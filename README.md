@@ -12,6 +12,12 @@ Historical path note:
 
 This repo now carries new client product-direction work. The retained bridge release client at `C:/Users/kiwun/Documents/ai/VPN/external/client-fork/app/` still owns current public Android+Windows packaging, signing, and rollback-safe release truth until formal cutover closes.
 
+Bridge-artifact mirror note:
+
+- the public `Kiwunaka/PORTALapp` fork cannot accept new Git LFS release objects
+- because of that, repo-backed Android and Windows alpha/beta/RC/public bridge bundles are mirrored into `artifacts/releases/bridge/` here after they are built and canonicalized in the bridge workspace
+- treat that mirror as retained artifact archive only; it does not make `POKROV-app` the release-build/signing truth before formal cutover
+
 ## Status
 
 - runnable app-first Flutter workspace for local validation and widget tests
