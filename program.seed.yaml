@@ -1,7 +1,7 @@
-program: pokrov-next-client
+program: pokrov-app
 seed_version: 5
 created_at: 2026-04-18
-status: runnable_four_host_runtime_lane
+status: runnable_two_target_public_lane_with_apple_readiness_hosts
 wave: 7
 worktree_kind: disjoint_global_rework
 bridge_client:
@@ -26,10 +26,10 @@ runtime_dependency:
 future_scope:
   public_release_targets:
     - android
+    - windows
+  readiness_only_targets:
     - ios
     - macos
-    - windows
-  readiness_only_targets: []
 apple_readiness:
   ios:
     host_shell: apps/ios_shell

@@ -1,11 +1,12 @@
 {
   "public_release_targets": [
     "android",
-    "ios",
-    "macos",
     "windows"
   ],
-  "readiness_only_targets": [],
+  "readiness_only_targets": [
+    "ios",
+    "macos"
+  ],
   "host_shells": {
     "android": "apps/android_shell",
     "ios": "apps/ios_shell",

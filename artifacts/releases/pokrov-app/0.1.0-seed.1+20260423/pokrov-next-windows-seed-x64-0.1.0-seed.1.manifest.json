@@ -1,0 +1,53 @@
+﻿{
+    "generated_at_utc":  "2026-04-22T22:47:25.0174132Z",
+    "display_name":  "POKROV",
+    "version":  "0.1.0-seed.1",
+    "runtime_release_tag":  "v3.1.8",
+    "release_output_directory":  "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\apps\\windows_shell\\build\\windows\\x64\\runner\\Release",
+    "staged_bundle_directory":  "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\apps\\windows_shell\\build\\release_bundle\\pokrov-next-windows-seed-x64-0.1.0-seed.1",
+    "zip_path":  "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\apps\\windows_shell\\build\\release_bundle\\pokrov-next-windows-seed-x64-0.1.0-seed.1.zip",
+    "executable":  {
+                       "file_name":  "pokrov_windows_seed.exe",
+                       "file_description":  "POKROV",
+                       "product_name":  "POKROV",
+                       "product_version":  "0.1.0-seed.1",
+                       "is_prerelease":  true
+                   },
+    "required_files":  [
+                           {
+                               "path":  "pokrov_windows_seed.exe",
+                               "size_bytes":  80896,
+                               "sha256":  "B644558377DB295724B9F75A93717534E21BC8B55B5B5ED40B1F2E3D77ECAE2D"
+                           },
+                           {
+                               "path":  "flutter_windows.dll",
+                               "size_bytes":  18181632,
+                               "sha256":  "4BD4BAB764EADAA9DA230407BE3FA9C0522B2BBC3DAE60593BEB9A0984F35138"
+                           },
+                           {
+                               "path":  "libcore.dll",
+                               "size_bytes":  44759552,
+                               "sha256":  "9358DE4C4C8C108C668FCFB97D3E7D9AF18EEDC7E73257D212620575E1709ADD"
+                           },
+                           {
+                               "path":  "data/app.so",
+                               "size_bytes":  5374880,
+                               "sha256":  "C969481ACB3FAC32CDE91CACB983F3D5E5E16BF3D0EF8836B2FC3B91009CD240"
+                           },
+                           {
+                               "path":  "data/icudtl.dat",
+                               "size_bytes":  778864,
+                               "sha256":  "C12537022EF818991A7BFED41A76D8D6AE962FFBC0E6511AC762A5D0845E7F7C"
+                           }
+                       ],
+    "safe_claims":  [
+                        "The Windows seed shell uses the desktop FFI runtime lane.",
+                        "The local release build bundles libcore.dll next to the Flutter runner.",
+                        "Local packaging is unsigned and stays inside the next-client seed lane."
+                    ],
+    "blocked_on":  [
+                       "trusted Windows signing material is not wired into this lane",
+                       "installer or MSIX publication flow is not implemented",
+                       "public download hosting and product cutover remain external"
+                   ]
+}

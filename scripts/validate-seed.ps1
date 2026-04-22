@@ -112,7 +112,8 @@ $jsonFiles = @(
 $missing = [System.Collections.Generic.List[string]]::new()
 $invalidJson = [System.Collections.Generic.List[string]]::new()
 $manifestErrors = [System.Collections.Generic.List[string]]::new()
-$expectedPublicTargets = @("android", "ios", "macos", "windows")
+$expectedPublicTargets = @("android", "windows")
+$expectedReadinessOnlyTargets = @("ios", "macos")
 $expectedHostShells = @{
   android = "apps/android_shell"
   ios = "apps/ios_shell"
@@ -155,8 +156,14 @@ if (Test-Path -LiteralPath $platformMatrixPath -PathType Leaf) {
     }
   }
 
-  if (@($platformMatrix.readiness_only_targets).Count -ne 0) {
-    $manifestErrors.Add("config\\platform-matrix.seed.json must keep readiness_only_targets empty for the four-target seed")
+  foreach ($target in $expectedReadinessOnlyTargets) {
+    if (@($platformMatrix.readiness_only_targets) -notcontains $target) {
+      $manifestErrors.Add("config\\platform-matrix.seed.json must include readiness-only target '$target'")
+    }
+  }
+
+  if (@($platformMatrix.readiness_only_targets).Count -ne $expectedReadinessOnlyTargets.Count) {
+    $manifestErrors.Add("config\\platform-matrix.seed.json must keep readiness_only_targets limited to ios and macos for the Android+Windows public lane")
   }
 
   foreach ($target in $expectedHostShells.Keys) {
@@ -176,8 +183,14 @@ if (Test-Path -LiteralPath $productContractPath -PathType Leaf) {
     }
   }
 
-  if (@($productContract.readiness_only_scope).Count -ne 0) {
-    $manifestErrors.Add("config\\product-contract.seed.json must keep readiness_only_scope empty for the four-target seed")
+  foreach ($target in $expectedReadinessOnlyTargets) {
+    if (@($productContract.readiness_only_scope) -notcontains $target) {
+      $manifestErrors.Add("config\\product-contract.seed.json must include readiness-only scope '$target'")
+    }
+  }
+
+  if (@($productContract.readiness_only_scope).Count -ne $expectedReadinessOnlyTargets.Count) {
+    $manifestErrors.Add("config\\product-contract.seed.json must keep readiness_only_scope limited to ios and macos for the Android+Windows public lane")
   }
 
   if (@($productContract.public_routing_modes) -notcontains "selected_apps") {
@@ -314,6 +327,12 @@ if (Test-Path -LiteralPath $programSeed -PathType Leaf) {
   foreach ($target in $expectedPublicTargets) {
     if ($seedLines -notcontains "- $target") {
       $manifestErrors.Add("program.seed.yaml must list public target '$target'")
+    }
+  }
+
+  foreach ($target in $expectedReadinessOnlyTargets) {
+    if ($seedLines -notcontains "- $target") {
+      $manifestErrors.Add("program.seed.yaml must list readiness-only target '$target'")
     }
   }
 

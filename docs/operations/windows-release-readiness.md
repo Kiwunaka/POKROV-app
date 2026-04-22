@@ -16,6 +16,7 @@ Historical mapping note:
 - pinned runtime artifacts are synced from `config/runtime-artifacts.seed.json` into `apps/windows_shell/windows/runner/resources/runtime`
 - `flutter build windows --release` copies `libcore.dll` next to the Flutter runner in the release bundle
 - `scripts/build-windows-release.ps1` now runs the local Windows verification lane: seed validation, tests, `flutter analyze`, `flutter build windows --release`, bundle verification, and unsigned zip staging
+- the seed validation inside that helper now aligns with the current product canon: `Android + Windows` public scope, `iOS + macOS` readiness-only hosts
 - the built executable is explicitly marked as a prerelease seed but now presents the public product name `POKROV` in Windows metadata and window chrome
 
 ## Local Verification Commands

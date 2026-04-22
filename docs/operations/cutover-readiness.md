@@ -25,6 +25,7 @@ Historical mapping note:
 - release truth: `no`
 - long-term repo truth by itself: `yes`
 - bridge-period repo-backed artifact mirror: `yes`
+- next-client repo-backed alpha archive: `allowed`
 
 ## Required Before Public Cutover
 
@@ -103,3 +104,4 @@ Blocked-by note:
 - the local repo bootstrap step is complete, but signed release evidence, Windows publication readiness, Apple validation, and formal cutover approval are still open
 - until those release and signing gates close, legacy bridge packaging/signing remains the rollback-safe public release truth even though new product-direction work now lands in `POKROV-app`
 - until that cutover closes, `POKROV-app/artifacts/releases/bridge/` may retain repo-backed Android and Windows alpha/beta bundles mirrored from the bridge lane without changing the fact that build/signing truth still lives in `external/client-fork/app`
+- `POKROV-app/artifacts/releases/pokrov-app/` may retain repo-backed alpha and beta bundles built directly from this lane for engineering and tester handoff without changing the fact that public release truth still lives in the bridge lane

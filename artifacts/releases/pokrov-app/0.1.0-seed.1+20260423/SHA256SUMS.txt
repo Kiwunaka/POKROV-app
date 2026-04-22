@@ -1,0 +1,4 @@
+f3ad10abf9feedb36016c57ee7358985da60bb03d1d3e5ad9adad5e550f86295  pokrov-app-android-release.apk
+8e343038b7994e563d84711aef5077bd5f5e5710d7db16b8f21a8d7686658169  pokrov-app-android-release.aab
+6dc8fcce0e251865c932ed0c6870e77d2c7f52be940336d22357d69f110a41fe  pokrov-next-windows-seed-x64-0.1.0-seed.1.zip
+df66926150e08836084a2b3788b892123948f22b8ece27a11a21266f7a86bec3  pokrov-next-windows-seed-x64-0.1.0-seed.1.manifest.json

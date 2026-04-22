@@ -18,6 +18,11 @@ Bridge-artifact mirror note:
 - because of that, repo-backed Android and Windows alpha/beta/RC/public bridge bundles are mirrored into `artifacts/releases/bridge/` here after they are built and canonicalized in the bridge workspace
 - treat that mirror as retained artifact archive only; it does not make `POKROV-app` the release-build/signing truth before formal cutover
 
+Next-client artifact note:
+
+- repo-backed alpha and beta bundles produced directly from this lane should live under `artifacts/releases/pokrov-app/`
+- these bundles prove that the canonical next-client repo can build Android and Windows locally, but they do not make this lane the public release-build or signing truth before formal cutover
+
 ## Status
 
 - runnable app-first Flutter workspace for local validation and widget tests
