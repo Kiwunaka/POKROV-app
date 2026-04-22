@@ -1,0 +1,21 @@
+name: pokrov_runtime_engine
+description: Runtime wiring and libcore artifact handling for the POKROV next client.
+publish_to: none
+version: 0.1.0-runtime.1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  ffi: ^2.1.3
+  flutter:
+    sdk: flutter
+  path: ^1.9.0
+  path_provider: ^2.1.5
+  pokrov_core_domain:
+    path: ../core_domain
+  win32: ^5.10.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

@@ -1,0 +1,11 @@
+name: pokrov_platform_contracts
+description: Seed platform contracts for the POKROV next client program.
+publish_to: none
+version: 0.1.0-seed.1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  pokrov_core_domain:
+    path: ../core_domain

@@ -1,0 +1,44 @@
+{
+  "display_name": "POKROV",
+  "binary_name": "pokrov_windows_seed.exe",
+  "bundle_root": "apps/windows_shell/build/windows/x64/runner/Release",
+  "artifact_root": "apps/windows_shell/build/release_bundle",
+  "bundle_folder_template": "pokrov-next-windows-seed-x64-{version}",
+  "zip_name_template": "pokrov-next-windows-seed-x64-{version}.zip",
+  "manifest_name_template": "pokrov-next-windows-seed-x64-{version}.manifest.json",
+  "required_files": [
+    "pokrov_windows_seed.exe",
+    "flutter_windows.dll",
+    "libcore.dll",
+    "data/app.so",
+    "data/icudtl.dat"
+  ],
+  "metadata": {
+    "company_name": "space.pokrov",
+    "file_description": "POKROV",
+    "product_name": "POKROV"
+  },
+  "runtime": {
+    "platform": "windows",
+    "artifact_directory": "apps/windows_shell/windows/runner/resources/runtime",
+    "core_binary": "libcore.dll"
+  },
+  "signing": {
+    "status": "external_blocker",
+    "expected_inputs": [
+      "trusted Windows code-signing certificate",
+      "timestamping service URL",
+      "installer or MSIX packaging identity"
+    ]
+  },
+  "safe_claims": [
+    "The Windows seed shell uses the desktop FFI runtime lane.",
+    "The local release build bundles libcore.dll next to the Flutter runner.",
+    "Local packaging is unsigned and stays inside the next-client seed lane."
+  ],
+  "blocked_on": [
+    "trusted Windows signing material is not wired into this lane",
+    "installer or MSIX publication flow is not implemented",
+    "public download hosting and product cutover remain external"
+  ]
+}

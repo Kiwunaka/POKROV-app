@@ -1,0 +1,27 @@
+name: pokrov_windows_shell
+description: Windows host seed for the POKROV next client program.
+publish_to: none
+version: 0.1.0-seed.1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  pokrov_app_shell:
+    path: ../../packages/app_shell
+  pokrov_core_domain:
+    path: ../../packages/core_domain
+  pokrov_platform_contracts:
+    path: ../../packages/platform_contracts
+  pokrov_support_context:
+    path: ../../packages/support_context
+
+flutter:
+  uses-material-design: true
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter

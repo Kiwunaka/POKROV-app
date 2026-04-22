@@ -1,0 +1,9 @@
+{
+  "device_name": "seed-device",
+  "platform": "android",
+  "locale": "ru-RU",
+  "route_mode_override": null,
+  "enable_engine_logs": false,
+  "show_advanced_core_picker": false,
+  "notes": "Local-only placeholder values for prototype work. Do not treat as production state."
+}

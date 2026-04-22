@@ -1,0 +1,57 @@
+{
+  "brand": "POKROV",
+  "public_product_line": "POKROV",
+  "legacy_client_identifier": "POKROV VPN",
+  "client_strategy": "consumer-first",
+  "identity_model": "app-first",
+  "public_scope": [
+    "android",
+    "windows"
+  ],
+  "readiness_only_scope": [
+    "ios",
+    "macos"
+  ],
+  "default_runtime_core": "sing-box",
+  "advanced_fallback_core": "xray",
+  "trial_days": 5,
+  "telegram_bonus_days": 10,
+  "free_tier": {
+    "node_pool": "NL-free",
+    "traffic_gb": 5,
+    "period_days": 30,
+    "speed_mbps": 50,
+    "device_limit": 1
+  },
+  "monetization": {
+    "in_app_purchases": false,
+    "third_party_ads": false,
+    "first_party_promos_only": true
+  },
+  "public_routing_modes": [
+    "all_except_ru",
+    "full_tunnel",
+    "selected_apps"
+  ],
+  "location_variant_order": [
+    "vless_reality",
+    "vmess",
+    "trojan",
+    "xhttp"
+  ],
+  "recovery_order": [
+    "app",
+    "web",
+    "telegram"
+  ],
+  "support_surfaces": [
+    "@pokrov_supportbot",
+    "support@pokrov.space"
+  ],
+  "apple_publication": {
+    "credentials_in_repo": false,
+    "ios_distribution": "testflight_then_app_store_placeholder",
+    "macos_distribution": "developer_id_notarized_or_mac_app_store_placeholder",
+    "network_extension_required_for_production_connectivity": true
+  }
+}

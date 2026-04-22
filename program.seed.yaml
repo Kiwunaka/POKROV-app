@@ -1,0 +1,78 @@
+program: pokrov-next-client
+seed_version: 5
+created_at: 2026-04-18
+status: runnable_four_host_runtime_lane
+wave: 7
+worktree_kind: disjoint_global_rework
+bridge_client:
+  path: ../client-fork/app
+  touched: false
+base_strategy_gate: docs/decisions/2026-04-18-karing-vs-clean-room-gate.md
+workspace:
+  manager: melos
+  validation_script: scripts/validate-seed.ps1
+  bootstrap_script: scripts/bootstrap-local.ps1
+  workspace_bootstrap_script: scripts/bootstrap-workspace.ps1
+  test_script: scripts/run-tests.ps1
+config_seeds:
+  product_contract: config/product-contract.seed.json
+  platform_matrix: config/platform-matrix.seed.json
+  runtime_profile: config/runtime-profile.seed.json
+runtime_dependency:
+  default_core: sing-box
+  advanced_fallback_core: xray
+  native_core_artifact: libcore_not_wired_in_seed
+  release_gate_owner: bridge_client_only_for_now
+future_scope:
+  public_release_targets:
+    - android
+    - ios
+    - macos
+    - windows
+  readiness_only_targets: []
+apple_readiness:
+  ios:
+    host_shell: apps/ios_shell
+    bundle_id: space.pokrov.pokrovIosShell
+    deployment_target: "12.0"
+    runner_tests: true
+    entitlements_present: false
+    network_extension_targets_present: false
+    signing_ready: false
+  macos:
+    host_shell: apps/macos_shell
+    bundle_id: space.pokrov.pokrovMacosShell
+    deployment_target: "10.14"
+    runner_tests: true
+    entitlements_present: true
+    network_extension_targets_present: false
+    signing_ready: false
+cutover:
+  replaces_bridge_client: false
+  public_store_ready: false
+  production_runtime_ready: false
+tracks:
+  - id: android_shell
+    path: apps/android_shell
+    status: runnable_seed_host
+  - id: ios_shell
+    path: apps/ios_shell
+    status: runnable_seed_host
+  - id: macos_shell
+    path: apps/macos_shell
+    status: runnable_seed_host
+  - id: windows_shell
+    path: apps/windows_shell
+    status: runnable_seed_host
+  - id: app_shell
+    path: packages/app_shell
+    status: runnable_seed_package
+  - id: core_domain
+    path: packages/core_domain
+    status: runnable_seed_package
+  - id: platform_contracts
+    path: packages/platform_contracts
+    status: runnable_seed_package
+  - id: support_context
+    path: packages/support_context
+    status: runnable_seed_package

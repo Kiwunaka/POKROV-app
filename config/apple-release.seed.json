@@ -1,0 +1,72 @@
+{
+  "status": "placeholder_only_no_credentials_committed",
+  "credentials_present": false,
+  "operator_action_required": true,
+  "ios": {
+    "bundle_id": "space.pokrov.app.ios",
+    "display_name": "POKROV",
+    "minimum_os": "12.0",
+    "url_scheme": "pokrov",
+    "app_group_identifier": "group.space.pokrov.app.shared",
+    "development_team_id": "REPLACE_WITH_APPLE_TEAM_ID",
+    "code_sign_style": "Automatic",
+    "signing_identities": {
+      "debug": "Apple Development",
+      "release": "Apple Distribution"
+    },
+    "provisioning_profile_specifier": {
+      "debug": "",
+      "release": ""
+    },
+    "packet_tunnel_extension": {
+      "required_for_production_connectivity": true,
+      "target_present": false,
+      "bundle_id": "space.pokrov.app.ios.networkextension"
+    },
+    "distribution": {
+      "primary_channel": "testflight_then_app_store",
+      "testflight_group": "Internal",
+      "app_store_connect_sku": "REPLACE_WITH_ASC_SKU",
+      "app_store_id": "REPLACE_WITH_ASC_APP_ID",
+      "uses_in_app_purchases": false
+    },
+    "store_metadata": {
+      "support_url": "https://pokrov.space/",
+      "marketing_url": "https://pokrov.space/",
+      "privacy_policy_url": "https://pokrov.space/privacy/"
+    }
+  },
+  "macos": {
+    "bundle_id": "space.pokrov.app.macos",
+    "display_name": "POKROV",
+    "minimum_os": "10.14",
+    "url_scheme": "pokrov",
+    "app_group_identifier": "group.space.pokrov.app.shared",
+    "development_team_id": "REPLACE_WITH_APPLE_TEAM_ID",
+    "code_sign_style": "Automatic",
+    "signing_identities": {
+      "debug": "Apple Development",
+      "release_developer_id": "Developer ID Application",
+      "release_app_store": "3rd Party Mac Developer Application",
+      "installer_developer_id": "Developer ID Installer"
+    },
+    "provisioning_profile_specifier": {
+      "developer_id_direct": "",
+      "mac_app_store": ""
+    },
+    "distribution": {
+      "primary_channel": "developer_id_notarized_direct",
+      "secondary_channel": "mac_app_store_optional",
+      "notary_profile_name": "REPLACE_WITH_NOTARY_PROFILE",
+      "notary_team_id": "REPLACE_WITH_APPLE_TEAM_ID",
+      "app_store_connect_sku": "REPLACE_WITH_ASC_SKU",
+      "app_store_id": "REPLACE_WITH_ASC_APP_ID"
+    },
+    "store_metadata": {
+      "category": "public.app-category.utilities",
+      "support_url": "https://pokrov.space/",
+      "marketing_url": "https://pokrov.space/",
+      "privacy_policy_url": "https://pokrov.space/privacy/"
+    }
+  }
+}

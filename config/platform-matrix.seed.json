@@ -1,0 +1,27 @@
+{
+  "public_release_targets": [
+    "android",
+    "ios",
+    "macos",
+    "windows"
+  ],
+  "readiness_only_targets": [],
+  "host_shells": {
+    "android": "apps/android_shell",
+    "ios": "apps/ios_shell",
+    "macos": "apps/macos_shell",
+    "windows": "apps/windows_shell"
+  },
+  "release_readiness": {
+    "android": "seed_only_non_release_lane",
+    "ios": "apple_shell_ready_store_blocked",
+    "macos": "apple_shell_ready_notarization_blocked",
+    "windows": "runtime_shell_buildable_signing_blocked"
+  },
+  "shared_packages": {
+    "app_shell": "packages/app_shell",
+    "core_domain": "packages/core_domain",
+    "platform_contracts": "packages/platform_contracts",
+    "support_context": "packages/support_context"
+  }
+}

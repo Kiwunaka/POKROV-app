@@ -1,0 +1,27 @@
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+
+# Flutter and Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub/
+.pub-cache/
+
+# Build outputs
+build/
+dist/
+coverage/
+
+# Runtime artifact cache
+artifacts/libcore/
+!artifacts/README.md
+
+# Seed-local config outputs
+config/local/*
+!config/local/.gitkeep

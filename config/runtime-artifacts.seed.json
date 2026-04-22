@@ -1,0 +1,29 @@
+{
+  "libcore": {
+    "repository": "hiddify/hiddify-core",
+    "release_tag": "v3.1.8",
+    "assets": {
+      "android": {
+        "asset": "hiddify-core-android.tar.gz",
+        "entry": "libcore.aar",
+        "sync_destination": "apps/android_shell/android/app/libs"
+      },
+      "ios": {
+        "asset": "hiddify-core-ios.tar.gz",
+        "entry": "Libcore.xcframework",
+        "sync_destination": "apps/ios_shell/ios/Frameworks"
+      },
+      "macos": {
+        "asset": "hiddify-core-macos-universal.tar.gz",
+        "entry": "libcore.dylib",
+        "helper": "HiddifyCli",
+        "sync_destination": "apps/macos_shell/macos/Runner/Frameworks"
+      },
+      "windows": {
+        "asset": "hiddify-core-windows-amd64.tar.gz",
+        "entry": "libcore.dll",
+        "sync_destination": "apps/windows_shell/windows/runner/resources/runtime"
+      }
+    }
+  }
+}

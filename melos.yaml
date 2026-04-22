@@ -1,0 +1,19 @@
+name: pokrov_next_client
+
+packages:
+  - apps/*
+  - packages/*
+
+scripts:
+  bootstrap-workspace:
+    run: powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap-workspace.ps1
+    description: Resolve Flutter dependencies for the starter apps and packages.
+  validate-seed:
+    run: powershell -ExecutionPolicy Bypass -File .\scripts\validate-seed.ps1
+    description: Validate the scaffold seed, package manifests, and config templates.
+  bootstrap-local:
+    run: powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap-local.ps1
+    description: Materialize local-only config files from the committed templates.
+  test:
+    run: powershell -ExecutionPolicy Bypass -File .\scripts\run-tests.ps1
+    description: Bootstrap the workspace and run the starter test lane.

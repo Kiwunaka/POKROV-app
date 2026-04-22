@@ -1,0 +1,36 @@
+{
+  "brand": "POKROV",
+  "client_strategy": "consumer-first",
+  "identity_model": "app-first",
+  "default_runtime_core": "sing-box",
+  "advanced_fallback_core": "xray",
+  "trial_days": 5,
+  "telegram_bonus_days": 10,
+  "free_tier": {
+    "node_pool": "NL-free",
+    "traffic_gb": 5,
+    "period_days": 30,
+    "speed_mbps": 50,
+    "device_limit": 1
+  },
+  "monetization": {
+    "in_app_purchases": false,
+    "third_party_ads": false,
+    "first_party_promos_only": true
+  },
+  "public_routing_modes": [
+    "all_except_ru",
+    "full_tunnel",
+    "selected_apps"
+  ],
+  "official_surfaces": {
+    "app": "https://app.pokrov.space/",
+    "api": "https://api.pokrov.space/",
+    "connect": "https://connect.pokrov.space/",
+    "checkout": "https://pay.pokrov.space/checkout/"
+  },
+  "support_surfaces": [
+    "@pokrov_supportbot",
+    "@pokrov_feedbackbot"
+  ]
+}

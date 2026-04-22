@@ -1,0 +1,20 @@
+// Placeholder Apple signing and bundle settings for the next-client iOS lane.
+// Do not commit real Apple credentials or provisioning-profile names here.
+
+POKROV_IOS_DISPLAY_NAME = POKROV
+POKROV_IOS_BUNDLE_NAME = pokrov_ios_shell
+POKROV_IOS_BUNDLE_ID = space.pokrov.app.ios
+POKROV_IOS_URL_SCHEME = pokrov
+POKROV_IOS_APP_GROUP = group.space.pokrov.app.shared
+POKROV_IOS_PACKET_TUNNEL_DISPLAY_NAME = POKROV Tunnel
+POKROV_IOS_PACKET_TUNNEL_BUNDLE_NAME = pokrov_ios_tunnel
+POKROV_IOS_PACKET_TUNNEL_BUNDLE_ID = space.pokrov.app.ios.networkextension
+
+POKROV_IOS_DEVELOPMENT_TEAM = REPLACE_WITH_APPLE_TEAM_ID
+POKROV_IOS_CODE_SIGN_STYLE = Automatic
+POKROV_IOS_CODE_SIGN_IDENTITY = Apple Development
+POKROV_IOS_PROVISIONING_PROFILE_SPECIFIER =
+
+POKROV_IOS_APP_STORE_SKU = REPLACE_WITH_ASC_SKU
+POKROV_IOS_APP_STORE_ID = REPLACE_WITH_ASC_APP_ID
+POKROV_IOS_TESTFLIGHT_GROUP = Internal

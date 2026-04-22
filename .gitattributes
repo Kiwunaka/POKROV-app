@@ -1,0 +1,5 @@
+apps/android_shell/android/app/libs/*.aar filter=lfs diff=lfs merge=lfs -text
+apps/ios_shell/ios/Frameworks/Libcore.xcframework/**/Libcore filter=lfs diff=lfs merge=lfs -text
+apps/macos_shell/macos/Runner/Frameworks/*.dylib filter=lfs diff=lfs merge=lfs -text
+apps/windows_shell/windows/runner/resources/runtime/*.dll filter=lfs diff=lfs merge=lfs -text
+apps/windows_shell/windows/runner/resources/runtime/*.exe filter=lfs diff=lfs merge=lfs -text

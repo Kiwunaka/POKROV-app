@@ -1,0 +1,61 @@
+{
+  "lane": "external/pokrov-next-client",
+  "status": "blocked_not_cutover_ready",
+  "public_cutover_allowed": false,
+  "blocking_dependencies": [
+    "Karing vs clean-room base decision remains open",
+    "native-core provenance and packaging still need one documented cross-platform contract",
+    "iOS production connectivity still requires a packet-tunnel target plus reviewed entitlements",
+    "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
+    "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
+    "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
+    "Windows trusted signing, installer or MSIX packaging, and public hosting remain operator work outside this lane"
+  ],
+  "ios_release_gates": [
+    "Apple team selected",
+    "bundle ID reserved in Apple Developer",
+    "packet tunnel target added and signed",
+    "app group and provisioning profiles created",
+    "archive succeeds on device SDK",
+    "TestFlight build uploaded",
+    "App Store metadata reviewed"
+  ],
+  "macos_release_gates": [
+    "Apple team selected",
+    "bundle ID reserved in Apple Developer",
+    "release archive exported from Xcode",
+    "Developer ID or Mac App Store channel chosen",
+    "notarization succeeds",
+    "stapled app passes Gatekeeper",
+    "support and privacy metadata reviewed"
+  ],
+  "windows_release_gates": [
+    "runtime artifacts synced into the Windows host shell",
+    "flutter analyze passes for apps/windows_shell",
+    "shared runtime and widget tests pass",
+    "flutter build windows --release succeeds",
+    "local release bundle includes libcore.dll",
+    "trusted signing certificate and timestamping path are provided",
+    "installer or MSIX publication path is chosen"
+  ],
+  "operator_required_evidence": {
+    "ios": [
+      "signed archive",
+      "uploaded TestFlight build",
+      "App Store Connect build processing",
+      "provisioning profile mapping"
+    ],
+    "macos": [
+      "signed archive or exported .app",
+      "notarytool submission result",
+      "stapler output",
+      "spctl assessment result"
+    ],
+    "windows": [
+      "verified release bundle manifest",
+      "signed executable or installer",
+      "installer or MSIX identity",
+      "public hosting or store handoff"
+    ]
+  }
+}
