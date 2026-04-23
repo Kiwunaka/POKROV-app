@@ -116,15 +116,15 @@ extension AccessLanePresentation on AccessLane {
   String get summary {
     switch (this) {
       case AccessLane.trialPremium:
-        return 'First run starts with a real 5-day premium access lane.';
+        return 'Try free gives this device full access for 5 days.';
       case AccessLane.bonusPremium:
-        return 'Channel linking unlocks a one-time +10 day premium bonus.';
+        return 'Link Telegram to claim one extra +10 day extension.';
       case AccessLane.paidUnlimited:
-        return 'Paid access keeps all enabled non-free nodes available without quota messaging.';
+        return 'Paid access keeps every enabled non-free location available without data limits.';
       case AccessLane.freeMonthly:
-        return 'Free monthly keeps the user on NL-free with renewable quota and gentle upsell.';
+        return 'After the premium period, the app keeps a lighter NL-free connection with a renewable quota.';
       case AccessLane.freeSoftMode:
-        return 'Soft mode keeps continuity after quota pressure while the app pushes upgrade and support help.';
+        return 'If the monthly quota runs out, the app keeps things calm and points you to renew or get help.';
     }
   }
 }
@@ -135,7 +135,7 @@ extension RouteModePresentation on RouteMode {
       case RouteMode.fullTunnel:
         return 'Full tunnel';
       case RouteMode.selectedApps:
-        return 'Selected apps';
+        return 'Only selected apps';
       case RouteMode.allExceptRu:
         return 'All except RU';
     }
@@ -144,11 +144,11 @@ extension RouteModePresentation on RouteMode {
   String get summary {
     switch (this) {
       case RouteMode.fullTunnel:
-        return 'Route the entire device through the managed profile.';
+        return 'Send all traffic on this device through POKROV.';
       case RouteMode.selectedApps:
-        return 'Split tunnel only the chosen apps or processes when the host supports it.';
+        return 'Only the apps you choose use POKROV. Everything else stays direct.';
       case RouteMode.allExceptRu:
-        return 'Keep a regional bypass lane for local services while routing everything else.';
+        return 'Keep Russian and local services direct while protecting the rest of the device.';
     }
   }
 }

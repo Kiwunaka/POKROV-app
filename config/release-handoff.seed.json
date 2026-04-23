@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "last_updated": "2026-04-23",
+  "purpose": "stable root-repo handoff source for canonical client-lane identity and latest repo-backed release metadata",
+  "repo": {
+    "name": "POKROV-app",
+    "canonical_git_line": "POKROV-app/main",
+    "repo_root": "C:/Users/kiwun/Documents/ai/POKROV-app",
+    "canonical_role": "new client development truth for Android and Windows, with Apple readiness work tracked here until formal cutover closes",
+    "historical_bootstrap_sources": [
+      "C:/Users/kiwun/Documents/ai/VPN/app-next/",
+      "external/pokrov-next-client"
+    ]
+  },
+  "release_truth": {
+    "public_cutover_allowed": false,
+    "canonical_development_repo": "C:/Users/kiwun/Documents/ai/POKROV-app",
+    "active_release_metadata_root": "C:/Users/kiwun/Documents/ai/POKROV-app/artifacts/releases",
+    "retained_bridge_archive_root": "C:/Users/kiwun/Documents/ai/POKROV-app/artifacts/releases/bridge/0.9.0-beta+20508",
+    "retired_bridge_repo": "C:/Users/kiwun/Documents/ai/VPN/external/client-fork/app",
+    "retired_bridge_reason": "last pre-cutover bundle lineage retained as archive evidence only",
+    "cutover_readiness_source": "config/cutover-readiness.seed.json"
+  },
+  "latest_repo_backed_release": {
+    "channel": "engineering_alpha",
+    "version": "0.1.0-seed.1+20260423",
+    "archive_root": "artifacts/releases/pokrov-app/0.1.0-seed.1+20260423",
+    "readme": "artifacts/releases/pokrov-app/0.1.0-seed.1+20260423/README.md",
+    "checksums": "artifacts/releases/pokrov-app/0.1.0-seed.1+20260423/SHA256SUMS.txt",
+    "artifacts": [
+      {
+        "platform": "android",
+        "kind": "apk",
+        "file_name": "pokrov-app-android-release.apk",
+        "canonical_label": "android_alpha_apk"
+      },
+      {
+        "platform": "android",
+        "kind": "aab",
+        "file_name": "pokrov-app-android-release.aab",
+        "canonical_label": "android_alpha_app_bundle"
+      },
+      {
+        "platform": "windows",
+        "kind": "zip",
+        "file_name": "pokrov-next-windows-seed-x64-0.1.0-seed.1.zip",
+        "canonical_label": "windows_alpha_unsigned_bundle_zip"
+      },
+      {
+        "platform": "windows",
+        "kind": "manifest",
+        "file_name": "pokrov-next-windows-seed-x64-0.1.0-seed.1.manifest.json",
+        "canonical_label": "windows_alpha_unsigned_bundle_manifest"
+      }
+    ]
+  },
+  "stable_consumption_notes": [
+    "Root-repo docs and handoff automation should read this file instead of hard-coding bootstrap lane names or scanning versioned artifact folders.",
+    "Actual Windows alpha filenames still retain older next-client seed naming; this file maps those retained filenames to canonical POKROV-app release meaning without changing the archived bundle itself.",
+    "Retained bridge lineage remains available for rollback-safe evidence under artifacts/releases/bridge, but it no longer defines the active release-metadata source."
+  ]
+}

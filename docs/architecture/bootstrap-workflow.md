@@ -38,7 +38,7 @@ Treat everything under `config/local/*` as regenerated local-only workstation co
 The clean-room starter now includes:
 
 - shared domain, platform-contract, and support-context packages
-- a shared Material shell with `Quick Connect`, `Locations`, `Profile`, and `Support`
+- a shared Material shell that now locks the consumer-first tab set `Protection / Locations / Rules / Profile`
 - Android, iOS, macOS, and Windows host entrypoints that build the shell from shared bootstrap defaults
 - a widget test lane in `packages/app_shell/test/`
 - Android-shell Flutter tests in `apps/android_shell/test/`

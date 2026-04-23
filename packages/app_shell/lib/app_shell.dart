@@ -9,14 +9,14 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_context/support_context.dart';
 
 import 'app_first_runtime_bootstrap.dart';
-
 export 'app_first_runtime_bootstrap.dart';
+part 'app_shell_ui_helpers.dart';
 
 enum SeedTab {
-  quickConnect,
+  protection,
   locations,
+  rules,
   profile,
-  support,
 }
 
 enum _SectionTone {
@@ -90,9 +90,9 @@ class SeedAppContext {
   final ManagedProfilePayload managedProfileSeed;
 
   List<SeedTab> get defaultTabs => const [
-        SeedTab.quickConnect,
+        SeedTab.protection,
         SeedTab.locations,
-        SeedTab.support,
+        SeedTab.rules,
         SeedTab.profile,
       ];
 }
@@ -306,6 +306,7 @@ class PokrovSeedApp extends StatelessWidget {
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: Colors.transparent,
           elevation: 0,
+          indicatorColor: _SeedPalette.accent.withOpacity(0.1),
           labelTextStyle: WidgetStateProperty.resolveWith(
             (states) => TextStyle(
               fontSize: 12,
@@ -410,7 +411,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   void _showSeedHandoff(String label, String value) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Seed handoff: $label -> $value'),
+        content: Text('Next step: $label -> $value'),
       ),
     );
   }
@@ -446,23 +447,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     await _runRuntimeAction(_runtimeEngine.snapshot);
   }
 
-  Future<void> _initializeRuntime() async {
-    await _runRuntimeAction(_runtimeEngine.initialize);
-  }
-
-  Future<void> _stageSeedRuntimeProfile() async {
-    setState(() {
-      _runtimeHeadline =
-          'Local smoke profile staged for diagnostics only. Main connect still syncs a live managed profile.';
-      _managedProfileDirty = true;
-    });
-    await _runRuntimeAction(
-      () => _runtimeEngine.stageManagedProfile(
-        widget.appContext.managedProfileSeed,
-      ),
-    );
-  }
-
   Future<ManagedProfilePayload> _resolveManagedProfile() async {
     final payload = await _bootstrapper.resolveManagedProfile(
       hostPlatform: widget.appContext.hostPlatform,
@@ -471,8 +455,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (mounted) {
       setState(() {
         _managedProfileDirty = false;
-        _runtimeHeadline =
-            'Managed profile synced from ${Uri.parse(widget.appContext.apiBaseUrl).host}.';
+        _runtimeHeadline = 'Protection refreshed from '
+            '${Uri.parse(widget.appContext.apiBaseUrl).host}.';
       });
     }
     return payload;
@@ -481,8 +465,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   Future<void> _toggleRuntime() async {
     if (_runtimeBusy) {
       setState(() {
-        _runtimeHeadline =
-            'Runtime transition is already in progress. Give the Android host a moment to finish connecting or stopping.';
+        _runtimeHeadline = 'Protection is already updating. Give it a moment.';
       });
       return;
     }
@@ -513,7 +496,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!_canPrimaryConnect(snapshot)) {
         setState(() {
           _runtimeHeadline =
-              'Live connect is not ready on this host yet. Refresh runtime or prime the host bridge first.';
+              'This device still needs a little setup before protection can start.';
         });
         return;
       }
@@ -556,8 +539,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _runtimeSnapshot = current;
           _runtimeHeadline = current.phase == RuntimePhase.running
               ? current.isCleanlyHealthy
-                  ? 'Connected through the live managed profile.'
-                  : current.diagnosticsLabel ?? current.message
+                  ? 'Protection is on.'
+                  : 'Protection is on, but it needs attention.'
               : current.message;
         });
         if (current.phase != RuntimePhase.running &&
@@ -669,31 +652,26 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   @override
   Widget build(BuildContext context) {
+    final hasProvisionedAccess = !_managedProfileDirty ||
+        (_runtimeSnapshot?.phase == RuntimePhase.running) ||
+        ((_runtimeSnapshot?.stagedConfigPath ?? '').isNotEmpty);
     final sections = <Widget>[
       _QuickConnectSection(
         appContext: widget.appContext,
         selectedRouteMode: _selectedRouteMode,
-        onRouteModeSelected: (mode) {
-          setState(() {
-            _selectedRouteMode = mode;
-            _managedProfileDirty = true;
-          });
-        },
-        onOpenHandoff: _showSeedHandoff,
         runtimeSnapshot: _runtimeSnapshot,
         runtimeHeadline: _runtimeHeadline,
         runtimeBusy: _runtimeBusy,
         primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
         onRefreshRuntime: _refreshRuntimeSnapshot,
-        onInitializeRuntime: _initializeRuntime,
-        onStageSeedProfile: _stageSeedRuntimeProfile,
         onToggleRuntime: _toggleRuntime,
       ),
       _LocationsSection(
         appContext: widget.appContext,
         selectedRouteMode: _selectedRouteMode,
+        hasProvisionedAccess: hasProvisionedAccess,
       ),
-      _SupportSection(
+      _RulesSection(
         appContext: widget.appContext,
         selectedRouteMode: _selectedRouteMode,
         onRouteModeSelected: (mode) {
@@ -702,13 +680,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             _managedProfileDirty = true;
           });
         },
-        onOpenHandoff: _showSeedHandoff,
       ),
       _ProfileSection(
         appContext: widget.appContext,
         selectedRouteMode: _selectedRouteMode,
+        hasProvisionedAccess: hasProvisionedAccess,
         onOpenHandoff: _showSeedHandoff,
         runtimeSnapshot: _runtimeSnapshot,
+        runtimeHeadline: _runtimeHeadline,
       ),
     ];
 
@@ -720,7 +699,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           children: [
             const Text('POKROV'),
             Text(
-              'Public lane: Android and Windows',
+              'Protection first. Everything else stays close.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: _SeedPalette.ink.withOpacity(0.68),
                   ),
@@ -745,13 +724,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.82),
-              borderRadius: BorderRadius.circular(28),
+              color: Colors.white.withOpacity(0.78),
+              borderRadius: BorderRadius.circular(32),
               border: Border.all(color: _SeedPalette.line),
               boxShadow: [
                 BoxShadow(
                   color: _SeedPalette.ink.withOpacity(0.08),
-                  blurRadius: 28,
+                  blurRadius: 36,
                   offset: const Offset(0, 12),
                 ),
               ],
@@ -797,29 +776,21 @@ class _QuickConnectSection extends StatelessWidget {
   const _QuickConnectSection({
     required this.appContext,
     required this.selectedRouteMode,
-    required this.onRouteModeSelected,
-    required this.onOpenHandoff,
     required this.runtimeSnapshot,
     required this.runtimeHeadline,
     required this.runtimeBusy,
     required this.primaryConnectEnabled,
     required this.onRefreshRuntime,
-    required this.onInitializeRuntime,
-    required this.onStageSeedProfile,
     required this.onToggleRuntime,
   });
 
   final SeedAppContext appContext;
   final RouteMode selectedRouteMode;
-  final ValueChanged<RouteMode> onRouteModeSelected;
-  final void Function(String label, String value) onOpenHandoff;
   final RuntimeSnapshot? runtimeSnapshot;
   final String? runtimeHeadline;
   final bool runtimeBusy;
   final bool primaryConnectEnabled;
   final Future<void> Function() onRefreshRuntime;
-  final Future<void> Function() onInitializeRuntime;
-  final Future<void> Function() onStageSeedProfile;
   final Future<void> Function() onToggleRuntime;
 
   @override
@@ -827,79 +798,72 @@ class _QuickConnectSection extends StatelessWidget {
     final snapshot = runtimeSnapshot;
     final isRunning = snapshot?.phase == RuntimePhase.running;
     final isHealthyRunning = snapshot?.isCleanlyHealthy ?? false;
-    final runtimeStateLabel = snapshot?.phaseLabel ?? 'Checking host runtime';
-    final runtimeSummary = runtimeHeadline ??
-        snapshot?.message ??
-        'The app syncs a managed profile before starting sing-box.';
+    final statusLabel = _consumerProtectionStatusLabel(
+      snapshot,
+      busy: runtimeBusy,
+    );
+    final statusSummary = _consumerProtectionStatusSummary(
+      snapshot,
+      headline: runtimeHeadline,
+      hostPlatform: appContext.hostPlatform,
+    );
     final primaryActionEnabled = !runtimeBusy && primaryConnectEnabled;
+    final heroTitle = runtimeBusy
+        ? 'Checking protection'
+        : isRunning
+            ? isHealthyRunning
+                ? 'Protected'
+                : 'Protected, with a note'
+            : primaryActionEnabled
+                ? 'Ready when you are'
+                : 'Finish setup first';
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 160),
       children: [
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            _StatusPill(
-              label: 'Protection',
-              icon: Icons.flash_on_rounded,
-              tone: _SectionTone.accent,
-            ),
-            _StatusPill(
-              label: '${appContext.runtimeProfile.trialDays}-day premium',
-              icon: Icons.workspace_premium_rounded,
-            ),
-            _StatusPill(
-              label: appContext.runtimeProfile.freeTier.nodePool,
-              icon: Icons.hub_rounded,
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
+        Text('Protection', style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: 12),
         _SectionCard(
-          title: 'Protection starts with ${appContext.runtimeProfile.trialDays} free premium days',
+          title: heroTitle,
           tone: _SectionTone.accent,
           lines: [
-            'One tap should initialize the host runtime, stage the managed profile, and start ${appContext.runtimeProfile.defaultCore.label}.',
-            'Fallback stays on ${appContext.runtimeProfile.freeTier.quotaSummary} and ${appContext.runtimeProfile.freeTier.speedSummary}.',
+            statusSummary,
+            primaryActionEnabled
+                ? 'One main control lives here. Rules adjusts behaviour. Profile keeps the rest together.'
+                : 'This device still needs a little setup before protection can start.',
           ],
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
                 children: [
-                  Expanded(
-                    child: Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        _MetricTile(
-                          label: 'Access lane',
-                          value: appContext.accessLane.label,
-                          caption: runtimeStateLabel,
-                          icon: Icons.verified_user_rounded,
-                        ),
-                        _MetricTile(
-                          label: 'Free fallback',
-                          value:
-                              appContext.runtimeProfile.freeTier.quotaSummary,
-                          caption:
-                              appContext.runtimeProfile.freeTier.speedSummary,
-                          icon: Icons.speed_rounded,
-                        ),
-                        _MetricTile(
-                          label: 'Route mode',
-                          value: selectedRouteMode.label,
-                          caption: appContext.hostPlatform.label,
-                          icon: Icons.alt_route_rounded,
-                        ),
-                      ],
-                    ),
+                  _MetricTile(
+                    label: 'Status',
+                    value: statusLabel,
+                    caption: isRunning
+                        ? 'Daily use stays centered here.'
+                        : 'Protection stays simple on purpose.',
+                    icon: isRunning
+                        ? Icons.shield_rounded
+                        : Icons.play_circle_outline_rounded,
+                  ),
+                  _MetricTile(
+                    label: 'Current rule',
+                    value: selectedRouteMode.label,
+                    caption: 'Change this in Rules',
+                    icon: Icons.alt_route_rounded,
+                  ),
+                  _MetricTile(
+                    label: 'This device',
+                    value: appContext.hostPlatform.label,
+                    caption: 'Subscription, support, and bonus live in Profile',
+                    icon: Icons.devices_rounded,
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               Center(
                 child: _ConnectOrbButton(
                   running: isRunning,
@@ -918,80 +882,71 @@ class _QuickConnectSection extends StatelessWidget {
                         : Icons.play_circle_fill_rounded,
                   ),
                   label: Text(
-                    isRunning
-                        ? 'Stop runtime'
-                        : primaryActionEnabled
-                            ? 'Connect with sing-box'
-                            : 'Runtime not ready',
+                    runtimeBusy
+                        ? 'Preparing protection'
+                        : isRunning
+                            ? 'Turn protection off'
+                            : primaryActionEnabled
+                                ? 'Turn protection on'
+                                : 'Protection unavailable',
                   ),
                 ),
+              ),
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _StatusPill(
+                    label: statusLabel,
+                    icon: isRunning
+                        ? Icons.shield_rounded
+                        : Icons.flash_on_rounded,
+                    tone: _SectionTone.accent,
+                  ),
+                  _StatusPill(
+                    label: selectedRouteMode.label,
+                    icon: Icons.alt_route_rounded,
+                  ),
+                  _StatusPill(
+                    label: appContext.hostPlatform.label,
+                    icon: Icons.devices_rounded,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                isRunning && !isHealthyRunning
+                    ? 'Protection is on, but it may need attention. Profile is the next stop if you need help.'
+                    : primaryActionEnabled
+                        ? 'One clear action starts protection with your managed setup.'
+                        : 'Use Check status again once this device finishes setup.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: _SeedPalette.ink.withOpacity(0.72),
+                    ),
               ),
             ],
           ),
         ),
         _SectionCard(
-          title: 'Access lane',
+          title: 'What stays simple',
           tone: _SectionTone.muted,
           lines: [
-            'Current lane: ${appContext.accessLane.label}',
             appContext.accessLane.summary,
-            'Free fallback: ${appContext.runtimeProfile.freeTier.quotaSummary} | ${appContext.runtimeProfile.freeTier.speedSummary}',
-            'Monetization: no IAP, no third-party ads, first-party promos only.',
+            'Trial: ${appContext.runtimeProfile.trialDays} days. Telegram bonus: +${appContext.runtimeProfile.telegramBonusDays} days.',
+            'Free fallback stays on ${appContext.runtimeProfile.freeTier.nodePool} with ${appContext.runtimeProfile.freeTier.quotaSummary}.',
           ],
         ),
         _SectionCard(
-          title: 'Protection policy',
+          title: 'Connection status',
           tone: _SectionTone.neutral,
           lines: [
-            'Selected: ${selectedRouteMode.label}',
-            'Host shell: ${appContext.hostPlatform.label}',
-            'Rules owns split tunneling and route selection in this shell.',
-            'Supports selected apps: ${appContext.bootstrapContract.supportsSelectedAppsMode ? "yes" : "not in this host seed"}',
-          ],
-        ),
-        _SectionCard(
-          title: 'Managed continuation',
-          tone: _SectionTone.muted,
-          lines: [
-            'Activation flow: activation key -> redeem -> managed profile.',
-            'Checkout opens externally at ${appContext.checkoutUrl}.',
-            'Cabinet continuation stays at ${appContext.cabinetUrl}.',
-            'Runtime sync uses ${Uri.parse(appContext.apiBaseUrl).host}.',
-          ],
-        ),
-        _SectionCard(
-          title: 'Runtime health',
-          tone: isHealthyRunning
-              ? _SectionTone.accent
-              : isRunning
-                  ? _SectionTone.muted
-                  : _SectionTone.neutral,
-          lines: [
-            'Host lane: ${snapshot?.laneLabel ?? "Inspecting host runtime..."}',
-            'Status: ${snapshot?.phaseLabel ?? "Loading"}',
-            runtimeSummary,
-            if ((snapshot?.diagnosticsLabel ?? '').isNotEmpty)
-              'Host diagnostics: ${snapshot!.diagnosticsLabel}',
-            if ((snapshot?.defaultNetworkInterface ?? '').isNotEmpty)
-              'Default uplink: ${snapshot!.defaultNetworkInterface}'
-                  '${snapshot.defaultNetworkIndex != null ? " (#${snapshot.defaultNetworkIndex})" : ""}',
-            if (snapshot?.dnsReady != null)
-              'DNS ready: ${snapshot!.dnsReady! ? "yes" : "no"}',
-            if (snapshot?.ipv4RouteCount != null ||
-                snapshot?.ipv6RouteCount != null)
-              'Route counts: IPv4 ${snapshot?.ipv4RouteCount ?? 0}, '
-                  'IPv6 ${snapshot?.ipv6RouteCount ?? 0}',
-            if ((snapshot?.includePackageCount ?? 0) > 0 ||
-                (snapshot?.excludePackageCount ?? 0) > 0)
-              'Package filters: include ${snapshot?.includePackageCount ?? 0}, '
-                  'exclude ${snapshot?.excludePackageCount ?? 0}',
-            if ((snapshot?.lastFailureKind ?? '').isNotEmpty)
-              'Last failure kind: ${snapshot!.lastFailureKind}',
-            if ((snapshot?.lastStopReason ?? '').isNotEmpty)
-              'Last stop reason: ${snapshot!.lastStopReason}',
-            if ((snapshot?.stagedConfigPath ?? '').isNotEmpty &&
-                snapshot?.phase != RuntimePhase.running)
-              'Managed profile is staged and ready for live connect.',
+            'Now: $statusLabel',
+            statusSummary,
+            'Current rule: ${selectedRouteMode.label}',
+            isRunning
+                ? 'Protection is already active on this device.'
+                : 'If setup is still finishing, check status again in a moment.',
           ],
           child: Wrap(
             spacing: 12,
@@ -1000,23 +955,7 @@ class _QuickConnectSection extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: runtimeBusy ? null : onRefreshRuntime,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Refresh status'),
-              ),
-              OutlinedButton.icon(
-                onPressed:
-                    runtimeBusy || !(runtimeSnapshot?.canInitialize ?? false)
-                        ? null
-                        : onInitializeRuntime,
-                icon: const Icon(Icons.developer_mode_outlined),
-                label: const Text('Prime runtime'),
-              ),
-              OutlinedButton.icon(
-                onPressed: runtimeBusy ||
-                        !(runtimeSnapshot?.supportsLiveConnect ?? false)
-                    ? null
-                    : onStageSeedProfile,
-                icon: const Icon(Icons.inventory_2_outlined),
-                label: const Text('Stage local smoke profile'),
+                label: const Text('Check status again'),
               ),
               FilledButton.icon(
                 onPressed: primaryActionEnabled ? onToggleRuntime : null,
@@ -1027,29 +966,12 @@ class _QuickConnectSection extends StatelessWidget {
                 ),
                 label: Text(
                   snapshot?.phase == RuntimePhase.running
-                      ? 'Disconnect now'
-                      : 'Connect now',
+                      ? 'Stop from here'
+                      : 'Start from here',
                 ),
               ),
             ],
           ),
-        ),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            OutlinedButton.icon(
-              onPressed: () => onOpenHandoff('redeem', appContext.redeemHint),
-              icon: const Icon(Icons.key),
-              label: const Text('Redeem activation key'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () =>
-                  onOpenHandoff('checkout', appContext.checkoutUrl),
-              icon: const Icon(Icons.open_in_browser),
-              label: const Text('Open checkout'),
-            ),
-          ],
         ),
       ],
     );
@@ -1060,10 +982,12 @@ class _LocationsSection extends StatelessWidget {
   const _LocationsSection({
     required this.appContext,
     required this.selectedRouteMode,
+    required this.hasProvisionedAccess,
   });
 
   final SeedAppContext appContext;
   final RouteMode selectedRouteMode;
+  final bool hasProvisionedAccess;
 
   @override
   Widget build(BuildContext context) {
@@ -1075,17 +999,41 @@ class _LocationsSection extends StatelessWidget {
         Text('Locations', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),
         _SectionCard(
-          title: 'One logical location',
-          tone: _SectionTone.accent,
+          title: 'Auto-managed',
+          tone:
+              hasProvisionedAccess ? _SectionTone.neutral : _SectionTone.muted,
           lines: [
-            'The consumer shell shows a single managed location.',
-            'Current route mode: ${selectedRouteMode.label}',
-            'Free users stay on ${appContext.runtimeProfile.freeTier.nodePool}.',
-            'Transport variants stay hidden behind auto, diagnostics, and admin lanes.',
+            'POKROV keeps the location story calm: one managed location, not a wall of countries.',
+            'Current rule: ${selectedRouteMode.label}.',
+            hasProvisionedAccess
+                ? 'This device already has a managed location ready.'
+                : 'Finish setup from Protection first. Until then, Locations stays quiet instead of showing placeholders.',
           ],
         ),
-        ...appContext.locations.map(
-          (location) => _LocationCard(location: location),
+        if (hasProvisionedAccess) ...[
+          ...appContext.locations.map(
+            (location) => _LocationCard(
+              location: location,
+              appContext: appContext,
+              selectedRouteMode: selectedRouteMode,
+            ),
+          ),
+        ] else ...[
+          _SectionCard(
+            title: 'Available after setup',
+            lines: [
+              'Turn protection on once to create the app-first session for this device.',
+              'After that, this screen will show the managed route without exposing raw network controls.',
+            ],
+          ),
+        ],
+        _SectionCard(
+          title: 'How it chooses',
+          lines: [
+            'Premium access uses enabled non-free locations.',
+            'Free fallback stays on ${appContext.runtimeProfile.freeTier.nodePool}.',
+            'Transport details stay hidden behind auto and support diagnostics.',
+          ],
         ),
       ],
     );
@@ -1096,18 +1044,21 @@ class _ProfileSection extends StatelessWidget {
   const _ProfileSection({
     required this.appContext,
     required this.selectedRouteMode,
+    required this.hasProvisionedAccess,
     required this.onOpenHandoff,
     required this.runtimeSnapshot,
+    required this.runtimeHeadline,
   });
 
   final SeedAppContext appContext;
   final RouteMode selectedRouteMode;
+  final bool hasProvisionedAccess;
   final void Function(String label, String value) onOpenHandoff;
   final RuntimeSnapshot? runtimeSnapshot;
+  final String? runtimeHeadline;
 
   @override
   Widget build(BuildContext context) {
-    final freeTier = appContext.runtimeProfile.freeTier;
     final theme = Theme.of(context);
     final readinessOnlySummary = appContext.scope.readinessOnlySummary;
 
@@ -1117,33 +1068,142 @@ class _ProfileSection extends StatelessWidget {
         Text('Profile', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),
         _SectionCard(
-          title: 'Account model',
+          title: 'Everything for this account',
+          tone: _SectionTone.accent,
           lines: [
-            'Identity model: app-first',
-            'Public target: ${appContext.scope.publicReleaseSummary}',
+            hasProvisionedAccess
+                ? 'Subscription, devices, support, settings, and Telegram bonus all live here.'
+                : 'This will be the hub for subscription, device setup, support, settings, and Telegram bonus once this device is ready.',
+            'Current rule: ${selectedRouteMode.label}.',
+            'Current status: ${_consumerProtectionStatusLabel(runtimeSnapshot)}.',
+          ],
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _ProfileHubTile(
+                title: 'Subscription',
+                value: appContext.accessLane.label,
+                caption: hasProvisionedAccess
+                    ? 'Renew or upgrade from here when you need to.'
+                    : 'The ${appContext.runtimeProfile.trialDays}-day start becomes real when this device finishes setup.',
+                icon: Icons.workspace_premium_outlined,
+                tone: _SectionTone.accent,
+              ),
+              _ProfileHubTile(
+                title: 'Device',
+                value: appContext.hostPlatform.label,
+                caption:
+                    'This device is currently using ${selectedRouteMode.label}.',
+                icon: Icons.devices_outlined,
+              ),
+              _ProfileHubTile(
+                title: 'Telegram bonus',
+                value: '+${appContext.runtimeProfile.telegramBonusDays} days',
+                caption:
+                    'Optional for daily use. Helpful for bonus, recovery, and support.',
+                icon: Icons.add_circle_outline_rounded,
+              ),
+              _ProfileHubTile(
+                title: 'Support',
+                value: 'App -> web -> Telegram',
+                caption: 'The recovery order stays calm and predictable.',
+                icon: Icons.support_agent_rounded,
+              ),
+            ],
+          ),
+        ),
+        _SectionCard(
+          title: 'Subscription',
+          lines: [
+            'Current plan: ${appContext.accessLane.label}.',
+            appContext.accessLane.summary,
+            'Checkout continues in the browser when you need renewal or paid access.',
+          ],
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              FilledButton.icon(
+                onPressed: () =>
+                    onOpenHandoff('checkout', appContext.checkoutUrl),
+                icon: const Icon(Icons.shopping_bag_outlined),
+                label: const Text('Continue to checkout'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    onOpenHandoff('cabinet', appContext.cabinetUrl),
+                icon: const Icon(Icons.web),
+                label: const Text('Open cabinet'),
+              ),
+            ],
+          ),
+        ),
+        _SectionCard(
+          title: 'Telegram bonus',
+          lines: [
+            'Join ${appContext.supportSnapshot.publicChannel} and claim one extra +${appContext.runtimeProfile.telegramBonusDays} day bonus.',
+            'Telegram stays optional for normal daily use. Here it acts as bonus, recovery, and support continuation.',
+          ],
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => onOpenHandoff(
+                  'community',
+                  appContext.supportSnapshot.publicChannel,
+                ),
+                icon: const Icon(Icons.campaign_outlined),
+                label: const Text('Open community channel'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => onOpenHandoff(
+                    'support', appContext.supportSnapshot.supportBot),
+                icon: const Icon(Icons.open_in_new_rounded),
+                label: const Text('Open support bot'),
+              ),
+            ],
+          ),
+        ),
+        _SectionCard(
+          title: 'Devices',
+          lines: [
+            'This device: ${appContext.hostPlatform.label}.',
+            'Public platform promise: ${appContext.scope.publicReleaseSummary}.',
             if (readinessOnlySummary.isNotEmpty)
-              'Engineering-only hosts: $readinessOnlySummary',
-            'Checkout lane: external browser only',
-            'Current route mode: ${selectedRouteMode.label}',
-            'Runtime phase: ${runtimeSnapshot?.phaseLabel ?? "Loading"}',
+              'Readiness-only hosts: $readinessOnlySummary.',
           ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _KeyValueLine(
+                label: 'Route on this device',
+                value: selectedRouteMode.label,
+              ),
+              _KeyValueLine(
+                label: 'Free fallback',
+                value:
+                    '${appContext.runtimeProfile.freeTier.nodePool} · ${appContext.runtimeProfile.freeTier.quotaSummary}',
+              ),
+              if (appContext.bootstrapContract.supportsSelectedAppsMode)
+                const _KeyValueLine(
+                  label: 'Selected apps',
+                  value: 'Adjust this from Rules when needed',
+                ),
+            ],
+          ),
         ),
         _SectionCard(
-          title: 'Free fallback policy',
+          title: 'Settings',
           lines: [
-            'Lane after premium: ${AccessLane.freeMonthly.label}',
-            'Quota: ${freeTier.quotaSummary}',
-            'Speed limit: ${freeTier.speedSummary}',
-            'Node pool: ${freeTier.nodePool}',
-          ],
-        ),
-        _SectionCard(
-          title: 'Devices and settings',
-          lines: [
-            'Visible platform promise: ${appContext.scope.publicReleaseSummary}',
-            'Default core: ${appContext.runtimeProfile.defaultCore.label}',
-            'Advanced fallback: ${appContext.runtimeProfile.advancedFallbackCore.label}',
-            'Promos: first-party only',
+            'Connection status: ${_consumerProtectionStatusLabel(runtimeSnapshot)}.',
+            _consumerProtectionStatusSummary(
+              runtimeSnapshot,
+              headline: runtimeHeadline,
+              hostPlatform: appContext.hostPlatform,
+            ),
+            'Compatibility mode stays tucked away unless support asks for it.',
           ],
         ),
         _RedeemPanel(
@@ -1152,66 +1212,54 @@ class _ProfileSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _SectionCard(
-          title: 'Support and recovery',
+          title: 'Support',
           lines: [
             appContext.supportSnapshot.summary,
-            'Telegram stays a continuation, recovery, and bonus lane, not the primary paywall.',
+            'Recovery order: app, then web cabinet, then Telegram.',
             'Feedback stays available through ${appContext.supportSnapshot.feedbackBot}.',
+            appContext.supportSnapshot.safeNotes,
           ],
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            FilledButton.icon(
-              onPressed: () =>
-                  onOpenHandoff('checkout', appContext.checkoutUrl),
-              icon: const Icon(Icons.shopping_bag_outlined),
-              label: const Text('Open checkout in browser'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => onOpenHandoff('cabinet', appContext.cabinetUrl),
-              icon: const Icon(Icons.web),
-              label: const Text('Open cabinet'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () =>
-                  onOpenHandoff('support', appContext.supportSnapshot.supportBot),
-              icon: const Icon(Icons.support_agent),
-              label: const Text('Contact support'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => onOpenHandoff(
-                'community',
-                appContext.supportSnapshot.publicChannel,
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => onOpenHandoff(
+                    'support', appContext.supportSnapshot.supportBot),
+                icon: const Icon(Icons.support_agent),
+                label: const Text('Contact support'),
               ),
-              icon: const Icon(Icons.campaign_outlined),
-              label: const Text('Open community channel'),
-            ),
-          ],
+              OutlinedButton.icon(
+                onPressed: () => onOpenHandoff(
+                    'feedback', appContext.supportSnapshot.feedbackBot),
+                icon: const Icon(Icons.rate_review_outlined),
+                label: const Text('Send feedback'),
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 }
 
-class _SupportSection extends StatelessWidget {
-  const _SupportSection({
+class _RulesSection extends StatelessWidget {
+  const _RulesSection({
     required this.appContext,
     required this.selectedRouteMode,
     required this.onRouteModeSelected,
-    required this.onOpenHandoff,
   });
 
   final SeedAppContext appContext;
   final RouteMode selectedRouteMode;
   final ValueChanged<RouteMode> onRouteModeSelected;
-  final void Function(String label, String value) onOpenHandoff;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final routeChoices = appContext.runtimeProfile.supportedRouteModes;
+    final selectedAppsAvailable =
+        appContext.bootstrapContract.supportsSelectedAppsMode;
 
     return ListView(
       padding: const EdgeInsets.all(24),
@@ -1219,16 +1267,17 @@ class _SupportSection extends StatelessWidget {
         Text('Rules', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),
         _SectionCard(
-          title: 'Visible routing story',
+          title: 'Pick a route style',
+          tone: _SectionTone.accent,
           lines: [
-            'Public default: ${RouteMode.allExceptRu.label}',
-            'Current mode: ${selectedRouteMode.label}',
-            'Rules owns split tunneling and bypass behavior in the main shell.',
+            'Choose how this device should behave. The labels stay human on purpose.',
+            'Current choice: ${selectedRouteMode.label}.',
+            'Recommended default: ${RouteMode.allExceptRu.label}.',
           ],
           child: Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: appContext.runtimeProfile.supportedRouteModes
+            children: routeChoices
                 .map(
                   (mode) => _RouteModeCard(
                     mode: mode,
@@ -1240,30 +1289,29 @@ class _SupportSection extends StatelessWidget {
           ),
         ),
         _SectionCard(
-          title: 'Split tunneling and bypass',
+          title: 'Route labels',
           lines: [
-            'All except RU stays the public default route story.',
-            'Full tunnel remains visible as a direct fallback lane.',
-            'Selected apps appears only on Android and Windows where the host supports it.',
+            '${RouteMode.allExceptRu.label}: ${RouteMode.allExceptRu.summary}',
+            '${RouteMode.fullTunnel.label}: ${RouteMode.fullTunnel.summary}',
+            selectedAppsAvailable
+                ? '${RouteMode.selectedApps.label}: ${RouteMode.selectedApps.summary}'
+                : '${RouteMode.selectedApps.label}: not available on ${appContext.hostPlatform.label} yet.',
           ],
         ),
         _SectionCard(
-          title: 'Hidden transport matrix',
+          title: 'What changes here',
           lines: [
-            'The user sees one logical location only.',
-            'VLESS+REALITY, VMess, Trojan, and XHTTP stay under auto, diagnostics, or admin flows.',
-            'XHTTP remains gated until the CDN/static prerequisite is ready.',
+            'Split tunnelling and bypass behaviour live here.',
+            'Locations stays focused on one managed location story.',
+            'Profile keeps support, subscription, devices, and settings together.',
           ],
         ),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            FilledButton.icon(
-              onPressed: () => onOpenHandoff('rules', selectedRouteMode.label),
-              icon: const Icon(Icons.fact_check_outlined),
-              label: const Text('Share rules context'),
-            ),
+        _SectionCard(
+          title: 'Behind the scenes',
+          lines: [
+            'The user sees one managed location only.',
+            'Transport variants and diagnostics stay out of the first layer.',
+            'Advanced compatibility stays tucked away unless support needs it.',
           ],
         ),
       ],
@@ -1331,96 +1379,170 @@ class _RedeemPanelState extends State<_RedeemPanel> {
 class _LocationCard extends StatelessWidget {
   const _LocationCard({
     required this.location,
+    required this.appContext,
+    required this.selectedRouteMode,
   });
 
   final LocationCluster location;
+  final SeedAppContext appContext;
+  final RouteMode selectedRouteMode;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final engineeringNotes = location.variants
-        .where((variant) => variant.note.isNotEmpty)
-        .map((variant) => '${variant.kind.label}: ${variant.note}')
-        .join(' ');
 
-    return _SectionCard(
-      title: location.heading,
-      tone: location.variants.any((variant) => variant.isLive)
-          ? _SectionTone.neutral
-          : _SectionTone.muted,
-      lines: [
-        'Location code: ${location.code} | ${location.recommendedLane}',
-        'Transport variants stay hidden behind auto and diagnostics in the product canon.',
-      ],
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Transport selection stays on auto for the public shell. Diagnostics and admin tooling can inspect the ordered fallback matrix when needed.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: _SeedPalette.ink.withOpacity(0.72),
-            ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.82),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: _SeedPalette.line),
+        boxShadow: [
+          BoxShadow(
+            color: _SeedPalette.ink.withOpacity(0.05),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
-          if (engineeringNotes.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              'Engineering note: $engineeringNotes',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: _SeedPalette.ink.withOpacity(0.72),
-              ),
-            ),
-          ],
         ],
       ),
-    );
-
-    return _SectionCard(
-      title: location.heading,
-      tone: location.variants.any((variant) => variant.isLive)
-          ? _SectionTone.neutral
-          : _SectionTone.muted,
-      lines: [
-        'Location code: ${location.code} | ${location.recommendedLane}',
-        'Transport variants stay hidden behind auto and diagnostics in the product canon.',
-      ],
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: location.variants
-                .map(
-                  (variant) => _StatusPill(
-                    label: variant.isLive
-                        ? '${variant.kind.label} • ${variant.availability.label}'
-                        : '${variant.kind.label} • ${variant.availability.label}',
-                    icon: variant.isLive
-                        ? Icons.check_circle_rounded
-                        : Icons.schedule_rounded,
-                    tone: variant.isLive
-                        ? _SectionTone.accent
-                        : _SectionTone.muted,
-                  ),
-                )
-                .toList(),
-          ),
-          if (location.variants.any((variant) => variant.note.isNotEmpty)) ...[
-            const SizedBox(height: 12),
-            Text(
-              location.variants
-                  .where((variant) => variant.note.isNotEmpty)
-                  .map((variant) => '${variant.kind.label}: ${variant.note}')
-                  .join(' '),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: _SeedPalette.ink.withOpacity(0.72),
-              ),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: _SeedPalette.accent.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
-          ],
+            child: const Icon(
+              Icons.public_rounded,
+              color: _SeedPalette.accent,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            location.label,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: _SeedPalette.ink,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            location.city,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: _SeedPalette.ink.withOpacity(0.72),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      location.recommendedLane,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: _SeedPalette.accent,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'POKROV chooses the best enabled location for your current plan without asking you to manage raw network controls.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: _SeedPalette.ink.withOpacity(0.7),
+                    height: 1.32,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _StatusPill(
+                      label: selectedRouteMode.label,
+                      icon: Icons.alt_route_rounded,
+                    ),
+                    _StatusPill(
+                      label: appContext.accessLane.label,
+                      icon: Icons.workspace_premium_outlined,
+                    ),
+                    _StatusPill(
+                      label: appContext.runtimeProfile.freeTier.nodePool,
+                      icon: Icons.hub_outlined,
+                      tone: _SectionTone.muted,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
+}
+
+String _consumerProtectionStatusLabel(
+  RuntimeSnapshot? snapshot, {
+  bool busy = false,
+}) {
+  if (busy) {
+    return 'Preparing';
+  }
+  if (snapshot == null) {
+    return 'Checking status';
+  }
+  if (snapshot.phase == RuntimePhase.running) {
+    return snapshot.isCleanlyHealthy ? 'Protected' : 'Needs attention';
+  }
+  if (snapshot.phase == RuntimePhase.artifactMissing) {
+    return 'Unavailable';
+  }
+  if ((snapshot.stagedConfigPath ?? '').isNotEmpty) {
+    return 'Ready to protect';
+  }
+  return 'Ready';
+}
+
+String _consumerProtectionStatusSummary(
+  RuntimeSnapshot? snapshot, {
+  required String? headline,
+  required HostPlatform hostPlatform,
+}) {
+  if ((headline ?? '').trim().isNotEmpty) {
+    return headline!.trim();
+  }
+  if (snapshot == null) {
+    return 'Checking whether this ${hostPlatform.label} device is ready.';
+  }
+  if (snapshot.phase == RuntimePhase.running) {
+    return snapshot.isCleanlyHealthy
+        ? 'Your managed protection is active.'
+        : 'Protection is on, but the app noticed something worth checking.';
+  }
+  if (snapshot.phase == RuntimePhase.artifactMissing) {
+    return 'This device is still finishing setup before protection can start.';
+  }
+  if ((snapshot.stagedConfigPath ?? '').isNotEmpty) {
+    return 'Everything is staged and ready when you tap the main action.';
+  }
+  return 'POKROV prepares the connection in the background so daily use stays simple.';
 }
 
 class _SectionCard extends StatelessWidget {
@@ -1469,18 +1591,18 @@ class _SectionCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         gradient: colors.background,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(32),
         border: Border.all(color: colors.border),
         boxShadow: [
           BoxShadow(
             color: _SeedPalette.ink.withOpacity(0.06),
-            blurRadius: 24,
+            blurRadius: 32,
             offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1650,7 +1772,7 @@ class _MetricTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 170, maxWidth: 240),
+      constraints: const BoxConstraints(minWidth: 156, maxWidth: 210),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -1723,66 +1845,127 @@ class _ConnectOrbButton extends StatelessWidget {
       onTap: onPressed,
       borderRadius: BorderRadius.circular(999),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        width: 180,
-        height: 180,
+        duration: const Duration(milliseconds: 260),
+        width: 208,
+        height: 208,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: RadialGradient(
             colors: [
-              accent.withOpacity(0.22),
-              accent.withOpacity(0.1),
-              accent.withOpacity(0.02),
+              accent.withOpacity(0.2),
+              accent.withOpacity(0.08),
+              accent.withOpacity(0.01),
             ],
           ),
         ),
-        child: Center(
-          child: Container(
-            width: 134,
-            height: 134,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.92),
-              border: Border.all(color: accent.withOpacity(0.3), width: 10),
-              boxShadow: [
-                BoxShadow(
-                  color: accent.withOpacity(0.18),
-                  blurRadius: 30,
-                  offset: const Offset(0, 12),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 260),
+              width: 182,
+              height: 182,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: accent.withOpacity(running ? 0.16 : 0.09),
+                  width: 1.4,
                 ),
-              ],
+              ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  busy
-                      ? Icons.sync_rounded
-                      : degraded
-                          ? Icons.warning_amber_rounded
-                          : running
-                              ? Icons.shield_rounded
-                              : Icons.flash_on_rounded,
-                  size: 34,
-                  color: accent,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 260),
+              width: 156,
+              height: 156,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: accent.withOpacity(running ? 0.22 : 0.12),
+                  width: 8,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  busy
-                      ? 'Starting'
-                      : degraded
-                          ? 'Warning'
-                          : running
-                              ? 'Protected'
-                              : 'One tap',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: _SeedPalette.ink,
-                        fontWeight: FontWeight.w800,
+                boxShadow: [
+                  BoxShadow(
+                    color: accent.withOpacity(0.14),
+                    blurRadius: 28,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+              ),
+            ),
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 260),
+              top: 34,
+              right: running ? 48 : 56,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 260),
+                opacity: busy ? 0.4 : 0.9,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: accent,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: accent.withOpacity(0.35),
+                        blurRadius: 12,
                       ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
-          ),
+            AnimatedScale(
+              duration: const Duration(milliseconds: 260),
+              scale: busy
+                  ? 0.98
+                  : running
+                      ? 1.02
+                      : 1,
+              child: Container(
+                width: 126,
+                height: 126,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.94),
+                  border: Border.all(
+                    color: accent.withOpacity(0.28),
+                    width: 9,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      busy
+                          ? Icons.sync_rounded
+                          : degraded
+                              ? Icons.warning_amber_rounded
+                              : running
+                                  ? Icons.shield_rounded
+                                  : Icons.flash_on_rounded,
+                      size: 34,
+                      color: accent,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      busy
+                          ? 'Preparing'
+                          : degraded
+                              ? 'Attention'
+                              : running
+                                  ? 'Protected'
+                                  : 'One tap',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: _SeedPalette.ink,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

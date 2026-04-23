@@ -35,7 +35,7 @@ class RuntimeHostBridge(
             if (stagedConfigPath.isNullOrBlank()) {
                 AndroidRuntimeState.markFailure(
                     kind = "missing_staged_config",
-                    message = "VPN permission was granted, but no staged config is available.",
+                    message = "Permission was granted, but this device is still missing its connection setup.",
                 )
                 return
             }
@@ -44,7 +44,7 @@ class RuntimeHostBridge(
             }.onFailure { error ->
                 AndroidRuntimeState.markFailure(
                     kind = "runtime_start_after_permission_failed",
-                    message = "Android runtime start failed after VPN permission: ${error.message ?: error.javaClass.simpleName}",
+                    message = "POKROV could not finish connecting after permission was granted: ${error.message ?: error.javaClass.simpleName}",
                 )
             }
             return
@@ -52,7 +52,7 @@ class RuntimeHostBridge(
 
         AndroidRuntimeState.markFailure(
             kind = "vpn_permission_denied",
-            message = "VPN permission was denied. The runtime service was not started.",
+            message = "Permission was denied, so POKROV could not connect on this device.",
         )
     }
 
@@ -120,7 +120,7 @@ class RuntimeHostBridge(
             ?: run {
                 AndroidRuntimeState.markFailure(
                     kind = "missing_profile_name",
-                    message = "Missing profileName for host staging.",
+                    message = "POKROV is missing the profile name for this setup step.",
                 )
                 return AndroidRuntimeState.snapshot()
             }
@@ -128,7 +128,7 @@ class RuntimeHostBridge(
             ?: run {
                 AndroidRuntimeState.markFailure(
                     kind = "missing_config_payload",
-                    message = "Missing configPayload for host staging.",
+                    message = "POKROV is missing the connection details for this setup step.",
                 )
                 return AndroidRuntimeState.snapshot()
             }
@@ -150,7 +150,7 @@ class RuntimeHostBridge(
         } catch (error: Throwable) {
             AndroidRuntimeState.markFailure(
                 kind = "profile_staging_failed",
-                message = "Android managed profile staging failed: ${error.message ?: error.javaClass.simpleName}",
+                message = "POKROV could not finish preparing this device: ${error.message ?: error.javaClass.simpleName}",
             )
             AndroidRuntimeState.snapshot()
         }
@@ -168,7 +168,7 @@ class RuntimeHostBridge(
         if (stagedConfigPath.isNullOrBlank()) {
             AndroidRuntimeState.markFailure(
                 kind = "missing_staged_config",
-                message = "Stage a managed profile before starting the Android runtime service.",
+                message = "Set up this device first, then try connecting again.",
             )
             return AndroidRuntimeState.snapshot()
         }
@@ -187,7 +187,7 @@ class RuntimeHostBridge(
         }.onFailure { error ->
             AndroidRuntimeState.markFailure(
                 kind = "runtime_start_failed",
-                message = "Android runtime start failed: ${error.message ?: error.javaClass.simpleName}",
+                message = "POKROV could not start on this device: ${error.message ?: error.javaClass.simpleName}",
             )
         }
         return AndroidRuntimeState.snapshot()
@@ -200,7 +200,7 @@ class RuntimeHostBridge(
         }.onFailure { error ->
             AndroidRuntimeState.markFailure(
                 kind = "runtime_stop_failed",
-                message = "Android runtime stop failed: ${error.message ?: error.javaClass.simpleName}",
+                message = "POKROV could not disconnect cleanly: ${error.message ?: error.javaClass.simpleName}",
             )
         }
         return AndroidRuntimeState.snapshot()

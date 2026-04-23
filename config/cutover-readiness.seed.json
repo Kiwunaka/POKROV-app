@@ -1,11 +1,11 @@
 {
-  "lane": "external/pokrov-next-client",
+  "lane": "POKROV-app/main",
   "status": "blocked_not_cutover_ready",
   "public_cutover_allowed": false,
   "blocking_dependencies": [
-    "Karing vs clean-room base decision remains open",
+    "formal public cutover approval remains open even though the clean-room base decision is already selected in POKROV-app",
     "native-core provenance and packaging still need one documented cross-platform contract",
-    "iOS production connectivity still requires a packet-tunnel target plus reviewed entitlements",
+    "iOS production connectivity still requires on-device packet-tunnel proof plus reviewed entitlements",
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",

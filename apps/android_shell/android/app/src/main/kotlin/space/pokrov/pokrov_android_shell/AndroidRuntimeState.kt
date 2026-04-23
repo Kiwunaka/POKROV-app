@@ -26,7 +26,7 @@ internal object AndroidRuntimeState {
     private var environment: AndroidRuntimeEnvironment? = null
     private var phase: AndroidRuntimePhase = AndroidRuntimePhase.ARTIFACT_MISSING
     private var stagedConfigPath: String? = null
-    private var lastMessage = "Native runtime bridge has not inspected this host yet."
+    private var lastMessage = "POKROV has not checked this device yet."
     private var lastRunningMessage: String? = null
     private var defaultNetworkInterface: String? = null
     private var defaultNetworkIndex: Int? = null
@@ -46,7 +46,7 @@ internal object AndroidRuntimeState {
             environment = null
             phase = AndroidRuntimePhase.ARTIFACT_MISSING
             stagedConfigPath = null
-            lastMessage = "libcore mobile classes are not linked into this Android host build."
+            lastMessage = "This Android build is missing the connection runtime."
             dnsReady = false
             defaultNetworkInterface = null
             defaultNetworkIndex = null
@@ -74,7 +74,7 @@ internal object AndroidRuntimeState {
         environment = resolved
         if (phase == AndroidRuntimePhase.ARTIFACT_MISSING) {
             phase = AndroidRuntimePhase.ARTIFACT_READY
-            lastMessage = "Android host bridge found packaged libcore bindings and can initialize them."
+            lastMessage = "POKROV found the packaged runtime and can get this device ready."
         }
         return resolved
     }
@@ -102,11 +102,11 @@ internal object AndroidRuntimeState {
             } else {
                 AndroidRuntimePhase.INITIALIZED
             }
-            lastMessage = "Runtime bootstrap completed on the Android host bridge."
+            lastMessage = "POKROV finished the device setup step."
             true
         } catch (error: Throwable) {
             phase = AndroidRuntimePhase.ARTIFACT_READY
-            lastMessage = "Android runtime setup failed: ${error.message ?: error.javaClass.simpleName}"
+            lastMessage = "POKROV could not finish the device setup step: ${error.message ?: error.javaClass.simpleName}"
             false
         }
     }
@@ -117,12 +117,12 @@ internal object AndroidRuntimeState {
         phase = AndroidRuntimePhase.CONFIG_STAGED
         lastFailureKind = null
         lastStopReason = null
-        lastMessage = "Managed profile staged on the Android host bridge."
+        lastMessage = "POKROV finished preparing this device."
     }
 
     @Synchronized
     fun markPermissionRequested() {
-        lastMessage = "VPN permission requested. Grant it to continue the full-tunnel runtime start."
+        lastMessage = "Android is asking for permission so POKROV can protect this device."
     }
 
     @Synchronized
@@ -136,7 +136,7 @@ internal object AndroidRuntimeState {
 
     @Synchronized
     fun markStopRequested(
-        message: String = "Stopping Android runtime service...",
+        message: String = "Disconnecting POKROV on this device...",
         stopReason: String = "user_requested",
     ) {
         phase = when {
@@ -159,7 +159,7 @@ internal object AndroidRuntimeState {
             else -> AndroidRuntimePhase.ARTIFACT_MISSING
         }
         lastStopReason = stopReason
-        if (message == "Android runtime service stopped." && shouldPreserveFailureMessage()) {
+        if (message == "POKROV turned off on this device." && shouldPreserveFailureMessage()) {
             return
         }
         lastMessage = message
@@ -307,16 +307,16 @@ internal object AndroidRuntimeState {
         val resolvedMessage = when {
             !runningMessage.isNullOrBlank() -> runningMessage
             !lastRunningMessage.isNullOrBlank() -> lastRunningMessage!!
-            else -> "Android runtime service is running."
+            else -> "POKROV is on for this device."
         }
         lastRunningMessage = resolvedMessage
         val normalizedMessage = lastMessage.lowercase()
         if (
             normalizedMessage.contains("staged") ||
-                normalizedMessage.contains("bootstrap") ||
+                normalizedMessage.contains("setup step") ||
                 normalizedMessage.contains("permission requested") ||
-                normalizedMessage.contains("ready for live connect") ||
-                normalizedMessage.contains("not inspected")
+                normalizedMessage.contains("ready to connect") ||
+                normalizedMessage.contains("not checked")
         ) {
             lastMessage = resolvedMessage
         }
@@ -393,11 +393,11 @@ internal object AndroidRuntimeState {
 
         if (details.isEmpty()) {
             return when (hostHealth) {
-                "healthy" -> "Android host diagnostics are healthy."
+                "healthy" -> "Android device checks look healthy."
                 "degraded" -> if (dnsState == "degraded" || uplinkState == "degraded") {
-                    "Android host diagnostics report warnings."
+                    "Android device checks report warnings."
                 } else {
-                    "Android host diagnostics are waiting for post-establish health."
+                    "Android device checks are still settling after connect."
                 }
                 else -> null
             }

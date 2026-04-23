@@ -158,7 +158,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
       }
 
       throw const BootstrapFailure(
-        'Managed profile bootstrap exhausted its retry budget.',
+        'POKROV could not finish preparing this device.',
       );
     } finally {
       client.close(force: true);
@@ -240,7 +240,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
     final decoded = jsonDecode(await file.readAsString());
     if (decoded is! Map) {
       throw const BootstrapFailure(
-        'Stored bootstrap session is corrupt and cannot be parsed.',
+        'This device needs to be set up again before it can connect.',
       );
     }
     return _StoredBootstrapState.fromJson(
@@ -295,7 +295,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
     final sessionToken = _readText(session['session_token']);
     if (sessionToken.isEmpty) {
       throw const BootstrapFailure(
-        'App-first trial bootstrap did not return a session token.',
+        'POKROV could not finish preparing this device.',
       );
     }
 
@@ -361,14 +361,14 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
     final configFormat = _readText(response['config_format']);
     if (configFormat != 'singbox-json') {
       throw BootstrapFailure(
-        'The managed profile returned unsupported format "$configFormat".',
+        'This device received connection details it cannot use yet.',
       );
     }
 
     final configPayload = response['config_payload'];
     if (configPayload == null) {
       throw const BootstrapFailure(
-        'The managed profile response did not include config_payload.',
+        'POKROV could not finish setup because the connection details were incomplete.',
       );
     }
     final supportContext = _readMap(response['support_context']);
@@ -412,7 +412,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
     final decoded = jsonDecode(rawConfigPayload);
     if (decoded is! Map) {
       throw const BootstrapFailure(
-        'Managed profile config_payload must be a JSON object.',
+        'The connection details for this device were incomplete.',
       );
     }
 
@@ -486,7 +486,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
     final outbounds = _readListOfMaps(baseConfig['outbounds']);
     if (outbounds.isEmpty) {
       throw const BootstrapFailure(
-        'Managed profile did not include any outbounds to materialize.',
+        'The connection details for this device were incomplete.',
       );
     }
 
@@ -505,7 +505,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
         selectorTag == null &&
         urlTestTag == null) {
       throw const BootstrapFailure(
-        'Managed profile did not include a proxy outbound that can be promoted to a live runtime config.',
+        'The connection details for this device did not include a working connection path.',
       );
     }
 
@@ -2000,13 +2000,13 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
         }
         if (bytes.isEmpty) {
           throw BootstrapFailure(
-            'Downloaded rule-set from ${uri.host} was empty.',
+            'POKROV downloaded an empty routing update from ${uri.host}.',
           );
         }
         return bytes;
       } on SocketException catch (error) {
         final failure = BootstrapFailure(
-          'Network error while downloading rule-set from ${uri.host}: $error',
+          'A network error blocked a routing update from ${uri.host}: $error',
         );
         if (attempt >= maxRequestAttempts - 1) {
           throw failure;
@@ -2014,7 +2014,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
         lastFailure = failure;
       } on HandshakeException catch (error) {
         final failure = BootstrapFailure(
-          'TLS error while downloading rule-set from ${uri.host}: $error',
+          'A secure connection error blocked a routing update from ${uri.host}: $error',
         );
         if (attempt >= maxRequestAttempts - 1) {
           throw failure;
@@ -2022,7 +2022,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
         lastFailure = failure;
       } on TimeoutException {
         final failure = BootstrapFailure(
-          'Timed out while downloading rule-set from ${uri.host}.',
+          'POKROV timed out while downloading a routing update from ${uri.host}.',
           statusCode: HttpStatus.gatewayTimeout,
         );
         if (attempt >= maxRequestAttempts - 1) {
@@ -2036,7 +2036,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
 
     throw lastFailure ??
         BootstrapFailure(
-          'Rule-set download from ${uri.host} failed before a response was received.',
+          'POKROV could not download a routing update from ${uri.host}.',
         );
   }
 
@@ -2105,11 +2105,11 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
           );
         }
         throw BootstrapFailure(
-          'Unexpected response envelope from $path: ${decoded.runtimeType}.',
+          'POKROV received an unexpected response while preparing this device.',
         );
       } on SocketException catch (error) {
         final failure = BootstrapFailure(
-          'Network error while contacting ${requestUri.host}: $error',
+          'A network error blocked setup while contacting ${requestUri.host}: $error',
         );
         if (attempt >= maxRequestAttempts - 1) {
           throw failure;
@@ -2117,7 +2117,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
         lastFailure = failure;
       } on HandshakeException catch (error) {
         final failure = BootstrapFailure(
-          'TLS error while contacting ${requestUri.host}: $error',
+          'A secure connection error blocked setup while contacting ${requestUri.host}: $error',
         );
         if (attempt >= maxRequestAttempts - 1) {
           throw failure;
@@ -2125,7 +2125,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
         lastFailure = failure;
       } on TimeoutException {
         final failure = BootstrapFailure(
-          'Timed out while contacting ${requestUri.host}.',
+          'POKROV timed out while contacting ${requestUri.host}.',
           statusCode: HttpStatus.gatewayTimeout,
         );
         if (attempt >= maxRequestAttempts - 1) {
@@ -2138,9 +2138,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
     }
 
     throw lastFailure ??
-        const BootstrapFailure(
-          'POKROV API bootstrap failed before a response was received.',
-        );
+        const BootstrapFailure('POKROV could not reach the setup service.');
   }
 
   bool _isSessionFailure(int? statusCode) =>
@@ -2204,7 +2202,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
 
   String _errorMessageForResponse(String text, int statusCode) {
     if (text.trim().isEmpty) {
-      return 'API request failed with status $statusCode.';
+      return 'Setup request failed with status $statusCode.';
     }
     try {
       final decoded = jsonDecode(text);

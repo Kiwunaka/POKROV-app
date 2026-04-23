@@ -1,14 +1,15 @@
 # Wave 7 New-Base Client Scaffold
 
 Date: 2026-04-18
-Status: runnable four-host runtime lane seed
-Scope: `app-next/`
+Status: runnable four-host runtime lane seed, now anchored to the canonical `POKROV-app` repo
+Scope: `POKROV-app/`
 
 Historical mapping note:
 
 - earlier notes may still refer to `external/pokrov-next-client/`
-- the canonical path name for this same platform-owned future lane is now `app-next/`
-- this cleanup wave does not migrate the git model or shipping ownership
+- the same lane was then normalized to `app-next/` inside the platform repo before bootstrapping this dedicated repo
+- the canonical git lane for this work is now `POKROV-app/main`; older names are bootstrap history only
+- this cleanup wave does not make the lane shipping truth or release truth
 
 ## Goal
 
@@ -16,7 +17,8 @@ Create a new-base client program seed that gives the global rework a safe future
 
 ## In Scope
 
-- a new disjoint `app-next/` path in the platform-owned future-client worktree
+- a dedicated future-client lane separated from the retained bridge client
+- canonical repo metadata that records `POKROV-app/main` as the long-term client development lane
 - a top-level README and seed metadata
 - a recorded base-strategy decision for `clean-room`
 - placeholder folders for Android, iOS, macOS, Windows, shared packages, config, scripts, assets, docs, and tests
@@ -32,7 +34,7 @@ Create a new-base client program seed that gives the global rework a safe future
 - any edits inside `external/client-fork/app/`
 - importing upstream code from `Karing` or any other base
 - a production-ready Flutter app
-- any git-model migration for the current shipping client or release lanes
+- any further git-model migration for the current shipping client or public release lanes
 - CI, trusted signing, public installer or `MSIX` publication, or deployment wiring
 - public store-readiness or production-cutover claims
 
@@ -41,7 +43,7 @@ Create a new-base client program seed that gives the global rework a safe future
 - visible product naming stays `POKROV`
 - the app remains `consumer-first` and `app-first`
 - the clean-room lane is the chosen base and keeps four public host targets while production release wiring stays out of scope
-- this wave only normalizes the lane path from the historical `external/pokrov-next-client/` name to `app-next/`
+- this wave now records that the earlier `external/pokrov-next-client/` and `app-next/` bootstrap lanes resolve to the canonical `POKROV-app/main` repo
 - `sing-box` stays the default core and `xray` remains advanced fallback only
 - real public cutover still depends on signed provenance, device proof, and store-ready runtime evidence
 - the first-run happy path stays `open app -> Try free -> get real access -> Connect`
@@ -50,7 +52,7 @@ Create a new-base client program seed that gives the global rework a safe future
 
 The seed is complete when:
 
-1. the new path exists separately from the bridge client
+1. the canonical repo lane exists separately from the bridge client
 2. the base decision is documented and resumable
 3. future platform and package boundaries are visible from the folder layout
 4. a simple validation script can confirm the seed is present
@@ -76,7 +78,7 @@ The seed is complete when:
 - `melos.yaml`: workspace discovery for host apps and packages
 - `apps/*/pubspec.yaml`: seed host package manifests
 - `packages/*/pubspec.yaml`: shared package manifests
-- `packages/app_shell/lib/app_shell.dart`: runnable shared shell with quick connect, locations, profile, and support sections
+- `packages/app_shell/lib/app_shell.dart`: runnable shared shell that is now locked to `Protection / Locations / Rules / Profile`
 - `config/platform-matrix.seed.json`: four-platform scope map with one thin host shell per public target
 - `config/runtime-profile.seed.json`: runtime facts snapshot for the seed lane, including free-tier and monetization rules
 - `config/templates/*`: local-only config templates
@@ -89,10 +91,10 @@ The seed is complete when:
 
 ## Current Runtime Coverage
 
-- Quick Connect now reflects `Try free`, external checkout-only monetization, the managed `activation key -> redeem -> managed profile` story, and a live app-first bootstrap for Android and Windows.
+- The `Protection` lane now reflects `Try free`, external checkout-only monetization, the managed `activation key -> redeem -> managed profile` story, and a live app-first bootstrap for Android and Windows.
 - Route-mode UX already models `Full tunnel`, `Selected apps`, and `All except RU`, while respecting host support for split tunneling.
 - Locations already show `Auto-select best` plus the fixed transport ordering `VLESS+REALITY`, `VMess`, `Trojan`, `XHTTP`, with launch gating for `XHTTP`.
-- Profile and Support already model free fallback, community bonus, redeem entry, and support-safe handoff surfaces.
+- `Profile` now owns free fallback, community bonus, redeem entry, and support-safe handoff surfaces, with any standalone support leftovers treated as transitional seed UI rather than final product IA.
 - Windows now uses real `libcore` FFI loading, live managed-profile bootstrap, and build-verified runtime startup.
 - Windows now also has a local unsigned build-and-package helper that verifies bundle composition and prerelease metadata.
 - macOS now has bundle-aware runtime discovery and host artifact copy wiring.
@@ -120,6 +122,7 @@ Current concrete source-of-truth placeholders for this lane:
 
 - `config/apple-release.seed.json`
 - `config/cutover-readiness.seed.json`
+- `config/release-handoff.seed.json`
 - `docs/operations/apple-release-readiness.md`
 - `docs/operations/cutover-readiness.md`
 
@@ -130,4 +133,4 @@ Current concrete source-of-truth placeholders for this lane:
 - The first production-hardening wave after that gate should build on the pinned native-core artifact story that already exists here, instead of re-opening it.
 - The next engineering focus should be signed Apple tunnel validation, Android device validation, and release automation rather than redoing seed runtime wiring.
 - If later work needs shared facts, sync from the root platform source of truth instead of copying stale values by hand.
-- This cleanup wave normalizes the lane name to `app-next/` only; it does not migrate the git model or make this lane the shipping or release truth.
+- This cleanup wave records `POKROV-app/main` as the canonical client development lane; it does not make this lane the shipping or public release truth.

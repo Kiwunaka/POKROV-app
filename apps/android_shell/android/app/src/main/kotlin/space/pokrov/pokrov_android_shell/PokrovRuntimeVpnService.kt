@@ -52,7 +52,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
                 Log.i(LOG_TAG, "Received STOP for Android runtime service.")
                 runtimeExecutor.execute {
                     stopRuntime(
-                        message = "Android runtime service stopped cleanly.",
+                        message = "POKROV turned off on this device.",
                         stopReason = "user_requested",
                     )
                     mainHandler.post { stopSelf() }
@@ -63,7 +63,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
                 if (configPath.isNullOrBlank()) {
                     AndroidRuntimeState.markFailure(
                         kind = "missing_staged_config",
-                        message = "Android runtime start is missing a staged config path.",
+                        message = "POKROV is missing the connection setup for this device.",
                     )
                     Log.e(LOG_TAG, "Android runtime start is missing a staged config path.")
                     stopSelf()
@@ -78,7 +78,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
                     } catch (error: Throwable) {
                         AndroidRuntimeState.markFailure(
                             kind = "foreground_start_failed",
-                            message = "Android runtime foreground start failed: ${error.message ?: error.javaClass.simpleName}",
+                            message = "POKROV could not finish getting ready on this device: ${error.message ?: error.javaClass.simpleName}",
                         )
                         Log.e(LOG_TAG, "Android foreground start failed.", error)
                         stopSelf()
@@ -94,7 +94,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
         if (boxService != null || activeTun != null) {
             runtimeExecutor.execute {
                 stopRuntime(
-                    message = "Android runtime service stopped.",
+                    message = "POKROV turned off on this device.",
                     stopReason = "service_destroyed",
                 )
             }
@@ -106,7 +106,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
     override fun onRevoke() {
         runtimeExecutor.execute {
             stopRuntime(
-                message = "Android runtime VPN permission was revoked.",
+                message = "Android permission was removed, so POKROV turned off on this device.",
                 stopReason = "vpn_permission_revoked",
             )
             mainHandler.post { stopSelf() }
@@ -141,7 +141,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
         } catch (error: Throwable) {
             AndroidRuntimeState.markFailure(
                 kind = "runtime_service_start_failed",
-                message = "Android runtime service failed to start: ${error.message ?: error.javaClass.simpleName}",
+                message = "POKROV could not start on this device: ${error.message ?: error.javaClass.simpleName}",
             )
             Log.e(LOG_TAG, "Android runtime service failed to start.", error)
             stopSelf()
@@ -172,13 +172,13 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
         }
     }
 
-    private fun buildNotification(contentText: String, title: String = "POKROV runtime"): Notification {
+    private fun buildNotification(contentText: String, title: String = "POKROV on this device"): Notification {
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 NOTIFICATION_CHANNEL_ID,
-                "POKROV Runtime",
+                "POKROV protection",
                 NotificationManager.IMPORTANCE_LOW,
             )
             notificationManager.createNotificationChannel(channel)
@@ -225,8 +225,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
 
     private fun beginForegroundRuntime() {
         val notification = buildNotification(
-            contentText = "Starting runtime service...",
-            title = "POKROV starting",
+            contentText = "Preparing protection for this device...",
+            title = "POKROV is getting things ready",
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(
@@ -464,8 +464,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
         notificationManager.notify(
             NOTIFICATION_ID,
             buildNotification(
-                contentText = "Runtime service is running.",
-                title = "POKROV connected",
+                contentText = "Protection is active on this device.",
+                title = "POKROV is on",
             ),
         )
         return tun.fd
@@ -580,7 +580,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
 
         private fun markServiceStarting() {
             tunEstablished = false
-            currentRuntimeMessage = "Android runtime service is starting."
+            currentRuntimeMessage = "POKROV is getting things ready on this device."
         }
 
         private fun markTunEstablished(message: String) {

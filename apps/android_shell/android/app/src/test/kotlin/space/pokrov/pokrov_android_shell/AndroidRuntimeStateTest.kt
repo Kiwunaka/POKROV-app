@@ -35,21 +35,21 @@ class AndroidRuntimeStateTest {
         )
         setPrivateField("phase", AndroidRuntimePhase.CONFIG_STAGED)
         setPrivateField("stagedConfigPath", "/tmp/pokrov-seed-runtime.json")
-        setPrivateField("lastMessage", "Managed profile staged on the Android host bridge.")
+        setPrivateField("lastMessage", "POKROV finished preparing this device.")
 
         AndroidRuntimeState.markFailure(
             kind = "runtime_service_start_failed",
-            message = "Android runtime service failed to start: invalid inbound mix.",
+            message = "POKROV could not start on this device: invalid inbound mix.",
         )
         AndroidRuntimeState.markStopped(
-            message = "Android runtime service stopped.",
+            message = "POKROV turned off on this device.",
             stopReason = "service_destroyed",
         )
 
         val snapshot = AndroidRuntimeState.snapshot()
         assertEquals("configStaged", snapshot["phase"])
         assertEquals(
-            "Android runtime service failed to start: invalid inbound mix.",
+            "POKROV could not start on this device: invalid inbound mix.",
             snapshot["message"],
         )
         assertEquals("runtime_service_start_failed", snapshot["last_failure_kind"])

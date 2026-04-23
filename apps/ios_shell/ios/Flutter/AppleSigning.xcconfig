@@ -2,12 +2,12 @@
 // Do not commit real Apple credentials or provisioning-profile names here.
 
 POKROV_IOS_DISPLAY_NAME = POKROV
-POKROV_IOS_BUNDLE_NAME = pokrov_ios_shell
+POKROV_IOS_BUNDLE_NAME = POKROV
 POKROV_IOS_BUNDLE_ID = space.pokrov.app.ios
 POKROV_IOS_URL_SCHEME = pokrov
 POKROV_IOS_APP_GROUP = group.space.pokrov.app.shared
-POKROV_IOS_PACKET_TUNNEL_DISPLAY_NAME = POKROV Tunnel
-POKROV_IOS_PACKET_TUNNEL_BUNDLE_NAME = pokrov_ios_tunnel
+POKROV_IOS_PACKET_TUNNEL_DISPLAY_NAME = POKROV Connection
+POKROV_IOS_PACKET_TUNNEL_BUNDLE_NAME = POKROV Connection
 POKROV_IOS_PACKET_TUNNEL_BUNDLE_ID = space.pokrov.app.ios.networkextension
 
 POKROV_IOS_DEVELOPMENT_TEAM = REPLACE_WITH_APPLE_TEAM_ID

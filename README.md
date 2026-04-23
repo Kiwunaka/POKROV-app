@@ -6,22 +6,25 @@ This directory is the canonical `POKROV-app` client repository for the new `Andr
 
 Historical path note:
 
-- earlier docs and work orders may still call this lane `external/pokrov-next-client/`
+- earlier docs and work orders may still call this lane `external/pokrov-next-client/` or `app-next/`
 - the initial local snapshot for this repo was bootstrapped from `C:/Users/kiwun/Documents/ai/VPN/app-next/` on `2026-04-22`
 - `app-next/` inside the platform repo is now transition/reference material rather than the canonical git lane
 
-This repo now carries new client product-direction work. The retained bridge release client at `C:/Users/kiwun/Documents/ai/VPN/external/client-fork/app/` still owns current public Android+Windows packaging, signing, and rollback-safe release truth until formal cutover closes.
+This repo now carries new client product-direction work and is the only active client development and release-metadata canon.
+The retired bridge bundle lineage is preserved under `artifacts/releases/bridge/` as archive evidence only.
 
 Bridge-artifact mirror note:
 
 - the public `Kiwunaka/PORTALapp` fork cannot accept new Git LFS release objects
-- because of that, repo-backed Android and Windows alpha/beta/RC/public bridge bundles are mirrored into `artifacts/releases/bridge/` here after they are built and canonicalized in the bridge workspace
-- treat that mirror as retained artifact archive only; it does not make `POKROV-app` the release-build/signing truth before formal cutover
+- retained Android and Windows bridge bundles are mirrored into `artifacts/releases/bridge/` here as rollback-safe evidence
+- treat that mirror as archive evidence only; it does not override the active `POKROV-app` release-metadata home
 
 Next-client artifact note:
 
 - repo-backed alpha and beta bundles produced directly from this lane should live under `artifacts/releases/pokrov-app/`
 - these bundles prove that the canonical next-client repo can build Android and Windows locally, but they do not make this lane the public release-build or signing truth before formal cutover
+- stable root-repo handoff metadata for this lane now lives at `config/release-handoff.seed.json`
+- active release-handoff manifests live under `artifacts/releases/pokrov-app/<version>/release-handoff.json` with the stable pointer at `artifacts/releases/release-handoff.json`
 
 ## Status
 
@@ -53,7 +56,7 @@ Next-client artifact note:
 - `scripts/run-tests.ps1` now executes the real Android validation lane: Flutter tests for `apps/android_shell` plus Android Gradle unit tests for manifest guards, platform monitoring, runtime state, DNS planning, and route planning
 - iOS `NETunnelProviderManager` seed connect/disconnect request lane through the runtime bridge
 - macOS bundle-aware artifact discovery plus host copy wiring for `libcore.dylib` and `HiddifyCli`
-- bootstrapped canonical client repo from the former `app-next/` source workspace
+- canonical client repo established from the former `app-next/` bootstrap snapshot
 - no CI wiring
 - no release wiring
 - no bridge-client imports
@@ -78,8 +81,7 @@ This seed creates a safe place to:
 
 ## Guardrails
 
-- Do not move or rewrite anything inside `external/client-fork/app/` from this lane.
-- Do not point build, release, or deploy automation at this path yet.
+- Do not treat the retired bridge repo as an active workflow target from this lane.
 - Keep public naming aligned with `POKROV`; use `POKROV VPN` only for compatibility notes.
 - Treat this directory as the new-base runtime lane, not as an already approved cutover candidate.
 - Treat this subtree as the canonical git truth for new client development, but not yet as the shipping truth or release truth for Android, Windows, Apple, or store publication.
@@ -91,6 +93,7 @@ This seed creates a safe place to:
 - `apps/`: future platform shells with starter Android, iOS, macOS, and Windows host entry points
 - `packages/`: shared seed modules for app shell, domain, platform contracts, and support context
 - `config/`: seed contract snapshots, runtime profiles, local config templates, and regenerated local-only `config/local/*` materializations
+- `config/release-handoff.seed.json`: stable root-repo handoff source for canonical lane identity plus the latest repo-backed release archive
 - `docs/`: scaffold spec, decision gates, and structure notes
 - `assets/`: repo-local brand assets and generated launcher/icon masters
 - `scripts/`: non-destructive local validation and bootstrap helpers for this scaffold
@@ -140,7 +143,7 @@ This seed creates a safe place to:
 - The current `All except RU` cache combines hydraponique `roscomvpn-geosite` domain overlays, hydraponique `roscomvpn-geoip` whitelist CIDR overlays, and upstream `SagerNet/sing-geoip` `geoip-ru` for the broader RU IP catch-all.
 - The Android validation lane now has repo-local proof points on both sides of the shell boundary: `apps/android_shell/test/` covers shell boot plus runtime-diagnostics affordances, and `apps/android_shell/android/gradlew.bat testDebugUnitTest` covers manifest guards, platform monitoring, runtime state, DNS planning, and TUN route planning.
 - Stop and reconnect transitions now demote Android runtime state before teardown, which keeps the shared shell from holding onto a stale `Connected` snapshot as often during rapid reconnect loops.
-- Selected-apps parity is still outside this cycle in `app-next`: the hardening work in this wave is for `Full tunnel`, while per-app Android parity remains a deferred follow-up.
+- Selected-apps parity is still outside this cycle: the hardening work in this wave is for `Full tunnel`, while per-app Android parity remains a deferred follow-up.
 - This is still not a release claim: Android needs production service hardening and device validation, and Apple still needs signing, entitlement, archive, and on-device verification even though the checked-in iOS provider now carries Libbox-backed service code.
 - The stronger Android test lane is still not a release substitute: it proves repo-local Flutter and JVM-side invariants only, and the required physical-device localhost/control-surface audit remains a separate gate.
 - Treat provenance updates, checksums, host packaging drift, and four-platform runtime verification as blocking dependencies for release candidates and public cutover.
@@ -172,4 +175,4 @@ These inventories are readiness notes only. They do not make either Apple host s
 - The next-client lane now pins and syncs `libcore` artifacts for all four host shells.
 - Android already has a real `VpnService` seed lane, and iOS already has a checked-in packet-tunnel extension with `NETunnelProviderManager` control plus Libbox-backed service code.
 - The Apple hosts still do not have reviewed signing, notarization, or a live traffic-carrying packet-tunnel implementation, so they remain pre-release lanes.
-- Nothing in this subtree changes the live bridge client or the current production release flow; this repository is now the long-term git-truth target for new client development, while the bridge lane remains current release truth until formal cutover.
+- Nothing in this subtree authorizes public cutover by itself; retained bridge lineage remains archived under `artifacts/releases/bridge/`, while this repository is the only active git-truth target for client development and release metadata.

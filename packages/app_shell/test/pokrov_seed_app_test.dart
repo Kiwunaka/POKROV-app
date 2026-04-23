@@ -53,9 +53,7 @@ void main() {
     expect(find.text('Locations'), findsOneWidget);
     expect(find.text('Rules'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
-    expect(find.text('Protection starts with 5 free premium days'),
-        findsOneWidget);
-    final protectionPolicy = find.text('Protection policy');
+    final protectionPolicy = find.text('What stays simple');
     await tester.dragUntilVisible(
       protectionPolicy,
       find.byType(Scrollable).first,
@@ -63,7 +61,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(protectionPolicy, findsOneWidget);
-    final runtimeLane = find.text('Runtime health');
+    final runtimeLane = find.text('Connection status');
     await tester.dragUntilVisible(
       runtimeLane,
       find.byType(Scrollable).first,
@@ -73,6 +71,8 @@ void main() {
     expect(runtimeLane, findsOneWidget);
     await tester.tap(find.text('Profile').last);
     await tester.pumpAndSettle();
+    expect(find.text('Everything for this account'), findsOneWidget);
+    expect(find.text('Telegram bonus'), findsWidgets);
     final redeemPanel = find.text('Redeem activation key');
     await tester.dragUntilVisible(
       redeemPanel,
@@ -84,7 +84,7 @@ void main() {
   });
 
   testWidgets(
-      'android runtime health shows warnings when host diagnostics are degraded',
+      'android protection surface keeps degraded runtime messaging consumer friendly',
       (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger =
@@ -123,7 +123,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final runtimeLane = find.text('Runtime health');
+    final runtimeLane = find.text('Connection status');
     await tester.dragUntilVisible(
       runtimeLane,
       find.byType(Scrollable).first,
@@ -131,17 +131,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Connected with warnings'), findsWidgets);
-    expect(find.text('Connected now'), findsNothing);
-    expect(
-      find.textContaining(
-          'Host diagnostics: DNS degraded on the current uplink.'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Needs attention'), findsWidgets);
+    expect(find.textContaining('Protection is on, but the app noticed'),
+        findsWidgets);
+    expect(find.textContaining('Host diagnostics'), findsNothing);
   });
 
-  testWidgets(
-      'android runtime health derives warnings from top-level host fields',
+  testWidgets('android protection surface hides raw top-level host diagnostics',
       (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger =
@@ -180,7 +176,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final runtimeLane = find.text('Runtime health');
+    final runtimeLane = find.text('Connection status');
     await tester.dragUntilVisible(
       runtimeLane,
       find.byType(Scrollable).first,
@@ -188,25 +184,17 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Connected with warnings'), findsWidgets);
+    expect(find.textContaining('Needs attention'), findsWidgets);
+    expect(find.textContaining('Protection is on, but the app noticed'),
+        findsWidgets);
+    expect(find.textContaining('Last failure kind'), findsNothing);
     expect(
-      find.textContaining(
-        'Host diagnostics: Uplink wlan0 (#42) | DNS waiting | Routes v4=2 v6=0 | Last failure default_network_unavailable',
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining('Last failure kind: default_network_unavailable'),
-      findsOneWidget,
-    );
-    expect(
-      find.text('Connected through the live managed profile.'),
+      find.text('Protection is on.'),
       findsNothing,
     );
   });
 
-  testWidgets('shows a single logical location in locations',
-      (tester) async {
+  testWidgets('shows a single logical location in locations', (tester) async {
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
@@ -217,14 +205,15 @@ void main() {
     await tester.tap(find.text('Locations').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('One logical location'), findsOneWidget);
+    expect(find.text('Auto-managed'), findsOneWidget);
+    expect(find.text('Available after setup'), findsOneWidget);
     await tester.drag(find.byType(ListView).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.textContaining('POKROV'), findsWidgets);
     expect(
-      find.textContaining(
-        'Transport variants stay hidden behind auto and diagnostics',
-      ),
+        find.textContaining('Premium access uses enabled non-free locations'),
+        findsOneWidget);
+    expect(
+      find.textContaining('Transport details stay hidden behind auto'),
       findsWidgets,
     );
   });
@@ -306,7 +295,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final connectAction = find.text('Connect with sing-box');
+    final connectAction = find.text('Turn protection on');
     await tester.dragUntilVisible(
       connectAction,
       find.byType(Scrollable).first,
@@ -398,7 +387,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final connectAction = find.text('Connect with sing-box');
+    final connectAction = find.text('Turn protection on');
     await tester.dragUntilVisible(
       connectAction,
       find.byType(Scrollable).first,
@@ -456,7 +445,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Runtime not ready'), findsOneWidget);
+    expect(find.text('Protection unavailable'), findsOneWidget);
   });
 
   testWidgets(
@@ -548,7 +537,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final connectAction = find.text('Connect with sing-box');
+    final connectAction = find.text('Turn protection on');
     await tester.dragUntilVisible(
       connectAction,
       find.byType(Scrollable).first,
@@ -562,8 +551,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Connected through the live managed profile.'),
-      findsNothing,
+      find.text('Turn protection off'),
+      findsWidgets,
     );
   });
 
@@ -654,7 +643,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final connectAction = find.text('Connect with sing-box');
+    final connectAction = find.text('Turn protection on');
     await tester.dragUntilVisible(
       connectAction,
       find.byType(Scrollable).first,
@@ -669,7 +658,7 @@ void main() {
 
     expect(snapshotCalls, greaterThanOrEqualTo(2));
     expect(
-      find.text('Managed profile is staged and ready for live connect.'),
+      find.text('Everything is staged and ready when you tap the main action.'),
       findsNothing,
     );
   });
@@ -720,7 +709,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final runtimeLane = find.text('Runtime health');
+    final runtimeLane = find.text('Connection status');
     await tester.dragUntilVisible(
       runtimeLane,
       find.byType(Scrollable).first,
@@ -728,9 +717,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Managed profile staged'), findsWidgets);
+    expect(find.textContaining('Ready to protect'), findsWidgets);
     expect(
-      find.text('Managed profile is staged and ready for live connect.'),
+      find.text('Everything is staged and ready when you tap the main action.'),
       findsOneWidget,
     );
 
@@ -742,7 +731,7 @@ void main() {
 
     expect(snapshotCalls, greaterThanOrEqualTo(2));
     expect(
-      find.text('Managed profile is staged and ready for live connect.'),
+      find.text('Everything is staged and ready when you tap the main action.'),
       findsNothing,
     );
   });

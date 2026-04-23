@@ -1,8 +1,8 @@
 # Cutover Readiness
 
-Last updated: 2026-04-22
+Last updated: 2026-04-23
 
-This document tracks what must be true before `POKROV-app/main` can replace the retained legacy bridge client as the public Android+Windows release truth.
+This document tracks what must be true before `POKROV-app/main` is approved as the public `Android + Windows` release lane.
 
 Historical mapping note:
 
@@ -15,27 +15,45 @@ Historical mapping note:
 - cutover state: `engineering green, local repo bootstrapped, public cutover blocked`
 - lane path: `C:/Users/kiwun/Documents/ai/POKROV-app`
 - lane ownership: `canonical client development repo for POKROV-app/main`
+- public scope in this document: `Android + Windows`
+- Apple scope in this wave: `readiness only`
 - base decision: `clean-room selected`
 - Apple release state: `checked-in unsigned service lane`
 - Windows release state: `local unsigned bundle only`
 - Android and Windows engineering verification: `green in local test/build lane`
 - public store readiness: `not approved`
 - public cutover approval: `not allowed`
-- shipping truth: `no`
-- release truth: `no`
-- long-term repo truth by itself: `yes`
-- bridge-period repo-backed artifact mirror: `yes`
-- next-client repo-backed alpha archive: `allowed`
+- public Android release approval: `blocked`
+- public Windows release approval: `blocked`
+- long-term repo truth: `yes`
+- repo-backed alpha or beta archive: `allowed`
 
-## Required Before Public Cutover
+This repo is already the canonical development lane for new client work.
+This document tracks public release approval and cutover readiness, not whether the repo exists as engineering truth.
 
-1. Document one real native-core provenance and packaging contract for `iOS`, `macOS`, `Android`, and `Windows`.
-2. Review and prove the Apple connectivity path, especially live `NEPacketTunnelFlow` behavior on device.
-3. Provision the real Apple team, bundle IDs, app groups, profiles, and signing identities.
-4. Produce signed Apple artifacts from a Mac and keep the evidence in the handoff.
-5. Complete TestFlight, App Store, notarization, and Gatekeeper validation.
-6. Finish store metadata, screenshots, support mailbox, and privacy answers.
-7. Provide trusted Windows signing, installer or `MSIX` packaging, and public hosting evidence for the Windows lane.
+## Required Before Public Android+Windows Cutover
+
+1. Keep the client product contract, app-first onboarding contract, route-mode behavior, support flow, and download behavior documented in this repo.
+2. Prove one real native-core provenance and packaging contract for the public Android and Windows artifacts.
+3. Complete the Android release-build localhost and local-control-surface audit on physical hardware.
+4. Provide trusted Android and Windows signing plus public hosting or handoff evidence for the release artifacts.
+5. Verify runtime download handoff, checkout continuation, support continuation, and Telegram bonus behavior in release-mode builds.
+6. Keep release handoff evidence explicit for `current-origin`, `brain-origin`, and `RU-origin` checks where reachability matters.
+
+## Android Gate Checklist
+
+- [ ] Runtime artifacts are synced into the documented Android build lane
+- [ ] `flutter analyze` passes in the Android host lane
+- [ ] Shared runtime and widget tests pass for the public Android shell
+- [ ] `flutter build apk --release` succeeds
+- [ ] `flutter build appbundle --release` succeeds when store/operator artifacts are requested
+- [ ] Release-installed build passes the physical-device localhost/control-surface audit
+- [ ] Trusted Android signing material is available
+- [ ] Public download handoff is approved for Android `Play` / `APK` / mirror
+- [ ] Release handoff includes runtime URL verification and origin evidence
+
+Apple checklists below remain readiness-only in this wave.
+They do not expand the public `Android + Windows` release scope tracked by this document.
 
 ## iOS Gate Checklist
 
@@ -80,6 +98,9 @@ Safe to claim now:
 - the local `POKROV-app` repo is bootstrapped and carries the clean-room client lane
 - `app-next/` and `external/pokrov-next-client/` are now historical/bootstrap source references, not the canonical git lane
 - this repo is the long-term canonical git target for new client development work
+- this repo now owns the client product contract, app-first onboarding contract, and client backlog tracking under `docs/`
+- public scope for this release wave remains `Android + Windows`
+- Apple work in this repo is readiness and packaging preparation only for this wave
 - iOS and macOS shell metadata is materially closer to a real release lane
 - iOS now carries checked-in packet-tunnel service code instead of a deliberate scaffold stop
 - operator work needed for signing, notarization, and store prep is now explicit
@@ -96,12 +117,11 @@ Not safe to claim now:
 - signed iOS packet-tunnel execution is proven on device
 - Apple store submission is ready
 - Apple cutover is approved
-- this lane has become shipping truth or release truth
-- this repo already replaced the old bootstrap-source lane as the canonical development target, but it has not yet replaced the bridge lane as public release truth
+- public Android release approval is complete
+- public Windows release approval is complete
 
 Blocked-by note:
 
-- the local repo bootstrap step is complete, but signed release evidence, Windows publication readiness, Apple validation, and formal cutover approval are still open
-- until those release and signing gates close, legacy bridge packaging/signing remains the rollback-safe public release truth even though new product-direction work now lands in `POKROV-app`
-- until that cutover closes, `POKROV-app/artifacts/releases/bridge/` may retain repo-backed Android and Windows alpha/beta bundles mirrored from the bridge lane without changing the fact that build/signing truth still lives in `external/client-fork/app`
-- `POKROV-app/artifacts/releases/pokrov-app/` may retain repo-backed alpha and beta bundles built directly from this lane for engineering and tester handoff without changing the fact that public release truth still lives in the bridge lane
+- the local repo bootstrap step is complete, but public Android and Windows release approval is still blocked on signing, artifact handoff, Android localhost-audit evidence, and final runtime verification
+- `POKROV-app/artifacts/releases/pokrov-app/` may retain repo-backed alpha and beta bundles built directly from this lane for engineering and tester handoff
+- rollback and compatibility lanes may still exist elsewhere, but this document tracks approval of the `POKROV-app` release lane itself rather than treating another repo as the primary frame

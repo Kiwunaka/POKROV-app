@@ -17,14 +17,15 @@ Generated local content:
 
 Use `scripts/fetch-libcore-assets.ps1` to populate the local artifact cache and optionally sync the matching files into each host shell.
 
-Bridge-period release rule:
+Retained bridge-archive rule:
 
-- build and package Android and Windows in `C:/Users/kiwun/Documents/ai/VPN/external/client-fork/app/`
-- keep `external/client-fork/app/out/` as the local working-set bundle for signing and operator validation
-- mirror the final alpha/beta/RC/public handoff bundle into `artifacts/releases/bridge/<version>/` here because the public bridge fork cannot accept new Git LFS release objects
+- keep the last bridge-period Android and Windows handoff bundles mirrored in `artifacts/releases/bridge/<version>/`
+- treat those bundles as rollback-safe evidence only
+- do not treat the retired bridge repo as the active artifact or signing home
 
 Next-client alpha rule:
 
 - build repo-backed Android and Windows validation bundles for the canonical next-client lane in `C:/Users/kiwun/Documents/ai/POKROV-app`
 - archive those bundles under `artifacts/releases/pokrov-app/<version>/`
+- keep `release-handoff.json` beside each versioned bundle and update the stable pointer at `artifacts/releases/release-handoff.json` when a version becomes the active handoff source
 - treat them as engineering and tester handoff artifacts only until formal cutover closes
