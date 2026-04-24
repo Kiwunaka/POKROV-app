@@ -309,6 +309,34 @@ void main() {
       find.byKey(const ValueKey('pokrov-desktop-protection-grid')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('pokrov-desktop-right-rail')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('connect hero exposes one primary runtime action',
+      (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _chooseDefaultDeviceRoute(tester);
+
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey('pokrov-primary-connect-action')),
+      find.byType(Scrollable).first,
+      const Offset(0, -320),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('pokrov-primary-connect-action')),
+      findsOneWidget,
+    );
+    expect(find.text('Запустить здесь'), findsNothing);
   });
 
   testWidgets('selected app route persists picked package identifiers',
@@ -448,6 +476,47 @@ void main() {
     );
   });
 
+  testWidgets('selected app route supports search and manual app fallback',
+      (tester) async {
+    const appPickerChannel = MethodChannel('space.pokrov/app_picker');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
+    messenger.setMockMethodCallHandler(appPickerChannel, (call) async {
+      return <Object?>[];
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(appPickerChannel, null);
+    });
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final selectedAppsRoute =
+        find.byKey(const ValueKey('pokrov-route-selected-apps'));
+    await tester.ensureVisible(selectedAppsRoute);
+    await tester.pumpAndSettle();
+    await tester.tap(selectedAppsRoute);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('pokrov-scan-selected-apps')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('pokrov-app-picker-search')),
+      'notion.exe',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('pokrov-add-manual-app')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Notion.exe'), findsOneWidget);
+    expect(find.text('Выбрано: 1'), findsWidgets);
+  });
+
   testWidgets('first-layer shell hides technical node and demo code copy',
       (tester) async {
     await tester.pumpWidget(
@@ -499,6 +568,78 @@ void main() {
       launcher.targets,
       contains('https://pay.pokrov.space/checkout/?plan=1_month'),
     );
+  });
+
+  testWidgets(
+      'activation key field formats validates and opens redeem fallback',
+      (tester) async {
+    final launcher = _RecordingLinkLauncher();
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        linkLauncher: launcher,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Профиль').last);
+    await tester.pumpAndSettle();
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey('pokrov-access-key-field')),
+      find.byType(Scrollable).first,
+      const Offset(0, -280),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('pokrov-access-key-field')),
+      'pokrov abcd 1234',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('POKROV-ABCD-1234'), findsWidgets);
+    await tester.tap(find.byKey(const ValueKey('pokrov-redeem-access-key')));
+    await tester.pumpAndSettle();
+
+    expect(
+      launcher.targets,
+      contains('https://app.pokrov.space/redeem?code=POKROV-ABCD-1234'),
+    );
+    expect(find.textContaining('Ключ принят'), findsWidgets);
+  });
+
+  testWidgets('activation key rejects short values before cabinet handoff',
+      (tester) async {
+    final launcher = _RecordingLinkLauncher();
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        linkLauncher: launcher,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Профиль').last);
+    await tester.pumpAndSettle();
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey('pokrov-access-key-field')),
+      find.byType(Scrollable).first,
+      const Offset(0, -280),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('pokrov-access-key-field')),
+      'bad',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('pokrov-redeem-access-key')));
+    await tester.pumpAndSettle();
+
+    expect(launcher.targets, isEmpty);
+    expect(find.textContaining('Проверьте ключ'), findsWidgets);
   });
 
   testWidgets(
@@ -1080,7 +1221,7 @@ void main() {
 
     expect(snapshotCalls, greaterThanOrEqualTo(2));
     expect(
-      find.textContaining('Профиль готов'),
+      find.textContaining('Доступ готов'),
       findsNothing,
     );
   });
@@ -1142,7 +1283,7 @@ void main() {
 
     expect(find.textContaining('Сейчас: Готово'), findsWidgets);
     expect(
-      find.textContaining('Профиль готов'),
+      find.textContaining('Доступ готов'),
       findsWidgets,
     );
 
@@ -1154,7 +1295,7 @@ void main() {
 
     expect(snapshotCalls, greaterThanOrEqualTo(2));
     expect(
-      find.textContaining('Профиль готов'),
+      find.textContaining('Доступ готов'),
       findsNothing,
     );
   });

@@ -61,7 +61,7 @@ abstract final class _AppShellCopy {
     (
       '3',
       'Нажмите подключение',
-      'Локация и профиль применятся без ручной настройки.'
+      'Локация и правила применятся без ручной настройки.'
     ),
   ];
   static const routeModeQuestion = 'Как должно работать это устройство?';
@@ -287,7 +287,7 @@ class SeedAppContext {
 }
 
 const _seedManagedProfilePayload = ManagedProfilePayload(
-  profileName: 'pokrov-seed-runtime',
+  profileName: 'pokrov-runtime',
   configPayload: '''
 {
   "log": {
@@ -796,7 +796,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (mounted) {
       setState(() {
         _managedProfileDirty = false;
-        _runtimeHeadline = 'Профиль подключения обновлен.';
+        _runtimeHeadline = 'Доступ обновлен.';
       });
     }
     return payload;
@@ -1465,7 +1465,7 @@ class _QuickConnectSection extends StatelessWidget {
                 running: isRunning,
                 degraded: isRunning && !isHealthyRunning,
                 busy: runtimeBusy,
-                onPressed: primaryActionEnabled ? onToggleRuntime : null,
+                onPressed: null,
               ),
             ),
             const SizedBox(height: 16),
@@ -1555,19 +1555,6 @@ class _QuickConnectSection extends StatelessWidget {
               icon: const Icon(Icons.refresh),
               label: const Text('Проверить еще раз'),
             ),
-            FilledButton.icon(
-              onPressed: primaryActionEnabled ? onToggleRuntime : null,
-              icon: Icon(
-                snapshot?.phase == RuntimePhase.running
-                    ? Icons.stop_circle_outlined
-                    : Icons.play_circle_outline,
-              ),
-              label: Text(
-                snapshot?.phase == RuntimePhase.running
-                    ? 'Остановить здесь'
-                    : 'Запустить здесь',
-              ),
-            ),
           ],
         ),
       ),
@@ -1592,7 +1579,9 @@ class _QuickConnectSection extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    Expanded(
+                    ConstrainedBox(
+                      key: const ValueKey('pokrov-desktop-right-rail'),
+                      constraints: const BoxConstraints(maxWidth: 380),
                       child: Column(
                         children: children.sublist(4),
                       ),
@@ -1902,7 +1891,7 @@ class _DeviceScopeCard extends StatelessWidget {
   }
 }
 
-class _SelectedAppsPicker extends StatelessWidget {
+class _SelectedAppsPicker extends StatefulWidget {
   const _SelectedAppsPicker({
     required this.apps,
     required this.selectedAppIds,
@@ -1922,9 +1911,63 @@ class _SelectedAppsPicker extends StatelessWidget {
   final void Function(SelectableApp app, bool selected) onChanged;
 
   @override
+  State<_SelectedAppsPicker> createState() => _SelectedAppsPickerState();
+}
+
+class _SelectedAppsPickerState extends State<_SelectedAppsPicker> {
+  final TextEditingController _searchController = TextEditingController();
+  final List<SelectableApp> _manualApps = [];
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _addManualApp() {
+    final raw = _searchController.text.trim();
+    if (raw.isEmpty) {
+      return;
+    }
+    final app = SelectableApp(
+      id: raw,
+      name: _friendlyManualAppName(raw),
+      source: 'manual',
+    );
+    setState(() {
+      if (!_manualApps.any((existing) => existing.id == app.id)) {
+        _manualApps.add(app);
+      }
+      _searchController.clear();
+    });
+    widget.onChanged(app, true);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final fallback =
-        scanAttempted && apps.any((app) => app.source == 'curated');
+    final fallback = widget.scanAttempted &&
+        widget.apps.any((app) => app.source == 'curated');
+    final allApps = [
+      ...widget.apps,
+      ..._manualApps.where(
+        (manual) => !widget.apps.any((app) => app.id == manual.id),
+      ),
+    ];
+    final query = _searchController.text.trim().toLowerCase();
+    final filteredApps = query.isEmpty
+        ? allApps
+        : allApps
+            .where(
+              (app) =>
+                  app.name.toLowerCase().contains(query) ||
+                  app.id.toLowerCase().contains(query),
+            )
+            .toList(growable: false);
+    final canAddManual = query.isNotEmpty &&
+        !allApps.any(
+          (app) =>
+              app.id.toLowerCase() == query || app.name.toLowerCase() == query,
+        );
 
     return Container(
       key: fallback ? const ValueKey('pokrov-selected-app-fallback') : null,
@@ -1944,47 +1987,88 @@ class _SelectedAppsPicker extends StatelessWidget {
             children: [
               FilledButton.icon(
                 key: const ValueKey('pokrov-scan-selected-apps'),
-                onPressed: busy ? null : onScan,
-                icon: Icon(busy ? Icons.sync_rounded : Icons.search_rounded),
-                label: Text(busy ? 'Ищем приложения' : 'Найти приложения'),
+                onPressed: widget.busy ? null : widget.onScan,
+                icon: Icon(
+                  widget.busy ? Icons.sync_rounded : Icons.search_rounded,
+                ),
+                label: Text(
+                  widget.busy ? 'Ищем приложения' : 'Найти приложения',
+                ),
               ),
-              if (selectedAppIds.isNotEmpty)
+              if (widget.selectedAppIds.isNotEmpty)
                 _StatusPill(
-                  label: 'Выбрано: ${selectedAppIds.length}',
+                  label: 'Выбрано: ${widget.selectedAppIds.length}',
                   icon: Icons.check_circle_outline,
                   tone: _SectionTone.accent,
                 ),
             ],
           ),
-          if (message.trim().isNotEmpty) ...[
+          const SizedBox(height: 12),
+          TextField(
+            key: const ValueKey('pokrov-app-picker-search'),
+            controller: _searchController,
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.search_rounded),
+              labelText: 'Поиск или ручной выбор',
+              hintText: 'Telegram, chrome.exe, com.app.name',
+            ),
+          ),
+          if (canAddManual) ...[
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              key: const ValueKey('pokrov-add-manual-app'),
+              onPressed: _addManualApp,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Добавить вручную'),
+            ),
+          ],
+          if (widget.message.trim().isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
-              message,
+              widget.message,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: _SeedPalette.muted,
                     height: 1.3,
                   ),
             ),
           ],
-          if (apps.isNotEmpty) ...[
+          if (filteredApps.isNotEmpty) ...[
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final app in apps)
+                for (final app in filteredApps)
                   FilterChip(
                     label: Text(app.name),
-                    selected: selectedAppIds.contains(app.id),
-                    onSelected: (selected) => onChanged(app, selected),
+                    selected: widget.selectedAppIds.contains(app.id),
+                    onSelected: (selected) => widget.onChanged(app, selected),
                   ),
               ],
+            ),
+          ] else if (widget.scanAttempted) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Ничего не нашли. Добавьте приложение вручную или попробуйте другое название.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: _SeedPalette.muted,
+                    height: 1.3,
+                  ),
             ),
           ],
         ],
       ),
     );
   }
+}
+
+String _friendlyManualAppName(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) {
+    return trimmed;
+  }
+  return trimmed[0].toUpperCase() + trimmed.substring(1);
 }
 
 List<SelectableApp> _curatedSelectableApps(HostPlatform hostPlatform) {
@@ -2271,6 +2355,8 @@ class _ProfileSection extends StatelessWidget {
         _RedeemPanel(
           hintCode: appContext.redeemHint,
           onRedeem: (code) => onOpenHandoff('redeem', code),
+          onOpenCabinet: () =>
+              unawaited(onOpenHandoff('cabinet', appContext.cabinetUrl)),
         ),
         const SizedBox(height: 12),
         _SectionCard(
@@ -2458,10 +2544,12 @@ class _RedeemPanel extends StatefulWidget {
   const _RedeemPanel({
     required this.hintCode,
     required this.onRedeem,
+    required this.onOpenCabinet,
   });
 
   final String hintCode;
   final ValueChanged<String> onRedeem;
+  final VoidCallback onOpenCabinet;
 
   @override
   State<_RedeemPanel> createState() => _RedeemPanelState();
@@ -2469,17 +2557,58 @@ class _RedeemPanel extends StatefulWidget {
 
 class _RedeemPanelState extends State<_RedeemPanel> {
   late final TextEditingController _controller;
+  String _statusMessage = '';
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.hintCode);
+    _controller =
+        TextEditingController(text: _formatAccessKey(widget.hintCode));
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _pasteFromClipboard() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text ?? '';
+    if (text.trim().isEmpty) {
+      return;
+    }
+    _applyFormattedKey(text);
+  }
+
+  void _applyFormattedKey(String value) {
+    final formatted = _formatAccessKey(value);
+    if (_controller.text != formatted) {
+      _controller.value = TextEditingValue(
+        text: formatted,
+        selection: TextSelection.collapsed(offset: formatted.length),
+      );
+    }
+    setState(() {
+      _statusMessage = '';
+    });
+  }
+
+  void _redeem() {
+    final formatted = _formatAccessKey(_controller.text);
+    if (!_isPlausibleAccessKey(formatted)) {
+      setState(() {
+        _statusMessage =
+            'Проверьте ключ: обычно это 12-32 символа из письма, кабинета или Telegram.';
+      });
+      return;
+    }
+    _applyFormattedKey(formatted);
+    widget.onRedeem(formatted);
+    setState(() {
+      _statusMessage =
+          'Ключ принят. Если окно не открылось, продолжите через кабинет.';
+    });
   }
 
   @override
@@ -2493,22 +2622,87 @@ class _RedeemPanelState extends State<_RedeemPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextField(
+            key: const ValueKey('pokrov-access-key-field'),
             controller: _controller,
+            textCapitalization: TextCapitalization.characters,
+            autocorrect: false,
+            enableSuggestions: false,
+            onChanged: _applyFormattedKey,
             decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.key_rounded),
               labelText: 'Ключ доступа',
-              hintText: 'POKROV-XXXX-XXXX',
+              hintText: 'POKROV-ABCD-1234',
             ),
           ),
           const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: () => widget.onRedeem(_controller.text.trim()),
-            icon: const Icon(Icons.verified_outlined),
-            label: const Text('Активировать'),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              OutlinedButton.icon(
+                key: const ValueKey('pokrov-paste-access-key'),
+                onPressed: () => unawaited(_pasteFromClipboard()),
+                icon: const Icon(Icons.content_paste_rounded),
+                label: const Text('Вставить'),
+              ),
+              FilledButton.icon(
+                key: const ValueKey('pokrov-redeem-access-key'),
+                onPressed: _redeem,
+                icon: const Icon(Icons.verified_outlined),
+                label: const Text('Активировать'),
+              ),
+              TextButton.icon(
+                onPressed: widget.onOpenCabinet,
+                icon: const Icon(Icons.web_rounded),
+                label: const Text('Открыть кабинет'),
+              ),
+            ],
           ),
+          if (_statusMessage.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              _statusMessage,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: _isPlausibleAccessKey(_controller.text)
+                        ? _SeedPalette.accent
+                        : Theme.of(context).colorScheme.error,
+                    height: 1.3,
+                  ),
+            ),
+          ],
         ],
       ),
     );
   }
+}
+
+String _normalizeAccessKey(String value) {
+  return value.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+}
+
+String _formatAccessKey(String value) {
+  final normalized = _normalizeAccessKey(value);
+  if (normalized.isEmpty) {
+    return '';
+  }
+  final groups = <String>[];
+  var rest = normalized;
+  if (rest.startsWith('POKROV')) {
+    groups.add('POKROV');
+    rest = rest.substring(6);
+  }
+  for (var index = 0; index < rest.length; index += 4) {
+    final end = index + 4 > rest.length ? rest.length : index + 4;
+    groups.add(rest.substring(index, end));
+  }
+  return groups.where((group) => group.isNotEmpty).join('-');
+}
+
+bool _isPlausibleAccessKey(String value) {
+  final normalized = _normalizeAccessKey(value);
+  return normalized.length >= 12 &&
+      normalized.length <= 32 &&
+      RegExp(r'^[A-Z0-9]+$').hasMatch(normalized);
 }
 
 class _LocationCard extends StatelessWidget {
@@ -2673,7 +2867,7 @@ String _consumerRuntimeMessage(String message) {
     return 'Подключение активно.';
   }
   if (normalized.contains('staged')) {
-    return 'Профиль готов к подключению.';
+    return 'Доступ готов к подключению.';
   }
   if (normalized.contains('ready')) {
     return 'Устройство готово к подключению.';
@@ -2701,7 +2895,7 @@ String _consumerProtectionStatusSummary(
     return 'Устройство еще завершает подготовку перед подключением.';
   }
   if ((snapshot.stagedConfigPath ?? '').isNotEmpty) {
-    return 'Профиль готов. Нажмите главную кнопку, когда будете готовы.';
+    return 'Доступ готов. Нажмите главную кнопку, когда будете готовы.';
   }
   return 'POKROV готовит подключение в фоне, чтобы ежедневный запуск был простым.';
 }
