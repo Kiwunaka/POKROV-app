@@ -12,15 +12,18 @@ class _FakeBootstrapper implements ManagedProfileBootstrapper {
   int calls = 0;
   RouteMode? lastRouteMode;
   HostPlatform? lastHostPlatform;
+  List<String> lastSelectedAppIds = const [];
 
   @override
   Future<ManagedProfilePayload> resolveManagedProfile({
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
+    List<String> selectedAppIds = const [],
   }) async {
     calls += 1;
     lastRouteMode = routeMode;
     lastHostPlatform = hostPlatform;
+    lastSelectedAppIds = selectedAppIds;
     return payload;
   }
 }
@@ -256,6 +259,193 @@ void main() {
     expect(find.text('Система'), findsOneWidget);
     expect(find.text('Светлая'), findsOneWidget);
     expect(find.text('Темная'), findsOneWidget);
+  });
+
+  testWidgets('dark theme changes the shell surface colors', (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final scaffoldBefore = tester.widget<Scaffold>(find.byType(Scaffold));
+    final beforeColor = scaffoldBefore.backgroundColor;
+
+    await tester.tap(find.text('Профиль').last);
+    await tester.pumpAndSettle();
+    await tester.dragUntilVisible(
+      find.text('Темная'),
+      find.byType(Scrollable).first,
+      const Offset(0, -280),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Темная'));
+    await tester.pumpAndSettle();
+
+    final scaffoldAfter = tester.widget<Scaffold>(find.byType(Scaffold));
+    expect(scaffoldAfter.backgroundColor, isNot(beforeColor));
+    expect(
+      Theme.of(tester.element(find.byType(Scaffold))).brightness,
+      Brightness.dark,
+    );
+  });
+
+  testWidgets('desktop windows surface uses a two column protection layout',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1440, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+        find.byKey(const ValueKey('pokrov-desktop-sidebar')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('pokrov-desktop-protection-grid')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('selected app route persists picked package identifiers',
+      (tester) async {
+    const runtimeChannel = MethodChannel('space.pokrov/runtime_engine');
+    const appPickerChannel = MethodChannel('space.pokrov/app_picker');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'managed-from-api',
+        configPayload: '{}',
+      ),
+    );
+
+    messenger.setMockMethodCallHandler(appPickerChannel, (call) async {
+      expect(call.method, 'listSelectableApps');
+      return <Object?>[
+        <String, Object?>{
+          'id': 'org.telegram.messenger',
+          'name': 'Telegram',
+        },
+      ];
+    });
+    messenger.setMockMethodCallHandler(runtimeChannel, (call) async {
+      switch (call.method) {
+        case 'runtimeEngine.snapshot':
+          return <String, Object?>{
+            'phase': 'artifactReady',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': false,
+            'message': 'Host bridge ready.',
+          };
+        case 'runtimeEngine.initialize':
+        case 'runtimeEngine.stageManagedProfile':
+          return <String, Object?>{
+            'phase': 'configStaged',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'stagedConfigPath': '/host/runtime/pokrov-runtime.json',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': true,
+            'message': 'Ready.',
+          };
+        case 'runtimeEngine.connect':
+          return <String, Object?>{
+            'phase': 'running',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'stagedConfigPath': '/host/runtime/pokrov-runtime.json',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': true,
+            'message': 'Running.',
+          };
+      }
+      return null;
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(appPickerChannel, null);
+      messenger.setMockMethodCallHandler(runtimeChannel, null);
+    });
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final selectedAppsRoute =
+        find.byKey(const ValueKey('pokrov-route-selected-apps'));
+    await tester.ensureVisible(selectedAppsRoute);
+    await tester.pumpAndSettle();
+    await tester.tap(selectedAppsRoute);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('pokrov-scan-selected-apps')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Telegram'));
+    await tester.pumpAndSettle();
+
+    final connectAction =
+        find.byKey(const ValueKey('pokrov-primary-connect-action'));
+    await tester.dragUntilVisible(
+      find.text('Подключить'),
+      find.byType(Scrollable).first,
+      const Offset(0, -320),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(connectAction);
+    await tester.pumpAndSettle();
+    await tester.tap(connectAction);
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.lastRouteMode, RouteMode.selectedApps);
+    expect(bootstrapper.lastSelectedAppIds, ['org.telegram.messenger']);
+  });
+
+  testWidgets(
+      'selected app route offers curated fallback when scanning is empty',
+      (tester) async {
+    const appPickerChannel = MethodChannel('space.pokrov/app_picker');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
+    messenger.setMockMethodCallHandler(appPickerChannel, (call) async {
+      return <Object?>[];
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(appPickerChannel, null);
+    });
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final selectedAppsRoute =
+        find.byKey(const ValueKey('pokrov-route-selected-apps'));
+    await tester.ensureVisible(selectedAppsRoute);
+    await tester.pumpAndSettle();
+    await tester.tap(selectedAppsRoute);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('pokrov-scan-selected-apps')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('pokrov-selected-app-fallback')),
+      findsWidgets,
+    );
   });
 
   testWidgets('first-layer shell hides technical node and demo code copy',

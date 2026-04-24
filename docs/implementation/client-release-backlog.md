@@ -21,7 +21,7 @@ Already verified locally by the current engineering lane:
 - silent managed-profile import and activation
 - quick-connect shell flow
 - route-mode onboarding groundwork
-- consumer-first `Protection / Locations / Rules / Profile` shell structure
+- consumer-first `Подключение / Локации / Правила / Профиль` shell structure
 - browser checkout continuation from the app
 - support context preparation and ticket-backed continuation contracts
 

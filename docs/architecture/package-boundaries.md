@@ -26,7 +26,7 @@ Rules:
 | `core_domain` | Scope, access-lane, route-mode, runtime-core, free-tier, and location-matrix facts |
 | `platform_contracts` | Host bootstrap contract, permissions, core defaults, and the future native-core artifact contract |
 | `support_context` | Support-safe snapshot shown in the placeholder UI |
-| `app_shell` | Runnable app-first shell aligned to `Protection / Locations / Rules / Profile`, with redeem and support handoff owned as Profile-level actions |
+| `app_shell` | Runnable app-first shell aligned to `Подключение / Локации / Правила / Профиль`, with redeem and support handoff owned as `Профиль`-level actions |
 
 ## Native-Core Artifact Rule
 

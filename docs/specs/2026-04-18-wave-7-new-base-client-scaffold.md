@@ -6,7 +6,7 @@ Scope: `POKROV-app/`
 
 Historical mapping note:
 
-- earlier notes may still refer to `external/pokrov-next-client/`
+- earlier retained-bootstrap notes may still refer to the pre-cutover lane names, but active commands now start from this `POKROV-app` repo root
 - the same lane was then normalized to `app-next/` inside the platform repo before bootstrapping this dedicated repo
 - the canonical git lane for this work is now `POKROV-app/main`; older names are bootstrap history only
 - this cleanup wave does not make the lane shipping truth or release truth
@@ -43,7 +43,7 @@ Create a new-base client program seed that gives the global rework a safe future
 - visible product naming stays `POKROV`
 - the app remains `consumer-first` and `app-first`
 - the clean-room lane is the chosen base and keeps four public host targets while production release wiring stays out of scope
-- this wave now records that the earlier `external/pokrov-next-client/` and `app-next/` bootstrap lanes resolve to the canonical `POKROV-app/main` repo
+- this wave now records that the earlier bootstrap lane names resolve to the canonical `POKROV-app/main` repo
 - `sing-box` stays the default core and `xray` remains advanced fallback only
 - real public cutover still depends on signed provenance, device proof, and store-ready runtime evidence
 - the first-run happy path stays `open app -> Try free -> get real access -> Connect`
@@ -78,7 +78,7 @@ The seed is complete when:
 - `melos.yaml`: workspace discovery for host apps and packages
 - `apps/*/pubspec.yaml`: seed host package manifests
 - `packages/*/pubspec.yaml`: shared package manifests
-- `packages/app_shell/lib/app_shell.dart`: runnable shared shell that is now locked to `Protection / Locations / Rules / Profile`
+- `packages/app_shell/lib/app_shell.dart`: runnable shared shell that is now locked to `Подключение / Локации / Правила / Профиль`
 - `config/platform-matrix.seed.json`: four-platform scope map with one thin host shell per public target
 - `config/runtime-profile.seed.json`: runtime facts snapshot for the seed lane, including free-tier and monetization rules
 - `config/templates/*`: local-only config templates
@@ -91,10 +91,10 @@ The seed is complete when:
 
 ## Current Runtime Coverage
 
-- The `Protection` lane now reflects `Try free`, external checkout-only monetization, the managed `activation key -> redeem -> managed profile` story, and a live app-first bootstrap for Android and Windows.
+- The `Подключение` lane now reflects `Try free`, external checkout-only monetization, the managed `activation key -> redeem -> managed profile` story, and a live app-first bootstrap for Android and Windows.
 - Route-mode UX already models `Full tunnel`, `Selected apps`, and `All except RU`, while respecting host support for split tunneling.
 - Locations already show `Auto-select best` plus the fixed transport ordering `VLESS+REALITY`, `VMess`, `Trojan`, `XHTTP`, with launch gating for `XHTTP`.
-- `Profile` now owns free fallback, community bonus, redeem entry, and support-safe handoff surfaces, with any standalone support leftovers treated as transitional seed UI rather than final product IA.
+- `Профиль` now owns free fallback, community bonus, redeem entry, and support-safe handoff surfaces, with any standalone support leftovers treated as transitional seed UI rather than final product IA.
 - Windows now uses real `libcore` FFI loading, live managed-profile bootstrap, and build-verified runtime startup.
 - Windows now also has a local unsigned build-and-package helper that verifies bundle composition and prerelease metadata.
 - macOS now has bundle-aware runtime discovery and host artifact copy wiring.

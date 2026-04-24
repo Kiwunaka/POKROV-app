@@ -6,7 +6,7 @@ This document is the concrete Windows readiness note for the `POKROV-app` lane.
 
 Historical mapping note:
 
-- older notes may still reference `external/pokrov-next-client/` or `app-next/`
+- older retained-bootstrap notes may still reference `app-next/`, but active commands now start from this `POKROV-app` repo root
 - the initial local snapshot for this repo was bootstrapped from `C:/Users/kiwun/Documents/ai/VPN/app-next/`
 - this document now tracks the Windows readiness of the canonical `POKROV-app` repo lane
 

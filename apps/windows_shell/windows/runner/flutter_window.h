@@ -34,6 +34,10 @@ class FlutterWindow : public Win32Window {
   // Opens app-first handoff links in the user's default browser/app.
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
       external_link_channel_;
+
+  // Lists running desktop applications for selected-app routing.
+  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
+      app_picker_channel_;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

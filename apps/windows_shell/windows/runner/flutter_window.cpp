@@ -4,22 +4,36 @@
 #include <flutter/method_result_functions.h>
 #include <flutter/standard_method_codec.h>
 #include <shellapi.h>
+#include <tlhelp32.h>
 #include <optional>
+#include <set>
 #include <string>
 
 #include "flutter/generated_plugin_registrant.h"
 
 namespace {
 constexpr char kExternalLinkChannelName[] = "space.pokrov/external_link";
+constexpr char kAppPickerChannelName[] = "space.pokrov/app_picker";
 constexpr char kOpenExternalMethod[] = "openExternal";
+constexpr char kListSelectableAppsMethod[] = "listSelectableApps";
 
 bool StartsWith(const std::string& value, const std::string& prefix) {
   return value.rfind(prefix, 0) == 0;
 }
 
 bool IsAllowedExternalTarget(const std::string& target) {
-  return StartsWith(target, "https://") || StartsWith(target, "http://") ||
-         StartsWith(target, "tg://") || StartsWith(target, "mailto:");
+  if (StartsWith(target, "tg://") || StartsWith(target, "mailto:")) {
+    return true;
+  }
+  if (!StartsWith(target, "https://")) {
+    return false;
+  }
+  return target.find("https://pokrov.space") == 0 ||
+         target.find("https://app.pokrov.space") == 0 ||
+         target.find("https://api.pokrov.space") == 0 ||
+         target.find("https://connect.pokrov.space") == 0 ||
+         target.find("https://pay.pokrov.space") == 0 ||
+         target.find("https://t.me/") == 0;
 }
 
 std::string ExtractTarget(const flutter::EncodableValue* arguments) {
@@ -57,6 +71,60 @@ std::wstring Utf8ToWide(const std::string& value) {
   MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, value.data(),
                       static_cast<int>(value.size()), wide.data(), size);
   return wide;
+}
+
+std::string WideToUtf8(const std::wstring& value) {
+  if (value.empty()) {
+    return "";
+  }
+  const int size = WideCharToMultiByte(CP_UTF8, 0, value.data(),
+                                       static_cast<int>(value.size()), nullptr,
+                                       0, nullptr, nullptr);
+  if (size <= 0) {
+    return "";
+  }
+  std::string utf8(size, '\0');
+  WideCharToMultiByte(CP_UTF8, 0, value.data(),
+                      static_cast<int>(value.size()), utf8.data(), size,
+                      nullptr, nullptr);
+  return utf8;
+}
+
+flutter::EncodableList ListRunningDesktopApps() {
+  flutter::EncodableList apps;
+  std::set<std::wstring> seen;
+  HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if (snapshot == INVALID_HANDLE_VALUE) {
+    return apps;
+  }
+
+  PROCESSENTRY32W entry = {};
+  entry.dwSize = sizeof(PROCESSENTRY32W);
+  if (Process32FirstW(snapshot, &entry)) {
+    do {
+      std::wstring exe(entry.szExeFile);
+      if (exe.empty() || seen.count(exe) > 0) {
+        continue;
+      }
+      seen.insert(exe);
+      const std::string name = WideToUtf8(exe);
+      if (name.empty()) {
+        continue;
+      }
+      flutter::EncodableMap app;
+      app[flutter::EncodableValue("id")] = flutter::EncodableValue(name);
+      app[flutter::EncodableValue("name")] = flutter::EncodableValue(name);
+      app[flutter::EncodableValue("source")] =
+          flutter::EncodableValue("process");
+      apps.emplace_back(app);
+      if (apps.size() >= 80) {
+        break;
+      }
+    } while (Process32NextW(snapshot, &entry));
+  }
+
+  CloseHandle(snapshot);
+  return apps;
 }
 }  // namespace
 
@@ -112,6 +180,21 @@ bool FlutterWindow::OnCreate() {
         result->Success(flutter::EncodableValue(
             reinterpret_cast<intptr_t>(launched) > 32));
       });
+  app_picker_channel_ = std::make_unique<
+      flutter::MethodChannel<flutter::EncodableValue>>(
+      flutter_controller_->engine()->messenger(), kAppPickerChannelName,
+      &flutter::StandardMethodCodec::GetInstance());
+  app_picker_channel_->SetMethodCallHandler(
+      [](const flutter::MethodCall<flutter::EncodableValue>& call,
+         std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
+             result) {
+        if (call.method_name() != kListSelectableAppsMethod) {
+          result->NotImplemented();
+          return;
+        }
+
+        result->Success(flutter::EncodableValue(ListRunningDesktopApps()));
+      });
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -130,6 +213,10 @@ void FlutterWindow::OnDestroy() {
   if (external_link_channel_) {
     external_link_channel_->SetMethodCallHandler(nullptr);
     external_link_channel_ = nullptr;
+  }
+  if (app_picker_channel_) {
+    app_picker_channel_->SetMethodCallHandler(nullptr);
+    app_picker_channel_ = nullptr;
   }
 
   if (flutter_controller_) {
