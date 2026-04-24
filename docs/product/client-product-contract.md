@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-04-23
+Last updated: 2026-04-24
 
 ## Document Status
 
@@ -21,10 +21,10 @@ This repo is the canonical client-development lane for `POKROV`.
 The target user journey is:
 
 1. open the app
-2. tap `Try free`
+2. complete the short three-step Russian onboarding
 3. choose how this device should work
 4. receive a real working subscription
-5. tap `Connect`
+5. tap the main connection action
 
 Telegram is optional for first launch, trial activation, and normal daily use.
 It remains a recovery, reward, community, and fallback-support surface rather than the primary login wall.
@@ -49,7 +49,7 @@ Additive email auth for the site and cabinet is marked `soon` and must stay expl
 - public recovery order: `POKROV app -> web cabinet -> Telegram fallback`
 - public wording must avoid direct-meaning `VPN` copy outside legacy compatibility labels
 - public browser surface split is checkout-first `marketing` plus continuation-first `webapp`, with public email continuation still marked `soon`
-- the current front-end reset is atlas-driven and keeps the client shell locked to `Protection / Locations / Rules / Profile` while public acquisition moves to `marketing`
+- the current front-end reset is atlas-driven and keeps the client shell locked to `Подключение / Локации / Правила / Профиль` while public acquisition moves to `marketing`
 
 ## Release Gate Reality
 
@@ -67,7 +67,8 @@ Additive email auth for the site and cabinet is marked `soon` and must stay expl
 The user sees:
 
 - a clear brand/trust message
-- a `Try free` primary CTA
+- the real POKROV mark from the checked-in brand asset
+- a Russian trial-start primary CTA
 - short copy explaining that the trial activates on this device
 
 The app should not require:
@@ -81,19 +82,29 @@ The app should not require:
 
 The client receives a real working profile, imports it silently, and lands on the daily-use shell.
 
-Primary navigation:
+Primary navigation in the Russian client shell:
 
-1. `Protection`
-2. `Locations`
-3. `Rules`
-4. `Profile`
+1. `Подключение`
+2. `Локации`
+3. `Правила`
+4. `Профиль`
 
-Nested under `Profile`:
+Nested under `Профиль`:
 
-- `Support`
-- `Devices`
-- `Subscription`
-- `Settings`
+- `Поддержка`
+- `Устройства`
+- `Подписка`
+- `Настройки`
+
+Shell design rule:
+
+- the current Flutter shell uses the white/mint premium utility direction
+- Android uses the compact tab layout
+- Windows uses a desktop sidebar and constrained card-grid surface instead of a stretched phone layout
+- the app exposes `System`, `Light`, and `Dark` theme choices from `Профиль -> Настройки`
+- first-layer copy is Russian and avoids raw protocol, config, host, or personal-link internals
+- the shell has one current redesign contract; do not preserve a separate old redesign path or alternate subtitle treatment
+- visible brand copy stays `POKROV`; old subtitle lines and longer trial promises are stale
 
 Public consumer surfaces must not expose raw hostnames, ports, public IP, raw config editors, JSON/profile editors, or local-control surfaces in the first-layer path.
 
@@ -109,7 +120,7 @@ Product rules for that choice:
 
 - the first choice is about device scope, not raw transport details
 - `Optimize everything on this device` is the recommended default and stays `TUN`-first
-- the device-wide path defaults the visible `Rules` story to `All except RU`
+- the device-wide path defaults the visible `Правила` story to `Все, кроме РФ`
 - `Full tunnel` stays available as the direct device-wide fallback
 - `Only selected apps` is the split-tunneling path
 - Windows should use an executable or process picker for selected apps
@@ -125,7 +136,7 @@ Product rules for that choice:
 Before the device receives a real subscription payload:
 
 - the onboarding card remains the primary connection surface
-- `Locations` stays gated and must not show fake/demo countries
+- `Локации` stays gated and must not show fake/demo countries
 - `Support` may prepare context, but real ticket history appears only after a linked session exists
 - Telegram remains optional and secondary
 
@@ -134,6 +145,7 @@ Before the device receives a real subscription payload:
 - purchase and renewal stay available from the app
 - the client continues payment through the canonical hosted checkout on `https://pay.pokrov.space/checkout/`
 - checkout opens in the external browser or external application rather than native store billing in this wave
+- browser, Telegram, feedback, support, and redeem handoffs should call a real external-link launcher; where a host has not implemented a launcher plugin yet, the shared shell must keep an explicit testable launcher abstraction instead of relying on snackbar-only copy
 - Telegram purchase continuation may remain as a fallback path, not the default CTA
 - public acquisition outside the app is checkout-first on `marketing`, while the cabinet stays a continuation surface rather than a second acquisition page
 

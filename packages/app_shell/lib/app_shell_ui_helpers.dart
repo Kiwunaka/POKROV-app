@@ -29,7 +29,7 @@ class _ProfileHubTile extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: background,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: _SeedPalette.line),
         ),
         child: Column(

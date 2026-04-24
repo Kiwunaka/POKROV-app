@@ -101,30 +101,30 @@ extension AccessLanePresentation on AccessLane {
   String get label {
     switch (this) {
       case AccessLane.trialPremium:
-        return 'Trial premium';
+        return 'Пробный доступ';
       case AccessLane.bonusPremium:
-        return 'Bonus premium';
+        return 'Бонусный доступ';
       case AccessLane.paidUnlimited:
-        return 'Paid unlimited';
+        return 'Премиум';
       case AccessLane.freeMonthly:
-        return 'Free monthly';
+        return 'Базовый доступ';
       case AccessLane.freeSoftMode:
-        return 'Free soft mode';
+        return 'Мягкий режим';
     }
   }
 
   String get summary {
     switch (this) {
       case AccessLane.trialPremium:
-        return 'Try free gives this device full access for 5 days.';
+        return 'Пробный период дает этому устройству полный доступ на 5 дней.';
       case AccessLane.bonusPremium:
-        return 'Link Telegram to claim one extra +10 day extension.';
+        return 'Привяжите Telegram, чтобы получить разовый бонус +10 дней.';
       case AccessLane.paidUnlimited:
-        return 'Paid access keeps every enabled non-free location available without data limits.';
+        return 'Премиум открывает все доступные платные локации без лимита трафика.';
       case AccessLane.freeMonthly:
-        return 'After the premium period, the app keeps a lighter NL-free connection with a renewable quota.';
+        return 'После премиум-периода остается базовое подключение с обновляемой квотой.';
       case AccessLane.freeSoftMode:
-        return 'If the monthly quota runs out, the app keeps things calm and points you to renew or get help.';
+        return 'Если месячная квота закончится, приложение спокойно подскажет продление или помощь.';
     }
   }
 }
@@ -133,22 +133,22 @@ extension RouteModePresentation on RouteMode {
   String get label {
     switch (this) {
       case RouteMode.fullTunnel:
-        return 'Full tunnel';
+        return 'Полный режим';
       case RouteMode.selectedApps:
-        return 'Only selected apps';
+        return 'Только выбранные приложения';
       case RouteMode.allExceptRu:
-        return 'All except RU';
+        return 'Все, кроме РФ';
     }
   }
 
   String get summary {
     switch (this) {
       case RouteMode.fullTunnel:
-        return 'Send all traffic on this device through POKROV.';
+        return 'Все соединения на устройстве идут через POKROV.';
       case RouteMode.selectedApps:
-        return 'Only the apps you choose use POKROV. Everything else stays direct.';
+        return 'POKROV используют только выбранные приложения. Остальное остается напрямую.';
       case RouteMode.allExceptRu:
-        return 'Keep Russian and local services direct while protecting the rest of the device.';
+        return 'Российские и локальные сервисы остаются напрямую, остальное идет через POKROV.';
     }
   }
 }
@@ -172,9 +172,9 @@ extension VariantAvailabilityPresentation on VariantAvailability {
   String get label {
     switch (this) {
       case VariantAvailability.live:
-        return 'Live';
+        return 'Доступно';
       case VariantAvailability.gated:
-        return 'Launch gated';
+        return 'Готовится';
     }
   }
 }
@@ -210,9 +210,9 @@ class FreeTierPolicy {
   final int deviceLimit;
   final String nodePool;
 
-  String get quotaSummary => '$trafficGb GB / $periodDays days';
-  String get speedSummary => '$speedMbps Mbps per IP';
-  String get deviceSummary => 'Up to $deviceLimit device';
+  String get quotaSummary => '$trafficGb ГБ / $periodDays дней';
+  String get speedSummary => '$speedMbps Мбит/с на IP';
+  String get deviceSummary => 'До $deviceLimit устройства';
 }
 
 class RuntimeProfile {

@@ -1,6 +1,6 @@
 # POKROV App Docs
 
-Last updated: 2026-04-23
+Last updated: 2026-04-24
 
 This folder holds the living client-repo documentation for `POKROV-app/main`.
 
@@ -9,6 +9,9 @@ Current direction note:
 - the front-end rebuild is an atlas-driven shell reset across the app shell and browser handoff surfaces
 - `marketing` owns public acquisition, `webapp` owns browser continuation, and the client shell stays locked to `Protection / Locations / Rules / Profile`
 - public-facing wording should stay calm and non-technical even when the underlying runtime remains transport-rich
+- the active shell uses the white/mint premium utility direction and must not keep a parallel old-redesign path
+- first-layer app copy must not expose protocol, runtime, local-control, raw profile, hostname, or port terms
+- old subtitles and longer trial promises are stale; current client copy follows `POKROV` and `5 days`
 
 Historical mapping note:
 

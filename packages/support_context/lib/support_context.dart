@@ -22,8 +22,8 @@ class SupportSnapshot {
   final int channelBonusDays;
 
   String get summary =>
-      'Get help in $supportBot, $feedbackBot, or by email at $supportEmail. Updates live in $publicChannel.';
+      'Поддержка: $supportBot, обратная связь: $feedbackBot, почта: $supportEmail. Новости выходят в $publicChannel.';
 
   String get communityBonusSummary =>
-      'Join $publicChannel, then claim your one-time +$channelBonusDays day bonus.';
+      'Подпишитесь на $publicChannel и заберите разовый бонус +$channelBonusDays дней.';
 }
