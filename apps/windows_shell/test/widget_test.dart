@@ -4,7 +4,8 @@ import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 
 void main() {
-  testWidgets('windows shell boots the shared protection surface', (tester) async {
+  testWidgets('windows shell boots the shared protection surface',
+      (tester) async {
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
@@ -15,16 +16,9 @@ void main() {
     expect(find.text('Protection'), findsWidgets);
     expect(find.text('POKROV'), findsOneWidget);
 
-    final initializeRuntime = find.text('Prime runtime');
-    await tester.dragUntilVisible(
-      initializeRuntime,
-      find.byType(Scrollable).first,
-      const Offset(0, -240),
-    );
-    await tester.pumpAndSettle();
-
-    expect(initializeRuntime, findsOneWidget);
-    expect(find.text('Stage local smoke profile'), findsOneWidget);
-    expect(find.text('Connect now'), findsOneWidget);
+    expect(find.text('Prime runtime'), findsNothing);
+    expect(find.text('Stage local smoke profile'), findsNothing);
+    expect(find.text('Connect now'), findsNothing);
+    expect(find.text('Finish setup first'), findsOneWidget);
   });
 }

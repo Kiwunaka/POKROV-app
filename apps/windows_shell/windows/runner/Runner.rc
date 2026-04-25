@@ -92,9 +92,9 @@ BEGIN
             VALUE "CompanyName", "space.pokrov" "\0"
             VALUE "FileDescription", "POKROV" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "pokrov_windows_seed" "\0"
+            VALUE "InternalName", "pokrov_windows_beta" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 space.pokrov. All rights reserved." "\0"
-            VALUE "OriginalFilename", "pokrov_windows_seed.exe" "\0"
+            VALUE "OriginalFilename", "pokrov_windows_beta.exe" "\0"
             VALUE "ProductName", "POKROV" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END

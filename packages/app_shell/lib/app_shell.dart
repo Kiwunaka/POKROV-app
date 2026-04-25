@@ -7,6 +7,7 @@ import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_platform_contracts/platform_contracts.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_context/support_context.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'app_first_runtime_bootstrap.dart';
 export 'app_first_runtime_bootstrap.dart';
@@ -24,6 +25,8 @@ enum _SectionTone {
   muted,
   neutral,
 }
+
+typedef ExternalHandoffLauncher = Future<bool> Function(Uri uri);
 
 abstract final class _SeedPalette {
   static const canvas = Color(0xFFF4F0E7);
@@ -220,7 +223,7 @@ SeedAppContext buildSeedAppContext({
       publicChannel: '@pokrov_vpn',
       supportEmail: 'support@pokrov.space',
       safeNotes:
-          'The seed shell can now validate runtime artifacts and initialize libcore on supported desktop hosts.',
+          'Support receives safe device context only: app version, platform, route mode, and connection status.',
       recommendedRouteMode: RouteMode.allExceptRu,
       channelBonusDays: 10,
     ),
@@ -254,7 +257,7 @@ SeedAppContext buildSeedAppContext({
       _cabinetUrlOverride,
       'https://app.pokrov.space/',
     ),
-    redeemHint: 'POKROV-START-2026',
+    redeemHint: '',
     managedProfileSeed: _seedManagedProfilePayload,
   );
 }
@@ -264,10 +267,12 @@ class PokrovSeedApp extends StatelessWidget {
     super.key,
     required this.appContext,
     this.bootstrapper,
+    this.handoffLauncher,
   });
 
   final SeedAppContext appContext;
   final ManagedProfileBootstrapper? bootstrapper;
+  final ExternalHandoffLauncher? handoffLauncher;
 
   @override
   Widget build(BuildContext context) {
@@ -350,6 +355,7 @@ class PokrovSeedApp extends StatelessWidget {
       home: PokrovSeedShell(
         appContext: appContext,
         bootstrapper: bootstrapper,
+        handoffLauncher: handoffLauncher,
       ),
     );
   }
@@ -360,10 +366,12 @@ class PokrovSeedShell extends StatefulWidget {
     super.key,
     required this.appContext,
     this.bootstrapper,
+    this.handoffLauncher,
   });
 
   final SeedAppContext appContext;
   final ManagedProfileBootstrapper? bootstrapper;
+  final ExternalHandoffLauncher? handoffLauncher;
 
   @override
   State<PokrovSeedShell> createState() => _PokrovSeedShellState();
@@ -408,12 +416,73 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  void _showSeedHandoff(String label, String value) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Next step: $label -> $value'),
-      ),
+  Future<bool> _launchExternalHandoff(Uri uri) {
+    final launcher = widget.handoffLauncher ??
+        (Uri target) => launchUrl(
+              target,
+              mode: LaunchMode.externalApplication,
+            );
+    return launcher(uri);
+  }
+
+  Future<void> _openSafeHandoff(String label, String value) async {
+    final uri = _safeHandoffUri(
+      label: label,
+      value: value,
+      cabinetUrl: widget.appContext.cabinetUrl,
     );
+    if (uri == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter an activation key first.')),
+      );
+      return;
+    }
+
+    final opened = await _launchExternalHandoff(uri);
+    if (!mounted) {
+      return;
+    }
+    if (!opened) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Open this in your browser: $uri')),
+      );
+    }
+  }
+
+  void _showSeedHandoff(String label, String value) {
+    unawaited(_openSafeHandoff(label, value));
+  }
+
+  Uri? _safeHandoffUri({
+    required String label,
+    required String value,
+    required String cabinetUrl,
+  }) {
+    final trimmed = value.trim();
+    switch (label) {
+      case 'checkout':
+      case 'cabinet':
+      case 'download':
+        return Uri.tryParse(trimmed);
+      case 'redeem':
+        if (trimmed.isEmpty) {
+          return null;
+        }
+        return Uri.parse(cabinetUrl).replace(
+          path: '/redeem',
+          queryParameters: <String, String>{'code': trimmed},
+        );
+      case 'community':
+      case 'support':
+      case 'feedback':
+        final handle = trimmed.replaceFirst('@', '');
+        if (handle.isEmpty) {
+          return null;
+        }
+        return Uri.https('t.me', '/$handle');
+      default:
+        return Uri.tryParse(trimmed);
+    }
   }
 
   Future<RuntimeSnapshot> _runRuntimeAction(
@@ -1136,6 +1205,16 @@ class _ProfileSection extends StatelessWidget {
                 icon: const Icon(Icons.web),
                 label: const Text('Open cabinet'),
               ),
+              OutlinedButton.icon(
+                onPressed: () => onOpenHandoff(
+                  'download',
+                  Uri.parse(appContext.cabinetUrl)
+                      .replace(path: '/downloads')
+                      .toString(),
+                ),
+                icon: const Icon(Icons.download_outlined),
+                label: const Text('Open downloads'),
+              ),
             ],
           ),
         ),
@@ -1189,7 +1268,7 @@ class _ProfileSection extends StatelessWidget {
               if (appContext.bootstrapContract.supportsSelectedAppsMode)
                 const _KeyValueLine(
                   label: 'Selected apps',
-                  value: 'Adjust this from Rules when needed',
+                  value: 'Beta MVP: route sync only',
                 ),
             ],
           ),
@@ -1298,6 +1377,14 @@ class _RulesSection extends StatelessWidget {
                 : '${RouteMode.selectedApps.label}: not available on ${appContext.hostPlatform.label} yet.',
           ],
         ),
+        if (selectedAppsAvailable)
+          const _SectionCard(
+            title: 'Selected apps beta status',
+            lines: [
+              'Picker support is limited in this beta.',
+              'The app keeps this as an explicit route-mode choice while per-app selection UI and OS enforcement finish.',
+            ],
+          ),
         _SectionCard(
           title: 'What changes here',
           lines: [

@@ -71,7 +71,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
   final Duration _allExceptRuRuleSetCacheMaxAge;
   final List<String> Function(String tag)? _allExceptRuRuleSetUrlsResolver;
 
-  static const _appVersion = '0.1.0-seed.2';
+  static const _appVersion = '0.2.0-beta.1';
   static const _defaultManagedManifestPath = '/api/client/profile/managed';
   static const _androidShellPackageName = 'space.pokrov.pokrov_android_shell';
   static const _allExceptRuRuleSetCacheDirectoryName =
@@ -284,7 +284,6 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
         'app_version': _appVersion,
         'locale': _trim(Platform.localeName, 32),
         'time_zone': _trim(DateTime.now().timeZoneName, 64),
-        'trial_days': 5,
       },
       hostPlatform: hostPlatform,
     );

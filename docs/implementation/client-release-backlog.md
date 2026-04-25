@@ -1,6 +1,6 @@
 # POKROV Client Release Backlog
 
-Last updated: 2026-04-23
+Last updated: 2026-04-25
 
 ## Document Status
 
@@ -8,7 +8,7 @@ This file tracks the current public-release blockers and follow-up backlog for `
 
 ## Current Status
 
-The app-first foundation and the consumer information architecture are in place in the new client repo, but public Android+Windows release approval is still blocked.
+The app-first foundation and the consumer information architecture are in place in the new client repo, but public Android+Windows release approval is still blocked. The current W07 paid beta evidence line is `0.2.0-beta.1`.
 
 Latest documented repo-level gate note:
 
@@ -18,6 +18,7 @@ Latest documented repo-level gate note:
 Already verified locally by the current engineering lane:
 
 - app-first `Try free` bootstrap with real session persistence
+- client no longer sends caller-controlled `trial_days`; the backend owns the canonical 5-day trial
 - silent managed-profile import and activation
 - quick-connect shell flow
 - route-mode onboarding groundwork
@@ -49,6 +50,8 @@ Already verified locally by the current engineering lane:
 - keep Windows package identity, executable naming, installer naming, and public artifacts on the canonical `POKROV` / `pokrov` line
 - build fresh Android and Windows release candidates after the latest branding sync
 - sign the final Android and Windows artifacts for public distribution
+- keep Android APKs internal-only and public-blocked until trusted signing plus the physical localhost/control-surface audit pass
+- keep Windows unsigned bundles gated and beta-labeled, with explicit SmartScreen or unknown-publisher warning text
 - keep runtime download handoff aligned with the currently exposed public targets: Android `Play` / `APK` / mirror and Windows `EXE` / mirror
 - keep `AAB`, `MSIX`, and portable `ZIP` aligned as store/operator artifacts unless the public payload expands
 
@@ -78,6 +81,7 @@ Already verified locally by the current engineering lane:
 - keep `/api/client/apps` payloads, install docs, and signed release handoff aligned
 - rebuild or redeploy static download surfaces whenever public Android or Windows URLs change
 - keep public-facing version labels on `0.x.x-beta` across client, docs, and release notes
+- selected-apps remains a beta MVP unless Android package picking, Windows process picking, persistence, and OS enforcement are all proven
 
 ## Explicit Non-Blockers In This Wave
 

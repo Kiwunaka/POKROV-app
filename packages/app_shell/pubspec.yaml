@@ -1,7 +1,7 @@
 name: pokrov_app_shell
-description: Seed app shell widgets for the POKROV next client program.
+description: Beta app shell widgets for the POKROV client program.
 publish_to: none
-version: 0.1.0-seed.1
+version: 0.2.0-beta.1
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -18,6 +18,7 @@ dependencies:
     path: ../runtime_engine
   pokrov_support_context:
     path: ../support_context
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,6 @@
 # App-First Onboarding Flow
 
-Last updated: 2026-04-23
+Last updated: 2026-04-25
 
 ## Document Status
 
@@ -44,6 +44,7 @@ UX guardrail:
 
 - the client start-trial request must not send caller-controlled `trial_days`
 - the backend always enforces the fixed `5-day` trial from shared truth
+- W07 client behavior follows this rule: the request carries device/app context only, while the backend owns duration and entitlement issuance
 - `provisioning.status` must expose whether the profile is ready immediately or still pending sync
 - the app should read one additive `client_policy` contract from `start-trial`, `dashboard`, and user-refresh flows instead of inferring defaults from stale local assumptions
 - the same additive contract should carry the current route-mode state so app, cabinet, and support see one device truth
@@ -97,6 +98,7 @@ Current implementation bridge:
 - the client persists `Only selected apps` through backend `route_mode=selected_apps`
 - the client persists both device-wide routes through backend `route_mode=all_traffic`
 - the visible distinction between `All except RU` and `Full tunnel` therefore remains a client `Rules` choice until the backend grows a dedicated device-behavior field
+- selected-apps is beta-limited in W07: the UI labels it honestly while picker and OS enforcement work remains open
 
 ## Managed Provisioning And Smart Connect
 
@@ -185,6 +187,7 @@ Support rules:
 - static marketing download CTA is build-time and must be rebuilt or redeployed when public Android or Windows URLs change
 - `AAB`, `MSIX`, and portable `ZIP` remain store/operator artifacts rather than first-layer client download targets
 - public-facing build surfaces should present the beta line `0.x.x-beta`
+- app handoffs for checkout, cabinet downloads, support, community, feedback, and key redemption open safe external destinations instead of exposing raw profiles or local control surfaces
 
 ## Release And Audit Expectations
 

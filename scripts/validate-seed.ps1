@@ -279,8 +279,8 @@ $windowsReleaseConfigPath = Join-Path $root "config\\windows-release.seed.json"
 if (Test-Path -LiteralPath $windowsReleaseConfigPath -PathType Leaf) {
   $windowsReleaseConfig = Get-Content -Raw -LiteralPath $windowsReleaseConfigPath | ConvertFrom-Json
 
-  if ($windowsReleaseConfig.binary_name -ne "pokrov_windows_seed.exe") {
-    $manifestErrors.Add("config\\windows-release.seed.json must keep binary_name as pokrov_windows_seed.exe")
+  if ($windowsReleaseConfig.binary_name -ne "pokrov_windows_beta.exe") {
+    $manifestErrors.Add("config\\windows-release.seed.json must keep binary_name as pokrov_windows_beta.exe")
   }
 
   if ($windowsReleaseConfig.runtime.platform -ne "windows") {
@@ -291,7 +291,7 @@ if (Test-Path -LiteralPath $windowsReleaseConfigPath -PathType Leaf) {
     $manifestErrors.Add("config\\windows-release.seed.json must keep runtime.artifact_directory on apps/windows_shell/windows/runner/resources/runtime")
   }
 
-  foreach ($requiredPath in @("pokrov_windows_seed.exe", "libcore.dll", "data/app.so")) {
+  foreach ($requiredPath in @("pokrov_windows_beta.exe", "libcore.dll", "data/app.so")) {
     if (@($windowsReleaseConfig.required_files) -notcontains $requiredPath) {
       $manifestErrors.Add("config\\windows-release.seed.json must list required build file '$requiredPath'")
     }

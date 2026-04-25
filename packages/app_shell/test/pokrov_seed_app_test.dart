@@ -83,6 +83,76 @@ void main() {
     expect(redeemPanel, findsWidgets);
   });
 
+  testWidgets('profile handoffs open safe external destinations',
+      (tester) async {
+    final opened = <Uri>[];
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        handoffLauncher: (uri) async {
+          opened.add(uri);
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profile').last);
+    await tester.pumpAndSettle();
+
+    final checkout = find.text('Continue to checkout');
+    await tester.dragUntilVisible(
+      checkout,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(checkout);
+    await tester.pumpAndSettle();
+
+    expect(opened.single.toString(),
+        'https://pay.pokrov.space/checkout/?plan=1_month');
+
+    final support = find.text('Contact support');
+    await tester.dragUntilVisible(
+      support,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(support);
+    await tester.pumpAndSettle();
+
+    expect(opened.last.toString(), 'https://t.me/pokrov_supportbot');
+  });
+
+  testWidgets('selected apps status is explicit beta MVP copy', (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Rules').last);
+    await tester.pumpAndSettle();
+
+    final selectedAppsStatus = find.text('Selected apps beta status');
+    await tester.dragUntilVisible(
+      selectedAppsStatus,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+
+    expect(selectedAppsStatus, findsOneWidget);
+    expect(
+      find.textContaining('Picker support is limited in this beta'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
       'android protection surface keeps degraded runtime messaging consumer friendly',
       (tester) async {
@@ -757,6 +827,7 @@ void main() {
         ]),
       );
       expect(appContext.runtimeProfile.freeTier.speedMbps, 50);
+      expect(appContext.redeemHint, isEmpty);
       expect(appContext.locations, hasLength(1));
     }
   });

@@ -18,7 +18,20 @@ void main() {
 
     final requiredFiles =
         (releaseJson['required_files'] as List<dynamic>).cast<String>();
+    expect(releaseJson['channel'], 'gated_beta');
+    expect(releaseJson['binary_name'], 'pokrov_windows_beta.exe');
+    expect(releaseJson['public_approved'], isFalse);
+    expect(releaseJson['artifact_status'], 'unsigned_beta');
     expect(requiredFiles, isNot(contains('HiddifyCli.exe')));
+    expect(requiredFiles, contains('pokrov_windows_beta.exe'));
+    expect(requiredFiles, isNot(contains('pokrov_windows_seed.exe')));
+
+    final signing = releaseJson['signing'] as Map<String, dynamic>;
+    expect(signing['status'], 'unsigned_beta_blocker');
+    expect(
+      (signing['user_warning'] as String).toLowerCase(),
+      contains('smartscreen'),
+    );
 
     final runtime = releaseJson['runtime'] as Map<String, dynamic>;
     expect(runtime.containsKey('helper_binary'), isFalse);

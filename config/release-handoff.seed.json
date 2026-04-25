@@ -22,35 +22,39 @@
     "cutover_readiness_source": "config/cutover-readiness.seed.json"
   },
   "latest_repo_backed_release": {
-    "channel": "engineering_alpha",
-    "version": "0.1.0-seed.1+20260423",
-    "archive_root": "artifacts/releases/pokrov-app/0.1.0-seed.1+20260423",
-    "readme": "artifacts/releases/pokrov-app/0.1.0-seed.1+20260423/README.md",
-    "checksums": "artifacts/releases/pokrov-app/0.1.0-seed.1+20260423/SHA256SUMS.txt",
+    "channel": "paid_beta_evidence",
+    "version": "0.2.0-beta.1+20260425",
+    "archive_root": "artifacts/releases/pokrov-app/0.2.0-beta.1+20260425",
+    "readme": "artifacts/releases/pokrov-app/0.2.0-beta.1+20260425/README.md",
+    "checksums": null,
     "artifacts": [
       {
         "platform": "android",
         "kind": "apk",
-        "file_name": "pokrov-app-android-release.apk",
-        "canonical_label": "android_alpha_apk"
+        "file_name": null,
+        "canonical_label": "android_internal_beta_apk_public_blocked",
+        "public_approved": false
       },
       {
         "platform": "android",
         "kind": "aab",
-        "file_name": "pokrov-app-android-release.aab",
-        "canonical_label": "android_alpha_app_bundle"
+        "file_name": null,
+        "canonical_label": "android_store_bundle_blocked",
+        "public_approved": false
       },
       {
         "platform": "windows",
         "kind": "zip",
-        "file_name": "pokrov-next-windows-seed-x64-0.1.0-seed.1.zip",
-        "canonical_label": "windows_alpha_unsigned_bundle_zip"
+        "file_name": "pokrov-windows-beta-x64-0.2.0-beta.1.zip",
+        "canonical_label": "windows_gated_unsigned_beta_bundle_zip",
+        "public_approved": false
       },
       {
         "platform": "windows",
         "kind": "manifest",
-        "file_name": "pokrov-next-windows-seed-x64-0.1.0-seed.1.manifest.json",
-        "canonical_label": "windows_alpha_unsigned_bundle_manifest"
+        "file_name": "pokrov-windows-beta-x64-0.2.0-beta.1.manifest.json",
+        "canonical_label": "windows_gated_unsigned_beta_bundle_manifest",
+        "public_approved": false
       }
     ]
   },

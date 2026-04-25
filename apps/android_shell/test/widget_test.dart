@@ -4,7 +4,8 @@ import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 
 void main() {
-  testWidgets('android shell boots the shared protection surface', (tester) async {
+  testWidgets('android shell boots the shared protection surface',
+      (tester) async {
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
@@ -16,7 +17,8 @@ void main() {
     expect(find.text('POKROV'), findsOneWidget);
   });
 
-  testWidgets('android shell exposes route-mode and runtime diagnostics lane', (
+  testWidgets('android shell keeps raw runtime diagnostics out of first layer',
+      (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -26,18 +28,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final scrollable = find.byType(Scrollable).first;
-    await tester.scrollUntilVisible(
-      find.text('Runtime health'),
-      300,
-      scrollable: scrollable,
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Runtime health'), findsOneWidget);
-    expect(find.text('Refresh status'), findsOneWidget);
-    expect(find.text('Prime runtime'), findsOneWidget);
-    expect(find.text('Stage local smoke profile'), findsOneWidget);
-    expect(find.text('Connect now'), findsOneWidget);
+    expect(find.text('Runtime health'), findsNothing);
+    expect(find.text('Prime runtime'), findsNothing);
+    expect(find.text('Stage local smoke profile'), findsNothing);
+    expect(find.text('Connect now'), findsNothing);
   });
 }

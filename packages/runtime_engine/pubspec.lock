@@ -193,7 +193,7 @@ packages:
       path: "../core_domain"
       relative: true
     source: path
-    version: "0.1.0-seed.1"
+    version: "0.2.0-beta.1"
   sky_engine:
     dependency: transitive
     description: flutter

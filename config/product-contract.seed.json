@@ -16,6 +16,7 @@
   "advanced_fallback_core": "xray",
   "trial_days": 5,
   "telegram_bonus_days": 10,
+  "client_version_line": "0.2.0-beta.1",
   "free_tier": {
     "node_pool": "NL-free",
     "traffic_gb": 5,
@@ -33,6 +34,11 @@
     "full_tunnel",
     "selected_apps"
   ],
+  "selected_apps_status": {
+    "android": "beta_mvp_route_sync_only",
+    "windows": "beta_mvp_route_sync_only",
+    "public_claim": "picker_and_os_enforcement_limited_in_beta"
+  },
   "location_variant_order": [
     "vless_reality",
     "vmess",

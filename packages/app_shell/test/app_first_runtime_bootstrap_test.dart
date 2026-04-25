@@ -77,6 +77,7 @@ void main() {
         if (request.uri.path == '/api/client/session/start-trial') {
           final decoded = jsonDecode(body) as Map<String, dynamic>;
           expect(decoded['install_id'], isNotEmpty);
+          expect(decoded.containsKey('trial_days'), isFalse);
           request.response
             ..headers.contentType = ContentType.json
             ..write(

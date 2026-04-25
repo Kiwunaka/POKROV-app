@@ -1,6 +1,6 @@
 # Cutover Readiness
 
-Last updated: 2026-04-23
+Last updated: 2026-04-25
 
 This document tracks what must be true before `POKROV-app/main` is approved as the public `Android + Windows` release lane.
 
@@ -12,19 +12,20 @@ Historical mapping note:
 
 ## Current Status
 
-- cutover state: `engineering green, local repo bootstrapped, public cutover blocked`
+- cutover state: `paid beta evidence lane, public cutover blocked`
 - lane path: `C:/Users/kiwun/Documents/ai/POKROV-app`
 - lane ownership: `canonical client development repo for POKROV-app/main`
 - public scope in this document: `Android + Windows`
 - Apple scope in this wave: `readiness only`
 - base decision: `clean-room selected`
 - Apple release state: `checked-in unsigned service lane`
-- Windows release state: `local unsigned bundle only`
-- Android and Windows engineering verification: `green in local test/build lane`
+- Android release state: `internal beta only / public blocked`
+- Windows release state: `gated unsigned beta artifact only`
+- Android and Windows engineering verification: `requires fresh W07 gate run`
 - public store readiness: `not approved`
 - public cutover approval: `not allowed`
-- public Android release approval: `blocked`
-- public Windows release approval: `blocked`
+- public Android release approval: `blocked until signing plus physical localhost/control-surface audit`
+- public Windows release approval: `blocked until trusted signing and handoff approval`
 - long-term repo truth: `yes`
 - repo-backed alpha or beta archive: `allowed`
 
@@ -51,6 +52,7 @@ This document tracks public release approval and cutover readiness, not whether 
 - [ ] Trusted Android signing material is available
 - [ ] Public download handoff is approved for Android `Play` / `APK` / mirror
 - [ ] Release handoff includes runtime URL verification and origin evidence
+- [ ] Any APK shown to testers is cabinet-gated, beta-labeled, and explicitly marked internal only
 
 Apple checklists below remain readiness-only in this wave.
 They do not expand the public `Android + Windows` release scope tracked by this document.
@@ -86,10 +88,11 @@ They do not expand the public `Android + Windows` release scope tracked by this 
 - [ ] `flutter analyze` passes in `apps/windows_shell`
 - [ ] Shared runtime and widget tests pass
 - [ ] `flutter build windows --release` succeeds
-- [ ] Local release bundle contains `pokrov_windows_seed.exe` and `libcore.dll`
+- [ ] Local release bundle contains `pokrov_windows_beta.exe` and `libcore.dll`
 - [ ] Trusted code-signing identity is available
 - [ ] Installer or `MSIX` publication path is chosen
 - [ ] Public hosting and handoff path are approved
+- [ ] Gated beta download copy warns about Microsoft Defender SmartScreen or unknown-publisher prompts while unsigned
 
 ## Safe Claims
 
@@ -105,6 +108,7 @@ Safe to claim now:
 - iOS now carries checked-in packet-tunnel service code instead of a deliberate scaffold stop
 - operator work needed for signing, notarization, and store prep is now explicit
 - Windows now has a real local runtime build-and-bundle lane with unsigned package staging
+- the current Windows beta artifact may be shared only behind approved beta access with the unsigned warning
 
 Not safe to claim now:
 
@@ -123,5 +127,7 @@ Not safe to claim now:
 Blocked-by note:
 
 - the local repo bootstrap step is complete, but public Android and Windows release approval is still blocked on signing, artifact handoff, Android localhost-audit evidence, and final runtime verification
+- Android remains internal-test-only while the physical-device audit is missing, even if an APK can be built locally
+- Windows remains unsigned-gated beta only until trusted signing and installer or MSIX handoff are ready
 - `POKROV-app/artifacts/releases/pokrov-app/` may retain repo-backed alpha and beta bundles built directly from this lane for engineering and tester handoff
 - rollback and compatibility lanes may still exist elsewhere, but this document tracks approval of the `POKROV-app` release lane itself rather than treating another repo as the primary frame

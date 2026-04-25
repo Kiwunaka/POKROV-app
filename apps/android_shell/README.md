@@ -11,7 +11,7 @@ Current responsibility:
 - preserving backend-managed mobile-safe `dns` and `route` semantics instead of collapsing Android into a seed-only universal DNS profile
 - keeping Android route ownership explicit with `auto_detect_interface`, `override_android_vpn`, and a self-package bypass rule for `space.pokrov.pokrov_android_shell`, so live control traffic does not fold back into the TUN
 - letting `All except RU` classify RU traffic on-device before connect by consuming cached local sing-box `.srs` rule-sets from the shared bootstrapper, while still keeping the older `.ru`, `.xn--p1ai`, and `.su` suffix bypass rules as a fallback if the cache cannot refresh
-- exposing the stronger `Runtime health` diagnostics lane in `Quick Connect`, including refresh, runtime priming, local smoke-profile staging, and direct connect or disconnect controls
+- keeping raw runtime diagnostics and local smoke-profile controls out of the first-layer shell; release diagnostics remain support/internal
 - exporting structured Android host diagnostics into the shared runtime snapshot, including uplink interface and index, DNS readiness, route counts, package-filter counts, and the last failure or stop reason
 - treating Android `running` as healthy only when the post-establish uplink and DNS diagnostics are healthy; otherwise the shell keeps the connect visible as `Connected with warnings`
 - refreshing runtime truth again when the app returns to the foreground and reconciling a live TUN back to `running`, so relaunches do not leave the shared shell stuck on a stale staged state as easily
