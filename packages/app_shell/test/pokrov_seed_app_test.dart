@@ -12,38 +12,17 @@ class _FakeBootstrapper implements ManagedProfileBootstrapper {
   int calls = 0;
   RouteMode? lastRouteMode;
   HostPlatform? lastHostPlatform;
-  List<String> lastSelectedAppIds = const [];
 
   @override
   Future<ManagedProfilePayload> resolveManagedProfile({
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
-    List<String> selectedAppIds = const [],
   }) async {
     calls += 1;
     lastRouteMode = routeMode;
     lastHostPlatform = hostPlatform;
-    lastSelectedAppIds = selectedAppIds;
     return payload;
   }
-}
-
-class _RecordingLinkLauncher implements ExternalLinkLauncher {
-  final targets = <String>[];
-
-  @override
-  Future<bool> openExternal(String target) async {
-    targets.add(target);
-    return true;
-  }
-}
-
-Future<void> _chooseDefaultDeviceRoute(WidgetTester tester) async {
-  final routeChoice = find.text('Оптимизировать все устройство');
-  await tester.ensureVisible(routeChoice);
-  await tester.pumpAndSettle();
-  await tester.tap(routeChoice);
-  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -70,11 +49,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Подключение'), findsWidgets);
-    expect(find.text('Локации'), findsOneWidget);
-    expect(find.text('Правила'), findsOneWidget);
-    expect(find.text('Профиль'), findsOneWidget);
-    final protectionPolicy = find.text('Начало в 3 шага');
+    expect(find.text('Protection'), findsWidgets);
+    expect(find.text('Locations'), findsOneWidget);
+    expect(find.text('Rules'), findsOneWidget);
+    expect(find.text('Profile'), findsOneWidget);
+    final protectionPolicy = find.text('What stays simple');
     await tester.dragUntilVisible(
       protectionPolicy,
       find.byType(Scrollable).first,
@@ -82,7 +61,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(protectionPolicy, findsOneWidget);
-    final runtimeLane = find.text('Состояние подключения');
+    final runtimeLane = find.text('Connection status');
     await tester.dragUntilVisible(
       runtimeLane,
       find.byType(Scrollable).first,
@@ -90,11 +69,11 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(runtimeLane, findsOneWidget);
-    await tester.tap(find.text('Профиль').last);
+    await tester.tap(find.text('Profile').last);
     await tester.pumpAndSettle();
-    expect(find.text('Подписка'), findsWidgets);
-    expect(find.text('Бонус Telegram'), findsWidgets);
-    final redeemPanel = find.text('Активировать ключ доступа');
+    expect(find.text('Everything for this account'), findsOneWidget);
+    expect(find.text('Telegram bonus'), findsWidgets);
+    final redeemPanel = find.text('Redeem activation key');
     await tester.dragUntilVisible(
       redeemPanel,
       find.byType(Scrollable).first,
@@ -214,7 +193,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final runtimeLane = find.text('Состояние подключения');
+    final runtimeLane = find.text('Connection status');
     await tester.dragUntilVisible(
       runtimeLane,
       find.byType(Scrollable).first,
@@ -222,8 +201,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Нужно внимание'), findsWidgets);
-    expect(find.textContaining('приложение заметило'), findsWidgets);
+    expect(find.textContaining('Needs attention'), findsWidgets);
+    expect(find.textContaining('Protection is on, but the app noticed'),
+        findsWidgets);
     expect(find.textContaining('Host diagnostics'), findsNothing);
   });
 
@@ -266,7 +246,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final runtimeLane = find.text('Состояние подключения');
+    final runtimeLane = find.text('Connection status');
     await tester.dragUntilVisible(
       runtimeLane,
       find.byType(Scrollable).first,
@@ -274,11 +254,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Нужно внимание'), findsWidgets);
-    expect(find.textContaining('приложение заметило'), findsWidgets);
+    expect(find.textContaining('Needs attention'), findsWidgets);
+    expect(find.textContaining('Protection is on, but the app noticed'),
+        findsWidgets);
     expect(find.textContaining('Last failure kind'), findsNothing);
     expect(
-      find.text('Подключение активно.'),
+      find.text('Protection is on.'),
       findsNothing,
     );
   });
@@ -291,17 +272,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Локации').last);
+    await tester.tap(find.text('Locations').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Автовыбор'), findsOneWidget);
-    expect(find.text('Откроется после подготовки'), findsOneWidget);
+    expect(find.text('Auto-managed'), findsOneWidget);
+    expect(find.text('Available after setup'), findsOneWidget);
     await tester.drag(find.byType(ListView).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Премиум использует доступные платные локации'),
+    expect(
+        find.textContaining('Premium access uses enabled non-free locations'),
         findsOneWidget);
     expect(
-      find.textContaining('Детали подключения скрыты'),
+      find.textContaining('Transport details stay hidden behind auto'),
       findsWidgets,
     );
   });
@@ -382,9 +364,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await _chooseDefaultDeviceRoute(tester);
 
-    final connectAction = find.text('Подключить');
+    final connectAction = find.text('Turn protection on');
     await tester.dragUntilVisible(
       connectAction,
       find.byType(Scrollable).first,
@@ -475,9 +456,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await _chooseDefaultDeviceRoute(tester);
 
-    final connectAction = find.text('Подключить');
+    final connectAction = find.text('Turn protection on');
     await tester.dragUntilVisible(
       connectAction,
       find.byType(Scrollable).first,
@@ -535,10 +515,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await _chooseDefaultDeviceRoute(tester);
-    await tester.drag(find.byType(ListView).first, const Offset(0, -900));
-    await tester.pumpAndSettle();
-    expect(find.text('Сначала завершите подготовку'), findsWidgets);
+    expect(find.text('Protection unavailable'), findsOneWidget);
   });
 
   testWidgets(
@@ -629,9 +606,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await _chooseDefaultDeviceRoute(tester);
 
-    final connectAction = find.text('Подключить');
+    final connectAction = find.text('Turn protection on');
     await tester.dragUntilVisible(
       connectAction,
       find.byType(Scrollable).first,
@@ -645,7 +621,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Отключить'),
+      find.text('Turn protection off'),
       findsWidgets,
     );
   });
@@ -736,9 +712,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await _chooseDefaultDeviceRoute(tester);
 
-    final connectAction = find.text('Подключить');
+    final connectAction = find.text('Turn protection on');
     await tester.dragUntilVisible(
       connectAction,
       find.byType(Scrollable).first,
@@ -753,7 +728,7 @@ void main() {
 
     expect(snapshotCalls, greaterThanOrEqualTo(2));
     expect(
-      find.textContaining('Доступ готов'),
+      find.text('Everything is staged and ready when you tap the main action.'),
       findsNothing,
     );
   });
@@ -803,9 +778,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await _chooseDefaultDeviceRoute(tester);
 
-    final runtimeLane = find.text('Состояние подключения');
+    final runtimeLane = find.text('Connection status');
     await tester.dragUntilVisible(
       runtimeLane,
       find.byType(Scrollable).first,
@@ -813,10 +787,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Сейчас: Готово'), findsWidgets);
+    expect(find.textContaining('Ready to protect'), findsWidgets);
     expect(
-      find.textContaining('Доступ готов'),
-      findsWidgets,
+      find.text('Everything is staged and ready when you tap the main action.'),
+      findsOneWidget,
     );
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
@@ -827,7 +801,7 @@ void main() {
 
     expect(snapshotCalls, greaterThanOrEqualTo(2));
     expect(
-      find.textContaining('Доступ готов'),
+      find.text('Everything is staged and ready when you tap the main action.'),
       findsNothing,
     );
   });

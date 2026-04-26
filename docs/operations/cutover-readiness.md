@@ -6,7 +6,7 @@ This document tracks what must be true before `POKROV-app/main` is approved as t
 
 Historical mapping note:
 
-- older retained-bootstrap notes may still reference `app-next/`, but active commands now start from this `POKROV-app` repo root
+- older notes may still reference `external/pokrov-next-client/` or `app-next/`
 - the initial local snapshot for this repo was bootstrapped from `C:/Users/kiwun/Documents/ai/VPN/app-next/` on `2026-04-22`
 - those older source-lane names are now historical/bootstrap references rather than the canonical git lane
 
@@ -99,7 +99,7 @@ They do not expand the public `Android + Windows` release scope tracked by this 
 Safe to claim now:
 
 - the local `POKROV-app` repo is bootstrapped and carries the clean-room client lane
-- `app-next/` is now a historical/bootstrap source reference, not the canonical git lane
+- `app-next/` and `external/pokrov-next-client/` are now historical/bootstrap source references, not the canonical git lane
 - this repo is the long-term canonical git target for new client development work
 - this repo now owns the client product contract, app-first onboarding contract, and client backlog tracking under `docs/`
 - public scope for this release wave remains `Android + Windows`

@@ -4,7 +4,7 @@ This repo is the bootstrapped clean-room client lane and gives later workers a c
 
 Historical mapping note:
 
-- older retained-bootstrap docs may still say `app-next/`, but active commands now start from this `POKROV-app` repo root
+- older docs may still say `external/pokrov-next-client/` or `app-next/`
 - the initial local snapshot for this repo came from `C:/Users/kiwun/Documents/ai/VPN/app-next/`
 - this workflow now documents the canonical `POKROV-app` repo rather than the former in-repo bootstrap source
 
@@ -38,7 +38,7 @@ Treat everything under `config/local/*` as regenerated local-only workstation co
 The clean-room starter now includes:
 
 - shared domain, platform-contract, and support-context packages
-- a shared Material shell that now locks the consumer-first tab set `Подключение / Локации / Правила / Профиль`
+- a shared Material shell that now locks the consumer-first tab set `Protection / Locations / Rules / Profile`
 - Android, iOS, macOS, and Windows host entrypoints that build the shell from shared bootstrap defaults
 - a widget test lane in `packages/app_shell/test/`
 - Android-shell Flutter tests in `apps/android_shell/test/`

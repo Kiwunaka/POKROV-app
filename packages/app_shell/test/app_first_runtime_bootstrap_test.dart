@@ -106,7 +106,6 @@ void main() {
           );
           final decoded = jsonDecode(body) as Map<String, dynamic>;
           expect(decoded['route_mode'], 'selected_apps');
-          expect(decoded['selected_apps'], ['org.telegram.messenger']);
           request.response
             ..headers.contentType = ContentType.json
             ..write(jsonEncode(<String, Object?>{'ok': true}));
@@ -157,7 +156,6 @@ void main() {
     final payload = await bootstrapper.resolveManagedProfile(
       hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.selectedApps,
-      selectedAppIds: const ['org.telegram.messenger'],
     );
 
     expect(payload.profileName, 'pokrov-windows-rev-007');
@@ -1031,17 +1029,16 @@ void main() {
     expect(
       dnsRules.any(
         (rule) =>
-            ((rule['domain'] as List?)?.contains('nl.kiwunaka.space') ??
-                false) &&
-            rule['server'] == 'local',
+            (rule['domain'] as List?)?.contains('nl.kiwunaka.space') ??
+            false && rule['server'] == 'local',
       ),
       isTrue,
     );
     expect(
       routeRules.any(
         (rule) =>
-            ((rule['rule_set'] as List?)?.contains('geoip-ru') ?? false) &&
-            rule['outbound'] == 'direct',
+            (rule['rule_set'] as List?)?.contains('geoip-ru') ??
+            false && rule['outbound'] == 'direct',
       ),
       isFalse,
     );
@@ -1237,8 +1234,8 @@ void main() {
     expect(
       routeRules.any(
         (rule) =>
-            ((rule['rule_set'] as List?)?.contains('geoip-ru') ?? false) &&
-            rule['outbound'] == 'direct',
+            (rule['rule_set'] as List?)?.contains('geoip-ru') ??
+            false && rule['outbound'] == 'direct',
       ),
       isTrue,
     );
@@ -1252,9 +1249,8 @@ void main() {
     expect(
       routeRules.any(
         (rule) =>
-            ((rule['rule_set'] as List?)?.contains(_ruIpCountryRuleSetTag) ??
-                false) &&
-            rule['outbound'] == 'direct',
+            (rule['rule_set'] as List?)?.contains(_ruIpCountryRuleSetTag) ??
+            false && rule['outbound'] == 'direct',
       ),
       isTrue,
     );
@@ -1423,9 +1419,8 @@ void main() {
     expect(
       routeRules.any(
         (rule) =>
-            ((rule['rule_set'] as List?)?.contains(_ruIpWhitelistRuleSetTag) ??
-                false) &&
-            rule['outbound'] == 'direct',
+            (rule['rule_set'] as List?)?.contains(_ruIpWhitelistRuleSetTag) ??
+            false && rule['outbound'] == 'direct',
       ),
       isTrue,
     );

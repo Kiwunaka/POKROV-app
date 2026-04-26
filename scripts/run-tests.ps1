@@ -28,8 +28,8 @@ function Invoke-AndroidGradleUnitTests {
   $gradleWrapper = Join-Path $androidProjectPath "gradlew.bat"
 
   if (-not (Test-Path $gradleWrapper)) {
-    Write-Warning "Android Gradle wrapper not found at $gradleWrapper; skipping Gradle unit tests for this seed checkout."
-    return
+    Write-Error "Android Gradle wrapper not found at $gradleWrapper"
+    exit 1
   }
 
   Write-Host "Running Android Gradle unit tests in apps\android_shell" -ForegroundColor Cyan
@@ -57,4 +57,4 @@ foreach ($relativePath in $flutterTestPackages) {
 
 Invoke-AndroidGradleUnitTests
 
-Write-Host "Workspace Flutter tests passed; Android Gradle unit tests ran when a wrapper was present." -ForegroundColor Green
+Write-Host "Workspace Flutter and Android unit tests passed." -ForegroundColor Green

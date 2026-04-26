@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
@@ -13,7 +12,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Подключение'), findsWidgets);
+    expect(find.text('Protection'), findsWidgets);
     expect(find.text('POKROV'), findsOneWidget);
 
     expect(find.text('Prime runtime'), findsNothing);

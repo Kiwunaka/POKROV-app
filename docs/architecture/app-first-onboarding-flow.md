@@ -8,7 +8,7 @@ This file is the living client architecture note for app-first identity, onboard
 
 ## Goal
 
-The app must give the user a real working session after the Russian trial-start action, then let the user choose how the device should work before the first live connect.
+The app must give the user a real working session after `Try free`, then let the user choose how the device should work before the first live connect.
 
 UI state alone is not enough.
 The backend must create a real account, a real device record, a real app session, and a real subscription source.
@@ -17,7 +17,7 @@ The backend must create a real account, a real device record, a real app session
 
 1. the app generates and persists `install_id`
 2. the app collects soft device context
-3. the user taps the Russian trial-start action
+3. the user taps `Try free`
 4. the app calls `POST /api/client/session/start-trial`
 5. the backend validates anti-abuse rules
 6. the backend creates:
@@ -32,14 +32,13 @@ The backend must create a real account, a real device record, a real app session
    - `provisioning`
    - experience payload
 9. the app silently imports the managed profile
-10. the app shows the short Russian three-step onboarding in `Подключение`
-11. the app asks `Как должно работать это устройство?` before the first live route activation
-12. the app saves the chosen per-device route policy
-13. the shell changes to the main connection card
+10. the app asks `How should this device work?` before the first live route activation
+11. the app saves the chosen per-device route policy
+12. the shell changes to `Quick Connect`
 
 UX guardrail:
 
-- until provisioning succeeds with a real subscription payload, `Локации` stays behind an activation gate and must not render fake/demo countries
+- until provisioning succeeds with a real subscription payload, `Locations` stays behind an activation gate and must not render fake/demo countries
 
 ## Contract Rules
 
@@ -78,27 +77,16 @@ Current `client_policy` fields:
 
 Before the first live connect, the client must ask exactly one first-layer consumer question:
 
-- `Как должно работать это устройство?`
-- `Оптимизировать все устройство`
-- `Только выбранные приложения`
-
-Client shell presentation:
-
-- primary tabs are `Подключение`, `Локации`, `Правила`, and `Профиль`
-- the onboarding is three short steps and stays free of raw subscription links, config editors, hostnames, ports, or transport names
-- the visible brand mark renders from `assets/branding/pokrov-mark.png`; placeholder letter marks are not part of the client shell contract
-- Windows uses a desktop sidebar with constrained cards; Android keeps the compact tab surface
-- subscription, device, support, settings, bonus, and key activation cards live under `Профиль`
-- `Профиль -> Настройки` exposes `System`, `Light`, and `Dark` theme choices
-- visible first-layer copy should describe device behavior and next actions only; runtime-core, protocol, local-control, hostname, port, and raw profile terms belong in diagnostics, advanced settings, or support context
-- the white/mint redesign is the only active shell direction for this lane; no dual old/new redesign route should be documented or tested as a user path
+- `How should this device work?`
+- `Optimize everything on this device`
+- `Only selected apps`
 
 Behavior rules:
 
 - `Optimize everything on this device` is the default public path and stays `TUN`-first
-- the device-wide lane defaults the visible `Правила` story to `Все, кроме РФ`
-- `Полный режим` stays available as the alternate device-wide rule
-- `Только выбранные приложения` is the split-tunneling path and must persist selected app or process identifiers per device
+- the device-wide lane defaults the visible `Rules` story to `All except RU`
+- `Full tunnel` stays available as the alternate device-wide rule
+- `Only selected apps` is the split-tunneling path and must persist selected app or process identifiers per device
 - Windows should back that path with an executable or process picker
 - Android should back that path with an installed-package picker
 - the saved route mode must remain editable later from a dedicated route-mode screen
@@ -189,7 +177,6 @@ Support rules:
 
 - renewal and upgrade begin from the client UI
 - the app opens the canonical hosted checkout in the external browser
-- external checkout, cabinet, Telegram, support, feedback, and redeem handoffs go through an explicit launcher abstraction; snackbar text alone is not a handoff implementation
 - the same hosted checkout contract is shared across app, site, and bot flows
 - public marketing entry into that flow is checkout-first; cabinet continuation starts after the user is known
 

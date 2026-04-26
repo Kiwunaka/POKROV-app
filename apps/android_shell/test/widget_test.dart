@@ -13,7 +13,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Подключение'), findsWidgets);
+    expect(find.text('Protection'), findsWidgets);
     expect(find.text('POKROV'), findsOneWidget);
   });
 

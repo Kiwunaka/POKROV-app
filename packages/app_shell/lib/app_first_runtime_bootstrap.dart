@@ -27,7 +27,6 @@ abstract interface class ManagedProfileBootstrapper {
   Future<ManagedProfilePayload> resolveManagedProfile({
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
-    List<String> selectedAppIds = const [],
   });
 }
 
@@ -109,7 +108,6 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
   Future<ManagedProfilePayload> resolveManagedProfile({
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
-    List<String> selectedAppIds = const [],
   }) async {
     var state = await _loadOrCreateState(hostPlatform);
     final client = _createHttpClient(hostPlatform);
@@ -129,7 +127,6 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
             state: state,
             hostPlatform: hostPlatform,
             routeMode: routeMode,
-            selectedAppIds: selectedAppIds,
             client: client,
           );
           final manifest = await _fetchManagedManifest(
@@ -319,16 +316,8 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
     required _StoredBootstrapState state,
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
-    required List<String> selectedAppIds,
     required HttpClient client,
   }) async {
-    final normalizedSelectedApps = routeMode == RouteMode.selectedApps
-        ? selectedAppIds
-            .map((id) => id.trim())
-            .where((id) => id.isNotEmpty)
-            .toSet()
-            .toList(growable: false)
-        : const <String>[];
     try {
       await _requestJson(
         method: 'POST',
@@ -338,7 +327,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
         hostPlatform: hostPlatform,
         body: <String, Object?>{
           'route_mode': _routeModeWireValue(routeMode),
-          'selected_apps': normalizedSelectedApps,
+          'selected_apps': const <String>[],
           'requires_elevated_privileges':
               hostPlatform.supportsSelectedAppsMode &&
                   routeMode == RouteMode.selectedApps,

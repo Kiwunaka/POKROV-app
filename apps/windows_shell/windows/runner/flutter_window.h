@@ -2,9 +2,7 @@
 #define RUNNER_FLUTTER_WINDOW_H_
 
 #include <flutter/dart_project.h>
-#include <flutter/encodable_value.h>
 #include <flutter/flutter_view_controller.h>
-#include <flutter/method_channel.h>
 
 #include <memory>
 
@@ -30,14 +28,6 @@ class FlutterWindow : public Win32Window {
 
   // The Flutter instance hosted by this window.
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;
-
-  // Opens app-first handoff links in the user's default browser/app.
-  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
-      external_link_channel_;
-
-  // Lists running desktop applications for selected-app routing.
-  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
-      app_picker_channel_;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

@@ -51,7 +51,7 @@ Still missing before iOS release:
 Mac/operator commands to run later:
 
 ```bash
-cd apps/ios_shell
+cd external/pokrov-next-client/apps/ios_shell
 xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos -showBuildSettings
 xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos archive -archivePath build/Runner.xcarchive
 ```
@@ -78,7 +78,7 @@ Still missing before macOS release:
 Mac/operator commands to run later:
 
 ```bash
-cd apps/macos_shell
+cd external/pokrov-next-client/apps/macos_shell
 xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release -showBuildSettings
 xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release archive -archivePath build/Runner.xcarchive
 xcrun notarytool submit build/Runner.zip --keychain-profile "REPLACE_WITH_NOTARY_PROFILE" --wait
