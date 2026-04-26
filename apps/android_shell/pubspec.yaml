@@ -1,7 +1,7 @@
 name: pokrov_android_shell
-description: Android host seed for the POKROV next client program.
+description: Android internal beta host for the POKROV client program.
 publish_to: none
-version: 0.1.0-seed.1
+version: 0.2.0-beta.1
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

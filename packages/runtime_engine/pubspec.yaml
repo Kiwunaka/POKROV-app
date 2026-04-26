@@ -1,7 +1,7 @@
 name: pokrov_runtime_engine
 description: Runtime wiring and libcore artifact handling for the POKROV next client.
 publish_to: none
-version: 0.1.0-runtime.1
+version: 0.2.0-beta.1
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

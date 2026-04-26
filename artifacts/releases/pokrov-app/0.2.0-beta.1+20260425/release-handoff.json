@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "channel": "paid_beta_evidence",
+  "version": "0.2.0-beta.1+20260425",
+  "source_branch": "codex/beta-release-client",
+  "artifact_mode": "metadata_only",
+  "public_cutover_allowed": false,
+  "android": {
+    "distribution": "internal_beta_only",
+    "public_approved": false,
+    "artifact_url": null,
+    "blocked_on": [
+      "trusted Android signing material",
+      "release-installed physical-device localhost/control-surface audit",
+      "public download handoff approval"
+    ]
+  },
+  "windows": {
+    "distribution": "gated_unsigned_beta",
+    "public_approved": false,
+    "binary_name": "pokrov_windows_beta.exe",
+    "bundle_name_template": "pokrov-windows-beta-x64-{version}",
+    "artifact_url": null,
+    "required_warning": "Microsoft Defender SmartScreen or unknown-publisher warning is expected until trusted signing is complete.",
+    "blocked_on": [
+      "trusted Windows code-signing certificate",
+      "timestamping service URL",
+      "installer or MSIX publication path",
+      "public hosting and handoff approval"
+    ]
+  },
+  "client_contract": {
+    "client_sends_trial_days": false,
+    "selected_apps_status": "beta_mvp_route_sync_only",
+    "first_layer_raw_profile_or_local_control": false,
+    "safe_external_handoffs": [
+      "checkout",
+      "cabinet_downloads",
+      "support_bot",
+      "community_channel",
+      "feedback_bot",
+      "redeem"
+    ]
+  }
+}

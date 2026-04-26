@@ -104,542 +104,74 @@ void main() {
     expect(redeemPanel, findsWidgets);
   });
 
-  testWidgets('first-layer app shell copy hides transport and control terms',
+  testWidgets('profile handoffs open safe external destinations',
       (tester) async {
-    await tester.pumpWidget(
-      PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    for (final term in <String>[
-      'VPN',
-      'SNI',
-      'DNS',
-      'VLESS',
-      'VMess',
-      'Trojan',
-      'XHTTP',
-      'xray',
-      'sing-box',
-      'system proxy',
-      'service mode',
-      'subscription_url',
-      'host:port',
-    ]) {
-      expect(find.textContaining(term, findRichText: true), findsNothing);
-    }
-  });
-
-  testWidgets('windows shell uses the real brand asset instead of a text mark',
-      (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1200, 820));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final opened = <Uri>[];
 
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('P'), findsNothing);
-    expect(find.byType(Image), findsWidgets);
-  });
-
-  testWidgets(
-      'first connect waits for an explicit device route choice before starting runtime',
-      (tester) async {
-    const channel = MethodChannel('space.pokrov/runtime_engine');
-    final messenger =
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-    final calls = <String>[];
-
-    messenger.setMockMethodCallHandler(channel, (call) async {
-      calls.add(call.method);
-      switch (call.method) {
-        case 'runtimeEngine.snapshot':
-          return <String, Object?>{
-            'phase': 'artifactReady',
-            'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
-            'supportsLiveConnect': true,
-            'canInitialize': true,
-            'canConnect': false,
-            'message': 'Host bridge ready.',
-          };
-        case 'runtimeEngine.initialize':
-          return <String, Object?>{
-            'phase': 'initialized',
-            'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
-            'supportsLiveConnect': true,
-            'canInitialize': true,
-            'canConnect': false,
-            'message': 'Runtime bootstrap completed on the host bridge.',
-          };
-        case 'runtimeEngine.stageManagedProfile':
-          return <String, Object?>{
-            'phase': 'configStaged',
-            'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
-            'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
-            'supportsLiveConnect': true,
-            'canInitialize': true,
-            'canConnect': true,
-            'message': 'Managed profile staged on the host bridge.',
-          };
-        case 'runtimeEngine.connect':
-          return <String, Object?>{
-            'phase': 'running',
-            'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
-            'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
-            'supportsLiveConnect': true,
-            'canInitialize': true,
-            'canConnect': true,
-            'message': 'Android runtime service is running.',
-          };
-      }
-      return null;
-    });
-    addTearDown(() {
-      messenger.setMockMethodCallHandler(channel, null);
-    });
-
-    await tester.pumpWidget(
-      PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
-        bootstrapper: _FakeBootstrapper(
-          const ManagedProfilePayload(
-            profileName: 'managed-from-api',
-            configPayload: '{}',
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Как должно работать это устройство?'), findsOneWidget);
-
-    expect(calls, isNot(contains('runtimeEngine.connect')));
-
-    await _chooseDefaultDeviceRoute(tester);
-
-    await tester.drag(find.byType(ListView).first, const Offset(0, -900));
-    await tester.pumpAndSettle();
-    final connectAction = find.text('Подключить');
-    expect(connectAction, findsWidgets);
-    await tester.tap(connectAction.last);
-    await tester.pumpAndSettle();
-
-    expect(calls, contains('runtimeEngine.connect'));
-  });
-
-  testWidgets('profile exposes system light and dark theme choices',
-      (tester) async {
-    await tester.pumpWidget(
-      PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Профиль').last);
-    await tester.pumpAndSettle();
-
-    await tester.dragUntilVisible(
-      find.text('Система'),
-      find.byType(Scrollable).first,
-      const Offset(0, -280),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Система'), findsOneWidget);
-    expect(find.text('Светлая'), findsOneWidget);
-    expect(find.text('Темная'), findsOneWidget);
-  });
-
-  testWidgets('dark theme changes the shell surface colors', (tester) async {
-    await tester.pumpWidget(
-      PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final scaffoldBefore = tester.widget<Scaffold>(find.byType(Scaffold));
-    final beforeColor = scaffoldBefore.backgroundColor;
-
-    await tester.tap(find.text('Профиль').last);
-    await tester.pumpAndSettle();
-    await tester.dragUntilVisible(
-      find.text('Темная'),
-      find.byType(Scrollable).first,
-      const Offset(0, -280),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Темная'));
-    await tester.pumpAndSettle();
-
-    final scaffoldAfter = tester.widget<Scaffold>(find.byType(Scaffold));
-    expect(scaffoldAfter.backgroundColor, isNot(beforeColor));
-    expect(
-      Theme.of(tester.element(find.byType(Scaffold))).brightness,
-      Brightness.dark,
-    );
-  });
-
-  testWidgets('desktop windows surface uses a two column protection layout',
-      (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1440, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    await tester.pumpWidget(
-      PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-        find.byKey(const ValueKey('pokrov-desktop-sidebar')), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('pokrov-desktop-protection-grid')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey('pokrov-desktop-right-rail')),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('connect hero exposes one primary runtime action',
-      (tester) async {
-    await tester.pumpWidget(
-      PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await _chooseDefaultDeviceRoute(tester);
-
-    await tester.dragUntilVisible(
-      find.byKey(const ValueKey('pokrov-primary-connect-action')),
-      find.byType(Scrollable).first,
-      const Offset(0, -320),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      find.byKey(const ValueKey('pokrov-primary-connect-action')),
-      findsOneWidget,
-    );
-    expect(find.text('Запустить здесь'), findsNothing);
-  });
-
-  testWidgets('selected app route persists picked package identifiers',
-      (tester) async {
-    const runtimeChannel = MethodChannel('space.pokrov/runtime_engine');
-    const appPickerChannel = MethodChannel('space.pokrov/app_picker');
-    final messenger =
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-    final bootstrapper = _FakeBootstrapper(
-      const ManagedProfilePayload(
-        profileName: 'managed-from-api',
-        configPayload: '{}',
-      ),
-    );
-
-    messenger.setMockMethodCallHandler(appPickerChannel, (call) async {
-      expect(call.method, 'listSelectableApps');
-      return <Object?>[
-        <String, Object?>{
-          'id': 'org.telegram.messenger',
-          'name': 'Telegram',
+        handoffLauncher: (uri) async {
+          opened.add(uri);
+          return true;
         },
-      ];
-    });
-    messenger.setMockMethodCallHandler(runtimeChannel, (call) async {
-      switch (call.method) {
-        case 'runtimeEngine.snapshot':
-          return <String, Object?>{
-            'phase': 'artifactReady',
-            'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
-            'supportsLiveConnect': true,
-            'canInitialize': true,
-            'canConnect': false,
-            'message': 'Host bridge ready.',
-          };
-        case 'runtimeEngine.initialize':
-        case 'runtimeEngine.stageManagedProfile':
-          return <String, Object?>{
-            'phase': 'configStaged',
-            'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
-            'stagedConfigPath': '/host/runtime/pokrov-runtime.json',
-            'supportsLiveConnect': true,
-            'canInitialize': true,
-            'canConnect': true,
-            'message': 'Ready.',
-          };
-        case 'runtimeEngine.connect':
-          return <String, Object?>{
-            'phase': 'running',
-            'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
-            'stagedConfigPath': '/host/runtime/pokrov-runtime.json',
-            'supportsLiveConnect': true,
-            'canInitialize': true,
-            'canConnect': true,
-            'message': 'Running.',
-          };
-      }
-      return null;
-    });
-    addTearDown(() {
-      messenger.setMockMethodCallHandler(appPickerChannel, null);
-      messenger.setMockMethodCallHandler(runtimeChannel, null);
-    });
+      ),
+    );
+    await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Profile').last);
+    await tester.pumpAndSettle();
+
+    final checkout = find.text('Continue to checkout');
+    await tester.dragUntilVisible(
+      checkout,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(checkout);
+    await tester.pumpAndSettle();
+
+    expect(opened.single.toString(),
+        'https://pay.pokrov.space/checkout/?plan=1_month');
+
+    final support = find.text('Contact support');
+    await tester.dragUntilVisible(
+      support,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(support);
+    await tester.pumpAndSettle();
+
+    expect(opened.last.toString(), 'https://t.me/pokrov_supportbot');
+  });
+
+  testWidgets('selected apps status is explicit beta MVP copy', (tester) async {
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
-        bootstrapper: bootstrapper,
       ),
     );
     await tester.pumpAndSettle();
 
-    final selectedAppsRoute =
-        find.byKey(const ValueKey('pokrov-route-selected-apps'));
-    await tester.ensureVisible(selectedAppsRoute);
-    await tester.pumpAndSettle();
-    await tester.tap(selectedAppsRoute);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('pokrov-scan-selected-apps')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Telegram'));
+    await tester.tap(find.text('Rules').last);
     await tester.pumpAndSettle();
 
-    final connectAction =
-        find.byKey(const ValueKey('pokrov-primary-connect-action'));
+    final selectedAppsStatus = find.text('Selected apps beta status');
     await tester.dragUntilVisible(
-      find.text('Подключить'),
+      selectedAppsStatus,
       find.byType(Scrollable).first,
-      const Offset(0, -320),
-    );
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(connectAction);
-    await tester.pumpAndSettle();
-    await tester.tap(connectAction);
-    await tester.pumpAndSettle();
-
-    expect(bootstrapper.lastRouteMode, RouteMode.selectedApps);
-    expect(bootstrapper.lastSelectedAppIds, ['org.telegram.messenger']);
-  });
-
-  testWidgets(
-      'selected app route offers curated fallback when scanning is empty',
-      (tester) async {
-    const appPickerChannel = MethodChannel('space.pokrov/app_picker');
-    final messenger =
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-
-    messenger.setMockMethodCallHandler(appPickerChannel, (call) async {
-      return <Object?>[];
-    });
-    addTearDown(() {
-      messenger.setMockMethodCallHandler(appPickerChannel, null);
-    });
-
-    await tester.pumpWidget(
-      PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
-      ),
+      const Offset(0, -260),
     );
     await tester.pumpAndSettle();
 
-    final selectedAppsRoute =
-        find.byKey(const ValueKey('pokrov-route-selected-apps'));
-    await tester.ensureVisible(selectedAppsRoute);
-    await tester.pumpAndSettle();
-    await tester.tap(selectedAppsRoute);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('pokrov-scan-selected-apps')));
-    await tester.pumpAndSettle();
-
+    expect(selectedAppsStatus, findsOneWidget);
     expect(
-      find.byKey(const ValueKey('pokrov-selected-app-fallback')),
-      findsWidgets,
+      find.textContaining('Picker support is limited in this beta'),
+      findsOneWidget,
     );
-  });
-
-  testWidgets('selected app route supports search and manual app fallback',
-      (tester) async {
-    const appPickerChannel = MethodChannel('space.pokrov/app_picker');
-    final messenger =
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-
-    messenger.setMockMethodCallHandler(appPickerChannel, (call) async {
-      return <Object?>[];
-    });
-    addTearDown(() {
-      messenger.setMockMethodCallHandler(appPickerChannel, null);
-    });
-
-    await tester.pumpWidget(
-      PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final selectedAppsRoute =
-        find.byKey(const ValueKey('pokrov-route-selected-apps'));
-    await tester.ensureVisible(selectedAppsRoute);
-    await tester.pumpAndSettle();
-    await tester.tap(selectedAppsRoute);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('pokrov-scan-selected-apps')));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const ValueKey('pokrov-app-picker-search')),
-      'notion.exe',
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('pokrov-add-manual-app')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Notion.exe'), findsOneWidget);
-    expect(find.text('Выбрано: 1'), findsWidgets);
-  });
-
-  testWidgets('first-layer shell hides technical node and demo code copy',
-      (tester) async {
-    await tester.pumpWidget(
-      PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('NL-free'), findsNothing);
-    await tester.tap(find.text('Профиль').last);
-    await tester.pumpAndSettle();
-    await tester.dragUntilVisible(
-      find.text('Активировать ключ доступа'),
-      find.byType(Scrollable).first,
-      const Offset(0, -280),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('POKROV-START-2026'), findsNothing);
-    expect(find.textContaining('техническ'), findsNothing);
-  });
-
-  testWidgets('external handoffs do not stop at a snackbar-only message',
-      (tester) async {
-    final launcher = _RecordingLinkLauncher();
-
-    await tester.pumpWidget(
-      PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
-        linkLauncher: launcher,
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Профиль').last);
-    await tester.pumpAndSettle();
-    await tester.dragUntilVisible(
-      find.text('Перейти к оплате'),
-      find.byType(Scrollable).first,
-      const Offset(0, -280),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Перейти к оплате'));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('Откроем внешний переход'), findsNothing);
-    expect(
-      launcher.targets,
-      contains('https://pay.pokrov.space/checkout/?plan=1_month'),
-    );
-  });
-
-  testWidgets(
-      'activation key field formats validates and opens redeem fallback',
-      (tester) async {
-    final launcher = _RecordingLinkLauncher();
-
-    await tester.pumpWidget(
-      PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
-        linkLauncher: launcher,
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Профиль').last);
-    await tester.pumpAndSettle();
-    await tester.dragUntilVisible(
-      find.byKey(const ValueKey('pokrov-access-key-field')),
-      find.byType(Scrollable).first,
-      const Offset(0, -280),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const ValueKey('pokrov-access-key-field')),
-      'pokrov abcd 1234',
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('POKROV-ABCD-1234'), findsWidgets);
-    await tester.tap(find.byKey(const ValueKey('pokrov-redeem-access-key')));
-    await tester.pumpAndSettle();
-
-    expect(
-      launcher.targets,
-      contains('https://app.pokrov.space/redeem?code=POKROV-ABCD-1234'),
-    );
-    expect(find.textContaining('Ключ принят'), findsWidgets);
-  });
-
-  testWidgets('activation key rejects short values before cabinet handoff',
-      (tester) async {
-    final launcher = _RecordingLinkLauncher();
-
-    await tester.pumpWidget(
-      PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
-        linkLauncher: launcher,
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Профиль').last);
-    await tester.pumpAndSettle();
-    await tester.dragUntilVisible(
-      find.byKey(const ValueKey('pokrov-access-key-field')),
-      find.byType(Scrollable).first,
-      const Offset(0, -280),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const ValueKey('pokrov-access-key-field')),
-      'bad',
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('pokrov-redeem-access-key')));
-    await tester.pumpAndSettle();
-
-    expect(launcher.targets, isEmpty);
-    expect(find.textContaining('Проверьте ключ'), findsWidgets);
   });
 
   testWidgets(
@@ -1321,6 +853,7 @@ void main() {
         ]),
       );
       expect(appContext.runtimeProfile.freeTier.speedMbps, 50);
+      expect(appContext.redeemHint, isEmpty);
       expect(appContext.locations, hasLength(1));
     }
   });

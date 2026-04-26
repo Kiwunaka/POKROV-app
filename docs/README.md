@@ -1,6 +1,6 @@
 # POKROV App Docs
 
-Last updated: 2026-04-24
+Last updated: 2026-04-25
 
 This folder holds the living client-repo documentation for `POKROV-app/main`.
 
@@ -35,6 +35,9 @@ Current client-doc scope:
 
 - living client contract and release-readiness docs for `POKROV-app/main`
 - public `v1` scope: `Android + Windows`
+- current paid beta evidence line: `0.2.0-beta.1`
+- Android status: `internal beta only / public blocked`
+- Windows status: `gated unsigned beta with required SmartScreen or unknown-publisher warning`
 - `iOS` and `macOS`: readiness, packaging, and signing-preparation only in this wave
 - cross-surface product facts still inherit from the platform canon under `C:/Users/kiwun/Documents/ai/VPN/docs/`
 - browser continuation outside the app inherits the platform surface split: checkout-first marketing, continuation-first cabinet, and public email marked `soon`

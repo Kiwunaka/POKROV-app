@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "client_lane": "pokrov-app",
+  "release_version": "0.1.0-seed.1+20260423",
+  "artifact_dir": "C:/Users/kiwun/Documents/ai/POKROV-app/artifacts/releases/pokrov-app/0.1.0-seed.1+20260423",
+  "release_state": "engineering_alpha_not_public",
+  "downloads": {
+    "android": {
+      "play_url": "",
+      "apk_url": "",
+      "mirror_url": ""
+    },
+    "windows": {
+      "exe_url": "",
+      "mirror_url": ""
+    },
+    "docs_url": "https://pokrov.space/install/"
+  },
+  "runtime_env": {
+    "APP_ANDROID_PLAY_URL": "",
+    "APP_ANDROID_APK_URL": "",
+    "APP_ANDROID_MIRROR_URL": "",
+    "APP_WINDOWS_EXE_URL": "",
+    "APP_WINDOWS_MIRROR_URL": "",
+    "APP_DOCS_URL": "https://pokrov.space/install/"
+  },
+  "notes": [
+    "Stable pointer to the current client-owned POKROV-app handoff manifest.",
+    "Public Android and Windows URLs are intentionally blank until signed/public release hosting is approved."
+  ]
+}

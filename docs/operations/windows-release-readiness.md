@@ -38,13 +38,13 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 -Sy
 - release runner root: `apps/windows_shell/build/windows/x64/runner/Release/`
 - staged unsigned bundle root: `apps/windows_shell/build/release_bundle/`
 - expected release files:
-  - `pokrov_windows_seed.exe`
+  - `pokrov_windows_beta.exe`
   - `flutter_windows.dll`
   - `libcore.dll`
   - `data/app.so`
   - `data/icudtl.dat`
 - staged manifest:
-  - `pokrov-next-windows-seed-x64-<version>.manifest.json`
+  - `pokrov-windows-beta-x64-<version>.manifest.json`
 
 These outputs are regenerated local verification artifacts. They are useful for operator inspection and local validation, but they are not production release truth.
 

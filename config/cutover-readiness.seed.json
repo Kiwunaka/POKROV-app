@@ -2,6 +2,20 @@
   "lane": "POKROV-app/main",
   "status": "blocked_not_cutover_ready",
   "public_cutover_allowed": false,
+  "android_release": {
+    "beta_distribution": "internal_only",
+    "public_approved": false,
+    "blocked_on": [
+      "trusted Android signing material",
+      "release-installed physical-device localhost/control-surface audit",
+      "public download handoff approval"
+    ]
+  },
+  "windows_release": {
+    "beta_distribution": "gated_unsigned",
+    "public_approved": false,
+    "required_user_warning": "Microsoft Defender SmartScreen or unknown-publisher warning is expected until trusted signing is complete."
+  },
   "blocking_dependencies": [
     "formal public cutover approval remains open even though the clean-room base decision is already selected in POKROV-app",
     "native-core provenance and packaging still need one documented cross-platform contract",

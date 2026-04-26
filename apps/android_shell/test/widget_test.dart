@@ -17,7 +17,8 @@ void main() {
     expect(find.text('POKROV'), findsOneWidget);
   });
 
-  testWidgets('android shell exposes route-mode and runtime diagnostics lane', (
+  testWidgets('android shell keeps raw runtime diagnostics out of first layer',
+      (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -27,16 +28,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final scrollable = find.byType(Scrollable).first;
-    await tester.scrollUntilVisible(
-      find.text('Состояние подключения'),
-      300,
-      scrollable: scrollable,
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Состояние подключения'), findsOneWidget);
-    expect(find.text('Проверить еще раз'), findsOneWidget);
-    expect(find.text('Правила'), findsOneWidget);
+    expect(find.text('Runtime health'), findsNothing);
+    expect(find.text('Prime runtime'), findsNothing);
+    expect(find.text('Stage local smoke profile'), findsNothing);
+    expect(find.text('Connect now'), findsNothing);
   });
 }

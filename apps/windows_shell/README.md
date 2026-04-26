@@ -10,8 +10,8 @@ Current responsibility:
 
 Current local truth:
 
-- `flutter build windows --release` produces a runnable bundle with `pokrov_windows_seed.exe` and `libcore.dll`
-- the shared shell already surfaces a cleaner `Runtime health` panel plus one-tap connect from `Quick Connect` on Windows
+- `flutter build windows --release` produces a runnable beta bundle with `pokrov_windows_beta.exe` and `libcore.dll`
+- the shared shell keeps local runtime controls out of the first layer and uses one-tap connect from `Protection` on Windows
 - the packaged output stays inside the next-client seed lane under `build/release_bundle` and is not a public release artifact
 
 Deferred responsibility:

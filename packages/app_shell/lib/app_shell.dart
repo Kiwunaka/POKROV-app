@@ -11,6 +11,7 @@ import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_platform_contracts/platform_contracts.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_context/support_context.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'app_first_runtime_bootstrap.dart';
 export 'app_first_runtime_bootstrap.dart';
@@ -28,6 +29,8 @@ enum _SectionTone {
   muted,
   neutral,
 }
+
+typedef ExternalHandoffLauncher = Future<bool> Function(Uri uri);
 
 abstract final class _SeedPalette {
   static const canvas = Color(0xFFF8FAF7);
@@ -409,7 +412,7 @@ SeedAppContext buildSeedAppContext({
       publicChannel: '@pokrov_vpn',
       supportEmail: 'support@pokrov.space',
       safeNotes:
-          'Приложение передает в поддержку только безопасный контекст: устройство, правило и состояние подключения.',
+          'Support receives safe device context only: app version, platform, route mode, and connection status.',
       recommendedRouteMode: RouteMode.allExceptRu,
       channelBonusDays: 10,
     ),
@@ -453,39 +456,12 @@ class PokrovSeedApp extends StatefulWidget {
     super.key,
     required this.appContext,
     this.bootstrapper,
-    this.linkLauncher = const PlatformExternalLinkLauncher(),
-    this.appSelectionScanner = const PlatformAppSelectionScanner(),
-    this.themeModeStore = const PlatformThemeModeStore(),
+    this.handoffLauncher,
   });
 
   final SeedAppContext appContext;
   final ManagedProfileBootstrapper? bootstrapper;
-  final ExternalLinkLauncher linkLauncher;
-  final AppSelectionScanner appSelectionScanner;
-  final ThemeModeStore themeModeStore;
-
-  @override
-  State<PokrovSeedApp> createState() => _PokrovSeedAppState();
-}
-
-class _PokrovSeedAppState extends State<PokrovSeedApp> {
-  ThemeMode _themeMode = ThemeMode.system;
-
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_loadThemeMode());
-  }
-
-  Future<void> _loadThemeMode() async {
-    final stored = await widget.themeModeStore.load();
-    if (!mounted || stored == null) {
-      return;
-    }
-    setState(() {
-      _themeMode = stored;
-    });
-  }
+  final ExternalHandoffLauncher? handoffLauncher;
 
   @override
   Widget build(BuildContext context) {
@@ -495,17 +471,9 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
       darkTheme: _buildSeedTheme(Brightness.dark),
       themeMode: _themeMode,
       home: PokrovSeedShell(
-        appContext: widget.appContext,
-        bootstrapper: widget.bootstrapper,
-        linkLauncher: widget.linkLauncher,
-        appSelectionScanner: widget.appSelectionScanner,
-        themeMode: _themeMode,
-        onThemeModeChanged: (mode) {
-          setState(() {
-            _themeMode = mode;
-          });
-          unawaited(widget.themeModeStore.save(mode));
-        },
+        appContext: appContext,
+        bootstrapper: bootstrapper,
+        handoffLauncher: handoffLauncher,
       ),
     );
   }
@@ -607,18 +575,12 @@ class PokrovSeedShell extends StatefulWidget {
     super.key,
     required this.appContext,
     this.bootstrapper,
-    required this.linkLauncher,
-    required this.appSelectionScanner,
-    required this.themeMode,
-    required this.onThemeModeChanged,
+    this.handoffLauncher,
   });
 
   final SeedAppContext appContext;
   final ManagedProfileBootstrapper? bootstrapper;
-  final ExternalLinkLauncher linkLauncher;
-  final AppSelectionScanner appSelectionScanner;
-  final ThemeMode themeMode;
-  final ValueChanged<ThemeMode> onThemeModeChanged;
+  final ExternalHandoffLauncher? handoffLauncher;
 
   @override
   State<PokrovSeedShell> createState() => _PokrovSeedShellState();
@@ -669,16 +631,73 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  Future<void> _openExternalHandoff(String label, String value) async {
-    final target = _handoffTarget(label, value);
-    final opened = await widget.linkLauncher.openExternal(target);
-    if (!mounted || opened) {
+  Future<bool> _launchExternalHandoff(Uri uri) {
+    final launcher = widget.handoffLauncher ??
+        (Uri target) => launchUrl(
+              target,
+              mode: LaunchMode.externalApplication,
+            );
+    return launcher(uri);
+  }
+
+  Future<void> _openSafeHandoff(String label, String value) async {
+    final uri = _safeHandoffUri(
+      label: label,
+      value: value,
+      cabinetUrl: widget.appContext.cabinetUrl,
+    );
+    if (uri == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter an activation key first.')),
+      );
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Не получилось открыть внешний переход.')),
-    );
+    final opened = await _launchExternalHandoff(uri);
+    if (!mounted) {
+      return;
+    }
+    if (!opened) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Open this in your browser: $uri')),
+      );
+    }
+  }
+
+  void _showSeedHandoff(String label, String value) {
+    unawaited(_openSafeHandoff(label, value));
+  }
+
+  Uri? _safeHandoffUri({
+    required String label,
+    required String value,
+    required String cabinetUrl,
+  }) {
+    final trimmed = value.trim();
+    switch (label) {
+      case 'checkout':
+      case 'cabinet':
+      case 'download':
+        return Uri.tryParse(trimmed);
+      case 'redeem':
+        if (trimmed.isEmpty) {
+          return null;
+        }
+        return Uri.parse(cabinetUrl).replace(
+          path: '/redeem',
+          queryParameters: <String, String>{'code': trimmed},
+        );
+      case 'community':
+      case 'support':
+      case 'feedback':
+        final handle = trimmed.replaceFirst('@', '');
+        if (handle.isEmpty) {
+          return null;
+        }
+        return Uri.https('t.me', '/$handle');
+      default:
+        return Uri.tryParse(trimmed);
+    }
   }
 
   String _handoffTarget(String label, String value) {
@@ -2278,6 +2297,16 @@ class _ProfileSection extends StatelessWidget {
                 icon: const Icon(Icons.web),
                 label: const Text('Открыть кабинет'),
               ),
+              OutlinedButton.icon(
+                onPressed: () => onOpenHandoff(
+                  'download',
+                  Uri.parse(appContext.cabinetUrl)
+                      .replace(path: '/downloads')
+                      .toString(),
+                ),
+                icon: const Icon(Icons.download_outlined),
+                label: const Text('Open downloads'),
+              ),
             ],
           ),
         ),
@@ -2330,8 +2359,8 @@ class _ProfileSection extends StatelessWidget {
               ),
               if (appContext.bootstrapContract.supportsSelectedAppsMode)
                 const _KeyValueLine(
-                  label: 'Выбранные приложения',
-                  value: 'Меняются во вкладке «Правила»',
+                  label: 'Selected apps',
+                  value: 'Beta MVP: route sync only',
                 ),
             ],
           ),
@@ -2481,6 +2510,14 @@ class _RulesSection extends StatelessWidget {
                 : '${RouteMode.selectedApps.label}: пока недоступно на ${appContext.hostPlatform.label}.',
           ],
         ),
+        if (selectedAppsAvailable)
+          const _SectionCard(
+            title: 'Selected apps beta status',
+            lines: [
+              'Picker support is limited in this beta.',
+              'The app keeps this as an explicit route-mode choice while per-app selection UI and OS enforcement finish.',
+            ],
+          ),
         _SectionCard(
           title: 'Что меняется здесь',
           lines: [

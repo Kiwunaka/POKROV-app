@@ -80,11 +80,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
                             kind = "foreground_start_failed",
                             message = "POKROV could not finish getting ready on this device: ${error.message ?: error.javaClass.simpleName}",
                         )
-                        Log.e(
-                            LOG_TAG,
-                            "Android runtime foreground start failed: ${error.message ?: error.javaClass.simpleName}",
-                            error,
-                        )
+                        Log.e(LOG_TAG, "Android runtime foreground start failed:", error)
                         stopSelf()
                     }
                 }

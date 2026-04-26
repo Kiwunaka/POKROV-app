@@ -16,16 +16,9 @@ void main() {
     expect(find.text('Подключение'), findsWidgets);
     expect(find.text('POKROV'), findsOneWidget);
 
-    final runtimeStatus = find.text('Состояние подключения');
-    await tester.dragUntilVisible(
-      runtimeStatus,
-      find.byType(Scrollable).first,
-      const Offset(0, -240),
-    );
-    await tester.pumpAndSettle();
-
-    expect(runtimeStatus, findsOneWidget);
-    expect(find.text('Проверить еще раз'), findsOneWidget);
-    expect(find.text('Правила'), findsOneWidget);
+    expect(find.text('Prime runtime'), findsNothing);
+    expect(find.text('Stage local smoke profile'), findsNothing);
+    expect(find.text('Connect now'), findsNothing);
+    expect(find.text('Finish setup first'), findsOneWidget);
   });
 }

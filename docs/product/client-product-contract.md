@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-04-24
+Last updated: 2026-04-25
 
 ## Document Status
 
@@ -43,7 +43,7 @@ Additive email auth for the site and cabinet is marked `soon` and must stay expl
 - `xray` role: advanced compatibility fallback only
 - free trial: `5 days`
 - Telegram reward: `+10 days`
-- public user-facing version line: `0.x.x-beta`
+- public user-facing version line: current paid beta evidence uses `0.2.0-beta.1`, preserving the `0.x.x-beta` train
 - recommended public routing mode: `All except RU`
 - public routing mode set: `All except RU` and `Full tunnel`
 - public recovery order: `POKROV app -> web cabinet -> Telegram fallback`
@@ -128,6 +128,7 @@ Product rules for that choice:
 - the chosen route mode must persist per device and remain editable later from a dedicated route-mode screen
 - the live state must round-trip through backend-owned `route_mode`, `selected_apps`, `requires_elevated_privileges`, and mirrored `route_policy.*` fields
 - current implementation keeps both device-wide routes on the existing backend `route_mode=all_traffic` lane, while the split path writes `route_mode=selected_apps`
+- current selected-apps beta MVP is explicit: route-mode sync exists, but Android package picking, Windows process picking, persistence, and OS-level enforcement are not yet complete
 - if the chosen desktop route mode requires elevation, the app must explain that before connect and guide the user to relaunch as administrator
 - first-layer UX must not force users into raw system-proxy, service-mode, or low-level transport toggles
 
@@ -201,6 +202,8 @@ Store/operator artifacts remain separate:
 Release continuity rules:
 
 - public-facing build surfaces must present the beta line `0.x.x-beta`
+- Android APK distribution is internal beta only until trusted signing and physical localhost/control-surface audit pass
+- Windows unsigned bundles may be gated to beta users only with a SmartScreen or unknown-publisher warning
 - signed release builds inject updater and source metadata through the documented `PORTAL_RELEASE_*` environment variables
 - local non-release builds keep updater and source-code surfaces disabled instead of falling back to a personal repository URL
 - release handoff must keep app, bot, and authenticated web surfaces aligned with the same runtime `APP_*` URLs
