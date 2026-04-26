@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-04-22
+Last updated: 2026-04-26
 
 This document is the concrete Windows readiness note for the `POKROV-app` lane.
 
@@ -18,6 +18,8 @@ Historical mapping note:
 - `scripts/build-windows-release.ps1` now runs the local Windows verification lane: seed validation, tests, `flutter analyze`, `flutter build windows --release`, bundle verification, and unsigned zip staging
 - the seed validation inside that helper now aligns with the current product canon: `Android + Windows` public scope, `iOS + macOS` readiness-only hosts
 - the built executable is explicitly marked as a prerelease seed but now presents the public product name `POKROV` in Windows metadata and window chrome
+- public download copy must match the actual handoff URL and signing state
+- support macros must explain SmartScreen or unknown-publisher behavior for gated beta testers
 
 ## Local Verification Commands
 
@@ -31,6 +33,12 @@ flutter analyze
 flutter build windows --release
 Pop-Location
 powershell -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 -SyncRuntime
+```
+
+For a gated beta packaging smoke where tests/analyze already ran:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze
 ```
 
 ## Expected Local Outputs
@@ -59,13 +67,14 @@ Safe to claim now:
 - the current Windows seed connect lane applies runtime options before `libcore start` and prefers a system-proxy host mode with dedicated local ports instead of assuming an elevated TUN session
 - this Windows lane now lives in the canonical `POKROV-app` repo
 - this Windows lane is the long-term repo target for new client development, but not yet the public release-truth lane
+- unsigned Windows builds may be used for gated beta only with explicit SmartScreen or unknown-publisher warning guidance
 
 Not safe to claim now:
 
 - the Windows executable is production signed
 - an installer or `MSIX` publication flow is ready
 - Microsoft Store, WinGet, SmartScreen reputation, or public hosting is approved
-- the next-client Windows lane is ready to replace the live bridge Windows release path
+- the Windows lane is approved for broad public distribution
 - this lane is shipping truth or release truth for Windows
 - this lane by itself is the canonical post-Wave-0 client repo
 
@@ -74,5 +83,19 @@ Not safe to claim now:
 - trusted Windows code-signing material is not wired into this lane
 - installer or `MSIX` publication shape is still undecided
 - public artifact hosting, updater policy, and operator handoff stay outside this seed
-- the broader next-client cutover is still blocked on signed and publicly proven release evidence across all four platforms
+- public Windows distribution is still blocked on signing or approved unsigned-warning posture, runtime route-mode evidence, DNS/leak validation, and public handoff evidence
 - this wave does not migrate the current shipping git ownership or release process
+
+## Blocked Runtime Verification
+
+Before public Windows claims, attach evidence for:
+
+- `Full tunnel` route-mode smoke.
+- `All except RU` route-mode smoke.
+- DNS split behavior and leak checks.
+- Connect, reconnect, disconnect, and recovery after failure.
+- current-origin, brain-origin, and RU-origin checks where runtime reachability matters.
+
+## Release Rule
+
+Windows public release remains blocked until artifact, checksum, signing or unsigned-warning posture, release handoff, and support-copy evidence are approved.

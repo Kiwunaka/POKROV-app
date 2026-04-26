@@ -1,6 +1,6 @@
 # POKROV App Docs
 
-Last updated: 2026-04-25
+Last updated: 2026-04-26
 
 This folder holds the living client-repo documentation for `POKROV-app/main`.
 
@@ -50,8 +50,13 @@ Current anchors:
 - `architecture/bootstrap-workflow.md`
 - `implementation/client-release-backlog.md`
 - `operations/apple-release-readiness.md`
+- `operations/android-release-audit.md`
 - `operations/windows-release-readiness.md`
 - `operations/cutover-readiness.md`
+- `product/client-public-beta-prd.md`
+- `design/DESIGN.md`
+- root `DESIGN.md`
+- `developer/work-orders/2026-04-open-beta-v4/INDEX.md`
 
 These docs are now the live client-documentation lane for the bootstrapped `POKROV-app` repo.
 The product contract, app-first onboarding contract, consumer-first shell IA, route-mode/support/download behavior, and current Android+Windows blockers should live here instead of only in retained bridge docs.
