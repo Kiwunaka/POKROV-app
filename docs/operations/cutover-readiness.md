@@ -1,6 +1,6 @@
 # Cutover Readiness
 
-Last updated: 2026-04-25
+Last updated: 2026-05-07
 
 This document tracks what must be true before `POKROV-app/main` is approved as the public `Android + Windows` release lane.
 
@@ -24,8 +24,10 @@ Historical mapping note:
 - Android and Windows engineering verification: `requires fresh W07 gate run`
 - public store readiness: `not approved`
 - public cutover approval: `not allowed`
-- public Android release approval: `blocked until signing plus physical localhost/control-surface audit`
-- public Windows release approval: `blocked until trusted signing and handoff approval`
+- public Android release approval: `blocked`
+- public Android release blockers: `signing plus physical localhost/control-surface audit`
+- public Windows release approval: `blocked`
+- public Windows release blockers: `trusted signing, runtime evidence, and handoff approval`
 - long-term repo truth: `yes`
 - repo-backed alpha or beta archive: `allowed`
 
@@ -128,6 +130,6 @@ Blocked-by note:
 
 - the local repo bootstrap step is complete, but public Android and Windows release approval is still blocked on signing, artifact handoff, Android localhost-audit evidence, and final runtime verification
 - Android remains internal-test-only while the physical-device audit is missing, even if an APK can be built locally
-- Windows remains unsigned-gated beta only until trusted signing and installer or MSIX handoff are ready
+- Windows remains unsigned-gated beta only until trusted signing, runtime evidence, and public handoff are ready; the repo can now stage an unsigned setup EXE for testers, but that is not broad public approval
 - `POKROV-app/artifacts/releases/pokrov-app/` may retain repo-backed alpha and beta bundles built directly from this lane for engineering and tester handoff
 - rollback and compatibility lanes may still exist elsewhere, but this document tracks approval of the `POKROV-app` release lane itself rather than treating another repo as the primary frame

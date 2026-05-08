@@ -4,7 +4,9 @@ param(
   [switch]$SkipAnalyze,
   [switch]$SkipTests,
   [switch]$SkipBuild,
-  [switch]$SkipZip
+  [switch]$SkipZip,
+  [switch]$SkipInstaller,
+  [switch]$OfflinePubGet
 )
 
 $ErrorActionPreference = "Stop"
@@ -87,6 +89,18 @@ function New-ReleaseManifestFileList {
   return $files
 }
 
+function Write-Utf8File {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Path,
+    [Parameter(Mandatory = $true)]
+    [string]$Content
+  )
+
+  $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+  [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
+}
+
 $root = Split-Path -Parent $PSScriptRoot
 $windowsReleaseConfigPath = Join-Path $root "config\\windows-release.seed.json"
 $runtimeArtifactsConfigPath = Join-Path $root "config\\runtime-artifacts.seed.json"
@@ -120,12 +134,20 @@ if ($SyncRuntime -or (Test-RequiredFiles -BasePath $runtimeDirectory -RelativePa
 }
 
 if (-not $SkipTests) {
-  & (Join-Path $PSScriptRoot "run-tests.ps1")
+  $runTestsArgs = @()
+  if ($OfflinePubGet) {
+    $runTestsArgs += "-OfflinePubGet"
+  }
+  & (Join-Path $PSScriptRoot "run-tests.ps1") @runTestsArgs
   if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
   }
 } else {
-  Invoke-External -FilePath "flutter" -Arguments @("pub", "get") -WorkingDirectory $appDirectory
+  $pubGetArgs = @("pub", "get")
+  if ($OfflinePubGet) {
+    $pubGetArgs += "--offline"
+  }
+  Invoke-External -FilePath "flutter" -Arguments $pubGetArgs -WorkingDirectory $appDirectory
 }
 
 if (-not $SkipAnalyze) {
@@ -169,9 +191,11 @@ if ($metadataErrors.Count -gt 0) {
 $artifactRoot = Join-Path $root $windowsReleaseConfig.artifact_root
 $bundleFolderName = $windowsReleaseConfig.bundle_folder_template.Replace("{version}", $version)
 $zipName = $windowsReleaseConfig.zip_name_template.Replace("{version}", $version)
+$installerName = $windowsReleaseConfig.installer_name_template.Replace("{version}", $version)
 $manifestName = $windowsReleaseConfig.manifest_name_template.Replace("{version}", $version)
 $stagedBundleDirectory = Join-Path $artifactRoot $bundleFolderName
 $zipPath = Join-Path $artifactRoot $zipName
+$installerPath = Join-Path $artifactRoot $installerName
 $manifestPath = Join-Path $artifactRoot $manifestName
 
 New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
@@ -190,6 +214,116 @@ if (-not $SkipZip) {
   Compress-Archive -Path (Join-Path $stagedBundleDirectory "*") -DestinationPath $zipPath -CompressionLevel Optimal
 }
 
+$installerSha256 = $null
+if (-not $SkipInstaller) {
+  if ($SkipZip) {
+    throw "Windows installer packaging requires the versioned zip. Remove -SkipZip or pass -SkipInstaller."
+  }
+  $iexpress = Get-Command "iexpress.exe" -ErrorAction SilentlyContinue
+  if (-not $iexpress) {
+    throw "iexpress.exe is required to build the unsigned Windows beta installer EXE"
+  }
+
+  $installerPayloadDirectory = Join-Path $artifactRoot ("installer_payload_" + ($version -replace '[^A-Za-z0-9_.-]', '_'))
+  if (Test-Path -LiteralPath $installerPayloadDirectory) {
+    Remove-Item -Recurse -Force -LiteralPath $installerPayloadDirectory
+  }
+  New-Item -ItemType Directory -Force -Path $installerPayloadDirectory | Out-Null
+
+  $zipLeaf = Split-Path -Leaf $zipPath
+  Copy-Item -Force -LiteralPath $zipPath -Destination (Join-Path $installerPayloadDirectory $zipLeaf)
+
+  $installPs1Path = Join-Path $installerPayloadDirectory "install-pokrov.ps1"
+  $installCmdPath = Join-Path $installerPayloadDirectory "install-pokrov.cmd"
+  $installPs1 = @"
+`$ErrorActionPreference = "Stop"
+`$sourceDir = Split-Path -Parent `$MyInvocation.MyCommand.Path
+`$zipPath = Join-Path `$sourceDir "$zipLeaf"
+`$target = Join-Path `$env:LOCALAPPDATA "Programs\\POKROV"
+`$temp = Join-Path `$env:TEMP ("pokrov-install-" + [guid]::NewGuid().ToString("N"))
+New-Item -ItemType Directory -Force -Path `$temp | Out-Null
+try {
+  Expand-Archive -Path `$zipPath -DestinationPath `$temp -Force
+  if (Test-Path -LiteralPath `$target) {
+    Remove-Item -Recurse -Force -LiteralPath `$target
+  }
+  New-Item -ItemType Directory -Force -Path `$target | Out-Null
+  Copy-Item -Recurse -Force -Path (Join-Path `$temp "*") -Destination `$target
+  `$exe = Join-Path `$target "$($windowsReleaseConfig.binary_name)"
+  `$shell = New-Object -ComObject WScript.Shell
+  `$programs = [Environment]::GetFolderPath("Programs")
+  `$shortcut = `$shell.CreateShortcut((Join-Path `$programs "POKROV.lnk"))
+  `$shortcut.TargetPath = `$exe
+  `$shortcut.WorkingDirectory = `$target
+  `$shortcut.Save()
+  Start-Process -FilePath `$exe -WorkingDirectory `$target
+} finally {
+  if (Test-Path -LiteralPath `$temp) {
+    Remove-Item -Recurse -Force -LiteralPath `$temp
+  }
+}
+"@
+  $installCmd = @"
+@echo off
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0install-pokrov.ps1"
+exit /b %ERRORLEVEL%
+"@
+  Write-Utf8File -Path $installPs1Path -Content $installPs1
+  Write-Utf8File -Path $installCmdPath -Content $installCmd
+
+  $sedPath = Join-Path $artifactRoot ($installerName + ".sed")
+  $sed = @"
+[Version]
+Class=IEXPRESS
+SEDVersion=3
+[Options]
+PackagePurpose=InstallApp
+ShowInstallProgramWindow=1
+HideExtractAnimation=0
+UseLongFileName=1
+InsideCompressed=0
+CAB_FixedSize=0
+CAB_ResvCodeSigning=0
+RebootMode=N
+InstallPrompt=
+DisplayLicense=
+FinishMessage=POKROV installed.
+TargetName=$installerPath
+FriendlyName=POKROV Windows beta installer
+AppLaunched=install-pokrov.cmd
+PostInstallCmd=<None>
+AdminQuietInstCmd=install-pokrov.cmd
+UserQuietInstCmd=install-pokrov.cmd
+SourceFiles=SourceFiles
+[SourceFiles]
+SourceFiles0=$installerPayloadDirectory
+[SourceFiles0]
+install-pokrov.cmd=
+install-pokrov.ps1=
+$zipLeaf=
+"@
+  Write-Utf8File -Path $sedPath -Content $sed
+  if (Test-Path -LiteralPath $installerPath) {
+    Remove-Item -Force -LiteralPath $installerPath
+  }
+  $iexpressProcess = Start-Process -FilePath $iexpress.Source -ArgumentList @("/N", "/Q", $sedPath) -NoNewWindow -Wait -PassThru
+  if ($iexpressProcess.ExitCode -ne 0) {
+    throw "iexpress.exe failed with exit code $($iexpressProcess.ExitCode)"
+  }
+  $installerReady = $false
+  for ($attempt = 0; $attempt -lt 60; $attempt++) {
+    if (Test-Path -LiteralPath $installerPath) {
+      $installerReady = $true
+      break
+    }
+    Start-Sleep -Seconds 1
+  }
+  if (-not $installerReady) {
+    throw "iexpress.exe did not produce installer: $installerPath"
+  }
+  $installerSha256 = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash
+}
+
 $manifest = [ordered]@{
   generated_at_utc = (Get-Date).ToUniversalTime().ToString("o")
   display_name = $windowsReleaseConfig.display_name
@@ -198,6 +332,8 @@ $manifest = [ordered]@{
   release_output_directory = $releaseOutputDirectory
   staged_bundle_directory = $stagedBundleDirectory
   zip_path = if ($SkipZip) { $null } else { $zipPath }
+  installer_path = if ($SkipInstaller) { $null } else { $installerPath }
+  installer_sha256 = $installerSha256
   executable = [ordered]@{
     file_name = $windowsReleaseConfig.binary_name
     file_description = $versionInfo.FileDescription
@@ -218,5 +354,8 @@ Write-Host "Release output: $releaseOutputDirectory"
 Write-Host "Staged bundle: $stagedBundleDirectory"
 if (-not $SkipZip) {
   Write-Host "Zip: $zipPath"
+}
+if (-not $SkipInstaller) {
+  Write-Host "Installer: $installerPath"
 }
 Write-Host "Manifest: $manifestPath"

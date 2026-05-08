@@ -84,7 +84,7 @@ Current blocking dependency:
 - selected-apps parity is still explicitly out of scope for this cycle in `POKROV-app`; the current hardening wave is for `Full tunnel`, and per-app Android parity remains deferred
 - `iOS` host now reaches a source-backed packet-tunnel lane: it can initialize libcore, stage a managed profile into the shared app-group runtime directory, persist a `NETunnelProviderManager`, and request tunnel start or stop against the checked-in `PacketTunnelExtension` target; the provider now boots `MobileSetup` plus `LibboxSetup`, starts a Libbox command server and service, and opens tun through `NEPacketTunnelFlow`, but this still lacks signed Apple validation on a real device
 - `macOS` now copies synced `libcore.dylib` and `HiddifyCli` artifacts into the app bundle and the desktop FFI lane can discover them from the built host layout
-- `Windows` now copies synced `libcore.dll` into the release bundle, applies runtime options before `libcore start`, prefers a system-proxy desktop host mode in the current seed, and `build-windows-release.ps1` verifies the bundle metadata and stages an unsigned zip plus manifest under `apps/windows_shell/build/release_bundle`
+- `Windows` now copies synced `libcore.dll` into the release bundle, applies runtime options before `libcore start`, prefers a system-proxy desktop host mode in the current seed, and `build-windows-release.ps1` verifies the bundle metadata and stages an unsigned setup EXE, portable ZIP, and manifest under `apps/windows_shell/build/release_bundle`
 - host `build/` outputs and staged local bundles remain disposable local verification artifacts; they are not release truth for any public lane
 - treat future live connect, service ownership, and traffic-carrying runtime work as one shared contract owned by the lane, not four host-local improvisations
 
@@ -116,7 +116,7 @@ The Apple placeholder inputs that now shape later operator work live in:
 - no Android traffic validation on a real device or emulator
 - no replacement for the required Android release-build localhost/control-surface audit on physical hardware
 - no reviewed iOS entitlement validation, signed shared-app-group proof, or on-device packet-flow evidence
-- no trusted signing, public installer or `MSIX` publishing, or deploy wiring
+- no trusted signing, trusted public installer or `MSIX` publishing, or deploy wiring
 - no git-model migration for the shipping client or release lanes
 
 That keeps the seed safe whether the next wave chooses `Karing` adaptation or a clean-room client lane.

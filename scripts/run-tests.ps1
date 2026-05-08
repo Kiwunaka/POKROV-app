@@ -1,6 +1,14 @@
+param(
+  [switch]$OfflinePubGet
+)
+
 $root = Split-Path -Parent $PSScriptRoot
 
-& (Join-Path $PSScriptRoot "bootstrap-workspace.ps1")
+$bootstrapArgs = @()
+if ($OfflinePubGet) {
+  $bootstrapArgs += "-OfflinePubGet"
+}
+& (Join-Path $PSScriptRoot "bootstrap-workspace.ps1") @bootstrapArgs
 if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }

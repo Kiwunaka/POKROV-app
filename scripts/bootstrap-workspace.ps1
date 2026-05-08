@@ -1,3 +1,7 @@
+param(
+  [switch]$OfflinePubGet
+)
+
 $root = Split-Path -Parent $PSScriptRoot
 
 $workspacePackages = @(
@@ -17,7 +21,14 @@ foreach ($relativePath in $workspacePackages) {
   Write-Host "Running flutter pub get in $relativePath" -ForegroundColor Cyan
   Push-Location $fullPath
   try {
-    flutter pub get
+    $pubGetArgs = @("pub", "get")
+    if ($OfflinePubGet) {
+      $pubGetArgs += "--offline"
+    }
+    flutter @pubGetArgs
+    if ($LASTEXITCODE -ne 0) {
+      exit $LASTEXITCODE
+    }
   } finally {
     Pop-Location
   }
