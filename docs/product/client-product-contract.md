@@ -54,9 +54,9 @@ Additive email auth for the site and cabinet is marked `soon` and must stay expl
 ## Release Gate Reality
 
 - `Android + Windows` remain the only public release pair for this wave
-- `Windows` may proceed when its documented release gates are green
-- `Android` remains blocked until a release-installed build passes the localhost and local-control-surface audit on physical hardware
-- the current green repo/static gate snapshot is necessary but not sufficient; public release still needs production signing, runtime handoff validation, and separate `current-origin`, `brain-origin`, and `RU-origin` evidence
+- `Windows` may proceed for this outside-store beta as an unsigned EXE only when runtime handoff gates are green and unknown-publisher warning copy is visible
+- `Android` is operator-attested for this beta wave; raw audit evidence remains optional replacement evidence, not a public claim
+- the current green repo/static gate snapshot is necessary but not sufficient; public release still needs runtime handoff validation, paid/email evidence, and separate `current-origin`, `brain-origin`, and accepted-skip `RU-origin` handling
 - emulator or adb-only Android audits are valid preflight, not final release approval
 - `iOS` and `macOS` readiness work does not block the public Android+Windows ship, but it also does not expand the public promise
 
@@ -190,7 +190,7 @@ Store/operator artifacts remain separate:
 Release continuity rules:
 
 - public-facing build surfaces must present the beta line `0.x.x-beta`
-- Android APK distribution is internal beta only until trusted signing and physical localhost/control-surface audit pass
+- Android APK distribution is staged for outside-store beta after operator-attested physical audit, but remains blocked from runtime/public download until final handoff approval
 - Windows unsigned bundles may be gated to beta users only with a SmartScreen or unknown-publisher warning
 - signed release builds inject updater and source metadata through the documented `PORTAL_RELEASE_*` environment variables
 - local non-release builds keep updater and source-code surfaces disabled instead of falling back to a personal repository URL

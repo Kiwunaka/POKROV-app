@@ -1,20 +1,26 @@
 {
   "lane": "POKROV-app/main",
-  "status": "blocked_not_cutover_ready",
+  "status": "outside_store_beta_staged_runtime_sync_pending",
   "public_cutover_allowed": false,
   "android_release": {
-    "beta_distribution": "internal_only",
+    "beta_distribution": "outside_store_apk_staged",
     "public_approved": false,
     "blocked_on": [
-      "trusted Android signing material",
-      "release-installed physical-device localhost/control-surface audit",
+      "runtime APP_* sync approval",
+      "live /api/client/apps download smoke",
       "public download handoff approval"
+    ],
+    "accepted_evidence": [
+      "operator-attested physical-device localhost/control-surface audit for this beta wave"
     ]
   },
   "windows_release": {
-    "beta_distribution": "gated_unsigned",
+    "beta_distribution": "outside_store_unsigned_exe_staged",
     "public_approved": false,
-    "required_user_warning": "Microsoft Defender SmartScreen or unknown-publisher warning is expected until trusted signing is complete."
+    "required_user_warning": "Microsoft Defender SmartScreen or unknown-publisher warning is expected until trusted signing is complete.",
+    "accepted_evidence": [
+      "unsigned beta risk accepted for this outside-store beta wave"
+    ]
   },
   "blocking_dependencies": [
     "formal public cutover approval remains open even though the clean-room base decision is already selected in POKROV-app",
@@ -23,7 +29,7 @@
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
-    "Windows trusted signing, installer or MSIX packaging, and public hosting remain operator work outside this lane"
+    "Windows trusted signing remains a later trust upgrade; runtime sync, live download smoke, and handoff approval remain operator work outside this lane"
   ],
   "ios_release_gates": [
     "Apple team selected",
@@ -49,8 +55,8 @@
     "shared runtime and widget tests pass",
     "flutter build windows --release succeeds",
     "local release bundle includes libcore.dll",
-    "trusted signing certificate and timestamping path are provided",
-    "installer or MSIX publication path is chosen"
+    "trusted signing certificate and timestamping path are provided for a later trusted build",
+    "outside-store EXE path stays first-layer for this beta wave while MSIX/ZIP remain operator/store artifacts"
   ],
   "operator_required_evidence": {
     "ios": [
@@ -67,8 +73,8 @@
     ],
     "windows": [
       "verified release bundle manifest",
-      "signed executable or installer",
-      "installer or MSIX identity",
+      "signed executable or installer for a later trusted build",
+      "outside-store EXE identity and unsigned warning copy",
       "public hosting or store handoff"
     ]
   }

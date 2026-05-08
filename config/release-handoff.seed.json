@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "last_updated": "2026-04-23",
+  "last_updated": "2026-05-09",
   "purpose": "stable root-repo handoff source for canonical client-lane identity and latest repo-backed release metadata",
   "repo": {
     "name": "POKROV-app",
@@ -22,17 +22,24 @@
     "cutover_readiness_source": "config/cutover-readiness.seed.json"
   },
   "latest_repo_backed_release": {
-    "channel": "paid_beta_evidence",
-    "version": "0.2.0-beta.1+20260425",
-    "archive_root": "artifacts/releases/pokrov-app/0.2.0-beta.1+20260425",
-    "readme": "artifacts/releases/pokrov-app/0.2.0-beta.1+20260425/README.md",
-    "checksums": null,
+    "channel": "outside_store_public_beta_staging",
+    "version": "0.2.0-beta.1+20260508",
+    "archive_root": "artifacts/releases/pokrov-app/0.2.0-beta.1+20260508",
+    "readme": "artifacts/releases/pokrov-app/0.2.0-beta.1+20260508/README.md",
+    "checksums": "artifacts/releases/pokrov-app/0.2.0-beta.1+20260508/SHA256SUMS.txt",
+    "github_release": "https://github.com/Kiwunaka/POKROV-app/releases/tag/v0.2.0-beta.1",
+    "runtime_sync_allowed": false,
+    "public_announcement_allowed": false,
+    "paid_checkout_allowed": false,
     "artifacts": [
       {
         "platform": "android",
         "kind": "apk",
-        "file_name": null,
-        "canonical_label": "android_internal_beta_apk_public_blocked",
+        "file_name": "pokrov-android-universal.apk",
+        "url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v0.2.0-beta.1/pokrov-android-universal.apk",
+        "sha256": "1A369891641964A9A30A296E7D47111A07B6DDAAD5ABC293F7EF938A654DADB0",
+        "canonical_label": "android_outside_store_beta_apk_runtime_sync_pending",
+        "evidence_state": "OPERATOR_ATTESTED",
         "public_approved": false
       },
       {
@@ -44,16 +51,19 @@
       },
       {
         "platform": "windows",
-        "kind": "zip",
-        "file_name": "pokrov-windows-beta-x64-0.2.0-beta.1.zip",
-        "canonical_label": "windows_gated_unsigned_beta_bundle_zip",
+        "kind": "exe",
+        "file_name": "pokrov-windows-setup-x64.exe",
+        "url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v0.2.0-beta.1/pokrov-windows-setup-x64.exe",
+        "sha256": "E340F36EC10149649373E0E7816C81B8C6873E9B95C7A85DC0F6AD708DB2C70D",
+        "canonical_label": "windows_unsigned_outside_store_beta_exe_runtime_sync_pending",
+        "evidence_state": "UNSIGNED_BETA_RISK_ACCEPTED",
         "public_approved": false
       },
       {
         "platform": "windows",
-        "kind": "manifest",
-        "file_name": "pokrov-windows-beta-x64-0.2.0-beta.1.manifest.json",
-        "canonical_label": "windows_gated_unsigned_beta_bundle_manifest",
+        "kind": "zip",
+        "file_name": null,
+        "canonical_label": "windows_portable_zip_not_first_layer_public_distribution",
         "public_approved": false
       }
     ]

@@ -1,6 +1,6 @@
 # POKROV Client Release Backlog
 
-Last updated: 2026-04-25
+Last updated: 2026-05-09
 
 ## Document Status
 
@@ -8,12 +8,13 @@ This file tracks the current public-release blockers and follow-up backlog for `
 
 ## Current Status
 
-The app-first foundation and the consumer information architecture are in place in the new client repo, but public Android+Windows release approval is still blocked. The current W07 paid beta evidence line is `0.2.0-beta.1`.
+The app-first foundation and the consumer information architecture are in place in the new client repo. Android and Windows artifacts are staged for an outside-store beta on `0.2.0-beta.1`, but public Android+Windows release approval is still blocked by runtime handoff, email/payment evidence, and final platform GO.
 
 Latest documented repo-level gate note:
 
 - the latest recorded full `python scripts/release_orchestrator.py --gates-only` success snapshot remains the `2026-04-13` run from the platform workspace
-- that local green gate snapshot does not replace signing, handoff, live-origin evidence, or the physical-device Android localhost audit
+- that local green gate snapshot does not replace runtime handoff, live-origin evidence, or payment/email proof
+- Android physical-device audit is operator-attested for this beta wave; do not describe it as raw repo evidence unless a retained audit artifact is attached
 
 Already verified locally by the current engineering lane:
 
@@ -30,11 +31,9 @@ Already verified locally by the current engineering lane:
 
 ### Android local-surface security gate
 
-- repo/static smoke exists, but that does not replace the required connected-device Android localhost audit
-- audit release builds for proxy, local DNS, Clash API, libbox command server, and equivalent localhost control surfaces
-- prove default bind scope and third-party reachability on Android instead of assuming `VpnService` isolation is sufficient
-- keep Android release blocked if any unauthenticated local admin or proxy surface remains reachable
-- keep negative tests for unauthorized local-client access and config or key exposure in the release path
+- retain the operator-attested physical-device localhost/control-surface audit for this beta wave
+- replace the attestation with raw audit evidence only if the operator supplies it
+- keep negative tests for unauthorized local-client access and config or key exposure in the release path for later builds
 
 ### Route-mode, routing, and DNS verification
 
@@ -49,8 +48,8 @@ Already verified locally by the current engineering lane:
 - keep regenerated launcher, tray, and package assets aligned with the final `POKROV` brand set
 - keep Windows package identity, executable naming, installer naming, and public artifacts on the canonical `POKROV` / `pokrov` line
 - build fresh Android and Windows release candidates after the latest branding sync
-- sign the final Android and Windows artifacts for public distribution
-- keep Android APKs internal-only and public-blocked until trusted signing plus the physical localhost/control-surface audit pass
+- keep trusted signing as a later trust upgrade; it is not required for this outside-store beta wave
+- keep Android APK runtime/public download blocked until the runtime APP_* sync and live download smoke pass
 - keep Windows unsigned bundles gated and beta-labeled, with explicit SmartScreen or unknown-publisher warning text
 - keep runtime download handoff aligned with the currently exposed public targets: Android `Play` / `APK` / mirror and Windows `EXE` / mirror
 - keep `AAB`, `MSIX`, and portable `ZIP` aligned as store/operator artifacts unless the public payload expands
