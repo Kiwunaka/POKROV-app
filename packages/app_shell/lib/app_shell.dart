@@ -29,17 +29,16 @@ enum _SectionTone {
 typedef ExternalHandoffLauncher = Future<bool> Function(Uri uri);
 
 abstract final class _SeedPalette {
-  static const canvas = Color(0xFFF4F0E7);
-  static const canvasAlt = Color(0xFFEAF1E9);
-  static const ink = Color(0xFF12261B);
-  static const accent = Color(0xFF216A4D);
+  static const canvas = Color(0xFFF7F3EB);
+  static const canvasAlt = Color(0xFFF0EADF);
+  static const ink = Color(0xFF1F2636);
+  static const accent = Color(0xFF20674F);
   static const accentBright = Color(0xFF3F8B67);
-  static const mint = Color(0xFFBDE6CF);
-  static const sky = Color(0xFFD9ECE6);
-  static const rose = Color(0xFFF4D6CC);
-  static const surface = Color(0xFFF9FBF7);
-  static const surfaceMuted = Color(0xFFF1F5EE);
-  static const line = Color(0x1A163022);
+  static const mint = Color(0xFFDCEFE5);
+  static const sky = Color(0xFFE7F2EC);
+  static const surface = Color(0xFFFDFCF8);
+  static const surfaceMuted = Color(0xFFEDF4EE);
+  static const line = Color(0x1A1F2636);
 }
 
 const _apiBaseUrlOverride = String.fromEnvironment(
@@ -793,14 +792,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.78),
-              borderRadius: BorderRadius.circular(32),
+              color: Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(30),
               border: Border.all(color: _SeedPalette.line),
               boxShadow: [
                 BoxShadow(
-                  color: _SeedPalette.ink.withOpacity(0.08),
-                  blurRadius: 36,
-                  offset: const Offset(0, 12),
+                  color: _SeedPalette.ink.withOpacity(0.07),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
@@ -837,6 +836,31 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SeedContentList extends StatelessWidget {
+  const _SeedContentList({
+    required this.children,
+    this.top = 12,
+  });
+
+  final List<Widget> children;
+  final double top;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final sidePadding = constraints.maxWidth >= 980
+            ? (constraints.maxWidth - 900) / 2
+            : 24.0;
+        return ListView(
+          padding: EdgeInsets.fromLTRB(sidePadding, top, sidePadding, 160),
+          children: children,
+        );
+      },
     );
   }
 }
@@ -887,8 +911,7 @@ class _QuickConnectSection extends StatelessWidget {
                 ? 'Ready when you are'
                 : 'Finish setup first';
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 160),
+    return _SeedContentList(
       children: [
         Text('Protection', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 12),
@@ -944,6 +967,7 @@ class _QuickConnectSection extends StatelessWidget {
               const SizedBox(height: 16),
               Center(
                 child: FilledButton.icon(
+                  key: const ValueKey('primary-connect-action'),
                   onPressed: primaryActionEnabled ? onToggleRuntime : null,
                   icon: Icon(
                     isRunning
@@ -952,11 +976,11 @@ class _QuickConnectSection extends StatelessWidget {
                   ),
                   label: Text(
                     runtimeBusy
-                        ? 'Preparing protection'
+                        ? 'Preparing'
                         : isRunning
-                            ? 'Turn protection off'
+                            ? 'Disconnect'
                             : primaryActionEnabled
-                                ? 'Turn protection on'
+                                ? 'Connect'
                                 : 'Protection unavailable',
                   ),
                 ),
@@ -1035,8 +1059,8 @@ class _QuickConnectSection extends StatelessWidget {
                 ),
                 label: Text(
                   snapshot?.phase == RuntimePhase.running
-                      ? 'Stop from here'
-                      : 'Start from here',
+                      ? 'Disconnect'
+                      : 'Connect',
                 ),
               ),
             ],
@@ -1062,8 +1086,7 @@ class _LocationsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 160),
+    return _SeedContentList(
       children: [
         Text('Locations', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),
@@ -1091,7 +1114,7 @@ class _LocationsSection extends StatelessWidget {
           _SectionCard(
             title: 'Available after setup',
             lines: [
-              'Turn protection on once to create the app-first session for this device.',
+              'Tap Connect once to create the app-first session for this device.',
               'After that, this screen will show the managed route without exposing raw network controls.',
             ],
           ),
@@ -1131,8 +1154,8 @@ class _ProfileSection extends StatelessWidget {
     final theme = Theme.of(context);
     final readinessOnlySummary = appContext.scope.readinessOnlySummary;
 
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return _SeedContentList(
+      top: 24,
       children: [
         Text('Profile', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),
@@ -1340,8 +1363,8 @@ class _RulesSection extends StatelessWidget {
     final selectedAppsAvailable =
         appContext.bootstrapContract.supportsSelectedAppsMode;
 
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return _SeedContentList(
+      top: 24,
       children: [
         Text('Rules', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),
@@ -1742,58 +1765,8 @@ class _SeedBackdrop extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          Positioned(
-            top: -60,
-            right: -10,
-            child: _GlowBlob(
-              size: 220,
-              color: _SeedPalette.mint.withOpacity(0.62),
-            ),
-          ),
-          Positioned(
-            top: 150,
-            left: -70,
-            child: _GlowBlob(
-              size: 260,
-              color: _SeedPalette.sky.withOpacity(0.58),
-            ),
-          ),
-          Positioned(
-            bottom: 60,
-            right: -40,
-            child: _GlowBlob(
-              size: 180,
-              color: _SeedPalette.rose.withOpacity(0.46),
-            ),
-          ),
           child,
         ],
-      ),
-    );
-  }
-}
-
-class _GlowBlob extends StatelessWidget {
-  const _GlowBlob({
-    required this.size,
-    required this.color,
-  });
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [color, color.withOpacity(0)],
-          ),
-        ),
       ),
     );
   }
@@ -2042,7 +2015,7 @@ class _ConnectOrbButton extends StatelessWidget {
                               ? 'Attention'
                               : running
                                   ? 'Protected'
-                                  : 'One tap',
+                                  : 'Connect',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             color: _SeedPalette.ink,
                             fontWeight: FontWeight.w800,

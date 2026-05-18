@@ -365,7 +365,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final connectAction = find.text('Turn protection on');
+    final connectAction = find.byKey(const ValueKey('primary-connect-action'));
     await tester.dragUntilVisible(
       connectAction,
       find.byType(Scrollable).first,
@@ -457,7 +457,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final connectAction = find.text('Turn protection on');
+    final connectAction = find.byKey(const ValueKey('primary-connect-action'));
     await tester.dragUntilVisible(
       connectAction,
       find.byType(Scrollable).first,
@@ -607,7 +607,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final connectAction = find.text('Turn protection on');
+    final connectAction = find.byKey(const ValueKey('primary-connect-action'));
     await tester.dragUntilVisible(
       connectAction,
       find.byType(Scrollable).first,
@@ -621,7 +621,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Turn protection off'),
+      find.text('Disconnect'),
       findsWidgets,
     );
   });
@@ -713,7 +713,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final connectAction = find.text('Turn protection on');
+    final connectAction = find.byKey(const ValueKey('primary-connect-action'));
     await tester.dragUntilVisible(
       connectAction,
       find.byType(Scrollable).first,
