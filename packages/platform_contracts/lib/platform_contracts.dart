@@ -32,13 +32,13 @@ extension PermissionRequirementPresentation on PermissionRequirement {
   String get label {
     switch (this) {
       case PermissionRequirement.notifications:
-        return 'Notifications';
+        return 'Уведомления';
       case PermissionRequirement.vpnProfile:
-        return 'VPN profile';
+        return 'Системное подключение';
       case PermissionRequirement.backgroundStart:
-        return 'Background start';
+        return 'Запуск в фоне';
       case PermissionRequirement.elevatedSession:
-        return 'Elevated session';
+        return 'Права Windows';
     }
   }
 }

@@ -100,26 +100,26 @@ class RuntimeSnapshot {
   String get laneLabel {
     switch (lane) {
       case RuntimeLane.desktopFfi:
-        return 'Desktop libcore lane';
+        return 'Локальный runtime';
       case RuntimeLane.mobileArtifact:
-        return 'Mobile runtime bridge';
+        return 'Системный runtime';
     }
   }
 
   String get phaseLabel {
     switch (phase) {
       case RuntimePhase.artifactMissing:
-        return 'Artifacts missing';
+        return 'Нужна подготовка';
       case RuntimePhase.artifactReady:
-        return 'Artifacts synced';
+        return 'Файлы готовы';
       case RuntimePhase.initialized:
-        return 'Bridge ready';
+        return 'Runtime готов';
       case RuntimePhase.configStaged:
-        return 'Managed profile staged';
+        return 'Настройки готовы';
       case RuntimePhase.running:
         return hasDegradedHostDiagnostics
-            ? 'Connected with warnings'
-            : 'Connected';
+            ? 'Подключено с предупреждением'
+            : 'Подключено';
     }
   }
 
@@ -132,7 +132,7 @@ class RuntimeSnapshot {
       if (dnsState != RuntimeDiagnosticState.unknown)
         'DNS ${_diagnosticStateLabel(dnsState)}',
       if (uplinkState != RuntimeDiagnosticState.unknown)
-        'Uplink ${_diagnosticStateLabel(uplinkState)}',
+        'Сеть ${_diagnosticStateLabel(uplinkState)}',
     ];
     if (labels.isEmpty) {
       return null;
@@ -142,9 +142,9 @@ class RuntimeSnapshot {
 
   static String _diagnosticStateLabel(RuntimeDiagnosticState state) {
     return switch (state) {
-      RuntimeDiagnosticState.healthy => 'healthy',
-      RuntimeDiagnosticState.degraded => 'degraded',
-      RuntimeDiagnosticState.unknown => 'unknown',
+      RuntimeDiagnosticState.healthy => 'в порядке',
+      RuntimeDiagnosticState.degraded => 'требует проверки',
+      RuntimeDiagnosticState.unknown => 'проверяется',
     };
   }
 }
@@ -221,7 +221,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
 
   static const defaultLibcoreTag = 'v3.1.8';
   static const _missingArtifactMessage =
-      'Run scripts/fetch-libcore-assets.ps1 and sync the host artifacts first.';
+      'Модуль подключения не найден в этой сборке. Обновите приложение или проверьте сборку.';
 
   @override
   Future<RuntimeSnapshot> snapshot() async {
@@ -245,12 +245,12 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     _phase = phase;
     _message = switch (phase) {
       RuntimePhase.artifactReady =>
-        'Desktop runtime can initialize once the shell requests it.',
+        'Ядро готово. Подключение запустится, когда приложение запросит старт.',
       RuntimePhase.initialized =>
-        'Runtime bootstrap succeeded. Stage a managed profile to continue.',
+        'Подготовка завершена. Осталось получить профиль доступа.',
       RuntimePhase.configStaged =>
-        'A managed profile is staged and ready for a live connect attempt.',
-      RuntimePhase.running => 'libcore is running with the staged profile.',
+        'Профиль доступа готов. Можно подключаться.',
+      RuntimePhase.running => 'POKROV подключен с текущим профилем доступа.',
       RuntimePhase.artifactMissing => _missingArtifactMessage,
     };
 
@@ -291,14 +291,14 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       );
       if (error.isNotEmpty) {
         _phase = RuntimePhase.artifactReady;
-        _message = 'Runtime setup failed: $error';
+        _message = 'Не удалось подготовить подключение: $error';
       } else {
         _phase = RuntimePhase.initialized;
-        _message = 'Runtime bootstrap completed with libcore.';
+        _message = 'Подготовка подключения завершена.';
       }
     } catch (error) {
       _phase = RuntimePhase.artifactReady;
-      _message = 'Runtime load failed: $error';
+      _message = 'Не удалось загрузить модуль подключения: $error';
     }
 
     return snapshot();
@@ -333,7 +333,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       );
       if (parseError.isNotEmpty) {
         _phase = RuntimePhase.initialized;
-        _message = 'Managed profile validation failed: $parseError';
+        _message = 'Профиль доступа не прошел проверку: $parseError';
         return snapshot();
       }
     }
@@ -341,7 +341,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     _stagedPayload = payload;
     _stagedConfigPath = finalPath;
     _phase = RuntimePhase.configStaged;
-    _message = 'Managed profile staged at $finalPath.';
+    _message = 'Настройки POKROV готовы.';
     return snapshot();
   }
 
@@ -350,7 +350,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     final before = await snapshot();
     if (!before.canConnect || _bindings == null || _stagedPayload == null) {
       _message =
-          'Connect is waiting for a staged managed profile and initialized libcore.';
+          'POKROV ждет подготовленные настройки и готовый runtime.';
       return snapshot();
     }
 
@@ -359,7 +359,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     );
     if (optionsError.isNotEmpty) {
       _phase = RuntimePhase.configStaged;
-      _message = 'Runtime option sync failed: $optionsError';
+      _message = 'POKROV не смог применить параметры runtime: $optionsError';
       return snapshot();
     }
 
@@ -369,12 +369,12 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     );
     if (error.isNotEmpty) {
       _phase = RuntimePhase.configStaged;
-      _message = 'Runtime start failed: $error';
+      _message = 'POKROV не смог подключиться: $error';
       return snapshot();
     }
 
     _phase = RuntimePhase.running;
-    _message = 'libcore started with the staged managed profile.';
+    _message = 'POKROV включен.';
     return snapshot();
   }
 
@@ -388,14 +388,14 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
 
     final error = _bindings!.stop();
     if (error.isNotEmpty) {
-      _message = 'Runtime stop failed: $error';
+      _message = 'POKROV не смог отключиться: $error';
       return snapshot();
     }
 
     _phase = _stagedConfigPath == null
         ? RuntimePhase.initialized
         : RuntimePhase.configStaged;
-    _message = 'libcore stopped cleanly.';
+    _message = 'POKROV отключен.';
     return snapshot();
   }
 
@@ -654,8 +654,8 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       canInitialize: false,
       canConnect: false,
       message: artifacts.coreArtifact != null
-          ? 'Native mobile artifact is present. Finish the host bridge lane to enable live connect.'
-          : 'Run scripts/fetch-libcore-assets.ps1 -Platforms ${hostPlatform.name} -SyncToHosts to stage the mobile core artifact.',
+          ? 'Мобильный модуль найден. Системный запуск еще готовится.'
+          : 'Модуль подключения не найден в этой сборке. Обновите приложение или проверьте сборку.',
     );
   }
 
@@ -733,7 +733,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         canConnect: false,
         message: error.message?.trim().isNotEmpty == true
             ? error.message!.trim()
-            : 'Runtime host bridge call failed: ${error.code}',
+            : 'Не удалось связаться с системным модулем: ${error.code}',
       );
     }
   }
@@ -953,7 +953,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       canInitialize: response['canInitialize'] as bool? ?? false,
       canConnect: response['canConnect'] as bool? ?? false,
       message: response['message'] as String? ??
-          'Runtime host bridge returned an empty snapshot.',
+          'Runtime не вернул статус подключения.',
       hostHealth: resolvedHostHealth,
       dnsState: resolvedDnsState,
       uplinkState: resolvedUplinkState,
@@ -1228,27 +1228,27 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     final details = <String>[
       if ((defaultNetworkInterface?.trim().isNotEmpty ?? false))
         defaultNetworkIndex != null
-            ? 'Uplink $defaultNetworkInterface (#$defaultNetworkIndex)'
-            : 'Uplink $defaultNetworkInterface'
+            ? 'Сеть $defaultNetworkInterface (#$defaultNetworkIndex)'
+            : 'Сеть $defaultNetworkInterface'
       else if (uplinkState == RuntimeDiagnosticState.degraded)
-        'Uplink unresolved',
+        'Сеть не определена',
       if (dnsReady != null)
-        'DNS ${dnsReady ? 'ready' : 'waiting'}'
+        'DNS ${dnsReady ? 'готов' : 'ждет'}'
       else if (dnsState != RuntimeDiagnosticState.unknown)
         'DNS ${RuntimeSnapshot._diagnosticStateLabel(dnsState)}',
       if (ipv4RouteCount != null || ipv6RouteCount != null)
-        'Routes v4=${ipv4RouteCount ?? 0} v6=${ipv6RouteCount ?? 0}',
+        'Правила v4=${ipv4RouteCount ?? 0} v6=${ipv6RouteCount ?? 0}',
       if ((includePackageCount ?? 0) > 0 || (excludePackageCount ?? 0) > 0)
-        'Packages include=${includePackageCount ?? 0} exclude=${excludePackageCount ?? 0}',
+        'Приложения include=${includePackageCount ?? 0} exclude=${excludePackageCount ?? 0}',
       if ((lastFailureKind?.trim().isNotEmpty ?? false))
-        'Last failure $lastFailureKind',
+        'Последняя ошибка $lastFailureKind',
     ];
 
     if (details.isEmpty) {
       return switch (hostHealth) {
-        RuntimeHostHealth.healthy => 'Android host diagnostics are healthy.',
+        RuntimeHostHealth.healthy => 'Диагностика Android без замечаний.',
         RuntimeHostHealth.degraded =>
-          'Android host diagnostics report warnings.',
+          'Диагностика Android сообщает предупреждение.',
         RuntimeHostHealth.unknown => null,
       };
     }

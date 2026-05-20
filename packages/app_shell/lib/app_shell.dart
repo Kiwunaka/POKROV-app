@@ -216,23 +216,23 @@ SeedAppContext buildSeedAppContext({
       firstPartyPromosOnly: true,
     ),
     bootstrapContract: bootstrapContract,
-    supportSnapshot: const SupportSnapshot(
-      supportBot: '@pokrov_supportbot',
-      feedbackBot: '@pokrov_feedbackbot',
-      publicChannel: '@pokrov_vpn',
-      supportEmail: 'support@pokrov.space',
-      safeNotes:
-          'Support receives safe device context only: app version, platform, route mode, and connection status.',
-      recommendedRouteMode: RouteMode.allExceptRu,
-      channelBonusDays: 10,
-    ),
-    locations: const [
-      LocationCluster(
-        code: 'pokrov-managed',
-        label: 'POKROV',
-        city: 'Single logical location',
-        countryCode: 'PO',
-        recommendedLane: 'Auto-managed',
+      supportSnapshot: const SupportSnapshot(
+        supportBot: '@pokrov_supportbot',
+        feedbackBot: '@pokrov_feedbackbot',
+        publicChannel: '@pokrov_vpn',
+        supportEmail: 'support@pokrov.space',
+        safeNotes:
+          'Поддержка видит только безопасный контекст: версию приложения, платформу, режим и статус подключения.',
+        recommendedRouteMode: RouteMode.allExceptRu,
+        channelBonusDays: 10,
+      ),
+      locations: const [
+        LocationCluster(
+          code: 'pokrov-managed',
+          label: 'POKROV',
+          city: 'Автоматический выбор',
+          countryCode: 'PO',
+          recommendedLane: 'Авто',
         variants: [
           LocationVariant(kind: TransportKind.vlessReality),
           LocationVariant(kind: TransportKind.vmess),
@@ -240,7 +240,7 @@ SeedAppContext buildSeedAppContext({
           LocationVariant(
             kind: TransportKind.xhttp,
             availability: VariantAvailability.gated,
-            note: 'Needs CDN/static front before public launch.',
+            note: 'Откроется после подготовки публичного контура.',
           ),
         ],
       ),
@@ -432,7 +432,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     );
     if (uri == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter an activation key first.')),
+        const SnackBar(content: Text('Сначала введите код активации.')),
       );
       return;
     }
@@ -523,7 +523,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (mounted) {
       setState(() {
         _managedProfileDirty = false;
-        _runtimeHeadline = 'Protection refreshed from '
+        _runtimeHeadline = 'Настройки обновлены с '
             '${Uri.parse(widget.appContext.apiBaseUrl).host}.';
       });
     }
@@ -533,7 +533,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   Future<void> _toggleRuntime() async {
     if (_runtimeBusy) {
       setState(() {
-        _runtimeHeadline = 'Protection is already updating. Give it a moment.';
+        _runtimeHeadline = 'POKROV уже обновляется. Подождите немного.';
       });
       return;
     }
@@ -564,7 +564,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!_canPrimaryConnect(snapshot)) {
         setState(() {
           _runtimeHeadline =
-              'This device still needs a little setup before protection can start.';
+              'На этом устройстве еще нужно завершить подготовку.';
         });
         return;
       }
@@ -607,8 +607,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _runtimeSnapshot = current;
           _runtimeHeadline = current.phase == RuntimePhase.running
               ? current.isCleanlyHealthy
-                  ? 'Protection is on.'
-                  : 'Protection is on, but it needs attention.'
+                  ? 'POKROV включен.'
+                  : 'POKROV включен, но требует внимания.'
               : current.message;
         });
         if (current.phase != RuntimePhase.running &&
@@ -702,7 +702,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     return normalized.contains('failed') ||
         normalized.contains('denied') ||
         normalized.contains('error') ||
-        normalized.contains('stopped');
+        normalized.contains('stopped') ||
+        normalized.contains('не удалось') ||
+        normalized.contains('отказ') ||
+        normalized.contains('ошиб') ||
+        normalized.contains('останов');
   }
 
   bool _canPrimaryConnect(RuntimeSnapshot? snapshot) {
@@ -767,7 +771,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           children: [
             const Text('POKROV'),
             Text(
-              'Protection first. Everything else stays close.',
+              'Подключение, устройства и поддержка рядом.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: _SeedPalette.ink.withOpacity(0.68),
                   ),
@@ -814,22 +818,22 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                 NavigationDestination(
                   icon: Icon(Icons.flash_on_outlined),
                   selectedIcon: Icon(Icons.flash_on),
-                  label: 'Protection',
+                  label: 'Подключение',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.public_outlined),
                   selectedIcon: Icon(Icons.public),
-                  label: 'Locations',
+                  label: 'Локация',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.rule_folder_outlined),
                   selectedIcon: Icon(Icons.rule_folder),
-                  label: 'Rules',
+                  label: 'Режим',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.person_outline),
                   selectedIcon: Icon(Icons.person),
-                  label: 'Profile',
+                  label: 'Профиль',
                 ),
               ],
             ),
@@ -902,18 +906,18 @@ class _QuickConnectSection extends StatelessWidget {
     );
     final primaryActionEnabled = !runtimeBusy && primaryConnectEnabled;
     final heroTitle = runtimeBusy
-        ? 'Checking protection'
+        ? 'Проверяем подключение'
         : isRunning
             ? isHealthyRunning
-                ? 'Protected'
-                : 'Protected, with a note'
+                ? 'Подключение активно'
+                : 'Подключение активно, есть замечание'
             : primaryActionEnabled
-                ? 'Ready when you are'
-                : 'Finish setup first';
+                ? 'Готово к подключению'
+                : 'Нужно завершить подготовку';
 
     return _SeedContentList(
       children: [
-        Text('Protection', style: Theme.of(context).textTheme.headlineSmall),
+        Text('Подключение', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 12),
         _SectionCard(
           title: heroTitle,
@@ -921,8 +925,8 @@ class _QuickConnectSection extends StatelessWidget {
           lines: [
             statusSummary,
             primaryActionEnabled
-                ? 'One main control lives here. Rules adjusts behaviour. Profile keeps the rest together.'
-                : 'This device still needs a little setup before protection can start.',
+                ? 'Главная кнопка здесь. Режим меняется во вкладке «Режим», аккаунт и поддержка — в «Профиле».'
+                : 'На этом устройстве еще нужно завершить подготовку.',
           ],
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -932,25 +936,25 @@ class _QuickConnectSection extends StatelessWidget {
                 runSpacing: 12,
                 children: [
                   _MetricTile(
-                    label: 'Status',
+                    label: 'Статус',
                     value: statusLabel,
                     caption: isRunning
-                        ? 'Daily use stays centered here.'
-                        : 'Protection stays simple on purpose.',
+                        ? 'POKROV работает на этом устройстве.'
+                        : 'Нажмите главную кнопку, когда будете готовы.',
                     icon: isRunning
                         ? Icons.shield_rounded
                         : Icons.play_circle_outline_rounded,
                   ),
                   _MetricTile(
-                    label: 'Current rule',
+                    label: 'Режим',
                     value: selectedRouteMode.label,
-                    caption: 'Change this in Rules',
+                    caption: 'Меняется во вкладке «Режим»',
                     icon: Icons.alt_route_rounded,
                   ),
                   _MetricTile(
-                    label: 'This device',
+                    label: 'Устройство',
                     value: appContext.hostPlatform.label,
-                    caption: 'Subscription, support, and bonus live in Profile',
+                    caption: 'Срок, поддержка и бонус в профиле',
                     icon: Icons.devices_rounded,
                   ),
                 ],
@@ -976,12 +980,12 @@ class _QuickConnectSection extends StatelessWidget {
                   ),
                   label: Text(
                     runtimeBusy
-                        ? 'Preparing'
+                        ? 'Готовим'
                         : isRunning
-                            ? 'Disconnect'
+                            ? 'Отключить'
                             : primaryActionEnabled
-                                ? 'Connect'
-                                : 'Protection unavailable',
+                                ? 'Подключить'
+                                : 'Пока недоступно',
                   ),
                 ),
               ),
@@ -1010,10 +1014,10 @@ class _QuickConnectSection extends StatelessWidget {
               const SizedBox(height: 14),
               Text(
                 isRunning && !isHealthyRunning
-                    ? 'Protection is on, but it may need attention. Profile is the next stop if you need help.'
+                    ? 'POKROV включен, но есть замечание. Если нужно, откройте поддержку в профиле.'
                     : primaryActionEnabled
-                        ? 'One clear action starts protection with your managed setup.'
-                        : 'Use Check status again once this device finishes setup.',
+                        ? 'Одно нажатие включает POKROV с подготовленными настройками.'
+                        : 'Когда подготовка закончится, проверьте статус еще раз.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: _SeedPalette.ink.withOpacity(0.72),
                     ),
@@ -1022,24 +1026,24 @@ class _QuickConnectSection extends StatelessWidget {
           ),
         ),
         _SectionCard(
-          title: 'What stays simple',
+          title: 'Что остается простым',
           tone: _SectionTone.muted,
           lines: [
             appContext.accessLane.summary,
-            'Trial: ${appContext.runtimeProfile.trialDays} days. Telegram bonus: +${appContext.runtimeProfile.telegramBonusDays} days.',
-            'Free fallback stays on ${appContext.runtimeProfile.freeTier.nodePool} with ${appContext.runtimeProfile.freeTier.quotaSummary}.',
+            'Пробный период: ${appContext.runtimeProfile.trialDays} дней. Telegram-бонус: +${appContext.runtimeProfile.telegramBonusDays} дней.',
+            'Базовый режим остается на ${appContext.runtimeProfile.freeTier.nodePoolLabel}: ${appContext.runtimeProfile.freeTier.quotaSummary}.',
           ],
         ),
         _SectionCard(
-          title: 'Connection status',
+          title: 'Статус подключения',
           tone: _SectionTone.neutral,
           lines: [
-            'Now: $statusLabel',
+            'Сейчас: $statusLabel',
             statusSummary,
-            'Current rule: ${selectedRouteMode.label}',
+            'Текущий режим: ${selectedRouteMode.label}',
             isRunning
-                ? 'Protection is already active on this device.'
-                : 'If setup is still finishing, check status again in a moment.',
+                ? 'POKROV уже включен на этом устройстве.'
+                : 'Если подготовка еще идет, проверьте статус через минуту.',
           ],
           child: Wrap(
             spacing: 12,
@@ -1048,7 +1052,7 @@ class _QuickConnectSection extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: runtimeBusy ? null : onRefreshRuntime,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Check status again'),
+                label: const Text('Проверить еще раз'),
               ),
               FilledButton.icon(
                 onPressed: primaryActionEnabled ? onToggleRuntime : null,
@@ -1059,8 +1063,8 @@ class _QuickConnectSection extends StatelessWidget {
                 ),
                 label: Text(
                   snapshot?.phase == RuntimePhase.running
-                      ? 'Disconnect'
-                      : 'Connect',
+                      ? 'Отключить'
+                      : 'Подключить',
                 ),
               ),
             ],
@@ -1088,18 +1092,18 @@ class _LocationsSection extends StatelessWidget {
 
     return _SeedContentList(
       children: [
-        Text('Locations', style: theme.textTheme.headlineSmall),
+        Text('Локация', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),
         _SectionCard(
-          title: 'Auto-managed',
+          title: 'Автоматический выбор',
           tone:
               hasProvisionedAccess ? _SectionTone.neutral : _SectionTone.muted,
           lines: [
-            'POKROV keeps the location story calm: one managed location, not a wall of countries.',
-            'Current rule: ${selectedRouteMode.label}.',
+            'POKROV сам выбирает подходящий доступный узел по вашему текущему доступу.',
+            'Текущий режим: ${selectedRouteMode.label}.',
             hasProvisionedAccess
-                ? 'This device already has a managed location ready.'
-                : 'Finish setup from Protection first. Until then, Locations stays quiet instead of showing placeholders.',
+                ? 'На этом устройстве уже готов профиль подключения.'
+                : 'Сначала завершите подготовку во вкладке «Подключение». До этого экран не показывает пустые заглушки.',
           ],
         ),
         if (hasProvisionedAccess) ...[
@@ -1112,19 +1116,19 @@ class _LocationsSection extends StatelessWidget {
           ),
         ] else ...[
           _SectionCard(
-            title: 'Available after setup',
+            title: 'Появится после подготовки',
             lines: [
-              'Tap Connect once to create the app-first session for this device.',
-              'After that, this screen will show the managed route without exposing raw network controls.',
+              'Нажмите «Подключить», чтобы создать сессию для этого устройства.',
+              'После этого экран покажет выбранный узел и понятный статус без технических списков.',
             ],
           ),
         ],
         _SectionCard(
-          title: 'How it chooses',
+          title: 'Как выбирается узел',
           lines: [
-            'Premium access uses enabled non-free locations.',
-            'Free fallback stays on ${appContext.runtimeProfile.freeTier.nodePool}.',
-            'Transport details stay hidden behind auto and support diagnostics.',
+            'Полный доступ использует включенные платные узлы.',
+            'Базовый режим остается на ${appContext.runtimeProfile.freeTier.nodePoolLabel}.',
+            'Технические детали остаются внутри автонастройки и диагностики поддержки.',
           ],
         ),
       ],
@@ -1152,65 +1156,63 @@ class _ProfileSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final readinessOnlySummary = appContext.scope.readinessOnlySummary;
-
     return _SeedContentList(
       top: 24,
       children: [
-        Text('Profile', style: theme.textTheme.headlineSmall),
+        Text('Профиль', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),
         _SectionCard(
-          title: 'Everything for this account',
+          title: 'Все по этому аккаунту',
           tone: _SectionTone.accent,
           lines: [
             hasProvisionedAccess
-                ? 'Subscription, devices, support, settings, and Telegram bonus all live here.'
-                : 'This will be the hub for subscription, device setup, support, settings, and Telegram bonus once this device is ready.',
-            'Current rule: ${selectedRouteMode.label}.',
-            'Current status: ${_consumerProtectionStatusLabel(runtimeSnapshot)}.',
+                ? 'Срок доступа, устройства, поддержка, настройки и Telegram-бонус живут здесь.'
+                : 'После подготовки устройства здесь будут срок доступа, поддержка, настройки и Telegram-бонус.',
+            'Текущий режим: ${selectedRouteMode.label}.',
+            'Статус: ${_consumerProtectionStatusLabel(runtimeSnapshot)}.',
           ],
           child: Wrap(
             spacing: 12,
             runSpacing: 12,
             children: [
               _ProfileHubTile(
-                title: 'Subscription',
+                title: 'Доступ',
                 value: appContext.accessLane.label,
                 caption: hasProvisionedAccess
-                    ? 'Renew or upgrade from here when you need to.'
-                    : 'The ${appContext.runtimeProfile.trialDays}-day start becomes real when this device finishes setup.',
+                    ? 'Продление и оплата открываются из профиля.'
+                    : '${appContext.runtimeProfile.trialDays} дней начнутся после подготовки устройства.',
                 icon: Icons.workspace_premium_outlined,
                 tone: _SectionTone.accent,
               ),
               _ProfileHubTile(
-                title: 'Device',
+                title: 'Устройство',
                 value: appContext.hostPlatform.label,
                 caption:
-                    'This device is currently using ${selectedRouteMode.label}.',
+                    'Сейчас используется режим «${selectedRouteMode.label}».',
                 icon: Icons.devices_outlined,
               ),
               _ProfileHubTile(
-                title: 'Telegram bonus',
-                value: '+${appContext.runtimeProfile.telegramBonusDays} days',
+                title: 'Telegram-бонус',
+                value: '+${appContext.runtimeProfile.telegramBonusDays} дней',
                 caption:
-                    'Optional for daily use. Helpful for bonus, recovery, and support.',
+                    'Не нужен для первого старта. Полезен для бонуса, восстановления и поддержки.',
                 icon: Icons.add_circle_outline_rounded,
               ),
               _ProfileHubTile(
-                title: 'Support',
-                value: 'App -> web -> Telegram',
-                caption: 'The recovery order stays calm and predictable.',
+                title: 'Поддержка',
+                value: 'Приложение -> кабинет -> Telegram',
+                caption: 'Так проще не потерять контекст обращения.',
                 icon: Icons.support_agent_rounded,
               ),
             ],
           ),
         ),
         _SectionCard(
-          title: 'Subscription',
+          title: 'Доступ и продление',
           lines: [
-            'Current plan: ${appContext.accessLane.label}.',
+            'Сейчас: ${appContext.accessLane.label}.',
             appContext.accessLane.summary,
-            'Checkout continues in the browser when you need renewal or paid access.',
+            'Оплата открывается в браузере, когда нужно продлить срок.',
           ],
           child: Wrap(
             spacing: 12,
@@ -1220,13 +1222,13 @@ class _ProfileSection extends StatelessWidget {
                 onPressed: () =>
                     onOpenHandoff('checkout', appContext.checkoutUrl),
                 icon: const Icon(Icons.shopping_bag_outlined),
-                label: const Text('Continue to checkout'),
+                label: const Text('Перейти к оплате'),
               ),
               OutlinedButton.icon(
                 onPressed: () =>
                     onOpenHandoff('cabinet', appContext.cabinetUrl),
                 icon: const Icon(Icons.web),
-                label: const Text('Open cabinet'),
+                label: const Text('Открыть кабинет'),
               ),
               OutlinedButton.icon(
                 onPressed: () => onOpenHandoff(
@@ -1236,16 +1238,16 @@ class _ProfileSection extends StatelessWidget {
                       .toString(),
                 ),
                 icon: const Icon(Icons.download_outlined),
-                label: const Text('Open downloads'),
+                label: const Text('Открыть загрузки'),
               ),
             ],
           ),
         ),
         _SectionCard(
-          title: 'Telegram bonus',
+          title: 'Telegram-бонус',
           lines: [
-            'Join ${appContext.supportSnapshot.publicChannel} and claim one extra +${appContext.runtimeProfile.telegramBonusDays} day bonus.',
-            'Telegram stays optional for normal daily use. Here it acts as bonus, recovery, and support continuation.',
+            'Подпишитесь на ${appContext.supportSnapshot.publicChannel} и заберите +${appContext.runtimeProfile.telegramBonusDays} дней.',
+            'Telegram остается необязательным для обычного использования. Он помогает с бонусом, восстановлением и поддержкой.',
           ],
           child: Wrap(
             spacing: 12,
@@ -1257,55 +1259,53 @@ class _ProfileSection extends StatelessWidget {
                   appContext.supportSnapshot.publicChannel,
                 ),
                 icon: const Icon(Icons.campaign_outlined),
-                label: const Text('Open community channel'),
+                label: const Text('Открыть канал'),
               ),
               OutlinedButton.icon(
                 onPressed: () => onOpenHandoff(
                     'support', appContext.supportSnapshot.supportBot),
                 icon: const Icon(Icons.open_in_new_rounded),
-                label: const Text('Open support bot'),
+                label: const Text('Открыть поддержку'),
               ),
             ],
           ),
         ),
         _SectionCard(
-          title: 'Devices',
+          title: 'Устройства',
           lines: [
-            'This device: ${appContext.hostPlatform.label}.',
-            'Public platform promise: ${appContext.scope.publicReleaseSummary}.',
-            if (readinessOnlySummary.isNotEmpty)
-              'Readiness-only hosts: $readinessOnlySummary.',
+            'Это устройство: ${appContext.hostPlatform.label}.',
+            'Текущая пользовательская бета: ${appContext.scope.publicReleaseSummary}.',
           ],
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _KeyValueLine(
-                label: 'Route on this device',
+                label: 'Режим на устройстве',
                 value: selectedRouteMode.label,
               ),
               _KeyValueLine(
-                label: 'Free fallback',
+                label: 'Базовый режим',
                 value:
-                    '${appContext.runtimeProfile.freeTier.nodePool} · ${appContext.runtimeProfile.freeTier.quotaSummary}',
+                    '${appContext.runtimeProfile.freeTier.nodePoolLabel} · ${appContext.runtimeProfile.freeTier.quotaSummary}',
               ),
               if (appContext.bootstrapContract.supportsSelectedAppsMode)
                 const _KeyValueLine(
-                  label: 'Selected apps',
-                  value: 'Beta MVP: route sync only',
+                  label: 'Выбранные приложения',
+                  value: 'Beta: синхронизация режима',
                 ),
             ],
           ),
         ),
         _SectionCard(
-          title: 'Settings',
+          title: 'Настройки',
           lines: [
-            'Connection status: ${_consumerProtectionStatusLabel(runtimeSnapshot)}.',
+            'Статус подключения: ${_consumerProtectionStatusLabel(runtimeSnapshot)}.',
             _consumerProtectionStatusSummary(
               runtimeSnapshot,
               headline: runtimeHeadline,
               hostPlatform: appContext.hostPlatform,
             ),
-            'Compatibility mode stays tucked away unless support asks for it.',
+            'Совместимый режим остается в дополнительных настройках, пока поддержка не попросит открыть его.',
           ],
         ),
         _RedeemPanel(
@@ -1314,11 +1314,11 @@ class _ProfileSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _SectionCard(
-          title: 'Support',
+          title: 'Поддержка',
           lines: [
             appContext.supportSnapshot.summary,
-            'Recovery order: app, then web cabinet, then Telegram.',
-            'Feedback stays available through ${appContext.supportSnapshot.feedbackBot}.',
+            'Порядок восстановления: приложение, потом кабинет, потом Telegram.',
+            'Отзывы доступны через ${appContext.supportSnapshot.feedbackBot}.',
             appContext.supportSnapshot.safeNotes,
           ],
           child: Wrap(
@@ -1329,13 +1329,13 @@ class _ProfileSection extends StatelessWidget {
                 onPressed: () => onOpenHandoff(
                     'support', appContext.supportSnapshot.supportBot),
                 icon: const Icon(Icons.support_agent),
-                label: const Text('Contact support'),
+                label: const Text('Написать в поддержку'),
               ),
               OutlinedButton.icon(
                 onPressed: () => onOpenHandoff(
                     'feedback', appContext.supportSnapshot.feedbackBot),
                 icon: const Icon(Icons.rate_review_outlined),
-                label: const Text('Send feedback'),
+                label: const Text('Оставить отзыв'),
               ),
             ],
           ),
@@ -1366,15 +1366,15 @@ class _RulesSection extends StatelessWidget {
     return _SeedContentList(
       top: 24,
       children: [
-        Text('Rules', style: theme.textTheme.headlineSmall),
+        Text('Режим', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),
         _SectionCard(
-          title: 'Pick a route style',
+          title: 'Выберите режим',
           tone: _SectionTone.accent,
           lines: [
-            'Choose how this device should behave. The labels stay human on purpose.',
-            'Current choice: ${selectedRouteMode.label}.',
-            'Recommended default: ${RouteMode.allExceptRu.label}.',
+            'Выберите, как POKROV будет работать на этом устройстве.',
+            'Сейчас выбран режим: ${selectedRouteMode.label}.',
+            'Рекомендуемый вариант: ${RouteMode.allExceptRu.label}.',
           ],
           child: Wrap(
             spacing: 10,
@@ -1391,37 +1391,37 @@ class _RulesSection extends StatelessWidget {
           ),
         ),
         _SectionCard(
-          title: 'Route labels',
+          title: 'Что значит каждый режим',
           lines: [
             '${RouteMode.allExceptRu.label}: ${RouteMode.allExceptRu.summary}',
             '${RouteMode.fullTunnel.label}: ${RouteMode.fullTunnel.summary}',
             selectedAppsAvailable
                 ? '${RouteMode.selectedApps.label}: ${RouteMode.selectedApps.summary}'
-                : '${RouteMode.selectedApps.label}: not available on ${appContext.hostPlatform.label} yet.',
+                : '${RouteMode.selectedApps.label}: пока недоступно на ${appContext.hostPlatform.label}.',
           ],
         ),
         if (selectedAppsAvailable)
           const _SectionCard(
-            title: 'Selected apps beta status',
+            title: 'Выбранные приложения в beta',
             lines: [
-              'Picker support is limited in this beta.',
-              'The app keeps this as an explicit route-mode choice while per-app selection UI and OS enforcement finish.',
+              'Выбор приложений пока ограничен в этой beta.',
+              'POKROV показывает режим явно, пока завершается интерфейс выбора и системное применение.',
             ],
           ),
         _SectionCard(
-          title: 'What changes here',
+          title: 'Что меняется здесь',
           lines: [
-            'Split tunnelling and bypass behaviour live here.',
-            'Locations stays focused on one managed location story.',
-            'Profile keeps support, subscription, devices, and settings together.',
+            'Здесь меняется поведение подключения на устройстве.',
+            'Локация остается автоматической и не перегружает списками.',
+            'Профиль держит вместе доступ, поддержку, устройства и настройки.',
           ],
         ),
         _SectionCard(
-          title: 'Behind the scenes',
+          title: 'Что остается внутри',
           lines: [
-            'The user sees one managed location only.',
-            'Transport variants and diagnostics stay out of the first layer.',
-            'Advanced compatibility stays tucked away unless support needs it.',
+            'На первом уровне видно выбранную локацию POKROV.',
+            'Транспорт и диагностика не мешают обычному использованию.',
+            'Совместимый режим открывается только когда он действительно нужен.',
           ],
         ),
       ],
@@ -1460,9 +1460,9 @@ class _RedeemPanelState extends State<_RedeemPanel> {
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
-      title: 'Redeem activation key',
+      title: 'Активировать код',
       lines: const [
-        'Bot, web, and checkout issue a single-use activation key instead of a raw personal link.',
+        'Если у вас есть код оплаты или подарка, активируйте его в текущем аккаунте POKROV.',
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1470,7 +1470,7 @@ class _RedeemPanelState extends State<_RedeemPanel> {
           TextField(
             controller: _controller,
             decoration: const InputDecoration(
-              labelText: 'Activation key',
+              labelText: 'Код активации',
               hintText: 'POKROV-XXXX-XXXX',
             ),
           ),
@@ -1478,7 +1478,7 @@ class _RedeemPanelState extends State<_RedeemPanel> {
           FilledButton.icon(
             onPressed: () => widget.onRedeem(_controller.text.trim()),
             icon: const Icon(Icons.verified_outlined),
-            label: const Text('Redeem key'),
+            label: const Text('Активировать код'),
           ),
         ],
       ),
@@ -1573,7 +1573,7 @@ class _LocationCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'POKROV chooses the best enabled location for your current plan without asking you to manage raw network controls.',
+                  'POKROV сам выбирает подходящий доступный узел для вашего текущего доступа.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: _SeedPalette.ink.withOpacity(0.7),
                     height: 1.32,
@@ -1593,7 +1593,7 @@ class _LocationCard extends StatelessWidget {
                       icon: Icons.workspace_premium_outlined,
                     ),
                     _StatusPill(
-                      label: appContext.runtimeProfile.freeTier.nodePool,
+                      label: appContext.runtimeProfile.freeTier.nodePoolLabel,
                       icon: Icons.hub_outlined,
                       tone: _SectionTone.muted,
                     ),
@@ -1613,21 +1613,21 @@ String _consumerProtectionStatusLabel(
   bool busy = false,
 }) {
   if (busy) {
-    return 'Preparing';
+    return 'Готовим';
   }
   if (snapshot == null) {
-    return 'Checking status';
+    return 'Проверяем статус';
   }
   if (snapshot.phase == RuntimePhase.running) {
-    return snapshot.isCleanlyHealthy ? 'Protected' : 'Needs attention';
+    return snapshot.isCleanlyHealthy ? 'Включено' : 'Нужно внимание';
   }
   if (snapshot.phase == RuntimePhase.artifactMissing) {
-    return 'Unavailable';
+    return 'Недоступно';
   }
   if ((snapshot.stagedConfigPath ?? '').isNotEmpty) {
-    return 'Ready to protect';
+    return 'Готово к подключению';
   }
-  return 'Ready';
+  return 'Готово';
 }
 
 String _consumerProtectionStatusSummary(
@@ -1639,20 +1639,20 @@ String _consumerProtectionStatusSummary(
     return headline!.trim();
   }
   if (snapshot == null) {
-    return 'Checking whether this ${hostPlatform.label} device is ready.';
+    return 'Проверяем, готово ли устройство ${hostPlatform.label}.';
   }
   if (snapshot.phase == RuntimePhase.running) {
     return snapshot.isCleanlyHealthy
-        ? 'Your managed protection is active.'
-        : 'Protection is on, but the app noticed something worth checking.';
+        ? 'POKROV работает на этом устройстве.'
+        : 'POKROV включен, но заметил состояние, которое стоит проверить.';
   }
   if (snapshot.phase == RuntimePhase.artifactMissing) {
-    return 'This device is still finishing setup before protection can start.';
+    return 'Устройство еще завершает подготовку перед подключением.';
   }
   if ((snapshot.stagedConfigPath ?? '').isNotEmpty) {
-    return 'Everything is staged and ready when you tap the main action.';
+    return 'Все готово. Нажмите главную кнопку, чтобы подключиться.';
   }
-  return 'POKROV prepares the connection in the background so daily use stays simple.';
+  return 'POKROV готовит подключение в фоне, чтобы на первом экране осталась одна понятная кнопка.';
 }
 
 class _SectionCard extends StatelessWidget {
@@ -2010,12 +2010,12 @@ class _ConnectOrbButton extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       busy
-                          ? 'Preparing'
+                          ? 'Готовим'
                           : degraded
-                              ? 'Attention'
+                              ? 'Внимание'
                               : running
-                                  ? 'Protected'
-                                  : 'Connect',
+                                  ? 'Включено'
+                                  : 'Подключить',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             color: _SeedPalette.ink,
                             fontWeight: FontWeight.w800,

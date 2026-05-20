@@ -35,7 +35,7 @@ class RuntimeHostBridge(
             if (stagedConfigPath.isNullOrBlank()) {
                 AndroidRuntimeState.markFailure(
                     kind = "missing_staged_config",
-                    message = "Permission was granted, but this device is still missing its connection setup.",
+                    message = "Разрешение получено, но на устройстве еще нет настроек подключения.",
                 )
                 return
             }
@@ -44,7 +44,7 @@ class RuntimeHostBridge(
             }.onFailure { error ->
                 AndroidRuntimeState.markFailure(
                     kind = "runtime_start_after_permission_failed",
-                    message = "POKROV could not finish connecting after permission was granted: ${error.message ?: error.javaClass.simpleName}",
+                    message = "POKROV не смог завершить подключение после разрешения: ${error.message ?: error.javaClass.simpleName}",
                 )
             }
             return
@@ -52,7 +52,7 @@ class RuntimeHostBridge(
 
         AndroidRuntimeState.markFailure(
             kind = "vpn_permission_denied",
-            message = "Permission was denied, so POKROV could not connect on this device.",
+            message = "Разрешение отклонено, поэтому POKROV не смог подключиться на этом устройстве.",
         )
     }
 
@@ -120,7 +120,7 @@ class RuntimeHostBridge(
             ?: run {
                 AndroidRuntimeState.markFailure(
                     kind = "missing_profile_name",
-                    message = "POKROV is missing the profile name for this setup step.",
+                    message = "Для этого шага настройки не хватает имени профиля POKROV.",
                 )
                 return AndroidRuntimeState.snapshot()
             }
@@ -128,7 +128,7 @@ class RuntimeHostBridge(
             ?: run {
                 AndroidRuntimeState.markFailure(
                     kind = "missing_config_payload",
-                    message = "POKROV is missing the connection details for this setup step.",
+                    message = "Для этого шага настройки не хватает данных подключения POKROV.",
                 )
                 return AndroidRuntimeState.snapshot()
             }
@@ -150,7 +150,7 @@ class RuntimeHostBridge(
         } catch (error: Throwable) {
             AndroidRuntimeState.markFailure(
                 kind = "profile_staging_failed",
-                message = "POKROV could not finish preparing this device: ${error.message ?: error.javaClass.simpleName}",
+                message = "POKROV не смог завершить подготовку устройства: ${error.message ?: error.javaClass.simpleName}",
             )
             AndroidRuntimeState.snapshot()
         }
@@ -168,7 +168,7 @@ class RuntimeHostBridge(
         if (stagedConfigPath.isNullOrBlank()) {
             AndroidRuntimeState.markFailure(
                 kind = "missing_staged_config",
-                message = "Set up this device first, then try connecting again.",
+                message = "Сначала завершите подготовку устройства, затем попробуйте подключиться еще раз.",
             )
             return AndroidRuntimeState.snapshot()
         }
@@ -187,7 +187,7 @@ class RuntimeHostBridge(
         }.onFailure { error ->
             AndroidRuntimeState.markFailure(
                 kind = "runtime_start_failed",
-                message = "POKROV could not start on this device: ${error.message ?: error.javaClass.simpleName}",
+                message = "POKROV не смог подключиться на этом устройстве: ${error.message ?: error.javaClass.simpleName}",
             )
         }
         return AndroidRuntimeState.snapshot()
@@ -200,7 +200,7 @@ class RuntimeHostBridge(
         }.onFailure { error ->
             AndroidRuntimeState.markFailure(
                 kind = "runtime_stop_failed",
-                message = "POKROV could not disconnect cleanly: ${error.message ?: error.javaClass.simpleName}",
+                message = "POKROV не смог корректно отключиться: ${error.message ?: error.javaClass.simpleName}",
             )
         }
         return AndroidRuntimeState.snapshot()

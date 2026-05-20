@@ -46,7 +46,7 @@ internal object AndroidRuntimeState {
             environment = null
             phase = AndroidRuntimePhase.ARTIFACT_MISSING
             stagedConfigPath = null
-            lastMessage = "This Android build is missing the connection runtime."
+            lastMessage = "В этой сборке для Android нет модуля подключения."
             dnsReady = false
             defaultNetworkInterface = null
             defaultNetworkIndex = null
@@ -102,11 +102,11 @@ internal object AndroidRuntimeState {
             } else {
                 AndroidRuntimePhase.INITIALIZED
             }
-            lastMessage = "POKROV finished the device setup step."
+            lastMessage = "POKROV подготовил устройство."
             true
         } catch (error: Throwable) {
             phase = AndroidRuntimePhase.ARTIFACT_READY
-            lastMessage = "POKROV could not finish the device setup step: ${error.message ?: error.javaClass.simpleName}"
+            lastMessage = "POKROV не смог подготовить устройство: ${error.message ?: error.javaClass.simpleName}"
             false
         }
     }
@@ -117,12 +117,12 @@ internal object AndroidRuntimeState {
         phase = AndroidRuntimePhase.CONFIG_STAGED
         lastFailureKind = null
         lastStopReason = null
-        lastMessage = "POKROV finished preparing this device."
+        lastMessage = "POKROV подготовил профиль для этого устройства."
     }
 
     @Synchronized
     fun markPermissionRequested() {
-        lastMessage = "Android is asking for permission so POKROV can protect this device."
+        lastMessage = "Android просит разрешение, чтобы POKROV мог подключить это устройство."
     }
 
     @Synchronized
@@ -136,7 +136,7 @@ internal object AndroidRuntimeState {
 
     @Synchronized
     fun markStopRequested(
-        message: String = "Disconnecting POKROV on this device...",
+        message: String = "Отключаем POKROV на этом устройстве...",
         stopReason: String = "user_requested",
     ) {
         phase = when {
@@ -159,7 +159,7 @@ internal object AndroidRuntimeState {
             else -> AndroidRuntimePhase.ARTIFACT_MISSING
         }
         lastStopReason = stopReason
-        if (message == "POKROV turned off on this device." && shouldPreserveFailureMessage()) {
+        if (message == "POKROV отключен на этом устройстве." && shouldPreserveFailureMessage()) {
             return
         }
         lastMessage = message
@@ -307,7 +307,7 @@ internal object AndroidRuntimeState {
         val resolvedMessage = when {
             !runningMessage.isNullOrBlank() -> runningMessage
             !lastRunningMessage.isNullOrBlank() -> lastRunningMessage!!
-            else -> "POKROV is on for this device."
+            else -> "POKROV включен на этом устройстве."
         }
         lastRunningMessage = resolvedMessage
         val normalizedMessage = lastMessage.lowercase()
@@ -316,7 +316,11 @@ internal object AndroidRuntimeState {
                 normalizedMessage.contains("setup step") ||
                 normalizedMessage.contains("permission requested") ||
                 normalizedMessage.contains("ready to connect") ||
-                normalizedMessage.contains("not checked")
+                normalizedMessage.contains("not checked") ||
+                normalizedMessage.contains("подготовил профиль") ||
+                normalizedMessage.contains("подготовил устройство") ||
+                normalizedMessage.contains("просит разрешение") ||
+                normalizedMessage.contains("готов")
         ) {
             lastMessage = resolvedMessage
         }
@@ -374,30 +378,30 @@ internal object AndroidRuntimeState {
         val interfaceName = defaultNetworkInterface?.takeIf { it.isNotBlank() }
         when {
             interfaceName != null && defaultNetworkIndex != null ->
-                details += "Uplink $interfaceName (#$defaultNetworkIndex)"
+                details += "Сеть $interfaceName (#$defaultNetworkIndex)"
             interfaceName != null ->
-                details += "Uplink $interfaceName"
+                details += "Сеть $interfaceName"
             uplinkState == "degraded" ->
-                details += "Uplink unresolved"
+                details += "Сеть не определена"
         }
 
-        details += if (dnsReady) "DNS ready" else "DNS waiting"
-        details += "Routes v4=$ipv4RouteCount v6=$ipv6RouteCount"
+        details += if (dnsReady) "DNS готов" else "DNS ждет"
+        details += "Правила v4=$ipv4RouteCount v6=$ipv6RouteCount"
 
         if (includePackageCount > 0 || excludePackageCount > 0) {
-            details += "Packages include=$includePackageCount exclude=$excludePackageCount"
+            details += "Приложения include=$includePackageCount exclude=$excludePackageCount"
         }
         if (!lastFailureKind.isNullOrBlank()) {
-            details += "Last failure $lastFailureKind"
+            details += "Последняя ошибка $lastFailureKind"
         }
 
         if (details.isEmpty()) {
             return when (hostHealth) {
-                "healthy" -> "Android device checks look healthy."
+                "healthy" -> "Диагностика Android без замечаний."
                 "degraded" -> if (dnsState == "degraded" || uplinkState == "degraded") {
-                    "Android device checks report warnings."
+                    "Диагностика Android сообщает предупреждение."
                 } else {
-                    "Android device checks are still settling after connect."
+                    "Android завершает проверку после подключения."
                 }
                 else -> null
             }

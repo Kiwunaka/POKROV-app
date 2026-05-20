@@ -12,12 +12,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Protection'), findsWidgets);
+    expect(find.text('Подключение'), findsWidgets);
     expect(find.text('POKROV'), findsOneWidget);
 
     expect(find.text('Prime runtime'), findsNothing);
     expect(find.text('Stage local smoke profile'), findsNothing);
     expect(find.text('Connect now'), findsNothing);
-    expect(find.text('Finish setup first'), findsOneWidget);
+    expect(find.text('Пока недоступно'), findsOneWidget);
   });
 }

@@ -35,21 +35,21 @@ class AndroidRuntimeStateTest {
         )
         setPrivateField("phase", AndroidRuntimePhase.CONFIG_STAGED)
         setPrivateField("stagedConfigPath", "/tmp/pokrov-seed-runtime.json")
-        setPrivateField("lastMessage", "POKROV finished preparing this device.")
+        setPrivateField("lastMessage", "POKROV подготовил профиль для этого устройства.")
 
         AndroidRuntimeState.markFailure(
             kind = "runtime_service_start_failed",
-            message = "POKROV could not start on this device: invalid inbound mix.",
+            message = "POKROV не смог подключить устройство: invalid inbound mix.",
         )
         AndroidRuntimeState.markStopped(
-            message = "POKROV turned off on this device.",
+            message = "POKROV отключен на этом устройстве.",
             stopReason = "service_destroyed",
         )
 
         val snapshot = AndroidRuntimeState.snapshot()
         assertEquals("configStaged", snapshot["phase"])
         assertEquals(
-            "POKROV could not start on this device: invalid inbound mix.",
+            "POKROV не смог подключить устройство: invalid inbound mix.",
             snapshot["message"],
         )
         assertEquals("runtime_service_start_failed", snapshot["last_failure_kind"])
@@ -83,7 +83,7 @@ class AndroidRuntimeStateTest {
             interfaceIndex = 42,
             dnsReady = true,
         )
-        AndroidRuntimeState.markRunning("Android tun established.")
+        AndroidRuntimeState.markRunning("POKROV включен на этом устройстве.")
 
         val snapshot = AndroidRuntimeState.snapshot()
         @Suppress("UNCHECKED_CAST")
@@ -94,7 +94,7 @@ class AndroidRuntimeStateTest {
         assertEquals("healthy", snapshot["dnsState"])
         assertEquals("healthy", snapshot["uplinkState"])
         assertEquals(
-            "Uplink wlan0 (#42) | DNS ready | Routes v4=3 v6=2 | Packages include=4 exclude=1",
+            "Сеть wlan0 (#42) | DNS готов | Правила v4=3 v6=2 | Приложения include=4 exclude=1",
             snapshot["hostDiagnosticsSummary"],
         )
         assertEquals("wlan0", snapshot["default_network_interface"])
@@ -129,10 +129,10 @@ class AndroidRuntimeStateTest {
         AndroidRuntimeState.markRunning("Android tun established.")
         AndroidRuntimeState.markDegraded(
             failureKind = "default_network_unavailable",
-            message = "Android tun is established, but no non-VPN default uplink is ready for DNS resolution.",
+            message = "Android подключил POKROV, но обычная сеть устройства еще не готова для DNS.",
         )
         AndroidRuntimeState.markStopped(
-            message = "Android runtime VPN permission was revoked.",
+            message = "Android отозвал разрешение на подключение POKROV.",
             stopReason = "vpn_permission_revoked",
         )
 
@@ -142,7 +142,7 @@ class AndroidRuntimeStateTest {
         assertEquals("default_network_unavailable", snapshot["last_failure_kind"])
         assertEquals("vpn_permission_revoked", snapshot["last_stop_reason"])
         assertEquals(
-            "Android runtime VPN permission was revoked.",
+            "Android отозвал разрешение на подключение POKROV.",
             snapshot["message"],
         )
         assertFalse(snapshot["dns_ready"] as Boolean)
@@ -191,19 +191,19 @@ class AndroidRuntimeStateTest {
         )
         setPrivateField("phase", AndroidRuntimePhase.CONFIG_STAGED)
         setPrivateField("stagedConfigPath", "/tmp/pokrov-runtime.json")
-        setPrivateField("lastMessage", "Managed profile staged on the Android host bridge.")
-        setPrivateField("lastRunningMessage", "Android tun established.")
+        setPrivateField("lastMessage", "POKROV подготовил профиль для этого устройства.")
+        setPrivateField("lastRunningMessage", "POKROV включен на этом устройстве.")
         setPrivateField("lastStopReason", "service_destroyed")
 
         AndroidRuntimeState.reconcileActiveRuntime(
             tunEstablished = true,
-            runningMessage = "Android runtime service is running.",
+            runningMessage = "POKROV включен на этом устройстве.",
         )
 
         val snapshot = AndroidRuntimeState.snapshot()
 
         assertEquals("running", snapshot["phase"])
-        assertEquals("Android runtime service is running.", snapshot["message"])
+        assertEquals("POKROV включен на этом устройстве.", snapshot["message"])
         assertEquals(null, snapshot["last_stop_reason"])
     }
 

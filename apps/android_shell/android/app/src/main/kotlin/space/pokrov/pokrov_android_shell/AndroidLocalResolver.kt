@@ -189,7 +189,7 @@ internal object AndroidLocalResolver : LocalDNSTransport {
             AndroidRuntimeState.recordFailureKind("default_network_unavailable")
             AndroidRuntimeState.markDegraded(
                 failureKind = "default_network_unavailable",
-                message = "Android tun is established, but no non-VPN default uplink is ready for DNS resolution.",
+                message = "Android подключил POKROV, но обычная сеть устройства еще не готова для DNS.",
             )
             throw error
         }

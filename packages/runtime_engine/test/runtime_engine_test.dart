@@ -253,7 +253,7 @@ void main() {
     expect(snapshot.uplinkState, RuntimeDiagnosticState.healthy);
     expect(snapshot.hasDegradedHostDiagnostics, isTrue);
     expect(snapshot.isCleanlyHealthy, isFalse);
-    expect(snapshot.phaseLabel, 'Connected with warnings');
+    expect(snapshot.phaseLabel, 'Подключено с предупреждением');
     expect(snapshot.diagnosticsLabel, 'DNS degraded on the current uplink.');
   });
 
@@ -300,10 +300,10 @@ void main() {
     expect(snapshot.ipv4RouteCount, 3);
     expect(snapshot.ipv6RouteCount, 1);
     expect(snapshot.lastFailureKind, isNull);
-    expect(snapshot.phaseLabel, 'Connected');
+    expect(snapshot.phaseLabel, 'Подключено');
     expect(
       snapshot.diagnosticsLabel,
-      'Uplink wlan0 (#42) | DNS ready | Routes v4=3 v6=1',
+      'Сеть wlan0 (#42) | DNS готов | Правила v4=3 v6=1',
     );
   });
 

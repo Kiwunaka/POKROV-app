@@ -127,7 +127,7 @@ internal object AndroidDefaultNetworkMonitor {
         currentNetwork?.let { return it }
         Log.i(
             LOG_TAG,
-            "Waiting up to ${AndroidPlatformRuntimeBridge.DEFAULT_NETWORK_WAIT_TIMEOUT_MILLIS}ms for a non-VPN default uplink.",
+            "Ждем до ${AndroidPlatformRuntimeBridge.DEFAULT_NETWORK_WAIT_TIMEOUT_MILLIS}мс, пока Android покажет обычную сеть устройства.",
         )
         val network = AndroidPlatformRuntimeBridge.awaitValue(
             currentValue = { currentNetwork },
@@ -151,7 +151,7 @@ internal object AndroidDefaultNetworkMonitor {
         )
         AndroidRuntimeState.markDegraded(
             failureKind = "default_network_unavailable",
-            message = "Android tun is established, but no non-VPN default uplink is ready for DNS resolution.",
+            message = "Android подключил POKROV, но обычная сеть устройства еще не готова для DNS.",
         )
         throw IllegalStateException("Android default network is unavailable for DNS resolution.")
     }
@@ -217,7 +217,7 @@ internal object AndroidDefaultNetworkMonitor {
             if (resolvedCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true) {
                 Log.i(
                     LOG_TAG,
-                    "Ignoring VPN network=${networkToken(network)} as an uplink candidate.",
+                    "Пропускаем сеть POKROV network=${networkToken(network)} при выборе обычной сети устройства.",
                 )
             }
             if (currentNetwork == network) {

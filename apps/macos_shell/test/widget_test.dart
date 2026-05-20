@@ -11,7 +11,7 @@ testWidgets('macos shell boots the shared protection surface', (tester) async {
     );
     await tester.pumpAndSettle();
 
-  expect(find.text('Protection'), findsWidgets);
-    expect(find.text('POKROV Starter'), findsOneWidget);
+  expect(find.text('Подключение'), findsWidgets);
+    expect(find.text('POKROV'), findsOneWidget);
   });
 }
