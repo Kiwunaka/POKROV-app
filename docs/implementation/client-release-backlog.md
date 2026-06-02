@@ -61,6 +61,12 @@ Already verified locally by the current engineering lane:
 - confirm app, bot, and authenticated web surfaces consume the same runtime `APP_*` values after handoff
 - split release-reachability evidence into `current-origin`, `brain-origin`, and `RU-origin` checks when regional reachability matters
 
+## Karing-Based Candidate Lane
+
+- [ ] Prove full-source Karing buildability for Android and Windows
+- [ ] Implement POKROV managed mode
+- [ ] Pass Android + Windows release gates before any public cutover
+
 ## Follow-Up Backlog
 
 ### User-facing wording cleanup

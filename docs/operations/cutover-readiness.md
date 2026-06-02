@@ -17,7 +17,7 @@ Historical mapping note:
 - lane ownership: `canonical client development repo for POKROV-app/main`
 - public scope in this document: `Android + Windows`
 - Apple scope in this wave: `readiness only`
-- base decision: `clean-room selected`
+- base decision: `Karing-based candidate reopened for gated spike; clean-room lane remains current until candidate gates pass`
 - Apple release state: `checked-in unsigned service lane`
 - Android release state: `operator-attested outside-store beta artifact, runtime sync pending`
 - Windows release state: `gated unsigned outside-store beta artifact, runtime sync pending`
