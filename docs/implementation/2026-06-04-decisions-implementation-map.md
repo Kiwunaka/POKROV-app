@@ -47,9 +47,11 @@ The current code slice is:
    and promo codes through `POST /api/redeem`;
 5. support follow-up replies can explicitly attach the same safe
    `app_diagnostics` payload used for ticket creation;
-6. no wheel/calendar hub in UI until mutating reward logic, rollout flags, and
+6. Rules renders the safe ruleset/package-catalog version and explicit
+   enabled/staged/locked preset states without exposing raw rule assets;
+7. no wheel/calendar hub in UI until mutating reward logic, rollout flags, and
    copy are approved;
-7. keep profile loading lazy so the app does not block startup or ordinary
+8. keep profile loading lazy so the app does not block startup or ordinary
    navigation on bonus data.
 
 This slice is P0/P1 bridge work because the master brief needs bonus/account
@@ -81,7 +83,7 @@ clarity before a richer Rewards Hub can safely exist.
 | Calendar check-in endpoint and summary | Partial | app state/check-in endpoint shells exist and are feature-gated/disabled by default; UI not live | implement check-in ledger and rollout proof before enabling UI |
 | Support diagnostics flow | Done for P1 follow-up attachment, partial for realtime lifecycle | chat can attach redacted diagnostics on create and on the next follow-up reply after explicit user confirmation | add polling/SSE only after operator flow proof |
 | Paywall/subscription UX cleanup | Partial | checkout handoff exists; in-app paywall not built | add paid plan surface only after pricing/copy/legal checks |
-| Rules presets UI | Partial | categories shown; selected apps staged | sync backend ruleset catalog and add real enabled states |
+| Rules presets UI | Done for P1 seed/catalog states, partial for live catalog and picker | Rules shows safe ruleset/package-catalog versions, enabled/staged/locked preset states, and selected apps remains staged | wire live backend catalog sync and add Android package / Windows process picker only after OS enforcement proof |
 | Email recovery polish | Partial | email/cabinet entry exists | add app email linking/recovery UI after email readiness stays green |
 
 ## P2 Map

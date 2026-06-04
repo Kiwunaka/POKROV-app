@@ -1410,6 +1410,38 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(selectedAppsStatus, findsOneWidget);
+    expect(find.byKey(const ValueKey('rules-catalog-version')), findsOneWidget);
+    expect(find.textContaining('2026-04-13'), findsWidgets);
+
+    final banksPreset = find.byKey(const ValueKey('rules-preset-ru-banks'));
+    final gosuslugiPreset =
+        find.byKey(const ValueKey('rules-preset-gosuslugi'));
+    final messengerPreset =
+        find.byKey(const ValueKey('rules-preset-messengers'));
+
+    expect(banksPreset, findsOneWidget);
+    expect(gosuslugiPreset, findsOneWidget);
+    expect(messengerPreset, findsOneWidget);
+    expect(
+      find.descendant(of: banksPreset, matching: find.text('Активно')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: gosuslugiPreset, matching: find.text('Активно')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: messengerPreset, matching: find.text('Готовится')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: selectedAppsStatus, matching: find.text('Скоро')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('geoip'), findsNothing);
+    expect(find.textContaining('.srs'), findsNothing);
+    expect(find.textContaining('CIDR'), findsNothing);
+    expect(find.textContaining('rule_set'), findsNothing);
     expect(find.text('Р’С‹Р±СЂР°РЅРЅС‹Рµ РїСЂРёР»РѕР¶РµРЅРёСЏ РІ beta'),
         findsNothing);
     expect(

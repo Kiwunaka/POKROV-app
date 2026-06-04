@@ -98,7 +98,10 @@ Current implementation bridge:
 - the client persists `Only selected apps` through backend `route_mode=selected_apps`
 - the client persists both device-wide routes through backend `route_mode=all_traffic`
 - the visible distinction between `All except RU` and `Full tunnel` therefore remains a client `Rules` choice until the backend grows a dedicated device-behavior field
-- selected-apps is beta-limited in W07: the UI labels it honestly while picker and OS enforcement work remains open
+- the app may render `ruleset_version` and `package_catalog_version` as safe
+  user-facing catalog labels together with enabled/staged/locked preset states
+- selected-apps remains staged: the UI labels it honestly while picker and OS
+  enforcement work remains open
 
 ## Managed Provisioning And Smart Connect
 

@@ -88,6 +88,8 @@ abstract final class _SeedPalette {
 
 const _pokrovBrandMarkAsset = 'assets/brand/pokrov_mark.png';
 const _selectedAppsEnforcementReady = false;
+const _seedRulesetVersion = '2026-04-13';
+const _seedPackageCatalogVersion = '2026-04-13';
 
 abstract final class _MotionTokens {
   static const quick = Duration(milliseconds: 120);
@@ -153,6 +155,7 @@ class SeedAppContext {
     required this.runtimeProfile,
     required this.bootstrapContract,
     required this.supportSnapshot,
+    required this.rulesPresetContract,
     required this.locations,
     required this.apiBaseUrl,
     required this.checkoutUrl,
@@ -167,6 +170,7 @@ class SeedAppContext {
   final RuntimeProfile runtimeProfile;
   final PlatformBootstrapContract bootstrapContract;
   final SupportSnapshot supportSnapshot;
+  final RulesPresetContract rulesPresetContract;
   final List<LocationCluster> locations;
   final String apiBaseUrl;
   final String checkoutUrl;
@@ -181,6 +185,81 @@ class SeedAppContext {
         SeedTab.profile,
       ];
 }
+
+enum RulesPresetState {
+  enabled,
+  staged,
+  locked,
+}
+
+class RulesPresetStatus {
+  const RulesPresetStatus({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.state,
+  });
+
+  final String id;
+  final String title;
+  final String subtitle;
+  final RulesPresetState state;
+
+  bool get enabled => state == RulesPresetState.enabled;
+}
+
+class RulesPresetContract {
+  const RulesPresetContract({
+    required this.rulesetVersion,
+    required this.packageCatalogVersion,
+    required this.presets,
+  });
+
+  final String rulesetVersion;
+  final String packageCatalogVersion;
+  final List<RulesPresetStatus> presets;
+
+  int get enabledCount => presets
+      .where((preset) => preset.state == RulesPresetState.enabled)
+      .length;
+}
+
+const _seedRulesPresetContract = RulesPresetContract(
+  rulesetVersion: _seedRulesetVersion,
+  packageCatalogVersion: _seedPackageCatalogVersion,
+  presets: [
+    RulesPresetStatus(
+      id: 'ru-banks',
+      title: 'Российские банки',
+      subtitle: 'Карты, платежи и приложения банков идут напрямую.',
+      state: RulesPresetState.enabled,
+    ),
+    RulesPresetStatus(
+      id: 'gosuslugi',
+      title: 'Госуслуги',
+      subtitle: 'Государственные сервисы остаются без POKROV.',
+      state: RulesPresetState.enabled,
+    ),
+    RulesPresetStatus(
+      id: 'marketplaces',
+      title: 'Маркетплейсы',
+      subtitle: 'Покупки и доставка работают привычным маршрутом.',
+      state: RulesPresetState.enabled,
+    ),
+    RulesPresetStatus(
+      id: 'messengers',
+      title: 'Мессенджеры',
+      subtitle: 'Категория готовится к проверке правил.',
+      state: RulesPresetState.staged,
+    ),
+    RulesPresetStatus(
+      id: 'selected-apps',
+      title: 'Добавить приложение',
+      subtitle: 'Выбор приложений появится после системной проверки.',
+      state: RulesPresetState.locked,
+    ),
+  ],
+);
 
 const _seedManagedProfilePayload = ManagedProfilePayload(
   profileName: 'pokrov-seed-runtime',
@@ -311,6 +390,7 @@ SeedAppContext buildSeedAppContext({
       recommendedRouteMode: RouteMode.allExceptRu,
       channelBonusDays: 10,
     ),
+    rulesPresetContract: _seedRulesPresetContract,
     locations: const [
       LocationCluster(
         code: 'pokrov-managed',
@@ -3364,6 +3444,7 @@ class _RulesSection extends StatelessWidget {
     final selectedAppsStaged =
         appContext.bootstrapContract.supportsSelectedAppsMode &&
             !selectedAppsActive;
+    final rulesContract = appContext.rulesPresetContract;
 
     return _SeedContentList(
       top: 24,
@@ -3410,38 +3491,22 @@ class _RulesSection extends StatelessWidget {
         ),
         _SectionCard(
           title: 'Без POKROV',
-          lines: const ['5 категорий'],
-          child: const Column(
+          lines: [
+            '${rulesContract.enabledCount} из ${rulesContract.presets.length} активно',
+          ],
+          child: Column(
             children: [
-              _PresetRow(
-                icon: Icons.account_balance_outlined,
-                title: 'Российские банки',
-                subtitle: 'Карты, платежи и приложения банков идут напрямую.',
-                enabled: true,
-              ),
-              _PresetRow(
-                icon: Icons.verified_user_outlined,
-                title: 'Госуслуги',
-                subtitle: 'Государственные сервисы остаются без POKROV.',
-                enabled: true,
-              ),
-              _PresetRow(
-                icon: Icons.shopping_bag_outlined,
-                title: 'Маркетплейсы',
-                subtitle: 'Покупки и доставка работают привычным маршрутом.',
-                enabled: true,
-              ),
-              _PresetRow(
-                icon: Icons.forum_outlined,
-                title: 'Мессенджеры',
-                subtitle: 'Категория готовится к проверке правил.',
-                enabled: false,
-              ),
-              _PresetRow(
-                icon: Icons.add_box_outlined,
-                title: 'Добавить приложение',
-                subtitle: 'Выбор приложений появится после системной проверки.',
-                enabled: false,
+              _RulesCatalogVersionLine(contract: rulesContract),
+              const SizedBox(height: 10),
+              ...rulesContract.presets.map(
+                (preset) => _PresetRow(
+                  key: ValueKey('rules-preset-${preset.id}'),
+                  icon: _rulesPresetIcon(preset.id),
+                  title: preset.title,
+                  subtitle: preset.subtitle,
+                  enabled: preset.enabled,
+                  statusLabel: _rulesPresetStatusLabel(preset.state),
+                ),
               ),
             ],
           ),
@@ -3634,18 +3699,52 @@ class _AdvancedSettingsCardState extends State<_AdvancedSettingsCard> {
   }
 }
 
+class _RulesCatalogVersionLine extends StatelessWidget {
+  const _RulesCatalogVersionLine({
+    required this.contract,
+  });
+
+  final RulesPresetContract contract;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        key: const ValueKey('rules-catalog-version'),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: _SeedPalette.surfaceMuted,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: _SeedPalette.line),
+        ),
+        child: Text(
+          'Каталог правил ${contract.rulesetVersion} · приложения ${contract.packageCatalogVersion}',
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: _SeedPalette.muted,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      ),
+    );
+  }
+}
+
 class _PresetRow extends StatelessWidget {
   const _PresetRow({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.enabled,
+    required this.statusLabel,
+    super.key,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final bool enabled;
+  final String statusLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -3694,17 +3793,61 @@ class _PresetRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          Icon(
-            enabled ? Icons.check_circle_rounded : Icons.lock_clock_outlined,
-            color: enabled
-                ? _SeedPalette.accent
-                : _SeedPalette.ink.withValues(alpha: 0.34),
-            size: 20,
+          SizedBox(
+            width: 94,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Flexible(
+                  child: Text(
+                    statusLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: enabled
+                              ? _SeedPalette.accent
+                              : _SeedPalette.ink.withValues(alpha: 0.48),
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(
+                  enabled
+                      ? Icons.check_circle_rounded
+                      : Icons.lock_clock_outlined,
+                  color: enabled
+                      ? _SeedPalette.accent
+                      : _SeedPalette.ink.withValues(alpha: 0.34),
+                  size: 20,
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+IconData _rulesPresetIcon(String id) {
+  return switch (id) {
+    'ru-banks' => Icons.account_balance_outlined,
+    'gosuslugi' => Icons.verified_user_outlined,
+    'marketplaces' => Icons.shopping_bag_outlined,
+    'messengers' => Icons.forum_outlined,
+    'selected-apps' => Icons.add_box_outlined,
+    _ => Icons.rule_folder_outlined,
+  };
+}
+
+String _rulesPresetStatusLabel(RulesPresetState state) {
+  return switch (state) {
+    RulesPresetState.enabled => 'Активно',
+    RulesPresetState.staged => 'Готовится',
+    RulesPresetState.locked => 'Скоро',
+  };
 }
 
 class _LocationCard extends StatelessWidget {

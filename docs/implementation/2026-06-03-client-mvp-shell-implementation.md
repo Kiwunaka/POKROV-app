@@ -17,6 +17,8 @@ Status: implemented local MVP shell plus Premium Shell V2 brand/control/support/
   channel wording kept as an information source rather than a raw feed dump.
 - `Правила` now contains consumer-facing presets for Russian banks, Gosuslugi,
   marketplaces, messengers, and app selection without exposing raw rules.
+  It also shows the safe ruleset/package-catalog version and compact
+  enabled/staged/locked preset states.
 - `Профиль` now appears as a compact account layer: access/payment/cabinet,
   native code entry with Telegram bonus, and device/help rows. Longer restore,
   email, support, and advanced details stay one tap deeper.
@@ -133,6 +135,10 @@ The Task 7 consilium aligned on a beta-honest staging cut:
   enforcement are proven per platform
 - `Правила` keeps `Приложения · Скоро` as a teaser row, but does not expose a
   selectable `Выбранные приложения` route card
+- Rules presets now read a seed catalog contract: enabled rows show active
+  user-facing categories, staged rows show preparation status, and locked rows
+  stay as `soon` without exposing raw rule-set names, CIDR, JSON, or engine
+  internals.
 - managed-profile bootstrap now parses backend `smart_connect` metadata into
   `ManagedProfilePayload.smartConnect`
 - the client now performs best-effort TCP RTT probes for shortlist items with
@@ -165,6 +171,8 @@ The Task 7 consilium aligned on a beta-honest staging cut:
 - Selected-app routing is staged only. The backend route-policy plumbing remains
   available for future proof work, but the public app does not let users pick it
   yet.
+- Rules catalog states are seed-backed in this MVP slice. Live backend catalog
+  sync and the Android package / Windows process picker remain future work.
 - Smart-connect remains backend-owned and hidden from first-layer UI. The app
   may upload RTT evidence and sticky selection telemetry, but it is not a
   visible mode, balancer, or manual node list in the MVP.

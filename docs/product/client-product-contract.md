@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-05-26
+Last updated: 2026-06-04
 
 ## Document Status
 
@@ -119,6 +119,10 @@ Product rules for that choice:
 - the live state must round-trip through backend-owned `route_mode`, `selected_apps`, `requires_elevated_privileges`, and mirrored `route_policy.*` fields
 - current implementation keeps public route choices on the device-wide lanes:
   `All except RU` and `Full tunnel`
+- `Rules` may show safe catalog/package versions and enabled/staged preset
+  states so users know which rule categories are active
+- `Rules` must not expose raw rule-set filenames, geo labels, CIDR, JSON,
+  protocol names, ports, or engine internals in the normal UI
 - low-level selected-apps route-policy plumbing remains tested for future
   compatibility, but the public shell must not expose it while Android package
   picking, Windows process picking, persistence, and OS-level enforcement are
