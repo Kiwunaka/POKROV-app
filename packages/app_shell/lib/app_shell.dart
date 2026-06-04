@@ -611,6 +611,16 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       );
       return false;
     }
+    if (_looksLikeSubscriptionOrProxyLink(code)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Ссылка подключения не привязывает аккаунт. Введите одноразовый код или ключ активации.',
+          ),
+        ),
+      );
+      return false;
+    }
 
     final accountActions = _accountActionService;
     if (accountActions == null) {
@@ -653,6 +663,40 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       );
       return false;
     }
+  }
+
+  bool _looksLikeSubscriptionOrProxyLink(String value) {
+    final text = value.trim().toLowerCase();
+    if (text.isEmpty) {
+      return false;
+    }
+    final parsed = Uri.tryParse(text);
+    if (parsed != null && parsed.hasScheme) {
+      final scheme = parsed.scheme.toLowerCase();
+      if (scheme == 'http' || scheme == 'https') {
+        final host = parsed.host.toLowerCase();
+        final path = parsed.path.toLowerCase();
+        return host == 'connect.pokrov.space' ||
+            host.endsWith('.pokrov.space') && path.contains('s8kx2mp7qr4wt') ||
+            path.contains('subscription') ||
+            path.contains('/sub/') ||
+            path.contains('/config/');
+      }
+      return const <String>{
+        'vless',
+        'vmess',
+        'trojan',
+        'ss',
+        'socks',
+        'wireguard',
+        'hysteria2',
+        'tuic',
+      }.contains(scheme);
+    }
+    return text.contains('subscription_url=') ||
+        text.contains('vless://') ||
+        text.contains('vmess://') ||
+        text.contains('trojan://');
   }
 
   Future<void> _openCabinetWithHandoff(String value) async {

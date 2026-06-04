@@ -537,6 +537,50 @@ void main() {
     );
   });
 
+  testWidgets('returning first launch rejects raw subscription links locally',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('first-launch-returning-user')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('first-launch-manual-key-warning')),
+      findsOneWidget,
+    );
+
+    await tester.enterText(
+      find.byKey(const ValueKey('first-launch-restore-code-field')),
+      'https://connect.pokrov.space/s8Kx2mP7qR4wT/raw-subscription-token',
+    );
+    await tester.tap(find.byKey(const ValueKey('first-launch-restore-redeem')));
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.redeemCalls, 0);
+    expect(
+      find.textContaining('Ссылка подключения не привязывает аккаунт'),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('first-launch-restore-screen')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('renders premium shell v2 with compact first screen',
       (tester) async {
     await tester.pumpWidget(

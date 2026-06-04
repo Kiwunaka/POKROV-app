@@ -167,6 +167,17 @@ summary. Wheel and calendar state endpoints exist for future UI wiring, but
 their mutating actions remain feature-gated and must stay hidden until reward
 logic and UI copy are explicit.
 
+### Returning-user recovery
+
+- returning users restore from the first-launch screen with a one-time code
+  from Telegram, the cabinet, email, or an activation key
+- raw connection/subscription/proxy links are not account proof and must not be
+  sent through unified redeem as recovery codes
+- the app shows this warning on the restore screen and locally rejects raw
+  connection links before the backend call
+- backend structured rejection remains the canonical fallback for any raw link
+  that reaches `/api/redeem`
+
 ### Support
 
 Support payloads should carry:

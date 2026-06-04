@@ -186,6 +186,8 @@ Consumer privacy rules:
 - route labels and support diagnostics should stay safe and human-readable
 - public-facing copy should prefer plain user language over transport acronyms, raw profile terms, or operator jargon
 - raw subscription copy, edit, regenerate, or share actions stay out of the first-layer consumer path
+- raw connection or subscription links must not be treated as account proof in
+  first-launch restore or normal code redemption
 - manual import and recovery tools may remain behind explicit compatibility or recovery surfaces
 
 ## Download And Release Continuity

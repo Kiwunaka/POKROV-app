@@ -59,7 +59,7 @@ clarity before a richer Rewards Hub can safely exist.
 | First-launch `new / returning` split | Done for MVP | startup asks new vs returning; completion is file-backed and tested | keep wording lightweight while runtime gates evolve |
 | Returning-user restore screen | Done for MVP | first-launch restore panel uses unified redeem, Telegram, cabinet, and raw-key warning | expand accepted code families on backend over time |
 | Unified redeem API contract | Partial | platform `POST /api/redeem` supports access keys and promo codes; app uses `AppFirstAccountActionService.redeemCode` | expand gift/claim-token families only when backend support is explicit |
-| Safe one-time claim/link semantics | Partial | app rejects raw link as normal account proof in docs; UI copy still needs first-launch warning | show raw-link warning in restore flow; backend keeps structured rejection |
+| Safe one-time claim/link semantics | Done for MVP | first-launch restore warns that raw connection links are not account proof; app locally rejects raw subscription/proxy links before unified redeem; backend keeps structured rejection | expand accepted code families only when backend support is explicit |
 | App profile basics | Partial | grouped account/profile sections, access, redeem, cabinet, Telegram, support, bonus summary, advanced gate exist | keep reducing visible account copy and add only proven states |
 | Telegram `+10 days` link/check/claim | Done for MVP | app has link, channel check, claim actions and tests | keep optional, no startup wall |
 | Bot parity for subscription/access | Partial | platform bots were updated in root repo; app/cabinet share app-first contracts | add parity smoke checklist before final `1.0.0-beta` handoff |
