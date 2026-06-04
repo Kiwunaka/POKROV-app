@@ -27,6 +27,7 @@ abstract interface class ManagedProfileBootstrapper {
   Future<ManagedProfilePayload> resolveManagedProfile({
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
+    List<String> selectedApps = const <String>[],
   });
 }
 
@@ -502,7 +503,11 @@ class AppFirstRuntimeBootstrapper
   Future<ManagedProfilePayload> resolveManagedProfile({
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
+    List<String> selectedApps = const <String>[],
   }) async {
+    final normalizedSelectedApps = _normalizeSelectedAppIdentifiers(
+      selectedApps,
+    );
     var state = await _loadOrCreateState(hostPlatform);
     final client = _createHttpClient(hostPlatform);
 
@@ -521,12 +526,14 @@ class AppFirstRuntimeBootstrapper
             state: state,
             hostPlatform: hostPlatform,
             routeMode: routeMode,
+            selectedApps: normalizedSelectedApps,
             client: client,
           );
           final manifest = await _fetchManagedManifest(
             state: state,
             hostPlatform: hostPlatform,
             routeMode: routeMode,
+            selectedApps: normalizedSelectedApps,
             client: client,
           );
           state = state.copyWith(
@@ -1330,8 +1337,11 @@ class AppFirstRuntimeBootstrapper
     required _StoredBootstrapState state,
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
+    required List<String> selectedApps,
     required HttpClient client,
   }) async {
+    final policySelectedApps =
+        routeMode == RouteMode.selectedApps ? selectedApps : const <String>[];
     try {
       await _requestJson(
         method: 'POST',
@@ -1341,7 +1351,7 @@ class AppFirstRuntimeBootstrapper
         hostPlatform: hostPlatform,
         body: <String, Object?>{
           'route_mode': _routeModeWireValue(routeMode),
-          'selected_apps': const <String>[],
+          'selected_apps': policySelectedApps,
           'requires_elevated_privileges':
               hostPlatform.supportsSelectedAppsMode &&
                   routeMode == RouteMode.selectedApps,
@@ -1358,6 +1368,7 @@ class AppFirstRuntimeBootstrapper
     required _StoredBootstrapState state,
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
+    required List<String> selectedApps,
     required HttpClient client,
   }) async {
     final path = state.managedManifestPath.isEmpty
@@ -1404,6 +1415,7 @@ class AppFirstRuntimeBootstrapper
             configPayload is String ? configPayload : jsonEncode(configPayload),
         hostPlatform: hostPlatform,
         routeMode: routeMode,
+        selectedApps: selectedApps,
         supportContext: supportContext,
         clientRuleSetCatalog: clientRuleSetCatalog,
       ),
@@ -1423,6 +1435,7 @@ class AppFirstRuntimeBootstrapper
     required String rawConfigPayload,
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
+    required List<String> selectedApps,
     required Map<String, dynamic> supportContext,
     required _ClientRuleSetCatalog clientRuleSetCatalog,
   }) async {
@@ -1442,6 +1455,7 @@ class AppFirstRuntimeBootstrapper
         baseConfig: baseConfig,
         hostPlatform: hostPlatform,
         routeMode: routeMode,
+        selectedApps: selectedApps,
         clientRuleSetCatalog: clientRuleSetCatalog,
       );
       return const JsonEncoder.withIndent('  ').convert(sanitized);
@@ -1450,6 +1464,7 @@ class AppFirstRuntimeBootstrapper
       baseConfig: baseConfig,
       hostPlatform: hostPlatform,
       routeMode: routeMode,
+      selectedApps: selectedApps,
       supportContext: supportContext,
       clientRuleSetCatalog: clientRuleSetCatalog,
     );
@@ -1617,6 +1632,7 @@ class AppFirstRuntimeBootstrapper
     required Map<String, dynamic> baseConfig,
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
+    required List<String> selectedApps,
     required _ClientRuleSetCatalog clientRuleSetCatalog,
   }) {
     final sanitized = Map<String, dynamic>.from(baseConfig)..remove('_meta');
@@ -1638,6 +1654,19 @@ class AppFirstRuntimeBootstrapper
         ..remove('override_android_vpn');
       sanitized['route'] = routeCopy;
     }
+    if (routeMode == RouteMode.selectedApps) {
+      final inbounds = _readListOfMaps(sanitized['inbounds'])
+          .map((inbound) => Map<String, dynamic>.from(inbound))
+          .toList(growable: true);
+      for (final inbound in inbounds) {
+        if (_readText(inbound['type']) == 'tun') {
+          inbound['include_package'] = selectedApps;
+        }
+      }
+      if (inbounds.isNotEmpty) {
+        sanitized['inbounds'] = inbounds;
+      }
+    }
     return sanitized;
   }
 
@@ -1645,6 +1674,7 @@ class AppFirstRuntimeBootstrapper
     required Map<String, dynamic> baseConfig,
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
+    required List<String> selectedApps,
     required Map<String, dynamic> supportContext,
     required _ClientRuleSetCatalog clientRuleSetCatalog,
   }) {
@@ -1747,6 +1777,7 @@ class AppFirstRuntimeBootstrapper
         'inbounds': _buildInbounds(
           hostPlatform: hostPlatform,
           routeMode: routeMode,
+          selectedApps: selectedApps,
           supportContext: supportContext,
         ),
         'outbounds': outbounds,
@@ -1779,6 +1810,7 @@ class AppFirstRuntimeBootstrapper
       'inbounds': _buildInbounds(
         hostPlatform: hostPlatform,
         routeMode: routeMode,
+        selectedApps: selectedApps,
         supportContext: supportContext,
       ),
       'outbounds': outbounds,
@@ -2359,6 +2391,7 @@ class AppFirstRuntimeBootstrapper
   List<Map<String, dynamic>> _buildInbounds({
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
+    required List<String> selectedApps,
     required Map<String, dynamic> supportContext,
   }) {
     final ipVersionPreference =
@@ -2400,7 +2433,7 @@ class AppFirstRuntimeBootstrapper
     }
     if (hostPlatform == HostPlatform.android &&
         routeMode == RouteMode.selectedApps) {
-      tunInbound['include_package'] = const <String>[];
+      tunInbound['include_package'] = selectedApps;
     }
 
     if (hostPlatform == HostPlatform.android) {
@@ -3108,6 +3141,22 @@ class AppFirstRuntimeBootstrapper
       return <String>{};
     }
     return <String>{text};
+  }
+
+  List<String> _normalizeSelectedAppIdentifiers(List<String> selectedApps) {
+    final seen = <String>{};
+    final normalized = <String>[];
+    for (final item in selectedApps) {
+      final value = _trim(item, 96);
+      if (value.isEmpty || !seen.add(value)) {
+        continue;
+      }
+      normalized.add(value);
+      if (normalized.length >= 128) {
+        break;
+      }
+    }
+    return normalized;
   }
 
   List<Map<String, dynamic>> _readListOfMaps(Object? value) {

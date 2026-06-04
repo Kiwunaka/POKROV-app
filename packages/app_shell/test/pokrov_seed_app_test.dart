@@ -116,6 +116,7 @@ class _FakeBootstrapper
   Future<ManagedProfilePayload> resolveManagedProfile({
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
+    List<String> selectedApps = const <String>[],
   }) async {
     calls += 1;
     lastRouteMode = routeMode;
@@ -342,6 +343,7 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
   Future<ManagedProfilePayload> resolveManagedProfile({
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
+    List<String> selectedApps = const <String>[],
   }) async {
     throw BootstrapFailure(message);
   }
@@ -378,7 +380,7 @@ void main() {
     );
   });
 
-  test('public route choices stage selected apps until enforcement proof', () {
+  test('public route choices expose selected apps in P3', () {
     for (final hostPlatform in <HostPlatform>[
       HostPlatform.android,
       HostPlatform.windows,
@@ -388,11 +390,11 @@ void main() {
 
       expect(
         context.runtimeProfile.supportedRouteModes,
-        containsAll(const [RouteMode.allExceptRu, RouteMode.fullTunnel]),
-      );
-      expect(
-        context.runtimeProfile.supportedRouteModes,
-        isNot(contains(RouteMode.selectedApps)),
+        containsAll(const [
+          RouteMode.allExceptRu,
+          RouteMode.fullTunnel,
+          RouteMode.selectedApps,
+        ]),
       );
     }
   });
@@ -1643,7 +1645,7 @@ void main() {
     expect(find.text('Still broken'), findsOneWidget);
   });
 
-  testWidgets('rules stage selected-apps status and hide beta prose',
+  testWidgets('rules show selected-apps editor and hide beta prose',
       (tester) async {
     await tester.pumpWidget(
       PokrovSeedApp(
@@ -1700,7 +1702,10 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.descendant(of: selectedAppsStatus, matching: find.text('Скоро')),
+      find.descendant(
+        of: selectedAppsStatus,
+        matching: find.byKey(const ValueKey('rules-selected-app-input')),
+      ),
       findsOneWidget,
     );
     expect(find.textContaining('geoip'), findsNothing);
@@ -1711,6 +1716,60 @@ void main() {
         findsNothing);
     expect(
         find.text('Р§С‚Рѕ Р·РЅР°С‡РёС‚ РєР°Р¶РґС‹Р№ СЂРµР¶РёРј'), findsNothing);
+  });
+
+  testWidgets('rules lets user add a custom selected app identifier',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-rules');
+    final selectedAppsSection =
+        find.byKey(const ValueKey('rules-section-selected-apps'));
+    await tester.dragUntilVisible(
+      selectedAppsSection,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('rules-selected-app-input')),
+      'com.example.special',
+    );
+    await tester.tap(find.byKey(const ValueKey('rules-selected-app-add')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('rules-selected-app-com.example.special')),
+        findsOneWidget);
+    expect(find.text('com.example.special'), findsOneWidget);
+
+    await _tapNav(tester, 'nav-protection');
+    await tester.pumpAndSettle();
+
+    final routeChip = find.byKey(const ValueKey('home-route-chip'));
+    expect(routeChip, findsOneWidget);
+    expect(
+      find.descendant(
+        of: routeChip,
+        matching: find.text(RouteMode.selectedApps.label),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('advanced settings require acknowledgement before opening',

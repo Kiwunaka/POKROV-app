@@ -3083,7 +3083,7 @@ void main() {
   });
 
   test(
-      'android selected-apps route mode stays explicit no-op until per-app parity lands',
+      'android selected-apps route mode syncs selected packages into policy and tun include list',
       () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-bootstrap-android-selected-apps-test-',
@@ -3124,7 +3124,10 @@ void main() {
         if (request.uri.path == '/api/client/route-policy') {
           final decoded = jsonDecode(body) as Map<String, dynamic>;
           expect(decoded['route_mode'], 'selected_apps');
-          expect(decoded['selected_apps'], isEmpty);
+          expect(decoded['selected_apps'], <String>[
+            'org.telegram.messenger',
+            'com.example.special',
+          ]);
           expect(decoded['requires_elevated_privileges'], isTrue);
           request.response
             ..headers.contentType = ContentType.json
@@ -3180,13 +3183,20 @@ void main() {
     final payload = await bootstrapper.resolveManagedProfile(
       hostPlatform: HostPlatform.android,
       routeMode: RouteMode.selectedApps,
+      selectedApps: const <String>[
+        'org.telegram.messenger',
+        'com.example.special',
+      ],
     );
     final config = jsonDecode(payload.configPayload) as Map<String, dynamic>;
     final tunInbound = (config['inbounds'] as List)
         .cast<Map<String, dynamic>>()
         .singleWhere((inbound) => inbound['type'] == 'tun');
 
-    expect(tunInbound['include_package'], isEmpty);
+    expect(tunInbound['include_package'], <String>[
+      'org.telegram.messenger',
+      'com.example.special',
+    ]);
     expect(config['route'], containsPair('final', 'proxy'));
   });
 

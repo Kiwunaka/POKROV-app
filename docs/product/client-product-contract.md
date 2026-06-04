@@ -111,22 +111,24 @@ Product rules for that choice:
 - `Optimize everything on this device` is the recommended default and stays `TUN`-first
 - the device-wide path defaults the visible `Rules` story to `All except RU`
 - `Full tunnel` stays available as the direct device-wide fallback
-- `Only selected apps` is the staged split-tunneling path and is not a public
-  selectable MVP mode until platform enforcement is proven
-- Windows should use an executable or process picker for selected apps
-- Android should use an installed-package picker for selected apps
+- `Only selected apps` is the P3 split-tunneling path for user-selected app or
+  process identifiers
+- Windows should use an executable or process picker for selected apps; until
+  that native picker lands, manual process/exe identifiers are allowed only as
+  an advanced P3 bridge
+- Android should use an installed-package picker for selected apps; until that
+  native picker lands, manual package identifiers are allowed as the P3 bridge
 - the chosen route mode must persist per device and remain editable later from a dedicated route-mode screen
 - the live state must round-trip through backend-owned `route_mode`, `selected_apps`, `requires_elevated_privileges`, and mirrored `route_policy.*` fields
-- current implementation keeps public route choices on the device-wide lanes:
-  `All except RU` and `Full tunnel`
+- current implementation exposes `All except RU`, `Full tunnel`, and
+  `Only selected apps`; adding a custom app identifier auto-selects the
+  selected-apps route and sends `selected_apps` through app-first route policy
 - `Rules` may show safe catalog/package versions and enabled/staged preset
   states so users know which rule categories are active
 - `Rules` must not expose raw rule-set filenames, geo labels, CIDR, JSON,
   protocol names, ports, or engine internals in the normal UI
-- low-level selected-apps route-policy plumbing remains tested for future
-  compatibility, but the public shell must not expose it while Android package
-  picking, Windows process picking, persistence, and OS-level enforcement are
-  incomplete
+- low-level selected-apps route-policy plumbing is active for app-managed
+  profiles, but raw rule editing remains hidden behind advanced/debug gates
 - if the chosen desktop route mode requires elevation, the app must explain that before connect and guide the user to relaunch as administrator
 - first-layer UX must not force users into raw system-proxy, service-mode, or low-level transport toggles
 

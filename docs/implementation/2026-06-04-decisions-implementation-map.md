@@ -75,7 +75,7 @@ clarity before a richer Rewards Hub can safely exist.
 | Short-lived cabinet token | Done for MVP | app calls `POST /api/client/cabinet-token`; cabinet exchange exists | keep e2e coverage for one-time URL token removal |
 | Bonus API contract and MVP endpoints | Done for MVP | channel check/claim live; app reads `GET /api/bonuses/summary` plus safe history from `GET /api/bonuses/history`; platform exposes referral summary, promo redeem, unified gift redeem, and disabled-by-default wheel/calendar endpoint shells; compact summary/history plus wheel/calendar state parsing are tested | keep wheel/calendar mutating flows disabled until reward logic and rollout flags are approved |
 | Smart-connect shortlist and route-mode sync | Done for MVP | managed profile returns smart-connect metadata plus internal probe targets; route mode persists through backend contract; client performs best-effort RTT probe/upload and applies the 15% stickiness threshold with tests | keep smart-connect hidden from first-layer UI; collect live release-build telemetry before exposing any manual controls |
-| Claims guardrails | Done for MVP | WARP info-only, selected-apps staged, no stable/store/trusted/RU claims | keep guardrails in tests/docs with each release update |
+| Claims guardrails | Done for MVP | WARP info-only, raw rule editing hidden from normal UI, no stable/store/trusted/RU claims | keep guardrails in tests/docs with each release update |
 
 ## P1 Map
 
@@ -86,20 +86,35 @@ clarity before a richer Rewards Hub can safely exist.
 | Calendar check-in endpoint and summary | Done for P1 preview, partial for live check-in | app parses calendar state from summary and shows activity calendar preview with disabled check-in action while backend returns disabled state | implement check-in ledger and rollout proof before enabling check-in |
 | Support diagnostics flow | Done for P1 follow-up attachment, partial for realtime lifecycle | chat can attach redacted diagnostics on create and on the next follow-up reply after explicit user confirmation | add polling/SSE only after operator flow proof |
 | Paywall/subscription UX cleanup | Done for P1 safe handoff, partial for priced paywall | Account opens a subscription sheet with current access, checkout handoff, and cabinet handoff without unsupported prices | add paid plan cards only after pricing/copy/legal checks |
-| Rules presets UI | Done for P1 seed/catalog states, partial for live catalog and picker | Rules shows safe ruleset/package-catalog versions, enabled/staged/locked preset states, and selected apps remains staged | wire live backend catalog sync and add Android package / Windows process picker only after OS enforcement proof |
+| Rules presets UI | Done for P1 seed/catalog states, partial for live catalog and picker | Rules shows safe ruleset/package-catalog versions and enabled/staged/locked preset states | continue app/process picker and live backend catalog work in P3 |
 | Email recovery polish | Done for P1 handoff, partial for native email auth | Account opens an email/recovery sheet with add-email, cabinet, and recovery handoffs | add native email linking only after delivery readiness stays green |
 
 ## P2 Map
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Full activity calendar | Partial | Rewards Hub shows a compact activity grid derived from safe summary state | replace preview with ledger-backed full calendar when check-in history exists |
-| Achievements in app | Partial | Rewards Hub shows safe achievement chips derived from opening, Telegram, referral, and streak state | replace preview chips with backend achievement ledger when available |
+| Full activity calendar | Moved to P3 | Rewards Hub shows a compact activity grid derived from safe summary state | replace preview with ledger-backed full calendar when check-in history exists |
+| Achievements in app | Moved to P3 | Rewards Hub shows safe achievement chips derived from opening, Telegram, referral, and streak state | replace preview chips with backend achievement ledger when available |
 | Rich referral UI | Done for P2 safe display, partial for live referral program | App reads `GET /api/bonuses/referral/summary`, parses link/tier state, and Rewards Hub exposes copy-code, copy-link, and safe Telegram share/open actions without pushing referral spam into the first layer | keep anti-abuse, payout/bonus ledger, and referral campaign tuning backend-owned |
 | Promo slots in app | Done for P2 safe display, partial for live campaigns | Rewards Hub fetches `GET /api/client/promo-slots?surface=app` best-effort, renders enabled first-party slots, and falls back to a quiet empty state | add campaign assignment, rollout QA, and feature-flag proof before relying on remote campaign content |
-| Advanced raw rule editor | Not started | advanced gate exists | keep out of normal UI until support/debug need is proven |
-| Detailed cabinet/account management | Partial | cabinet continuation exists | expand webapp first, then expose app entry points |
-| Windows process picker | Not started | selected-apps staged only | implement with OS enforcement proof |
+| Advanced raw rule editor | Moved to P3 debug-only | advanced gate exists | keep raw rule editing out of normal UI; user-facing need is covered by custom selected apps |
+| Detailed cabinet/account management | Moved to P3 | cabinet continuation exists | expand webapp first, then expose app entry points |
+| Windows process picker | Moved to P3 | selected app identifiers now have a manual editor and policy plumbing | implement native process/exe picker after Windows OS enforcement proof |
+
+## P3 Map
+
+| Decision | Status | Current Evidence | Next Action |
+| --- | --- | --- | --- |
+| Custom selected apps | Done for P3 manual identifiers, partial for native pickers | Rules lets the user add/remove app identifiers; selected apps auto-select the `selected_apps` route mode; app sends `selected_apps` to route policy; Android materialization writes `include_package` into sing-box TUN config | replace manual entry with Android installed-package picker and Windows process/exe picker |
+| Full activity calendar | Not started for ledger-backed UI | P2 preview grid exists | add backend check-in history/ledger, then render full calendar |
+| Achievements ledger | Not started for live achievements | P2 safe chips exist | add backend achievement ledger and replace preview chips |
+| Live wheel/calendar rewards | Not started for mutation | disabled endpoint shells and disabled UI actions exist | enable only after reward ledger, feature flags, rollout proof, and copy |
+| Promo campaign assignment | Not started for live campaigns | P2 app-safe promo-slot rendering exists | add assignment, QA, rollout flags, and campaign telemetry |
+| Referral program hardening | Not started for live program tuning | P2 referral summary/share UI exists | add anti-abuse, bonus/payout ledger, and campaign tuning |
+| Support realtime lifecycle | Not started | ticket-backed chat and diagnostic attachments exist | add polling/SSE after operator workflow proof |
+| Native email linking | Not started | email/recovery handoff exists | add native email auth only after delivery readiness |
+| Detailed cabinet/account management | Not started in app | cabinet handoff exists | expand webapp account management first, then app entry points |
+| Advanced raw rule editor | Debug-only backlog | advanced gate exists | only expose behind explicit responsibility gate for support/debug; never use it as normal app selection UI |
 
 ## Guardrails
 

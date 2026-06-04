@@ -87,7 +87,7 @@ abstract final class _SeedPalette {
 }
 
 const _pokrovBrandMarkAsset = 'assets/brand/pokrov_mark.png';
-const _selectedAppsEnforcementReady = false;
+const _selectedAppsEnforcementReady = true;
 const _seedRulesetVersion = '2026-04-13';
 const _seedPackageCatalogVersion = '2026-04-13';
 
@@ -577,6 +577,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   bool _bonusSummaryBusy = false;
   bool _bonusSummaryRequested = false;
   String? _bonusSummaryError;
+  final List<String> _selectedAppIds = <String>[];
 
   @override
   void initState() {
@@ -610,6 +611,28 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   void _selectRouteMode(RouteMode mode) {
     setState(() {
       _selectedRouteMode = mode;
+      _managedProfileDirty = true;
+    });
+  }
+
+  void _addSelectedAppId(String value) {
+    final normalized = _normalizeSelectedAppIdentifier(value);
+    if (normalized == null || _selectedAppIds.contains(normalized)) {
+      return;
+    }
+    setState(() {
+      _selectedAppIds.add(normalized);
+      if (widget.appContext.runtimeProfile.supportedRouteModes
+          .contains(RouteMode.selectedApps)) {
+        _selectedRouteMode = RouteMode.selectedApps;
+      }
+      _managedProfileDirty = true;
+    });
+  }
+
+  void _removeSelectedAppId(String value) {
+    setState(() {
+      _selectedAppIds.remove(value);
       _managedProfileDirty = true;
     });
   }
@@ -1212,6 +1235,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final payload = await _bootstrapper.resolveManagedProfile(
       hostPlatform: widget.appContext.hostPlatform,
       routeMode: _selectedRouteMode,
+      selectedApps: _selectedRouteMode == RouteMode.selectedApps
+          ? _selectedAppIds
+          : const <String>[],
     );
     if (mounted) {
       setState(() {
@@ -1440,9 +1466,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _RulesSection(
         appContext: widget.appContext,
         selectedRouteMode: _selectedRouteMode,
+        selectedAppIds: _selectedAppIds,
         onRouteModeSelected: (mode) {
           _selectRouteMode(mode);
         },
+        onSelectedAppAdded: _addSelectedAppId,
+        onSelectedAppRemoved: _removeSelectedAppId,
       ),
       _ProfileSection(
         appContext: widget.appContext,
@@ -4302,12 +4331,18 @@ class _RulesSection extends StatelessWidget {
   const _RulesSection({
     required this.appContext,
     required this.selectedRouteMode,
+    required this.selectedAppIds,
     required this.onRouteModeSelected,
+    required this.onSelectedAppAdded,
+    required this.onSelectedAppRemoved,
   });
 
   final SeedAppContext appContext;
   final RouteMode selectedRouteMode;
+  final List<String> selectedAppIds;
   final ValueChanged<RouteMode> onRouteModeSelected;
+  final ValueChanged<String> onSelectedAppAdded;
+  final ValueChanged<String> onSelectedAppRemoved;
 
   @override
   Widget build(BuildContext context) {
@@ -4388,24 +4423,136 @@ class _RulesSection extends StatelessWidget {
           _SectionCard(
             key: const ValueKey('rules-section-selected-apps'),
             title: 'Приложения',
-            lines: const ['Выбор готовится.'],
-            child: _SettingsRow(
-              icon: Icons.add_box_outlined,
-              title: 'Добавить',
-              value: 'Скоро',
-              onTap: () => _showInfoSheet(
-                context,
-                title: 'Выбранные приложения',
-                lines: const [
-                  'Интерфейс выбора появится после системной проверки.',
-                  'Текущий режим уже можно выбрать здесь.',
-                ],
-              ),
+            lines: [
+              selectedAppIds.isEmpty
+                  ? 'Добавьте приложения для режима «только выбранные».'
+                  : 'Выбрано: ${selectedAppIds.length}',
+            ],
+            child: _SelectedAppsEditor(
+              hostPlatform: appContext.hostPlatform,
+              selectedAppIds: selectedAppIds,
+              onAdd: onSelectedAppAdded,
+              onRemove: onSelectedAppRemoved,
             ),
           ),
       ],
     );
   }
+}
+
+class _SelectedAppsEditor extends StatefulWidget {
+  const _SelectedAppsEditor({
+    required this.hostPlatform,
+    required this.selectedAppIds,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  final HostPlatform hostPlatform;
+  final List<String> selectedAppIds;
+  final ValueChanged<String> onAdd;
+  final ValueChanged<String> onRemove;
+
+  @override
+  State<_SelectedAppsEditor> createState() => _SelectedAppsEditorState();
+}
+
+class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final normalized = _normalizeSelectedAppIdentifier(_controller.text);
+    if (normalized == null) {
+      return;
+    }
+    widget.onAdd(normalized);
+    _controller.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hint = switch (widget.hostPlatform) {
+      HostPlatform.windows => 'telegram.exe',
+      HostPlatform.android => 'org.telegram.messenger',
+      HostPlatform.ios || HostPlatform.macos => 'app.identifier',
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextField(
+                key: const ValueKey('rules-selected-app-input'),
+                controller: _controller,
+                decoration: InputDecoration(
+                  labelText: 'ID приложения',
+                  hintText: hint,
+                ),
+                onSubmitted: (_) => _submit(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton.filled(
+              key: const ValueKey('rules-selected-app-add'),
+              tooltip: 'Добавить приложение',
+              onPressed: _submit,
+              icon: const Icon(Icons.add_rounded),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (widget.selectedAppIds.isEmpty)
+          Text(
+            'Добавьте package id или имя процесса. Остальное POKROV настроит сам.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: _SeedPalette.muted,
+                  height: 1.35,
+                ),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: widget.selectedAppIds
+                .map(
+                  (appId) => InputChip(
+                    key: ValueKey('rules-selected-app-$appId'),
+                    label: Text(appId),
+                    avatar: const Icon(Icons.apps_rounded, size: 16),
+                    onDeleted: () => widget.onRemove(appId),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+      ],
+    );
+  }
+}
+
+String? _normalizeSelectedAppIdentifier(String value) {
+  final normalized = value.trim();
+  if (normalized.isEmpty || normalized.length > 96) {
+    return null;
+  }
+  final safe = RegExp(r'^[a-zA-Z0-9._:-]+$');
+  if (!safe.hasMatch(normalized)) {
+    return null;
+  }
+  return normalized;
 }
 
 void _showAdvancedSettingsSheet(BuildContext context) {

@@ -100,8 +100,12 @@ Current implementation bridge:
 - the visible distinction between `All except RU` and `Full tunnel` therefore remains a client `Rules` choice until the backend grows a dedicated device-behavior field
 - the app may render `ruleset_version` and `package_catalog_version` as safe
   user-facing catalog labels together with enabled/staged/locked preset states
-- selected-apps remains staged: the UI labels it honestly while picker and OS
-  enforcement work remains open
+- selected-apps is P3-active as a manual identifier bridge: the UI lets users
+  add package/process identifiers, the app sends `selected_apps` through
+  backend route policy, and Android materialization writes selected package ids
+  into sing-box `include_package`
+- native Android installed-package and Windows process/exe pickers remain P3
+  follow-up work; raw rule editing remains outside normal UI
 
 ## Managed Provisioning And Smart Connect
 
