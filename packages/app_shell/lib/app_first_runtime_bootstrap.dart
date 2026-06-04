@@ -63,6 +63,14 @@ abstract interface class AppFirstBonusActionService {
   Future<AppFirstBonusSummary> fetchBonusSummary({
     required HostPlatform hostPlatform,
   });
+
+  Future<AppFirstBonusRewardResult> spinBonusWheel({
+    required HostPlatform hostPlatform,
+  });
+
+  Future<AppFirstBonusRewardResult> checkInBonusCalendar({
+    required HostPlatform hostPlatform,
+  });
 }
 
 class BootstrapFailure implements Exception {
@@ -222,6 +230,22 @@ class AppFirstBonusSummary {
   final List<AppFirstBonusHistoryItem> historyItems;
 
   bool get channelBonusClaimed => channelBonusClaimedAt.trim().isNotEmpty;
+}
+
+class AppFirstBonusRewardResult {
+  const AppFirstBonusRewardResult({
+    required this.ok,
+    required this.rewardDays,
+    required this.rewardKey,
+    required this.expiryAt,
+    required this.summary,
+  });
+
+  final bool ok;
+  final int rewardDays;
+  final String rewardKey;
+  final String expiryAt;
+  final AppFirstBonusSummary summary;
 }
 
 class AppFirstReferralSummary {
@@ -992,6 +1016,85 @@ class AppFirstRuntimeBootstrapper
       throw const BootstrapFailure(
         'POKROV could not load the bonus summary.',
       );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  @override
+  Future<AppFirstBonusRewardResult> spinBonusWheel({
+    required HostPlatform hostPlatform,
+  }) {
+    return _runBonusRewardAction(
+      hostPlatform: hostPlatform,
+      path: '/api/bonuses/wheel/spin',
+      failureMessage: 'POKROV could not claim the wheel reward.',
+    );
+  }
+
+  @override
+  Future<AppFirstBonusRewardResult> checkInBonusCalendar({
+    required HostPlatform hostPlatform,
+  }) {
+    return _runBonusRewardAction(
+      hostPlatform: hostPlatform,
+      path: '/api/bonuses/calendar/checkin',
+      failureMessage: 'POKROV could not claim the calendar reward.',
+    );
+  }
+
+  Future<AppFirstBonusRewardResult> _runBonusRewardAction({
+    required HostPlatform hostPlatform,
+    required String path,
+    required String failureMessage,
+  }) async {
+    var state = await _loadOrCreateState(hostPlatform);
+    final client = _createHttpClient(hostPlatform);
+    try {
+      for (var attempt = 0; attempt < 2; attempt += 1) {
+        if (!state.hasSession) {
+          state = await _startTrial(
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
+        }
+
+        try {
+          final response = await _requestJson(
+            method: 'POST',
+            path: path,
+            client: client,
+            bearerToken: state.sessionToken,
+            hostPlatform: hostPlatform,
+          );
+          final summary = await fetchBonusSummary(
+            hostPlatform: hostPlatform,
+          );
+          return AppFirstBonusRewardResult(
+            ok: response['ok'] == true,
+            rewardDays: _readInt(response['reward_days']),
+            rewardKey: _readText(response['reward_key']),
+            expiryAt: _readText(response['expiry_at']),
+            summary: summary,
+          );
+        } on BootstrapFailure catch (error) {
+          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
+            state = await _startTrial(
+              state: state.copyWith(
+                sessionToken: '',
+                accountId: '',
+              ),
+              hostPlatform: hostPlatform,
+              client: client,
+            );
+            continue;
+          }
+          rethrow;
+        }
+      }
+
+      throw BootstrapFailure(failureMessage);
     } finally {
       client.close(force: true);
     }

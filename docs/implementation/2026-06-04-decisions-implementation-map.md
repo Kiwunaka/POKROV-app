@@ -52,14 +52,15 @@ The current code slice is:
    enabled/staged/locked preset states without exposing raw rule assets;
 7. Rewards Hub opens from Account and shows safe wheel/calendar state previews,
    activity grid, achievements, referral card with safe share/copy actions,
-   first-party promo slots, and disabled mutating actions until backend state
-   marks the mechanics enabled;
+   first-party promo slots, muted disabled states, and live spin/check-in
+   actions only when backend summary state marks the mechanics enabled;
 8. keep profile loading lazy so the app does not block startup or ordinary
    navigation on bonus data;
 9. Rules selected-apps mode now has a picker-first UX with Android native
    launchable-app bridge support, immediate fallback suggestions, Windows
-   running-process suggestions, manual entry retained for unusual app IDs, and
-   Windows TUN/process routing proof so selected `.exe` values go through
+   running-process and discovered `.exe` suggestions, manual entry retained for
+   unusual app IDs, and Windows TUN/process routing proof so selected `.exe`
+   values go through
    POKROV while the rest of the device stays direct;
 10. embedded support chat now polls the active ticket, refreshes status, and
     shows operator replies plus ticket lifecycle hints in-app without forcing
@@ -68,6 +69,10 @@ The current code slice is:
     public metadata, managed-profile-only runtime material, client parsing, and
     a Home consent gate that keeps Hiddify `warp.enable=false` until the user
     explicitly turns on a runtime-ready managed policy.
+12. Account now has a compact details sheet for access/device/mode/cabinet,
+    settings rows have tactile press feedback, and the desktop sidebar animates
+    label opacity/width while the responsive matrix covers `360`, `700`,
+    `900`, `1024`, `1180`, and `1440` widths.
 
 This slice is P0/P1 bridge work because the master brief needs bonus/account
 clarity before a richer Rewards Hub can safely exist.
@@ -85,7 +90,7 @@ clarity before a richer Rewards Hub can safely exist.
 | Telegram `+10 days` link/check/claim | Done for MVP | app has link, channel check, claim actions and tests | keep optional, no startup wall |
 | Bot parity for subscription/access | Done for MVP | platform bots, cabinet, and app share app-first contracts; root `scripts/app_bot_parity_smoke.py` verifies static parity for account, cabinet, Telegram bonus, support ticket, safe redeem, and bot fallback entrypoints | keep live Telegram bot and same-account parity as owner `MANUAL_OWNER_TEST` before handoff |
 | Short-lived cabinet token | Done for MVP | app calls `POST /api/client/cabinet-token`; cabinet exchange exists | keep e2e coverage for one-time URL token removal |
-| Bonus API contract and MVP endpoints | Done for MVP | channel check/claim live; app reads `GET /api/bonuses/summary` plus safe history from `GET /api/bonuses/history`; platform exposes referral summary, promo redeem, unified gift redeem, and disabled-by-default wheel/calendar endpoint shells; compact summary/history plus wheel/calendar state parsing are tested | keep wheel/calendar mutating flows disabled until reward logic and rollout flags are approved |
+| Bonus API contract and MVP endpoints | Done for MVP | channel check/claim live; app reads `GET /api/bonuses/summary` plus safe history from `GET /api/bonuses/history`; platform exposes referral summary, promo redeem, unified gift redeem, and disabled-by-default wheel/calendar endpoints; under `BONUS_WHEEL_ENABLED` / `BONUS_CALENDAR_ENABLED`, wheel/calendar mutations write `RewardClaim`, extend access, refresh achievements, and return a fresh summary; compact summary/history plus wheel/calendar state parsing and mutation tests exist | keep flags off by default until rollout/copy/support approval |
 | Smart-connect shortlist and route-mode sync | Done for MVP | managed profile returns smart-connect metadata plus internal probe targets; route mode persists through backend contract; client performs best-effort RTT probe/upload and applies the 15% stickiness threshold with tests | keep smart-connect hidden from first-layer UI; collect live release-build telemetry before exposing any manual controls |
 | Claims guardrails | Done for MVP | WARP info-only, raw rule editing hidden from normal UI, no stable/store/trusted/RU claims | keep guardrails in tests/docs with each release update |
 
@@ -93,9 +98,9 @@ clarity before a richer Rewards Hub can safely exist.
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Rewards Hub light | Done for P1 preview, partial for live rewards | Account summary opens a dedicated hub with Telegram/referral/promo/history context, safe wheel/calendar previews, activity grid, achievements, and referral card | add live reward mutations only after backend ledger and rollout proof |
-| App-facing wheel spin endpoint and UI | Done for P1 preview, partial for live spin | app parses wheel state from summary and shows roulette UI with disabled spin action while backend returns disabled state | implement reward ledger and rollout proof before enabling spin |
-| Calendar check-in endpoint and summary | Done for P1 preview, partial for live check-in | app parses calendar state from summary and shows activity calendar preview with disabled check-in action while backend returns disabled state | implement check-in ledger and rollout proof before enabling check-in |
+| Rewards Hub light | Done for P1 plus flag-gated live actions | Account summary opens a dedicated hub with Telegram/referral/promo/history context, safe wheel/calendar state, activity grid, achievements, referral card, muted disabled states, and live actions when backend summary says ready | keep copy calm and flags backend-owned |
+| App-facing wheel spin endpoint and UI | Done under rollout flag | app parses wheel state from summary; disabled state is muted/non-CTA; when backend returns enabled/ready, the app calls the spin action service; backend writes `RewardClaim`, extends access, refreshes achievements, and returns a summary | keep `BONUS_WHEEL_ENABLED=false` until rollout approval |
+| Calendar check-in endpoint and summary | Done under rollout flag | app parses calendar state from summary; disabled state is muted/non-CTA; when backend returns enabled/ready, the app calls the check-in action service; backend writes `RewardClaim`, extends access by `BONUS_CALENDAR_REWARD_DAYS`, refreshes achievements, and returns a summary | keep `BONUS_CALENDAR_ENABLED=false` until rollout approval |
 | Support diagnostics flow | Done for P1 follow-up attachment, partial for realtime lifecycle | chat can attach redacted diagnostics on create and on the next follow-up reply after explicit user confirmation | add polling/SSE only after operator flow proof |
 | Paywall/subscription UX cleanup | Done for P1 safe handoff, partial for priced paywall | Account opens a subscription sheet with current access, checkout handoff, and cabinet handoff without unsupported prices | add paid plan cards only after pricing/copy/legal checks |
 | Rules presets UI | Done for P1 seed/catalog states, partial for live catalog and picker | Rules shows safe ruleset/package-catalog versions and enabled/staged/locked preset states | continue app/process picker and live backend catalog work in P3 |
@@ -118,14 +123,14 @@ clarity before a richer Rewards Hub can safely exist.
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
 | Custom selected apps | Done for P3 manual identifiers, partial for richer native pickers | Rules lets the user add/remove app identifiers; selected apps auto-select the `selected_apps` route mode; app sends `selected_apps` to route policy; Android materialization writes `include_package` into sing-box TUN config; P4 picker-first UI and Android launchable-app bridge are started; Windows materialization now writes selected `process_name` route/DNS rules with direct default | replace fallback suggestions with richer native catalogs where platform proof exists |
-| Full activity calendar | Not started for ledger-backed UI | P2 preview grid exists | add backend check-in history/ledger, then render full calendar |
-| Achievements ledger | Not started for live achievements | P2 safe chips exist | add backend achievement ledger and replace preview chips |
-| Live wheel/calendar rewards | Not started for mutation | disabled endpoint shells and disabled UI actions exist | enable only after reward ledger, feature flags, rollout proof, and copy |
+| Full activity calendar | Partial ledger-backed shell | P2 preview grid exists; backend calendar claims now produce `RewardClaim` rows and safe `checked_dates` under rollout flag | expand the grid into a full month/ledger view only after rollout data exists |
+| Achievements ledger | Partial backend ledger | backend now writes safe achievement rows for first wheel, first check-in, and seven-check-in streak under rollout flags; app still renders compact safe chips | expand achievement taxonomy only after real reward tuning |
+| Live wheel/calendar rewards | Done under backend rollout flags | app exposes active actions only from backend-ready state; backend mutations are ledger-backed, extend access, and return fresh summaries; disabled flags still render as muted non-CTA | keep rollout flags off by default until support/copy/operator approval |
 | Promo campaign assignment | Not started for live campaigns | P2 app-safe promo-slot rendering exists | add assignment, QA, rollout flags, and campaign telemetry |
 | Referral program hardening | Not started for live program tuning | P2 referral summary/share UI exists | add anti-abuse, bonus/payout ledger, and campaign tuning |
 | Support realtime lifecycle | Done for polling lifecycle, partial for SSE | ticket-backed chat, diagnostic attachments, active-ticket polling, status freshness hints, operator-reply hints, closed/offline lifecycle states, and Telegram fallback visibility exist | add SSE or tuned cadence only after operator workflow proof; keep typing/read receipts out until real support tooling exists |
-| Native email linking | Not started | email/recovery handoff exists | add native email auth only after delivery readiness |
-| Detailed cabinet/account management | Not started in app | cabinet handoff exists | expand webapp account management first, then app entry points |
+| Native email linking | Evidence-gated handoff | email/recovery handoff exists; full native form flow stays blocked on delivery/account-linking readiness | keep browser/cabinet continuation until delivery readiness is green |
+| Detailed cabinet/account management | Done for P4 entrypoints | cabinet handoff exists; Account details sheet exposes access/device/mode/cabinet/downloads/email entrypoints | deeper account management remains webapp-first |
 | Advanced raw rule editor | Debug-only backlog | advanced gate exists | only expose behind explicit responsibility gate for support/debug; never use it as normal app selection UI |
 
 ## P4 Map
@@ -137,14 +142,14 @@ states.
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Android installed-app picker and Windows process/exe picker | Started, with route proof | picker-first Rules UI opens a searchable app/process sheet; Android bridge exposes `runtimeEngine.listInstalledApps` for launchable packages; immediate fallback suggestions keep the sheet useful when bridge data is unavailable; Windows picker starts from running processes plus curated `.exe` suggestions; Windows selected-apps config now uses TUN process rules and direct default instead of system-proxy behavior | expand Android/Windows catalogs with richer labels/icons and native exe path selection as platform proof becomes available |
-| Live wheel, calendar, and achievements | Not started for live mutations | Rewards Hub preview, disabled wheel/calendar endpoint shells, compact calendar grid, and safe achievement chips exist | add reward ledger, feature flags, rollout proof, and copy before enabling spin/check-in/achievement claims |
+| Android installed-app picker and Windows process/exe picker | Done for P4 beta | picker-first Rules UI opens a searchable app/process sheet; Android bridge exposes `runtimeEngine.listInstalledApps` for launchable packages; source badges distinguish installed/running/suggested/file candidates; immediate fallback suggestions keep the sheet useful when bridge data is unavailable; Windows picker starts from running processes, discovered Program Files/LocalAppData `.exe` candidates, and curated suggestions; selected-app add uses restrained haptic/tactile feedback; Windows selected-apps config uses TUN process rules and direct default instead of system-proxy behavior | native icons and a true OS file-dialog picker remain polish/backlog, not a beta blocker |
+| Live wheel, calendar, and achievements | Done under rollout flags | Rewards Hub has muted disabled states; app can call live wheel/check-in actions when backend summary says enabled; backend writes `RewardClaim`, extends access, refreshes safe achievements, and returns fresh summary; app tests cover live action path | keep reward flags off by default until operator rollout/copy/support approval |
 | Support realtime lifecycle | Done for polling lifecycle, partial for SSE | embedded ticket-backed support chat, explicit diagnostic attachment, active-ticket polling, operator-reply hints, closed/offline lifecycle hints, and manual refresh action exist; the app updates messages/status from `GET /api/tickets/{id}` while the screen is open | add SSE or tuned polling cadence only after real operator workflow proof; do not fake typing, read receipts, or operator presence |
-| Native email linking and recovery | Not started for native app flow | email/recovery handoff and cabinet continuation exist | add native email linking/recovery only after delivery readiness and account-linking semantics are green |
-| Detailed account and cabinet management | Not started in app | app opens cabinet through short-lived token and shows compact access/account summary | expose detailed account management through app-safe entrypoints or a polished cabinet continuation, without turning Account into a dense dashboard |
+| Native email linking and recovery | Evidence-gated handoff for P4 beta | email/recovery handoff and cabinet continuation exist through short-lived sessions; native password/token forms remain out of app while delivery/account-linking readiness is operator-gated | implement native forms only after delivery readiness, recovery UX, and account-link semantics stay green |
+| Detailed account and cabinet management | Done for P4 beta entrypoints | app opens cabinet through short-lived token, shows compact access/account summary, and has a details sheet for access/device/mode/cabinet/downloads/email | deeper cabinet management remains webapp-first |
 | WARP as a working feature | Started as guarded policy/runtime/consent bridge | Home can show an honest disabled/upcoming WARP tile; public `client_policy.warp_policy` is sanitized; authenticated managed profiles may carry runtime-ready WARP material; client bootstrap parses `warp_policy`; the Home tile can request explicit user consent only for runtime-ready policy; desktop runtime maps WARP into Hiddify options only when policy is ready and consented, while incomplete or non-consented policy stays disabled | add live WARP provisioning, safe storage/rotation, fallback diagnostics, Android proof, Windows proof, and reconnect/recovery UX before claiming WARP as working |
-| Responsive/golden width verification | Not started for the full matrix | widget tests cover key shell behavior, but not the full visual matrix | capture and review `360`, `700`, `900`, `1024`, `1180`, and `1440` widths for Russian text, Home density, sidebar behavior, and no one-letter wrapping |
-| Premium motion pass | Partial foundation only | motion policy, reduced-motion hooks, skeleton components, and connect-disc structure exist | finish connect ritual, skeleton consistency, status transitions, sidebar collapse, and row/chip feedback as a dedicated quality pass |
+| Responsive/golden width verification | Done for widget matrix, visual screenshots still manual | widget tests cover `360`, `700`, `900`, `1024`, `1180`, and `1440` shell behavior, Home WARP tile, primary connect action, mobile bottom navigation, desktop icon rail, and expanded sidebar | keep screenshot/golden capture as release polish when visual baselines are approved |
+| Premium motion pass | Done for P4 beta foundation | connect ritual, status switcher, geometry-matched skeletons, row/chip tactile feedback, muted disabled rewards, sidebar label opacity/width transition, and reduced-motion hooks are covered by code/tests | continue P5 taste polish without changing product claims |
 
 ## P5 Map
 
@@ -155,12 +160,12 @@ platform-native without pretending that disabled features are live.
 | --- | --- | --- | --- |
 | Connect disc ritual | Partial foundation | brand-marked connect disc exists | add press scale, finite ring sweep, connected settle, and error settle using transform/opacity and reduced-motion fallback |
 | Status transitions | Not started as a dedicated pass | connection statuses render in the shell | add `160-220ms` crossfade/slide transitions without leaving stale status text in the tree |
-| Row and chip tactile feedback | Not started as a dedicated pass | rows and chips exist across Home, Locations, Rules, Rewards, and Account | add short press feedback for rows/chips without bounce, glow, or layout-property animation |
+| Row and chip tactile feedback | Done for P4 rows/chips | Home chips and settings rows have transform/opacity tactile feedback without layout-property animation; selected-app add uses restrained haptic feedback | extend only where new interactive rows appear |
 | Geometry-matched skeletons | Partial | motion skeleton components exist | ensure skeleton dimensions match final rows/cards/chips so lazy loading causes no layout shift |
-| Disabled feature states | Partial | WARP, wheel, and calendar stay disabled/upcoming instead of active | make disabled WARP/wheel/calendar look muted and non-CTA, with one short reason and no active affordance |
-| Account and Rewards text density | Partial | grouped Account and Rewards Hub exist | reduce first-layer copy, prefer iOS Settings-style rows and values, and move explanations into sheets/details |
-| Windows sidebar collapse polish | Partial | desktop sidebar, narrow drawer, and collapse behavior exist | add label opacity and width transitions without content jumps, and verify keyboard/focus behavior |
-| Android haptics | Not started | Android shell can host platform feedback | add restrained haptics for connect, redeem success, selected-app added, and other clear success states |
+| Disabled feature states | Done for P4 beta | WARP stays honest/gated; wheel and calendar disabled states render as muted non-CTA rows with short status instead of disabled buttons | keep active affordances tied to backend summary state |
+| Account and Rewards text density | Done for P4 beta | Account first layer uses settings-style rows; details move into subscription/email/account/rewards sheets | continue copy polish from user testing |
+| Windows sidebar collapse polish | Done for P4 beta | desktop sidebar has label opacity/width motion, icon rail, and narrow drawer behavior with responsive matrix coverage | keyboard/focus refinement remains polish |
+| Android haptics | Partial for beta | connect/redeem/success paths already use haptics; selected-app added now calls tactile feedback | tune platform-specific haptic intensity on physical devices |
 
 ## Guardrails
 
@@ -170,10 +175,10 @@ platform-native without pretending that disabled features are live.
 - Do not claim active WARP/enhanced privacy until backend policy, safe storage,
   runtime start, failure-mode, Android, and Windows evidence are green.
 - Keep Xray fallback advanced-only.
-- Roulette/calendar/referral-rich UI may appear only as a safe Rewards Hub
-  preview while backend state is disabled. Mutating reward actions stay disabled
-  until public app APIs, reward ledger, feature flags, rollout proof, and copy
-  all exist.
+- Roulette/calendar/referral-rich UI may appear only through backend-owned safe
+  state. Mutating reward actions stay muted while flags are disabled and become
+  active only when public app APIs, reward ledger, feature flags, rollout proof,
+  and copy are approved.
 - App promo slots are first-party only. They may open only approved POKROV or
   Telegram handoff URLs and must not introduce ad SDKs, tracking pixels, or
   third-party campaign rendering.

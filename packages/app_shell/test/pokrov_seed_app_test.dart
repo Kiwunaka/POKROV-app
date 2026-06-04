@@ -101,6 +101,8 @@ class _FakeBootstrapper
   int channelBonusCheckCalls = 0;
   int channelBonusClaimCalls = 0;
   int bonusSummaryCalls = 0;
+  int wheelSpinCalls = 0;
+  int calendarCheckInCalls = 0;
   RouteMode? lastRouteMode;
   HostPlatform? lastHostPlatform;
   String? lastRedeemCode;
@@ -111,6 +113,8 @@ class _FakeBootstrapper
   HostPlatform? lastChannelBonusCheckHostPlatform;
   HostPlatform? lastChannelBonusClaimHostPlatform;
   HostPlatform? lastBonusSummaryHostPlatform;
+  HostPlatform? lastWheelSpinHostPlatform;
+  HostPlatform? lastCalendarCheckInHostPlatform;
 
   @override
   Future<ManagedProfilePayload> resolveManagedProfile({
@@ -180,6 +184,36 @@ class _FakeBootstrapper
     bonusSummaryCalls += 1;
     lastBonusSummaryHostPlatform = hostPlatform;
     return bonusSummary;
+  }
+
+  @override
+  Future<AppFirstBonusRewardResult> spinBonusWheel({
+    required HostPlatform hostPlatform,
+  }) async {
+    wheelSpinCalls += 1;
+    lastWheelSpinHostPlatform = hostPlatform;
+    return AppFirstBonusRewardResult(
+      ok: true,
+      rewardDays: 1,
+      rewardKey: 'wheel_test',
+      expiryAt: '2026-06-06T12:00:00Z',
+      summary: bonusSummary,
+    );
+  }
+
+  @override
+  Future<AppFirstBonusRewardResult> checkInBonusCalendar({
+    required HostPlatform hostPlatform,
+  }) async {
+    calendarCheckInCalls += 1;
+    lastCalendarCheckInHostPlatform = hostPlatform;
+    return AppFirstBonusRewardResult(
+      ok: true,
+      rewardDays: 1,
+      rewardKey: 'calendar_test',
+      expiryAt: '2026-06-06T12:00:00Z',
+      summary: bonusSummary,
+    );
   }
 }
 
@@ -1135,6 +1169,94 @@ void main() {
         find.byKey(const ValueKey('rewards-promo-slot-empty')), findsOneWidget);
   });
 
+  testWidgets('rewards hub can run live wheel and calendar actions',
+      (tester) async {
+    const liveWheel = AppFirstBonusFeatureState(
+      ok: true,
+      enabled: true,
+      state: 'ready',
+      featureFlag: 'BONUS_WHEEL_ENABLED',
+      featureFlagEnabled: true,
+      actionEndpoint: '/api/bonuses/wheel/spin',
+      lastActionAt: '',
+      streakMonths: 0,
+    );
+    const liveCalendar = AppFirstBonusFeatureState(
+      ok: true,
+      enabled: true,
+      state: 'ready',
+      featureFlag: 'BONUS_CALENDAR_ENABLED',
+      featureFlagEnabled: true,
+      actionEndpoint: '/api/bonuses/calendar/checkin',
+      lastActionAt: '',
+      streakMonths: 0,
+    );
+    const summary = AppFirstBonusSummary(
+      referralCount: 1,
+      referralCode: 'POKROV1',
+      referralBonusDays: 10,
+      streakMonths: 1,
+      lastWheelSpin: '',
+      channelBonusPremiumDays: 10,
+      channelBonusClaimedAt: '',
+      openingBonusPremiumDays: 5,
+      openingBonusClaimed: true,
+      channelUsername: 'pokrov_vpn',
+      tierKey: 'starter',
+      tierPercent: 5,
+      paidReferrals: 0,
+      nextTierKey: 'pro',
+      nextTierAt: 5,
+      wheelState: liveWheel,
+      calendarState: liveCalendar,
+    );
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      bonusSummary: summary,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-profile');
+    final wheelAction =
+        find.byKey(const ValueKey('profile-bonus-wheel-action'));
+    await tester.dragUntilVisible(
+      wheelAction,
+      find.byType(Scrollable).first,
+      const Offset(0, -240),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(wheelAction);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('rewards-wheel-spin-action')));
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.wheelSpinCalls, 1);
+    expect(bootstrapper.lastWheelSpinHostPlatform, HostPlatform.android);
+
+    await tester
+        .tap(find.byKey(const ValueKey('profile-activity-calendar-action')));
+    await tester.pumpAndSettle();
+    await tester
+        .tap(find.byKey(const ValueKey('rewards-calendar-checkin-action')));
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.calendarCheckInCalls, 1);
+    expect(bootstrapper.lastCalendarCheckInHostPlatform, HostPlatform.android);
+  });
+
   testWidgets('profile rewards hub shows first-party promo slots',
       (tester) async {
     final bootstrapper = _FakeBootstrapper(
@@ -1329,6 +1451,155 @@ void main() {
     expect(find.byKey(const ValueKey('profile-email-cabinet-action')),
         findsOneWidget);
     expect(launched, isEmpty);
+  });
+
+  testWidgets('profile exposes compact account details and tactile rows',
+      (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-profile');
+
+    expect(find.byKey(const ValueKey('settings-row-press-feedback')),
+        findsWidgets);
+
+    final accountDetails =
+        find.byKey(const ValueKey('profile-account-details-action'));
+    expect(accountDetails, findsOneWidget);
+    await tester.dragUntilVisible(
+      accountDetails,
+      find.byType(Scrollable).first,
+      const Offset(0, -240),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(accountDetails);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('profile-account-details-sheet')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-account-details-cabinet')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-account-details-downloads')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-account-details-email')),
+        findsOneWidget);
+  });
+
+  testWidgets('disabled rewards render muted states instead of CTAs',
+      (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-profile');
+
+    final wheelAction =
+        find.byKey(const ValueKey('profile-bonus-wheel-action'));
+    await tester.dragUntilVisible(
+      wheelAction,
+      find.byType(Scrollable).first,
+      const Offset(0, -240),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(wheelAction);
+    await tester.pumpAndSettle();
+
+    final wheelMuted = find.byKey(const ValueKey('rewards-wheel-muted-state'));
+    final calendarMuted =
+        find.byKey(const ValueKey('rewards-calendar-muted-state'));
+    expect(wheelMuted, findsOneWidget);
+    expect(calendarMuted, findsOneWidget);
+    expect(
+      find.descendant(of: wheelMuted, matching: find.byType(FilledButton)),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: calendarMuted, matching: find.byType(FilledButton)),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('rewards-wheel-spin-action')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('rewards-calendar-checkin-action')),
+        findsOneWidget);
+  });
+
+  testWidgets('P4 responsive width matrix keeps the app shell stable',
+      (tester) async {
+    final cases = <({double width, HostPlatform platform, String shellKey})>[
+      (width: 360, platform: HostPlatform.android, shellKey: 'mobile-shell'),
+      (width: 700, platform: HostPlatform.android, shellKey: 'mobile-shell'),
+      (
+        width: 900,
+        platform: HostPlatform.windows,
+        shellKey: 'desktop-icon-rail'
+      ),
+      (
+        width: 1024,
+        platform: HostPlatform.windows,
+        shellKey: 'desktop-icon-rail'
+      ),
+      (
+        width: 1180,
+        platform: HostPlatform.windows,
+        shellKey: 'desktop-sidebar-expanded'
+      ),
+      (
+        width: 1440,
+        platform: HostPlatform.windows,
+        shellKey: 'desktop-sidebar-expanded'
+      ),
+    ];
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    for (final item in cases) {
+      await tester.binding.setSurfaceSize(Size(item.width, 820));
+      await tester.pumpWidget(
+        PokrovSeedApp(
+          appContext: buildSeedAppContext(hostPlatform: item.platform),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await _completeFirstLaunchIfPresent(tester);
+
+      expect(find.byKey(ValueKey(item.shellKey)), findsOneWidget);
+      expect(
+          find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
+      expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
+      if (item.platform == HostPlatform.android) {
+        expect(find.byType(NavigationBar), findsOneWidget);
+      } else {
+        expect(find.byType(NavigationBar), findsNothing);
+      }
+      expect(tester.takeException(), isNull, reason: 'width ${item.width}');
+    }
+  });
+
+  testWidgets('expanded desktop sidebar animates label width and opacity',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    expect(
+        find.byKey(const ValueKey('desktop-sidebar-expanded')), findsOneWidget);
+    expect(find.byKey(const ValueKey('desktop-sidebar-label-motion')),
+        findsWidgets);
   });
 
   testWidgets('windows shell collapses sidebar and shows honest WARP tile',

@@ -578,6 +578,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   bool _bonusSummaryBusy = false;
   bool _bonusSummaryRequested = false;
   String? _bonusSummaryError;
+  bool _bonusRewardBusy = false;
   final List<String> _selectedAppIds = <String>[];
   WarpRuntimePolicy _managedWarpPolicy = WarpRuntimePolicy.disabled;
   bool _warpRuntimeConsent = false;
@@ -1012,6 +1013,80 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _bonusSummaryBusy = false;
         _bonusSummaryError = 'Не удалось обновить сводку: $error';
       });
+    }
+  }
+
+  Future<void> _spinBonusWheelInApp() async {
+    await _runBonusRewardInApp(
+      actionName: 'Рулетка',
+      run: (service) => service.spinBonusWheel(
+        hostPlatform: widget.appContext.hostPlatform,
+      ),
+    );
+  }
+
+  Future<void> _checkInBonusCalendarInApp() async {
+    await _runBonusRewardInApp(
+      actionName: 'Календарь',
+      run: (service) => service.checkInBonusCalendar(
+        hostPlatform: widget.appContext.hostPlatform,
+      ),
+    );
+  }
+
+  Future<void> _runBonusRewardInApp({
+    required String actionName,
+    required Future<AppFirstBonusRewardResult> Function(
+      AppFirstBonusActionService service,
+    ) run,
+  }) async {
+    if (_bonusRewardBusy) {
+      return;
+    }
+    final bonusActions = _bonusActionService;
+    if (bonusActions == null) {
+      await _loadBonusSummary(force: true);
+      return;
+    }
+
+    setState(() {
+      _bonusRewardBusy = true;
+      _bonusSummaryError = null;
+    });
+    try {
+      HapticFeedback.selectionClick();
+      final result = await run(bonusActions);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _bonusRewardBusy = false;
+        _bonusSummary = result.summary;
+        _managedProfileDirty = true;
+        _runtimeHeadline = '$actionName: награда активирована.';
+      });
+      HapticFeedback.heavyImpact();
+      final days = result.rewardDays;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            days > 0
+                ? '$actionName: +$days дн. добавлены.'
+                : '$actionName: отметка сохранена.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _bonusRewardBusy = false;
+        _bonusSummaryError = 'Не удалось выполнить действие: $error';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось выполнить действие: $error')),
+      );
     }
   }
 
@@ -1572,7 +1647,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         bonusSummary: _bonusSummary,
         bonusSummaryBusy: _bonusSummaryBusy,
         bonusSummaryError: _bonusSummaryError,
+        bonusRewardBusy: _bonusRewardBusy,
         onRefreshBonusSummary: () => _loadBonusSummary(force: true),
+        onSpinWheel: _spinBonusWheelInApp,
+        onCheckInCalendar: _checkInBonusCalendarInApp,
         runtimeSnapshot: _runtimeSnapshot,
         runtimeHeadline: _runtimeHeadline,
       ),
@@ -2428,13 +2506,32 @@ class _SidebarItem extends StatelessWidget {
               ),
               if (!collapsed) ...[
                 const SizedBox(width: 10),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: selected ? _SeedPalette.ink : _SeedPalette.muted,
-                        fontWeight:
-                            selected ? FontWeight.w800 : FontWeight.w600,
-                      ),
+                AnimatedSize(
+                  key: const ValueKey('desktop-sidebar-label-motion'),
+                  duration: _MotionScope.of(context).duration(
+                    _MotionTokens.short,
+                  ),
+                  curve: _MotionTokens.ease,
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedOpacity(
+                    duration: _MotionScope.of(context).duration(
+                      _MotionTokens.short,
+                    ),
+                    curve: _MotionTokens.ease,
+                    opacity: collapsed ? 0 : 1,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: selected
+                                ? _SeedPalette.ink
+                                : _SeedPalette.muted,
+                            fontWeight:
+                                selected ? FontWeight.w800 : FontWeight.w600,
+                          ),
+                    ),
+                  ),
                 ),
               ],
             ],
@@ -3382,7 +3479,10 @@ class _ProfileSection extends StatelessWidget {
     required this.bonusSummary,
     required this.bonusSummaryBusy,
     required this.bonusSummaryError,
+    required this.bonusRewardBusy,
     required this.onRefreshBonusSummary,
+    required this.onSpinWheel,
+    required this.onCheckInCalendar,
     required this.runtimeSnapshot,
     required this.runtimeHeadline,
   });
@@ -3402,7 +3502,10 @@ class _ProfileSection extends StatelessWidget {
   final AppFirstBonusSummary? bonusSummary;
   final bool bonusSummaryBusy;
   final String? bonusSummaryError;
+  final bool bonusRewardBusy;
   final VoidCallback onRefreshBonusSummary;
+  final VoidCallback onSpinWheel;
+  final VoidCallback onCheckInCalendar;
   final RuntimeSnapshot? runtimeSnapshot;
   final String? runtimeHeadline;
 
@@ -3621,7 +3724,10 @@ class _ProfileSection extends StatelessWidget {
                         onTap: () => _showRewardsHubSheet(
                           context,
                           summary: bonusSummary,
+                          rewardBusy: bonusRewardBusy,
                           onRefreshBonusSummary: onRefreshBonusSummary,
+                          onSpinWheel: onSpinWheel,
+                          onCheckInCalendar: onCheckInCalendar,
                           onOpenHandoff: onOpenHandoff,
                         ),
                       ),
@@ -3635,7 +3741,10 @@ class _ProfileSection extends StatelessWidget {
                         onTap: () => _showRewardsHubSheet(
                           context,
                           summary: bonusSummary,
+                          rewardBusy: bonusRewardBusy,
                           onRefreshBonusSummary: onRefreshBonusSummary,
+                          onSpinWheel: onSpinWheel,
+                          onCheckInCalendar: onCheckInCalendar,
                           onOpenHandoff: onOpenHandoff,
                         ),
                       ),
@@ -3658,7 +3767,10 @@ class _ProfileSection extends StatelessWidget {
                         onTap: () => _showRewardsHubSheet(
                           context,
                           summary: bonusSummary,
+                          rewardBusy: bonusRewardBusy,
                           onRefreshBonusSummary: onRefreshBonusSummary,
+                          onSpinWheel: onSpinWheel,
+                          onCheckInCalendar: onCheckInCalendar,
                           onOpenHandoff: onOpenHandoff,
                         ),
                       ),
@@ -3672,7 +3784,10 @@ class _ProfileSection extends StatelessWidget {
                         onTap: () => _showRewardsHubSheet(
                           context,
                           summary: bonusSummary,
+                          rewardBusy: bonusRewardBusy,
                           onRefreshBonusSummary: onRefreshBonusSummary,
+                          onSpinWheel: onSpinWheel,
+                          onCheckInCalendar: onCheckInCalendar,
                           onOpenHandoff: onOpenHandoff,
                         ),
                       ),
@@ -3708,6 +3823,20 @@ class _ProfileSection extends StatelessWidget {
                       icon: Icons.alt_route_rounded,
                       title: 'Режим',
                       value: selectedRouteMode.label,
+                    ),
+                    _SettingsRow(
+                      key: const ValueKey('profile-account-details-action'),
+                      icon: Icons.manage_accounts_outlined,
+                      title: 'Аккаунт',
+                      value: 'Детали',
+                      onTap: () => _showAccountDetailsSheet(
+                        context,
+                        appContext: appContext,
+                        selectedRouteMode: selectedRouteMode,
+                        statusLabel: statusLabel,
+                        hasProvisionedAccess: hasProvisionedAccess,
+                        onOpenHandoff: onOpenHandoff,
+                      ),
                     ),
                     _SettingsRow(
                       icon: Icons.download_outlined,
@@ -3833,6 +3962,106 @@ void _showSubscriptionSheet(
   );
 }
 
+void _showAccountDetailsSheet(
+  BuildContext context, {
+  required SeedAppContext appContext,
+  required RouteMode selectedRouteMode,
+  required String statusLabel,
+  required bool hasProvisionedAccess,
+  required void Function(String label, String value) onOpenHandoff,
+}) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: _SeedPalette.surface,
+    builder: (context) => SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        key: const ValueKey('profile-account-details-sheet'),
+        padding: const EdgeInsets.fromLTRB(22, 4, 22, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Аккаунт',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: _SeedPalette.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            _KeyValueLine(
+              label: 'Доступ',
+              value: appContext.accessLane.label,
+            ),
+            _KeyValueLine(
+              label: 'Статус',
+              value: statusLabel,
+            ),
+            _KeyValueLine(
+              label: 'Устройство',
+              value: appContext.hostPlatform.label,
+            ),
+            _KeyValueLine(
+              label: 'Режим',
+              value: selectedRouteMode.label,
+            ),
+            _KeyValueLine(
+              label: 'Профиль',
+              value: hasProvisionedAccess ? 'Готов' : 'Готовится',
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.icon(
+                  key: const ValueKey('profile-account-details-cabinet'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onOpenHandoff('cabinet', appContext.cabinetUrl);
+                  },
+                  icon: const Icon(Icons.web_outlined),
+                  label: const Text('Кабинет'),
+                ),
+                OutlinedButton.icon(
+                  key: const ValueKey('profile-account-details-downloads'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onOpenHandoff(
+                      'download',
+                      Uri.parse(appContext.cabinetUrl)
+                          .replace(path: '/downloads')
+                          .toString(),
+                    );
+                  },
+                  icon: const Icon(Icons.download_outlined),
+                  label: const Text('Загрузки'),
+                ),
+                OutlinedButton.icon(
+                  key: const ValueKey('profile-account-details-email'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onOpenHandoff(
+                      'download',
+                      Uri.parse(appContext.cabinetUrl)
+                          .replace(path: '/account/email')
+                          .toString(),
+                    );
+                  },
+                  icon: const Icon(Icons.alternate_email_rounded),
+                  label: const Text('Email'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 void _showEmailRecoverySheet(
   BuildContext context, {
   required SeedAppContext appContext,
@@ -3914,7 +4143,10 @@ void _showEmailRecoverySheet(
 void _showRewardsHubSheet(
   BuildContext context, {
   required AppFirstBonusSummary? summary,
+  required bool rewardBusy,
   required VoidCallback onRefreshBonusSummary,
+  required VoidCallback onSpinWheel,
+  required VoidCallback onCheckInCalendar,
   required void Function(String label, String value) onOpenHandoff,
 }) {
   showModalBottomSheet<void>(
@@ -3924,7 +4156,10 @@ void _showRewardsHubSheet(
     isScrollControlled: true,
     builder: (context) => _RewardsHubSheet(
       summary: summary,
+      rewardBusy: rewardBusy,
       onRefreshBonusSummary: onRefreshBonusSummary,
+      onSpinWheel: onSpinWheel,
+      onCheckInCalendar: onCheckInCalendar,
       onOpenHandoff: onOpenHandoff,
     ),
   );
@@ -3933,12 +4168,18 @@ void _showRewardsHubSheet(
 class _RewardsHubSheet extends StatelessWidget {
   const _RewardsHubSheet({
     required this.summary,
+    required this.rewardBusy,
     required this.onRefreshBonusSummary,
+    required this.onSpinWheel,
+    required this.onCheckInCalendar,
     required this.onOpenHandoff,
   });
 
   final AppFirstBonusSummary? summary;
+  final bool rewardBusy;
   final VoidCallback onRefreshBonusSummary;
+  final VoidCallback onSpinWheel;
+  final VoidCallback onCheckInCalendar;
   final void Function(String label, String value) onOpenHandoff;
 
   @override
@@ -3983,8 +4224,17 @@ class _RewardsHubSheet extends StatelessWidget {
               detail: wheel.availabilityText,
               lastActionAt: wheel.lastActionAt,
               actionKey: const ValueKey('rewards-wheel-spin-action'),
-              actionLabel: wheel.canRun ? 'Крутить' : 'Скоро',
-              actionEnabled: false,
+              mutedKey: const ValueKey('rewards-wheel-muted-state'),
+              actionLabel: rewardBusy
+                  ? 'Готовим'
+                  : wheel.canRun
+                      ? 'Крутить'
+                      : 'Скоро',
+              actionEnabled: wheel.canRun && !rewardBusy,
+              onAction: () {
+                Navigator.of(context).pop();
+                onSpinWheel();
+              },
             ),
             const SizedBox(height: 10),
             _RewardsFeatureCard(
@@ -3995,8 +4245,17 @@ class _RewardsHubSheet extends StatelessWidget {
               detail: calendar.availabilityText,
               lastActionAt: calendar.lastActionAt,
               actionKey: const ValueKey('rewards-calendar-checkin-action'),
-              actionLabel: calendar.canRun ? 'Отметиться' : 'Скоро',
-              actionEnabled: false,
+              mutedKey: const ValueKey('rewards-calendar-muted-state'),
+              actionLabel: rewardBusy
+                  ? 'Готовим'
+                  : calendar.canRun
+                      ? 'Отметиться'
+                      : 'Скоро',
+              actionEnabled: calendar.canRun && !rewardBusy,
+              onAction: () {
+                Navigator.of(context).pop();
+                onCheckInCalendar();
+              },
             ),
             const SizedBox(height: 12),
             _RewardsCalendarGrid(
@@ -4043,8 +4302,10 @@ class _RewardsFeatureCard extends StatelessWidget {
     required this.detail,
     required this.lastActionAt,
     required this.actionKey,
+    required this.mutedKey,
     required this.actionLabel,
     required this.actionEnabled,
+    this.onAction,
   });
 
   final IconData icon;
@@ -4053,8 +4314,10 @@ class _RewardsFeatureCard extends StatelessWidget {
   final String detail;
   final String lastActionAt;
   final Key actionKey;
+  final Key mutedKey;
   final String actionLabel;
   final bool actionEnabled;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -4116,12 +4379,67 @@ class _RewardsFeatureCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 12),
-          FilledButton.icon(
-            key: actionKey,
-            onPressed: actionEnabled ? () {} : null,
-            icon: const Icon(Icons.auto_awesome_outlined),
-            label: Text(actionLabel),
-          ),
+          if (actionEnabled)
+            FilledButton.icon(
+              key: actionKey,
+              onPressed: () {
+                Feedback.forTap(context);
+                onAction?.call();
+              },
+              icon: const Icon(Icons.auto_awesome_outlined),
+              label: Text(actionLabel),
+            )
+          else
+            KeyedSubtree(
+              key: actionKey,
+              child: Container(
+                key: mutedKey,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: _SeedPalette.ink.withValues(alpha: 0.045),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: _SeedPalette.line.withValues(alpha: 0.75),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.hourglass_empty_rounded,
+                      size: 18,
+                      color: _SeedPalette.muted,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        actionLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: _SeedPalette.muted,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        status,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.right,
+                        style:
+                            Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  color: _SeedPalette.muted,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -4740,6 +5058,7 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
     if (candidate == null) {
       return;
     }
+    Feedback.forTap(context);
     widget.onAdd(candidate.identifier);
   }
 
@@ -4818,6 +5137,7 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
 
 enum _SelectedAppCandidateSource {
   installed,
+  installedExecutable,
   runningProcess,
   suggested,
 }
@@ -4843,6 +5163,8 @@ class _SelectedAppCandidate {
     switch (source) {
       case _SelectedAppCandidateSource.installed:
         return 'Установлено';
+      case _SelectedAppCandidateSource.installedExecutable:
+        return 'Файл';
       case _SelectedAppCandidateSource.runningProcess:
         return 'Запущено';
       case _SelectedAppCandidateSource.suggested:
@@ -4982,10 +5304,43 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            subtitle: Text(
-                              '${candidate.sourceLabel} · ${candidate.subtitle}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            subtitle: Row(
+                              children: [
+                                Container(
+                                  key: ValueKey(
+                                    'rules-selected-app-source-${candidate.identifier}',
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _SeedPalette.accent
+                                        .withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    candidate.sourceLabel,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          color: _SeedPalette.accent,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    candidate.subtitle,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                             trailing: Icon(
                               selected
@@ -5021,7 +5376,10 @@ Future<List<_SelectedAppCandidate>> _loadSelectedAppCandidates(
 ) async {
   final nativeCandidates = switch (hostPlatform) {
     HostPlatform.android => await _loadAndroidInstalledAppCandidates(),
-    HostPlatform.windows => await _loadWindowsProcessCandidates(),
+    HostPlatform.windows => <_SelectedAppCandidate>[
+        ...await _loadWindowsProcessCandidates(),
+        ...await _loadWindowsExecutableCandidates(),
+      ],
     HostPlatform.ios || HostPlatform.macos => const <_SelectedAppCandidate>[],
   };
   return _mergeSelectedAppCandidates(
@@ -5092,6 +5450,52 @@ Future<List<_SelectedAppCandidate>> _loadWindowsProcessCandidates() async {
             _normalizeSelectedAppIdentifier(candidate.identifier) != null)
         .take(120)
         .toList(growable: false);
+  } on Object {
+    return const <_SelectedAppCandidate>[];
+  }
+}
+
+Future<List<_SelectedAppCandidate>> _loadWindowsExecutableCandidates() async {
+  if (!Platform.isWindows) {
+    return const <_SelectedAppCandidate>[];
+  }
+  try {
+    final result = await Process.run(
+      'powershell',
+      <String>[
+        '-NoProfile',
+        '-Command',
+        r'''
+[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+$roots = @(
+  $env:ProgramFiles,
+  ${env:ProgramFiles(x86)},
+  (Join-Path $env:LOCALAPPDATA 'Programs')
+) | Where-Object { $_ -and (Test-Path -LiteralPath $_) };
+if (-not $roots) { @() | ConvertTo-Json -Compress; exit 0 }
+Get-ChildItem -LiteralPath $roots -Filter *.exe -File -Recurse -Depth 3 -ErrorAction SilentlyContinue |
+  Sort-Object Name -Unique |
+  Select-Object -First 160 `
+    @{Name='label';Expression={ if ($_.VersionInfo.FileDescription) { $_.VersionInfo.FileDescription } else { $_.BaseName } }},
+    @{Name='identifier';Expression={ $_.Name.ToLowerInvariant() }},
+    @{Name='subtitle';Expression={ $_.FullName }} |
+  ConvertTo-Json -Compress
+''',
+      ],
+    ).timeout(const Duration(seconds: 3));
+    if (result.exitCode != 0) {
+      return const <_SelectedAppCandidate>[];
+    }
+    final decoded = jsonDecode(result.stdout.toString());
+    return _candidatesFromHostMaps(
+      switch (decoded) {
+        final List<Object?> list => list,
+        final Map<String, Object?> single => <Object?>[single],
+        _ => const <Object?>[],
+      },
+      source: _SelectedAppCandidateSource.installedExecutable,
+      icon: Icons.folder_open_rounded,
+    ).take(160).toList(growable: false);
   } on Object {
     return const <_SelectedAppCandidate>[];
   }
@@ -5764,10 +6168,77 @@ class _SettingsRow extends StatelessWidget {
     if (onTap == null) {
       return row;
     }
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+    return _SettingsRowPressSurface(
+      onTap: () {
+        Feedback.forTap(context);
+        onTap!();
+      },
       child: row,
+    );
+  }
+}
+
+class _SettingsRowPressSurface extends StatefulWidget {
+  const _SettingsRowPressSurface({
+    required this.child,
+    required this.onTap,
+  });
+
+  final Widget child;
+  final VoidCallback onTap;
+
+  @override
+  State<_SettingsRowPressSurface> createState() =>
+      _SettingsRowPressSurfaceState();
+}
+
+class _SettingsRowPressSurfaceState extends State<_SettingsRowPressSurface> {
+  bool _hovered = false;
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (_pressed == value) {
+      return;
+    }
+    setState(() {
+      _pressed = value;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final motion = _MotionScope.of(context);
+    final scale = _pressed ? 0.985 : (_hovered ? 1.006 : 1.0);
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() {
+        _hovered = true;
+      }),
+      onExit: (_) => setState(() {
+        _hovered = false;
+        _pressed = false;
+      }),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => _setPressed(true),
+        onTapCancel: () => _setPressed(false),
+        onTapUp: (_) => _setPressed(false),
+        child: AnimatedScale(
+          key: const ValueKey('settings-row-press-feedback'),
+          scale: scale,
+          duration: motion.duration(_MotionTokens.short),
+          curve: _MotionTokens.ease,
+          alignment: Alignment.center,
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              onTap: widget.onTap,
+              borderRadius: BorderRadius.circular(14),
+              child: widget.child,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
