@@ -58,7 +58,9 @@ The current code slice is:
    navigation on bonus data;
 9. Rules selected-apps mode now has a picker-first UX with Android native
    launchable-app bridge support, immediate fallback suggestions, Windows
-   running-process suggestions, and manual entry retained for unusual app IDs.
+   running-process suggestions, manual entry retained for unusual app IDs, and
+   Windows TUN/process routing proof so selected `.exe` values go through
+   POKROV while the rest of the device stays direct.
 
 This slice is P0/P1 bridge work because the master brief needs bonus/account
 clarity before a richer Rewards Hub can safely exist.
@@ -108,7 +110,7 @@ clarity before a richer Rewards Hub can safely exist.
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Custom selected apps | Done for P3 manual identifiers, partial for native pickers | Rules lets the user add/remove app identifiers; selected apps auto-select the `selected_apps` route mode; app sends `selected_apps` to route policy; Android materialization writes `include_package` into sing-box TUN config; P4 picker-first UI and Android launchable-app bridge are started | harden Windows process/exe route enforcement and replace fallback suggestions with richer native catalogs where platform proof exists |
+| Custom selected apps | Done for P3 manual identifiers, partial for richer native pickers | Rules lets the user add/remove app identifiers; selected apps auto-select the `selected_apps` route mode; app sends `selected_apps` to route policy; Android materialization writes `include_package` into sing-box TUN config; P4 picker-first UI and Android launchable-app bridge are started; Windows materialization now writes selected `process_name` route/DNS rules with direct default | replace fallback suggestions with richer native catalogs where platform proof exists |
 | Full activity calendar | Not started for ledger-backed UI | P2 preview grid exists | add backend check-in history/ledger, then render full calendar |
 | Achievements ledger | Not started for live achievements | P2 safe chips exist | add backend achievement ledger and replace preview chips |
 | Live wheel/calendar rewards | Not started for mutation | disabled endpoint shells and disabled UI actions exist | enable only after reward ledger, feature flags, rollout proof, and copy |
@@ -128,7 +130,7 @@ states.
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Android installed-app picker and Windows process/exe picker | Started | picker-first Rules UI opens a searchable app/process sheet; Android bridge exposes `runtimeEngine.listInstalledApps` for launchable packages; immediate fallback suggestions keep the sheet useful when bridge data is unavailable; Windows picker starts from running processes plus curated `.exe` suggestions | add Windows native exe/process enumeration proof to route-contract tests, then expand Android/Windows catalogs with labels/icons as available |
+| Android installed-app picker and Windows process/exe picker | Started, with route proof | picker-first Rules UI opens a searchable app/process sheet; Android bridge exposes `runtimeEngine.listInstalledApps` for launchable packages; immediate fallback suggestions keep the sheet useful when bridge data is unavailable; Windows picker starts from running processes plus curated `.exe` suggestions; Windows selected-apps config now uses TUN process rules and direct default instead of system-proxy behavior | expand Android/Windows catalogs with richer labels/icons and native exe path selection as platform proof becomes available |
 | Live wheel, calendar, and achievements | Not started for live mutations | Rewards Hub preview, disabled wheel/calendar endpoint shells, compact calendar grid, and safe achievement chips exist | add reward ledger, feature flags, rollout proof, and copy before enabling spin/check-in/achievement claims |
 | Support realtime lifecycle | Not started | embedded ticket-backed support chat and explicit diagnostic attachment exist | add polling or SSE, ticket status, operator escalation states, and stale/offline behavior without fake operator presence |
 | Native email linking and recovery | Not started for native app flow | email/recovery handoff and cabinet continuation exist | add native email linking/recovery only after delivery readiness and account-linking semantics are green |

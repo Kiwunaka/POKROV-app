@@ -3201,6 +3201,146 @@ void main() {
   });
 
   test(
+      'windows selected-apps route mode limits proxy routing to selected processes',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-windows-selected-apps-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'session-token-windows-selected-apps',
+                    'account_id': '342',
+                  },
+                  'provisioning': <String, Object?>{
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/route-policy') {
+          final decoded = jsonDecode(body) as Map<String, dynamic>;
+          expect(decoded['route_mode'], 'selected_apps');
+          expect(decoded['selected_apps'], <String>[
+            'Telegram.exe',
+            'msedge',
+          ]);
+          expect(decoded['requires_elevated_privileges'], isTrue);
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/profile/managed') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'profile_revision': 'rev-windows-selected-apps',
+                  'config_format': 'singbox-json',
+                  'config_payload': <String, Object?>{
+                    'outbounds': <Object?>[
+                      <String, Object?>{
+                        'type': 'selector',
+                        'tag': 'proxy',
+                        'outbounds': <Object?>['node-1'],
+                      },
+                      <String, Object?>{
+                        'type': 'vless',
+                        'tag': 'node-1',
+                        'server': 'nl.kiwunaka.space',
+                        'server_port': 443,
+                        'uuid': 'test-uuid',
+                      },
+                    ],
+                    'route': <String, Object?>{
+                      'final': 'proxy',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+
+    final payload = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.selectedApps,
+      selectedApps: const <String>[
+        'Telegram.exe',
+        'msedge',
+      ],
+    );
+    final config = jsonDecode(payload.configPayload) as Map<String, dynamic>;
+    final dns = config['dns'] as Map<String, dynamic>;
+    final dnsRules = (dns['rules'] as List).cast<Map<String, dynamic>>();
+    final route = config['route'] as Map<String, dynamic>;
+    final routeRules = (route['rules'] as List).cast<Map<String, dynamic>>();
+
+    expect(route['find_process'], true);
+    expect(route['final'], 'direct');
+    expect(
+      routeRules,
+      contains(
+        containsPair('process_name', <String>['telegram.exe', 'msedge.exe']),
+      ),
+    );
+    expect(
+      routeRules.any(
+        (rule) =>
+            (rule['process_name'] as List?)?.contains('telegram.exe') ==
+                true &&
+            rule['outbound'] == 'proxy',
+      ),
+      isTrue,
+    );
+    expect(dns['final'], 'dns-direct');
+    expect(
+      dnsRules.any(
+        (rule) =>
+            (rule['process_name'] as List?)?.contains('msedge.exe') == true &&
+            rule['server'] == 'dns-remote',
+      ),
+      isTrue,
+    );
+  });
+
+  test(
       'android full tunnel rewrites dns final away from direct bootstrap lanes',
       () async {
     final tempDirectory = await Directory.systemTemp.createTemp(

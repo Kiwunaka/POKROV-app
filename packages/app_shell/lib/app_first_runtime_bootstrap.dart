@@ -1804,7 +1804,9 @@ class AppFirstRuntimeBootstrapper
         outbounds: outbounds,
         directTag: directTag,
         finalOutboundTag: finalOutboundTag,
+        hostPlatform: hostPlatform,
         routeMode: routeMode,
+        selectedApps: selectedApps,
         clientRuleSetCatalog: clientRuleSetCatalog,
       ),
       'inbounds': _buildInbounds(
@@ -1821,6 +1823,7 @@ class AppFirstRuntimeBootstrapper
         finalOutboundTag: finalOutboundTag,
         hostPlatform: hostPlatform,
         routeMode: routeMode,
+        selectedApps: selectedApps,
         clientRuleSetCatalog: clientRuleSetCatalog,
       ),
     };
@@ -2306,7 +2309,9 @@ class AppFirstRuntimeBootstrapper
     required List<Map<String, dynamic>> outbounds,
     required String directTag,
     required String finalOutboundTag,
+    required HostPlatform hostPlatform,
     required RouteMode routeMode,
+    required List<String> selectedApps,
     required _ClientRuleSetCatalog clientRuleSetCatalog,
   }) {
     final dns = _readMap(baseDns).isEmpty
@@ -2369,6 +2374,15 @@ class AppFirstRuntimeBootstrapper
       rules: rules,
       serverTag: 'dns-direct',
     );
+    final selectedProcessNames =
+        _selectedWindowsProcessNames(hostPlatform, selectedApps);
+    if (selectedProcessNames.isNotEmpty) {
+      _ensureWindowsSelectedProcessDnsRule(
+        rules: rules,
+        processNames: selectedProcessNames,
+        serverTag: 'dns-remote',
+      );
+    }
     if (routeMode == RouteMode.allExceptRu) {
       _ensureDnsDomainSuffixRule(rules, '.ru', 'dns-direct');
       _ensureDnsDomainSuffixRule(rules, '.xn--p1ai', 'dns-direct');
@@ -2383,7 +2397,9 @@ class AppFirstRuntimeBootstrapper
     dns
       ..['servers'] = servers
       ..['rules'] = rules
-      ..putIfAbsent('final', () => 'dns-remote')
+      ..['final'] = selectedProcessNames.isNotEmpty
+          ? 'dns-direct'
+          : (dns['final'] ?? 'dns-remote')
       ..['independent_cache'] = dns['independent_cache'] ?? false;
     return dns;
   }
@@ -2467,6 +2483,7 @@ class AppFirstRuntimeBootstrapper
     required String finalOutboundTag,
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
+    required List<String> selectedApps,
     required _ClientRuleSetCatalog clientRuleSetCatalog,
   }) {
     final route = _readMap(baseRoute).isEmpty
@@ -2507,6 +2524,15 @@ class AppFirstRuntimeBootstrapper
         'outbound': directTag,
       });
     }
+    final selectedProcessNames =
+        _selectedWindowsProcessNames(hostPlatform, selectedApps);
+    if (selectedProcessNames.isNotEmpty) {
+      _ensureWindowsSelectedProcessRouteRule(
+        rules: rules,
+        processNames: selectedProcessNames,
+        outboundTag: finalOutboundTag,
+      );
+    }
     if (routeMode == RouteMode.allExceptRu) {
       _mergeRouteRuleSetDefinitions(
         route: route,
@@ -2524,7 +2550,8 @@ class AppFirstRuntimeBootstrapper
 
     route
       ..['rules'] = rules
-      ..['final'] = finalOutboundTag;
+      ..['final'] =
+          selectedProcessNames.isNotEmpty ? directTag : finalOutboundTag;
     if (hostPlatform != HostPlatform.android) {
       route['auto_detect_interface'] = true;
     }
@@ -2773,7 +2800,9 @@ class AppFirstRuntimeBootstrapper
       outbounds: outbounds,
       directTag: directTag,
       finalOutboundTag: finalOutboundTag,
+      hostPlatform: hostPlatform,
       routeMode: RouteMode.allExceptRu,
+      selectedApps: const <String>[],
       clientRuleSetCatalog: clientRuleSetCatalog,
     );
     config['route'] = _buildRouteBlock(
@@ -2783,6 +2812,7 @@ class AppFirstRuntimeBootstrapper
       finalOutboundTag: finalOutboundTag,
       hostPlatform: hostPlatform,
       routeMode: RouteMode.allExceptRu,
+      selectedApps: const <String>[],
       clientRuleSetCatalog: clientRuleSetCatalog,
     );
   }
@@ -2940,6 +2970,42 @@ class AppFirstRuntimeBootstrapper
       rules.add(<String, dynamic>{
         'rule_set': ruleSetTags,
         'outbound': directTag,
+      });
+    }
+  }
+
+  void _ensureWindowsSelectedProcessDnsRule({
+    required List<Map<String, dynamic>> rules,
+    required List<String> processNames,
+    required String serverTag,
+  }) {
+    final alreadyPresent = rules.any(
+      (rule) =>
+          _readText(rule['server']) == serverTag &&
+          _sameStringList(_readTagList(rule['process_name']), processNames),
+    );
+    if (!alreadyPresent) {
+      rules.insert(0, <String, dynamic>{
+        'process_name': processNames,
+        'server': serverTag,
+      });
+    }
+  }
+
+  void _ensureWindowsSelectedProcessRouteRule({
+    required List<Map<String, dynamic>> rules,
+    required List<String> processNames,
+    required String outboundTag,
+  }) {
+    final alreadyPresent = rules.any(
+      (rule) =>
+          _readText(rule['outbound']) == outboundTag &&
+          _sameStringList(_readTagList(rule['process_name']), processNames),
+    );
+    if (!alreadyPresent) {
+      rules.add(<String, dynamic>{
+        'process_name': processNames,
+        'outbound': outboundTag,
       });
     }
   }
@@ -3157,6 +3223,39 @@ class AppFirstRuntimeBootstrapper
       }
     }
     return normalized;
+  }
+
+  List<String> _selectedWindowsProcessNames(
+    HostPlatform hostPlatform,
+    List<String> selectedApps,
+  ) {
+    if (hostPlatform != HostPlatform.windows || selectedApps.isEmpty) {
+      return const <String>[];
+    }
+    final seen = <String>{};
+    final processNames = <String>[];
+    final safeProcessName = RegExp(r'^[a-z0-9_.-]+\.exe$');
+    for (final item in selectedApps) {
+      var value = _trim(item, 96).replaceAll(r'\', '/').toLowerCase();
+      if (value.isEmpty) {
+        continue;
+      }
+      final separator = value.lastIndexOf('/');
+      if (separator >= 0) {
+        value = value.substring(separator + 1);
+      }
+      if (!value.endsWith('.exe')) {
+        value = '$value.exe';
+      }
+      if (!safeProcessName.hasMatch(value) || !seen.add(value)) {
+        continue;
+      }
+      processNames.add(value);
+      if (processNames.length >= 128) {
+        break;
+      }
+    }
+    return processNames;
   }
 
   List<Map<String, dynamic>> _readListOfMaps(Object? value) {
