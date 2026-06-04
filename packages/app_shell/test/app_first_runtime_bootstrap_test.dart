@@ -29,6 +29,43 @@ Map<String, List<int>> _allExceptRuRuleSetFixtures() {
   };
 }
 
+Map<String, Object?> _supportTicketJson({
+  required int id,
+  required List<Object?> messages,
+  String status = 'open',
+  String statusTitle = 'Open',
+}) {
+  return <String, Object?>{
+    'id': id,
+    'user_tg_id': 10001,
+    'status': status,
+    'status_title': statusTitle,
+    'subject': 'Support',
+    'created_at': '2026-06-03T00:00:00Z',
+    'updated_at': '2026-06-03T00:01:00Z',
+    'messages': messages,
+    'last_message_preview': messages.isEmpty
+        ? ''
+        : ((messages.last as Map<String, Object?>)['body'] ?? '').toString(),
+  };
+}
+
+Map<String, Object?> _supportMessageJson({
+  required int id,
+  required int ticketId,
+  required String senderRole,
+  required String body,
+}) {
+  return <String, Object?>{
+    'id': id,
+    'ticket_id': ticketId,
+    'sender_tg_id': senderRole == 'user' ? 10001 : 90001,
+    'sender_role': senderRole,
+    'body': body,
+    'created_at': '2026-06-03T00:00:00Z',
+  };
+}
+
 void main() {
   test(
       'android bootstrap can map canonical API host to a direct control-plane IP',
@@ -124,6 +161,37 @@ void main() {
               jsonEncode(
                 <String, Object?>{
                   'profile_revision': 'rev-007',
+                  'smart_connect': <String, Object?>{
+                    'eligible': true,
+                    'fallback_required': false,
+                    'shortlist_reason': 'eligible',
+                    'shortlist_limit': 5,
+                    'shortlist_revision': 'short-007',
+                    'transport_profile': 'reality',
+                    'profile_revision': 'rev-007',
+                    'fallback_order': <String>['pl', 'de'],
+                    'shortlist': <Object?>[
+                      <String, Object?>{
+                        'code': 'pl',
+                        'country': 'Poland',
+                        'rank': 1,
+                        'rank_hint': <String, Object?>{
+                          'health_score': 97.5,
+                          'cpu_percent': 21.0,
+                          'panel_latency_ms': 42,
+                          'backend_penalty': 0,
+                          'cpu_penalty': 0,
+                          'sticky_preferred': true,
+                        },
+                      },
+                    ],
+                    'stickiness': <String, Object?>{
+                      'preferred_node_code': 'pl',
+                      'threshold_percent': 15,
+                      'latest_sample_at': '2026-06-03T10:00:00Z',
+                      'stickiness_applied': true,
+                    },
+                  },
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
                     'outbounds': <Object?>[
@@ -159,6 +227,11 @@ void main() {
     );
 
     expect(payload.profileName, 'pokrov-windows-rev-007');
+    expect(payload.smartConnect, isNotNull);
+    expect(payload.smartConnect?.shortlistRevision, 'short-007');
+    expect(payload.smartConnect?.shortlist.single.code, 'pl');
+    expect(payload.smartConnect?.shortlist.single.rankHint.panelLatencyMs, 42);
+    expect(payload.smartConnect?.stickiness.preferredNodeCode, 'pl');
     expect(payload.configPayload, contains('"type": "tun"'));
     expect(payload.configPayload, contains('"final": "proxy"'));
     expect(payload.configPayload, contains('"auto_detect_interface": true'));
@@ -179,6 +252,714 @@ void main() {
         jsonDecode(await stateFile.readAsString()) as Map<String, dynamic>;
     expect(state['session_token'], 'session-token-1');
     expect(state['managed_manifest_path'], '/api/client/profile/managed');
+  });
+
+  test(
+      'support ticket service creates a ticket with app-session auth and safe diagnostics',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-support-ticket-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final requests = <String>[];
+    Map<String, dynamic>? ticketBody;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add('${request.method} ${request.uri.path}');
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'support-session-token',
+                    'account_id': 'ticket-account',
+                  },
+                  'provisioning': <String, Object?>{
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/tickets') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer support-session-token',
+          );
+          ticketBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ticket': <String, Object?>{
+                    'id': 321,
+                    'status': 'open',
+                    'status_title': 'Open',
+                    'messages': <Object?>[
+                      <String, Object?>{
+                        'body': ticketBody?['body'],
+                      },
+                    ],
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final service = AppFirstSupportTicketService(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+
+    final receipt = await service.createTicket(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.allExceptRu,
+      statusLabel: 'Ready',
+      subject: 'Connection help',
+      body: 'Cannot connect on first launch',
+      diagnostics: const <String, Object?>{
+        'app_version': '0.2.0-beta.1',
+        'platform': 'windows',
+        'route_mode': 'all_except_ru',
+        'connection_status': 'Ready',
+        'raw_config': 'vless://secret-value',
+        'subscription_url': 'https://secret.example/sub',
+      },
+    );
+
+    expect(receipt.ticketId, 321);
+    expect(receipt.statusTitle, 'Open');
+    expect(requests, <String>[
+      'POST /api/client/session/start-trial',
+      'POST /api/tickets',
+    ]);
+    expect(ticketBody?['subject'], 'Connection help');
+    expect(ticketBody?['body'], 'Cannot connect on first launch');
+    expect(ticketBody?['media_type'], 'app_diagnostics');
+    final mediaPayload = jsonDecode(ticketBody?['media_payload'] as String)
+        as Map<String, dynamic>;
+    expect(mediaPayload['platform'], 'windows');
+    expect(mediaPayload['route_mode'], 'all_except_ru');
+    expect(mediaPayload['connection_status'], 'Ready');
+    expect(mediaPayload.containsKey('raw_config'), isFalse);
+    expect(mediaPayload.containsKey('subscription_url'), isFalse);
+    expect(ticketBody?['media_payload'], isNot(contains('vless://')));
+    expect(ticketBody?['media_payload'], isNot(contains('secret.example')));
+  });
+
+  test(
+      'support ticket service lists ticket threads and replies without resending diagnostics',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-support-thread-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final requests = <String>[];
+    Map<String, dynamic>? replyBody;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        final requestLabel = request.uri.hasQuery
+            ? '${request.method} ${request.uri.path}?${request.uri.query}'
+            : '${request.method} ${request.uri.path}';
+        requests.add(requestLabel);
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'support-thread-token',
+                    'account_id': 'thread-account',
+                  },
+                  'provisioning': <String, Object?>{
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.method == 'GET' && request.uri.path == '/api/tickets') {
+          expect(request.uri.queryParameters['limit'], '5');
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer support-thread-token',
+          );
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'tickets': <Object?>[
+                    _supportTicketJson(
+                      id: 654,
+                      messages: <Object?>[
+                        _supportMessageJson(
+                          id: 1,
+                          ticketId: 654,
+                          senderRole: 'user',
+                          body: 'Initial issue',
+                        ),
+                      ],
+                    ),
+                  ],
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.method == 'GET' && request.uri.path == '/api/tickets/654') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ticket': _supportTicketJson(
+                    id: 654,
+                    messages: <Object?>[
+                      _supportMessageJson(
+                        id: 1,
+                        ticketId: 654,
+                        senderRole: 'user',
+                        body: 'Initial issue',
+                      ),
+                      _supportMessageJson(
+                        id: 2,
+                        ticketId: 654,
+                        senderRole: 'admin',
+                        body: 'Please try reconnecting.',
+                      ),
+                    ],
+                  ),
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.method == 'POST' &&
+            request.uri.path == '/api/tickets/654/messages') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer support-thread-token',
+          );
+          replyBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ticket': _supportTicketJson(
+                    id: 654,
+                    messages: <Object?>[
+                      _supportMessageJson(
+                        id: 1,
+                        ticketId: 654,
+                        senderRole: 'user',
+                        body: 'Initial issue',
+                      ),
+                      _supportMessageJson(
+                        id: 2,
+                        ticketId: 654,
+                        senderRole: 'admin',
+                        body: 'Please try reconnecting.',
+                      ),
+                      _supportMessageJson(
+                        id: 3,
+                        ticketId: 654,
+                        senderRole: 'user',
+                        body: replyBody?['body'] as String? ?? '',
+                      ),
+                    ],
+                  ),
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final service = AppFirstSupportTicketService(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+
+    final tickets = await service.listTickets(
+      hostPlatform: HostPlatform.windows,
+      limit: 5,
+    );
+    expect(tickets.single.id, 654);
+    expect(tickets.single.messages.single.senderRole, 'user');
+
+    final thread = await service.getTicket(
+      hostPlatform: HostPlatform.windows,
+      ticketId: 654,
+    );
+    expect(thread.messages.last.senderRole, 'admin');
+
+    final updated = await service.sendMessage(
+      hostPlatform: HostPlatform.windows,
+      ticketId: 654,
+      body: 'Follow up',
+    );
+
+    expect(updated.messages.last.body, 'Follow up');
+    expect(replyBody?['body'], 'Follow up');
+    expect(replyBody?.containsKey('media_type'), isFalse);
+    expect(replyBody?.containsKey('media_payload'), isFalse);
+    expect(requests, <String>[
+      'POST /api/client/session/start-trial',
+      'GET /api/tickets?limit=5',
+      'GET /api/tickets/654',
+      'POST /api/tickets/654/messages',
+    ]);
+  });
+
+  test('redeems an activation code through the app-first unified endpoint',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-redeem-adapter-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final requests = <String>[];
+    Map<String, dynamic>? redeemBody;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add('${request.method} ${request.uri.path}');
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'redeem-session-token',
+                    'account_id': 'redeem-account',
+                  },
+                  'provisioning': <String, Object?>{
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/redeem') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer redeem-session-token',
+          );
+          redeemBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ok': true,
+                  'kind': 'access_key',
+                  'code_preview': '...2026',
+                  'result': <String, Object?>{
+                    'access': <String, Object?>{
+                      'access_state': 'paid_active',
+                    },
+                    'provisioning': <String, Object?>{
+                      'managed_profile_path': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+
+    final result = await bootstrapper.redeemCode(
+      hostPlatform: HostPlatform.windows,
+      code: 'POKROV-ACCESS-2026',
+    );
+
+    expect(result.ok, isTrue);
+    expect(result.kind, 'access_key');
+    expect(result.codePreview, '...2026');
+    expect(result.result['access'], isA<Map<String, dynamic>>());
+    expect(redeemBody?['code'], 'POKROV-ACCESS-2026');
+    expect(requests, <String>[
+      'POST /api/client/session/start-trial',
+      'POST /api/redeem',
+    ]);
+  });
+
+  test('creates a short-lived cabinet handoff through the app-first API',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-cabinet-handoff-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final requests = <String>[];
+    Map<String, dynamic>? handoffBody;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add('${request.method} ${request.uri.path}');
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'cabinet-session-token',
+                    'account_id': 'cabinet-account',
+                  },
+                  'provisioning': <String, Object?>{
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/cabinet-token') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer cabinet-session-token',
+          );
+          handoffBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ok': true,
+                  'token': 'short-cabinet-token',
+                  'handoff_token': 'short-cabinet-token',
+                  'expires_in': 120,
+                  'target_path': '/profile',
+                  'handoff_url':
+                      'https://app.pokrov.space/profile?handoff_token=short-cabinet-token',
+                  'auth_origin': 'app_cabinet_handoff',
+                  'scope': 'cabinet_handoff',
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+
+    final handoff = await bootstrapper.createCabinetHandoff(
+      hostPlatform: HostPlatform.windows,
+      targetPath: '/profile',
+    );
+
+    expect(handoff.token, 'short-cabinet-token');
+    expect(handoff.expiresIn.inSeconds, lessThanOrEqualTo(120));
+    expect(handoff.handoffUrl.host, 'app.pokrov.space');
+    expect(handoff.targetPath, '/profile');
+    expect(handoff.scope, 'cabinet_handoff');
+    expect(handoffBody?['target_path'], '/profile');
+    expect(requests, <String>[
+      'POST /api/client/session/start-trial',
+      'POST /api/client/cabinet-token',
+    ]);
+  });
+
+  test('creates a Telegram link through the app-first API', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-telegram-link-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final requests = <String>[];
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add('${request.method} ${request.uri.path}');
+        await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'telegram-link-session',
+                    'account_id': 'telegram-link-account',
+                  },
+                  'provisioning': <String, Object?>{
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/telegram/link') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer telegram-link-session',
+          );
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ok': true,
+                  'linked': false,
+                  'linked_telegram_id': null,
+                  'linked_telegram_username': null,
+                  'start_code': 'app-link-2026',
+                  'bot_url': 'https://t.me/pokrov_vpnbot?start=app-link-2026',
+                  'channel_url': 'https://t.me/pokrov_vpn',
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+
+    final result = await bootstrapper.createTelegramLink(
+      hostPlatform: HostPlatform.windows,
+    );
+
+    expect(result.ok, isTrue);
+    expect(result.linked, isFalse);
+    expect(result.startCode, 'app-link-2026');
+    expect(result.botUrl.host, 't.me');
+    expect(result.channelUrl?.path, '/pokrov_vpn');
+    expect(requests, <String>[
+      'POST /api/client/session/start-trial',
+      'POST /api/client/telegram/link',
+    ]);
+  });
+
+  test('checks and claims the Telegram channel bonus through app-first APIs',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-channel-bonus-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final requests = <String>[];
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add('${request.method} ${request.uri.path}');
+        await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'channel-bonus-session',
+                    'account_id': 'channel-bonus-account',
+                  },
+                  'provisioning': <String, Object?>{
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/channel/subscriber/check') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer channel-bonus-session',
+          );
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ok': true,
+                  'subscriber': true,
+                  'reason': 'member',
+                  'points_granted': 0,
+                  'campaign_marked': false,
+                  'link_required': false,
+                  'claim_required': true,
+                  'already_claimed': false,
+                  'bonus_days': 10,
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/bonuses/channel/claim') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer channel-bonus-session',
+          );
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ok': true,
+                  'already_claimed': false,
+                  'premium_days': 10,
+                  'claimed_at': '2026-06-03T12:00:00Z',
+                  'expiry_at': '2026-06-13T12:00:00Z',
+                  'sub_type': 'BONUS',
+                  'channel': '@pokrov_vpn',
+                  'linked_telegram_id': 777001,
+                  'linked_telegram_username': 'linked_user',
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+
+    final status = await bootstrapper.checkChannelBonus(
+      hostPlatform: HostPlatform.windows,
+    );
+    final claim = await bootstrapper.claimChannelBonus(
+      hostPlatform: HostPlatform.windows,
+    );
+
+    expect(status.ok, isTrue);
+    expect(status.subscriber, isTrue);
+    expect(status.claimRequired, isTrue);
+    expect(status.bonusDays, 10);
+    expect(claim.ok, isTrue);
+    expect(claim.premiumDays, 10);
+    expect(claim.subType, 'BONUS');
+    expect(claim.claimedAt, '2026-06-03T12:00:00Z');
+    expect(requests, <String>[
+      'POST /api/client/session/start-trial',
+      'POST /api/channel/subscriber/check',
+      'POST /api/bonuses/channel/claim',
+    ]);
   });
 
   test('retries a temporary 502 during start-trial and then succeeds',
@@ -1029,16 +1810,17 @@ void main() {
     expect(
       dnsRules.any(
         (rule) =>
-            (rule['domain'] as List?)?.contains('nl.kiwunaka.space') ??
-            false && rule['server'] == 'local',
+            ((rule['domain'] as List?)?.contains('nl.kiwunaka.space') ??
+                false) &&
+            rule['server'] == 'local',
       ),
       isTrue,
     );
     expect(
       routeRules.any(
         (rule) =>
-            (rule['rule_set'] as List?)?.contains('geoip-ru') ??
-            false && rule['outbound'] == 'direct',
+            ((rule['rule_set'] as List?)?.contains('geoip-ru') ?? false) &&
+            rule['outbound'] == 'direct',
       ),
       isFalse,
     );
@@ -1234,8 +2016,8 @@ void main() {
     expect(
       routeRules.any(
         (rule) =>
-            (rule['rule_set'] as List?)?.contains('geoip-ru') ??
-            false && rule['outbound'] == 'direct',
+            ((rule['rule_set'] as List?)?.contains('geoip-ru') ?? false) &&
+            rule['outbound'] == 'direct',
       ),
       isTrue,
     );
@@ -1249,8 +2031,9 @@ void main() {
     expect(
       routeRules.any(
         (rule) =>
-            (rule['rule_set'] as List?)?.contains(_ruIpCountryRuleSetTag) ??
-            false && rule['outbound'] == 'direct',
+            ((rule['rule_set'] as List?)?.contains(_ruIpCountryRuleSetTag) ??
+                false) &&
+            rule['outbound'] == 'direct',
       ),
       isTrue,
     );
@@ -1419,8 +2202,9 @@ void main() {
     expect(
       routeRules.any(
         (rule) =>
-            (rule['rule_set'] as List?)?.contains(_ruIpWhitelistRuleSetTag) ??
-            false && rule['outbound'] == 'direct',
+            ((rule['rule_set'] as List?)?.contains(_ruIpWhitelistRuleSetTag) ??
+                false) &&
+            rule['outbound'] == 'direct',
       ),
       isTrue,
     );

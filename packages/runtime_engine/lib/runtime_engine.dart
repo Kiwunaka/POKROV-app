@@ -156,6 +156,7 @@ class ManagedProfilePayload {
     this.disableMemoryLimit = false,
     this.materializedForRuntime = false,
     this.routeMode = RouteMode.fullTunnel,
+    this.smartConnect,
   });
 
   final String profileName;
@@ -163,6 +164,7 @@ class ManagedProfilePayload {
   final bool disableMemoryLimit;
   final bool materializedForRuntime;
   final RouteMode routeMode;
+  final SmartConnectProfile? smartConnect;
 }
 
 abstract interface class PokrovRuntimeEngine {
@@ -248,8 +250,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         'Ядро готово. Подключение запустится, когда приложение запросит старт.',
       RuntimePhase.initialized =>
         'Подготовка завершена. Осталось получить профиль доступа.',
-      RuntimePhase.configStaged =>
-        'Профиль доступа готов. Можно подключаться.',
+      RuntimePhase.configStaged => 'Профиль доступа готов. Можно подключаться.',
       RuntimePhase.running => 'POKROV подключен с текущим профилем доступа.',
       RuntimePhase.artifactMissing => _missingArtifactMessage,
     };
@@ -349,8 +350,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   Future<RuntimeSnapshot> connect() async {
     final before = await snapshot();
     if (!before.canConnect || _bindings == null || _stagedPayload == null) {
-      _message =
-          'POKROV ждет подготовленные настройки и готовый runtime.';
+      _message = 'POKROV ждет подготовленные настройки и готовый runtime.';
       return snapshot();
     }
 

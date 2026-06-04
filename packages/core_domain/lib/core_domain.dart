@@ -214,9 +214,8 @@ class FreeTierPolicy {
   String get speedSummary => 'до $speedMbps Мбит/с на IP';
   String get deviceSummary =>
       deviceLimit == 1 ? '1 устройство' : 'до $deviceLimit устройств';
-  String get nodePoolLabel => nodePool.trim().toLowerCase() == 'nl-free'
-      ? 'Бесплатный узел'
-      : nodePool;
+  String get nodePoolLabel =>
+      nodePool.trim().toLowerCase() == 'nl-free' ? 'Бесплатный узел' : nodePool;
 }
 
 class RuntimeProfile {
@@ -244,6 +243,130 @@ class RuntimeProfile {
 
   String get supportedRouteSummary =>
       supportedRouteModes.map((mode) => mode.label).join(', ');
+}
+
+class SmartConnectProfile {
+  const SmartConnectProfile({
+    required this.eligible,
+    required this.fallbackRequired,
+    required this.shortlistReason,
+    required this.shortlistLimit,
+    required this.shortlistRevision,
+    required this.transportProfile,
+    required this.profileRevision,
+    required this.fallbackOrder,
+    required this.shortlist,
+    required this.stickiness,
+  });
+
+  final bool eligible;
+  final bool fallbackRequired;
+  final String shortlistReason;
+  final int shortlistLimit;
+  final String shortlistRevision;
+  final String transportProfile;
+  final String profileRevision;
+  final List<String> fallbackOrder;
+  final List<SmartConnectNode> shortlist;
+  final SmartConnectStickiness stickiness;
+
+  static SmartConnectProfile? tryParse(Object? value) {
+    if (value is! Map) {
+      return null;
+    }
+    final json = value.map((key, value) => MapEntry(key.toString(), value));
+    return SmartConnectProfile(
+      eligible: _readBool(json['eligible']),
+      fallbackRequired: _readBool(json['fallback_required']),
+      shortlistReason: _readText(json['shortlist_reason']),
+      shortlistLimit: _readInt(json['shortlist_limit']),
+      shortlistRevision: _readText(json['shortlist_revision']),
+      transportProfile: _readText(json['transport_profile']),
+      profileRevision: _readText(json['profile_revision']),
+      fallbackOrder: _readStringList(json['fallback_order']),
+      shortlist: _readMapList(json['shortlist'])
+          .map(SmartConnectNode.fromJson)
+          .toList(growable: false),
+      stickiness: SmartConnectStickiness.fromJson(
+        _readMap(json['stickiness']),
+      ),
+    );
+  }
+}
+
+class SmartConnectNode {
+  const SmartConnectNode({
+    required this.code,
+    required this.country,
+    required this.rank,
+    required this.rankHint,
+  });
+
+  final String code;
+  final String country;
+  final int rank;
+  final SmartConnectRankHint rankHint;
+
+  factory SmartConnectNode.fromJson(Map<String, dynamic> json) {
+    return SmartConnectNode(
+      code: _readText(json['code']),
+      country: _readText(json['country']),
+      rank: _readInt(json['rank']),
+      rankHint: SmartConnectRankHint.fromJson(_readMap(json['rank_hint'])),
+    );
+  }
+}
+
+class SmartConnectRankHint {
+  const SmartConnectRankHint({
+    required this.healthScore,
+    required this.cpuPercent,
+    required this.panelLatencyMs,
+    required this.backendPenalty,
+    required this.cpuPenalty,
+    required this.stickyPreferred,
+  });
+
+  final double healthScore;
+  final double cpuPercent;
+  final int? panelLatencyMs;
+  final int backendPenalty;
+  final int cpuPenalty;
+  final bool stickyPreferred;
+
+  factory SmartConnectRankHint.fromJson(Map<String, dynamic> json) {
+    return SmartConnectRankHint(
+      healthScore: _readDouble(json['health_score']),
+      cpuPercent: _readDouble(json['cpu_percent']),
+      panelLatencyMs: _readNullableInt(json['panel_latency_ms']),
+      backendPenalty: _readInt(json['backend_penalty']),
+      cpuPenalty: _readInt(json['cpu_penalty']),
+      stickyPreferred: _readBool(json['sticky_preferred']),
+    );
+  }
+}
+
+class SmartConnectStickiness {
+  const SmartConnectStickiness({
+    required this.preferredNodeCode,
+    required this.thresholdPercent,
+    required this.latestSampleAt,
+    required this.stickinessApplied,
+  });
+
+  final String preferredNodeCode;
+  final int thresholdPercent;
+  final String latestSampleAt;
+  final bool stickinessApplied;
+
+  factory SmartConnectStickiness.fromJson(Map<String, dynamic> json) {
+    return SmartConnectStickiness(
+      preferredNodeCode: _readText(json['preferred_node_code']),
+      thresholdPercent: _readInt(json['threshold_percent']),
+      latestSampleAt: _readText(json['latest_sample_at']),
+      stickinessApplied: _readBool(json['stickiness_applied']),
+    );
+  }
 }
 
 class LocationVariant {
@@ -278,4 +401,57 @@ class LocationCluster {
   final String recommendedLane;
 
   String get heading => '$label · $city';
+}
+
+Map<String, dynamic> _readMap(Object? value) {
+  if (value is! Map) {
+    return const <String, dynamic>{};
+  }
+  return value.map((key, value) => MapEntry(key.toString(), value));
+}
+
+List<Map<String, dynamic>> _readMapList(Object? value) {
+  if (value is! List) {
+    return const <Map<String, dynamic>>[];
+  }
+  return value.whereType<Map>().map(_readMap).toList(growable: false);
+}
+
+List<String> _readStringList(Object? value) {
+  if (value is! List) {
+    return const <String>[];
+  }
+  return value
+      .map((item) => item.toString().trim())
+      .where((item) => item.isNotEmpty)
+      .toList(growable: false);
+}
+
+String _readText(Object? value) => value?.toString().trim() ?? '';
+
+bool _readBool(Object? value) {
+  if (value is bool) {
+    return value;
+  }
+  final text = _readText(value).toLowerCase();
+  return text == 'true' || text == '1' || text == 'yes';
+}
+
+int _readInt(Object? value) => _readNullableInt(value) ?? 0;
+
+int? _readNullableInt(Object? value) {
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.round();
+  }
+  return int.tryParse(_readText(value));
+}
+
+double _readDouble(Object? value) {
+  if (value is num) {
+    return value.toDouble();
+  }
+  return double.tryParse(_readText(value)) ?? 0;
 }

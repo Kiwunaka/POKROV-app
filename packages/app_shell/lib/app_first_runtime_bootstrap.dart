@@ -30,6 +30,32 @@ abstract interface class ManagedProfileBootstrapper {
   });
 }
 
+abstract interface class AppFirstAccountActionService {
+  Future<AppFirstRedeemResult> redeemCode({
+    required HostPlatform hostPlatform,
+    required String code,
+  });
+
+  Future<CabinetHandoff> createCabinetHandoff({
+    required HostPlatform hostPlatform,
+    String targetPath = '/',
+  });
+}
+
+abstract interface class AppFirstBonusActionService {
+  Future<TelegramLinkResult> createTelegramLink({
+    required HostPlatform hostPlatform,
+  });
+
+  Future<ChannelBonusStatus> checkChannelBonus({
+    required HostPlatform hostPlatform,
+  });
+
+  Future<ChannelBonusClaimResult> claimChannelBonus({
+    required HostPlatform hostPlatform,
+  });
+}
+
 class BootstrapFailure implements Exception {
   const BootstrapFailure(
     this.message, {
@@ -43,7 +69,109 @@ class BootstrapFailure implements Exception {
   String toString() => message;
 }
 
-class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
+class AppFirstRedeemResult {
+  const AppFirstRedeemResult({
+    required this.ok,
+    required this.kind,
+    required this.codePreview,
+    required this.result,
+  });
+
+  final bool ok;
+  final String kind;
+  final String codePreview;
+  final Map<String, dynamic> result;
+}
+
+class CabinetHandoff {
+  const CabinetHandoff({
+    required this.token,
+    required this.handoffUrl,
+    required this.expiresIn,
+    required this.targetPath,
+    required this.scope,
+  });
+
+  final String token;
+  final Uri handoffUrl;
+  final Duration expiresIn;
+  final String targetPath;
+  final String scope;
+}
+
+class TelegramLinkResult {
+  const TelegramLinkResult({
+    required this.ok,
+    required this.linked,
+    required this.linkedTelegramId,
+    required this.linkedTelegramUsername,
+    required this.startCode,
+    required this.botUrl,
+    required this.channelUrl,
+  });
+
+  final bool ok;
+  final bool linked;
+  final int? linkedTelegramId;
+  final String linkedTelegramUsername;
+  final String startCode;
+  final Uri botUrl;
+  final Uri? channelUrl;
+}
+
+class ChannelBonusStatus {
+  const ChannelBonusStatus({
+    required this.ok,
+    required this.subscriber,
+    required this.reason,
+    required this.pointsGranted,
+    required this.campaignMarked,
+    required this.linkRequired,
+    required this.claimRequired,
+    required this.alreadyClaimed,
+    required this.bonusDays,
+  });
+
+  final bool ok;
+  final bool subscriber;
+  final String reason;
+  final int pointsGranted;
+  final bool campaignMarked;
+  final bool linkRequired;
+  final bool claimRequired;
+  final bool alreadyClaimed;
+  final int bonusDays;
+}
+
+class ChannelBonusClaimResult {
+  const ChannelBonusClaimResult({
+    required this.ok,
+    required this.alreadyClaimed,
+    required this.premiumDays,
+    required this.claimedAt,
+    required this.expiryAt,
+    required this.subType,
+    required this.channel,
+    required this.linkedTelegramId,
+    required this.linkedTelegramUsername,
+  });
+
+  final bool ok;
+  final bool alreadyClaimed;
+  final int premiumDays;
+  final String claimedAt;
+  final String expiryAt;
+  final String subType;
+  final String channel;
+  final int? linkedTelegramId;
+  final String linkedTelegramUsername;
+}
+
+class AppFirstRuntimeBootstrapper
+    implements
+        ManagedProfileBootstrapper,
+        AppFirstAccountActionService,
+        AppFirstBonusActionService {
   AppFirstRuntimeBootstrapper({
     this.apiBaseUrl = 'https://api.pokrov.space',
     Future<Directory> Function()? supportDirectoryResolver,
@@ -159,6 +287,315 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
 
       throw const BootstrapFailure(
         'POKROV не смог завершить подготовку устройства.',
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  Future<AppFirstRedeemResult> redeemCode({
+    required HostPlatform hostPlatform,
+    required String code,
+  }) async {
+    final trimmedCode = code.trim();
+    if (trimmedCode.isEmpty) {
+      throw const BootstrapFailure('Activation code is required.');
+    }
+
+    var state = await _loadOrCreateState(hostPlatform);
+    final client = _createHttpClient(hostPlatform);
+    try {
+      for (var attempt = 0; attempt < 2; attempt += 1) {
+        if (!state.hasSession) {
+          state = await _startTrial(
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
+        }
+
+        try {
+          final response = await _requestJson(
+            method: 'POST',
+            path: '/api/redeem',
+            client: client,
+            bearerToken: state.sessionToken,
+            hostPlatform: hostPlatform,
+            body: <String, Object?>{
+              'code': trimmedCode,
+            },
+          );
+          return AppFirstRedeemResult(
+            ok: response['ok'] == true,
+            kind: _readText(response['kind']),
+            codePreview: _readText(response['code_preview']),
+            result: _readMap(response['result']),
+          );
+        } on BootstrapFailure catch (error) {
+          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
+            state = await _startTrial(
+              state: state.copyWith(
+                sessionToken: '',
+                accountId: '',
+              ),
+              hostPlatform: hostPlatform,
+              client: client,
+            );
+            continue;
+          }
+          rethrow;
+        }
+      }
+
+      throw const BootstrapFailure('POKROV could not redeem this code.');
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  Future<CabinetHandoff> createCabinetHandoff({
+    required HostPlatform hostPlatform,
+    String targetPath = '/',
+  }) async {
+    var state = await _loadOrCreateState(hostPlatform);
+    final client = _createHttpClient(hostPlatform);
+    try {
+      for (var attempt = 0; attempt < 2; attempt += 1) {
+        if (!state.hasSession) {
+          state = await _startTrial(
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
+        }
+
+        try {
+          final response = await _requestJson(
+            method: 'POST',
+            path: '/api/client/cabinet-token',
+            client: client,
+            bearerToken: state.sessionToken,
+            hostPlatform: hostPlatform,
+            body: <String, Object?>{
+              'target_path': targetPath.trim().isEmpty ? '/' : targetPath,
+            },
+          );
+          final token = _readText(response['token']);
+          final handoffUrlText = _readText(response['handoff_url']);
+          if (token.isEmpty || handoffUrlText.isEmpty) {
+            throw const BootstrapFailure(
+              'POKROV could not create a cabinet handoff.',
+            );
+          }
+          return CabinetHandoff(
+            token: token,
+            handoffUrl: Uri.parse(handoffUrlText),
+            expiresIn: Duration(
+              seconds: max(0, _readInt(response['expires_in'])),
+            ),
+            targetPath: _readText(response['target_path']).isEmpty
+                ? '/'
+                : _readText(response['target_path']),
+            scope: _readText(response['scope']),
+          );
+        } on BootstrapFailure catch (error) {
+          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
+            state = await _startTrial(
+              state: state.copyWith(
+                sessionToken: '',
+                accountId: '',
+              ),
+              hostPlatform: hostPlatform,
+              client: client,
+            );
+            continue;
+          }
+          rethrow;
+        }
+      }
+
+      throw const BootstrapFailure(
+        'POKROV could not create a cabinet handoff.',
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  Future<TelegramLinkResult> createTelegramLink({
+    required HostPlatform hostPlatform,
+  }) async {
+    var state = await _loadOrCreateState(hostPlatform);
+    final client = _createHttpClient(hostPlatform);
+    try {
+      for (var attempt = 0; attempt < 2; attempt += 1) {
+        if (!state.hasSession) {
+          state = await _startTrial(
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
+        }
+
+        try {
+          final response = await _requestJson(
+            method: 'POST',
+            path: '/api/client/telegram/link',
+            client: client,
+            bearerToken: state.sessionToken,
+            hostPlatform: hostPlatform,
+          );
+          final botUrlText = _readText(response['bot_url']);
+          if (botUrlText.isEmpty) {
+            throw const BootstrapFailure(
+              'POKROV could not create a Telegram link.',
+            );
+          }
+          return TelegramLinkResult(
+            ok: response['ok'] == true,
+            linked: response['linked'] == true,
+            linkedTelegramId: _readNullableInt(response['linked_telegram_id']),
+            linkedTelegramUsername:
+                _readText(response['linked_telegram_username']),
+            startCode: _readText(response['start_code']),
+            botUrl: Uri.parse(botUrlText),
+            channelUrl: _readOptionalUri(response['channel_url']),
+          );
+        } on BootstrapFailure catch (error) {
+          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
+            state = await _startTrial(
+              state: state.copyWith(
+                sessionToken: '',
+                accountId: '',
+              ),
+              hostPlatform: hostPlatform,
+              client: client,
+            );
+            continue;
+          }
+          rethrow;
+        }
+      }
+
+      throw const BootstrapFailure(
+        'POKROV could not create a Telegram link.',
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  Future<ChannelBonusStatus> checkChannelBonus({
+    required HostPlatform hostPlatform,
+  }) async {
+    var state = await _loadOrCreateState(hostPlatform);
+    final client = _createHttpClient(hostPlatform);
+    try {
+      for (var attempt = 0; attempt < 2; attempt += 1) {
+        if (!state.hasSession) {
+          state = await _startTrial(
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
+        }
+
+        try {
+          final response = await _requestJson(
+            method: 'POST',
+            path: '/api/channel/subscriber/check',
+            client: client,
+            bearerToken: state.sessionToken,
+            hostPlatform: hostPlatform,
+          );
+          return ChannelBonusStatus(
+            ok: response['ok'] == true,
+            subscriber: response['subscriber'] == true,
+            reason: _readText(response['reason']),
+            pointsGranted: _readInt(response['points_granted']),
+            campaignMarked: response['campaign_marked'] == true,
+            linkRequired: response['link_required'] == true,
+            claimRequired: response['claim_required'] == true,
+            alreadyClaimed: response['already_claimed'] == true,
+            bonusDays: _readInt(response['bonus_days']),
+          );
+        } on BootstrapFailure catch (error) {
+          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
+            state = await _startTrial(
+              state: state.copyWith(
+                sessionToken: '',
+                accountId: '',
+              ),
+              hostPlatform: hostPlatform,
+              client: client,
+            );
+            continue;
+          }
+          rethrow;
+        }
+      }
+
+      throw const BootstrapFailure(
+        'POKROV could not check the Telegram bonus.',
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  Future<ChannelBonusClaimResult> claimChannelBonus({
+    required HostPlatform hostPlatform,
+  }) async {
+    var state = await _loadOrCreateState(hostPlatform);
+    final client = _createHttpClient(hostPlatform);
+    try {
+      for (var attempt = 0; attempt < 2; attempt += 1) {
+        if (!state.hasSession) {
+          state = await _startTrial(
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
+        }
+
+        try {
+          final response = await _requestJson(
+            method: 'POST',
+            path: '/api/bonuses/channel/claim',
+            client: client,
+            bearerToken: state.sessionToken,
+            hostPlatform: hostPlatform,
+          );
+          return ChannelBonusClaimResult(
+            ok: response['ok'] == true,
+            alreadyClaimed: response['already_claimed'] == true,
+            premiumDays: _readInt(response['premium_days']),
+            claimedAt: _readText(response['claimed_at']),
+            expiryAt: _readText(response['expiry_at']),
+            subType: _readText(response['sub_type']),
+            channel: _readText(response['channel']),
+            linkedTelegramId: _readNullableInt(response['linked_telegram_id']),
+            linkedTelegramUsername:
+                _readText(response['linked_telegram_username']),
+          );
+        } on BootstrapFailure catch (error) {
+          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
+            state = await _startTrial(
+              state: state.copyWith(
+                sessionToken: '',
+                accountId: '',
+              ),
+              hostPlatform: hostPlatform,
+              client: client,
+            );
+            continue;
+          }
+          rethrow;
+        }
+      }
+
+      throw const BootstrapFailure(
+        'POKROV could not activate the Telegram bonus.',
       );
     } finally {
       client.close(force: true);
@@ -371,6 +808,9 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
       );
     }
     final supportContext = _readMap(response['support_context']);
+    final smartConnect = SmartConnectProfile.tryParse(
+      response['smart_connect'],
+    );
     final clientRuleSetCatalog = await _ensureAllExceptRuRuleSetCatalog(
       hostPlatform: hostPlatform,
       routeMode: routeMode,
@@ -392,6 +832,7 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
       ),
       materializedForRuntime: true,
       routeMode: routeMode,
+      smartConnect: smartConnect,
     );
 
     return _ManagedManifestEnvelope(
@@ -2137,7 +2578,8 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
     }
 
     throw lastFailure ??
-        const BootstrapFailure('POKROV не смог связаться с сервисом подготовки.');
+        const BootstrapFailure(
+            'POKROV не смог связаться с сервисом подготовки.');
   }
 
   bool _isSessionFailure(int? statusCode) =>
@@ -2237,7 +2679,512 @@ class AppFirstRuntimeBootstrapper implements ManagedProfileBootstrapper {
     return text;
   }
 
+  int _readInt(Object? value) {
+    if (value is int) {
+      return value;
+    }
+    return int.tryParse((value ?? '').toString()) ?? 0;
+  }
+
+  int? _readNullableInt(Object? value) {
+    if (value == null) {
+      return null;
+    }
+    final parsed = _readInt(value);
+    return parsed == 0 ? null : parsed;
+  }
+
+  Uri? _readOptionalUri(Object? value) {
+    final text = _readText(value);
+    if (text.isEmpty) {
+      return null;
+    }
+    return Uri.tryParse(text);
+  }
+
   String _trim(String value, int maxLength) {
+    final text = value.trim();
+    if (text.length <= maxLength) {
+      return text;
+    }
+    return text.substring(0, maxLength);
+  }
+}
+
+abstract interface class SupportTicketService {
+  Future<List<SupportTicketThread>> listTickets({
+    required HostPlatform hostPlatform,
+    int limit,
+  });
+
+  Future<SupportTicketThread> getTicket({
+    required HostPlatform hostPlatform,
+    required int ticketId,
+  });
+
+  Future<SupportTicketReceipt> createTicket({
+    required HostPlatform hostPlatform,
+    required RouteMode routeMode,
+    required String statusLabel,
+    required String body,
+    String subject,
+    Map<String, Object?> diagnostics,
+  });
+
+  Future<SupportTicketThread> sendMessage({
+    required HostPlatform hostPlatform,
+    required int ticketId,
+    required String body,
+  });
+}
+
+class SupportTicketThread {
+  const SupportTicketThread({
+    required this.id,
+    required this.status,
+    required this.statusTitle,
+    required this.subject,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.closedAt,
+    required this.lastMessagePreview,
+    required this.messages,
+  });
+
+  final int id;
+  final String status;
+  final String statusTitle;
+  final String subject;
+  final String createdAt;
+  final String updatedAt;
+  final String closedAt;
+  final String lastMessagePreview;
+  final List<SupportTicketMessage> messages;
+
+  bool get isClosed => status.toLowerCase() == 'closed';
+}
+
+class SupportTicketMessage {
+  const SupportTicketMessage({
+    required this.id,
+    required this.ticketId,
+    required this.senderRole,
+    required this.body,
+    required this.mediaType,
+    required this.mediaFileId,
+    required this.mediaPayload,
+    required this.createdAt,
+  });
+
+  final int id;
+  final int ticketId;
+  final String senderRole;
+  final String body;
+  final String mediaType;
+  final String mediaFileId;
+  final String mediaPayload;
+  final String createdAt;
+
+  bool get isUser => senderRole.toLowerCase() == 'user';
+}
+
+class SupportTicketReceipt {
+  const SupportTicketReceipt({
+    required this.ticketId,
+    required this.statusTitle,
+    required this.messageCount,
+  });
+
+  final int ticketId;
+  final String statusTitle;
+  final int messageCount;
+}
+
+class SupportTicketFailure implements Exception {
+  const SupportTicketFailure(
+    this.message, {
+    this.statusCode,
+  });
+
+  final String message;
+  final int? statusCode;
+
+  @override
+  String toString() => message;
+}
+
+class AppFirstSupportTicketService implements SupportTicketService {
+  AppFirstSupportTicketService({
+    String apiBaseUrl = 'https://api.pokrov.space',
+    Future<Directory> Function()? supportDirectoryResolver,
+    HttpClient Function()? httpClientFactory,
+    Future<void> Function(Duration delay)? delayScheduler,
+    Duration connectionTimeout = const Duration(seconds: 8),
+    Duration requestTimeout = const Duration(seconds: 15),
+    int maxRequestAttempts = 3,
+  }) : _bootstrapper = AppFirstRuntimeBootstrapper(
+          apiBaseUrl: apiBaseUrl,
+          supportDirectoryResolver: supportDirectoryResolver,
+          httpClientFactory: httpClientFactory,
+          delayScheduler: delayScheduler,
+          connectionTimeout: connectionTimeout,
+          requestTimeout: requestTimeout,
+          maxRequestAttempts: maxRequestAttempts,
+        );
+
+  final AppFirstRuntimeBootstrapper _bootstrapper;
+
+  static const _defaultSubject = 'Поддержка POKROV';
+  static const _diagnosticMediaType = 'app_diagnostics';
+  static const _allowedDiagnosticKeys = <String>{
+    'app_version',
+    'platform',
+    'os_version',
+    'route_mode',
+    'connection_status',
+    'entitlement_state',
+    'recent_error_category',
+    'selected_region',
+    'selected_country',
+    'dns_health',
+    'uplink_health',
+    'device_name',
+    'app_build',
+  };
+
+  @override
+  Future<List<SupportTicketThread>> listTickets({
+    required HostPlatform hostPlatform,
+    int limit = 5,
+  }) async {
+    final boundedLimit = limit.clamp(1, 20);
+    final response = await _requestJsonWithSession(
+      method: 'GET',
+      path: '/api/tickets?limit=$boundedLimit',
+      hostPlatform: hostPlatform,
+    );
+    final rawTickets = response['tickets'];
+    if (rawTickets is! List) {
+      return const <SupportTicketThread>[];
+    }
+    return rawTickets
+        .map((item) => _ticketThreadFromMap(_bootstrapper._readMap(item)))
+        .where((ticket) => ticket.id > 0)
+        .toList(growable: false);
+  }
+
+  @override
+  Future<SupportTicketThread> getTicket({
+    required HostPlatform hostPlatform,
+    required int ticketId,
+  }) async {
+    final response = await _requestJsonWithSession(
+      method: 'GET',
+      path: '/api/tickets/$ticketId',
+      hostPlatform: hostPlatform,
+    );
+    return _ticketThreadFromResponse(response);
+  }
+
+  @override
+  Future<SupportTicketReceipt> createTicket({
+    required HostPlatform hostPlatform,
+    required RouteMode routeMode,
+    required String statusLabel,
+    required String body,
+    String subject = _defaultSubject,
+    Map<String, Object?> diagnostics = const <String, Object?>{},
+  }) async {
+    final cleanBody = _trimForTicket(body, 2000);
+    if (cleanBody.isEmpty) {
+      throw const SupportTicketFailure('Сообщение не должно быть пустым.');
+    }
+
+    var state = await _bootstrapper._loadOrCreateState(hostPlatform);
+    final client = _bootstrapper._createHttpClient(hostPlatform);
+    try {
+      for (var attempt = 0; attempt < 2; attempt += 1) {
+        if (!state.hasSession) {
+          state = await _startTrial(
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
+        }
+
+        try {
+          final response = await _bootstrapper._requestJson(
+            method: 'POST',
+            path: '/api/tickets',
+            client: client,
+            bearerToken: state.sessionToken,
+            hostPlatform: hostPlatform,
+            body: <String, Object?>{
+              'subject': _trimForTicket(subject, 200).isEmpty
+                  ? _defaultSubject
+                  : _trimForTicket(subject, 200),
+              'body': cleanBody,
+              'media_type': _diagnosticMediaType,
+              'media_payload': _diagnosticsPayload(
+                hostPlatform: hostPlatform,
+                routeMode: routeMode,
+                statusLabel: statusLabel,
+                diagnostics: diagnostics,
+              ),
+            },
+          );
+          return _receiptFromResponse(response);
+        } on BootstrapFailure catch (error) {
+          if (attempt == 0 &&
+              _bootstrapper._isSessionFailure(error.statusCode)) {
+            state = await _startTrial(
+              state: state.copyWith(
+                sessionToken: '',
+                accountId: '',
+              ),
+              hostPlatform: hostPlatform,
+              client: client,
+            );
+            continue;
+          }
+          throw SupportTicketFailure(
+            error.message,
+            statusCode: error.statusCode,
+          );
+        }
+      }
+
+      throw const SupportTicketFailure(
+        'POKROV не смог отправить обращение в поддержку.',
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  @override
+  Future<SupportTicketThread> sendMessage({
+    required HostPlatform hostPlatform,
+    required int ticketId,
+    required String body,
+  }) async {
+    final cleanBody = _trimForTicket(body, 2000);
+    if (cleanBody.isEmpty) {
+      throw const SupportTicketFailure(
+          'РЎРѕРѕР±С‰РµРЅРёРµ РЅРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїСѓСЃС‚С‹Рј.');
+    }
+
+    final response = await _requestJsonWithSession(
+      method: 'POST',
+      path: '/api/tickets/$ticketId/messages',
+      hostPlatform: hostPlatform,
+      body: <String, Object?>{
+        'body': cleanBody,
+      },
+    );
+    return _ticketThreadFromResponse(response);
+  }
+
+  Future<Map<String, dynamic>> _requestJsonWithSession({
+    required String method,
+    required String path,
+    required HostPlatform hostPlatform,
+    Map<String, Object?>? body,
+  }) async {
+    var state = await _bootstrapper._loadOrCreateState(hostPlatform);
+    final client = _bootstrapper._createHttpClient(hostPlatform);
+    try {
+      for (var attempt = 0; attempt < 2; attempt += 1) {
+        if (!state.hasSession) {
+          state = await _startTrial(
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
+        }
+
+        try {
+          return await _bootstrapper._requestJson(
+            method: method,
+            path: path,
+            client: client,
+            bearerToken: state.sessionToken,
+            hostPlatform: hostPlatform,
+            body: body,
+          );
+        } on BootstrapFailure catch (error) {
+          if (attempt == 0 &&
+              _bootstrapper._isSessionFailure(error.statusCode)) {
+            state = await _startTrial(
+              state: state.copyWith(
+                sessionToken: '',
+                accountId: '',
+              ),
+              hostPlatform: hostPlatform,
+              client: client,
+            );
+            continue;
+          }
+          throw SupportTicketFailure(
+            error.message,
+            statusCode: error.statusCode,
+          );
+        }
+      }
+    } finally {
+      client.close(force: true);
+    }
+
+    throw const SupportTicketFailure(
+      'POKROV РЅРµ СЃРјРѕРі РѕР±РЅРѕРІРёС‚СЊ С‡Р°С‚ РїРѕРґРґРµСЂР¶РєРё.',
+    );
+  }
+
+  Future<_StoredBootstrapState> _startTrial({
+    required _StoredBootstrapState state,
+    required HostPlatform hostPlatform,
+    required HttpClient client,
+  }) {
+    return _bootstrapper._startTrial(
+      state: state,
+      hostPlatform: hostPlatform,
+      client: client,
+    );
+  }
+
+  SupportTicketThread _ticketThreadFromResponse(Map<String, dynamic> response) {
+    return _ticketThreadFromMap(_bootstrapper._readMap(response['ticket']));
+  }
+
+  SupportTicketThread _ticketThreadFromMap(Map<String, dynamic> ticket) {
+    final rawMessages = ticket['messages'];
+    final messages = rawMessages is List
+        ? rawMessages
+            .map((item) => _ticketMessageFromMap(_bootstrapper._readMap(item)))
+            .where((message) => message.id > 0 || message.body.isNotEmpty)
+            .toList(growable: false)
+        : const <SupportTicketMessage>[];
+    return SupportTicketThread(
+      id: _readInt(ticket['id']),
+      status: _bootstrapper._readText(ticket['status']),
+      statusTitle: _bootstrapper._readText(ticket['status_title']),
+      subject: _bootstrapper._readText(ticket['subject']),
+      createdAt: _bootstrapper._readText(ticket['created_at']),
+      updatedAt: _bootstrapper._readText(ticket['updated_at']),
+      closedAt: _bootstrapper._readText(ticket['closed_at']),
+      lastMessagePreview:
+          _bootstrapper._readText(ticket['last_message_preview']),
+      messages: messages,
+    );
+  }
+
+  SupportTicketMessage _ticketMessageFromMap(Map<String, dynamic> message) {
+    return SupportTicketMessage(
+      id: _readInt(message['id']),
+      ticketId: _readInt(message['ticket_id']),
+      senderRole: _bootstrapper._readText(message['sender_role']),
+      body: _bootstrapper._readText(message['body']),
+      mediaType: _bootstrapper._readText(message['media_type']),
+      mediaFileId: _bootstrapper._readText(message['media_file_id']),
+      mediaPayload: _bootstrapper._readText(message['media_payload']),
+      createdAt: _bootstrapper._readText(message['created_at']),
+    );
+  }
+
+  SupportTicketReceipt _receiptFromResponse(Map<String, dynamic> response) {
+    final ticket = _bootstrapper._readMap(response['ticket']);
+    final messages =
+        ticket['messages'] is List ? (ticket['messages'] as List).length : 0;
+    return SupportTicketReceipt(
+      ticketId: _readInt(ticket['id']),
+      statusTitle: _bootstrapper._readText(ticket['status_title']).isEmpty
+          ? _bootstrapper._readText(ticket['status'])
+          : _bootstrapper._readText(ticket['status_title']),
+      messageCount: messages,
+    );
+  }
+
+  String _diagnosticsPayload({
+    required HostPlatform hostPlatform,
+    required RouteMode routeMode,
+    required String statusLabel,
+    required Map<String, Object?> diagnostics,
+  }) {
+    final safe = <String, Object?>{
+      'app_version': AppFirstRuntimeBootstrapper._appVersion,
+      'platform': hostPlatform.name,
+      'route_mode': _routeModeDiagnosticValue(routeMode),
+      'connection_status': _safeDiagnosticValue(statusLabel),
+    };
+
+    for (final entry in diagnostics.entries) {
+      final key = entry.key.trim();
+      if (!_allowedDiagnosticKeys.contains(key)) {
+        continue;
+      }
+      final value = _safeDiagnosticValue(entry.value);
+      if (value != null) {
+        safe[key] = value;
+      }
+    }
+
+    final encoded = jsonEncode(safe);
+    if (encoded.length <= 1900) {
+      return encoded;
+    }
+    return jsonEncode(<String, Object?>{
+      'app_version': safe['app_version'],
+      'platform': safe['platform'],
+      'route_mode': safe['route_mode'],
+      'connection_status': safe['connection_status'],
+    });
+  }
+
+  Object? _safeDiagnosticValue(Object? value) {
+    if (value == null) {
+      return null;
+    }
+    if (value is bool || value is int || value is double) {
+      return value;
+    }
+    final text = _trimForTicket(value.toString(), 160);
+    if (text.isEmpty || _looksSensitive(text)) {
+      return null;
+    }
+    return text;
+  }
+
+  bool _looksSensitive(String value) {
+    final normalized = value.toLowerCase();
+    return normalized.contains('://') ||
+        normalized.contains('vless') ||
+        normalized.contains('vmess') ||
+        normalized.contains('trojan') ||
+        normalized.contains('wireguard') ||
+        normalized.contains('subscription') ||
+        normalized.contains('access_key') ||
+        normalized.contains('secret') ||
+        normalized.contains('token=') ||
+        normalized.contains('uuid=') ||
+        normalized.contains('server=');
+  }
+
+  String _routeModeDiagnosticValue(RouteMode routeMode) {
+    return switch (routeMode) {
+      RouteMode.allExceptRu => 'all_except_ru',
+      RouteMode.fullTunnel => 'full_tunnel',
+      RouteMode.selectedApps => 'selected_apps',
+    };
+  }
+
+  int _readInt(Object? value) {
+    if (value is int) {
+      return value;
+    }
+    return int.tryParse((value ?? '').toString()) ?? 0;
+  }
+
+  String _trimForTicket(String value, int maxLength) {
     final text = value.trim();
     if (text.length <= maxLength) {
       return text;

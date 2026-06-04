@@ -20,6 +20,8 @@ dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/brand/
 
 dev_dependencies:
   flutter_lints: ^4.0.0
