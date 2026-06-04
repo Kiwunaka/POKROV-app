@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-04-25
+Last updated: 2026-05-26
 
 ## Document Status
 
@@ -28,8 +28,7 @@ The target user journey is:
 
 Telegram is optional for first launch, trial activation, and normal daily use.
 It remains a recovery, reward, community, and fallback-support surface rather than the primary login wall.
-Browser continuation currently starts from app handoff and Telegram.
-Additive email auth for the site and cabinet is marked `soon` and must stay explicitly labeled that way until the public launch path is really live.
+Browser continuation currently starts from app handoff, Telegram, and the evidence-backed email continuation lane where delivery readiness is green.
 
 ## Locked Product Decisions
 
@@ -48,15 +47,16 @@ Additive email auth for the site and cabinet is marked `soon` and must stay expl
 - public routing mode set: `All except RU` and `Full tunnel`
 - public recovery order: `POKROV app -> web cabinet -> Telegram fallback`
 - public wording must avoid direct-meaning `VPN` copy outside legacy compatibility labels
-- public browser surface split is checkout-first `marketing` plus continuation-first `webapp`, with public email continuation still marked `soon`
+- public browser surface split is checkout-first `marketing` plus continuation-first `webapp`
 - the current front-end reset is atlas-driven and keeps the client shell locked to `Protection / Locations / Rules / Profile` while public acquisition moves to `marketing`
 
 ## Release Gate Reality
 
 - `Android + Windows` remain the only public release pair for this wave
-- `Windows` may proceed for this outside-store beta as an unsigned EXE only when runtime handoff gates are green and unknown-publisher warning copy is visible
+- outside-store public beta for Android + Windows is `GO` from the `2026-05-15` platform launch-decision evidence pack
+- `Windows` may proceed for this outside-store beta as an unsigned EXE while unknown-publisher warning copy is visible
 - `Android` is operator-attested for this beta wave; raw audit evidence remains optional replacement evidence, not a public claim
-- the current green repo/static gate snapshot is necessary but not sufficient; public release still needs runtime handoff validation, paid/email evidence, and separate `current-origin`, `brain-origin`, and accepted-skip `RU-origin` handling
+- the current green repo/static gate snapshot is necessary but not sufficient for future candidates; the `2026-05-15` beta pack includes runtime handoff validation, paid/email evidence, and separate `current-origin`, `brain-origin`, and accepted-skip `RU-origin` handling
 - emulator or adb-only Android audits are valid preflight, not final release approval
 - `iOS` and `macOS` readiness work does not block the public Android+Windows ship, but it also does not expand the public promise
 
@@ -111,13 +111,18 @@ Product rules for that choice:
 - `Optimize everything on this device` is the recommended default and stays `TUN`-first
 - the device-wide path defaults the visible `Rules` story to `All except RU`
 - `Full tunnel` stays available as the direct device-wide fallback
-- `Only selected apps` is the split-tunneling path
+- `Only selected apps` is the staged split-tunneling path and is not a public
+  selectable MVP mode until platform enforcement is proven
 - Windows should use an executable or process picker for selected apps
 - Android should use an installed-package picker for selected apps
 - the chosen route mode must persist per device and remain editable later from a dedicated route-mode screen
 - the live state must round-trip through backend-owned `route_mode`, `selected_apps`, `requires_elevated_privileges`, and mirrored `route_policy.*` fields
-- current implementation keeps both device-wide routes on the existing backend `route_mode=all_traffic` lane, while the split path writes `route_mode=selected_apps`
-- current selected-apps beta MVP is explicit: route-mode sync exists, but Android package picking, Windows process picking, persistence, and OS-level enforcement are not yet complete
+- current implementation keeps public route choices on the device-wide lanes:
+  `All except RU` and `Full tunnel`
+- low-level selected-apps route-policy plumbing remains tested for future
+  compatibility, but the public shell must not expose it while Android package
+  picking, Windows process picking, persistence, and OS-level enforcement are
+  incomplete
 - if the chosen desktop route mode requires elevation, the app must explain that before connect and guide the user to relaunch as administrator
 - first-layer UX must not force users into raw system-proxy, service-mode, or low-level transport toggles
 
@@ -190,7 +195,7 @@ Store/operator artifacts remain separate:
 Release continuity rules:
 
 - public-facing build surfaces must present the beta line `0.x.x-beta`
-- Android APK distribution is staged for outside-store beta after operator-attested physical audit, but remains blocked from runtime/public download until final handoff approval
+- Android APK distribution is approved for the outside-store beta after operator-attested physical audit and the `2026-05-15` runtime handoff proof; re-verify before changing artifacts or public URLs
 - Windows unsigned bundles may be gated to beta users only with a SmartScreen or unknown-publisher warning
 - signed release builds inject updater and source metadata through the documented `PORTAL_RELEASE_*` environment variables
 - local non-release builds keep updater and source-code surfaces disabled instead of falling back to a personal repository URL

@@ -1,11 +1,11 @@
 # Android Release Audit
 
-Status: blocked by missing access  
-Last updated: 2026-04-26
+Status: owner-attested for outside-store beta; raw audit remains manual owner test
+Last updated: 2026-05-26
 
 ## Required Dependency
 
-Set `ANDROID_AUDIT_SERIAL` to a connected physical Android device. Emulator serials are preflight only and do not clear public release.
+Set `ANDROID_AUDIT_SERIAL` to a connected physical Android device. Emulator serials are preflight only and do not clear trusted, store, stable, or raw-audited Android release claims.
 
 Set `ANDROID_AUDIT_PACKAGE` to `space.pokrov.pokrov_android_shell` unless a release candidate intentionally changes the package id.
 
@@ -42,4 +42,4 @@ python "$env:PLATFORM_REPO/scripts/android_localhost_audit.py" --serial $env:AND
 
 ## Release Rule
 
-Android public release remains blocked until this audit is green on a physical release-installed build.
+Android outside-store public beta uses the retained `2026-05-15` owner attestation. A fresh raw physical-device PASS remains required before trusted, store, stable, or raw-audited Android claims.

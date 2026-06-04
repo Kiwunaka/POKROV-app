@@ -1,14 +1,15 @@
 # POKROV App Docs
 
-Last updated: 2026-04-26
+Last updated: 2026-06-03
 
 This folder holds the living client-repo documentation for `POKROV-app/main`.
 
 Current direction note:
 
-- the front-end rebuild is an atlas-driven shell reset across the app shell and browser handoff surfaces
+- the front-end rebuild is now a Premium Shell V2 reset after owner feedback rejected the first card-heavy MVP shell
 - `marketing` owns public acquisition, `webapp` owns browser continuation, and the client shell stays locked to `Protection / Locations / Rules / Profile`
 - public-facing wording should stay calm and non-technical even when the underlying runtime remains transport-rich
+- `hiddify-core` is the pinned runtime base, but WARP/enhanced privacy is not product-ready until wired and verified
 
 Historical mapping note:
 
@@ -45,16 +46,28 @@ Current anchors:
 - `architecture/app-first-onboarding-flow.md`
 - `specs/2026-04-18-wave-7-new-base-client-scaffold.md`
 - `decisions/2026-04-18-karing-vs-clean-room-gate.md`
+- `decisions/2026-06-03-hiddify-karing-happ-client-base-review.md`
+- `decisions/2026-06-03-hiddify-core-warp-status.md`
+- `decisions/2026-06-03-client-ux-account-rewards-master-brief.md`
+- `decisions/2026-06-03-client-chat-responsive-warp-motion-review.md`
+- `decisions/2026-06-03-client-best-mvp-consilium.md`
 - `architecture/folder-structure.md`
 - `architecture/package-boundaries.md`
 - `architecture/bootstrap-workflow.md`
 - `implementation/client-release-backlog.md`
+- `implementation/2026-06-03-client-build-readiness-and-api-plan.md`
+- `implementation/2026-06-03-client-mvp-shell-implementation.md`
 - `operations/apple-release-readiness.md`
 - `operations/android-release-audit.md`
 - `operations/windows-release-readiness.md`
 - `operations/cutover-readiness.md`
 - `product/client-public-beta-prd.md`
 - `design/DESIGN.md`
+- `design/2026-06-03-client-premium-shell-v2-brief.md`
+- `design/2026-06-03-client-quiet-emerald-style-brief.md`
+- `design/2026-06-03-client-screen-component-rules.md`
+- `design/2026-06-03-client-chat-responsive-warp-motion-brief.md`
+- `design/2026-06-03-client-best-mvp-build-brief.md`
 - root `DESIGN.md`
 - `developer/work-orders/2026-04-open-beta-v4/INDEX.md`
 

@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-05-07
+Last updated: 2026-06-04
 
 This document is the concrete Windows readiness note for the `POKROV-app` lane.
 
@@ -63,6 +63,25 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 -Sy
   - `pokrov-windows-beta-x64-<version>-setup.exe`
 
 These outputs are regenerated local verification artifacts. They are useful for operator inspection and local validation, but they are not production release truth.
+
+Latest local packaging note:
+
+- `2026-06-03`: `scripts/build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze`
+  succeeded after the full Task 8 verification run.
+- The generated unsigned setup EXE, portable ZIP, manifest, and the Android
+  debug smoke APK were retained in
+  `artifacts/releases/pokrov-app/0.2.0-beta.1+20260603-local-mvp/`.
+- This retained pack remains local engineering handoff, not trusted signing or
+  public hosting approval.
+- `2026-06-04`: the same packaging command succeeded again for the local RC
+  pass after Android release-smoke APK/AAB builds. The generated unsigned setup
+  EXE, portable ZIP, and manifest were retained in
+  `artifacts/releases/pokrov-app/0.2.0-beta.1+20260604-rc-local/` with
+  verified checksums and `runtime_sync_allowed=false`.
+- Owner decision on `2026-06-04`: trusted Windows signing is an accepted skip
+  for the current outside-store beta, but trusted signing, SmartScreen
+  reputation, Microsoft Store, WinGet, and broad stable-distribution claims are
+  still not allowed.
 
 ## Safe Claims
 

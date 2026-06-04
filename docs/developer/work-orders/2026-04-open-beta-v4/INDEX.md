@@ -1,6 +1,6 @@
 # POKROV App Open Beta v4 Work Order
 
-Status: active
+Status: outside-store public beta GO with accepted skips
 Started: 2026-04-26
 Branch: `codex/open-beta-v4`
 
@@ -9,13 +9,13 @@ This folder tracks active client-lane work for the platform Open Beta v4 plan.
 ## Scope
 
 - Android and Windows are the public release target pair.
-- Android has operator-attested physical-device audit evidence for this beta wave, but remains public-blocked until runtime `APP_*` sync approval, live download smoke, and final platform GO.
-- Windows remains a gated unsigned outside-store beta until runtime evidence, checksum/handoff approval, and user-facing unknown-publisher warning copy are approved. Trusted signing is a later trust upgrade, not a blocker for this beta pass.
+- Android has operator-attested physical-device audit evidence and runtime handoff evidence for the `2026-05-15` outside-store beta; raw device evidence remains a manual owner test before stronger claims.
+- Windows is an unsigned outside-store public beta with runtime evidence and accepted unknown-publisher warning posture. Trusted signing is a later trust upgrade, not a blocker for this beta pass.
 - iOS and macOS remain readiness-only.
 
 ## Current Decision
 
-Do not release publicly from this branch. The client lane is ready for local docs/gate hardening, but broad distribution remains blocked by runtime download handoff, live `/api/client/apps` smoke, payment/email evidence, and the final platform launch decision.
+The platform launch decision is outside-store public beta `GO` as of `2026-05-15`. Do not upgrade that decision to stable, store, trusted-signing, RU-origin, or raw Android-audit claims without fresh exact-candidate evidence.
 
 ## Verification Entry Points
 
