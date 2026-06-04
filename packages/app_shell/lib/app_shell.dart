@@ -29,6 +29,12 @@ enum _SectionTone {
   reward,
 }
 
+enum _FirstLaunchStep {
+  choice,
+  restore,
+  ready,
+}
+
 typedef ExternalHandoffLauncher = Future<bool> Function(Uri uri);
 
 abstract final class _SeedPalette {
@@ -434,9 +440,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   late final AppFirstAccountActionService? _accountActionService;
   late final AppFirstBonusActionService? _bonusActionService;
   late final SupportTicketService _supportTicketService;
+  final TextEditingController _firstLaunchRestoreCodeController =
+      TextEditingController();
   RuntimeSnapshot? _runtimeSnapshot;
   bool _runtimeBusy = false;
+  bool _firstLaunchBusy = false;
   bool _managedProfileDirty = true;
+  _FirstLaunchStep _firstLaunchStep = _FirstLaunchStep.choice;
   String? _runtimeHeadline;
   String _telegramBonusStatus = 'Получить код';
   bool _telegramBonusBusy = false;
@@ -485,6 +495,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _firstLaunchRestoreCodeController.dispose();
     super.dispose();
   }
 
@@ -541,19 +552,19 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  Future<void> _redeemCodeInApp(String value) async {
+  Future<bool> _redeemCodeInApp(String value) async {
     final code = value.trim();
     if (code.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Введите код активации.')),
       );
-      return;
+      return false;
     }
 
     final accountActions = _accountActionService;
     if (accountActions == null) {
       await _openSafeHandoff('redeem', code);
-      return;
+      return false;
     }
 
     try {
@@ -563,7 +574,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         code: code,
       );
       if (!mounted) {
-        return;
+        return true;
       }
       setState(() {
         _managedProfileDirty = true;
@@ -580,13 +591,15 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           ),
         ),
       );
+      return true;
     } catch (error) {
       if (!mounted) {
-        return;
+        return false;
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось активировать код: $error')),
       );
+      return false;
     }
   }
 
@@ -798,6 +811,47 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         unawaited(_openSafeHandoff(label, value));
         return;
     }
+  }
+
+  void _completeFirstLaunchAsNewUser() {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _firstLaunchStep = _FirstLaunchStep.ready;
+    });
+  }
+
+  void _openFirstLaunchRestore() {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _firstLaunchStep = _FirstLaunchStep.restore;
+    });
+  }
+
+  void _backToFirstLaunchChoice() {
+    setState(() {
+      _firstLaunchStep = _FirstLaunchStep.choice;
+    });
+  }
+
+  Future<void> _redeemFirstLaunchRestoreCode() async {
+    if (_firstLaunchBusy) {
+      return;
+    }
+    setState(() {
+      _firstLaunchBusy = true;
+    });
+    final ok = await _redeemCodeInApp(
+      _firstLaunchRestoreCodeController.text,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _firstLaunchBusy = false;
+      if (ok) {
+        _firstLaunchStep = _FirstLaunchStep.ready;
+      }
+    });
   }
 
   Future<void> _showSupportHub() {
@@ -1173,27 +1227,43 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       key: const ValueKey('motion-policy'),
       disableAnimations: disableAnimations,
       child: Scaffold(
-        extendBody: !isDesktopShell,
+        extendBody:
+            _firstLaunchStep == _FirstLaunchStep.ready && !isDesktopShell,
         body: _SeedBackdrop(
           child: SafeArea(
-            child: isDesktopShell
-                ? _DesktopShell(
-                    selectedIndex: _selectedIndex,
-                    sections: sections,
-                    onSelected: (index) {
-                      setState(() {
-                        _selectedIndex = index;
-                      });
-                    },
-                  )
-                : _MobileShell(
-                    selectedIndex: _selectedIndex,
-                    sections: sections,
-                    onSelected: (index) {
-                      setState(() {
-                        _selectedIndex = index;
-                      });
-                    },
+            child: _firstLaunchStep == _FirstLaunchStep.ready
+                ? isDesktopShell
+                    ? _DesktopShell(
+                        selectedIndex: _selectedIndex,
+                        sections: sections,
+                        onSelected: (index) {
+                          setState(() {
+                            _selectedIndex = index;
+                          });
+                        },
+                      )
+                    : _MobileShell(
+                        selectedIndex: _selectedIndex,
+                        sections: sections,
+                        onSelected: (index) {
+                          setState(() {
+                            _selectedIndex = index;
+                          });
+                        },
+                      )
+                : _FirstLaunchGate(
+                    appContext: widget.appContext,
+                    step: _firstLaunchStep,
+                    restoreCodeController: _firstLaunchRestoreCodeController,
+                    busy: _firstLaunchBusy,
+                    onNewUser: _completeFirstLaunchAsNewUser,
+                    onReturningUser: _openFirstLaunchRestore,
+                    onBack: _backToFirstLaunchChoice,
+                    onRedeemCode: _redeemFirstLaunchRestoreCode,
+                    onOpenTelegram: _createTelegramLinkInApp,
+                    onOpenCabinet: () => _openCabinetWithHandoff(
+                      widget.appContext.cabinetUrl,
+                    ),
                   ),
           ),
         ),
@@ -1223,6 +1293,341 @@ class _SeedContentList extends StatelessWidget {
           children: children,
         );
       },
+    );
+  }
+}
+
+class _FirstLaunchGate extends StatelessWidget {
+  const _FirstLaunchGate({
+    required this.appContext,
+    required this.step,
+    required this.restoreCodeController,
+    required this.busy,
+    required this.onNewUser,
+    required this.onReturningUser,
+    required this.onBack,
+    required this.onRedeemCode,
+    required this.onOpenTelegram,
+    required this.onOpenCabinet,
+  });
+
+  final SeedAppContext appContext;
+  final _FirstLaunchStep step;
+  final TextEditingController restoreCodeController;
+  final bool busy;
+  final VoidCallback onNewUser;
+  final VoidCallback onReturningUser;
+  final VoidCallback onBack;
+  final VoidCallback onRedeemCode;
+  final VoidCallback onOpenTelegram;
+  final VoidCallback onOpenCabinet;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SeedContentList(
+      top: 24,
+      children: [
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: step == _FirstLaunchStep.restore
+                ? _FirstLaunchRestoreScreen(
+                    appContext: appContext,
+                    codeController: restoreCodeController,
+                    busy: busy,
+                    onBack: onBack,
+                    onRedeemCode: onRedeemCode,
+                    onOpenTelegram: onOpenTelegram,
+                    onOpenCabinet: onOpenCabinet,
+                  )
+                : _FirstLaunchChoiceScreen(
+                    appContext: appContext,
+                    onNewUser: onNewUser,
+                    onReturningUser: onReturningUser,
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FirstLaunchChoiceScreen extends StatelessWidget {
+  const _FirstLaunchChoiceScreen({
+    required this.appContext,
+    required this.onNewUser,
+    required this.onReturningUser,
+  });
+
+  final SeedAppContext appContext;
+  final VoidCallback onNewUser;
+  final VoidCallback onReturningUser;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      key: const ValueKey('first-launch-choice-screen'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 18),
+        const Center(child: _BrandLockup(markSize: 42, center: true)),
+        const SizedBox(height: 28),
+        Text(
+          'Вы раньше пользовались POKROV?',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            color: _SeedPalette.ink,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Выберите путь один раз. Доступ, бонусы и кабинет останутся в одном аккаунте.',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: _SeedPalette.muted,
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 22),
+        _FirstLaunchOptionButton(
+          key: const ValueKey('first-launch-new-user'),
+          icon: Icons.auto_awesome_rounded,
+          title: 'Я новый пользователь',
+          subtitle:
+              '${appContext.runtimeProfile.trialDays} дней доступа без карты',
+          primary: true,
+          onTap: onNewUser,
+        ),
+        const SizedBox(height: 12),
+        _FirstLaunchOptionButton(
+          key: const ValueKey('first-launch-returning-user'),
+          icon: Icons.key_rounded,
+          title: 'У меня уже есть доступ',
+          subtitle: 'Код из Telegram, кабинета, письма или ключ активации',
+          onTap: onReturningUser,
+        ),
+      ],
+    );
+  }
+}
+
+class _FirstLaunchRestoreScreen extends StatelessWidget {
+  const _FirstLaunchRestoreScreen({
+    required this.appContext,
+    required this.codeController,
+    required this.busy,
+    required this.onBack,
+    required this.onRedeemCode,
+    required this.onOpenTelegram,
+    required this.onOpenCabinet,
+  });
+
+  final SeedAppContext appContext;
+  final TextEditingController codeController;
+  final bool busy;
+  final VoidCallback onBack;
+  final VoidCallback onRedeemCode;
+  final VoidCallback onOpenTelegram;
+  final VoidCallback onOpenCabinet;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      key: const ValueKey('first-launch-restore-screen'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: IconButton(
+            key: const ValueKey('first-launch-back-to-choice'),
+            tooltip: 'Назад',
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: busy ? null : onBack,
+          ),
+        ),
+        const Center(child: _BrandLockup(markSize: 36, center: true)),
+        const SizedBox(height: 22),
+        Text(
+          'Восстановить доступ',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            color: _SeedPalette.ink,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Введите одноразовый код из Telegram, кабинета, письма или ключ активации.',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: _SeedPalette.muted,
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 20),
+        TextField(
+          key: const ValueKey('first-launch-restore-code-field'),
+          controller: codeController,
+          enabled: !busy,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) {
+            if (!busy) {
+              onRedeemCode();
+            }
+          },
+          decoration: InputDecoration(
+            hintText: 'Код или ключ',
+            prefixIcon: const Icon(Icons.key_rounded),
+            filled: true,
+            fillColor: _SeedPalette.surface,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: _SeedPalette.line),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: _SeedPalette.line),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          key: const ValueKey('first-launch-restore-redeem'),
+          onPressed: busy ? null : onRedeemCode,
+          icon: busy
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.check_circle_outline_rounded),
+          label: Text(busy ? 'Проверяем' : 'Восстановить'),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          alignment: WrapAlignment.center,
+          children: [
+            OutlinedButton.icon(
+              key: const ValueKey('first-launch-open-telegram-code'),
+              onPressed: busy ? null : onOpenTelegram,
+              icon: const Icon(Icons.send_outlined),
+              label: const Text('Код в Telegram'),
+            ),
+            OutlinedButton.icon(
+              key: const ValueKey('first-launch-open-cabinet'),
+              onPressed: busy ? null : onOpenCabinet,
+              icon: const Icon(Icons.web_outlined),
+              label: const Text('Открыть кабинет'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          key: const ValueKey('first-launch-manual-key-warning'),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: _SeedPalette.warning.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: _SeedPalette.warning.withValues(alpha: 0.24),
+            ),
+          ),
+          child: Text(
+            'Сырые ссылки подключения не доказывают аккаунт. Для привязки безопаснее одноразовый код; ручной ключ останется режимом восстановления.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: _SeedPalette.ink.withValues(alpha: 0.78),
+              height: 1.35,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FirstLaunchOptionButton extends StatelessWidget {
+  const _FirstLaunchOptionButton({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.primary = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool primary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: primary
+          ? _SeedPalette.accent.withValues(alpha: 0.08)
+          : _SeedPalette.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: primary
+                  ? _SeedPalette.accent.withValues(alpha: 0.22)
+                  : _SeedPalette.line,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: _SeedPalette.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: _SeedPalette.accent),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: _SeedPalette.ink,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: _SeedPalette.muted,
+                            height: 1.3,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Icon(Icons.chevron_right_rounded,
+                  color: _SeedPalette.muted),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1379,21 +1784,25 @@ class _MobileShell extends StatelessWidget {
                 onDestinationSelected: onSelected,
                 destinations: const [
                   NavigationDestination(
+                    key: ValueKey('nav-protection'),
                     icon: Icon(Icons.flash_on_outlined),
                     selectedIcon: Icon(Icons.flash_on),
                     label: 'Защита',
                   ),
                   NavigationDestination(
+                    key: ValueKey('nav-locations'),
                     icon: Icon(Icons.public_outlined),
                     selectedIcon: Icon(Icons.public),
                     label: 'Локации',
                   ),
                   NavigationDestination(
+                    key: ValueKey('nav-rules'),
                     icon: Icon(Icons.rule_folder_outlined),
                     selectedIcon: Icon(Icons.rule_folder),
                     label: 'Правила',
                   ),
                   NavigationDestination(
+                    key: ValueKey('nav-profile'),
                     icon: Icon(Icons.person_outline),
                     selectedIcon: Icon(Icons.person),
                     label: 'Аккаунт',
@@ -1457,6 +1866,7 @@ class _DesktopSidebar extends StatelessWidget {
             ],
             const SizedBox(height: 28),
             _SidebarItem(
+              itemKey: const ValueKey('nav-protection'),
               index: 0,
               selectedIndex: selectedIndex,
               icon: Icons.flash_on_outlined,
@@ -1466,6 +1876,7 @@ class _DesktopSidebar extends StatelessWidget {
               collapsed: collapsed,
             ),
             _SidebarItem(
+              itemKey: const ValueKey('nav-locations'),
               index: 1,
               selectedIndex: selectedIndex,
               icon: Icons.public_outlined,
@@ -1475,6 +1886,7 @@ class _DesktopSidebar extends StatelessWidget {
               collapsed: collapsed,
             ),
             _SidebarItem(
+              itemKey: const ValueKey('nav-rules'),
               index: 2,
               selectedIndex: selectedIndex,
               icon: Icons.rule_folder_outlined,
@@ -1484,6 +1896,7 @@ class _DesktopSidebar extends StatelessWidget {
               collapsed: collapsed,
             ),
             _SidebarItem(
+              itemKey: const ValueKey('nav-profile'),
               index: 3,
               selectedIndex: selectedIndex,
               icon: Icons.person_outline,
@@ -1593,6 +2006,7 @@ class _BrandMark extends StatelessWidget {
 
 class _SidebarItem extends StatelessWidget {
   const _SidebarItem({
+    required this.itemKey,
     required this.index,
     required this.selectedIndex,
     required this.icon,
@@ -1602,6 +2016,7 @@ class _SidebarItem extends StatelessWidget {
     this.collapsed = false,
   });
 
+  final Key itemKey;
   final int index;
   final int selectedIndex;
   final IconData icon;
@@ -1616,6 +2031,7 @@ class _SidebarItem extends StatelessWidget {
     final child = Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: InkWell(
+        key: itemKey,
         borderRadius: BorderRadius.circular(10),
         onTap: () => onSelected(index),
         child: AnimatedContainer(
@@ -2392,6 +2808,7 @@ class _LocationsSection extends StatelessWidget {
         Text('Локации', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),
         _SectionCard(
+          key: const ValueKey('locations-auto-section'),
           title: 'Автоматический выбор',
           tone:
               hasProvisionedAccess ? _SectionTone.neutral : _SectionTone.muted,
@@ -2401,6 +2818,7 @@ class _LocationsSection extends StatelessWidget {
                 : 'После подготовки',
           ],
           child: _SettingsRow(
+            key: const ValueKey('locations-auto-help-action'),
             icon: Icons.info_outline_rounded,
             title: 'Как выбирается',
             value: 'Коротко',
@@ -2516,6 +2934,7 @@ class _ProfileSection extends StatelessWidget {
                       ),
                     ),
                     _SettingsRow(
+                      key: const ValueKey('profile-checkout-action'),
                       icon: Icons.shopping_bag_outlined,
                       title: 'Оплата',
                       value: 'Продлить',
@@ -2694,6 +3113,7 @@ class _RulesSection extends StatelessWidget {
                 ),
               ),
               _SettingsRow(
+                key: const ValueKey('rules-mode-help-action'),
                 icon: Icons.info_outline_rounded,
                 title: 'Как выбрать',
                 value: 'Коротко',
@@ -2754,6 +3174,7 @@ class _RulesSection extends StatelessWidget {
         ),
         if (selectedAppsActive || selectedAppsStaged)
           _SectionCard(
+            key: const ValueKey('rules-section-selected-apps'),
             title: 'Приложения',
             lines: const ['Выбор готовится.'],
             child: _SettingsRow(
@@ -3028,6 +3449,7 @@ class _LocationCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
+      key: ValueKey('location-card-${location.code}'),
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -3984,6 +4406,9 @@ String? _motionRecoveryNotice(
   if (snapshot != null &&
       snapshot.phase != RuntimePhase.running &&
       normalized.contains('подготов')) {
+    return text;
+  }
+  if (snapshot != null && snapshot.phase != RuntimePhase.running) {
     return text;
   }
   return null;

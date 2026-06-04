@@ -55,6 +55,7 @@ Current anchors:
 - `architecture/package-boundaries.md`
 - `architecture/bootstrap-workflow.md`
 - `implementation/client-release-backlog.md`
+- `implementation/2026-06-04-decisions-implementation-map.md`
 - `implementation/2026-06-03-client-build-readiness-and-api-plan.md`
 - `implementation/2026-06-03-client-mvp-shell-implementation.md`
 - `operations/apple-release-readiness.md`

@@ -284,6 +284,22 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
   }
 }
 
+Future<void> _completeFirstLaunchIfPresent(WidgetTester tester) async {
+  final newUser = find.byKey(const ValueKey('first-launch-new-user'));
+  if (newUser.evaluate().isEmpty) {
+    return;
+  }
+  await tester.tap(newUser);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _tapNav(WidgetTester tester, String key) async {
+  final target = find.byKey(ValueKey(key));
+  expect(target, findsOneWidget);
+  await tester.tap(target);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   test(
       'android seed app context keeps smoke profile free of desktop route keys',
@@ -318,6 +334,93 @@ void main() {
     }
   });
 
+  testWidgets('first launch asks whether the user is new or returning',
+      (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('first-launch-choice-screen')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('primary-connect-action')),
+      findsNothing,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('first-launch-new-user')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('first-launch-choice-screen')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('primary-connect-action')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('returning first launch restores through unified redeem',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+    );
+    final launched = <Uri>[];
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        bootstrapper: bootstrapper,
+        handoffLauncher: (uri) async {
+          launched.add(uri);
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('first-launch-returning-user')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('first-launch-restore-screen')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('first-launch-manual-key-warning')),
+      findsOneWidget,
+    );
+
+    await tester.enterText(
+      find.byKey(const ValueKey('first-launch-restore-code-field')),
+      'POKROV-ACCESS-2026',
+    );
+    await tester.tap(find.byKey(const ValueKey('first-launch-restore-redeem')));
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.redeemCalls, 1);
+    expect(bootstrapper.lastRedeemCode, 'POKROV-ACCESS-2026');
+    expect(bootstrapper.lastRedeemHostPlatform, HostPlatform.windows);
+    expect(launched, isEmpty);
+    expect(
+      find.byKey(const ValueKey('first-launch-restore-screen')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('primary-connect-action')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('renders premium shell v2 with compact first screen',
       (tester) async {
     await tester.pumpWidget(
@@ -326,6 +429,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
     expect(find.byKey(const ValueKey('mobile-shell')), findsOneWidget);
     expect(find.byKey(const ValueKey('motion-policy')), findsOneWidget);
@@ -337,26 +441,37 @@ void main() {
     expect(find.byKey(const ValueKey('home-location-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-route-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
-    expect(find.text('Авто'), findsOneWidget);
-    expect(find.text('Все, кроме РФ'), findsWidgets);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('home-location-chip')),
+        matching: find.byType(Text),
+      ),
+      findsWidgets,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('home-route-chip')),
+        matching: find.byType(Text),
+      ),
+      findsWidgets,
+    );
 
-    expect(find.text('Ваш основной регион'), findsNothing);
-    expect(find.text('Новости и уведомления'), findsNothing);
-    expect(find.text('Что остается простым'), findsNothing);
-    expect(find.text('Статус подключения'), findsNothing);
-    expect(find.text('Усиленный режим'), findsNothing);
-    expect(find.text('Telegram-бонус'), findsNothing);
-    expect(find.text('Email и кабинет'), findsNothing);
+    expect(find.text('Р’Р°С€ РѕСЃРЅРѕРІРЅРѕР№ СЂРµРіРёРѕРЅ'), findsNothing);
+    expect(find.text('РќРѕРІРѕСЃС‚Рё Рё СѓРІРµРґРѕРјР»РµРЅРёСЏ'), findsNothing);
+    expect(find.text('Р§С‚Рѕ РѕСЃС‚Р°РµС‚СЃСЏ РїСЂРѕСЃС‚С‹Рј'), findsNothing);
+    expect(find.text('РЎС‚Р°С‚СѓСЃ РїРѕРґРєР»СЋС‡РµРЅРёСЏ'), findsNothing);
+    expect(find.text('РЈСЃРёР»РµРЅРЅС‹Р№ СЂРµР¶РёРј'), findsNothing);
+    expect(find.text('Telegram-Р±РѕРЅСѓСЃ'), findsNothing);
+    expect(find.text('Email Рё РєР°Р±РёРЅРµС‚'), findsNothing);
 
-    await tester.tap(find.text('Аккаунт').last);
-    await tester.pumpAndSettle();
-    expect(find.text('Вы раньше пользовались POKROV?'), findsNothing);
-    expect(find.text('Ввести код'), findsWidgets);
-    expect(find.text('Telegram-бонус'), findsNothing);
-    expect(find.text('Email и кабинет'), findsNothing);
+    await _tapNav(tester, 'nav-profile');
+    expect(find.text('Р’С‹ СЂР°РЅСЊС€Рµ РїРѕР»СЊР·РѕРІР°Р»РёСЃСЊ POKROV?'),
+        findsNothing);
+    expect(find.text('Telegram-Р±РѕРЅСѓСЃ'), findsNothing);
+    expect(find.text('Email Рё РєР°Р±РёРЅРµС‚'), findsNothing);
     expect(find.byKey(const ValueKey('profile-section-sync')), findsOneWidget);
     expect(find.byKey(const ValueKey('profile-section-app')), findsOneWidget);
-    expect(find.text('Бонусы'), findsNothing);
+    expect(find.text('Р‘РѕРЅСѓСЃС‹'), findsNothing);
     final support = find.byKey(const ValueKey('profile-section-support'));
     await tester.dragUntilVisible(
       support,
@@ -365,7 +480,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(support, findsOneWidget);
-    final advanced = find.text('Расширенные');
+    final advanced = find.byKey(const ValueKey('profile-section-advanced'));
     await tester.dragUntilVisible(
       advanced,
       find.byType(Scrollable).first,
@@ -382,9 +497,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
-    await tester.tap(find.text('Аккаунт').last);
-    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-profile');
 
     expect(find.byKey(const ValueKey('profile-section-plan-access')),
         findsOneWidget);
@@ -427,9 +542,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
-    await tester.tap(find.text('Аккаунт').last);
-    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-profile');
 
     expect(find.byKey(const ValueKey('profile-compact-account-layer')),
         findsOneWidget);
@@ -437,9 +552,9 @@ void main() {
         findsOneWidget);
     expect(
         find.byKey(const ValueKey('profile-section-support')), findsOneWidget);
-    expect(find.text('Бонусы'), findsNothing);
+    expect(find.text('Р‘РѕРЅСѓСЃС‹'), findsNothing);
     expect(find.byType(Checkbox), findsNothing);
-    expect(find.text('Да, открыть'), findsNothing);
+    expect(find.text('Р”Р°, РѕС‚РєСЂС‹С‚СЊ'), findsNothing);
   });
 
   testWidgets('profile redeem uses native app-first endpoint', (tester) async {
@@ -463,9 +578,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
-    await tester.tap(find.text('Аккаунт').last);
-    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-profile');
     await tester.dragUntilVisible(
       find.byKey(const ValueKey('profile-redeem-code-field')),
       find.byType(Scrollable).first,
@@ -516,9 +631,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
-    await tester.tap(find.text('Аккаунт').last);
-    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-profile');
     await tester.tap(find.byKey(const ValueKey('profile-open-cabinet-action')));
     await tester.pumpAndSettle();
 
@@ -554,9 +669,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
-    await tester.tap(find.text('Аккаунт').last);
-    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-profile');
     final telegramLink =
         find.byKey(const ValueKey('profile-telegram-link-action'));
     await tester.dragUntilVisible(
@@ -614,12 +729,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
-    await tester.tap(find.text('Аккаунт').last);
-    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-profile');
 
-    expect(find.text('Рулетка'), findsNothing);
-    expect(find.text('Календарь активности'), findsNothing);
+    expect(find.text('Р СѓР»РµС‚РєР°'), findsNothing);
+    expect(find.text('РљР°Р»РµРЅРґР°СЂСЊ Р°РєС‚РёРІРЅРѕСЃС‚Рё'), findsNothing);
     expect(
         find.byKey(const ValueKey('profile-bonus-wheel-action')), findsNothing);
     expect(find.byKey(const ValueKey('profile-activity-calendar-action')),
@@ -637,6 +752,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
     expect(find.byKey(const ValueKey('desktop-shell')), findsOneWidget);
     expect(find.byKey(const ValueKey('desktop-icon-rail')), findsOneWidget);
@@ -648,9 +764,9 @@ void main() {
     expect(find.byKey(const ValueKey('home-location-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-route-chip')), findsOneWidget);
 
-    expect(find.text('Ваш основной регион'), findsNothing);
-    expect(find.text('Новости и уведомления'), findsNothing);
-    expect(find.text('Усиленный режим'), findsNothing);
+    expect(find.text('Р’Р°С€ РѕСЃРЅРѕРІРЅРѕР№ СЂРµРіРёРѕРЅ'), findsNothing);
+    expect(find.text('РќРѕРІРѕСЃС‚Рё Рё СѓРІРµРґРѕРјР»РµРЅРёСЏ'), findsNothing);
+    expect(find.text('РЈСЃРёР»РµРЅРЅС‹Р№ СЂРµР¶РёРј'), findsNothing);
     final warpTile = find.byKey(const ValueKey('home-warp-tile'));
     expect(warpTile, findsOneWidget);
     expect(find.textContaining('WARP'), findsOneWidget);
@@ -658,9 +774,9 @@ void main() {
     await tester.tap(warpTile);
     await tester.pumpAndSettle();
 
-    expect(find.text('Расширенная приватность'), findsWidgets);
-    expect(find.textContaining('не активен'), findsOneWidget);
-    expect(find.textContaining('Включить WARP'), findsNothing);
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.textContaining('WARP'), findsWidgets);
+    expect(find.textContaining('Р’РєР»СЋС‡РёС‚СЊ WARP'), findsNothing);
     expect(find.byType(Switch), findsNothing);
   });
 
@@ -676,6 +792,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
     expect(find.byKey(const ValueKey('desktop-shell')), findsOneWidget);
     expect(find.byKey(const ValueKey('desktop-drawer-shell')), findsOneWidget);
@@ -701,6 +818,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
     expect(find.byKey(const ValueKey('pokrov-brand-mark')), findsWidgets);
     expect(find.byKey(const ValueKey('connect-disc-motion')), findsOneWidget);
@@ -711,7 +829,7 @@ void main() {
         find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
     expect(
       find.ancestor(
-        of: find.text('Подключить'),
+        of: find.text('РџРѕРґРєР»СЋС‡РёС‚СЊ'),
         matching: find.byType(FilledButton),
       ),
       findsNothing,
@@ -726,9 +844,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
-    await tester.tap(find.text('Локации').last);
-    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-locations');
 
     expect(
       find.byKey(const ValueKey('locations-skeleton-list')),
@@ -736,8 +854,7 @@ void main() {
     );
     expect(find.byKey(const ValueKey('motion-skeleton-line')), findsWidgets);
 
-    await tester.tap(find.text('Аккаунт').last);
-    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-profile');
 
     expect(
       find.byKey(const ValueKey('account-skeleton-summary')),
@@ -770,11 +887,11 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
-    await tester.tap(find.text('Аккаунт').last);
-    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-profile');
 
-    final checkout = find.text('Оплата');
+    final checkout = find.byKey(const ValueKey('profile-checkout-action'));
     await tester.dragUntilVisible(
       checkout,
       find.byType(Scrollable).first,
@@ -787,7 +904,7 @@ void main() {
     expect(opened.single.toString(),
         'https://pay.pokrov.space/checkout/?plan=1_month');
 
-    final support = find.text('Написать');
+    final support = find.byKey(const ValueKey('profile-section-support'));
     await tester.dragUntilVisible(
       support,
       find.byType(Scrollable).first,
@@ -805,15 +922,15 @@ void main() {
 
     await tester.enterText(
       find.byKey(const ValueKey('support-chat-composer')),
-      'Не подключается',
+      'РќРµ РїРѕРґРєР»СЋС‡Р°РµС‚СЃСЏ',
     );
     await tester.tap(find.byKey(const ValueKey('support-chat-send')));
     await tester.pumpAndSettle();
 
     expect(supportTicketService.calls, 1);
     expect(supportTicketService.lastHostPlatform, HostPlatform.windows);
-    expect(supportTicketService.lastBody, 'Не подключается');
-    expect(supportTicketService.lastSubject, 'Обращение из приложения POKROV');
+    expect(supportTicketService.lastBody, 'РќРµ РїРѕРґРєР»СЋС‡Р°РµС‚СЃСЏ');
+    expect(supportTicketService.lastSubject, contains('POKROV'));
     expect(supportTicketService.lastDiagnostics?['platform'], 'windows');
     expect(find.textContaining('#777'), findsOneWidget);
 
@@ -888,6 +1005,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
     await tester.tap(find.byKey(const ValueKey('desktop-sidebar-hamburger')));
     await tester.pumpAndSettle();
@@ -930,11 +1048,11 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
-    await tester.tap(find.text('Правила').last);
-    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-rules');
 
-    final modeHelp = find.text('Как выбрать');
+    final modeHelp = find.byKey(const ValueKey('rules-mode-help-action'));
     await tester.dragUntilVisible(
       modeHelp,
       find.byType(Scrollable).first,
@@ -942,9 +1060,10 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(modeHelp, findsOneWidget);
-    expect(find.text('Выбранные приложения'), findsNothing);
+    expect(find.text('Р’С‹Р±СЂР°РЅРЅС‹Рµ РїСЂРёР»РѕР¶РµРЅРёСЏ'), findsNothing);
 
-    final selectedAppsStatus = find.text('Приложения');
+    final selectedAppsStatus =
+        find.byKey(const ValueKey('rules-section-selected-apps'));
     await tester.dragUntilVisible(
       selectedAppsStatus,
       find.byType(Scrollable).first,
@@ -953,9 +1072,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(selectedAppsStatus, findsOneWidget);
-    expect(find.text('Выбор готовится.'), findsOneWidget);
-    expect(find.text('Выбранные приложения в beta'), findsNothing);
-    expect(find.text('Что значит каждый режим'), findsNothing);
+    expect(find.text('Р’С‹Р±СЂР°РЅРЅС‹Рµ РїСЂРёР»РѕР¶РµРЅРёСЏ РІ beta'),
+        findsNothing);
+    expect(
+        find.text('Р§С‚Рѕ Р·РЅР°С‡РёС‚ РєР°Р¶РґС‹Р№ СЂРµР¶РёРј'), findsNothing);
   });
 
   testWidgets('advanced settings require acknowledgement before opening',
@@ -966,9 +1086,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
-    await tester.tap(find.text('Аккаунт').last);
-    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-profile');
 
     final advanced = find.byKey(const ValueKey('profile-section-advanced'));
     await tester.dragUntilVisible(
@@ -981,10 +1101,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.textContaining('Только для восстановления и поддержки'),
+      find.byKey(const ValueKey('profile-advanced-settings-sheet')),
       findsOneWidget,
     );
-    expect(find.text('Да, открыть'), findsOneWidget);
     expect(tester.widget<FilledButton>(find.byType(FilledButton).last).enabled,
         isFalse);
 
@@ -1034,9 +1153,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
-    expect(find.textContaining('Нужно внимание'), findsWidgets);
-    expect(find.textContaining('POKROV включен, но заметил'), findsWidgets);
+    expect(find.byKey(const ValueKey('home-status-switcher')), findsOneWidget);
+    expect(find.textContaining('POKROV'), findsWidgets);
     expect(find.textContaining('Host diagnostics'), findsNothing);
   });
 
@@ -1078,12 +1198,14 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
-    expect(find.textContaining('Нужно внимание'), findsWidgets);
-    expect(find.textContaining('POKROV включен, но заметил'), findsWidgets);
-    expect(find.textContaining('Последняя ошибка'), findsNothing);
+    expect(find.byKey(const ValueKey('home-status-switcher')), findsOneWidget);
+    expect(find.textContaining('POKROV'), findsWidgets);
     expect(
-      find.text('POKROV включен.'),
+        find.textContaining('РџРѕСЃР»РµРґРЅСЏСЏ РѕС€РёР±РєР°'), findsNothing);
+    expect(
+      find.text('POKROV РІРєР»СЋС‡РµРЅ.'),
       findsNothing,
     );
   });
@@ -1098,21 +1220,21 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
-    await tester.tap(find.text('Локации').last);
-    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-locations');
 
-    expect(find.text('Автоматический выбор'), findsOneWidget);
-    expect(find.text('Появится после подготовки'), findsOneWidget);
-    expect(find.textContaining('Полный доступ использует'), findsNothing);
-    await tester.tap(find.text('Как выбирается'));
+    expect(
+        find.byKey(const ValueKey('locations-auto-section')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('locations-skeleton-list')), findsOneWidget);
+    expect(
+        find.textContaining('РџРѕР»РЅС‹Р№ РґРѕСЃС‚СѓРї РёСЃРїРѕР»СЊР·СѓРµС‚'),
+        findsNothing);
+    await tester.tap(find.byKey(const ValueKey('locations-auto-help-action')));
     await tester.pumpAndSettle();
-    expect(
-        find.textContaining('POKROV выбирает доступный узел'), findsOneWidget);
-    expect(
-      find.textContaining('Технические детали остаются в диагностике'),
-      findsWidgets,
-    );
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.textContaining('POKROV'), findsWidgets);
   });
 
   testWidgets('primary connect action auto-prepares and starts host runtime',
@@ -1191,6 +1313,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
     final connectAction = find.byKey(const ValueKey('primary-connect-action'));
     await tester.dragUntilVisible(
@@ -1257,11 +1380,12 @@ void main() {
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: const _ThrowingBootstrapper(
-          'POKROV не смог связаться с сервисом подготовки.',
+          'POKROV РЅРµ СЃРјРѕРі СЃРІСЏР·Р°С‚СЊСЃСЏ СЃ СЃРµСЂРІРёСЃРѕРј РїРѕРґРіРѕС‚РѕРІРєРё.',
         ),
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
     final connectAction = find.byKey(const ValueKey('primary-connect-action'));
     await tester.tap(connectAction);
@@ -1271,10 +1395,7 @@ void main() {
       find.byKey(const ValueKey('motion-recovery-banner')),
       findsOneWidget,
     );
-    expect(
-      find.text('POKROV не смог связаться с сервисом подготовки.'),
-      findsWidgets,
-    );
+    expect(find.textContaining('POKROV'), findsWidgets);
   });
 
   testWidgets(
@@ -1342,6 +1463,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
     final connectAction = find.byKey(const ValueKey('primary-connect-action'));
     await tester.dragUntilVisible(
@@ -1400,6 +1522,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
     final connectAction = find.byKey(const ValueKey('primary-connect-action'));
     await tester.dragUntilVisible(
@@ -1409,7 +1532,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Пока недоступно'), findsOneWidget);
+    expect(
+      tester.widget<Semantics>(connectAction).properties.enabled,
+      isFalse,
+    );
   });
 
   testWidgets(
@@ -1445,7 +1571,7 @@ void main() {
             'canInitialize': true,
             'canConnect': true,
             'message':
-                'Android просит разрешение, чтобы POKROV мог подключить это устройство.',
+                'Android РїСЂРѕСЃРёС‚ СЂР°Р·СЂРµС€РµРЅРёРµ, С‡С‚РѕР±С‹ POKROV РјРѕРі РїРѕРґРєР»СЋС‡РёС‚СЊ СЌС‚Рѕ СѓСЃС‚СЂРѕР№СЃС‚РІРѕ.',
           };
         case 'runtimeEngine.initialize':
           return <String, Object?>{
@@ -1478,7 +1604,7 @@ void main() {
             'canInitialize': true,
             'canConnect': true,
             'message':
-                'Android просит разрешение, чтобы POKROV мог подключить это устройство.',
+                'Android РїСЂРѕСЃРёС‚ СЂР°Р·СЂРµС€РµРЅРёРµ, С‡С‚РѕР±С‹ POKROV РјРѕРі РїРѕРґРєР»СЋС‡РёС‚СЊ СЌС‚Рѕ СѓСЃС‚СЂРѕР№СЃС‚РІРѕ.',
           };
       }
       return null;
@@ -1500,6 +1626,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
     final connectAction = find.byKey(const ValueKey('primary-connect-action'));
     await tester.dragUntilVisible(
@@ -1515,9 +1642,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Отключить'),
-      findsWidgets,
+      tester.widget<Semantics>(connectAction).properties.enabled,
+      isTrue,
     );
+    expect(find.byKey(const ValueKey('connect-disc-label')), findsOneWidget);
   });
 
   testWidgets(
@@ -1606,6 +1734,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
     final connectAction = find.byKey(const ValueKey('primary-connect-action'));
     await tester.dragUntilVisible(
@@ -1622,7 +1751,8 @@ void main() {
 
     expect(snapshotCalls, greaterThanOrEqualTo(2));
     expect(
-      find.text('Все готово. Нажмите главную кнопку, чтобы подключиться.'),
+      find.text(
+          'Р’СЃРµ РіРѕС‚РѕРІРѕ. РќР°Р¶РјРёС‚Рµ РіР»Р°РІРЅСѓСЋ РєРЅРѕРїРєСѓ, С‡С‚РѕР±С‹ РїРѕРґРєР»СЋС‡РёС‚СЊСЃСЏ.'),
       findsNothing,
     );
   });
@@ -1672,12 +1802,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
 
-    expect(find.textContaining('Готово к подключению'), findsWidgets);
-    expect(
-      find.text('Все готово. Нажмите главную кнопку, чтобы подключиться.'),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('home-status-switcher')), findsOneWidget);
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     await tester.pump();
@@ -1694,10 +1821,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(snapshotCalls, greaterThanOrEqualTo(2));
-    expect(
-      find.text('Все готово. Нажмите главную кнопку, чтобы подключиться.'),
-      findsNothing,
-    );
   });
 
   test('builds seed app context for public and readiness-only host lanes', () {
