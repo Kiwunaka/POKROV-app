@@ -167,6 +167,7 @@ Support contract rules:
 - support is a real ticket-backed flow, not decorative chat UI
 - app support should prepare account and device context before handing the user into the ticket flow or fallback channels
 - authenticated browser support should continue through `/api/tickets`, `/api/tickets/{ticket_id}`, `/api/tickets/{ticket_id}/messages`, and `/api/tickets/uploads`
+- app support may attach redacted diagnostics on ticket creation and on one explicitly confirmed follow-up reply
 - diagnostics should expose route mode, DNS policy, transport profile, ruleset/package-catalog version, app version, and linked Telegram state without leaking raw config, keys, or share links
 
 ## Smart Connect And Privacy Rules

@@ -1208,10 +1208,9 @@ class AppFirstRuntimeBootstrapper
     final best = ordered.first;
     final previousNodeCode =
         smartConnect.stickiness.preferredNodeCode.trim().toLowerCase();
-    final thresholdPercent =
-        smartConnect.stickiness.thresholdPercent > 0
-            ? smartConnect.stickiness.thresholdPercent
-            : 15;
+    final thresholdPercent = smartConnect.stickiness.thresholdPercent > 0
+        ? smartConnect.stickiness.thresholdPercent
+        : 15;
     _SmartConnectLatencySample? stickySample;
     for (final sample in ordered) {
       if (sample.nodeCode == previousNodeCode) {
@@ -3104,6 +3103,9 @@ abstract interface class SupportTicketService {
     required HostPlatform hostPlatform,
     required int ticketId,
     required String body,
+    RouteMode? routeMode,
+    String statusLabel,
+    Map<String, Object?> diagnostics,
   });
 }
 
@@ -3336,6 +3338,9 @@ class AppFirstSupportTicketService implements SupportTicketService {
     required HostPlatform hostPlatform,
     required int ticketId,
     required String body,
+    RouteMode? routeMode,
+    String statusLabel = '',
+    Map<String, Object?> diagnostics = const <String, Object?>{},
   }) async {
     final cleanBody = _trimForTicket(body, 2000);
     if (cleanBody.isEmpty) {
@@ -3343,13 +3348,25 @@ class AppFirstSupportTicketService implements SupportTicketService {
           'РЎРѕРѕР±С‰РµРЅРёРµ РЅРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїСѓСЃС‚С‹Рј.');
     }
 
+    final payload = <String, Object?>{
+      'body': cleanBody,
+    };
+    if (diagnostics.isNotEmpty) {
+      payload
+        ..['media_type'] = _diagnosticMediaType
+        ..['media_payload'] = _diagnosticsPayload(
+          hostPlatform: hostPlatform,
+          routeMode: routeMode ?? RouteMode.allExceptRu,
+          statusLabel: statusLabel,
+          diagnostics: diagnostics,
+        );
+    }
+
     final response = await _requestJsonWithSession(
       method: 'POST',
       path: '/api/tickets/$ticketId/messages',
       hostPlatform: hostPlatform,
-      body: <String, Object?>{
-        'body': cleanBody,
-      },
+      body: payload,
     );
     return _ticketThreadFromResponse(response);
   }

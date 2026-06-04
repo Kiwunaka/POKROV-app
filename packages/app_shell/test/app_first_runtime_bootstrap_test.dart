@@ -55,6 +55,8 @@ Map<String, Object?> _supportMessageJson({
   required int ticketId,
   required String senderRole,
   required String body,
+  String? mediaType,
+  String? mediaPayload,
 }) {
   return <String, Object?>{
     'id': id,
@@ -62,6 +64,8 @@ Map<String, Object?> _supportMessageJson({
     'sender_tg_id': senderRole == 'user' ? 10001 : 90001,
     'sender_role': senderRole,
     'body': body,
+    if (mediaType != null) 'media_type': mediaType,
+    if (mediaPayload != null) 'media_payload': mediaPayload,
     'created_at': '2026-06-03T00:00:00Z',
   };
 }
@@ -433,8 +437,7 @@ void main() {
     ]);
   });
 
-  test('uses shortlist probe endpoint for default smart-connect RTT',
-      () async {
+  test('uses shortlist probe endpoint for default smart-connect RTT', () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-smart-connect-default-probe-test-',
     );
@@ -444,7 +447,8 @@ void main() {
       }
     });
 
-    final probeServer = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    final probeServer =
+        await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(probeServer.close);
     unawaited(() async {
       await for (final socket in probeServer) {
@@ -890,6 +894,127 @@ void main() {
       'POST /api/client/session/start-trial',
       'GET /api/tickets?limit=5',
       'GET /api/tickets/654',
+      'POST /api/tickets/654/messages',
+    ]);
+  });
+
+  test(
+      'support ticket service can attach safe diagnostics to follow-up replies',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-support-reply-diagnostics-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final requests = <String>[];
+    Map<String, dynamic>? replyBody;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        final requestLabel = request.uri.hasQuery
+            ? '${request.method} ${request.uri.path}?${request.uri.query}'
+            : '${request.method} ${request.uri.path}';
+        requests.add(requestLabel);
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'support-reply-diagnostics-token',
+                    'account_id': 'reply-diagnostics-account',
+                  },
+                  'provisioning': <String, Object?>{
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.method == 'POST' &&
+            request.uri.path == '/api/tickets/654/messages') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer support-reply-diagnostics-token',
+          );
+          replyBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ticket': _supportTicketJson(
+                    id: 654,
+                    messages: <Object?>[
+                      _supportMessageJson(
+                        id: 3,
+                        ticketId: 654,
+                        senderRole: 'user',
+                        body: replyBody?['body'] as String? ?? '',
+                        mediaType: replyBody?['media_type'] as String?,
+                        mediaPayload: replyBody?['media_payload'] as String?,
+                      ),
+                    ],
+                  ),
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final service = AppFirstSupportTicketService(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+
+    final updated = await service.sendMessage(
+      hostPlatform: HostPlatform.windows,
+      ticketId: 654,
+      body: 'Follow up with diagnostics',
+      routeMode: RouteMode.allExceptRu,
+      statusLabel: 'Ready',
+      diagnostics: const <String, Object?>{
+        'app_version': '0.2.0-beta.1',
+        'platform': 'windows',
+        'route_mode': 'all_except_ru',
+        'connection_status': 'Ready',
+        'raw_config': 'vless://secret-value',
+        'subscription_url': 'https://secret.example/sub',
+      },
+    );
+
+    expect(updated.messages.single.mediaType, 'app_diagnostics');
+    expect(replyBody?['body'], 'Follow up with diagnostics');
+    expect(replyBody?['media_type'], 'app_diagnostics');
+    final mediaPayload = jsonDecode(replyBody?['media_payload'] as String)
+        as Map<String, dynamic>;
+    expect(mediaPayload['platform'], 'windows');
+    expect(mediaPayload['route_mode'], 'all_except_ru');
+    expect(mediaPayload['connection_status'], 'Ready');
+    expect(mediaPayload.containsKey('raw_config'), isFalse);
+    expect(mediaPayload.containsKey('subscription_url'), isFalse);
+    expect(replyBody?['media_payload'], isNot(contains('vless://')));
+    expect(replyBody?['media_payload'], isNot(contains('secret.example')));
+    expect(requests, <String>[
+      'POST /api/client/session/start-trial',
       'POST /api/tickets/654/messages',
     ]);
   });

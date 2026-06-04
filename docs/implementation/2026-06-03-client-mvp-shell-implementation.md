@@ -79,8 +79,9 @@ support/text-density consilium:
 - the support adapter can list tickets, load a ticket thread, create the first
   app-first ticket, and send follow-up messages to
   `/api/tickets/{ticket_id}/messages`
-- diagnostics are attached only during first ticket creation; normal follow-up
-  messages are body-only
+- diagnostics are attached during first ticket creation and can be explicitly
+  queued for the next follow-up reply from the chat diagnostics preview; normal
+  follow-up messages remain body-only by default
 - support diagnostics are sent as `app_diagnostics` through a conservative
   allowlist; raw configs, subscription URLs, keys, server addresses, and
   protocol links are filtered out before request payload construction
@@ -155,7 +156,8 @@ The Task 7 consilium aligned on a beta-honest staging cut:
   available and degrades to the canonical cabinet URL when the adapter fails.
 - Support is thread-aware through existing `/api/tickets*` endpoints. Continuous
   background polling, SSE, read receipts, typing indicators, and response-time
-  promises are still intentionally absent.
+  promises are still intentionally absent; follow-up diagnostics are a deliberate
+  one-message attachment, not passive telemetry.
 - Telegram bonus link/check/claim is native in the app shell, but it remains
   explicit user action only. The app does not poll Telegram membership, does not
   require Telegram for normal use, and does not deep-link back from Telegram in

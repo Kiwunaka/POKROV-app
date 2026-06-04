@@ -194,6 +194,7 @@ Support rules:
 
 - the app should prepare context before opening the ticket flow or fallback channels
 - authenticated browser and cabinet support is ticket-backed through `/api/tickets*`
+- app ticket creation attaches safe diagnostics automatically; follow-up replies attach diagnostics only after explicit one-message user confirmation
 - diagnostics should expose only safe summaries such as route mode, route category, DNS policy, and transport profile
 - diagnostics must not leak raw config, keys, or detailed topology
 - when no real session exists yet, support may show prepared context and recovery entry points but must not pretend that live ticket history already exists

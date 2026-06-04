@@ -45,9 +45,11 @@ The current code slice is:
    `POST /api/bonuses/promo/redeem` contracts;
 4. unified app code redemption for paid access keys, legacy gift-card codes,
    and promo codes through `POST /api/redeem`;
-5. no wheel/calendar hub in UI until mutating reward logic, rollout flags, and
+5. support follow-up replies can explicitly attach the same safe
+   `app_diagnostics` payload used for ticket creation;
+6. no wheel/calendar hub in UI until mutating reward logic, rollout flags, and
    copy are approved;
-6. keep profile loading lazy so the app does not block startup or ordinary
+7. keep profile loading lazy so the app does not block startup or ordinary
    navigation on bonus data.
 
 This slice is P0/P1 bridge work because the master brief needs bonus/account
@@ -77,7 +79,7 @@ clarity before a richer Rewards Hub can safely exist.
 | Rewards Hub light | Partial | compact Account summary shows Telegram/referral/promo status and recent safe bonus history; backend referral/promo/history contracts exist; wheel/calendar UI intentionally hidden | add dedicated hub only after copy proves a separate hub is clearer than the compact Account layer |
 | App-facing wheel spin endpoint and UI | Partial | app endpoint shell exists and is feature-gated/disabled by default; UI not live | implement reward ledger and rollout proof before enabling UI |
 | Calendar check-in endpoint and summary | Partial | app state/check-in endpoint shells exist and are feature-gated/disabled by default; UI not live | implement check-in ledger and rollout proof before enabling UI |
-| Support diagnostics flow | Done for MVP create path, partial for lifecycle | chat can attach redacted diagnostics on create | add follow-up diagnostics attachment and polling/SSE after operator flow proof |
+| Support diagnostics flow | Done for P1 follow-up attachment, partial for realtime lifecycle | chat can attach redacted diagnostics on create and on the next follow-up reply after explicit user confirmation | add polling/SSE only after operator flow proof |
 | Paywall/subscription UX cleanup | Partial | checkout handoff exists; in-app paywall not built | add paid plan surface only after pricing/copy/legal checks |
 | Rules presets UI | Partial | categories shown; selected apps staged | sync backend ruleset catalog and add real enabled states |
 | Email recovery polish | Partial | email/cabinet entry exists | add app email linking/recovery UI after email readiness stays green |

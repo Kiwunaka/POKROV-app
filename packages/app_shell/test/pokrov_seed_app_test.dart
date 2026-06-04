@@ -211,6 +211,9 @@ class _FakeSupportTicketService implements SupportTicketService {
   String? lastBody;
   int? lastTicketId;
   String? lastReplyBody;
+  RouteMode? lastReplyRouteMode;
+  String? lastReplyStatusLabel;
+  Map<String, Object?>? lastReplyDiagnostics;
   Map<String, Object?>? lastDiagnostics;
 
   @override
@@ -258,11 +261,17 @@ class _FakeSupportTicketService implements SupportTicketService {
     required HostPlatform hostPlatform,
     required int ticketId,
     required String body,
+    RouteMode? routeMode,
+    String statusLabel = '',
+    Map<String, Object?> diagnostics = const <String, Object?>{},
   }) async {
     sendCalls += 1;
     lastHostPlatform = hostPlatform;
     lastTicketId = ticketId;
     lastReplyBody = body;
+    lastReplyRouteMode = routeMode;
+    lastReplyStatusLabel = statusLabel;
+    lastReplyDiagnostics = diagnostics;
     return sentThread;
   }
 }
@@ -1328,6 +1337,17 @@ void main() {
     expect(supportTicketService.getCalls, 1);
     expect(find.text('Try another location.'), findsOneWidget);
 
+    await tester.tap(find.byKey(const ValueKey('support-attach-diagnostics')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('support-diagnostics-preview')),
+        findsOneWidget);
+
+    await tester
+        .tap(find.byKey(const ValueKey('support-diagnostics-attach-next')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('support-diagnostics-queued')),
+        findsOneWidget);
+
     await tester.enterText(
       find.byKey(const ValueKey('support-chat-composer')),
       'Still broken',
@@ -1339,6 +1359,22 @@ void main() {
     expect(supportTicketService.sendCalls, 1);
     expect(supportTicketService.lastTicketId, 888);
     expect(supportTicketService.lastReplyBody, 'Still broken');
+    expect(supportTicketService.lastReplyRouteMode, RouteMode.allExceptRu);
+    expect(supportTicketService.lastReplyStatusLabel, isNotEmpty);
+    expect(supportTicketService.lastReplyDiagnostics?['platform'], 'windows');
+    expect(supportTicketService.lastReplyDiagnostics?['route_mode'],
+        RouteMode.allExceptRu.name);
+    expect(supportTicketService.lastReplyDiagnostics?['connection_status'],
+        isNotEmpty);
+    expect(supportTicketService.lastReplyDiagnostics?.containsKey('raw_config'),
+        isFalse);
+    expect(
+      supportTicketService.lastReplyDiagnostics
+          ?.containsKey('subscription_url'),
+      isFalse,
+    );
+    expect(
+        find.byKey(const ValueKey('support-diagnostics-queued')), findsNothing);
     expect(find.text('Still broken'), findsOneWidget);
   });
 

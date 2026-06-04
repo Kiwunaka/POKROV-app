@@ -4020,6 +4020,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
   String _threadStatus = 'AI помощник';
   String? _threadError;
   List<_SupportChatMessage> _messages = _supportGreetingMessages();
+  bool _attachDiagnosticsToNextMessage = false;
 
   @override
   void initState() {
@@ -4111,6 +4112,9 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
     if (text.isEmpty || _sending || _loadingThread) {
       return;
     }
+    final attachDiagnostics = _attachDiagnosticsToNextMessage;
+    final diagnostics =
+        attachDiagnostics ? _supportDiagnostics() : const <String, Object?>{};
     setState(() {
       _messages
           .add(_SupportChatMessage(role: _SupportChatRole.user, body: text));
@@ -4125,12 +4129,16 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
           hostPlatform: widget.appContext.hostPlatform,
           ticketId: activeTicketId,
           body: text,
+          routeMode: attachDiagnostics ? widget.selectedRouteMode : null,
+          statusLabel: attachDiagnostics ? widget.statusLabel : '',
+          diagnostics: diagnostics,
         );
         if (!mounted) {
           return;
         }
         setState(() {
           _sending = false;
+          _attachDiagnosticsToNextMessage = false;
           _applyThread(thread);
         });
         return;
@@ -4150,6 +4158,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
       }
       setState(() {
         _sending = false;
+        _attachDiagnosticsToNextMessage = false;
         _messages.add(
           _SupportChatMessage(
             role: _SupportChatRole.assistant,
@@ -4300,13 +4309,27 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                       ),
                 ),
                 const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton(
-                    key: const ValueKey('support-diagnostics-close'),
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    child: const Text('Готово'),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      key: const ValueKey('support-diagnostics-close'),
+                      onPressed: () => Navigator.of(context).maybePop(),
+                      child: const Text('Готово'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton.icon(
+                      key: const ValueKey('support-diagnostics-attach-next'),
+                      onPressed: () {
+                        setState(() {
+                          _attachDiagnosticsToNextMessage = true;
+                        });
+                        Navigator.of(context).maybePop();
+                      },
+                      icon: const Icon(Icons.attach_file_rounded, size: 18),
+                      label: const Text('Прикрепить'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -4377,54 +4400,131 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: _SeedPalette.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _SeedPalette.line),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        key: const ValueKey('support-attach-diagnostics'),
-                        tooltip: 'Диагностика',
-                        icon: const Icon(Icons.attach_file_rounded),
-                        onPressed: _showDiagnosticsPreview,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_attachDiagnosticsToNextMessage)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _SupportDiagnosticsQueuedPill(
+                        onClear: () {
+                          setState(() {
+                            _attachDiagnosticsToNextMessage = false;
+                          });
+                        },
                       ),
-                      Expanded(
-                        child: TextField(
-                          key: const ValueKey('support-chat-composer'),
-                          controller: _composer,
-                          minLines: 1,
-                          maxLines: 3,
-                          decoration: const InputDecoration(
-                            hintText: 'Напишите сообщение',
-                            border: InputBorder.none,
-                            isDense: true,
+                    ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: _SeedPalette.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _SeedPalette.line),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            key: const ValueKey('support-attach-diagnostics'),
+                            tooltip: 'Диагностика',
+                            icon: const Icon(Icons.attach_file_rounded),
+                            onPressed: _showDiagnosticsPreview,
                           ),
-                          onSubmitted: (_) => unawaited(_sendMessage()),
-                        ),
+                          Expanded(
+                            child: TextField(
+                              key: const ValueKey('support-chat-composer'),
+                              controller: _composer,
+                              minLines: 1,
+                              maxLines: 3,
+                              decoration: const InputDecoration(
+                                hintText: 'Напишите сообщение',
+                                border: InputBorder.none,
+                                isDense: true,
+                              ),
+                              onSubmitted: (_) => unawaited(_sendMessage()),
+                            ),
+                          ),
+                          IconButton(
+                            key: const ValueKey('support-chat-send'),
+                            tooltip: 'Отправить',
+                            icon: _sending
+                                ? const SizedBox.square(
+                                    dimension: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.send_rounded),
+                            onPressed: (_sending || _loadingThread)
+                                ? null
+                                : () => unawaited(_sendMessage()),
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        key: const ValueKey('support-chat-send'),
-                        tooltip: 'Отправить',
-                        icon: _sending
-                            ? const SizedBox.square(
-                                dimension: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.send_rounded),
-                        onPressed: (_sending || _loadingThread)
-                            ? null
-                            : () => unawaited(_sendMessage()),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SupportDiagnosticsQueuedPill extends StatelessWidget {
+  const _SupportDiagnosticsQueuedPill({
+    required this.onClear,
+  });
+
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        key: const ValueKey('support-diagnostics-queued'),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: _SeedPalette.accent.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: _SeedPalette.accent.withValues(alpha: 0.16),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.verified_user_outlined,
+              size: 16,
+              color: _SeedPalette.accent,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Диагностика будет приложена',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: _SeedPalette.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(width: 4),
+            IconButton(
+              key: const ValueKey('support-diagnostics-clear'),
+              tooltip: 'Не прикладывать',
+              visualDensity: VisualDensity.compact,
+              iconSize: 16,
+              constraints: const BoxConstraints(
+                minWidth: 26,
+                minHeight: 26,
+              ),
+              padding: EdgeInsets.zero,
+              onPressed: onClear,
+              icon: const Icon(
+                Icons.close_rounded,
+                color: _SeedPalette.muted,
               ),
             ),
           ],
