@@ -116,6 +116,40 @@ clarity before a richer Rewards Hub can safely exist.
 | Detailed cabinet/account management | Not started in app | cabinet handoff exists | expand webapp account management first, then app entry points |
 | Advanced raw rule editor | Debug-only backlog | advanced gate exists | only expose behind explicit responsibility gate for support/debug; never use it as normal app selection UI |
 
+## P4 Map
+
+Owner priority update on `2026-06-04`: P4 is the remaining product-completion
+and verification wave after the P3 manual selected-apps bridge. These items
+should improve real user capability or release confidence, not add fake active
+states.
+
+| Decision | Status | Current Evidence | Next Action |
+| --- | --- | --- | --- |
+| Android installed-app picker and Windows process/exe picker | Not started for native pickers | manual selected-app identifiers, backend `selected_apps`, and Android `include_package` bridge exist | build Android installed-package picker and Windows process/exe picker so normal users do not type package/process ids |
+| Live wheel, calendar, and achievements | Not started for live mutations | Rewards Hub preview, disabled wheel/calendar endpoint shells, compact calendar grid, and safe achievement chips exist | add reward ledger, feature flags, rollout proof, and copy before enabling spin/check-in/achievement claims |
+| Support realtime lifecycle | Not started | embedded ticket-backed support chat and explicit diagnostic attachment exist | add polling or SSE, ticket status, operator escalation states, and stale/offline behavior without fake operator presence |
+| Native email linking and recovery | Not started for native app flow | email/recovery handoff and cabinet continuation exist | add native email linking/recovery only after delivery readiness and account-linking semantics are green |
+| Detailed account and cabinet management | Not started in app | app opens cabinet through short-lived token and shows compact access/account summary | expose detailed account management through app-safe entrypoints or a polished cabinet continuation, without turning Account into a dense dashboard |
+| WARP as a working feature | Not started | Home can show an honest disabled/upcoming WARP tile; WARP is not claimed active | implement backend policy, safe storage, runtime activation, fallback, diagnostics, Android proof, and Windows proof before enabling any toggle |
+| Responsive/golden width verification | Not started for the full matrix | widget tests cover key shell behavior, but not the full visual matrix | capture and review `360`, `700`, `900`, `1024`, `1180`, and `1440` widths for Russian text, Home density, sidebar behavior, and no one-letter wrapping |
+| Premium motion pass | Partial foundation only | motion policy, reduced-motion hooks, skeleton components, and connect-disc structure exist | finish connect ritual, skeleton consistency, status transitions, sidebar collapse, and row/chip feedback as a dedicated quality pass |
+
+## P5 Map
+
+P5 is the premium-feel wave. It must make the app feel tactile, calm, and
+platform-native without pretending that disabled features are live.
+
+| Decision | Status | Current Evidence | Next Action |
+| --- | --- | --- | --- |
+| Connect disc ritual | Partial foundation | brand-marked connect disc exists | add press scale, finite ring sweep, connected settle, and error settle using transform/opacity and reduced-motion fallback |
+| Status transitions | Not started as a dedicated pass | connection statuses render in the shell | add `160-220ms` crossfade/slide transitions without leaving stale status text in the tree |
+| Row and chip tactile feedback | Not started as a dedicated pass | rows and chips exist across Home, Locations, Rules, Rewards, and Account | add short press feedback for rows/chips without bounce, glow, or layout-property animation |
+| Geometry-matched skeletons | Partial | motion skeleton components exist | ensure skeleton dimensions match final rows/cards/chips so lazy loading causes no layout shift |
+| Disabled feature states | Partial | WARP, wheel, and calendar stay disabled/upcoming instead of active | make disabled WARP/wheel/calendar look muted and non-CTA, with one short reason and no active affordance |
+| Account and Rewards text density | Partial | grouped Account and Rewards Hub exist | reduce first-layer copy, prefer iOS Settings-style rows and values, and move explanations into sheets/details |
+| Windows sidebar collapse polish | Partial | desktop sidebar, narrow drawer, and collapse behavior exist | add label opacity and width transitions without content jumps, and verify keyboard/focus behavior |
+| Android haptics | Not started | Android shell can host platform feedback | add restrained haptics for connect, redeem success, selected-app added, and other clear success states |
+
 ## Guardrails
 
 - Do not expose raw links, hostnames, ports, protocol names, JSON, CIDR, or
