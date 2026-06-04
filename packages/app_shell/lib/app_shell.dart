@@ -3688,6 +3688,9 @@ class _RewardsHubSheet extends StatelessWidget {
         summary?.wheelState ?? AppFirstBonusFeatureState.wheelDisabled;
     final calendar =
         summary?.calendarState ?? AppFirstBonusFeatureState.calendarDisabled;
+    final referralSummary = summary == null
+        ? AppFirstReferralSummary.empty
+        : _rewardsReferralSummary(summary!);
     final referralCode = summary?.referralCode.trim() ?? '';
     return SafeArea(
       top: false,
@@ -3747,7 +3750,8 @@ class _RewardsHubSheet extends StatelessWidget {
             const SizedBox(height: 12),
             _RewardsReferralCard(
               referralCode: referralCode,
-              referralCount: summary?.referralCount ?? 0,
+              referralSummary: referralSummary,
+              onOpenHandoff: onOpenHandoff,
             ),
             const SizedBox(height: 12),
             _RewardsPromoSlotsSection(
@@ -4149,15 +4153,27 @@ Uri? _safePromoSlotHref(String value) {
 class _RewardsReferralCard extends StatelessWidget {
   const _RewardsReferralCard({
     required this.referralCode,
-    required this.referralCount,
+    required this.referralSummary,
+    required this.onOpenHandoff,
   });
 
   final String referralCode;
-  final int referralCount;
+  final AppFirstReferralSummary referralSummary;
+  final void Function(String label, String value) onOpenHandoff;
 
   @override
   Widget build(BuildContext context) {
-    final code = referralCode.isEmpty ? 'POKROV' : referralCode;
+    final code = referralSummary.code.trim().isNotEmpty
+        ? referralSummary.code.trim()
+        : referralCode.isEmpty
+            ? 'POKROV'
+            : referralCode;
+    final referralShareLink = referralSummary.shareLink.trim().isNotEmpty
+        ? referralSummary.shareLink
+        : code == 'POKROV'
+            ? ''
+            : 'https://t.me/pokrov_vpnbot?start=ref_$code';
+    final shareLink = _safeReferralShareHref(referralShareLink);
     return Container(
       key: const ValueKey('rewards-referral-card'),
       width: double.infinity,
@@ -4183,7 +4199,9 @@ class _RewardsReferralCard extends StatelessWidget {
                       ),
                 ),
                 Text(
-                  'Приглашений: $referralCount',
+                  referralSummary.bonusDays > 0
+                      ? 'Приглашений: ${referralSummary.count} · бонус +${referralSummary.bonusDays} дней'
+                      : 'Приглашений: ${referralSummary.count}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: _SeedPalette.muted,
                       ),
@@ -4202,10 +4220,73 @@ class _RewardsReferralCard extends StatelessWidget {
             icon: const Icon(Icons.copy_rounded),
             label: const Text('Копия'),
           ),
+          const SizedBox(width: 8),
+          IconButton.outlined(
+            key: const ValueKey('rewards-referral-copy-link-action'),
+            tooltip: 'Скопировать ссылку',
+            onPressed: shareLink == null
+                ? null
+                : () {
+                    Clipboard.setData(
+                      ClipboardData(text: shareLink.toString()),
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Ссылка скопирована')),
+                    );
+                  },
+            icon: const Icon(Icons.link_rounded),
+          ),
+          IconButton.filled(
+            key: const ValueKey('rewards-referral-share-action'),
+            tooltip: 'Открыть ссылку',
+            onPressed: shareLink == null
+                ? null
+                : () => onOpenHandoff('download', shareLink.toString()),
+            icon: const Icon(Icons.ios_share_rounded),
+          ),
         ],
       ),
     );
   }
+}
+
+AppFirstReferralSummary _rewardsReferralSummary(AppFirstBonusSummary summary) {
+  final remote = summary.referralSummary;
+  if (remote.code.trim().isNotEmpty ||
+      remote.link.trim().isNotEmpty ||
+      remote.count > 0 ||
+      remote.bonusDays > 0) {
+    return remote;
+  }
+  return AppFirstReferralSummary(
+    count: summary.referralCount,
+    code: summary.referralCode,
+    link: '',
+    bonusDays: summary.referralBonusDays,
+    tierKey: summary.tierKey,
+    tierPercent: summary.tierPercent,
+    paidReferrals: summary.paidReferrals,
+    nextTierKey: summary.nextTierKey,
+    nextTierAt: summary.nextTierAt,
+  );
+}
+
+Uri? _safeReferralShareHref(String value) {
+  final uri = Uri.tryParse(value.trim());
+  if (uri == null || !uri.hasScheme) {
+    return null;
+  }
+  final scheme = uri.scheme.toLowerCase();
+  if (scheme == 'tg') {
+    return uri;
+  }
+  if (scheme != 'https') {
+    return null;
+  }
+  if (uri.host.toLowerCase() != 't.me') {
+    return null;
+  }
+  return uri;
 }
 
 int _rewardActiveDays(AppFirstBonusSummary? summary) {

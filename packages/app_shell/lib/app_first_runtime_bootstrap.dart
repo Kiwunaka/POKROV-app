@@ -194,6 +194,7 @@ class AppFirstBonusSummary {
     required this.nextTierAt,
     this.wheelState = AppFirstBonusFeatureState.wheelDisabled,
     this.calendarState = AppFirstBonusFeatureState.calendarDisabled,
+    this.referralSummary = AppFirstReferralSummary.empty,
     this.promoSlots = AppFirstPromoSlots.empty,
     this.historyItems = const <AppFirstBonusHistoryItem>[],
   });
@@ -215,10 +216,59 @@ class AppFirstBonusSummary {
   final int? nextTierAt;
   final AppFirstBonusFeatureState wheelState;
   final AppFirstBonusFeatureState calendarState;
+  final AppFirstReferralSummary referralSummary;
   final AppFirstPromoSlots promoSlots;
   final List<AppFirstBonusHistoryItem> historyItems;
 
   bool get channelBonusClaimed => channelBonusClaimedAt.trim().isNotEmpty;
+}
+
+class AppFirstReferralSummary {
+  const AppFirstReferralSummary({
+    required this.count,
+    required this.code,
+    required this.link,
+    required this.bonusDays,
+    required this.tierKey,
+    required this.tierPercent,
+    required this.paidReferrals,
+    required this.nextTierKey,
+    required this.nextTierAt,
+  });
+
+  static const empty = AppFirstReferralSummary(
+    count: 0,
+    code: '',
+    link: '',
+    bonusDays: 0,
+    tierKey: '',
+    tierPercent: 0,
+    paidReferrals: 0,
+    nextTierKey: '',
+    nextTierAt: null,
+  );
+
+  final int count;
+  final String code;
+  final String link;
+  final int bonusDays;
+  final String tierKey;
+  final double tierPercent;
+  final int paidReferrals;
+  final String nextTierKey;
+  final int? nextTierAt;
+
+  String get shareLink {
+    final direct = link.trim();
+    if (direct.isNotEmpty) {
+      return direct;
+    }
+    final safeCode = code.trim();
+    if (safeCode.isEmpty) {
+      return '';
+    }
+    return 'https://t.me/pokrov_vpnbot?start=ref_$safeCode';
+  }
 }
 
 class AppFirstBonusFeatureState {
@@ -851,11 +901,27 @@ class AppFirstRuntimeBootstrapper
           final tier = _readMap(response['points_tier']);
           final wheel = _readMap(response['wheel']);
           final calendar = _readMap(response['calendar']);
+          final referralCount = _readInt(response['referral_count']);
+          final referralCode = _readText(response['referral_code']);
+          final referralBonusDays = _readInt(response['referral_bonus_days']);
+          final referralSummaryFallback = _readReferralSummary(
+            _readMap(response['referral']),
+            fallbackCount: referralCount,
+            fallbackCode: referralCode,
+            fallbackBonusDays: referralBonusDays,
+            fallbackTier: tier,
+          );
           final historyItems = await _fetchBonusHistoryItems(
             summaryResponse: response,
             hostPlatform: hostPlatform,
             client: client,
             bearerToken: state.sessionToken,
+          );
+          final referralSummary = await _fetchReferralSummary(
+            hostPlatform: hostPlatform,
+            client: client,
+            bearerToken: state.sessionToken,
+            fallback: referralSummaryFallback,
           );
           final promoSlots = await _fetchPromoSlots(
             hostPlatform: hostPlatform,
@@ -863,9 +929,9 @@ class AppFirstRuntimeBootstrapper
             bearerToken: state.sessionToken,
           );
           return AppFirstBonusSummary(
-            referralCount: _readInt(response['referral_count']),
-            referralCode: _readText(response['referral_code']),
-            referralBonusDays: _readInt(response['referral_bonus_days']),
+            referralCount: referralCount,
+            referralCode: referralCode,
+            referralBonusDays: referralBonusDays,
             streakMonths: _readInt(response['streak_months']),
             lastWheelSpin: _readText(response['last_wheel_spin']),
             channelBonusPremiumDays:
@@ -896,6 +962,7 @@ class AppFirstRuntimeBootstrapper
                 'last_wheel_spin',
               ],
             ),
+            referralSummary: referralSummary,
             promoSlots: promoSlots,
             historyItems: historyItems,
           );
@@ -965,6 +1032,74 @@ class AppFirstRuntimeBootstrapper
     } on BootstrapFailure {
       return AppFirstPromoSlots.empty;
     }
+  }
+
+  Future<AppFirstReferralSummary> _fetchReferralSummary({
+    required HostPlatform hostPlatform,
+    required HttpClient client,
+    required String bearerToken,
+    required AppFirstReferralSummary fallback,
+  }) async {
+    try {
+      final response = await _requestJson(
+        method: 'GET',
+        path: '/api/bonuses/referral/summary',
+        client: client,
+        bearerToken: bearerToken,
+        hostPlatform: hostPlatform,
+      );
+      return _readReferralSummary(
+        response,
+        fallbackCount: fallback.count,
+        fallbackCode: fallback.code,
+        fallbackBonusDays: fallback.bonusDays,
+        fallbackTier: <String, Object?>{
+          'tier_key': fallback.tierKey,
+          'percent': fallback.tierPercent,
+          'paid_referrals': fallback.paidReferrals,
+          'next_tier_key': fallback.nextTierKey,
+          'next_tier_at': fallback.nextTierAt,
+        },
+      );
+    } on BootstrapFailure {
+      return fallback;
+    }
+  }
+
+  AppFirstReferralSummary _readReferralSummary(
+    Map<String, dynamic> data, {
+    required int fallbackCount,
+    required String fallbackCode,
+    required int fallbackBonusDays,
+    required Map<String, Object?> fallbackTier,
+  }) {
+    final tier = _readMap(data['tier']).isEmpty
+        ? _readMap(data['points_tier'])
+        : _readMap(data['tier']);
+    final resolvedTier = tier.isEmpty ? fallbackTier : tier;
+    return AppFirstReferralSummary(
+      count: data.containsKey('count')
+          ? _readInt(data['count'])
+          : _readInt(data['referral_count']) == 0
+              ? fallbackCount
+              : _readInt(data['referral_count']),
+      code: _readText(data['code']).isNotEmpty
+          ? _readText(data['code'])
+          : _readText(data['referral_code']).isNotEmpty
+              ? _readText(data['referral_code'])
+              : fallbackCode,
+      link: _readText(data['link']),
+      bonusDays: data.containsKey('bonus_days')
+          ? _readInt(data['bonus_days'])
+          : _readInt(data['referral_bonus_days']) == 0
+              ? fallbackBonusDays
+              : _readInt(data['referral_bonus_days']),
+      tierKey: _readText(resolvedTier['tier_key']),
+      tierPercent: _readDouble(resolvedTier['percent']),
+      paidReferrals: _readInt(resolvedTier['paid_referrals']),
+      nextTierKey: _readText(resolvedTier['next_tier_key']),
+      nextTierAt: _readNullableInt(resolvedTier['next_tier_at']),
+    );
   }
 
   AppFirstBonusFeatureState _readBonusFeatureState(

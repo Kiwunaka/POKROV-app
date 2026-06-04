@@ -151,6 +151,8 @@ Before the device receives a real subscription payload:
 
 - Account may show a compact bonus summary for Telegram reward, referrals,
   promo entry, and the latest safe bonus-history events
+- Rewards Hub may show the referral code, safe Telegram referral link, tier
+  state, and copy/share actions from `GET /api/bonuses/referral/summary`
 - bonus history must stay compact and app-safe: no raw subscription links,
   full promo codes, tokens, hostnames, or backend event metadata
 - Rewards Hub may show enabled first-party promo slots from

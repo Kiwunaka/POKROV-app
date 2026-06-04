@@ -1557,6 +1557,35 @@ void main() {
           continue;
         }
 
+        if (request.uri.path == '/api/bonuses/referral/summary') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer bonus-summary-session',
+          );
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ok': true,
+                  'count': 2,
+                  'code': 'POKROV2',
+                  'link': 'https://t.me/pokrov_vpnbot?start=ref_POKROV2',
+                  'bonus_days': 10,
+                  'tier': <String, Object?>{
+                    'tier_key': 'starter',
+                    'percent': 5,
+                    'paid_referrals': 2,
+                    'next_tier_key': 'pro',
+                    'next_tier_at': 5,
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
         if (request.uri.path == '/api/client/promo-slots') {
           expect(request.uri.queryParameters['surface'], 'app');
           expect(
@@ -1631,6 +1660,11 @@ void main() {
     expect(summary.historyItems.first.kind, 'promo');
     expect(summary.historyItems.first.days, 7);
     expect(summary.historyItems.first.codePreview, '...DAYS');
+    expect(summary.referralSummary.code, 'POKROV2');
+    expect(summary.referralSummary.link,
+        'https://t.me/pokrov_vpnbot?start=ref_POKROV2');
+    expect(summary.referralSummary.bonusDays, 10);
+    expect(summary.referralSummary.tierKey, 'starter');
     expect(summary.promoSlots.remoteAvailable, isTrue);
     expect(summary.promoSlots.visibleSlots, hasLength(1));
     expect(summary.promoSlots.visibleSlots.single.title, 'Telegram +10 days');
@@ -1643,6 +1677,7 @@ void main() {
       'POST /api/client/session/start-trial',
       'GET /api/bonuses/summary',
       'GET /api/bonuses/history',
+      'GET /api/bonuses/referral/summary',
       'GET /api/client/promo-slots',
     ]);
   });

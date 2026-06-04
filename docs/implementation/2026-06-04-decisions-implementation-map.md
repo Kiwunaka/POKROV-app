@@ -36,8 +36,8 @@ Explicitly ignored as old/archive input:
 The current code slice is:
 
 1. app-facing bonus summary model and runtime adapter;
-2. compact Account summary surface for Telegram, referrals, promo entry, and
-   recent safe bonus history;
+2. compact Account summary surface for Telegram, referral link/share, promo
+   entry, and recent safe bonus history;
 3. platform `GET /api/bonuses/summary`, `GET /api/bonuses/referral/summary`,
    `GET /api/bonuses/history`, `GET /api/bonuses/wheel/state`,
    `POST /api/bonuses/wheel/spin`, `GET /api/bonuses/calendar`,
@@ -51,8 +51,9 @@ The current code slice is:
 6. Rules renders the safe ruleset/package-catalog version and explicit
    enabled/staged/locked preset states without exposing raw rule assets;
 7. Rewards Hub opens from Account and shows safe wheel/calendar state previews,
-   activity grid, achievements, referral card, first-party promo slots, and
-   disabled mutating actions until backend state marks the mechanics enabled;
+   activity grid, achievements, referral card with safe share/copy actions,
+   first-party promo slots, and disabled mutating actions until backend state
+   marks the mechanics enabled;
 8. keep profile loading lazy so the app does not block startup or ordinary
    navigation on bonus data.
 
@@ -94,7 +95,7 @@ clarity before a richer Rewards Hub can safely exist.
 | --- | --- | --- | --- |
 | Full activity calendar | Partial | Rewards Hub shows a compact activity grid derived from safe summary state | replace preview with ledger-backed full calendar when check-in history exists |
 | Achievements in app | Partial | Rewards Hub shows safe achievement chips derived from opening, Telegram, referral, and streak state | replace preview chips with backend achievement ledger when available |
-| Rich referral UI | Partial | Rewards Hub shows referral code/card and copy action without pushing referral spam into the first layer | add share link/deep-link once referral summary contract is wired into app shell |
+| Rich referral UI | Done for P2 safe display, partial for live referral program | App reads `GET /api/bonuses/referral/summary`, parses link/tier state, and Rewards Hub exposes copy-code, copy-link, and safe Telegram share/open actions without pushing referral spam into the first layer | keep anti-abuse, payout/bonus ledger, and referral campaign tuning backend-owned |
 | Promo slots in app | Done for P2 safe display, partial for live campaigns | Rewards Hub fetches `GET /api/client/promo-slots?surface=app` best-effort, renders enabled first-party slots, and falls back to a quiet empty state | add campaign assignment, rollout QA, and feature-flag proof before relying on remote campaign content |
 | Advanced raw rule editor | Not started | advanced gate exists | keep out of normal UI until support/debug need is proven |
 | Detailed cabinet/account management | Partial | cabinet continuation exists | expand webapp first, then expose app entry points |

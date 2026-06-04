@@ -172,6 +172,10 @@ and Account may show the latest safe reward events inside the existing bonus
 summary. Wheel and calendar state endpoints can feed safe Rewards Hub previews,
 but their mutating actions remain feature-gated and must stay disabled until
 reward logic, rollout state, and UI copy are explicit.
+The client reads `GET /api/bonuses/referral/summary` for the Rewards Hub
+referral card: code, safe Telegram link, bonus days, and tier state. It may
+expose copy/share/open actions for that link, but referral anti-abuse, bonus
+granting, and campaign tuning remain backend-owned.
 `GET /api/client/promo-slots?surface=app` may feed the same Rewards Hub with
 enabled first-party slots only; third-party ads, unsafe links, and tracking
 campaigns stay out of the app.

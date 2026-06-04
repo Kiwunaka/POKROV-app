@@ -1202,6 +1202,59 @@ void main() {
     expect(find.text('Telegram +10 days'), findsOneWidget);
   });
 
+  testWidgets('profile rewards hub opens referral share link', (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+    );
+    final launched = <Uri>[];
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        handoffLauncher: (uri) async {
+          launched.add(uri);
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-profile');
+    final wheelAction =
+        find.byKey(const ValueKey('profile-bonus-wheel-action'));
+    await tester.dragUntilVisible(
+      wheelAction,
+      find.byType(Scrollable).first,
+      const Offset(0, -240),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(wheelAction);
+    await tester.pumpAndSettle();
+
+    final shareAction =
+        find.byKey(const ValueKey('rewards-referral-share-action'));
+    expect(shareAction, findsOneWidget);
+    await tester.dragUntilVisible(
+      shareAction,
+      find.byKey(const ValueKey('rewards-hub-sheet')),
+      const Offset(0, -160),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(shareAction);
+    await tester.pumpAndSettle();
+
+    expect(launched, hasLength(1));
+    expect(launched.single.toString(), contains('start=ref_POKROV1'));
+  });
+
   testWidgets('profile opens subscription and email recovery sheets',
       (tester) async {
     final bootstrapper = _FakeBootstrapper(
