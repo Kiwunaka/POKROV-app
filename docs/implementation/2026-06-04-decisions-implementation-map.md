@@ -49,8 +49,9 @@ The current code slice is:
    `app_diagnostics` payload used for ticket creation;
 6. Rules renders the safe ruleset/package-catalog version and explicit
    enabled/staged/locked preset states without exposing raw rule assets;
-7. no wheel/calendar hub in UI until mutating reward logic, rollout flags, and
-   copy are approved;
+7. Rewards Hub opens from Account and shows safe wheel/calendar state previews,
+   activity grid, achievements, referral card, and disabled mutating actions
+   until backend state marks the mechanics enabled;
 8. keep profile loading lazy so the app does not block startup or ordinary
    navigation on bonus data.
 
@@ -70,7 +71,7 @@ clarity before a richer Rewards Hub can safely exist.
 | Telegram `+10 days` link/check/claim | Done for MVP | app has link, channel check, claim actions and tests | keep optional, no startup wall |
 | Bot parity for subscription/access | Done for MVP | platform bots, cabinet, and app share app-first contracts; root `scripts/app_bot_parity_smoke.py` verifies static parity for account, cabinet, Telegram bonus, support ticket, safe redeem, and bot fallback entrypoints | keep live Telegram bot and same-account parity as owner `MANUAL_OWNER_TEST` before handoff |
 | Short-lived cabinet token | Done for MVP | app calls `POST /api/client/cabinet-token`; cabinet exchange exists | keep e2e coverage for one-time URL token removal |
-| Bonus API contract and MVP endpoints | Done for MVP | channel check/claim live; app reads `GET /api/bonuses/summary` plus safe history from `GET /api/bonuses/history`; platform exposes referral summary, promo redeem, unified gift redeem, and disabled-by-default wheel/calendar endpoint shells; compact summary/history tested; wheel/calendar UI hidden | keep wheel/calendar mutating flows hidden until reward logic and rollout flags are approved |
+| Bonus API contract and MVP endpoints | Done for MVP | channel check/claim live; app reads `GET /api/bonuses/summary` plus safe history from `GET /api/bonuses/history`; platform exposes referral summary, promo redeem, unified gift redeem, and disabled-by-default wheel/calendar endpoint shells; compact summary/history plus wheel/calendar state parsing are tested | keep wheel/calendar mutating flows disabled until reward logic and rollout flags are approved |
 | Smart-connect shortlist and route-mode sync | Done for MVP | managed profile returns smart-connect metadata plus internal probe targets; route mode persists through backend contract; client performs best-effort RTT probe/upload and applies the 15% stickiness threshold with tests | keep smart-connect hidden from first-layer UI; collect live release-build telemetry before exposing any manual controls |
 | Claims guardrails | Done for MVP | WARP info-only, selected-apps staged, no stable/store/trusted/RU claims | keep guardrails in tests/docs with each release update |
 
@@ -78,21 +79,21 @@ clarity before a richer Rewards Hub can safely exist.
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Rewards Hub light | Partial | compact Account summary shows Telegram/referral/promo status and recent safe bonus history; backend referral/promo/history contracts exist; wheel/calendar UI intentionally hidden | add dedicated hub only after copy proves a separate hub is clearer than the compact Account layer |
-| App-facing wheel spin endpoint and UI | Partial | app endpoint shell exists and is feature-gated/disabled by default; UI not live | implement reward ledger and rollout proof before enabling UI |
-| Calendar check-in endpoint and summary | Partial | app state/check-in endpoint shells exist and are feature-gated/disabled by default; UI not live | implement check-in ledger and rollout proof before enabling UI |
+| Rewards Hub light | Done for P1 preview, partial for live rewards | Account summary opens a dedicated hub with Telegram/referral/promo/history context, safe wheel/calendar previews, activity grid, achievements, and referral card | add live reward mutations only after backend ledger and rollout proof |
+| App-facing wheel spin endpoint and UI | Done for P1 preview, partial for live spin | app parses wheel state from summary and shows roulette UI with disabled spin action while backend returns disabled state | implement reward ledger and rollout proof before enabling spin |
+| Calendar check-in endpoint and summary | Done for P1 preview, partial for live check-in | app parses calendar state from summary and shows activity calendar preview with disabled check-in action while backend returns disabled state | implement check-in ledger and rollout proof before enabling check-in |
 | Support diagnostics flow | Done for P1 follow-up attachment, partial for realtime lifecycle | chat can attach redacted diagnostics on create and on the next follow-up reply after explicit user confirmation | add polling/SSE only after operator flow proof |
-| Paywall/subscription UX cleanup | Partial | checkout handoff exists; in-app paywall not built | add paid plan surface only after pricing/copy/legal checks |
+| Paywall/subscription UX cleanup | Done for P1 safe handoff, partial for priced paywall | Account opens a subscription sheet with current access, checkout handoff, and cabinet handoff without unsupported prices | add paid plan cards only after pricing/copy/legal checks |
 | Rules presets UI | Done for P1 seed/catalog states, partial for live catalog and picker | Rules shows safe ruleset/package-catalog versions, enabled/staged/locked preset states, and selected apps remains staged | wire live backend catalog sync and add Android package / Windows process picker only after OS enforcement proof |
-| Email recovery polish | Partial | email/cabinet entry exists | add app email linking/recovery UI after email readiness stays green |
+| Email recovery polish | Done for P1 handoff, partial for native email auth | Account opens an email/recovery sheet with add-email, cabinet, and recovery handoffs | add native email linking only after delivery readiness stays green |
 
 ## P2 Map
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Full activity calendar | Not started | hidden by design | depends on real calendar ledger, not just disabled endpoint shell |
-| Achievements in app | Not started | hidden by design | depends on bonus ledger and copy |
-| Rich referral UI | Not started | app-safe referral summary API exists; first-layer UI stays compact | add only if copy/design makes referral sharing useful without clutter |
+| Full activity calendar | Partial | Rewards Hub shows a compact activity grid derived from safe summary state | replace preview with ledger-backed full calendar when check-in history exists |
+| Achievements in app | Partial | Rewards Hub shows safe achievement chips derived from opening, Telegram, referral, and streak state | replace preview chips with backend achievement ledger when available |
+| Rich referral UI | Partial | Rewards Hub shows referral code/card and copy action without pushing referral spam into the first layer | add share link/deep-link once referral summary contract is wired into app shell |
 | Promo slots in app | Not started | platform promo slots exist | add app-safe slot contract and feature flag |
 | Advanced raw rule editor | Not started | advanced gate exists | keep out of normal UI until support/debug need is proven |
 | Detailed cabinet/account management | Partial | cabinet continuation exists | expand webapp first, then expose app entry points |
@@ -106,6 +107,8 @@ clarity before a richer Rewards Hub can safely exist.
 - Do not claim active WARP/enhanced privacy until backend policy, safe storage,
   runtime start, failure-mode, Android, and Windows evidence are green.
 - Keep Xray fallback advanced-only.
-- Keep roulette/calendar/referral-rich UI hidden until public app APIs,
-  mutating reward logic, feature flags, and copy all exist.
+- Roulette/calendar/referral-rich UI may appear only as a safe Rewards Hub
+  preview while backend state is disabled. Mutating reward actions stay disabled
+  until public app APIs, reward ledger, feature flags, rollout proof, and copy
+  all exist.
 - Keep current outside-store beta honesty until stronger evidence exists.

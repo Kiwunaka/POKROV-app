@@ -168,9 +168,9 @@ Linked Telegram identity and membership in `@pokrov_vpn` can grant `+10 days`.
 Promo codes can be redeemed through the unified code entry or the app-facing
 bonus promo endpoint. Bonus history is available as a compact app-safe ledger
 and Account may show the latest safe reward events inside the existing bonus
-summary. Wheel and calendar state endpoints exist for future UI wiring, but
-their mutating actions remain feature-gated and must stay hidden until reward
-logic and UI copy are explicit.
+summary. Wheel and calendar state endpoints can feed safe Rewards Hub previews,
+but their mutating actions remain feature-gated and must stay disabled until
+reward logic, rollout state, and UI copy are explicit.
 
 ### Returning-user recovery
 

@@ -192,6 +192,8 @@ class AppFirstBonusSummary {
     required this.paidReferrals,
     required this.nextTierKey,
     required this.nextTierAt,
+    this.wheelState = AppFirstBonusFeatureState.wheelDisabled,
+    this.calendarState = AppFirstBonusFeatureState.calendarDisabled,
     this.historyItems = const <AppFirstBonusHistoryItem>[],
   });
 
@@ -210,9 +212,77 @@ class AppFirstBonusSummary {
   final int paidReferrals;
   final String nextTierKey;
   final int? nextTierAt;
+  final AppFirstBonusFeatureState wheelState;
+  final AppFirstBonusFeatureState calendarState;
   final List<AppFirstBonusHistoryItem> historyItems;
 
   bool get channelBonusClaimed => channelBonusClaimedAt.trim().isNotEmpty;
+}
+
+class AppFirstBonusFeatureState {
+  const AppFirstBonusFeatureState({
+    required this.ok,
+    required this.enabled,
+    required this.state,
+    required this.featureFlag,
+    required this.featureFlagEnabled,
+    required this.actionEndpoint,
+    required this.lastActionAt,
+    required this.streakMonths,
+  });
+
+  static const wheelDisabled = AppFirstBonusFeatureState(
+    ok: true,
+    enabled: false,
+    state: 'disabled_until_feature_flag',
+    featureFlag: 'BONUS_WHEEL_ENABLED',
+    featureFlagEnabled: false,
+    actionEndpoint: '/api/bonuses/wheel/spin',
+    lastActionAt: '',
+    streakMonths: 0,
+  );
+
+  static const calendarDisabled = AppFirstBonusFeatureState(
+    ok: true,
+    enabled: false,
+    state: 'disabled_until_feature_flag',
+    featureFlag: 'BONUS_CALENDAR_ENABLED',
+    featureFlagEnabled: false,
+    actionEndpoint: '/api/bonuses/calendar/checkin',
+    lastActionAt: '',
+    streakMonths: 0,
+  );
+
+  final bool ok;
+  final bool enabled;
+  final String state;
+  final String featureFlag;
+  final bool featureFlagEnabled;
+  final String actionEndpoint;
+  final String lastActionAt;
+  final int streakMonths;
+
+  bool get canRun => ok && enabled && actionEndpoint.trim().isNotEmpty;
+
+  String get statusLabel {
+    if (canRun) {
+      return 'Готово';
+    }
+    if (featureFlagEnabled) {
+      return 'На проверке';
+    }
+    return 'Скоро';
+  }
+
+  String get availabilityText {
+    if (canRun) {
+      return 'Можно использовать';
+    }
+    if (featureFlagEnabled) {
+      return 'Механика готовится к безопасному запуску';
+    }
+    return 'Появится после включения feature flag';
+  }
 }
 
 class AppFirstBonusHistoryItem {
@@ -718,6 +788,8 @@ class AppFirstRuntimeBootstrapper
             hostPlatform: hostPlatform,
           );
           final tier = _readMap(response['points_tier']);
+          final wheel = _readMap(response['wheel']);
+          final calendar = _readMap(response['calendar']);
           final historyItems = await _fetchBonusHistoryItems(
             summaryResponse: response,
             hostPlatform: hostPlatform,
@@ -743,6 +815,21 @@ class AppFirstRuntimeBootstrapper
             paidReferrals: _readInt(tier['paid_referrals']),
             nextTierKey: _readText(tier['next_tier_key']),
             nextTierAt: _readNullableInt(tier['next_tier_at']),
+            wheelState: _readBonusFeatureState(
+              wheel,
+              fallback: AppFirstBonusFeatureState.wheelDisabled,
+              actionEndpointKey: 'spin_endpoint',
+              lastActionAtKeys: const <String>['last_spin_at'],
+            ),
+            calendarState: _readBonusFeatureState(
+              calendar,
+              fallback: AppFirstBonusFeatureState.calendarDisabled,
+              actionEndpointKey: 'checkin_endpoint',
+              lastActionAtKeys: const <String>[
+                'last_checkin_at',
+                'last_wheel_spin',
+              ],
+            ),
             historyItems: historyItems,
           );
         } on BootstrapFailure catch (error) {
@@ -767,6 +854,40 @@ class AppFirstRuntimeBootstrapper
     } finally {
       client.close(force: true);
     }
+  }
+
+  AppFirstBonusFeatureState _readBonusFeatureState(
+    Map<String, dynamic> data, {
+    required AppFirstBonusFeatureState fallback,
+    required String actionEndpointKey,
+    required List<String> lastActionAtKeys,
+  }) {
+    if (data.isEmpty) {
+      return fallback;
+    }
+    var lastActionAt = '';
+    for (final key in lastActionAtKeys) {
+      lastActionAt = _readText(data[key]);
+      if (lastActionAt.isNotEmpty) {
+        break;
+      }
+    }
+    return AppFirstBonusFeatureState(
+      ok: data['ok'] != false,
+      enabled: data['enabled'] == true,
+      state: _readText(data['state']).isEmpty
+          ? fallback.state
+          : _readText(data['state']),
+      featureFlag: _readText(data['feature_flag']).isEmpty
+          ? fallback.featureFlag
+          : _readText(data['feature_flag']),
+      featureFlagEnabled: data['feature_flag_enabled'] == true,
+      actionEndpoint: _readText(data[actionEndpointKey]).isEmpty
+          ? fallback.actionEndpoint
+          : _readText(data[actionEndpointKey]),
+      lastActionAt: lastActionAt,
+      streakMonths: _readInt(data['streak_months']),
+    );
   }
 
   Future<List<AppFirstBonusHistoryItem>> _fetchBonusHistoryItems({

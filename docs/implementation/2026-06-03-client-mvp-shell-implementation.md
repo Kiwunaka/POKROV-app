@@ -118,8 +118,8 @@ backend contract instead of adding a duplicate summary endpoint:
   than hardcoded UI guesses
 - successful claim marks the managed profile dirty so the next connect/profile
   refresh can pick up the updated access state
-- wheel, roulette, and activity calendar UI remain absent from the MVP widget
-  tree until real public APIs and feature flags exist
+- Rewards Hub now shows safe wheel/calendar previews from the backend summary
+  state. Spin/check-in actions stay disabled while backend state is disabled.
 - no `/api/client/bonuses/summary` endpoint was added in this slice; the
   consilium decision was to use the existing endpoint family and later add a
   dashboard adapter only if repeated aggregation becomes necessary
@@ -176,8 +176,9 @@ The Task 7 consilium aligned on a beta-honest staging cut:
 - Smart-connect remains backend-owned and hidden from first-layer UI. The app
   may upload RTT evidence and sticky selection telemetry, but it is not a
   visible mode, balancer, or manual node list in the MVP.
-- Roulette and activity calendar are not active UI. They remain hidden until
-  public app APIs and feature flags exist.
+- Roulette and activity calendar are visible only as Rewards Hub previews.
+  Mutating spin/check-in actions remain disabled until backend state, reward
+  ledger, rollout flags, and copy are approved.
 - Raw subscription import and Xray fallback remain advanced/recovery-only.
 - The imagegen concept mark explored during the brand pass was not promoted into
   the app because it diverged from the current official POKROV mark.

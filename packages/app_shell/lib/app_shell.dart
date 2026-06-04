@@ -3169,6 +3169,12 @@ class _ProfileSection extends StatelessWidget {
     return '${summary.referralCount} · ${summary.referralCode}';
   }
 
+  AppFirstBonusFeatureState get _wheelState =>
+      bonusSummary?.wheelState ?? AppFirstBonusFeatureState.wheelDisabled;
+
+  AppFirstBonusFeatureState get _calendarState =>
+      bonusSummary?.calendarState ?? AppFirstBonusFeatureState.calendarDisabled;
+
   IconData _bonusHistoryIcon(AppFirstBonusHistoryItem item) {
     switch (item.kind) {
       case 'telegram_channel':
@@ -3222,6 +3228,18 @@ class _ProfileSection extends StatelessWidget {
                         context,
                         title: 'Статус',
                         lines: [statusSummary],
+                      ),
+                    ),
+                    _SettingsRow(
+                      key: const ValueKey('profile-plan-details-action'),
+                      icon: Icons.workspace_premium_outlined,
+                      title: 'Подписка',
+                      value: 'Детали',
+                      onTap: () => _showSubscriptionSheet(
+                        context,
+                        appContext: appContext,
+                        hasProvisionedAccess: hasProvisionedAccess,
+                        onOpenHandoff: onOpenHandoff,
                       ),
                     ),
                     _SettingsRow(
@@ -3336,6 +3354,30 @@ class _ProfileSection extends StatelessWidget {
                         title: 'Промокод',
                         value: 'Через код',
                       ),
+                      _SettingsRow(
+                        key: const ValueKey('profile-bonus-wheel-action'),
+                        icon: Icons.casino_outlined,
+                        title: 'Рулетка',
+                        value: bonusSummary!.wheelState.statusLabel,
+                        onTap: () => _showRewardsHubSheet(
+                          context,
+                          summary: bonusSummary,
+                          onRefreshBonusSummary: onRefreshBonusSummary,
+                        ),
+                      ),
+                      _SettingsRow(
+                        key: const ValueKey(
+                          'profile-activity-calendar-action',
+                        ),
+                        icon: Icons.calendar_month_outlined,
+                        title: 'Календарь',
+                        value: bonusSummary!.calendarState.statusLabel,
+                        onTap: () => _showRewardsHubSheet(
+                          context,
+                          summary: bonusSummary,
+                          onRefreshBonusSummary: onRefreshBonusSummary,
+                        ),
+                      ),
                       for (final entry in bonusSummary!.historyItems.indexed)
                         _SettingsRow(
                           key: ValueKey(
@@ -3345,6 +3387,32 @@ class _ProfileSection extends StatelessWidget {
                           title: entry.$2.title,
                           value: entry.$2.compactValue,
                         ),
+                    ],
+                    if (bonusSummary == null) ...[
+                      _SettingsRow(
+                        key: const ValueKey('profile-bonus-wheel-action'),
+                        icon: Icons.casino_outlined,
+                        title: 'Рулетка',
+                        value: _wheelState.statusLabel,
+                        onTap: () => _showRewardsHubSheet(
+                          context,
+                          summary: bonusSummary,
+                          onRefreshBonusSummary: onRefreshBonusSummary,
+                        ),
+                      ),
+                      _SettingsRow(
+                        key: const ValueKey(
+                          'profile-activity-calendar-action',
+                        ),
+                        icon: Icons.calendar_month_outlined,
+                        title: 'Календарь',
+                        value: _calendarState.statusLabel,
+                        onTap: () => _showRewardsHubSheet(
+                          context,
+                          summary: bonusSummary,
+                          onRefreshBonusSummary: onRefreshBonusSummary,
+                        ),
+                      ),
                     ],
                     if ((bonusSummaryError ?? '').isNotEmpty)
                       Padding(
@@ -3390,14 +3458,14 @@ class _ProfileSection extends StatelessWidget {
                       ),
                     ),
                     _SettingsRow(
+                      key: const ValueKey('profile-email-action'),
                       icon: Icons.alternate_email_rounded,
                       title: 'Email',
                       value: 'Кабинет',
-                      onTap: () => onOpenHandoff(
-                        'download',
-                        Uri.parse(appContext.cabinetUrl)
-                            .replace(path: '/account/email')
-                            .toString(),
+                      onTap: () => _showEmailRecoverySheet(
+                        context,
+                        appContext: appContext,
+                        onOpenHandoff: onOpenHandoff,
                       ),
                     ),
                     _SettingsRow(
@@ -3423,6 +3491,557 @@ class _ProfileSection extends StatelessWidget {
       ],
     );
   }
+}
+
+void _showSubscriptionSheet(
+  BuildContext context, {
+  required SeedAppContext appContext,
+  required bool hasProvisionedAccess,
+  required void Function(String label, String value) onOpenHandoff,
+}) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: _SeedPalette.surface,
+    builder: (context) => SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        key: const ValueKey('profile-subscription-sheet'),
+        padding: const EdgeInsets.fromLTRB(22, 4, 22, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Подписка',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: _SeedPalette.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              hasProvisionedAccess
+                  ? 'Доступ активен. Продление открывается на защищенной странице оплаты.'
+                  : 'Сначала подготовьте устройство, затем продлите доступ через защищенную оплату.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: _SeedPalette.ink.withValues(alpha: 0.72),
+                    height: 1.35,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            _KeyValueLine(
+              label: 'Текущий доступ',
+              value: appContext.accessLane.label,
+            ),
+            _KeyValueLine(
+              label: 'Устройство',
+              value: appContext.hostPlatform.label,
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.icon(
+                  key: const ValueKey('subscription-checkout-primary'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onOpenHandoff('checkout', appContext.checkoutUrl);
+                  },
+                  icon: const Icon(Icons.shopping_bag_outlined),
+                  label: const Text('Перейти к оплате'),
+                ),
+                OutlinedButton.icon(
+                  key: const ValueKey('subscription-cabinet-primary'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onOpenHandoff('cabinet', appContext.cabinetUrl);
+                  },
+                  icon: const Icon(Icons.web_outlined),
+                  label: const Text('Открыть кабинет'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+void _showEmailRecoverySheet(
+  BuildContext context, {
+  required SeedAppContext appContext,
+  required void Function(String label, String value) onOpenHandoff,
+}) {
+  final emailUrl =
+      Uri.parse(appContext.cabinetUrl).replace(path: '/account/email');
+  final recoveryUrl =
+      Uri.parse(appContext.cabinetUrl).replace(path: '/auth/recovery');
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: _SeedPalette.surface,
+    builder: (context) => SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        key: const ValueKey('profile-email-recovery-sheet'),
+        padding: const EdgeInsets.fromLTRB(22, 4, 22, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Email и восстановление',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: _SeedPalette.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Email нужен для восстановления доступа и входа в кабинет. Все действия открываются через короткую защищенную сессию.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: _SeedPalette.ink.withValues(alpha: 0.72),
+                    height: 1.35,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.icon(
+                  key: const ValueKey('profile-email-add-action'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onOpenHandoff('download', emailUrl.toString());
+                  },
+                  icon: const Icon(Icons.alternate_email_rounded),
+                  label: const Text('Добавить email'),
+                ),
+                OutlinedButton.icon(
+                  key: const ValueKey('profile-email-cabinet-action'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onOpenHandoff('cabinet', appContext.cabinetUrl);
+                  },
+                  icon: const Icon(Icons.web_outlined),
+                  label: const Text('Кабинет'),
+                ),
+                OutlinedButton.icon(
+                  key: const ValueKey('profile-email-recovery-action'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onOpenHandoff('download', recoveryUrl.toString());
+                  },
+                  icon: const Icon(Icons.lock_reset_rounded),
+                  label: const Text('Восстановить'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+void _showRewardsHubSheet(
+  BuildContext context, {
+  required AppFirstBonusSummary? summary,
+  required VoidCallback onRefreshBonusSummary,
+}) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: _SeedPalette.surface,
+    isScrollControlled: true,
+    builder: (context) => _RewardsHubSheet(
+      summary: summary,
+      onRefreshBonusSummary: onRefreshBonusSummary,
+    ),
+  );
+}
+
+class _RewardsHubSheet extends StatelessWidget {
+  const _RewardsHubSheet({
+    required this.summary,
+    required this.onRefreshBonusSummary,
+  });
+
+  final AppFirstBonusSummary? summary;
+  final VoidCallback onRefreshBonusSummary;
+
+  @override
+  Widget build(BuildContext context) {
+    final wheel =
+        summary?.wheelState ?? AppFirstBonusFeatureState.wheelDisabled;
+    final calendar =
+        summary?.calendarState ?? AppFirstBonusFeatureState.calendarDisabled;
+    final referralCode = summary?.referralCode.trim() ?? '';
+    return SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        key: const ValueKey('rewards-hub-sheet'),
+        padding: const EdgeInsets.fromLTRB(18, 4, 18, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Бонусы',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: _SeedPalette.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Здесь собраны Telegram-бонус, промокоды, история и будущие механики. Активные награды выдаются только через backend.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: _SeedPalette.ink.withValues(alpha: 0.72),
+                    height: 1.35,
+                  ),
+            ),
+            const SizedBox(height: 14),
+            _RewardsFeatureCard(
+              key: const ValueKey('rewards-wheel-card'),
+              icon: Icons.casino_outlined,
+              title: 'Рулетка',
+              status: wheel.statusLabel,
+              detail: wheel.availabilityText,
+              lastActionAt: wheel.lastActionAt,
+              actionKey: const ValueKey('rewards-wheel-spin-action'),
+              actionLabel: wheel.canRun ? 'Крутить' : 'Скоро',
+              actionEnabled: false,
+            ),
+            const SizedBox(height: 10),
+            _RewardsFeatureCard(
+              key: const ValueKey('rewards-calendar-card'),
+              icon: Icons.calendar_month_outlined,
+              title: 'Календарь активности',
+              status: calendar.statusLabel,
+              detail: calendar.availabilityText,
+              lastActionAt: calendar.lastActionAt,
+              actionKey: const ValueKey('rewards-calendar-checkin-action'),
+              actionLabel: calendar.canRun ? 'Отметиться' : 'Скоро',
+              actionEnabled: false,
+            ),
+            const SizedBox(height: 12),
+            _RewardsCalendarGrid(
+              activeDays: _rewardActiveDays(summary),
+            ),
+            const SizedBox(height: 12),
+            _RewardsAchievements(
+              summary: summary,
+            ),
+            const SizedBox(height: 12),
+            _RewardsReferralCard(
+              referralCode: referralCode,
+              referralCount: summary?.referralCount ?? 0,
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              key: const ValueKey('rewards-refresh-action'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                onRefreshBonusSummary();
+              },
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Обновить сводку'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RewardsFeatureCard extends StatelessWidget {
+  const _RewardsFeatureCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.status,
+    required this.detail,
+    required this.lastActionAt,
+    required this.actionKey,
+    required this.actionLabel,
+    required this.actionEnabled,
+  });
+
+  final IconData icon;
+  final String title;
+  final String status;
+  final String detail;
+  final String lastActionAt;
+  final Key actionKey;
+  final String actionLabel;
+  final bool actionEnabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _SeedPalette.surfaceMuted,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _SeedPalette.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: _SeedPalette.accent.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: _SeedPalette.accent, size: 19),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: _SeedPalette.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+              _StatusPill(
+                label: status,
+                icon: Icons.info_outline_rounded,
+                tone: _SectionTone.reward,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            detail,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: _SeedPalette.ink.withValues(alpha: 0.70),
+                  height: 1.32,
+                ),
+          ),
+          if (lastActionAt.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Последнее действие: $lastActionAt',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: _SeedPalette.muted,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            key: actionKey,
+            onPressed: actionEnabled ? () {} : null,
+            icon: const Icon(Icons.auto_awesome_outlined),
+            label: Text(actionLabel),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RewardsCalendarGrid extends StatelessWidget {
+  const _RewardsCalendarGrid({
+    required this.activeDays,
+  });
+
+  final int activeDays;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const ValueKey('rewards-calendar-grid'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _SeedPalette.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _SeedPalette.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Активность',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: _SeedPalette.ink,
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 10),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              crossAxisSpacing: 6,
+              mainAxisSpacing: 6,
+              childAspectRatio: 1,
+            ),
+            itemCount: 21,
+            itemBuilder: (context, index) {
+              final active = index < activeDays;
+              return Container(
+                key: ValueKey('rewards-calendar-day-$index'),
+                decoration: BoxDecoration(
+                  color: active
+                      ? _SeedPalette.accent.withValues(alpha: 0.16)
+                      : _SeedPalette.surfaceMuted,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: active
+                        ? _SeedPalette.accent.withValues(alpha: 0.22)
+                        : _SeedPalette.line,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RewardsAchievements extends StatelessWidget {
+  const _RewardsAchievements({
+    required this.summary,
+  });
+
+  final AppFirstBonusSummary? summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final achievements = <({String title, bool active})>[
+      (title: 'Первый старт', active: summary?.openingBonusClaimed ?? false),
+      (title: 'Telegram', active: summary?.channelBonusClaimed ?? false),
+      (title: 'Рефералы', active: (summary?.referralCount ?? 0) > 0),
+      (title: 'Серия', active: (summary?.streakMonths ?? 0) > 0),
+    ];
+    return Container(
+      key: const ValueKey('rewards-achievements-section'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _SeedPalette.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _SeedPalette.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Достижения',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: _SeedPalette.ink,
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: achievements
+                .map(
+                  (achievement) => _StatusPill(
+                    label: achievement.title,
+                    icon: achievement.active
+                        ? Icons.check_circle_rounded
+                        : Icons.lock_clock_outlined,
+                    tone: achievement.active
+                        ? _SectionTone.accent
+                        : _SectionTone.muted,
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RewardsReferralCard extends StatelessWidget {
+  const _RewardsReferralCard({
+    required this.referralCode,
+    required this.referralCount,
+  });
+
+  final String referralCode;
+  final int referralCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final code = referralCode.isEmpty ? 'POKROV' : referralCode;
+    return Container(
+      key: const ValueKey('rewards-referral-card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _SeedPalette.warning.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _SeedPalette.warning.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.group_add_outlined, color: _SeedPalette.accent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  code,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: _SeedPalette.ink,
+                        fontWeight: FontWeight.w900,
+                      ),
+                ),
+                Text(
+                  'Приглашений: $referralCount',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: _SeedPalette.muted,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          OutlinedButton.icon(
+            key: const ValueKey('rewards-referral-copy-action'),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: code));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Код скопирован')),
+              );
+            },
+            icon: const Icon(Icons.copy_rounded),
+            label: const Text('Копия'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+int _rewardActiveDays(AppFirstBonusSummary? summary) {
+  if (summary == null) {
+    return 0;
+  }
+  final historyDays = summary.historyItems.length;
+  final streakDays = summary.streakMonths * 3;
+  return (historyDays + streakDays).clamp(0, 21);
 }
 
 class _RulesSection extends StatelessWidget {

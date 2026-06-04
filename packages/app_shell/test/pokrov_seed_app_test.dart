@@ -939,7 +939,7 @@ void main() {
     expect(find.textContaining('10'), findsWidgets);
   });
 
-  testWidgets('profile loads compact bonus summary without wheel calendar',
+  testWidgets('profile loads compact bonus summary with reward preview',
       (tester) async {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
@@ -1026,13 +1026,13 @@ void main() {
     expect(find.text('Telegram-бонус получен'), findsOneWidget);
     expect(find.textContaining('POKROV2'), findsWidgets);
     expect(find.textContaining('+10'), findsWidgets);
-    expect(
-        find.byKey(const ValueKey('profile-bonus-wheel-action')), findsNothing);
+    expect(find.byKey(const ValueKey('profile-bonus-wheel-action')),
+        findsOneWidget);
     expect(find.byKey(const ValueKey('profile-activity-calendar-action')),
-        findsNothing);
+        findsOneWidget);
   });
 
-  testWidgets('bonus MVP keeps wheel and activity calendar hidden',
+  testWidgets('bonus preview keeps wheel and activity calendar non-mutating',
       (tester) async {
     await tester.pumpWidget(
       PokrovSeedApp(
@@ -1046,10 +1046,137 @@ void main() {
 
     expect(find.text('Р СѓР»РµС‚РєР°'), findsNothing);
     expect(find.text('РљР°Р»РµРЅРґР°СЂСЊ Р°РєС‚РёРІРЅРѕСЃС‚Рё'), findsNothing);
-    expect(
-        find.byKey(const ValueKey('profile-bonus-wheel-action')), findsNothing);
+    expect(find.byKey(const ValueKey('profile-bonus-wheel-action')),
+        findsOneWidget);
     expect(find.byKey(const ValueKey('profile-activity-calendar-action')),
-        findsNothing);
+        findsOneWidget);
+  });
+
+  testWidgets('profile opens rewards hub with wheel and calendar preview',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      bonusSummary: const AppFirstBonusSummary(
+        referralCount: 3,
+        referralCode: 'POKROV3',
+        referralBonusDays: 10,
+        streakMonths: 2,
+        lastWheelSpin: '2026-06-03T12:00:00Z',
+        channelBonusPremiumDays: 10,
+        channelBonusClaimedAt: '2026-06-03T12:00:00Z',
+        openingBonusPremiumDays: 5,
+        openingBonusClaimed: true,
+        channelUsername: 'pokrov_vpn',
+        tierKey: 'starter',
+        tierPercent: 5,
+        paidReferrals: 3,
+        nextTierKey: 'pro',
+        nextTierAt: 5,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-profile');
+    final wheelAction =
+        find.byKey(const ValueKey('profile-bonus-wheel-action'));
+    expect(wheelAction, findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-activity-calendar-action')),
+        findsOneWidget);
+    await tester.dragUntilVisible(
+      wheelAction,
+      find.byType(Scrollable).first,
+      const Offset(0, -240),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(wheelAction);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('rewards-hub-sheet')), findsOneWidget);
+    expect(find.byKey(const ValueKey('rewards-wheel-card')), findsOneWidget);
+    expect(find.byKey(const ValueKey('rewards-calendar-card')), findsOneWidget);
+    expect(find.byKey(const ValueKey('rewards-wheel-spin-action')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('rewards-calendar-checkin-action')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('rewards-calendar-grid')), findsOneWidget);
+    expect(find.byKey(const ValueKey('rewards-achievements-section')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('rewards-referral-card')), findsOneWidget);
+  });
+
+  testWidgets('profile opens subscription and email recovery sheets',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+    );
+    final launched = <Uri>[];
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        handoffLauncher: (uri) async {
+          launched.add(uri);
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-profile');
+    final planAction =
+        find.byKey(const ValueKey('profile-plan-details-action'));
+    expect(planAction, findsOneWidget);
+    await tester.tap(planAction);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('profile-subscription-sheet')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('subscription-checkout-primary')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('subscription-cabinet-primary')),
+        findsOneWidget);
+
+    Navigator.of(tester.element(find.byKey(
+      const ValueKey('profile-subscription-sheet'),
+    ))).pop();
+    await tester.pumpAndSettle();
+
+    final emailAction = find.byKey(const ValueKey('profile-email-action'));
+    await tester.dragUntilVisible(
+      emailAction,
+      find.byType(Scrollable).first,
+      const Offset(0, -240),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(emailAction);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('profile-email-recovery-sheet')),
+        findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('profile-email-add-action')), findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-email-cabinet-action')),
+        findsOneWidget);
+    expect(launched, isEmpty);
   });
 
   testWidgets('windows shell collapses sidebar and shows honest WARP tile',

@@ -1492,6 +1492,26 @@ void main() {
                     'next_tier_key': 'pro',
                     'next_tier_at': 5,
                   },
+                  'wheel': <String, Object?>{
+                    'ok': true,
+                    'enabled': false,
+                    'state': 'disabled_until_feature_flag',
+                    'feature_flag': 'BONUS_WHEEL_ENABLED',
+                    'feature_flag_enabled': false,
+                    'spin_endpoint': '/api/bonuses/wheel/spin',
+                    'last_spin_at': '2026-06-03T12:00:00Z',
+                    'streak_months': 3,
+                  },
+                  'calendar': <String, Object?>{
+                    'ok': true,
+                    'enabled': false,
+                    'state': 'disabled_until_reward_logic',
+                    'feature_flag': 'BONUS_CALENDAR_ENABLED',
+                    'feature_flag_enabled': true,
+                    'checkin_endpoint': '/api/bonuses/calendar/checkin',
+                    'last_wheel_spin': '2026-06-03T12:00:00Z',
+                    'streak_months': 3,
+                  },
                 },
               ),
             );
@@ -1560,6 +1580,16 @@ void main() {
     expect(summary.openingBonusClaimed, isTrue);
     expect(summary.tierKey, 'starter');
     expect(summary.nextTierAt, 5);
+    expect(summary.wheelState.enabled, isFalse);
+    expect(summary.wheelState.statusLabel, 'Скоро');
+    expect(summary.wheelState.actionEndpoint, '/api/bonuses/wheel/spin');
+    expect(summary.wheelState.lastActionAt, '2026-06-03T12:00:00Z');
+    expect(summary.calendarState.enabled, isFalse);
+    expect(summary.calendarState.statusLabel, 'На проверке');
+    expect(
+      summary.calendarState.actionEndpoint,
+      '/api/bonuses/calendar/checkin',
+    );
     expect(summary.historyItems, hasLength(2));
     expect(summary.historyItems.first.kind, 'promo');
     expect(summary.historyItems.first.days, 7);

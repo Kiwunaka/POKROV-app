@@ -153,9 +153,12 @@ Before the device receives a real subscription payload:
   promo entry, and the latest safe bonus-history events
 - bonus history must stay compact and app-safe: no raw subscription links,
   full promo codes, tokens, hostnames, or backend event metadata
-- wheel, roulette, activity calendar, achievements, and rich loyalty UI remain
-  hidden until reward logic, feature flags, rollout evidence, and copy are
-  approved
+- wheel, roulette, activity calendar, achievements, and rich loyalty UI may be
+  shown only as safe Rewards Hub previews while backend reward state is
+  disabled
+- wheel spin and calendar check-in buttons must remain disabled until reward
+  logic, feature flags, rollout evidence, and copy are approved and backend
+  state marks the mechanics enabled
 
 ## Support Direction
 
