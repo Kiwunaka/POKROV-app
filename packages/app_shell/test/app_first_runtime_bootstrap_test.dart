@@ -1557,6 +1557,43 @@ void main() {
           continue;
         }
 
+        if (request.uri.path == '/api/client/promo-slots') {
+          expect(request.uri.queryParameters['surface'], 'app');
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer bonus-summary-session',
+          );
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'surface': 'app',
+                  'access_state': 'trial_premium',
+                  'remote_available': true,
+                  'fallback_behavior':
+                      'contextual_only_when_remote_unavailable',
+                  'mode': 'whitelist_slots',
+                  'slots': <Object?>[
+                    <String, Object?>{
+                      'slot_id': 'rewards_top',
+                      'content_id': 'telegram_bonus',
+                      'enabled': true,
+                      'title': 'Telegram +10 days',
+                      'body': 'Connect Telegram and claim the reward.',
+                      'cta_label': 'Open',
+                      'cta_href': 'https://t.me/pokrov_vpnbot',
+                      'kind': 'bonus',
+                      'goal': 'bonus_claim',
+                    },
+                  ],
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
         request.response.statusCode = HttpStatus.notFound;
         await request.response.close();
       }
@@ -1594,11 +1631,19 @@ void main() {
     expect(summary.historyItems.first.kind, 'promo');
     expect(summary.historyItems.first.days, 7);
     expect(summary.historyItems.first.codePreview, '...DAYS');
+    expect(summary.promoSlots.remoteAvailable, isTrue);
+    expect(summary.promoSlots.visibleSlots, hasLength(1));
+    expect(summary.promoSlots.visibleSlots.single.title, 'Telegram +10 days');
+    expect(
+      summary.promoSlots.visibleSlots.single.ctaHref,
+      'https://t.me/pokrov_vpnbot',
+    );
     expect(summary.historyItems.last.title, 'Telegram-бонус получен');
     expect(requests, <String>[
       'POST /api/client/session/start-trial',
       'GET /api/bonuses/summary',
       'GET /api/bonuses/history',
+      'GET /api/client/promo-slots',
     ]);
   });
 

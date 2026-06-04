@@ -161,6 +161,7 @@ Related backend contracts:
 - `GET /api/bonuses/calendar`
 - `POST /api/bonuses/calendar/checkin`
 - `POST /api/bonuses/promo/redeem`
+- `GET /api/client/promo-slots?surface=app`
 - `POST /api/channel/subscriber/check`
 - `POST /api/bonuses/channel/claim`
 
@@ -171,6 +172,9 @@ and Account may show the latest safe reward events inside the existing bonus
 summary. Wheel and calendar state endpoints can feed safe Rewards Hub previews,
 but their mutating actions remain feature-gated and must stay disabled until
 reward logic, rollout state, and UI copy are explicit.
+`GET /api/client/promo-slots?surface=app` may feed the same Rewards Hub with
+enabled first-party slots only; third-party ads, unsafe links, and tracking
+campaigns stay out of the app.
 
 ### Returning-user recovery
 

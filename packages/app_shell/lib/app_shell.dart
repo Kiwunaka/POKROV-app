@@ -3363,6 +3363,7 @@ class _ProfileSection extends StatelessWidget {
                           context,
                           summary: bonusSummary,
                           onRefreshBonusSummary: onRefreshBonusSummary,
+                          onOpenHandoff: onOpenHandoff,
                         ),
                       ),
                       _SettingsRow(
@@ -3376,6 +3377,7 @@ class _ProfileSection extends StatelessWidget {
                           context,
                           summary: bonusSummary,
                           onRefreshBonusSummary: onRefreshBonusSummary,
+                          onOpenHandoff: onOpenHandoff,
                         ),
                       ),
                       for (final entry in bonusSummary!.historyItems.indexed)
@@ -3398,6 +3400,7 @@ class _ProfileSection extends StatelessWidget {
                           context,
                           summary: bonusSummary,
                           onRefreshBonusSummary: onRefreshBonusSummary,
+                          onOpenHandoff: onOpenHandoff,
                         ),
                       ),
                       _SettingsRow(
@@ -3411,6 +3414,7 @@ class _ProfileSection extends StatelessWidget {
                           context,
                           summary: bonusSummary,
                           onRefreshBonusSummary: onRefreshBonusSummary,
+                          onOpenHandoff: onOpenHandoff,
                         ),
                       ),
                     ],
@@ -3652,6 +3656,7 @@ void _showRewardsHubSheet(
   BuildContext context, {
   required AppFirstBonusSummary? summary,
   required VoidCallback onRefreshBonusSummary,
+  required void Function(String label, String value) onOpenHandoff,
 }) {
   showModalBottomSheet<void>(
     context: context,
@@ -3661,6 +3666,7 @@ void _showRewardsHubSheet(
     builder: (context) => _RewardsHubSheet(
       summary: summary,
       onRefreshBonusSummary: onRefreshBonusSummary,
+      onOpenHandoff: onOpenHandoff,
     ),
   );
 }
@@ -3669,10 +3675,12 @@ class _RewardsHubSheet extends StatelessWidget {
   const _RewardsHubSheet({
     required this.summary,
     required this.onRefreshBonusSummary,
+    required this.onOpenHandoff,
   });
 
   final AppFirstBonusSummary? summary;
   final VoidCallback onRefreshBonusSummary;
+  final void Function(String label, String value) onOpenHandoff;
 
   @override
   Widget build(BuildContext context) {
@@ -3740,6 +3748,11 @@ class _RewardsHubSheet extends StatelessWidget {
             _RewardsReferralCard(
               referralCode: referralCode,
               referralCount: summary?.referralCount ?? 0,
+            ),
+            const SizedBox(height: 12),
+            _RewardsPromoSlotsSection(
+              promoSlots: summary?.promoSlots ?? AppFirstPromoSlots.empty,
+              onOpenHandoff: onOpenHandoff,
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
@@ -3971,6 +3984,166 @@ class _RewardsAchievements extends StatelessWidget {
       ),
     );
   }
+}
+
+class _RewardsPromoSlotsSection extends StatelessWidget {
+  const _RewardsPromoSlotsSection({
+    required this.promoSlots,
+    required this.onOpenHandoff,
+  });
+
+  final AppFirstPromoSlots promoSlots;
+  final void Function(String label, String value) onOpenHandoff;
+
+  @override
+  Widget build(BuildContext context) {
+    final slots = promoSlots.visibleSlots;
+    return Container(
+      key: const ValueKey('rewards-promo-slots-section'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _SeedPalette.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _SeedPalette.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.local_offer_outlined,
+                color: _SeedPalette.accent,
+                size: 19,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Акции',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: _SeedPalette.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+              _StatusPill(
+                label: promoSlots.remoteAvailable ? 'Обновлено' : 'Нет акций',
+                icon: Icons.verified_outlined,
+                tone: promoSlots.remoteAvailable
+                    ? _SectionTone.accent
+                    : _SectionTone.muted,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (slots.isEmpty)
+            Text(
+              key: const ValueKey('rewards-promo-slot-empty'),
+              'Сейчас нет персональных акций. Промокод можно ввести в поле кода выше.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: _SeedPalette.muted,
+                    height: 1.35,
+                  ),
+            )
+          else
+            ...slots.map(
+              (slot) => _RewardsPromoSlotRow(
+                key: ValueKey('rewards-promo-slot-${slot.slotId}'),
+                slot: slot,
+                onOpenHandoff: onOpenHandoff,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RewardsPromoSlotRow extends StatelessWidget {
+  const _RewardsPromoSlotRow({
+    super.key,
+    required this.slot,
+    required this.onOpenHandoff,
+  });
+
+  final AppFirstPromoSlot slot;
+  final void Function(String label, String value) onOpenHandoff;
+
+  @override
+  Widget build(BuildContext context) {
+    final safeHref = _safePromoSlotHref(slot.ctaHref);
+    final ctaLabel = slot.ctaLabel.trim().isEmpty ? 'Открыть' : slot.ctaLabel;
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _SeedPalette.surfaceMuted,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _SeedPalette.line),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  slot.title.trim().isEmpty ? 'POKROV' : slot.title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: _SeedPalette.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                if (slot.body.trim().isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    slot.body,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: _SeedPalette.muted,
+                          height: 1.3,
+                        ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          OutlinedButton(
+            key: ValueKey('rewards-promo-slot-cta-${slot.slotId}'),
+            onPressed: safeHref == null
+                ? null
+                : () {
+                    Navigator.of(context).pop();
+                    onOpenHandoff('download', safeHref.toString());
+                  },
+            child: Text(ctaLabel),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Uri? _safePromoSlotHref(String value) {
+  final uri = Uri.tryParse(value.trim());
+  if (uri == null || !uri.hasScheme) {
+    return null;
+  }
+  final scheme = uri.scheme.toLowerCase();
+  if (scheme != 'https' && scheme != 'tg') {
+    return null;
+  }
+  if (scheme == 'tg') {
+    return uri;
+  }
+  final host = uri.host.toLowerCase();
+  if (host == 't.me' ||
+      host == 'pokrov.space' ||
+      host.endsWith('.pokrov.space')) {
+    return uri;
+  }
+  return null;
 }
 
 class _RewardsReferralCard extends StatelessWidget {

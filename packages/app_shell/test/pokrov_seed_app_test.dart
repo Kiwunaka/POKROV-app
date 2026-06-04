@@ -1115,6 +1115,91 @@ void main() {
     expect(find.byKey(const ValueKey('rewards-achievements-section')),
         findsOneWidget);
     expect(find.byKey(const ValueKey('rewards-referral-card')), findsOneWidget);
+    expect(find.byKey(const ValueKey('rewards-promo-slots-section')),
+        findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('rewards-promo-slot-empty')), findsOneWidget);
+  });
+
+  testWidgets('profile rewards hub shows first-party promo slots',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      bonusSummary: const AppFirstBonusSummary(
+        referralCount: 1,
+        referralCode: 'POKROV1',
+        referralBonusDays: 10,
+        streakMonths: 1,
+        lastWheelSpin: '',
+        channelBonusPremiumDays: 10,
+        channelBonusClaimedAt: '',
+        openingBonusPremiumDays: 5,
+        openingBonusClaimed: true,
+        channelUsername: 'pokrov_vpn',
+        tierKey: 'starter',
+        tierPercent: 5,
+        paidReferrals: 0,
+        nextTierKey: 'pro',
+        nextTierAt: 5,
+        promoSlots: AppFirstPromoSlots(
+          surface: 'app',
+          accessState: 'trial_premium',
+          remoteAvailable: true,
+          fallbackBehavior: 'contextual_only_when_remote_unavailable',
+          mode: 'whitelist_slots',
+          slots: <AppFirstPromoSlot>[
+            AppFirstPromoSlot(
+              slotId: 'telegram_bonus_app',
+              contentId: 'telegram_bonus',
+              enabled: true,
+              title: 'Telegram +10 days',
+              body: 'Connect Telegram and claim the reward.',
+              ctaLabel: 'Open',
+              ctaHref: 'https://t.me/pokrov_vpnbot',
+              kind: 'bonus',
+              goal: 'bonus_claim',
+            ),
+          ],
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-profile');
+    final wheelAction =
+        find.byKey(const ValueKey('profile-bonus-wheel-action'));
+    await tester.dragUntilVisible(
+      wheelAction,
+      find.byType(Scrollable).first,
+      const Offset(0, -240),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(wheelAction);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('rewards-promo-slots-section')),
+        findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('rewards-promo-slot-empty')), findsNothing);
+    expect(find.byKey(const ValueKey('rewards-promo-slot-telegram_bonus_app')),
+        findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('rewards-promo-slot-cta-telegram_bonus_app')),
+        findsOneWidget);
+    expect(find.text('Telegram +10 days'), findsOneWidget);
   });
 
   testWidgets('profile opens subscription and email recovery sheets',

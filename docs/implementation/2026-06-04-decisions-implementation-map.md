@@ -42,7 +42,8 @@ The current code slice is:
    `GET /api/bonuses/history`, `GET /api/bonuses/wheel/state`,
    `POST /api/bonuses/wheel/spin`, `GET /api/bonuses/calendar`,
    `POST /api/bonuses/calendar/checkin`, and
-   `POST /api/bonuses/promo/redeem` contracts;
+   `POST /api/bonuses/promo/redeem` contracts, plus app-safe
+   `GET /api/client/promo-slots?surface=app` rendering;
 4. unified app code redemption for paid access keys, legacy gift-card codes,
    and promo codes through `POST /api/redeem`;
 5. support follow-up replies can explicitly attach the same safe
@@ -50,8 +51,8 @@ The current code slice is:
 6. Rules renders the safe ruleset/package-catalog version and explicit
    enabled/staged/locked preset states without exposing raw rule assets;
 7. Rewards Hub opens from Account and shows safe wheel/calendar state previews,
-   activity grid, achievements, referral card, and disabled mutating actions
-   until backend state marks the mechanics enabled;
+   activity grid, achievements, referral card, first-party promo slots, and
+   disabled mutating actions until backend state marks the mechanics enabled;
 8. keep profile loading lazy so the app does not block startup or ordinary
    navigation on bonus data.
 
@@ -94,7 +95,7 @@ clarity before a richer Rewards Hub can safely exist.
 | Full activity calendar | Partial | Rewards Hub shows a compact activity grid derived from safe summary state | replace preview with ledger-backed full calendar when check-in history exists |
 | Achievements in app | Partial | Rewards Hub shows safe achievement chips derived from opening, Telegram, referral, and streak state | replace preview chips with backend achievement ledger when available |
 | Rich referral UI | Partial | Rewards Hub shows referral code/card and copy action without pushing referral spam into the first layer | add share link/deep-link once referral summary contract is wired into app shell |
-| Promo slots in app | Not started | platform promo slots exist | add app-safe slot contract and feature flag |
+| Promo slots in app | Done for P2 safe display, partial for live campaigns | Rewards Hub fetches `GET /api/client/promo-slots?surface=app` best-effort, renders enabled first-party slots, and falls back to a quiet empty state | add campaign assignment, rollout QA, and feature-flag proof before relying on remote campaign content |
 | Advanced raw rule editor | Not started | advanced gate exists | keep out of normal UI until support/debug need is proven |
 | Detailed cabinet/account management | Partial | cabinet continuation exists | expand webapp first, then expose app entry points |
 | Windows process picker | Not started | selected-apps staged only | implement with OS enforcement proof |
@@ -111,4 +112,7 @@ clarity before a richer Rewards Hub can safely exist.
   preview while backend state is disabled. Mutating reward actions stay disabled
   until public app APIs, reward ledger, feature flags, rollout proof, and copy
   all exist.
+- App promo slots are first-party only. They may open only approved POKROV or
+  Telegram handoff URLs and must not introduce ad SDKs, tracking pixels, or
+  third-party campaign rendering.
 - Keep current outside-store beta honesty until stronger evidence exists.

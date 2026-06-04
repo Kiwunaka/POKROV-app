@@ -194,6 +194,7 @@ class AppFirstBonusSummary {
     required this.nextTierAt,
     this.wheelState = AppFirstBonusFeatureState.wheelDisabled,
     this.calendarState = AppFirstBonusFeatureState.calendarDisabled,
+    this.promoSlots = AppFirstPromoSlots.empty,
     this.historyItems = const <AppFirstBonusHistoryItem>[],
   });
 
@@ -214,6 +215,7 @@ class AppFirstBonusSummary {
   final int? nextTierAt;
   final AppFirstBonusFeatureState wheelState;
   final AppFirstBonusFeatureState calendarState;
+  final AppFirstPromoSlots promoSlots;
   final List<AppFirstBonusHistoryItem> historyItems;
 
   bool get channelBonusClaimed => channelBonusClaimedAt.trim().isNotEmpty;
@@ -283,6 +285,65 @@ class AppFirstBonusFeatureState {
     }
     return 'Появится после включения feature flag';
   }
+}
+
+class AppFirstPromoSlots {
+  const AppFirstPromoSlots({
+    required this.surface,
+    required this.accessState,
+    required this.remoteAvailable,
+    required this.fallbackBehavior,
+    required this.mode,
+    required this.slots,
+  });
+
+  static const empty = AppFirstPromoSlots(
+    surface: 'app',
+    accessState: '',
+    remoteAvailable: false,
+    fallbackBehavior: 'contextual_only_when_remote_unavailable',
+    mode: 'whitelist_slots',
+    slots: <AppFirstPromoSlot>[],
+  );
+
+  final String surface;
+  final String accessState;
+  final bool remoteAvailable;
+  final String fallbackBehavior;
+  final String mode;
+  final List<AppFirstPromoSlot> slots;
+
+  List<AppFirstPromoSlot> get visibleSlots => slots
+      .where(
+        (slot) =>
+            slot.enabled &&
+            (slot.title.trim().isNotEmpty || slot.body.trim().isNotEmpty),
+      )
+      .toList(growable: false);
+}
+
+class AppFirstPromoSlot {
+  const AppFirstPromoSlot({
+    required this.slotId,
+    required this.contentId,
+    required this.enabled,
+    required this.title,
+    required this.body,
+    required this.ctaLabel,
+    required this.ctaHref,
+    required this.kind,
+    required this.goal,
+  });
+
+  final String slotId;
+  final String contentId;
+  final bool enabled;
+  final String title;
+  final String body;
+  final String ctaLabel;
+  final String ctaHref;
+  final String kind;
+  final String goal;
 }
 
 class AppFirstBonusHistoryItem {
@@ -796,6 +857,11 @@ class AppFirstRuntimeBootstrapper
             client: client,
             bearerToken: state.sessionToken,
           );
+          final promoSlots = await _fetchPromoSlots(
+            hostPlatform: hostPlatform,
+            client: client,
+            bearerToken: state.sessionToken,
+          );
           return AppFirstBonusSummary(
             referralCount: _readInt(response['referral_count']),
             referralCode: _readText(response['referral_code']),
@@ -830,6 +896,7 @@ class AppFirstRuntimeBootstrapper
                 'last_wheel_spin',
               ],
             ),
+            promoSlots: promoSlots,
             historyItems: historyItems,
           );
         } on BootstrapFailure catch (error) {
@@ -853,6 +920,50 @@ class AppFirstRuntimeBootstrapper
       );
     } finally {
       client.close(force: true);
+    }
+  }
+
+  Future<AppFirstPromoSlots> _fetchPromoSlots({
+    required HostPlatform hostPlatform,
+    required HttpClient client,
+    required String bearerToken,
+  }) async {
+    try {
+      final response = await _requestJson(
+        method: 'GET',
+        path: '/api/client/promo-slots?surface=app',
+        client: client,
+        bearerToken: bearerToken,
+        hostPlatform: hostPlatform,
+      );
+      return AppFirstPromoSlots(
+        surface: _readText(response['surface']).isEmpty
+            ? 'app'
+            : _readText(response['surface']),
+        accessState: _readText(response['access_state']),
+        remoteAvailable: response['remote_available'] == true,
+        fallbackBehavior: _readText(response['fallback_behavior']),
+        mode: _readText(response['mode']),
+        slots: _readListOfMaps(response['slots'])
+            .map(
+              (slot) => AppFirstPromoSlot(
+                slotId: _readText(slot['slot_id']),
+                contentId: _readText(slot['content_id']),
+                enabled: slot['enabled'] != false,
+                title: _readText(slot['title']),
+                body: _readText(slot['body']),
+                ctaLabel: _readText(slot['cta_label']),
+                ctaHref: _readText(slot['cta_href']),
+                kind: _readText(slot['kind']),
+                goal: _readText(slot['goal']),
+              ),
+            )
+            .where((slot) => slot.slotId.isNotEmpty)
+            .take(4)
+            .toList(growable: false),
+      );
+    } on BootstrapFailure {
+      return AppFirstPromoSlots.empty;
     }
   }
 
