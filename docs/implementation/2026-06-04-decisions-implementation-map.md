@@ -38,8 +38,12 @@ The current code slice is:
 1. app-facing bonus summary model and runtime adapter;
 2. compact Account summary surface for Telegram, referrals, and promo entry;
 3. platform `GET /api/bonuses/summary`, `GET /api/bonuses/referral/summary`,
-   and `POST /api/bonuses/promo/redeem` contracts;
-4. no wheel/calendar hub until app APIs and feature flags exist;
+   `GET /api/bonuses/history`, `GET /api/bonuses/wheel/state`,
+   `POST /api/bonuses/wheel/spin`, `GET /api/bonuses/calendar`,
+   `POST /api/bonuses/calendar/checkin`, and
+   `POST /api/bonuses/promo/redeem` contracts;
+4. no wheel/calendar hub in UI until mutating reward logic, rollout flags, and
+   copy are approved;
 5. keep profile loading lazy so the app does not block startup or ordinary
    navigation on bonus data.
 
@@ -59,7 +63,7 @@ clarity before a richer Rewards Hub can safely exist.
 | Telegram `+10 days` link/check/claim | Done for MVP | app has link, channel check, claim actions and tests | keep optional, no startup wall |
 | Bot parity for subscription/access | Partial | platform bots were updated in root repo; app/cabinet share app-first contracts | add parity smoke checklist before final `1.0.0-beta` handoff |
 | Short-lived cabinet token | Done for MVP | app calls `POST /api/client/cabinet-token`; cabinet exchange exists | keep e2e coverage for one-time URL token removal |
-| Bonus API contract and MVP endpoints | Partial | channel check/claim live; app reads `GET /api/bonuses/summary`; platform exposes referral summary and promo redeem; compact summary tested; wheel/calendar hidden | add app wheel/calendar endpoints only behind feature flags |
+| Bonus API contract and MVP endpoints | Partial | channel check/claim live; app reads `GET /api/bonuses/summary`; platform exposes referral summary, safe bonus history, promo redeem, and disabled-by-default wheel/calendar endpoint shells; compact summary tested; wheel/calendar UI hidden | wire client history only after Rewards Hub copy; keep wheel/calendar mutating flows hidden until reward logic and rollout flags are approved |
 | Smart-connect shortlist and route-mode sync | Partial | managed profile returns smart-connect metadata; route mode persisted through backend contract; client does not run RTT loop yet | implement RTT measurement/upload loop and stickiness UI only after runtime proof |
 | Claims guardrails | Done for MVP | WARP info-only, selected-apps staged, no stable/store/trusted/RU claims | keep guardrails in tests/docs with each release update |
 
@@ -67,9 +71,9 @@ clarity before a richer Rewards Hub can safely exist.
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Rewards Hub light | Partial | compact Account summary shows Telegram/referral/promo status; backend referral/promo contracts exist; wheel/calendar UI intentionally hidden | add dedicated hub only after copy, feature flags, and bonus history contract exist |
-| App-facing wheel spin endpoint and UI | Not started | bot/admin wheel exists, app endpoint not live | backend API plus feature flag before UI |
-| Calendar check-in endpoint and summary | Not started | no app API | backend API plus feature flag before UI |
+| Rewards Hub light | Partial | compact Account summary shows Telegram/referral/promo status; backend referral/promo/history contracts exist; wheel/calendar UI intentionally hidden | add dedicated hub only after copy and client-side history presentation are approved |
+| App-facing wheel spin endpoint and UI | Partial | app endpoint shell exists and is feature-gated/disabled by default; UI not live | implement reward ledger and rollout proof before enabling UI |
+| Calendar check-in endpoint and summary | Partial | app state/check-in endpoint shells exist and are feature-gated/disabled by default; UI not live | implement check-in ledger and rollout proof before enabling UI |
 | Support diagnostics flow | Done for MVP create path, partial for lifecycle | chat can attach redacted diagnostics on create | add follow-up diagnostics attachment and polling/SSE after operator flow proof |
 | Paywall/subscription UX cleanup | Partial | checkout handoff exists; in-app paywall not built | add paid plan surface only after pricing/copy/legal checks |
 | Rules presets UI | Partial | categories shown; selected apps staged | sync backend ruleset catalog and add real enabled states |
@@ -79,8 +83,8 @@ clarity before a richer Rewards Hub can safely exist.
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Full activity calendar | Not started | hidden by design | depends on P1 calendar API |
-| Achievements in app | Not started | hidden by design | depends on bonus ledger |
+| Full activity calendar | Not started | hidden by design | depends on real calendar ledger, not just disabled endpoint shell |
+| Achievements in app | Not started | hidden by design | depends on bonus ledger and copy |
 | Rich referral UI | Not started | app-safe referral summary API exists; first-layer UI stays compact | add only if copy/design makes referral sharing useful without clutter |
 | Promo slots in app | Not started | platform promo slots exist | add app-safe slot contract and feature flag |
 | Advanced raw rule editor | Not started | advanced gate exists | keep out of normal UI until support/debug need is proven |
@@ -95,6 +99,6 @@ clarity before a richer Rewards Hub can safely exist.
 - Do not claim active WARP/enhanced privacy until backend policy, safe storage,
   runtime start, failure-mode, Android, and Windows evidence are green.
 - Keep Xray fallback advanced-only.
-- Keep roulette/calendar/referral-rich UI hidden until public app APIs and
-  feature flags exist.
+- Keep roulette/calendar/referral-rich UI hidden until public app APIs,
+  mutating reward logic, feature flags, and copy all exist.
 - Keep current outside-store beta honesty until stronger evidence exists.
