@@ -30,6 +30,10 @@ abstract interface class ManagedProfileBootstrapper {
   });
 }
 
+typedef SmartConnectLatencyProbe = Future<int?> Function(
+  SmartConnectNode node,
+);
+
 abstract interface class AppFirstAccountActionService {
   Future<AppFirstRedeemResult> redeemCode({
     required HostPlatform hostPlatform,
@@ -256,9 +260,11 @@ class AppFirstRuntimeBootstrapper
     Future<void> Function(Duration delay)? delayScheduler,
     this.connectionTimeout = const Duration(seconds: 8),
     this.requestTimeout = const Duration(seconds: 15),
+    this.smartConnectProbeTimeout = const Duration(milliseconds: 900),
     this.maxRequestAttempts = 3,
     Duration allExceptRuRuleSetCacheMaxAge = const Duration(hours: 6),
     List<String> Function(String tag)? allExceptRuRuleSetUrlsResolver,
+    this.smartConnectLatencyProbe,
   })  : _supportDirectoryResolver =
             supportDirectoryResolver ?? getApplicationSupportDirectory,
         _httpClientFactory = httpClientFactory ?? HttpClient.new,
@@ -272,9 +278,11 @@ class AppFirstRuntimeBootstrapper
   final Future<void> Function(Duration delay) _delayScheduler;
   final Duration connectionTimeout;
   final Duration requestTimeout;
+  final Duration smartConnectProbeTimeout;
   final int maxRequestAttempts;
   final Duration _allExceptRuRuleSetCacheMaxAge;
   final List<String> Function(String tag)? _allExceptRuRuleSetUrlsResolver;
+  final SmartConnectLatencyProbe? smartConnectLatencyProbe;
 
   static const _appVersion = '0.2.0-beta.1';
   static const _defaultManagedManifestPath = '/api/client/profile/managed';
@@ -345,6 +353,12 @@ class AppFirstRuntimeBootstrapper
             managedManifestPath: manifest.managedManifestPath,
           );
           await _saveState(hostPlatform, state);
+          await _maybeUploadSmartConnectLatency(
+            smartConnect: manifest.payload.smartConnect,
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
           return manifest.payload;
         } on BootstrapFailure catch (error) {
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
@@ -1073,6 +1087,155 @@ class AppFirstRuntimeBootstrapper
       clientRuleSetCatalog: clientRuleSetCatalog,
     );
     return const JsonEncoder.withIndent('  ').convert(runtimeConfig);
+  }
+
+  Future<void> _maybeUploadSmartConnectLatency({
+    required SmartConnectProfile? smartConnect,
+    required _StoredBootstrapState state,
+    required HostPlatform hostPlatform,
+    required HttpClient client,
+  }) async {
+    final probe = smartConnectLatencyProbe ?? _probeSmartConnectNode;
+    if (smartConnect == null ||
+        !smartConnect.eligible ||
+        smartConnect.shortlist.isEmpty ||
+        !state.hasSession) {
+      return;
+    }
+
+    final samples = <_SmartConnectLatencySample>[];
+    for (final node in smartConnect.shortlist.take(10)) {
+      final nodeCode = node.code.trim().toLowerCase();
+      if (nodeCode.isEmpty) {
+        continue;
+      }
+      int? rttMs;
+      try {
+        rttMs = await probe(node);
+      } catch (_) {
+        continue;
+      }
+      if (rttMs == null || rttMs < 1 || rttMs > 60000) {
+        continue;
+      }
+      samples.add(
+        _SmartConnectLatencySample(
+          nodeCode: nodeCode,
+          rttMs: rttMs,
+          cpuPenalty: node.rankHint.cpuPenalty,
+          backendPenalty: node.rankHint.backendPenalty,
+          rank: node.rank,
+        ),
+      );
+    }
+    if (samples.isEmpty) {
+      return;
+    }
+
+    final selection = _selectSmartConnectNode(
+      smartConnect: smartConnect,
+      samples: samples,
+    );
+    try {
+      await _requestJson(
+        method: 'POST',
+        path: '/api/client/nodes/latency-samples',
+        client: client,
+        bearerToken: state.sessionToken,
+        hostPlatform: hostPlatform,
+        body: <String, Object?>{
+          'profile_revision': smartConnect.profileRevision,
+          'transport_profile': smartConnect.transportProfile,
+          'selected_node_code': selection.selectedNodeCode,
+          'previous_node_code': selection.previousNodeCode.isEmpty
+              ? null
+              : selection.previousNodeCode,
+          'stickiness_applied': selection.stickinessApplied,
+          'samples': samples
+              .map(
+                (sample) => <String, Object?>{
+                  'node_code': sample.nodeCode,
+                  'rtt_ms': sample.rttMs,
+                },
+              )
+              .toList(growable: false),
+        },
+      );
+    } on BootstrapFailure {
+      // RTT upload is telemetry/stickiness input. It must not block connecting.
+    }
+  }
+
+  Future<int?> _probeSmartConnectNode(SmartConnectNode node) async {
+    final host = node.probeHost.trim();
+    final port = node.probePort;
+    if (host.isEmpty || port <= 0 || port > 65535) {
+      return null;
+    }
+
+    Socket? socket;
+    final stopwatch = Stopwatch()..start();
+    try {
+      socket = await Socket.connect(
+        host,
+        port,
+        timeout: smartConnectProbeTimeout,
+      );
+      stopwatch.stop();
+      return max(1, min(60000, stopwatch.elapsedMilliseconds));
+    } on SocketException {
+      return null;
+    } on TimeoutException {
+      return null;
+    } finally {
+      stopwatch.stop();
+      socket?.destroy();
+    }
+  }
+
+  _SmartConnectSelection _selectSmartConnectNode({
+    required SmartConnectProfile smartConnect,
+    required List<_SmartConnectLatencySample> samples,
+  }) {
+    final ordered = List<_SmartConnectLatencySample>.from(samples)
+      ..sort((left, right) {
+        final scoreDelta = left.effectiveScore.compareTo(right.effectiveScore);
+        if (scoreDelta != 0) {
+          return scoreDelta;
+        }
+        return left.rank.compareTo(right.rank);
+      });
+    final best = ordered.first;
+    final previousNodeCode =
+        smartConnect.stickiness.preferredNodeCode.trim().toLowerCase();
+    final thresholdPercent =
+        smartConnect.stickiness.thresholdPercent > 0
+            ? smartConnect.stickiness.thresholdPercent
+            : 15;
+    _SmartConnectLatencySample? stickySample;
+    for (final sample in ordered) {
+      if (sample.nodeCode == previousNodeCode) {
+        stickySample = sample;
+        break;
+      }
+    }
+    if (stickySample != null && stickySample.nodeCode != best.nodeCode) {
+      final stickyScore = max(stickySample.effectiveScore, 1);
+      final improvementPercent =
+          ((stickyScore - best.effectiveScore) / stickyScore) * 100;
+      if (improvementPercent < thresholdPercent) {
+        return _SmartConnectSelection(
+          selectedNodeCode: stickySample.nodeCode,
+          previousNodeCode: previousNodeCode,
+          stickinessApplied: true,
+        );
+      }
+    }
+    return _SmartConnectSelection(
+      selectedNodeCode: best.nodeCode,
+      previousNodeCode: previousNodeCode,
+      stickinessApplied: false,
+    );
   }
 
   bool _looksRuntimeReady(Map<String, dynamic> config) {
@@ -3409,6 +3572,36 @@ class _ManagedManifestEnvelope {
   final ManagedProfilePayload payload;
   final String profileRevision;
   final String managedManifestPath;
+}
+
+class _SmartConnectLatencySample {
+  const _SmartConnectLatencySample({
+    required this.nodeCode,
+    required this.rttMs,
+    required this.cpuPenalty,
+    required this.backendPenalty,
+    required this.rank,
+  });
+
+  final String nodeCode;
+  final int rttMs;
+  final int cpuPenalty;
+  final int backendPenalty;
+  final int rank;
+
+  int get effectiveScore => rttMs + cpuPenalty + backendPenalty;
+}
+
+class _SmartConnectSelection {
+  const _SmartConnectSelection({
+    required this.selectedNodeCode,
+    required this.previousNodeCode,
+    required this.stickinessApplied,
+  });
+
+  final String selectedNodeCode;
+  final String previousNodeCode;
+  final bool stickinessApplied;
 }
 
 class _StoredBootstrapState {

@@ -300,19 +300,26 @@ class SmartConnectNode {
     required this.country,
     required this.rank,
     required this.rankHint,
+    this.probeHost = '',
+    this.probePort = 0,
   });
 
   final String code;
   final String country;
   final int rank;
   final SmartConnectRankHint rankHint;
+  final String probeHost;
+  final int probePort;
 
   factory SmartConnectNode.fromJson(Map<String, dynamic> json) {
+    final probe = _readMap(json['probe']);
     return SmartConnectNode(
       code: _readText(json['code']),
       country: _readText(json['country']),
       rank: _readInt(json['rank']),
       rankHint: SmartConnectRankHint.fromJson(_readMap(json['rank_hint'])),
+      probeHost: _readText(probe['host'] ?? json['probe_host']),
+      probePort: _readInt(probe['port'] ?? json['probe_port']),
     );
   }
 }

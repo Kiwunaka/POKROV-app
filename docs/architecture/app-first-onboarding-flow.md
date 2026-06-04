@@ -123,6 +123,8 @@ Smart-connect fields:
 - `smart_connect.transport_profile`
 - `smart_connect.profile_revision`
 - `smart_connect.shortlist[*].code`
+- `smart_connect.shortlist[*].probe.host`
+- `smart_connect.shortlist[*].probe.port`
 - `smart_connect.shortlist[*].rank_hint.health_score`
 - `smart_connect.shortlist[*].rank_hint.cpu_percent`
 - `smart_connect.shortlist[*].rank_hint.panel_latency_ms`
@@ -137,7 +139,7 @@ Shortlist rules:
 - premium users probe up to `5` eligible non-free nodes
 - free-tier users stay on `NL-free`
 - shortlist eligibility rejects disabled, draining, unhealthy, stale, overloaded, and transport-incompatible nodes
-- the client compares candidates with combined RTT and backend penalties
+- the client performs best-effort TCP RTT probes for shortlist items with an internal probe endpoint and compares candidates with combined RTT and backend penalties
 - the `15%` stickiness threshold prevents unnecessary node flapping
 - `POST /api/client/nodes/latency-samples` records install-scoped RTT evidence for operator visibility without changing the free-vs-premium pool rule
 

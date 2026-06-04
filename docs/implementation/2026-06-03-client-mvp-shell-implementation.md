@@ -134,9 +134,10 @@ The Task 7 consilium aligned on a beta-honest staging cut:
   selectable `Выбранные приложения` route card
 - managed-profile bootstrap now parses backend `smart_connect` metadata into
   `ManagedProfilePayload.smartConnect`
-- the client does not use `smart_connect` for node switching and does not send
-  RTT samples yet, because there is no verified client-side RTT measurement
-  loop in this slice
+- the client now performs best-effort TCP RTT probes for shortlist items with
+  backend-provided internal probe targets, applies the backend-owned stickiness
+  threshold locally, and uploads accepted samples through
+  `/api/client/nodes/latency-samples`
 - Home WARP/enhanced privacy remains a disabled/info-only tile with regression
   coverage proving there is no active toggle
 
@@ -160,8 +161,9 @@ The Task 7 consilium aligned on a beta-honest staging cut:
 - Selected-app routing is staged only. The backend route-policy plumbing remains
   available for future proof work, but the public app does not let users pick it
   yet.
-- Smart-connect metadata is parsed as passive backend-owned profile data. It is
-  not a visible mode, balancer, or manual node list in the MVP.
+- Smart-connect remains backend-owned and hidden from first-layer UI. The app
+  may upload RTT evidence and sticky selection telemetry, but it is not a
+  visible mode, balancer, or manual node list in the MVP.
 - Roulette and activity calendar are not active UI. They remain hidden until
   public app APIs and feature flags exist.
 - Raw subscription import and Xray fallback remain advanced/recovery-only.

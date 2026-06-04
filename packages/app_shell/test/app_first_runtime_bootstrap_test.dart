@@ -254,6 +254,341 @@ void main() {
     expect(state['managed_manifest_path'], '/api/client/profile/managed');
   });
 
+  test('uploads smart-connect RTT samples and applies stickiness threshold',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-smart-connect-latency-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final requests = <String>[];
+    Map<String, dynamic>? latencyBody;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add('${request.method} ${request.uri.path}');
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'smart-connect-session',
+                    'account_id': 'smart-connect-account',
+                  },
+                  'provisioning': <String, Object?>{
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/route-policy') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/profile/managed') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'profile_revision': 'rev-009',
+                  'smart_connect': <String, Object?>{
+                    'eligible': true,
+                    'fallback_required': false,
+                    'shortlist_reason': 'eligible',
+                    'shortlist_limit': 5,
+                    'shortlist_revision': 'short-009',
+                    'transport_profile': 'reality',
+                    'profile_revision': 'rev-009',
+                    'fallback_order': <String>['pl', 'de'],
+                    'shortlist': <Object?>[
+                      <String, Object?>{
+                        'code': 'pl',
+                        'country': 'Poland',
+                        'rank': 1,
+                        'rank_hint': <String, Object?>{
+                          'health_score': 98.0,
+                          'cpu_percent': 20.0,
+                          'panel_latency_ms': 60,
+                          'backend_penalty': 0,
+                          'cpu_penalty': 0,
+                          'sticky_preferred': true,
+                        },
+                      },
+                      <String, Object?>{
+                        'code': 'de',
+                        'country': 'Germany',
+                        'rank': 2,
+                        'rank_hint': <String, Object?>{
+                          'health_score': 97.0,
+                          'cpu_percent': 18.0,
+                          'panel_latency_ms': 55,
+                          'backend_penalty': 0,
+                          'cpu_penalty': 0,
+                          'sticky_preferred': false,
+                        },
+                      },
+                    ],
+                    'stickiness': <String, Object?>{
+                      'preferred_node_code': 'pl',
+                      'threshold_percent': 15,
+                      'latest_sample_at': '2026-06-04T10:00:00Z',
+                      'stickiness_applied': false,
+                    },
+                  },
+                  'config_format': 'singbox-json',
+                  'config_payload': <String, Object?>{
+                    'outbounds': <Object?>[
+                      <String, Object?>{
+                        'type': 'selector',
+                        'tag': 'proxy',
+                      },
+                    ],
+                    'route': <String, Object?>{
+                      'final': 'proxy',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/nodes/latency-samples') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer smart-connect-session',
+          );
+          latencyBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ok': true,
+                  'accepted_samples': 2,
+                  'preferred_node_code': 'pl',
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      smartConnectLatencyProbe: (node) async => switch (node.code) {
+        'pl' => 100,
+        'de' => 88,
+        _ => null,
+      },
+    );
+
+    final payload = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+
+    expect(payload.smartConnect?.shortlistRevision, 'short-009');
+    expect(latencyBody, isNotNull);
+    expect(latencyBody?['profile_revision'], 'rev-009');
+    expect(latencyBody?['transport_profile'], 'reality');
+    expect(latencyBody?['selected_node_code'], 'pl');
+    expect(latencyBody?['previous_node_code'], 'pl');
+    expect(latencyBody?['stickiness_applied'], isTrue);
+    expect(latencyBody?['samples'], <Object?>[
+      <String, Object?>{'node_code': 'pl', 'rtt_ms': 100},
+      <String, Object?>{'node_code': 'de', 'rtt_ms': 88},
+    ]);
+    expect(requests, <String>[
+      'POST /api/client/session/start-trial',
+      'POST /api/client/route-policy',
+      'GET /api/client/profile/managed',
+      'POST /api/client/nodes/latency-samples',
+    ]);
+  });
+
+  test('uses shortlist probe endpoint for default smart-connect RTT',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-smart-connect-default-probe-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final probeServer = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(probeServer.close);
+    unawaited(() async {
+      await for (final socket in probeServer) {
+        socket.destroy();
+      }
+    }());
+
+    Map<String, dynamic>? latencyBody;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'smart-connect-probe-session',
+                    'account_id': 'smart-connect-probe-account',
+                  },
+                  'provisioning': <String, Object?>{
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/route-policy') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/profile/managed') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'profile_revision': 'rev-probe',
+                  'smart_connect': <String, Object?>{
+                    'eligible': true,
+                    'fallback_required': false,
+                    'shortlist_reason': 'eligible',
+                    'shortlist_limit': 1,
+                    'shortlist_revision': 'short-probe',
+                    'transport_profile': 'reality',
+                    'profile_revision': 'rev-probe',
+                    'fallback_order': <String>['nl-free'],
+                    'shortlist': <Object?>[
+                      <String, Object?>{
+                        'code': 'nl-free',
+                        'country': 'Netherlands',
+                        'rank': 1,
+                        'probe': <String, Object?>{
+                          'host': '127.0.0.1',
+                          'port': probeServer.port,
+                        },
+                        'rank_hint': <String, Object?>{
+                          'health_score': 99.0,
+                          'cpu_percent': 10.0,
+                          'panel_latency_ms': 30,
+                          'backend_penalty': 0,
+                          'cpu_penalty': 0,
+                          'sticky_preferred': false,
+                        },
+                      },
+                    ],
+                    'stickiness': <String, Object?>{
+                      'preferred_node_code': '',
+                      'threshold_percent': 15,
+                      'latest_sample_at': null,
+                      'stickiness_applied': false,
+                    },
+                  },
+                  'config_format': 'singbox-json',
+                  'config_payload': <String, Object?>{
+                    'outbounds': <Object?>[
+                      <String, Object?>{
+                        'type': 'selector',
+                        'tag': 'proxy',
+                      },
+                    ],
+                    'route': <String, Object?>{
+                      'final': 'proxy',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/nodes/latency-samples') {
+          latencyBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ok': true,
+                  'accepted_samples': 1,
+                  'preferred_node_code': 'nl-free',
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+
+    await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+
+    final samples = latencyBody?['samples'] as List<Object?>?;
+    expect(samples, hasLength(1));
+    final sample = samples!.single as Map<String, dynamic>;
+    expect(sample['node_code'], 'nl-free');
+    expect(sample['rtt_ms'], greaterThan(0));
+    expect(latencyBody?['selected_node_code'], 'nl-free');
+  });
+
   test(
       'support ticket service creates a ticket with app-session auth and safe diagnostics',
       () async {

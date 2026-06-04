@@ -177,7 +177,7 @@ Quick-connect rules:
 - premium users probe up to `5` eligible non-free nodes
 - free-tier users stay on `NL-free` only
 - shortlist eligibility rejects disabled, draining, unhealthy, stale, overloaded, and transport-incompatible nodes
-- the client combines device RTT with backend CPU and health penalties and uses a `15%` stickiness threshold before changing nodes
+- the client uses backend-provided internal probe targets to combine device RTT with backend CPU and health penalties, then applies a `15%` stickiness threshold before changing nodes
 - explicit user-node assignments still take precedence
 
 Consumer privacy rules:
