@@ -1001,7 +1001,7 @@ void main() {
           continue;
         }
 
-        if (request.uri.path == '/api/bonuses') {
+        if (request.uri.path == '/api/bonuses/summary') {
           expect(
             request.headers.value(HttpHeaders.authorizationHeader),
             'Bearer bonus-summary-session',
@@ -1060,7 +1060,7 @@ void main() {
     expect(summary.nextTierAt, 5);
     expect(requests, <String>[
       'POST /api/client/session/start-trial',
-      'GET /api/bonuses',
+      'GET /api/bonuses/summary',
     ]);
   });
 

@@ -663,7 +663,7 @@ class AppFirstRuntimeBootstrapper
         try {
           final response = await _requestJson(
             method: 'GET',
-            path: '/api/bonuses',
+            path: '/api/bonuses/summary',
             client: client,
             bearerToken: state.sessionToken,
             hostPlatform: hostPlatform,

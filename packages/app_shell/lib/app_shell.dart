@@ -633,6 +633,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             ? 'Код активирован. Доступ обновлен.'
             : 'Код обработан.';
       });
+      unawaited(_loadBonusSummary(force: true));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

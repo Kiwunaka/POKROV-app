@@ -148,10 +148,16 @@ Shortlist rules:
 Related backend contracts:
 
 - `POST /api/client/telegram/link`
+- `GET /api/bonuses/summary`
+- `GET /api/bonuses/referral/summary`
+- `POST /api/bonuses/promo/redeem`
 - `POST /api/channel/subscriber/check`
 - `POST /api/bonuses/channel/claim`
 
 Linked Telegram identity and membership in `@pokrov_vpn` can grant `+10 days`.
+Promo codes can be redeemed through the unified code entry or the app-facing
+bonus promo endpoint. Wheel and calendar rewards remain hidden until backend
+feature flags and UI copy are explicit.
 
 ### Support
 
