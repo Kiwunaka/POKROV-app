@@ -188,4 +188,3 @@ Keep the current clean-room POKROV-app lane intact until the Hiddify spike prove
 - POKROV-managed provisioning
 - acceptable rebrand/telemetry/deeplink cleanup scope
 - a simple first-layer UI that can hide advanced proxy utility complexity
-
