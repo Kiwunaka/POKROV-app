@@ -188,6 +188,7 @@ class AppFirstBonusSummary {
     required this.paidReferrals,
     required this.nextTierKey,
     required this.nextTierAt,
+    this.historyItems = const <AppFirstBonusHistoryItem>[],
   });
 
   final int referralCount;
@@ -205,8 +206,42 @@ class AppFirstBonusSummary {
   final int paidReferrals;
   final String nextTierKey;
   final int? nextTierAt;
+  final List<AppFirstBonusHistoryItem> historyItems;
 
   bool get channelBonusClaimed => channelBonusClaimedAt.trim().isNotEmpty;
+}
+
+class AppFirstBonusHistoryItem {
+  const AppFirstBonusHistoryItem({
+    required this.kind,
+    required this.source,
+    required this.title,
+    required this.occurredAt,
+    required this.days,
+    required this.discountPct,
+    required this.codePreview,
+  });
+
+  final String kind;
+  final String source;
+  final String title;
+  final String occurredAt;
+  final int days;
+  final int discountPct;
+  final String codePreview;
+
+  String get compactValue {
+    if (days > 0) {
+      return '+$days дней';
+    }
+    if (discountPct > 0) {
+      return '-$discountPct%';
+    }
+    if (codePreview.isNotEmpty) {
+      return codePreview;
+    }
+    return occurredAt.isEmpty ? source : occurredAt;
+  }
 }
 
 class AppFirstRuntimeBootstrapper
@@ -669,6 +704,12 @@ class AppFirstRuntimeBootstrapper
             hostPlatform: hostPlatform,
           );
           final tier = _readMap(response['points_tier']);
+          final historyItems = await _fetchBonusHistoryItems(
+            summaryResponse: response,
+            hostPlatform: hostPlatform,
+            client: client,
+            bearerToken: state.sessionToken,
+          );
           return AppFirstBonusSummary(
             referralCount: _readInt(response['referral_count']),
             referralCode: _readText(response['referral_code']),
@@ -688,6 +729,7 @@ class AppFirstRuntimeBootstrapper
             paidReferrals: _readInt(tier['paid_referrals']),
             nextTierKey: _readText(tier['next_tier_key']),
             nextTierAt: _readNullableInt(tier['next_tier_at']),
+            historyItems: historyItems,
           );
         } on BootstrapFailure catch (error) {
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
@@ -710,6 +752,49 @@ class AppFirstRuntimeBootstrapper
       );
     } finally {
       client.close(force: true);
+    }
+  }
+
+  Future<List<AppFirstBonusHistoryItem>> _fetchBonusHistoryItems({
+    required Map<String, dynamic> summaryResponse,
+    required HostPlatform hostPlatform,
+    required HttpClient client,
+    required String bearerToken,
+  }) async {
+    final history = _readMap(summaryResponse['history']);
+    var endpoint = _readText(history['endpoint']);
+    if (endpoint.isEmpty) {
+      endpoint = '/api/bonuses/history';
+    }
+    if (!endpoint.startsWith('/api/bonuses/')) {
+      return const <AppFirstBonusHistoryItem>[];
+    }
+
+    try {
+      final response = await _requestJson(
+        method: 'GET',
+        path: endpoint,
+        client: client,
+        bearerToken: bearerToken,
+        hostPlatform: hostPlatform,
+      );
+      return _readListOfMaps(response['items'])
+          .map(
+            (item) => AppFirstBonusHistoryItem(
+              kind: _readText(item['kind']),
+              source: _readText(item['source']),
+              title: _readText(item['title']),
+              occurredAt: _readText(item['occurred_at']),
+              days: _readInt(item['days']),
+              discountPct: _readInt(item['discount_pct']),
+              codePreview: _readText(item['code_preview']),
+            ),
+          )
+          .where((item) => item.title.isNotEmpty)
+          .take(3)
+          .toList(growable: false);
+    } on BootstrapFailure {
+      return const <AppFirstBonusHistoryItem>[];
     }
   }
 

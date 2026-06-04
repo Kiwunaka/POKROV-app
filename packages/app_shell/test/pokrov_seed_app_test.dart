@@ -861,6 +861,26 @@ void main() {
         paidReferrals: 2,
         nextTierKey: 'pro',
         nextTierAt: 5,
+        historyItems: <AppFirstBonusHistoryItem>[
+          AppFirstBonusHistoryItem(
+            kind: 'promo',
+            source: 'promo',
+            title: 'Промокод активирован',
+            occurredAt: '2026-06-03T12:30:00Z',
+            days: 7,
+            discountPct: 0,
+            codePreview: '...DAYS',
+          ),
+          AppFirstBonusHistoryItem(
+            kind: 'telegram_channel',
+            source: 'telegram',
+            title: 'Telegram-бонус получен',
+            occurredAt: '2026-06-03T12:00:00Z',
+            days: 10,
+            discountPct: 0,
+            codePreview: '',
+          ),
+        ],
       ),
     );
 
@@ -896,6 +916,12 @@ void main() {
         findsOneWidget);
     expect(find.byKey(const ValueKey('profile-bonus-summary-promo')),
         findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-bonus-history-item-0')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-bonus-history-item-1')),
+        findsOneWidget);
+    expect(find.text('Промокод активирован'), findsOneWidget);
+    expect(find.text('Telegram-бонус получен'), findsOneWidget);
     expect(find.textContaining('POKROV2'), findsWidgets);
     expect(find.textContaining('+10'), findsWidgets);
     expect(

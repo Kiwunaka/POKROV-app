@@ -3046,6 +3046,19 @@ class _ProfileSection extends StatelessWidget {
     return '${summary.referralCount} · ${summary.referralCode}';
   }
 
+  IconData _bonusHistoryIcon(AppFirstBonusHistoryItem item) {
+    switch (item.kind) {
+      case 'telegram_channel':
+        return Icons.send_outlined;
+      case 'promo':
+        return Icons.card_giftcard_outlined;
+      case 'opening_bonus':
+        return Icons.auto_awesome_outlined;
+      default:
+        return Icons.history_rounded;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -3200,6 +3213,15 @@ class _ProfileSection extends StatelessWidget {
                         title: 'Промокод',
                         value: 'Через код',
                       ),
+                      for (final entry in bonusSummary!.historyItems.indexed)
+                        _SettingsRow(
+                          key: ValueKey(
+                            'profile-bonus-history-item-${entry.$1}',
+                          ),
+                          icon: _bonusHistoryIcon(entry.$2),
+                          title: entry.$2.title,
+                          value: entry.$2.compactValue,
+                        ),
                     ],
                     if ((bonusSummaryError ?? '').isNotEmpty)
                       Padding(

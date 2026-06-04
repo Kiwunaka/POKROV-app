@@ -143,6 +143,16 @@ Before the device receives a real subscription payload:
 - Telegram purchase continuation may remain as a fallback path, not the default CTA
 - public acquisition outside the app is checkout-first on `marketing`, while the cabinet stays a continuation surface rather than a second acquisition page
 
+### Rewards and bonuses
+
+- Account may show a compact bonus summary for Telegram reward, referrals,
+  promo entry, and the latest safe bonus-history events
+- bonus history must stay compact and app-safe: no raw subscription links,
+  full promo codes, tokens, hostnames, or backend event metadata
+- wheel, roulette, activity calendar, achievements, and rich loyalty UI remain
+  hidden until reward logic, feature flags, rollout evidence, and copy are
+  approved
+
 ## Support Direction
 
 Support should be reachable from:

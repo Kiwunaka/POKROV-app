@@ -1021,6 +1021,10 @@ void main() {
                   'opening_bonus_premium_days': 5,
                   'opening_bonus_claimed': true,
                   'channel_username': 'pokrov_vpn',
+                  'history': <String, Object?>{
+                    'endpoint': '/api/bonuses/history',
+                    'recent_count': 2,
+                  },
                   'points_tier': <String, Object?>{
                     'tier_key': 'starter',
                     'percent': 5,
@@ -1028,6 +1032,44 @@ void main() {
                     'next_tier_key': 'pro',
                     'next_tier_at': 5,
                   },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/bonuses/history') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer bonus-summary-session',
+          );
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ok': true,
+                  'items': <Object?>[
+                    <String, Object?>{
+                      'kind': 'promo',
+                      'source': 'promo',
+                      'title': 'Промокод активирован',
+                      'occurred_at': '2026-06-03T12:30:00Z',
+                      'days': 7,
+                      'discount_pct': 0,
+                      'code_preview': '...DAYS',
+                    },
+                    <String, Object?>{
+                      'kind': 'telegram_channel',
+                      'source': 'telegram',
+                      'title': 'Telegram-бонус получен',
+                      'occurred_at': '2026-06-03T12:00:00Z',
+                      'days': 10,
+                      'discount_pct': 0,
+                    },
+                  ],
+                  'next_cursor': null,
                 },
               ),
             );
@@ -1058,9 +1100,15 @@ void main() {
     expect(summary.openingBonusClaimed, isTrue);
     expect(summary.tierKey, 'starter');
     expect(summary.nextTierAt, 5);
+    expect(summary.historyItems, hasLength(2));
+    expect(summary.historyItems.first.kind, 'promo');
+    expect(summary.historyItems.first.days, 7);
+    expect(summary.historyItems.first.codePreview, '...DAYS');
+    expect(summary.historyItems.last.title, 'Telegram-бонус получен');
     expect(requests, <String>[
       'POST /api/client/session/start-trial',
       'GET /api/bonuses/summary',
+      'GET /api/bonuses/history',
     ]);
   });
 

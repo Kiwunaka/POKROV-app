@@ -108,6 +108,9 @@ backend contract instead of adding a duplicate summary endpoint:
   `/api/bonuses/channel/claim`
 - Profile/Account keeps the native code field and adds stateful Telegram bonus
   rows for link, check, and claim
+- Profile/Account now loads `GET /api/bonuses/summary`, follows the safe
+  `history.endpoint` to `GET /api/bonuses/history`, and renders only compact
+  recent bonus-history rows inside the existing summary
 - the Telegram bot URL and channel URL come from the backend response rather
   than hardcoded UI guesses
 - successful claim marks the managed profile dirty so the next connect/profile
