@@ -1,6 +1,7 @@
 library pokrov_app_shell;
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -4459,6 +4460,7 @@ class _SelectedAppsEditor extends StatefulWidget {
 
 class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
   late final TextEditingController _controller;
+  Future<List<_SelectedAppCandidate>>? _candidateFuture;
 
   @override
   void initState() {
@@ -4472,6 +4474,14 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant _SelectedAppsEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.hostPlatform != widget.hostPlatform) {
+      _candidateFuture = null;
+    }
+  }
+
   void _submit() {
     final normalized = _normalizeSelectedAppIdentifier(_controller.text);
     if (normalized == null) {
@@ -4479,6 +4489,29 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
     }
     widget.onAdd(normalized);
     _controller.clear();
+  }
+
+  Future<void> _openPicker() async {
+    final candidateFuture = _candidateFuture ??=
+        _loadSelectedAppCandidates(widget.hostPlatform);
+    final candidate = await showModalBottomSheet<_SelectedAppCandidate>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: _SeedPalette.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => _SelectedAppsPickerSheet(
+        hostPlatform: widget.hostPlatform,
+        candidatesFuture: candidateFuture,
+        selectedAppIds: widget.selectedAppIds,
+      ),
+    );
+    if (candidate == null) {
+      return;
+    }
+    widget.onAdd(candidate.identifier);
   }
 
   @override
@@ -4491,6 +4524,17 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        OutlinedButton.icon(
+          key: const ValueKey('rules-selected-app-pick'),
+          onPressed: _openPicker,
+          icon: const Icon(Icons.apps_rounded),
+          label: Text(
+            widget.hostPlatform == HostPlatform.windows
+                ? 'Выбрать процесс'
+                : 'Выбрать приложение',
+          ),
+        ),
+        const SizedBox(height: 10),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -4541,6 +4585,409 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
       ],
     );
   }
+}
+
+enum _SelectedAppCandidateSource {
+  installed,
+  runningProcess,
+  suggested,
+}
+
+class _SelectedAppCandidate {
+  const _SelectedAppCandidate({
+    required this.label,
+    required this.identifier,
+    required this.subtitle,
+    required this.source,
+    required this.icon,
+  });
+
+  final String label;
+  final String identifier;
+  final String subtitle;
+  final _SelectedAppCandidateSource source;
+  final IconData icon;
+
+  String get searchText =>
+      '$label $identifier $subtitle'.toLowerCase().trim();
+
+  String get sourceLabel {
+    switch (source) {
+      case _SelectedAppCandidateSource.installed:
+        return 'Установлено';
+      case _SelectedAppCandidateSource.runningProcess:
+        return 'Запущено';
+      case _SelectedAppCandidateSource.suggested:
+        return 'Подсказка';
+    }
+  }
+}
+
+class _SelectedAppsPickerSheet extends StatefulWidget {
+  const _SelectedAppsPickerSheet({
+    required this.hostPlatform,
+    required this.candidatesFuture,
+    required this.selectedAppIds,
+  });
+
+  final HostPlatform hostPlatform;
+  final Future<List<_SelectedAppCandidate>> candidatesFuture;
+  final List<String> selectedAppIds;
+
+  @override
+  State<_SelectedAppsPickerSheet> createState() =>
+      _SelectedAppsPickerSheetState();
+}
+
+class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final motion = _MotionScope.of(context);
+    final title = widget.hostPlatform == HostPlatform.windows
+        ? 'Процессы Windows'
+        : 'Приложения';
+    return SizedBox(
+      key: const ValueKey('rules-selected-app-picker-sheet'),
+      height: MediaQuery.sizeOf(context).height * 0.82,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const ValueKey('rules-selected-app-search'),
+                controller: _searchController,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search_rounded),
+                  labelText: 'Поиск',
+                ),
+                onChanged: (value) => setState(() {
+                  _query = value.trim().toLowerCase();
+                }),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: FutureBuilder<List<_SelectedAppCandidate>>(
+                  future: widget.candidatesFuture,
+                  builder: (context, snapshot) {
+                    final fallbackCandidates = _suggestedSelectedAppCandidates(
+                      widget.hostPlatform,
+                    );
+                    if (snapshot.connectionState != ConnectionState.done &&
+                        fallbackCandidates.isEmpty) {
+                      return const _MotionSkeletonList(
+                        rows: 5,
+                      );
+                    }
+                    final rawCandidates =
+                        snapshot.connectionState == ConnectionState.done &&
+                                snapshot.data != null
+                            ? snapshot.data!
+                            : fallbackCandidates;
+                    final candidates = rawCandidates
+                        .where(
+                          (candidate) => _query.isEmpty ||
+                              candidate.searchText.contains(_query),
+                        )
+                        .toList(growable: false);
+                    if (candidates.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'Ничего не найдено. Введите ID вручную ниже.',
+                          textAlign: TextAlign.center,
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: _SeedPalette.muted,
+                                  ),
+                        ),
+                      );
+                    }
+                    return ListView.separated(
+                      itemCount: candidates.length,
+                      separatorBuilder: (_, __) => Divider(
+                        height: 1,
+                        color: _SeedPalette.line,
+                      ),
+                      itemBuilder: (context, index) {
+                        final candidate = candidates[index];
+                        final selected =
+                            widget.selectedAppIds.contains(candidate.identifier);
+                        return AnimatedOpacity(
+                          duration: motion.duration(_MotionTokens.short),
+                          opacity: selected ? 0.62 : 1,
+                          child: ListTile(
+                            key: ValueKey(
+                              'rules-selected-app-option-${candidate.identifier}',
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                            enabled: !selected,
+                            leading: CircleAvatar(
+                              backgroundColor:
+                                  _SeedPalette.accent.withValues(alpha: 0.1),
+                              foregroundColor: _SeedPalette.accent,
+                              child: Icon(candidate.icon, size: 20),
+                            ),
+                            title: Text(
+                              candidate.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${candidate.sourceLabel} · ${candidate.subtitle}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: Icon(
+                              selected
+                                  ? Icons.check_circle_rounded
+                                  : Icons.add_circle_outline_rounded,
+                              color: selected
+                                  ? _SeedPalette.success
+                                  : _SeedPalette.accent,
+                            ),
+                            onTap: selected
+                                ? null
+                                : () => Navigator.of(context).pop(candidate),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+const _selectedAppsRuntimeChannel =
+    MethodChannel('space.pokrov/runtime_engine');
+
+Future<List<_SelectedAppCandidate>> _loadSelectedAppCandidates(
+  HostPlatform hostPlatform,
+) async {
+  final nativeCandidates = switch (hostPlatform) {
+    HostPlatform.android => await _loadAndroidInstalledAppCandidates(),
+    HostPlatform.windows => await _loadWindowsProcessCandidates(),
+    HostPlatform.ios || HostPlatform.macos => const <_SelectedAppCandidate>[],
+  };
+  return _mergeSelectedAppCandidates(
+    <_SelectedAppCandidate>[
+      ...nativeCandidates,
+      ..._suggestedSelectedAppCandidates(hostPlatform),
+    ],
+  );
+}
+
+Future<List<_SelectedAppCandidate>> _loadAndroidInstalledAppCandidates()
+    async {
+  try {
+    final response = await _selectedAppsRuntimeChannel
+        .invokeListMethod<Object?>('runtimeEngine.listInstalledApps')
+        .timeout(const Duration(seconds: 2));
+    return _candidatesFromHostMaps(
+      response,
+      source: _SelectedAppCandidateSource.installed,
+      icon: Icons.android_rounded,
+    );
+  } on TimeoutException {
+    return const <_SelectedAppCandidate>[];
+  } on MissingPluginException {
+    return const <_SelectedAppCandidate>[];
+  } on PlatformException {
+    return const <_SelectedAppCandidate>[];
+  }
+}
+
+Future<List<_SelectedAppCandidate>> _loadWindowsProcessCandidates() async {
+  if (!Platform.isWindows) {
+    return const <_SelectedAppCandidate>[];
+  }
+  try {
+    final result = await Process.run(
+      'powershell',
+      <String>[
+        '-NoProfile',
+        '-Command',
+        r'[Console]::OutputEncoding=[System.Text.Encoding]::UTF8; Get-Process | Select-Object -ExpandProperty ProcessName | Sort-Object -Unique | ConvertTo-Json -Compress',
+      ],
+    ).timeout(const Duration(seconds: 3));
+    if (result.exitCode != 0) {
+      return const <_SelectedAppCandidate>[];
+    }
+    final decoded = jsonDecode(result.stdout.toString());
+    final names = switch (decoded) {
+      final List<Object?> list => list.whereType<String>(),
+      final String single => <String>[single],
+      _ => const <String>[],
+    };
+    return names
+        .map((name) => name.trim())
+        .where((name) => name.isNotEmpty)
+        .map((name) {
+          final identifier = name.toLowerCase().endsWith('.exe')
+              ? name.toLowerCase()
+              : '${name.toLowerCase()}.exe';
+          return _SelectedAppCandidate(
+            label: identifier,
+            identifier: identifier,
+            subtitle: identifier,
+            source: _SelectedAppCandidateSource.runningProcess,
+            icon: Icons.memory_rounded,
+          );
+        })
+        .where((candidate) =>
+            _normalizeSelectedAppIdentifier(candidate.identifier) != null)
+        .take(120)
+        .toList(growable: false);
+  } on Object {
+    return const <_SelectedAppCandidate>[];
+  }
+}
+
+List<_SelectedAppCandidate> _candidatesFromHostMaps(
+  List<Object?>? response, {
+  required _SelectedAppCandidateSource source,
+  required IconData icon,
+}) {
+  if (response == null) {
+    return const <_SelectedAppCandidate>[];
+  }
+  final candidates = <_SelectedAppCandidate>[];
+  for (final item in response) {
+    if (item is! Map) {
+      continue;
+    }
+    final identifier = _normalizeSelectedAppIdentifier(
+      item['identifier']?.toString() ?? '',
+    );
+    if (identifier == null) {
+      continue;
+    }
+    final label = item['label']?.toString().trim();
+    final subtitle = item['subtitle']?.toString().trim();
+    candidates.add(
+      _SelectedAppCandidate(
+        label: label == null || label.isEmpty ? identifier : label,
+        identifier: identifier,
+        subtitle: subtitle == null || subtitle.isEmpty ? identifier : subtitle,
+        source: source,
+        icon: icon,
+      ),
+    );
+  }
+  return candidates;
+}
+
+List<_SelectedAppCandidate> _suggestedSelectedAppCandidates(
+  HostPlatform hostPlatform,
+) {
+  switch (hostPlatform) {
+    case HostPlatform.android:
+      return const <_SelectedAppCandidate>[
+        _SelectedAppCandidate(
+          label: 'Telegram',
+          identifier: 'org.telegram.messenger',
+          subtitle: 'org.telegram.messenger',
+          source: _SelectedAppCandidateSource.suggested,
+          icon: Icons.send_rounded,
+        ),
+        _SelectedAppCandidate(
+          label: 'YouTube',
+          identifier: 'com.google.android.youtube',
+          subtitle: 'com.google.android.youtube',
+          source: _SelectedAppCandidateSource.suggested,
+          icon: Icons.play_circle_fill_rounded,
+        ),
+        _SelectedAppCandidate(
+          label: 'Chrome',
+          identifier: 'com.android.chrome',
+          subtitle: 'com.android.chrome',
+          source: _SelectedAppCandidateSource.suggested,
+          icon: Icons.public_rounded,
+        ),
+        _SelectedAppCandidate(
+          label: 'Discord',
+          identifier: 'com.discord',
+          subtitle: 'com.discord',
+          source: _SelectedAppCandidateSource.suggested,
+          icon: Icons.forum_rounded,
+        ),
+      ];
+    case HostPlatform.windows:
+      return const <_SelectedAppCandidate>[
+        _SelectedAppCandidate(
+          label: 'Telegram',
+          identifier: 'telegram.exe',
+          subtitle: 'telegram.exe',
+          source: _SelectedAppCandidateSource.suggested,
+          icon: Icons.send_rounded,
+        ),
+        _SelectedAppCandidate(
+          label: 'Chrome',
+          identifier: 'chrome.exe',
+          subtitle: 'chrome.exe',
+          source: _SelectedAppCandidateSource.suggested,
+          icon: Icons.public_rounded,
+        ),
+        _SelectedAppCandidate(
+          label: 'Edge',
+          identifier: 'msedge.exe',
+          subtitle: 'msedge.exe',
+          source: _SelectedAppCandidateSource.suggested,
+          icon: Icons.public_rounded,
+        ),
+        _SelectedAppCandidate(
+          label: 'Discord',
+          identifier: 'discord.exe',
+          subtitle: 'discord.exe',
+          source: _SelectedAppCandidateSource.suggested,
+          icon: Icons.forum_rounded,
+        ),
+      ];
+    case HostPlatform.ios:
+    case HostPlatform.macos:
+      return const <_SelectedAppCandidate>[];
+  }
+}
+
+List<_SelectedAppCandidate> _mergeSelectedAppCandidates(
+  List<_SelectedAppCandidate> candidates,
+) {
+  final seen = <String>{};
+  final merged = <_SelectedAppCandidate>[];
+  for (final candidate in candidates) {
+    final key = candidate.identifier.toLowerCase();
+    if (!seen.add(key)) {
+      continue;
+    }
+    merged.add(candidate);
+  }
+  return merged;
 }
 
 String? _normalizeSelectedAppIdentifier(String value) {

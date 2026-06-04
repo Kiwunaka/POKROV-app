@@ -55,7 +55,10 @@ The current code slice is:
    first-party promo slots, and disabled mutating actions until backend state
    marks the mechanics enabled;
 8. keep profile loading lazy so the app does not block startup or ordinary
-   navigation on bonus data.
+   navigation on bonus data;
+9. Rules selected-apps mode now has a picker-first UX with Android native
+   launchable-app bridge support, immediate fallback suggestions, Windows
+   running-process suggestions, and manual entry retained for unusual app IDs.
 
 This slice is P0/P1 bridge work because the master brief needs bonus/account
 clarity before a richer Rewards Hub can safely exist.
@@ -105,7 +108,7 @@ clarity before a richer Rewards Hub can safely exist.
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Custom selected apps | Done for P3 manual identifiers, partial for native pickers | Rules lets the user add/remove app identifiers; selected apps auto-select the `selected_apps` route mode; app sends `selected_apps` to route policy; Android materialization writes `include_package` into sing-box TUN config | replace manual entry with Android installed-package picker and Windows process/exe picker |
+| Custom selected apps | Done for P3 manual identifiers, partial for native pickers | Rules lets the user add/remove app identifiers; selected apps auto-select the `selected_apps` route mode; app sends `selected_apps` to route policy; Android materialization writes `include_package` into sing-box TUN config; P4 picker-first UI and Android launchable-app bridge are started | harden Windows process/exe route enforcement and replace fallback suggestions with richer native catalogs where platform proof exists |
 | Full activity calendar | Not started for ledger-backed UI | P2 preview grid exists | add backend check-in history/ledger, then render full calendar |
 | Achievements ledger | Not started for live achievements | P2 safe chips exist | add backend achievement ledger and replace preview chips |
 | Live wheel/calendar rewards | Not started for mutation | disabled endpoint shells and disabled UI actions exist | enable only after reward ledger, feature flags, rollout proof, and copy |
@@ -125,7 +128,7 @@ states.
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Android installed-app picker and Windows process/exe picker | Not started for native pickers | manual selected-app identifiers, backend `selected_apps`, and Android `include_package` bridge exist | build Android installed-package picker and Windows process/exe picker so normal users do not type package/process ids |
+| Android installed-app picker and Windows process/exe picker | Started | picker-first Rules UI opens a searchable app/process sheet; Android bridge exposes `runtimeEngine.listInstalledApps` for launchable packages; immediate fallback suggestions keep the sheet useful when bridge data is unavailable; Windows picker starts from running processes plus curated `.exe` suggestions | add Windows native exe/process enumeration proof to route-contract tests, then expand Android/Windows catalogs with labels/icons as available |
 | Live wheel, calendar, and achievements | Not started for live mutations | Rewards Hub preview, disabled wheel/calendar endpoint shells, compact calendar grid, and safe achievement chips exist | add reward ledger, feature flags, rollout proof, and copy before enabling spin/check-in/achievement claims |
 | Support realtime lifecycle | Not started | embedded ticket-backed support chat and explicit diagnostic attachment exist | add polling or SSE, ticket status, operator escalation states, and stale/offline behavior without fake operator presence |
 | Native email linking and recovery | Not started for native app flow | email/recovery handoff and cabinet continuation exist | add native email linking/recovery only after delivery readiness and account-linking semantics are green |

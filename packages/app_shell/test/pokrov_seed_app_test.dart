@@ -1772,6 +1772,117 @@ void main() {
     );
   });
 
+  testWidgets('rules app picker adds a known Android application',
+      (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-rules');
+    final selectedAppsSection =
+        find.byKey(const ValueKey('rules-section-selected-apps'));
+    await tester.dragUntilVisible(
+      selectedAppsSection,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('rules-selected-app-pick')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('rules-selected-app-picker-sheet')),
+        findsOneWidget);
+
+    await tester.tap(
+      find.byKey(
+        const ValueKey(
+          'rules-selected-app-option-org.telegram.messenger',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(
+        const ValueKey('rules-selected-app-org.telegram.messenger'),
+      ),
+      findsOneWidget,
+    );
+
+    await _tapNav(tester, 'nav-protection');
+    final routeChip = find.byKey(const ValueKey('home-route-chip'));
+    expect(
+      find.descendant(
+        of: routeChip,
+        matching: find.text(RouteMode.selectedApps.label),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('rules app picker can use native Android catalog',
+      (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.listInstalledApps') {
+        return <Map<String, Object?>>[
+          <String, Object?>{
+            'label': 'Signal',
+            'identifier': 'org.thoughtcrime.securesms',
+            'subtitle': 'org.thoughtcrime.securesms',
+          },
+        ];
+      }
+      return null;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-rules');
+    final selectedAppsSection =
+        find.byKey(const ValueKey('rules-section-selected-apps'));
+    await tester.dragUntilVisible(
+      selectedAppsSection,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('rules-selected-app-pick')));
+    await tester.pumpAndSettle();
+
+    final nativeOption = find.byKey(
+      const ValueKey(
+        'rules-selected-app-option-org.thoughtcrime.securesms',
+      ),
+    );
+    expect(nativeOption, findsOneWidget);
+
+    await tester.tap(nativeOption);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(
+        const ValueKey('rules-selected-app-org.thoughtcrime.securesms'),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('advanced settings require acknowledgement before opening',
       (tester) async {
     await tester.pumpWidget(

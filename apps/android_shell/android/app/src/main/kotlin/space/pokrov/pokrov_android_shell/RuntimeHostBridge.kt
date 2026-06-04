@@ -21,6 +21,7 @@ class RuntimeHostBridge(
             METHOD_STAGE_MANAGED_PROFILE -> result.success(stageManagedProfile(call))
             METHOD_CONNECT -> result.success(connect())
             METHOD_DISCONNECT -> result.success(disconnect())
+            METHOD_LIST_INSTALLED_APPS -> result.success(listInstalledApps())
             else -> result.notImplemented()
         }
     }
@@ -206,6 +207,31 @@ class RuntimeHostBridge(
         return AndroidRuntimeState.snapshot()
     }
 
+    @Suppress("DEPRECATION")
+    private fun listInstalledApps(): List<Map<String, String>> {
+        val packageManager = activity.packageManager
+        val launcherIntent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+        val activities = packageManager.queryIntentActivities(launcherIntent, 0)
+        return activities
+            .mapNotNull { resolveInfo ->
+                val packageName = resolveInfo.activityInfo?.packageName
+                    ?: return@mapNotNull null
+                val label = resolveInfo.loadLabel(packageManager)
+                    ?.toString()
+                    ?.trim()
+                    .orEmpty()
+                mapOf(
+                    "label" to if (label.isBlank()) packageName else label,
+                    "identifier" to packageName,
+                    "subtitle" to packageName,
+                )
+            }
+            .distinctBy { app -> app["identifier"] }
+            .sortedBy { app -> app["label"]?.lowercase() }
+    }
+
     companion object {
         const val CHANNEL_NAME = "space.pokrov/runtime_engine"
         const val REQUEST_VPN_PERMISSION = 14071
@@ -216,5 +242,6 @@ class RuntimeHostBridge(
         private const val METHOD_STAGE_MANAGED_PROFILE = "runtimeEngine.stageManagedProfile"
         private const val METHOD_CONNECT = "runtimeEngine.connect"
         private const val METHOD_DISCONNECT = "runtimeEngine.disconnect"
+        private const val METHOD_LIST_INSTALLED_APPS = "runtimeEngine.listInstalledApps"
     }
 }
