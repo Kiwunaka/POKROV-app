@@ -1,0 +1,55 @@
+﻿{
+    "generated_at_utc":  "2026-06-03T21:31:10.6192517Z",
+    "display_name":  "POKROV",
+    "version":  "0.2.0-beta.1",
+    "runtime_release_tag":  "v3.1.8",
+    "release_output_directory":  "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\apps\\windows_shell\\build\\windows\\x64\\runner\\Release",
+    "staged_bundle_directory":  "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-beta-x64-0.2.0-beta.1",
+    "zip_path":  "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-beta-x64-0.2.0-beta.1.zip",
+    "installer_path":  "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-beta-x64-0.2.0-beta.1-setup.exe",
+    "installer_sha256":  "1CD64E1C0173FF887A69B5E3AB512340A3D14338FE5BF3F56B18D666BFD3441C",
+    "executable":  {
+                       "file_name":  "pokrov_windows_beta.exe",
+                       "file_description":  "POKROV",
+                       "product_name":  "POKROV",
+                       "product_version":  "0.2.0-beta.1",
+                       "is_prerelease":  true
+                   },
+    "required_files":  [
+                           {
+                               "path":  "pokrov_windows_beta.exe",
+                               "size_bytes":  81408,
+                               "sha256":  "8664F3F7F87924A79EC0DEDBBD83586DF4D8F4DB691782F0F29DA461D1EF08AC"
+                           },
+                           {
+                               "path":  "flutter_windows.dll",
+                               "size_bytes":  18511872,
+                               "sha256":  "1F4215E1072DD9E34F4565B74310E6771364E1470C7E92214BCA64947BD012A1"
+                           },
+                           {
+                               "path":  "libcore.dll",
+                               "size_bytes":  44759552,
+                               "sha256":  "9358DE4C4C8C108C668FCFB97D3E7D9AF18EEDC7E73257D212620575E1709ADD"
+                           },
+                           {
+                               "path":  "data/app.so",
+                               "size_bytes":  6013872,
+                               "sha256":  "A6EBEB970F68B3C27F4C51250BD60222EA3B658EC294CF3D8EE16C24A7B6627C"
+                           },
+                           {
+                               "path":  "data/icudtl.dat",
+                               "size_bytes":  778864,
+                               "sha256":  "C12537022EF818991A7BFED41A76D8D6AE962FFBC0E6511AC762A5D0845E7F7C"
+                           }
+                       ],
+    "safe_claims":  [
+                        "The Windows beta shell uses the desktop FFI runtime lane.",
+                        "The local release build bundles libcore.dll next to the Flutter runner.",
+                        "Local packaging produces an unsigned beta installer EXE and portable ZIP; share only through gated beta access with the SmartScreen warning above."
+                    ],
+    "blocked_on":  [
+                       "trusted Windows signing material is not wired into this lane",
+                       "trusted installer signing is not implemented",
+                       "public download hosting and product cutover remain external"
+                   ]
+}

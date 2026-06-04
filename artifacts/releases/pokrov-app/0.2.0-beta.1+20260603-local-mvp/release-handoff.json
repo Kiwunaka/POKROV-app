@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "client_lane": "pokrov-app",
+  "release_version": "0.2.0-beta.1+20260603-local-mvp",
+  "public_version_line": "0.2.0-beta.1",
+  "artifact_dir": "C:/Users/kiwun/Documents/ai/POKROV-app/artifacts/releases/pokrov-app/0.2.0-beta.1+20260603-local-mvp",
+  "release_state": "local_engineering_handoff_not_public_release",
+  "repo": {
+    "path": "C:/Users/kiwun/Documents/ai/POKROV-app",
+    "branch": "main",
+    "head": "e87c03b",
+    "worktree": "dirty"
+  },
+  "downloads": {
+    "android_debug_apk": {
+      "path": "pokrov-android-debug-0.2.0-beta.1+20260603-local.apk",
+      "size_bytes": 297123704,
+      "sha256": "F63A54777CC422F60B82D3B654728ACA60702F917298B429FF86644150271A40",
+      "public_claim": "debug smoke artifact only"
+    },
+    "windows_unsigned_setup": {
+      "path": "pokrov-windows-beta-x64-0.2.0-beta.1-setup.exe",
+      "size_bytes": 28119040,
+      "sha256": "816314E587DC308D788A7465F577F3617B59B380F88FB37EF8D46B30B0DA76E6",
+      "public_claim": "unsigned beta setup for gated/local inspection only"
+    },
+    "windows_portable_zip": {
+      "path": "pokrov-windows-beta-x64-0.2.0-beta.1.zip",
+      "size_bytes": 28213163,
+      "sha256": "F03881EADF31514B3A4404D4E9CFF8FC81F53B57D9670543FBAD3B60B450FED0",
+      "public_claim": "operator/fallback artifact only"
+    },
+    "windows_manifest": {
+      "path": "pokrov-windows-beta-x64-0.2.0-beta.1.manifest.json",
+      "size_bytes": 3391,
+      "sha256": "4C1748562916AED5C491EA35B9178F82C92E7FDB7411C842F7FDF0162927A2D0"
+    }
+  },
+  "verification": {
+    "backend": {
+      "portal_bot/tests/test_app_first_api.py": "18 passed",
+      "tests/test_api_auth_and_tickets.py": "65 passed"
+    },
+    "client": {
+      "packages/app_shell": {
+        "analyze": "clean",
+        "test": "49 passed"
+      },
+      "apps/android_shell": {
+        "analyze": "clean",
+        "test": "4 passed",
+        "build": "flutter build apk --debug"
+      },
+      "apps/windows_shell": {
+        "analyze": "clean",
+        "test": "2 passed",
+        "build": "scripts/build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze"
+      },
+      "packages/runtime_engine": {
+        "analyze": "clean",
+        "test": "11 passed"
+      },
+      "packages/core_domain": {
+        "analyze": "clean"
+      }
+    }
+  },
+  "cutover": {
+    "runtime_sync_allowed": false,
+    "public_announcement_allowed": false,
+    "store_release_allowed": false,
+    "trusted_windows_signing_claim_allowed": false,
+    "raw_android_audit_claim_allowed": false,
+    "ru_origin_readiness_claim_allowed": false,
+    "production_warp_claim_allowed": false
+  },
+  "manual_gates": [
+    "raw Android release-build physical-device audit",
+    "Android release APK/AAB production signing",
+    "trusted Windows signing / SmartScreen reputation",
+    "public hosting and runtime APP_* sync for this exact pack",
+    "real-user Telegram/WebApp opening",
+    "RU-origin reachability proof",
+    "production WARP / enhanced privacy proof",
+    "selected-apps OS enforcement proof"
+  ],
+  "notes": [
+    "This is a local engineering handoff pack, not a GitHub Release.",
+    "The Android artifact is a debug APK smoke artifact, not a signed release APK.",
+    "The Windows setup EXE is unsigned and must be used only with beta warning posture.",
+    "The pack should not be used to claim store readiness, trusted signing, raw Android audit, RU-origin readiness, or production WARP."
+  ]
+}

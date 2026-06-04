@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "product": "POKROV",
+  "client_lane": "pokrov-app",
+  "release_id": "0.2.0-beta.1+20260604-rc-local",
+  "release_version": "0.2.0-beta.1+20260604",
+  "version": "0.2.0-beta.1",
+  "artifact_dir": "C:/Users/kiwun/Documents/ai/POKROV-app/artifacts/releases/pokrov-app/0.2.0-beta.1+20260604-rc-local",
+  "generated_at": "2026-06-04T00:31:00+03:00",
+  "updated_at": "2026-06-04T05:14:33+03:00",
+  "release_state": "github_prerelease_assets_uploaded_runtime_handoff_green_manual_live_smoke_pending",
+  "github_release": {
+    "tag": "v0.2.0-beta.1",
+    "url": "https://github.com/Kiwunaka/POKROV-app/releases/tag/v0.2.0-beta.1",
+    "is_prerelease": true,
+    "is_draft": false,
+    "asset_refresh": "2026-06-04"
+  },
+  "downloads": {
+    "android": {
+      "play_url": "",
+      "apk_url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v0.2.0-beta.1/pokrov-android-universal.apk",
+      "mirror_url": "",
+      "sha256": "7FBF4E73C428533AEBD430D1C517D561DC8F0129ED68D83D2963DB0BDAD3BD44"
+    },
+    "windows": {
+      "exe_url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v0.2.0-beta.1/pokrov-windows-setup-x64.exe",
+      "mirror_url": "",
+      "sha256": "1CD64E1C0173FF887A69B5E3AB512340A3D14338FE5BF3F56B18D666BFD3441C"
+    },
+    "docs_url": "https://pokrov.space/install/"
+  },
+  "runtime_env": {
+    "APP_ANDROID_PLAY_URL": "",
+    "APP_ANDROID_APK_URL": "https://github.com/Kiwunaka/POKROV-app/releases/download/v0.2.0-beta.1/pokrov-android-universal.apk",
+    "APP_ANDROID_MIRROR_URL": "",
+    "APP_WINDOWS_EXE_URL": "https://github.com/Kiwunaka/POKROV-app/releases/download/v0.2.0-beta.1/pokrov-windows-setup-x64.exe",
+    "APP_WINDOWS_MIRROR_URL": "",
+    "APP_DOCS_URL": "https://pokrov.space/install/"
+  },
+  "cutover": {
+    "runtime_sync_allowed": true,
+    "runtime_sync_required": false,
+    "runtime_sync_result": "not_required_urls_unchanged_live_client_apps_green",
+    "public_publication_allowed": true,
+    "public_publication_marker": "GO for public beta publication",
+    "public_announcement_allowed": false,
+    "paid_checkout_allowed": false,
+    "reason": "GitHub prerelease assets were refreshed and URL-smoked; live brain-origin /api/client/apps already exposes the same GitHub URLs, so no APP_* mutation was required for this refresh. Real-user Telegram/WebApp and live install smoke remain manual."
+  },
+  "public_url_smoke": {
+    "current_origin": {
+      "android_apk": {
+        "url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v0.2.0-beta.1/pokrov-android-universal.apk",
+        "curl_range_status": 206,
+        "size_download": 1
+      },
+      "windows_exe": {
+        "url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v0.2.0-beta.1/pokrov-windows-setup-x64.exe",
+        "curl_range_status": 206,
+        "size_download": 1
+      }
+    },
+    "github_release_download_hash_check": {
+      "android_apk_sha256": "7FBF4E73C428533AEBD430D1C517D561DC8F0129ED68D83D2963DB0BDAD3BD44",
+      "windows_exe_sha256": "1CD64E1C0173FF887A69B5E3AB512340A3D14338FE5BF3F56B18D666BFD3441C"
+    }
+  },
+  "runtime_handoff_smoke": {
+    "brain_origin": {
+      "artifact": "C:/Users/kiwun/Documents/ai/VPN/docs/audit-artifacts/runtime-app-download-smoke-brain-2026-06-04-rc-refresh.json",
+      "classification": "PASS",
+      "api_base_url": "https://api.pokrov.space",
+      "api_health_status": 200,
+      "api_client_apps_status": 200,
+      "payment_providers_status": 200,
+      "android_apk_url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v0.2.0-beta.1/pokrov-android-universal.apk",
+      "windows_exe_url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v0.2.0-beta.1/pokrov-windows-setup-x64.exe",
+      "docs_url": "https://pokrov.space/install/",
+      "note": "Synthetic signed initData generated on brain proves backend auth and runtime link policy; it is not a real-user Telegram WebApp proof."
+    }
+  },
+  "owner_decisions": [
+    {
+      "date": "2026-06-04",
+      "decision": "current_outside_store_beta_release_allowed_without_production_android_signing_or_trusted_windows_signing",
+      "scope": "current 0.2.0-beta.1 outside-store beta only",
+      "required_copy": "must not claim trusted signing, store readiness, SmartScreen reputation, or stable release"
+    }
+  ],
+  "client_repo": {
+    "path": "C:/Users/kiwun/Documents/ai/POKROV-app",
+    "commit": "e87c03b",
+    "branch_policy": "POKROV-app/main",
+    "dirty_worktree": true
+  },
+  "platform_repo": {
+    "path": "C:/Users/kiwun/Documents/ai/VPN",
+    "commit": "2b400ff",
+    "branch_policy": "portal/master",
+    "dirty_worktree": true
+  },
+  "artifacts": [
+    {
+      "name": "pokrov-android-release-smoke-0.2.0-beta.1+20260604.apk",
+      "platform": "android",
+      "format": "apk",
+      "signing_state": "internal_beta_debug_signing_release_build",
+      "public_release_allowed": true,
+      "publication_gate": "operator_upload_public_url_smoke_and_runtime_sync_required"
+    },
+    {
+      "name": "pokrov-android-store-smoke-0.2.0-beta.1+20260604.aab",
+      "platform": "android",
+      "format": "aab",
+      "signing_state": "internal_beta_debug_signing_release_build",
+      "public_release_allowed": false,
+      "publication_gate": "store_format_smoke_only_not_public_download_payload"
+    },
+    {
+      "name": "pokrov-windows-beta-x64-0.2.0-beta.1+20260604-setup.exe",
+      "platform": "windows",
+      "format": "installer",
+      "signing_state": "unsigned_beta",
+      "public_release_allowed": true,
+      "publication_gate": "operator_upload_public_url_smoke_unsigned_warning_and_runtime_sync_required"
+    },
+    {
+      "name": "pokrov-windows-beta-x64-0.2.0-beta.1+20260604.zip",
+      "platform": "windows",
+      "format": "portable_zip",
+      "signing_state": "unsigned_beta",
+      "public_release_allowed": false,
+      "publication_gate": "operator_optional_payload_not_recommended_first_layer_public_download"
+    },
+    {
+      "name": "pokrov-windows-beta-x64-0.2.0-beta.1+20260604.manifest.json",
+      "platform": "windows",
+      "format": "manifest",
+      "signing_state": "unsigned_beta",
+      "public_release_allowed": false,
+      "publication_gate": "metadata_only"
+    }
+  ],
+  "fresh_verification": [
+    {
+      "command": "python scripts/run_client_release_gate.py preflight",
+      "cwd": "C:/Users/kiwun/Documents/ai/VPN",
+      "status": "PASS"
+    },
+    {
+      "command": "python scripts/run_client_release_gate.py build --target android-apk",
+      "cwd": "C:/Users/kiwun/Documents/ai/VPN",
+      "status": "PASS"
+    },
+    {
+      "command": "python scripts/run_client_release_gate.py build --target android-aab",
+      "cwd": "C:/Users/kiwun/Documents/ai/VPN",
+      "status": "PASS"
+    },
+    {
+      "command": "powershell -ExecutionPolicy Bypass -File .\\scripts\\build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze",
+      "cwd": "C:/Users/kiwun/Documents/ai/POKROV-app",
+      "status": "PASS"
+    }
+  ],
+  "signing_evidence": {
+    "android_apk": {
+      "tool": "apksigner verify --verbose --print-certs",
+      "verified_using_v2_scheme": true,
+      "certificate_dn": "C=US, O=Android, CN=Android Debug",
+      "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74",
+      "public_release_signing": false
+    },
+    "android_aab": {
+      "tool": "jarsigner -verify -certs -verbose",
+      "certificate_dn": "C=US, O=Android, CN=Android Debug",
+      "trusted_certificate_chain": false,
+      "public_release_signing": false
+    },
+    "windows_setup_exe": {
+      "tool": "Get-AuthenticodeSignature",
+      "status": "NotSigned",
+      "public_release_signing": false
+    },
+    "windows_runner_exe": {
+      "tool": "Get-AuthenticodeSignature",
+      "status": "NotSigned",
+      "public_release_signing": false
+    }
+  },
+  "accepted_skips_for_current_outside_store_beta": [
+    "ANDROID_PRODUCTION_SIGNING",
+    "WINDOWS_TRUSTED_SIGNING"
+  ],
+  "manual_gates_before_public_release": [
+    "ANDROID_PHYSICAL_RELEASE_BUILD_LOCALHOST_AUDIT",
+    "REAL_USER_TELEGRAM_WEBAPP_CHECK",
+    "RU_ORIGIN_PROBE_IF_CLAIMED",
+    "LIVE_INSTALL_AND_CONNECT_SMOKE"
+  ],
+  "runtime_sync_allowed": true
+}
