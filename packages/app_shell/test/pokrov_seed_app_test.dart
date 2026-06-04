@@ -188,9 +188,11 @@ class _FakeSupportTicketService implements SupportTicketService {
     this.receipt, {
     List<SupportTicketThread> tickets = const <SupportTicketThread>[],
     SupportTicketThread? loadedThread,
+    List<SupportTicketThread> loadedThreads = const <SupportTicketThread>[],
     SupportTicketThread? sentThread,
   })  : tickets = List<SupportTicketThread>.from(tickets),
         loadedThread = loadedThread ?? (tickets.isEmpty ? null : tickets.first),
+        loadedThreads = List<SupportTicketThread>.from(loadedThreads),
         sentThread = sentThread ??
             (loadedThread ??
                 (tickets.isEmpty
@@ -200,6 +202,7 @@ class _FakeSupportTicketService implements SupportTicketService {
   final SupportTicketReceipt receipt;
   final List<SupportTicketThread> tickets;
   final SupportTicketThread? loadedThread;
+  final List<SupportTicketThread> loadedThreads;
   final SupportTicketThread sentThread;
   int calls = 0;
   int listCalls = 0;
@@ -235,6 +238,10 @@ class _FakeSupportTicketService implements SupportTicketService {
     getCalls += 1;
     lastHostPlatform = hostPlatform;
     lastTicketId = ticketId;
+    if (loadedThreads.isNotEmpty) {
+      final index = (getCalls - 1).clamp(0, loadedThreads.length - 1);
+      return loadedThreads[index];
+    }
     return loadedThread ?? _supportThread(id: ticketId);
   }
 
@@ -1643,6 +1650,85 @@ void main() {
     expect(
         find.byKey(const ValueKey('support-diagnostics-queued')), findsNothing);
     expect(find.text('Still broken'), findsOneWidget);
+  });
+
+  testWidgets('support chat polls active ticket and shows operator reply',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final existingThread = _supportThread(
+      id: 889,
+      status: 'open',
+      statusTitle: 'Open',
+      messages: <SupportTicketMessage>[
+        _supportMessage(
+          id: 1,
+          ticketId: 889,
+          senderRole: 'user',
+          body: 'Need help',
+        ),
+      ],
+    );
+    final refreshedThread = _supportThread(
+      id: 889,
+      status: 'in_progress',
+      statusTitle: 'В работе',
+      messages: <SupportTicketMessage>[
+        ...existingThread.messages,
+        _supportMessage(
+          id: 2,
+          ticketId: 889,
+          senderRole: 'admin',
+          body: 'Operator is checking the route now.',
+        ),
+      ],
+    );
+    final supportTicketService = _FakeSupportTicketService(
+      const SupportTicketReceipt(
+        ticketId: 889,
+        statusTitle: 'Open',
+        messageCount: 1,
+      ),
+      tickets: <SupportTicketThread>[existingThread],
+      loadedThreads: <SupportTicketThread>[
+        existingThread,
+        refreshedThread,
+      ],
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        supportTicketService: supportTicketService,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await tester.tap(find.byKey(const ValueKey('desktop-sidebar-hamburger')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.person_outline).last);
+    await tester.pumpAndSettle();
+
+    final support = find.byKey(const ValueKey('profile-section-support'));
+    await tester.dragUntilVisible(
+      support,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(support);
+    await tester.pumpAndSettle();
+
+    expect(supportTicketService.getCalls, 1);
+    expect(find.text('Operator is checking the route now.'), findsNothing);
+
+    await tester.pump(const Duration(seconds: 12));
+    await tester.pumpAndSettle();
+
+    expect(supportTicketService.getCalls, greaterThanOrEqualTo(2));
+    expect(find.text('Operator is checking the route now.'), findsOneWidget);
+    expect(find.text('В работе'), findsOneWidget);
   });
 
   testWidgets('rules show selected-apps editor and hide beta prose',

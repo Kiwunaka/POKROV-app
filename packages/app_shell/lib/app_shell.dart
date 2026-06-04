@@ -5623,9 +5623,14 @@ class _SupportChatScreen extends StatefulWidget {
 }
 
 class _SupportChatScreenState extends State<_SupportChatScreen> {
+  static const _threadPollInterval = Duration(seconds: 10);
+
   late final TextEditingController _composer;
+  Timer? _threadPollTimer;
   bool _sending = false;
   bool _loadingThread = true;
+  bool _refreshingThread = false;
+  bool _threadClosed = false;
   int? _ticketId;
   String _threadStatus = 'AI помощник';
   String? _threadError;
@@ -5641,6 +5646,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
 
   @override
   void dispose() {
+    _threadPollTimer?.cancel();
     _composer.dispose();
     super.dispose();
   }
@@ -5671,10 +5677,12 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
         }
         setState(() {
           _ticketId = null;
+          _threadClosed = false;
           _loadingThread = false;
           _messages = _supportGreetingMessages();
           _threadStatus = 'AI помощник';
         });
+        _syncThreadPolling();
         return;
       }
 
@@ -5689,14 +5697,17 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
         _loadingThread = false;
         _applyThread(thread);
       });
+      _syncThreadPolling();
     } on SupportTicketFailure catch (error) {
       if (!mounted) {
         return;
       }
       setState(() {
         _loadingThread = false;
+        _threadClosed = false;
         _threadError = error.message;
       });
+      _syncThreadPolling();
     } catch (_) {
       if (!mounted) {
         return;
@@ -5710,11 +5721,64 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
 
   void _applyThread(SupportTicketThread thread) {
     _ticketId = thread.id;
+    _threadClosed = thread.isClosed;
     _threadStatus =
         thread.statusTitle.isEmpty ? thread.status : thread.statusTitle;
     final nextMessages = _messagesFromThread(thread);
     _messages =
         nextMessages.isEmpty ? _supportGreetingMessages() : nextMessages;
+  }
+
+  void _syncThreadPolling() {
+    _threadPollTimer?.cancel();
+    _threadPollTimer = null;
+    if (!mounted ||
+        _ticketId == null ||
+        _threadClosed ||
+        _loadingThread ||
+        _threadError != null) {
+      return;
+    }
+    _threadPollTimer = Timer.periodic(
+      _threadPollInterval,
+      (_) => unawaited(_refreshActiveThread()),
+    );
+  }
+
+  Future<void> _refreshActiveThread() async {
+    final activeTicketId = _ticketId;
+    if (activeTicketId == null ||
+        _threadClosed ||
+        _loadingThread ||
+        _sending ||
+        _refreshingThread) {
+      return;
+    }
+    setState(() {
+      _refreshingThread = true;
+    });
+    try {
+      final thread = await widget.supportTicketService.getTicket(
+        hostPlatform: widget.appContext.hostPlatform,
+        ticketId: activeTicketId,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _refreshingThread = false;
+        _threadError = null;
+        _applyThread(thread);
+      });
+      _syncThreadPolling();
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _refreshingThread = false;
+      });
+    }
   }
 
   Future<void> _sendMessage() async {
@@ -5751,6 +5815,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
           _attachDiagnosticsToNextMessage = false;
           _applyThread(thread);
         });
+        _syncThreadPolling();
         return;
       }
 
@@ -5778,6 +5843,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
           ),
         );
       });
+      _syncThreadPolling();
       try {
         final thread = await widget.supportTicketService.getTicket(
           hostPlatform: widget.appContext.hostPlatform,
@@ -5789,6 +5855,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
         setState(() {
           _applyThread(thread);
         });
+        _syncThreadPolling();
       } catch (_) {
         // Keep the local confirmation when the immediate refresh is unavailable.
       }
@@ -5979,7 +6046,9 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                     ? 'Загружаем'
                     : _sending
                         ? 'Отправляем'
-                        : _threadStatus,
+                        : _refreshingThread
+                            ? 'Обновляем чат'
+                            : _threadStatus,
                 details:
                     '${widget.appContext.hostPlatform.label} · ${widget.selectedRouteMode.label} · ${widget.statusLabel}',
               ),
