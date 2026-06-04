@@ -257,6 +257,9 @@ void main() {
     expect(payload.warpPolicy.runtimeReady, isTrue);
     expect(payload.warpPolicy.state, 'ready');
     expect(payload.warpPolicy.mode, 'proxy_over_warp');
+    expect(payload.warpPolicy.userConsented, isFalse);
+    expect(payload.warpPolicy.canOfferRuntime, isTrue);
+    expect(payload.warpPolicy.canEnableRuntime, isFalse);
     expect(
         payload.warpPolicy.wireguardConfigJson, contains('test-private-key'));
     expect(payload.warpPolicy.accountId, 'test-account-id');

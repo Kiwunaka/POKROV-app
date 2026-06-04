@@ -579,6 +579,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   bool _bonusSummaryRequested = false;
   String? _bonusSummaryError;
   final List<String> _selectedAppIds = <String>[];
+  WarpRuntimePolicy _managedWarpPolicy = WarpRuntimePolicy.disabled;
+  bool _warpRuntimeConsent = false;
+  bool _warpPolicyBusy = false;
 
   @override
   void initState() {
@@ -1240,14 +1243,89 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           ? _selectedAppIds
           : const <String>[],
     );
+    final warpConsentStillValid =
+        _warpRuntimeConsent && payload.warpPolicy.canOfferRuntime;
+    final runtimePayload = payload.copyWith(
+      warpPolicy: payload.warpPolicy.withUserConsent(warpConsentStillValid),
+    );
     if (mounted) {
       setState(() {
         _managedProfileDirty = false;
+        _managedWarpPolicy = payload.warpPolicy;
+        _warpRuntimeConsent = warpConsentStillValid;
         _runtimeHeadline = 'Настройки обновлены с '
             '${Uri.parse(widget.appContext.apiBaseUrl).host}.';
       });
     }
-    return payload;
+    return runtimePayload;
+  }
+
+  Future<void> _openWarpControl() async {
+    if (_warpPolicyBusy) {
+      return;
+    }
+
+    var policy = _managedWarpPolicy;
+    if (!policy.canOfferRuntime) {
+      setState(() {
+        _warpPolicyBusy = true;
+      });
+      try {
+        await _resolveManagedProfile();
+        policy = _managedWarpPolicy;
+      } on BootstrapFailure catch (error) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _runtimeHeadline = error.message;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
+        );
+        return;
+      } finally {
+        if (mounted) {
+          setState(() {
+            _warpPolicyBusy = false;
+          });
+        }
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!policy.canOfferRuntime) {
+      _showInfoSheet(
+        context,
+        title: 'Расширенная приватность',
+        lines: const [
+          'WARP пока готовится для этого устройства.',
+          'Когда backend пришлет проверенную конфигурацию, здесь появится отдельное включение.',
+        ],
+      );
+      return;
+    }
+
+    _showWarpConsentSheet(
+      context,
+      enabled: _warpRuntimeConsent,
+      onChanged: _setWarpRuntimeConsent,
+    );
+  }
+
+  void _setWarpRuntimeConsent(bool value) {
+    final enabled = value && _managedWarpPolicy.canOfferRuntime;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _warpRuntimeConsent = enabled;
+      _managedProfileDirty = true;
+      _runtimeHeadline = enabled
+          ? 'WARP включится при следующем подключении.'
+          : 'WARP выключен для следующих подключений.';
+    });
   }
 
   Future<void> _toggleRuntime() async {
@@ -1455,7 +1533,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         runtimeHeadline: _runtimeHeadline,
         runtimeBusy: _runtimeBusy,
         primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
+        warpPolicy: _managedWarpPolicy,
+        warpRuntimeConsent: _warpRuntimeConsent,
+        warpPolicyBusy: _warpPolicyBusy,
         onToggleRuntime: _toggleRuntime,
+        onOpenWarp: _openWarpControl,
         onOpenLocations: () => _selectTab(SeedTab.locations),
         onOpenRules: () => _selectTab(SeedTab.rules),
       ),
@@ -2375,7 +2457,11 @@ class _QuickConnectSection extends StatelessWidget {
     required this.runtimeHeadline,
     required this.runtimeBusy,
     required this.primaryConnectEnabled,
+    required this.warpPolicy,
+    required this.warpRuntimeConsent,
+    required this.warpPolicyBusy,
     required this.onToggleRuntime,
+    required this.onOpenWarp,
     required this.onOpenLocations,
     required this.onOpenRules,
   });
@@ -2386,7 +2472,11 @@ class _QuickConnectSection extends StatelessWidget {
   final String? runtimeHeadline;
   final bool runtimeBusy;
   final bool primaryConnectEnabled;
+  final WarpRuntimePolicy warpPolicy;
+  final bool warpRuntimeConsent;
+  final bool warpPolicyBusy;
   final Future<void> Function() onToggleRuntime;
+  final Future<void> Function() onOpenWarp;
   final VoidCallback onOpenLocations;
   final VoidCallback onOpenRules;
 
@@ -2448,7 +2538,11 @@ class _QuickConnectSection extends StatelessWidget {
               selectedRouteMode: selectedRouteMode,
               locationLabel: 'Авто',
               platformLabel: appContext.hostPlatform.label,
+              warpPolicy: warpPolicy,
+              warpRuntimeConsent: warpRuntimeConsent,
+              warpPolicyBusy: warpPolicyBusy,
               onToggleRuntime: onToggleRuntime,
+              onOpenWarp: onOpenWarp,
               onOpenLocations: onOpenLocations,
               onOpenRules: onOpenRules,
             ),
@@ -2473,7 +2567,11 @@ class _HomeStage extends StatefulWidget {
     required this.selectedRouteMode,
     required this.locationLabel,
     required this.platformLabel,
+    required this.warpPolicy,
+    required this.warpRuntimeConsent,
+    required this.warpPolicyBusy,
     required this.onToggleRuntime,
+    required this.onOpenWarp,
     required this.onOpenLocations,
     required this.onOpenRules,
   });
@@ -2490,7 +2588,11 @@ class _HomeStage extends StatefulWidget {
   final RouteMode selectedRouteMode;
   final String locationLabel;
   final String platformLabel;
+  final WarpRuntimePolicy warpPolicy;
+  final bool warpRuntimeConsent;
+  final bool warpPolicyBusy;
   final Future<void> Function() onToggleRuntime;
+  final Future<void> Function() onOpenWarp;
   final VoidCallback onOpenLocations;
   final VoidCallback onOpenRules;
 
@@ -2615,7 +2717,12 @@ class _HomeStageState extends State<_HomeStage>
             controller: _revealController,
             begin: 0.46,
             end: 1,
-            child: const _HomeWarpTile(),
+            child: _HomeWarpTile(
+              policy: widget.warpPolicy,
+              runtimeConsent: widget.warpRuntimeConsent,
+              busy: widget.warpPolicyBusy,
+              onOpen: widget.onOpenWarp,
+            ),
           ),
           const SizedBox(height: 18),
           _HomeRevealSlice(
@@ -2639,7 +2746,129 @@ class _HomeStageState extends State<_HomeStage>
 }
 
 class _HomeWarpTile extends StatelessWidget {
-  const _HomeWarpTile();
+  const _HomeWarpTile({
+    required this.policy,
+    required this.runtimeConsent,
+    required this.busy,
+    required this.onOpen,
+  });
+
+  final WarpRuntimePolicy policy;
+  final bool runtimeConsent;
+  final bool busy;
+  final Future<void> Function() onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final canOffer = policy.canOfferRuntime;
+    final enabled = canOffer && runtimeConsent;
+    final stateKey = busy
+        ? 'home-warp-state-loading'
+        : canOffer
+            ? enabled
+                ? 'home-warp-state-enabled'
+                : 'home-warp-state-ready'
+            : policy.enabled
+                ? 'home-warp-state-preparing'
+                : 'home-warp-state-disabled';
+    final status = busy
+        ? 'WARP · проверяем'
+        : canOffer
+            ? enabled
+                ? 'WARP · включится'
+                : 'WARP · доступен'
+            : 'WARP · готовится';
+    final iconColor = enabled
+        ? _SeedPalette.accent
+        : _SeedPalette.muted.withValues(alpha: 0.8);
+    final iconBackground = enabled
+        ? _SeedPalette.accent.withValues(alpha: 0.12)
+        : _SeedPalette.surfaceMuted.withValues(alpha: 0.86);
+
+    return InkWell(
+      key: const ValueKey('home-warp-tile'),
+      borderRadius: BorderRadius.circular(14),
+      onTap: () {
+        unawaited(onOpen());
+      },
+      child: Container(
+        key: ValueKey(stateKey),
+        width: double.infinity,
+        constraints: const BoxConstraints(maxWidth: 360),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: enabled
+              ? _SeedPalette.accent.withValues(alpha: 0.08)
+              : _SeedPalette.surfaceMuted.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: enabled
+                ? _SeedPalette.accent.withValues(alpha: 0.26)
+                : _SeedPalette.line,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: iconBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                enabled
+                    ? Icons.verified_user_rounded
+                    : Icons.privacy_tip_outlined,
+                size: 18,
+                color: iconColor,
+              ),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Расширенная приватность',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: _SeedPalette.ink,
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    status,
+                    key: const ValueKey('home-warp-status-label'),
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: enabled
+                              ? _SeedPalette.accent
+                              : _SeedPalette.muted,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              canOffer ? Icons.tune_rounded : Icons.info_outline_rounded,
+              size: 18,
+              color: _SeedPalette.muted,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ignore: unused_element
+class _HomeWarpTileLegacy extends StatelessWidget {
+  const _HomeWarpTileLegacy();
 
   @override
   Widget build(BuildContext context) {
@@ -4492,8 +4721,8 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
   }
 
   Future<void> _openPicker() async {
-    final candidateFuture = _candidateFuture ??=
-        _loadSelectedAppCandidates(widget.hostPlatform);
+    final candidateFuture =
+        _candidateFuture ??= _loadSelectedAppCandidates(widget.hostPlatform);
     final candidate = await showModalBottomSheet<_SelectedAppCandidate>(
       context: context,
       isScrollControlled: true,
@@ -4608,8 +4837,7 @@ class _SelectedAppCandidate {
   final _SelectedAppCandidateSource source;
   final IconData icon;
 
-  String get searchText =>
-      '$label $identifier $subtitle'.toLowerCase().trim();
+  String get searchText => '$label $identifier $subtitle'.toLowerCase().trim();
 
   String get sourceLabel {
     switch (source) {
@@ -4704,7 +4932,8 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                             : fallbackCandidates;
                     final candidates = rawCandidates
                         .where(
-                          (candidate) => _query.isEmpty ||
+                          (candidate) =>
+                              _query.isEmpty ||
                               candidate.searchText.contains(_query),
                         )
                         .toList(growable: false);
@@ -4728,8 +4957,8 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                       ),
                       itemBuilder: (context, index) {
                         final candidate = candidates[index];
-                        final selected =
-                            widget.selectedAppIds.contains(candidate.identifier);
+                        final selected = widget.selectedAppIds
+                            .contains(candidate.identifier);
                         return AnimatedOpacity(
                           duration: motion.duration(_MotionTokens.short),
                           opacity: selected ? 0.62 : 1,
@@ -4803,8 +5032,7 @@ Future<List<_SelectedAppCandidate>> _loadSelectedAppCandidates(
   );
 }
 
-Future<List<_SelectedAppCandidate>> _loadAndroidInstalledAppCandidates()
-    async {
+Future<List<_SelectedAppCandidate>> _loadAndroidInstalledAppCandidates() async {
   try {
     final response = await _selectedAppsRuntimeChannel
         .invokeListMethod<Object?>('runtimeEngine.listInstalledApps')
@@ -5555,6 +5783,112 @@ void _showInfoSheet(
     backgroundColor: _SeedPalette.surface,
     builder: (context) => _InfoSheet(title: title, lines: lines),
   );
+}
+
+void _showWarpConsentSheet(
+  BuildContext context, {
+  required bool enabled,
+  required ValueChanged<bool> onChanged,
+}) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: _SeedPalette.surface,
+    builder: (context) => _WarpConsentSheet(
+      enabled: enabled,
+      onChanged: onChanged,
+    ),
+  );
+}
+
+class _WarpConsentSheet extends StatelessWidget {
+  const _WarpConsentSheet({
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final nextValue = !enabled;
+    return SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        key: const ValueKey('home-warp-sheet'),
+        padding: const EdgeInsets.fromLTRB(22, 4, 22, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: _SeedPalette.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.privacy_tip_outlined,
+                    color: _SeedPalette.accent,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'WARP',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: _SeedPalette.ink,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Дополнительный слой приватности включается отдельно и может менять скорость.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: _SeedPalette.muted,
+                              height: 1.35,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  key: const ValueKey('home-warp-consent-switch'),
+                  value: enabled,
+                  activeThumbColor: _SeedPalette.accent,
+                  onChanged: (value) {
+                    onChanged(value);
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              key: const ValueKey('home-warp-enable-action'),
+              icon: enabled
+                  ? const Icon(Icons.shield_outlined)
+                  : const Icon(Icons.verified_user_rounded),
+              label: Text(enabled ? 'Оставить выключенным' : 'Включить WARP'),
+              onPressed: () {
+                onChanged(nextValue);
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _InfoSheet extends StatelessWidget {

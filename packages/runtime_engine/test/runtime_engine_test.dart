@@ -502,10 +502,10 @@ void main() {
     expect(bindings.lastOptionsJson, contains('"enable-tun":false'));
   });
 
-  test('desktop lane maps runtime-ready WARP policy into hiddify options',
+  test('desktop lane keeps runtime-ready WARP disabled without user consent',
       () async {
     final root = await Directory.systemTemp.createTemp(
-      'pokrov-runtime-desktop-warp-',
+      'pokrov-runtime-desktop-warp-no-consent-',
     );
     addTearDown(() async {
       if (await root.exists()) {
@@ -526,7 +526,7 @@ void main() {
 
     await engine.stageManagedProfile(
       const ManagedProfilePayload(
-        profileName: 'connect-desktop-warp',
+        profileName: 'connect-desktop-warp-no-consent',
         configPayload:
             '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
         materializedForRuntime: true,
@@ -534,6 +534,60 @@ void main() {
         warpPolicy: WarpRuntimePolicy(
           enabled: true,
           runtimeReady: true,
+          state: 'ready',
+          mode: 'proxy_over_warp',
+          source: 'backend_managed',
+          wireguardConfigJson:
+              '{"private-key":"test-private-key","local-address-ipv4":"172.16.0.2","peer-public-key":"test-peer-public-key","client-id":"test-client-id"}',
+          accountId: 'test-account-id',
+          accessToken: 'test-access-token',
+        ),
+      ),
+    );
+
+    await engine.connect();
+
+    final options =
+        jsonDecode(bindings.lastOptionsJson!) as Map<String, dynamic>;
+    final warp = options['warp'] as Map<String, dynamic>;
+    expect(warp['enable'], isFalse);
+    expect(warp.containsKey('account'), isFalse);
+    expect(warp.containsKey('wireguardConfig'), isFalse);
+  });
+
+  test('desktop lane maps consented runtime-ready WARP policy into options',
+      () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-warp-consent-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'connect-desktop-warp-consent',
+        configPayload:
+            '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.fullTunnel,
+        warpPolicy: WarpRuntimePolicy(
+          enabled: true,
+          runtimeReady: true,
+          userConsented: true,
           state: 'ready',
           mode: 'proxy_over_warp',
           source: 'backend_managed',

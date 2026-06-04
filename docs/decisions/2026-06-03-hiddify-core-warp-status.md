@@ -68,15 +68,17 @@ The client now has the first guarded WARP policy bridge:
   `warp_policy.wireguard_config` and `warp_policy.account` material only when
   `runtime_ready=true`;
 - `ManagedProfilePayload.warpPolicy` carries that policy to the runtime layer;
+- the Home tile can load readiness and show a separate consent sheet only when
+  the managed policy is runtime-ready;
 - desktop runtime options map a runtime-ready policy into Hiddify `warp`
-  options, while incomplete policy keeps `enable=false`.
+  options only when local `userConsented=true`; without consent, or with an
+  incomplete policy, `enable=false`.
 
 This means the runtime options surface can accept WARP-like settings, but it
 still does not mean the POKROV app has a working WARP product flow.
 
 Missing before product-ready support:
 
-- UI state and user consent flow
 - live backend provisioning policy for real WARP account/config material
 - safe storage and rotation policy for any license/account/access-token fields
 - platform-specific runtime verification on Android and Windows

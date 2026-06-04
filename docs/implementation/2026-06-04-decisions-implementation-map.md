@@ -65,7 +65,8 @@ The current code slice is:
     shows operator replies in-app without forcing the user back to Telegram;
 11. WARP/enhanced privacy now has a backend-owned policy contract, sanitized
     public metadata, managed-profile-only runtime material, client parsing, and
-    guarded Hiddify runtime option mapping without enabling the Home toggle.
+    a Home consent gate that keeps Hiddify `warp.enable=false` until the user
+    explicitly turns on a runtime-ready managed policy.
 
 This slice is P0/P1 bridge work because the master brief needs bonus/account
 clarity before a richer Rewards Hub can safely exist.
@@ -140,7 +141,7 @@ states.
 | Support realtime lifecycle | Started | embedded ticket-backed support chat, explicit diagnostic attachment, and active-ticket polling exist; the app updates messages/status from `GET /api/tickets/{id}` while the screen is open | add SSE or tuned polling cadence, stale/offline indicator, and operator escalation states without fake operator presence |
 | Native email linking and recovery | Not started for native app flow | email/recovery handoff and cabinet continuation exist | add native email linking/recovery only after delivery readiness and account-linking semantics are green |
 | Detailed account and cabinet management | Not started in app | app opens cabinet through short-lived token and shows compact access/account summary | expose detailed account management through app-safe entrypoints or a polished cabinet continuation, without turning Account into a dense dashboard |
-| WARP as a working feature | Started as guarded policy/runtime bridge | Home can show an honest disabled/upcoming WARP tile; public `client_policy.warp_policy` is sanitized; authenticated managed profiles may carry runtime-ready WARP material; client bootstrap parses `warp_policy`; desktop runtime maps runtime-ready policy into Hiddify `warp` options while incomplete policy stays disabled | add live WARP provisioning, safe storage/rotation, fallback diagnostics, Android proof, Windows proof, and explicit user consent before enabling any toggle |
+| WARP as a working feature | Started as guarded policy/runtime/consent bridge | Home can show an honest disabled/upcoming WARP tile; public `client_policy.warp_policy` is sanitized; authenticated managed profiles may carry runtime-ready WARP material; client bootstrap parses `warp_policy`; the Home tile can request explicit user consent only for runtime-ready policy; desktop runtime maps WARP into Hiddify options only when policy is ready and consented, while incomplete or non-consented policy stays disabled | add live WARP provisioning, safe storage/rotation, fallback diagnostics, Android proof, Windows proof, and reconnect/recovery UX before claiming WARP as working |
 | Responsive/golden width verification | Not started for the full matrix | widget tests cover key shell behavior, but not the full visual matrix | capture and review `360`, `700`, `900`, `1024`, `1180`, and `1440` widths for Russian text, Home density, sidebar behavior, and no one-letter wrapping |
 | Premium motion pass | Partial foundation only | motion policy, reduced-motion hooks, skeleton components, and connect-disc structure exist | finish connect ritual, skeleton consistency, status transitions, sidebar collapse, and row/chip feedback as a dedicated quality pass |
 

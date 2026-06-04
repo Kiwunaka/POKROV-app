@@ -1330,10 +1330,18 @@ void main() {
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(960, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+    );
 
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        bootstrapper: bootstrapper,
       ),
     );
     await tester.pumpAndSettle();
@@ -1363,6 +1371,53 @@ void main() {
     expect(find.textContaining('WARP'), findsWidgets);
     expect(find.textContaining('Р’РєР»СЋС‡РёС‚СЊ WARP'), findsNothing);
     expect(find.byType(Switch), findsNothing);
+  });
+
+  testWidgets('ready WARP tile asks for explicit consent before activation',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+        warpPolicy: WarpRuntimePolicy(
+          enabled: true,
+          runtimeReady: true,
+          state: 'ready',
+          wireguardConfigJson:
+              '{"private-key":"test-private-key","local-address-ipv4":"172.16.0.2"}',
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    expect(
+        find.byKey(const ValueKey('home-warp-state-disabled')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('home-warp-tile')));
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.calls, 1);
+    expect(find.byKey(const ValueKey('home-warp-sheet')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('home-warp-consent-switch')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('home-warp-enable-action')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('home-warp-enable-action')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('home-warp-sheet')), findsNothing);
+    expect(
+        find.byKey(const ValueKey('home-warp-state-enabled')), findsOneWidget);
   });
 
   testWidgets(

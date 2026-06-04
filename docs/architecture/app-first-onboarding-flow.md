@@ -130,8 +130,10 @@ WARP policy rule:
 - `client_policy.warp_policy` is sanitized metadata only
 - managed-profile `warp_policy` may carry backend-provisioned WireGuard
   config/account material only when `runtime_ready=true`
-- the Home WARP tile stays disabled until live provisioning, platform runtime
-  proof, diagnostics, and user consent are complete
+- the Home WARP tile stays muted while policy is unavailable or incomplete
+- when managed policy is runtime-ready, the app must ask for explicit local
+  consent before setting Hiddify `warp.enable=true`
+- without consent, runtime-ready WARP material remains staged as disabled
 
 Smart-connect fields:
 

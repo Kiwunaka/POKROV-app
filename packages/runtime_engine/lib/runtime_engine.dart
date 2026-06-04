@@ -156,6 +156,7 @@ class WarpRuntimePolicy {
     required this.state,
     this.mode = 'proxy_over_warp',
     this.source = 'backend_managed',
+    this.userConsented = false,
     this.wireguardConfigJson = '',
     this.accountId = '',
     this.accessToken = '',
@@ -178,6 +179,7 @@ class WarpRuntimePolicy {
   final String state;
   final String mode;
   final String source;
+  final bool userConsented;
   final String wireguardConfigJson;
   final String accountId;
   final String accessToken;
@@ -188,8 +190,50 @@ class WarpRuntimePolicy {
   final String noiseDelay;
   final String noiseMode;
 
-  bool get canEnableRuntime =>
+  bool get canOfferRuntime =>
       enabled && runtimeReady && wireguardConfigJson.trim().isNotEmpty;
+
+  bool get canEnableRuntime => canOfferRuntime && userConsented;
+
+  WarpRuntimePolicy withUserConsent(bool value) => copyWith(
+        userConsented: value,
+      );
+
+  WarpRuntimePolicy copyWith({
+    bool? enabled,
+    bool? runtimeReady,
+    String? state,
+    String? mode,
+    String? source,
+    bool? userConsented,
+    String? wireguardConfigJson,
+    String? accountId,
+    String? accessToken,
+    String? cleanIp,
+    int? cleanPort,
+    String? noise,
+    String? noiseSize,
+    String? noiseDelay,
+    String? noiseMode,
+  }) {
+    return WarpRuntimePolicy(
+      enabled: enabled ?? this.enabled,
+      runtimeReady: runtimeReady ?? this.runtimeReady,
+      state: state ?? this.state,
+      mode: mode ?? this.mode,
+      source: source ?? this.source,
+      userConsented: userConsented ?? this.userConsented,
+      wireguardConfigJson: wireguardConfigJson ?? this.wireguardConfigJson,
+      accountId: accountId ?? this.accountId,
+      accessToken: accessToken ?? this.accessToken,
+      cleanIp: cleanIp ?? this.cleanIp,
+      cleanPort: cleanPort ?? this.cleanPort,
+      noise: noise ?? this.noise,
+      noiseSize: noiseSize ?? this.noiseSize,
+      noiseDelay: noiseDelay ?? this.noiseDelay,
+      noiseMode: noiseMode ?? this.noiseMode,
+    );
+  }
 
   Map<String, Object?>? get wireguardConfigObject {
     final text = wireguardConfigJson.trim();
@@ -230,6 +274,7 @@ class WarpRuntimePolicy {
       ),
       mode: _readMode(map['mode']),
       source: _readText(map['source'], fallback: 'backend_managed'),
+      userConsented: _readBool(map['user_consented'] ?? map['userConsented']),
       wireguardConfigJson: wireguardConfig,
       accountId: _readText(
         account['account-id'] ?? account['account_id'] ?? account['accountId'],
@@ -347,6 +392,27 @@ class ManagedProfilePayload {
   final RouteMode routeMode;
   final SmartConnectProfile? smartConnect;
   final WarpRuntimePolicy warpPolicy;
+
+  ManagedProfilePayload copyWith({
+    String? profileName,
+    String? configPayload,
+    bool? disableMemoryLimit,
+    bool? materializedForRuntime,
+    RouteMode? routeMode,
+    SmartConnectProfile? smartConnect,
+    WarpRuntimePolicy? warpPolicy,
+  }) {
+    return ManagedProfilePayload(
+      profileName: profileName ?? this.profileName,
+      configPayload: configPayload ?? this.configPayload,
+      disableMemoryLimit: disableMemoryLimit ?? this.disableMemoryLimit,
+      materializedForRuntime:
+          materializedForRuntime ?? this.materializedForRuntime,
+      routeMode: routeMode ?? this.routeMode,
+      smartConnect: smartConnect ?? this.smartConnect,
+      warpPolicy: warpPolicy ?? this.warpPolicy,
+    );
+  }
 }
 
 abstract interface class PokrovRuntimeEngine {
