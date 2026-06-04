@@ -167,6 +167,28 @@ platform-native without pretending that disabled features are live.
 | Windows sidebar collapse polish | Done for P4 beta | desktop sidebar has label opacity/width motion, icon rail, and narrow drawer behavior with responsive matrix coverage | keyboard/focus refinement remains polish |
 | Android haptics | Partial for beta | connect/redeem/success paths already use haptics; selected-app added now calls tactile feedback | tune platform-specific haptic intensity on physical devices |
 
+## Approved P5 / WARP Design Contract
+
+Owner approval on `2026-06-05` promoted the P5 and WARP direction from chat
+research into an implementation contract:
+
+- [P5 WARP Approved Design](../specs/2026-06-05-p5-warp-approved-design.md)
+- [P5 WARP Application Map](../design/2026-06-05-p5-warp-application-map.md)
+
+This approval does not mark P5 or WARP as implemented. It fixes the next
+implementation order:
+
+1. P5 motion foundation and screen polish.
+2. WARP backend status/consent/revoke/events contracts.
+3. WARP provisioning, encrypted storage, and rotation.
+4. WARP client consent persistence, revoke UI, secure material path, runtime
+   state machine, fallback diagnostics, and support redaction.
+5. Android and Windows proof before any working-WARP product claim.
+
+The generated application map is an internal review artifact. Generated text
+inside the image is not product copy and must not override copy, release, or
+claim guardrails.
+
 ## Guardrails
 
 - Do not expose raw links, hostnames, ports, protocol names, JSON, CIDR, or
