@@ -165,8 +165,9 @@ These items no longer block the already-approved outside-store beta when they re
 - add lifecycle-safe periodic support refresh or SSE after real operator flow
   proves the polling cadence and UI states
 - keep recovery actions centered on reconnect, refresh, location change, checkout, and support rather than raw subscription copy/edit actions
-- keep expanding `/api/redeem` beyond access keys without reintroducing raw
-  subscription links as account proof
+- keep any further `/api/redeem` expansion beyond the current access-key,
+  gift-card, and promo families from reintroducing raw subscription links as
+  account proof
 - keep cabinet handoff exchange covered by e2e because the URL token is
   intentionally one-time and should be removed before normal cabinet use
 

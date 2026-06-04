@@ -43,9 +43,11 @@ The current code slice is:
    `POST /api/bonuses/wheel/spin`, `GET /api/bonuses/calendar`,
    `POST /api/bonuses/calendar/checkin`, and
    `POST /api/bonuses/promo/redeem` contracts;
-4. no wheel/calendar hub in UI until mutating reward logic, rollout flags, and
+4. unified app code redemption for paid access keys, legacy gift-card codes,
+   and promo codes through `POST /api/redeem`;
+5. no wheel/calendar hub in UI until mutating reward logic, rollout flags, and
    copy are approved;
-5. keep profile loading lazy so the app does not block startup or ordinary
+6. keep profile loading lazy so the app does not block startup or ordinary
    navigation on bonus data.
 
 This slice is P0/P1 bridge work because the master brief needs bonus/account
@@ -55,16 +57,16 @@ clarity before a richer Rewards Hub can safely exist.
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Hiddify-based runtime direction | Partial | active lane uses pinned `hiddify-core v3.1.8` artifacts; clean-room POKROV shell remains current | separate Hiddify fork/spike gate: provenance packet, Android/Windows build proof, managed profile loop |
+| Hiddify-based runtime direction | Done for MVP | active lane uses pinned `hiddify-core v3.1.8` artifacts through the runtime bridge; clean-room POKROV shell remains current; Android/Windows host runtime paths and managed-profile connect tests exist | separate Hiddify fork/provenance packet remains a release-hardening or replacement-lane gate, not a P0 blocker for the current shell |
 | First-launch `new / returning` split | Done for MVP | startup asks new vs returning; completion is file-backed and tested | keep wording lightweight while runtime gates evolve |
 | Returning-user restore screen | Done for MVP | first-launch restore panel uses unified redeem, Telegram, cabinet, and raw-key warning | expand accepted code families on backend over time |
-| Unified redeem API contract | Partial | platform `POST /api/redeem` supports access keys and promo codes; app uses `AppFirstAccountActionService.redeemCode` | expand gift/claim-token families only when backend support is explicit |
+| Unified redeem API contract | Done for MVP | platform `POST /api/redeem` supports paid access keys, legacy gift-card codes, and promo codes; app uses `AppFirstAccountActionService.redeemCode`; raw subscription/proxy links are rejected locally and by backend | claim-token/email-code families stay out until backend support is explicit |
 | Safe one-time claim/link semantics | Done for MVP | first-launch restore warns that raw connection links are not account proof; app locally rejects raw subscription/proxy links before unified redeem; backend keeps structured rejection | expand accepted code families only when backend support is explicit |
-| App profile basics | Partial | grouped account/profile sections, access, redeem, cabinet, Telegram, support, bonus summary, advanced gate exist | keep reducing visible account copy and add only proven states |
+| App profile basics | Done for MVP | grouped account/profile sections, access, redeem, cabinet, Telegram, support, bonus summary, and advanced gate exist; visible copy stays compact; hidden/disabled features are not surfaced as active | continue copy polish as P1/P2 quality work, not a P0 blocker |
 | Telegram `+10 days` link/check/claim | Done for MVP | app has link, channel check, claim actions and tests | keep optional, no startup wall |
 | Bot parity for subscription/access | Done for MVP | platform bots, cabinet, and app share app-first contracts; root `scripts/app_bot_parity_smoke.py` verifies static parity for account, cabinet, Telegram bonus, support ticket, safe redeem, and bot fallback entrypoints | keep live Telegram bot and same-account parity as owner `MANUAL_OWNER_TEST` before handoff |
 | Short-lived cabinet token | Done for MVP | app calls `POST /api/client/cabinet-token`; cabinet exchange exists | keep e2e coverage for one-time URL token removal |
-| Bonus API contract and MVP endpoints | Partial | channel check/claim live; app reads `GET /api/bonuses/summary` plus safe history from `GET /api/bonuses/history`; platform exposes referral summary, promo redeem, and disabled-by-default wheel/calendar endpoint shells; compact summary/history tested; wheel/calendar UI hidden | keep wheel/calendar mutating flows hidden until reward logic and rollout flags are approved |
+| Bonus API contract and MVP endpoints | Done for MVP | channel check/claim live; app reads `GET /api/bonuses/summary` plus safe history from `GET /api/bonuses/history`; platform exposes referral summary, promo redeem, unified gift redeem, and disabled-by-default wheel/calendar endpoint shells; compact summary/history tested; wheel/calendar UI hidden | keep wheel/calendar mutating flows hidden until reward logic and rollout flags are approved |
 | Smart-connect shortlist and route-mode sync | Done for MVP | managed profile returns smart-connect metadata plus internal probe targets; route mode persists through backend contract; client performs best-effort RTT probe/upload and applies the 15% stickiness threshold with tests | keep smart-connect hidden from first-layer UI; collect live release-build telemetry before exposing any manual controls |
 | Claims guardrails | Done for MVP | WARP info-only, selected-apps staged, no stable/store/trusted/RU claims | keep guardrails in tests/docs with each release update |
 

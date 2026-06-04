@@ -637,20 +637,19 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!mounted) {
         return true;
       }
+      final updatesAccess =
+          result.kind == 'access_key' || result.kind == 'gift';
       setState(() {
         _managedProfileDirty = true;
-        _runtimeHeadline = result.kind == 'access_key'
+        _runtimeHeadline = updatesAccess
             ? 'Код активирован. Доступ обновлен.'
             : 'Код обработан.';
       });
+      final confirmationText = _runtimeHeadline ?? '';
       unawaited(_loadBonusSummary(force: true));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            result.codePreview.isEmpty
-                ? 'Код активирован. Доступ обновлен.'
-                : 'Код ${result.codePreview} активирован.',
-          ),
+          content: Text(confirmationText),
         ),
       );
       return true;

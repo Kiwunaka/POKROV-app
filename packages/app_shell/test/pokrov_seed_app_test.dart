@@ -17,6 +17,7 @@ class _FakeBootstrapper
     ChannelBonusStatus? channelBonusStatus,
     ChannelBonusClaimResult? channelBonusClaimResult,
     AppFirstBonusSummary? bonusSummary,
+    AppFirstRedeemResult? redeemResult,
   })  : cabinetHandoff = cabinetHandoff ??
             CabinetHandoff(
               token: 'short-cabinet-token',
@@ -77,15 +78,17 @@ class _FakeBootstrapper
               paidReferrals: 0,
               nextTierKey: 'pro',
               nextTierAt: 5,
+            ),
+        redeemResult = redeemResult ??
+            const AppFirstRedeemResult(
+              ok: true,
+              kind: 'access_key',
+              codePreview: '...2026',
+              result: <String, dynamic>{},
             );
 
   final ManagedProfilePayload payload;
-  final AppFirstRedeemResult redeemResult = const AppFirstRedeemResult(
-    ok: true,
-    kind: 'access_key',
-    codePreview: '...2026',
-    result: <String, dynamic>{},
-  );
+  final AppFirstRedeemResult redeemResult;
   final CabinetHandoff cabinetHandoff;
   final TelegramLinkResult telegramLinkResult;
   final ChannelBonusStatus channelBonusStatus;
@@ -757,7 +760,53 @@ void main() {
     expect(bootstrapper.lastRedeemCode, 'POKROV-ACCESS-2026');
     expect(bootstrapper.lastRedeemHostPlatform, HostPlatform.android);
     expect(launched, isEmpty);
-    expect(find.textContaining('...2026'), findsWidgets);
+    expect(find.textContaining('Доступ обновлен'), findsWidgets);
+  });
+
+  testWidgets('profile gift redeem keeps access-updated confirmation',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      redeemResult: const AppFirstRedeemResult(
+        ok: true,
+        kind: 'gift',
+        codePreview: '...2026',
+        result: <String, dynamic>{},
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-profile');
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey('profile-redeem-code-field')),
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('profile-redeem-code-field')),
+      'POKROV-GIFT-2026',
+    );
+    await tester.tap(find.byKey(const ValueKey('profile-redeem-submit')));
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.redeemCalls, 1);
+    expect(bootstrapper.lastRedeemCode, 'POKROV-GIFT-2026');
+    expect(
+      find.textContaining('Доступ обновлен'),
+      findsWidgets,
+    );
   });
 
   testWidgets('profile cabinet opens through short-lived handoff',

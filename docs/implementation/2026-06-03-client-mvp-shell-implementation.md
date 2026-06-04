@@ -148,7 +148,9 @@ The Task 7 consilium aligned on a beta-honest staging cut:
 - In the V2 shell, that state is no longer exposed on Home. It remains a future
   advanced/runtime task.
 - Unified code entry uses the app-facing `/api/redeem` contract for native
-  activation.
+  activation. The P0 facade now accepts paid access keys, legacy gift-card
+  codes, and promo codes; access-key/gift success keeps the app confirmation
+  on the same `Доступ обновлен` wording.
 - Cabinet opening uses the short-lived `/api/client/cabinet-token` handoff when
   available and degrades to the canonical cabinet URL when the adapter fails.
 - Support is thread-aware through existing `/api/tickets*` endpoints. Continuous
