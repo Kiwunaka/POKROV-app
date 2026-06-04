@@ -1396,6 +1396,10 @@ class AppFirstRuntimeBootstrapper
       );
     }
     final supportContext = _readMap(response['support_context']);
+    final warpPolicy = WarpRuntimePolicy.tryParse(
+      response['warp_policy'] ??
+          _readMap(response['client_policy'])['warp_policy'],
+    );
     final smartConnect = SmartConnectProfile.tryParse(
       response['smart_connect'],
     );
@@ -1422,6 +1426,7 @@ class AppFirstRuntimeBootstrapper
       materializedForRuntime: true,
       routeMode: routeMode,
       smartConnect: smartConnect,
+      warpPolicy: warpPolicy,
     );
 
     return _ManagedManifestEnvelope(

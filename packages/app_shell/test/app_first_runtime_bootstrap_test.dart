@@ -208,6 +208,23 @@ void main() {
                       'final': 'proxy',
                     },
                   },
+                  'warp_policy': <String, Object?>{
+                    'enabled': true,
+                    'runtime_ready': true,
+                    'state': 'ready',
+                    'mode': 'proxy_over_warp',
+                    'source': 'backend_managed',
+                    'wireguard_config': <String, Object?>{
+                      'private-key': 'test-private-key',
+                      'local-address-ipv4': '172.16.0.2',
+                      'peer-public-key': 'test-peer-public-key',
+                      'client-id': 'test-client-id',
+                    },
+                    'account': <String, Object?>{
+                      'account-id': 'test-account-id',
+                      'access-token': 'test-access-token',
+                    },
+                  },
                 },
               ),
             );
@@ -236,6 +253,13 @@ void main() {
     expect(payload.smartConnect?.shortlist.single.code, 'pl');
     expect(payload.smartConnect?.shortlist.single.rankHint.panelLatencyMs, 42);
     expect(payload.smartConnect?.stickiness.preferredNodeCode, 'pl');
+    expect(payload.warpPolicy.enabled, isTrue);
+    expect(payload.warpPolicy.runtimeReady, isTrue);
+    expect(payload.warpPolicy.state, 'ready');
+    expect(payload.warpPolicy.mode, 'proxy_over_warp');
+    expect(
+        payload.warpPolicy.wireguardConfigJson, contains('test-private-key'));
+    expect(payload.warpPolicy.accountId, 'test-account-id');
     expect(payload.configPayload, contains('"type": "tun"'));
     expect(payload.configPayload, contains('"final": "proxy"'));
     expect(payload.configPayload, contains('"auto_detect_interface": true'));
@@ -3323,8 +3347,7 @@ void main() {
     expect(
       routeRules.any(
         (rule) =>
-            (rule['process_name'] as List?)?.contains('telegram.exe') ==
-                true &&
+            (rule['process_name'] as List?)?.contains('telegram.exe') == true &&
             rule['outbound'] == 'proxy',
       ),
       isTrue,

@@ -149,6 +149,186 @@ class RuntimeSnapshot {
   }
 }
 
+class WarpRuntimePolicy {
+  const WarpRuntimePolicy({
+    required this.enabled,
+    required this.runtimeReady,
+    required this.state,
+    this.mode = 'proxy_over_warp',
+    this.source = 'backend_managed',
+    this.wireguardConfigJson = '',
+    this.accountId = '',
+    this.accessToken = '',
+    this.cleanIp = 'auto',
+    this.cleanPort = 0,
+    this.noise = '',
+    this.noiseSize = '',
+    this.noiseDelay = '',
+    this.noiseMode = 'm4',
+  });
+
+  static const disabled = WarpRuntimePolicy(
+    enabled: false,
+    runtimeReady: false,
+    state: 'disabled_until_runtime_proof',
+  );
+
+  final bool enabled;
+  final bool runtimeReady;
+  final String state;
+  final String mode;
+  final String source;
+  final String wireguardConfigJson;
+  final String accountId;
+  final String accessToken;
+  final String cleanIp;
+  final int cleanPort;
+  final String noise;
+  final String noiseSize;
+  final String noiseDelay;
+  final String noiseMode;
+
+  bool get canEnableRuntime =>
+      enabled && runtimeReady && wireguardConfigJson.trim().isNotEmpty;
+
+  Map<String, Object?>? get wireguardConfigObject {
+    final text = wireguardConfigJson.trim();
+    if (text.isEmpty) {
+      return null;
+    }
+    try {
+      final decoded = jsonDecode(text);
+      if (decoded is Map) {
+        return decoded.map((key, value) => MapEntry(key.toString(), value));
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
+
+  static WarpRuntimePolicy tryParse(Object? value) {
+    final map = _readObjectMap(value);
+    if (map.isEmpty) {
+      return disabled;
+    }
+    final wireguardConfig = _readWireguardConfig(
+      map['wireguard_config'] ??
+          map['wireguardConfig'] ??
+          map['wireguard-config'],
+    );
+    final account = _readObjectMap(map['account']);
+    final enabled = _readBool(map['enabled']);
+    final runtimeReady = _readBool(map['runtime_ready'] ?? map['runtimeReady']);
+    return WarpRuntimePolicy(
+      enabled: enabled,
+      runtimeReady: runtimeReady,
+      state: _readState(
+        map['state'],
+        enabled: enabled,
+        runtimeReady: runtimeReady,
+      ),
+      mode: _readMode(map['mode']),
+      source: _readText(map['source'], fallback: 'backend_managed'),
+      wireguardConfigJson: wireguardConfig,
+      accountId: _readText(
+        account['account-id'] ?? account['account_id'] ?? account['accountId'],
+      ),
+      accessToken: _readText(
+        account['access-token'] ??
+            account['access_token'] ??
+            account['accessToken'],
+      ),
+      cleanIp: _readText(map['clean_ip'] ?? map['clean-ip'], fallback: 'auto'),
+      cleanPort: _readInt(map['clean_port'] ?? map['clean-port']),
+      noise: _readText(map['noise']),
+      noiseSize: _readText(map['noise_size'] ?? map['noise-size']),
+      noiseDelay: _readText(map['noise_delay'] ?? map['noise-delay']),
+      noiseMode:
+          _readText(map['noise_mode'] ?? map['noise-mode'], fallback: 'm4'),
+    );
+  }
+
+  static String _readWireguardConfig(Object? value) {
+    if (value is String) {
+      return value.trim();
+    }
+    if (value is Map) {
+      return jsonEncode(
+        value.map((key, item) => MapEntry(key.toString(), item)),
+      );
+    }
+    return '';
+  }
+
+  static Map<String, Object?> _readObjectMap(Object? value) {
+    if (value is Map<String, Object?>) {
+      return value;
+    }
+    if (value is Map) {
+      return value.map((key, item) => MapEntry(key.toString(), item));
+    }
+    return const <String, Object?>{};
+  }
+
+  static String _readText(Object? value, {String fallback = ''}) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? fallback : text;
+  }
+
+  static String _readMode(Object? value) {
+    final text = _readText(value, fallback: 'proxy_over_warp');
+    return text == 'warp_over_proxy' ? text : 'proxy_over_warp';
+  }
+
+  static String _readState(
+    Object? value, {
+    required bool enabled,
+    required bool runtimeReady,
+  }) {
+    final text = _readText(value);
+    if (runtimeReady) {
+      return text.isEmpty ? 'ready' : text;
+    }
+    if (enabled) {
+      return text.isEmpty || text == 'ready'
+          ? 'waiting_for_backend_provisioning'
+          : text;
+    }
+    return text.isEmpty || text == 'ready'
+        ? 'disabled_until_runtime_proof'
+        : text;
+  }
+
+  static bool _readBool(Object? value) {
+    if (value is bool) {
+      return value;
+    }
+    if (value is num) {
+      return value != 0;
+    }
+    switch (value?.toString().trim().toLowerCase()) {
+      case '1':
+      case 'true':
+      case 'yes':
+      case 'ready':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  static int _readInt(Object? value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value?.toString().trim() ?? '') ?? 0;
+  }
+}
+
 class ManagedProfilePayload {
   const ManagedProfilePayload({
     required this.profileName,
@@ -157,6 +337,7 @@ class ManagedProfilePayload {
     this.materializedForRuntime = false,
     this.routeMode = RouteMode.fullTunnel,
     this.smartConnect,
+    this.warpPolicy = WarpRuntimePolicy.disabled,
   });
 
   final String profileName;
@@ -165,6 +346,7 @@ class ManagedProfilePayload {
   final bool materializedForRuntime;
   final RouteMode routeMode;
   final SmartConnectProfile? smartConnect;
+  final WarpRuntimePolicy warpPolicy;
 }
 
 abstract interface class PokrovRuntimeEngine {
@@ -596,10 +778,42 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
           'enable-padding': false,
           'padding-size': '1-1500',
         },
-        'warp': _defaultWarpOptions(),
+        'warp': _warpOptions(payload.warpPolicy),
         'warp2': _defaultWarpOptions(),
       },
     );
+  }
+
+  Map<String, Object?> _warpOptions(WarpRuntimePolicy policy) {
+    final options = _defaultWarpOptions();
+    if (!policy.canEnableRuntime) {
+      return options;
+    }
+
+    options
+      ..['enable'] = true
+      ..['mode'] = policy.mode
+      ..['wireguard-config'] = policy.wireguardConfigJson
+      ..['clean-ip'] = policy.cleanIp
+      ..['clean-port'] = policy.cleanPort
+      ..['noise'] = policy.noise
+      ..['noise-size'] = policy.noiseSize
+      ..['noise-delay'] = policy.noiseDelay
+      ..['noise-mode'] = policy.noiseMode;
+
+    final wireguardConfig = policy.wireguardConfigObject;
+    if (wireguardConfig != null && wireguardConfig.isNotEmpty) {
+      options['wireguardConfig'] = wireguardConfig;
+    }
+    final account = <String, Object?>{
+      if (policy.accountId.trim().isNotEmpty) 'account-id': policy.accountId,
+      if (policy.accessToken.trim().isNotEmpty)
+        'access-token': policy.accessToken,
+    };
+    if (account.isNotEmpty) {
+      options['account'] = account;
+    }
+    return options;
   }
 
   Map<String, Object?> _defaultWarpOptions() {

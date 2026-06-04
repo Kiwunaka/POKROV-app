@@ -61,14 +61,24 @@ The shared runtime options builder currently includes:
 - default `enable: false`
 - empty WireGuard/account/license fields by default
 
-This means the runtime options surface can describe WARP-like settings, but it
-does not mean the POKROV app has a working WARP product flow.
+The client now has the first guarded WARP policy bridge:
+
+- public `client_policy.warp_policy` is sanitized metadata only;
+- authenticated managed profiles may carry backend-provisioned
+  `warp_policy.wireguard_config` and `warp_policy.account` material only when
+  `runtime_ready=true`;
+- `ManagedProfilePayload.warpPolicy` carries that policy to the runtime layer;
+- desktop runtime options map a runtime-ready policy into Hiddify `warp`
+  options, while incomplete policy keeps `enable=false`.
+
+This means the runtime options surface can accept WARP-like settings, but it
+still does not mean the POKROV app has a working WARP product flow.
 
 Missing before product-ready support:
 
 - UI state and user consent flow
-- backend/profile contract for WARP account/config material
-- safe storage for any license/account/access-token fields
+- live backend provisioning policy for real WARP account/config material
+- safe storage and rotation policy for any license/account/access-token fields
 - platform-specific runtime verification on Android and Windows
 - compatibility rules for route mode and Russian-service bypass
 - speed and failure-mode tests

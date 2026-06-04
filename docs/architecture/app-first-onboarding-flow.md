@@ -123,6 +123,15 @@ Managed-profile fields:
 - `fallback_order`
 - `support_context`
 - `smart_connect`
+- `warp_policy`
+
+WARP policy rule:
+
+- `client_policy.warp_policy` is sanitized metadata only
+- managed-profile `warp_policy` may carry backend-provisioned WireGuard
+  config/account material only when `runtime_ready=true`
+- the Home WARP tile stays disabled until live provisioning, platform runtime
+  proof, diagnostics, and user consent are complete
 
 Smart-connect fields:
 
