@@ -1,10 +1,12 @@
 library pokrov_app_shell;
 
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_platform_contracts/platform_contracts.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
@@ -36,6 +38,39 @@ enum _FirstLaunchStep {
 }
 
 typedef ExternalHandoffLauncher = Future<bool> Function(Uri uri);
+
+abstract class PokrovFirstLaunchStore {
+  Future<bool> isCompleted();
+  Future<void> markCompleted();
+}
+
+class PokrovFileFirstLaunchStore implements PokrovFirstLaunchStore {
+  const PokrovFileFirstLaunchStore();
+
+  static const _fileName = 'pokrov-first-launch-state.txt';
+  static const _completedMarker = 'completed';
+
+  Future<File> _stateFile() async {
+    final directory = await getApplicationSupportDirectory();
+    await directory.create(recursive: true);
+    return File('${directory.path}${Platform.pathSeparator}$_fileName');
+  }
+
+  @override
+  Future<bool> isCompleted() async {
+    final file = await _stateFile();
+    if (!await file.exists()) {
+      return false;
+    }
+    return (await file.readAsString()).trim() == _completedMarker;
+  }
+
+  @override
+  Future<void> markCompleted() async {
+    final file = await _stateFile();
+    await file.writeAsString(_completedMarker, flush: true);
+  }
+}
 
 abstract final class _SeedPalette {
   static const canvas = Color(0xFFF9FAFB);
@@ -318,12 +353,14 @@ class PokrovSeedApp extends StatelessWidget {
     this.bootstrapper,
     this.supportTicketService,
     this.handoffLauncher,
+    this.firstLaunchStore,
   });
 
   final SeedAppContext appContext;
   final ManagedProfileBootstrapper? bootstrapper;
   final SupportTicketService? supportTicketService;
   final ExternalHandoffLauncher? handoffLauncher;
+  final PokrovFirstLaunchStore? firstLaunchStore;
 
   @override
   Widget build(BuildContext context) {
@@ -408,6 +445,7 @@ class PokrovSeedApp extends StatelessWidget {
         bootstrapper: bootstrapper,
         supportTicketService: supportTicketService,
         handoffLauncher: handoffLauncher,
+        firstLaunchStore: firstLaunchStore,
       ),
     );
   }
@@ -420,12 +458,14 @@ class PokrovSeedShell extends StatefulWidget {
     this.bootstrapper,
     this.supportTicketService,
     this.handoffLauncher,
+    this.firstLaunchStore,
   });
 
   final SeedAppContext appContext;
   final ManagedProfileBootstrapper? bootstrapper;
   final SupportTicketService? supportTicketService;
   final ExternalHandoffLauncher? handoffLauncher;
+  final PokrovFirstLaunchStore? firstLaunchStore;
 
   @override
   State<PokrovSeedShell> createState() => _PokrovSeedShellState();
@@ -440,6 +480,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   late final AppFirstAccountActionService? _accountActionService;
   late final AppFirstBonusActionService? _bonusActionService;
   late final SupportTicketService _supportTicketService;
+  late final PokrovFirstLaunchStore _firstLaunchStore;
   final TextEditingController _firstLaunchRestoreCodeController =
       TextEditingController();
   RuntimeSnapshot? _runtimeSnapshot;
@@ -476,6 +517,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         AppFirstSupportTicketService(
           apiBaseUrl: widget.appContext.apiBaseUrl,
         );
+    _firstLaunchStore =
+        widget.firstLaunchStore ?? const PokrovFileFirstLaunchStore();
+    unawaited(_loadFirstLaunchState());
     _refreshRuntimeSnapshot();
   }
 
@@ -813,8 +857,32 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
+  Future<void> _loadFirstLaunchState() async {
+    var completed = false;
+    try {
+      completed = await _firstLaunchStore.isCompleted();
+    } catch (_) {
+      completed = false;
+    }
+    if (!mounted || !completed) {
+      return;
+    }
+    setState(() {
+      _firstLaunchStep = _FirstLaunchStep.ready;
+    });
+  }
+
+  Future<void> _markFirstLaunchCompleted() async {
+    try {
+      await _firstLaunchStore.markCompleted();
+    } catch (_) {
+      // Local persistence is best-effort; access must not be blocked by it.
+    }
+  }
+
   void _completeFirstLaunchAsNewUser() {
     HapticFeedback.selectionClick();
+    unawaited(_markFirstLaunchCompleted());
     setState(() {
       _firstLaunchStep = _FirstLaunchStep.ready;
     });
@@ -849,6 +917,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     setState(() {
       _firstLaunchBusy = false;
       if (ok) {
+        unawaited(_markFirstLaunchCompleted());
         _firstLaunchStep = _FirstLaunchStep.ready;
       }
     });

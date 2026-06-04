@@ -233,6 +233,26 @@ class _FakeSupportTicketService implements SupportTicketService {
   }
 }
 
+class _FakeFirstLaunchStore implements PokrovFirstLaunchStore {
+  _FakeFirstLaunchStore({this.completed = false});
+
+  bool completed;
+  int readCalls = 0;
+  int markCalls = 0;
+
+  @override
+  Future<bool> isCompleted() async {
+    readCalls += 1;
+    return completed;
+  }
+
+  @override
+  Future<void> markCompleted() async {
+    markCalls += 1;
+    completed = true;
+  }
+}
+
 SupportTicketThread _supportThread({
   required int id,
   String status = 'open',
@@ -355,6 +375,71 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('first-launch-new-user')));
     await tester.pumpAndSettle();
 
+    expect(
+      find.byKey(const ValueKey('first-launch-choice-screen')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('primary-connect-action')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('completed first launch skips the startup choice screen',
+      (tester) async {
+    final store = _FakeFirstLaunchStore(completed: true);
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(store.readCalls, 1);
+    expect(
+      find.byKey(const ValueKey('first-launch-choice-screen')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('primary-connect-action')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('new user first launch completion is persisted', (tester) async {
+    final store = _FakeFirstLaunchStore();
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('first-launch-new-user')));
+    await tester.pumpAndSettle();
+
+    expect(store.markCalls, 1);
+    expect(store.completed, isTrue);
+    expect(
+      find.byKey(const ValueKey('primary-connect-action')),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(store.readCalls, 2);
     expect(
       find.byKey(const ValueKey('first-launch-choice-screen')),
       findsNothing,
