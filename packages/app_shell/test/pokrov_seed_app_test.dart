@@ -190,6 +190,7 @@ class _FakeSupportTicketService implements SupportTicketService {
     SupportTicketThread? loadedThread,
     List<SupportTicketThread> loadedThreads = const <SupportTicketThread>[],
     SupportTicketThread? sentThread,
+    this.failGetAfter = 0,
   })  : tickets = List<SupportTicketThread>.from(tickets),
         loadedThread = loadedThread ?? (tickets.isEmpty ? null : tickets.first),
         loadedThreads = List<SupportTicketThread>.from(loadedThreads),
@@ -204,6 +205,7 @@ class _FakeSupportTicketService implements SupportTicketService {
   final SupportTicketThread? loadedThread;
   final List<SupportTicketThread> loadedThreads;
   final SupportTicketThread sentThread;
+  final int failGetAfter;
   int calls = 0;
   int listCalls = 0;
   int getCalls = 0;
@@ -238,6 +240,9 @@ class _FakeSupportTicketService implements SupportTicketService {
     getCalls += 1;
     lastHostPlatform = hostPlatform;
     lastTicketId = ticketId;
+    if (failGetAfter > 0 && getCalls >= failGetAfter) {
+      throw const SupportTicketFailure('poll failed');
+    }
     if (loadedThreads.isNotEmpty) {
       final index = (getCalls - 1).clamp(0, loadedThreads.length - 1);
       return loadedThreads[index];
@@ -1776,6 +1781,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(supportTicketService.getCalls, 1);
+    expect(find.byKey(const ValueKey('support-thread-lifecycle-tracking')),
+        findsOneWidget);
     expect(find.text('Operator is checking the route now.'), findsNothing);
 
     await tester.pump(const Duration(seconds: 12));
@@ -1783,7 +1790,74 @@ void main() {
 
     expect(supportTicketService.getCalls, greaterThanOrEqualTo(2));
     expect(find.text('Operator is checking the route now.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('support-thread-lifecycle-operator')),
+        findsOneWidget);
     expect(find.text('В работе'), findsOneWidget);
+  });
+
+  testWidgets('support chat shows offline lifecycle hint after poll failure',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final existingThread = _supportThread(
+      id: 890,
+      status: 'open',
+      statusTitle: 'Open',
+      messages: <SupportTicketMessage>[
+        _supportMessage(
+          id: 1,
+          ticketId: 890,
+          senderRole: 'user',
+          body: 'Need help',
+        ),
+      ],
+    );
+    final supportTicketService = _FakeSupportTicketService(
+      const SupportTicketReceipt(
+        ticketId: 890,
+        statusTitle: 'Open',
+        messageCount: 1,
+      ),
+      tickets: <SupportTicketThread>[existingThread],
+      loadedThread: existingThread,
+      failGetAfter: 2,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        supportTicketService: supportTicketService,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await tester.tap(find.byKey(const ValueKey('desktop-sidebar-hamburger')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.person_outline).last);
+    await tester.pumpAndSettle();
+
+    final support = find.byKey(const ValueKey('profile-section-support'));
+    await tester.dragUntilVisible(
+      support,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(support);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('support-thread-lifecycle-tracking')),
+        findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 12));
+    await tester.pumpAndSettle();
+
+    expect(supportTicketService.getCalls, greaterThanOrEqualTo(2));
+    expect(find.byKey(const ValueKey('support-thread-lifecycle-offline')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('support-thread-refresh-action')),
+        findsOneWidget);
   });
 
   testWidgets('rules show selected-apps editor and hide beta prose',

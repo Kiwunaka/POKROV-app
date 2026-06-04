@@ -62,7 +62,8 @@ The current code slice is:
    Windows TUN/process routing proof so selected `.exe` values go through
    POKROV while the rest of the device stays direct;
 10. embedded support chat now polls the active ticket, refreshes status, and
-    shows operator replies in-app without forcing the user back to Telegram;
+    shows operator replies plus ticket lifecycle hints in-app without forcing
+    the user back to Telegram;
 11. WARP/enhanced privacy now has a backend-owned policy contract, sanitized
     public metadata, managed-profile-only runtime material, client parsing, and
     a Home consent gate that keeps Hiddify `warp.enable=false` until the user
@@ -122,7 +123,7 @@ clarity before a richer Rewards Hub can safely exist.
 | Live wheel/calendar rewards | Not started for mutation | disabled endpoint shells and disabled UI actions exist | enable only after reward ledger, feature flags, rollout proof, and copy |
 | Promo campaign assignment | Not started for live campaigns | P2 app-safe promo-slot rendering exists | add assignment, QA, rollout flags, and campaign telemetry |
 | Referral program hardening | Not started for live program tuning | P2 referral summary/share UI exists | add anti-abuse, bonus/payout ledger, and campaign tuning |
-| Support realtime lifecycle | Started with client polling | ticket-backed chat, diagnostic attachments, and active-ticket polling exist; operator replies and status changes appear in the app after refresh | add SSE/status freshness hints and operator escalation/offline states after operator workflow proof |
+| Support realtime lifecycle | Done for polling lifecycle, partial for SSE | ticket-backed chat, diagnostic attachments, active-ticket polling, status freshness hints, operator-reply hints, closed/offline lifecycle states, and Telegram fallback visibility exist | add SSE or tuned cadence only after operator workflow proof; keep typing/read receipts out until real support tooling exists |
 | Native email linking | Not started | email/recovery handoff exists | add native email auth only after delivery readiness |
 | Detailed cabinet/account management | Not started in app | cabinet handoff exists | expand webapp account management first, then app entry points |
 | Advanced raw rule editor | Debug-only backlog | advanced gate exists | only expose behind explicit responsibility gate for support/debug; never use it as normal app selection UI |
@@ -138,7 +139,7 @@ states.
 | --- | --- | --- | --- |
 | Android installed-app picker and Windows process/exe picker | Started, with route proof | picker-first Rules UI opens a searchable app/process sheet; Android bridge exposes `runtimeEngine.listInstalledApps` for launchable packages; immediate fallback suggestions keep the sheet useful when bridge data is unavailable; Windows picker starts from running processes plus curated `.exe` suggestions; Windows selected-apps config now uses TUN process rules and direct default instead of system-proxy behavior | expand Android/Windows catalogs with richer labels/icons and native exe path selection as platform proof becomes available |
 | Live wheel, calendar, and achievements | Not started for live mutations | Rewards Hub preview, disabled wheel/calendar endpoint shells, compact calendar grid, and safe achievement chips exist | add reward ledger, feature flags, rollout proof, and copy before enabling spin/check-in/achievement claims |
-| Support realtime lifecycle | Started | embedded ticket-backed support chat, explicit diagnostic attachment, and active-ticket polling exist; the app updates messages/status from `GET /api/tickets/{id}` while the screen is open | add SSE or tuned polling cadence, stale/offline indicator, and operator escalation states without fake operator presence |
+| Support realtime lifecycle | Done for polling lifecycle, partial for SSE | embedded ticket-backed support chat, explicit diagnostic attachment, active-ticket polling, operator-reply hints, closed/offline lifecycle hints, and manual refresh action exist; the app updates messages/status from `GET /api/tickets/{id}` while the screen is open | add SSE or tuned polling cadence only after real operator workflow proof; do not fake typing, read receipts, or operator presence |
 | Native email linking and recovery | Not started for native app flow | email/recovery handoff and cabinet continuation exist | add native email linking/recovery only after delivery readiness and account-linking semantics are green |
 | Detailed account and cabinet management | Not started in app | app opens cabinet through short-lived token and shows compact access/account summary | expose detailed account management through app-safe entrypoints or a polished cabinet continuation, without turning Account into a dense dashboard |
 | WARP as a working feature | Started as guarded policy/runtime/consent bridge | Home can show an honest disabled/upcoming WARP tile; public `client_policy.warp_policy` is sanitized; authenticated managed profiles may carry runtime-ready WARP material; client bootstrap parses `warp_policy`; the Home tile can request explicit user consent only for runtime-ready policy; desktop runtime maps WARP into Hiddify options only when policy is ready and consented, while incomplete or non-consented policy stays disabled | add live WARP provisioning, safe storage/rotation, fallback diagnostics, Android proof, Windows proof, and reconnect/recovery UX before claiming WARP as working |

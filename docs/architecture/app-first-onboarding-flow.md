@@ -221,9 +221,13 @@ Support rules:
 - the app should prepare context before opening the ticket flow or fallback channels
 - authenticated browser and cabinet support is ticket-backed through `/api/tickets*`
 - app ticket creation attaches safe diagnostics automatically; follow-up replies attach diagnostics only after explicit one-message user confirmation
+- the app may poll the active ticket while the support screen is open and show
+  lifecycle hints such as checking, operator reply, closed, or temporarily
+  offline
 - diagnostics should expose only safe summaries such as route mode, route category, DNS policy, and transport profile
 - diagnostics must not leak raw config, keys, or detailed topology
 - when no real session exists yet, support may show prepared context and recovery entry points but must not pretend that live ticket history already exists
+- support UI must not fake typing, read receipts, or operator-online presence
 - recovery order in support copy stays `app -> web cabinet -> Telegram`
 - public browser email continuation stays marked `soon` until sender readiness and the launch path are genuinely live
 

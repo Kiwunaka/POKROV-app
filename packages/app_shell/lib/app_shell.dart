@@ -5964,7 +5964,9 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
   bool _sending = false;
   bool _loadingThread = true;
   bool _refreshingThread = false;
+  bool _threadRefreshFailed = false;
   bool _threadClosed = false;
+  bool _hasOperatorReply = false;
   int? _ticketId;
   String _threadStatus = 'AI помощник';
   String? _threadError;
@@ -6012,6 +6014,8 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
         setState(() {
           _ticketId = null;
           _threadClosed = false;
+          _threadRefreshFailed = false;
+          _hasOperatorReply = false;
           _loadingThread = false;
           _messages = _supportGreetingMessages();
           _threadStatus = 'AI помощник';
@@ -6039,6 +6043,8 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
       setState(() {
         _loadingThread = false;
         _threadClosed = false;
+        _threadRefreshFailed = false;
+        _hasOperatorReply = false;
         _threadError = error.message;
       });
       _syncThreadPolling();
@@ -6061,6 +6067,9 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
     final nextMessages = _messagesFromThread(thread);
     _messages =
         nextMessages.isEmpty ? _supportGreetingMessages() : nextMessages;
+    _hasOperatorReply = nextMessages
+        .any((message) => message.role == _SupportChatRole.operator);
+    _threadRefreshFailed = false;
   }
 
   void _syncThreadPolling() {
@@ -6111,8 +6120,42 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
       }
       setState(() {
         _refreshingThread = false;
+        _threadRefreshFailed = true;
       });
     }
+  }
+
+  _SupportLifecycleState get _supportLifecycleState {
+    if (_loadingThread) {
+      return _SupportLifecycleState.loading;
+    }
+    if (_threadError != null || _threadRefreshFailed) {
+      return _SupportLifecycleState.offline;
+    }
+    if (_refreshingThread) {
+      return _SupportLifecycleState.refreshing;
+    }
+    if (_threadClosed) {
+      return _SupportLifecycleState.closed;
+    }
+    if (_hasOperatorReply) {
+      return _SupportLifecycleState.operator;
+    }
+    if (_ticketId != null) {
+      return _SupportLifecycleState.tracking;
+    }
+    return _SupportLifecycleState.ready;
+  }
+
+  void _retrySupportLifecycle() {
+    if (_ticketId == null) {
+      unawaited(_loadInitialThread());
+      return;
+    }
+    setState(() {
+      _threadRefreshFailed = false;
+    });
+    unawaited(_refreshActiveThread());
   }
 
   Future<void> _sendMessage() async {
@@ -6387,6 +6430,13 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                     '${widget.appContext.hostPlatform.label} · ${widget.selectedRouteMode.label} · ${widget.statusLabel}',
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+              child: _SupportLifecycleHint(
+                state: _supportLifecycleState,
+                onRetry: _retrySupportLifecycle,
+              ),
+            ),
             if (_threadError != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
@@ -6574,6 +6624,137 @@ List<_SupportChatMessage> _supportGreetingMessages() {
           'Напишите, что случилось. POKROV приложит безопасный контекст и покажет ответ в этом чате.',
     ),
   ];
+}
+
+enum _SupportLifecycleState {
+  loading,
+  ready,
+  tracking,
+  refreshing,
+  operator,
+  closed,
+  offline,
+}
+
+class _SupportLifecycleHint extends StatelessWidget {
+  const _SupportLifecycleHint({
+    required this.state,
+    required this.onRetry,
+  });
+
+  final _SupportLifecycleState state;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final data = switch (state) {
+      _SupportLifecycleState.loading => (
+          key: 'loading',
+          icon: Icons.sync_rounded,
+          label: 'Загружаем диалог',
+          detail: 'История поддержки появится здесь.',
+          accent: _SeedPalette.muted,
+          retry: false,
+        ),
+      _SupportLifecycleState.ready => (
+          key: 'ready',
+          icon: Icons.smart_toy_outlined,
+          label: 'AI помощник на месте',
+          detail: 'Оператор подключится через тикет, если вопрос не решится.',
+          accent: _SeedPalette.muted,
+          retry: false,
+        ),
+      _SupportLifecycleState.tracking => (
+          key: 'tracking',
+          icon: Icons.mark_chat_unread_outlined,
+          label: 'Ответ появится здесь',
+          detail: 'POKROV проверяет тикет в фоне. Telegram остается запасным.',
+          accent: _SeedPalette.accent,
+          retry: false,
+        ),
+      _SupportLifecycleState.refreshing => (
+          key: 'refreshing',
+          icon: Icons.sync_rounded,
+          label: 'Обновляем диалог',
+          detail: 'Проверяем новые ответы без перехода в Telegram.',
+          accent: _SeedPalette.accent,
+          retry: false,
+        ),
+      _SupportLifecycleState.operator => (
+          key: 'operator',
+          icon: Icons.support_agent_rounded,
+          label: 'Поддержка ответила',
+          detail: 'Продолжайте диалог здесь или через Telegram.',
+          accent: _SeedPalette.accent,
+          retry: false,
+        ),
+      _SupportLifecycleState.closed => (
+          key: 'closed',
+          icon: Icons.check_circle_outline_rounded,
+          label: 'Обращение закрыто',
+          detail: 'Можно написать новое сообщение, если вопрос вернулся.',
+          accent: _SeedPalette.success,
+          retry: false,
+        ),
+      _SupportLifecycleState.offline => (
+          key: 'offline',
+          icon: Icons.cloud_off_outlined,
+          label: 'Чат временно не обновился',
+          detail:
+              'Сообщения не потеряны. Можно повторить или открыть Telegram.',
+          accent: _SeedPalette.warning,
+          retry: true,
+        ),
+    };
+
+    return Container(
+      key: ValueKey('support-thread-lifecycle-${data.key}'),
+      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+      decoration: BoxDecoration(
+        color: data.accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: data.accent.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        children: [
+          Icon(data.icon, size: 18, color: data.accent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  data.label,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: _SeedPalette.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  data.detail,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: _SeedPalette.muted,
+                        height: 1.25,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          if (data.retry) ...[
+            const SizedBox(width: 8),
+            TextButton(
+              key: const ValueKey('support-thread-refresh-action'),
+              onPressed: onRetry,
+              child: const Text('Повторить'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 class _SupportChatHeader extends StatelessWidget {
