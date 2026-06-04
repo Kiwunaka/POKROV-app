@@ -33,31 +33,31 @@ Explicitly ignored as old/archive input:
 
 ## Current Execution Slice
 
-The next code slice is:
+The current code slice is:
 
-1. first-launch `new / returning` split;
-2. returning-user restore surface using the unified app redeem path;
-3. no raw subscription link as account proof;
-4. keep the existing POKROV shell and runtime flow intact after the user chooses
-   the new-user path.
+1. app-facing bonus summary model and runtime adapter;
+2. compact Account summary surface for Telegram, referrals, and promo entry;
+3. no wheel/calendar hub until app APIs and feature flags exist;
+4. keep profile loading lazy so the app does not block startup or ordinary
+   navigation on bonus data.
 
-This slice is P0 because the master brief explicitly says returning users must
-restore existing access before ordinary route-mode setup.
+This slice is P0/P1 bridge work because the master brief needs bonus/account
+clarity before a richer Rewards Hub can safely exist.
 
 ## P0 Map
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
 | Hiddify-based runtime direction | Partial | active lane uses pinned `hiddify-core v3.1.8` artifacts; clean-room POKROV shell remains current | separate Hiddify fork/spike gate: provenance packet, Android/Windows build proof, managed profile loop |
-| First-launch `new / returning` split | In progress | profile has code entry, but startup does not ask new vs returning | implement first-launch prompt and tests |
-| Returning-user restore screen | In progress | profile redeem and cabinet/Telegram actions exist | add first-launch restore panel with code, Telegram, cabinet, and manual-key warning |
+| First-launch `new / returning` split | Done for MVP | startup asks new vs returning; completion is file-backed and tested | keep wording lightweight while runtime gates evolve |
+| Returning-user restore screen | Done for MVP | first-launch restore panel uses unified redeem, Telegram, cabinet, and raw-key warning | expand accepted code families on backend over time |
 | Unified redeem API contract | Done for first slice | platform has `POST /api/redeem`; app uses `AppFirstAccountActionService.redeemCode` | expand accepted code families on backend over time |
 | Safe one-time claim/link semantics | Partial | app rejects raw link as normal account proof in docs; UI copy still needs first-launch warning | show raw-link warning in restore flow; backend keeps structured rejection |
-| App profile basics | Partial | grouped account/profile sections, access, redeem, cabinet, Telegram, support, advanced gate exist | add lighter rewards/account summary after bonus API summary lands |
+| App profile basics | Partial | grouped account/profile sections, access, redeem, cabinet, Telegram, support, bonus summary, advanced gate exist | keep reducing visible account copy and add only proven states |
 | Telegram `+10 days` link/check/claim | Done for MVP | app has link, channel check, claim actions and tests | keep optional, no startup wall |
 | Bot parity for subscription/access | Partial | platform bots were updated in root repo; app/cabinet share app-first contracts | add parity smoke checklist before final `1.0.0-beta` handoff |
 | Short-lived cabinet token | Done for MVP | app calls `POST /api/client/cabinet-token`; cabinet exchange exists | keep e2e coverage for one-time URL token removal |
-| Bonus API contract and MVP endpoints | Partial | channel check/claim live; summary contract documented; wheel/calendar hidden | implement app-facing bonus summary/referral/promo endpoints before Rewards Hub |
+| Bonus API contract and MVP endpoints | Partial | channel check/claim live; app reads existing `GET /api/bonuses`; compact summary tested; wheel/calendar hidden | add app-safe referral and promo endpoints before richer Rewards Hub |
 | Smart-connect shortlist and route-mode sync | Partial | managed profile returns smart-connect metadata; route mode persisted through backend contract; client does not run RTT loop yet | implement RTT measurement/upload loop and stickiness UI only after runtime proof |
 | Claims guardrails | Done for MVP | WARP info-only, selected-apps staged, no stable/store/trusted/RU claims | keep guardrails in tests/docs with each release update |
 
@@ -65,7 +65,7 @@ restore existing access before ordinary route-mode setup.
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Rewards Hub light | Not started | wheel/calendar UI intentionally hidden | add only after bonus summary/referral endpoints exist |
+| Rewards Hub light | Partial | compact Account summary shows Telegram/referral/promo status; wheel/calendar UI intentionally hidden | add dedicated hub only after referral/promo endpoints and feature flags exist |
 | App-facing wheel spin endpoint and UI | Not started | bot/admin wheel exists, app endpoint not live | backend API plus feature flag before UI |
 | Calendar check-in endpoint and summary | Not started | no app API | backend API plus feature flag before UI |
 | Support diagnostics flow | Done for MVP create path, partial for lifecycle | chat can attach redacted diagnostics on create | add follow-up diagnostics attachment and polling/SSE after operator flow proof |

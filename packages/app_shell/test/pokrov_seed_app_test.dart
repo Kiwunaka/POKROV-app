@@ -16,6 +16,7 @@ class _FakeBootstrapper
     TelegramLinkResult? telegramLinkResult,
     ChannelBonusStatus? channelBonusStatus,
     ChannelBonusClaimResult? channelBonusClaimResult,
+    AppFirstBonusSummary? bonusSummary,
   })  : cabinetHandoff = cabinetHandoff ??
             CabinetHandoff(
               token: 'short-cabinet-token',
@@ -58,6 +59,24 @@ class _FakeBootstrapper
               channel: '@pokrov_vpn',
               linkedTelegramId: 777001,
               linkedTelegramUsername: 'linked_user',
+            ),
+        bonusSummary = bonusSummary ??
+            const AppFirstBonusSummary(
+              referralCount: 1,
+              referralCode: 'POKROV1',
+              referralBonusDays: 10,
+              streakMonths: 0,
+              lastWheelSpin: '',
+              channelBonusPremiumDays: 10,
+              channelBonusClaimedAt: '',
+              openingBonusPremiumDays: 5,
+              openingBonusClaimed: true,
+              channelUsername: 'pokrov_vpn',
+              tierKey: 'starter',
+              tierPercent: 5,
+              paidReferrals: 0,
+              nextTierKey: 'pro',
+              nextTierAt: 5,
             );
 
   final ManagedProfilePayload payload;
@@ -71,12 +90,14 @@ class _FakeBootstrapper
   final TelegramLinkResult telegramLinkResult;
   final ChannelBonusStatus channelBonusStatus;
   final ChannelBonusClaimResult channelBonusClaimResult;
+  final AppFirstBonusSummary bonusSummary;
   int calls = 0;
   int redeemCalls = 0;
   int cabinetCalls = 0;
   int telegramLinkCalls = 0;
   int channelBonusCheckCalls = 0;
   int channelBonusClaimCalls = 0;
+  int bonusSummaryCalls = 0;
   RouteMode? lastRouteMode;
   HostPlatform? lastHostPlatform;
   String? lastRedeemCode;
@@ -86,6 +107,7 @@ class _FakeBootstrapper
   HostPlatform? lastTelegramLinkHostPlatform;
   HostPlatform? lastChannelBonusCheckHostPlatform;
   HostPlatform? lastChannelBonusClaimHostPlatform;
+  HostPlatform? lastBonusSummaryHostPlatform;
 
   @override
   Future<ManagedProfilePayload> resolveManagedProfile({
@@ -145,6 +167,15 @@ class _FakeBootstrapper
     channelBonusClaimCalls += 1;
     lastChannelBonusClaimHostPlatform = hostPlatform;
     return channelBonusClaimResult;
+  }
+
+  @override
+  Future<AppFirstBonusSummary> fetchBonusSummary({
+    required HostPlatform hostPlatform,
+  }) async {
+    bonusSummaryCalls += 1;
+    lastBonusSummaryHostPlatform = hostPlatform;
+    return bonusSummary;
   }
 }
 
@@ -804,6 +835,73 @@ void main() {
     expect(
         bootstrapper.lastChannelBonusClaimHostPlatform, HostPlatform.android);
     expect(find.textContaining('10'), findsWidgets);
+  });
+
+  testWidgets('profile loads compact bonus summary without wheel calendar',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      bonusSummary: const AppFirstBonusSummary(
+        referralCount: 2,
+        referralCode: 'POKROV2',
+        referralBonusDays: 10,
+        streakMonths: 3,
+        lastWheelSpin: '',
+        channelBonusPremiumDays: 10,
+        channelBonusClaimedAt: '2026-06-03T12:00:00Z',
+        openingBonusPremiumDays: 5,
+        openingBonusClaimed: true,
+        channelUsername: 'pokrov_vpn',
+        tierKey: 'starter',
+        tierPercent: 5,
+        paidReferrals: 2,
+        nextTierKey: 'pro',
+        nextTierAt: 5,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-profile');
+    await tester.pumpAndSettle();
+
+    final summarySection =
+        find.byKey(const ValueKey('profile-section-bonus-summary'));
+    await tester.dragUntilVisible(
+      summarySection,
+      find.byType(Scrollable).first,
+      const Offset(0, -220),
+    );
+    await tester.pumpAndSettle();
+
+    expect(summarySection, findsOneWidget);
+    expect(bootstrapper.bonusSummaryCalls, 1);
+    expect(bootstrapper.lastBonusSummaryHostPlatform, HostPlatform.android);
+    expect(find.byKey(const ValueKey('profile-bonus-summary-refresh')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-bonus-summary-telegram')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-bonus-summary-referral')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-bonus-summary-promo')),
+        findsOneWidget);
+    expect(find.textContaining('POKROV2'), findsWidgets);
+    expect(find.textContaining('+10'), findsWidgets);
+    expect(
+        find.byKey(const ValueKey('profile-bonus-wheel-action')), findsNothing);
+    expect(find.byKey(const ValueKey('profile-activity-calendar-action')),
+        findsNothing);
   });
 
   testWidgets('bonus MVP keeps wheel and activity calendar hidden',

@@ -962,6 +962,108 @@ void main() {
     ]);
   });
 
+  test('fetches bonus summary through the app-first session', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bonus-summary-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final requests = <String>[];
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add('${request.method} ${request.uri.path}');
+        await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'bonus-summary-session',
+                    'account_id': 'bonus-summary-account',
+                  },
+                  'provisioning': <String, Object?>{
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/bonuses') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer bonus-summary-session',
+          );
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'referral_count': 2,
+                  'referral_code': 'POKROV2',
+                  'referral_bonus_days': 10,
+                  'streak_months': 3,
+                  'last_wheel_spin': null,
+                  'channel_bonus_premium_days': 10,
+                  'channel_bonus_claimed_at': '2026-06-03T12:00:00Z',
+                  'opening_bonus_premium_days': 5,
+                  'opening_bonus_claimed': true,
+                  'channel_username': 'pokrov_vpn',
+                  'points_tier': <String, Object?>{
+                    'tier_key': 'starter',
+                    'percent': 5,
+                    'paid_referrals': 2,
+                    'next_tier_key': 'pro',
+                    'next_tier_at': 5,
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+
+    final summary = await bootstrapper.fetchBonusSummary(
+      hostPlatform: HostPlatform.windows,
+    );
+
+    expect(summary.referralCount, 2);
+    expect(summary.referralCode, 'POKROV2');
+    expect(summary.referralBonusDays, 10);
+    expect(summary.streakMonths, 3);
+    expect(summary.channelBonusClaimed, isTrue);
+    expect(summary.channelBonusPremiumDays, 10);
+    expect(summary.openingBonusClaimed, isTrue);
+    expect(summary.tierKey, 'starter');
+    expect(summary.nextTierAt, 5);
+    expect(requests, <String>[
+      'POST /api/client/session/start-trial',
+      'GET /api/bonuses',
+    ]);
+  });
+
   test('retries a temporary 502 during start-trial and then succeeds',
       () async {
     final tempDirectory = await Directory.systemTemp.createTemp(

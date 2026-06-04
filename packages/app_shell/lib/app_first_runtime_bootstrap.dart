@@ -54,6 +54,10 @@ abstract interface class AppFirstBonusActionService {
   Future<ChannelBonusClaimResult> claimChannelBonus({
     required HostPlatform hostPlatform,
   });
+
+  Future<AppFirstBonusSummary> fetchBonusSummary({
+    required HostPlatform hostPlatform,
+  });
 }
 
 class BootstrapFailure implements Exception {
@@ -165,6 +169,44 @@ class ChannelBonusClaimResult {
   final String channel;
   final int? linkedTelegramId;
   final String linkedTelegramUsername;
+}
+
+class AppFirstBonusSummary {
+  const AppFirstBonusSummary({
+    required this.referralCount,
+    required this.referralCode,
+    required this.referralBonusDays,
+    required this.streakMonths,
+    required this.lastWheelSpin,
+    required this.channelBonusPremiumDays,
+    required this.channelBonusClaimedAt,
+    required this.openingBonusPremiumDays,
+    required this.openingBonusClaimed,
+    required this.channelUsername,
+    required this.tierKey,
+    required this.tierPercent,
+    required this.paidReferrals,
+    required this.nextTierKey,
+    required this.nextTierAt,
+  });
+
+  final int referralCount;
+  final String referralCode;
+  final int referralBonusDays;
+  final int streakMonths;
+  final String lastWheelSpin;
+  final int channelBonusPremiumDays;
+  final String channelBonusClaimedAt;
+  final int openingBonusPremiumDays;
+  final bool openingBonusClaimed;
+  final String channelUsername;
+  final String tierKey;
+  final double tierPercent;
+  final int paidReferrals;
+  final String nextTierKey;
+  final int? nextTierAt;
+
+  bool get channelBonusClaimed => channelBonusClaimedAt.trim().isNotEmpty;
 }
 
 class AppFirstRuntimeBootstrapper
@@ -596,6 +638,75 @@ class AppFirstRuntimeBootstrapper
 
       throw const BootstrapFailure(
         'POKROV could not activate the Telegram bonus.',
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  @override
+  Future<AppFirstBonusSummary> fetchBonusSummary({
+    required HostPlatform hostPlatform,
+  }) async {
+    var state = await _loadOrCreateState(hostPlatform);
+    final client = _createHttpClient(hostPlatform);
+    try {
+      for (var attempt = 0; attempt < 2; attempt += 1) {
+        if (!state.hasSession) {
+          state = await _startTrial(
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
+        }
+
+        try {
+          final response = await _requestJson(
+            method: 'GET',
+            path: '/api/bonuses',
+            client: client,
+            bearerToken: state.sessionToken,
+            hostPlatform: hostPlatform,
+          );
+          final tier = _readMap(response['points_tier']);
+          return AppFirstBonusSummary(
+            referralCount: _readInt(response['referral_count']),
+            referralCode: _readText(response['referral_code']),
+            referralBonusDays: _readInt(response['referral_bonus_days']),
+            streakMonths: _readInt(response['streak_months']),
+            lastWheelSpin: _readText(response['last_wheel_spin']),
+            channelBonusPremiumDays:
+                _readInt(response['channel_bonus_premium_days']),
+            channelBonusClaimedAt:
+                _readText(response['channel_bonus_claimed_at']),
+            openingBonusPremiumDays:
+                _readInt(response['opening_bonus_premium_days']),
+            openingBonusClaimed: response['opening_bonus_claimed'] == true,
+            channelUsername: _readText(response['channel_username']),
+            tierKey: _readText(tier['tier_key']),
+            tierPercent: _readDouble(tier['percent']),
+            paidReferrals: _readInt(tier['paid_referrals']),
+            nextTierKey: _readText(tier['next_tier_key']),
+            nextTierAt: _readNullableInt(tier['next_tier_at']),
+          );
+        } on BootstrapFailure catch (error) {
+          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
+            state = await _startTrial(
+              state: state.copyWith(
+                sessionToken: '',
+                accountId: '',
+              ),
+              hostPlatform: hostPlatform,
+              client: client,
+            );
+            continue;
+          }
+          rethrow;
+        }
+      }
+
+      throw const BootstrapFailure(
+        'POKROV could not load the bonus summary.',
       );
     } finally {
       client.close(force: true);
@@ -2684,6 +2795,16 @@ class AppFirstRuntimeBootstrapper
       return value;
     }
     return int.tryParse((value ?? '').toString()) ?? 0;
+  }
+
+  double _readDouble(Object? value) {
+    if (value is double) {
+      return value;
+    }
+    if (value is int) {
+      return value.toDouble();
+    }
+    return double.tryParse((value ?? '').toString()) ?? 0;
   }
 
   int? _readNullableInt(Object? value) {

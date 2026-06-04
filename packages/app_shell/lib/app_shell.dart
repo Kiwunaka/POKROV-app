@@ -493,6 +493,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   bool _telegramBonusBusy = false;
   bool _telegramBonusCanClaim = false;
   String? _telegramBonusError;
+  AppFirstBonusSummary? _bonusSummary;
+  bool _bonusSummaryBusy = false;
+  bool _bonusSummaryRequested = false;
+  String? _bonusSummaryError;
 
   @override
   void initState() {
@@ -534,6 +538,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     setState(() {
       _selectedIndex = tab.index;
     });
+    if (tab == SeedTab.profile && widget.bootstrapper != null) {
+      unawaited(_loadBonusSummary());
+    }
   }
 
   @override
@@ -793,6 +800,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _managedProfileDirty = true;
         _runtimeHeadline = 'Telegram-бонус активирован.';
       });
+      unawaited(_loadBonusSummary(force: true));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('+${result.premiumDays} дней добавлены к доступу.'),
@@ -805,6 +813,53 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       setState(() {
         _telegramBonusBusy = false;
         _telegramBonusError = 'Не удалось активировать бонус: $error';
+      });
+    }
+  }
+
+  Future<void> _loadBonusSummary({bool force = false}) async {
+    if (_bonusSummaryBusy) {
+      return;
+    }
+    if (!force && _bonusSummaryRequested) {
+      return;
+    }
+
+    final bonusActions = _bonusActionService;
+    if (bonusActions == null) {
+      setState(() {
+        _bonusSummaryRequested = true;
+        _bonusSummaryError = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _bonusSummaryBusy = true;
+      _bonusSummaryRequested = true;
+      _bonusSummaryError = null;
+    });
+    try {
+      if (force) {
+        HapticFeedback.selectionClick();
+      }
+      final summary = await bonusActions.fetchBonusSummary(
+        hostPlatform: widget.appContext.hostPlatform,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _bonusSummary = summary;
+        _bonusSummaryBusy = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _bonusSummaryBusy = false;
+        _bonusSummaryError = 'Не удалось обновить сводку: $error';
       });
     }
   }
@@ -1278,6 +1333,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         telegramBonusBusy: _telegramBonusBusy,
         telegramBonusCanClaim: _telegramBonusCanClaim,
         telegramBonusError: _telegramBonusError,
+        bonusSummary: _bonusSummary,
+        bonusSummaryBusy: _bonusSummaryBusy,
+        bonusSummaryError: _bonusSummaryError,
+        onRefreshBonusSummary: () => _loadBonusSummary(force: true),
         runtimeSnapshot: _runtimeSnapshot,
         runtimeHeadline: _runtimeHeadline,
       ),
@@ -1306,18 +1365,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                         selectedIndex: _selectedIndex,
                         sections: sections,
                         onSelected: (index) {
-                          setState(() {
-                            _selectedIndex = index;
-                          });
+                          _selectTab(SeedTab.values[index]);
                         },
                       )
                     : _MobileShell(
                         selectedIndex: _selectedIndex,
                         sections: sections,
                         onSelected: (index) {
-                          setState(() {
-                            _selectedIndex = index;
-                          });
+                          _selectTab(SeedTab.values[index]);
                         },
                       )
                 : _FirstLaunchGate(
@@ -2941,6 +2996,10 @@ class _ProfileSection extends StatelessWidget {
     required this.telegramBonusBusy,
     required this.telegramBonusCanClaim,
     required this.telegramBonusError,
+    required this.bonusSummary,
+    required this.bonusSummaryBusy,
+    required this.bonusSummaryError,
+    required this.onRefreshBonusSummary,
     required this.runtimeSnapshot,
     required this.runtimeHeadline,
   });
@@ -2957,8 +3016,34 @@ class _ProfileSection extends StatelessWidget {
   final bool telegramBonusBusy;
   final bool telegramBonusCanClaim;
   final String? telegramBonusError;
+  final AppFirstBonusSummary? bonusSummary;
+  final bool bonusSummaryBusy;
+  final String? bonusSummaryError;
+  final VoidCallback onRefreshBonusSummary;
   final RuntimeSnapshot? runtimeSnapshot;
   final String? runtimeHeadline;
+
+  List<String> _bonusSummaryLines() {
+    final summary = bonusSummary;
+    if (summary == null && bonusSummaryBusy) {
+      return const ['Обновляем Telegram, рефералы и промокоды.'];
+    }
+    if (summary == null) {
+      return const ['Telegram · рефералы · промокоды'];
+    }
+    final referralCode =
+        summary.referralCode.isEmpty ? '' : ' · ${summary.referralCode}';
+    return [
+      'Telegram +${summary.channelBonusPremiumDays} дней · рефералы ${summary.referralCount}$referralCode',
+    ];
+  }
+
+  String _referralSummaryValue(AppFirstBonusSummary summary) {
+    if (summary.referralCode.isEmpty) {
+      return '${summary.referralCount}';
+    }
+    return '${summary.referralCount} · ${summary.referralCode}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -3066,6 +3151,60 @@ class _ProfileSection extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
                           telegramBonusError!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              _SectionCard(
+                key: const ValueKey('profile-section-bonus-summary'),
+                title: 'Сводка',
+                tone: _SectionTone.reward,
+                lines: _bonusSummaryLines(),
+                child: Column(
+                  children: [
+                    _SettingsRow(
+                      key: const ValueKey('profile-bonus-summary-refresh'),
+                      icon: Icons.refresh_rounded,
+                      title: 'Обновить бонусы',
+                      value: bonusSummaryBusy ? 'Секунду' : 'Сводка',
+                      onTap: bonusSummaryBusy ? null : onRefreshBonusSummary,
+                    ),
+                    if (bonusSummary != null) ...[
+                      _SettingsRow(
+                        key: const ValueKey(
+                          'profile-bonus-summary-telegram',
+                        ),
+                        icon: Icons.send_outlined,
+                        title: 'Telegram',
+                        value: bonusSummary!.channelBonusClaimed
+                            ? '+${bonusSummary!.channelBonusPremiumDays} дней активированы'
+                            : '+${bonusSummary!.channelBonusPremiumDays} дней доступны',
+                      ),
+                      _SettingsRow(
+                        key: const ValueKey(
+                          'profile-bonus-summary-referral',
+                        ),
+                        icon: Icons.group_add_outlined,
+                        title: 'Рефералы',
+                        value: _referralSummaryValue(bonusSummary!),
+                      ),
+                      _SettingsRow(
+                        key: const ValueKey('profile-bonus-summary-promo'),
+                        icon: Icons.card_giftcard_outlined,
+                        title: 'Промокод',
+                        value: 'Через код',
+                      ),
+                    ],
+                    if ((bonusSummaryError ?? '').isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          bonusSummaryError!,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.error,
                             height: 1.3,
