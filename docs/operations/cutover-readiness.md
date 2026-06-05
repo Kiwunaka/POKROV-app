@@ -194,10 +194,12 @@ production WARP proof.
 `2026-06-05` WARP material/provisioning local verification:
 
 - root backend focused test:
-  - `tests/test_network_rollout_api.py`: `8 passed`
+  - `tests/test_network_rollout_api.py`: `9 passed`
   - covers encrypted-at-rest scoped WARP material provisioning,
     authenticated managed-profile material delivery, public policy redaction,
-    lifecycle ledger redaction, revoke deactivation, and rollout fallback
+    lifecycle ledger redaction, revoke deactivation, rollout fallback,
+    provisioning/rotation rate limits, stale material rejection, and admin
+    WARP summary redaction
 - client focused tests:
   - `packages/app_shell/test/app_first_runtime_bootstrap_test.dart`:
     `27 passed`

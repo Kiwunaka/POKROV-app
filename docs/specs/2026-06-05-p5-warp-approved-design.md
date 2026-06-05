@@ -53,10 +53,10 @@ WARP is partially implemented as a backend-backed lifecycle feature. The
 current code has policy parsing, desktop runtime option mapping,
 `/api/client/warp/*` status/consent/revoke/rotate/events endpoints, a sanitized
 `WarpEvent` ledger, encrypted-at-rest per-user/per-install WARP material
-storage with admin provisioning, and client consent/runtime-event wiring. A
+storage with admin provisioning, backend rate limits, stale-material rejection,
+admin summary visibility, and client consent/runtime-event wiring. A
 production-grade WARP feature still requires provider-side provisioning
-automation/rate limits, deeper health diagnostics, Android proof, and Windows
-proof.
+automation, deeper health diagnostics, Android proof, and Windows proof.
 
 The generated application map is approved as the P5 visual direction, not as
 copy, data, or a pixel-perfect implementation source. Generated labels such as
@@ -312,9 +312,14 @@ Backend/platform work required:
   through scoped `warp_materials` rows and `PUT /api/admin/client/warp/material`.
 - Keep public policy sanitized; managed material may be returned only through
   authenticated app-first managed flows and only when runtime-ready.
-- Add rate limits and abuse protection for provisioning/rotation.
-- Add monitoring for WARP provisioning failures, rotation failures, runtime
-  errors, and active consent counts.
+- Rate limits and abuse visibility for provisioning/rotation are implemented
+  through `WARP_MATERIAL_PROVISION_LIMIT_PER_HOUR`,
+  `WARP_ROTATION_LIMIT_PER_HOUR`, and sanitized rate-limit `WarpEvent` rows.
+- Stale material rejection is implemented through `WARP_MATERIAL_MAX_AGE_HOURS`;
+  stale material is not returned through managed profiles.
+- Admin monitoring is implemented through `GET /api/admin/client/warp/summary`
+  for WARP material, consent, provisioning, rotation, runtime error, and
+  rate-limit counters.
 
 Client/runtime work required:
 
@@ -354,8 +359,9 @@ Manual proof required before WARP is called working:
    Implemented on 2026-06-05.
 4. WARP provisioning, encrypted storage, and rotation in the platform repo.
    Scoped encrypted material storage and admin provisioning were implemented
-   on 2026-06-05; provider-side rotation automation, stale material rejection,
-   rate limits, and monitoring remain open.
+   on 2026-06-05; backend rate limits, stale material rejection, and admin
+   summary monitoring were implemented on 2026-06-05. Provider-side rotation
+   automation remains open.
 5. WARP consent persistence, revoke UI, local secure material handling, and
    runtime state machine in the app repo.
    Backend-backed consent, runtime event reporting, and local enabled-state
@@ -397,8 +403,9 @@ Platform tests:
 - WARP status/readiness endpoint;
 - consent/revoke lifecycle;
 - scoped admin WARP material provisioning with encrypted-at-rest storage;
-- rotation and stale material rejection;
+- rotation rate limits and stale material rejection;
 - event ingestion and redaction;
+- admin WARP summary redaction and counters;
 - managed profile returns WARP material only under authenticated runtime-ready
   conditions;
 - public policy never includes secrets.
