@@ -24,6 +24,8 @@ does not mark P5 or WARP as implemented.
   [../design/2026-06-03-client-chat-responsive-warp-motion-brief.md](../design/2026-06-03-client-chat-responsive-warp-motion-brief.md)
 - Application map render:
   [../design/2026-06-05-p5-warp-application-map.md](../design/2026-06-05-p5-warp-application-map.md)
+- Application map consilium review:
+  [../design/2026-06-05-p5-application-map-consilium-review.md](../design/2026-06-05-p5-application-map-consilium-review.md)
 
 OpenCode-go consilium lanes used for the review:
 
@@ -33,6 +35,11 @@ OpenCode-go consilium lanes used for the review:
 - `opencode-go/glm-5.1`
 - `opencode-go/deepseek-v4-pro`
 - `opencode-go/kimi-k2.6`
+
+The application-map review also checked PNG support. `minimax-m3` and
+`kimi-k2.6` reliably reviewed the attached PNG; `qwen3.7-max` was not reliable
+for PNG in this run, and `mimo-v2.5-pro`, `glm-5.1`, and `deepseek-v4-pro`
+reviewed the detailed Product Design / Image-to-Code visual packet.
 
 ## Product Verdict
 
@@ -44,6 +51,51 @@ WARP is not yet a working product feature. The current code has a useful policy
 bridge and desktop runtime mapping, but a production-grade WARP feature still
 requires provisioning, secure material handling, consent/revoke persistence,
 health diagnostics, runtime fallback, Android proof, and Windows proof.
+
+The generated application map is approved as the P5 visual direction, not as
+copy, data, or a pixel-perfect implementation source. Generated labels such as
+`POKROV VPN Client`, `Beta draft`, `Secure by design`, and all simulated values
+are internal reference artifacts only.
+
+## Application Map Extraction
+
+Keep from the map:
+
+- central tactile connect disc as the Home focus;
+- neutral light surfaces with emerald used only for active/selected states;
+- row-based Account, Rules, Locations, Rewards, and Support;
+- bottom sheets for gated features;
+- Windows sidebar plus centered main stage;
+- finite ring sweep, press scale, status crossfade, geometry-matched
+  skeletons, row feedback, and calm muted states.
+
+Refine before implementation:
+
+- public `WARP` labels become `Расширенная защита` or
+  `Расширенная приватность`; literal `WARP` remains advanced/support/internal;
+- generated `POKROV VPN Client`, `Beta draft`, and `Secure by design` text is
+  not product copy;
+- rewards wheel/calendar/balance render muted or hidden until backend flags and
+  ledgers are live;
+- location ping, signal bars, server load, device counts, renewal dates, timers,
+  and reward balances must be live data or skeleton/empty state;
+- Windows right-panel metrics default to consumer-readable state and move
+  protocol/load/uptime/raw metrics behind details or Advanced;
+- support chat must not imply fake operator presence, typing, read receipts, or
+  SLA;
+- internal labels such as `NL-free` need clearer user-facing wording or a
+  first-run hint;
+- app-picker icons must come from OS/source-owned/generic sources, not copied
+  third-party brand assets from a generated mock.
+
+Reject from the map:
+
+- showing WARP as a normal active Home/sidebar feature before proof;
+- active-looking rewards when the feature is off;
+- fake ping/load/country/device/support values;
+- any implication of stable `1.0.0`, store release, trusted signing,
+  RU-origin readiness, anonymity, faster internet, ad-free behavior, or
+  unrestricted access.
 
 ## P5 Definition Of Done
 
@@ -72,13 +124,87 @@ Motion rules:
   paths;
 - disabled future features stay muted and informational, not fake CTAs.
 
+Data honesty rules:
+
+- generated sample values from the application map are never implementation
+  fixtures;
+- pings, country signal bars, server load, uptime, renewal dates, device limits,
+  timers, reward balances, and support presence must come from live/safe state
+  or render as skeletons, empty states, or muted unavailable states;
+- if a metric is useful only for support or advanced diagnosis, hide it behind
+  details or Advanced by default.
+
+## Component Architecture
+
+Connect disc:
+
+- Mobile target diameter: around `160dp`; Windows target diameter:
+  `240-280dp`.
+- Idle: white inner disc, muted/soft emerald ring, simple lightning/brand
+  action icon, short action label.
+- Connecting: finite ring sweep for the current attempt. No endless progress
+  glow.
+- Connected: solid emerald ring, check mark, and live timer only when runtime
+  state is actually connected.
+- Reconnecting and error are required states before P5 is complete.
+- Press state uses transform scale around `0.95-0.98` over `100-150ms`.
+- Connected settle may pulse once; steady connected state should be calm.
+
+Rows:
+
+- Standard row height: `56dp`.
+- Two-line row height: `72dp`.
+- Leading icon: `24dp`.
+- Title: `16` regular/semibold depending on hierarchy.
+- Subtitle/caption: `13` muted.
+- Press state uses subtle surface tint; no layout movement.
+- Dividers are hairline and may be indented after the leading icon.
+
+Chips:
+
+- Height: `32dp`.
+- Radius: `16dp`.
+- Horizontal padding: around `12dp`.
+- Home should show no more than two chips. Overflow belongs in a sheet/detail.
+- Labels must be user-readable.
+
+Bottom sheets:
+
+- Top radius: `20-24dp`.
+- Drag handle: around `36-40dp x 4dp`.
+- Default detent: around `60%`; expanded detent: around `85-92%`.
+- Scrim: around `32-40%`.
+- Tablet/desktop sheets use a max width instead of full-viewport stretch.
+
+Windows sidebar:
+
+- Expanded width target: `240-260dp`.
+- Collapsed icon rail: around `64dp`.
+- Active row uses emerald indicator or soft pill, not glow.
+- Focus and keyboard navigation are part of the component, not later polish.
+- Normal users should see consumer-readable status first; advanced metrics use
+  progressive disclosure.
+
+Skeletons:
+
+- Skeletons match the geometry of the eventual content: same row height, icon
+  circle, text-line count, margins, and radii.
+- Shimmer may run around `1.5s`, but must not shift layout or repaint large
+  scrolling surfaces excessively.
+
+Muted/gated states:
+
+- Use muted color, desaturated icon, short reason, and no active primary CTA.
+- A future feature must look unavailable by design, not broken.
+
 ## Screen Contract
 
 Home:
 
 - One connect/disconnect focus.
-- Current status, location chip, route-mode chip, and a calm WARP/preparing
-  chip or row only when it does not compete with the primary action.
+- Current status, location chip, route-mode chip, and a calm extended
+  protection/preparing chip or row only when it does not compete with the
+  primary action.
 - No long paragraphs, no repeated CTA, no Telegram/cabinet/reward clutter on
   the first screen.
 
@@ -87,6 +213,7 @@ Rules:
 - Row-based routing mode and selected-app controls.
 - Android installed-app picker and Windows process/exe picker remain the normal
   custom-app path.
+- App icons must be OS-provided, source-owned, or generic safe icons.
 - Raw rule editing remains debug/advanced only behind a responsibility gate.
 
 Locations:
@@ -94,6 +221,8 @@ Locations:
 - Auto location remains the default.
 - Country rows stay compact with ping/load signal only when supported by real
   data.
+- Search, loading, empty, offline, and long-list states are part of the screen
+  contract.
 - No transport matrix or protocol internals in normal UI.
 
 Account:
@@ -108,15 +237,18 @@ Rewards:
 - Wheel, calendar, achievements, referral, and promo stay backend-flag-owned.
 - Disabled rewards render as muted rows/cards with short reasons.
 - Active actions appear only when backend summary marks the mechanic ready.
+- The generated wheel/calendar image is a live-state target, not the beta
+  default.
 
 Support:
 
 - Embedded app chat remains primary.
 - Polling lifecycle is acceptable for beta.
-- No fake typing, read receipts, or operator presence.
+- No fake typing, read receipts, SLA, or operator presence.
 - Diagnostic attachment must be explicit and redacted.
+- Queued/registered-ticket wording is allowed; fake online chat chrome is not.
 
-WARP Sheet:
+Extended Protection Sheet:
 
 - Public-facing copy should prefer product wording such as `Расширенная защита`
   or `Расширенная приватность`; literal `WARP` is acceptable in technical,
@@ -127,6 +259,35 @@ WARP Sheet:
   compatibility tradeoff, and a revoke/forget action.
 - Never claim anonymity, no restrictions, faster internet, ad-free behavior, or
   stronger privacy without evidence and copy review.
+
+Windows:
+
+- Desktop keeps a sidebar and centered connect stage instead of stretching the
+  mobile navigation pattern.
+- The right panel starts with consumer-readable status and hides protocol/load,
+  uptime, raw runtime fields, and support-grade metrics behind details or
+  Advanced.
+- Sidebar collapse uses width plus label opacity transitions with stable icon
+  alignment and keyboard focus states.
+
+## Dedicated Visual References Required
+
+The application map is too compressed to code from directly. P5 implementation
+should use screen-specific references before changing production UI:
+
+- Home idle, connecting, connected, reconnecting, and error.
+- Connect-disc component states at `1:1` scale.
+- Extended protection gate sheet and ready-to-consent sheet using product
+  wording.
+- Rules app picker with search, long list, empty state, and selected-app tab.
+- Locations search, skeleton/loading, offline/error, and long-list states.
+- Account subscription/details/session-limit states.
+- Rewards muted/locked state and live-flag state.
+- Support empty state, sent message, attachment picker, and send error.
+- Windows shell at `1280x720`, `1440x900`, and `1920x1080`, with sidebar and
+  right panel collapsed/expanded.
+- Motion timing sheet with easing, frame states, and reduced-motion behavior.
+- Dark mode only if it enters the release scope explicitly.
 
 ## WARP Working-Feature Contract
 
@@ -193,6 +354,16 @@ App tests:
 - connect-disc phases and reduced-motion fallback;
 - status transitions without stale text;
 - skeleton geometry at target widths;
+- visual golden frames for Home state matrix, extended protection sheets,
+  Rules picker, Locations states, Account rows, Rewards gated/live states,
+  Support states, and Windows shell states;
+- copy guard that prevents public first-layer `WARP` wording from replacing
+  `Расширенная защита` / `Расширенная приватность`;
+- no-fake-data guard for ping, load, uptime, timers, rewards, support presence,
+  and generated sample values;
+- Windows sidebar collapse and right-panel progressive disclosure;
+- rewards muted/live feature-flag behavior;
+- support no fake typing, read receipts, SLA, or online-operator state;
 - WARP tile/sheet states: not ready, ready-to-consent, consented, revoked,
   failure/fallback;
 - Android MethodChannel bridge for WARP material/options;
@@ -224,6 +395,9 @@ Manual tests:
 - Do not make Xray a normal-user primary path.
 - Do not introduce store/stable/trusted/RU-origin readiness claims.
 - Do not make WARP a Home toggle until the runtime and backend proof is green.
+- Do not copy third-party app icons from generated mocks.
+- Do not ship fake pings, fake load, fake dates, fake timers, fake reward
+  balances, or fake support presence.
 - Do not use generated app-map text as product copy.
 
 ## Next Step

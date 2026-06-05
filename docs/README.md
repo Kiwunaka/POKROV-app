@@ -70,6 +70,7 @@ Current anchors:
 - `design/2026-06-03-client-chat-responsive-warp-motion-brief.md`
 - `design/2026-06-03-client-best-mvp-build-brief.md`
 - `design/2026-06-05-p5-warp-application-map.md`
+- `design/2026-06-05-p5-application-map-consilium-review.md`
 - `specs/2026-06-05-p5-warp-approved-design.md`
 - root `DESIGN.md`
 - `developer/work-orders/2026-04-open-beta-v4/INDEX.md`

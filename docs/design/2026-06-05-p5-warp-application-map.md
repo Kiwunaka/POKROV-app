@@ -49,6 +49,8 @@ Create one high-resolution claim-safe product design reference board for the POK
   diagnostics, Android proof, and Windows proof are green.
 - The render may be used as a critique target for Product Design and external
   model consilium. It should not override `docs/specs/2026-06-05-p5-warp-approved-design.md`.
+- Second-pass consilium review:
+  [2026-06-05-p5-application-map-consilium-review.md](2026-06-05-p5-application-map-consilium-review.md)
 
 ## Next Review Prompts
 

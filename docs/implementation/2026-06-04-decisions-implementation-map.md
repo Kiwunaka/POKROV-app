@@ -174,6 +174,7 @@ research into an implementation contract:
 
 - [P5 WARP Approved Design](../specs/2026-06-05-p5-warp-approved-design.md)
 - [P5 WARP Application Map](../design/2026-06-05-p5-warp-application-map.md)
+- [P5 Application Map Consilium Review](../design/2026-06-05-p5-application-map-consilium-review.md)
 
 This approval does not mark P5 or WARP as implemented. It fixes the next
 implementation order:
@@ -188,6 +189,10 @@ implementation order:
 The generated application map is an internal review artifact. Generated text
 inside the image is not product copy and must not override copy, release, or
 claim guardrails.
+
+The second-pass Product Design / Image-to-Code review tightens P5 around
+public extended-protection naming, no-fake-data rules, screen-specific render
+requirements, Windows progressive disclosure, and component-level motion rules.
 
 ## Guardrails
 
