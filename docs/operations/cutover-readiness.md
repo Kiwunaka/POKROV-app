@@ -246,7 +246,7 @@ production WARP proof.
   `apps/windows_shell/build/release_bundle/pokrov-windows-beta-x64-1.0.0-beta.manifest.json`
 - Uploaded GitHub prerelease assets on 2026-06-05:
   - `pokrov-android-universal.apk`:
-    `EF5A0113C6B4571013593AFD0758D5784CA30134714770E44D2BCB02A81ACECF`
+    `3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D`
   - `pokrov-windows-setup-x64.exe`:
     `40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433`
   - `pokrov-windows-portable-x64.zip`:
@@ -289,6 +289,11 @@ rotation proof, or production WARP readiness.
     `apps/android_shell/build/app/outputs/flutter-apk/app-release.apk`
   - `flutter build appbundle --release`: pass; rebuilt
     `apps/android_shell/build/app/outputs/bundle/release/app-release.aab`
+  - `gh release upload v1.0.0-beta ... pokrov-android-universal.apk
+    SHA256SUMS.txt --clobber`: pass
+  - `gh release download v1.0.0-beta --pattern SHA256SUMS.txt --pattern
+    pokrov-android-universal.apk`: pass; downloaded APK hash
+    `3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D`
 - This closes the prior Flutter Gradle/AGP/Kotlin future-support warning for
   the Android host lane. It does not prove Android physical release-build WARP,
   raw Android device audit, Play/store readiness, production signing, or

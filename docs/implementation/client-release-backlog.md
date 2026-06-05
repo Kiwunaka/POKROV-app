@@ -22,7 +22,8 @@ Latest documented repo-level gate note:
 - the later `2026-06-05` Android toolchain refresh upgrades the Android host
   lane to Gradle `8.11.1`, Android Gradle Plugin `8.9.1`, and Kotlin
   `2.1.0`, then re-verifies Android analyze/test/APK/AAB without the older
-  Flutter Gradle/AGP/Kotlin future-support warnings
+  Flutter Gradle/AGP/Kotlin future-support warnings; the GitHub prerelease
+  Android APK and `SHA256SUMS.txt` were refreshed after this rebuild
 - owner decision on `2026-06-04`: current outside-store beta release is
   allowed without production Android signing and without trusted Windows
   signing; this does not authorize store/trusted/stable claims
@@ -98,6 +99,11 @@ Already verified locally by the current engineering lane:
     `apps/android_shell/build/app/outputs/flutter-apk/app-release.apk`
   - `flutter build appbundle --release`: pass; built
     `apps/android_shell/build/app/outputs/bundle/release/app-release.aab`
+  - `gh release upload v1.0.0-beta ... pokrov-android-universal.apk
+    SHA256SUMS.txt --clobber`: pass
+  - `gh release download v1.0.0-beta --pattern SHA256SUMS.txt --pattern
+    pokrov-android-universal.apk`: pass; downloaded APK hash
+    `3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D`
   - this closes the recorded Android build-tool future-support warning; it is
     not raw Android physical-device audit proof, store readiness, or production
     signing evidence

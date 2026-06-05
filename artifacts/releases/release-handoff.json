@@ -6,24 +6,24 @@
   "release_version": "1.0.0-beta",
   "version": "1.0.0-beta",
   "generated_at": "2026-06-05T19:05:27+03:00",
-  "updated_at": "2026-06-05T19:05:27+03:00",
-  "release_state": "github_prerelease_assets_refreshed_phase6_manual_live_smoke_pending",
-  "built_from_client_commit": "c03ded35ea2dbb3e64377302d2744e640a802540",
+  "updated_at": "2026-06-05T23:37:34+03:00",
+  "release_state": "github_prerelease_assets_refreshed_phase6_android_toolchain_refresh_manual_live_smoke_pending",
+  "built_from_client_commit": "e494d9bbf6767780be1b39af6fc4c2785f61cda7",
   "github_release": {
     "tag": "v1.0.0-beta",
     "url": "https://github.com/Kiwunaka/POKROV-app/releases/tag/v1.0.0-beta",
     "is_prerelease": true,
     "is_draft": false,
     "visibility": "private",
-    "asset_refresh_utc": "2026-06-05T16:05:27Z"
+    "asset_refresh_utc": "2026-06-05T20:37:34Z"
   },
   "downloads": {
     "android": {
       "play_url": "",
       "apk_url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/pokrov-android-universal.apk",
       "mirror_url": "",
-      "sha256": "EF5A0113C6B4571013593AFD0758D5784CA30134714770E44D2BCB02A81ACECF",
-      "size_bytes": 189669400
+      "sha256": "3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D",
+      "size_bytes": 189689484
     },
     "windows": {
       "exe_url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/pokrov-windows-setup-x64.exe",
@@ -55,7 +55,7 @@
     "public_publication_marker": "GO for outside-store beta with accepted skips; GitHub repo visibility is private",
     "public_announcement_allowed": false,
     "paid_checkout_allowed": false,
-    "reason": "Phase 6 refreshed v1.0.0-beta GitHub prerelease assets and hashes. Unauthenticated curl returns 404 because the GitHub repo is private; authenticated gh release download of SHA256SUMS passed. App-session /api/client/apps and live install/connect smoke remain manual owner tests."
+    "reason": "Phase 6 refreshed v1.0.0-beta GitHub prerelease assets and hashes; the later Android toolchain refresh re-uploaded the Android APK and SHA256SUMS.txt. Unauthenticated curl returns 404 because the GitHub repo is private; authenticated gh release download of SHA256SUMS and the Android APK passed. App-session /api/client/apps and live install/connect smoke remain manual owner tests."
   },
   "public_url_smoke": {
     "current_origin": {
@@ -70,7 +70,7 @@
         "classification": "PASS",
         "command": "gh release download v1.0.0-beta --pattern 'SHA256SUMS.txt'",
         "checksums": [
-          "ef5a0113c6b4571013593afd0758d5784ca30134714770e44d2bcb02a81acecf  pokrov-android-universal.apk",
+          "3676a18b06c3d5ce4be82f9c93a4f1ea83dab72206a06f13b066a37746a8268d  pokrov-android-universal.apk",
           "1df313b6abc19c06c31d2592f3aee6a258c421f846c5d5d756f34e432b4d2c96  pokrov-windows-1.0.0-beta.manifest.json",
           "3d87311bba0b8df3d44cc9b2da5d488157b1961d5353b1b83f1025f8374c7aae  pokrov-windows-portable-x64.zip",
           "40d345f139185f367b28a2b7fddd48a486a0acb4d34be04cffbb624496455433  pokrov-windows-setup-x64.exe"
@@ -108,6 +108,11 @@
       "command": "gh release upload v1.0.0-beta ... --clobber",
       "cwd": "C:/Users/kiwun/Documents/ai/POKROV-app",
       "status": "PASS"
+    },
+    {
+      "command": "gh release download v1.0.0-beta --pattern 'SHA256SUMS.txt' --pattern 'pokrov-android-universal.apk'",
+      "cwd": "C:/Users/kiwun/Documents/ai/POKROV-app",
+      "status": "PASS_ANDROID_HASH_3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D"
     }
   ],
   "artifacts": [
@@ -116,7 +121,7 @@
       "platform": "android",
       "format": "apk",
       "signing_state": "internal_beta_debug_signing_release_build",
-      "sha256": "EF5A0113C6B4571013593AFD0758D5784CA30134714770E44D2BCB02A81ACECF",
+      "sha256": "3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D",
       "public_release_allowed": true,
       "publication_gate": "outside_store_beta_with_operator_attestation_manual_live_smoke_pending"
     },
