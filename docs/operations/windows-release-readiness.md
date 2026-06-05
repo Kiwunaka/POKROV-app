@@ -103,7 +103,9 @@ Safe to claim now:
 - the current `1.0.0-beta` unsigned setup EXE is uploaded to the GitHub prerelease for authenticated beta access
 - the current Windows seed connect lane applies runtime options before `libcore start` and prefers a system-proxy host mode with dedicated local ports instead of assuming an elevated TUN session
 - this Windows lane now lives in the canonical `POKROV-app` repo
-- this Windows lane is the long-term repo target for new client development, but not yet the public release-truth lane
+- this Windows lane is the current repo-backed outside-store beta release truth
+  for Windows, but not a trusted-signed, store, or broad stable distribution
+  lane
 - unsigned Windows builds may be used for gated beta only with explicit SmartScreen or unknown-publisher warning guidance
 
 Not safe to claim now:
@@ -119,8 +121,14 @@ Not safe to claim now:
 
 - trusted Windows code-signing material is not wired into this lane
 - trusted installer signing and `MSIX` publication are still not wired into this lane
-- anonymous public artifact hosting, updater policy, and operator handoff smoke stay outside this seed
-- public Windows distribution is still blocked on signing or approved unsigned-warning posture, runtime route-mode evidence, DNS/leak validation, and public handoff evidence
+- anonymous public artifact hosting and updater policy remain distribution
+  scope decisions, not repo-side blockers for the current authenticated/gated
+  GitHub prerelease beta
+- outside-store Windows beta distribution is no longer blocked on unsigned
+  posture: the owner accepted unsigned beta risk and the setup EXE is uploaded.
+  Stronger broad/trusted distribution remains blocked on signing, live
+  exact-artifact runtime route-mode smoke, DNS/leak validation, and public
+  anonymous hosting if that surface is required
 - this wave does not migrate the current shipping git ownership or release process
 
 ## Blocked Runtime Verification
@@ -135,4 +143,8 @@ Before public Windows claims, attach evidence for:
 
 ## Release Rule
 
-Windows outside-store beta upload is complete for `1.0.0-beta`. Stronger public or trusted release claims remain blocked until live install smoke, signing or approved unsigned-warning posture, support-copy evidence, and anonymous/public hosting requirements are approved.
+Windows outside-store beta upload is complete for `1.0.0-beta` with approved
+unsigned-warning posture. Stronger trusted/stable/store claims remain blocked
+until live install smoke, trusted signing/SmartScreen reputation,
+support-copy evidence, and anonymous/public hosting requirements are approved
+for that broader channel.

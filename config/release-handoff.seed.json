@@ -37,7 +37,7 @@
         "kind": "apk",
         "file_name": "pokrov-android-universal.apk",
         "url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/pokrov-android-universal.apk",
-        "sha256": "EF5A0113C6B4571013593AFD0758D5784CA30134714770E44D2BCB02A81ACECF",
+        "sha256": "3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D",
         "canonical_label": "android_outside_store_beta_apk",
         "evidence_state": "OPERATOR_ATTESTED_MANUAL_LIVE_SMOKE_PENDING",
         "public_approved": true
@@ -78,12 +78,12 @@
         "public_approved": false
       }
     ],
-    "asset_refresh_utc": "2026-06-05T16:05:27Z",
+    "asset_refresh_utc": "2026-06-05T20:37:34Z",
     "github_repo_visibility": "private",
     "anonymous_download_smoke": "BLOCKED_PRIVATE_REPO_404",
-    "authenticated_github_release_smoke": "PASS_GH_RELEASE_DOWNLOAD_SHA256SUMS",
+    "authenticated_github_release_smoke": "PASS_GH_RELEASE_DOWNLOAD_ALL_ASSETS",
     "live_app_session_download_smoke": "MANUAL_OWNER_TEST",
-    "built_from_client_commit": "c03ded35ea2dbb3e64377302d2744e640a802540",
+    "built_from_client_commit": "e494d9bbf6767780be1b39af6fc4c2785f61cda7",
     "phase6_verification": {
       "focused_flutter_tests": "PASS: packages/app_shell 91 passed",
       "app_shell_analyze": "PASS: no issues found",
@@ -92,7 +92,9 @@
       "windows_unsigned_packaging": "PASS: scripts/build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze",
       "github_asset_upload": "PASS: gh release upload v1.0.0-beta --clobber",
       "anonymous_github_download": "BLOCKED_PRIVATE_REPO_404",
-      "authenticated_checksum_download": "PASS"
+      "authenticated_checksum_download": "PASS",
+      "authenticated_all_asset_download": "PASS: downloaded Android APK, Windows setup EXE, Windows portable ZIP, Windows manifest, and SHA256SUMS.txt match retained SHA-256 values",
+      "android_toolchain_refresh": "PASS: Gradle 8.11.1, AGP 8.9.1, Kotlin 2.1.0"
     }
   },
   "stable_consumption_notes": [

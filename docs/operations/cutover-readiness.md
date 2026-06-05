@@ -21,7 +21,7 @@ Historical mapping note:
 - Apple release state: `checked-in unsigned service lane`
 - Android release state: `operator-attested outside-store beta APK refreshed for 1.0.0-beta; live install/app-session smoke remains manual`
 - Windows release state: `unsigned outside-store beta setup EXE refreshed for 1.0.0-beta; live install/app-session smoke remains manual`
-- Android and Windows engineering verification: `2026-05-15 beta evidence retained; 2026-06-03 local Task 8 verification passed for app-first backend tests, Flutter analyze/test, Android debug APK smoke, and Windows release build; 2026-06-04 local RC built Android release-smoke APK/AAB and unsigned Windows setup/zip/manifest; 2026-06-05 local 1.0.0-beta P6 refreshed focused Flutter tests/analyze, root preflight, Android release APK, Windows unsigned setup/zip/manifest, and GitHub prerelease assets; 2026-06-05 Android toolchain refresh moved the host lane to Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0 with Android analyze/test/APK/AAB green`
+- Android and Windows engineering verification: `2026-05-15 beta evidence retained; 2026-06-03 local Task 8 verification passed for app-first backend tests, Flutter analyze/test, Android debug APK smoke, and Windows release build; 2026-06-04 local RC built Android release-smoke APK/AAB and unsigned Windows setup/zip/manifest; 2026-06-05 local 1.0.0-beta P6 refreshed focused Flutter tests/analyze, root preflight, Android release APK, Windows unsigned setup/zip/manifest, and GitHub prerelease assets; 2026-06-05 Android toolchain refresh moved the host lane to Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0 with Android analyze/test/APK/AAB green; final closure pass verified authenticated GitHub download hashes for all current release assets`
 - public store readiness: `not approved`
 - public cutover approval: `outside-store beta only`
 - public Android release approval: `outside-store beta with operator attestation`
@@ -38,8 +38,11 @@ This document tracks public release approval and cutover readiness, not whether 
 
 ### Stage 0: local exact-candidate package
 
-Status: `DONE` for `1.0.0-beta+20260605-p6`; refreshed local engineering
-artifacts are built from commit `c03ded35ea2dbb3e64377302d2744e640a802540`.
+Status: `DONE` for `1.0.0-beta+20260605-p6`; initial refreshed local
+engineering artifacts were built from commit
+`c03ded35ea2dbb3e64377302d2744e640a802540`, and the Android APK was refreshed
+again after the Android toolchain update at
+`e494d9bbf6767780be1b39af6fc4c2785f61cda7`.
 
 - Android release APK is built. A fresh 2026-06-05 AAB store-smoke artifact
   also builds locally, but store/operator packaging still requires a separate
@@ -96,8 +99,9 @@ Status: `DONE_GITHUB_PRERELEASE_REFRESHED_PRIVATE_REPO`.
   `artifacts/releases/release-handoff.json`.
 - Unauthenticated current-origin range requests return `404` because the
   GitHub repository is private.
-- Authenticated `gh release download` of `SHA256SUMS.txt` passed and matches
-  the uploaded asset digests.
+- Authenticated `gh release download` of `SHA256SUMS.txt`, Android APK,
+  Windows setup EXE, Windows portable ZIP, and Windows manifest passed; all
+  downloaded files match the retained SHA-256 values.
 - Smoke from `brain-origin` and `RU-origin` only when those reachability claims
   are needed for the release note.
 
@@ -127,18 +131,20 @@ Status: `MANUAL_OWNER_TEST`.
 - Run start-trial -> managed profile -> connect -> dashboard.
 - Run redeem code, cabinet token handoff, support chat, Telegram bonus check,
   and checkout continuation.
-- Keep WARP info-only and selected-apps staged unless their runtime gates are
-  separately proven.
+- WARP/enhanced privacy and selected-apps are implemented for guarded beta use.
+  Keep production WARP, DNS/leak, and exact-artifact runtime claims behind
+  release-build proof.
 
 ### Stage 7: release note and monitoring
 
-Status: `PENDING`.
+Status: `READY_GUARDRAILS_RECORDED_OPERATOR_MONITORING_AFTER_ANNOUNCEMENT`.
 
 - Publish only outside-store beta claims.
 - Do not claim Play/App Store, trusted Windows signing, raw Android audit,
   RU-origin readiness, or production WARP unless fresh evidence is attached.
 - Watch support tickets, payment fulfillment, node metrics, and download
-  failures after the announcement.
+  failures after the announcement. This is an operator/live monitoring task,
+  not a repo-side beta implementation blocker.
 
 ## Required Before Public Android+Windows Cutover
 
@@ -371,6 +377,9 @@ Safe to claim now:
   under `artifacts/releases/pokrov-app/0.2.0-beta.1+20260604-rc-local/`
 - the current Windows beta artifact may be shared only behind approved beta access with the unsigned warning
 - Android + Windows outside-store public beta is `GO` as of the `2026-05-15` launch decision evidence pack
+- current Android + Windows `1.0.0-beta` assets are uploaded to the GitHub
+  prerelease and authenticated download/checksum proof passes for every listed
+  asset
 - Android physical-device audit is accepted as `OPERATOR_ATTESTED` for this beta wave, not as raw repository evidence
 - Windows signing is not required for this outside-store beta wave, but trusted signing must not be claimed
 
@@ -381,7 +390,7 @@ Not safe to claim now:
 - Windows artifacts are production signed
 - TestFlight is live
 - notarization is green
-- Windows public hosting is approved
+- anonymous/broad public Windows hosting is approved
 - signed iOS packet-tunnel execution is proven on device
 - Apple store submission is ready
 - Apple cutover is approved
@@ -397,6 +406,7 @@ Blocked-by note:
 - Windows remains unsigned beta only; trusted signing is a later trust upgrade, not a blocker for this outside-store beta pass
 - real-user Telegram/WebApp checks, raw Android device audit replacement evidence, signing, store access, and RU-origin probes remain manual owner or operator checks, not blockers for local docs/code synchronization
 - `POKROV-app/artifacts/releases/pokrov-app/` may retain repo-backed alpha and beta bundles built directly from this lane for engineering and tester handoff
-- local RC packs must not be promoted to public runtime download truth until
-  operator upload, public URL smoke, and runtime `APP_*` approval are recorded
+- local RC packs must not be promoted to runtime download truth by themselves;
+  the current `v1.0.0-beta` GitHub prerelease handoff is the repo-backed beta
+  artifact truth, while live app-session `APP_*` proof remains manual
 - rollback and compatibility lanes may still exist elsewhere, but this document tracks approval of the `POKROV-app` release lane itself rather than treating another repo as the primary frame

@@ -7,9 +7,11 @@ Date: 2026-06-05
 This closes the local `1.0.0-beta` Phase 6 evidence refresh for the active
 `POKROV-app/main` client lane.
 
-The build commit for the refreshed binaries is
-`c03ded35ea2dbb3e64377302d2744e640a802540`. The follow-up commit only updates
-release evidence and handoff metadata.
+The initial Phase 6 binary refresh was built from
+`c03ded35ea2dbb3e64377302d2744e640a802540`. The Android APK was refreshed again
+after the Android toolchain update at
+`e494d9bbf6767780be1b39af6fc4c2785f61cda7`. Later commits only update release
+evidence and handoff metadata.
 
 ## Decision Scope
 
@@ -68,11 +70,18 @@ Ignored owner-deprecated inputs:
   pass; rebuilt unsigned Windows setup EXE, portable ZIP, bundle, and manifest.
 - `gh release upload v1.0.0-beta ... --clobber`: pass.
 - `gh release download v1.0.0-beta --pattern SHA256SUMS.txt`: pass.
+- final authenticated release download smoke:
+  `gh release download v1.0.0-beta --pattern SHA256SUMS.txt --pattern
+  pokrov-android-universal.apk --pattern pokrov-windows-setup-x64.exe
+  --pattern pokrov-windows-portable-x64.zip --pattern
+  pokrov-windows-1.0.0-beta.manifest.json`: pass; all downloaded assets match
+  retained SHA-256 values.
 
 Known build warnings:
 
-- Flutter warns that the current Android Gradle, Android Gradle Plugin, and
-  Kotlin versions should be upgraded before future toolchain support drops.
+- The prior Flutter Android Gradle, Android Gradle Plugin, and Kotlin
+  future-support warnings were closed by the later Android toolchain refresh:
+  Gradle `8.11.1`, Android Gradle Plugin `8.9.1`, Kotlin `2.1.0`.
 - Android command-line SDK XML warning remains a toolchain maintenance item.
 
 ## Uploaded Assets
@@ -84,8 +93,8 @@ GitHub prerelease:
 Assets:
 
 - `pokrov-android-universal.apk`
-  - size: `189669400`
-  - sha256: `EF5A0113C6B4571013593AFD0758D5784CA30134714770E44D2BCB02A81ACECF`
+  - size: `189689484`
+  - sha256: `3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D`
 - `pokrov-windows-setup-x64.exe`
   - size: `28291072`
   - sha256: `40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433`
@@ -103,7 +112,8 @@ Repository visibility note:
   return `404`.
 - Download is verified through authenticated GitHub CLI. Public anonymous
   availability requires making the repo/release public or moving assets to a
-  public download host.
+  public download host; that is a distribution-scope decision, not a repo-side
+  beta implementation blocker.
 
 ## Remaining Manual Or Trust Gates
 
@@ -132,7 +142,7 @@ Safe now:
 `POKROV 1.0.0-beta` Android + Windows outside-store beta assets are built,
 uploaded to the GitHub prerelease, and backed by local focused tests, analyzer,
 client gate preflight, Android APK build, Windows unsigned packaging, and
-authenticated GitHub checksum proof.
+authenticated GitHub checksum proof for all current release assets.
 
 Not safe:
 

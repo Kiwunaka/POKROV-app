@@ -10,9 +10,9 @@ Current direction note:
 - `marketing` owns public acquisition, `webapp` owns browser continuation, and the client shell stays locked to `Protection / Locations / Rules / Profile`
 - public-facing wording should stay calm and non-technical even when the underlying runtime remains transport-rich
 - `hiddify-core` is the pinned runtime base; WARP/enhanced privacy now has
-  backend lifecycle and client consent/event wiring, but production readiness
-  still requires provisioning, secure material handling, and Android/Windows
-  release-build proof
+  backend lifecycle, client consent/event wiring, provisioning, and safe
+  material-handling contracts, but production WARP claims still require
+  Android/Windows release-build proof
 
 Historical mapping note:
 
@@ -65,6 +65,7 @@ Current anchors:
 - `operations/android-release-audit.md`
 - `operations/windows-release-readiness.md`
 - `operations/2026-06-05-phase-6-release-beta-handoff.md`
+- `operations/2026-06-05-final-beta-closure-except-manual-tests-signing.md`
 - `operations/warp-runtime-proof-checklist.md`
 - `operations/responsive-golden-capture-plan.md`
 - `operations/cutover-readiness.md`

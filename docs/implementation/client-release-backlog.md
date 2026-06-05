@@ -10,6 +10,12 @@ This file tracks the current public-release blockers and follow-up backlog for `
 
 The app-first foundation and the consumer information architecture are in place in the new client repo. Android and Windows artifacts are approved for the outside-store public beta on the `1.0.0-beta` line, with accepted limitations: Android raw physical-device evidence is replaced by owner attestation for this beta, Windows remains unsigned, live install/app-session smoke remains manual, and RU-origin readiness is not claimed.
 
+As of the final `2026-06-05` closure pass, repo-side P0-P6 implementation,
+authenticated GitHub release upload/checksum proof, Android build-tool refresh,
+and handoff metadata alignment are closed for the current beta. The remaining
+open items are manual/local release-build tests, live account/session smokes,
+DNS/leak/runtime proof, and signing/trust/store work.
+
 Latest documented repo-level gate note:
 
 - the latest recorded full `python scripts/release_orchestrator.py --gates-only` success snapshot remains the `2026-04-13` run from the platform workspace
@@ -49,8 +55,9 @@ Already verified locally by the current engineering lane:
 - native Telegram reward actions through `POST /api/client/telegram/link`,
   `POST /api/channel/subscriber/check`, and
   `POST /api/bonuses/channel/claim`
-- Profile/Account link/check/claim rows for the `+10 days` Telegram reward,
-  with wheel and activity-calendar UI still absent from the MVP
+- Profile/Account reward rows plus the Rewards Hub for Telegram bonus,
+  referral, promo slots, wheel, calendar, achievements, and history; mutating
+  reward actions stay backend-flagged and quiet until rollout approval
 - `2026-06-03` Task 8 local verification:
   - root backend focused tests: `18 passed` for app-first API and `65 passed`
     for auth/tickets
@@ -110,7 +117,11 @@ Already verified locally by the current engineering lane:
 
 ## Public Android+Windows Blockers
 
-These items no longer block the already-approved outside-store beta when they require owner hardware/accounts, signing/store access, live deploy approval, or RU probe access. They remain blockers for stable, store, trusted-signing, raw Android-audit, or RU-origin claims.
+These items no longer block the already-approved outside-store beta when they
+require owner hardware/accounts, exact-artifact local tests, signing/store
+access, live deploy approval, or RU probe access. After the final `2026-06-05`
+closure pass, they are the only remaining gates for stronger stable, store,
+trusted-signing, raw Android-audit, production-WARP, or RU-origin claims.
 
 ### Android local-surface security gate
 
@@ -121,17 +132,22 @@ These items no longer block the already-approved outside-store beta when they re
 ### Route-mode, routing, and DNS verification
 
 - keep the public routing story focused on `All except RU` and `Full tunnel`
-- keep selected-apps as `Приложения · Скоро` only until Android package picker,
-  Windows process picker, persistence, and OS-level enforcement are proven per
-  platform
-- keep `Blocked only` internal until routing assets, DNS behavior, and leak checks are complete enough for honest verification
-- finish geo-asset wiring for routing rules and DNS presets
-- validate DNS split and leak behavior on Android and Windows before treating RU-specific routing copy as fully shipped
+- selected-apps is implemented for beta with a picker-first UI, Android
+  launchable-app bridge, Windows process/exe candidates, selected-app
+  persistence, and route-policy materialization; exact-artifact runtime proof
+  remains a local/manual test gate
+- keep `Blocked only` internal until DNS behavior and leak checks are complete
+  enough for honest verification
+- validate DNS split, geo-routing behavior, and leak behavior on Android and
+  Windows release builds before treating RU-specific routing copy as fully
+  shipped
 - keep the persisted route-mode contract aligned with backend-owned `route_mode`, `selected_apps`, `requires_elevated_privileges`, and `route_policy.*`
 - keep managed-profile `smart_connect` backend-owned and passive in the client
   until a real RTT measurement/upload loop is implemented and verified
-- keep WARP/enhanced privacy disabled/info-only until runtime proof, backend
-  profile policy, safe storage, and Android/Windows failure-mode evidence exist
+- WARP/enhanced privacy is implemented as a guarded beta feature with backend
+  policy, consent/revoke/event lifecycle, safe material contracts, fallback
+  reporting, and support/admin redaction; production WARP claims still require
+  Android/Windows release-build runtime and recovery proof
 
 ### Release branding, packaging, and hosting
 
@@ -141,7 +157,7 @@ These items no longer block the already-approved outside-store beta when they re
   runtime, or release-copy sync
 - keep trusted signing as a later trust upgrade; it is not required for this outside-store beta wave
 - production Android signing and trusted Windows signing are accepted skips for
-  the current `0.2.0-beta.1` outside-store beta, with explicit beta/unsigned
+  the current `1.0.0-beta` outside-store beta, with explicit beta/unsigned
   copy required
 - keep Android APK runtime/public download tied to the verified runtime APP_* sync and live download smoke from the current evidence pack; re-run before changing artifacts or URLs
 - Android build-tool future-support warnings are closed as of the `2026-06-05`
@@ -165,7 +181,8 @@ These items no longer block the already-approved outside-store beta when they re
 - verify the release build keeps Telegram reward optional and action-driven:
   no app startup gate, no membership polling loop, and no wheel/calendar UI
   before public APIs and feature flags exist
-- validate final download links and release handoff values after signed artifacts are published
+- validate final download links and release handoff values after any new
+  artifacts are published
 - confirm app, bot, and authenticated web surfaces consume the same runtime `APP_*` values after handoff
 - split release-reachability evidence into `current-origin`, `brain-origin`, and `RU-origin` checks when regional reachability matters
 - keep real-user Telegram/WebApp opening as a manual owner test; synthetic brain-signed init data proves backend/runtime policy, not a real user session
@@ -214,7 +231,9 @@ Retained only as fork/reference hardening backlog:
 - keep `/api/client/apps` payloads, install docs, and signed release handoff aligned
 - rebuild or redeploy static download surfaces whenever public Android or Windows URLs change
 - keep public-facing version labels on `0.x.x-beta` across client, docs, and release notes
-- selected-apps remains a beta MVP unless Android package picking, Windows process picking, persistence, and OS enforcement are all proven
+- selected-apps picker and policy plumbing are closed for beta; richer native
+  icons/file-dialog polish and exact-artifact OS runtime proof remain follow-up
+  quality/manual-test work, not repo-side beta blockers
 
 ## Explicit Non-Blockers In This Wave
 

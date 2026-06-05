@@ -7,6 +7,13 @@ Date: 2026-06-04
 This note moves the `0.2.0-beta.1+20260604-rc-local` package from local RC
 build evidence into owner/operator review.
 
+Superseded status on `2026-06-05`: the active beta handoff is now
+`v1.0.0-beta`, tracked by
+`2026-06-05-phase-6-release-beta-handoff.md` and
+`2026-06-05-final-beta-closure-except-manual-tests-signing.md`. The Stage 7
+`PENDING` entry below is retained as historical `0.2.0-beta.1` context, not an
+active blocker for the current `1.0.0-beta` repo-side closure.
+
 RC folder:
 
 `C:/Users/kiwun/Documents/ai/POKROV-app/artifacts/releases/pokrov-app/0.2.0-beta.1+20260604-rc-local/`
@@ -20,7 +27,8 @@ RC folder:
 - Stage 4 public artifact upload: `DONE_GITHUB_PRERELEASE_REFRESHED`
 - Stage 5 runtime handoff sync: `DONE_URLS_UNCHANGED_BRAIN_SMOKE_PASS`
 - Stage 6 live beta smoke: `MANUAL_OWNER_TEST`
-- Stage 7 release note and monitoring: `PENDING`
+- Stage 7 release note and monitoring:
+  `SUPERSEDED_BY_2026_06_05_1_0_0_BETA_CLOSURE`
 
 ## Local Evidence
 
@@ -57,9 +65,10 @@ RC folder:
 On 2026-06-04, the owner approved the current outside-store beta release
 without production Android signing and without trusted Windows signing.
 
-This approval is limited to the current `0.2.0-beta.1` outside-store beta. It
-does not authorize Play/App Store claims, trusted Windows signing claims,
-SmartScreen reputation claims, or stable release labeling.
+This approval was limited to the `0.2.0-beta.1` outside-store beta and is now
+superseded by the `1.0.0-beta` handoff notes. It did not authorize Play/App
+Store claims, trusted Windows signing claims, SmartScreen reputation claims, or
+stable release labeling.
 
 ## Payload Decision
 

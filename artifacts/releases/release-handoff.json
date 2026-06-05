@@ -55,7 +55,7 @@
     "public_publication_marker": "GO for outside-store beta with accepted skips; GitHub repo visibility is private",
     "public_announcement_allowed": false,
     "paid_checkout_allowed": false,
-    "reason": "Phase 6 refreshed v1.0.0-beta GitHub prerelease assets and hashes; the later Android toolchain refresh re-uploaded the Android APK and SHA256SUMS.txt. Unauthenticated curl returns 404 because the GitHub repo is private; authenticated gh release download of SHA256SUMS and the Android APK passed. App-session /api/client/apps and live install/connect smoke remain manual owner tests."
+    "reason": "Phase 6 refreshed v1.0.0-beta GitHub prerelease assets and hashes; the later Android toolchain refresh re-uploaded the Android APK and SHA256SUMS.txt. Unauthenticated curl returns 404 because the GitHub repo is private; authenticated gh release download of SHA256SUMS, Android APK, Windows setup EXE, Windows portable ZIP, and Windows manifest passed. App-session /api/client/apps and live install/connect smoke remain manual owner tests."
   },
   "public_url_smoke": {
     "current_origin": {
@@ -68,7 +68,7 @@
       },
       "authenticated_github_release_download": {
         "classification": "PASS",
-        "command": "gh release download v1.0.0-beta --pattern 'SHA256SUMS.txt'",
+          "command": "gh release download v1.0.0-beta --pattern 'SHA256SUMS.txt' --pattern 'pokrov-android-universal.apk' --pattern 'pokrov-windows-setup-x64.exe' --pattern 'pokrov-windows-portable-x64.zip' --pattern 'pokrov-windows-1.0.0-beta.manifest.json'",
         "checksums": [
           "3676a18b06c3d5ce4be82f9c93a4f1ea83dab72206a06f13b066a37746a8268d  pokrov-android-universal.apk",
           "1df313b6abc19c06c31d2592f3aee6a258c421f846c5d5d756f34e432b4d2c96  pokrov-windows-1.0.0-beta.manifest.json",

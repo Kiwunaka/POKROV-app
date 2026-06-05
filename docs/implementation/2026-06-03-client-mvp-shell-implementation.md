@@ -126,6 +126,11 @@ backend contract instead of adding a duplicate summary endpoint:
 
 ## Routing, Smart Connect, And WARP Staging Update
 
+Superseded status on `2026-06-05`: this section records the Task 7 staging
+state. P4/P5 later promoted selected-apps, WARP/enhanced privacy, rewards, and
+support lifecycle from staged MVP surfaces into guarded beta implementations.
+Exact-artifact runtime proof remains manual.
+
 The Task 7 consilium aligned on a beta-honest staging cut:
 
 - public route choices are now only `Все, кроме РФ` and `Все устройство`
@@ -133,8 +138,9 @@ The Task 7 consilium aligned on a beta-honest staging cut:
   capability, but `RouteMode.selectedApps` is not included in public
   `supportedRouteModes` until package/process picker, persistence, and OS-level
   enforcement are proven per platform
-- `Правила` keeps `Приложения · Скоро` as a teaser row, but does not expose a
-  selectable `Выбранные приложения` route card
+- At this historical point, Rules kept app selection as a teaser row and did
+  not expose a selectable selected-apps route card. P4 later replaced this with
+  picker-first selected-apps beta UI and platform policy plumbing.
 - Rules presets now read a seed catalog contract: enabled rows show active
   user-facing categories, staged rows show preparation status, and locked rows
   stay as `soon` without exposing raw rule-set names, CIDR, JSON, or engine
@@ -229,16 +235,18 @@ Notes from the same run:
 
 - Android debug build emitted Flutter deprecation warnings for Gradle `8.3.0`,
   Android Gradle Plugin `8.1.1`, Kotlin `1.8.22`, and an SDK XML version
-  mismatch. They did not block the debug APK build, but remain Android
-  toolchain follow-up work before stronger release claims.
+  mismatch. They did not block the debug APK build. The Gradle, Android Gradle
+  Plugin, and Kotlin future-support warnings were closed by the `2026-06-05`
+  Android toolchain refresh; the SDK XML warning remains normal toolchain
+  maintenance.
 - `pytest` finished with exit code `0`; on Windows it printed a pytest atexit
   temp-cleanup `PermissionError` for `%TEMP%\pytest-of-kiwun\pytest-current`
   after `test_app_first_api.py`.
 
 ## Follow-Up Gates
 
-- Upgrade Android Gradle Plugin, Gradle wrapper, and Kotlin to the future
-  Flutter-supported range after a dedicated Android toolchain pass.
+- Android Gradle Plugin, Gradle wrapper, and Kotlin upgrade: closed on
+  `2026-06-05` by the Android toolchain refresh.
 - Broaden `/api/redeem` beyond access keys only when backend support for new
   code kinds is verified.
 - Keep cabinet handoff exchange covered by backend/webapp/client regression

@@ -1,15 +1,15 @@
 {
   "lane": "POKROV-app/main",
-  "status": "outside_store_beta_uploaded_manual_live_smoke_pending",
+  "status": "outside_store_beta_repo_and_handoff_closed_manual_tests_and_signing_remaining",
   "public_cutover_allowed": true,
   "last_updated": "2026-06-05",
   "latest_repo_backed_release": {
     "version": "1.0.0-beta",
     "github_release": "https://github.com/Kiwunaka/POKROV-app/releases/tag/v1.0.0-beta",
-    "asset_refresh_utc": "2026-06-05T16:05:27Z",
+    "asset_refresh_utc": "2026-06-05T20:37:34Z",
     "github_repo_visibility": "private",
     "anonymous_download_smoke": "BLOCKED_PRIVATE_REPO_404",
-    "authenticated_github_release_smoke": "PASS_GH_RELEASE_DOWNLOAD_SHA256SUMS",
+    "authenticated_github_release_smoke": "PASS_GH_RELEASE_DOWNLOAD_ALL_ASSETS",
     "live_app_session_download_smoke": "MANUAL_OWNER_TEST"
   },
   "android_release": {
@@ -46,6 +46,14 @@
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
     "Windows trusted signing remains a later trust upgrade; live install smoke and broad-distribution trust checks remain operator work outside this lane"
+  ],
+  "repo_side_closed": [
+    "P0-P6 beta implementation scope",
+    "Android APK and Windows unsigned beta artifacts uploaded to GitHub prerelease",
+    "SHA256SUMS and release handoff metadata aligned",
+    "authenticated GitHub download proof for all current release assets",
+    "Android build-tool future-support warning closed with Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0",
+    "release-note guardrails recorded; post-announcement monitoring remains operator work"
   ],
   "ios_release_gates": [
     "Apple team selected",
