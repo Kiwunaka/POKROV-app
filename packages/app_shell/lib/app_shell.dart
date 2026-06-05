@@ -94,7 +94,6 @@ const _seedRulesetVersion = '2026-04-13';
 const _seedPackageCatalogVersion = '2026-04-13';
 
 abstract final class _MotionTokens {
-  static const quick = PokrovMotionTokens.quick;
   static const short = PokrovMotionTokens.short;
   static const standard = PokrovMotionTokens.standard;
   static const homeReveal = PokrovMotionTokens.homeReveal;
@@ -3153,20 +3152,7 @@ class _HomeRevealSlice extends StatelessWidget {
 }
 
 Widget _fadeSlideTransition(Widget child, Animation<double> animation) {
-  final curved = CurvedAnimation(
-    parent: animation,
-    curve: _MotionTokens.ease,
-  );
-  return FadeTransition(
-    opacity: curved,
-    child: SlideTransition(
-      position: Tween<Offset>(
-        begin: const Offset(0, 0.12),
-        end: Offset.zero,
-      ).animate(curved),
-      child: child,
-    ),
-  );
+  return pokrovFadeSlideTransition(child, animation);
 }
 
 class _MotionRecoveryBanner extends StatelessWidget {
@@ -3220,135 +3206,20 @@ class _MotionRecoveryBanner extends StatelessWidget {
   }
 }
 
-class _StatusDotLabel extends StatelessWidget {
+class _StatusDotLabel extends PokrovStatusDotLabel {
   const _StatusDotLabel({
-    required this.label,
-    required this.color,
+    required super.label,
+    required super.color,
   });
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final motion = _MotionScope.of(context);
-    return Wrap(
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 8,
-      runSpacing: 4,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        AnimatedSwitcher(
-          key: const ValueKey('home-status-switcher'),
-          duration: motion.duration(_MotionTokens.short),
-          transitionBuilder: _fadeSlideTransition,
-          child: Text(
-            label,
-            key: ValueKey(label),
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: _SeedPalette.ink,
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
-class _HomeChip extends StatefulWidget {
+class _HomeChip extends PokrovHomeChip {
   const _HomeChip({
     super.key,
-    required this.icon,
-    required this.label,
-    this.onTap,
+    required super.icon,
+    required super.label,
+    super.onTap,
   });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-
-  @override
-  State<_HomeChip> createState() => _HomeChipState();
-}
-
-class _HomeChipState extends State<_HomeChip> {
-  bool _hovered = false;
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final motion = _MotionScope.of(context);
-    final interactive = widget.onTap != null;
-    final scale = _pressed
-        ? 0.97
-        : _hovered && interactive
-            ? 1.015
-            : 1.0;
-    return MouseRegion(
-      cursor: interactive ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      onEnter: interactive ? (_) => setState(() => _hovered = true) : null,
-      onExit: interactive ? (_) => setState(() => _hovered = false) : null,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
-        onTapDown: interactive ? (_) => setState(() => _pressed = true) : null,
-        onTapCancel:
-            interactive ? () => setState(() => _pressed = false) : null,
-        onTapUp: interactive ? (_) => setState(() => _pressed = false) : null,
-        child: AnimatedScale(
-          key: const ValueKey('home-chip-motion'),
-          scale: scale,
-          duration: motion.duration(_MotionTokens.quick),
-          curve: _MotionTokens.ease,
-          child: AnimatedContainer(
-            duration: motion.duration(_MotionTokens.short),
-            curve: _MotionTokens.ease,
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 13),
-            decoration: BoxDecoration(
-              color: _hovered && interactive
-                  ? _SeedPalette.accent.withValues(alpha: 0.07)
-                  : _SeedPalette.surface,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: _hovered && interactive
-                    ? _SeedPalette.accent.withValues(alpha: 0.20)
-                    : _SeedPalette.line,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(widget.icon, size: 16, color: _SeedPalette.muted),
-                const SizedBox(width: 8),
-                AnimatedSwitcher(
-                  duration: motion.duration(_MotionTokens.short),
-                  child: Text(
-                    widget.label,
-                    key: ValueKey(widget.label),
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: _SeedPalette.ink,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _MotionSkeletonList extends PokrovSkeletonList {
@@ -6034,183 +5905,14 @@ class _LocationCard extends StatelessWidget {
   }
 }
 
-class _SettingsRow extends StatelessWidget {
+class _SettingsRow extends PokrovSettingsRow {
   const _SettingsRow({
     super.key,
-    required this.icon,
-    required this.title,
-    required this.value,
-    this.onTap,
+    required super.icon,
+    required super.title,
+    required super.value,
+    super.onTap,
   });
-
-  final IconData icon;
-  final String title;
-  final String value;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final row = LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 360;
-        final leading = Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: _SeedPalette.accent.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, size: 18, color: _SeedPalette.accent),
-        );
-        final titleText = Text(
-          title,
-          maxLines: compact ? 2 : 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: _SeedPalette.ink,
-                fontWeight: FontWeight.w700,
-              ),
-        );
-        final valueText = Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: compact ? TextAlign.left : TextAlign.right,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: _SeedPalette.ink.withValues(alpha: 0.62),
-                fontWeight: FontWeight.w700,
-              ),
-        );
-        final chevron = onTap == null
-            ? null
-            : Icon(
-                Icons.chevron_right_rounded,
-                size: 22,
-                color: _SeedPalette.ink.withValues(alpha: 0.38),
-              );
-
-        if (compact) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 7),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                leading,
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      titleText,
-                      const SizedBox(height: 3),
-                      valueText,
-                    ],
-                  ),
-                ),
-                if (chevron != null) ...[
-                  const SizedBox(width: 8),
-                  chevron,
-                ],
-              ],
-            ),
-          );
-        }
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Row(
-            children: [
-              leading,
-              const SizedBox(width: 12),
-              Expanded(child: titleText),
-              const SizedBox(width: 12),
-              Flexible(child: valueText),
-              if (chevron != null) ...[
-                const SizedBox(width: 8),
-                chevron,
-              ],
-            ],
-          ),
-        );
-      },
-    );
-
-    if (onTap == null) {
-      return row;
-    }
-    return _SettingsRowPressSurface(
-      onTap: () {
-        Feedback.forTap(context);
-        onTap!();
-      },
-      child: row,
-    );
-  }
-}
-
-class _SettingsRowPressSurface extends StatefulWidget {
-  const _SettingsRowPressSurface({
-    required this.child,
-    required this.onTap,
-  });
-
-  final Widget child;
-  final VoidCallback onTap;
-
-  @override
-  State<_SettingsRowPressSurface> createState() =>
-      _SettingsRowPressSurfaceState();
-}
-
-class _SettingsRowPressSurfaceState extends State<_SettingsRowPressSurface> {
-  bool _hovered = false;
-  bool _pressed = false;
-
-  void _setPressed(bool value) {
-    if (_pressed == value) {
-      return;
-    }
-    setState(() {
-      _pressed = value;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final motion = _MotionScope.of(context);
-    final scale = _pressed ? 0.985 : (_hovered ? 1.006 : 1.0);
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() {
-        _hovered = true;
-      }),
-      onExit: (_) => setState(() {
-        _hovered = false;
-        _pressed = false;
-      }),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => _setPressed(true),
-        onTapCancel: () => _setPressed(false),
-        onTapUp: (_) => _setPressed(false),
-        child: AnimatedScale(
-          key: const ValueKey('settings-row-press-feedback'),
-          scale: scale,
-          duration: motion.duration(_MotionTokens.short),
-          curve: _MotionTokens.ease,
-          alignment: Alignment.center,
-          child: Material(
-            type: MaterialType.transparency,
-            child: InkWell(
-              onTap: widget.onTap,
-              borderRadius: BorderRadius.circular(14),
-              child: widget.child,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 void _showInfoSheet(

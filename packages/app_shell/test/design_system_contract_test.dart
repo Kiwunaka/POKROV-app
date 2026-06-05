@@ -101,6 +101,51 @@ void main() {
     );
     expect(find.byType(RepaintBoundary), findsAtLeastNWidgets(2));
   });
+
+  testWidgets('home micro controls keep stable motion and row feedback keys',
+      (tester) async {
+    var taps = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PokrovMotionScope(
+          disableAnimations: false,
+          child: Material(
+            child: Column(
+              children: [
+                const PokrovStatusDotLabel(
+                  label: 'Ready',
+                  color: Colors.green,
+                ),
+                PokrovHomeChip(
+                  icon: Icons.public,
+                  label: 'Auto',
+                  onTap: () => taps += 1,
+                ),
+                PokrovSettingsRow(
+                  icon: Icons.info_outline,
+                  title: 'Status',
+                  value: 'Ready',
+                  onTap: () => taps += 1,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(PokrovStatusDotLabel.switcherKey), findsOneWidget);
+    expect(find.byKey(PokrovHomeChip.motionKey), findsOneWidget);
+    expect(
+        find.byKey(PokrovSettingsRowPressSurface.feedbackKey), findsOneWidget);
+    expect(
+        tester.getSize(find.byKey(PokrovHomeChip.motionKey)), isNot(Size.zero));
+
+    await tester.tap(find.text('Auto'));
+    await tester.tap(find.text('Status'));
+
+    expect(taps, 2);
+  });
 }
 
 class _MotionDurationProbe extends StatelessWidget {
