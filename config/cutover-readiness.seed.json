@@ -1,14 +1,25 @@
 {
   "lane": "POKROV-app/main",
-  "status": "outside_store_beta_staged_runtime_sync_pending",
-  "public_cutover_allowed": false,
+  "status": "outside_store_beta_uploaded_manual_live_smoke_pending",
+  "public_cutover_allowed": true,
+  "last_updated": "2026-06-05",
+  "latest_repo_backed_release": {
+    "version": "1.0.0-beta",
+    "github_release": "https://github.com/Kiwunaka/POKROV-app/releases/tag/v1.0.0-beta",
+    "asset_refresh_utc": "2026-06-05T16:05:27Z",
+    "github_repo_visibility": "private",
+    "anonymous_download_smoke": "BLOCKED_PRIVATE_REPO_404",
+    "authenticated_github_release_smoke": "PASS_GH_RELEASE_DOWNLOAD_SHA256SUMS",
+    "live_app_session_download_smoke": "MANUAL_OWNER_TEST"
+  },
   "android_release": {
     "beta_distribution": "outside_store_apk_staged",
-    "public_approved": false,
+    "public_approved": true,
     "blocked_on": [
-      "runtime APP_* sync approval",
-      "live /api/client/apps download smoke",
-      "public download handoff approval"
+      "raw physical-device audit proof if replacing operator attestation",
+      "real-user app-session /api/client/apps download smoke",
+      "live install/connect/dashboard smoke from exact uploaded APK",
+      "Play/store readiness claims"
     ],
     "accepted_evidence": [
       "operator-attested physical-device localhost/control-surface audit for this beta wave"
@@ -16,20 +27,25 @@
   },
   "windows_release": {
     "beta_distribution": "outside_store_unsigned_exe_staged",
-    "public_approved": false,
+    "public_approved": true,
     "required_user_warning": "Microsoft Defender SmartScreen or unknown-publisher warning is expected until trusted signing is complete.",
+    "blocked_on": [
+      "real-user app-session /api/client/apps download smoke",
+      "live install/connect/dashboard smoke from exact uploaded unsigned setup EXE",
+      "trusted signing and SmartScreen reputation for later broad distribution"
+    ],
     "accepted_evidence": [
       "unsigned beta risk accepted for this outside-store beta wave"
     ]
   },
   "blocking_dependencies": [
-    "formal public cutover approval remains open even though the clean-room base decision is already selected in POKROV-app",
-    "native-core provenance and packaging still need one documented cross-platform contract",
+    "public announcement remains manual even though outside-store beta artifacts were refreshed",
+    "real-user app-session runtime handoff smoke still requires owner access",
     "iOS production connectivity still requires on-device packet-tunnel proof plus reviewed entitlements",
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
-    "Windows trusted signing remains a later trust upgrade; runtime sync, live download smoke, and handoff approval remain operator work outside this lane"
+    "Windows trusted signing remains a later trust upgrade; live install smoke and broad-distribution trust checks remain operator work outside this lane"
   ],
   "ios_release_gates": [
     "Apple team selected",

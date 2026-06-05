@@ -79,11 +79,17 @@
 
 ## Phase 6: Release-Beta Evidence Refresh
 
-- [ ] Run focused Flutter tests for changed packages.
-- [ ] Run root client gate smoke where affected.
-- [ ] Rebuild Android APK and Windows unsigned beta artifacts only after implementation phases are green.
-- [ ] Update `docs/operations/cutover-readiness.md` and release handoff metadata with honest evidence.
-- [ ] Upload refreshed artifacts only after the owner asks for a new downloadable prerelease.
+- [x] Run focused Flutter tests for changed packages.
+- [x] Run root client gate smoke where affected.
+- [x] Rebuild Android APK and Windows unsigned beta artifacts only after implementation phases are green.
+- [x] Update `docs/operations/cutover-readiness.md` and release handoff metadata with honest evidence.
+- [x] Upload refreshed artifacts after the owner-approved downloadable prerelease request.
+
+Phase 6 closed on `2026-06-05` for local code/docs/release evidence. Remaining
+work is limited to accepted skips and manual gates: production Android signing,
+trusted Windows signing, live install/app-session smoke, raw Android physical
+audit replacement evidence, RU-origin proof if claimed, and production WARP
+runtime proof.
 
 ## First Implementation Slice
 

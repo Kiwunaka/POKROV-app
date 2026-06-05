@@ -1,6 +1,6 @@
 # POKROV Client Release Backlog
 
-Last updated: 2026-06-04
+Last updated: 2026-06-05
 
 ## Document Status
 
@@ -8,19 +8,22 @@ This file tracks the current public-release blockers and follow-up backlog for `
 
 ## Current Status
 
-The app-first foundation and the consumer information architecture are in place in the new client repo. Android and Windows artifacts are approved for the outside-store public beta on the `0.x.x-beta` line by the `2026-05-15` platform launch-decision evidence pack, with accepted limitations: Android raw physical-device evidence is replaced by owner attestation for this beta, Windows remains unsigned, and RU-origin readiness is not claimed.
+The app-first foundation and the consumer information architecture are in place in the new client repo. Android and Windows artifacts are approved for the outside-store public beta on the `1.0.0-beta` line, with accepted limitations: Android raw physical-device evidence is replaced by owner attestation for this beta, Windows remains unsigned, live install/app-session smoke remains manual, and RU-origin readiness is not claimed.
 
 Latest documented repo-level gate note:
 
 - the latest recorded full `python scripts/release_orchestrator.py --gates-only` success snapshot remains the `2026-04-13` run from the platform workspace
 - the `2026-05-15` platform evidence pack adds runtime handoff, live-origin, and payment/email proof for the outside-store beta
-- the `2026-06-04` local RC pack adds fresh exact-candidate Android
-  release-smoke APK/AAB and Windows unsigned packaging evidence
+- the `2026-06-04` local RC pack adds exact-candidate Android release-smoke
+  APK/AAB and Windows unsigned packaging evidence
+- the `2026-06-05` Phase 6 handoff refreshes `1.0.0-beta` Android APK,
+  Windows unsigned setup/ZIP/manifest, GitHub prerelease upload, and handoff
+  metadata
 - owner decision on `2026-06-04`: current outside-store beta release is
   allowed without production Android signing and without trusted Windows
   signing; this does not authorize store/trusted/stable claims
-- public runtime sync and download URLs still need operator approval for the
-  exact public payload rather than relying on local green snapshots
+- live app-session runtime download smoke still needs owner/operator proof for
+  the exact `1.0.0-beta` payload rather than relying on local green snapshots
 - Android physical-device audit is operator-attested for this beta wave; do not describe it as raw repo evidence unless a retained audit artifact is attached
 
 Already verified locally by the current engineering lane:
@@ -126,10 +129,10 @@ These items no longer block the already-approved outside-store beta when they re
 - treat `0.2.0-beta.1+20260603-local-mvp` as local engineering handoff only;
   do not sync public runtime `APP_*` values from it without separate operator
   GO and hosting evidence
-- treat `0.2.0-beta.1+20260604-rc-local` as the latest local release-candidate
-  and GitHub-uploaded prerelease evidence; Android remains internal
-  beta/release-smoke signed, Windows remains unsigned, and live install/connect
-  smoke plus real-user Telegram/WebApp verification remain manual
+- treat `1.0.0-beta+20260605-p6` as the latest repo-backed beta handoff
+  evidence; Android remains internal beta/release-smoke signed, Windows remains
+  unsigned, and live install/connect smoke plus real-user Telegram/WebApp
+  verification remain manual
 
 ### Runtime launch and handoff verification
 
@@ -142,13 +145,20 @@ These items no longer block the already-approved outside-store beta when they re
 - split release-reachability evidence into `current-origin`, `brain-origin`, and `RU-origin` checks when regional reachability matters
 - keep real-user Telegram/WebApp opening as a manual owner test; synthetic brain-signed init data proves backend/runtime policy, not a real user session
 
-## Karing-Based Candidate Lane
+## Archived Karing-Based Candidate Lane
 
-- [ ] Prove full-source Karing buildability for Android and Windows
-- [ ] Confirm GPL compliance and no Karing-name association before distribution
-- [ ] Implement POKROV managed mode
-- [ ] Hide generic proxy-utility surfaces from the normal POKROV user path
-- [ ] Pass Android + Windows release gates before any public cutover
+Owner status on 2026-06-05: not part of the active `1.0.0-beta` client release
+gate.
+
+Retained only as fork/reference hardening backlog:
+
+- prove full-source Karing buildability for Android and Windows if the lane is
+  deliberately reopened;
+- confirm GPL compliance and no Karing-name association before any derivative
+  distribution;
+- implement POKROV managed mode if that fork ever becomes active;
+- hide generic proxy-utility surfaces from the normal POKROV user path;
+- pass Android + Windows release gates before any public cutover from that lane.
 
 ## Follow-Up Backlog
 

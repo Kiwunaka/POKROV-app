@@ -1,6 +1,6 @@
 # Cutover Readiness
 
-Last updated: 2026-06-04
+Last updated: 2026-06-05
 
 This document tracks what must be true before `POKROV-app/main` is approved as the public `Android + Windows` release lane.
 
@@ -19,9 +19,9 @@ Historical mapping note:
 - Apple scope in this wave: `readiness only`
 - base decision: `Karing-based candidate reopened for gated spike; clean-room lane remains current until candidate gates pass`
 - Apple release state: `checked-in unsigned service lane`
-- Android release state: `operator-attested outside-store beta artifact, runtime handoff green for 2026-05-15 beta`
-- Windows release state: `unsigned outside-store beta artifact, runtime handoff green for 2026-05-15 beta`
-- Android and Windows engineering verification: `2026-05-15 beta evidence retained; 2026-06-03 local Task 8 verification passed for app-first backend tests, Flutter analyze/test, Android debug APK smoke, and Windows release build; 2026-06-04 local RC built Android release-smoke APK/AAB and unsigned Windows setup/zip/manifest; 2026-06-05 local 1.0.0-beta build refreshed Android APK and unsigned Windows setup/zip/manifest after P5/WARP pass`
+- Android release state: `operator-attested outside-store beta APK refreshed for 1.0.0-beta; live install/app-session smoke remains manual`
+- Windows release state: `unsigned outside-store beta setup EXE refreshed for 1.0.0-beta; live install/app-session smoke remains manual`
+- Android and Windows engineering verification: `2026-05-15 beta evidence retained; 2026-06-03 local Task 8 verification passed for app-first backend tests, Flutter analyze/test, Android debug APK smoke, and Windows release build; 2026-06-04 local RC built Android release-smoke APK/AAB and unsigned Windows setup/zip/manifest; 2026-06-05 local 1.0.0-beta P6 refreshed focused Flutter tests/analyze, root preflight, Android release APK, Windows unsigned setup/zip/manifest, and GitHub prerelease assets`
 - public store readiness: `not approved`
 - public cutover approval: `outside-store beta only`
 - public Android release approval: `outside-store beta with operator attestation`
@@ -38,13 +38,15 @@ This document tracks public release approval and cutover readiness, not whether 
 
 ### Stage 0: local exact-candidate package
 
-Status: `DONE` for `0.2.0-beta.1+20260604-rc-local`; refreshed local
-engineering artifacts are now built from the `1.0.0-beta` version line.
+Status: `DONE` for `1.0.0-beta+20260605-p6`; refreshed local engineering
+artifacts are built from commit `c03ded35ea2dbb3e64377302d2744e640a802540`.
 
-- Android release-smoke APK and AAB are built.
+- Android release APK is built. The AAB remains a retained 2026-06-04
+  store-smoke artifact until store/operator packaging is requested again.
 - Windows unsigned setup EXE, portable ZIP, and manifest are built.
-- `SHA256SUMS.txt`, `README.md`, and `release-handoff.json` are retained in
-  the local RC folder.
+- `SHA256SUMS.txt` is retained in the local `.tmp/release-assets-1.0.0-beta/`
+  staging folder; stable handoff metadata is retained at
+  `artifacts/releases/release-handoff.json`.
 - Runtime sync is explicitly disabled until operator GO.
 - Owner decision on `2026-06-04`: the current outside-store beta may release
   without production Android signing and without trusted Windows signing.
@@ -84,24 +86,32 @@ Status: `UNSIGNED_RELEASE_APPROVED_BY_OWNER_MANUAL_TEST_PENDING`.
 
 ### Stage 4: public artifact upload
 
-Status: `DONE_GITHUB_PRERELEASE_REFRESHED`.
+Status: `DONE_GITHUB_PRERELEASE_REFRESHED_PRIVATE_REPO`.
 
-- Uploaded approved APK and Windows setup EXE to GitHub prerelease
-  `v0.2.0-beta.1` on 2026-06-04 using canonical asset names.
-- Recorded public URLs and public SHA-256 values in the RC handoff.
-- Smoked the URLs from the current operator origin with range requests.
-- Downloaded the GitHub release assets back and confirmed SHA-256 values match.
+- Uploaded approved APK, Windows setup EXE, Windows portable ZIP, Windows
+  manifest, and `SHA256SUMS.txt` to GitHub prerelease `v1.0.0-beta` on
+  2026-06-05 using canonical asset names.
+- Recorded URLs and SHA-256 values in `config/release-handoff.seed.json` and
+  `artifacts/releases/release-handoff.json`.
+- Unauthenticated current-origin range requests return `404` because the
+  GitHub repository is private.
+- Authenticated `gh release download` of `SHA256SUMS.txt` passed and matches
+  the uploaded asset digests.
 - Smoke from `brain-origin` and `RU-origin` only when those reachability claims
   are needed for the release note.
 
 ### Stage 5: runtime handoff sync
 
-Status: `DONE_URLS_UNCHANGED_BRAIN_SMOKE_PASS`.
+Status: `MANUAL_OWNER_TEST_APP_SESSION_REQUIRED`.
 
-- Runtime `APP_*` mutation was not required for this refresh because the
-  GitHub URLs stayed stable.
-- Brain-origin `/api/client/apps` smoke passed on 2026-06-04 and returned the
-  expected Android APK, Windows EXE, and install docs URLs.
+- Runtime `APP_*` should point at the `v1.0.0-beta` URLs before a fresh
+  public/tester announcement if the app surface consumes runtime download
+  URLs.
+- Unauthenticated `https://api.pokrov.space/api/client/apps` returns `401`
+  (`Telegram auth required`), so live handoff proof needs a real app session or
+  operator-authenticated smoke.
+- The retained 2026-06-04 brain-origin smoke remains evidence for the previous
+  stable URL set, not proof of the 2026-06-05 `v1.0.0-beta` URL refresh.
 - Public-beta external-access preflight passes publication policy and runtime
   download checks but remains `BLOCKED_BY_ACCESS` for email/Lava live probe env:
   `EMAIL_PROBE_TO` and `LAVATOP_PROBE_EMAIL`.
@@ -232,6 +242,27 @@ production WARP proof.
   `apps/windows_shell/build/release_bundle/pokrov-windows-beta-x64-1.0.0-beta-setup.exe`
 - Windows manifest:
   `apps/windows_shell/build/release_bundle/pokrov-windows-beta-x64-1.0.0-beta.manifest.json`
+- Uploaded GitHub prerelease assets on 2026-06-05:
+  - `pokrov-android-universal.apk`:
+    `EF5A0113C6B4571013593AFD0758D5784CA30134714770E44D2BCB02A81ACECF`
+  - `pokrov-windows-setup-x64.exe`:
+    `40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433`
+  - `pokrov-windows-portable-x64.zip`:
+    `3D87311BBA0B8DF3D44CC9B2DA5D488157B1961D5353B1B83F1025F8374C7AAE`
+  - `pokrov-windows-1.0.0-beta.manifest.json`:
+    `1DF313B6ABC19C06C31D2592F3AEE6A258C421F846C5D5D756F34E432B4D2C96`
+- Fresh Phase 6 verification:
+  - `python scripts/run_client_release_gate.py preflight`: pass
+  - `flutter test test/assistant_contract_test.dart test/warp_lifecycle_contract_test.dart test/app_first_runtime_bootstrap_test.dart test/pokrov_seed_app_test.dart`:
+    `91 passed`
+  - `flutter analyze` in `packages/app_shell`: no issues found
+  - `python scripts/run_client_release_gate.py build --target android-apk`:
+    pass; rebuilt release APK
+  - `scripts/build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze`:
+    pass; rebuilt unsigned setup EXE, portable ZIP, and manifest
+  - `gh release upload v1.0.0-beta ... --clobber`: pass
+  - `gh release download v1.0.0-beta --pattern SHA256SUMS.txt`: pass
+  - unauthenticated GitHub range smoke: `BLOCKED_PRIVATE_REPO_404`
 
 This refresh still does not prove Android physical release-build WARP,
 Windows release-build WARP, production WARP, trusted Windows signing, store
@@ -252,7 +283,7 @@ rotation proof, or production WARP readiness.
 - [ ] Raw audit evidence is attached if replacing the operator attestation
 - [x] Public download handoff is approved for Android `APK` / mirror; `Play` remains empty for outside-store beta
 - [x] Release handoff includes runtime URL verification and origin evidence for the `2026-05-15` beta evidence pack
-- [ ] Any APK shown to testers is official, beta-labeled, outside-store, and not described as Play/store-ready
+- [x] Any APK shown to testers is official, beta-labeled, outside-store, and not described as Play/store-ready
 
 Apple checklists below remain readiness-only in this wave.
 They do not expand the public `Android + Windows` release scope tracked by this document.
@@ -293,7 +324,7 @@ They do not expand the public `Android + Windows` release scope tracked by this 
 - [ ] Trusted code-signing identity is available for a later trusted Windows distribution
 - [x] EXE first-layer beta path is chosen for this outside-store wave; `MSIX` / portable `ZIP` stay operator/store artifacts
 - [x] Public hosting and handoff path are approved for the `2026-05-15` outside-store beta evidence pack
-- [ ] Gated beta download copy warns about Microsoft Defender SmartScreen or unknown-publisher prompts while unsigned
+- [x] Gated beta download copy warns about Microsoft Defender SmartScreen or unknown-publisher prompts while unsigned
 
 ## Safe Claims
 

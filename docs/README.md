@@ -37,8 +37,8 @@ Current client-doc scope:
 - living client contract and release-readiness docs for `POKROV-app/main`
 - public `v1` scope: `Android + Windows`
 - current paid beta evidence line: `1.0.0-beta`
-- Android status: `outside-store APK staged / public runtime blocked`
-- Windows status: `gated unsigned beta with required SmartScreen or unknown-publisher warning`
+- Android status: `1.0.0-beta outside-store APK uploaded / live owner smoke pending`
+- Windows status: `1.0.0-beta unsigned beta uploaded / SmartScreen warning and live owner smoke pending`
 - `iOS` and `macOS`: readiness, packaging, and signing-preparation only in this wave
 - cross-surface product facts still inherit from the platform canon under `C:/Users/kiwun/Documents/ai/VPN/docs/`
 - browser continuation outside the app inherits the platform surface split: checkout-first marketing, continuation-first cabinet, and status-gated public email when the platform runtime reports delivery-ready mode
@@ -48,7 +48,6 @@ Current anchors:
 - `product/client-product-contract.md`
 - `architecture/app-first-onboarding-flow.md`
 - `specs/2026-04-18-wave-7-new-base-client-scaffold.md`
-- `decisions/2026-04-18-karing-vs-clean-room-gate.md`
 - `decisions/2026-06-03-hiddify-karing-happ-client-base-review.md`
 - `decisions/2026-06-03-hiddify-core-warp-status.md`
 - `decisions/2026-06-03-client-ux-account-rewards-master-brief.md`
@@ -65,6 +64,7 @@ Current anchors:
 - `operations/apple-release-readiness.md`
 - `operations/android-release-audit.md`
 - `operations/windows-release-readiness.md`
+- `operations/2026-06-05-phase-6-release-beta-handoff.md`
 - `operations/warp-runtime-proof-checklist.md`
 - `operations/responsive-golden-capture-plan.md`
 - `operations/cutover-readiness.md`

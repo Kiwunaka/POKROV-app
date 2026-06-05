@@ -658,19 +658,30 @@ Reject implementation if it includes:
 
 ## Minimal Start Checklist
 
-Before the next coding wave starts:
+Status on 2026-06-05: superseded by
+`docs/implementation/2026-06-04-decisions-implementation-map.md` and
+`docs/operations/2026-06-05-phase-6-release-beta-handoff.md`.
 
-- [ ] record Hiddify provenance/license decision.
-- [ ] prove or fail Android `hiddify-core` build.
-- [ ] prove or fail Windows `hiddify-core` build.
-- [ ] create POKROV app ID/deep link constants.
-- [ ] define `install_id` persistence and `start-trial` idempotency.
-- [ ] define managed profile schema fields needed by the client.
-- [x] decide `/api/redeem` vs `RedeemAdapter`: build `/api/redeem` first.
-- [x] decide cabinet token timing: P0 short-lived handoff plus single-use
+- [x] Hiddify provenance/license decision: owner moved this out of the active
+  `1.0.0-beta` beta blocker set; it remains fork-hardening only.
+- [x] Android `hiddify-core` runtime artifact path: proven through the pinned
+  `hiddify-core v3.1.8` artifact contract and Android release APK build.
+- [x] Windows `hiddify-core` runtime artifact path: proven through the pinned
+  `hiddify-core v3.1.8` artifact contract and unsigned Windows release bundle.
+- [x] POKROV app identity constants: active Android/Windows beta hosts use the
+  POKROV product identity and `1.0.0-beta` version line.
+- [x] `install_id` persistence and `start-trial` idempotency: implemented and
+  covered by app-first runtime tests.
+- [x] Managed profile schema fields needed by the client: implemented for
+  route mode, selected apps, smart-connect, support context, and WARP policy.
+- [x] Decide `/api/redeem` vs `RedeemAdapter`: build `/api/redeem` first.
+- [x] Decide cabinet token timing: P0 short-lived handoff plus single-use
   webapp exchange are live.
-- [ ] decide Russia smart-mode launch posture.
-- [ ] keep roulette/calendar/referral rich UI out of P0 unless APIs are live.
+- [x] Russia smart-mode launch posture: route-mode setup and selected-apps
+  beta path are implemented; ruleset/routing rollout remains backend-owned.
+- [x] Keep roulette/calendar/referral rich UI out of P0 unless APIs are live:
+  Rewards Hub uses backend-owned safe state, rollout flags, muted disabled
+  states, and live actions only when the API reports readiness.
 
 ## One-Line Plan
 

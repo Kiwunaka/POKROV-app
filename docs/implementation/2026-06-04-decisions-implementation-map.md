@@ -76,6 +76,10 @@ The current code slice is:
 13. P5 connect motion now has tested idle, connected, and error settle layers,
     and WARP operator visibility includes redacted runtime state/reason/event
     summary data in the platform admin dashboard.
+14. Phase 6 refreshed the `1.0.0-beta` Android APK and Windows unsigned beta
+    artifacts, uploaded the GitHub prerelease assets, and updated handoff
+    metadata; signatures, live install smoke, app-session runtime handoff, and
+    stronger WARP proof remain explicit manual/trust gates.
 
 This slice is P0/P1 bridge work because the master brief needs bonus/account
 clarity before a richer Rewards Hub can safely exist.
@@ -126,11 +130,11 @@ clarity before a richer Rewards Hub can safely exist.
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
 | Custom selected apps | Done for P3 manual identifiers, partial for richer native pickers | Rules lets the user add/remove app identifiers; selected apps auto-select the `selected_apps` route mode; app sends `selected_apps` to route policy; Android materialization writes `include_package` into sing-box TUN config; P4 picker-first UI and Android launchable-app bridge are started; Windows materialization now writes selected `process_name` route/DNS rules with direct default | replace fallback suggestions with richer native catalogs where platform proof exists |
-| Full activity calendar | Partial ledger-backed shell | P2 preview grid exists; backend calendar claims now produce `RewardClaim` rows and safe `checked_dates` under rollout flag | expand the grid into a full month/ledger view only after rollout data exists |
-| Achievements ledger | Partial backend ledger | backend now writes safe achievement rows for first wheel, first check-in, and seven-check-in streak under rollout flags; app still renders compact safe chips | expand achievement taxonomy only after real reward tuning |
+| Full activity calendar | Done for beta ledger summary | P2 preview grid exists; backend calendar claims produce `RewardClaim` rows and safe `checked_dates` under rollout flag; Rewards Hub renders safe activity state without noisy gamification | expand the grid into a full month/ledger view only after rollout data exists |
+| Achievements ledger | Done for beta safe chips | backend writes safe achievement rows for first wheel, first check-in, and seven-check-in streak under rollout flags; app renders compact safe chips | expand achievement taxonomy only after real reward tuning |
 | Live wheel/calendar rewards | Done under backend rollout flags | app exposes active actions only from backend-ready state; backend mutations are ledger-backed, extend access, and return fresh summaries; disabled flags still render as muted non-CTA | keep rollout flags off by default until support/copy/operator approval |
-| Promo campaign assignment | Not started for live campaigns | P2 app-safe promo-slot rendering exists | add assignment, QA, rollout flags, and campaign telemetry |
-| Referral program hardening | Not started for live program tuning | P2 referral summary/share UI exists | add anti-abuse, bonus/payout ledger, and campaign tuning |
+| Promo campaign assignment | Done for beta app-safe slots, live campaign tuning post-beta | app-safe promo-slot rendering exists; platform exposes app/admin promo-slot contracts and forbids third-party ads/tracking payloads in app | add campaign assignment QA and telemetry when real campaigns are scheduled |
+| Referral program hardening | Done for beta guardrails, live program tuning post-beta | app reads referral summary and exposes copy/share actions; platform owns referral bonus queue, campaign-send dedupe, and abuse/rate-limit guardrails | tune anti-abuse thresholds, payouts, and campaign rules after live referral data exists |
 | Support realtime lifecycle | Done for polling lifecycle, partial for SSE | ticket-backed chat, diagnostic attachments, active-ticket polling, status freshness hints, operator-reply hints, closed/offline lifecycle states, and Telegram fallback visibility exist | add SSE or tuned cadence only after operator workflow proof; keep typing/read receipts out until real support tooling exists |
 | Native email linking | Evidence-gated handoff | email/recovery handoff exists; full native form flow stays blocked on delivery/account-linking readiness | keep browser/cabinet continuation until delivery readiness is green |
 | Detailed cabinet/account management | Done for P4 entrypoints | cabinet handoff exists; Account details sheet exposes access/device/mode/cabinet/downloads/email entrypoints | deeper account management remains webapp-first |
@@ -150,7 +154,7 @@ states.
 | Support realtime lifecycle | Done for polling lifecycle, partial for SSE | embedded ticket-backed support chat, explicit diagnostic attachment, active-ticket polling, operator-reply hints, closed/offline lifecycle hints, and manual refresh action exist; the app updates messages/status from `GET /api/tickets/{id}` while the screen is open | add SSE or tuned polling cadence only after real operator workflow proof; do not fake typing, read receipts, or operator presence |
 | Native email linking and recovery | Evidence-gated handoff for P4 beta | email/recovery handoff and cabinet continuation exist through short-lived sessions; native password/token forms remain out of app while delivery/account-linking readiness is operator-gated | implement native forms only after delivery readiness, recovery UX, and account-link semantics stay green |
 | Detailed account and cabinet management | Done for P4 beta entrypoints | app opens cabinet through short-lived token, shows compact access/account summary, and has a details sheet for access/device/mode/cabinet/downloads/email | deeper cabinet management remains webapp-first |
-| WARP as a working feature | Done for guarded beta contract, proof-gated for production claim | Home can show an honest disabled/upcoming WARP tile; public `client_policy.warp_policy` is sanitized; authenticated managed profiles may carry runtime-ready WARP material; client bootstrap parses `warp_policy`; the Home tile can request explicit user consent only for runtime-ready policy; desktop runtime maps WARP into Hiddify options only when policy is ready and consented, while incomplete or non-consented policy stays disabled; runtime fallback events are reported to the backend and the admin dashboard has a redacted WARP lifecycle summary | provider-side automation/rotation proof, Android release-build proof, Windows release-build proof, and reconnect/recovery smoke remain required before claiming production WARP |
+| WARP as a working feature | Done for guarded beta feature, proof-gated for production claim | Home shows the enhanced-protection tile honestly; public `client_policy.warp_policy` is sanitized; authenticated managed profiles may carry runtime-ready WARP material; client bootstrap parses `warp_policy`; the Home tile can request explicit user consent only for runtime-ready policy; desktop runtime maps WARP into Hiddify options only when policy is ready and consented, while incomplete or non-consented policy stays disabled; runtime fallback events are reported to the backend and the admin dashboard has a redacted WARP lifecycle summary | provider-side automation/rotation proof, Android release-build proof, Windows release-build proof, and reconnect/recovery smoke remain required before claiming production WARP |
 | Responsive/golden width verification | Done for widget matrix, visual screenshots still manual | widget tests cover `360`, `700`, `900`, `1024`, `1180`, and `1440` shell behavior, Home WARP tile, primary connect action, mobile bottom navigation, desktop icon rail, and expanded sidebar | keep screenshot/golden capture as release polish when visual baselines are approved |
 | Premium motion pass | Done for P4 beta foundation | connect ritual, status switcher, geometry-matched skeletons, row/chip tactile feedback, muted disabled rewards, sidebar label opacity/width transition, and reduced-motion hooks are covered by code/tests | continue P5 taste polish without changing product claims |
 
@@ -164,11 +168,11 @@ platform-native without pretending that disabled features are live.
 | Connect disc ritual | Done for P5 beta | brand-marked connect disc has tactile press scale, finite busy sweep, connected settle, error settle, and reduced-motion-compatible transform/opacity layers covered by widget tests | tune exact timing on physical Android/Windows builds after visual QA |
 | Status transitions | Done for P5 beta foundation | Home status label and connect label use short crossfade/slide switchers without layout churn | tune copy and timing after tester feedback |
 | Row and chip tactile feedback | Done for P4 rows/chips | Home chips and settings rows have transform/opacity tactile feedback without layout-property animation; selected-app add uses restrained haptic feedback | extend only where new interactive rows appear |
-| Geometry-matched skeletons | Partial | motion skeleton components exist | ensure skeleton dimensions match final rows/cards/chips so lazy loading causes no layout shift |
+| Geometry-matched skeletons | Done for P5 beta | account, rewards, locations, and support loading states use stable skeleton geometry covered by focused widget tests | tune visual baselines after screenshot/golden approval |
 | Disabled feature states | Done for P4 beta | WARP stays honest/gated; wheel and calendar disabled states render as muted non-CTA rows with short status instead of disabled buttons | keep active affordances tied to backend summary state |
 | Account and Rewards text density | Done for P4 beta | Account first layer uses settings-style rows; details move into subscription/email/account/rewards sheets | continue copy polish from user testing |
 | Windows sidebar collapse polish | Done for P4 beta | desktop sidebar has label opacity/width motion, icon rail, and narrow drawer behavior with responsive matrix coverage | keyboard/focus refinement remains polish |
-| Android haptics | Partial for beta | connect/redeem/success paths already use haptics; selected-app added now calls tactile feedback | tune platform-specific haptic intensity on physical devices |
+| Android haptics | Done for P5 beta foundation | connect/redeem/success paths use haptics and selected-app added uses restrained tactile feedback | tune platform-specific haptic intensity on physical devices |
 
 ## Approved P5 / WARP Design Contract
 
@@ -180,15 +184,17 @@ research into an implementation contract:
 - [P5 Application Map Consilium Review](../design/2026-06-05-p5-application-map-consilium-review.md)
 - [Premium Client AI Assistant Architecture Plan](../superpowers/plans/2026-06-05-premium-client-ai-assistant-architecture.md)
 
-This approval does not mark P5 or WARP as implemented. It fixes the next
-implementation order:
+This approval has now been implemented through the Phase 6 local release-beta
+refresh. The contract remains the guardrail for future polish and proof work:
 
-1. P5 motion foundation and screen polish.
-2. WARP backend status/consent/revoke/events contracts.
-3. WARP provisioning, encrypted storage, and rotation.
+1. P5 motion foundation and screen polish are implemented for beta.
+2. WARP backend status/consent/revoke/events contracts are implemented.
+3. WARP provisioning, encrypted storage, and rotation contracts are implemented
+   for beta evidence.
 4. WARP client consent persistence, revoke UI, secure material path, runtime
-   state machine, fallback diagnostics, and support redaction.
-5. Android and Windows proof before any working-WARP product claim.
+   state machine, fallback diagnostics, and support redaction are implemented.
+5. Android and Windows release-build proof remains required before any
+   production WARP claim.
 
 The generated application map is an internal review artifact. Generated text
 inside the image is not product copy and must not override copy, release, or

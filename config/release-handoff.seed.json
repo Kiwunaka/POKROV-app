@@ -37,9 +37,9 @@
         "kind": "apk",
         "file_name": "pokrov-android-universal.apk",
         "url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/pokrov-android-universal.apk",
-        "sha256": "95CB38B066FB1E684CC70DF0FB7D6A98E18ED9E6D1EC267462089802E043EA25",
+        "sha256": "EF5A0113C6B4571013593AFD0758D5784CA30134714770E44D2BCB02A81ACECF",
         "canonical_label": "android_outside_store_beta_apk",
-        "evidence_state": "OPERATOR_ATTESTED",
+        "evidence_state": "OPERATOR_ATTESTED_MANUAL_LIVE_SMOKE_PENDING",
         "public_approved": true
       },
       {
@@ -54,9 +54,9 @@
         "kind": "exe",
         "file_name": "pokrov-windows-setup-x64.exe",
         "url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/pokrov-windows-setup-x64.exe",
-        "sha256": "B5C8E8CFE67BF51D36BEABD3101BABD96BD529528045ED9C5F515156036F5014",
+        "sha256": "40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433",
         "canonical_label": "windows_unsigned_outside_store_beta_exe",
-        "evidence_state": "UNSIGNED_BETA_RISK_ACCEPTED",
+        "evidence_state": "UNSIGNED_BETA_RISK_ACCEPTED_MANUAL_LIVE_SMOKE_PENDING",
         "public_approved": true
       },
       {
@@ -64,11 +64,36 @@
         "kind": "zip",
         "file_name": "pokrov-windows-portable-x64.zip",
         "url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/pokrov-windows-portable-x64.zip",
-        "sha256": "2EAA20B2ED14BC50B6838E554DB52DE8AA0E4E27BFF32B77E692959B21292600",
+        "sha256": "3D87311BBA0B8DF3D44CC9B2DA5D488157B1961D5353B1B83F1025F8374C7AAE",
         "canonical_label": "windows_portable_zip_not_first_layer_public_distribution",
         "public_approved": false
+      },
+      {
+        "platform": "windows",
+        "kind": "manifest",
+        "file_name": "pokrov-windows-1.0.0-beta.manifest.json",
+        "url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/pokrov-windows-1.0.0-beta.manifest.json",
+        "sha256": "1DF313B6ABC19C06C31D2592F3AEE6A258C421F846C5D5D756F34E432B4D2C96",
+        "canonical_label": "windows_unsigned_outside_store_beta_manifest",
+        "public_approved": false
       }
-    ]
+    ],
+    "asset_refresh_utc": "2026-06-05T16:05:27Z",
+    "github_repo_visibility": "private",
+    "anonymous_download_smoke": "BLOCKED_PRIVATE_REPO_404",
+    "authenticated_github_release_smoke": "PASS_GH_RELEASE_DOWNLOAD_SHA256SUMS",
+    "live_app_session_download_smoke": "MANUAL_OWNER_TEST",
+    "built_from_client_commit": "c03ded35ea2dbb3e64377302d2744e640a802540",
+    "phase6_verification": {
+      "focused_flutter_tests": "PASS: packages/app_shell 91 passed",
+      "app_shell_analyze": "PASS: no issues found",
+      "root_client_gate_preflight": "PASS",
+      "android_release_apk_build": "PASS: flutter build apk --release through scripts/run_client_release_gate.py",
+      "windows_unsigned_packaging": "PASS: scripts/build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze",
+      "github_asset_upload": "PASS: gh release upload v1.0.0-beta --clobber",
+      "anonymous_github_download": "BLOCKED_PRIVATE_REPO_404",
+      "authenticated_checksum_download": "PASS"
+    }
   },
   "stable_consumption_notes": [
     "Root-repo docs and handoff automation should read this file instead of hard-coding bootstrap lane names or scanning versioned artifact folders.",

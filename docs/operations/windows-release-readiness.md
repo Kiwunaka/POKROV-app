@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-06-04
+Last updated: 2026-06-05
 
 This document is the concrete Windows readiness note for the `POKROV-app` lane.
 
@@ -86,6 +86,11 @@ Latest local packaging note:
   -SkipAnalyze` succeeded after the P5/WARP pass and produced local
   `1.0.0-beta` unsigned artifacts under
   `apps/windows_shell/build/release_bundle/pokrov-windows-beta-x64-1.0.0-beta*`.
+- Phase 6 refreshed GitHub prerelease `v1.0.0-beta` with
+  `pokrov-windows-setup-x64.exe`:
+  `40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433`.
+  The release repository is currently private, so unauthenticated asset curl
+  returns `404`; authenticated GitHub CLI checksum download passed.
 
 ## Safe Claims
 
@@ -95,6 +100,7 @@ Safe to claim now:
 - the Windows connect path now fetches a live managed profile from the app-first API before it stages and starts libcore
 - the local release build bundles the pinned runtime artifacts into the Windows runner output
 - the Windows seed lane has a reproducible unsigned package step with a manifest, portable ZIP, and first-layer setup EXE for gated beta inspection
+- the current `1.0.0-beta` unsigned setup EXE is uploaded to the GitHub prerelease for authenticated beta access
 - the current Windows seed connect lane applies runtime options before `libcore start` and prefers a system-proxy host mode with dedicated local ports instead of assuming an elevated TUN session
 - this Windows lane now lives in the canonical `POKROV-app` repo
 - this Windows lane is the long-term repo target for new client development, but not yet the public release-truth lane
@@ -113,7 +119,7 @@ Not safe to claim now:
 
 - trusted Windows code-signing material is not wired into this lane
 - trusted installer signing and `MSIX` publication are still not wired into this lane
-- public artifact hosting, updater policy, and operator handoff stay outside this seed
+- anonymous public artifact hosting, updater policy, and operator handoff smoke stay outside this seed
 - public Windows distribution is still blocked on signing or approved unsigned-warning posture, runtime route-mode evidence, DNS/leak validation, and public handoff evidence
 - this wave does not migrate the current shipping git ownership or release process
 
@@ -129,4 +135,4 @@ Before public Windows claims, attach evidence for:
 
 ## Release Rule
 
-Windows public release remains blocked until artifact, checksum, signing or unsigned-warning posture, release handoff, and support-copy evidence are approved.
+Windows outside-store beta upload is complete for `1.0.0-beta`. Stronger public or trusted release claims remain blocked until live install smoke, signing or approved unsigned-warning posture, support-copy evidence, and anonymous/public hosting requirements are approved.
