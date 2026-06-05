@@ -218,6 +218,8 @@ production WARP proof.
 
 `2026-06-05` local `1.0.0-beta` artifact refresh after P5/WARP pass:
 
+- GitHub prerelease:
+  `https://github.com/Kiwunaka/POKROV-app/releases/tag/v1.0.0-beta`
 - Android release APK:
   `apps/android_shell/build/app/outputs/flutter-apk/app-release.apk`
 - Windows release EXE:
