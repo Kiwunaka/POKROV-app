@@ -75,6 +75,7 @@ Current anchors:
 - `design/2026-06-05-p5-warp-application-map.md`
 - `design/2026-06-05-p5-application-map-consilium-review.md`
 - `specs/2026-06-05-p5-warp-approved-design.md`
+- `superpowers/plans/2026-06-05-premium-client-ai-assistant-architecture.md`
 - root `DESIGN.md`
 - `developer/work-orders/2026-04-open-beta-v4/INDEX.md`
 

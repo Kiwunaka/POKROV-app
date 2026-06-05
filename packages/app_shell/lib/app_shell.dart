@@ -15,6 +15,7 @@ import 'package:pokrov_support_context/support_context.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app_first_runtime_bootstrap.dart';
+import 'src/design_system/design_system.dart';
 export 'app_first_runtime_bootstrap.dart';
 part 'app_shell_ui_helpers.dart';
 
@@ -74,17 +75,17 @@ class PokrovFileFirstLaunchStore implements PokrovFirstLaunchStore {
 }
 
 abstract final class _SeedPalette {
-  static const canvas = Color(0xFFF9FAFB);
-  static const canvasAlt = Color(0xFFFFFFFF);
-  static const ink = Color(0xFF10131A);
-  static const accent = Color(0xFF0F725D);
-  static const accentBright = Color(0xFF16A27B);
-  static const success = Color(0xFF159A68);
-  static const warning = Color(0xFFE29A1F);
-  static const surface = Color(0xFFFFFFFF);
-  static const surfaceMuted = Color(0xFFF3F5F8);
-  static const line = Color(0x1A10131A);
-  static const muted = Color(0xFF697080);
+  static const canvas = PokrovPalette.canvas;
+  static const canvasAlt = PokrovPalette.canvasAlt;
+  static const ink = PokrovPalette.ink;
+  static const accent = PokrovPalette.accent;
+  static const accentBright = PokrovPalette.accentBright;
+  static const success = PokrovPalette.success;
+  static const warning = PokrovPalette.warning;
+  static const surface = PokrovPalette.surface;
+  static const surfaceMuted = PokrovPalette.surfaceMuted;
+  static const line = PokrovPalette.line;
+  static const muted = PokrovPalette.muted;
 }
 
 const _pokrovBrandMarkAsset = 'assets/brand/pokrov_mark.png';
@@ -93,37 +94,22 @@ const _seedRulesetVersion = '2026-04-13';
 const _seedPackageCatalogVersion = '2026-04-13';
 
 abstract final class _MotionTokens {
-  static const quick = Duration(milliseconds: 120);
-  static const short = Duration(milliseconds: 180);
-  static const standard = Duration(milliseconds: 240);
-  static const homeReveal = Duration(milliseconds: 680);
-  static const ease = Curves.easeOutCubic;
+  static const quick = PokrovMotionTokens.quick;
+  static const short = PokrovMotionTokens.short;
+  static const standard = PokrovMotionTokens.standard;
+  static const homeReveal = PokrovMotionTokens.homeReveal;
+  static const ease = PokrovMotionTokens.ease;
 }
 
-class _MotionScope extends InheritedWidget {
+class _MotionScope extends PokrovMotionScope {
   const _MotionScope({
     required super.child,
-    required this.disableAnimations,
+    required super.disableAnimations,
     super.key,
   });
 
-  final bool disableAnimations;
-
-  static _MotionScope of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<_MotionScope>() ??
-        const _MotionScope(
-          disableAnimations: false,
-          child: SizedBox.shrink(),
-        );
-  }
-
-  Duration duration(Duration value) {
-    return disableAnimations ? Duration.zero : value;
-  }
-
-  @override
-  bool updateShouldNotify(covariant _MotionScope oldWidget) {
-    return oldWidget.disableAnimations != disableAnimations;
+  static PokrovMotionScope of(BuildContext context) {
+    return PokrovMotionScope.of(context);
   }
 }
 

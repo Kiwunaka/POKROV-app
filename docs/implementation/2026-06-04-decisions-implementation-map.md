@@ -178,6 +178,7 @@ research into an implementation contract:
 - [P5 WARP Approved Design](../specs/2026-06-05-p5-warp-approved-design.md)
 - [P5 WARP Application Map](../design/2026-06-05-p5-warp-application-map.md)
 - [P5 Application Map Consilium Review](../design/2026-06-05-p5-application-map-consilium-review.md)
+- [Premium Client AI Assistant Architecture Plan](../superpowers/plans/2026-06-05-premium-client-ai-assistant-architecture.md)
 
 This approval does not mark P5 or WARP as implemented. It fixes the next
 implementation order:
@@ -196,6 +197,14 @@ claim guardrails.
 The second-pass Product Design / Image-to-Code review tightens P5 around
 public extended-protection naming, no-fake-data rules, screen-specific render
 requirements, Windows progressive disclosure, and component-level motion rules.
+
+Phase 0 of the follow-up architecture plan started on `2026-06-05`: app-shell
+palette and motion contracts now live under
+`packages/app_shell/lib/src/design_system/`, while the existing private
+compatibility adapters keep current beta UI behavior stable. The first focused
+verification for that slice passed `flutter test
+test/design_system_contract_test.dart test/pokrov_seed_app_test.dart` and
+`flutter analyze` in `packages/app_shell`.
 
 ## Guardrails
 
