@@ -39,8 +39,9 @@
 ## Phase 1: Shell Decomposition Without UX Rewrite
 
 - [x] Extract the brand mark into internal widgets with an official raster asset contract test.
-- [ ] Extract skeleton primitives, rows/chips, and status transitions into internal widgets.
-- [ ] Add contract tests for stable keys, reduced-motion behavior, and no layout-shift skeleton geometry.
+- [x] Extract skeleton primitives into internal widgets with stable key and geometry contract tests.
+- [ ] Extract rows/chips and status transitions into internal widgets.
+- [ ] Add contract tests for remaining stable keys, reduced-motion behavior, and no layout-shift geometry.
 - [ ] Extract desktop sidebar behavior into a dedicated shell module with width/label-opacity/focus tests.
 - [ ] Keep Home/Locations/Rules/Account behavior unchanged while reducing `app_shell.dart` responsibility.
 

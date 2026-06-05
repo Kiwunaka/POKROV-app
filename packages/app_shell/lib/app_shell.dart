@@ -3351,123 +3351,15 @@ class _HomeChipState extends State<_HomeChip> {
   }
 }
 
-class _MotionSkeletonList extends StatelessWidget {
+class _MotionSkeletonList extends PokrovSkeletonList {
   const _MotionSkeletonList({
     super.key,
-    this.rows = 4,
+    super.rows = 4,
   });
-
-  final int rows;
-
-  @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: _SeedPalette.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _SeedPalette.line),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: List.generate(rows, (index) {
-            return Padding(
-              padding: EdgeInsets.only(bottom: index == rows - 1 ? 0 : 14),
-              child: Row(
-                children: [
-                  const _MotionSkeletonLine(width: 36, height: 36, radius: 18),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _MotionSkeletonLine(
-                          width: index.isEven ? 168 : 132,
-                          height: 12,
-                        ),
-                        const SizedBox(height: 8),
-                        _MotionSkeletonLine(
-                          width: index.isEven ? 232 : 188,
-                          height: 10,
-                          opacity: 0.08,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ),
-      ),
-    );
-  }
 }
 
-class _AccountSkeletonSummary extends StatelessWidget {
+class _AccountSkeletonSummary extends PokrovAccountSkeletonSummary {
   const _AccountSkeletonSummary();
-
-  @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Container(
-        key: const ValueKey('account-skeleton-summary'),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: _SeedPalette.surface.withValues(alpha: 0.72),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _SeedPalette.line),
-        ),
-        child: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _MotionSkeletonLine(width: 220, height: 12),
-            SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _MotionSkeletonLine(height: 74, radius: 12),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: _MotionSkeletonLine(height: 74, radius: 12),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MotionSkeletonLine extends StatelessWidget {
-  const _MotionSkeletonLine({
-    this.width,
-    required this.height,
-    this.radius = 999,
-    this.opacity = 0.12,
-  });
-
-  final double? width;
-  final double height;
-  final double radius;
-  final double opacity;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      key: const ValueKey('motion-skeleton-line'),
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: _SeedPalette.ink.withValues(alpha: opacity),
-        borderRadius: BorderRadius.circular(radius),
-      ),
-    );
-  }
 }
 
 class _LocationsSection extends StatelessWidget {

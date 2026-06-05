@@ -74,6 +74,33 @@ void main() {
     expect(image.height, 32);
     expect(find.byType(Opacity), findsOneWidget);
   });
+
+  testWidgets('skeleton primitives preserve geometry and stable keys',
+      (tester) async {
+    await tester.pumpWidget(
+      const Directionality(
+        textDirection: TextDirection.ltr,
+        child: Column(
+          children: [
+            PokrovSkeletonLine(width: 64, height: 18, radius: 9),
+            PokrovSkeletonList(rows: 2),
+            PokrovAccountSkeletonSummary(),
+          ],
+        ),
+      ),
+    );
+
+    expect(find.byKey(PokrovSkeletonLine.lineKey), findsWidgets);
+    expect(
+      tester.getSize(find.byKey(PokrovSkeletonLine.lineKey).first),
+      const Size(64, 18),
+    );
+    expect(
+      find.byKey(PokrovAccountSkeletonSummary.summaryKey),
+      findsOneWidget,
+    );
+    expect(find.byType(RepaintBoundary), findsAtLeastNWidgets(2));
+  });
 }
 
 class _MotionDurationProbe extends StatelessWidget {
