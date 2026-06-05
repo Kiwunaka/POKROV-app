@@ -88,7 +88,7 @@ abstract final class _SeedPalette {
   static const muted = PokrovPalette.muted;
 }
 
-const _pokrovBrandMarkAsset = 'assets/brand/pokrov_mark.png';
+const _pokrovBrandMarkAsset = PokrovBrandAssets.mark;
 const _selectedAppsEnforcementReady = true;
 const _seedRulesetVersion = '2026-04-13';
 const _seedPackageCatalogVersion = '2026-04-13';
@@ -2500,50 +2500,15 @@ class _BrandLockup extends StatelessWidget {
   }
 }
 
-class _BrandMark extends StatelessWidget {
+class _BrandMark extends PokrovBrandMark {
   const _BrandMark({
-    required this.size,
-    this.opacity = 1,
-  });
-
-  final double size;
-  final double opacity;
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: opacity,
-      child: Image.asset(
-        _pokrovBrandMarkAsset,
-        key: const ValueKey('pokrov-brand-mark'),
-        width: size,
-        height: size,
-        cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).round(),
-        filterQuality: FilterQuality.medium,
-        errorBuilder: (context, error, stackTrace) {
-          return SizedBox(
-            width: size,
-            height: size,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: _SeedPalette.accent.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  'P',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: _SeedPalette.accent,
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
+    required double size,
+    double opacity = 1,
+  }) : super(
+          size: size,
+          opacity: opacity,
+          assetName: _pokrovBrandMarkAsset,
+        );
 }
 
 class _SidebarItem extends StatelessWidget {

@@ -53,6 +53,27 @@ void main() {
 
     expect(find.text('240'), findsOneWidget);
   });
+
+  testWidgets('brand mark uses the official raster asset contract',
+      (tester) async {
+    await tester.pumpWidget(
+      const Directionality(
+        textDirection: TextDirection.ltr,
+        child: PokrovBrandMark(size: 32, opacity: 0.72),
+      ),
+    );
+
+    final image = tester.widget<Image>(
+      find.byKey(PokrovBrandMark.imageKey),
+    );
+    final resized = image.image as ResizeImage;
+    final asset = resized.imageProvider as AssetImage;
+
+    expect(asset.assetName, PokrovBrandAssets.mark);
+    expect(image.width, 32);
+    expect(image.height, 32);
+    expect(find.byType(Opacity), findsOneWidget);
+  });
 }
 
 class _MotionDurationProbe extends StatelessWidget {
