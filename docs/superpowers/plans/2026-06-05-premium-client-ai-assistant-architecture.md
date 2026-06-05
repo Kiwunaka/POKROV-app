@@ -71,11 +71,11 @@
 
 ## Phase 5: Premium UX Pass
 
-- [ ] Trim Account/Rewards/Rules first-layer text into Settings-style rows with values and chevrons.
-- [ ] Add skeletons that match final geometry for async account, rewards, locations, and support content.
-- [ ] Add tactile feedback on real rows/chips only.
-- [ ] Add Windows keyboard shortcuts and focus polish for navigation and support composer.
-- [ ] Add responsive/golden capture plan for `360`, `700`, `900`, `1024`, `1180`, `1440`.
+- [x] Trim Account/Rewards/Rules first-layer text into Settings-style rows with values and chevrons.
+- [x] Add skeletons that match final geometry for async account, rewards, locations, and support content.
+- [x] Add tactile feedback on real rows/chips only.
+- [x] Add Windows keyboard shortcuts and focus polish for navigation and support composer.
+- [x] Add responsive/golden capture plan for `360`, `700`, `900`, `1024`, `1180`, `1440`.
 
 ## Phase 6: Release-Beta Evidence Refresh
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -22,6 +23,7 @@ class _FakeBootstrapper
     AppFirstBonusSummary? bonusSummary,
     AppFirstRedeemResult? redeemResult,
     WarpControlStatus? warpStatus,
+    this.bonusSummaryGate,
   })  : cabinetHandoff = cabinetHandoff ??
             CabinetHandoff(
               token: 'short-cabinet-token',
@@ -100,6 +102,7 @@ class _FakeBootstrapper
   final ChannelBonusStatus channelBonusStatus;
   final ChannelBonusClaimResult channelBonusClaimResult;
   final AppFirstBonusSummary bonusSummary;
+  final Future<void>? bonusSummaryGate;
   int calls = 0;
   int redeemCalls = 0;
   int cabinetCalls = 0;
@@ -196,6 +199,7 @@ class _FakeBootstrapper
   Future<AppFirstBonusSummary> fetchBonusSummary({
     required HostPlatform hostPlatform,
   }) async {
+    await bonusSummaryGate;
     bonusSummaryCalls += 1;
     lastBonusSummaryHostPlatform = hostPlatform;
     return bonusSummary;
@@ -295,6 +299,7 @@ class _FakeSupportTicketService implements SupportTicketService {
     SupportTicketThread? loadedThread,
     List<SupportTicketThread> loadedThreads = const <SupportTicketThread>[],
     SupportTicketThread? sentThread,
+    this.listGate,
     this.failGetAfter = 0,
   })  : tickets = List<SupportTicketThread>.from(tickets),
         loadedThread = loadedThread ?? (tickets.isEmpty ? null : tickets.first),
@@ -310,6 +315,7 @@ class _FakeSupportTicketService implements SupportTicketService {
   final SupportTicketThread? loadedThread;
   final List<SupportTicketThread> loadedThreads;
   final SupportTicketThread sentThread;
+  final Future<void>? listGate;
   final int failGetAfter;
   int calls = 0;
   int listCalls = 0;
@@ -332,6 +338,7 @@ class _FakeSupportTicketService implements SupportTicketService {
     required HostPlatform hostPlatform,
     int limit = 5,
   }) async {
+    await listGate;
     listCalls += 1;
     lastHostPlatform = hostPlatform;
     return tickets.take(limit).toList(growable: false);
@@ -1913,6 +1920,164 @@ void main() {
     );
   });
 
+  testWidgets('P5 rewards loading uses geometry-matched skeleton',
+      (tester) async {
+    final gate = Completer<void>();
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      bonusSummaryGate: gate.future,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-profile');
+
+    final refresh = find.byKey(const ValueKey('profile-bonus-summary-refresh'));
+    await tester.dragUntilVisible(
+      refresh,
+      find.byType(Scrollable).first,
+      const Offset(0, -220),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(refresh);
+    await tester.pump();
+
+    expect(
+        find.byKey(const ValueKey('rewards-skeleton-summary')), findsOneWidget);
+    expect(find.byKey(const ValueKey('motion-skeleton-line')), findsWidgets);
+
+    gate.complete();
+    await tester.pumpAndSettle();
+    expect(
+        find.byKey(const ValueKey('rewards-skeleton-summary')), findsNothing);
+  });
+
+  testWidgets('P5 support loading uses geometry skeleton instead of spinner',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1180, 760));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final gate = Completer<void>();
+    final supportTicketService = _FakeSupportTicketService(
+      const SupportTicketReceipt(
+        ticketId: 701,
+        statusTitle: 'Open',
+        messageCount: 1,
+      ),
+      listGate: gate.future,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        supportTicketService: supportTicketService,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-profile');
+
+    final support = find.byKey(const ValueKey('profile-section-support'));
+    await tester.dragUntilVisible(
+      support,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(support);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(find.byKey(const ValueKey('support-chat-skeleton')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('support-chat-screen')),
+        matching: find.byType(CircularProgressIndicator),
+      ),
+      findsNothing,
+    );
+
+    gate.complete();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('support-chat-skeleton')), findsNothing);
+  });
+
+  testWidgets('P5 Windows shortcuts navigate tabs and focus support composer',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1180, 760));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final supportTicketService = _FakeSupportTicketService(
+      const SupportTicketReceipt(
+        ticketId: 702,
+        statusTitle: 'Open',
+        messageCount: 1,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        supportTicketService: supportTicketService,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit2);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+    await tester.pumpAndSettle();
+
+    expect(
+        find.byKey(const ValueKey('locations-auto-section')), findsOneWidget);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('profile-compact-account-layer')),
+        findsOneWidget);
+
+    final support = find.byKey(const ValueKey('profile-section-support'));
+    await tester.dragUntilVisible(
+      support,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(support);
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+    await tester.pump();
+
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('support-chat-composer')),
+      'Shortcut message',
+    );
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+    await tester.pumpAndSettle();
+
+    expect(supportTicketService.calls, 1);
+    expect(supportTicketService.lastBody, 'Shortcut message');
+  });
+
   testWidgets('profile handoffs open safe external destinations',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));
@@ -2353,6 +2518,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(modeHelp, findsOneWidget);
     expect(find.text('Р’С‹Р±СЂР°РЅРЅС‹Рµ РїСЂРёР»РѕР¶РµРЅРёСЏ'), findsNothing);
+    expect(find.byKey(const ValueKey('rules-mode-row-allExceptRu')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('rules-mode-row-fullTunnel')),
+        findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('rules-mode-row-allExceptRu')),
+        matching: find.byIcon(Icons.chevron_right_rounded),
+      ),
+      findsOneWidget,
+    );
 
     final selectedAppsStatus =
         find.byKey(const ValueKey('rules-section-selected-apps'));

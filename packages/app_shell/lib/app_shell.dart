@@ -28,6 +28,20 @@ enum SeedTab {
   profile,
 }
 
+class _SelectSeedTabIntent extends Intent {
+  const _SelectSeedTabIntent(this.tab);
+
+  final SeedTab tab;
+}
+
+class _FocusSupportComposerIntent extends Intent {
+  const _FocusSupportComposerIntent();
+}
+
+class _SendSupportMessageIntent extends Intent {
+  const _SendSupportMessageIntent();
+}
+
 enum _SectionTone {
   accent,
   muted,
@@ -1717,6 +1731,27 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     return snapshot.phase != RuntimePhase.artifactMissing;
   }
 
+  Map<ShortcutActivator, Intent> _desktopNavigationShortcuts() {
+    return const <ShortcutActivator, Intent>{
+      SingleActivator(LogicalKeyboardKey.digit1, control: true):
+          _SelectSeedTabIntent(SeedTab.protection),
+      SingleActivator(LogicalKeyboardKey.digit2, control: true):
+          _SelectSeedTabIntent(SeedTab.locations),
+      SingleActivator(LogicalKeyboardKey.digit3, control: true):
+          _SelectSeedTabIntent(SeedTab.rules),
+      SingleActivator(LogicalKeyboardKey.digit4, control: true):
+          _SelectSeedTabIntent(SeedTab.profile),
+      SingleActivator(LogicalKeyboardKey.numpad1, control: true):
+          _SelectSeedTabIntent(SeedTab.protection),
+      SingleActivator(LogicalKeyboardKey.numpad2, control: true):
+          _SelectSeedTabIntent(SeedTab.locations),
+      SingleActivator(LogicalKeyboardKey.numpad3, control: true):
+          _SelectSeedTabIntent(SeedTab.rules),
+      SingleActivator(LogicalKeyboardKey.numpad4, control: true):
+          _SelectSeedTabIntent(SeedTab.profile),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasProvisionedAccess = !_managedProfileDirty ||
@@ -1790,41 +1825,62 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     return _MotionScope(
       key: const ValueKey('motion-policy'),
       disableAnimations: disableAnimations,
-      child: Scaffold(
-        extendBody:
-            _firstLaunchStep == _FirstLaunchStep.ready && !isDesktopShell,
-        body: _SeedBackdrop(
-          child: SafeArea(
-            child: _firstLaunchStep == _FirstLaunchStep.ready
-                ? isDesktopShell
-                    ? _DesktopShell(
-                        selectedIndex: _selectedIndex,
-                        sections: sections,
-                        onSelected: (index) {
-                          _selectTab(SeedTab.values[index]);
-                        },
-                      )
-                    : _MobileShell(
-                        selectedIndex: _selectedIndex,
-                        sections: sections,
-                        onSelected: (index) {
-                          _selectTab(SeedTab.values[index]);
-                        },
-                      )
-                : _FirstLaunchGate(
-                    appContext: widget.appContext,
-                    step: _firstLaunchStep,
-                    restoreCodeController: _firstLaunchRestoreCodeController,
-                    busy: _firstLaunchBusy,
-                    onNewUser: _completeFirstLaunchAsNewUser,
-                    onReturningUser: _openFirstLaunchRestore,
-                    onBack: _backToFirstLaunchChoice,
-                    onRedeemCode: _redeemFirstLaunchRestoreCode,
-                    onOpenTelegram: _createTelegramLinkInApp,
-                    onOpenCabinet: () => _openCabinetWithHandoff(
-                      widget.appContext.cabinetUrl,
-                    ),
-                  ),
+      child: Shortcuts(
+        key: const ValueKey('desktop-shell-shortcuts'),
+        shortcuts: isDesktopShell && _firstLaunchStep == _FirstLaunchStep.ready
+            ? _desktopNavigationShortcuts()
+            : const <ShortcutActivator, Intent>{},
+        child: Actions(
+          actions: <Type, Action<Intent>>{
+            _SelectSeedTabIntent: CallbackAction<_SelectSeedTabIntent>(
+              onInvoke: (intent) {
+                _selectTab(intent.tab);
+                return null;
+              },
+            ),
+          },
+          child: Focus(
+            key: const ValueKey('desktop-shell-focus-root'),
+            autofocus: true,
+            child: Scaffold(
+              extendBody:
+                  _firstLaunchStep == _FirstLaunchStep.ready && !isDesktopShell,
+              body: _SeedBackdrop(
+                child: SafeArea(
+                  child: _firstLaunchStep == _FirstLaunchStep.ready
+                      ? isDesktopShell
+                          ? _DesktopShell(
+                              selectedIndex: _selectedIndex,
+                              sections: sections,
+                              onSelected: (index) {
+                                _selectTab(SeedTab.values[index]);
+                              },
+                            )
+                          : _MobileShell(
+                              selectedIndex: _selectedIndex,
+                              sections: sections,
+                              onSelected: (index) {
+                                _selectTab(SeedTab.values[index]);
+                              },
+                            )
+                      : _FirstLaunchGate(
+                          appContext: widget.appContext,
+                          step: _firstLaunchStep,
+                          restoreCodeController:
+                              _firstLaunchRestoreCodeController,
+                          busy: _firstLaunchBusy,
+                          onNewUser: _completeFirstLaunchAsNewUser,
+                          onReturningUser: _openFirstLaunchRestore,
+                          onBack: _backToFirstLaunchChoice,
+                          onRedeemCode: _redeemFirstLaunchRestoreCode,
+                          onOpenTelegram: _createTelegramLinkInApp,
+                          onOpenCabinet: () => _openCabinetWithHandoff(
+                            widget.appContext.cabinetUrl,
+                          ),
+                        ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -3574,6 +3630,11 @@ class _ProfileSection extends StatelessWidget {
                 lines: _bonusSummaryLines(),
                 child: Column(
                   children: [
+                    if (bonusSummary == null && bonusSummaryBusy)
+                      const _MotionSkeletonList(
+                        key: ValueKey('rewards-skeleton-summary'),
+                        rows: 3,
+                      ),
                     _SettingsRow(
                       key: const ValueKey('profile-bonus-summary-refresh'),
                       icon: Icons.refresh_rounded,
@@ -4804,13 +4865,16 @@ class _RulesSection extends StatelessWidget {
           child: Column(
             children: <Widget>[
               ...routeChoices.map(
-                (mode) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _RouteModeCard(
-                    mode: mode,
-                    selected: selectedRouteMode == mode,
-                    onTap: () => onRouteModeSelected(mode),
-                  ),
+                (mode) => _SettingsRow(
+                  key: ValueKey('rules-mode-row-${mode.name}'),
+                  icon: switch (mode) {
+                    RouteMode.allExceptRu => Icons.shield_outlined,
+                    RouteMode.fullTunnel => Icons.public_rounded,
+                    RouteMode.selectedApps => Icons.apps_rounded,
+                  },
+                  title: mode.label,
+                  value: selectedRouteMode == mode ? 'Выбран' : 'Выбрать',
+                  onTap: () => onRouteModeSelected(mode),
                 ),
               ),
               _SettingsRow(
@@ -5737,83 +5801,18 @@ class _PresetRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: enabled
-                  ? _SeedPalette.accent.withValues(alpha: 0.1)
-                  : _SeedPalette.ink.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(
-              icon,
-              color: enabled
-                  ? _SeedPalette.accent
-                  : _SeedPalette.ink.withValues(alpha: 0.38),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: _SeedPalette.ink,
-                      ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: _SeedPalette.ink.withValues(alpha: 0.68),
-                        height: 1.25,
-                      ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          SizedBox(
-            width: 94,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Flexible(
-                  child: Text(
-                    statusLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.right,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: enabled
-                              ? _SeedPalette.accent
-                              : _SeedPalette.ink.withValues(alpha: 0.48),
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Icon(
-                  enabled
-                      ? Icons.check_circle_rounded
-                      : Icons.lock_clock_outlined,
-                  color: enabled
-                      ? _SeedPalette.accent
-                      : _SeedPalette.ink.withValues(alpha: 0.34),
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
+    return _SettingsRow(
+      icon: icon,
+      title: title,
+      value: statusLabel,
+      onTap: () => _showInfoSheet(
+        context,
+        title: title,
+        lines: [
+          subtitle,
+          enabled
+              ? 'Этот пресет уже учитывается в текущей карте правил.'
+              : 'POKROV покажет включение, когда пресет пройдет проверку.',
         ],
       ),
     );
@@ -6158,6 +6157,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
   static const _threadPollInterval = Duration(seconds: 10);
 
   late final TextEditingController _composer;
+  late final FocusNode _composerFocusNode;
   Timer? _threadPollTimer;
   bool _sending = false;
   bool _loadingThread = true;
@@ -6175,12 +6175,14 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
   void initState() {
     super.initState();
     _composer = TextEditingController();
+    _composerFocusNode = FocusNode(debugLabel: 'support-composer');
     unawaited(_loadInitialThread());
   }
 
   @override
   void dispose() {
     _threadPollTimer?.cancel();
+    _composerFocusNode.dispose();
     _composer.dispose();
     super.dispose();
   }
@@ -6603,152 +6605,212 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: const ValueKey('support-chat-screen'),
-      backgroundColor: _SeedPalette.canvas,
-      appBar: AppBar(
-        title: const Text('Поддержка'),
-        actions: [
-          TextButton(
-            key: const ValueKey('support-chat-telegram-fallback'),
-            onPressed: () => widget.onOpenHandoff(
-              'support',
-              widget.appContext.supportSnapshot.supportBot,
-            ),
-            child: Text(widget.appContext.supportSnapshot.supportBot),
+    return Shortcuts(
+      key: const ValueKey('support-chat-shortcuts'),
+      shortcuts: const <ShortcutActivator, Intent>{
+        SingleActivator(LogicalKeyboardKey.keyK, control: true):
+            _FocusSupportComposerIntent(),
+        SingleActivator(LogicalKeyboardKey.enter, control: true):
+            _SendSupportMessageIntent(),
+      },
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          _FocusSupportComposerIntent:
+              CallbackAction<_FocusSupportComposerIntent>(
+            onInvoke: (_) {
+              _composerFocusNode.requestFocus();
+              return null;
+            },
           ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
-              child: _SupportChatHeader(
-                status: _loadingThread
-                    ? 'Загружаем'
-                    : _sending
-                        ? 'Отправляем'
-                        : _refreshingThread
-                            ? 'Обновляем чат'
-                            : _threadStatus,
-                details:
-                    '${widget.appContext.hostPlatform.label} · ${widget.selectedRouteMode.label} · ${widget.statusLabel}',
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-              child: _SupportLifecycleHint(
-                state: _supportLifecycleState,
-                onRetry: _retrySupportLifecycle,
-              ),
-            ),
-            if (_threadError != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-                child: _SupportChatNotice(
-                  body: _threadError!,
-                  onRetry: () => unawaited(_loadInitialThread()),
+          _SendSupportMessageIntent: CallbackAction<_SendSupportMessageIntent>(
+            onInvoke: (_) {
+              if (!_sending && !_loadingThread) {
+                unawaited(_sendMessage());
+              }
+              return null;
+            },
+          ),
+        },
+        child: Focus(
+          key: const ValueKey('support-chat-focus-root'),
+          autofocus: true,
+          child: Scaffold(
+            key: const ValueKey('support-chat-screen'),
+            backgroundColor: _SeedPalette.canvas,
+            appBar: AppBar(
+              title: const Text('Поддержка'),
+              actions: [
+                TextButton(
+                  key: const ValueKey('support-chat-telegram-fallback'),
+                  onPressed: () => widget.onOpenHandoff(
+                    'support',
+                    widget.appContext.supportSnapshot.supportBot,
+                  ),
+                  child: Text(widget.appContext.supportSnapshot.supportBot),
                 ),
-              ),
-            Expanded(
-              child: _loadingThread
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        key: ValueKey('support-chat-loading'),
-                      ),
-                    )
-                  : ListView.builder(
-                      key: const ValueKey('support-chat-message-list'),
-                      padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
-                      itemCount: _messages.length,
-                      itemBuilder: (context, index) {
-                        return _SupportChatBubble(message: _messages[index]);
-                      },
-                    ),
+                const SizedBox(width: 8),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            body: SafeArea(
+              top: false,
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (!_loadingThread)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
+                    child: _SupportChatHeader(
+                      status: _loadingThread
+                          ? 'Загружаем'
+                          : _sending
+                              ? 'Отправляем'
+                              : _refreshingThread
+                                  ? 'Обновляем чат'
+                                  : _threadStatus,
+                      details:
+                          '${widget.appContext.hostPlatform.label} · ${widget.selectedRouteMode.label} · ${widget.statusLabel}',
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+                    child: _SupportLifecycleHint(
+                      state: _supportLifecycleState,
+                      onRetry: _retrySupportLifecycle,
+                    ),
+                  ),
+                  if (_threadError != null)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _SupportAssistantSuggestions(
-                        suggestions:
-                            PokrovAssistantContract.defaultSupportSuggestions,
-                        onSelected: _applyAssistantSuggestion,
+                      padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+                      child: _SupportChatNotice(
+                        body: _threadError!,
+                        onRetry: () => unawaited(_loadInitialThread()),
                       ),
                     ),
-                  if (_attachDiagnosticsToNextMessage)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _SupportDiagnosticsQueuedPill(
-                        onClear: () {
-                          setState(() {
-                            _attachDiagnosticsToNextMessage = false;
-                          });
-                        },
-                      ),
-                    ),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: _SeedPalette.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _SeedPalette.line),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            key: const ValueKey('support-attach-diagnostics'),
-                            tooltip: 'Диагностика',
-                            icon: const Icon(Icons.attach_file_rounded),
-                            onPressed: _showDiagnosticsPreview,
+                  Expanded(
+                    child: _loadingThread
+                        ? const _SupportChatSkeleton()
+                        : ListView.builder(
+                            key: const ValueKey('support-chat-message-list'),
+                            padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+                            itemCount: _messages.length,
+                            itemBuilder: (context, index) {
+                              return _SupportChatBubble(
+                                message: _messages[index],
+                              );
+                            },
                           ),
-                          Expanded(
-                            child: TextField(
-                              key: const ValueKey('support-chat-composer'),
-                              controller: _composer,
-                              minLines: 1,
-                              maxLines: 3,
-                              decoration: const InputDecoration(
-                                hintText: 'Напишите сообщение',
-                                border: InputBorder.none,
-                                isDense: true,
-                              ),
-                              onSubmitted: (_) => unawaited(_sendMessage()),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (!_loadingThread)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: _SupportAssistantSuggestions(
+                              suggestions: PokrovAssistantContract
+                                  .defaultSupportSuggestions,
+                              onSelected: _applyAssistantSuggestion,
                             ),
                           ),
-                          IconButton(
-                            key: const ValueKey('support-chat-send'),
-                            tooltip: 'Отправить',
-                            icon: _sending
-                                ? const SizedBox.square(
-                                    dimension: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.send_rounded),
-                            onPressed: (_sending || _loadingThread)
-                                ? null
-                                : () => unawaited(_sendMessage()),
+                        if (_attachDiagnosticsToNextMessage)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: _SupportDiagnosticsQueuedPill(
+                              onClear: () {
+                                setState(() {
+                                  _attachDiagnosticsToNextMessage = false;
+                                });
+                              },
+                            ),
                           ),
-                        ],
-                      ),
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: _SeedPalette.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: _SeedPalette.line),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Row(
+                              children: [
+                                IconButton(
+                                  key: const ValueKey(
+                                    'support-attach-diagnostics',
+                                  ),
+                                  tooltip: 'Диагностика',
+                                  icon: const Icon(Icons.attach_file_rounded),
+                                  onPressed: _showDiagnosticsPreview,
+                                ),
+                                Expanded(
+                                  child: TextField(
+                                    key: const ValueKey(
+                                      'support-chat-composer',
+                                    ),
+                                    controller: _composer,
+                                    focusNode: _composerFocusNode,
+                                    minLines: 1,
+                                    maxLines: 3,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Напишите сообщение',
+                                      border: InputBorder.none,
+                                      isDense: true,
+                                    ),
+                                    onSubmitted: (_) =>
+                                        unawaited(_sendMessage()),
+                                  ),
+                                ),
+                                IconButton(
+                                  key: const ValueKey('support-chat-send'),
+                                  tooltip: 'Отправить',
+                                  icon: _sending
+                                      ? const SizedBox.square(
+                                          dimension: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Icon(Icons.send_rounded),
+                                  onPressed: (_sending || _loadingThread)
+                                      ? null
+                                      : () => unawaited(_sendMessage()),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _SupportChatSkeleton extends StatelessWidget {
+  const _SupportChatSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      key: const ValueKey('support-chat-skeleton'),
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+      children: const [
+        PokrovSkeletonLine(width: 210, height: 12),
+        SizedBox(height: 14),
+        PokrovSkeletonLine(height: 72, radius: 16, opacity: 0.08),
+        SizedBox(height: 10),
+        Align(
+          alignment: Alignment.centerRight,
+          child: PokrovSkeletonLine(width: 240, height: 64, radius: 16),
+        ),
+        SizedBox(height: 10),
+        PokrovSkeletonLine(width: 280, height: 74, radius: 16, opacity: 0.08),
+      ],
     );
   }
 }
@@ -7169,14 +7231,6 @@ class _SupportChatBubble extends StatelessWidget {
       ),
     );
   }
-}
-
-String _routeModeCompactSubtitle(RouteMode mode) {
-  return switch (mode) {
-    RouteMode.allExceptRu => 'РФ напрямую',
-    RouteMode.fullTunnel => 'Все через POKROV',
-    RouteMode.selectedApps => 'Только выбранные',
-  };
 }
 
 String _consumerProtectionStatusLabel(
@@ -7876,73 +7930,5 @@ class _ConnectDiscRimPainter extends CustomPainter {
         oldDelegate.disableAnimations != disableAnimations ||
         oldDelegate.breathValue != breathValue ||
         oldDelegate.sweepValue != sweepValue;
-  }
-}
-
-class _RouteModeCard extends StatelessWidget {
-  const _RouteModeCard({
-    required this.mode,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final RouteMode mode;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        width: 210,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: selected
-              ? _SeedPalette.accent.withValues(alpha: 0.12)
-              : Colors.white.withValues(alpha: 0.78),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: selected
-                ? _SeedPalette.accent.withValues(alpha: 0.28)
-                : _SeedPalette.line,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  selected ? Icons.check_circle_rounded : Icons.tune_rounded,
-                  size: 18,
-                  color: _SeedPalette.accent,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    mode.label,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: _SeedPalette.ink,
-                        ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _routeModeCompactSubtitle(mode),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: _SeedPalette.ink.withValues(alpha: 0.7),
-                    height: 1.3,
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
