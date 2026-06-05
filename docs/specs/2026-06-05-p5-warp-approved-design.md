@@ -1,7 +1,7 @@
 # P5 WARP Approved Design
 
 Date: 2026-06-05
-Status: owner-approved design contract / implementation not started in this doc
+Status: owner-approved design contract / implementation started
 Owner: POKROV-app/main
 
 ## Approval
@@ -9,8 +9,10 @@ Owner: POKROV-app/main
 The owner approved the P5/WARP direction after the OpenCode-go consilium pass
 and requested the direction be recorded before implementation.
 
-This contract supersedes loose chat memory for the next P5 and WARP wave. It
-does not mark P5 or WARP as implemented.
+This contract supersedes loose chat memory for the next P5 and WARP wave. As
+of 2026-06-05, backend WARP lifecycle endpoints and client consent/event wiring
+are implemented; provisioning, encrypted-at-rest WARP credential storage, and
+release-build Android/Windows WARP proof remain open gates.
 
 ## Inputs
 
@@ -47,10 +49,12 @@ P5 is a premium-feel wave, not another information-architecture rewrite. The
 app should feel like a quiet daily utility: fast, tactile, predictable, and
 platform-native.
 
-WARP is not yet a working product feature. The current code has a useful policy
-bridge and desktop runtime mapping, but a production-grade WARP feature still
-requires provisioning, secure material handling, consent/revoke persistence,
-health diagnostics, runtime fallback, Android proof, and Windows proof.
+WARP is partially implemented as a backend-backed lifecycle feature. The
+current code has policy parsing, desktop runtime option mapping,
+`/api/client/warp/*` status/consent/revoke/rotate/events endpoints, a sanitized
+`WarpEvent` ledger, and client consent/runtime-event wiring. A production-grade
+WARP feature still requires provisioning, encrypted-at-rest credential storage,
+deeper health diagnostics, Android proof, and Windows proof.
 
 The generated application map is approved as the P5 visual direction, not as
 copy, data, or a pixel-perfect implementation source. Generated labels such as
@@ -293,15 +297,16 @@ should use screen-specific references before changing production UI:
 
 Backend/platform work required:
 
-- Add app-facing WARP endpoints:
+- App-facing WARP lifecycle endpoints are implemented:
   - `GET /api/client/warp/status` or readiness;
   - `POST /api/client/warp/consent`;
   - `POST /api/client/warp/revoke`;
   - `POST /api/client/warp/rotate`;
   - `POST /api/client/warp/events`.
-- Add a WARP ledger/model for consent, material assignment, rotation, revoke,
-  and event history.
-- Encrypt WARP account and WireGuard material at rest.
+- `WarpEvent` ledger/model is implemented for consent, revoke, rotation
+  request, and runtime fallback/error events with request and ledger metadata
+  redaction.
+- Encrypt WARP account and WireGuard material at rest remains open.
 - Keep public policy sanitized; managed material may be returned only through
   authenticated app-first managed flows and only when runtime-ready.
 - Add rate limits and abuse protection for provisioning/rotation.
@@ -310,11 +315,15 @@ Backend/platform work required:
 
 Client/runtime work required:
 
-- Persist user consent safely instead of keeping it only in memory.
+- Persist user consent safely instead of keeping it only in memory. First
+  implementation uses backend `WarpEvent` lifecycle status plus app-side cache.
 - Add revoke flow that clears local consent, wipes local WARP material, asks
   backend to revoke, and reconnects baseline without WARP.
 - Keep WARP material out of plain user-visible diagnostics, support payloads,
   logs, screenshots, and public cache files.
+- The client now calls backend consent/revoke, reads backend WARP status when
+  resolving managed profile, and reports runtime fallback/error events through
+  `POST /api/client/warp/events` with client-side metadata sanitization.
 - Prove the runtime material path is safe before returning real WireGuard
   private keys or access tokens to the app.
 - Extend runtime state with WARP readiness, active/degraded/failure, and last
@@ -338,10 +347,15 @@ Manual proof required before WARP is called working:
 1. P5 motion foundation in the app repo.
 2. P5 screen polish and copy-density pass in the app repo.
 3. WARP backend status/consent/revoke/events contract in the platform repo.
+   Implemented on 2026-06-05.
 4. WARP provisioning, encrypted storage, and rotation in the platform repo.
 5. WARP consent persistence, revoke UI, local secure material handling, and
    runtime state machine in the app repo.
+   Backend-backed consent and runtime event reporting started on 2026-06-05;
+   local secure material handling and reconnect-on-revoke remain open.
 6. WARP fallback diagnostics and support-chat redaction in both repos.
+   Runtime fallback ledger reporting started on 2026-06-05; support-chat
+   redaction proof remains open.
 7. Android and Windows proof, docs, and release-gate updates.
 
 Each step should update its matching docs and tests before moving to the next

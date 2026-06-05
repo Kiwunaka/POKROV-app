@@ -73,6 +73,32 @@ abstract interface class AppFirstBonusActionService {
   });
 }
 
+abstract interface class AppFirstWarpActionService {
+  Future<WarpControlStatus> fetchWarpStatus({
+    required HostPlatform hostPlatform,
+  });
+
+  Future<WarpControlStatus> setWarpConsent({
+    required HostPlatform hostPlatform,
+    required bool enabled,
+    String reasonCode = '',
+  });
+
+  Future<WarpControlStatus> requestWarpRotation({
+    required HostPlatform hostPlatform,
+    String reasonCode = 'user_requested',
+  });
+
+  Future<WarpControlStatus> reportWarpRuntimeEvent({
+    required HostPlatform hostPlatform,
+    required String eventName,
+    String state = '',
+    String reasonCode = '',
+    String message = '',
+    Map<String, Object?> meta = const <String, Object?>{},
+  });
+}
+
 class BootstrapFailure implements Exception {
   const BootstrapFailure(
     this.message, {
@@ -84,6 +110,181 @@ class BootstrapFailure implements Exception {
 
   @override
   String toString() => message;
+}
+
+class WarpControlStatus {
+  const WarpControlStatus({
+    required this.feature,
+    required this.publicLabel,
+    required this.technicalLabel,
+    required this.enabled,
+    required this.runtimeReady,
+    required this.canEnable,
+    required this.consented,
+    required this.state,
+    required this.mode,
+    required this.source,
+    this.policyState = '',
+    this.wireguardConfigAvailable = false,
+    this.consentedAt = '',
+    this.revokedAt = '',
+    this.lastEvent = const <String, Object?>{},
+  });
+
+  final String feature;
+  final String publicLabel;
+  final String technicalLabel;
+  final bool enabled;
+  final bool runtimeReady;
+  final bool canEnable;
+  final bool consented;
+  final String state;
+  final String mode;
+  final String source;
+  final String policyState;
+  final bool wireguardConfigAvailable;
+  final String consentedAt;
+  final String revokedAt;
+  final Map<String, Object?> lastEvent;
+
+  static const unavailable = WarpControlStatus(
+    feature: 'extended_protection',
+    publicLabel: 'Расширенная защита',
+    technicalLabel: 'WARP',
+    enabled: false,
+    runtimeReady: false,
+    canEnable: false,
+    consented: false,
+    state: 'not_ready',
+    mode: 'proxy_over_warp',
+    source: 'backend_managed',
+  );
+
+  WarpControlStatus copyWith({
+    String? feature,
+    String? publicLabel,
+    String? technicalLabel,
+    bool? enabled,
+    bool? runtimeReady,
+    bool? canEnable,
+    bool? consented,
+    String? state,
+    String? mode,
+    String? source,
+    String? policyState,
+    bool? wireguardConfigAvailable,
+    String? consentedAt,
+    String? revokedAt,
+    Map<String, Object?>? lastEvent,
+  }) {
+    return WarpControlStatus(
+      feature: feature ?? this.feature,
+      publicLabel: publicLabel ?? this.publicLabel,
+      technicalLabel: technicalLabel ?? this.technicalLabel,
+      enabled: enabled ?? this.enabled,
+      runtimeReady: runtimeReady ?? this.runtimeReady,
+      canEnable: canEnable ?? this.canEnable,
+      consented: consented ?? this.consented,
+      state: state ?? this.state,
+      mode: mode ?? this.mode,
+      source: source ?? this.source,
+      policyState: policyState ?? this.policyState,
+      wireguardConfigAvailable:
+          wireguardConfigAvailable ?? this.wireguardConfigAvailable,
+      consentedAt: consentedAt ?? this.consentedAt,
+      revokedAt: revokedAt ?? this.revokedAt,
+      lastEvent: lastEvent ?? this.lastEvent,
+    );
+  }
+
+  WarpRuntimePolicy applyTo(WarpRuntimePolicy policy) {
+    return policy.copyWith(
+      enabled: policy.enabled || enabled,
+      runtimeReady: policy.runtimeReady && runtimeReady,
+      state: state.isEmpty ? policy.state : state,
+      mode: mode.isEmpty ? policy.mode : mode,
+      source: source.isEmpty ? policy.source : source,
+      userConsented: consented && policy.canOfferRuntime,
+    );
+  }
+
+  static WarpControlStatus fromPolicy(WarpRuntimePolicy policy) {
+    return WarpControlStatus(
+      feature: 'extended_protection',
+      publicLabel: 'Расширенная защита',
+      technicalLabel: 'WARP',
+      enabled: policy.enabled,
+      runtimeReady: policy.runtimeReady,
+      canEnable: policy.canOfferRuntime && !policy.userConsented,
+      consented: policy.userConsented,
+      state: policy.userConsented ? 'consented' : policy.state,
+      mode: policy.mode,
+      source: policy.source,
+      wireguardConfigAvailable: policy.wireguardConfigJson.trim().isNotEmpty,
+    );
+  }
+
+  static WarpControlStatus tryParse(Object? value) {
+    final map = _readObjectMap(value);
+    if (map.isEmpty) {
+      return unavailable;
+    }
+    return WarpControlStatus(
+      feature: _readText(
+        map['feature'],
+        fallback: 'extended_protection',
+      ),
+      publicLabel: _readText(
+        map['public_label'] ?? map['publicLabel'],
+        fallback: 'Расширенная защита',
+      ),
+      technicalLabel: _readText(
+        map['technical_label'] ?? map['technicalLabel'],
+        fallback: 'WARP',
+      ),
+      enabled: _readBool(map['enabled']),
+      runtimeReady: _readBool(map['runtime_ready'] ?? map['runtimeReady']),
+      canEnable: _readBool(map['can_enable'] ?? map['canEnable']),
+      consented: _readBool(map['consented']),
+      state: _readText(map['state'], fallback: 'not_ready'),
+      mode: _readText(map['mode'], fallback: 'proxy_over_warp'),
+      source: _readText(map['source'], fallback: 'backend_managed'),
+      policyState: _readText(map['policy_state'] ?? map['policyState']),
+      wireguardConfigAvailable: _readBool(
+        map['wireguard_config_available'] ?? map['wireguardConfigAvailable'],
+      ),
+      consentedAt: _readText(map['consented_at'] ?? map['consentedAt']),
+      revokedAt: _readText(map['revoked_at'] ?? map['revokedAt']),
+      lastEvent: _readMap(map['last_event'] ?? map['lastEvent']),
+    );
+  }
+
+  static Map<String, Object?> _readObjectMap(Object? value) {
+    if (value is Map<String, Object?>) {
+      return value;
+    }
+    if (value is Map) {
+      return value.map((key, item) => MapEntry(key.toString(), item));
+    }
+    return const <String, Object?>{};
+  }
+
+  static Map<String, Object?> _readMap(Object? value) {
+    return _readObjectMap(value);
+  }
+
+  static String _readText(Object? value, {String fallback = ''}) {
+    final text = value == null ? '' : value.toString().trim();
+    return text.isEmpty ? fallback : text;
+  }
+
+  static bool _readBool(Object? value) {
+    if (value is bool) {
+      return value;
+    }
+    final text = value == null ? '' : value.toString().trim().toLowerCase();
+    return text == '1' || text == 'true' || text == 'yes' || text == 'on';
+  }
 }
 
 class AppFirstRedeemResult {
@@ -458,7 +659,8 @@ class AppFirstRuntimeBootstrapper
     implements
         ManagedProfileBootstrapper,
         AppFirstAccountActionService,
-        AppFirstBonusActionService {
+        AppFirstBonusActionService,
+        AppFirstWarpActionService {
   AppFirstRuntimeBootstrapper({
     this.apiBaseUrl = 'https://api.pokrov.space',
     Future<Directory> Function()? supportDirectoryResolver,
@@ -719,6 +921,139 @@ class AppFirstRuntimeBootstrapper
 
       throw const BootstrapFailure(
         'POKROV could not create a cabinet handoff.',
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  @override
+  Future<WarpControlStatus> fetchWarpStatus({
+    required HostPlatform hostPlatform,
+  }) async {
+    final response = await _requestWarpJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'GET',
+      path: '/api/client/warp/status',
+    );
+    return WarpControlStatus.tryParse(response);
+  }
+
+  @override
+  Future<WarpControlStatus> setWarpConsent({
+    required HostPlatform hostPlatform,
+    required bool enabled,
+    String reasonCode = '',
+  }) async {
+    final response = await _requestWarpJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: enabled ? '/api/client/warp/consent' : '/api/client/warp/revoke',
+      body: enabled
+          ? <String, Object?>{
+              'consent': true,
+              if (reasonCode.trim().isNotEmpty)
+                'reason_code': reasonCode.trim(),
+            }
+          : <String, Object?>{
+              if (reasonCode.trim().isNotEmpty)
+                'reason_code': reasonCode.trim(),
+            },
+    );
+    return WarpControlStatus.tryParse(response);
+  }
+
+  @override
+  Future<WarpControlStatus> requestWarpRotation({
+    required HostPlatform hostPlatform,
+    String reasonCode = 'user_requested',
+  }) async {
+    final response = await _requestWarpJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: '/api/client/warp/rotate',
+      body: <String, Object?>{
+        'reason_code':
+            reasonCode.trim().isEmpty ? 'user_requested' : reasonCode.trim(),
+      },
+    );
+    return WarpControlStatus.tryParse(response);
+  }
+
+  @override
+  Future<WarpControlStatus> reportWarpRuntimeEvent({
+    required HostPlatform hostPlatform,
+    required String eventName,
+    String state = '',
+    String reasonCode = '',
+    String message = '',
+    Map<String, Object?> meta = const <String, Object?>{},
+  }) async {
+    final response = await _requestWarpJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: '/api/client/warp/events',
+      body: <String, Object?>{
+        'event_name': _safeWarpToken(eventName, fallback: 'runtime_event'),
+        if (state.trim().isNotEmpty)
+          'state': _safeWarpToken(state, fallback: 'fallback'),
+        if (reasonCode.trim().isNotEmpty)
+          'reason_code': _safeWarpToken(
+            reasonCode,
+            fallback: 'runtime_event',
+          ),
+        if (message.trim().isNotEmpty) 'message': message.trim(),
+        'meta': _sanitizeWarpRuntimeMeta(meta),
+      },
+    );
+    return WarpControlStatus.tryParse(response);
+  }
+
+  Future<Map<String, dynamic>> _requestWarpJsonWithSession({
+    required HostPlatform hostPlatform,
+    required String method,
+    required String path,
+    Map<String, Object?>? body,
+  }) async {
+    var state = await _loadOrCreateState(hostPlatform);
+    final client = _createHttpClient(hostPlatform);
+    try {
+      for (var attempt = 0; attempt < 2; attempt += 1) {
+        if (!state.hasSession) {
+          state = await _startTrial(
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
+        }
+
+        try {
+          return await _requestJson(
+            method: method,
+            path: path,
+            client: client,
+            bearerToken: state.sessionToken,
+            hostPlatform: hostPlatform,
+            body: body,
+          );
+        } on BootstrapFailure catch (error) {
+          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
+            state = await _startTrial(
+              state: state.copyWith(
+                sessionToken: '',
+                accountId: '',
+              ),
+              hostPlatform: hostPlatform,
+              client: client,
+            );
+            continue;
+          }
+          rethrow;
+        }
+      }
+
+      throw const BootstrapFailure(
+        'POKROV could not update extended protection.',
       );
     } finally {
       client.close(force: true);
@@ -3588,6 +3923,85 @@ class AppFirstRuntimeBootstrapper
       case RouteMode.allExceptRu:
         return 'all_traffic';
     }
+  }
+
+  String _safeWarpToken(String value, {required String fallback}) {
+    final cleaned = value.trim().toLowerCase();
+    if (cleaned.isEmpty || !RegExp(r'^[a-z0-9_:-]{2,64}$').hasMatch(cleaned)) {
+      return fallback;
+    }
+    return cleaned;
+  }
+
+  Map<String, Object?> _sanitizeWarpRuntimeMeta(
+    Map<String, Object?> meta,
+  ) {
+    final sanitized = <String, Object?>{};
+    for (final entry in meta.entries) {
+      final key = entry.key.trim();
+      if (key.isEmpty || _isUnsafeWarpMetaKey(key)) {
+        continue;
+      }
+      final value = _sanitizeWarpRuntimeMetaValue(entry.value);
+      if (value != null) {
+        sanitized[key] = value;
+      }
+    }
+    return sanitized;
+  }
+
+  Object? _sanitizeWarpRuntimeMetaValue(Object? value) {
+    if (value == null) {
+      return null;
+    }
+    if (value is bool || value is num) {
+      return value;
+    }
+    if (value is String) {
+      final cleaned = value.trim();
+      if (cleaned.isEmpty) {
+        return null;
+      }
+      final lowered = cleaned.toLowerCase();
+      if (lowered.contains('://') ||
+          lowered.contains('private-key') ||
+          lowered.contains('access-token') ||
+          lowered.contains('bearer ')) {
+        return '[redacted]';
+      }
+      return cleaned.length > 500 ? cleaned.substring(0, 500) : cleaned;
+    }
+    if (value is Map) {
+      return _sanitizeWarpRuntimeMeta(
+        value.map((key, child) => MapEntry(key.toString(), child)),
+      );
+    }
+    if (value is Iterable) {
+      return value
+          .take(20)
+          .map(_sanitizeWarpRuntimeMetaValue)
+          .where((item) => item != null)
+          .toList(growable: false);
+    }
+    return value.toString();
+  }
+
+  bool _isUnsafeWarpMetaKey(String key) {
+    final lowered = key.toLowerCase().replaceAll('-', '_');
+    const unsafeFragments = <String>[
+      'account',
+      'auth',
+      'cookie',
+      'key',
+      'private',
+      'secret',
+      'subscription',
+      'token',
+      'url',
+      'warp_config',
+      'wireguard',
+    ];
+    return unsafeFragments.any((fragment) => lowered.contains(fragment));
   }
 
   String _profileName({

@@ -9,7 +9,10 @@ Current direction note:
 - the front-end rebuild is now a Premium Shell V2 reset after owner feedback rejected the first card-heavy MVP shell
 - `marketing` owns public acquisition, `webapp` owns browser continuation, and the client shell stays locked to `Protection / Locations / Rules / Profile`
 - public-facing wording should stay calm and non-technical even when the underlying runtime remains transport-rich
-- `hiddify-core` is the pinned runtime base, but WARP/enhanced privacy is not product-ready until wired and verified
+- `hiddify-core` is the pinned runtime base; WARP/enhanced privacy now has
+  backend lifecycle and client consent/event wiring, but production readiness
+  still requires provisioning, secure material handling, and Android/Windows
+  release-build proof
 
 Historical mapping note:
 

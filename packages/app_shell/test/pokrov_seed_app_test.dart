@@ -9,7 +9,8 @@ class _FakeBootstrapper
     implements
         ManagedProfileBootstrapper,
         AppFirstAccountActionService,
-        AppFirstBonusActionService {
+        AppFirstBonusActionService,
+        AppFirstWarpActionService {
   _FakeBootstrapper(
     this.payload, {
     CabinetHandoff? cabinetHandoff,
@@ -18,6 +19,7 @@ class _FakeBootstrapper
     ChannelBonusClaimResult? channelBonusClaimResult,
     AppFirstBonusSummary? bonusSummary,
     AppFirstRedeemResult? redeemResult,
+    WarpControlStatus? warpStatus,
   })  : cabinetHandoff = cabinetHandoff ??
             CabinetHandoff(
               token: 'short-cabinet-token',
@@ -85,7 +87,9 @@ class _FakeBootstrapper
               kind: 'access_key',
               codePreview: '...2026',
               result: <String, dynamic>{},
-            );
+            ),
+        warpStatus =
+            warpStatus ?? WarpControlStatus.fromPolicy(payload.warpPolicy);
 
   final ManagedProfilePayload payload;
   final AppFirstRedeemResult redeemResult;
@@ -103,6 +107,15 @@ class _FakeBootstrapper
   int bonusSummaryCalls = 0;
   int wheelSpinCalls = 0;
   int calendarCheckInCalls = 0;
+  int warpStatusCalls = 0;
+  int warpConsentCalls = 0;
+  int warpRotationCalls = 0;
+  int warpRuntimeEventCalls = 0;
+  bool? lastWarpConsentEnabled;
+  String? lastWarpRuntimeEventName;
+  String? lastWarpRuntimeEventState;
+  Map<String, Object?>? lastWarpRuntimeEventMeta;
+  WarpControlStatus warpStatus;
   RouteMode? lastRouteMode;
   HostPlatform? lastHostPlatform;
   String? lastRedeemCode;
@@ -214,6 +227,62 @@ class _FakeBootstrapper
       expiryAt: '2026-06-06T12:00:00Z',
       summary: bonusSummary,
     );
+  }
+
+  @override
+  Future<WarpControlStatus> fetchWarpStatus({
+    required HostPlatform hostPlatform,
+  }) async {
+    warpStatusCalls += 1;
+    return warpStatus;
+  }
+
+  @override
+  Future<WarpControlStatus> setWarpConsent({
+    required HostPlatform hostPlatform,
+    required bool enabled,
+    String reasonCode = '',
+  }) async {
+    warpConsentCalls += 1;
+    lastWarpConsentEnabled = enabled;
+    warpStatus = warpStatus.copyWith(
+      canEnable: !enabled,
+      consented: enabled,
+      state: enabled ? 'consented' : 'revoked',
+      consentedAt: enabled ? '2026-06-05T12:00:00Z' : '',
+      revokedAt: enabled ? '' : '2026-06-05T12:01:00Z',
+    );
+    return warpStatus;
+  }
+
+  @override
+  Future<WarpControlStatus> requestWarpRotation({
+    required HostPlatform hostPlatform,
+    String reasonCode = 'user_requested',
+  }) async {
+    warpRotationCalls += 1;
+    warpStatus = warpStatus.copyWith(state: 'rotation_requested');
+    return warpStatus;
+  }
+
+  @override
+  Future<WarpControlStatus> reportWarpRuntimeEvent({
+    required HostPlatform hostPlatform,
+    required String eventName,
+    String state = '',
+    String reasonCode = '',
+    String message = '',
+    Map<String, Object?> meta = const <String, Object?>{},
+  }) async {
+    warpRuntimeEventCalls += 1;
+    lastWarpRuntimeEventName = eventName;
+    lastWarpRuntimeEventState = state;
+    lastWarpRuntimeEventMeta = meta;
+    warpStatus = warpStatus.copyWith(
+      state: state.isEmpty ? warpStatus.state : state,
+      lastEvent: <String, Object?>{'event_name': eventName},
+    );
+    return warpStatus;
   }
 }
 
@@ -1691,6 +1760,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('home-warp-enable-action')));
     await tester.pumpAndSettle();
 
+    expect(bootstrapper.warpConsentCalls, 1);
+    expect(bootstrapper.lastWarpConsentEnabled, isTrue);
     expect(find.byKey(const ValueKey('home-warp-sheet')), findsNothing);
     expect(
         find.byKey(const ValueKey('home-warp-state-enabled')), findsOneWidget);

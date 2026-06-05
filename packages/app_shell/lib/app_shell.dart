@@ -560,6 +560,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   late final ManagedProfileBootstrapper _bootstrapper;
   late final AppFirstAccountActionService? _accountActionService;
   late final AppFirstBonusActionService? _bonusActionService;
+  late final AppFirstWarpActionService? _warpActionService;
   late final SupportTicketService _supportTicketService;
   late final PokrovFirstLaunchStore _firstLaunchStore;
   final TextEditingController _firstLaunchRestoreCodeController =
@@ -602,6 +603,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         : null;
     _bonusActionService = bootstrapper is AppFirstBonusActionService
         ? bootstrapper as AppFirstBonusActionService
+        : null;
+    _warpActionService = bootstrapper is AppFirstWarpActionService
+        ? bootstrapper as AppFirstWarpActionService
         : null;
     _supportTicketService = widget.supportTicketService ??
         AppFirstSupportTicketService(
@@ -1318,21 +1322,44 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           ? _selectedAppIds
           : const <String>[],
     );
+    final warpStatus = await _fetchWarpStatusOrNull();
+    final displayWarpPolicy =
+        warpStatus?.applyTo(payload.warpPolicy) ?? payload.warpPolicy;
     final warpConsentStillValid =
-        _warpRuntimeConsent && payload.warpPolicy.canOfferRuntime;
+        (warpStatus?.consented ?? _warpRuntimeConsent) &&
+            displayWarpPolicy.canOfferRuntime;
     final runtimePayload = payload.copyWith(
-      warpPolicy: payload.warpPolicy.withUserConsent(warpConsentStillValid),
+      warpPolicy: displayWarpPolicy.withUserConsent(warpConsentStillValid),
     );
     if (mounted) {
       setState(() {
         _managedProfileDirty = false;
-        _managedWarpPolicy = payload.warpPolicy;
+        _managedWarpPolicy = displayWarpPolicy;
         _warpRuntimeConsent = warpConsentStillValid;
         _runtimeHeadline = 'Настройки обновлены с '
             '${Uri.parse(widget.appContext.apiBaseUrl).host}.';
       });
     }
     return runtimePayload;
+  }
+
+  Future<WarpControlStatus?> _fetchWarpStatusOrNull() async {
+    final service = _warpActionService;
+    if (service == null) {
+      return null;
+    }
+    try {
+      return await service.fetchWarpStatus(
+        hostPlatform: widget.appContext.hostPlatform,
+      );
+    } on BootstrapFailure catch (error) {
+      if (mounted && error.statusCode != null) {
+        setState(() {
+          _runtimeHeadline = error.message;
+        });
+      }
+      return null;
+    }
   }
 
   Future<void> _openWarpControl() async {
@@ -1391,16 +1418,58 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     );
   }
 
-  void _setWarpRuntimeConsent(bool value) {
-    final enabled = value && _managedWarpPolicy.canOfferRuntime;
+  Future<void> _setWarpRuntimeConsent(bool value) async {
+    if (_warpPolicyBusy) {
+      return;
+    }
+    final requestedEnabled = value && _managedWarpPolicy.canOfferRuntime;
     HapticFeedback.selectionClick();
     setState(() {
-      _warpRuntimeConsent = enabled;
-      _managedProfileDirty = true;
-      _runtimeHeadline = enabled
-          ? 'WARP включится при следующем подключении.'
-          : 'WARP выключен для следующих подключений.';
+      _warpPolicyBusy = true;
     });
+    try {
+      final service = _warpActionService;
+      final status = service == null
+          ? WarpControlStatus.fromPolicy(_managedWarpPolicy).copyWith(
+              consented: requestedEnabled,
+              canEnable: !requestedEnabled,
+              state: requestedEnabled ? 'consented' : 'revoked',
+            )
+          : await service.setWarpConsent(
+              hostPlatform: widget.appContext.hostPlatform,
+              enabled: requestedEnabled,
+              reasonCode: requestedEnabled ? 'user_consented' : 'user_disabled',
+            );
+      final nextPolicy = status.applyTo(_managedWarpPolicy);
+      final enabled = status.consented && nextPolicy.canOfferRuntime;
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _managedWarpPolicy = nextPolicy;
+        _warpRuntimeConsent = enabled;
+        _managedProfileDirty = true;
+        _runtimeHeadline = enabled
+            ? 'WARP включится при следующем подключении.'
+            : 'WARP выключен для следующих подключений.';
+      });
+    } on BootstrapFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _runtimeHeadline = error.message;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _warpPolicyBusy = false;
+        });
+      }
+    }
   }
 
   Future<void> _toggleRuntime() async {
@@ -1486,6 +1555,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         });
         if (current.phase != RuntimePhase.running &&
             current.message.trim().isNotEmpty) {
+          unawaited(_reportWarpRuntimeFallback(current));
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(current.message)),
           );
@@ -1507,6 +1577,46 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _runtimeBusy = false;
         });
       }
+    }
+  }
+
+  Future<void> _reportWarpRuntimeFallback(RuntimeSnapshot snapshot) async {
+    final service = _warpActionService;
+    if (service == null ||
+        !_warpRuntimeConsent ||
+        !_managedWarpPolicy.canOfferRuntime) {
+      return;
+    }
+    try {
+      final failureKind = snapshot.lastFailureKind?.trim() ?? '';
+      final diagnosticsSummary = snapshot.hostDiagnosticsSummary?.trim() ?? '';
+      final status = await service.reportWarpRuntimeEvent(
+        hostPlatform: widget.appContext.hostPlatform,
+        eventName: 'runtime_fallback',
+        state: 'fallback',
+        reasonCode:
+            failureKind.isNotEmpty ? failureKind : 'connect_not_running',
+        message: snapshot.message,
+        meta: <String, Object?>{
+          'phase': snapshot.phase.name,
+          'lane': snapshot.lane.name,
+          'host_health': snapshot.hostHealth.name,
+          'dns_state': snapshot.dnsState.name,
+          'uplink_state': snapshot.uplinkState.name,
+          if (diagnosticsSummary.isNotEmpty)
+            'host_diagnostics_summary': diagnosticsSummary,
+        },
+      );
+      if (!mounted) {
+        return;
+      }
+      final nextPolicy = status.applyTo(_managedWarpPolicy);
+      setState(() {
+        _managedWarpPolicy = nextPolicy;
+        _warpRuntimeConsent = status.consented && nextPolicy.canOfferRuntime;
+      });
+    } on BootstrapFailure {
+      // Runtime fallback telemetry must never block the user's connect flow.
     }
   }
 
@@ -2857,6 +2967,7 @@ class _HomeWarpTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final motion = _MotionScope.of(context);
     final canOffer = policy.canOfferRuntime;
     final enabled = canOffer && runtimeConsent;
     final stateKey = busy
@@ -2888,8 +2999,10 @@ class _HomeWarpTile extends StatelessWidget {
       onTap: () {
         unawaited(onOpen());
       },
-      child: Container(
+      child: AnimatedContainer(
         key: ValueKey(stateKey),
+        duration: motion.duration(_MotionTokens.short),
+        curve: _MotionTokens.ease,
         width: double.infinity,
         constraints: const BoxConstraints(maxWidth: 360),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -2937,15 +3050,20 @@ class _HomeWarpTile extends StatelessWidget {
                         ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    status,
+                  AnimatedSwitcher(
                     key: const ValueKey('home-warp-status-label'),
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: enabled
-                              ? _SeedPalette.accent
-                              : _SeedPalette.muted,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    duration: motion.duration(_MotionTokens.short),
+                    transitionBuilder: _fadeSlideTransition,
+                    child: Text(
+                      status,
+                      key: ValueKey(status),
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: enabled
+                                ? _SeedPalette.accent
+                                : _SeedPalette.muted,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
                   ),
                 ],
               ),
@@ -6259,7 +6377,7 @@ void _showInfoSheet(
 void _showWarpConsentSheet(
   BuildContext context, {
   required bool enabled,
-  required ValueChanged<bool> onChanged,
+  required Future<void> Function(bool value) onChanged,
 }) {
   showModalBottomSheet<void>(
     context: context,
@@ -6279,7 +6397,7 @@ class _WarpConsentSheet extends StatelessWidget {
   });
 
   final bool enabled;
-  final ValueChanged<bool> onChanged;
+  final Future<void> Function(bool value) onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -6337,7 +6455,7 @@ class _WarpConsentSheet extends StatelessWidget {
                   value: enabled,
                   activeThumbColor: _SeedPalette.accent,
                   onChanged: (value) {
-                    onChanged(value);
+                    unawaited(onChanged(value));
                     Navigator.of(context).pop();
                   },
                 ),
@@ -6351,7 +6469,7 @@ class _WarpConsentSheet extends StatelessWidget {
                   : const Icon(Icons.verified_user_rounded),
               label: Text(enabled ? 'Оставить выключенным' : 'Включить WARP'),
               onPressed: () {
-                onChanged(nextValue);
+                unawaited(onChanged(nextValue));
                 Navigator.of(context).pop();
               },
             ),

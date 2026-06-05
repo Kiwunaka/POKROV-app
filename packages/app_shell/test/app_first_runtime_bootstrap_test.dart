@@ -285,6 +285,187 @@ void main() {
     expect(state['managed_manifest_path'], '/api/client/profile/managed');
   });
 
+  test('warp lifecycle actions use app session and sanitize runtime metadata',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-warp-lifecycle-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final requests = <String>[];
+    Map<String, dynamic>? consentBody;
+    Map<String, dynamic>? runtimeEventBody;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add('${request.method} ${request.uri.path}');
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'session-token-warp',
+                    'account_id': '42',
+                  },
+                  'provisioning': <String, Object?>{
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/warp/status') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer session-token-warp',
+          );
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'feature': 'extended_protection',
+                  'public_label': 'Расширенная защита',
+                  'technical_label': 'WARP',
+                  'enabled': true,
+                  'runtime_ready': true,
+                  'can_enable': true,
+                  'consented': false,
+                  'state': 'ready_to_consent',
+                  'mode': 'proxy_over_warp',
+                  'source': 'backend_managed',
+                  'wireguard_config_available': true,
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/warp/consent') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer session-token-warp',
+          );
+          consentBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'feature': 'extended_protection',
+                  'public_label': 'Расширенная защита',
+                  'technical_label': 'WARP',
+                  'enabled': true,
+                  'runtime_ready': true,
+                  'can_enable': false,
+                  'consented': true,
+                  'state': 'consented',
+                  'mode': 'proxy_over_warp',
+                  'source': 'backend_managed',
+                  'wireguard_config_available': true,
+                  'consented_at': '2026-06-05T12:00:00Z',
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/warp/events') {
+          runtimeEventBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ok': true,
+                  'feature': 'extended_protection',
+                  'public_label': 'Расширенная защита',
+                  'technical_label': 'WARP',
+                  'enabled': true,
+                  'runtime_ready': true,
+                  'can_enable': false,
+                  'consented': true,
+                  'state': 'fallback',
+                  'mode': 'proxy_over_warp',
+                  'source': 'backend_managed',
+                  'wireguard_config_available': true,
+                  'last_event': <String, Object?>{
+                    'event_name': 'runtime_fallback',
+                    'state': 'fallback',
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+
+    final status = await bootstrapper.fetchWarpStatus(
+      hostPlatform: HostPlatform.windows,
+    );
+    expect(status.state, 'ready_to_consent');
+    expect(status.consented, isFalse);
+
+    final consent = await bootstrapper.setWarpConsent(
+      hostPlatform: HostPlatform.windows,
+      enabled: true,
+    );
+    expect(consent.consented, isTrue);
+    expect(consentBody, containsPair('consent', true));
+
+    final fallback = await bootstrapper.reportWarpRuntimeEvent(
+      hostPlatform: HostPlatform.windows,
+      eventName: 'runtime_fallback',
+      state: 'fallback',
+      reasonCode: 'handshake_failed',
+      message: 'baseline fallback used',
+      meta: const <String, Object?>{
+        'safe_detail': 'fallback',
+        'wireguard_config': <String, Object?>{'private-key': 'test-private'},
+        'subscription_url': 'https://connect.pokrov.space/secret',
+      },
+    );
+    expect(fallback.state, 'fallback');
+    final runtimeEventJson = jsonEncode(runtimeEventBody);
+    expect(runtimeEventJson, contains('safe_detail'));
+    expect(runtimeEventJson, isNot(contains('test-private')));
+    expect(runtimeEventJson, isNot(contains('connect.pokrov.space/secret')));
+    expect(
+      requests,
+      containsAllInOrder(const [
+        'POST /api/client/session/start-trial',
+        'GET /api/client/warp/status',
+        'POST /api/client/warp/consent',
+        'POST /api/client/warp/events',
+      ]),
+    );
+  });
+
   test('uploads smart-connect RTT samples and applies stickiness threshold',
       () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
