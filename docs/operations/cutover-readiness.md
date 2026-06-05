@@ -191,6 +191,24 @@ These are local engineering evidence, not raw Android physical-device audit
 replacement, store readiness, trusted Windows signing, RU-origin readiness, or
 production WARP proof.
 
+`2026-06-05` WARP material/provisioning local verification:
+
+- root backend focused test:
+  - `tests/test_network_rollout_api.py`: `8 passed`
+  - covers encrypted-at-rest scoped WARP material provisioning,
+    authenticated managed-profile material delivery, public policy redaction,
+    lifecycle ledger redaction, revoke deactivation, and rollout fallback
+- client focused tests:
+  - `packages/app_shell/test/app_first_runtime_bootstrap_test.dart`:
+    `27 passed`
+  - `packages/app_shell/test/pokrov_seed_app_test.dart`: `51 passed`
+  - covers backend-backed WARP status/consent/event wiring and immediate local
+    enabled-state clearing on revoke
+
+This is backend/client contract evidence only. It is not Android physical
+release-build WARP proof, Windows release-build WARP proof, provider-side WARP
+rotation proof, or production WARP readiness.
+
 ## Android Gate Checklist
 
 - [x] Runtime artifacts are synced into the documented Android build lane

@@ -1440,8 +1440,16 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
               enabled: requestedEnabled,
               reasonCode: requestedEnabled ? 'user_consented' : 'user_disabled',
             );
-      final nextPolicy = status.applyTo(_managedWarpPolicy);
-      final enabled = status.consented && nextPolicy.canOfferRuntime;
+      final servicePolicy = status.applyTo(_managedWarpPolicy);
+      final nextPolicy = requestedEnabled
+          ? servicePolicy
+          : WarpRuntimePolicy.disabled.copyWith(
+              state: status.state.isEmpty ? 'revoked' : status.state,
+              mode: servicePolicy.mode,
+              source: servicePolicy.source,
+            );
+      final enabled =
+          requestedEnabled && status.consented && nextPolicy.canOfferRuntime;
       if (!mounted) {
         return;
       }

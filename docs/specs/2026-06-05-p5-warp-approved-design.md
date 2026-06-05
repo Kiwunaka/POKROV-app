@@ -1,7 +1,7 @@
 # P5 WARP Approved Design
 
 Date: 2026-06-05
-Status: owner-approved design contract / implementation started
+Status: owner-approved design contract / implementation in progress
 Owner: POKROV-app/main
 
 ## Approval
@@ -10,9 +10,9 @@ The owner approved the P5/WARP direction after the OpenCode-go consilium pass
 and requested the direction be recorded before implementation.
 
 This contract supersedes loose chat memory for the next P5 and WARP wave. As
-of 2026-06-05, backend WARP lifecycle endpoints and client consent/event wiring
-are implemented; provisioning, encrypted-at-rest WARP credential storage, and
-release-build Android/Windows WARP proof remain open gates.
+of 2026-06-05, backend WARP lifecycle endpoints, encrypted-at-rest scoped
+provisioning, and client consent/event wiring are implemented; release-build
+Android/Windows WARP proof remains an open gate.
 
 ## Inputs
 
@@ -52,9 +52,11 @@ platform-native.
 WARP is partially implemented as a backend-backed lifecycle feature. The
 current code has policy parsing, desktop runtime option mapping,
 `/api/client/warp/*` status/consent/revoke/rotate/events endpoints, a sanitized
-`WarpEvent` ledger, and client consent/runtime-event wiring. A production-grade
-WARP feature still requires provisioning, encrypted-at-rest credential storage,
-deeper health diagnostics, Android proof, and Windows proof.
+`WarpEvent` ledger, encrypted-at-rest per-user/per-install WARP material
+storage with admin provisioning, and client consent/runtime-event wiring. A
+production-grade WARP feature still requires provider-side provisioning
+automation/rate limits, deeper health diagnostics, Android proof, and Windows
+proof.
 
 The generated application map is approved as the P5 visual direction, not as
 copy, data, or a pixel-perfect implementation source. Generated labels such as
@@ -306,7 +308,8 @@ Backend/platform work required:
 - `WarpEvent` ledger/model is implemented for consent, revoke, rotation
   request, and runtime fallback/error events with request and ledger metadata
   redaction.
-- Encrypt WARP account and WireGuard material at rest remains open.
+- Encrypted-at-rest WARP account and WireGuard material storage is implemented
+  through scoped `warp_materials` rows and `PUT /api/admin/client/warp/material`.
 - Keep public policy sanitized; managed material may be returned only through
   authenticated app-first managed flows and only when runtime-ready.
 - Add rate limits and abuse protection for provisioning/rotation.
@@ -317,8 +320,9 @@ Client/runtime work required:
 
 - Persist user consent safely instead of keeping it only in memory. First
   implementation uses backend `WarpEvent` lifecycle status plus app-side cache.
-- Add revoke flow that clears local consent, wipes local WARP material, asks
-  backend to revoke, and reconnects baseline without WARP.
+- Revoke now asks backend to revoke and immediately clears the local enabled
+  WARP state; physical staged-file wipe and reconnect-baseline proof remain
+  open.
 - Keep WARP material out of plain user-visible diagnostics, support payloads,
   logs, screenshots, and public cache files.
 - The client now calls backend consent/revoke, reads backend WARP status when
@@ -349,10 +353,14 @@ Manual proof required before WARP is called working:
 3. WARP backend status/consent/revoke/events contract in the platform repo.
    Implemented on 2026-06-05.
 4. WARP provisioning, encrypted storage, and rotation in the platform repo.
+   Scoped encrypted material storage and admin provisioning were implemented
+   on 2026-06-05; provider-side rotation automation, stale material rejection,
+   rate limits, and monitoring remain open.
 5. WARP consent persistence, revoke UI, local secure material handling, and
    runtime state machine in the app repo.
-   Backend-backed consent and runtime event reporting started on 2026-06-05;
-   local secure material handling and reconnect-on-revoke remain open.
+   Backend-backed consent, runtime event reporting, and local enabled-state
+   clearing on revoke started on 2026-06-05; physical staged material wipe and
+   reconnect-on-revoke remain open.
 6. WARP fallback diagnostics and support-chat redaction in both repos.
    Runtime fallback ledger reporting started on 2026-06-05; support-chat
    redaction proof remains open.
@@ -388,6 +396,7 @@ Platform tests:
 
 - WARP status/readiness endpoint;
 - consent/revoke lifecycle;
+- scoped admin WARP material provisioning with encrypted-at-rest storage;
 - rotation and stale material rejection;
 - event ingestion and redaction;
 - managed profile returns WARP material only under authenticated runtime-ready

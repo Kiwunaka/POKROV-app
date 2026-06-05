@@ -1767,6 +1767,55 @@ void main() {
         find.byKey(const ValueKey('home-warp-state-enabled')), findsOneWidget);
   });
 
+  testWidgets('revoking WARP consent clears the local enabled state',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+        warpPolicy: WarpRuntimePolicy(
+          enabled: true,
+          runtimeReady: true,
+          state: 'ready',
+          wireguardConfigJson:
+              '{"private-key":"test-private-key","local-address-ipv4":"172.16.0.2"}',
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await tester.ensureVisible(find.byKey(const ValueKey('home-warp-tile')));
+    await tester.tap(find.byKey(const ValueKey('home-warp-tile')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('home-warp-enable-action')));
+    await tester.pumpAndSettle();
+
+    expect(
+        find.byKey(const ValueKey('home-warp-state-enabled')), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(const ValueKey('home-warp-tile')));
+    await tester.tap(find.byKey(const ValueKey('home-warp-tile')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('home-warp-consent-switch')));
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.warpConsentCalls, 2);
+    expect(bootstrapper.lastWarpConsentEnabled, isFalse);
+    expect(
+        find.byKey(const ValueKey('home-warp-state-enabled')), findsNothing);
+    expect(
+        find.byKey(const ValueKey('home-warp-state-disabled')), findsOneWidget);
+  });
+
   testWidgets(
       'narrow windows shell uses a hamburger drawer instead of fixed sidebar',
       (tester) async {
