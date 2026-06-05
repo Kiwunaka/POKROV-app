@@ -2358,8 +2358,49 @@ class _MobileShell extends StatelessWidget {
   }
 }
 
-class _DesktopSidebar extends StatelessWidget {
+class _DesktopSidebar extends PokrovDesktopSidebar {
   _DesktopSidebar({
+    required int selectedIndex,
+    required ValueChanged<int> onSelected,
+    required bool collapsed,
+    bool drawer = false,
+  }) : super(
+          selectedIndex: selectedIndex,
+          onSelected: onSelected,
+          collapsed: collapsed,
+          drawer: drawer,
+          brandMarkAssetName: _pokrovBrandMarkAsset,
+          destinations: const [
+            PokrovSidebarDestination(
+              itemKey: ValueKey('nav-protection'),
+              icon: Icons.flash_on_outlined,
+              selectedIcon: Icons.flash_on,
+              label: 'Защита',
+            ),
+            PokrovSidebarDestination(
+              itemKey: ValueKey('nav-locations'),
+              icon: Icons.public_outlined,
+              selectedIcon: Icons.public,
+              label: 'Локации',
+            ),
+            PokrovSidebarDestination(
+              itemKey: ValueKey('nav-rules'),
+              icon: Icons.rule_folder_outlined,
+              selectedIcon: Icons.rule_folder,
+              label: 'Правила',
+            ),
+            PokrovSidebarDestination(
+              itemKey: ValueKey('nav-profile'),
+              icon: Icons.person_outline,
+              selectedIcon: Icons.person,
+              label: 'Аккаунт',
+            ),
+          ],
+        );
+}
+
+class PokrovLegacyDesktopSidebar extends StatelessWidget {
+  PokrovLegacyDesktopSidebar({
     required this.selectedIndex,
     required this.onSelected,
     required this.collapsed,

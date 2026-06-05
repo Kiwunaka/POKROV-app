@@ -146,6 +146,96 @@ void main() {
 
     expect(taps, 2);
   });
+
+  testWidgets('desktop sidebar preserves width keys and destination taps',
+      (tester) async {
+    var selected = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: StatefulBuilder(
+          builder: (context, setState) {
+            return SizedBox(
+              height: 320,
+              child: Row(
+                children: [
+                  PokrovMotionScope(
+                    disableAnimations: false,
+                    child: PokrovDesktopSidebar(
+                      selectedIndex: selected,
+                      collapsed: false,
+                      destinations: const [
+                        PokrovSidebarDestination(
+                          itemKey: ValueKey('test-nav-home'),
+                          icon: Icons.flash_on_outlined,
+                          selectedIcon: Icons.flash_on,
+                          label: 'Home',
+                        ),
+                        PokrovSidebarDestination(
+                          itemKey: ValueKey('test-nav-account'),
+                          icon: Icons.person_outline,
+                          selectedIcon: Icons.person,
+                          label: 'Account',
+                        ),
+                      ],
+                      onSelected: (value) => setState(() {
+                        selected = value;
+                      }),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    expect(find.byKey(PokrovDesktopSidebar.expandedKey), findsOneWidget);
+    expect(find.byKey(PokrovDesktopSidebar.labelMotionKey), findsWidgets);
+    expect(
+      tester.getSize(find.byKey(PokrovDesktopSidebar.expandedKey)).width,
+      224,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('test-nav-account')));
+    await tester.pumpAndSettle();
+
+    expect(selected, 1);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SizedBox(
+          height: 320,
+          child: Row(
+            children: [
+              PokrovMotionScope(
+                disableAnimations: false,
+                child: PokrovDesktopSidebar(
+                  selectedIndex: selected,
+                  collapsed: true,
+                  destinations: const [
+                    PokrovSidebarDestination(
+                      itemKey: ValueKey('test-nav-home-collapsed'),
+                      icon: Icons.flash_on_outlined,
+                      selectedIcon: Icons.flash_on,
+                      label: 'Home',
+                    ),
+                  ],
+                  onSelected: (_) {},
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(PokrovDesktopSidebar.iconRailKey), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(PokrovDesktopSidebar.iconRailKey)).width,
+      72,
+    );
+  });
 }
 
 class _MotionDurationProbe extends StatelessWidget {

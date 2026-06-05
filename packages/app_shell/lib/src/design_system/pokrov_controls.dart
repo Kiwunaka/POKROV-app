@@ -338,3 +338,57 @@ class _PokrovSettingsRowPressSurfaceState
     );
   }
 }
+
+enum PokrovStatusTone {
+  accent,
+  muted,
+  neutral,
+  reward,
+}
+
+class PokrovStatusPill extends StatelessWidget {
+  const PokrovStatusPill({
+    required this.label,
+    required this.icon,
+    this.tone = PokrovStatusTone.neutral,
+    super.key,
+  });
+
+  final String label;
+  final IconData icon;
+  final PokrovStatusTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final background = switch (tone) {
+      PokrovStatusTone.accent => PokrovPalette.accent.withValues(alpha: 0.12),
+      PokrovStatusTone.muted =>
+        PokrovPalette.surfaceMuted.withValues(alpha: 0.92),
+      PokrovStatusTone.neutral => Colors.white.withValues(alpha: 0.86),
+      PokrovStatusTone.reward => const Color(0xFFFFF3CF),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: PokrovPalette.line),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: PokrovPalette.accent),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: PokrovPalette.ink,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}

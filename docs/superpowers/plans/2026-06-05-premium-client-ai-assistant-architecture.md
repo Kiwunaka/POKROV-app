@@ -42,8 +42,8 @@
 - [x] Extract skeleton primitives into internal widgets with stable key and geometry contract tests.
 - [x] Extract rows/chips and status transitions into internal widgets.
 - [x] Add contract tests for remaining stable keys, reduced-motion behavior, and no layout-shift geometry.
-- [ ] Extract desktop sidebar behavior into a dedicated shell module with width/label-opacity/focus tests.
-- [ ] Keep Home/Locations/Rules/Account behavior unchanged while reducing `app_shell.dart` responsibility.
+- [x] Extract desktop sidebar behavior into a dedicated shell module with width/label-opacity/focus tests.
+- [x] Keep Home/Locations/Rules/Account behavior unchanged while reducing `app_shell.dart` responsibility.
 
 ## Phase 2: Connect Ritual And Performance Guardrails
 
