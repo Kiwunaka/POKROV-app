@@ -15,6 +15,7 @@ import 'package:pokrov_support_context/support_context.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app_first_runtime_bootstrap.dart';
+import 'src/assistant/pokrov_ai_assistant.dart';
 import 'src/design_system/design_system.dart';
 export 'app_first_runtime_bootstrap.dart';
 part 'app_shell_ui_helpers.dart';
@@ -6342,6 +6343,15 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
     unawaited(_refreshActiveThread());
   }
 
+  void _applyAssistantSuggestion(PokrovAssistantSuggestion suggestion) {
+    setState(() {
+      _composer.text = suggestion.prompt;
+      _composer.selection = TextSelection.collapsed(
+        offset: _composer.text.length,
+      );
+    });
+  }
+
   Future<void> _sendMessage() async {
     final text = _composer.text.trim();
     if (text.isEmpty || _sending || _loadingThread) {
@@ -6650,6 +6660,15 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (!_loadingThread)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _SupportAssistantSuggestions(
+                        suggestions:
+                            PokrovAssistantContract.defaultSupportSuggestions,
+                        onSelected: _applyAssistantSuggestion,
+                      ),
+                    ),
                   if (_attachDiagnosticsToNextMessage)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
@@ -6774,6 +6793,43 @@ class _SupportDiagnosticsQueuedPill extends StatelessWidget {
                 color: _SeedPalette.muted,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SupportAssistantSuggestions extends StatelessWidget {
+  const _SupportAssistantSuggestions({
+    required this.suggestions,
+    required this.onSelected,
+  });
+
+  final List<PokrovAssistantSuggestion> suggestions;
+  final ValueChanged<PokrovAssistantSuggestion> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SingleChildScrollView(
+        key: const ValueKey('support-assistant-suggestions'),
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final suggestion in suggestions) ...[
+              ActionChip(
+                key: ValueKey(suggestion.key),
+                avatar: const Icon(Icons.auto_awesome_rounded, size: 16),
+                label: Text(suggestion.title),
+                visualDensity: VisualDensity.compact,
+                side: BorderSide(color: _SeedPalette.line),
+                backgroundColor: _SeedPalette.surface,
+                onPressed: () => onSelected(suggestion),
+              ),
+              const SizedBox(width: 8),
+            ],
           ],
         ),
       ),

@@ -54,11 +54,11 @@
 
 ## Phase 3: In-App AI Assistant Contract
 
-- [ ] Define app-facing assistant contract as support-scoped, not a fifth top-level tab.
-- [ ] Add client models for assistant session, message, suggestion, diagnostic attachment, escalation, and safe action confirmation.
-- [ ] Add backend API plan for assistant sessions/messages/stream/status/escalate/actions if existing ticket APIs are not enough.
-- [ ] Add redaction and prompt-safety rules: no raw config, no keys, no hidden topology, no autonomous destructive actions.
-- [ ] Integrate AI helper inside Support chat and optional command/help entry points.
+- [x] Define app-facing assistant contract as support-scoped, not a fifth top-level tab.
+- [x] Add client models for assistant session, message, suggestion, diagnostic attachment, escalation, and safe action confirmation.
+- [x] Add backend API plan for assistant sessions/messages/stream/status/escalate/actions if existing ticket APIs are not enough.
+- [x] Add redaction and prompt-safety rules: no raw config, no keys, no hidden topology, no autonomous destructive actions.
+- [x] Integrate support-scoped AI helper suggestions inside Support chat; live endpoint wiring remains a backend implementation slice.
 
 ## Phase 4: WARP Working-Feature Hardening
 

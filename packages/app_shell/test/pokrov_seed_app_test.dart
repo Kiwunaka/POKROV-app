@@ -2111,6 +2111,58 @@ void main() {
     expect(find.text('Still broken'), findsOneWidget);
   });
 
+  testWidgets('support chat keeps AI helper scoped to support suggestions',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final supportTicketService = _FakeSupportTicketService(
+      const SupportTicketReceipt(
+        ticketId: 901,
+        statusTitle: 'Open',
+        messageCount: 1,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        supportTicketService: supportTicketService,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await tester.tap(find.byKey(const ValueKey('desktop-sidebar-hamburger')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.person_outline).last);
+    await tester.pumpAndSettle();
+
+    final support = find.byKey(const ValueKey('profile-section-support'));
+    await tester.dragUntilVisible(
+      support,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(support);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('support-chat-screen')), findsOneWidget);
+    expect(find.byKey(const ValueKey('support-assistant-suggestions')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('nav-ai-assistant')), findsNothing);
+
+    await tester.tap(
+      find.byKey(const ValueKey('support-ai-suggestion-connectivity')),
+    );
+    await tester.pumpAndSettle();
+
+    final composer = tester.widget<TextField>(
+      find.byKey(const ValueKey('support-chat-composer')),
+    );
+    expect(composer.controller?.text, contains('Не подключается'));
+  });
+
   testWidgets('support chat polls active ticket and shows operator reply',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(760, 800));
