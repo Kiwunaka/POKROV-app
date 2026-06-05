@@ -19,6 +19,10 @@ Latest documented repo-level gate note:
 - the `2026-06-05` Phase 6 handoff refreshes `1.0.0-beta` Android APK,
   Windows unsigned setup/ZIP/manifest, GitHub prerelease upload, and handoff
   metadata
+- the later `2026-06-05` Android toolchain refresh upgrades the Android host
+  lane to Gradle `8.11.1`, Android Gradle Plugin `8.9.1`, and Kotlin
+  `2.1.0`, then re-verifies Android analyze/test/APK/AAB without the older
+  Flutter Gradle/AGP/Kotlin future-support warnings
 - owner decision on `2026-06-04`: current outside-store beta release is
   allowed without production Android signing and without trusted Windows
   signing; this does not authorize store/trusted/stable claims
@@ -83,6 +87,20 @@ Already verified locally by the current engineering lane:
   - public-beta external-access preflight passes publication policy and runtime
     checks, but remains `BLOCKED_BY_ACCESS` for missing `EMAIL_PROBE_TO` and
     `LAVATOP_PROBE_EMAIL` live probe env
+- `2026-06-05` Android toolchain refresh local verification:
+  - Android host versions: Gradle `8.11.1`, Android Gradle Plugin `8.9.1`,
+    Kotlin `2.1.0`
+  - `flutter analyze` in `apps/android_shell`: no issues found
+  - `flutter test` in `apps/android_shell`: `4 passed`
+  - `gradlew testDebugUnitTest --no-daemon` in
+    `apps/android_shell/android`: pass
+  - `flutter build apk --release`: pass; built
+    `apps/android_shell/build/app/outputs/flutter-apk/app-release.apk`
+  - `flutter build appbundle --release`: pass; built
+    `apps/android_shell/build/app/outputs/bundle/release/app-release.aab`
+  - this closes the recorded Android build-tool future-support warning; it is
+    not raw Android physical-device audit proof, store readiness, or production
+    signing evidence
 
 ## Public Android+Windows Blockers
 
@@ -120,9 +138,10 @@ These items no longer block the already-approved outside-store beta when they re
   the current `0.2.0-beta.1` outside-store beta, with explicit beta/unsigned
   copy required
 - keep Android APK runtime/public download tied to the verified runtime APP_* sync and live download smoke from the current evidence pack; re-run before changing artifacts or URLs
-- upgrade Gradle, Android Gradle Plugin, and Kotlin before stronger Android
-  release/toolchain claims; the `2026-06-03` debug APK smoke passed but emitted
-  Flutter deprecation warnings for the current versions
+- Android build-tool future-support warnings are closed as of the `2026-06-05`
+  toolchain refresh; keep later Gradle, Android Gradle Plugin, and Kotlin
+  upgrades as normal maintenance, without expanding raw-device, store, or
+  signing claims
 - keep Windows unsigned bundles gated and beta-labeled, with explicit SmartScreen or unknown-publisher warning text
 - keep runtime download handoff aligned with the currently exposed public targets: Android `Play` / `APK` / mirror and Windows `EXE` / mirror
 - keep `AAB`, `MSIX`, and portable `ZIP` aligned as store/operator artifacts unless the public payload expands

@@ -21,7 +21,7 @@ Historical mapping note:
 - Apple release state: `checked-in unsigned service lane`
 - Android release state: `operator-attested outside-store beta APK refreshed for 1.0.0-beta; live install/app-session smoke remains manual`
 - Windows release state: `unsigned outside-store beta setup EXE refreshed for 1.0.0-beta; live install/app-session smoke remains manual`
-- Android and Windows engineering verification: `2026-05-15 beta evidence retained; 2026-06-03 local Task 8 verification passed for app-first backend tests, Flutter analyze/test, Android debug APK smoke, and Windows release build; 2026-06-04 local RC built Android release-smoke APK/AAB and unsigned Windows setup/zip/manifest; 2026-06-05 local 1.0.0-beta P6 refreshed focused Flutter tests/analyze, root preflight, Android release APK, Windows unsigned setup/zip/manifest, and GitHub prerelease assets`
+- Android and Windows engineering verification: `2026-05-15 beta evidence retained; 2026-06-03 local Task 8 verification passed for app-first backend tests, Flutter analyze/test, Android debug APK smoke, and Windows release build; 2026-06-04 local RC built Android release-smoke APK/AAB and unsigned Windows setup/zip/manifest; 2026-06-05 local 1.0.0-beta P6 refreshed focused Flutter tests/analyze, root preflight, Android release APK, Windows unsigned setup/zip/manifest, and GitHub prerelease assets; 2026-06-05 Android toolchain refresh moved the host lane to Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0 with Android analyze/test/APK/AAB green`
 - public store readiness: `not approved`
 - public cutover approval: `outside-store beta only`
 - public Android release approval: `outside-store beta with operator attestation`
@@ -41,8 +41,9 @@ This document tracks public release approval and cutover readiness, not whether 
 Status: `DONE` for `1.0.0-beta+20260605-p6`; refreshed local engineering
 artifacts are built from commit `c03ded35ea2dbb3e64377302d2744e640a802540`.
 
-- Android release APK is built. The AAB remains a retained 2026-06-04
-  store-smoke artifact until store/operator packaging is requested again.
+- Android release APK is built. A fresh 2026-06-05 AAB store-smoke artifact
+  also builds locally, but store/operator packaging still requires a separate
+  owner request and signing/release review.
 - Windows unsigned setup EXE, portable ZIP, and manifest are built.
 - `SHA256SUMS.txt` is retained in the local `.tmp/release-assets-1.0.0-beta/`
   staging folder; stable handoff metadata is retained at
@@ -162,7 +163,8 @@ Status: `PENDING`.
     pass; built
     `apps/android_shell/build/app/outputs/bundle/release/app-release.aab`
   - Android Gradle, Android Gradle Plugin, and Kotlin future-support warnings
-    remain toolchain follow-up work
+    were still toolchain follow-up work in this RC snapshot; see the later
+    `2026-06-05` Android toolchain refresh below
 - Windows packaging:
   - `scripts/build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze`:
     pass; rebuilt unsigned beta setup EXE, portable ZIP, and manifest
@@ -271,6 +273,26 @@ readiness, or RU-origin readiness.
 This is backend/client contract evidence only. It is not Android physical
 release-build WARP proof, Windows release-build WARP proof, provider-side WARP
 rotation proof, or production WARP readiness.
+
+`2026-06-05` Android toolchain refresh:
+
+- Android host versions:
+  - Gradle wrapper distribution: `8.11.1`
+  - Android Gradle Plugin: `8.9.1`
+  - Kotlin Android plugin: `2.1.0`
+- Local verification:
+  - `flutter analyze` in `apps/android_shell`: no issues found
+  - `flutter test` in `apps/android_shell`: `4 passed`
+  - `gradlew testDebugUnitTest --no-daemon` in
+    `apps/android_shell/android`: pass
+  - `flutter build apk --release`: pass; rebuilt
+    `apps/android_shell/build/app/outputs/flutter-apk/app-release.apk`
+  - `flutter build appbundle --release`: pass; rebuilt
+    `apps/android_shell/build/app/outputs/bundle/release/app-release.aab`
+- This closes the prior Flutter Gradle/AGP/Kotlin future-support warning for
+  the Android host lane. It does not prove Android physical release-build WARP,
+  raw Android device audit, Play/store readiness, production signing, or
+  RU-origin readiness.
 
 ## Android Gate Checklist
 
