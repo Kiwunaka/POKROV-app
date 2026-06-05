@@ -2894,6 +2894,7 @@ class _HomeStageState extends State<_HomeStage>
               enabled: widget.actionEnabled,
               running: widget.running,
               degraded: widget.degraded,
+              error: widget.recoveryNotice != null,
               busy: widget.busy,
               onPressed: widget.actionEnabled ? widget.onToggleRuntime : null,
             ),
@@ -6866,7 +6867,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
 
   Map<String, Object?> _supportDiagnostics() {
     return <String, Object?>{
-      'app_version': '0.2.0-beta.1',
+      'app_version': '1.0.0-beta',
       'platform': widget.appContext.hostPlatform.name,
       'route_mode': widget.selectedRouteMode.name,
       'connection_status': widget.statusLabel,
@@ -6949,7 +6950,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                 ),
                 _KeyValueLine(
                   label: 'Версия',
-                  value: '0.2.0-beta.1',
+                  value: '1.0.0-beta',
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -7760,6 +7761,7 @@ class _ConnectOrbButton extends StatefulWidget {
     required this.enabled,
     required this.running,
     required this.degraded,
+    required this.error,
     required this.busy,
     required this.onPressed,
   });
@@ -7768,6 +7770,7 @@ class _ConnectOrbButton extends StatefulWidget {
   final bool enabled;
   final bool running;
   final bool degraded;
+  final bool error;
   final bool busy;
   final VoidCallback? onPressed;
 
@@ -7806,6 +7809,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     if (oldWidget.enabled != widget.enabled ||
         oldWidget.running != widget.running ||
         oldWidget.degraded != widget.degraded ||
+        oldWidget.error != widget.error ||
         oldWidget.busy != widget.busy) {
       _breathController.reset();
       _sweepController.reset();
@@ -7850,7 +7854,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
   @override
   Widget build(BuildContext context) {
     final motion = _MotionScope.of(context);
-    final accent = widget.degraded
+    final accent = (widget.degraded || widget.error)
         ? const Color(0xFFB5673A)
         : widget.running
             ? _SeedPalette.accentBright
@@ -7865,7 +7869,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     final labelColor = widget.enabled ? _SeedPalette.ink : _SeedPalette.muted;
     final markOpacity = !widget.enabled
         ? 0.34
-        : widget.degraded
+        : (widget.degraded || widget.error)
             ? 0.62
             : widget.busy
                 ? 0.72
@@ -7947,7 +7951,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                                 accent: accent,
                                 enabled: widget.enabled,
                                 running: widget.running,
-                                degraded: widget.degraded,
+                                degraded: widget.degraded || widget.error,
                                 busy: widget.busy,
                                 disableAnimations: disableAnimations,
                                 breathValue: _breathController.value,
@@ -7955,6 +7959,15 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                               ),
                             );
                           },
+                        ),
+                        _ConnectSettleLayer(
+                          diameter: diameter,
+                          accent: accent,
+                          running: widget.running,
+                          degraded: widget.degraded,
+                          error: widget.error,
+                          busy: widget.busy,
+                          disableAnimations: disableAnimations,
                         ),
                         DecoratedBox(
                           decoration: BoxDecoration(
@@ -7998,6 +8011,110 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ConnectSettleLayer extends StatelessWidget {
+  const _ConnectSettleLayer({
+    required this.diameter,
+    required this.accent,
+    required this.running,
+    required this.degraded,
+    required this.error,
+    required this.busy,
+    required this.disableAnimations,
+  });
+
+  final double diameter;
+  final Color accent;
+  final bool running;
+  final bool degraded;
+  final bool error;
+  final bool busy;
+  final bool disableAnimations;
+
+  @override
+  Widget build(BuildContext context) {
+    final motion = _MotionScope.of(context);
+    final isError = error || (degraded && !running);
+    final stateKey = busy
+        ? 'connect-disc-busy-settle'
+        : isError
+            ? 'connect-disc-error-settle'
+            : running
+                ? 'connect-disc-connected-settle'
+                : 'connect-disc-idle-settle';
+    final isActive = busy || running || isError;
+    final settleColor = isError ? _SeedPalette.warning : accent;
+    final inset = busy
+        ? 16.0
+        : isError
+            ? 13.0
+            : running
+                ? 12.0
+                : 20.0;
+    final opacity = busy
+        ? 0.18
+        : isError
+            ? 0.22
+            : running
+                ? 0.20
+                : 0.0;
+
+    return IgnorePointer(
+      key: const ValueKey('connect-disc-settle-layer'),
+      child: AnimatedSwitcher(
+        duration: motion.duration(_MotionTokens.standard),
+        switchInCurve: _MotionTokens.ease,
+        switchOutCurve: _MotionTokens.ease,
+        transitionBuilder: (child, animation) {
+          if (disableAnimations) {
+            return FadeTransition(opacity: animation, child: child);
+          }
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: _MotionTokens.ease,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.982, end: 1).animate(curved),
+              child: child,
+            ),
+          );
+        },
+        child: SizedBox.square(
+          key: ValueKey(stateKey),
+          dimension: diameter,
+          child: AnimatedOpacity(
+            duration: motion.duration(_MotionTokens.short),
+            opacity: isActive ? 1 : 0,
+            curve: _MotionTokens.ease,
+            child: Padding(
+              padding: EdgeInsets.all(inset),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: settleColor.withValues(alpha: opacity),
+                  border: Border.all(
+                    color: settleColor.withValues(
+                      alpha: isError ? 0.28 : 0.18,
+                    ),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: settleColor.withValues(alpha: opacity * 0.7),
+                      blurRadius: isError ? 18 : 24,
+                      spreadRadius: isError ? 1 : 2,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

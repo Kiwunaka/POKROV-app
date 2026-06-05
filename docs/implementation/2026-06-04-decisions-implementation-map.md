@@ -73,6 +73,9 @@ The current code slice is:
     settings rows have tactile press feedback, and the desktop sidebar animates
     label opacity/width while the responsive matrix covers `360`, `700`,
     `900`, `1024`, `1180`, and `1440` widths.
+13. P5 connect motion now has tested idle, connected, and error settle layers,
+    and WARP operator visibility includes redacted runtime state/reason/event
+    summary data in the platform admin dashboard.
 
 This slice is P0/P1 bridge work because the master brief needs bonus/account
 clarity before a richer Rewards Hub can safely exist.
@@ -147,7 +150,7 @@ states.
 | Support realtime lifecycle | Done for polling lifecycle, partial for SSE | embedded ticket-backed support chat, explicit diagnostic attachment, active-ticket polling, operator-reply hints, closed/offline lifecycle hints, and manual refresh action exist; the app updates messages/status from `GET /api/tickets/{id}` while the screen is open | add SSE or tuned polling cadence only after real operator workflow proof; do not fake typing, read receipts, or operator presence |
 | Native email linking and recovery | Evidence-gated handoff for P4 beta | email/recovery handoff and cabinet continuation exist through short-lived sessions; native password/token forms remain out of app while delivery/account-linking readiness is operator-gated | implement native forms only after delivery readiness, recovery UX, and account-link semantics stay green |
 | Detailed account and cabinet management | Done for P4 beta entrypoints | app opens cabinet through short-lived token, shows compact access/account summary, and has a details sheet for access/device/mode/cabinet/downloads/email | deeper cabinet management remains webapp-first |
-| WARP as a working feature | Started as guarded policy/runtime/consent bridge | Home can show an honest disabled/upcoming WARP tile; public `client_policy.warp_policy` is sanitized; authenticated managed profiles may carry runtime-ready WARP material; client bootstrap parses `warp_policy`; the Home tile can request explicit user consent only for runtime-ready policy; desktop runtime maps WARP into Hiddify options only when policy is ready and consented, while incomplete or non-consented policy stays disabled | add live WARP provisioning, safe storage/rotation, fallback diagnostics, Android proof, Windows proof, and reconnect/recovery UX before claiming WARP as working |
+| WARP as a working feature | Done for guarded beta contract, proof-gated for production claim | Home can show an honest disabled/upcoming WARP tile; public `client_policy.warp_policy` is sanitized; authenticated managed profiles may carry runtime-ready WARP material; client bootstrap parses `warp_policy`; the Home tile can request explicit user consent only for runtime-ready policy; desktop runtime maps WARP into Hiddify options only when policy is ready and consented, while incomplete or non-consented policy stays disabled; runtime fallback events are reported to the backend and the admin dashboard has a redacted WARP lifecycle summary | provider-side automation/rotation proof, Android release-build proof, Windows release-build proof, and reconnect/recovery smoke remain required before claiming production WARP |
 | Responsive/golden width verification | Done for widget matrix, visual screenshots still manual | widget tests cover `360`, `700`, `900`, `1024`, `1180`, and `1440` shell behavior, Home WARP tile, primary connect action, mobile bottom navigation, desktop icon rail, and expanded sidebar | keep screenshot/golden capture as release polish when visual baselines are approved |
 | Premium motion pass | Done for P4 beta foundation | connect ritual, status switcher, geometry-matched skeletons, row/chip tactile feedback, muted disabled rewards, sidebar label opacity/width transition, and reduced-motion hooks are covered by code/tests | continue P5 taste polish without changing product claims |
 
@@ -158,8 +161,8 @@ platform-native without pretending that disabled features are live.
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Connect disc ritual | Partial foundation | brand-marked connect disc exists | add press scale, finite ring sweep, connected settle, and error settle using transform/opacity and reduced-motion fallback |
-| Status transitions | Not started as a dedicated pass | connection statuses render in the shell | add `160-220ms` crossfade/slide transitions without leaving stale status text in the tree |
+| Connect disc ritual | Done for P5 beta | brand-marked connect disc has tactile press scale, finite busy sweep, connected settle, error settle, and reduced-motion-compatible transform/opacity layers covered by widget tests | tune exact timing on physical Android/Windows builds after visual QA |
+| Status transitions | Done for P5 beta foundation | Home status label and connect label use short crossfade/slide switchers without layout churn | tune copy and timing after tester feedback |
 | Row and chip tactile feedback | Done for P4 rows/chips | Home chips and settings rows have transform/opacity tactile feedback without layout-property animation; selected-app add uses restrained haptic feedback | extend only where new interactive rows appear |
 | Geometry-matched skeletons | Partial | motion skeleton components exist | ensure skeleton dimensions match final rows/cards/chips so lazy loading causes no layout shift |
 | Disabled feature states | Done for P4 beta | WARP stays honest/gated; wheel and calendar disabled states render as muted non-CTA rows with short status instead of disabled buttons | keep active affordances tied to backend summary state |

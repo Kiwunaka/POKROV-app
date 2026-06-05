@@ -21,7 +21,7 @@ Historical mapping note:
 - Apple release state: `checked-in unsigned service lane`
 - Android release state: `operator-attested outside-store beta artifact, runtime handoff green for 2026-05-15 beta`
 - Windows release state: `unsigned outside-store beta artifact, runtime handoff green for 2026-05-15 beta`
-- Android and Windows engineering verification: `2026-05-15 beta evidence retained; 2026-06-03 local Task 8 verification passed for app-first backend tests, Flutter analyze/test, Android debug APK smoke, and Windows release build; 2026-06-04 local RC built Android release-smoke APK/AAB and unsigned Windows setup/zip/manifest`
+- Android and Windows engineering verification: `2026-05-15 beta evidence retained; 2026-06-03 local Task 8 verification passed for app-first backend tests, Flutter analyze/test, Android debug APK smoke, and Windows release build; 2026-06-04 local RC built Android release-smoke APK/AAB and unsigned Windows setup/zip/manifest; 2026-06-05 local 1.0.0-beta build refreshed Android APK and unsigned Windows setup/zip/manifest after P5/WARP pass`
 - public store readiness: `not approved`
 - public cutover approval: `outside-store beta only`
 - public Android release approval: `outside-store beta with operator attestation`
@@ -38,7 +38,8 @@ This document tracks public release approval and cutover readiness, not whether 
 
 ### Stage 0: local exact-candidate package
 
-Status: `DONE` for `0.2.0-beta.1+20260604-rc-local`.
+Status: `DONE` for `0.2.0-beta.1+20260604-rc-local`; refreshed local
+engineering artifacts are now built from the `1.0.0-beta` version line.
 
 - Android release-smoke APK and AAB are built.
 - Windows unsigned setup EXE, portable ZIP, and manifest are built.
@@ -204,8 +205,35 @@ production WARP proof.
   - `packages/app_shell/test/app_first_runtime_bootstrap_test.dart`:
     `27 passed`
   - `packages/app_shell/test/pokrov_seed_app_test.dart`: `51 passed`
-  - covers backend-backed WARP status/consent/event wiring and immediate local
-    enabled-state clearing on revoke
+  - covers backend-backed WARP status/consent/event wiring, immediate local
+    enabled-state clearing on revoke, and P5 connect-disc idle/connected/error
+    settle states
+
+`2026-06-05` WARP runtime/admin telemetry local verification:
+
+- root focused tests cover redacted WARP runtime state/reason/event headers in
+  `GET /api/admin/client/warp/summary`
+- webapp static smoke covers admin dashboard wiring for the redacted WARP
+  summary card/queue entry
+
+`2026-06-05` local `1.0.0-beta` artifact refresh after P5/WARP pass:
+
+- Android release APK:
+  `apps/android_shell/build/app/outputs/flutter-apk/app-release.apk`
+- Windows release EXE:
+  `apps/windows_shell/build/windows/x64/runner/Release/pokrov_windows_beta.exe`
+- Windows unsigned beta bundle:
+  `apps/windows_shell/build/release_bundle/pokrov-windows-beta-x64-1.0.0-beta/`
+- Windows unsigned beta ZIP:
+  `apps/windows_shell/build/release_bundle/pokrov-windows-beta-x64-1.0.0-beta.zip`
+- Windows unsigned beta setup EXE:
+  `apps/windows_shell/build/release_bundle/pokrov-windows-beta-x64-1.0.0-beta-setup.exe`
+- Windows manifest:
+  `apps/windows_shell/build/release_bundle/pokrov-windows-beta-x64-1.0.0-beta.manifest.json`
+
+This refresh still does not prove Android physical release-build WARP,
+Windows release-build WARP, production WARP, trusted Windows signing, store
+readiness, or RU-origin readiness.
 
 This is backend/client contract evidence only. It is not Android physical
 release-build WARP proof, Windows release-build WARP proof, provider-side WARP

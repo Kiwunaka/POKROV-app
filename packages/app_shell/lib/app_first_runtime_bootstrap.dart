@@ -692,7 +692,7 @@ class AppFirstRuntimeBootstrapper
   final List<String> Function(String tag)? _allExceptRuRuleSetUrlsResolver;
   final SmartConnectLatencyProbe? smartConnectLatencyProbe;
 
-  static const _appVersion = '0.2.0-beta.1';
+  static const _appVersion = '1.0.0-beta';
   static const _defaultManagedManifestPath = '/api/client/profile/managed';
   static const _androidShellPackageName = 'space.pokrov.pokrov_android_shell';
   static const _allExceptRuRuleSetCacheDirectoryName =

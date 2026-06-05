@@ -82,6 +82,10 @@ Latest local packaging note:
   for the current outside-store beta, but trusted signing, SmartScreen
   reputation, Microsoft Store, WinGet, and broad stable-distribution claims are
   still not allowed.
+- `2026-06-05`: `scripts/build-windows-release.ps1 -SyncRuntime -SkipTests
+  -SkipAnalyze` succeeded after the P5/WARP pass and produced local
+  `1.0.0-beta` unsigned artifacts under
+  `apps/windows_shell/build/release_bundle/pokrov-windows-beta-x64-1.0.0-beta*`.
 
 ## Safe Claims
 

@@ -42,7 +42,7 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - `xray` role: advanced compatibility fallback only
 - free trial: `5 days`
 - Telegram reward: `+10 days`
-- public user-facing version line: current paid beta evidence uses `0.2.0-beta.1`, preserving the `0.x.x-beta` train
+- public user-facing version line: current paid beta evidence uses `1.0.0-beta`; this is still a beta label, not a stable `1.0.0` claim
 - recommended public routing mode: `All except RU`
 - public routing mode set: `All except RU` and `Full tunnel`
 - public recovery order: `POKROV app -> web cabinet -> Telegram fallback`

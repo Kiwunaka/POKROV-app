@@ -36,7 +36,7 @@ Current client-doc scope:
 
 - living client contract and release-readiness docs for `POKROV-app/main`
 - public `v1` scope: `Android + Windows`
-- current paid beta evidence line: `0.2.0-beta.1`
+- current paid beta evidence line: `1.0.0-beta`
 - Android status: `outside-store APK staged / public runtime blocked`
 - Windows status: `gated unsigned beta with required SmartScreen or unknown-publisher warning`
 - `iOS` and `macOS`: readiness, packaging, and signing-preparation only in this wave

@@ -1858,6 +1858,8 @@ void main() {
 
     expect(find.byKey(const ValueKey('pokrov-brand-mark')), findsWidgets);
     expect(find.byKey(const ValueKey('connect-disc-motion')), findsOneWidget);
+    expect(find.byKey(const ValueKey('connect-disc-settle-layer')),
+        findsOneWidget);
     expect(find.byKey(const ValueKey('connect-disc-label')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-status-switcher')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-chip-motion')), findsWidgets);
@@ -2737,6 +2739,8 @@ void main() {
     await tester.tap(connectAction);
     await tester.pumpAndSettle();
 
+    expect(find.byKey(const ValueKey('connect-disc-connected-settle')),
+        findsOneWidget);
     expect(
       calls,
       containsAllInOrder(const [
@@ -2802,6 +2806,10 @@ void main() {
     await tester.tap(connectAction);
     await tester.pumpAndSettle();
 
+    expect(
+      find.byKey(const ValueKey('connect-disc-error-settle')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey('motion-recovery-banner')),
       findsOneWidget,

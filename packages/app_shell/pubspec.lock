@@ -198,28 +198,28 @@ packages:
       path: "../core_domain"
       relative: true
     source: path
-    version: "0.2.0-beta.1"
+    version: "1.0.0-beta"
   pokrov_platform_contracts:
     dependency: "direct main"
     description:
       path: "../platform_contracts"
       relative: true
     source: path
-    version: "0.2.0-beta.1"
+    version: "1.0.0-beta"
   pokrov_runtime_engine:
     dependency: "direct main"
     description:
       path: "../runtime_engine"
       relative: true
     source: path
-    version: "0.2.0-beta.1"
+    version: "1.0.0-beta"
   pokrov_support_context:
     dependency: "direct main"
     description:
       path: "../support_context"
       relative: true
     source: path
-    version: "0.2.0-beta.1"
+    version: "1.0.0-beta"
   sky_engine:
     dependency: transitive
     description: flutter
