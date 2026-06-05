@@ -7375,11 +7375,11 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     super.initState();
     _breathController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: PokrovConnectDiscMotion.breathDuration,
     );
     _sweepController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1250),
+      duration: PokrovConnectDiscMotion.sweepDuration,
     );
   }
 
@@ -7449,6 +7449,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
   @override
   Widget build(BuildContext context) {
     final motion = _MotionScope.of(context);
+    final state = _discState;
     final accent = (widget.degraded || widget.error)
         ? const Color(0xFFB5673A)
         : widget.running
@@ -7506,11 +7507,13 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                     final breath = disableAnimations
                         ? 0.0
                         : Curves.easeInOut.transform(_breathController.value);
-                    final busyScale = widget.busy ? 0.985 : 1.0;
-                    final breathScale =
-                        widget.busy ? 1.0 : 1.0 + breath * 0.014;
                     return Transform.scale(
-                      scale: (_pressed ? 0.97 : 1.0) * busyScale * breathScale,
+                      scale: PokrovConnectDiscMotion.scale(
+                        pressed: _pressed,
+                        runsSweep: state.runsSweep,
+                        breathValue: breath,
+                        disableAnimations: disableAnimations,
+                      ),
                       child: child,
                     );
                   },
@@ -7547,7 +7550,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                                 enabled: widget.enabled,
                                 running: widget.running,
                                 degraded: widget.degraded || widget.error,
-                                busy: widget.busy,
+                                busy: state.runsSweep,
                                 disableAnimations: disableAnimations,
                                 breathValue: _breathController.value,
                                 sweepValue: _sweepController.value,
@@ -7666,7 +7669,10 @@ class _ConnectSettleLayer extends StatelessWidget {
           return FadeTransition(
             opacity: curved,
             child: ScaleTransition(
-              scale: Tween<double>(begin: 0.982, end: 1).animate(curved),
+              scale: Tween<double>(
+                begin: PokrovConnectDiscMotion.settleScaleBegin,
+                end: 1,
+              ).animate(curved),
               child: child,
             ),
           );
@@ -7754,9 +7760,17 @@ class _ConnectDiscRimPainter extends CustomPainter {
         ..strokeWidth = 4
         ..color = accent.withValues(alpha: disableAnimations ? 0.42 : 0.74);
       final rect = Rect.fromCircle(center: center, radius: radius);
-      final startAngle =
-          disableAnimations ? -math.pi / 2 : sweepValue * math.pi * 2;
-      canvas.drawArc(rect, startAngle, math.pi * 0.86, false, sweepPaint);
+      final startAngle = PokrovConnectDiscMotion.sweepStartAngle(
+        disableAnimations: disableAnimations,
+        sweepValue: sweepValue,
+      );
+      canvas.drawArc(
+        rect,
+        startAngle,
+        PokrovConnectDiscMotion.busySweepArcRadians,
+        false,
+        sweepPaint,
+      );
     } else if (degraded && enabled) {
       final warningPaint = Paint()
         ..isAntiAlias = true
@@ -7772,7 +7786,13 @@ class _ConnectDiscRimPainter extends CustomPainter {
         ..strokeWidth = 4
         ..color = accent.withValues(alpha: 0.56);
       final rect = Rect.fromCircle(center: center, radius: radius);
-      canvas.drawArc(rect, -math.pi * 0.62, math.pi * 1.24, false, activePaint);
+      canvas.drawArc(
+        rect,
+        PokrovConnectDiscMotion.connectedArcStartAngle,
+        PokrovConnectDiscMotion.connectedArcSweepRadians,
+        false,
+        activePaint,
+      );
     }
   }
 

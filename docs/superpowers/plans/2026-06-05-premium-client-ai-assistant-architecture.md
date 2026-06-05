@@ -48,7 +48,7 @@
 ## Phase 2: Connect Ritual And Performance Guardrails
 
 - [x] Isolate connect-disc state machine: idle, preparing, connecting, connected, disconnecting, reconnecting, error.
-- [ ] Add tests for finite sweep, press scale, connected settle, error settle, and reduced-motion fallback.
+- [x] Add tests for finite sweep, press scale, connected settle, error settle, and reduced-motion fallback.
 - [x] Wrap expensive animated regions in `RepaintBoundary`.
 - [x] Add a local performance checklist for Windows and Android visual QA.
 

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/src/design_system/design_system.dart';
@@ -123,6 +125,69 @@ void main() {
     );
     expect(disconnecting.runsSweep, isTrue);
     expect(disconnecting.settleKey, const ValueKey('connect-disc-busy-settle'));
+  });
+
+  test('connect disc motion keeps finite sweep and tactile scale contract', () {
+    expect(
+      PokrovConnectDiscMotion.breathDuration,
+      const Duration(milliseconds: 900),
+    );
+    expect(
+      PokrovConnectDiscMotion.sweepDuration,
+      const Duration(milliseconds: 1250),
+    );
+    expect(PokrovConnectDiscMotion.pressScale, 0.97);
+    expect(PokrovConnectDiscMotion.busyScale, 0.985);
+    expect(PokrovConnectDiscMotion.breathAmplitude, 0.014);
+    expect(PokrovConnectDiscMotion.settleScaleBegin, 0.982);
+
+    expect(PokrovConnectDiscMotion.busySweepArcRadians, lessThan(math.pi * 2));
+    expect(
+      PokrovConnectDiscMotion.busySweepArcRadians,
+      closeTo(math.pi * 0.86, 0.0001),
+    );
+    expect(
+      PokrovConnectDiscMotion.sweepStartAngle(
+        disableAnimations: false,
+        sweepValue: 0.25,
+      ),
+      closeTo(math.pi / 2, 0.0001),
+    );
+    expect(
+      PokrovConnectDiscMotion.sweepStartAngle(
+        disableAnimations: true,
+        sweepValue: 0.75,
+      ),
+      closeTo(-math.pi / 2, 0.0001),
+    );
+
+    expect(
+      PokrovConnectDiscMotion.scale(
+        pressed: true,
+        runsSweep: false,
+        breathValue: 1,
+        disableAnimations: false,
+      ),
+      closeTo(0.97 * 1.014, 0.0001),
+    );
+    expect(
+      PokrovConnectDiscMotion.scale(
+        pressed: false,
+        runsSweep: true,
+        breathValue: 1,
+        disableAnimations: false,
+      ),
+      0.985,
+    );
+    expect(
+      PokrovConnectDiscMotion.scale(
+        pressed: false,
+        runsSweep: false,
+        breathValue: 1,
+        disableAnimations: true,
+      ),
+      1,
+    );
   });
 
   testWidgets('brand mark uses the official raster asset contract',
