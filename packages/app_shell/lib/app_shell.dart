@@ -7410,13 +7410,22 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     super.dispose();
   }
 
+  PokrovConnectDiscState get _discState => PokrovConnectDiscState.resolve(
+        enabled: widget.enabled,
+        running: widget.running,
+        degraded: widget.degraded,
+        error: widget.error,
+        busy: widget.busy,
+      );
+
   void _syncControllers() {
     final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ??
         WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
             .disableAnimations;
-    final canAnimate = widget.enabled && !disableAnimations;
+    final state = _discState;
+    final canAnimate = state.enabled && !disableAnimations;
 
-    if (canAnimate && !widget.busy) {
+    if (canAnimate && !state.runsSweep) {
       if (!_breathController.isAnimating &&
           _breathController.status != AnimationStatus.completed) {
         _breathController.forward();
@@ -7426,7 +7435,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
       _breathController.value = 0;
     }
 
-    if (canAnimate && widget.busy) {
+    if (canAnimate && state.runsSweep) {
       if (!_sweepController.isAnimating &&
           _sweepController.status != AnimationStatus.completed) {
         _sweepController.forward(from: 0);
@@ -7549,6 +7558,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                         _ConnectSettleLayer(
                           diameter: diameter,
                           accent: accent,
+                          enabled: widget.enabled,
                           running: widget.running,
                           degraded: widget.degraded,
                           error: widget.error,
@@ -7606,6 +7616,7 @@ class _ConnectSettleLayer extends StatelessWidget {
   const _ConnectSettleLayer({
     required this.diameter,
     required this.accent,
+    required this.enabled,
     required this.running,
     required this.degraded,
     required this.error,
@@ -7615,6 +7626,7 @@ class _ConnectSettleLayer extends StatelessWidget {
 
   final double diameter;
   final Color accent;
+  final bool enabled;
   final bool running;
   final bool degraded;
   final bool error;
@@ -7624,30 +7636,18 @@ class _ConnectSettleLayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final motion = _MotionScope.of(context);
-    final isError = error || (degraded && !running);
-    final stateKey = busy
-        ? 'connect-disc-busy-settle'
-        : isError
-            ? 'connect-disc-error-settle'
-            : running
-                ? 'connect-disc-connected-settle'
-                : 'connect-disc-idle-settle';
-    final isActive = busy || running || isError;
+    final state = PokrovConnectDiscState.resolve(
+      enabled: enabled,
+      running: running,
+      degraded: degraded,
+      error: error,
+      busy: busy,
+    );
+    final isError = state.isError;
+    final isActive = state.isActive;
     final settleColor = isError ? _SeedPalette.warning : accent;
-    final inset = busy
-        ? 16.0
-        : isError
-            ? 13.0
-            : running
-                ? 12.0
-                : 20.0;
-    final opacity = busy
-        ? 0.18
-        : isError
-            ? 0.22
-            : running
-                ? 0.20
-                : 0.0;
+    final inset = state.settleInset;
+    final opacity = state.settleOpacity;
 
     return IgnorePointer(
       key: const ValueKey('connect-disc-settle-layer'),
@@ -7672,7 +7672,7 @@ class _ConnectSettleLayer extends StatelessWidget {
           );
         },
         child: SizedBox.square(
-          key: ValueKey(stateKey),
+          key: state.settleKey,
           dimension: diameter,
           child: AnimatedOpacity(
             duration: motion.duration(_MotionTokens.short),

@@ -47,10 +47,10 @@
 
 ## Phase 2: Connect Ritual And Performance Guardrails
 
-- [ ] Isolate connect-disc state machine: idle, preparing, connecting, connected, disconnecting, reconnecting, error.
+- [x] Isolate connect-disc state machine: idle, preparing, connecting, connected, disconnecting, reconnecting, error.
 - [ ] Add tests for finite sweep, press scale, connected settle, error settle, and reduced-motion fallback.
-- [ ] Wrap expensive animated regions in `RepaintBoundary`.
-- [ ] Add a local performance checklist for Windows and Android visual QA.
+- [x] Wrap expensive animated regions in `RepaintBoundary`.
+- [x] Add a local performance checklist for Windows and Android visual QA.
 
 ## Phase 3: In-App AI Assistant Contract
 

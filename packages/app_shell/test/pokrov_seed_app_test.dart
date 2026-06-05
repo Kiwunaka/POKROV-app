@@ -1810,8 +1810,7 @@ void main() {
 
     expect(bootstrapper.warpConsentCalls, 2);
     expect(bootstrapper.lastWarpConsentEnabled, isFalse);
-    expect(
-        find.byKey(const ValueKey('home-warp-state-enabled')), findsNothing);
+    expect(find.byKey(const ValueKey('home-warp-state-enabled')), findsNothing);
     expect(
         find.byKey(const ValueKey('home-warp-state-disabled')), findsOneWidget);
   });
@@ -1858,6 +1857,13 @@ void main() {
 
     expect(find.byKey(const ValueKey('pokrov-brand-mark')), findsWidgets);
     expect(find.byKey(const ValueKey('connect-disc-motion')), findsOneWidget);
+    expect(
+      find.ancestor(
+        of: find.byKey(const ValueKey('connect-disc-motion')),
+        matching: find.byType(RepaintBoundary),
+      ),
+      findsAtLeastNWidgets(1),
+    );
     expect(find.byKey(const ValueKey('connect-disc-settle-layer')),
         findsOneWidget);
     expect(find.byKey(const ValueKey('connect-disc-label')), findsOneWidget);

@@ -54,6 +54,77 @@ void main() {
     expect(find.text('240'), findsOneWidget);
   });
 
+  test('connect disc state resolves phases and stable settle contracts', () {
+    final idle = PokrovConnectDiscState.resolve(
+      enabled: true,
+      running: false,
+      degraded: false,
+      error: false,
+      busy: false,
+    );
+    expect(idle.phase, PokrovConnectDiscPhase.idle);
+    expect(idle.settleKey, const ValueKey('connect-disc-idle-settle'));
+    expect(idle.runsSweep, isFalse);
+    expect(idle.settleInset, 20);
+    expect(idle.settleOpacity, 0);
+
+    final connecting = PokrovConnectDiscState.resolve(
+      enabled: true,
+      running: false,
+      degraded: false,
+      error: false,
+      busy: true,
+    );
+    expect(connecting.phase, PokrovConnectDiscPhase.connecting);
+    expect(connecting.settleKey, const ValueKey('connect-disc-busy-settle'));
+    expect(connecting.runsSweep, isTrue);
+    expect(connecting.settleInset, 16);
+    expect(connecting.settleOpacity, 0.18);
+
+    final revalidating = PokrovConnectDiscState.resolve(
+      enabled: true,
+      running: true,
+      degraded: false,
+      error: false,
+      busy: true,
+    );
+    expect(revalidating.phase, PokrovConnectDiscPhase.reconnecting);
+    expect(revalidating.settleKey, const ValueKey('connect-disc-busy-settle'));
+
+    final connected = PokrovConnectDiscState.resolve(
+      enabled: true,
+      running: true,
+      degraded: false,
+      error: false,
+      busy: false,
+    );
+    expect(connected.phase, PokrovConnectDiscPhase.connected);
+    expect(
+        connected.settleKey, const ValueKey('connect-disc-connected-settle'));
+    expect(connected.settleInset, 12);
+    expect(connected.settleOpacity, 0.20);
+
+    final degraded = PokrovConnectDiscState.resolve(
+      enabled: true,
+      running: false,
+      degraded: true,
+      error: false,
+      busy: false,
+    );
+    expect(degraded.phase, PokrovConnectDiscPhase.error);
+    expect(degraded.settleKey, const ValueKey('connect-disc-error-settle'));
+    expect(degraded.isError, isTrue);
+    expect(degraded.settleInset, 13);
+    expect(degraded.settleOpacity, 0.22);
+
+    final disconnecting = PokrovConnectDiscState.explicit(
+      enabled: true,
+      phase: PokrovConnectDiscPhase.disconnecting,
+    );
+    expect(disconnecting.runsSweep, isTrue);
+    expect(disconnecting.settleKey, const ValueKey('connect-disc-busy-settle'));
+  });
+
   testWidgets('brand mark uses the official raster asset contract',
       (tester) async {
     await tester.pumpWidget(

@@ -65,6 +65,7 @@ Current anchors:
 - `operations/android-release-audit.md`
 - `operations/windows-release-readiness.md`
 - `operations/cutover-readiness.md`
+- `operations/client-motion-performance-checklist.md`
 - `product/client-public-beta-prd.md`
 - `design/DESIGN.md`
 - `design/2026-06-03-client-premium-shell-v2-brief.md`
