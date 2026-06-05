@@ -489,6 +489,55 @@ Future<void> _tapNav(WidgetTester tester, String key) async {
   await tester.pumpAndSettle();
 }
 
+Future<void> _openEnhancedProtectionFromProfile(WidgetTester tester) async {
+  if (find.byKey(const ValueKey('nav-profile')).evaluate().isEmpty) {
+    final hamburger = find.byKey(const ValueKey('desktop-sidebar-hamburger'));
+    if (hamburger.evaluate().isNotEmpty) {
+      await tester.tap(hamburger);
+      await tester.pumpAndSettle();
+    }
+  }
+  await _tapNav(tester, 'nav-profile');
+  final action =
+      find.byKey(const ValueKey('profile-enhanced-protection-action'));
+  await tester.dragUntilVisible(
+    action,
+    find.byType(Scrollable).first,
+    const Offset(0, -260),
+    maxIteration: 12,
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(action);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _openRedeemSheetFromProfile(WidgetTester tester) async {
+  final action = find.byKey(const ValueKey('profile-redeem-code-action'));
+  await tester.dragUntilVisible(
+    action,
+    find.byType(Scrollable).first,
+    const Offset(0, -220),
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(action);
+  await tester.pumpAndSettle();
+  expect(find.byKey(const ValueKey('profile-redeem-sheet')), findsOneWidget);
+}
+
+Future<void> _openRewardsHubFromProfile(WidgetTester tester) async {
+  final action = find.byKey(const ValueKey('profile-bonus-wheel-action'));
+  await tester.dragUntilVisible(
+    action,
+    find.byType(Scrollable).first,
+    const Offset(0, -240),
+    maxIteration: 12,
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(action);
+  await tester.pumpAndSettle();
+  expect(find.byKey(const ValueKey('rewards-hub-sheet')), findsOneWidget);
+}
+
 void main() {
   test(
       'android seed app context keeps smoke profile free of desktop route keys',
@@ -523,7 +572,7 @@ void main() {
     }
   });
 
-  testWidgets('first launch asks whether the user is new or returning',
+  testWidgets('first launch keeps Home visible and offers soft recovery',
       (tester) async {
     await tester.pumpWidget(
       PokrovSeedApp(
@@ -538,8 +587,9 @@ void main() {
     );
     expect(
       find.byKey(const ValueKey('primary-connect-action')),
-      findsNothing,
+      findsOneWidget,
     );
+    expect(find.byKey(const ValueKey('mobile-shell')), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('first-launch-new-user')));
     await tester.pumpAndSettle();
@@ -651,7 +701,7 @@ void main() {
     );
     expect(
       find.byKey(const ValueKey('first-launch-manual-key-warning')),
-      findsOneWidget,
+      findsNothing,
     );
 
     await tester.enterText(
@@ -698,7 +748,7 @@ void main() {
 
     expect(
       find.byKey(const ValueKey('first-launch-manual-key-warning')),
-      findsOneWidget,
+      findsNothing,
     );
 
     await tester.enterText(
@@ -738,7 +788,7 @@ void main() {
         find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-location-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-route-chip')), findsOneWidget);
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('home-location-chip')),
@@ -786,6 +836,31 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(advanced, findsOneWidget);
+  });
+
+  testWidgets('home status opens connection details without first-layer copy',
+      (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    expect(find.byKey(const ValueKey('home-connection-details-action')),
+        findsOneWidget);
+    expect(find.text('Подключение'), findsNothing);
+
+    await tester.tap(
+      find.byKey(const ValueKey('home-connection-details-action')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.text('Подключение'), findsOneWidget);
+    expect(find.textContaining('Локация:'), findsOneWidget);
+    expect(find.textContaining('Режим:'), findsOneWidget);
   });
 
   testWidgets('profile uses grouped MVP account sections', (tester) async {
@@ -846,8 +921,10 @@ void main() {
 
     expect(find.byKey(const ValueKey('profile-compact-account-layer')),
         findsOneWidget);
-    expect(find.byKey(const ValueKey('profile-redeem-code-field')),
+    expect(find.byKey(const ValueKey('profile-redeem-code-action')),
         findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('profile-redeem-code-field')), findsNothing);
     expect(
         find.byKey(const ValueKey('profile-section-support')), findsOneWidget);
     expect(find.text('Р‘РѕРЅСѓСЃС‹'), findsNothing);
@@ -879,11 +956,7 @@ void main() {
     await _completeFirstLaunchIfPresent(tester);
 
     await _tapNav(tester, 'nav-profile');
-    await tester.dragUntilVisible(
-      find.byKey(const ValueKey('profile-redeem-code-field')),
-      find.byType(Scrollable).first,
-      const Offset(0, -260),
-    );
+    await _openRedeemSheetFromProfile(tester);
     await tester.enterText(
       find.byKey(const ValueKey('profile-redeem-code-field')),
       'POKROV-ACCESS-2026',
@@ -924,11 +997,7 @@ void main() {
     await _completeFirstLaunchIfPresent(tester);
 
     await _tapNav(tester, 'nav-profile');
-    await tester.dragUntilVisible(
-      find.byKey(const ValueKey('profile-redeem-code-field')),
-      find.byType(Scrollable).first,
-      const Offset(0, -260),
-    );
+    await _openRedeemSheetFromProfile(tester);
     await tester.enterText(
       find.byKey(const ValueKey('profile-redeem-code-field')),
       'POKROV-GIFT-2026',
@@ -1138,24 +1207,26 @@ void main() {
     expect(bootstrapper.lastBonusSummaryHostPlatform, HostPlatform.android);
     expect(find.byKey(const ValueKey('profile-bonus-summary-refresh')),
         findsOneWidget);
-    expect(find.byKey(const ValueKey('profile-bonus-summary-telegram')),
+    expect(find.byKey(const ValueKey('profile-bonus-wheel-action')),
         findsOneWidget);
-    expect(find.byKey(const ValueKey('profile-bonus-summary-referral')),
-        findsOneWidget);
-    expect(find.byKey(const ValueKey('profile-bonus-summary-promo')),
-        findsOneWidget);
-    expect(find.byKey(const ValueKey('profile-bonus-history-item-0')),
-        findsOneWidget);
-    expect(find.byKey(const ValueKey('profile-bonus-history-item-1')),
-        findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-activity-calendar-action')),
+        findsNothing);
+    expect(find.byKey(const ValueKey('rewards-history-section')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('profile-bonus-wheel-action')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('rewards-hub-sheet')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('rewards-history-section')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('rewards-history-item-0')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('rewards-history-item-1')), findsOneWidget);
     expect(find.text('Промокод активирован'), findsOneWidget);
     expect(find.text('Telegram-бонус получен'), findsOneWidget);
     expect(find.textContaining('POKROV2'), findsWidgets);
     expect(find.textContaining('+10'), findsWidgets);
-    expect(find.byKey(const ValueKey('profile-bonus-wheel-action')),
-        findsOneWidget);
-    expect(find.byKey(const ValueKey('profile-activity-calendar-action')),
-        findsOneWidget);
   });
 
   testWidgets('bonus preview keeps wheel and activity calendar non-mutating',
@@ -1170,12 +1241,17 @@ void main() {
 
     await _tapNav(tester, 'nav-profile');
 
-    expect(find.text('Р СѓР»РµС‚РєР°'), findsNothing);
-    expect(find.text('РљР°Р»РµРЅРґР°СЂСЊ Р°РєС‚РёРІРЅРѕСЃС‚Рё'), findsNothing);
     expect(find.byKey(const ValueKey('profile-bonus-wheel-action')),
         findsOneWidget);
     expect(find.byKey(const ValueKey('profile-activity-calendar-action')),
-        findsOneWidget);
+        findsNothing);
+    expect(find.byKey(const ValueKey('rewards-wheel-card')), findsNothing);
+    expect(find.byKey(const ValueKey('rewards-calendar-card')), findsNothing);
+
+    await _openRewardsHubFromProfile(tester);
+
+    expect(find.byKey(const ValueKey('rewards-wheel-card')), findsOneWidget);
+    expect(find.byKey(const ValueKey('rewards-calendar-card')), findsOneWidget);
   });
 
   testWidgets('profile opens rewards hub with wheel and calendar preview',
@@ -1219,7 +1295,7 @@ void main() {
         find.byKey(const ValueKey('profile-bonus-wheel-action'));
     expect(wheelAction, findsOneWidget);
     expect(find.byKey(const ValueKey('profile-activity-calendar-action')),
-        findsOneWidget);
+        findsNothing);
     await tester.dragUntilVisible(
       wheelAction,
       find.byType(Scrollable).first,
@@ -1324,9 +1400,7 @@ void main() {
     expect(bootstrapper.wheelSpinCalls, 1);
     expect(bootstrapper.lastWheelSpinHostPlatform, HostPlatform.android);
 
-    await tester
-        .tap(find.byKey(const ValueKey('profile-activity-calendar-action')));
-    await tester.pumpAndSettle();
+    await _openRewardsHubFromProfile(tester);
     await tester
         .tap(find.byKey(const ValueKey('rewards-calendar-checkin-action')));
     await tester.pumpAndSettle();
@@ -1651,7 +1725,7 @@ void main() {
       expect(find.byKey(ValueKey(item.shellKey)), findsOneWidget);
       expect(
           find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
-      expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
+      expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
       if (item.platform == HostPlatform.android) {
         expect(find.byType(NavigationBar), findsOneWidget);
       } else {
@@ -1680,7 +1754,7 @@ void main() {
         findsWidgets);
   });
 
-  testWidgets('windows shell collapses sidebar and shows honest WARP tile',
+  testWidgets('windows shell keeps enhanced protection out of Home',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(960, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -1714,13 +1788,11 @@ void main() {
     expect(find.text('Р’Р°С€ РѕСЃРЅРѕРІРЅРѕР№ СЂРµРіРёРѕРЅ'), findsNothing);
     expect(find.text('РќРѕРІРѕСЃС‚Рё Рё СѓРІРµРґРѕРјР»РµРЅРёСЏ'), findsNothing);
     expect(find.text('РЈСЃРёР»РµРЅРЅС‹Р№ СЂРµР¶РёРј'), findsNothing);
-    final warpTile = find.byKey(const ValueKey('home-warp-tile'));
-    expect(warpTile, findsOneWidget);
-    expect(find.textContaining('Расширенная приватность'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    expect(find.textContaining('Расширенная приватность'), findsNothing);
     expect(find.textContaining('WARP'), findsNothing);
 
-    await tester.tap(warpTile);
-    await tester.pumpAndSettle();
+    await _openEnhancedProtectionFromProfile(tester);
 
     expect(find.byType(BottomSheet), findsOneWidget);
     expect(
@@ -1731,7 +1803,7 @@ void main() {
     expect(find.byType(Switch), findsNothing);
   });
 
-  testWidgets('ready WARP tile asks for explicit consent before activation',
+  testWidgets('enhanced protection asks for explicit consent before activation',
       (tester) async {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
@@ -1757,14 +1829,11 @@ void main() {
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
 
-    expect(
-        find.byKey(const ValueKey('home-warp-state-disabled')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
 
-    await tester.tap(find.byKey(const ValueKey('home-warp-tile')));
-    await tester.pumpAndSettle();
+    await _openEnhancedProtectionFromProfile(tester);
 
     expect(bootstrapper.calls, 1);
-    expect(find.byKey(const ValueKey('home-warp-state-ready')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-warp-sheet')), findsOneWidget);
     expect(
         find.byKey(const ValueKey('home-warp-consent-switch')), findsOneWidget);
@@ -1777,8 +1846,7 @@ void main() {
     expect(bootstrapper.warpConsentCalls, 1);
     expect(bootstrapper.lastWarpConsentEnabled, isTrue);
     expect(find.byKey(const ValueKey('home-warp-sheet')), findsNothing);
-    expect(
-        find.byKey(const ValueKey('home-warp-state-enabled')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
   });
 
   testWidgets('revoking WARP consent clears the local enabled state',
@@ -1807,26 +1875,19 @@ void main() {
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
 
-    await tester.ensureVisible(find.byKey(const ValueKey('home-warp-tile')));
-    await tester.tap(find.byKey(const ValueKey('home-warp-tile')));
-    await tester.pumpAndSettle();
+    await _openEnhancedProtectionFromProfile(tester);
     await tester.tap(find.byKey(const ValueKey('home-warp-enable-action')));
     await tester.pumpAndSettle();
 
-    expect(
-        find.byKey(const ValueKey('home-warp-state-enabled')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
 
-    await tester.ensureVisible(find.byKey(const ValueKey('home-warp-tile')));
-    await tester.tap(find.byKey(const ValueKey('home-warp-tile')));
-    await tester.pumpAndSettle();
+    await _openEnhancedProtectionFromProfile(tester);
     await tester.tap(find.byKey(const ValueKey('home-warp-consent-switch')));
     await tester.pumpAndSettle();
 
     expect(bootstrapper.warpConsentCalls, 2);
     expect(bootstrapper.lastWarpConsentEnabled, isFalse);
-    expect(find.byKey(const ValueKey('home-warp-state-enabled')), findsNothing);
-    expect(
-        find.byKey(const ValueKey('home-warp-state-disabled')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
   });
 
   testWidgets(
@@ -1882,7 +1943,10 @@ void main() {
         findsOneWidget);
     expect(find.byKey(const ValueKey('connect-disc-label')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-status-switcher')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('home-status-dot-motion')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-chip-motion')), findsWidgets);
+    expect(find.byKey(const ValueKey('home-chip-label-motion')), findsWidgets);
     expect(
         find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
     expect(

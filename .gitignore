@@ -17,6 +17,7 @@ Thumbs.db
 build/
 dist/
 coverage/
+.tmp/
 
 # Runtime artifact cache
 artifacts/libcore/

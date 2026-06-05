@@ -1174,6 +1174,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     });
   }
 
+  Future<void> _toggleRuntimeFromHome() async {
+    if (_firstLaunchStep != _FirstLaunchStep.ready) {
+      _completeFirstLaunchAsNewUser();
+    }
+    await _toggleRuntime();
+  }
+
   void _openFirstLaunchRestore() {
     HapticFeedback.selectionClick();
     setState(() {
@@ -1765,11 +1772,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         runtimeHeadline: _runtimeHeadline,
         runtimeBusy: _runtimeBusy,
         primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
-        warpPolicy: _managedWarpPolicy,
-        warpRuntimeConsent: _warpRuntimeConsent,
-        warpPolicyBusy: _warpPolicyBusy,
-        onToggleRuntime: _toggleRuntime,
-        onOpenWarp: _openWarpControl,
+        onToggleRuntime: _toggleRuntimeFromHome,
         onOpenLocations: () => _selectTab(SeedTab.locations),
         onOpenRules: () => _selectTab(SeedTab.rules),
       ),
@@ -1810,6 +1813,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         onCheckInCalendar: _checkInBonusCalendarInApp,
         runtimeSnapshot: _runtimeSnapshot,
         runtimeHeadline: _runtimeHeadline,
+        onOpenWarp: _openWarpControl,
       ),
     ];
 
@@ -1821,6 +1825,21 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ??
         WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
             .disableAnimations;
+    final shell = isDesktopShell
+        ? _DesktopShell(
+            selectedIndex: _selectedIndex,
+            sections: sections,
+            onSelected: (index) {
+              _selectTab(SeedTab.values[index]);
+            },
+          )
+        : _MobileShell(
+            selectedIndex: _selectedIndex,
+            sections: sections,
+            onSelected: (index) {
+              _selectTab(SeedTab.values[index]);
+            },
+          );
 
     return _MotionScope(
       key: const ValueKey('motion-policy'),
@@ -1843,27 +1862,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             key: const ValueKey('desktop-shell-focus-root'),
             autofocus: true,
             child: Scaffold(
-              extendBody:
-                  _firstLaunchStep == _FirstLaunchStep.ready && !isDesktopShell,
+              extendBody: !isDesktopShell,
               body: _SeedBackdrop(
                 child: SafeArea(
-                  child: _firstLaunchStep == _FirstLaunchStep.ready
-                      ? isDesktopShell
-                          ? _DesktopShell(
-                              selectedIndex: _selectedIndex,
-                              sections: sections,
-                              onSelected: (index) {
-                                _selectTab(SeedTab.values[index]);
-                              },
-                            )
-                          : _MobileShell(
-                              selectedIndex: _selectedIndex,
-                              sections: sections,
-                              onSelected: (index) {
-                                _selectTab(SeedTab.values[index]);
-                              },
-                            )
-                      : _FirstLaunchGate(
+                  child: Stack(
+                    children: [
+                      Positioned.fill(child: shell),
+                      if (_firstLaunchStep != _FirstLaunchStep.ready)
+                        _FirstLaunchGate(
                           appContext: widget.appContext,
                           step: _firstLaunchStep,
                           restoreCodeController:
@@ -1878,6 +1884,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                             widget.appContext.cabinetUrl,
                           ),
                         ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1940,30 +1948,38 @@ class _FirstLaunchGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _SeedContentList(
-      top: 24,
-      children: [
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: step == _FirstLaunchStep.restore
-                ? _FirstLaunchRestoreScreen(
-                    appContext: appContext,
-                    codeController: restoreCodeController,
-                    busy: busy,
-                    onBack: onBack,
-                    onRedeemCode: onRedeemCode,
-                    onOpenTelegram: onOpenTelegram,
-                    onOpenCabinet: onOpenCabinet,
-                  )
-                : _FirstLaunchChoiceScreen(
-                    appContext: appContext,
-                    onNewUser: onNewUser,
-                    onReturningUser: onReturningUser,
-                  ),
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: step == _FirstLaunchStep.restore ? 18 : 96,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: step == _FirstLaunchStep.restore ? 520 : 460,
+              ),
+              child: step == _FirstLaunchStep.restore
+                  ? _FirstLaunchRestoreScreen(
+                      codeController: restoreCodeController,
+                      busy: busy,
+                      onBack: onBack,
+                      onRedeemCode: onRedeemCode,
+                      onOpenTelegram: onOpenTelegram,
+                      onOpenCabinet: onOpenCabinet,
+                    )
+                  : _FirstLaunchChoiceScreen(
+                      appContext: appContext,
+                      onNewUser: onNewUser,
+                      onReturningUser: onReturningUser,
+                    ),
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -1982,56 +1998,95 @@ class _FirstLaunchChoiceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
+    return Material(
       key: const ValueKey('first-launch-choice-screen'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: 18),
-        const Center(child: _BrandLockup(markSize: 42, center: true)),
-        const SizedBox(height: 28),
-        Text(
-          'Вы раньше пользовались POKROV?',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            color: _SeedPalette.ink,
-            fontWeight: FontWeight.w800,
-          ),
+      color: _SeedPalette.surface.withValues(alpha: 0.96),
+      elevation: 10,
+      shadowColor: _SeedPalette.ink.withValues(alpha: 0.10),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _SeedPalette.line),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Выберите путь один раз. Доступ, бонусы и кабинет останутся в одном аккаунте.',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: _SeedPalette.muted,
-            height: 1.35,
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 380;
+            final copy = Column(
+              crossAxisAlignment: compact
+                  ? CrossAxisAlignment.center
+                  : CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Можно сразу подключиться',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: compact ? TextAlign.center : TextAlign.start,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: _SeedPalette.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${appContext.runtimeProfile.trialDays} дней доступа без карты.',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: compact ? TextAlign.center : TextAlign.start,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: _SeedPalette.muted,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            );
+            final actions = Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              alignment: compact ? WrapAlignment.center : WrapAlignment.end,
+              children: [
+                TextButton.icon(
+                  key: const ValueKey('first-launch-returning-user'),
+                  onPressed: onReturningUser,
+                  icon: const Icon(Icons.key_rounded),
+                  label: const Text('Есть код'),
+                ),
+                FilledButton.icon(
+                  key: const ValueKey('first-launch-new-user'),
+                  onPressed: onNewUser,
+                  icon: const Icon(Icons.flash_on_rounded),
+                  label: const Text('Начать'),
+                ),
+              ],
+            );
+            if (compact) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  copy,
+                  const SizedBox(height: 10),
+                  actions,
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: copy),
+                const SizedBox(width: 12),
+                actions,
+              ],
+            );
+          },
         ),
-        const SizedBox(height: 22),
-        _FirstLaunchOptionButton(
-          key: const ValueKey('first-launch-new-user'),
-          icon: Icons.auto_awesome_rounded,
-          title: 'Я новый пользователь',
-          subtitle:
-              '${appContext.runtimeProfile.trialDays} дней доступа без карты',
-          primary: true,
-          onTap: onNewUser,
-        ),
-        const SizedBox(height: 12),
-        _FirstLaunchOptionButton(
-          key: const ValueKey('first-launch-returning-user'),
-          icon: Icons.key_rounded,
-          title: 'У меня уже есть доступ',
-          subtitle: 'Код из Telegram, кабинета, письма или ключ активации',
-          onTap: onReturningUser,
-        ),
-      ],
+      ),
     );
   }
 }
 
 class _FirstLaunchRestoreScreen extends StatelessWidget {
   const _FirstLaunchRestoreScreen({
-    required this.appContext,
     required this.codeController,
     required this.busy,
     required this.onBack,
@@ -2040,7 +2095,6 @@ class _FirstLaunchRestoreScreen extends StatelessWidget {
     required this.onOpenCabinet,
   });
 
-  final SeedAppContext appContext;
   final TextEditingController codeController;
   final bool busy;
   final VoidCallback onBack;
@@ -2051,197 +2105,108 @@ class _FirstLaunchRestoreScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
+    return Material(
       key: const ValueKey('first-launch-restore-screen'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: IconButton(
-            key: const ValueKey('first-launch-back-to-choice'),
-            tooltip: 'Назад',
-            icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: busy ? null : onBack,
-          ),
-        ),
-        const Center(child: _BrandLockup(markSize: 36, center: true)),
-        const SizedBox(height: 22),
-        Text(
-          'Восстановить доступ',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            color: _SeedPalette.ink,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Введите одноразовый код из Telegram, кабинета, письма или ключ активации.',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: _SeedPalette.muted,
-            height: 1.35,
-          ),
-        ),
-        const SizedBox(height: 20),
-        TextField(
-          key: const ValueKey('first-launch-restore-code-field'),
-          controller: codeController,
-          enabled: !busy,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) {
-            if (!busy) {
-              onRedeemCode();
-            }
-          },
-          decoration: InputDecoration(
-            hintText: 'Код или ключ',
-            prefixIcon: const Icon(Icons.key_rounded),
-            filled: true,
-            fillColor: _SeedPalette.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: _SeedPalette.line),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: _SeedPalette.line),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        FilledButton.icon(
-          key: const ValueKey('first-launch-restore-redeem'),
-          onPressed: busy ? null : onRedeemCode,
-          icon: busy
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.check_circle_outline_rounded),
-          label: Text(busy ? 'Проверяем' : 'Восстановить'),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          alignment: WrapAlignment.center,
+      color: _SeedPalette.surface.withValues(alpha: 0.98),
+      elevation: 12,
+      shadowColor: _SeedPalette.ink.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(22),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            OutlinedButton.icon(
-              key: const ValueKey('first-launch-open-telegram-code'),
-              onPressed: busy ? null : onOpenTelegram,
-              icon: const Icon(Icons.send_outlined),
-              label: const Text('Код в Telegram'),
+            Row(
+              children: [
+                IconButton(
+                  key: const ValueKey('first-launch-back-to-choice'),
+                  tooltip: 'Назад',
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  onPressed: busy ? null : onBack,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'Восстановить доступ',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: _SeedPalette.ink,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            OutlinedButton.icon(
-              key: const ValueKey('first-launch-open-cabinet'),
-              onPressed: busy ? null : onOpenCabinet,
-              icon: const Icon(Icons.web_outlined),
-              label: const Text('Открыть кабинет'),
+            const SizedBox(height: 8),
+            Text(
+              'Введите код из Telegram, кабинета или письма.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: _SeedPalette.muted,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              key: const ValueKey('first-launch-restore-code-field'),
+              controller: codeController,
+              enabled: !busy,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) {
+                if (!busy) {
+                  onRedeemCode();
+                }
+              },
+              decoration: InputDecoration(
+                hintText: 'Код или ключ',
+                prefixIcon: const Icon(Icons.key_rounded),
+                filled: true,
+                fillColor: _SeedPalette.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: _SeedPalette.line),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: _SeedPalette.line),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              key: const ValueKey('first-launch-restore-redeem'),
+              onPressed: busy ? null : onRedeemCode,
+              icon: busy
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.check_circle_outline_rounded),
+              label: Text(busy ? 'Проверяем' : 'Восстановить'),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                TextButton.icon(
+                  key: const ValueKey('first-launch-open-telegram-code'),
+                  onPressed: busy ? null : onOpenTelegram,
+                  icon: const Icon(Icons.send_outlined),
+                  label: const Text('Код в Telegram'),
+                ),
+                TextButton.icon(
+                  key: const ValueKey('first-launch-open-cabinet'),
+                  onPressed: busy ? null : onOpenCabinet,
+                  icon: const Icon(Icons.web_outlined),
+                  label: const Text('Кабинет'),
+                ),
+              ],
             ),
           ],
-        ),
-        const SizedBox(height: 16),
-        Container(
-          key: const ValueKey('first-launch-manual-key-warning'),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: _SeedPalette.warning.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: _SeedPalette.warning.withValues(alpha: 0.24),
-            ),
-          ),
-          child: Text(
-            'Сырые ссылки подключения не доказывают аккаунт. Для привязки безопаснее одноразовый код; ручной ключ останется режимом восстановления.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: _SeedPalette.ink.withValues(alpha: 0.78),
-              height: 1.35,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FirstLaunchOptionButton extends StatelessWidget {
-  const _FirstLaunchOptionButton({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    this.primary = false,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  final bool primary;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: primary
-          ? _SeedPalette.accent.withValues(alpha: 0.08)
-          : _SeedPalette.surface,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: primary
-                  ? _SeedPalette.accent.withValues(alpha: 0.22)
-                  : _SeedPalette.line,
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: _SeedPalette.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(icon, color: _SeedPalette.accent),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: _SeedPalette.ink,
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: _SeedPalette.muted,
-                            height: 1.3,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Icon(Icons.chevron_right_rounded,
-                  color: _SeedPalette.muted),
-            ],
-          ),
         ),
       ),
     );
@@ -2738,11 +2703,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.runtimeHeadline,
     required this.runtimeBusy,
     required this.primaryConnectEnabled,
-    required this.warpPolicy,
-    required this.warpRuntimeConsent,
-    required this.warpPolicyBusy,
     required this.onToggleRuntime,
-    required this.onOpenWarp,
     required this.onOpenLocations,
     required this.onOpenRules,
   });
@@ -2753,11 +2714,7 @@ class _QuickConnectSection extends StatelessWidget {
   final String? runtimeHeadline;
   final bool runtimeBusy;
   final bool primaryConnectEnabled;
-  final WarpRuntimePolicy warpPolicy;
-  final bool warpRuntimeConsent;
-  final bool warpPolicyBusy;
   final Future<void> Function() onToggleRuntime;
-  final Future<void> Function() onOpenWarp;
   final VoidCallback onOpenLocations;
   final VoidCallback onOpenRules;
 
@@ -2808,7 +2765,6 @@ class _QuickConnectSection extends StatelessWidget {
             constraints: BoxConstraints(maxWidth: isDesktop ? 560 : 460),
             child: _HomeStage(
               statusLabel: statusLabel,
-              statusSummary: statusSummary,
               statusColor: statusColor,
               actionLabel: actionLabel,
               actionEnabled: primaryActionEnabled,
@@ -2818,12 +2774,16 @@ class _QuickConnectSection extends StatelessWidget {
               recoveryNotice: recoveryNotice,
               selectedRouteMode: selectedRouteMode,
               locationLabel: 'Авто',
-              platformLabel: appContext.hostPlatform.label,
-              warpPolicy: warpPolicy,
-              warpRuntimeConsent: warpRuntimeConsent,
-              warpPolicyBusy: warpPolicyBusy,
               onToggleRuntime: onToggleRuntime,
-              onOpenWarp: onOpenWarp,
+              onOpenConnectionDetails: () => _showInfoSheet(
+                context,
+                title: 'Подключение',
+                lines: [
+                  statusSummary,
+                  'Локация: Авто.',
+                  'Режим: ${selectedRouteMode.label}.',
+                ],
+              ),
               onOpenLocations: onOpenLocations,
               onOpenRules: onOpenRules,
             ),
@@ -2837,7 +2797,6 @@ class _QuickConnectSection extends StatelessWidget {
 class _HomeStage extends StatefulWidget {
   const _HomeStage({
     required this.statusLabel,
-    required this.statusSummary,
     required this.statusColor,
     required this.actionLabel,
     required this.actionEnabled,
@@ -2847,18 +2806,13 @@ class _HomeStage extends StatefulWidget {
     required this.recoveryNotice,
     required this.selectedRouteMode,
     required this.locationLabel,
-    required this.platformLabel,
-    required this.warpPolicy,
-    required this.warpRuntimeConsent,
-    required this.warpPolicyBusy,
     required this.onToggleRuntime,
-    required this.onOpenWarp,
+    required this.onOpenConnectionDetails,
     required this.onOpenLocations,
     required this.onOpenRules,
   });
 
   final String statusLabel;
-  final String statusSummary;
   final Color statusColor;
   final String actionLabel;
   final bool actionEnabled;
@@ -2868,12 +2822,8 @@ class _HomeStage extends StatefulWidget {
   final String? recoveryNotice;
   final RouteMode selectedRouteMode;
   final String locationLabel;
-  final String platformLabel;
-  final WarpRuntimePolicy warpPolicy;
-  final bool warpRuntimeConsent;
-  final bool warpPolicyBusy;
   final Future<void> Function() onToggleRuntime;
-  final Future<void> Function() onOpenWarp;
+  final VoidCallback onOpenConnectionDetails;
   final VoidCallback onOpenLocations;
   final VoidCallback onOpenRules;
 
@@ -2918,7 +2868,6 @@ class _HomeStageState extends State<_HomeStage>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
       key: const ValueKey('home-boot-reveal'),
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -2936,9 +2885,20 @@ class _HomeStageState extends State<_HomeStage>
             controller: _revealController,
             begin: 0.18,
             end: 0.58,
-            child: _StatusDotLabel(
-              label: widget.statusLabel,
-              color: widget.statusColor,
+            child: InkWell(
+              key: const ValueKey('home-connection-details-action'),
+              borderRadius: BorderRadius.circular(999),
+              onTap: widget.onOpenConnectionDetails,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 6,
+                ),
+                child: _StatusDotLabel(
+                  label: widget.statusLabel,
+                  color: widget.statusColor,
+                ),
+              ),
             ),
           ),
           if (widget.recoveryNotice != null) ...[
@@ -2985,40 +2945,10 @@ class _HomeStageState extends State<_HomeStage>
                   key: const ValueKey('home-route-chip'),
                   icon: Icons.alt_route_rounded,
                   label: widget.selectedRouteMode.label,
+                  minLabelWidth: 142,
                   onTap: widget.onOpenRules,
                 ),
-                _HomeChip(
-                  icon: Icons.devices_rounded,
-                  label: widget.platformLabel,
-                ),
               ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          _HomeRevealSlice(
-            controller: _revealController,
-            begin: 0.46,
-            end: 1,
-            child: _HomeWarpTile(
-              policy: widget.warpPolicy,
-              runtimeConsent: widget.warpRuntimeConsent,
-              busy: widget.warpPolicyBusy,
-              onOpen: widget.onOpenWarp,
-            ),
-          ),
-          const SizedBox(height: 18),
-          _HomeRevealSlice(
-            controller: _revealController,
-            begin: 0.48,
-            end: 1,
-            child: Text(
-              widget.statusSummary,
-              key: ValueKey(widget.statusSummary),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: _SeedPalette.muted,
-                height: 1.35,
-              ),
             ),
           ),
         ],
@@ -3027,6 +2957,7 @@ class _HomeStageState extends State<_HomeStage>
   }
 }
 
+// ignore: unused_element
 class _HomeWarpTile extends StatelessWidget {
   const _HomeWarpTile({
     required this.policy,
@@ -3323,6 +3254,7 @@ class _HomeChip extends PokrovHomeChip {
     super.key,
     required super.icon,
     required super.label,
+    super.minLabelWidth,
     super.onTap,
   });
 }
@@ -3431,6 +3363,7 @@ class _ProfileSection extends StatelessWidget {
     required this.onCheckInCalendar,
     required this.runtimeSnapshot,
     required this.runtimeHeadline,
+    required this.onOpenWarp,
   });
 
   final SeedAppContext appContext;
@@ -3454,6 +3387,7 @@ class _ProfileSection extends StatelessWidget {
   final VoidCallback onCheckInCalendar;
   final RuntimeSnapshot? runtimeSnapshot;
   final String? runtimeHeadline;
+  final Future<void> Function() onOpenWarp;
 
   List<String> _bonusSummaryLines() {
     final summary = bonusSummary;
@@ -3470,30 +3404,20 @@ class _ProfileSection extends StatelessWidget {
     ];
   }
 
-  String _referralSummaryValue(AppFirstBonusSummary summary) {
-    if (summary.referralCode.isEmpty) {
-      return '${summary.referralCount}';
+  String _bonusHubValue() {
+    final summary = bonusSummary;
+    if (bonusSummaryBusy) {
+      return 'Обновляем';
     }
-    return '${summary.referralCount} · ${summary.referralCode}';
-  }
-
-  AppFirstBonusFeatureState get _wheelState =>
-      bonusSummary?.wheelState ?? AppFirstBonusFeatureState.wheelDisabled;
-
-  AppFirstBonusFeatureState get _calendarState =>
-      bonusSummary?.calendarState ?? AppFirstBonusFeatureState.calendarDisabled;
-
-  IconData _bonusHistoryIcon(AppFirstBonusHistoryItem item) {
-    switch (item.kind) {
-      case 'telegram_channel':
-        return Icons.send_outlined;
-      case 'promo':
-        return Icons.card_giftcard_outlined;
-      case 'opening_bonus':
-        return Icons.auto_awesome_outlined;
-      default:
-        return Icons.history_rounded;
+    if (summary == null) {
+      return 'Открыть';
     }
+    final parts = <String>[
+      if (summary.channelBonusPremiumDays > 0)
+        '+${summary.channelBonusPremiumDays} дней',
+      if (summary.referralCount > 0) '${summary.referralCount} реф.',
+    ];
+    return parts.isEmpty ? 'Открыть' : parts.join(' · ');
   }
 
   @override
@@ -3571,18 +3495,22 @@ class _ProfileSection extends StatelessWidget {
               ),
               _SectionCard(
                 key: const ValueKey('profile-section-sync'),
-                title: 'Код и бонус',
+                title: 'Восстановление',
                 tone: _SectionTone.reward,
-                lines: [
-                  'Код доступа или Telegram +${appContext.runtimeProfile.telegramBonusDays} дней.',
-                ],
+                lines: const ['Код, Telegram и восстановление доступа.'],
                 child: Column(
                   children: [
-                    _RedeemFields(
-                      hintCode: appContext.redeemHint,
-                      onRedeem: (code) => onOpenHandoff('redeem', code),
+                    _SettingsRow(
+                      key: const ValueKey('profile-redeem-code-action'),
+                      icon: Icons.key_rounded,
+                      title: 'Код активации',
+                      value: 'Ввести',
+                      onTap: () => _showRedeemSheet(
+                        context,
+                        hintCode: appContext.redeemHint,
+                        onRedeem: (code) => onOpenHandoff('redeem', code),
+                      ),
                     ),
-                    const SizedBox(height: 10),
                     _SettingsRow(
                       key: const ValueKey('profile-telegram-link-action'),
                       icon: Icons.send_outlined,
@@ -3625,7 +3553,7 @@ class _ProfileSection extends StatelessWidget {
               ),
               _SectionCard(
                 key: const ValueKey('profile-section-bonus-summary'),
-                title: 'Сводка',
+                title: 'Бонусы',
                 tone: _SectionTone.reward,
                 lines: _bonusSummaryLines(),
                 child: Column(
@@ -3642,107 +3570,21 @@ class _ProfileSection extends StatelessWidget {
                       value: bonusSummaryBusy ? 'Секунду' : 'Сводка',
                       onTap: bonusSummaryBusy ? null : onRefreshBonusSummary,
                     ),
-                    if (bonusSummary != null) ...[
-                      _SettingsRow(
-                        key: const ValueKey(
-                          'profile-bonus-summary-telegram',
-                        ),
-                        icon: Icons.send_outlined,
-                        title: 'Telegram',
-                        value: bonusSummary!.channelBonusClaimed
-                            ? '+${bonusSummary!.channelBonusPremiumDays} дней активированы'
-                            : '+${bonusSummary!.channelBonusPremiumDays} дней доступны',
+                    _SettingsRow(
+                      key: const ValueKey('profile-bonus-wheel-action'),
+                      icon: Icons.auto_awesome_outlined,
+                      title: 'Бонусы и история',
+                      value: _bonusHubValue(),
+                      onTap: () => _showRewardsHubSheet(
+                        context,
+                        summary: bonusSummary,
+                        rewardBusy: bonusRewardBusy,
+                        onRefreshBonusSummary: onRefreshBonusSummary,
+                        onSpinWheel: onSpinWheel,
+                        onCheckInCalendar: onCheckInCalendar,
+                        onOpenHandoff: onOpenHandoff,
                       ),
-                      _SettingsRow(
-                        key: const ValueKey(
-                          'profile-bonus-summary-referral',
-                        ),
-                        icon: Icons.group_add_outlined,
-                        title: 'Рефералы',
-                        value: _referralSummaryValue(bonusSummary!),
-                      ),
-                      _SettingsRow(
-                        key: const ValueKey('profile-bonus-summary-promo'),
-                        icon: Icons.card_giftcard_outlined,
-                        title: 'Промокод',
-                        value: 'Через код',
-                      ),
-                      _SettingsRow(
-                        key: const ValueKey('profile-bonus-wheel-action'),
-                        icon: Icons.casino_outlined,
-                        title: 'Рулетка',
-                        value: bonusSummary!.wheelState.statusLabel,
-                        onTap: () => _showRewardsHubSheet(
-                          context,
-                          summary: bonusSummary,
-                          rewardBusy: bonusRewardBusy,
-                          onRefreshBonusSummary: onRefreshBonusSummary,
-                          onSpinWheel: onSpinWheel,
-                          onCheckInCalendar: onCheckInCalendar,
-                          onOpenHandoff: onOpenHandoff,
-                        ),
-                      ),
-                      _SettingsRow(
-                        key: const ValueKey(
-                          'profile-activity-calendar-action',
-                        ),
-                        icon: Icons.calendar_month_outlined,
-                        title: 'Календарь',
-                        value: bonusSummary!.calendarState.statusLabel,
-                        onTap: () => _showRewardsHubSheet(
-                          context,
-                          summary: bonusSummary,
-                          rewardBusy: bonusRewardBusy,
-                          onRefreshBonusSummary: onRefreshBonusSummary,
-                          onSpinWheel: onSpinWheel,
-                          onCheckInCalendar: onCheckInCalendar,
-                          onOpenHandoff: onOpenHandoff,
-                        ),
-                      ),
-                      for (final entry in bonusSummary!.historyItems.indexed)
-                        _SettingsRow(
-                          key: ValueKey(
-                            'profile-bonus-history-item-${entry.$1}',
-                          ),
-                          icon: _bonusHistoryIcon(entry.$2),
-                          title: entry.$2.title,
-                          value: entry.$2.compactValue,
-                        ),
-                    ],
-                    if (bonusSummary == null) ...[
-                      _SettingsRow(
-                        key: const ValueKey('profile-bonus-wheel-action'),
-                        icon: Icons.casino_outlined,
-                        title: 'Рулетка',
-                        value: _wheelState.statusLabel,
-                        onTap: () => _showRewardsHubSheet(
-                          context,
-                          summary: bonusSummary,
-                          rewardBusy: bonusRewardBusy,
-                          onRefreshBonusSummary: onRefreshBonusSummary,
-                          onSpinWheel: onSpinWheel,
-                          onCheckInCalendar: onCheckInCalendar,
-                          onOpenHandoff: onOpenHandoff,
-                        ),
-                      ),
-                      _SettingsRow(
-                        key: const ValueKey(
-                          'profile-activity-calendar-action',
-                        ),
-                        icon: Icons.calendar_month_outlined,
-                        title: 'Календарь',
-                        value: _calendarState.statusLabel,
-                        onTap: () => _showRewardsHubSheet(
-                          context,
-                          summary: bonusSummary,
-                          rewardBusy: bonusRewardBusy,
-                          onRefreshBonusSummary: onRefreshBonusSummary,
-                          onSpinWheel: onSpinWheel,
-                          onCheckInCalendar: onCheckInCalendar,
-                          onOpenHandoff: onOpenHandoff,
-                        ),
-                      ),
-                    ],
+                    ),
                     if ((bonusSummaryError ?? '').isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
@@ -3774,6 +3616,17 @@ class _ProfileSection extends StatelessWidget {
                       icon: Icons.alt_route_rounded,
                       title: 'Режим',
                       value: selectedRouteMode.label,
+                    ),
+                    _SettingsRow(
+                      key: const ValueKey(
+                        'profile-enhanced-protection-action',
+                      ),
+                      icon: Icons.privacy_tip_outlined,
+                      title: 'Расширенная защита',
+                      value: 'Дополнительно',
+                      onTap: () {
+                        unawaited(onOpenWarp());
+                      },
                     ),
                     _SettingsRow(
                       key: const ValueKey('profile-account-details-action'),
@@ -4217,6 +4070,10 @@ class _RewardsHubSheet extends StatelessWidget {
               summary: summary,
             ),
             const SizedBox(height: 12),
+            _RewardsHistorySection(
+              summary: summary,
+            ),
+            const SizedBox(height: 12),
             _RewardsReferralCard(
               referralCode: referralCode,
               referralSummary: referralSummary,
@@ -4512,6 +4369,71 @@ class _RewardsAchievements extends StatelessWidget {
                 )
                 .toList(growable: false),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RewardsHistorySection extends StatelessWidget {
+  const _RewardsHistorySection({
+    required this.summary,
+  });
+
+  final AppFirstBonusSummary? summary;
+
+  IconData _historyIcon(AppFirstBonusHistoryItem item) {
+    switch (item.kind) {
+      case 'telegram_channel':
+        return Icons.send_outlined;
+      case 'promo':
+        return Icons.card_giftcard_outlined;
+      case 'opening_bonus':
+        return Icons.auto_awesome_outlined;
+      default:
+        return Icons.history_rounded;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = summary?.historyItems ?? const <AppFirstBonusHistoryItem>[];
+    return Container(
+      key: const ValueKey('rewards-history-section'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _SeedPalette.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _SeedPalette.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'История',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: _SeedPalette.ink,
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 8),
+          if (items.isEmpty)
+            Text(
+              'Пока пусто.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: _SeedPalette.muted,
+                    height: 1.35,
+                  ),
+            )
+          else
+            for (final entry in items.indexed)
+              _SettingsRow(
+                key: ValueKey('rewards-history-item-${entry.$1}'),
+                icon: _historyIcon(entry.$2),
+                title: entry.$2.title,
+                value: entry.$2.compactValue,
+              ),
         ],
       ),
     );
@@ -5604,6 +5526,54 @@ void _showAdvancedSettingsSheet(BuildContext context) {
         ),
       );
     },
+  );
+}
+
+void _showRedeemSheet(
+  BuildContext context, {
+  required String hintCode,
+  required ValueChanged<String> onRedeem,
+}) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: _SeedPalette.surface,
+    builder: (context) => SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        key: const ValueKey('profile-redeem-sheet'),
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Код активации',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: _SeedPalette.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Введите код из приложения, кабинета, Telegram или письма.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: _SeedPalette.muted,
+                    height: 1.35,
+                  ),
+            ),
+            const SizedBox(height: 14),
+            _RedeemFields(
+              hintCode: hintCode,
+              onRedeem: (code) {
+                Navigator.of(context).pop();
+                onRedeem(code);
+              },
+            ),
+          ],
+        ),
+      ),
+    ),
   );
 }
 

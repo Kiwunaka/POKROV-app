@@ -255,6 +255,7 @@ void main() {
                 PokrovHomeChip(
                   icon: Icons.public,
                   label: 'Auto',
+                  minLabelWidth: 140,
                   onTap: () => taps += 1,
                 ),
                 PokrovSettingsRow(
@@ -271,11 +272,17 @@ void main() {
     );
 
     expect(find.byKey(PokrovStatusDotLabel.switcherKey), findsOneWidget);
+    expect(find.byKey(PokrovStatusDotLabel.dotMotionKey), findsOneWidget);
     expect(find.byKey(PokrovHomeChip.motionKey), findsOneWidget);
+    expect(find.byKey(PokrovHomeChip.labelMotionKey), findsOneWidget);
     expect(
         find.byKey(PokrovSettingsRowPressSurface.feedbackKey), findsOneWidget);
     expect(
         tester.getSize(find.byKey(PokrovHomeChip.motionKey)), isNot(Size.zero));
+    expect(
+      tester.getSize(find.byKey(PokrovHomeChip.labelMotionKey)).width,
+      greaterThanOrEqualTo(140),
+    );
 
     await tester.tap(find.text('Auto'));
     await tester.tap(find.text('Status'));

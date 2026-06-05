@@ -28,6 +28,7 @@ class PokrovStatusDotLabel extends StatelessWidget {
   });
 
   static const switcherKey = ValueKey('home-status-switcher');
+  static const dotMotionKey = ValueKey('home-status-dot-motion');
 
   final String label;
   final Color color;
@@ -41,7 +42,10 @@ class PokrovStatusDotLabel extends StatelessWidget {
       spacing: 8,
       runSpacing: 4,
       children: [
-        Container(
+        AnimatedContainer(
+          key: dotMotionKey,
+          duration: motion.duration(PokrovMotionTokens.short),
+          curve: PokrovMotionTokens.ease,
           width: 8,
           height: 8,
           decoration: BoxDecoration(
@@ -73,13 +77,16 @@ class PokrovHomeChip extends StatefulWidget {
     super.key,
     required this.icon,
     required this.label,
+    this.minLabelWidth = 0,
     this.onTap,
   });
 
   static const motionKey = ValueKey('home-chip-motion');
+  static const labelMotionKey = ValueKey('home-chip-label-motion');
 
   final IconData icon;
   final String label;
+  final double minLabelWidth;
   final VoidCallback? onTap;
 
   @override
@@ -136,15 +143,23 @@ class _PokrovHomeChipState extends State<PokrovHomeChip> {
               children: [
                 Icon(widget.icon, size: 16, color: PokrovPalette.muted),
                 const SizedBox(width: 8),
-                AnimatedSwitcher(
-                  duration: motion.duration(PokrovMotionTokens.short),
-                  child: Text(
-                    widget.label,
-                    key: ValueKey(widget.label),
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: PokrovPalette.ink,
-                          fontWeight: FontWeight.w700,
-                        ),
+                ConstrainedBox(
+                  key: PokrovHomeChip.labelMotionKey,
+                  constraints: BoxConstraints(
+                    minWidth: widget.minLabelWidth,
+                  ),
+                  child: AnimatedSwitcher(
+                    duration: motion.duration(PokrovMotionTokens.short),
+                    transitionBuilder: pokrovFadeSlideTransition,
+                    child: Text(
+                      widget.label,
+                      key: ValueKey(widget.label),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: PokrovPalette.ink,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
                   ),
                 ),
               ],
