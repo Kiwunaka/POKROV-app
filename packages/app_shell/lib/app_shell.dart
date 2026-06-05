@@ -17,6 +17,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'app_first_runtime_bootstrap.dart';
 import 'src/assistant/pokrov_ai_assistant.dart';
 import 'src/design_system/design_system.dart';
+import 'src/warp/pokrov_warp_lifecycle.dart';
 export 'app_first_runtime_bootstrap.dart';
 part 'app_shell_ui_helpers.dart';
 
@@ -1206,12 +1207,24 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
               _runtimeSnapshot,
               busy: _runtimeBusy,
             ),
+            extraDiagnostics: _extendedProtectionDiagnostics(),
             supportTicketService: _supportTicketService,
             onOpenHandoff: _showSeedHandoff,
           );
         },
       ),
     );
+  }
+
+  Map<String, Object?> _extendedProtectionDiagnostics() {
+    return PokrovWarpSupportDiagnostics.fromLifecycle(
+      PokrovWarpLifecycle.resolve(
+        policy: _managedWarpPolicy,
+        consented: _warpRuntimeConsent,
+        busy: _warpPolicyBusy,
+        lastError: _runtimeSnapshot?.lastFailureKind ?? '',
+      ),
+    ).toJson();
   }
 
   Uri? _safeHandoffUri({
@@ -1390,7 +1403,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         context,
         title: 'Расширенная приватность',
         lines: const [
-          'WARP пока готовится для этого устройства.',
+          'Дополнительный режим пока готовится для этого устройства.',
           'Когда backend пришлет проверенную конфигурацию, здесь появится отдельное включение.',
         ],
       );
@@ -1399,6 +1412,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
     _showWarpConsentSheet(
       context,
+      lifecycle: PokrovWarpLifecycle.resolve(
+        policy: _managedWarpPolicy,
+        consented: _warpRuntimeConsent,
+        busy: _warpPolicyBusy,
+      ),
       enabled: _warpRuntimeConsent,
       onChanged: _setWarpRuntimeConsent,
     );
@@ -1444,8 +1462,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _warpRuntimeConsent = enabled;
         _managedProfileDirty = true;
         _runtimeHeadline = enabled
-            ? 'WARP включится при следующем подключении.'
-            : 'WARP выключен для следующих подключений.';
+            ? 'Расширенная защита включится при следующем подключении.'
+            : 'Расширенная защита выключена для следующих подключений.';
       });
     } on BootstrapFailure catch (error) {
       if (!mounted) {
@@ -2969,24 +2987,13 @@ class _HomeWarpTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final motion = _MotionScope.of(context);
-    final canOffer = policy.canOfferRuntime;
-    final enabled = canOffer && runtimeConsent;
-    final stateKey = busy
-        ? 'home-warp-state-loading'
-        : canOffer
-            ? enabled
-                ? 'home-warp-state-enabled'
-                : 'home-warp-state-ready'
-            : policy.enabled
-                ? 'home-warp-state-preparing'
-                : 'home-warp-state-disabled';
-    final status = busy
-        ? 'WARP · проверяем'
-        : canOffer
-            ? enabled
-                ? 'WARP · включится'
-                : 'WARP · доступен'
-            : 'WARP · готовится';
+    final lifecycle = PokrovWarpLifecycle.resolve(
+      policy: policy,
+      consented: runtimeConsent,
+      busy: busy,
+    );
+    final canOffer = lifecycle.canOffer;
+    final enabled = lifecycle.highlightsEnabled;
     final iconColor = enabled
         ? _SeedPalette.accent
         : _SeedPalette.muted.withValues(alpha: 0.8);
@@ -3001,7 +3008,7 @@ class _HomeWarpTile extends StatelessWidget {
         unawaited(onOpen());
       },
       child: AnimatedContainer(
-        key: ValueKey(stateKey),
+        key: ValueKey(lifecycle.stateKey),
         duration: motion.duration(_MotionTokens.short),
         curve: _MotionTokens.ease,
         width: double.infinity,
@@ -3042,7 +3049,7 @@ class _HomeWarpTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Расширенная приватность',
+                    lifecycle.publicTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -3056,8 +3063,8 @@ class _HomeWarpTile extends StatelessWidget {
                     duration: motion.duration(_MotionTokens.short),
                     transitionBuilder: _fadeSlideTransition,
                     child: Text(
-                      status,
-                      key: ValueKey(status),
+                      lifecycle.publicStatus,
+                      key: ValueKey(lifecycle.publicStatus),
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: enabled
                                 ? _SeedPalette.accent
@@ -3095,7 +3102,7 @@ class _HomeWarpTileLegacy extends StatelessWidget {
         context,
         title: 'Расширенная приватность',
         lines: const [
-          'WARP готовится и не активен в этой сборке.',
+          'Дополнительный режим готовится и не активен в этой сборке.',
           'Когда режим будет проверен, POKROV покажет простой тумблер и честное предупреждение о скорости.',
         ],
       ),
@@ -3140,7 +3147,7 @@ class _HomeWarpTileLegacy extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'WARP · готовится',
+                    'Дополнительный режим готовится',
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
                           color: _SeedPalette.muted,
                           fontWeight: FontWeight.w700,
@@ -5972,6 +5979,7 @@ void _showInfoSheet(
 
 void _showWarpConsentSheet(
   BuildContext context, {
+  required PokrovWarpLifecycle lifecycle,
   required bool enabled,
   required Future<void> Function(bool value) onChanged,
 }) {
@@ -5980,6 +5988,7 @@ void _showWarpConsentSheet(
     showDragHandle: true,
     backgroundColor: _SeedPalette.surface,
     builder: (context) => _WarpConsentSheet(
+      lifecycle: lifecycle,
       enabled: enabled,
       onChanged: onChanged,
     ),
@@ -5988,10 +5997,12 @@ void _showWarpConsentSheet(
 
 class _WarpConsentSheet extends StatelessWidget {
   const _WarpConsentSheet({
+    required this.lifecycle,
     required this.enabled,
     required this.onChanged,
   });
 
+  final PokrovWarpLifecycle lifecycle;
   final bool enabled;
   final Future<void> Function(bool value) onChanged;
 
@@ -6029,7 +6040,7 @@ class _WarpConsentSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'WARP',
+                        lifecycle.publicSheetTitle,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               color: _SeedPalette.ink,
                               fontWeight: FontWeight.w800,
@@ -6037,7 +6048,7 @@ class _WarpConsentSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Дополнительный слой приватности включается отдельно и может менять скорость.',
+                        lifecycle.publicSheetBody,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: _SeedPalette.muted,
                               height: 1.35,
@@ -6063,7 +6074,7 @@ class _WarpConsentSheet extends StatelessWidget {
               icon: enabled
                   ? const Icon(Icons.shield_outlined)
                   : const Icon(Icons.verified_user_rounded),
-              label: Text(enabled ? 'Оставить выключенным' : 'Включить WARP'),
+              label: Text(lifecycle.publicActionLabel),
               onPressed: () {
                 unawaited(onChanged(nextValue));
                 Navigator.of(context).pop();
@@ -6127,6 +6138,7 @@ class _SupportChatScreen extends StatefulWidget {
     required this.appContext,
     required this.selectedRouteMode,
     required this.statusLabel,
+    required this.extraDiagnostics,
     required this.supportTicketService,
     required this.onOpenHandoff,
   });
@@ -6134,6 +6146,7 @@ class _SupportChatScreen extends StatefulWidget {
   final SeedAppContext appContext;
   final RouteMode selectedRouteMode;
   final String statusLabel;
+  final Map<String, Object?> extraDiagnostics;
   final SupportTicketService supportTicketService;
   final void Function(String label, String value) onOpenHandoff;
 
@@ -6468,6 +6481,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
       'route_mode': widget.selectedRouteMode.name,
       'connection_status': widget.statusLabel,
       'selected_region': 'POKROV auto',
+      ...widget.extraDiagnostics,
     };
   }
 

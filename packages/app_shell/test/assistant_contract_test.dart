@@ -67,6 +67,31 @@ void main() {
     expect(redacted, contains('обычный текст'));
   });
 
+  test('assistant diagnostics allow safe enhanced protection state only', () {
+    final attachment = PokrovAssistantDiagnosticAttachment.fromDiagnostics(
+      <String, Object?>{
+        'platform': 'windows',
+        'enhanced_protection_state': 'fallback',
+        'enhanced_protection_consent': true,
+        'enhanced_protection_available': true,
+        'enhanced_protection_error': 'wireguard private-key failed',
+        'warp_private_key': 'secret',
+      },
+    );
+
+    expect(
+      attachment.safeDiagnostics['enhanced_protection_state'],
+      'fallback',
+    );
+    expect(attachment.safeDiagnostics['enhanced_protection_consent'], isTrue);
+    expect(attachment.safeDiagnostics['enhanced_protection_available'], isTrue);
+    expect(
+      attachment.safeDiagnostics['enhanced_protection_error'],
+      '[redacted] failed',
+    );
+    expect(attachment.safeDiagnostics.containsKey('warp_private_key'), isFalse);
+  });
+
   test('assistant actions require explicit confirmation before app changes',
       () {
     const action = PokrovAssistantSafeAction(

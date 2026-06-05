@@ -451,6 +451,20 @@ void main() {
       },
     );
     expect(fallback.state, 'fallback');
+    final warpCacheFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}'
+      'warp-consent-windows.json',
+    );
+    expect(await warpCacheFile.exists(), isTrue);
+    final warpCacheJson = await warpCacheFile.readAsString();
+    expect(warpCacheJson, contains('extended_protection'));
+    expect(warpCacheJson, contains('Расширенная защита'));
+    expect(warpCacheJson, contains('fallback'));
+    expect(warpCacheJson, isNot(contains('technical_label')));
+    expect(warpCacheJson, isNot(contains('WARP')));
+    expect(warpCacheJson, isNot(contains('private-key')));
+    expect(warpCacheJson, isNot(contains('wireguard_config')));
+    expect(warpCacheJson, isNot(contains('connect.pokrov.space')));
     final runtimeEventJson = jsonEncode(runtimeEventBody);
     expect(runtimeEventJson, contains('safe_detail'));
     expect(runtimeEventJson, isNot(contains('test-private')));

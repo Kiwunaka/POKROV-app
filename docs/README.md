@@ -65,6 +65,7 @@ Current anchors:
 - `operations/apple-release-readiness.md`
 - `operations/android-release-audit.md`
 - `operations/windows-release-readiness.md`
+- `operations/warp-runtime-proof-checklist.md`
 - `operations/cutover-readiness.md`
 - `operations/client-motion-performance-checklist.md`
 - `product/client-public-beta-prd.md`

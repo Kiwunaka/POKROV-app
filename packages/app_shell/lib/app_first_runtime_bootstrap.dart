@@ -936,7 +936,9 @@ class AppFirstRuntimeBootstrapper
       method: 'GET',
       path: '/api/client/warp/status',
     );
-    return WarpControlStatus.tryParse(response);
+    final status = WarpControlStatus.tryParse(response);
+    await _saveWarpConsentCache(hostPlatform, status);
+    return status;
   }
 
   @override
@@ -960,7 +962,9 @@ class AppFirstRuntimeBootstrapper
                 'reason_code': reasonCode.trim(),
             },
     );
-    return WarpControlStatus.tryParse(response);
+    final status = WarpControlStatus.tryParse(response);
+    await _saveWarpConsentCache(hostPlatform, status);
+    return status;
   }
 
   @override
@@ -977,7 +981,9 @@ class AppFirstRuntimeBootstrapper
             reasonCode.trim().isEmpty ? 'user_requested' : reasonCode.trim(),
       },
     );
-    return WarpControlStatus.tryParse(response);
+    final status = WarpControlStatus.tryParse(response);
+    await _saveWarpConsentCache(hostPlatform, status);
+    return status;
   }
 
   @override
@@ -1006,7 +1012,9 @@ class AppFirstRuntimeBootstrapper
         'meta': _sanitizeWarpRuntimeMeta(meta),
       },
     );
-    return WarpControlStatus.tryParse(response);
+    final status = WarpControlStatus.tryParse(response);
+    await _saveWarpConsentCache(hostPlatform, status);
+    return status;
   }
 
   Future<Map<String, dynamic>> _requestWarpJsonWithSession({
@@ -1724,6 +1732,43 @@ class AppFirstRuntimeBootstrapper
       '${supportDirectory.path}${Platform.pathSeparator}'
       'app-first-session-${hostPlatform.name}.json',
     );
+  }
+
+  Future<void> _saveWarpConsentCache(
+    HostPlatform hostPlatform,
+    WarpControlStatus status,
+  ) async {
+    final file = await _warpConsentCacheFile(hostPlatform);
+    await file.parent.create(recursive: true);
+    final updatedAt =
+        status.consented ? status.consentedAt.trim() : status.revokedAt.trim();
+    await file.writeAsString(
+      jsonEncode(
+        <String, Object?>{
+          'feature': 'extended_protection',
+          'public_label': _safeWarpPublicLabel(status.publicLabel),
+          'consented': status.consented,
+          'state': _safeWarpToken(status.state, fallback: 'not_ready'),
+          if (updatedAt.isNotEmpty) 'consent_updated_at': updatedAt,
+        },
+      ),
+    );
+  }
+
+  Future<File> _warpConsentCacheFile(HostPlatform hostPlatform) async {
+    final supportDirectory = await _supportDirectoryResolver();
+    return File(
+      '${supportDirectory.path}${Platform.pathSeparator}'
+      'warp-consent-${hostPlatform.name}.json',
+    );
+  }
+
+  String _safeWarpPublicLabel(String value) {
+    final text = value.trim();
+    if (text.isEmpty || text.toLowerCase().contains('warp')) {
+      return 'Расширенная защита';
+    }
+    return text.length > 80 ? text.substring(0, 80) : text;
   }
 
   Future<_StoredBootstrapState> _startTrial({
@@ -4258,6 +4303,10 @@ class AppFirstSupportTicketService implements SupportTicketService {
     'uplink_health',
     'device_name',
     'app_build',
+    'enhanced_protection_state',
+    'enhanced_protection_consent',
+    'enhanced_protection_available',
+    'enhanced_protection_error',
   };
 
   @override

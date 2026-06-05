@@ -62,12 +62,12 @@
 
 ## Phase 4: WARP Working-Feature Hardening
 
-- [ ] Keep public wording as `Расширенная защита` / `Расширенная приватность`; literal `WARP` stays advanced/support/internal unless clarity requires it.
-- [ ] Finish client-side WARP state machine: not ready, ready to consent, consented, active, degraded, fallback, revoked, error.
-- [ ] Persist consent through backend status plus safe local cache.
-- [ ] Ensure revoke clears local enabled state and any staged runtime material path.
-- [ ] Add support diagnostics redaction proof for WARP states and errors.
-- [ ] Add Android and Windows runtime proof checklist before any production-working claim.
+- [x] Keep public wording as `Расширенная защита` / `Расширенная приватность`; literal `WARP` stays advanced/support/internal unless clarity requires it.
+- [x] Finish client-side WARP state machine: not ready, ready to consent, consented, active, degraded, fallback, revoked, error.
+- [x] Persist consent through backend status plus safe local cache.
+- [x] Ensure revoke clears local enabled state and restages the baseline route on the next connect; staged-material deletion proof remains in the runtime checklist.
+- [x] Add support diagnostics redaction proof for WARP states and errors.
+- [x] Add Android and Windows runtime proof checklist before any production-working claim.
 
 ## Phase 5: Premium UX Pass
 

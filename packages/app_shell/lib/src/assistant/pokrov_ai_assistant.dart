@@ -151,6 +151,14 @@ class PokrovAssistantDiagnosticAttachment {
           PokrovAssistantRedactor.isSensitiveKey(key)) {
         continue;
       }
+      if (key == 'enhanced_protection_error') {
+        final value =
+            PokrovAssistantRedactor.safeRedactedDiagnosticValue(entry.value);
+        if (value != null) {
+          safe[key] = value;
+        }
+        continue;
+      }
       final value = PokrovAssistantRedactor.safeDiagnosticValue(entry.value);
       if (value != null) {
         safe[key] = value;
@@ -239,6 +247,10 @@ class PokrovAssistantRedactor {
     'uplink_health',
     'device_name',
     'app_build',
+    'enhanced_protection_state',
+    'enhanced_protection_consent',
+    'enhanced_protection_available',
+    'enhanced_protection_error',
   };
 
   static const _sensitiveKeyFragments = <String>{
@@ -261,7 +273,8 @@ class PokrovAssistantRedactor {
       r'\b(?:token|secret|access_key|uuid|server|subscription)[=:]\S+',
       caseSensitive: false,
     ),
-    RegExp(r'\b(?:wireguard|vless|vmess|trojan)\b', caseSensitive: false),
+    RegExp(r'\b(?:wireguard|warp|private-key|private_key|vless|vmess|trojan)\b',
+        caseSensitive: false),
   ];
 
   static bool isSensitiveKey(String key) {
@@ -281,6 +294,18 @@ class PokrovAssistantRedactor {
       return null;
     }
     return text;
+  }
+
+  static Object? safeRedactedDiagnosticValue(Object? value) {
+    if (value == null) {
+      return null;
+    }
+    final text = value.toString().trim();
+    if (text.isEmpty || text.length > 160) {
+      return null;
+    }
+    final redacted = redactText(text).trim();
+    return redacted.isEmpty ? null : redacted;
   }
 
   static String redactText(String value) {

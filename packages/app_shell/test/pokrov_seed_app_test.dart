@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -1707,14 +1709,18 @@ void main() {
     expect(find.text('РЈСЃРёР»РµРЅРЅС‹Р№ СЂРµР¶РёРј'), findsNothing);
     final warpTile = find.byKey(const ValueKey('home-warp-tile'));
     expect(warpTile, findsOneWidget);
-    expect(find.textContaining('WARP'), findsOneWidget);
+    expect(find.textContaining('Расширенная приватность'), findsOneWidget);
+    expect(find.textContaining('WARP'), findsNothing);
 
     await tester.tap(warpTile);
     await tester.pumpAndSettle();
 
     expect(find.byType(BottomSheet), findsOneWidget);
-    expect(find.textContaining('WARP'), findsWidgets);
-    expect(find.textContaining('Р’РєР»СЋС‡РёС‚СЊ WARP'), findsNothing);
+    expect(
+      find.textContaining('Дополнительный режим пока готовится'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('WARP'), findsNothing);
     expect(find.byType(Switch), findsNothing);
   });
 
@@ -1751,6 +1757,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(bootstrapper.calls, 1);
+    expect(find.byKey(const ValueKey('home-warp-state-ready')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-warp-sheet')), findsOneWidget);
     expect(
         find.byKey(const ValueKey('home-warp-consent-switch')), findsOneWidget);
@@ -2099,6 +2106,20 @@ void main() {
         RouteMode.allExceptRu.name);
     expect(supportTicketService.lastReplyDiagnostics?['connection_status'],
         isNotEmpty);
+    expect(
+      supportTicketService.lastReplyDiagnostics?['enhanced_protection_state'],
+      isNotEmpty,
+    );
+    expect(
+      supportTicketService
+          .lastReplyDiagnostics?['enhanced_protection_available'],
+      isNotNull,
+    );
+    final diagnosticsJson =
+        jsonEncode(supportTicketService.lastReplyDiagnostics);
+    expect(diagnosticsJson, isNot(contains('WARP')));
+    expect(diagnosticsJson, isNot(contains('wireguard')));
+    expect(diagnosticsJson, isNot(contains('private-key')));
     expect(supportTicketService.lastReplyDiagnostics?.containsKey('raw_config'),
         isFalse);
     expect(
