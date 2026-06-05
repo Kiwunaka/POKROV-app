@@ -1,7 +1,7 @@
 # P6 Overload Correction Plan
 
 Date: 2026-06-05
-Status: P2 implemented locally
+Status: P3 implemented locally
 Owner: POKROV-app/main
 
 ## Goal
@@ -92,6 +92,14 @@ Acceptance:
   finite connect ritual, status crossfade, row/chip feedback, skeletons, and
   reduced-motion compliance.
 
+## P3 Follow-Up
+
+- Apply the same low-density rule to secondary surfaces.
+- Keep Rules picker-first; hide manual identifiers behind an explicit manual
+  row instead of showing technical inputs immediately.
+- Keep Support diagnostics copy calm and product-facing; explain the safe
+  summary rather than listing raw keys, server addresses, or config internals.
+
 ## Implementation Order
 
 1. Update tests to encode the new Home-first and Home-minimal rules.
@@ -163,6 +171,27 @@ Implemented locally on 2026-06-05:
 Verification:
 
 - `flutter test test/design_system_contract_test.dart` in `packages/app_shell`
+- `flutter analyze` in `packages/app_shell`
+- `flutter test` in `packages/app_shell`
+- `flutter build windows --release` in `apps/windows_shell`
+
+## P3 Implementation Notes
+
+Implemented locally on 2026-06-05:
+
+- Rules selected-apps now opens with a picker-first surface. The manual
+  identifier field is hidden behind `Добавить вручную`, so normal users do not
+  see package/process terminology before they ask for it.
+- The empty selected-apps state now says POKROV will apply chosen apps
+  automatically instead of explaining package IDs or process names.
+- Support diagnostics preview now describes a safe summary of device, mode,
+  status, and version. It no longer shows first-layer copy about raw keys,
+  server addresses, or configs.
+
+Verification:
+
+- `flutter test test/pokrov_seed_app_test.dart --name "profile handoffs open safe external destinations"` in `packages/app_shell`
+- `flutter test test/pokrov_seed_app_test.dart --name "rules show selected-apps editor and hide beta prose|rules lets user add a custom selected app identifier"` in `packages/app_shell`
 - `flutter analyze` in `packages/app_shell`
 - `flutter test` in `packages/app_shell`
 - `flutter build windows --release` in `apps/windows_shell`

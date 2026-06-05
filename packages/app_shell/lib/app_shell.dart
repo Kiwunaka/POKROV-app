@@ -4884,6 +4884,7 @@ class _SelectedAppsEditor extends StatefulWidget {
 class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
   late final TextEditingController _controller;
   Future<List<_SelectedAppCandidate>>? _candidateFuture;
+  bool _manualEntryVisible = false;
 
   @override
   void initState() {
@@ -4959,33 +4960,69 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
           ),
         ),
         const SizedBox(height: 10),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: TextField(
-                key: const ValueKey('rules-selected-app-input'),
-                controller: _controller,
-                decoration: InputDecoration(
-                  labelText: 'ID приложения',
-                  hintText: hint,
+        TextButton.icon(
+          key: const ValueKey('rules-selected-app-manual-toggle'),
+          onPressed: () {
+            setState(() {
+              _manualEntryVisible = !_manualEntryVisible;
+            });
+          },
+          icon: Icon(
+            _manualEntryVisible
+                ? Icons.expand_less_rounded
+                : Icons.edit_outlined,
+          ),
+          label: Text(
+            _manualEntryVisible ? 'Скрыть ручной ввод' : 'Добавить вручную',
+          ),
+        ),
+        AnimatedSwitcher(
+          duration: _MotionScope.of(context).duration(_MotionTokens.short),
+          transitionBuilder: _fadeSlideTransition,
+          child: _manualEntryVisible
+              ? Padding(
+                  key: const ValueKey('rules-selected-app-manual-fields'),
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          key: const ValueKey('rules-selected-app-input'),
+                          controller: _controller,
+                          decoration: InputDecoration(
+                            labelText: 'Название или ID',
+                            hintText: hint,
+                          ),
+                          onSubmitted: (_) => _submit(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.filled(
+                        key: const ValueKey('rules-selected-app-add'),
+                        tooltip: 'Добавить приложение',
+                        onPressed: _submit,
+                        icon: const Icon(Icons.add_rounded),
+                      ),
+                    ],
+                  ),
+                )
+              : Align(
+                  key: const ValueKey('rules-selected-app-manual-hint'),
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Если приложения нет в списке, добавьте его вручную.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: _SeedPalette.muted,
+                          height: 1.35,
+                        ),
+                  ),
                 ),
-                onSubmitted: (_) => _submit(),
-              ),
-            ),
-            const SizedBox(width: 8),
-            IconButton.filled(
-              key: const ValueKey('rules-selected-app-add'),
-              tooltip: 'Добавить приложение',
-              onPressed: _submit,
-              icon: const Icon(Icons.add_rounded),
-            ),
-          ],
         ),
         const SizedBox(height: 10),
         if (widget.selectedAppIds.isEmpty)
           Text(
-            'Добавьте package id или имя процесса. Остальное POKROV настроит сам.',
+            'POKROV применит выбранные приложения сам.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: _SeedPalette.muted,
                   height: 1.35,
@@ -6536,7 +6573,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Сырые ключи, ссылки, адреса серверов и конфиги не отправляются.',
+                  'Мы прикрепим только безопасную сводку: устройство, режим, статус и версию.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: _SeedPalette.muted,
                         height: 1.3,

@@ -167,6 +167,9 @@ Retained only as fork/reference hardening backlog:
 - remove remaining user-visible inherited `Hiddify` or legacy power-user wording from advanced surfaces
 - polish Russian copy where inherited text still feels technical or legacy
 - keep advanced networking controls out of first-layer onboarding and daily-use screens
+- `2026-06-05` P3 cleanup moved selected-app manual identifiers behind an
+  explicit manual row and rewrote support diagnostics preview as a safe-summary
+  explanation rather than raw-key/server/config negative copy
 
 ### Route-mode and support UX polish
 

@@ -2220,7 +2220,11 @@ void main() {
     expect(find.byKey(const ValueKey('support-diagnostics-preview')),
         findsOneWidget);
     expect(find.textContaining(appContext.hostPlatform.label), findsWidgets);
+    expect(find.textContaining('безопасную сводку'), findsOneWidget);
+    expect(find.textContaining('Сырые'), findsNothing);
     expect(find.textContaining('config'), findsNothing);
+    expect(find.textContaining('конфиг'), findsNothing);
+    expect(find.textContaining('адреса серверов'), findsNothing);
     expect(find.textContaining('://'), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('support-diagnostics-close')));
@@ -2633,8 +2637,19 @@ void main() {
         of: selectedAppsStatus,
         matching: find.byKey(const ValueKey('rules-selected-app-input')),
       ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: selectedAppsStatus,
+        matching: find.byKey(const ValueKey('rules-selected-app-pick')),
+      ),
       findsOneWidget,
     );
+    expect(find.byKey(const ValueKey('rules-selected-app-manual-toggle')),
+        findsOneWidget);
+    expect(find.textContaining('package id'), findsNothing);
+    expect(find.textContaining('имя процесса'), findsNothing);
     expect(find.textContaining('geoip'), findsNothing);
     expect(find.textContaining('.srs'), findsNothing);
     expect(find.textContaining('CIDR'), findsNothing);
@@ -2674,6 +2689,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.tap(
+      find.byKey(const ValueKey('rules-selected-app-manual-toggle')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('rules-selected-app-manual-fields')),
+        findsOneWidget);
     await tester.enterText(
       find.byKey(const ValueKey('rules-selected-app-input')),
       'com.example.special',
