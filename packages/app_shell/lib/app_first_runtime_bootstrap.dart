@@ -2075,6 +2075,14 @@ class AppFirstRuntimeBootstrapper
     final session = _readMap(response['session']);
     final provisioning = _readMap(response['provisioning']);
     final managedManifest = _readMap(provisioning['managed_manifest']);
+    final provisioningReady = _readBool(response['sync_ok']) ||
+        _readBool(provisioning['sync_ok']) ||
+        _readText(provisioning['status']) == 'ready';
+    if (!provisioningReady) {
+      throw const BootstrapFailure(
+        'Сервер еще готовит доступ. Попробуйте подключиться через минуту.',
+      );
+    }
     final sessionToken = _readText(session['session_token']);
     if (sessionToken.isEmpty) {
       throw const BootstrapFailure(
@@ -2156,6 +2164,14 @@ class AppFirstRuntimeBootstrapper
     if (configPayload == null) {
       throw const BootstrapFailure(
         'POKROV не смог завершить настройку: данных подключения недостаточно.',
+      );
+    }
+    final provisioning = _readMap(response['provisioning']);
+    final provisioningReady = _readBool(provisioning['sync_ok']) ||
+        _readText(provisioning['status']) == 'ready';
+    if (!provisioningReady) {
+      throw const BootstrapFailure(
+        'Сервер еще готовит доступ. Попробуйте подключиться через минуту.',
       );
     }
     final supportContext = _readMap(response['support_context']);
@@ -4397,6 +4413,14 @@ class AppFirstRuntimeBootstrapper
   String _readText(Object? value, {String fallback = ''}) {
     final text = value == null ? '' : value.toString().trim();
     return text.isEmpty ? fallback : text;
+  }
+
+  bool _readBool(Object? value) {
+    if (value is bool) {
+      return value;
+    }
+    final text = value == null ? '' : value.toString().trim().toLowerCase();
+    return text == '1' || text == 'true' || text == 'yes' || text == 'on';
   }
 
   int _readInt(Object? value) {

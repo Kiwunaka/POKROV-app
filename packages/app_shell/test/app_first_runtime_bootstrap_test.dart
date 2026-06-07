@@ -129,6 +129,8 @@ void main() {
                     'account_id': '42',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -164,6 +166,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-007',
                   'smart_connect': <String, Object?>{
                     'eligible': true,
@@ -316,6 +322,8 @@ void main() {
                     'account_id': '42',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -510,6 +518,8 @@ void main() {
                     'account_id': 'smart-connect-account',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -535,6 +545,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-009',
                   'smart_connect': <String, Object?>{
                     'eligible': true,
@@ -695,6 +709,8 @@ void main() {
                     'account_id': 'smart-connect-probe-account',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -720,6 +736,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-probe',
                   'smart_connect': <String, Object?>{
                     'eligible': true,
@@ -846,6 +866,8 @@ void main() {
                     'account_id': 'ticket-account',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -965,6 +987,8 @@ void main() {
                     'account_id': 'thread-account',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -1154,6 +1178,8 @@ void main() {
                     'account_id': 'reply-diagnostics-account',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -1271,6 +1297,8 @@ void main() {
                     'account_id': 'redeem-account',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -1301,6 +1329,8 @@ void main() {
                       'access_state': 'paid_active',
                     },
                     'provisioning': <String, Object?>{
+                      'status': 'ready',
+                      'sync_ok': true,
                       'managed_profile_path': '/api/client/profile/managed',
                     },
                   },
@@ -1367,6 +1397,8 @@ void main() {
                     'account_id': 'cabinet-account',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -1460,6 +1492,8 @@ void main() {
                     'account_id': 'telegram-link-account',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -1549,6 +1583,8 @@ void main() {
                     'account_id': 'channel-bonus-account',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -1672,6 +1708,8 @@ void main() {
                     'account_id': 'bonus-summary-account',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -1953,6 +1991,8 @@ void main() {
                     'account_id': '84',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -1978,6 +2018,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-retry',
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
@@ -2059,6 +2103,8 @@ void main() {
                     'account_id': '126',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -2084,6 +2130,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-materialized',
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
@@ -2162,6 +2212,8 @@ void main() {
                     'account_id': '252',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -2187,6 +2239,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-android-runtime',
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
@@ -2320,6 +2376,8 @@ void main() {
                     'account_id': '168',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -2345,6 +2403,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-ready',
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
@@ -2436,6 +2498,8 @@ void main() {
                     'account_id': '336',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -2461,6 +2525,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-android-runtime-ready',
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
@@ -2630,6 +2698,8 @@ void main() {
                     'account_id': '337',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -2655,6 +2725,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-android-managed-safe',
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
@@ -2837,6 +2911,8 @@ void main() {
                     'account_id': '338',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -2862,6 +2938,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-android-all-except-ru',
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
@@ -3048,6 +3128,8 @@ void main() {
                     'account_id': '342',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -3075,6 +3157,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-windows-all-except-ru',
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
@@ -3221,6 +3307,8 @@ void main() {
                     'account_id': '343',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -3248,6 +3336,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-all-except-ru-fallback',
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
@@ -3342,6 +3434,8 @@ void main() {
                     'account_id': '341',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -3374,6 +3468,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-android-selected-apps',
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
@@ -3460,6 +3558,8 @@ void main() {
                     'account_id': '342',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -3492,6 +3592,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-windows-selected-apps',
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
@@ -3599,6 +3703,8 @@ void main() {
                     'account_id': '339',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -3624,6 +3730,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-android-dns-final',
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
@@ -3725,6 +3835,8 @@ void main() {
                     'account_id': '340',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -3750,6 +3862,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-android-selector-sanitize',
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
@@ -3846,6 +3962,8 @@ void main() {
                     'account_id': '420',
                   },
                   'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
                     'managed_manifest': <String, Object?>{
                       'url': '/api/client/profile/managed',
                     },
@@ -3871,6 +3989,10 @@ void main() {
             ..write(
               jsonEncode(
                 <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
                   'profile_revision': 'rev-android-ipv4-only',
                   'config_format': 'singbox-json',
                   'support_context': <String, Object?>{

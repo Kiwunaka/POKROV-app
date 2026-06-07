@@ -453,11 +453,14 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   DesktopRuntimeEngine({
     required this.hostPlatform,
     this.assetRootOverride,
+    Future<String?> Function()? connectivityProbe,
     DesktopRuntimeBindings Function(String libraryPath)? bindingsLoader,
-  }) : _bindingsLoader = bindingsLoader ?? _LibcoreBindings.load;
+  })  : _connectivityProbe = connectivityProbe,
+        _bindingsLoader = bindingsLoader ?? _LibcoreBindings.load;
 
   final HostPlatform hostPlatform;
   final String? assetRootOverride;
+  final Future<String?> Function()? _connectivityProbe;
   final DesktopRuntimeBindings Function(String libraryPath) _bindingsLoader;
 
   _RuntimeDirectories? _directories;
@@ -621,9 +624,62 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       return snapshot();
     }
 
+    final probeError = await _verifyStartedRuntime();
+    if (probeError != null) {
+      final stopError = _bindings!.stop();
+      _phase = RuntimePhase.configStaged;
+      _message = stopError.isEmpty
+          ? 'POKROV запустил модуль, но трафик не проходит: $probeError'
+          : 'POKROV запустил модуль, но трафик не проходит: $probeError; остановка тоже не удалась: $stopError';
+      return snapshot();
+    }
+
     _phase = RuntimePhase.running;
     _message = 'POKROV включен.';
     return snapshot();
+  }
+
+  Future<String?> _verifyStartedRuntime() async {
+    final injectedProbe = _connectivityProbe;
+    if (injectedProbe != null) {
+      return injectedProbe();
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    final proxyProbe = await _probeHttp(
+      useLocalProxy: true,
+      timeout: const Duration(seconds: 8),
+    );
+    if (proxyProbe != null) {
+      return proxyProbe;
+    }
+    return null;
+  }
+
+  Future<String?> _probeHttp({
+    required bool useLocalProxy,
+    required Duration timeout,
+  }) async {
+    final client = HttpClient();
+    client.connectionTimeout = timeout;
+    if (useLocalProxy) {
+      client.findProxy = (uri) => 'PROXY 127.0.0.1:22341';
+    }
+    try {
+      final request = await client
+          .getUrl(Uri.parse('http://cp.cloudflare.com'))
+          .timeout(timeout);
+      request.followRedirects = false;
+      final response = await request.close().timeout(timeout);
+      await response.drain<void>().timeout(timeout);
+      if (response.statusCode >= 200 && response.statusCode < 500) {
+        return null;
+      }
+      return 'проверка соединения вернула HTTP ${response.statusCode}';
+    } on Object catch (error) {
+      return 'проверка соединения не прошла (${error.toString()})';
+    } finally {
+      client.close(force: true);
+    }
   }
 
   @override
@@ -793,7 +849,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       RouteMode.selectedApps => 'global',
       RouteMode.fullTunnel => 'global',
     };
-    final systemProxyMode = hostPlatform == HostPlatform.windows;
+    final systemProxyMode = false;
     final directDnsAddress =
         payload.routeMode == RouteMode.allExceptRu ? 'local' : 'udp://1.1.1.1';
 

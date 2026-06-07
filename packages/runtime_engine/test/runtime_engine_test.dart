@@ -431,6 +431,7 @@ void main() {
     final engine = DesktopRuntimeEngine(
       hostPlatform: HostPlatform.windows,
       assetRootOverride: root.path,
+      connectivityProbe: () async => null,
       bindingsLoader: (_) => bindings,
     );
 
@@ -498,8 +499,8 @@ void main() {
     expect(running.phase, RuntimePhase.running);
     expect(bindings.changeOptionsCalls, 1);
     expect(bindings.startCalls, 1);
-    expect(bindings.lastOptionsJson, contains('"set-system-proxy":true'));
-    expect(bindings.lastOptionsJson, contains('"enable-tun":false'));
+    expect(bindings.lastOptionsJson, contains('"set-system-proxy":false'));
+    expect(bindings.lastOptionsJson, contains('"enable-tun":true'));
   });
 
   test('desktop lane keeps runtime-ready WARP disabled without user consent',
@@ -521,6 +522,7 @@ void main() {
     final engine = DesktopRuntimeEngine(
       hostPlatform: HostPlatform.windows,
       assetRootOverride: root.path,
+      connectivityProbe: () async => null,
       bindingsLoader: (_) => bindings,
     );
 
@@ -574,6 +576,7 @@ void main() {
     final engine = DesktopRuntimeEngine(
       hostPlatform: HostPlatform.windows,
       assetRootOverride: root.path,
+      connectivityProbe: () async => null,
       bindingsLoader: (_) => bindings,
     );
 
