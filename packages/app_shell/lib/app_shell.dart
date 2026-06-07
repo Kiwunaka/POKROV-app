@@ -106,6 +106,7 @@ abstract final class _SeedPalette {
 
 const _pokrovBrandMarkAsset = PokrovBrandAssets.mark;
 const _selectedAppsEnforcementReady = true;
+const _pokrovAppVersion = '1.0.0-beta';
 const _seedRulesetVersion = '2026-04-13';
 const _seedPackageCatalogVersion = '2026-04-13';
 
@@ -562,6 +563,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   late final AppFirstAccountActionService? _accountActionService;
   late final AppFirstBonusActionService? _bonusActionService;
   late final AppFirstWarpActionService? _warpActionService;
+  late final AppFirstReleaseActionService? _releaseActionService;
   late final SupportTicketService _supportTicketService;
   late final PokrovFirstLaunchStore _firstLaunchStore;
   final TextEditingController _firstLaunchRestoreCodeController =
@@ -585,6 +587,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   WarpRuntimePolicy _managedWarpPolicy = WarpRuntimePolicy.disabled;
   bool _warpRuntimeConsent = false;
   bool _warpPolicyBusy = false;
+  bool _clientUpdateCheckBusy = false;
+  bool _clientUpdatePromptVisible = false;
+  String _lastPromptedUpdateKey = '';
 
   @override
   void initState() {
@@ -608,6 +613,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _warpActionService = bootstrapper is AppFirstWarpActionService
         ? bootstrapper as AppFirstWarpActionService
         : null;
+    _releaseActionService = bootstrapper is AppFirstReleaseActionService
+        ? bootstrapper as AppFirstReleaseActionService
+        : null;
     _supportTicketService = widget.supportTicketService ??
         AppFirstSupportTicketService(
           apiBaseUrl: widget.appContext.apiBaseUrl,
@@ -616,6 +624,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         widget.firstLaunchStore ?? const PokrovFileFirstLaunchStore();
     unawaited(_loadFirstLaunchState());
     _refreshRuntimeSnapshot();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_checkForClientUpdate());
+    });
   }
 
   void _selectRouteMode(RouteMode mode) {
@@ -667,6 +678,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && !_runtimeBusy) {
       unawaited(_refreshRuntimeSnapshot());
+      unawaited(_checkForClientUpdate());
     }
   }
 
@@ -677,6 +689,93 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
               mode: LaunchMode.externalApplication,
             );
     return launcher(uri);
+  }
+
+  Future<void> _checkForClientUpdate() async {
+    final releaseActions = _releaseActionService;
+    if (releaseActions == null ||
+        _clientUpdateCheckBusy ||
+        _clientUpdatePromptVisible) {
+      return;
+    }
+    _clientUpdateCheckBusy = true;
+    try {
+      final metadata = await releaseActions.fetchClientApps(
+        hostPlatform: widget.appContext.hostPlatform,
+        currentVersion: _pokrovAppVersion,
+      );
+      if (!mounted || metadata.silentUpdate) {
+        return;
+      }
+      final update = metadata.updateFor(widget.appContext.hostPlatform);
+      final promptKey =
+          '${update.platform}:${update.latestVersion}:${update.updatePolicy}';
+      if (!update.shouldPrompt || promptKey == _lastPromptedUpdateKey) {
+        return;
+      }
+      _lastPromptedUpdateKey = promptKey;
+      await _showClientUpdatePrompt(update);
+    } catch (_) {
+      // Update checks are advisory; never block the app on startup.
+    } finally {
+      _clientUpdateCheckBusy = false;
+    }
+  }
+
+  Future<void> _showClientUpdatePrompt(ClientAppUpdateInfo update) async {
+    if (!mounted || _clientUpdatePromptVisible) {
+      return;
+    }
+    _clientUpdatePromptVisible = true;
+    final title =
+        update.isRequired ? 'Нужно обновить POKROV' : 'Доступно обновление';
+    final version = update.latestVersion.trim();
+    final notes = update.releaseNotes.trim();
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: !update.isRequired,
+        builder: (dialogContext) {
+          return AlertDialog(
+            key: const ValueKey('client-update-prompt'),
+            title: Text(title),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  version.isEmpty
+                      ? 'Установите свежую сборку, чтобы получить исправления и актуальные правила.'
+                      : 'Свежая версия: $version.',
+                ),
+                if (notes.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(notes),
+                ],
+              ],
+            ),
+            actions: [
+              if (!update.isRequired)
+                TextButton(
+                  key: const ValueKey('client-update-later'),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Позже'),
+                ),
+              FilledButton(
+                key: const ValueKey('client-update-download'),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  unawaited(_openSafeHandoff('download', update.url));
+                },
+                child: const Text('Скачать'),
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      _clientUpdatePromptVisible = false;
+    }
   }
 
   Future<void> _openSafeHandoff(String label, String value) async {
@@ -6485,7 +6584,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
 
   Map<String, Object?> _supportDiagnostics() {
     return <String, Object?>{
-      'app_version': '1.0.0-beta',
+      'app_version': _pokrovAppVersion,
       'platform': widget.appContext.hostPlatform.name,
       'route_mode': widget.selectedRouteMode.name,
       'connection_status': widget.statusLabel,

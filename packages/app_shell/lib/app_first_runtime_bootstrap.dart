@@ -99,6 +99,14 @@ abstract interface class AppFirstWarpActionService {
   });
 }
 
+abstract interface class AppFirstReleaseActionService {
+  Future<ClientAppsMetadata> fetchClientApps({
+    required HostPlatform hostPlatform,
+    required String currentVersion,
+    String channel = 'beta',
+  });
+}
+
 class BootstrapFailure implements Exception {
   const BootstrapFailure(
     this.message, {
@@ -596,6 +604,12 @@ class AppFirstPromoSlots {
             (slot.title.trim().isNotEmpty || slot.body.trim().isNotEmpty),
       )
       .toList(growable: false);
+
+  List<AppFirstPromoSlot> visibleForPlacement(String placement) => visibleSlots
+      .where(
+        (slot) => slot.placement.trim() == placement.trim(),
+      )
+      .toList(growable: false);
 }
 
 class AppFirstPromoSlot {
@@ -605,8 +619,13 @@ class AppFirstPromoSlot {
     required this.enabled,
     required this.title,
     required this.body,
+    this.imageUrl = '',
     required this.ctaLabel,
     required this.ctaHref,
+    this.placement = '',
+    this.dismissible = true,
+    this.startsAt = '',
+    this.endsAt = '',
     required this.kind,
     required this.goal,
   });
@@ -616,10 +635,150 @@ class AppFirstPromoSlot {
   final bool enabled;
   final String title;
   final String body;
+  final String imageUrl;
   final String ctaLabel;
   final String ctaHref;
+  final String placement;
+  final bool dismissible;
+  final String startsAt;
+  final String endsAt;
   final String kind;
   final String goal;
+}
+
+class ClientAppsMetadata {
+  const ClientAppsMetadata({
+    required this.android,
+    required this.windows,
+    required this.docsUrl,
+    required this.updatedAt,
+    required this.updateCheckMode,
+    required this.silentUpdate,
+  });
+
+  static const empty = ClientAppsMetadata(
+    android: ClientAppPlatformMetadata.emptyAndroid,
+    windows: ClientAppPlatformMetadata.emptyWindows,
+    docsUrl: '',
+    updatedAt: '',
+    updateCheckMode: 'prompt',
+    silentUpdate: false,
+  );
+
+  final ClientAppPlatformMetadata android;
+  final ClientAppPlatformMetadata windows;
+  final String docsUrl;
+  final String updatedAt;
+  final String updateCheckMode;
+  final bool silentUpdate;
+
+  ClientAppUpdateInfo updateFor(HostPlatform hostPlatform) {
+    return switch (hostPlatform) {
+      HostPlatform.android => android.update,
+      HostPlatform.windows => windows.update,
+      HostPlatform.ios || HostPlatform.macos => ClientAppUpdateInfo.none,
+    };
+  }
+}
+
+class ClientAppPlatformMetadata {
+  const ClientAppPlatformMetadata({
+    required this.platform,
+    required this.primaryUrl,
+    required this.mirrorUrl,
+    required this.version,
+    required this.sha256,
+    required this.size,
+    required this.releaseNotes,
+    required this.releaseNotesUrl,
+    required this.publishedAt,
+    required this.update,
+  });
+
+  static const emptyAndroid = ClientAppPlatformMetadata(
+    platform: 'android',
+    primaryUrl: '',
+    mirrorUrl: '',
+    version: '',
+    sha256: '',
+    size: 0,
+    releaseNotes: '',
+    releaseNotesUrl: '',
+    publishedAt: '',
+    update: ClientAppUpdateInfo.none,
+  );
+
+  static const emptyWindows = ClientAppPlatformMetadata(
+    platform: 'windows',
+    primaryUrl: '',
+    mirrorUrl: '',
+    version: '',
+    sha256: '',
+    size: 0,
+    releaseNotes: '',
+    releaseNotesUrl: '',
+    publishedAt: '',
+    update: ClientAppUpdateInfo.none,
+  );
+
+  final String platform;
+  final String primaryUrl;
+  final String mirrorUrl;
+  final String version;
+  final String sha256;
+  final int size;
+  final String releaseNotes;
+  final String releaseNotesUrl;
+  final String publishedAt;
+  final ClientAppUpdateInfo update;
+}
+
+class ClientAppUpdateInfo {
+  const ClientAppUpdateInfo({
+    required this.platform,
+    required this.channel,
+    required this.latestVersion,
+    required this.minSupportedVersion,
+    required this.updatePolicy,
+    required this.url,
+    required this.sha256,
+    required this.size,
+    required this.releaseNotes,
+    required this.releaseNotesUrl,
+    required this.publishedAt,
+  });
+
+  static const none = ClientAppUpdateInfo(
+    platform: '',
+    channel: 'beta',
+    latestVersion: '',
+    minSupportedVersion: '',
+    updatePolicy: 'none',
+    url: '',
+    sha256: '',
+    size: 0,
+    releaseNotes: '',
+    releaseNotesUrl: '',
+    publishedAt: '',
+  );
+
+  final String platform;
+  final String channel;
+  final String latestVersion;
+  final String minSupportedVersion;
+  final String updatePolicy;
+  final String url;
+  final String sha256;
+  final int size;
+  final String releaseNotes;
+  final String releaseNotesUrl;
+  final String publishedAt;
+
+  bool get shouldPrompt =>
+      url.trim().isNotEmpty &&
+      (updatePolicy == 'recommended' || updatePolicy == 'required');
+
+  bool get isRequired => updatePolicy == 'required';
 }
 
 class AppFirstBonusHistoryItem {
@@ -660,7 +819,8 @@ class AppFirstRuntimeBootstrapper
         ManagedProfileBootstrapper,
         AppFirstAccountActionService,
         AppFirstBonusActionService,
-        AppFirstWarpActionService {
+        AppFirstWarpActionService,
+        AppFirstReleaseActionService {
   AppFirstRuntimeBootstrapper({
     this.apiBaseUrl = 'https://api.pokrov.space',
     Future<Directory> Function()? supportDirectoryResolver,
@@ -1248,6 +1408,121 @@ class AppFirstRuntimeBootstrapper
     }
   }
 
+  ClientAppPlatformMetadata _readClientAppPlatformMetadata({
+    required String platform,
+    required Map<String, Object?> response,
+  }) {
+    final update = _readMap(response['update']);
+    final primaryUrl = platform == 'android'
+        ? _readText(response['apk_url'])
+        : _readText(response['exe_url']);
+    return ClientAppPlatformMetadata(
+      platform: platform,
+      primaryUrl: primaryUrl,
+      mirrorUrl: _readText(response['mirror_url']),
+      version: _readText(response['version']),
+      sha256: _readText(response['sha256']),
+      size: _readInt(response['size']),
+      releaseNotes: _readText(response['release_notes']),
+      releaseNotesUrl: _readText(response['release_notes_url']),
+      publishedAt: _readText(response['published_at']),
+      update: ClientAppUpdateInfo(
+        platform: _readText(update['platform'], fallback: platform),
+        channel: _readText(update['channel'], fallback: 'beta'),
+        latestVersion: _readText(update['latest_version']),
+        minSupportedVersion: _readText(update['min_supported_version']),
+        updatePolicy: _readText(update['update_policy'], fallback: 'none'),
+        url: _readText(update['url']),
+        sha256: _readText(update['sha256']),
+        size: _readInt(update['size']),
+        releaseNotes: _readText(update['release_notes']),
+        releaseNotesUrl: _readText(update['release_notes_url']),
+        publishedAt: _readText(update['published_at']),
+      ),
+    );
+  }
+
+  @override
+  Future<ClientAppsMetadata> fetchClientApps({
+    required HostPlatform hostPlatform,
+    required String currentVersion,
+    String channel = 'beta',
+  }) async {
+    var state = await _loadOrCreateState(hostPlatform);
+    final client = _createHttpClient(hostPlatform);
+    try {
+      for (var attempt = 0; attempt < 2; attempt += 1) {
+        if (!state.hasSession) {
+          state = await _startTrial(
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
+        }
+
+        try {
+          final platformLabel = switch (hostPlatform) {
+            HostPlatform.android => 'android',
+            HostPlatform.windows => 'windows',
+            HostPlatform.ios => 'ios',
+            HostPlatform.macos => 'macos',
+          };
+          final query = Uri(
+            queryParameters: <String, String>{
+              'platform': platformLabel,
+              'current_version': currentVersion.trim(),
+              'channel': channel.trim().isEmpty ? 'beta' : channel.trim(),
+            },
+          ).query;
+          final response = await _requestJson(
+            method: 'GET',
+            path: '/api/client/apps?$query',
+            client: client,
+            bearerToken: state.sessionToken,
+            hostPlatform: hostPlatform,
+          );
+          final updateCheck = _readMap(response['update_check']);
+          return ClientAppsMetadata(
+            android: _readClientAppPlatformMetadata(
+              platform: 'android',
+              response: _readMap(response['android']),
+            ),
+            windows: _readClientAppPlatformMetadata(
+              platform: 'windows',
+              response: _readMap(response['windows']),
+            ),
+            docsUrl: _readText(response['docs_url']),
+            updatedAt: _readText(response['updated_at']),
+            updateCheckMode: _readText(
+              updateCheck['mode'],
+              fallback: 'prompt',
+            ),
+            silentUpdate: updateCheck['silent_update'] == true,
+          );
+        } on BootstrapFailure catch (error) {
+          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
+            state = await _startTrial(
+              state: state.copyWith(
+                sessionToken: '',
+                accountId: '',
+              ),
+              hostPlatform: hostPlatform,
+              client: client,
+            );
+            continue;
+          }
+          rethrow;
+        }
+      }
+
+      throw const BootstrapFailure(
+        'POKROV could not check app updates.',
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
   @override
   Future<AppFirstBonusSummary> fetchBonusSummary({
     required HostPlatform hostPlatform,
@@ -1472,8 +1747,13 @@ class AppFirstRuntimeBootstrapper
                 enabled: slot['enabled'] != false,
                 title: _readText(slot['title']),
                 body: _readText(slot['body']),
+                imageUrl: _readText(slot['image_url']),
                 ctaLabel: _readText(slot['cta_label']),
                 ctaHref: _readText(slot['cta_href']),
+                placement: _readText(slot['placement']),
+                dismissible: slot['dismissible'] != false,
+                startsAt: _readText(slot['starts_at']),
+                endsAt: _readText(slot['ends_at']),
                 kind: _readText(slot['kind']),
                 goal: _readText(slot['goal']),
               ),
@@ -4114,9 +4394,9 @@ class AppFirstRuntimeBootstrapper
     return const <String, dynamic>{};
   }
 
-  String _readText(Object? value) {
+  String _readText(Object? value, {String fallback = ''}) {
     final text = value == null ? '' : value.toString().trim();
-    return text;
+    return text.isEmpty ? fallback : text;
   }
 
   int _readInt(Object? value) {

@@ -1832,8 +1832,13 @@ void main() {
                       'enabled': true,
                       'title': 'Telegram +10 days',
                       'body': 'Connect Telegram and claim the reward.',
+                      'image_url': 'https://cdn.example.com/promo.png',
                       'cta_label': 'Open',
                       'cta_href': 'https://t.me/pokrov_vpnbot',
+                      'placement': 'home_banner',
+                      'dismissible': false,
+                      'starts_at': '2026-06-01T00:00:00Z',
+                      'ends_at': '2026-06-30T00:00:00Z',
                       'kind': 'bonus',
                       'goal': 'bonus_claim',
                     },
@@ -1890,6 +1895,11 @@ void main() {
     expect(summary.promoSlots.remoteAvailable, isTrue);
     expect(summary.promoSlots.visibleSlots, hasLength(1));
     expect(summary.promoSlots.visibleSlots.single.title, 'Telegram +10 days');
+    expect(summary.promoSlots.visibleSlots.single.imageUrl,
+        'https://cdn.example.com/promo.png');
+    expect(summary.promoSlots.visibleSlots.single.placement, 'home_banner');
+    expect(summary.promoSlots.visibleSlots.single.dismissible, isFalse);
+    expect(summary.promoSlots.visibleForPlacement('home_banner'), hasLength(1));
     expect(
       summary.promoSlots.visibleSlots.single.ctaHref,
       'https://t.me/pokrov_vpnbot',
