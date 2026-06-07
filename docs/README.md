@@ -1,6 +1,6 @@
 # POKROV App Docs
 
-Last updated: 2026-06-05
+Last updated: 2026-06-07
 
 This folder holds the living client-repo documentation for `POKROV-app/main`.
 
@@ -43,25 +43,16 @@ Current client-doc scope:
 - cross-surface product facts still inherit from the platform canon under `C:/Users/kiwun/Documents/ai/VPN/docs/`
 - browser continuation outside the app inherits the platform surface split: checkout-first marketing, continuation-first cabinet, and status-gated public email when the platform runtime reports delivery-ready mode
 
-Current anchors:
+Current active anchors:
 
 - `product/client-product-contract.md`
 - `architecture/app-first-onboarding-flow.md`
-- `specs/2026-04-18-wave-7-new-base-client-scaffold.md`
-- `decisions/2026-06-03-hiddify-karing-happ-client-base-review.md`
-- `decisions/2026-06-03-hiddify-core-warp-status.md`
 - `decisions/2026-06-03-client-ux-account-rewards-master-brief.md`
-- `decisions/2026-06-03-client-chat-responsive-warp-motion-review.md`
-- `decisions/2026-06-03-client-best-mvp-consilium.md`
 - `architecture/folder-structure.md`
 - `architecture/package-boundaries.md`
 - `architecture/bootstrap-workflow.md`
 - `architecture/in-app-ai-assistant-contract.md`
 - `implementation/client-release-backlog.md`
-- `implementation/2026-06-04-decisions-implementation-map.md`
-- `implementation/2026-06-03-client-build-readiness-and-api-plan.md`
-- `implementation/2026-06-03-client-mvp-shell-implementation.md`
-- `operations/apple-release-readiness.md`
 - `operations/android-release-audit.md`
 - `operations/windows-release-readiness.md`
 - `operations/2026-06-05-phase-6-release-beta-handoff.md`
@@ -72,17 +63,39 @@ Current anchors:
 - `operations/client-motion-performance-checklist.md`
 - `product/client-public-beta-prd.md`
 - `design/DESIGN.md`
+- `design/2026-06-03-client-screen-component-rules.md`
+- root `DESIGN.md`
+- root `docs/operations/client-delivery-update-content-plan.md`
+- `developer/work-orders/2026-04-open-beta-v4/INDEX.md`
+
+Completed / reference docs:
+
+- `specs/2026-04-18-wave-7-new-base-client-scaffold.md`
+- `decisions/2026-06-03-hiddify-karing-happ-client-base-review.md`
+- `decisions/2026-06-03-hiddify-core-warp-status.md`
+- `decisions/2026-06-03-client-chat-responsive-warp-motion-review.md`
+- `decisions/2026-06-03-client-best-mvp-consilium.md`
+- `implementation/2026-06-04-decisions-implementation-map.md`
+- `implementation/2026-06-03-client-build-readiness-and-api-plan.md`
+- `implementation/2026-06-03-client-mvp-shell-implementation.md`
+- `operations/apple-release-readiness.md`
 - `design/2026-06-03-client-premium-shell-v2-brief.md`
 - `design/2026-06-03-client-quiet-emerald-style-brief.md`
-- `design/2026-06-03-client-screen-component-rules.md`
 - `design/2026-06-03-client-chat-responsive-warp-motion-brief.md`
 - `design/2026-06-03-client-best-mvp-build-brief.md`
 - `design/2026-06-05-p5-warp-application-map.md`
 - `design/2026-06-05-p5-application-map-consilium-review.md`
 - `specs/2026-06-05-p5-warp-approved-design.md`
 - `superpowers/plans/2026-06-05-premium-client-ai-assistant-architecture.md`
-- root `DESIGN.md`
-- `developer/work-orders/2026-04-open-beta-v4/INDEX.md`
+
+Deprecated / legacy inputs:
+
+- `decisions/2026-06-02-karing-base-reopen.md`
+- `decisions/2026-04-18-karing-vs-clean-room-gate.md`
+
+These legacy inputs are not release blockers and should not be used as the
+starting point for current `1.0.0-beta` work unless the owner explicitly
+reopens them.
 
 These docs are now the live client-documentation lane for the bootstrapped `POKROV-app` repo.
 The product contract, app-first onboarding contract, consumer-first shell IA, route-mode/support/download behavior, and current Android+Windows blockers should live here instead of only in retained bridge docs.
