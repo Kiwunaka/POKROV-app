@@ -6,29 +6,29 @@
   "release_version": "1.0.0-beta",
   "version": "1.0.0-beta",
   "generated_at": "2026-06-05T19:05:27+03:00",
-  "updated_at": "2026-06-05T23:37:34+03:00",
-  "release_state": "github_prerelease_assets_refreshed_phase6_android_toolchain_refresh_manual_live_smoke_pending",
+  "updated_at": "2026-06-07T22:18:30+03:00",
+  "release_state": "public_release_repo_assets_published_manual_live_smoke_pending",
   "built_from_client_commit": "e494d9bbf6767780be1b39af6fc4c2785f61cda7",
   "github_release": {
     "tag": "v1.0.0-beta",
-    "url": "https://github.com/Kiwunaka/POKROV-app/releases/tag/v1.0.0-beta",
+    "url": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta",
     "is_prerelease": true,
     "is_draft": false,
-    "visibility": "private",
-    "asset_refresh_utc": "2026-06-05T20:37:34Z"
+    "visibility": "public",
+    "asset_refresh_utc": "2026-06-07T19:18:04Z"
   },
   "downloads": {
     "android": {
       "play_url": "",
-      "apk_url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/pokrov-android-universal.apk",
+      "apk_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-android-universal.apk",
       "mirror_url": "",
       "sha256": "3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D",
       "size_bytes": 189689484
     },
     "windows": {
-      "exe_url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/pokrov-windows-setup-x64.exe",
-      "zip_url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/pokrov-windows-portable-x64.zip",
-      "manifest_url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/pokrov-windows-1.0.0-beta.manifest.json",
+      "exe_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-windows-setup-x64.exe",
+      "zip_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-windows-portable-x64.zip",
+      "manifest_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-windows-1.0.0-beta.manifest.json",
       "mirror_url": "",
       "exe_sha256": "40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433",
       "zip_sha256": "3D87311BBA0B8DF3D44CC9B2DA5D488157B1961D5353B1B83F1025F8374C7AAE",
@@ -36,14 +36,14 @@
       "exe_size_bytes": 28291072,
       "zip_size_bytes": 28384659
     },
-    "checksums_url": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/SHA256SUMS.txt",
+    "checksums_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/SHA256SUMS.txt",
     "docs_url": "https://pokrov.space/install/"
   },
   "runtime_env": {
     "APP_ANDROID_PLAY_URL": "",
-    "APP_ANDROID_APK_URL": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/pokrov-android-universal.apk",
+    "APP_ANDROID_APK_URL": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-android-universal.apk",
     "APP_ANDROID_MIRROR_URL": "",
-    "APP_WINDOWS_EXE_URL": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/pokrov-windows-setup-x64.exe",
+    "APP_WINDOWS_EXE_URL": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-windows-setup-x64.exe",
     "APP_WINDOWS_MIRROR_URL": "",
     "APP_DOCS_URL": "https://pokrov.space/install/"
   },
@@ -52,19 +52,22 @@
     "runtime_sync_required": true,
     "runtime_sync_result": "MANUAL_OWNER_TEST_APP_SESSION_REQUIRED",
     "public_publication_allowed": true,
-    "public_publication_marker": "GO for outside-store beta with accepted skips; GitHub repo visibility is private",
+    "public_publication_marker": "GO for outside-store beta with accepted skips; GitHub release-only repo is public",
     "public_announcement_allowed": false,
     "paid_checkout_allowed": false,
-    "reason": "Phase 6 refreshed v1.0.0-beta GitHub prerelease assets and hashes; the later Android toolchain refresh re-uploaded the Android APK and SHA256SUMS.txt. Unauthenticated curl returns 404 because the GitHub repo is private; authenticated gh release download of SHA256SUMS, Android APK, Windows setup EXE, Windows portable ZIP, and Windows manifest passed. App-session /api/client/apps and live install/connect smoke remain manual owner tests."
+    "reason": "Phase 6 refreshed v1.0.0-beta GitHub prerelease assets and hashes; the later Android toolchain refresh re-uploaded the Android APK and SHA256SUMS.txt. On 2026-06-07 assets were republished to the public release-only repository Kiwunaka/pokrov. Unauthenticated range smoke returns 206 for SHA256SUMS, Android APK, Windows setup EXE, Windows portable ZIP, and Windows manifest. App-session /api/client/apps and live install/connect smoke remain manual owner tests."
   },
   "public_url_smoke": {
     "current_origin": {
       "unauthenticated_github_asset_range": {
-        "classification": "BLOCKED_PRIVATE_REPO_404",
-        "android_apk_status": 404,
-        "windows_exe_status": 404,
-        "windows_zip_status": 404,
-        "checksums_status": 404
+        "classification": "PASS_PUBLIC_GITHUB_RELEASES_206",
+        "android_apk_status": 206,
+        "windows_exe_status": 206,
+        "windows_zip_status": 206,
+        "windows_manifest_status": 206,
+        "checksums_status": 206,
+        "release_repo": "Kiwunaka/pokrov",
+        "release_url": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta"
       },
       "authenticated_github_release_download": {
         "classification": "PASS",

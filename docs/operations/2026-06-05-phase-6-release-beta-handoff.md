@@ -86,9 +86,9 @@ Known build warnings:
 
 ## Uploaded Assets
 
-GitHub prerelease:
+Public GitHub prerelease:
 
-`https://github.com/Kiwunaka/POKROV-app/releases/tag/v1.0.0-beta`
+`https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta`
 
 Assets:
 
@@ -105,15 +105,14 @@ Assets:
   - size: `3381`
   - sha256: `1DF313B6ABC19C06C31D2592F3AEE6A258C421F846C5D5D756F34E432B4D2C96`
 
-Repository visibility note:
+Public download note:
 
-- `gh repo view Kiwunaka/POKROV-app` reports `PRIVATE`.
-- Unauthenticated current-origin range requests to GitHub release asset URLs
-  return `404`.
-- Download is verified through authenticated GitHub CLI. Public anonymous
-  availability requires making the repo/release public or moving assets to a
-  public download host; that is a distribution-scope decision, not a repo-side
-  beta implementation blocker.
+- The development repository remains private.
+- Public user downloads now live in the release-only repository
+  `Kiwunaka/pokrov`.
+- Unauthenticated current-origin range requests return `206` for Android APK,
+  Windows setup EXE, Windows portable ZIP, Windows manifest, and
+  `SHA256SUMS.txt`.
 
 ## Remaining Manual Or Trust Gates
 
@@ -140,12 +139,12 @@ These are intentionally not closed by local agent work:
 Safe now:
 
 `POKROV 1.0.0-beta` Android + Windows outside-store beta assets are built,
-uploaded to the GitHub prerelease, and backed by local focused tests, analyzer,
-client gate preflight, Android APK build, Windows unsigned packaging, and
-authenticated GitHub checksum proof for all current release assets.
+uploaded to the public GitHub prerelease, and backed by local focused tests,
+analyzer, client gate preflight, Android APK build, Windows unsigned packaging,
+checksum proof, and unauthenticated public range smoke for all current release
+assets.
 
 Not safe:
 
 Stable `1.0.0`, store availability, trusted Windows signing, raw Android audit
-proof, RU-origin readiness, anonymous public GitHub downloads from the current
-private repository, or production-ready WARP.
+proof, RU-origin readiness, or production-ready WARP.

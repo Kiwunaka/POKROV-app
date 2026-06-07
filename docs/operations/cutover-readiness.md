@@ -90,18 +90,18 @@ Status: `UNSIGNED_RELEASE_APPROVED_BY_OWNER_MANUAL_TEST_PENDING`.
 
 ### Stage 4: public artifact upload
 
-Status: `DONE_GITHUB_PRERELEASE_REFRESHED_PRIVATE_REPO`.
+Status: `DONE_PUBLIC_RELEASE_REPO_PUBLISHED`.
 
 - Uploaded approved APK, Windows setup EXE, Windows portable ZIP, Windows
   manifest, and `SHA256SUMS.txt` to GitHub prerelease `v1.0.0-beta` on
-  2026-06-05 using canonical asset names.
+  2026-06-05 using canonical asset names, then republished the same
+  checksum-matching assets to the public release-only repository
+  `Kiwunaka/pokrov` on 2026-06-07.
 - Recorded URLs and SHA-256 values in `config/release-handoff.seed.json` and
   `artifacts/releases/release-handoff.json`.
-- Unauthenticated current-origin range requests return `404` because the
-  GitHub repository is private.
-- Authenticated `gh release download` of `SHA256SUMS.txt`, Android APK,
-  Windows setup EXE, Windows portable ZIP, and Windows manifest passed; all
-  downloaded files match the retained SHA-256 values.
+- Unauthenticated current-origin range requests return `206` for
+  `SHA256SUMS.txt`, Android APK, Windows setup EXE, Windows portable ZIP, and
+  Windows manifest in `Kiwunaka/pokrov`.
 - Smoke from `brain-origin` and `RU-origin` only when those reachability claims
   are needed for the release note.
 
@@ -236,8 +236,8 @@ production WARP proof.
 
 `2026-06-05` local `1.0.0-beta` artifact refresh after P5/WARP pass:
 
-- GitHub prerelease:
-  `https://github.com/Kiwunaka/POKROV-app/releases/tag/v1.0.0-beta`
+- Public GitHub prerelease:
+  `https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta`
 - Android release APK:
   `apps/android_shell/build/app/outputs/flutter-apk/app-release.apk`
 - Windows release EXE:
@@ -270,7 +270,7 @@ production WARP proof.
     pass; rebuilt unsigned setup EXE, portable ZIP, and manifest
   - `gh release upload v1.0.0-beta ... --clobber`: pass
   - `gh release download v1.0.0-beta --pattern SHA256SUMS.txt`: pass
-  - unauthenticated GitHub range smoke: `BLOCKED_PRIVATE_REPO_404`
+  - unauthenticated GitHub range smoke: `PASS_PUBLIC_GITHUB_RELEASES_206`
 
 This refresh still does not prove Android physical release-build WARP,
 Windows release-build WARP, production WARP, trusted Windows signing, store

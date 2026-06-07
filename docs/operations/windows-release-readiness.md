@@ -89,8 +89,8 @@ Latest local packaging note:
 - Phase 6 refreshed GitHub prerelease `v1.0.0-beta` with
   `pokrov-windows-setup-x64.exe`:
   `40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433`.
-  The release repository is currently private, so unauthenticated asset curl
-  returns `404`; authenticated GitHub CLI checksum download passed.
+  The same asset is now published in the public release-only repository
+  `Kiwunaka/pokrov`; unauthenticated range smoke returns `206`.
 
 ## Safe Claims
 
@@ -100,7 +100,8 @@ Safe to claim now:
 - the Windows connect path now fetches a live managed profile from the app-first API before it stages and starts libcore
 - the local release build bundles the pinned runtime artifacts into the Windows runner output
 - the Windows seed lane has a reproducible unsigned package step with a manifest, portable ZIP, and first-layer setup EXE for gated beta inspection
-- the current `1.0.0-beta` unsigned setup EXE is uploaded to the GitHub prerelease for authenticated beta access
+- the current `1.0.0-beta` unsigned setup EXE is uploaded to the public
+  GitHub prerelease for outside-store beta access
 - the current Windows seed connect lane applies runtime options before `libcore start` and prefers a system-proxy host mode with dedicated local ports instead of assuming an elevated TUN session
 - this Windows lane now lives in the canonical `POKROV-app` repo
 - this Windows lane is the current repo-backed outside-store beta release truth
@@ -112,7 +113,7 @@ Not safe to claim now:
 
 - the Windows executable is production signed
 - a trusted-signed production installer or `MSIX` publication flow is ready
-- Microsoft Store, WinGet, SmartScreen reputation, or public hosting is approved
+- Microsoft Store, WinGet, or SmartScreen reputation is approved
 - the Windows lane is approved for broad public distribution
 - this lane is shipping truth or release truth for Windows
 - this lane by itself is the canonical post-Wave-0 client repo
@@ -121,9 +122,9 @@ Not safe to claim now:
 
 - trusted Windows code-signing material is not wired into this lane
 - trusted installer signing and `MSIX` publication are still not wired into this lane
-- anonymous public artifact hosting and updater policy remain distribution
-  scope decisions, not repo-side blockers for the current authenticated/gated
-  GitHub prerelease beta
+- anonymous public artifact hosting is closed through `Kiwunaka/pokrov`;
+  stronger updater policy remains distribution scope, not a repo-side blocker
+  for the current outside-store beta
 - outside-store Windows beta distribution is no longer blocked on unsigned
   posture: the owner accepted unsigned beta risk and the setup EXE is uploaded.
   Stronger broad/trusted distribution remains blocked on signing, live

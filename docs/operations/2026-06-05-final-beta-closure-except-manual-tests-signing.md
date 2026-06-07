@@ -17,7 +17,12 @@ from the gates that intentionally remain outside local agent control.
 - GitHub prerelease `v1.0.0-beta` is present and not draft.
 - Android APK, Windows setup EXE, Windows portable ZIP, Windows manifest, and
   `SHA256SUMS.txt` are uploaded under canonical asset names.
-- Authenticated `gh release download` of all release assets passes.
+- Public release-only repository `Kiwunaka/pokrov` now hosts the current
+  `v1.0.0-beta` assets.
+- Unauthenticated range smoke returns `206` for Android APK, Windows setup EXE,
+  Windows portable ZIP, Windows manifest, and `SHA256SUMS.txt`.
+- Authenticated `gh release download` of all private-source release assets also
+  passed before public republishing.
 - Downloaded release assets match the retained SHA-256 values:
   - Android APK:
     `3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D`
@@ -70,6 +75,7 @@ Safe to treat as closed for the current beta:
 - authenticated GitHub prerelease upload and checksum proof;
 - Android build-tool refresh;
 - documentation and handoff metadata alignment;
+- public GitHub release-only download surface and anonymous range smoke;
 - guarded WARP beta contracts without production WARP claims.
 
 Not safe to claim until the remaining gates above are completed:
@@ -79,5 +85,4 @@ Not safe to claim until the remaining gates above are completed:
 - trusted Windows signing;
 - raw Android audit proof;
 - production WARP;
-- RU-origin readiness;
-- anonymous public GitHub downloads from the current private repository.
+- RU-origin readiness.
