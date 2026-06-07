@@ -94,29 +94,30 @@ Status: `DONE_PUBLIC_RELEASE_REPO_PUBLISHED`.
 
 - Uploaded approved APK, Windows setup EXE, Windows portable ZIP, Windows
   manifest, and `SHA256SUMS.txt` to GitHub prerelease `v1.0.0-beta` on
-  2026-06-05 using canonical asset names, then republished the same
-  checksum-matching assets to the public release-only repository
-  `Kiwunaka/pokrov` on 2026-06-07.
+  2026-06-05, then republished to the public release-only repository
+  `Kiwunaka/pokrov` on 2026-06-07. The current Android public payload is split
+  by ABI: `pokrov-android-arm64-v8a.apk` by default and
+  `pokrov-android-armeabi-v7a.apk` for legacy ARMv7 devices.
 - Recorded URLs and SHA-256 values in `config/release-handoff.seed.json` and
   `artifacts/releases/release-handoff.json`.
 - Unauthenticated current-origin range requests return `206` for
-  `SHA256SUMS.txt`, Android APK, Windows setup EXE, Windows portable ZIP, and
-  Windows manifest in `Kiwunaka/pokrov`.
+  `SHA256SUMS.txt`, both Android split APKs, Windows setup EXE, Windows
+  portable ZIP, and Windows manifest in `Kiwunaka/pokrov`.
 - Smoke from `brain-origin` and `RU-origin` only when those reachability claims
   are needed for the release note.
 
 ### Stage 5: runtime handoff sync
 
-Status: `MANUAL_OWNER_TEST_APP_SESSION_REQUIRED`.
+Status: `PASS_BRAIN_RUNTIME_APP_DOWNLOAD_SMOKE_REAL_USER_MANUAL_PENDING`.
 
-- Runtime `APP_*` should point at the `v1.0.0-beta` URLs before a fresh
-  public/tester announcement if the app surface consumes runtime download
-  URLs.
+- Runtime `APP_*` points at the current `v1.0.0-beta` public release URLs on
+  `brain`.
 - Unauthenticated `https://api.pokrov.space/api/client/apps` returns `401`
   (`Telegram auth required`), so live handoff proof needs a real app session or
   operator-authenticated smoke.
-- The retained 2026-06-04 brain-origin smoke remains evidence for the previous
-  stable URL set, not proof of the 2026-06-05 `v1.0.0-beta` URL refresh.
+- `2026-06-07` brain-local signed `/api/client/apps` smoke passed and returned
+  the current split APK variants, hashes, sizes, Windows EXE, and docs URL. A
+  real-user Telegram WebApp opening remains a manual owner test.
 - Public-beta external-access preflight passes publication policy and runtime
   download checks but remains `BLOCKED_BY_ACCESS` for email/Lava live probe env:
   `EMAIL_PROBE_TO` and `LAVATOP_PROBE_EMAIL`.
@@ -250,26 +251,30 @@ production WARP proof.
   `apps/windows_shell/build/release_bundle/pokrov-windows-beta-x64-1.0.0-beta-setup.exe`
 - Windows manifest:
   `apps/windows_shell/build/release_bundle/pokrov-windows-beta-x64-1.0.0-beta.manifest.json`
-- Uploaded GitHub prerelease assets on 2026-06-05:
-  - `pokrov-android-universal.apk`:
-    `3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D`
+- Current public GitHub prerelease assets after the 2026-06-07 split APK
+  refresh:
+  - `pokrov-android-arm64-v8a.apk`:
+    `9D5AB665378F563021A6FB50F9E996FB6DA1A4269D9FBC959C8E33561A4EA523`
+  - `pokrov-android-armeabi-v7a.apk`:
+    `28882CA1E2F57695D31658A16AF32DE901FCE2163EBA9E0469C1136CA4E52DF9`
   - `pokrov-windows-setup-x64.exe`:
-    `40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433`
+    `B4CC0BF82DCFF7F021F7325E513226856B8E1D0686242744888D64D26FB82EBB`
   - `pokrov-windows-portable-x64.zip`:
-    `3D87311BBA0B8DF3D44CC9B2DA5D488157B1961D5353B1B83F1025F8374C7AAE`
+    `6D854D5F6C75B4F048C8481B07BF62D35D97536DA15EDC585DAEA982BA224FEF`
   - `pokrov-windows-1.0.0-beta.manifest.json`:
-    `1DF313B6ABC19C06C31D2592F3AEE6A258C421F846C5D5D756F34E432B4D2C96`
+    `3E20F410AEC23C18403C51FCEA2C7F015A230B63EB5C1428326820E04BC22AA0`
 - Fresh Phase 6 verification:
   - `python scripts/run_client_release_gate.py preflight`: pass
   - `flutter test test/assistant_contract_test.dart test/warp_lifecycle_contract_test.dart test/app_first_runtime_bootstrap_test.dart test/pokrov_seed_app_test.dart`:
     `91 passed`
   - `flutter analyze` in `packages/app_shell`: no issues found
-  - `python scripts/run_client_release_gate.py build --target android-apk`:
-    pass; rebuilt release APK
+  - `flutter build apk --release --split-per-abi --target-platform android-arm,android-arm64`:
+    pass; rebuilt release split APKs
   - `scripts/build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze`:
     pass; rebuilt unsigned setup EXE, portable ZIP, and manifest
-  - `gh release upload v1.0.0-beta ... --clobber`: pass
-  - `gh release download v1.0.0-beta --pattern SHA256SUMS.txt`: pass
+  - `gh release upload v1.0.0-beta --repo Kiwunaka/pokrov --clobber ...`:
+    pass
+  - old `pokrov-android-universal.apk` removed from the public release: pass
   - unauthenticated GitHub range smoke: `PASS_PUBLIC_GITHUB_RELEASES_206`
 
 This refresh still does not prove Android physical release-build WARP,
@@ -295,11 +300,8 @@ rotation proof, or production WARP readiness.
     `apps/android_shell/build/app/outputs/flutter-apk/app-release.apk`
   - `flutter build appbundle --release`: pass; rebuilt
     `apps/android_shell/build/app/outputs/bundle/release/app-release.aab`
-  - `gh release upload v1.0.0-beta ... pokrov-android-universal.apk
-    SHA256SUMS.txt --clobber`: pass
-  - `gh release download v1.0.0-beta --pattern SHA256SUMS.txt --pattern
-    pokrov-android-universal.apk`: pass; downloaded APK hash
-    `3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D`
+  - historical 2026-06-05 universal APK was replaced in the public release by
+    the 2026-06-07 split APK refresh above.
 - This closes the prior Flutter Gradle/AGP/Kotlin future-support warning for
   the Android host lane. It does not prove Android physical release-build WARP,
   raw Android device audit, Play/store readiness, production signing, or

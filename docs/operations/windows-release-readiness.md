@@ -88,8 +88,8 @@ Latest local packaging note:
   `apps/windows_shell/build/release_bundle/pokrov-windows-beta-x64-1.0.0-beta*`.
 - Phase 6 refreshed GitHub prerelease `v1.0.0-beta` with
   `pokrov-windows-setup-x64.exe`:
-  `40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433`.
-  The same asset is now published in the public release-only repository
+  `B4CC0BF82DCFF7F021F7325E513226856B8E1D0686242744888D64D26FB82EBB`.
+  The rebuilt asset is now published in the public release-only repository
   `Kiwunaka/pokrov`; unauthenticated range smoke returns `206`.
 
 ## Safe Claims

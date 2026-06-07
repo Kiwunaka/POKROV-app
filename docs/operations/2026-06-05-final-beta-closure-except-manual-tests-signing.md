@@ -15,29 +15,34 @@ from the gates that intentionally remain outside local agent control.
 ## Closed In This Pass
 
 - GitHub prerelease `v1.0.0-beta` is present and not draft.
-- Android APK, Windows setup EXE, Windows portable ZIP, Windows manifest, and
-  `SHA256SUMS.txt` are uploaded under canonical asset names.
+- Android split APKs, Windows setup EXE, Windows portable ZIP, Windows
+  manifest, and `SHA256SUMS.txt` are uploaded under canonical asset names.
 - Public release-only repository `Kiwunaka/pokrov` now hosts the current
   `v1.0.0-beta` assets.
-- Unauthenticated range smoke returns `206` for Android APK, Windows setup EXE,
-  Windows portable ZIP, Windows manifest, and `SHA256SUMS.txt`.
+- Unauthenticated range smoke returns `206` for Android split APKs, Windows
+  setup EXE, Windows portable ZIP, Windows manifest, and `SHA256SUMS.txt`.
+- Brain-local signed `/api/client/apps` smoke returns the current split APK
+  variants, hashes, sizes, Windows EXE, and docs URL. Real-user Telegram
+  WebApp opening remains a manual owner test.
 - Authenticated `gh release download` of all private-source release assets also
   passed before public republishing.
 - Downloaded release assets match the retained SHA-256 values:
-  - Android APK:
-    `3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D`
+  - Android ARM64 APK:
+    `9D5AB665378F563021A6FB50F9E996FB6DA1A4269D9FBC959C8E33561A4EA523`
+  - Android ARMv7 APK:
+    `28882CA1E2F57695D31658A16AF32DE901FCE2163EBA9E0469C1136CA4E52DF9`
   - Windows setup EXE:
-    `40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433`
+    `B4CC0BF82DCFF7F021F7325E513226856B8E1D0686242744888D64D26FB82EBB`
   - Windows portable ZIP:
-    `3D87311BBA0B8DF3D44CC9B2DA5D488157B1961D5353B1B83F1025F8374C7AAE`
+    `6D854D5F6C75B4F048C8481B07BF62D35D97536DA15EDC585DAEA982BA224FEF`
   - Windows manifest:
-    `1DF313B6ABC19C06C31D2592F3AEE6A258C421F846C5D5D756F34E432B4D2C96`
+    `3E20F410AEC23C18403C51FCEA2C7F015A230B63EB5C1428326820E04BC22AA0`
 - Android build-tool future-support warnings are closed for the current host
   lane: Gradle `8.11.1`, Android Gradle Plugin `8.9.1`, Kotlin `2.1.0`.
 - `artifacts/releases/release-handoff.json`,
   `config/release-handoff.seed.json`, and
   `config/cutover-readiness.seed.json` are aligned to the refreshed Android
-  asset and current beta state.
+  split APK assets and current beta state.
 - P4/P5/P6 implementation map items are closed for beta scope:
   selected-app picker, support polling lifecycle, rewards flags, WARP guarded
   beta lifecycle, responsive widget matrix, and premium motion foundation.

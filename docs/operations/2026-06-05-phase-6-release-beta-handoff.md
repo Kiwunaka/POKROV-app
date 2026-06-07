@@ -70,12 +70,12 @@ Ignored owner-deprecated inputs:
   pass; rebuilt unsigned Windows setup EXE, portable ZIP, bundle, and manifest.
 - `gh release upload v1.0.0-beta ... --clobber`: pass.
 - `gh release download v1.0.0-beta --pattern SHA256SUMS.txt`: pass.
-- final authenticated release download smoke:
-  `gh release download v1.0.0-beta --pattern SHA256SUMS.txt --pattern
-  pokrov-android-universal.apk --pattern pokrov-windows-setup-x64.exe
-  --pattern pokrov-windows-portable-x64.zip --pattern
-  pokrov-windows-1.0.0-beta.manifest.json`: pass; all downloaded assets match
-  retained SHA-256 values.
+- final public release smoke after the 2026-06-07 refresh:
+  unauthenticated range requests returned `206` for `SHA256SUMS.txt`,
+  `pokrov-android-arm64-v8a.apk`, `pokrov-android-armeabi-v7a.apk`,
+  `pokrov-windows-setup-x64.exe`, `pokrov-windows-portable-x64.zip`, and
+  `pokrov-windows-1.0.0-beta.manifest.json`; all public release asset digests
+  match retained SHA-256 values.
 
 Known build warnings:
 
@@ -92,26 +92,29 @@ Public GitHub prerelease:
 
 Assets:
 
-- `pokrov-android-universal.apk`
-  - size: `189689484`
-  - sha256: `3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D`
+- `pokrov-android-arm64-v8a.apk`
+  - size: `64868001`
+  - sha256: `9D5AB665378F563021A6FB50F9E996FB6DA1A4269D9FBC959C8E33561A4EA523`
+- `pokrov-android-armeabi-v7a.apk`
+  - size: `58858195`
+  - sha256: `28882CA1E2F57695D31658A16AF32DE901FCE2163EBA9E0469C1136CA4E52DF9`
 - `pokrov-windows-setup-x64.exe`
-  - size: `28291072`
-  - sha256: `40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433`
+  - size: `28307456`
+  - sha256: `B4CC0BF82DCFF7F021F7325E513226856B8E1D0686242744888D64D26FB82EBB`
 - `pokrov-windows-portable-x64.zip`
-  - size: `28384659`
-  - sha256: `3D87311BBA0B8DF3D44CC9B2DA5D488157B1961D5353B1B83F1025F8374C7AAE`
+  - size: `28400057`
+  - sha256: `6D854D5F6C75B4F048C8481B07BF62D35D97536DA15EDC585DAEA982BA224FEF`
 - `pokrov-windows-1.0.0-beta.manifest.json`
   - size: `3381`
-  - sha256: `1DF313B6ABC19C06C31D2592F3AEE6A258C421F846C5D5D756F34E432B4D2C96`
+  - sha256: `3E20F410AEC23C18403C51FCEA2C7F015A230B63EB5C1428326820E04BC22AA0`
 
 Public download note:
 
 - The development repository remains private.
 - Public user downloads now live in the release-only repository
   `Kiwunaka/pokrov`.
-- Unauthenticated current-origin range requests return `206` for Android APK,
-  Windows setup EXE, Windows portable ZIP, Windows manifest, and
+- Unauthenticated current-origin range requests return `206` for Android split
+  APKs, Windows setup EXE, Windows portable ZIP, Windows manifest, and
   `SHA256SUMS.txt`.
 
 ## Remaining Manual Or Trust Gates

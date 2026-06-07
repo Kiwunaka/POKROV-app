@@ -6,8 +6,8 @@
   "release_version": "1.0.0-beta",
   "version": "1.0.0-beta",
   "generated_at": "2026-06-05T19:05:27+03:00",
-  "updated_at": "2026-06-07T22:18:30+03:00",
-  "release_state": "public_release_repo_assets_published_manual_live_smoke_pending",
+  "updated_at": "2026-06-07T22:46:56+03:00",
+  "release_state": "public_release_repo_split_apk_assets_published_manual_live_smoke_pending",
   "built_from_client_commit": "e494d9bbf6767780be1b39af6fc4c2785f61cda7",
   "github_release": {
     "tag": "v1.0.0-beta",
@@ -15,47 +15,77 @@
     "is_prerelease": true,
     "is_draft": false,
     "visibility": "public",
-    "asset_refresh_utc": "2026-06-07T19:18:04Z"
+    "asset_refresh_utc": "2026-06-07T19:46:56Z"
   },
   "downloads": {
     "android": {
       "play_url": "",
-      "apk_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-android-universal.apk",
+      "apk_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-android-arm64-v8a.apk",
+      "apk_arm64_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-android-arm64-v8a.apk",
+      "apk_armeabi_v7a_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-android-armeabi-v7a.apk",
       "mirror_url": "",
-      "sha256": "3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D",
-      "size_bytes": 189689484
+      "sha256": "9D5AB665378F563021A6FB50F9E996FB6DA1A4269D9FBC959C8E33561A4EA523",
+      "size_bytes": 64868001,
+      "apk_variants": [
+        {
+          "abi": "arm64-v8a",
+          "label": "Android ARM64",
+          "url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-android-arm64-v8a.apk",
+          "sha256": "9D5AB665378F563021A6FB50F9E996FB6DA1A4269D9FBC959C8E33561A4EA523",
+          "size_bytes": 64868001
+        },
+        {
+          "abi": "armeabi-v7a",
+          "label": "Android ARMv7",
+          "url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-android-armeabi-v7a.apk",
+          "sha256": "28882CA1E2F57695D31658A16AF32DE901FCE2163EBA9E0469C1136CA4E52DF9",
+          "size_bytes": 58858195
+        }
+      ]
     },
     "windows": {
       "exe_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-windows-setup-x64.exe",
       "zip_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-windows-portable-x64.zip",
       "manifest_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-windows-1.0.0-beta.manifest.json",
       "mirror_url": "",
-      "exe_sha256": "40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433",
-      "zip_sha256": "3D87311BBA0B8DF3D44CC9B2DA5D488157B1961D5353B1B83F1025F8374C7AAE",
-      "manifest_sha256": "1DF313B6ABC19C06C31D2592F3AEE6A258C421F846C5D5D756F34E432B4D2C96",
-      "exe_size_bytes": 28291072,
-      "zip_size_bytes": 28384659
+      "exe_sha256": "B4CC0BF82DCFF7F021F7325E513226856B8E1D0686242744888D64D26FB82EBB",
+      "zip_sha256": "6D854D5F6C75B4F048C8481B07BF62D35D97536DA15EDC585DAEA982BA224FEF",
+      "manifest_sha256": "3E20F410AEC23C18403C51FCEA2C7F015A230B63EB5C1428326820E04BC22AA0",
+      "exe_size_bytes": 28307456,
+      "zip_size_bytes": 28400057
     },
     "checksums_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/SHA256SUMS.txt",
     "docs_url": "https://pokrov.space/install/"
   },
   "runtime_env": {
     "APP_ANDROID_PLAY_URL": "",
-    "APP_ANDROID_APK_URL": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-android-universal.apk",
+    "APP_ANDROID_APK_URL": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-android-arm64-v8a.apk",
+    "APP_ANDROID_APK_ARM64_URL": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-android-arm64-v8a.apk",
+    "APP_ANDROID_APK_ARMEABI_V7A_URL": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-android-armeabi-v7a.apk",
     "APP_ANDROID_MIRROR_URL": "",
+    "APP_ANDROID_VERSION": "1.0.0-beta",
+    "APP_ANDROID_SHA256": "9D5AB665378F563021A6FB50F9E996FB6DA1A4269D9FBC959C8E33561A4EA523",
+    "APP_ANDROID_SIZE_BYTES": "64868001",
+    "APP_ANDROID_ARM64_SHA256": "9D5AB665378F563021A6FB50F9E996FB6DA1A4269D9FBC959C8E33561A4EA523",
+    "APP_ANDROID_ARM64_SIZE_BYTES": "64868001",
+    "APP_ANDROID_ARMEABI_V7A_SHA256": "28882CA1E2F57695D31658A16AF32DE901FCE2163EBA9E0469C1136CA4E52DF9",
+    "APP_ANDROID_ARMEABI_V7A_SIZE_BYTES": "58858195",
     "APP_WINDOWS_EXE_URL": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-windows-setup-x64.exe",
     "APP_WINDOWS_MIRROR_URL": "",
+    "APP_WINDOWS_VERSION": "1.0.0-beta",
+    "APP_WINDOWS_SHA256": "B4CC0BF82DCFF7F021F7325E513226856B8E1D0686242744888D64D26FB82EBB",
+    "APP_WINDOWS_SIZE_BYTES": "28307456",
     "APP_DOCS_URL": "https://pokrov.space/install/"
   },
   "cutover": {
     "runtime_sync_allowed": true,
     "runtime_sync_required": true,
-    "runtime_sync_result": "MANUAL_OWNER_TEST_APP_SESSION_REQUIRED",
+    "runtime_sync_result": "PASS_BRAIN_RUNTIME_APP_DOWNLOAD_SMOKE_REAL_USER_MANUAL_PENDING",
     "public_publication_allowed": true,
     "public_publication_marker": "GO for outside-store beta with accepted skips; GitHub release-only repo is public",
     "public_announcement_allowed": false,
     "paid_checkout_allowed": false,
-    "reason": "Phase 6 refreshed v1.0.0-beta GitHub prerelease assets and hashes; the later Android toolchain refresh re-uploaded the Android APK and SHA256SUMS.txt. On 2026-06-07 assets were republished to the public release-only repository Kiwunaka/pokrov. Unauthenticated range smoke returns 206 for SHA256SUMS, Android APK, Windows setup EXE, Windows portable ZIP, and Windows manifest. App-session /api/client/apps and live install/connect smoke remain manual owner tests."
+    "reason": "On 2026-06-07 the Android public APK was replaced with split ARM APKs in the public release-only repository Kiwunaka/pokrov: arm64-v8a is the default /api/client/apps URL and armeabi-v7a is exposed as an APK variant. Windows EXE/ZIP/manifest were rebuilt and republished. App-session /api/client/apps and live install/connect smoke remain manual owner tests. Brain-local signed /api/client/apps smoke passed after deploy and returned split APK variants, hashes, sizes, Windows EXE, and docs URL."
   },
   "public_url_smoke": {
     "current_origin": {
@@ -67,16 +97,20 @@
         "windows_manifest_status": 206,
         "checksums_status": 206,
         "release_repo": "Kiwunaka/pokrov",
-        "release_url": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta"
+        "release_url": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta",
+        "android_arm64_apk_status": 206,
+        "android_armeabi_v7a_apk_status": 206
       },
       "authenticated_github_release_download": {
-        "classification": "PASS",
-          "command": "gh release download v1.0.0-beta --pattern 'SHA256SUMS.txt' --pattern 'pokrov-android-universal.apk' --pattern 'pokrov-windows-setup-x64.exe' --pattern 'pokrov-windows-portable-x64.zip' --pattern 'pokrov-windows-1.0.0-beta.manifest.json'",
+        "classification": "PASS_PUBLIC_RELEASE_VIEW_DIGESTS",
+        "command": "gh release view v1.0.0-beta --repo Kiwunaka/pokrov --json assets",
         "checksums": [
-          "3676a18b06c3d5ce4be82f9c93a4f1ea83dab72206a06f13b066a37746a8268d  pokrov-android-universal.apk",
-          "1df313b6abc19c06c31d2592f3aee6a258c421f846c5d5d756f34e432b4d2c96  pokrov-windows-1.0.0-beta.manifest.json",
-          "3d87311bba0b8df3d44cc9b2da5d488157b1961d5353b1b83f1025f8374c7aae  pokrov-windows-portable-x64.zip",
-          "40d345f139185f367b28a2b7fddd48a486a0acb4d34be04cffbb624496455433  pokrov-windows-setup-x64.exe"
+          "9d5ab665378f563021a6fb50f9e996fb6da1a4269d9fbc959c8e33561a4ea523  pokrov-android-arm64-v8a.apk",
+          "28882ca1e2f57695d31658a16af32de901fce2163eba9e0469c1136ca4e52df9  pokrov-android-armeabi-v7a.apk",
+          "3e20f410aec23c18403c51fcea2c7f015a230b63eb5c1428326820e04bc22aa0  pokrov-windows-1.0.0-beta.manifest.json",
+          "6d854d5f6c75b4f048c8481b07bf62d35d97536da15edc585daea982ba224fef  pokrov-windows-portable-x64.zip",
+          "b4cc0bf82dcff7f021f7325e513226856b8e1d0686242744888d64d26fb82ebb  pokrov-windows-setup-x64.exe",
+          "7363a5a72bf953ca4e3851d4015ae1984b299941d0bc68980dd6e3a58ad04a92  SHA256SUMS.txt"
         ]
       }
     }
@@ -110,21 +144,39 @@
     {
       "command": "gh release upload v1.0.0-beta ... --clobber",
       "cwd": "C:/Users/kiwun/Documents/ai/POKROV-app",
-      "status": "PASS"
+      "status": "PASS_SPLIT_APK_AND_WINDOWS_ASSETS_REFRESHED"
     },
     {
-      "command": "gh release download v1.0.0-beta --pattern 'SHA256SUMS.txt' --pattern 'pokrov-android-universal.apk'",
+      "command": "curl.exe -L -r 0-0 public split APK/EXE/ZIP/manifest/SHA256SUMS URLs",
       "cwd": "C:/Users/kiwun/Documents/ai/POKROV-app",
-      "status": "PASS_ANDROID_HASH_3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D"
+      "status": "PASS_PUBLIC_GITHUB_RELEASES_206"
+    },
+    {
+      "command": "python scripts/brain_runtime_app_download_smoke.py --brain-ip 82.21.114.104 --output ops-local/runtime-app-download-smoke-2026-06-07-split-apk.json",
+      "cwd": "C:/Users/kiwun/Documents/ai/VPN",
+      "status": "PASS_RUNTIME_CLIENT_APPS_SPLIT_APK"
     }
   ],
   "artifacts": [
     {
-      "name": "pokrov-android-universal.apk",
+      "name": "pokrov-android-arm64-v8a.apk",
       "platform": "android",
       "format": "apk",
+      "abi": "arm64-v8a",
       "signing_state": "internal_beta_debug_signing_release_build",
-      "sha256": "3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D",
+      "sha256": "9D5AB665378F563021A6FB50F9E996FB6DA1A4269D9FBC959C8E33561A4EA523",
+      "size_bytes": 64868001,
+      "public_release_allowed": true,
+      "publication_gate": "outside_store_beta_with_operator_attestation_manual_live_smoke_pending"
+    },
+    {
+      "name": "pokrov-android-armeabi-v7a.apk",
+      "platform": "android",
+      "format": "apk",
+      "abi": "armeabi-v7a",
+      "signing_state": "internal_beta_debug_signing_release_build",
+      "sha256": "28882CA1E2F57695D31658A16AF32DE901FCE2163EBA9E0469C1136CA4E52DF9",
+      "size_bytes": 58858195,
       "public_release_allowed": true,
       "publication_gate": "outside_store_beta_with_operator_attestation_manual_live_smoke_pending"
     },
@@ -133,7 +185,8 @@
       "platform": "windows",
       "format": "installer",
       "signing_state": "unsigned_beta",
-      "sha256": "40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433",
+      "sha256": "B4CC0BF82DCFF7F021F7325E513226856B8E1D0686242744888D64D26FB82EBB",
+      "size_bytes": 28307456,
       "public_release_allowed": true,
       "publication_gate": "outside_store_beta_with_unsigned_warning_manual_live_smoke_pending"
     },
@@ -142,7 +195,8 @@
       "platform": "windows",
       "format": "portable_zip",
       "signing_state": "unsigned_beta",
-      "sha256": "3D87311BBA0B8DF3D44CC9B2DA5D488157B1961D5353B1B83F1025F8374C7AAE",
+      "sha256": "6D854D5F6C75B4F048C8481B07BF62D35D97536DA15EDC585DAEA982BA224FEF",
+      "size_bytes": 28400057,
       "public_release_allowed": false,
       "publication_gate": "operator_optional_payload_not_first_layer_download"
     },
@@ -151,7 +205,8 @@
       "platform": "windows",
       "format": "manifest",
       "signing_state": "unsigned_beta",
-      "sha256": "1DF313B6ABC19C06C31D2592F3AEE6A258C421F846C5D5D756F34E432B4D2C96",
+      "sha256": "3E20F410AEC23C18403C51FCEA2C7F015A230B63EB5C1428326820E04BC22AA0",
+      "size_bytes": 3381,
       "public_release_allowed": false,
       "publication_gate": "metadata_only"
     }
