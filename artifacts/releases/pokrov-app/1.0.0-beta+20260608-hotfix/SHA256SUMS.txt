@@ -1,0 +1,5 @@
+001d41b520035be5d10e6409ddcea45fce39e70bc97b0d336d2f180b52d0aab2  pokrov-android-arm64-v8a.apk
+53ff8a76eec97dde1f6638e3079670087e2455db0169912afef0d9945b48fdb5  pokrov-android-armeabi-v7a.apk
+29e3504065105880e0d124dd7730fe3ce57a6245b08e5e77126638e2a0e496df  pokrov-windows-1.0.0-beta.manifest.json
+d3c9916f2f1f668214c77b499a437fb05174bb600df2879dbbec85a9246fceb6  pokrov-windows-portable-x64.zip
+a67a79c3d2990896b6f392056b9dbeea672dffd3df070119813ecdd9db61b6f5  pokrov-windows-setup-x64.exe
