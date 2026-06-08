@@ -4,7 +4,7 @@ abstract final class PokrovMotionTokens {
   static const quick = Duration(milliseconds: 120);
   static const short = Duration(milliseconds: 180);
   static const standard = Duration(milliseconds: 240);
-  static const homeReveal = Duration(milliseconds: 680);
+  static const homeReveal = Duration(milliseconds: 480);
   static const ease = Curves.easeOutCubic;
 }
 

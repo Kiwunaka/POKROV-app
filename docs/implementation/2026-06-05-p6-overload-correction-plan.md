@@ -195,3 +195,27 @@ Verification:
 - `flutter analyze` in `packages/app_shell`
 - `flutter test` in `packages/app_shell`
 - `flutter build windows --release` in `apps/windows_shell`
+
+## 2026-06-08 Follow-Up Implementation Notes
+
+Implemented locally after the owner manual-feedback pass:
+
+- Home now surfaces the guarded enhanced-protection control as
+  `WARP · Расширенная защита`. It remains lifecycle-driven and muted while
+  backend policy is unavailable or incomplete.
+- Windows `Rules` now uses region/process-first presets (`Маршруты Windows`,
+  `Российский регион`, `Локальная сеть`, `Выбранные процессы`) instead of
+  Android-only banks/Gosuslugi/marketplace framing.
+- The selected-apps editor is still picker-first, with Android installed-app
+  and Windows process/exe candidates plus manual fallback.
+- Rewards hub now starts with referral, promo, history, and achievements before
+  wheel/calendar experiments. Disabled wheel/calendar actions render as muted
+  reasons instead of `Скоро` CTAs.
+- Home reveal timing was shortened from `680ms` to `480ms` to reduce the
+  dragged feel on Windows while keeping reduced-motion fallback intact.
+
+Verification:
+
+- `flutter test test/pokrov_seed_app_test.dart` in `packages/app_shell`
+- `flutter test test/design_system_contract_test.dart test/warp_lifecycle_contract_test.dart` in `packages/app_shell`
+- `flutter test` in `packages/app_shell`

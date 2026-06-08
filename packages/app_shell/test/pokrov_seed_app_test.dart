@@ -807,7 +807,8 @@ void main() {
         find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-location-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-route-chip')), findsOneWidget);
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
+    expect(find.textContaining('WARP'), findsOneWidget);
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('home-location-chip')),
@@ -1483,15 +1484,31 @@ void main() {
 
     await tester.tap(wheelAction);
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('rewards-wheel-spin-action')));
+
+    final rewardsScroll = find.byType(Scrollable).last;
+    final spinAction = find.byKey(const ValueKey('rewards-wheel-spin-action'));
+    await tester.dragUntilVisible(
+      spinAction,
+      rewardsScroll,
+      const Offset(0, -220),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(spinAction);
     await tester.pumpAndSettle();
 
     expect(bootstrapper.wheelSpinCalls, 1);
     expect(bootstrapper.lastWheelSpinHostPlatform, HostPlatform.android);
 
     await _openRewardsHubFromProfile(tester);
-    await tester
-        .tap(find.byKey(const ValueKey('rewards-calendar-checkin-action')));
+    final calendarAction =
+        find.byKey(const ValueKey('rewards-calendar-checkin-action'));
+    await tester.dragUntilVisible(
+      calendarAction,
+      find.byType(Scrollable).last,
+      const Offset(0, -220),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(calendarAction);
     await tester.pumpAndSettle();
 
     expect(bootstrapper.calendarCheckInCalls, 1);
@@ -1814,7 +1831,7 @@ void main() {
       expect(find.byKey(ValueKey(item.shellKey)), findsOneWidget);
       expect(
           find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
-      expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+      expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
       if (item.platform == HostPlatform.android) {
         expect(find.byType(NavigationBar), findsOneWidget);
       } else {
@@ -1843,7 +1860,7 @@ void main() {
         findsWidgets);
   });
 
-  testWidgets('windows shell keeps enhanced protection out of Home',
+  testWidgets('windows shell surfaces enhanced protection on Home',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(960, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -1877,9 +1894,8 @@ void main() {
     expect(find.text('Р’Р°С€ РѕСЃРЅРѕРІРЅРѕР№ СЂРµРіРёРѕРЅ'), findsNothing);
     expect(find.text('РќРѕРІРѕСЃС‚Рё Рё СѓРІРµРґРѕРјР»РµРЅРёСЏ'), findsNothing);
     expect(find.text('РЈСЃРёР»РµРЅРЅС‹Р№ СЂРµР¶РёРј'), findsNothing);
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
-    expect(find.textContaining('Расширенная приватность'), findsNothing);
-    expect(find.textContaining('WARP'), findsNothing);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
+    expect(find.textContaining('WARP'), findsOneWidget);
 
     await _openEnhancedProtectionFromProfile(tester);
 
@@ -1894,6 +1910,9 @@ void main() {
 
   testWidgets('enhanced protection asks for explicit consent before activation',
       (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1180, 820));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
@@ -1918,7 +1937,7 @@ void main() {
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
 
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
 
     await _openEnhancedProtectionFromProfile(tester);
 
@@ -1935,11 +1954,15 @@ void main() {
     expect(bootstrapper.warpConsentCalls, 1);
     expect(bootstrapper.lastWarpConsentEnabled, isTrue);
     expect(find.byKey(const ValueKey('home-warp-sheet')), findsNothing);
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    await _tapNav(tester, 'nav-protection');
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
   });
 
   testWidgets('revoking WARP consent clears the local enabled state',
       (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1180, 820));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
@@ -1968,7 +1991,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('home-warp-enable-action')));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    await _tapNav(tester, 'nav-protection');
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
 
     await _openEnhancedProtectionFromProfile(tester);
     await tester.tap(find.byKey(const ValueKey('home-warp-consent-switch')));
@@ -1976,7 +2000,8 @@ void main() {
 
     expect(bootstrapper.warpConsentCalls, 2);
     expect(bootstrapper.lastWarpConsentEnabled, isFalse);
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    await _tapNav(tester, 'nav-protection');
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
   });
 
   testWidgets(
@@ -2747,6 +2772,53 @@ void main() {
         findsNothing);
     expect(
         find.text('Р§С‚Рѕ Р·РЅР°С‡РёС‚ РєР°Р¶РґС‹Р№ СЂРµР¶РёРј'), findsNothing);
+  });
+
+  testWidgets(
+      'windows rules use region and process copy instead of mobile presets',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1180, 820));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-rules');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Маршруты Windows'), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('rules-preset-ru-region')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('rules-preset-local-network')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('rules-preset-selected-apps')),
+      findsOneWidget,
+    );
+    expect(find.text('Российские банки'), findsNothing);
+    expect(find.text('Госуслуги'), findsNothing);
+    expect(find.text('Маркетплейсы'), findsNothing);
+
+    final selectedAppsSection =
+        find.byKey(const ValueKey('rules-section-selected-apps'));
+    await tester.dragUntilVisible(
+      selectedAppsSection,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Процессы'), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('rules-selected-app-pick')), findsOneWidget);
+    expect(find.text('Выбрать процесс'), findsOneWidget);
   });
 
   testWidgets('rules lets user add a custom selected app identifier',

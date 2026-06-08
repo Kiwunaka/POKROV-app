@@ -227,42 +227,101 @@ class RulesPresetContract {
       .length;
 }
 
-const _seedRulesPresetContract = RulesPresetContract(
-  rulesetVersion: _seedRulesetVersion,
-  packageCatalogVersion: _seedPackageCatalogVersion,
-  presets: [
-    RulesPresetStatus(
-      id: 'ru-banks',
-      title: 'Российские банки',
-      subtitle: 'Карты, платежи и приложения банков идут напрямую.',
-      state: RulesPresetState.enabled,
-    ),
-    RulesPresetStatus(
-      id: 'gosuslugi',
-      title: 'Госуслуги',
-      subtitle: 'Государственные сервисы остаются без POKROV.',
-      state: RulesPresetState.enabled,
-    ),
-    RulesPresetStatus(
-      id: 'marketplaces',
-      title: 'Маркетплейсы',
-      subtitle: 'Покупки и доставка работают привычным маршрутом.',
-      state: RulesPresetState.enabled,
-    ),
-    RulesPresetStatus(
-      id: 'messengers',
-      title: 'Мессенджеры',
-      subtitle: 'Категория готовится к проверке правил.',
-      state: RulesPresetState.staged,
-    ),
-    RulesPresetStatus(
-      id: 'selected-apps',
-      title: 'Добавить приложение',
-      subtitle: 'Выбор приложений появится после системной проверки.',
-      state: RulesPresetState.locked,
-    ),
-  ],
-);
+RulesPresetContract _seedRulesPresetContractFor(HostPlatform hostPlatform) {
+  return switch (hostPlatform) {
+    HostPlatform.windows => const RulesPresetContract(
+        rulesetVersion: _seedRulesetVersion,
+        packageCatalogVersion: _seedPackageCatalogVersion,
+        presets: [
+          RulesPresetStatus(
+            id: 'ru-region',
+            title: 'Российский регион',
+            subtitle:
+                'Российские сайты, локальные адреса и нужные RU-сервисы идут напрямую.',
+            state: RulesPresetState.enabled,
+          ),
+          RulesPresetStatus(
+            id: 'local-network',
+            title: 'Локальная сеть',
+            subtitle: 'Домашние и рабочие адреса остаются вне туннеля.',
+            state: RulesPresetState.enabled,
+          ),
+          RulesPresetStatus(
+            id: 'full-tunnel',
+            title: 'Все устройство',
+            subtitle: 'Можно направить весь трафик Windows через POKROV.',
+            state: RulesPresetState.enabled,
+          ),
+          RulesPresetStatus(
+            id: 'selected-apps',
+            title: 'Выбранные процессы',
+            subtitle: 'POKROV работает только для выбранных .exe и процессов.',
+            state: RulesPresetState.enabled,
+          ),
+        ],
+      ),
+    HostPlatform.android => const RulesPresetContract(
+        rulesetVersion: _seedRulesetVersion,
+        packageCatalogVersion: _seedPackageCatalogVersion,
+        presets: [
+          RulesPresetStatus(
+            id: 'ru-banks',
+            title: 'Российские банки',
+            subtitle: 'Карты, платежи и приложения банков идут напрямую.',
+            state: RulesPresetState.enabled,
+          ),
+          RulesPresetStatus(
+            id: 'gosuslugi',
+            title: 'Госуслуги',
+            subtitle: 'Государственные сервисы остаются без POKROV.',
+            state: RulesPresetState.enabled,
+          ),
+          RulesPresetStatus(
+            id: 'marketplaces',
+            title: 'Маркетплейсы',
+            subtitle: 'Покупки и доставка работают привычным маршрутом.',
+            state: RulesPresetState.enabled,
+          ),
+          RulesPresetStatus(
+            id: 'messengers',
+            title: 'Мессенджеры',
+            subtitle: 'Категория готовится к проверке правил.',
+            state: RulesPresetState.staged,
+          ),
+          RulesPresetStatus(
+            id: 'selected-apps',
+            title: 'Выбранные приложения',
+            subtitle: 'Можно выбрать приложения, которые идут через POKROV.',
+            state: RulesPresetState.enabled,
+          ),
+        ],
+      ),
+    HostPlatform.ios || HostPlatform.macos => const RulesPresetContract(
+        rulesetVersion: _seedRulesetVersion,
+        packageCatalogVersion: _seedPackageCatalogVersion,
+        presets: [
+          RulesPresetStatus(
+            id: 'ru-region',
+            title: 'Российский регион',
+            subtitle: 'Российские сайты и локальные адреса идут напрямую.',
+            state: RulesPresetState.enabled,
+          ),
+          RulesPresetStatus(
+            id: 'full-tunnel',
+            title: 'Все устройство',
+            subtitle: 'Весь трафик устройства идет через POKROV.',
+            state: RulesPresetState.enabled,
+          ),
+          RulesPresetStatus(
+            id: 'selected-apps',
+            title: 'Выбранные приложения',
+            subtitle: 'Платформа пока не дает управлять приложениями отсюда.',
+            state: RulesPresetState.locked,
+          ),
+        ],
+      ),
+  };
+}
 
 const _seedManagedProfilePayload = ManagedProfilePayload(
   profileName: 'pokrov-seed-runtime',
@@ -393,7 +452,7 @@ SeedAppContext buildSeedAppContext({
       recommendedRouteMode: RouteMode.allExceptRu,
       channelBonusDays: 10,
     ),
-    rulesPresetContract: _seedRulesPresetContract,
+    rulesPresetContract: _seedRulesPresetContractFor(hostPlatform),
     locations: const [
       LocationCluster(
         code: 'pokrov-managed',
@@ -1871,9 +1930,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         runtimeHeadline: _runtimeHeadline,
         runtimeBusy: _runtimeBusy,
         primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
+        warpPolicy: _managedWarpPolicy,
+        warpRuntimeConsent: _warpRuntimeConsent,
+        warpBusy: _warpPolicyBusy,
         onToggleRuntime: _toggleRuntimeFromHome,
         onOpenLocations: () => _selectTab(SeedTab.locations),
         onOpenRules: () => _selectTab(SeedTab.rules),
+        onOpenWarp: _openWarpControl,
       ),
       _LocationsSection(
         appContext: widget.appContext,
@@ -2802,9 +2865,13 @@ class _QuickConnectSection extends StatelessWidget {
     required this.runtimeHeadline,
     required this.runtimeBusy,
     required this.primaryConnectEnabled,
+    required this.warpPolicy,
+    required this.warpRuntimeConsent,
+    required this.warpBusy,
     required this.onToggleRuntime,
     required this.onOpenLocations,
     required this.onOpenRules,
+    required this.onOpenWarp,
   });
 
   final SeedAppContext appContext;
@@ -2813,9 +2880,13 @@ class _QuickConnectSection extends StatelessWidget {
   final String? runtimeHeadline;
   final bool runtimeBusy;
   final bool primaryConnectEnabled;
+  final WarpRuntimePolicy warpPolicy;
+  final bool warpRuntimeConsent;
+  final bool warpBusy;
   final Future<void> Function() onToggleRuntime;
   final VoidCallback onOpenLocations;
   final VoidCallback onOpenRules;
+  final Future<void> Function() onOpenWarp;
 
   @override
   Widget build(BuildContext context) {
@@ -2873,6 +2944,9 @@ class _QuickConnectSection extends StatelessWidget {
               recoveryNotice: recoveryNotice,
               selectedRouteMode: selectedRouteMode,
               locationLabel: 'Авто',
+              warpPolicy: warpPolicy,
+              warpRuntimeConsent: warpRuntimeConsent,
+              warpBusy: warpBusy,
               onToggleRuntime: onToggleRuntime,
               onOpenConnectionDetails: () => _showInfoSheet(
                 context,
@@ -2885,6 +2959,7 @@ class _QuickConnectSection extends StatelessWidget {
               ),
               onOpenLocations: onOpenLocations,
               onOpenRules: onOpenRules,
+              onOpenWarp: onOpenWarp,
             ),
           ),
         ),
@@ -2905,10 +2980,14 @@ class _HomeStage extends StatefulWidget {
     required this.recoveryNotice,
     required this.selectedRouteMode,
     required this.locationLabel,
+    required this.warpPolicy,
+    required this.warpRuntimeConsent,
+    required this.warpBusy,
     required this.onToggleRuntime,
     required this.onOpenConnectionDetails,
     required this.onOpenLocations,
     required this.onOpenRules,
+    required this.onOpenWarp,
   });
 
   final String statusLabel;
@@ -2921,10 +3000,14 @@ class _HomeStage extends StatefulWidget {
   final String? recoveryNotice;
   final RouteMode selectedRouteMode;
   final String locationLabel;
+  final WarpRuntimePolicy warpPolicy;
+  final bool warpRuntimeConsent;
+  final bool warpBusy;
   final Future<void> Function() onToggleRuntime;
   final VoidCallback onOpenConnectionDetails;
   final VoidCallback onOpenLocations;
   final VoidCallback onOpenRules;
+  final Future<void> Function() onOpenWarp;
 
   @override
   State<_HomeStage> createState() => _HomeStageState();
@@ -3028,7 +3111,7 @@ class _HomeStageState extends State<_HomeStage>
           _HomeRevealSlice(
             controller: _revealController,
             begin: 0.42,
-            end: 1,
+            end: 0.88,
             child: Wrap(
               alignment: WrapAlignment.center,
               spacing: 10,
@@ -3050,13 +3133,24 @@ class _HomeStageState extends State<_HomeStage>
               ],
             ),
           ),
+          const SizedBox(height: 12),
+          _HomeRevealSlice(
+            controller: _revealController,
+            begin: 0.54,
+            end: 1,
+            child: _HomeWarpTile(
+              policy: widget.warpPolicy,
+              runtimeConsent: widget.warpRuntimeConsent,
+              busy: widget.warpBusy,
+              onOpen: widget.onOpenWarp,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-// ignore: unused_element
 class _HomeWarpTile extends StatelessWidget {
   const _HomeWarpTile({
     required this.policy,
@@ -3135,7 +3229,7 @@ class _HomeWarpTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    lifecycle.publicTitle,
+                    '${lifecycle.technicalLabel} · ${lifecycle.publicSheetTitle}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -4112,13 +4206,32 @@ class _RewardsHubSheet extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Здесь собраны Telegram-бонус, промокоды, история и будущие механики. Активные награды выдаются только через backend.',
+              'Рабочие бонусы и история сверху. Эксперименты появятся ниже, когда backend включит feature flag.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: _SeedPalette.ink.withValues(alpha: 0.72),
                     height: 1.35,
                   ),
             ),
             const SizedBox(height: 14),
+            _RewardsReferralCard(
+              referralCode: referralCode,
+              referralSummary: referralSummary,
+              onOpenHandoff: onOpenHandoff,
+            ),
+            const SizedBox(height: 12),
+            _RewardsPromoSlotsSection(
+              promoSlots: summary?.promoSlots ?? AppFirstPromoSlots.empty,
+              onOpenHandoff: onOpenHandoff,
+            ),
+            const SizedBox(height: 12),
+            _RewardsHistorySection(
+              summary: summary,
+            ),
+            const SizedBox(height: 12),
+            _RewardsAchievements(
+              summary: summary,
+            ),
+            const SizedBox(height: 12),
             _RewardsFeatureCard(
               key: const ValueKey('rewards-wheel-card'),
               icon: Icons.casino_outlined,
@@ -4132,7 +4245,7 @@ class _RewardsHubSheet extends StatelessWidget {
                   ? 'Готовим'
                   : wheel.canRun
                       ? 'Крутить'
-                      : 'Скоро',
+                      : 'Отключено',
               actionEnabled: wheel.canRun && !rewardBusy,
               onAction: () {
                 Navigator.of(context).pop();
@@ -4153,7 +4266,7 @@ class _RewardsHubSheet extends StatelessWidget {
                   ? 'Готовим'
                   : calendar.canRun
                       ? 'Отметиться'
-                      : 'Скоро',
+                      : 'Отключено',
               actionEnabled: calendar.canRun && !rewardBusy,
               onAction: () {
                 Navigator.of(context).pop();
@@ -4163,25 +4276,6 @@ class _RewardsHubSheet extends StatelessWidget {
             const SizedBox(height: 12),
             _RewardsCalendarGrid(
               activeDays: _rewardActiveDays(summary),
-            ),
-            const SizedBox(height: 12),
-            _RewardsAchievements(
-              summary: summary,
-            ),
-            const SizedBox(height: 12),
-            _RewardsHistorySection(
-              summary: summary,
-            ),
-            const SizedBox(height: 12),
-            _RewardsReferralCard(
-              referralCode: referralCode,
-              referralSummary: referralSummary,
-              onOpenHandoff: onOpenHandoff,
-            ),
-            const SizedBox(height: 12),
-            _RewardsPromoSlotsSection(
-              promoSlots: summary?.promoSlots ?? AppFirstPromoSlots.empty,
-              onOpenHandoff: onOpenHandoff,
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
@@ -4228,6 +4322,7 @@ class _RewardsFeatureCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final inactiveReason = detail.trim().isEmpty ? status : detail;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -4320,7 +4415,7 @@ class _RewardsFeatureCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        actionLabel,
+                        inactiveReason,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -4873,6 +4968,8 @@ class _RulesSection extends StatelessWidget {
         appContext.bootstrapContract.supportsSelectedAppsMode &&
             !selectedAppsActive;
     final rulesContract = appContext.rulesPresetContract;
+    final isWindows = appContext.hostPlatform == HostPlatform.windows;
+    final directRulesTitle = isWindows ? 'Маршруты Windows' : 'Без POKROV';
 
     return _SeedContentList(
       top: 24,
@@ -4893,7 +4990,9 @@ class _RulesSection extends StatelessWidget {
                     RouteMode.fullTunnel => Icons.public_rounded,
                     RouteMode.selectedApps => Icons.apps_rounded,
                   },
-                  title: mode.label,
+                  title: isWindows && mode == RouteMode.selectedApps
+                      ? 'Выбранные процессы'
+                      : mode.label,
                   value: selectedRouteMode == mode ? 'Выбран' : 'Выбрать',
                   onTap: () => onRouteModeSelected(mode),
                 ),
@@ -4921,7 +5020,7 @@ class _RulesSection extends StatelessWidget {
           ),
         ),
         _SectionCard(
-          title: 'Без POKROV',
+          title: directRulesTitle,
           lines: [
             '${rulesContract.enabledCount} из ${rulesContract.presets.length} активно',
           ],
@@ -4945,10 +5044,12 @@ class _RulesSection extends StatelessWidget {
         if (selectedAppsActive || selectedAppsStaged)
           _SectionCard(
             key: const ValueKey('rules-section-selected-apps'),
-            title: 'Приложения',
+            title: isWindows ? 'Процессы' : 'Приложения',
             lines: [
               selectedAppIds.isEmpty
-                  ? 'Добавьте приложения для режима «только выбранные».'
+                  ? isWindows
+                      ? 'Выберите .exe для режима «только выбранные».'
+                      : 'Добавьте приложения для режима «только выбранные».'
                   : 'Выбрано: ${selectedAppIds.length}',
             ],
             child: _SelectedAppsEditor(
@@ -5931,6 +6032,9 @@ IconData _rulesPresetIcon(String id) {
     'gosuslugi' => Icons.verified_user_outlined,
     'marketplaces' => Icons.shopping_bag_outlined,
     'messengers' => Icons.forum_outlined,
+    'ru-region' => Icons.travel_explore_outlined,
+    'local-network' => Icons.router_outlined,
+    'full-tunnel' => Icons.public_outlined,
     'selected-apps' => Icons.add_box_outlined,
     _ => Icons.rule_folder_outlined,
   };
@@ -5940,7 +6044,7 @@ String _rulesPresetStatusLabel(RulesPresetState state) {
   return switch (state) {
     RulesPresetState.enabled => 'Активно',
     RulesPresetState.staged => 'Готовится',
-    RulesPresetState.locked => 'Скоро',
+    RulesPresetState.locked => 'Недоступно',
   };
 }
 

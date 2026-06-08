@@ -113,16 +113,20 @@ Product rules for that choice:
 - `Full tunnel` stays available as the direct device-wide fallback
 - `Only selected apps` is the P3 split-tunneling path for user-selected app or
   process identifiers
-- Windows should use an executable or process picker for selected apps; until
-  that native picker lands, manual process/exe identifiers are allowed only as
-  an advanced P3 bridge
-- Android should use an installed-package picker for selected apps; until that
-  native picker lands, manual package identifiers are allowed as the P3 bridge
+- Windows uses an executable/process picker for selected apps, backed by
+  running-process, discovered `.exe`, and curated fallback candidates
+- Android uses an installed-package picker for selected apps, with curated
+  fallback candidates when the native catalog is unavailable
+- manual process/package identifiers remain available only behind an explicit
+  manual fallback row
 - the chosen route mode must persist per device and remain editable later from a dedicated route-mode screen
 - the live state must round-trip through backend-owned `route_mode`, `selected_apps`, `requires_elevated_privileges`, and mirrored `route_policy.*` fields
 - current implementation exposes `All except RU`, `Full tunnel`, and
   `Only selected apps`; adding a custom app identifier auto-selects the
   selected-apps route and sends `selected_apps` through app-first route policy
+- Windows `Rules` uses region/process-first copy (`Маршруты Windows`,
+  `Российский регион`, `Выбранные процессы`) instead of Android-only bank,
+  Gosuslugi, and marketplace presets
 - `Rules` may show safe catalog/package versions and enabled/staged preset
   states so users know which rule categories are active
 - `Rules` must not expose raw rule-set filenames, geo labels, CIDR, JSON,
@@ -200,6 +204,9 @@ Consumer privacy rules:
 - normal consumer screens must not expose public IP, raw connection links, raw JSON/profile editors, sniffing terms, or low-level topology
 - route labels and support diagnostics should stay safe and human-readable
 - public-facing copy should prefer plain user language over transport acronyms, raw profile terms, or operator jargon
+- Home may show the secondary technical label `WARP` as
+  `WARP · Расширенная защита`; this is a gated lifecycle control, not a
+  production WARP or stronger-privacy claim
 - raw subscription copy, edit, regenerate, or share actions stay out of the first-layer consumer path
 - raw connection or subscription links must not be treated as account proof in
   first-launch restore or normal code redemption

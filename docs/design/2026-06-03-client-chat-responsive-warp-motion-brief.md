@@ -143,19 +143,19 @@ Home may show an enhanced privacy tile before runtime support exists only if it
 is visibly not active:
 
 ```text
-Расширенная приватность
-WARP · готовится
+WARP · Расширенная защита
+Готовится / Доступна / Включится при подключении
 ```
 
 Rules:
 
-- no enabled toggle
-- no connected/active state
+- no active-looking state until backend policy is runtime-ready and the user has
+  explicitly consented
 - no anonymity, no-restrictions, or ad-free claims
 - tap opens a bottom sheet:
   - what the feature is intended to do
   - current state: preparing / not active in this build
-  - optional `Сообщить о запуске` action
+  - explicit consent only when runtime-ready material exists
 
 When runtime is wired and verified on Android and Windows, this can become a
 real control with a one-line tradeoff:

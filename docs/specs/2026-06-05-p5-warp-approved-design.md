@@ -77,8 +77,9 @@ Keep from the map:
 
 Refine before implementation:
 
-- public `WARP` labels become `Расширенная защита` or
-  `Расширенная приватность`; literal `WARP` remains advanced/support/internal;
+- public WARP wording should remain product-first, but the Home tile may use
+  the owner-approved secondary technical label `WARP · Расширенная защита`
+  when the state is clearly muted/gated;
 - generated `POKROV VPN Client`, `Beta draft`, and `Secure by design` text is
   not product copy;
 - rewards wheel/calendar/balance render muted or hidden until backend flags and
@@ -96,7 +97,8 @@ Refine before implementation:
 
 Reject from the map:
 
-- showing WARP as a normal active Home/sidebar feature before proof;
+- showing WARP as a normal active Home/sidebar feature before proof; a muted
+  Home tile is allowed when it says preparing/consent/fallback honestly;
 - active-looking rewards when the feature is off;
 - fake ping/load/country/device/support values;
 - any implication of stable `1.0.0`, store release, trusted signing,
@@ -219,6 +221,8 @@ Rules:
 - Row-based routing mode and selected-app controls.
 - Android installed-app picker and Windows process/exe picker remain the normal
   custom-app path.
+- Windows Rules copy is region/process-first and must not reuse Android-only
+  bank/Gosuslugi/marketplace preset framing.
 - App icons must be OS-provided, source-owned, or generic safe icons.
 - Raw rule editing remains debug/advanced only behind a responsibility gate.
 
@@ -257,8 +261,9 @@ Support:
 Extended Protection Sheet:
 
 - Public-facing copy should prefer product wording such as `Расширенная защита`
-  or `Расширенная приватность`; literal `WARP` is acceptable in technical,
-  advanced, or support contexts when clarity requires it.
+  or `Расширенная приватность`; literal `WARP` is acceptable as the Home tile's
+  secondary technical label and in technical, advanced, or support contexts
+  when clarity requires it.
 - Until runtime proof exists, the sheet states that the feature is preparing or
   proof-gated.
 - When ready, the sheet must show explicit consent, a one-line speed/service
@@ -385,8 +390,8 @@ App tests:
 - visual golden frames for Home state matrix, extended protection sheets,
   Rules picker, Locations states, Account rows, Rewards gated/live states,
   Support states, and Windows shell states;
-- copy guard that prevents public first-layer `WARP` wording from replacing
-  `Расширенная защита` / `Расширенная приватность`;
+- copy guard that keeps first-layer WARP wording paired with
+  `Расширенная защита` / `Расширенная приватность` and a gated lifecycle state;
 - no-fake-data guard for ping, load, uptime, timers, rewards, support presence,
   and generated sample values;
 - Windows sidebar collapse and right-panel progressive disclosure;

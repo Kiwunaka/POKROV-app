@@ -23,7 +23,7 @@ void main() {
     expect(PokrovMotionTokens.quick, const Duration(milliseconds: 120));
     expect(PokrovMotionTokens.short, const Duration(milliseconds: 180));
     expect(PokrovMotionTokens.standard, const Duration(milliseconds: 240));
-    expect(PokrovMotionTokens.homeReveal, const Duration(milliseconds: 680));
+    expect(PokrovMotionTokens.homeReveal, const Duration(milliseconds: 480));
     expect(PokrovMotionTokens.ease, Curves.easeOutCubic);
   });
 

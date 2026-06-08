@@ -100,12 +100,16 @@ Current implementation bridge:
 - the visible distinction between `All except RU` and `Full tunnel` therefore remains a client `Rules` choice until the backend grows a dedicated device-behavior field
 - the app may render `ruleset_version` and `package_catalog_version` as safe
   user-facing catalog labels together with enabled/staged/locked preset states
-- selected-apps is P3-active as a manual identifier bridge: the UI lets users
-  add package/process identifiers, the app sends `selected_apps` through
-  backend route policy, and Android materialization writes selected package ids
-  into sing-box `include_package`
-- native Android installed-package and Windows process/exe pickers remain P3
-  follow-up work; raw rule editing remains outside normal UI
+- selected-apps is beta-active with a picker-first UI: Android uses an
+  installed-package picker and Windows uses process/exe candidates, with manual
+  package/process identifiers retained behind an explicit manual fallback
+- the app sends `selected_apps` through backend route policy; Android
+  materialization writes selected package ids into sing-box `include_package`,
+  while Windows selected-process routing is kept process/exe-first in the client
+- Windows `Rules` should render region/process language (`Маршруты Windows`,
+  `Российский регион`, `Выбранные процессы`) instead of mobile-only presets
+  such as banks, Gosuslugi, or marketplaces
+- raw rule editing remains outside normal UI
 
 ## Managed Provisioning And Smart Connect
 
@@ -130,7 +134,8 @@ WARP policy rule:
 - `client_policy.warp_policy` is sanitized metadata only
 - managed-profile `warp_policy` may carry backend-provisioned WireGuard
   config/account material only when `runtime_ready=true`
-- the Home WARP tile stays muted while policy is unavailable or incomplete
+- the Home enhanced-protection tile is visible as `WARP · Расширенная защита`
+  for user clarity, but stays muted while policy is unavailable or incomplete
 - when managed policy is runtime-ready, the app must ask for explicit local
   consent before setting Hiddify `warp.enable=true`
 - without consent, runtime-ready WARP material remains staged as disabled
