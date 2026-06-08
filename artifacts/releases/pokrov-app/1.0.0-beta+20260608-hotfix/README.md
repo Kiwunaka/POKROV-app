@@ -4,6 +4,7 @@ Local release package for the outside-store beta hotfix.
 
 - Backend fix: modern 3x-ui paid-node client add/update API fallback.
 - Client fix: provisioning readiness gate and desktop runtime connectivity proof before showing connected.
+- Client refresh: Home WARP tile, Windows-focused rules wording, rewards hierarchy, and faster first-screen motion from `bf70d20`.
 - Windows: unsigned beta setup EXE and portable ZIP.
 - Android: split APKs for arm64-v8a and armeabi-v7a.
 

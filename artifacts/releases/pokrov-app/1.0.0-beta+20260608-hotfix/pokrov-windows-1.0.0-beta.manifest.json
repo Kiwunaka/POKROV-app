@@ -1,5 +1,5 @@
 ﻿{
-    "generated_at_utc":  "2026-06-07T21:55:12.6637980Z",
+    "generated_at_utc":  "2026-06-08T13:13:21.7035998Z",
     "display_name":  "POKROV",
     "version":  "1.0.0-beta",
     "runtime_release_tag":  "v3.1.8",
@@ -7,7 +7,7 @@
     "staged_bundle_directory":  "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-beta-x64-1.0.0-beta",
     "zip_path":  "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-beta-x64-1.0.0-beta.zip",
     "installer_path":  "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-beta-x64-1.0.0-beta-setup.exe",
-    "installer_sha256":  "A67A79C3D2990896B6F392056B9DBEEA672DFFD3DF070119813ECDD9DB61B6F5",
+    "installer_sha256":  "2FEF5F1FD19CEA27E23BA716D6FDB316730477CBBC2403DF883A6B12A50F68DA",
     "executable":  {
                        "file_name":  "pokrov_windows_beta.exe",
                        "file_description":  "POKROV",
@@ -19,7 +19,7 @@
                            {
                                "path":  "pokrov_windows_beta.exe",
                                "size_bytes":  81408,
-                               "sha256":  "80E237D9A6F5EAB5A60F05F6A33F01A5EBA7425732E10474503595D878954497"
+                               "sha256":  "2C6F9A3A02211441C99B78092915D410047D63BB0C1C02CA37C194202D494E9B"
                            },
                            {
                                "path":  "flutter_windows.dll",
@@ -34,7 +34,7 @@
                            {
                                "path":  "data/app.so",
                                "size_bytes":  6505392,
-                               "sha256":  "6AF6720F76AACA5DB8935940ED170B4A4047BF876FF322BC59A1E08A56A04293"
+                               "sha256":  "3ACF0224E58B6CDF335A598218F8C84187E931C4B07DAB2058380603333C98AC"
                            },
                            {
                                "path":  "data/icudtl.dat",
