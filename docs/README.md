@@ -1,6 +1,6 @@
 # POKROV App Docs
 
-Last updated: 2026-06-07
+Last updated: 2026-06-09
 
 This folder holds the living client-repo documentation for `POKROV-app/main`.
 
@@ -9,9 +9,9 @@ Current direction note:
 - the front-end rebuild is now a Premium Shell V2 reset after owner feedback rejected the first card-heavy MVP shell
 - `marketing` owns public acquisition, `webapp` owns browser continuation, and the client shell stays locked to `Protection / Locations / Rules / Profile`
 - public-facing wording should stay calm and non-technical even when the underlying runtime remains transport-rich
-- `hiddify-core` is the pinned runtime base; WARP/enhanced privacy now has
-  backend lifecycle, client consent/event wiring, provisioning, and safe
-  material-handling contracts, but production WARP claims still require
+- `hiddify-core` is the pinned runtime base; WARP now uses the client-local
+  core path by default, while backend lifecycle endpoints store consent/events
+  and optional managed material. Production WARP claims still require
   Android/Windows release-build proof
 
 Historical mapping note:

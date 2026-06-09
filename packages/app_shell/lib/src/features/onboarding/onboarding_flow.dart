@@ -1,0 +1,437 @@
+part of pokrov_app_shell;
+
+class _FirstLaunchGate extends StatelessWidget {
+  const _FirstLaunchGate({
+    required this.appContext,
+    required this.step,
+    required this.restoreCodeController,
+    required this.busy,
+    required this.onNewUser,
+    required this.onReturningUser,
+    required this.onBack,
+    required this.onRedeemCode,
+    required this.onOpenTelegram,
+    required this.onOpenCabinet,
+  });
+
+  final SeedAppContext appContext;
+  final _FirstLaunchStep step;
+  final TextEditingController restoreCodeController;
+  final bool busy;
+  final VoidCallback onNewUser;
+  final VoidCallback onReturningUser;
+  final VoidCallback onBack;
+  final VoidCallback onRedeemCode;
+  final VoidCallback onOpenTelegram;
+  final VoidCallback onOpenCabinet;
+
+  @override
+  Widget build(BuildContext context) {
+    final compactHeight = MediaQuery.sizeOf(context).height < 680;
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: SafeArea(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: _SeedPalette.canvas.withValues(alpha: 0.96),
+          ),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(18, compactHeight ? 14 : 28, 18, 28),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: math.max(
+                  0,
+                  MediaQuery.sizeOf(context).height -
+                      MediaQuery.paddingOf(context).vertical -
+                      (compactHeight ? 42 : 70),
+                ),
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: step == _FirstLaunchStep.restore ? 560 : 900,
+                  ),
+                  child: step == _FirstLaunchStep.restore
+                      ? _FirstLaunchRestoreScreen(
+                          codeController: restoreCodeController,
+                          busy: busy,
+                          onBack: onBack,
+                          onRedeemCode: onRedeemCode,
+                          onOpenTelegram: onOpenTelegram,
+                          onOpenCabinet: onOpenCabinet,
+                        )
+                      : _FirstLaunchChoiceScreen(
+                          appContext: appContext,
+                          onNewUser: onNewUser,
+                          onReturningUser: onReturningUser,
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FirstLaunchChoiceScreen extends StatelessWidget {
+  const _FirstLaunchChoiceScreen({
+    required this.appContext,
+    required this.onNewUser,
+    required this.onReturningUser,
+  });
+
+  final SeedAppContext appContext;
+  final VoidCallback onNewUser;
+  final VoidCallback onReturningUser;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      key: const ValueKey('first-launch-choice-screen'),
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
+        decoration: BoxDecoration(
+          color: _SeedPalette.surface.withValues(alpha: 0.98),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: _SeedPalette.line.withValues(alpha: 0.92)),
+          boxShadow: [
+            BoxShadow(
+              color: _SeedPalette.ink.withValues(alpha: 0.055),
+              blurRadius: 42,
+              offset: const Offset(0, 22),
+            ),
+          ],
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 700;
+            final header = Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const _BrandLockup(markSize: 42, center: true),
+                const SizedBox(height: 22),
+                Text(
+                  'Уже пользовались POKROV?',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: _SeedPalette.ink,
+                    fontWeight: FontWeight.w900,
+                    height: 1.05,
+                    letterSpacing: 0,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: Text(
+                    'Если доступ уже был в Telegram, кабинете или письме, привяжем его по коду. Если нет — дадим ${appContext.runtimeProfile.trialDays} дней на первый старт.',
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: _SeedPalette.muted,
+                      height: 1.34,
+                    ),
+                  ),
+                ),
+              ],
+            );
+            final actions = [
+              _FirstLaunchChoiceCard(
+                key: const ValueKey('first-launch-new-user'),
+                icon: Icons.flash_on_rounded,
+                title: 'Начать заново',
+                subtitle:
+                    '${appContext.runtimeProfile.trialDays} дней пробного доступа без карты',
+                primary: true,
+                onTap: onNewUser,
+              ),
+              _FirstLaunchChoiceCard(
+                key: const ValueKey('first-launch-returning-user'),
+                icon: Icons.key_rounded,
+                title: 'У меня есть код',
+                subtitle: 'Telegram, кабинет, сайт или письмо',
+                primary: false,
+                onTap: onReturningUser,
+              ),
+            ];
+            if (compact) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  header,
+                  const SizedBox(height: 24),
+                  ...actions.expand(
+                    (child) => [child, const SizedBox(height: 12)],
+                  ),
+                ],
+              );
+            }
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                header,
+                const SizedBox(height: 28),
+                Row(
+                  children: [
+                    for (var index = 0; index < actions.length; index += 1)
+                      Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            left: index == 0 ? 0 : 7,
+                            right: index == actions.length - 1 ? 0 : 7,
+                          ),
+                          child: actions[index],
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _FirstLaunchChoiceCard extends StatelessWidget {
+  const _FirstLaunchChoiceCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.primary,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool primary;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final background = primary
+        ? _SeedPalette.accent.withValues(alpha: 0.09)
+        : _SeedPalette.surfaceMuted.withValues(alpha: 0.66);
+    final border = primary
+        ? _SeedPalette.accent.withValues(alpha: 0.20)
+        : _SeedPalette.line;
+    final iconBackground = primary
+        ? _SeedPalette.accent
+        : _SeedPalette.accent.withValues(alpha: 0.10);
+    final iconColor = primary ? Colors.white : _SeedPalette.accent;
+    return PokrovSettingsRowPressSurface(
+      onTap: onTap,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 150),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: border),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: iconBackground,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 23),
+                ),
+                const Spacer(),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: primary
+                      ? _SeedPalette.accent
+                      : _SeedPalette.ink.withValues(alpha: 0.38),
+                ),
+              ],
+            ),
+            const SizedBox(height: 34),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: _SeedPalette.ink,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: _SeedPalette.muted,
+                height: 1.28,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FirstLaunchRestoreScreen extends StatelessWidget {
+  const _FirstLaunchRestoreScreen({
+    required this.codeController,
+    required this.busy,
+    required this.onBack,
+    required this.onRedeemCode,
+    required this.onOpenTelegram,
+    required this.onOpenCabinet,
+  });
+
+  final TextEditingController codeController;
+  final bool busy;
+  final VoidCallback onBack;
+  final VoidCallback onRedeemCode;
+  final VoidCallback onOpenTelegram;
+  final VoidCallback onOpenCabinet;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      key: const ValueKey('first-launch-restore-screen'),
+      color: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          color: _SeedPalette.surface.withValues(alpha: 0.98),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: _SeedPalette.line),
+          boxShadow: [
+            BoxShadow(
+              color: _SeedPalette.ink.withValues(alpha: 0.055),
+              blurRadius: 38,
+              offset: const Offset(0, 20),
+            ),
+          ],
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  IconButton(
+                    key: const ValueKey('first-launch-back-to-choice'),
+                    tooltip: 'Назад',
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    onPressed: busy ? null : onBack,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      'Восстановить доступ',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: _SeedPalette.ink,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Введите код из Telegram, кабинета, сайта или письма. Так приложение поймет, какой доступ ваш.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: _SeedPalette.muted,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 18),
+              TextField(
+                key: const ValueKey('first-launch-restore-code-field'),
+                controller: codeController,
+                enabled: !busy,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) {
+                  if (!busy) {
+                    onRedeemCode();
+                  }
+                },
+                decoration: InputDecoration(
+                  labelText: 'Код активации',
+                  hintText: 'POKROV-XXXX-XXXX',
+                  prefixIcon: const Icon(Icons.key_rounded),
+                  filled: true,
+                  fillColor: _SeedPalette.surfaceMuted.withValues(alpha: 0.64),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(color: _SeedPalette.line),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(color: _SeedPalette.line),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              FilledButton.icon(
+                key: const ValueKey('first-launch-restore-redeem'),
+                onPressed: busy ? null : onRedeemCode,
+                icon: busy
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.check_circle_outline_rounded),
+                label: Text(busy ? 'Проверяем' : 'Восстановить'),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      key: const ValueKey('first-launch-open-telegram-code'),
+                      onPressed: busy ? null : onOpenTelegram,
+                      icon: const Icon(Icons.send_outlined),
+                      label: const Text('Telegram'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      key: const ValueKey('first-launch-open-cabinet'),
+                      onPressed: busy ? null : onOpenCabinet,
+                      icon: const Icon(Icons.web_outlined),
+                      label: const Text('Кабинет'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

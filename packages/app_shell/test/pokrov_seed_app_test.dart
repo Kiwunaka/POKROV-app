@@ -872,9 +872,11 @@ void main() {
         find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-location-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-route-chip')), findsOneWidget);
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    final homeWarpTile = find.byKey(const ValueKey('home-warp-tile'));
+    expect(homeWarpTile, findsOneWidget);
     expect(find.textContaining('Расширенная защита'), findsNothing);
-    expect(find.textContaining('WARP'), findsNothing);
+    expect(find.descendant(of: homeWarpTile, matching: find.text('WARP')),
+        findsOneWidget);
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('home-location-chip')),
@@ -1777,7 +1779,7 @@ void main() {
     expect(launched, isEmpty);
   });
 
-  testWidgets('profile exposes compact account details and tactile rows',
+  testWidgets('profile keeps account and settings actions grouped',
       (tester) async {
     await tester.pumpWidget(
       PokrovSeedApp(
@@ -1792,26 +1794,12 @@ void main() {
     expect(find.byKey(const ValueKey('settings-row-press-feedback')),
         findsWidgets);
 
-    final accountDetails =
-        find.byKey(const ValueKey('profile-account-details-action'));
-    expect(accountDetails, findsOneWidget);
-    await tester.dragUntilVisible(
-      accountDetails,
-      find.byType(Scrollable).first,
-      const Offset(0, -240),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(accountDetails);
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const ValueKey('profile-account-details-sheet')),
+    expect(find.byKey(const ValueKey('profile-account-details-action')),
+        findsNothing);
+    expect(find.byKey(const ValueKey('profile-open-cabinet-action')),
         findsOneWidget);
-    expect(find.byKey(const ValueKey('profile-account-details-cabinet')),
-        findsOneWidget);
-    expect(find.byKey(const ValueKey('profile-account-details-downloads')),
-        findsOneWidget);
-    expect(find.byKey(const ValueKey('profile-account-details-email')),
-        findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-email-action')), findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-section-app')), findsOneWidget);
   });
 
   testWidgets('disabled rewards render muted states instead of CTAs',
@@ -1897,7 +1885,7 @@ void main() {
       expect(find.byKey(ValueKey(item.shellKey)), findsOneWidget);
       expect(
           find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
-      expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+      expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
       if (item.platform == HostPlatform.android) {
         expect(find.byType(NavigationBar), findsOneWidget);
       } else {
@@ -1960,14 +1948,14 @@ void main() {
     expect(find.text('Р’Р°С€ РѕСЃРЅРѕРІРЅРѕР№ СЂРµРіРёРѕРЅ'), findsNothing);
     expect(find.text('РќРѕРІРѕСЃС‚Рё Рё СѓРІРµРґРѕРјР»РµРЅРёСЏ'), findsNothing);
     expect(find.text('РЈСЃРёР»РµРЅРЅС‹Р№ СЂРµР¶РёРј'), findsNothing);
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
     expect(find.textContaining('Расширенная защита'), findsNothing);
-    expect(find.textContaining('WARP'), findsNothing);
+    expect(find.textContaining('WARP'), findsOneWidget);
 
     await _tapNav(tester, 'nav-profile');
     expect(
       find.byKey(const ValueKey('profile-enhanced-protection-action')),
-      findsNothing,
+      findsOneWidget,
     );
   });
 
@@ -2072,7 +2060,7 @@ void main() {
     expect(bootstrapper.warpConsentCalls, 2);
     expect(bootstrapper.lastWarpConsentEnabled, isFalse);
     await _tapNav(tester, 'nav-protection');
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
   });
 
   testWidgets(
@@ -2165,7 +2153,7 @@ void main() {
 
     expect(
       find.byKey(const ValueKey('account-skeleton-summary')),
-      findsOneWidget,
+      findsNothing,
     );
   });
 
@@ -2799,22 +2787,16 @@ void main() {
     final banksPreset = find.byKey(const ValueKey('rules-preset-ru-banks'));
     final gosuslugiPreset =
         find.byKey(const ValueKey('rules-preset-gosuslugi'));
-    final messengerPreset =
-        find.byKey(const ValueKey('rules-preset-messengers'));
 
     expect(banksPreset, findsOneWidget);
     expect(gosuslugiPreset, findsOneWidget);
-    expect(messengerPreset, findsOneWidget);
+    expect(find.byKey(const ValueKey('rules-preset-messengers')), findsNothing);
     expect(
       find.descendant(of: banksPreset, matching: find.text('Активно')),
       findsOneWidget,
     );
     expect(
       find.descendant(of: gosuslugiPreset, matching: find.text('Активно')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: messengerPreset, matching: find.text('Скоро')),
       findsOneWidget,
     );
     expect(
@@ -2872,7 +2854,7 @@ void main() {
     );
     expect(
       find.byKey(const ValueKey('rules-preset-selected-apps')),
-      findsOneWidget,
+      findsNothing,
     );
     expect(find.text('Российские банки'), findsNothing);
     expect(find.text('Госуслуги'), findsNothing);

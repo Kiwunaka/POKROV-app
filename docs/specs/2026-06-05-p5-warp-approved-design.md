@@ -10,9 +10,12 @@ The owner approved the P5/WARP direction after the OpenCode-go consilium pass
 and requested the direction be recorded before implementation.
 
 This contract supersedes loose chat memory for the next P5 and WARP wave. As
-of 2026-06-05, backend WARP lifecycle endpoints, encrypted-at-rest scoped
-provisioning, and client consent/event wiring are implemented; release-build
-Android/Windows WARP proof remains an open gate.
+of 2026-06-09, WARP uses the client-local Hiddify-core path by default:
+the app passes WARP options to core and does not require backend-provided
+WireGuard material. Backend WARP lifecycle endpoints remain the
+consent/status/event ledger; encrypted-at-rest scoped provisioning is retained
+as an optional managed-material lane. Release-build Android/Windows WARP proof
+remains an open gate.
 
 ## Inputs
 
@@ -49,14 +52,15 @@ P5 is a premium-feel wave, not another information-architecture rewrite. The
 app should feel like a quiet daily utility: fast, tactile, predictable, and
 platform-native.
 
-WARP is partially implemented as a backend-backed lifecycle feature. The
-current code has policy parsing, desktop runtime option mapping,
-`/api/client/warp/*` status/consent/revoke/rotate/events endpoints, a sanitized
-`WarpEvent` ledger, encrypted-at-rest per-user/per-install WARP material
-storage with admin provisioning, backend rate limits, stale-material rejection,
+WARP is implemented as a client-local Hiddify-core lifecycle feature. The
+current code has policy parsing, desktop runtime option mapping without
+mandatory server material, `/api/client/warp/*` status/consent/revoke/rotate
+/events endpoints, a sanitized `WarpEvent` ledger, encrypted-at-rest
+per-user/per-install WARP material storage as an optional managed-material
+lane, backend rate limits, stale-material rejection for that optional lane,
 admin summary visibility, and client consent/runtime-event wiring. A
-production-grade WARP feature still requires provider-side provisioning
-automation, deeper health diagnostics, Android proof, and Windows proof.
+production-grade WARP claim still requires deeper health diagnostics, Android
+proof, and Windows proof.
 
 The generated application map is approved as the P5 visual direction, not as
 copy, data, or a pixel-perfect implementation source. Generated labels such as
@@ -97,8 +101,9 @@ Refine before implementation:
 
 Reject from the map:
 
-- showing WARP as a normal active Home/sidebar feature before proof; a muted
-  Home tile is allowed when it says preparing/consent/fallback honestly;
+- claiming WARP is release-proven before Android/Windows runtime evidence; a
+  normal Home control is allowed because core owns the client-local runtime,
+  but state labels must still say consented/active/fallback honestly;
 - active-looking rewards when the feature is off;
 - fake ping/load/country/device/support values;
 - any implication of stable `1.0.0`, store release, trusted signing,
@@ -302,7 +307,7 @@ should use screen-specific references before changing production UI:
 
 ## WARP Working-Feature Contract
 
-Backend/platform work required:
+Backend/platform ledger and optional managed-material work:
 
 - App-facing WARP lifecycle endpoints are implemented:
   - `GET /api/client/warp/status` or readiness;
@@ -314,7 +319,9 @@ Backend/platform work required:
   request, and runtime fallback/error events with request and ledger metadata
   redaction.
 - Encrypted-at-rest WARP account and WireGuard material storage is implemented
-  through scoped `warp_materials` rows and `PUT /api/admin/client/warp/material`.
+  through scoped `warp_materials` rows and `PUT /api/admin/client/warp/material`
+  as an optional operator-managed material lane, not as a prerequisite for the
+  normal client-local WARP toggle.
 - Keep public policy sanitized; managed material may be returned only through
   authenticated app-first managed flows and only when runtime-ready.
 - Rate limits and abuse visibility for provisioning/rotation are implemented
@@ -328,8 +335,10 @@ Backend/platform work required:
 
 Client/runtime work required:
 
-- Persist user consent safely instead of keeping it only in memory. First
-  implementation uses backend `WarpEvent` lifecycle status plus app-side cache.
+- Persist user consent safely instead of keeping it only in memory. Current
+  implementation uses backend `WarpEvent` lifecycle status plus app-side cache,
+  while keeping the local runtime path usable when backend-managed material is
+  absent.
 - Revoke now asks backend to revoke and immediately clears the local enabled
   WARP state; physical staged-file wipe and reconnect-baseline proof remain
   open.
@@ -338,8 +347,11 @@ Client/runtime work required:
 - The client now calls backend consent/revoke, reads backend WARP status when
   resolving managed profile, and reports runtime fallback/error events through
   `POST /api/client/warp/events` with client-side metadata sanitization.
-- Prove the runtime material path is safe before returning real WireGuard
-  private keys or access tokens to the app.
+- Prove the optional managed-material path is safe before returning real
+  WireGuard private keys or access tokens to the app.
+- For the default path, pass client-local Hiddify-core WARP options after
+  consent (`warp.enable=true`, local `id=p1`) without requiring server-managed
+  WireGuard/account material.
 - Extend runtime state with WARP readiness, active/degraded/failure, and last
   safe error category.
 - Add fallback: if WARP start or handshake fails, retry baseline without WARP
@@ -348,7 +360,7 @@ Client/runtime work required:
 - Verify Windows `libcore.dll` accepts the WARP options and can connect,
   disconnect, fail, and recover.
 
-Manual proof required before WARP is called working:
+Manual proof required before WARP is called production-proven:
 
 - Android physical release-build WARP connect/disconnect/fallback proof.
 - Windows release-build WARP connect/disconnect/fallback proof.
@@ -362,12 +374,12 @@ Manual proof required before WARP is called working:
 2. P5 screen polish and copy-density pass in the app repo.
 3. WARP backend status/consent/revoke/events contract in the platform repo.
    Implemented on 2026-06-05.
-4. WARP provisioning, encrypted storage, and rotation in the platform repo.
+4. Optional WARP provisioning, encrypted storage, and rotation in the platform repo.
    Scoped encrypted material storage and admin provisioning were implemented
    on 2026-06-05; backend rate limits, stale material rejection, and admin
    summary monitoring were implemented on 2026-06-05. Provider-side rotation
    automation remains open.
-5. WARP consent persistence, revoke UI, local secure material handling, and
+5. WARP consent persistence, revoke UI, client-local runtime options, and
    runtime state machine in the app repo.
    Backend-backed consent, runtime event reporting, and local enabled-state
    clearing on revoke started on 2026-06-05; physical staged material wipe and
@@ -399,7 +411,7 @@ App tests:
 - support no fake typing, read receipts, SLA, or online-operator state;
 - WARP tile/sheet states: not ready, ready-to-consent, consented, revoked,
   failure/fallback;
-- Android MethodChannel bridge for WARP material/options;
+- Android MethodChannel bridge for WARP options and optional material;
 - Windows runtime options mapping and fallback;
 - support diagnostic payload redaction.
 
@@ -411,15 +423,16 @@ Platform tests:
 - rotation rate limits and stale material rejection;
 - event ingestion and redaction;
 - admin WARP summary redaction and counters;
-- managed profile returns WARP material only under authenticated runtime-ready
-  conditions;
+- managed profile returns optional WARP material only under authenticated
+  runtime-ready conditions;
 - public policy never includes secrets.
 
 Manual tests:
 
 - Android physical release build;
 - Windows release build;
-- real WARP provisioning when credentials/access are available;
+- real WARP runtime behavior with client-local options;
+- optional managed WARP provisioning when credentials/access are available;
 - support operator visibility without leaking keys or raw configs.
 
 ## Explicit Non-Goals
@@ -429,7 +442,9 @@ Manual tests:
   subscription URLs in normal UI.
 - Do not make Xray a normal-user primary path.
 - Do not introduce store/stable/trusted/RU-origin readiness claims.
-- Do not make WARP a Home toggle until the runtime and backend proof is green.
+- Do not present WARP as production-proven, stronger anonymity, or a guaranteed
+  upgrade before release-build runtime evidence. A consent-gated Home control is
+  allowed when the client-local runtime lane is available.
 - Do not copy third-party app icons from generated mocks.
 - Do not ship fake pings, fake load, fake dates, fake timers, fake reward
   balances, or fake support presence.

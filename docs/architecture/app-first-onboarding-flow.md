@@ -1,6 +1,6 @@
 # App-First Onboarding Flow
 
-Last updated: 2026-06-04
+Last updated: 2026-06-09
 
 ## Document Status
 
@@ -131,14 +131,21 @@ Managed-profile fields:
 
 WARP policy rule:
 
-- `client_policy.warp_policy` is sanitized metadata only
-- managed-profile `warp_policy` may carry backend-provisioned WireGuard
-  config/account material only when `runtime_ready=true`
-- the Home enhanced-protection tile is visible as `WARP · Расширенная защита`
-  for user clarity, but stays muted while policy is unavailable or incomplete
-- when managed policy is runtime-ready, the app must ask for explicit local
-  consent before setting Hiddify `warp.enable=true`
-- without consent, runtime-ready WARP material remains staged as disabled
+- `client_policy.warp_policy` is sanitized metadata only.
+- The default WARP path is client-local Hiddify-core WARP. The app may expose
+  `WARP / Расширенная защита` when the local runtime lane is available; it must
+  not wait for backend-provisioned WireGuard/account material before offering
+  consent.
+- Managed-profile `warp_policy` may still carry backend-provisioned
+  WireGuard/account material as an optional operator lane, but this material is
+  not the normal prerequisite for WARP.
+- Before setting Hiddify `warp.enable=true`, the app must ask for explicit local
+  consent and persist that choice on the device.
+- Backend WARP status, consent, revoke, and event endpoints are lifecycle ledger
+  surfaces. They must not reject or clear client-local WARP solely because
+  server-managed material is absent.
+- Production WARP claims still require Android and Windows release-build
+  connect/disconnect/fallback proof.
 
 Smart-connect fields:
 

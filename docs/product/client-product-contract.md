@@ -216,11 +216,10 @@ Consumer privacy rules:
 - normal consumer screens must not expose public IP, raw connection links, raw JSON/profile editors, sniffing terms, or low-level topology
 - route labels and support diagnostics should stay safe and human-readable
 - public-facing copy should prefer plain user language over transport acronyms, raw profile terms, or operator jargon
-- Home and Profile show `Расширенная защита` only when backend/runtime reports
-  the feature as offerable for this device. If runtime proof or capability is
-  missing, the first-layer UI hides the control instead of showing `Скоро`.
-  `WARP` may appear only in diagnostics/operator context as a technical label,
-  not as a production WARP or stronger-privacy claim.
+- Home and Profile may show `WARP` as the owner-approved feature label because
+  the default runtime path is client-local Hiddify-core WARP. The UI must still
+  avoid claiming production-proof anonymity or stronger privacy until
+  Android/Windows release-build WARP evidence exists.
 - raw subscription copy, edit, regenerate, or share actions stay out of the first-layer consumer path
 - raw connection or subscription links must not be treated as account proof in
   first-launch restore or normal code redemption

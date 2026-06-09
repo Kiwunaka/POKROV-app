@@ -1,6 +1,6 @@
 # Decisions Implementation Map
 
-Date: 2026-06-04
+Date: 2026-06-09
 Status: active execution map
 Owner: POKROV-app/main
 
@@ -65,10 +65,10 @@ The current code slice is:
 10. embedded support chat now polls the active ticket, refreshes status, and
     shows operator replies plus ticket lifecycle hints in-app without forcing
     the user back to Telegram;
-11. WARP/enhanced privacy now has a backend-owned policy contract, sanitized
-    public metadata, managed-profile-only runtime material, client parsing, and
-    a Home consent gate that keeps Hiddify `warp.enable=false` until the user
-    explicitly turns on a runtime-ready managed policy.
+11. WARP/enhanced privacy now uses the client-local Hiddify-core path by
+    default, with sanitized backend metadata, optional managed-profile material,
+    client parsing, and a Home consent gate that keeps Hiddify
+    `warp.enable=false` until the user explicitly turns it on.
 12. Account now has a compact details sheet for access/device/mode/cabinet,
     settings rows have tactile press feedback, and the desktop sidebar animates
     label opacity/width while the responsive matrix covers `360`, `700`,
@@ -154,7 +154,7 @@ states.
 | Support realtime lifecycle | Done for polling lifecycle, partial for SSE | embedded ticket-backed support chat, explicit diagnostic attachment, active-ticket polling, operator-reply hints, closed/offline lifecycle hints, and manual refresh action exist; the app updates messages/status from `GET /api/tickets/{id}` while the screen is open | add SSE or tuned polling cadence only after real operator workflow proof; do not fake typing, read receipts, or operator presence |
 | Native email linking and recovery | Evidence-gated handoff for P4 beta | email/recovery handoff and cabinet continuation exist through short-lived sessions; native password/token forms remain out of app while delivery/account-linking readiness is operator-gated | implement native forms only after delivery readiness, recovery UX, and account-link semantics stay green |
 | Detailed account and cabinet management | Done for P4 beta entrypoints | app opens cabinet through short-lived token, shows compact access/account summary, and has a details sheet for access/device/mode/cabinet/downloads/email | deeper cabinet management remains webapp-first |
-| WARP as a working feature | Done for guarded beta feature, proof-gated for production claim | Home shows the enhanced-protection tile honestly; public `client_policy.warp_policy` is sanitized; authenticated managed profiles may carry runtime-ready WARP material; client bootstrap parses `warp_policy`; the Home tile can request explicit user consent only for runtime-ready policy; desktop runtime maps WARP into Hiddify options only when policy is ready and consented, while incomplete or non-consented policy stays disabled; runtime fallback events are reported to the backend and the admin dashboard has a redacted WARP lifecycle summary | provider-side automation/rotation proof, Android release-build proof, Windows release-build proof, and reconnect/recovery smoke remain required before claiming production WARP |
+| WARP as a working feature | Done for guarded beta feature, proof-gated for production claim | Home shows the enhanced-protection tile honestly; public `client_policy.warp_policy` is sanitized; the default runtime path is client-local Hiddify-core WARP; backend status/consent/revoke/event endpoints are a lifecycle ledger and no longer require server-managed WireGuard material for client-local consent; authenticated managed profiles may still carry optional runtime material; client bootstrap parses and normalizes `warp_policy`; the Home tile can request explicit user consent when the local runtime lane is available; desktop runtime maps consented WARP into Hiddify options with `warp.enable=true` and local `id=p1`; runtime fallback events are reported to the backend and the admin dashboard has a redacted WARP lifecycle summary | Android release-build proof, Windows release-build proof, and reconnect/recovery smoke remain required before claiming production WARP |
 | Responsive/golden width verification | Done for widget matrix, visual screenshots still manual | widget tests cover `360`, `700`, `900`, `1024`, `1180`, and `1440` shell behavior, Home WARP tile, primary connect action, mobile bottom navigation, desktop icon rail, and expanded sidebar | keep screenshot/golden capture as release polish when visual baselines are approved |
 | Premium motion pass | Done for P4 beta foundation | connect ritual, status switcher, geometry-matched skeletons, row/chip tactile feedback, muted disabled rewards, sidebar label opacity/width transition, and reduced-motion hooks are covered by code/tests | continue P5 taste polish without changing product claims |
 
@@ -188,11 +188,14 @@ This approval has now been implemented through the Phase 6 local release-beta
 refresh. The contract remains the guardrail for future polish and proof work:
 
 1. P5 motion foundation and screen polish are implemented for beta.
-2. WARP backend status/consent/revoke/events contracts are implemented.
-3. WARP provisioning, encrypted storage, and rotation contracts are implemented
-   for beta evidence.
-4. WARP client consent persistence, revoke UI, secure material path, runtime
-   state machine, fallback diagnostics, and support redaction are implemented.
+2. WARP backend status/consent/revoke/events contracts are implemented as the
+   lifecycle ledger for client-local WARP.
+3. Optional WARP provisioning, encrypted storage, and rotation contracts remain
+   implemented for operator-managed material, but are not required for the
+   normal client-local WARP path.
+4. WARP client consent persistence, revoke UI, client-local runtime options,
+   runtime state machine, fallback diagnostics, and support redaction are
+   implemented.
 5. Android and Windows release-build proof remains required before any
    production WARP claim.
 
@@ -217,8 +220,10 @@ test/design_system_contract_test.dart test/pokrov_seed_app_test.dart` and
 - Do not expose raw links, hostnames, ports, protocol names, JSON, CIDR, or
   engine internals in normal UI.
 - Do not treat raw subscription links as account proof.
-- Do not claim active WARP/enhanced privacy until backend policy, safe storage,
-  runtime start, failure-mode, Android, and Windows evidence are green.
+- Do not claim production-proven WARP/enhanced privacy until runtime start,
+  failure-mode, Android release-build, and Windows release-build evidence are
+  green. Client-local WARP may still be exposed as a beta feature after explicit
+  user consent.
 - Keep Xray fallback advanced-only.
 - Roulette/calendar/referral-rich UI may appear only through backend-owned safe
   state. Mutating reward actions stay muted while flags are disabled and become

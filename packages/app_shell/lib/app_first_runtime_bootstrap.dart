@@ -253,13 +253,43 @@ class WarpControlStatus {
   }
 
   WarpRuntimePolicy applyTo(WarpRuntimePolicy policy) {
+    final localPolicy = policy.withClientLocalDefaults();
+    final backendReady = enabled && runtimeReady;
+    final keepLocalRuntime = localPolicy.isClientLocal ||
+        (!backendReady && localPolicy.canOfferRuntime);
+    final nextEnabled =
+        keepLocalRuntime ? localPolicy.enabled : localPolicy.enabled || enabled;
+    final nextRuntimeReady = keepLocalRuntime
+        ? localPolicy.runtimeReady
+        : localPolicy.runtimeReady && runtimeReady;
+    final nextSource = keepLocalRuntime
+        ? localPolicy.source
+        : (source.isEmpty ? localPolicy.source : source);
+    final nextState = state.isEmpty
+        ? localPolicy.state
+        : keepLocalRuntime &&
+                (state == 'not_ready' ||
+                    state == 'disabled_until_runtime_proof')
+            ? localPolicy.state
+            : state;
     return policy.copyWith(
-      enabled: policy.enabled || enabled,
-      runtimeReady: policy.runtimeReady && runtimeReady,
-      state: state.isEmpty ? policy.state : state,
-      mode: mode.isEmpty ? policy.mode : mode,
-      source: source.isEmpty ? policy.source : source,
-      userConsented: consented && policy.canOfferRuntime,
+      enabled: nextEnabled,
+      runtimeReady: nextRuntimeReady,
+      state: nextState,
+      mode: mode.isEmpty ? localPolicy.mode : mode,
+      source: nextSource,
+      userConsented: consented && nextEnabled && nextRuntimeReady,
+      id: localPolicy.id,
+      licenseKey: localPolicy.licenseKey,
+      wireguardConfigJson: localPolicy.wireguardConfigJson,
+      accountId: localPolicy.accountId,
+      accessToken: localPolicy.accessToken,
+      cleanIp: localPolicy.cleanIp,
+      cleanPort: localPolicy.cleanPort,
+      noise: localPolicy.noise,
+      noiseSize: localPolicy.noiseSize,
+      noiseDelay: localPolicy.noiseDelay,
+      noiseMode: localPolicy.noiseMode,
     );
   }
 
@@ -4862,8 +4892,7 @@ class AppFirstSupportTicketService implements SupportTicketService {
   }) async {
     final cleanBody = _trimForTicket(body, 2000);
     if (cleanBody.isEmpty) {
-      throw const SupportTicketFailure(
-          'Сообщение не должно быть пустым.');
+      throw const SupportTicketFailure('Сообщение не должно быть пустым.');
     }
 
     final payload = <String, Object?>{

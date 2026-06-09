@@ -92,7 +92,7 @@ void main() {
       busy: false,
     );
 
-    expect(lifecycle.publicTitle, 'Расширенная приватность');
+    expect(lifecycle.publicTitle, 'Расширенная защита');
     expect(lifecycle.publicStatus, isNot(contains('WARP')));
     expect(lifecycle.publicActionLabel, isNot(contains('WARP')));
     expect(lifecycle.technicalLabel, 'WARP');

@@ -1,0 +1,382 @@
+{
+  "generated_at": "2026-06-09",
+  "mode": "built-in imagegen",
+  "root": "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\docs\\design\\generated\\2026-06-09-app-screen-variants",
+  "notes": [
+    "Use for layout, hierarchy, mood, and interaction references only.",
+    "Do not copy generated text, dates, fake metrics, or readiness claims verbatim.",
+    "Implementation source of truth remains DESIGN.md, design tokens, app docs, and code."
+  ],
+  "items": [
+    {
+      "file": "_all-screens-contact-sheet.png",
+      "role": "contact_sheet",
+      "width": 1200,
+      "height": 6984,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "account-settings/account-a-light-calm.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "account-settings/account-b-dark-premium.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "account-settings/account-c-settings-hub.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "account-settings/account-settings-contact-sheet.png",
+      "role": "contact_sheet",
+      "width": 1200,
+      "height": 720,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "home/home-a-light-calm.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "home/home-b-dark-premium.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "home/home-c-compact-ios.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "home/home-contact-sheet.png",
+      "role": "contact_sheet",
+      "width": 1200,
+      "height": 720,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "locations/locations-a-light-calm.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "locations/locations-b-dark-premium.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "locations/locations-c-compact-picker.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "locations/locations-contact-sheet.png",
+      "role": "contact_sheet",
+      "width": 1200,
+      "height": 720,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "onboarding/onboarding-a-light-setup.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "onboarding/onboarding-b-dark-wizard.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "onboarding/onboarding-c-returning-user.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "onboarding/onboarding-contact-sheet.png",
+      "role": "contact_sheet",
+      "width": 1200,
+      "height": 720,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "rewards/rewards-a-light-calm.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "rewards/rewards-b-dark-premium.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "rewards/rewards-c-desktop-hub.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "rewards/rewards-contact-sheet.png",
+      "role": "contact_sheet",
+      "width": 1200,
+      "height": 720,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "rules/rules-a-light-calm.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "rules/rules-b-dark-premium.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "rules/rules-c-selected-apps-picker.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "rules/rules-contact-sheet.png",
+      "role": "contact_sheet",
+      "width": 1200,
+      "height": 720,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "support-chat/support-a-light-chat.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "support-chat/support-b-dark-premium.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "support-chat/support-c-bottom-sheet.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "support-chat/support-chat-contact-sheet.png",
+      "role": "contact_sheet",
+      "width": 1200,
+      "height": 720,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "warp-sheet/warp-a-light-sheet.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "warp-sheet/warp-b-dark-active.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "warp-sheet/warp-c-settings-detail.png",
+      "role": "variant",
+      "width": 941,
+      "height": 1672,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "warp-sheet/warp-sheet-contact-sheet.png",
+      "role": "contact_sheet",
+      "width": 1200,
+      "height": 720,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "windows-shell/windows-a-light-dashboard.png",
+      "role": "variant",
+      "width": 1586,
+      "height": 992,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "windows-shell/windows-b-dark-premium.png",
+      "role": "variant",
+      "width": 1536,
+      "height": 1024,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "windows-shell/windows-c-compact-sidepanel.png",
+      "role": "variant",
+      "width": 1609,
+      "height": 977,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    },
+    {
+      "file": "windows-shell/windows-shell-contact-sheet.png",
+      "role": "contact_sheet",
+      "width": 1200,
+      "height": 720,
+      "intended_surface": "internal client design review",
+      "source": "built-in imagegen, generated 2026-06-09 from POKROV app redesign prompts",
+      "brand_reference": "POKROV emerald line-art hood/shield mark from assets/branding/pokrov-mark.png",
+      "release_scope": "not a shippable asset; visual reference only"
+    }
+  ]
+}

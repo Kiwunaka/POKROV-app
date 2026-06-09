@@ -813,4 +813,58 @@ void main() {
         'test-account-id');
     expect(warp2['enable'], isFalse);
   });
+
+  test('desktop lane enables client-local WARP without server material',
+      () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-warp-client-local-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      connectivityProbe: () async => null,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'connect-desktop-warp-client-local',
+        configPayload:
+            '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.fullTunnel,
+        warpPolicy: WarpRuntimePolicy(
+          enabled: true,
+          runtimeReady: true,
+          userConsented: true,
+          state: 'consented',
+          source: 'client_local',
+          id: 'p1',
+        ),
+      ),
+    );
+
+    await engine.connect();
+
+    final options =
+        jsonDecode(bindings.lastOptionsJson!) as Map<String, dynamic>;
+    final warp = options['warp'] as Map<String, dynamic>;
+    expect(warp['enable'], isTrue);
+    expect(warp['id'], 'p1');
+    expect(warp['mode'], 'proxy_over_warp');
+    expect(warp['wireguard-config'], '');
+    expect(warp.containsKey('wireguardConfig'), isFalse);
+    expect(warp.containsKey('account'), isFalse);
+  });
 }

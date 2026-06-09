@@ -157,6 +157,8 @@ class WarpRuntimePolicy {
     this.mode = 'proxy_over_warp',
     this.source = 'backend_managed',
     this.userConsented = false,
+    this.id = '',
+    this.licenseKey = '',
     this.wireguardConfigJson = '',
     this.accountId = '',
     this.accessToken = '',
@@ -174,12 +176,28 @@ class WarpRuntimePolicy {
     state: 'disabled_until_runtime_proof',
   );
 
+  static const clientLocalDefault = WarpRuntimePolicy(
+    enabled: true,
+    runtimeReady: true,
+    state: 'ready_to_consent',
+    source: 'client_local',
+    id: 'p1',
+    cleanIp: 'auto',
+    cleanPort: 0,
+    noise: '',
+    noiseSize: '',
+    noiseDelay: '',
+    noiseMode: 'm4',
+  );
+
   final bool enabled;
   final bool runtimeReady;
   final String state;
   final String mode;
   final String source;
   final bool userConsented;
+  final String id;
+  final String licenseKey;
   final String wireguardConfigJson;
   final String accountId;
   final String accessToken;
@@ -190,10 +208,43 @@ class WarpRuntimePolicy {
   final String noiseDelay;
   final String noiseMode;
 
-  bool get canOfferRuntime =>
-      enabled && runtimeReady && wireguardConfigJson.trim().isNotEmpty;
+  bool get canOfferRuntime => enabled && runtimeReady;
 
   bool get canEnableRuntime => canOfferRuntime && userConsented;
+
+  bool get isClientLocal => source.trim() == 'client_local';
+
+  bool get hasServerManagedMaterial =>
+      wireguardConfigJson.trim().isNotEmpty ||
+      accountId.trim().isNotEmpty ||
+      accessToken.trim().isNotEmpty;
+
+  WarpRuntimePolicy withClientLocalDefaults() {
+    if (canOfferRuntime && id.trim().isNotEmpty) {
+      return this;
+    }
+    final fallback = clientLocalDefault;
+    final normalizedState = state.trim();
+    final nextState = normalizedState.isEmpty ||
+            normalizedState == 'disabled_until_runtime_proof' ||
+            normalizedState == 'waiting_for_backend_provisioning' ||
+            normalizedState == 'not_ready'
+        ? fallback.state
+        : normalizedState;
+    return copyWith(
+      enabled: true,
+      runtimeReady: true,
+      state: nextState,
+      source: hasServerManagedMaterial ? source : fallback.source,
+      id: id.trim().isNotEmpty ? id : fallback.id,
+      cleanIp: cleanIp.trim().isNotEmpty ? cleanIp : fallback.cleanIp,
+      cleanPort: cleanPort,
+      noise: noise,
+      noiseSize: noiseSize,
+      noiseDelay: noiseDelay,
+      noiseMode: noiseMode.trim().isNotEmpty ? noiseMode : fallback.noiseMode,
+    );
+  }
 
   WarpRuntimePolicy withUserConsent(bool value) => copyWith(
         userConsented: value,
@@ -206,6 +257,8 @@ class WarpRuntimePolicy {
     String? mode,
     String? source,
     bool? userConsented,
+    String? id,
+    String? licenseKey,
     String? wireguardConfigJson,
     String? accountId,
     String? accessToken,
@@ -223,6 +276,8 @@ class WarpRuntimePolicy {
       mode: mode ?? this.mode,
       source: source ?? this.source,
       userConsented: userConsented ?? this.userConsented,
+      id: id ?? this.id,
+      licenseKey: licenseKey ?? this.licenseKey,
       wireguardConfigJson: wireguardConfigJson ?? this.wireguardConfigJson,
       accountId: accountId ?? this.accountId,
       accessToken: accessToken ?? this.accessToken,
@@ -275,6 +330,10 @@ class WarpRuntimePolicy {
       mode: _readMode(map['mode']),
       source: _readText(map['source'], fallback: 'backend_managed'),
       userConsented: _readBool(map['user_consented'] ?? map['userConsented']),
+      id: _readText(map['id']),
+      licenseKey: _readText(
+        map['license_key'] ?? map['license-key'] ?? map['licenseKey'],
+      ),
       wireguardConfigJson: wireguardConfig,
       accountId: _readText(
         account['account-id'] ?? account['account_id'] ?? account['accountId'],
@@ -967,10 +1026,17 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       return options;
     }
 
+    final licenseKey = policy.licenseKey.trim();
+    final warpId = policy.id.trim().isNotEmpty
+        ? policy.id.trim()
+        : licenseKey.isNotEmpty
+            ? licenseKey
+            : 'p1';
     options
       ..['enable'] = true
+      ..['id'] = warpId
       ..['mode'] = policy.mode
-      ..['wireguard-config'] = policy.wireguardConfigJson
+      ..['license-key'] = licenseKey
       ..['clean-ip'] = policy.cleanIp
       ..['clean-port'] = policy.cleanPort
       ..['noise'] = policy.noise
@@ -978,6 +1044,9 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       ..['noise-delay'] = policy.noiseDelay
       ..['noise-mode'] = policy.noiseMode;
 
+    if (policy.wireguardConfigJson.trim().isNotEmpty) {
+      options['wireguard-config'] = policy.wireguardConfigJson;
+    }
     final wireguardConfig = policy.wireguardConfigObject;
     if (wireguardConfig != null && wireguardConfig.isNotEmpty) {
       options['wireguardConfig'] = wireguardConfig;
@@ -996,6 +1065,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   Map<String, Object?> _defaultWarpOptions() {
     return <String, Object?>{
       'enable': false,
+      'id': 'p1',
       'mode': 'proxy_over_warp',
       'wireguard-config': '',
       'license-key': '',

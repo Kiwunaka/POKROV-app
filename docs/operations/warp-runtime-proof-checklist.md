@@ -1,6 +1,6 @@
 # WARP Runtime Proof Checklist
 
-Last updated: 2026-06-05
+Last updated: 2026-06-09
 
 This checklist is the client evidence gate for the internal WARP lane that is
 shown to normal users as `Расширенная защита` / `Расширенная приватность`.
@@ -9,6 +9,16 @@ Until this checklist has current Android and Windows release-build evidence,
 the app may ship the client lifecycle, consent, fallback, and diagnostics
 contract, but public copy must not claim production-ready anonymity or a
 fully proven WARP runtime.
+
+Implementation update on 2026-06-09:
+
+- WARP is now a client-local Hiddify-core lane. The app passes `warp.enable`,
+  `id=p1`, mode, and safe defaults to core; backend-provided WireGuard material
+  is optional rather than required.
+- Backend `/api/client/warp/*` endpoints are the consent/status/event ledger.
+  They must not block the client because server-side WARP material is absent.
+- The UI may show a normal WARP control after explicit consent, while runtime
+  proof still remains an owner/manual release-build gate.
 
 ## Evidence Rules
 
@@ -26,7 +36,8 @@ fully proven WARP runtime.
 
 - Install the unsigned/outside-store beta APK on a physical Android device.
 - Start from a clean app install and complete app-first onboarding.
-- Fetch managed profile with enhanced protection available.
+- Fetch managed profile; WARP should be available even when the backend has no
+  server-managed WireGuard material.
 - Open the home tile and confirm the sheet uses public wording only.
 - Enable consent and reconnect.
 - Record one of these runtime states: `active`, `degraded`, or `fallback`.
@@ -40,7 +51,8 @@ fully proven WARP runtime.
 ## Windows Unsigned Beta Proof
 
 - Install or unpack the unsigned Windows beta artifact on a clean user profile.
-- Complete app-first onboarding and fetch the managed profile.
+- Complete app-first onboarding and fetch the managed profile; WARP should be
+  available even when the backend has no server-managed WireGuard material.
 - Confirm responsive shell remains stable at `700`, `900`, `1024`, `1180`,
   and `1440` px widths.
 - Open the home tile and confirm public wording only.
@@ -57,6 +69,9 @@ fully proven WARP runtime.
 
 - Client lifecycle contract: implemented.
 - Backend status, consent, rotate, and runtime-event client calls: implemented.
+- Client-local WARP runtime options without server material: implemented.
+- Backend consent/status ledger no longer rejects client-local WARP for missing
+  server material: implemented.
 - Safe consent cache: implemented.
 - Support diagnostics redaction: implemented.
 - Android physical release-build proof: `MANUAL_OWNER_TEST`.

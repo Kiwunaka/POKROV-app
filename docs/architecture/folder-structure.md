@@ -32,6 +32,38 @@ This scaffold separates future work by purpose instead of by current implementat
 - `platform_contracts`: engine selection, permissions, platform services, and connect lifecycle contracts
 - `support_context`: safe diagnostics, escalation metadata, and support handoff payloads
 
+## App Shell Module Layout
+
+`packages/app_shell/lib/app_shell.dart` stays the public library entrypoint for
+the shared Flutter shell. It owns imports, exported contracts, app state,
+and the library-level part map.
+
+Shared shell modules live beside the feature folders:
+
+| Path | Owns |
+| --- | --- |
+| `src/seed/` | seed app context, built-in managed profile, public bootstrap constants |
+| `src/shell/` | app widget, navigation scaffolds, desktop/mobile shell layout |
+| `src/shared/` | reusable sheets, cards, backdrop, status pills, connect-disc wrappers |
+
+Large user-facing surfaces live as Dart `part` files under
+`packages/app_shell/lib/src/features/`:
+
+| Path | Owns |
+| --- | --- |
+| `src/features/onboarding/` | first-launch country/restore/start flow |
+| `src/features/home/` | protection home, connect ritual, access strip, WARP entry tile, notices |
+| `src/features/locations/` | automatic location surface and smart-connect labels |
+| `src/features/rules/` | route-mode choices, Windows/process/app selection, rules copy helpers |
+| `src/features/profile/` | access overview, account actions, settings rows, redeem/email sheets |
+| `src/features/rewards/` | bonus hub, wheel/calendar/achievements/referral surfaces |
+| `src/features/support/` | embedded support chat, lifecycle hints, AI helper suggestions |
+| `src/features/warp/` | WARP consent and state sheet |
+
+Keep these files behavior-focused and avoid moving platform/runtime contracts
+into the UI feature folders. New large screens should get their own feature
+part before `app_shell.dart` grows back into a single 10k-line file.
+
 ## Seed Executability
 
 This scaffold now includes:
