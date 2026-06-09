@@ -107,6 +107,14 @@ abstract interface class AppFirstReleaseActionService {
   });
 }
 
+abstract interface class AppFirstNodePreferenceService {
+  Future<SmartConnectPreferenceResult> setPreferredSmartConnectNode({
+    required HostPlatform hostPlatform,
+    required SmartConnectProfile smartConnect,
+    required String nodeCode,
+  });
+}
+
 class BootstrapFailure implements Exception {
   const BootstrapFailure(
     this.message, {
@@ -118,6 +126,45 @@ class BootstrapFailure implements Exception {
 
   @override
   String toString() => message;
+}
+
+class SmartConnectPreferenceResult {
+  const SmartConnectPreferenceResult({
+    required this.preferredNodeCode,
+    required this.acceptedSamples,
+  });
+
+  final String preferredNodeCode;
+  final int acceptedSamples;
+
+  static SmartConnectPreferenceResult tryParse(Object? value) {
+    if (value is! Map) {
+      return const SmartConnectPreferenceResult(
+        preferredNodeCode: '',
+        acceptedSamples: 0,
+      );
+    }
+    final json = value.map((key, value) => MapEntry(key.toString(), value));
+    return SmartConnectPreferenceResult(
+      preferredNodeCode: _readText(json['preferred_node_code']),
+      acceptedSamples: _readInt(json['accepted_samples']),
+    );
+  }
+
+  static String _readText(Object? value, {String fallback = ''}) {
+    final text = value == null ? '' : value.toString().trim();
+    return text.isEmpty ? fallback : text;
+  }
+
+  static int _readInt(Object? value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value?.toString().trim() ?? '') ?? 0;
+  }
 }
 
 class WarpControlStatus {
@@ -557,7 +604,7 @@ class AppFirstBonusFeatureState {
     if (featureFlagEnabled) {
       return 'На проверке';
     }
-    return 'Скоро';
+    return 'Недоступно';
   }
 
   String get availabilityText {
@@ -565,9 +612,9 @@ class AppFirstBonusFeatureState {
       return 'Можно использовать';
     }
     if (featureFlagEnabled) {
-      return 'Механика готовится к безопасному запуску';
+      return 'Пока недоступно';
     }
-    return 'Появится после включения feature flag';
+    return 'POKROV покажет эту возможность, когда она станет доступна';
   }
 }
 
@@ -820,7 +867,8 @@ class AppFirstRuntimeBootstrapper
         AppFirstAccountActionService,
         AppFirstBonusActionService,
         AppFirstWarpActionService,
-        AppFirstReleaseActionService {
+        AppFirstReleaseActionService,
+        AppFirstNodePreferenceService {
   AppFirstRuntimeBootstrapper({
     this.apiBaseUrl = 'https://api.pokrov.space',
     Future<Directory> Function()? supportDirectoryResolver,
@@ -852,7 +900,7 @@ class AppFirstRuntimeBootstrapper
   final List<String> Function(String tag)? _allExceptRuRuleSetUrlsResolver;
   final SmartConnectLatencyProbe? smartConnectLatencyProbe;
 
-  static const _appVersion = '1.0.0-beta';
+  static const _appVersion = '1.0.0-beta.2';
   static const _defaultManagedManifestPath = '/api/client/profile/managed';
   static const _androidShellPackageName = 'space.pokrov.pokrov_android_shell';
   static const _allExceptRuRuleSetCacheDirectoryName =
@@ -1517,6 +1565,86 @@ class AppFirstRuntimeBootstrapper
 
       throw const BootstrapFailure(
         'POKROV could not check app updates.',
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  @override
+  Future<SmartConnectPreferenceResult> setPreferredSmartConnectNode({
+    required HostPlatform hostPlatform,
+    required SmartConnectProfile smartConnect,
+    required String nodeCode,
+  }) async {
+    final normalizedNode = nodeCode.trim().toLowerCase();
+    if (normalizedNode.isEmpty) {
+      throw const BootstrapFailure('Выберите локацию из списка.');
+    }
+    final allowedCodes = {
+      for (final node in smartConnect.shortlist) node.code.trim().toLowerCase(),
+    }..remove('');
+    if (allowedCodes.isNotEmpty && !allowedCodes.contains(normalizedNode)) {
+      throw const BootstrapFailure(
+        'Эта локация недоступна для текущего доступа.',
+      );
+    }
+
+    var state = await _loadOrCreateState(hostPlatform);
+    final client = _createHttpClient(hostPlatform);
+    try {
+      for (var attempt = 0; attempt < 2; attempt += 1) {
+        if (!state.hasSession) {
+          state = await _startTrial(
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
+        }
+
+        try {
+          final response = await _requestJson(
+            method: 'POST',
+            path: '/api/client/nodes/latency-samples',
+            client: client,
+            bearerToken: state.sessionToken,
+            hostPlatform: hostPlatform,
+            body: <String, Object?>{
+              'profile_revision': smartConnect.profileRevision,
+              'transport_profile': smartConnect.transportProfile,
+              'selected_node_code': normalizedNode,
+              'previous_node_code':
+                  smartConnect.stickiness.preferredNodeCode.trim().isEmpty
+                      ? null
+                      : smartConnect.stickiness.preferredNodeCode.trim(),
+              'stickiness_applied': false,
+              'samples': <Map<String, Object?>>[
+                <String, Object?>{
+                  'node_code': normalizedNode,
+                  'rtt_ms': 1,
+                },
+              ],
+            },
+          );
+          return SmartConnectPreferenceResult.tryParse(response);
+        } on BootstrapFailure catch (error) {
+          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
+            state = await _startTrial(
+              state: state.copyWith(
+                sessionToken: '',
+                accountId: '',
+              ),
+              hostPlatform: hostPlatform,
+              client: client,
+            );
+            continue;
+          }
+          rethrow;
+        }
+      }
+
+      throw const BootstrapFailure(
+        'POKROV не смог сохранить выбранную локацию.',
       );
     } finally {
       client.close(force: true);
@@ -2968,7 +3096,7 @@ class AppFirstRuntimeBootstrapper
     }
 
     throw const BootstrapFailure(
-      'Профиль доступа не прошел проверку для Android.',
+      'Не удалось подготовить подключение на Android.',
     );
   }
 
@@ -4735,7 +4863,7 @@ class AppFirstSupportTicketService implements SupportTicketService {
     final cleanBody = _trimForTicket(body, 2000);
     if (cleanBody.isEmpty) {
       throw const SupportTicketFailure(
-          'РЎРѕРѕР±С‰РµРЅРёРµ РЅРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїСѓСЃС‚С‹Рј.');
+          'Сообщение не должно быть пустым.');
     }
 
     final payload = <String, Object?>{
@@ -4812,7 +4940,7 @@ class AppFirstSupportTicketService implements SupportTicketService {
     }
 
     throw const SupportTicketFailure(
-      'POKROV РЅРµ СЃРјРѕРі РѕР±РЅРѕРІРёС‚СЊ С‡Р°С‚ РїРѕРґРґРµСЂР¶РєРё.',
+      'POKROV не смог обновить чат поддержки.',
     );
   }
 

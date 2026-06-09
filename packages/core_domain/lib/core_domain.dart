@@ -133,11 +133,11 @@ extension RouteModePresentation on RouteMode {
   String get label {
     switch (this) {
       case RouteMode.fullTunnel:
-        return 'Все устройство';
+        return 'Всё устройство';
       case RouteMode.selectedApps:
         return 'Выбранные приложения';
       case RouteMode.allExceptRu:
-        return 'Все, кроме РФ';
+        return 'Всё, кроме РФ';
     }
   }
 

@@ -492,6 +492,71 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
   }
 }
 
+void _installReadyRuntimeBridgeMock() {
+  const channel = MethodChannel('space.pokrov/runtime_engine');
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
+  messenger.setMockMethodCallHandler(channel, (call) async {
+    switch (call.method) {
+      case 'runtimeEngine.snapshot':
+        return <String, Object?>{
+          'phase': 'artifactReady',
+          'artifactDirectory': '/host/runtime',
+          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': false,
+          'message': 'Host bridge ready.',
+        };
+      case 'runtimeEngine.initialize':
+        return <String, Object?>{
+          'phase': 'initialized',
+          'artifactDirectory': '/host/runtime',
+          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': false,
+          'message': 'Runtime bootstrap completed on the host bridge.',
+        };
+      case 'runtimeEngine.stageManagedProfile':
+        return <String, Object?>{
+          'phase': 'configStaged',
+          'artifactDirectory': '/host/runtime',
+          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'message': 'Managed profile staged on the host bridge.',
+        };
+      case 'runtimeEngine.connect':
+        return <String, Object?>{
+          'phase': 'running',
+          'artifactDirectory': '/host/runtime',
+          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'message': 'Runtime service is running.',
+        };
+      case 'runtimeEngine.disconnect':
+        return <String, Object?>{
+          'phase': 'initialized',
+          'artifactDirectory': '/host/runtime',
+          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'message': 'Runtime service stopped.',
+        };
+    }
+    return null;
+  });
+  addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+}
+
 Future<void> _completeFirstLaunchIfPresent(WidgetTester tester) async {
   final newUser = find.byKey(const ValueKey('first-launch-new-user'));
   if (newUser.evaluate().isEmpty) {
@@ -807,8 +872,9 @@ void main() {
         find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-location-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-route-chip')), findsOneWidget);
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
-    expect(find.textContaining('WARP'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    expect(find.textContaining('Расширенная защита'), findsNothing);
+    expect(find.textContaining('WARP'), findsNothing);
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('home-location-chip')),
@@ -917,7 +983,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(bootstrapper.clientAppsCalls, 1);
-    expect(bootstrapper.lastClientAppsCurrentVersion, '1.0.0-beta');
+    expect(bootstrapper.lastClientAppsCurrentVersion, '1.0.0-beta.2');
     expect(find.byKey(const ValueKey('client-update-prompt')), findsOneWidget);
     expect(find.text('Small beta fixes.'), findsOneWidget);
 
@@ -1831,7 +1897,7 @@ void main() {
       expect(find.byKey(ValueKey(item.shellKey)), findsOneWidget);
       expect(
           find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
-      expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
+      expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
       if (item.platform == HostPlatform.android) {
         expect(find.byType(NavigationBar), findsOneWidget);
       } else {
@@ -1860,7 +1926,7 @@ void main() {
         findsWidgets);
   });
 
-  testWidgets('windows shell surfaces enhanced protection on Home',
+  testWidgets('windows shell hides unavailable enhanced protection',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(960, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -1894,24 +1960,22 @@ void main() {
     expect(find.text('Р’Р°С€ РѕСЃРЅРѕРІРЅРѕР№ СЂРµРіРёРѕРЅ'), findsNothing);
     expect(find.text('РќРѕРІРѕСЃС‚Рё Рё СѓРІРµРґРѕРјР»РµРЅРёСЏ'), findsNothing);
     expect(find.text('РЈСЃРёР»РµРЅРЅС‹Р№ СЂРµР¶РёРј'), findsNothing);
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
-    expect(find.textContaining('WARP'), findsOneWidget);
-
-    await _openEnhancedProtectionFromProfile(tester);
-
-    expect(find.byType(BottomSheet), findsOneWidget);
-    expect(
-      find.textContaining('Дополнительный режим пока готовится'),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    expect(find.textContaining('Расширенная защита'), findsNothing);
     expect(find.textContaining('WARP'), findsNothing);
-    expect(find.byType(Switch), findsNothing);
+
+    await _tapNav(tester, 'nav-profile');
+    expect(
+      find.byKey(const ValueKey('profile-enhanced-protection-action')),
+      findsNothing,
+    );
   });
 
   testWidgets('enhanced protection asks for explicit consent before activation',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1180, 820));
     addTearDown(() => tester.binding.setSurfaceSize(null));
+    _installReadyRuntimeBridgeMock();
 
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
@@ -1930,12 +1994,15 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
     );
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
+
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
 
@@ -1962,6 +2029,7 @@ void main() {
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1180, 820));
     addTearDown(() => tester.binding.setSurfaceSize(null));
+    _installReadyRuntimeBridgeMock();
 
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
@@ -1980,12 +2048,15 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
     );
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
+
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
 
     await _openEnhancedProtectionFromProfile(tester);
     await tester.tap(find.byKey(const ValueKey('home-warp-enable-action')));
@@ -2001,7 +2072,7 @@ void main() {
     expect(bootstrapper.warpConsentCalls, 2);
     expect(bootstrapper.lastWarpConsentEnabled, isFalse);
     await _tapNav(tester, 'nav-protection');
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
   });
 
   testWidgets(
@@ -2722,8 +2793,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(selectedAppsStatus, findsOneWidget);
-    expect(find.byKey(const ValueKey('rules-catalog-version')), findsOneWidget);
-    expect(find.textContaining('2026-04-13'), findsWidgets);
+    expect(find.byKey(const ValueKey('rules-catalog-version')), findsNothing);
+    expect(find.textContaining('2026-04-13'), findsNothing);
 
     final banksPreset = find.byKey(const ValueKey('rules-preset-ru-banks'));
     final gosuslugiPreset =
@@ -2743,7 +2814,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.descendant(of: messengerPreset, matching: find.text('Готовится')),
+      find.descendant(of: messengerPreset, matching: find.text('Скоро')),
       findsOneWidget,
     );
     expect(
@@ -2791,7 +2862,8 @@ void main() {
     await _tapNav(tester, 'nav-rules');
     await tester.pumpAndSettle();
 
-    expect(find.text('Маршруты Windows'), findsOneWidget);
+    expect(find.text('Маршруты Windows'), findsNothing);
+    expect(find.text('Правила подключения'), findsOneWidget);
     expect(
         find.byKey(const ValueKey('rules-preset-ru-region')), findsOneWidget);
     expect(
@@ -2815,7 +2887,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Процессы'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: selectedAppsSection,
+        matching: find.text('Выбранные приложения'),
+      ),
+      findsOneWidget,
+    );
     expect(
         find.byKey(const ValueKey('rules-selected-app-pick')), findsOneWidget);
     expect(find.text('Выбрать процесс'), findsOneWidget);
@@ -2993,7 +3071,7 @@ void main() {
     );
   });
 
-  testWidgets('advanced settings require acknowledgement before opening',
+  testWidgets('advanced settings open as diagnostics without acknowledgement',
       (tester) async {
     await tester.pumpWidget(
       PokrovSeedApp(
@@ -3019,14 +3097,10 @@ void main() {
       find.byKey(const ValueKey('profile-advanced-settings-sheet')),
       findsOneWidget,
     );
-    expect(tester.widget<FilledButton>(find.byType(FilledButton).last).enabled,
-        isFalse);
-
-    await tester.tap(find.byType(Checkbox).last);
-    await tester.pumpAndSettle();
-
-    expect(tester.widget<FilledButton>(find.byType(FilledButton).last).enabled,
-        isTrue);
+    expect(find.byKey(const ValueKey('advanced-app-version')), findsOneWidget);
+    expect(find.byKey(const ValueKey('advanced-runtime-core')), findsOneWidget);
+    expect(find.byType(Checkbox), findsNothing);
+    expect(find.byType(FilledButton), findsNothing);
   });
 
   testWidgets(
@@ -3258,6 +3332,99 @@ void main() {
     expect(stagedPayloads.single, isNot(contains('"final":"direct"')));
   });
 
+  testWidgets('primary connect label is part of the tappable action',
+      (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final calls = <String>[];
+
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call.method);
+      switch (call.method) {
+        case 'runtimeEngine.snapshot':
+          return <String, Object?>{
+            'phase': 'artifactReady',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': false,
+            'message': 'Host bridge ready.',
+          };
+        case 'runtimeEngine.initialize':
+          return <String, Object?>{
+            'phase': 'initialized',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': false,
+            'message': 'Runtime bootstrap completed on the host bridge.',
+          };
+        case 'runtimeEngine.stageManagedProfile':
+          return <String, Object?>{
+            'phase': 'configStaged',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': true,
+            'message': 'Managed profile staged on the host bridge.',
+          };
+        case 'runtimeEngine.connect':
+          return <String, Object?>{
+            'phase': 'running',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': true,
+            'message': 'Android runtime service is running.',
+          };
+      }
+      return null;
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: _FakeBootstrapper(
+          const ManagedProfilePayload(
+            profileName: 'managed-from-api',
+            configPayload:
+                '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    final label = find.descendant(
+      of: find.byKey(const ValueKey('connect-disc-label')),
+      matching: find.text('Подключить'),
+    );
+    await tester.tap(label);
+    await tester.pumpAndSettle();
+
+    expect(
+      calls,
+      containsAllInOrder(const [
+        'runtimeEngine.initialize',
+        'runtimeEngine.stageManagedProfile',
+        'runtimeEngine.connect',
+      ]),
+    );
+    expect(find.byKey(const ValueKey('connect-disc-connected-settle')),
+        findsOneWidget);
+  });
+
   testWidgets('bootstrap failures surface as a calm recovery banner',
       (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
@@ -3317,6 +3484,81 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('POKROV'), findsWidgets);
+  });
+
+  testWidgets('unexpected runtime errors surface as recovery feedback',
+      (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final calls = <String>[];
+
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call.method);
+      switch (call.method) {
+        case 'runtimeEngine.snapshot':
+          return <String, Object?>{
+            'phase': 'artifactReady',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': false,
+            'message': 'Host bridge ready.',
+          };
+        case 'runtimeEngine.initialize':
+          return <String, Object?>{
+            'phase': 'initialized',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': false,
+            'message': 'Runtime bootstrap completed on the host bridge.',
+          };
+        case 'runtimeEngine.stageManagedProfile':
+          return <String, Object?>{
+            'phase': 'configStaged',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': true,
+            'message': 'Managed profile staged on the host bridge.',
+          };
+        case 'runtimeEngine.connect':
+          return Completer<Map<String, Object?>>().future;
+      }
+      return null;
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        runtimeActionTimeout: const Duration(milliseconds: 10),
+        bootstrapper: _FakeBootstrapper(
+          const ManagedProfilePayload(
+            profileName: 'managed-from-api',
+            configPayload:
+                '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
+
+    expect(calls, contains('runtimeEngine.connect'));
+    expect(
+        find.byKey(const ValueKey('motion-recovery-banner')), findsOneWidget);
+    expect(find.textContaining('системный модуль'), findsWidgets);
   });
 
   testWidgets(

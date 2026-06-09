@@ -471,6 +471,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   String? _stagedConfigPath;
   RuntimePhase _phase = RuntimePhase.artifactMissing;
   String _message = _missingArtifactMessage;
+  bool _preferWindowsSystemProxy = true;
 
   static const defaultLibcoreTag = 'v3.1.8';
   static const _missingArtifactMessage =
@@ -544,6 +545,11 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       if (error.isNotEmpty) {
         _phase = RuntimePhase.artifactReady;
         _message = 'Не удалось подготовить подключение: $error';
+        return _snapshotPreservingCurrentMessage(
+          phase: _phase,
+          canInitialize: true,
+          canConnect: false,
+        );
       } else {
         _phase = RuntimePhase.initialized;
         _message = 'Подготовка подключения завершена.';
@@ -551,6 +557,11 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     } catch (error) {
       _phase = RuntimePhase.artifactReady;
       _message = 'Не удалось загрузить модуль подключения: $error';
+      return _snapshotPreservingCurrentMessage(
+        phase: _phase,
+        canInitialize: true,
+        canConnect: false,
+      );
     }
 
     return snapshot();
@@ -586,7 +597,11 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       if (parseError.isNotEmpty) {
         _phase = RuntimePhase.initialized;
         _message = 'Профиль доступа не прошел проверку: $parseError';
-        return snapshot();
+        return _snapshotPreservingCurrentMessage(
+          phase: _phase,
+          canInitialize: true,
+          canConnect: false,
+        );
       }
     }
 
@@ -602,7 +617,11 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     final before = await snapshot();
     if (!before.canConnect || _bindings == null || _stagedPayload == null) {
       _message = 'POKROV ждет подготовленные настройки и готовый runtime.';
-      return snapshot();
+      return _snapshotPreservingCurrentMessage(
+        phase: _phase,
+        canInitialize: before.canInitialize,
+        canConnect: before.canConnect,
+      );
     }
 
     final optionsError = _bindings!.changeOptions(
@@ -611,7 +630,11 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     if (optionsError.isNotEmpty) {
       _phase = RuntimePhase.configStaged;
       _message = 'POKROV не смог применить параметры runtime: $optionsError';
-      return snapshot();
+      return _snapshotPreservingCurrentMessage(
+        phase: _phase,
+        canInitialize: true,
+        canConnect: true,
+      );
     }
 
     final error = _bindings!.start(
@@ -621,7 +644,11 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     if (error.isNotEmpty) {
       _phase = RuntimePhase.configStaged;
       _message = 'POKROV не смог подключиться: $error';
-      return snapshot();
+      return _snapshotPreservingCurrentMessage(
+        phase: _phase,
+        canInitialize: true,
+        canConnect: true,
+      );
     }
 
     final probeError = await _verifyStartedRuntime();
@@ -631,7 +658,11 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       _message = stopError.isEmpty
           ? 'POKROV запустил модуль, но трафик не проходит: $probeError'
           : 'POKROV запустил модуль, но трафик не проходит: $probeError; остановка тоже не удалась: $stopError';
-      return snapshot();
+      return _snapshotPreservingCurrentMessage(
+        phase: _phase,
+        canInitialize: true,
+        canConnect: true,
+      );
     }
 
     _phase = RuntimePhase.running;
@@ -693,14 +724,37 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     final error = _bindings!.stop();
     if (error.isNotEmpty) {
       _message = 'POKROV не смог отключиться: $error';
-      return snapshot();
+      return _snapshotPreservingCurrentMessage(
+        phase: _phase,
+        canInitialize: artifacts.coreBinary != null,
+        canConnect: _phase.index >= RuntimePhase.configStaged.index,
+      );
     }
 
     _phase = _stagedConfigPath == null
         ? RuntimePhase.initialized
         : RuntimePhase.configStaged;
     _message = 'POKROV отключен.';
-    return snapshot();
+    return _snapshotPreservingCurrentMessage(
+      phase: _phase,
+      canInitialize: artifacts.coreBinary != null,
+      canConnect: _stagedConfigPath != null,
+    );
+  }
+
+  Future<RuntimeSnapshot> _snapshotPreservingCurrentMessage({
+    required RuntimePhase phase,
+    required bool canInitialize,
+    required bool canConnect,
+  }) async {
+    final artifacts = _artifacts ?? await _resolveArtifacts();
+    _artifacts = artifacts;
+    return _buildSnapshot(
+      artifacts: artifacts,
+      phase: phase,
+      canInitialize: canInitialize,
+      canConnect: canConnect,
+    );
   }
 
   Future<_ResolvedArtifacts> _resolveArtifacts() async {
@@ -849,7 +903,8 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       RouteMode.selectedApps => 'global',
       RouteMode.fullTunnel => 'global',
     };
-    final systemProxyMode = false;
+    final systemProxyMode =
+        hostPlatform == HostPlatform.windows && _preferWindowsSystemProxy;
     final directDnsAddress =
         payload.routeMode == RouteMode.allExceptRu ? 'local' : 'udp://1.1.1.1';
 

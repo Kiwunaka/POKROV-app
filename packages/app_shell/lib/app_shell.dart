@@ -106,7 +106,7 @@ abstract final class _SeedPalette {
 
 const _pokrovBrandMarkAsset = PokrovBrandAssets.mark;
 const _selectedAppsEnforcementReady = true;
-const _pokrovAppVersion = '1.0.0-beta';
+const _pokrovAppVersion = '1.0.0-beta.2';
 const _seedRulesetVersion = '2026-04-13';
 const _seedPackageCatalogVersion = '2026-04-13';
 
@@ -235,7 +235,7 @@ RulesPresetContract _seedRulesPresetContractFor(HostPlatform hostPlatform) {
         presets: [
           RulesPresetStatus(
             id: 'ru-region',
-            title: 'Российский регион',
+            title: 'Российские сервисы',
             subtitle:
                 'Российские сайты, локальные адреса и нужные RU-сервисы идут напрямую.',
             state: RulesPresetState.enabled,
@@ -243,19 +243,19 @@ RulesPresetContract _seedRulesPresetContractFor(HostPlatform hostPlatform) {
           RulesPresetStatus(
             id: 'local-network',
             title: 'Локальная сеть',
-            subtitle: 'Домашние и рабочие адреса остаются вне туннеля.',
+            subtitle: 'Домашние и рабочие адреса работают напрямую.',
             state: RulesPresetState.enabled,
           ),
           RulesPresetStatus(
             id: 'full-tunnel',
-            title: 'Все устройство',
+            title: 'Весь трафик устройства',
             subtitle: 'Можно направить весь трафик Windows через POKROV.',
             state: RulesPresetState.enabled,
           ),
           RulesPresetStatus(
             id: 'selected-apps',
-            title: 'Выбранные процессы',
-            subtitle: 'POKROV работает только для выбранных .exe и процессов.',
+            title: 'Выбранные приложения',
+            subtitle: 'POKROV работает только для выбранных приложений.',
             state: RulesPresetState.enabled,
           ),
         ],
@@ -279,13 +279,13 @@ RulesPresetContract _seedRulesPresetContractFor(HostPlatform hostPlatform) {
           RulesPresetStatus(
             id: 'marketplaces',
             title: 'Маркетплейсы',
-            subtitle: 'Покупки и доставка работают привычным маршрутом.',
+            subtitle: 'Покупки и доставка работают привычным способом.',
             state: RulesPresetState.enabled,
           ),
           RulesPresetStatus(
             id: 'messengers',
             title: 'Мессенджеры',
-            subtitle: 'Категория готовится к проверке правил.',
+            subtitle: 'Добавим после проверки.',
             state: RulesPresetState.staged,
           ),
           RulesPresetStatus(
@@ -302,13 +302,13 @@ RulesPresetContract _seedRulesPresetContractFor(HostPlatform hostPlatform) {
         presets: [
           RulesPresetStatus(
             id: 'ru-region',
-            title: 'Российский регион',
+            title: 'Сайты из России',
             subtitle: 'Российские сайты и локальные адреса идут напрямую.',
             state: RulesPresetState.enabled,
           ),
           RulesPresetStatus(
             id: 'full-tunnel',
-            title: 'Все устройство',
+            title: 'Весь трафик устройства',
             subtitle: 'Весь трафик устройства идет через POKROV.',
             state: RulesPresetState.enabled,
           ),
@@ -448,7 +448,7 @@ SeedAppContext buildSeedAppContext({
       publicChannel: '@pokrov_vpn',
       supportEmail: 'support@pokrov.space',
       safeNotes:
-          'Поддержка видит только безопасный контекст: версию приложения, платформу, режим и статус подключения.',
+          'Поддержка видит только версию приложения, платформу, режим и статус подключения.',
       recommendedRouteMode: RouteMode.allExceptRu,
       channelBonusDays: 10,
     ),
@@ -467,7 +467,7 @@ SeedAppContext buildSeedAppContext({
           LocationVariant(
             kind: TransportKind.xhttp,
             availability: VariantAvailability.gated,
-            note: 'Откроется после подготовки публичного контура.',
+            note: 'Откроется, когда раздел будет готов.',
           ),
         ],
       ),
@@ -496,6 +496,7 @@ class PokrovSeedApp extends StatelessWidget {
     this.supportTicketService,
     this.handoffLauncher,
     this.firstLaunchStore,
+    this.runtimeActionTimeout = const Duration(seconds: 18),
   });
 
   final SeedAppContext appContext;
@@ -503,6 +504,7 @@ class PokrovSeedApp extends StatelessWidget {
   final SupportTicketService? supportTicketService;
   final ExternalHandoffLauncher? handoffLauncher;
   final PokrovFirstLaunchStore? firstLaunchStore;
+  final Duration runtimeActionTimeout;
 
   @override
   Widget build(BuildContext context) {
@@ -588,6 +590,7 @@ class PokrovSeedApp extends StatelessWidget {
         supportTicketService: supportTicketService,
         handoffLauncher: handoffLauncher,
         firstLaunchStore: firstLaunchStore,
+        runtimeActionTimeout: runtimeActionTimeout,
       ),
     );
   }
@@ -601,6 +604,7 @@ class PokrovSeedShell extends StatefulWidget {
     this.supportTicketService,
     this.handoffLauncher,
     this.firstLaunchStore,
+    this.runtimeActionTimeout = const Duration(seconds: 18),
   });
 
   final SeedAppContext appContext;
@@ -608,6 +612,7 @@ class PokrovSeedShell extends StatefulWidget {
   final SupportTicketService? supportTicketService;
   final ExternalHandoffLauncher? handoffLauncher;
   final PokrovFirstLaunchStore? firstLaunchStore;
+  final Duration runtimeActionTimeout;
 
   @override
   State<PokrovSeedShell> createState() => _PokrovSeedShellState();
@@ -623,6 +628,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   late final AppFirstBonusActionService? _bonusActionService;
   late final AppFirstWarpActionService? _warpActionService;
   late final AppFirstReleaseActionService? _releaseActionService;
+  late final AppFirstNodePreferenceService? _nodePreferenceService;
   late final SupportTicketService _supportTicketService;
   late final PokrovFirstLaunchStore _firstLaunchStore;
   final TextEditingController _firstLaunchRestoreCodeController =
@@ -646,6 +652,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   WarpRuntimePolicy _managedWarpPolicy = WarpRuntimePolicy.disabled;
   bool _warpRuntimeConsent = false;
   bool _warpPolicyBusy = false;
+  SmartConnectProfile? _smartConnectProfile;
+  String _preferredNodeCode = '';
+  bool _nodePreferenceBusy = false;
   bool _clientUpdateCheckBusy = false;
   bool _clientUpdatePromptVisible = false;
   String _lastPromptedUpdateKey = '';
@@ -675,6 +684,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _releaseActionService = bootstrapper is AppFirstReleaseActionService
         ? bootstrapper as AppFirstReleaseActionService
         : null;
+    _nodePreferenceService = bootstrapper is AppFirstNodePreferenceService
+        ? bootstrapper as AppFirstNodePreferenceService
+        : null;
     _supportTicketService = widget.supportTicketService ??
         AppFirstSupportTicketService(
           apiBaseUrl: widget.appContext.apiBaseUrl,
@@ -693,6 +705,62 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _selectedRouteMode = mode;
       _managedProfileDirty = true;
     });
+  }
+
+  Future<void> _setPreferredLocation(String nodeCode) async {
+    final smartConnect = _smartConnectProfile;
+    final normalized = nodeCode.trim().toLowerCase();
+    if (smartConnect == null || normalized.isEmpty || _nodePreferenceBusy) {
+      return;
+    }
+
+    HapticFeedback.selectionClick();
+    setState(() {
+      _nodePreferenceBusy = true;
+      _preferredNodeCode = normalized;
+      _managedProfileDirty = true;
+      _runtimeHeadline =
+          'Локация сохранена. Применим при следующем подключении.';
+    });
+    try {
+      final service = _nodePreferenceService;
+      if (service != null) {
+        final result = await service.setPreferredSmartConnectNode(
+          hostPlatform: widget.appContext.hostPlatform,
+          smartConnect: smartConnect,
+          nodeCode: normalized,
+        );
+        if (!mounted) {
+          return;
+        }
+        if (result.preferredNodeCode.trim().isNotEmpty) {
+          setState(() {
+            _preferredNodeCode = result.preferredNodeCode.trim().toLowerCase();
+          });
+        }
+      }
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Локация сохранена. Переподключите POKROV.'),
+        ),
+      );
+    } on BootstrapFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _nodePreferenceBusy = false;
+        });
+      }
+    }
   }
 
   void _addSelectedAppId(String value) {
@@ -804,7 +872,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
               children: [
                 Text(
                   version.isEmpty
-                      ? 'Установите свежую сборку, чтобы получить исправления и актуальные правила.'
+                      ? 'Установите свежую версию, чтобы получить исправления и актуальные правила.'
                       : 'Свежая версия: $version.',
                 ),
                 if (notes.isNotEmpty) ...[
@@ -1492,6 +1560,19 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     await _runRuntimeAction(_runtimeEngine.snapshot);
   }
 
+  Future<T> _withRuntimeActionTimeout<T>(
+    String operation,
+    Future<T> Function() action,
+  ) {
+    return action().timeout(
+      widget.runtimeActionTimeout,
+      onTimeout: () => throw TimeoutException(
+        'runtime action timed out: $operation',
+        widget.runtimeActionTimeout,
+      ),
+    );
+  }
+
   Future<ManagedProfilePayload> _resolveManagedProfile() async {
     final payload = await _bootstrapper.resolveManagedProfile(
       hostPlatform: widget.appContext.hostPlatform,
@@ -1514,6 +1595,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _managedProfileDirty = false;
         _managedWarpPolicy = displayWarpPolicy;
         _warpRuntimeConsent = warpConsentStillValid;
+        _smartConnectProfile = payload.smartConnect;
+        _preferredNodeCode =
+            payload.smartConnect?.stickiness.preferredNodeCode.trim() ?? '';
         _runtimeHeadline = 'Настройки обновлены с '
             '${Uri.parse(widget.appContext.apiBaseUrl).host}.';
       });
@@ -1580,10 +1664,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (!policy.canOfferRuntime) {
       _showInfoSheet(
         context,
-        title: 'Расширенная приватность',
+        title: 'Расширенная защита',
         lines: const [
-          'Дополнительный режим пока готовится для этого устройства.',
-          'Когда backend пришлет проверенную конфигурацию, здесь появится отдельное включение.',
+          'Дополнительный режим пока недоступен для этого устройства.',
+          'Когда он будет доступен, здесь появится отдельный переключатель.',
         ],
       );
       return;
@@ -1676,13 +1760,20 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     });
 
     try {
-      final snapshot = _runtimeSnapshot ?? await _runtimeEngine.snapshot();
+      final RuntimeSnapshot snapshot = _runtimeSnapshot ??
+          await _withRuntimeActionTimeout(
+            'snapshot',
+            _runtimeEngine.snapshot,
+          );
       if (!mounted) {
         return;
       }
 
       if (snapshot.phase == RuntimePhase.running) {
-        var current = await _runtimeEngine.disconnect();
+        var current = await _withRuntimeActionTimeout(
+          'disconnect',
+          _runtimeEngine.disconnect,
+        );
         current = await _settleRuntimeDisconnectTransition(current);
         if (!mounted) {
           return;
@@ -1702,11 +1793,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         return;
       }
 
-      var current = snapshot;
+      RuntimeSnapshot current = snapshot;
 
       if (current.canInitialize &&
           current.phase == RuntimePhase.artifactReady) {
-        current = await _runtimeEngine.initialize();
+        current = await _withRuntimeActionTimeout(
+          'initialize',
+          _runtimeEngine.initialize,
+        );
         if (!mounted) {
           return;
         }
@@ -1720,7 +1814,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _managedProfileDirty || (current.stagedConfigPath ?? '').isEmpty;
       if (shouldRefreshManagedProfile) {
         final managedProfile = await _resolveManagedProfile();
-        current = await _runtimeEngine.stageManagedProfile(managedProfile);
+        current = await _withRuntimeActionTimeout(
+          'stageManagedProfile',
+          () => _runtimeEngine.stageManagedProfile(managedProfile),
+        );
         if (!mounted) {
           return;
         }
@@ -1731,7 +1828,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
 
       if ((current.stagedConfigPath ?? '').isNotEmpty || current.canConnect) {
-        current = await _runtimeEngine.connect();
+        current = await _withRuntimeActionTimeout(
+          'connect',
+          _runtimeEngine.connect,
+        );
         current = await _settleRuntimeTransition(current);
         if (!mounted) {
           return;
@@ -1762,6 +1862,17 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error.message)),
       );
+    } on Object catch (error) {
+      if (!mounted) {
+        return;
+      }
+      final message = _runtimeUnexpectedErrorMessage(error);
+      setState(() {
+        _runtimeHeadline = message;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -1769,6 +1880,24 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         });
       }
     }
+  }
+
+  String _runtimeUnexpectedErrorMessage(Object error) {
+    final rawDetail = switch (error) {
+      TimeoutException() =>
+        'системный модуль не ответил вовремя. Попробуйте еще раз или откройте поддержку.',
+      PlatformException(:final message, :final code) =>
+        (message?.trim().isNotEmpty == true ? message!.trim() : code),
+      _ => error.toString().trim(),
+    };
+    final normalizedDetail = rawDetail.replaceFirst('Bad state: ', '').trim();
+    final detail = normalizedDetail.length > 180
+        ? '${normalizedDetail.substring(0, 180)}...'
+        : normalizedDetail;
+    if (detail.isEmpty) {
+      return 'POKROV не смог начать подключение. Откройте поддержку и приложите диагностику.';
+    }
+    return 'POKROV не смог начать подключение: $detail';
   }
 
   Future<void> _reportWarpRuntimeFallback(RuntimeSnapshot snapshot) async {
@@ -1828,7 +1957,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         : 10;
     for (var attempt = 0; attempt < maxAttempts; attempt += 1) {
       await Future<void>.delayed(const Duration(milliseconds: 450));
-      current = await _runtimeEngine.snapshot();
+      current = await _withRuntimeActionTimeout(
+        'settleSnapshot',
+        _runtimeEngine.snapshot,
+      );
       if (!mounted) {
         return current;
       }
@@ -1856,7 +1988,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     var current = snapshot;
     for (var attempt = 0; attempt < 15; attempt += 1) {
       await Future<void>.delayed(const Duration(milliseconds: 300));
-      current = await _runtimeEngine.snapshot();
+      current = await _withRuntimeActionTimeout(
+        'disconnectSnapshot',
+        _runtimeEngine.snapshot,
+      );
       if (!mounted) {
         return current;
       }
@@ -1930,10 +2065,21 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         runtimeHeadline: _runtimeHeadline,
         runtimeBusy: _runtimeBusy,
         primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
+        bonusSummary: _bonusSummary,
+        telegramBonusBusy: _telegramBonusBusy,
         warpPolicy: _managedWarpPolicy,
         warpRuntimeConsent: _warpRuntimeConsent,
         warpBusy: _warpPolicyBusy,
         onToggleRuntime: _toggleRuntimeFromHome,
+        onTelegramBonus: _telegramBonusBusy
+            ? null
+            : () {
+                if (_telegramBonusCanClaim) {
+                  unawaited(_claimTelegramBonusInApp());
+                } else {
+                  unawaited(_createTelegramLinkInApp());
+                }
+              },
         onOpenLocations: () => _selectTab(SeedTab.locations),
         onOpenRules: () => _selectTab(SeedTab.rules),
         onOpenWarp: _openWarpControl,
@@ -1942,6 +2088,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         appContext: widget.appContext,
         selectedRouteMode: _selectedRouteMode,
         hasProvisionedAccess: hasProvisionedAccess,
+        smartConnectProfile: _smartConnectProfile,
+        preferredNodeCode: _preferredNodeCode,
+        nodePreferenceBusy: _nodePreferenceBusy,
+        onPreferredNodeSelected: _setPreferredLocation,
       ),
       _RulesSection(
         appContext: widget.appContext,
@@ -1973,6 +2123,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         onRefreshBonusSummary: () => _loadBonusSummary(force: true),
         onSpinWheel: _spinBonusWheelInApp,
         onCheckInCalendar: _checkInBonusCalendarInApp,
+        warpPolicy: _managedWarpPolicy,
+        warpRuntimeConsent: _warpRuntimeConsent,
+        warpBusy: _warpPolicyBusy,
         runtimeSnapshot: _runtimeSnapshot,
         runtimeHeadline: _runtimeHeadline,
         onOpenWarp: _openWarpControl,
@@ -2542,13 +2695,13 @@ class _MobileShell extends StatelessWidget {
                     key: ValueKey('nav-rules'),
                     icon: Icon(Icons.rule_folder_outlined),
                     selectedIcon: Icon(Icons.rule_folder),
-                    label: 'Правила',
+                    label: 'Режим',
                   ),
                   NavigationDestination(
                     key: ValueKey('nav-profile'),
                     icon: Icon(Icons.person_outline),
                     selectedIcon: Icon(Icons.person),
-                    label: 'Аккаунт',
+                    label: 'Профиль',
                   ),
                 ],
               ),
@@ -2572,6 +2725,7 @@ class _DesktopSidebar extends PokrovDesktopSidebar {
           collapsed: collapsed,
           drawer: drawer,
           brandMarkAssetName: _pokrovBrandMarkAsset,
+          versionLabel: _pokrovAppVersion,
           destinations: const [
             PokrovSidebarDestination(
               itemKey: ValueKey('nav-protection'),
@@ -2589,13 +2743,13 @@ class _DesktopSidebar extends PokrovDesktopSidebar {
               itemKey: ValueKey('nav-rules'),
               icon: Icons.rule_folder_outlined,
               selectedIcon: Icons.rule_folder,
-              label: 'Правила',
+              label: 'Режим',
             ),
             PokrovSidebarDestination(
               itemKey: ValueKey('nav-profile'),
               icon: Icons.person_outline,
               selectedIcon: Icons.person,
-              label: 'Аккаунт',
+              label: 'Профиль',
             ),
           ],
         );
@@ -2642,7 +2796,7 @@ class PokrovLegacyDesktopSidebar extends StatelessWidget {
               const _BrandLockup(markSize: 34),
               const SizedBox(height: 4),
               Text(
-                '0.x beta',
+                _pokrovAppVersion,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       color: _SeedPalette.muted,
                     ),
@@ -2675,7 +2829,7 @@ class PokrovLegacyDesktopSidebar extends StatelessWidget {
               selectedIndex: selectedIndex,
               icon: Icons.rule_folder_outlined,
               selectedIcon: Icons.rule_folder,
-              label: 'Правила',
+              label: 'Режим',
               onSelected: onSelected,
               collapsed: collapsed,
             ),
@@ -2685,7 +2839,7 @@ class PokrovLegacyDesktopSidebar extends StatelessWidget {
               selectedIndex: selectedIndex,
               icon: Icons.person_outline,
               selectedIcon: Icons.person,
-              label: 'Аккаунт',
+              label: 'Профиль',
               onSelected: onSelected,
               collapsed: collapsed,
             ),
@@ -2865,10 +3019,13 @@ class _QuickConnectSection extends StatelessWidget {
     required this.runtimeHeadline,
     required this.runtimeBusy,
     required this.primaryConnectEnabled,
+    required this.bonusSummary,
+    required this.telegramBonusBusy,
     required this.warpPolicy,
     required this.warpRuntimeConsent,
     required this.warpBusy,
     required this.onToggleRuntime,
+    required this.onTelegramBonus,
     required this.onOpenLocations,
     required this.onOpenRules,
     required this.onOpenWarp,
@@ -2880,10 +3037,13 @@ class _QuickConnectSection extends StatelessWidget {
   final String? runtimeHeadline;
   final bool runtimeBusy;
   final bool primaryConnectEnabled;
+  final AppFirstBonusSummary? bonusSummary;
+  final bool telegramBonusBusy;
   final WarpRuntimePolicy warpPolicy;
   final bool warpRuntimeConsent;
   final bool warpBusy;
   final Future<void> Function() onToggleRuntime;
+  final VoidCallback? onTelegramBonus;
   final VoidCallback onOpenLocations;
   final VoidCallback onOpenRules;
   final Future<void> Function() onOpenWarp;
@@ -2915,7 +3075,7 @@ class _QuickConnectSection extends StatelessWidget {
                 : _SeedPalette.warning
             : _SeedPalette.muted;
     final actionLabel = runtimeBusy
-        ? 'Готовим'
+        ? 'Подключаемся'
         : isRunning
             ? 'Отключить'
             : primaryActionEnabled
@@ -2942,19 +3102,28 @@ class _QuickConnectSection extends StatelessWidget {
               busy: runtimeBusy,
               degraded: isRunning && !isHealthyRunning,
               recoveryNotice: recoveryNotice,
+              accessLabel: _accessMainLabel(appContext, bonusSummary),
+              accessPoolLabel: _accessPoolLabel(appContext.accessLane),
+              telegramBonusLabel: telegramBonusBusy
+                  ? 'Проверяем Telegram'
+                  : _telegramBonusHomeLabel(appContext, bonusSummary),
+              telegramBonusClaimed:
+                  (bonusSummary?.channelBonusClaimedAt ?? '').trim().isNotEmpty,
               selectedRouteMode: selectedRouteMode,
-              locationLabel: 'Авто',
+              locationLabel: 'Автоматически',
               warpPolicy: warpPolicy,
               warpRuntimeConsent: warpRuntimeConsent,
               warpBusy: warpBusy,
               onToggleRuntime: onToggleRuntime,
+              onTelegramBonus: onTelegramBonus,
               onOpenConnectionDetails: () => _showInfoSheet(
                 context,
                 title: 'Подключение',
                 lines: [
                   statusSummary,
-                  'Локация: Авто.',
-                  'Режим: ${selectedRouteMode.label}.',
+                  'Доступ: ${_accessMainLabel(appContext, bonusSummary)}.',
+                  'Локация: автоматический выбор.',
+                  'Режим: ${_routeModeShortLabel(selectedRouteMode)}.',
                 ],
               ),
               onOpenLocations: onOpenLocations,
@@ -2978,12 +3147,17 @@ class _HomeStage extends StatefulWidget {
     required this.busy,
     required this.degraded,
     required this.recoveryNotice,
+    required this.accessLabel,
+    required this.accessPoolLabel,
+    required this.telegramBonusLabel,
+    required this.telegramBonusClaimed,
     required this.selectedRouteMode,
     required this.locationLabel,
     required this.warpPolicy,
     required this.warpRuntimeConsent,
     required this.warpBusy,
     required this.onToggleRuntime,
+    required this.onTelegramBonus,
     required this.onOpenConnectionDetails,
     required this.onOpenLocations,
     required this.onOpenRules,
@@ -2998,12 +3172,17 @@ class _HomeStage extends StatefulWidget {
   final bool busy;
   final bool degraded;
   final String? recoveryNotice;
+  final String accessLabel;
+  final String accessPoolLabel;
+  final String telegramBonusLabel;
+  final bool telegramBonusClaimed;
   final RouteMode selectedRouteMode;
   final String locationLabel;
   final WarpRuntimePolicy warpPolicy;
   final bool warpRuntimeConsent;
   final bool warpBusy;
   final Future<void> Function() onToggleRuntime;
+  final VoidCallback? onTelegramBonus;
   final VoidCallback onOpenConnectionDetails;
   final VoidCallback onOpenLocations;
   final VoidCallback onOpenRules;
@@ -3083,6 +3262,19 @@ class _HomeStageState extends State<_HomeStage>
               ),
             ),
           ),
+          const SizedBox(height: 14),
+          _HomeRevealSlice(
+            controller: _revealController,
+            begin: 0.2,
+            end: 0.66,
+            child: _HomeAccessStrip(
+              accessLabel: widget.accessLabel,
+              poolLabel: widget.accessPoolLabel,
+              telegramBonusLabel: widget.telegramBonusLabel,
+              telegramBonusClaimed: widget.telegramBonusClaimed,
+              onTelegramBonus: widget.onTelegramBonus,
+            ),
+          ),
           if (widget.recoveryNotice != null) ...[
             const SizedBox(height: 12),
             _HomeRevealSlice(
@@ -3126,27 +3318,152 @@ class _HomeStageState extends State<_HomeStage>
                 _HomeChip(
                   key: const ValueKey('home-route-chip'),
                   icon: Icons.alt_route_rounded,
-                  label: widget.selectedRouteMode.label,
+                  label: _routeModeShortLabel(widget.selectedRouteMode),
                   minLabelWidth: 142,
                   onTap: widget.onOpenRules,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          _HomeRevealSlice(
-            controller: _revealController,
-            begin: 0.54,
-            end: 1,
-            child: _HomeWarpTile(
-              policy: widget.warpPolicy,
-              runtimeConsent: widget.warpRuntimeConsent,
-              busy: widget.warpBusy,
-              onOpen: widget.onOpenWarp,
+          if (widget.warpPolicy.canOfferRuntime ||
+              widget.warpRuntimeConsent ||
+              widget.warpBusy) ...[
+            const SizedBox(height: 12),
+            _HomeRevealSlice(
+              controller: _revealController,
+              begin: 0.54,
+              end: 1,
+              child: _HomeWarpTile(
+                policy: widget.warpPolicy,
+                runtimeConsent: widget.warpRuntimeConsent,
+                busy: widget.warpBusy,
+                onOpen: widget.onOpenWarp,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeAccessStrip extends StatelessWidget {
+  const _HomeAccessStrip({
+    required this.accessLabel,
+    required this.poolLabel,
+    required this.telegramBonusLabel,
+    required this.telegramBonusClaimed,
+    required this.onTelegramBonus,
+  });
+
+  final String accessLabel;
+  final String poolLabel;
+  final String telegramBonusLabel;
+  final bool telegramBonusClaimed;
+  final VoidCallback? onTelegramBonus;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      key: const ValueKey('home-access-strip'),
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _HomeAccessPill(
+          key: const ValueKey('home-trial-pill'),
+          icon: Icons.workspace_premium_outlined,
+          label: accessLabel,
+          sublabel: poolLabel,
+          tone: _SectionTone.accent,
+        ),
+        _HomeAccessPill(
+          key: const ValueKey('home-telegram-bonus-pill'),
+          icon: telegramBonusClaimed
+              ? Icons.check_circle_outline_rounded
+              : Icons.send_outlined,
+          label: telegramBonusLabel,
+          sublabel: telegramBonusClaimed ? 'Готово' : 'Бонус',
+          tone: _SectionTone.reward,
+          onTap: telegramBonusClaimed ? null : onTelegramBonus,
+        ),
+      ],
+    );
+  }
+}
+
+class _HomeAccessPill extends StatelessWidget {
+  const _HomeAccessPill({
+    required this.icon,
+    required this.label,
+    required this.sublabel,
+    required this.tone,
+    this.onTap,
+    super.key,
+  });
+
+  final IconData icon;
+  final String label;
+  final String sublabel;
+  final _SectionTone tone;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = tone == _SectionTone.reward
+        ? _SeedPalette.warning
+        : _SeedPalette.accent;
+    final content = AnimatedContainer(
+      duration: _MotionScope.of(context).duration(_MotionTokens.short),
+      curve: _MotionTokens.ease,
+      constraints: const BoxConstraints(minHeight: 44, maxWidth: 260),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.20)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 17, color: accent),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: _SeedPalette.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                Text(
+                  sublabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: _SeedPalette.muted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ],
             ),
           ),
         ],
       ),
+    );
+
+    if (onTap == null) {
+      return content;
+    }
+    return PokrovSettingsRowPressSurface(
+      onTap: onTap!,
+      child: content,
     );
   }
 }
@@ -3174,6 +3491,7 @@ class _HomeWarpTile extends StatelessWidget {
     );
     final canOffer = lifecycle.canOffer;
     final enabled = lifecycle.highlightsEnabled;
+    final title = lifecycle.publicSheetTitle;
     final iconColor = enabled
         ? _SeedPalette.accent
         : _SeedPalette.muted.withValues(alpha: 0.8);
@@ -3229,7 +3547,7 @@ class _HomeWarpTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${lifecycle.technicalLabel} · ${lifecycle.publicSheetTitle}',
+                    title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -3261,80 +3579,6 @@ class _HomeWarpTile extends StatelessWidget {
               canOffer ? Icons.tune_rounded : Icons.info_outline_rounded,
               size: 18,
               color: _SeedPalette.muted,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ignore: unused_element
-class _HomeWarpTileLegacy extends StatelessWidget {
-  const _HomeWarpTileLegacy();
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      key: const ValueKey('home-warp-tile'),
-      borderRadius: BorderRadius.circular(14),
-      onTap: () => _showInfoSheet(
-        context,
-        title: 'Расширенная приватность',
-        lines: const [
-          'Дополнительный режим готовится и не активен в этой сборке.',
-          'Когда режим будет проверен, POKROV покажет простой тумблер и честное предупреждение о скорости.',
-        ],
-      ),
-      child: Container(
-        width: double.infinity,
-        constraints: const BoxConstraints(maxWidth: 360),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: _SeedPalette.surfaceMuted.withValues(alpha: 0.72),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _SeedPalette.line),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: _SeedPalette.accent.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.privacy_tip_outlined,
-                size: 18,
-                color: _SeedPalette.accent,
-              ),
-            ),
-            const SizedBox(width: 11),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Расширенная приватность',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: _SeedPalette.ink,
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Дополнительный режим готовится',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: _SeedPalette.muted,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                ],
-              ),
             ),
           ],
         ),
@@ -3468,53 +3712,95 @@ class _LocationsSection extends StatelessWidget {
     required this.appContext,
     required this.selectedRouteMode,
     required this.hasProvisionedAccess,
+    required this.smartConnectProfile,
+    required this.preferredNodeCode,
+    required this.nodePreferenceBusy,
+    required this.onPreferredNodeSelected,
   });
 
   final SeedAppContext appContext;
   final RouteMode selectedRouteMode;
   final bool hasProvisionedAccess;
+  final SmartConnectProfile? smartConnectProfile;
+  final String preferredNodeCode;
+  final bool nodePreferenceBusy;
+  final ValueChanged<String> onPreferredNodeSelected;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final smartConnect = smartConnectProfile;
+    final shortlist = smartConnect?.shortlist ?? const <SmartConnectNode>[];
+    final premiumPool = _accessPoolLabel(appContext.accessLane);
 
     return _SeedContentList(
       children: [
-        Text('Локации', style: theme.textTheme.headlineSmall),
+        Text('Локация', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),
         _SectionCard(
           key: const ValueKey('locations-auto-section'),
-          title: 'Автоматический выбор',
+          title: 'Автоматически',
           tone:
               hasProvisionedAccess ? _SectionTone.neutral : _SectionTone.muted,
           lines: [
             hasProvisionedAccess
-                ? 'Готово · ${selectedRouteMode.label}'
+                ? '$premiumPool · ${_routeModeShortLabel(selectedRouteMode)}'
                 : 'После подготовки',
           ],
-          child: _SettingsRow(
-            key: const ValueKey('locations-auto-help-action'),
-            icon: Icons.info_outline_rounded,
-            title: 'Как выбирается',
-            value: 'Коротко',
-            onTap: () => _showInfoSheet(
-              context,
-              title: 'Автоматический выбор',
-              lines: [
-                'POKROV выбирает доступный узел по вашему доступу.',
-                'Базовый режим остается на ${appContext.runtimeProfile.freeTier.nodePoolLabel}.',
-                'Технические детали остаются в диагностике поддержки.',
-              ],
-            ),
+          child: Column(
+            children: [
+              _SettingsRow(
+                key: const ValueKey('locations-auto-help-action'),
+                icon: Icons.check_circle_outline_rounded,
+                title: 'Автовыбор сервера',
+                value: preferredNodeCode.trim().isEmpty
+                    ? 'Авто'
+                    : preferredNodeCode.trim().toUpperCase(),
+                onTap: () => _showInfoSheet(
+                  context,
+                  title: 'Автоматически',
+                  lines: [
+                    'POKROV сам выберет лучший доступный сервер.',
+                    'Пробные 5 дней дают доступ к премиум-локациям.',
+                    'Если выберете сервер ниже, POKROV поставит его первым при следующем подключении.',
+                  ],
+                ),
+              ),
+              if (nodePreferenceBusy)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: LinearProgressIndicator(minHeight: 3),
+                ),
+            ],
           ),
         ),
-        if (hasProvisionedAccess) ...[
-          ...appContext.locations.map(
-            (location) => _LocationCard(
-              location: location,
-              appContext: appContext,
-              selectedRouteMode: selectedRouteMode,
+        if (hasProvisionedAccess && shortlist.isNotEmpty) ...[
+          _SectionCard(
+            title: 'Доступные серверы',
+            lines: const [
+              'Выбор сохранится и применится после переподключения.'
+            ],
+            child: Column(
+              children: shortlist
+                  .map(
+                    (node) => _SmartConnectNodeRow(
+                      node: node,
+                      selected: node.code.trim().toLowerCase() ==
+                          preferredNodeCode.trim().toLowerCase(),
+                      disabled: nodePreferenceBusy,
+                      onTap: () => onPreferredNodeSelected(node.code),
+                    ),
+                  )
+                  .toList(growable: false),
             ),
+          ),
+        ] else if (hasProvisionedAccess) ...[
+          _SectionCard(
+            title: 'Выбор сервера',
+            tone: _SectionTone.muted,
+            lines: const [
+              'Пока доступен автоматический выбор. Список серверов появится после обновления профиля.',
+            ],
           ),
         ] else ...[
           const _MotionSkeletonList(
@@ -3529,6 +3815,37 @@ class _LocationsSection extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _SmartConnectNodeRow extends StatelessWidget {
+  const _SmartConnectNodeRow({
+    required this.node,
+    required this.selected,
+    required this.disabled,
+    required this.onTap,
+  });
+
+  final SmartConnectNode node;
+  final bool selected;
+  final bool disabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final latency = node.rankHint.panelLatencyMs;
+    final value = selected
+        ? 'Выбран'
+        : latency == null || latency <= 0
+            ? 'Выбрать'
+            : '${latency} мс';
+    return _SettingsRow(
+      key: ValueKey('locations-smart-node-${node.code}'),
+      icon: selected ? Icons.check_circle_rounded : Icons.public_rounded,
+      title: _smartConnectNodeTitle(node),
+      value: value,
+      onTap: disabled ? null : onTap,
     );
   }
 }
@@ -3554,6 +3871,9 @@ class _ProfileSection extends StatelessWidget {
     required this.onRefreshBonusSummary,
     required this.onSpinWheel,
     required this.onCheckInCalendar,
+    required this.warpPolicy,
+    required this.warpRuntimeConsent,
+    required this.warpBusy,
     required this.runtimeSnapshot,
     required this.runtimeHeadline,
     required this.onOpenWarp,
@@ -3578,6 +3898,9 @@ class _ProfileSection extends StatelessWidget {
   final VoidCallback onRefreshBonusSummary;
   final VoidCallback onSpinWheel;
   final VoidCallback onCheckInCalendar;
+  final WarpRuntimePolicy warpPolicy;
+  final bool warpRuntimeConsent;
+  final bool warpBusy;
   final RuntimeSnapshot? runtimeSnapshot;
   final String? runtimeHeadline;
   final Future<void> Function() onOpenWarp;
@@ -3622,10 +3945,17 @@ class _ProfileSection extends StatelessWidget {
       headline: runtimeHeadline,
       hostPlatform: appContext.hostPlatform,
     );
+    final warpLifecycle = PokrovWarpLifecycle.resolve(
+      policy: warpPolicy,
+      consented: warpRuntimeConsent,
+      busy: warpBusy,
+    );
+    final showEnhancedProtection =
+        warpLifecycle.canOffer || warpRuntimeConsent || warpBusy;
     return _SeedContentList(
       top: 24,
       children: [
-        Text('Аккаунт', style: theme.textTheme.headlineSmall),
+        Text('Профиль', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),
         KeyedSubtree(
           key: const ValueKey('profile-compact-account-layer'),
@@ -3633,10 +3963,10 @@ class _ProfileSection extends StatelessWidget {
             children: [
               _SectionCard(
                 key: const ValueKey('profile-section-plan-access'),
-                title: 'Доступ',
+                title: 'Мой доступ',
                 tone: _SectionTone.accent,
                 lines: [
-                  '${appContext.accessLane.label} · $statusLabel',
+                  '${_accessMainLabel(appContext, bonusSummary)} · ${_accessPoolLabel(appContext.accessLane)}',
                 ],
                 child: Column(
                   children: [
@@ -3659,7 +3989,7 @@ class _ProfileSection extends StatelessWidget {
                       key: const ValueKey('profile-plan-details-action'),
                       icon: Icons.workspace_premium_outlined,
                       title: 'Подписка',
-                      value: 'Детали',
+                      value: _accessShortValue(appContext, bonusSummary),
                       onTap: () => _showSubscriptionSheet(
                         context,
                         appContext: appContext,
@@ -3688,9 +4018,9 @@ class _ProfileSection extends StatelessWidget {
               ),
               _SectionCard(
                 key: const ValueKey('profile-section-sync'),
-                title: 'Восстановление',
+                title: 'Привязать доступ',
                 tone: _SectionTone.reward,
-                lines: const ['Код, Telegram и восстановление доступа.'],
+                lines: const ['Код из Telegram, кабинета, сайта или письма.'],
                 child: Column(
                   children: [
                     _SettingsRow(
@@ -3794,9 +4124,9 @@ class _ProfileSection extends StatelessWidget {
               ),
               _SectionCard(
                 key: const ValueKey('profile-section-app'),
-                title: 'Устройство и помощь',
+                title: 'Настройки',
                 lines: [
-                  '${appContext.hostPlatform.label} · ${selectedRouteMode.label}'
+                  '${appContext.hostPlatform.label} · ${_routeModeShortLabel(selectedRouteMode)}'
                 ],
                 child: Column(
                   children: [
@@ -3808,24 +4138,25 @@ class _ProfileSection extends StatelessWidget {
                     _SettingsRow(
                       icon: Icons.alt_route_rounded,
                       title: 'Режим',
-                      value: selectedRouteMode.label,
+                      value: _routeModeShortLabel(selectedRouteMode),
                     ),
-                    _SettingsRow(
-                      key: const ValueKey(
-                        'profile-enhanced-protection-action',
+                    if (showEnhancedProtection)
+                      _SettingsRow(
+                        key: const ValueKey(
+                          'profile-enhanced-protection-action',
+                        ),
+                        icon: Icons.privacy_tip_outlined,
+                        title: warpLifecycle.publicSheetTitle,
+                        value: warpLifecycle.publicStatus,
+                        onTap: () {
+                          unawaited(onOpenWarp());
+                        },
                       ),
-                      icon: Icons.privacy_tip_outlined,
-                      title: 'Расширенная защита',
-                      value: 'Дополнительно',
-                      onTap: () {
-                        unawaited(onOpenWarp());
-                      },
-                    ),
                     _SettingsRow(
                       key: const ValueKey('profile-account-details-action'),
                       icon: Icons.manage_accounts_outlined,
-                      title: 'Аккаунт',
-                      value: 'Детали',
+                      title: 'Профиль',
+                      value: 'Смотреть',
                       onTap: () => _showAccountDetailsSheet(
                         context,
                         appContext: appContext,
@@ -3838,7 +4169,7 @@ class _ProfileSection extends StatelessWidget {
                     _SettingsRow(
                       icon: Icons.download_outlined,
                       title: 'Загрузки',
-                      value: appContext.hostPlatform.label,
+                      value: 'Файлы',
                       onTap: () => onOpenHandoff(
                         'download',
                         Uri.parse(appContext.cabinetUrl)
@@ -3860,15 +4191,15 @@ class _ProfileSection extends StatelessWidget {
                     _SettingsRow(
                       key: const ValueKey('profile-section-support'),
                       icon: Icons.support_agent_rounded,
-                      title: 'Написать',
-                      value: 'Поддержка',
+                      title: 'Чат поддержки',
+                      value: 'Открыть',
                       onTap: onOpenSupportHub,
                     ),
                     _SettingsRow(
                       key: const ValueKey('profile-section-advanced'),
                       icon: Icons.tune_rounded,
-                      title: 'Расширенные',
-                      value: 'Открыть',
+                      title: 'Диагностика',
+                      value: _pokrovAppVersion,
                       onTap: () => _showAdvancedSettingsSheet(context),
                     ),
                   ],
@@ -4206,7 +4537,7 @@ class _RewardsHubSheet extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Рабочие бонусы и история сверху. Эксперименты появятся ниже, когда backend включит feature flag.',
+              'Здесь собраны ваши бонусы, история и доступные акции.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: _SeedPalette.ink.withValues(alpha: 0.72),
                     height: 1.35,
@@ -4242,7 +4573,7 @@ class _RewardsHubSheet extends StatelessWidget {
               actionKey: const ValueKey('rewards-wheel-spin-action'),
               mutedKey: const ValueKey('rewards-wheel-muted-state'),
               actionLabel: rewardBusy
-                  ? 'Готовим'
+                  ? 'Проверяем'
                   : wheel.canRun
                       ? 'Крутить'
                       : 'Отключено',
@@ -4263,7 +4594,7 @@ class _RewardsHubSheet extends StatelessWidget {
               actionKey: const ValueKey('rewards-calendar-checkin-action'),
               mutedKey: const ValueKey('rewards-calendar-muted-state'),
               actionLabel: rewardBusy
-                  ? 'Готовим'
+                  ? 'Проверяем'
                   : calendar.canRun
                       ? 'Отметиться'
                       : 'Отключено',
@@ -4969,17 +5300,16 @@ class _RulesSection extends StatelessWidget {
             !selectedAppsActive;
     final rulesContract = appContext.rulesPresetContract;
     final isWindows = appContext.hostPlatform == HostPlatform.windows;
-    final directRulesTitle = isWindows ? 'Маршруты Windows' : 'Без POKROV';
 
     return _SeedContentList(
       top: 24,
       children: [
-        Text('Правила', style: theme.textTheme.headlineSmall),
+        Text('Правила подключения', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),
         _SectionCard(
-          title: 'Режим',
+          title: 'Что идет через POKROV',
           tone: _SectionTone.accent,
-          lines: ['Сейчас · ${selectedRouteMode.label}'],
+          lines: ['Сейчас · ${_routeModeShortLabel(selectedRouteMode)}'],
           child: Column(
             children: <Widget>[
               ...routeChoices.map(
@@ -4990,9 +5320,7 @@ class _RulesSection extends StatelessWidget {
                     RouteMode.fullTunnel => Icons.public_rounded,
                     RouteMode.selectedApps => Icons.apps_rounded,
                   },
-                  title: isWindows && mode == RouteMode.selectedApps
-                      ? 'Выбранные процессы'
-                      : mode.label,
+                  title: _routeModeRowTitle(mode),
                   value: selectedRouteMode == mode ? 'Выбран' : 'Выбрать',
                   onTap: () => onRouteModeSelected(mode),
                 ),
@@ -5004,15 +5332,15 @@ class _RulesSection extends StatelessWidget {
                 value: 'Коротко',
                 onTap: () => _showInfoSheet(
                   context,
-                  title: 'Режимы',
+                  title: 'Режим работы',
                   lines: [
-                    '${RouteMode.allExceptRu.label}: ${RouteMode.allExceptRu.summary}',
-                    '${RouteMode.fullTunnel.label}: ${RouteMode.fullTunnel.summary}',
+                    '${_routeModeShortLabel(RouteMode.allExceptRu)}: ${_routeModeRowSummary(RouteMode.allExceptRu)}',
+                    '${_routeModeShortLabel(RouteMode.fullTunnel)}: ${_routeModeRowSummary(RouteMode.fullTunnel)}',
                     selectedAppsActive
-                        ? '${RouteMode.selectedApps.label}: ${RouteMode.selectedApps.summary}'
+                        ? '${_routeModeShortLabel(RouteMode.selectedApps)}: ${_routeModeRowSummary(RouteMode.selectedApps)}'
                         : selectedAppsStaged
-                            ? '${RouteMode.selectedApps.label}: появится после системной проверки.'
-                            : '${RouteMode.selectedApps.label}: недоступно на ${appContext.hostPlatform.label}.',
+                            ? '${_routeModeShortLabel(RouteMode.selectedApps)}: появится после системной проверки.'
+                            : '${_routeModeShortLabel(RouteMode.selectedApps)}: недоступно на ${appContext.hostPlatform.label}.',
                   ],
                 ),
               ),
@@ -5020,14 +5348,12 @@ class _RulesSection extends StatelessWidget {
           ),
         ),
         _SectionCard(
-          title: directRulesTitle,
+          title: 'Напрямую без POKROV',
           lines: [
-            '${rulesContract.enabledCount} из ${rulesContract.presets.length} активно',
+              'Российские и локальные сервисы остаются на обычном подключении.',
           ],
           child: Column(
             children: [
-              _RulesCatalogVersionLine(contract: rulesContract),
-              const SizedBox(height: 10),
               ...rulesContract.presets.map(
                 (preset) => _PresetRow(
                   key: ValueKey('rules-preset-${preset.id}'),
@@ -5044,11 +5370,11 @@ class _RulesSection extends StatelessWidget {
         if (selectedAppsActive || selectedAppsStaged)
           _SectionCard(
             key: const ValueKey('rules-section-selected-apps'),
-            title: isWindows ? 'Процессы' : 'Приложения',
+            title: 'Выбранные приложения',
             lines: [
               selectedAppIds.isEmpty
                   ? isWindows
-                      ? 'Выберите .exe для режима «только выбранные».'
+                      ? 'Выберите приложения, которые должны идти через POKROV.'
                       : 'Добавьте приложения для режима «только выбранные».'
                   : 'Выбрано: ${selectedAppIds.length}',
             ],
@@ -5191,7 +5517,7 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
                           key: const ValueKey('rules-selected-app-input'),
                           controller: _controller,
                           decoration: InputDecoration(
-                            labelText: 'Название или ID',
+                            labelText: 'Название приложения',
                             hintText: hint,
                           ),
                           onSubmitted: (_) => _submit(),
@@ -5375,7 +5701,7 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                     if (candidates.isEmpty) {
                       return Center(
                         child: Text(
-                          'Ничего не найдено. Введите ID вручную ниже.',
+                          'Ничего не найдено. Добавьте приложение вручную ниже.',
                           textAlign: TextAlign.center,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -5867,124 +6193,56 @@ class _RedeemFieldsState extends State<_RedeemFields> {
   }
 }
 
-class _AdvancedSettingsCard extends StatefulWidget {
+class _AdvancedSettingsCard extends StatelessWidget {
   const _AdvancedSettingsCard({super.key});
 
   @override
-  State<_AdvancedSettingsCard> createState() => _AdvancedSettingsCardState();
-}
-
-class _AdvancedSettingsCardState extends State<_AdvancedSettingsCard> {
-  bool _accepted = false;
-  bool _opened = false;
-
-  @override
   Widget build(BuildContext context) {
-    if (_opened) {
-      return _SectionCard(
-        title: 'Расширенные',
-        lines: const [
-          'Ручной режим открыт.',
-        ],
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            _KeyValueLine(
-              label: 'Свой ключ или подписка',
-              value: 'Только для восстановления',
-            ),
-            _KeyValueLine(
-              label: 'Совместимый режим',
-              value: 'По просьбе поддержки',
-            ),
-            _KeyValueLine(
-              label: 'Сброс',
-              value: 'Всегда к рекомендованным настройкам',
-            ),
-          ],
-        ),
-      );
-    }
-
     return _SectionCard(
-      title: 'Расширенные',
-      tone: _SectionTone.muted,
+      title: 'Диагностика',
       lines: const [
-        'Только для восстановления и поддержки.',
+        'Информация, которая помогает поддержке быстрее разобраться.',
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            value: _accepted,
-            onChanged: (value) {
-              setState(() {
-                _accepted = value ?? false;
-              });
-            },
-            controlAffinity: ListTileControlAffinity.leading,
-            title: const Text(
-              'Я беру ответственность за ручные настройки.',
-            ),
+        children: const [
+          _SettingsRow(
+            key: ValueKey('advanced-app-version'),
+            icon: Icons.info_outline_rounded,
+            title: 'Версия приложения',
+            value: _pokrovAppVersion,
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              OutlinedButton(
-                onPressed: () {
-                  setState(() {
-                    _accepted = false;
-                  });
-                },
-                child: const Text('Отмена'),
-              ),
-              FilledButton(
-                onPressed: _accepted
-                    ? () {
-                        setState(() {
-                          _opened = true;
-                        });
-                      }
-                    : null,
-                child: const Text('Да, открыть'),
-              ),
-            ],
+          _SettingsRow(
+            key: ValueKey('advanced-runtime-core'),
+            icon: Icons.memory_rounded,
+            title: 'Core',
+            value: 'sing-box',
+          ),
+          _SettingsRow(
+            key: ValueKey('advanced-windows-route'),
+            icon: Icons.desktop_windows_outlined,
+            title: 'Windows-подключение',
+            value: 'Через настройки Windows',
+          ),
+          _SettingsRow(
+            key: ValueKey('advanced-tun-status'),
+            icon: Icons.apps_rounded,
+            title: 'Выбранные процессы',
+            value: 'Учитываются',
+          ),
+          _SettingsRow(
+            key: ValueKey('advanced-xray-fallback'),
+            icon: Icons.construction_rounded,
+            title: 'Совместимый режим',
+            value: 'По запросу',
+          ),
+          _SettingsRow(
+            key: ValueKey('advanced-support-diagnostics'),
+            icon: Icons.support_agent_rounded,
+            title: 'Логи и диагностика',
+            value: 'В чате поддержки',
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _RulesCatalogVersionLine extends StatelessWidget {
-  const _RulesCatalogVersionLine({
-    required this.contract,
-  });
-
-  final RulesPresetContract contract;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        key: const ValueKey('rules-catalog-version'),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(
-          color: _SeedPalette.surfaceMuted,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: _SeedPalette.line),
-        ),
-        child: Text(
-          'Каталог правил ${contract.rulesetVersion} · приложения ${contract.packageCatalogVersion}',
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: _SeedPalette.muted,
-                fontWeight: FontWeight.w700,
-              ),
-        ),
       ),
     );
   }
@@ -6018,8 +6276,8 @@ class _PresetRow extends StatelessWidget {
         lines: [
           subtitle,
           enabled
-              ? 'Этот пресет уже учитывается в текущей карте правил.'
-              : 'POKROV покажет включение, когда пресет пройдет проверку.',
+              ? 'Эта настройка уже работает в текущих правилах.'
+              : 'POKROV включит настройку после проверки.',
         ],
       ),
     );
@@ -6043,124 +6301,101 @@ IconData _rulesPresetIcon(String id) {
 String _rulesPresetStatusLabel(RulesPresetState state) {
   return switch (state) {
     RulesPresetState.enabled => 'Активно',
-    RulesPresetState.staged => 'Готовится',
-    RulesPresetState.locked => 'Недоступно',
+    RulesPresetState.staged => 'Скоро',
+    RulesPresetState.locked => 'Пока нельзя',
   };
 }
 
-class _LocationCard extends StatelessWidget {
-  const _LocationCard({
-    required this.location,
-    required this.appContext,
-    required this.selectedRouteMode,
-  });
+String _accessPoolLabel(AccessLane lane) {
+  return switch (lane) {
+    AccessLane.trialPremium ||
+    AccessLane.bonusPremium ||
+    AccessLane.paidUnlimited =>
+      'Премиум-доступ',
+    AccessLane.freeMonthly || AccessLane.freeSoftMode => 'Базовый доступ',
+  };
+}
 
-  final LocationCluster location;
-  final SeedAppContext appContext;
-  final RouteMode selectedRouteMode;
+String _accessMainLabel(
+    SeedAppContext appContext, AppFirstBonusSummary? bonus) {
+  final baseDays = appContext.runtimeProfile.trialDays;
+  final bonusDays = bonus?.channelBonusPremiumDays ?? 0;
+  final claimed = (bonus?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
+  final totalDays = baseDays + (claimed ? bonusDays : 0);
+  return switch (appContext.accessLane) {
+    AccessLane.trialPremium =>
+      claimed ? '$totalDays дней доступа' : '$baseDays дней пробного доступа',
+    AccessLane.bonusPremium => '$totalDays дней доступа',
+    AccessLane.paidUnlimited => 'Премиум активен',
+    AccessLane.freeMonthly => 'Базовый режим',
+    AccessLane.freeSoftMode => 'Лимит закончился',
+  };
+}
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+String _accessShortValue(
+  SeedAppContext appContext,
+  AppFirstBonusSummary? bonus,
+) {
+  final baseDays = appContext.runtimeProfile.trialDays;
+  final bonusDays = bonus?.channelBonusPremiumDays ?? 0;
+  final claimed = (bonus?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
+  final totalDays = baseDays + (claimed ? bonusDays : 0);
+  return switch (appContext.accessLane) {
+    AccessLane.trialPremium => claimed ? '$totalDays дней' : '$baseDays дней',
+    AccessLane.bonusPremium => '$totalDays дней',
+    AccessLane.paidUnlimited => 'Премиум',
+    AccessLane.freeMonthly => 'Базовый',
+    AccessLane.freeSoftMode => 'Лимит',
+  };
+}
 
-    return Container(
-      key: ValueKey('location-card-${location.code}'),
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.82),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: _SeedPalette.line),
-        boxShadow: [
-          BoxShadow(
-            color: _SeedPalette.ink.withValues(alpha: 0.05),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: _SeedPalette.accent.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.public_rounded,
-              color: _SeedPalette.accent,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            location.label,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: _SeedPalette.ink,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            location.city,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: _SeedPalette.ink.withValues(alpha: 0.72),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      location.recommendedLane,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: _SeedPalette.accent,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    _StatusPill(
-                      label: selectedRouteMode.label,
-                      icon: Icons.alt_route_rounded,
-                    ),
-                    _StatusPill(
-                      label: appContext.accessLane.label,
-                      icon: Icons.workspace_premium_outlined,
-                    ),
-                    _StatusPill(
-                      label: appContext.runtimeProfile.freeTier.nodePoolLabel,
-                      icon: Icons.hub_outlined,
-                      tone: _SectionTone.muted,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+String _telegramBonusHomeLabel(
+  SeedAppContext appContext,
+  AppFirstBonusSummary? bonus,
+) {
+  final claimed = (bonus?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
+  if (claimed) {
+    return 'Telegram-бонус активен';
   }
+  return '+${appContext.runtimeProfile.telegramBonusDays} дней за Telegram';
+}
+
+String _routeModeShortLabel(RouteMode mode) {
+  return switch (mode) {
+    RouteMode.allExceptRu => 'За рубеж',
+    RouteMode.fullTunnel => 'Весь трафик',
+    RouteMode.selectedApps => 'Выбранные приложения',
+  };
+}
+
+String _routeModeRowTitle(RouteMode mode) {
+  return switch (mode) {
+    RouteMode.allExceptRu => 'Российские сервисы напрямую',
+    RouteMode.fullTunnel => 'Весь трафик через POKROV',
+    RouteMode.selectedApps => 'Только выбранные приложения',
+  };
+}
+
+String _routeModeRowSummary(RouteMode mode) {
+  return switch (mode) {
+    RouteMode.allExceptRu =>
+      'Российские и локальные сервисы работают напрямую, остальное идет через POKROV.',
+    RouteMode.fullTunnel => 'Весь трафик устройства идет через POKROV.',
+    RouteMode.selectedApps =>
+      'POKROV используют только выбранные приложения или .exe.',
+  };
+}
+
+String _smartConnectNodeTitle(SmartConnectNode node) {
+  final country = node.country.trim();
+  final code = node.code.trim().toUpperCase();
+  if (country.isNotEmpty && code.isNotEmpty) {
+    return '$country · $code';
+  }
+  if (country.isNotEmpty) {
+    return country;
+  }
+  return code.isEmpty ? 'POKROV' : code;
 }
 
 class _SettingsRow extends PokrovSettingsRow {
@@ -6376,7 +6611,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
   bool _threadClosed = false;
   bool _hasOperatorReply = false;
   int? _ticketId;
-  String _threadStatus = 'AI помощник';
+  String _threadStatus = 'Помощник POKROV';
   String? _threadError;
   List<_SupportChatMessage> _messages = _supportGreetingMessages();
   bool _attachDiagnosticsToNextMessage = false;
@@ -6428,7 +6663,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
           _hasOperatorReply = false;
           _loadingThread = false;
           _messages = _supportGreetingMessages();
-          _threadStatus = 'AI помощник';
+          _threadStatus = 'Помощник POKROV';
         });
         _syncThreadPolling();
         return;
@@ -6731,7 +6966,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
     return switch (role) {
       _SupportChatRole.user => '',
       _SupportChatRole.operator => 'Поддержка',
-      _SupportChatRole.assistant => 'AI помощник',
+      _SupportChatRole.assistant => 'Помощник POKROV',
     };
   }
 
@@ -6772,7 +7007,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                 ),
                 _KeyValueLine(
                   label: 'Версия',
-                  value: '1.0.0-beta',
+                  value: _pokrovAppVersion,
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -7145,9 +7380,9 @@ List<_SupportChatMessage> _supportGreetingMessages() {
   return <_SupportChatMessage>[
     _SupportChatMessage(
       role: _SupportChatRole.assistant,
-      label: 'AI помощник',
+      label: 'Помощник POKROV',
       body:
-          'Напишите, что случилось. POKROV приложит безопасный контекст и покажет ответ в этом чате.',
+          'Напишите, что случилось. POKROV приложит только сведения о приложении и подключении, а ответ появится здесь.',
     ),
   ];
 }
@@ -7177,16 +7412,16 @@ class _SupportLifecycleHint extends StatelessWidget {
       _SupportLifecycleState.loading => (
           key: 'loading',
           icon: Icons.sync_rounded,
-          label: 'Загружаем диалог',
-          detail: 'История поддержки появится здесь.',
+          label: 'Загружаем чат',
+          detail: 'История обращений появится здесь.',
           accent: _SeedPalette.muted,
           retry: false,
         ),
       _SupportLifecycleState.ready => (
           key: 'ready',
           icon: Icons.smart_toy_outlined,
-          label: 'AI помощник на месте',
-          detail: 'Оператор подключится через тикет, если вопрос не решится.',
+          label: 'Помощник POKROV на связи',
+          detail: 'Если вопрос не решится, к диалогу подключится оператор.',
           accent: _SeedPalette.muted,
           retry: false,
         ),
@@ -7194,15 +7429,15 @@ class _SupportLifecycleHint extends StatelessWidget {
           key: 'tracking',
           icon: Icons.mark_chat_unread_outlined,
           label: 'Ответ появится здесь',
-          detail: 'POKROV проверяет тикет в фоне. Telegram остается запасным.',
+          detail: 'POKROV проверяет обращение. Telegram остается запасным.',
           accent: _SeedPalette.accent,
           retry: false,
         ),
       _SupportLifecycleState.refreshing => (
           key: 'refreshing',
           icon: Icons.sync_rounded,
-          label: 'Обновляем диалог',
-          detail: 'Проверяем новые ответы без перехода в Telegram.',
+          label: 'Обновляем чат',
+          detail: 'Проверяем ответы, не открывая Telegram.',
           accent: _SeedPalette.accent,
           retry: false,
         ),
@@ -7448,7 +7683,7 @@ String _consumerProtectionStatusLabel(
   bool busy = false,
 }) {
   if (busy) {
-    return 'Готовим';
+    return 'Подключаемся';
   }
   if (snapshot == null) {
     return 'Проверяем статус';
@@ -7460,7 +7695,7 @@ String _consumerProtectionStatusLabel(
     return 'Недоступно';
   }
   if ((snapshot.stagedConfigPath ?? '').isNotEmpty) {
-    return 'Готово к подключению';
+    return 'Можно подключаться';
   }
   return 'Готово';
 }
@@ -7810,29 +8045,29 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
       button: true,
       enabled: widget.enabled,
       label: widget.actionLabel,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          MouseRegion(
-            cursor: widget.onPressed == null
-                ? SystemMouseCursors.basic
-                : SystemMouseCursors.click,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: widget.onPressed == null
-                  ? null
-                  : () {
-                      Feedback.forTap(context);
-                      widget.onPressed?.call();
-                    },
-              onTapDown: widget.onPressed == null
-                  ? null
-                  : (_) => setState(() => _pressed = true),
-              onTapCancel: () => setState(() => _pressed = false),
-              onTapUp: widget.onPressed == null
-                  ? null
-                  : (_) => setState(() => _pressed = false),
-              child: RepaintBoundary(
+      child: MouseRegion(
+        cursor: widget.onPressed == null
+            ? SystemMouseCursors.basic
+            : SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onPressed == null
+              ? null
+              : () {
+                  Feedback.forTap(context);
+                  widget.onPressed?.call();
+                },
+          onTapDown: widget.onPressed == null
+              ? null
+              : (_) => setState(() => _pressed = true),
+          onTapCancel: () => setState(() => _pressed = false),
+          onTapUp: widget.onPressed == null
+              ? null
+              : (_) => setState(() => _pressed = false),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RepaintBoundary(
                 child: AnimatedBuilder(
                   key: const ValueKey('connect-disc-motion'),
                   animation:
@@ -7926,24 +8161,24 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                   ),
                 ),
               ),
-            ),
+              const SizedBox(height: 16),
+              AnimatedSwitcher(
+                key: const ValueKey('connect-disc-label'),
+                duration: motion.duration(_MotionTokens.short),
+                transitionBuilder: _fadeSlideTransition,
+                child: Text(
+                  widget.actionLabel,
+                  key: ValueKey(widget.actionLabel),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: labelColor,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0,
+                      ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          AnimatedSwitcher(
-            key: const ValueKey('connect-disc-label'),
-            duration: motion.duration(_MotionTokens.short),
-            transitionBuilder: _fadeSlideTransition,
-            child: Text(
-              widget.actionLabel,
-              key: ValueKey(widget.actionLabel),
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: labelColor,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0,
-                  ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

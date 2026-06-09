@@ -7,12 +7,25 @@ import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
 class _FakeDesktopBindings implements DesktopRuntimeBindings {
+  _FakeDesktopBindings({
+    this.setupResult = '',
+    this.parseResult = '',
+    this.changeOptionsResult = '',
+    this.startResult = '',
+    this.stopResult = '',
+  });
+
   int setupCalls = 0;
   int parseCalls = 0;
   int changeOptionsCalls = 0;
   int startCalls = 0;
   int stopCalls = 0;
   String? lastOptionsJson;
+  final String setupResult;
+  final String parseResult;
+  final String changeOptionsResult;
+  final String startResult;
+  final String stopResult;
 
   @override
   String setup({
@@ -23,7 +36,7 @@ class _FakeDesktopBindings implements DesktopRuntimeBindings {
     required bool debug,
   }) {
     setupCalls += 1;
-    return '';
+    return setupResult;
   }
 
   @override
@@ -33,7 +46,7 @@ class _FakeDesktopBindings implements DesktopRuntimeBindings {
     required bool debug,
   }) {
     parseCalls += 1;
-    return '';
+    return parseResult;
   }
 
   @override
@@ -42,7 +55,7 @@ class _FakeDesktopBindings implements DesktopRuntimeBindings {
   }) {
     changeOptionsCalls += 1;
     lastOptionsJson = configJson;
-    return '';
+    return changeOptionsResult;
   }
 
   @override
@@ -51,13 +64,13 @@ class _FakeDesktopBindings implements DesktopRuntimeBindings {
     required bool disableMemoryLimit,
   }) {
     startCalls += 1;
-    return '';
+    return startResult;
   }
 
   @override
   String stop() {
     stopCalls += 1;
-    return '';
+    return stopResult;
   }
 }
 
@@ -499,8 +512,191 @@ void main() {
     expect(running.phase, RuntimePhase.running);
     expect(bindings.changeOptionsCalls, 1);
     expect(bindings.startCalls, 1);
-    expect(bindings.lastOptionsJson, contains('"set-system-proxy":false'));
-    expect(bindings.lastOptionsJson, contains('"enable-tun":true'));
+    expect(bindings.lastOptionsJson, contains('"set-system-proxy":true'));
+    expect(bindings.lastOptionsJson, contains('"enable-tun":false'));
+  });
+
+  test('desktop lane preserves setup errors instead of generic ready text',
+      () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-setup-error-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings(setupResult: 'setup failed');
+
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      bindingsLoader: (_) => bindings,
+    );
+
+    final snapshot = await engine.initialize();
+
+    expect(snapshot.phase, RuntimePhase.artifactReady);
+    expect(snapshot.message, contains('setup failed'));
+    expect(snapshot.canConnect, isFalse);
+  });
+
+  test('desktop lane preserves start errors after profile staging', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-start-error-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings(startResult: 'start failed');
+
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'connect-desktop-start-error',
+        configPayload:
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.fullTunnel,
+      ),
+    );
+
+    final snapshot = await engine.connect();
+
+    expect(snapshot.phase, RuntimePhase.configStaged);
+    expect(snapshot.message, contains('start failed'));
+    expect(snapshot.canConnect, isTrue);
+  });
+
+  test('desktop lane preserves parse errors after profile download', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-parse-error-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings(parseResult: 'parse failed');
+
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      bindingsLoader: (_) => bindings,
+    );
+
+    final snapshot = await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'connect-desktop-parse-error',
+        configPayload:
+            '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: false,
+        routeMode: RouteMode.fullTunnel,
+      ),
+    );
+
+    expect(snapshot.phase, RuntimePhase.initialized);
+    expect(snapshot.message, contains('parse failed'));
+    expect(snapshot.canConnect, isFalse);
+  });
+
+  test('desktop lane preserves option sync errors before start', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-options-error-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings(
+      changeOptionsResult: 'options failed',
+    );
+
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'connect-desktop-options-error',
+        configPayload:
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.fullTunnel,
+      ),
+    );
+
+    final snapshot = await engine.connect();
+
+    expect(snapshot.phase, RuntimePhase.configStaged);
+    expect(snapshot.message, contains('options failed'));
+    expect(snapshot.canConnect, isTrue);
+    expect(bindings.startCalls, 0);
+  });
+
+  test('desktop lane preserves disconnect errors', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-stop-error-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings(stopResult: 'stop failed');
+
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      connectivityProbe: () async => null,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'connect-desktop-stop-error',
+        configPayload:
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.fullTunnel,
+      ),
+    );
+    await engine.connect();
+
+    final snapshot = await engine.disconnect();
+
+    expect(snapshot.phase, RuntimePhase.running);
+    expect(snapshot.message, contains('stop failed'));
   });
 
   test('desktop lane keeps runtime-ready WARP disabled without user consent',

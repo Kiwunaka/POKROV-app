@@ -56,7 +56,7 @@ class PokrovWarpLifecycle {
 
   String get technicalLabel => 'WARP';
 
-  String get publicTitle => 'Расширенная приватность';
+  String get publicTitle => 'Расширенная защита';
 
   String get publicSheetTitle => 'Расширенная защита';
 
@@ -89,7 +89,7 @@ class PokrovWarpLifecycle {
       return 'Проверяем доступность';
     }
     return switch (phase) {
-      PokrovWarpPhase.notReady => 'Готовится',
+      PokrovWarpPhase.notReady => 'Не включена',
       PokrovWarpPhase.readyToConsent => 'Доступна',
       PokrovWarpPhase.consented => 'Включится при подключении',
       PokrovWarpPhase.active => 'Активна',
@@ -102,7 +102,7 @@ class PokrovWarpLifecycle {
 
   String get publicSheetBody => switch (phase) {
         PokrovWarpPhase.notReady =>
-          'Дополнительный режим готовится для этого устройства.',
+          'POKROV не показывает этот режим, пока сервер не подтвердит готовность для устройства.',
         PokrovWarpPhase.readyToConsent =>
           'Дополнительный слой включается отдельно и может менять скорость.',
         PokrovWarpPhase.consented =>
@@ -110,9 +110,9 @@ class PokrovWarpLifecycle {
         PokrovWarpPhase.active =>
           'Режим активен. Если сайты работают нестабильно, его можно выключить.',
         PokrovWarpPhase.degraded =>
-          'Режим работает нестабильно. POKROV может временно вернуться к обычному маршруту.',
+          'Режим работает нестабильно. POKROV может временно вернуться к обычному подключению.',
         PokrovWarpPhase.fallback =>
-          'POKROV временно вернулся к обычному маршруту, чтобы сохранить подключение.',
+          'POKROV временно вернулся к обычному подключению, чтобы сохранить доступ.',
         PokrovWarpPhase.revoked =>
           'Режим выключен. Его можно включить снова после проверки доступности.',
         PokrovWarpPhase.error =>

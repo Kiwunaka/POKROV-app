@@ -1,6 +1,6 @@
 # POKROV Client Screen And Component Rules
 
-Date: 2026-06-03
+Date: 2026-06-08
 Status: implementation-ready UI rules
 Decision owner: owner/operator
 
@@ -26,7 +26,7 @@ Local synthesis keeps POKROV canon above external-model opinions.
 
 ## Global Product Rules
 
-- The app has four top-level sections: `Защита`, `Локации`, `Правила`,
+- The app has four top-level sections: `Защита`, `Локация`, `Режим`,
   `Профиль`.
 - New users start in the app and receive the app-first trial.
 - Returning users restore with a safe one-time code.
@@ -264,15 +264,16 @@ Motion:
 
 ### Locations
 
-Goal: choose auto-location or a manual location.
+Goal: keep auto-location understandable and allow a real manual node choice
+when backend data exists.
 
 First-layer content:
 
-- `Авто` row first.
-- selected location state.
-- country/city rows grouped by region or availability.
-- free/premium availability where relevant.
-- human quality/load label.
+- `Автоматически` row first.
+- current selected/preferred node state.
+- real smart-connect shortlist rows only when returned by backend.
+- premium/free pool label where relevant.
+- human quality/load label if backed by data.
 
 Location row:
 
@@ -288,6 +289,9 @@ Rules:
 - If backend is unavailable, use last cached shortlist.
 - Do not switch nodes for tiny wins; keep stickiness.
 - Consumer list should not show raw hostnames or IPs.
+- Do not show fake countries, fake pings, or demo rows.
+- User-selected node is saved through the app-first latency-sample endpoint and
+  applied by ordering the next managed profile selector.
 
 States:
 
@@ -299,19 +303,19 @@ States:
 
 ### Rules / Exceptions
 
-Goal: let users control what routes directly or through POKROV via presets.
+Goal: let users choose the device route mode and the apps/processes that use
+POKROV.
 
 First-layer content:
 
-- `Правила`
-- `Без POKROV работают: N приложений`
-- top presets:
-  - `Российские банки`
-  - `Госуслуги`
-  - `Маркетплейсы`
-  - `Мессенджеры`
-- `Все категории`
-- `Добавить приложение`
+- `Режим работы`
+- `Что идет через POKROV`
+- route choices:
+  - `Всё, кроме РФ`
+  - `Всё устройство`
+  - `Выбранные приложения`
+- `Напрямую без POKROV`
+- `Выбранные приложения` / Windows `.exe` process picker
 
 Preset row:
 
@@ -322,10 +326,11 @@ Preset row:
 
 Rules:
 
-- show 3-4 most important presets first.
-- keep advanced raw editor behind Advanced.
+- show the route-mode choice before preset categories.
+- keep raw rule editing out of the normal UI.
 - ad/tracker blocking stays feature-flagged until rulesets are tested.
-- preset catalogue is backend-synced and versioned.
+- preset catalogue is backend-synced and versioned, but catalog/package
+  versions belong in diagnostics/support, not first-layer copy.
 
 Must not appear:
 
@@ -341,16 +346,23 @@ Goal: access, identity, recovery, support, and settings.
 Group rows into:
 
 - `Доступ`
-  - `Ваш доступ`
-  - `Ввести код`
+  - `Статус`
+  - `Подписка`
+  - `Оплата`
+  - `Кабинет`
+- `Привязать доступ`
+  - `Код активации`
   - `Telegram +10 дней`
-  - `Бонусы`
+  - `Проверить подписку`
+- `Бонусы`
+  - `Обновить бонусы`
+  - `Бонусы и история`
 - `Настройки`
-  - `Email и кабинет`
-  - `Устройства`
-  - `Поддержка`
-  - `Настройки`
-  - `Расширенные`
+  - `Устройство`
+  - `Режим работы`
+  - `WARP-защита`
+  - `Чат поддержки`
+  - `Диагностика`
 
 Rules:
 
@@ -506,35 +518,37 @@ Diagnostics rules:
 - redact secrets, raw links, IPs, keys, and tokens.
 - diagnostics export belongs in support/advanced, not normal UI.
 
-### Advanced Warning Gate
+### Advanced Diagnostics
 
-Goal: protect non-technical users from breaking connection.
+Goal: give testers and support useful facts without making advanced settings a
+normal user task.
 
 First-layer content:
 
 ```text
-Внимание
-Расширенные настройки могут нарушить подключение.
-Если не уверены, лучше напишите в поддержку.
+Диагностика
+Системные параметры для теста и поддержки.
 
-[ ] Я понимаю, что неправильные настройки могут сломать подключение.
-
-[Отмена]
-[Да, открыть]
+Версия приложения
+Core
+Windows-подключение
+TUN по приложениям
+WARP
+Совместимый режим
+Логи и диагностика
 ```
 
 Rules:
 
-- no direct access without warning and checkbox.
-- use a second confirmation before entering advanced.
-- `Сбросить до рекомендованных` is always visible inside Advanced.
-- validate before applying changes.
-- auto-rollback failed config.
-
-Optional stricter control:
-
-- delay enabling the checkbox for a few seconds if support sees repeated
-  accidental misuse.
+- do not show a scary checkbox just to view diagnostics.
+- no raw JSON, raw subscription editor, CIDR, hostnames, ports, or protocol
+  settings in this sheet.
+- dangerous/raw rule editing remains out of the beta normal UI until a separate
+  implementation adds validation, second confirmation, and rollback.
+- Enhanced protection must stay gated until runtime proof is present. When the
+  backend/runtime does not mark it offerable for the current device, Home,
+  Profile, and Advanced hide the normal control instead of rendering a `Скоро`
+  preview.
 
 ## Component Rules
 

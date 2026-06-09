@@ -924,7 +924,7 @@ void main() {
       subject: 'Connection help',
       body: 'Cannot connect on first launch',
       diagnostics: const <String, Object?>{
-        'app_version': '1.0.0-beta',
+        'app_version': '1.0.0-beta.2',
         'platform': 'windows',
         'route_mode': 'all_except_ru',
         'connection_status': 'Ready',
@@ -1240,7 +1240,7 @@ void main() {
       routeMode: RouteMode.allExceptRu,
       statusLabel: 'Ready',
       diagnostics: const <String, Object?>{
-        'app_version': '1.0.0-beta',
+        'app_version': '1.0.0-beta.2',
         'platform': 'windows',
         'route_mode': 'all_except_ru',
         'connection_status': 'Ready',
@@ -1912,7 +1912,7 @@ void main() {
     expect(summary.tierKey, 'starter');
     expect(summary.nextTierAt, 5);
     expect(summary.wheelState.enabled, isFalse);
-    expect(summary.wheelState.statusLabel, 'Скоро');
+    expect(summary.wheelState.statusLabel, 'Недоступно');
     expect(summary.wheelState.actionEndpoint, '/api/bonuses/wheel/spin');
     expect(summary.wheelState.lastActionAt, '2026-06-03T12:00:00Z');
     expect(summary.calendarState.enabled, isFalse);

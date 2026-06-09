@@ -1,7 +1,7 @@
 name: pokrov_windows_shell
 description: Windows gated beta host for the POKROV client program.
 publish_to: none
-version: 1.0.0-beta
+version: 1.0.0-beta.2
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -17,6 +17,8 @@ dependencies:
     path: ../../packages/platform_contracts
   pokrov_support_context:
     path: ../../packages/support_context
+  tray_manager: ^0.5.2
+  window_manager: ^0.5.1
 
 flutter:
   uses-material-design: true

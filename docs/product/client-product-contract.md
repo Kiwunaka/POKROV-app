@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-06-04
+Last updated: 2026-06-08
 
 ## Document Status
 
@@ -42,7 +42,7 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - `xray` role: advanced compatibility fallback only
 - free trial: `5 days`
 - Telegram reward: `+10 days`
-- public user-facing version line: current paid beta evidence uses `1.0.0-beta`; this is still a beta label, not a stable `1.0.0` claim
+- public user-facing version line: current paid beta evidence uses `1.0.0-beta`; patch/build labels such as `1.0.0-beta.2` are still beta labels, not stable `1.0.0` claims
 - recommended public routing mode: `All except RU`
 - public routing mode set: `All except RU` and `Full tunnel`
 - public recovery order: `POKROV app -> web cabinet -> Telegram fallback`
@@ -124,11 +124,12 @@ Product rules for that choice:
 - current implementation exposes `All except RU`, `Full tunnel`, and
   `Only selected apps`; adding a custom app identifier auto-selects the
   selected-apps route and sends `selected_apps` through app-first route policy
-- Windows `Rules` uses region/process-first copy (`Маршруты Windows`,
-  `Российский регион`, `Выбранные процессы`) instead of Android-only bank,
+- Windows `Rules` uses consumer route copy (`Режим работы`,
+  `Российские сервисы`, `Выбранные приложения`) instead of Android-only bank,
   Gosuslugi, and marketplace presets
-- `Rules` may show safe catalog/package versions and enabled/staged preset
-  states so users know which rule categories are active
+- `Rules` may show enabled/staged preset states so users know which rule
+  categories are active; catalog/package versions belong in support
+  diagnostics, not first-layer user copy
 - `Rules` must not expose raw rule-set filenames, geo labels, CIDR, JSON,
   protocol names, ports, or engine internals in the normal UI
 - low-level selected-apps route-policy plumbing is active for app-managed
@@ -144,6 +145,17 @@ Before the device receives a real subscription payload:
 - `Locations` stays gated and must not show fake/demo countries
 - `Support` may prepare context, but real ticket history appears only after a linked session exists
 - Telegram remains optional and secondary
+
+After activation:
+
+- `Locations` shows `Автоматически` when the backend has not returned a
+  shortlist yet
+- when `smart_connect.shortlist` is present, `Locations` shows only those real
+  eligible nodes and lets the user save a preferred node
+- saved node choice is sent through the app-first latency-sample endpoint and
+  the next managed profile should order that node first in the selector
+- trial and Telegram-bonus access must read as premium-pool access, never as
+  `free node` access
 
 ### Renewal and purchase
 
@@ -204,9 +216,11 @@ Consumer privacy rules:
 - normal consumer screens must not expose public IP, raw connection links, raw JSON/profile editors, sniffing terms, or low-level topology
 - route labels and support diagnostics should stay safe and human-readable
 - public-facing copy should prefer plain user language over transport acronyms, raw profile terms, or operator jargon
-- Home may show the secondary technical label `WARP` as
-  `WARP · Расширенная защита`; this is a gated lifecycle control, not a
-  production WARP or stronger-privacy claim
+- Home and Profile show `Расширенная защита` only when backend/runtime reports
+  the feature as offerable for this device. If runtime proof or capability is
+  missing, the first-layer UI hides the control instead of showing `Скоро`.
+  `WARP` may appear only in diagnostics/operator context as a technical label,
+  not as a production WARP or stronger-privacy claim.
 - raw subscription copy, edit, regenerate, or share actions stay out of the first-layer consumer path
 - raw connection or subscription links must not be treated as account proof in
   first-launch restore or normal code redemption
@@ -228,7 +242,8 @@ Store/operator artifacts remain separate:
 
 Release continuity rules:
 
-- public-facing build surfaces must present the beta line `0.x.x-beta`
+- public-facing build surfaces must present the beta line `1.0.0-beta` or an
+  explicit beta patch label such as `1.0.0-beta.2`
 - Android APK distribution is approved for the outside-store beta after operator-attested physical audit and the `2026-05-15` runtime handoff proof; re-verify before changing artifacts or public URLs
 - Windows unsigned bundles may be gated to beta users only with a SmartScreen or unknown-publisher warning
 - signed release builds inject updater and source metadata through the documented `PORTAL_RELEASE_*` environment variables
@@ -260,7 +275,8 @@ In scope:
 - silent profile provisioning
 - route-mode onboarding with `Optimize everything on this device` and `Only selected apps`
 - quick connect with smart-connect shortlist behavior
-- locations list
+- locations list with real smart-connect shortlist selection when backend data
+  is present
 - device management
 - subscription and renewal continuation
 - in-app and cabinet-backed support continuation

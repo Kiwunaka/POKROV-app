@@ -179,7 +179,7 @@ class PokrovAssistantContract {
     PokrovAssistantSuggestion(
       key: 'support-ai-suggestion-connectivity',
       title: 'Не подключается',
-      prompt: 'Не подключается. Проверьте безопасный контекст и подскажите '
+      prompt: 'Не подключается. Проверьте сведения о приложении и подключении, затем подскажите '
           'следующий шаг без сырых настроек.',
     ),
     PokrovAssistantSuggestion(

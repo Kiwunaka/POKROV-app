@@ -214,7 +214,7 @@ packages:
       path: "../../packages/app_shell"
       relative: true
     source: path
-    version: "1.0.0-beta"
+    version: "1.0.0-beta.2"
   pokrov_core_domain:
     dependency: "direct main"
     description:
