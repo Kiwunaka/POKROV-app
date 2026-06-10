@@ -47,6 +47,8 @@ $requiredFiles = @(
   "config\\runtime-profile.seed.json",
   "config\\runtime-artifacts.seed.json",
   "config\\windows-release.seed.json",
+  "config\\cutover-readiness.seed.json",
+  "config\\release-handoff.seed.json",
   "config\\templates\\local.env.example",
   "config\\templates\\device-overrides.seed.json",
   "docs\\README.md",
@@ -106,6 +108,8 @@ $jsonFiles = @(
   "config\\runtime-profile.seed.json",
   "config\\runtime-artifacts.seed.json",
   "config\\windows-release.seed.json",
+  "config\\cutover-readiness.seed.json",
+  "config\\release-handoff.seed.json",
   "config\\templates\\device-overrides.seed.json"
 )
 
@@ -294,6 +298,56 @@ if (Test-Path -LiteralPath $windowsReleaseConfigPath -PathType Leaf) {
   foreach ($requiredPath in @("pokrov_windows_beta.exe", "libcore.dll", "data/app.so")) {
     if (@($windowsReleaseConfig.required_files) -notcontains $requiredPath) {
       $manifestErrors.Add("config\\windows-release.seed.json must list required build file '$requiredPath'")
+    }
+  }
+}
+
+$cutoverReadinessPath = Join-Path $root "config\cutover-readiness.seed.json"
+$releaseHandoffPath = Join-Path $root "config\release-handoff.seed.json"
+$androidGradlePath = Join-Path $root "apps\android_shell\android\app\build.gradle"
+$androidReleaseUsesDebugSigning = $false
+if (Test-Path -LiteralPath $androidGradlePath -PathType Leaf) {
+  $androidGradleText = Get-Content -Raw -LiteralPath $androidGradlePath
+  $androidReleaseUsesDebugSigning = [regex]::Match($androidGradleText, "buildTypes\s*\{[\s\S]*?release\s*\{[\s\S]*?signingConfig\s*=\s*signingConfigs\.debug").Success
+}
+
+if ((Test-Path -LiteralPath $cutoverReadinessPath -PathType Leaf) -and (Test-Path -LiteralPath $releaseHandoffPath -PathType Leaf)) {
+  $cutoverReadiness = Get-Content -Raw -LiteralPath $cutoverReadinessPath | ConvertFrom-Json
+  $releaseHandoff = Get-Content -Raw -LiteralPath $releaseHandoffPath | ConvertFrom-Json
+
+  if ($releaseHandoff.release_truth.cutover_readiness_source -ne "config/cutover-readiness.seed.json") {
+    $manifestErrors.Add("config\release-handoff.seed.json must point cutover_readiness_source at config/cutover-readiness.seed.json")
+  }
+
+  if (($releaseHandoff.release_truth.public_cutover_allowed -eq $true) -and ($cutoverReadiness.public_cutover_allowed -ne $true)) {
+    $manifestErrors.Add("config\release-handoff.seed.json cannot allow public cutover while config\cutover-readiness.seed.json blocks it")
+  }
+
+  if (($releaseHandoff.latest_repo_backed_release.runtime_sync_allowed -eq $true) -and ($cutoverReadiness.public_cutover_allowed -ne $true)) {
+    $manifestErrors.Add("config\release-handoff.seed.json cannot allow runtime sync while config\cutover-readiness.seed.json blocks public cutover")
+  }
+
+  foreach ($artifact in @($releaseHandoff.latest_repo_backed_release.artifacts)) {
+    if ($artifact.public_approved -eq $true) {
+      if ($artifact.platform -eq "android") {
+        if ($cutoverReadiness.android_release.public_approved -ne $true) {
+          $manifestErrors.Add("config\release-handoff.seed.json cannot public-approve Android artifacts while config\cutover-readiness.seed.json blocks Android public approval")
+        }
+
+        if ($androidReleaseUsesDebugSigning -eq $true) {
+          $manifestErrors.Add("config\release-handoff.seed.json cannot public-approve Android artifacts while the Android release build uses debug signing")
+        }
+      }
+
+      if ($artifact.platform -eq "windows") {
+        if ($cutoverReadiness.windows_release.public_approved -ne $true) {
+          $manifestErrors.Add("config\release-handoff.seed.json cannot public-approve Windows artifacts while config\cutover-readiness.seed.json blocks Windows public approval")
+        }
+
+        if (($windowsReleaseConfig.public_approved -ne $true) -or ($windowsReleaseConfig.signing.status -eq "unsigned_beta_blocker")) {
+          $manifestErrors.Add("config\release-handoff.seed.json cannot public-approve Windows artifacts while config\windows-release.seed.json is unsigned or not public-approved")
+        }
+      }
     }
   }
 }
