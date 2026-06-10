@@ -985,7 +985,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(bootstrapper.clientAppsCalls, 1);
-    expect(bootstrapper.lastClientAppsCurrentVersion, '1.0.0-beta.2');
+    expect(bootstrapper.lastClientAppsCurrentVersion, '1.0.0-beta.3');
     expect(find.byKey(const ValueKey('client-update-prompt')), findsOneWidget);
     expect(find.text('Small beta fixes.'), findsOneWidget);
 

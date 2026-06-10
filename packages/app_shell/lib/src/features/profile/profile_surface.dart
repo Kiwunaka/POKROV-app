@@ -110,11 +110,17 @@ class _ProfileSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _SectionCard(
+              Container(
                 key: const ValueKey('profile-section-plan-access'),
-                title: 'Мой доступ',
-                tone: _SectionTone.accent,
-                lines: const [],
+                margin: const EdgeInsets.only(bottom: 18),
+                padding: const EdgeInsets.all(22),
+                decoration: BoxDecoration(
+                  color: _SeedPalette.surface,
+                  borderRadius: BorderRadius.circular(26),
+                  border: Border.all(
+                    color: _SeedPalette.accent.withValues(alpha: 0.16),
+                  ),
+                ),
                 child: _ProfileAccessOverview(
                   accessLabel: _accessMainLabel(appContext, bonusSummary),
                   accessValue: _accessShortValue(appContext, bonusSummary),
@@ -141,23 +147,6 @@ class _ProfileSection extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Быстрые действия',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: _SeedPalette.ink,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Код доступа, Telegram, кабинет и поддержка.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: _SeedPalette.muted,
-                        height: 1.3,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
                     _ProfileQuickActionsGrid(
                       children: [
                         _ProfileActionTile(

@@ -924,7 +924,7 @@ void main() {
       subject: 'Connection help',
       body: 'Cannot connect on first launch',
       diagnostics: const <String, Object?>{
-        'app_version': '1.0.0-beta.2',
+        'app_version': '1.0.0-beta.3',
         'platform': 'windows',
         'route_mode': 'all_except_ru',
         'connection_status': 'Ready',
@@ -1240,7 +1240,7 @@ void main() {
       routeMode: RouteMode.allExceptRu,
       statusLabel: 'Ready',
       diagnostics: const <String, Object?>{
-        'app_version': '1.0.0-beta.2',
+        'app_version': '1.0.0-beta.3',
         'platform': 'windows',
         'route_mode': 'all_except_ru',
         'connection_status': 'Ready',

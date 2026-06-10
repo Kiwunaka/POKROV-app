@@ -27,7 +27,7 @@ class PokrovDesktopSidebar extends StatelessWidget {
     required this.destinations,
     this.drawer = false,
     this.brandTitle = 'POKROV',
-    this.versionLabel = '1.0.0-beta.2',
+    this.versionLabel = '1.0.0-beta.3',
     this.betaLabel = 'Beta',
     this.brandMarkAssetName = PokrovBrandAssets.mark,
     super.key,

@@ -506,34 +506,16 @@ class _HomeConnectPanel extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       key: const ValueKey('home-desktop-connect-panel'),
-      constraints: const BoxConstraints(minHeight: 560),
-      padding: const EdgeInsets.fromLTRB(26, 24, 26, 22),
+      constraints: const BoxConstraints(minHeight: 548),
+      padding: const EdgeInsets.fromLTRB(28, 30, 28, 22),
       decoration: BoxDecoration(
-        color: _SeedPalette.surface.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(26),
+        color: _SeedPalette.surface,
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(color: _SeedPalette.line),
-        boxShadow: [
-          BoxShadow(
-            color: _SeedPalette.ink.withValues(alpha: 0.035),
-            blurRadius: 34,
-            offset: const Offset(0, 18),
-          ),
-        ],
       ),
       child: Column(
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              running ? 'POKROV включен' : 'Готово к подключению',
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: _SeedPalette.ink,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0,
-              ),
-            ),
-          ),
-          const SizedBox(height: 74),
+          const SizedBox(height: 18),
           _ConnectOrbButton(
             actionLabel: actionLabel,
             enabled: actionEnabled,
@@ -543,28 +525,28 @@ class _HomeConnectPanel extends StatelessWidget {
             busy: busy,
             onPressed: actionEnabled ? onToggleRuntime : null,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 22),
           _HomeStatusAction(
             statusLabel: statusLabel,
             statusColor: statusColor,
             onTap: onOpenConnectionDetails,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 30),
           _HomeModeChips(
             locationLabel: locationLabel,
             routeMode: selectedRouteMode,
             onOpenLocations: onOpenLocations,
             onOpenRules: onOpenRules,
           ),
-          const SizedBox(height: 54),
+          const SizedBox(height: 46),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: _SeedPalette.accent.withValues(alpha: 0.045),
-              borderRadius: BorderRadius.circular(18),
+              color: _SeedPalette.canvasAlt,
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: _SeedPalette.accent.withValues(alpha: 0.10),
+                color: _SeedPalette.line,
               ),
             ),
             child: Row(
@@ -770,16 +752,9 @@ class _HomeAccessStrip extends StatelessWidget {
       constraints: const BoxConstraints(maxWidth: 520),
       padding: const EdgeInsets.fromLTRB(16, 15, 14, 15),
       decoration: BoxDecoration(
-        color: _SeedPalette.surface.withValues(alpha: 0.96),
+        color: _SeedPalette.surface,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: _SeedPalette.line),
-        boxShadow: [
-          BoxShadow(
-            color: _SeedPalette.ink.withValues(alpha: 0.045),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
       ),
       child: Row(
         children: [

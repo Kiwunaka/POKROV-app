@@ -42,7 +42,7 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - `xray` role: advanced compatibility fallback only
 - free trial: `5 days`
 - Telegram reward: `+10 days`
-- public user-facing version line: current paid beta evidence uses `1.0.0-beta`; patch/build labels such as `1.0.0-beta.2` are still beta labels, not stable `1.0.0` claims
+- public user-facing version line: current paid beta evidence uses `1.0.0-beta`; patch/build labels such as `1.0.0-beta.3` are still beta labels, not stable `1.0.0` claims
 - recommended public routing mode: `All except RU`
 - public routing mode set: `All except RU` and `Full tunnel`
 - public recovery order: `POKROV app -> web cabinet -> Telegram fallback`
@@ -242,7 +242,7 @@ Store/operator artifacts remain separate:
 Release continuity rules:
 
 - public-facing build surfaces must present the beta line `1.0.0-beta` or an
-  explicit beta patch label such as `1.0.0-beta.2`
+  explicit beta patch label such as `1.0.0-beta.3`
 - Android APK distribution is approved for the outside-store beta after operator-attested physical audit and the `2026-05-15` runtime handoff proof; re-verify before changing artifacts or public URLs
 - Windows unsigned bundles may be gated to beta users only with a SmartScreen or unknown-publisher warning
 - signed release builds inject updater and source metadata through the documented `PORTAL_RELEASE_*` environment variables

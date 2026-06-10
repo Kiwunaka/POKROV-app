@@ -41,13 +41,6 @@ class _SectionCard extends StatelessWidget {
         color: colors.background,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: colors.border),
-        boxShadow: [
-          BoxShadow(
-            color: _SeedPalette.ink.withValues(alpha: 0.035),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -277,8 +270,9 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
         WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
             .disableAnimations;
     final diameter = switch (MediaQuery.sizeOf(context).width) {
-      >= 720 => 210.0,
-      _ => 182.0,
+      >= 1100 => 258.0,
+      >= 720 => 236.0,
+      _ => 224.0,
     };
     final labelColor = widget.enabled ? _SeedPalette.ink : _SeedPalette.muted;
     final markOpacity = !widget.enabled
@@ -313,119 +307,126 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
           onTapUp: widget.onPressed == null
               ? null
               : (_) => setState(() => _pressed = false),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              RepaintBoundary(
-                child: AnimatedBuilder(
-                  key: const ValueKey('connect-disc-motion'),
-                  animation:
-                      Listenable.merge([_breathController, _sweepController]),
-                  builder: (context, child) {
-                    final breath = disableAnimations
-                        ? 0.0
-                        : Curves.easeInOut.transform(_breathController.value);
-                    return Transform.scale(
-                      scale: PokrovConnectDiscMotion.scale(
-                        pressed: _pressed,
-                        runsSweep: state.runsSweep,
-                        breathValue: breath,
-                        disableAnimations: disableAnimations,
-                      ),
-                      child: child,
-                    );
-                  },
-                  child: AnimatedContainer(
-                    duration: motion.duration(_MotionTokens.standard),
-                    curve: _MotionTokens.ease,
-                    width: diameter,
-                    height: diameter,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: widget.running
-                          ? _SeedPalette.accent.withValues(alpha: 0.11)
-                          : _SeedPalette.surface,
-                      boxShadow: [
-                        BoxShadow(
-                          color: (widget.running ? accent : _SeedPalette.ink)
-                              .withValues(alpha: widget.running ? 0.14 : 0.07),
-                          blurRadius: widget.running ? 26 : 18,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        AnimatedBuilder(
-                          animation: Listenable.merge(
-                              [_breathController, _sweepController]),
-                          builder: (context, _) {
-                            return CustomPaint(
-                              size: Size.square(diameter),
-                              painter: _ConnectDiscRimPainter(
-                                accent: accent,
-                                enabled: widget.enabled,
-                                running: widget.running,
-                                degraded: widget.degraded || widget.error,
-                                busy: state.runsSweep,
-                                disableAnimations: disableAnimations,
-                                breathValue: _breathController.value,
-                                sweepValue: _sweepController.value,
-                              ),
-                            );
-                          },
-                        ),
-                        _ConnectSettleLayer(
-                          diameter: diameter,
-                          accent: accent,
-                          enabled: widget.enabled,
-                          running: widget.running,
-                          degraded: widget.degraded,
-                          error: widget.error,
-                          busy: widget.busy,
-                          disableAnimations: disableAnimations,
-                        ),
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: _SeedPalette.surface.withValues(alpha: 0.74),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: accent.withValues(
-                                  alpha: widget.running ? 0.18 : 0.10),
-                            ),
-                          ),
-                          child: SizedBox.square(
-                            dimension: diameter * 0.58,
-                            child: Center(
-                              child: _BrandMark(
-                                size: diameter * 0.42,
-                                opacity: markOpacity,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+          child: RepaintBoundary(
+            child: AnimatedBuilder(
+              key: const ValueKey('connect-disc-motion'),
+              animation:
+                  Listenable.merge([_breathController, _sweepController]),
+              builder: (context, child) {
+                final breath = disableAnimations
+                    ? 0.0
+                    : Curves.easeInOut.transform(_breathController.value);
+                return Transform.scale(
+                  scale: PokrovConnectDiscMotion.scale(
+                    pressed: _pressed,
+                    runsSweep: state.runsSweep,
+                    breathValue: breath,
+                    disableAnimations: disableAnimations,
+                  ),
+                  child: child,
+                );
+              },
+              child: AnimatedContainer(
+                duration: motion.duration(_MotionTokens.standard),
+                curve: _MotionTokens.ease,
+                width: diameter,
+                height: diameter,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _SeedPalette.surface,
+                  border: Border.all(
+                    color:
+                        accent.withValues(alpha: widget.running ? 0.54 : 0.34),
+                    width: widget.running ? 2.6 : 2.1,
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              AnimatedSwitcher(
-                key: const ValueKey('connect-disc-label'),
-                duration: motion.duration(_MotionTokens.short),
-                transitionBuilder: _fadeSlideTransition,
-                child: Text(
-                  widget.actionLabel,
-                  key: ValueKey(widget.actionLabel),
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: labelColor,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    AnimatedBuilder(
+                      animation: Listenable.merge(
+                          [_breathController, _sweepController]),
+                      builder: (context, _) {
+                        return CustomPaint(
+                          size: Size.square(diameter),
+                          painter: _ConnectDiscRimPainter(
+                            accent: accent,
+                            enabled: widget.enabled,
+                            running: widget.running,
+                            degraded: widget.degraded || widget.error,
+                            busy: state.runsSweep,
+                            disableAnimations: disableAnimations,
+                            breathValue: _breathController.value,
+                            sweepValue: _sweepController.value,
+                          ),
+                        );
+                      },
+                    ),
+                    _ConnectSettleLayer(
+                      diameter: diameter,
+                      accent: accent,
+                      enabled: widget.enabled,
+                      running: widget.running,
+                      degraded: widget.degraded,
+                      error: widget.error,
+                      busy: widget.busy,
+                      disableAnimations: disableAnimations,
+                    ),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: _SeedPalette.canvas,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _SeedPalette.line.withValues(alpha: 0.72),
+                        ),
                       ),
+                      child: SizedBox.square(
+                        dimension: diameter * 0.68,
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _BrandMark(
+                                size: diameter * 0.28,
+                                opacity: markOpacity,
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: diameter * 0.50,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: AnimatedSwitcher(
+                                    key: const ValueKey('connect-disc-label'),
+                                    duration:
+                                        motion.duration(_MotionTokens.short),
+                                    transitionBuilder: _fadeSlideTransition,
+                                    child: Text(
+                                      widget.actionLabel,
+                                      key: ValueKey(widget.actionLabel),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.visible,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            color: labelColor,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: 0,
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -513,13 +514,6 @@ class _ConnectSettleLayer extends StatelessWidget {
                       alpha: isError ? 0.28 : 0.18,
                     ),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: settleColor.withValues(alpha: opacity * 0.7),
-                      blurRadius: isError ? 18 : 24,
-                      spreadRadius: isError ? 1 : 2,
-                    ),
-                  ],
                 ),
               ),
             ),
@@ -559,13 +553,13 @@ class _ConnectDiscRimPainter extends CustomPainter {
         disableAnimations ? 0.0 : Curves.easeInOut.transform(breathValue);
     final baseOpacity = enabled
         ? running
-            ? 0.36
-            : 0.16 + breath * 0.08
+            ? 0.40
+            : 0.18 + breath * 0.04
         : 0.08;
     final basePaint = Paint()
       ..isAntiAlias = true
       ..style = PaintingStyle.stroke
-      ..strokeWidth = running ? 3.2 : 2.2
+      ..strokeWidth = running ? 2.8 : 1.8
       ..color = accent.withValues(alpha: baseOpacity);
 
     canvas.drawCircle(center, radius, basePaint);
@@ -575,7 +569,7 @@ class _ConnectDiscRimPainter extends CustomPainter {
         ..isAntiAlias = true
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = 4
+        ..strokeWidth = 3.2
         ..color = accent.withValues(alpha: disableAnimations ? 0.42 : 0.74);
       final rect = Rect.fromCircle(center: center, radius: radius);
       final startAngle = PokrovConnectDiscMotion.sweepStartAngle(
@@ -593,7 +587,7 @@ class _ConnectDiscRimPainter extends CustomPainter {
       final warningPaint = Paint()
         ..isAntiAlias = true
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
+        ..strokeWidth = 2.4
         ..color = _SeedPalette.warning.withValues(alpha: 0.72);
       canvas.drawCircle(center, radius - 1.5, warningPaint);
     } else if (running && enabled) {
@@ -601,7 +595,7 @@ class _ConnectDiscRimPainter extends CustomPainter {
         ..isAntiAlias = true
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = 4
+        ..strokeWidth = 3.1
         ..color = accent.withValues(alpha: 0.56);
       final rect = Rect.fromCircle(center: center, radius: radius);
       canvas.drawArc(
