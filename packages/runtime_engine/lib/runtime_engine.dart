@@ -471,7 +471,9 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   String? _stagedConfigPath;
   RuntimePhase _phase = RuntimePhase.artifactMissing;
   String _message = _missingArtifactMessage;
-  bool _preferWindowsSystemProxy = true;
+  // System proxy is a compatibility-only path; device-wide modes must stay
+  // TUN-backed so Full tunnel and All-except-RU do not leak non-proxy traffic.
+  bool _preferWindowsSystemProxy = false;
 
   static const defaultLibcoreTag = 'v3.1.8';
   static const _missingArtifactMessage =
@@ -903,8 +905,10 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       RouteMode.selectedApps => 'global',
       RouteMode.fullTunnel => 'global',
     };
-    final systemProxyMode =
-        hostPlatform == HostPlatform.windows && _preferWindowsSystemProxy;
+    final allowsSystemProxyMode = payload.routeMode == RouteMode.selectedApps;
+    final systemProxyMode = hostPlatform == HostPlatform.windows &&
+        _preferWindowsSystemProxy &&
+        allowsSystemProxyMode;
     final directDnsAddress =
         payload.routeMode == RouteMode.allExceptRu ? 'local' : 'udp://1.1.1.1';
 
