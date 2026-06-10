@@ -11,6 +11,31 @@ const _ruDomainCategoryRuleSetTag = 'pokrov-ru-domain-category';
 const _ruIpCountryRuleSetTag = 'pokrov-ru-ip-country';
 const _ruIpWhitelistRuleSetTag = 'pokrov-ru-ip-whitelist';
 
+const _validClientUpdateSha256 =
+    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
+ClientAppUpdateInfo _clientUpdateInfo({
+  String url =
+      'https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.1-beta/pokrov-android-universal.apk',
+  String sha256 = _validClientUpdateSha256,
+  int size = 123456,
+  String updatePolicy = 'recommended',
+}) {
+  return ClientAppUpdateInfo(
+    platform: 'android',
+    channel: 'beta',
+    latestVersion: '1.0.1-beta',
+    minSupportedVersion: '1.0.0-beta',
+    updatePolicy: updatePolicy,
+    url: url,
+    sha256: sha256,
+    size: size,
+    releaseNotes: 'Small beta fixes.',
+    releaseNotesUrl: '',
+    publishedAt: '2026-06-07T00:00:00Z',
+  );
+}
+
 String _expectedRuleSetCachePath(Directory tempDirectory, String fileName) {
   return '${tempDirectory.path}${Platform.pathSeparator}'
       'pokrov-runtime${Platform.pathSeparator}'
@@ -71,6 +96,35 @@ Map<String, Object?> _supportMessageJson({
 }
 
 void main() {
+  group('ClientAppUpdateInfo', () {
+    test('prompts only for trusted https downloads with checksum metadata', () {
+      expect(_clientUpdateInfo().shouldPrompt, isTrue);
+      expect(
+        _clientUpdateInfo(
+          url: 'http://github.com/example/pokrov/releases/download/app.apk',
+        ).shouldPrompt,
+        isFalse,
+      );
+      expect(
+        _clientUpdateInfo(url: 'https://evil.example/pokrov.apk').shouldPrompt,
+        isFalse,
+      );
+      expect(
+        _clientUpdateInfo(
+          url: 'https://github.com/attacker/pokrov/releases/download/app.apk',
+        ).shouldPrompt,
+        isFalse,
+      );
+      expect(
+        _clientUpdateInfo(url: 'intent://github.com/pokrov.apk').shouldPrompt,
+        isFalse,
+      );
+      expect(_clientUpdateInfo(sha256: '').shouldPrompt, isFalse);
+      expect(_clientUpdateInfo(sha256: 'not-a-sha256').shouldPrompt, isFalse);
+      expect(_clientUpdateInfo(size: 0).shouldPrompt, isFalse);
+    });
+  });
+
   test(
       'android bootstrap can map canonical API host to a direct control-plane IP',
       () {

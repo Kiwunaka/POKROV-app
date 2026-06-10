@@ -774,11 +774,49 @@ class ClientAppUpdateInfo {
   final String releaseNotesUrl;
   final String publishedAt;
 
+  static final RegExp _sha256Pattern = RegExp(r'^[a-fA-F0-9]{64}$');
+
+  bool get hasTrustedDownloadUrl {
+    final uri = Uri.tryParse(url.trim());
+    if (uri == null ||
+        uri.scheme.toLowerCase() != 'https' ||
+        uri.host.trim().isEmpty ||
+        uri.userInfo.isNotEmpty) {
+      return false;
+    }
+    return _isTrustedClientDownloadUri(uri);
+  }
+
+  bool get hasValidSha256 => _sha256Pattern.hasMatch(sha256.trim());
+
+  bool get hasExpectedDownloadSize => size > 0;
+
   bool get shouldPrompt =>
-      url.trim().isNotEmpty &&
+      hasTrustedDownloadUrl &&
+      hasValidSha256 &&
+      hasExpectedDownloadSize &&
       (updatePolicy == 'recommended' || updatePolicy == 'required');
 
   bool get isRequired => updatePolicy == 'required';
+
+  static bool _isTrustedClientDownloadUri(Uri uri) {
+    final normalizedHost = uri.host.toLowerCase();
+    if (normalizedHost == 'github.com') {
+      return _isPokrovGitHubReleasePath(uri.pathSegments);
+    }
+    return normalizedHost == 'pokrov.space' ||
+        normalizedHost.endsWith('.pokrov.space');
+  }
+
+  static bool _isPokrovGitHubReleasePath(List<String> pathSegments) {
+    if (pathSegments.length < 5) {
+      return false;
+    }
+    return pathSegments[0].toLowerCase() == 'kiwunaka' &&
+        pathSegments[1].toLowerCase() == 'pokrov-app' &&
+        pathSegments[2].toLowerCase() == 'releases' &&
+        pathSegments[3].toLowerCase() == 'download';
+  }
 }
 
 class AppFirstBonusHistoryItem {

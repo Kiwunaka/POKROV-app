@@ -731,6 +731,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         update.isRequired ? 'Нужно обновить POKROV' : 'Доступно обновление';
     final version = update.latestVersion.trim();
     final notes = update.releaseNotes.trim();
+    final checksum = update.sha256.trim().toLowerCase();
     try {
       await showDialog<void>(
         context: context,
@@ -751,6 +752,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                 if (notes.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(notes),
+                ],
+                if (checksum.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  SelectableText('SHA-256: $checksum'),
                 ],
               ],
             ),
