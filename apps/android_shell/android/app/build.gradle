@@ -7,6 +7,17 @@ plugins {
 
 def libcoreAar = file("libs/libcore.aar")
 
+def releaseStoreFile = System.getenv("POKROV_ANDROID_RELEASE_STORE_FILE")
+def releaseStorePassword = System.getenv("POKROV_ANDROID_RELEASE_STORE_PASSWORD")
+def releaseKeyAlias = System.getenv("POKROV_ANDROID_RELEASE_KEY_ALIAS")
+def releaseKeyPassword = System.getenv("POKROV_ANDROID_RELEASE_KEY_PASSWORD")
+def hasReleaseSigning = [
+    releaseStoreFile,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+].every { it }
+
 android {
     namespace = "space.pokrov.pokrov_android_shell"
     compileSdk = flutter.compileSdkVersion
@@ -29,12 +40,39 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        release {
+            if (hasReleaseSigning) {
+                storeFile = file(releaseStoreFile)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // Internal beta only. Public Android remains blocked until trusted
-            // signing and the physical localhost/control-surface audit pass.
-            signingConfig = signingConfigs.debug
+            // Public release builds must use production-controlled signing.
+            // Do not fall back to Android Debug signing for release artifacts.
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.release
+            }
         }
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    def releaseTaskRequested = graph.allTasks.any { task ->
+        task.name.toLowerCase().contains("release")
+    }
+
+    if (releaseTaskRequested && !hasReleaseSigning) {
+        throw new GradleException(
+            "Android release signing is required. Set POKROV_ANDROID_RELEASE_STORE_FILE, " +
+            "POKROV_ANDROID_RELEASE_STORE_PASSWORD, POKROV_ANDROID_RELEASE_KEY_ALIAS, and " +
+            "POKROV_ANDROID_RELEASE_KEY_PASSWORD; release builds must not use signingConfigs.debug."
+        )
     }
 }
 

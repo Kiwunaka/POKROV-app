@@ -7,8 +7,8 @@
   "version": "0.2.0-beta.1",
   "artifact_dir": "C:/Users/kiwun/Documents/ai/POKROV-app/artifacts/releases/pokrov-app/0.2.0-beta.1+20260604-rc-local",
   "generated_at": "2026-06-04T00:31:00+03:00",
-  "updated_at": "2026-06-04T05:14:33+03:00",
-  "release_state": "github_prerelease_assets_uploaded_runtime_handoff_green_manual_live_smoke_pending",
+  "updated_at": "2026-06-04T00:00:00Z",
+  "release_state": "github_prerelease_assets_uploaded_public_release_blocked_signing_required",
   "github_release": {
     "tag": "v0.2.0-beta.1",
     "url": "https://github.com/Kiwunaka/POKROV-app/releases/tag/v0.2.0-beta.1",
@@ -32,21 +32,21 @@
   },
   "runtime_env": {
     "APP_ANDROID_PLAY_URL": "",
-    "APP_ANDROID_APK_URL": "https://github.com/Kiwunaka/POKROV-app/releases/download/v0.2.0-beta.1/pokrov-android-universal.apk",
+    "APP_ANDROID_APK_URL": "",
     "APP_ANDROID_MIRROR_URL": "",
-    "APP_WINDOWS_EXE_URL": "https://github.com/Kiwunaka/POKROV-app/releases/download/v0.2.0-beta.1/pokrov-windows-setup-x64.exe",
+    "APP_WINDOWS_EXE_URL": "",
     "APP_WINDOWS_MIRROR_URL": "",
     "APP_DOCS_URL": "https://pokrov.space/install/"
   },
   "cutover": {
-    "runtime_sync_allowed": true,
+    "runtime_sync_allowed": false,
     "runtime_sync_required": false,
-    "runtime_sync_result": "not_required_urls_unchanged_live_client_apps_green",
-    "public_publication_allowed": true,
-    "public_publication_marker": "GO for public beta publication",
+    "runtime_sync_result": "blocked_unsigned_or_debug_signed_public_artifacts",
+    "public_publication_allowed": false,
+    "public_publication_marker": "BLOCKED: production Android signing and trusted Windows signing required before public release/runtime sync",
     "public_announcement_allowed": false,
     "paid_checkout_allowed": false,
-    "reason": "GitHub prerelease assets were refreshed and URL-smoked; live brain-origin /api/client/apps already exposes the same GitHub URLs, so no APP_* mutation was required for this refresh. Real-user Telegram/WebApp and live install smoke remain manual."
+    "reason": "Public release and runtime sync are blocked because Android artifacts are signed with the Android Debug certificate and Windows artifacts are unsigned. Production-controlled Android signing and trusted Windows signing must be verified before any public download URLs are synced into runtime APP_* values."
   },
   "public_url_smoke": {
     "current_origin": {
@@ -83,9 +83,9 @@
   "owner_decisions": [
     {
       "date": "2026-06-04",
-      "decision": "current_outside_store_beta_release_allowed_without_production_android_signing_or_trusted_windows_signing",
-      "scope": "current 0.2.0-beta.1 outside-store beta only",
-      "required_copy": "must not claim trusted signing, store readiness, SmartScreen reputation, or stable release"
+      "decision": "block_public_release_and_runtime_sync_until_production_android_signing_and_trusted_windows_signing_are_verified",
+      "scope": "0.2.0-beta.1 outside-store beta artifacts and any public/runtime handoff",
+      "required_copy": "must not direct users to install debug-signed Android or unsigned Windows artifacts as public release downloads"
     }
   ],
   "client_repo": {
@@ -106,8 +106,8 @@
       "platform": "android",
       "format": "apk",
       "signing_state": "internal_beta_debug_signing_release_build",
-      "public_release_allowed": true,
-      "publication_gate": "operator_upload_public_url_smoke_and_runtime_sync_required"
+      "public_release_allowed": false,
+      "publication_gate": "blocked_until_production_android_signing_verified"
     },
     {
       "name": "pokrov-android-store-smoke-0.2.0-beta.1+20260604.aab",
@@ -122,8 +122,8 @@
       "platform": "windows",
       "format": "installer",
       "signing_state": "unsigned_beta",
-      "public_release_allowed": true,
-      "publication_gate": "operator_upload_public_url_smoke_unsigned_warning_and_runtime_sync_required"
+      "public_release_allowed": false,
+      "publication_gate": "blocked_until_trusted_windows_signing_verified"
     },
     {
       "name": "pokrov-windows-beta-x64-0.2.0-beta.1+20260604.zip",
@@ -189,15 +189,14 @@
       "public_release_signing": false
     }
   },
-  "accepted_skips_for_current_outside_store_beta": [
-    "ANDROID_PRODUCTION_SIGNING",
-    "WINDOWS_TRUSTED_SIGNING"
-  ],
+  "accepted_skips_for_current_outside_store_beta": [],
   "manual_gates_before_public_release": [
+    "WINDOWS_TRUSTED_SIGNING",
+    "ANDROID_PRODUCTION_SIGNING",
     "ANDROID_PHYSICAL_RELEASE_BUILD_LOCALHOST_AUDIT",
     "REAL_USER_TELEGRAM_WEBAPP_CHECK",
     "RU_ORIGIN_PROBE_IF_CLAIMED",
     "LIVE_INSTALL_AND_CONNECT_SMOKE"
   ],
-  "runtime_sync_allowed": true
+  "runtime_sync_allowed": false
 }

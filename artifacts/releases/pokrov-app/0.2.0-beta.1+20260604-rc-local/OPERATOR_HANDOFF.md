@@ -4,13 +4,13 @@ Generated: 2026-06-04
 
 ## Decision
 
-This folder records the refreshed GitHub prerelease assets and remains the
-operator handoff source for runtime sync.
-Owner decision on 2026-06-04: this current outside-store beta release is
-allowed without production Android signing and without trusted Windows signing.
-GitHub upload, current-origin URL smoke, and brain-origin runtime handoff smoke
-passed on 2026-06-04. No runtime `APP_*` mutation was required because the
-public URLs stayed stable.
+This folder records the refreshed GitHub prerelease assets, but it is blocked
+from public release and runtime sync until production Android signing and
+trusted Windows signing are verified.
+Owner decision on 2026-06-04: debug-signed Android artifacts and unsigned
+Windows artifacts must not be offered as public release downloads. GitHub
+upload, current-origin URL smoke, and brain-origin runtime handoff smoke do not
+override the signing block.
 
 ## Payload candidates
 
@@ -35,8 +35,8 @@ download payload.
 - Windows setup EXE and runner EXE are unsigned.
 - Windows ZIP contains `pokrov_windows_beta.exe`, `libcore.dll`,
   `flutter_windows.dll`, `data/app.so`, and `data/icudtl.dat`.
-- Unsigned/untrusted signing state is an accepted skip for this current
-  outside-store beta only.
+- Unsigned/untrusted signing state is a blocking gate before public release or
+  runtime sync.
 - GitHub prerelease `v0.2.0-beta.1` was refreshed with:
   - `pokrov-android-universal.apk`
   - `pokrov-windows-setup-x64.exe`
@@ -56,16 +56,17 @@ download payload.
 7. Confirm the unsigned SmartScreen/unknown-publisher warning copy is visible where needed.
 8. Run start-trial -> profile -> connect -> dashboard on Windows.
 9. Test support chat, cabinet handoff, redeem code, Telegram bonus, and checkout continuation.
-10. Decide whether the exact APK and Windows setup EXE are approved for public beta upload.
+10. Verify production Android signing and trusted Windows signing before any public beta upload or runtime sync.
 
 ## Remaining live smoke gate
 
-GitHub upload and runtime URL handoff are complete. Before announcement:
+GitHub upload and runtime URL handoff are not sufficient for release. Before any public announcement or runtime sync:
 
-- beta warnings match the signing state;
-- real-user Telegram/WebApp check is recorded.
+- production Android signing is verified;
+- trusted Windows signing is verified;
+- real-user Telegram/WebApp check is recorded;
 - live install -> start-trial -> profile -> connect smoke is recorded on the
-  exact public APK/EXE.
+  exact production-signed APK/EXE.
 
 ## Claims allowed after this handoff
 
@@ -73,8 +74,8 @@ GitHub upload and runtime URL handoff are complete. Before announcement:
 - Local Android store-smoke AAB exists.
 - Local Windows unsigned setup and ZIP exist.
 - Local checksums and signing truth are recorded.
-- Current outside-store beta may be released without production Android signing
-  and without trusted Windows signing after upload/runtime/manual smoke gates.
+- Current outside-store beta remains blocked until production Android signing
+  and trusted Windows signing are verified.
 
 ## Claims still not allowed
 

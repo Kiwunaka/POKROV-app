@@ -43,21 +43,22 @@ It is not a store, stable, or trusted-signing release by itself.
   a trusted public certificate chain.
 - Windows setup EXE is `NotSigned`.
 - The staged Windows runner EXE is also `NotSigned`.
-- Owner decision on 2026-06-04: the current outside-store beta release is
-  allowed without production Android signing and without trusted Windows
-  signing, as long as public copy does not claim trusted/store distribution.
+- Owner decision on 2026-06-04: public release and runtime sync are blocked
+  until production Android signing and trusted Windows signing are verified.
+  Debug-signed Android artifacts and unsigned Windows artifacts must not be
+  offered as public release downloads.
 
 ## Remaining release gates
 
 - Production Android signing inputs are not configured in this local handoff,
-  and are an accepted skip for the current outside-store beta.
+  and are a blocking gate before public release or runtime sync.
 - Android physical-device release-build localhost/control-surface audit remains `MANUAL_OWNER_TEST`.
-- Windows trusted signing is not configured and is an accepted skip for the
-  current outside-store beta; unsigned-warning copy remains required.
+- Windows trusted signing is not configured and is a blocking gate before
+  public release or runtime sync.
 - Public upload, public download smoke, real-user Telegram/WebApp check, and live runtime sync remain operator release tasks.
 - Public GitHub upload, current-origin public URL smoke, and brain-origin
-  `/api/client/apps` smoke passed on 2026-06-04. No runtime `APP_*` mutation
-  was required because the public URLs stayed stable.
+  `/api/client/apps` smoke were recorded on 2026-06-04, but those checks do not
+  override the signing block for public release or runtime sync.
 - RU-origin proof remains manual and must not be claimed from this package alone.
 - WARP remains an info/roadmap feature, not an enabled production feature.
 
