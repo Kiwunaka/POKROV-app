@@ -7,6 +7,12 @@ plugins {
 
 def libcoreAar = file("libs/libcore.aar")
 
+def releaseKeystorePath = System.getenv("POKROV_ANDROID_RELEASE_KEYSTORE")
+def releaseKeystorePassword = System.getenv("POKROV_ANDROID_RELEASE_KEYSTORE_PASSWORD")
+def releaseKeyAlias = System.getenv("POKROV_ANDROID_RELEASE_KEY_ALIAS")
+def releaseKeyPassword = System.getenv("POKROV_ANDROID_RELEASE_KEY_PASSWORD")
+def hasProductionReleaseSigning = releaseKeystorePath && releaseKeystorePassword && releaseKeyAlias && releaseKeyPassword
+
 android {
     namespace = "space.pokrov.pokrov_android_shell"
     compileSdk = flutter.compileSdkVersion
@@ -29,11 +35,23 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasProductionReleaseSigning) {
+            release {
+                storeFile = file(releaseKeystorePath)
+                storePassword = releaseKeystorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // Internal beta only. Public Android remains blocked until trusted
-            // signing and the physical localhost/control-surface audit pass.
-            signingConfig = signingConfigs.debug
+            // Public Android artifacts must use operator-provided production
+            // signing. Without those credentials, release outputs are left
+            // unsigned and remain internal/operator-only.
+            signingConfig = hasProductionReleaseSigning ? signingConfigs.release : null
         }
     }
 }

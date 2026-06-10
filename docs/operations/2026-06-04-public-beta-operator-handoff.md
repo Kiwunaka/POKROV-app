@@ -15,10 +15,10 @@ RC folder:
 
 - Stage 0 local exact-candidate package: `DONE`
 - Stage 1 operator artifact review: `READY_FOR_OWNER`
-- Stage 2 Android public-beta gate: `UNSIGNED_RELEASE_APPROVED_BY_OWNER_MANUAL_TEST_PENDING`
-- Stage 3 Windows public-beta gate: `UNSIGNED_RELEASE_APPROVED_BY_OWNER_MANUAL_TEST_PENDING`
-- Stage 4 public artifact upload: `DONE_GITHUB_PRERELEASE_REFRESHED`
-- Stage 5 runtime handoff sync: `DONE_URLS_UNCHANGED_BRAIN_SMOKE_PASS`
+- Stage 2 Android public-beta gate: `BLOCKED_PENDING_PRODUCTION_SIGNING`
+- Stage 3 Windows public-beta gate: `BLOCKED_PENDING_TRUSTED_SIGNING`
+- Stage 4 public artifact upload: `BLOCKED_PENDING_SIGNED_ARTIFACTS`
+- Stage 5 runtime handoff sync: `BLOCKED_PENDING_SIGNED_ARTIFACTS`
 - Stage 6 live beta smoke: `MANUAL_OWNER_TEST`
 - Stage 7 release note and monitoring: `PENDING`
 
@@ -38,32 +38,33 @@ RC folder:
 - Windows setup EXE Authenticode status: `NotSigned`.
 - Windows runner EXE Authenticode status: `NotSigned`.
 - Windows ZIP contains the expected runner/runtime files.
-- GitHub prerelease `v0.2.0-beta.1` was refreshed with canonical public asset
-  names:
+- GitHub prerelease `v0.2.0-beta.1` must not be used for public distribution
+  until it is refreshed with signed canonical public asset names:
   - `pokrov-android-universal.apk`
   - `pokrov-windows-setup-x64.exe`
-- Current-origin public URL smoke returned `206` for both asset URLs.
+- Current-origin URL smoke is not sufficient for public approval while signing
+  is blocked.
 - `gh release download` returned files whose SHA-256 values match the local RC.
-- Brain-origin `/api/client/apps` smoke passed and returned the same GitHub
-  Android APK URL, Windows EXE URL, and install docs URL.
-- Public-beta external-access preflight now passes the publication policy,
-  runtime smoke, GitHub auth, staged payload, and unsigned Windows risk checks.
-  Its overall classification remains `BLOCKED_BY_ACCESS` only because
-  `EMAIL_PROBE_TO` and `LAVATOP_PROBE_EMAIL` are not present for live
-  email/Lava post-deploy probes.
+- Brain-origin `/api/client/apps` must not advertise Android/Windows public beta
+  URLs until signed replacement artifacts are available.
+- Public-beta external-access preflight remains blocked by the publication policy
+  until production Android signing and trusted Windows signing are verified.
+  Email and Lava live probes are still additional post-signing gates when
+  `EMAIL_PROBE_TO` and `LAVATOP_PROBE_EMAIL` are available.
 
 ## Owner Decision
 
-On 2026-06-04, the owner approved the current outside-store beta release
-without production Android signing and without trusted Windows signing.
+On 2026-06-04, public Android/Windows distribution is blocked until production
+Android signing and trusted Windows signing are configured and verified.
 
-This approval is limited to the current `0.2.0-beta.1` outside-store beta. It
-does not authorize Play/App Store claims, trusted Windows signing claims,
-SmartScreen reputation claims, or stable release labeling.
+Debug-signed Android artifacts and unsigned Windows artifacts are limited to
+internal/operator testing. They do not authorize outside-store public beta,
+Play/App Store claims, trusted Windows signing claims, SmartScreen reputation
+claims, or stable release labeling.
 
 ## Payload Decision
 
-Recommended gated beta payloads:
+Internal/operator-only payloads until signing gates pass:
 
 - Android:
   `pokrov-android-release-smoke-0.2.0-beta.1+20260604.apk`
@@ -80,14 +81,12 @@ Operator-only retained payloads:
 ## Manual Test Checklist
 
 - Android physical install from the exact APK.
-- Android production signing is an accepted skip for this beta; keep the
-  outside-store beta label explicit.
+- Android production signing must be verified before any public beta upload.
 - Android start-trial -> managed profile -> connect -> dashboard.
 - Android disconnect/reconnect.
 - Android localhost/control-surface audit on the exact installed build.
 - Windows install from the exact setup EXE.
-- Windows trusted signing is an accepted skip for this beta; keep the
-  SmartScreen/unknown-publisher warning explicit.
+- Windows trusted signing must be verified before any public beta upload.
 - Windows start-trial -> managed profile -> connect -> dashboard.
 - Windows disconnect/reconnect.
 - Support chat create/reply with redacted diagnostics.
@@ -98,16 +97,17 @@ Operator-only retained payloads:
 
 ## Runtime Handoff Result
 
-Runtime `APP_*` mutation was not required for this refresh because the public
-GitHub URLs stayed stable. The brain-origin smoke artifact is:
+Runtime `APP_*` URLs must not be treated as public Android/Windows download
+truth until signed replacement artifacts are uploaded and verified. The
+brain-origin smoke artifact is retained as historical evidence only:
 
 `C:/Users/kiwun/Documents/ai/VPN/docs/audit-artifacts/runtime-app-download-smoke-brain-2026-06-04-rc-refresh.json`
 
 Before announcement:
 
 - smoke `brain-origin` and `RU-origin` only when those claims are needed;
-- verify app, bot, cabinet, and download surfaces show the same version, URLs,
-  and beta warnings.
+- verify app, bot, cabinet, and download surfaces show the same signed version,
+  URLs, and beta warnings after signing gates pass.
 - run email and Lava live probes when `EMAIL_PROBE_TO` and
   `LAVATOP_PROBE_EMAIL` are available, or keep paid/email maturity claims out
   of the release note.
@@ -116,8 +116,8 @@ Before announcement:
 
 Allowed:
 
-- outside-store Android + Windows beta;
-- unsigned Windows beta with warning;
+- internal/operator-only Android + Windows testing;
+- signed public beta only after production Android and trusted Windows signing gates pass;
 - local RC evidence;
 - Android operator/physical test pending until attached.
 
