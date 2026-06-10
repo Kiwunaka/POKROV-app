@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "last_updated": "2026-06-07",
+  "last_updated": "2026-06-08",
   "purpose": "stable root-repo handoff source for canonical client-lane identity and latest repo-backed release metadata",
   "repo": {
     "name": "POKROV-app",
@@ -13,7 +13,7 @@
     ]
   },
   "release_truth": {
-    "public_cutover_allowed": true,
+    "public_cutover_allowed": false,
     "canonical_development_repo": "C:/Users/kiwun/Documents/ai/POKROV-app",
     "active_release_metadata_root": "C:/Users/kiwun/Documents/ai/POKROV-app/artifacts/releases",
     "retained_bridge_archive_root": "C:/Users/kiwun/Documents/ai/POKROV-app/artifacts/releases/bridge/0.9.0-beta+20508",
@@ -22,14 +22,14 @@
     "cutover_readiness_source": "config/cutover-readiness.seed.json"
   },
   "latest_repo_backed_release": {
-    "channel": "outside_store_public_beta",
+    "channel": "gated_internal_beta",
     "version": "1.0.0-beta",
-    "public_release_repo": "Kiwunaka/pokrov",
-    "archive_root": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta",
-    "readme": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta",
-    "checksums": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/SHA256SUMS.txt",
-    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta",
-    "runtime_sync_allowed": true,
+    "public_release_repo": "",
+    "archive_root": "",
+    "readme": "",
+    "checksums": "",
+    "github_release": "",
+    "runtime_sync_allowed": false,
     "public_announcement_allowed": false,
     "paid_checkout_allowed": false,
     "artifacts": [
@@ -38,24 +38,24 @@
         "kind": "apk",
         "abi": "arm64-v8a",
         "file_name": "pokrov-android-arm64-v8a.apk",
-        "url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-android-arm64-v8a.apk",
+        "url": "",
         "sha256": "001D41B520035BE5D10E6409DDCEA45FCE39E70BC97B0D336D2F180B52D0AAB2",
         "size_bytes": 64868001,
-        "canonical_label": "android_outside_store_beta_apk_arm64_default",
-        "evidence_state": "OPERATOR_ATTESTED_MANUAL_LIVE_SMOKE_PENDING",
-        "public_approved": true
+        "canonical_label": "android_gated_internal_beta_apk_arm64_default",
+        "evidence_state": "GATED_INTERNAL_BETA_BLOCKED_UNTIL_PRODUCTION_SIGNING",
+        "public_approved": false
       },
       {
         "platform": "android",
         "kind": "apk",
         "abi": "armeabi-v7a",
         "file_name": "pokrov-android-armeabi-v7a.apk",
-        "url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-android-armeabi-v7a.apk",
+        "url": "",
         "sha256": "53FF8A76EEC97DDE1F6638E3079670087E2455DB0169912AFEF0D9945B48FDB5",
         "size_bytes": 58858195,
-        "canonical_label": "android_outside_store_beta_apk_armv7_legacy",
-        "evidence_state": "OPERATOR_ATTESTED_MANUAL_LIVE_SMOKE_PENDING",
-        "public_approved": true
+        "canonical_label": "android_gated_internal_beta_apk_armv7_legacy",
+        "evidence_state": "GATED_INTERNAL_BETA_BLOCKED_UNTIL_PRODUCTION_SIGNING",
+        "public_approved": false
       },
       {
         "platform": "android",
@@ -68,39 +68,41 @@
         "platform": "windows",
         "kind": "exe",
         "file_name": "pokrov-windows-setup-x64.exe",
-        "url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-windows-setup-x64.exe",
+        "url": "",
         "sha256": "A67A79C3D2990896B6F392056B9DBEEA672DFFD3DF070119813ECDD9DB61B6F5",
         "size_bytes": 28311552,
-        "canonical_label": "windows_unsigned_outside_store_beta_exe",
-        "evidence_state": "UNSIGNED_BETA_RISK_ACCEPTED_MANUAL_LIVE_SMOKE_PENDING",
-        "public_approved": true
+        "canonical_label": "windows_unsigned_gated_internal_beta_exe",
+        "evidence_state": "GATED_INTERNAL_BETA_BLOCKED_UNTIL_TRUSTED_SIGNING",
+        "public_approved": false
       },
       {
         "platform": "windows",
         "kind": "zip",
         "file_name": "pokrov-windows-portable-x64.zip",
-        "url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-windows-portable-x64.zip",
+        "url": "",
         "sha256": "D3C9916F2F1F668214C77B499A437FB05174BB600DF2879DBBEC85A9246FCEB6",
         "size_bytes": 28402804,
         "canonical_label": "windows_portable_zip_not_first_layer_public_distribution",
-        "public_approved": false
+        "public_approved": false,
+        "evidence_state": "GATED_INTERNAL_BETA_BLOCKED_UNTIL_TRUSTED_SIGNING"
       },
       {
         "platform": "windows",
         "kind": "manifest",
         "file_name": "pokrov-windows-1.0.0-beta.manifest.json",
-        "url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta/pokrov-windows-1.0.0-beta.manifest.json",
+        "url": "",
         "sha256": "29E3504065105880E0D124DD7730FE3CE57A6245B08E5E77126638E2A0E496DF",
         "size_bytes": 3381,
-        "canonical_label": "windows_unsigned_outside_store_beta_manifest",
-        "public_approved": false
+        "canonical_label": "windows_unsigned_gated_internal_beta_manifest",
+        "public_approved": false,
+        "evidence_state": "GATED_INTERNAL_BETA_BLOCKED_UNTIL_TRUSTED_SIGNING"
       }
     ],
     "asset_refresh_utc": "2026-06-07T22:02:29Z",
-    "github_repo_visibility": "public",
-    "anonymous_download_smoke": "PASS_PUBLIC_GITHUB_RELEASES_206_HOTFIX",
-    "authenticated_github_release_smoke": "PASS_GH_RELEASE_DOWNLOAD_ALL_ASSETS",
-    "live_app_session_download_smoke": "PASS_BRAIN_SIGNED_SYNTHETIC_INITDATA_REAL_USER_MANUAL_PENDING_HOTFIX",
+    "github_repo_visibility": "gated_internal_beta",
+    "anonymous_download_smoke": "BLOCKED_PUBLIC_RELEASE_REQUIRES_TRUSTED_SIGNING",
+    "authenticated_github_release_smoke": "BLOCKED_PUBLIC_RELEASE_REQUIRES_TRUSTED_SIGNING",
+    "live_app_session_download_smoke": "BLOCKED_UNSIGNED_PUBLIC_ASSETS",
     "built_from_client_commit": "b30e8ca970842b3eba46790ce89a96ce7f9200d6",
     "phase6_verification": {
       "focused_flutter_tests": "PASS: packages/app_shell 91 passed",
@@ -108,21 +110,26 @@
       "root_client_gate_preflight": "PASS",
       "android_release_apk_build": "PASS: flutter build apk --release --split-per-abi --target-platform android-arm,android-arm64",
       "windows_unsigned_packaging": "PASS: scripts/build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze",
-      "github_asset_upload": "PASS: gh release upload v1.0.0-beta --repo Kiwunaka/pokrov --clobber split APK and Windows assets",
-      "anonymous_github_download": "PASS: unauthenticated curl range returned 206 for ARM64 APK, ARMv7 APK, EXE, ZIP, manifest, and SHA256SUMS on Kiwunaka/pokrov",
-      "authenticated_checksum_download": "PASS",
-      "authenticated_all_asset_download": "PASS: public GitHub release asset digests match retained SHA-256 values for split APK and Windows assets",
+      "github_asset_upload": "BLOCKED: public release/runtime download sync requires Android production signing and Windows trusted signing",
+      "anonymous_github_download": "BLOCKED: public release/runtime download sync requires Android production signing and Windows trusted signing",
+      "authenticated_checksum_download": "BLOCKED: public release/runtime download sync requires Android production signing and Windows trusted signing",
+      "authenticated_all_asset_download": "BLOCKED: public release/runtime download sync requires Android production signing and Windows trusted signing",
       "android_toolchain_refresh": "PASS: Gradle 8.11.1, AGP 8.9.1, Kotlin 2.1.0",
-      "runtime_app_download_smoke": "PASS: brain-local signed /api/client/apps returned split APK variants, hashes, sizes, Windows EXE, and docs URL",
+      "runtime_app_download_smoke": "BLOCKED: public release/runtime download sync requires Android production signing and Windows trusted signing",
       "hotfix_20260608_backend_live_start_trial": "PASS: fresh install sync_ok=true and managed provisioning.ready after backend deploy",
       "hotfix_20260608_client_tests": "PASS: runtime_engine flutter test, app_shell flutter test, targeted backend API tests",
       "hotfix_20260608_windows_packaging": "PASS: scripts/build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze",
       "hotfix_20260608_android_split_apk_build": "PASS: flutter build apk --release --split-per-abi --target-platform android-arm,android-arm64",
-      "hotfix_20260608_github_asset_upload": "PASS: gh release upload --clobber refreshed public release assets",
-      "hotfix_20260608_public_url_range": "PASS: curl -L -r 0-0 returned 206 for all public assets after retrying ARMv7 transient",
-      "hotfix_20260608_runtime_app_download_smoke": "PASS: /api/client/apps exposes hotfix hashes and split APK variants after handoff sync"
+      "hotfix_20260608_github_asset_upload": "BLOCKED: public release/runtime download sync requires Android production signing and Windows trusted signing",
+      "hotfix_20260608_public_url_range": "BLOCKED: public release/runtime download sync requires Android production signing and Windows trusted signing",
+      "hotfix_20260608_runtime_app_download_smoke": "BLOCKED: public release/runtime download sync requires Android production signing and Windows trusted signing"
     },
-    "runtime_sync_result": "PASS_BRAIN_RUNTIME_APP_DOWNLOAD_SMOKE_HOTFIX_REAL_USER_MANUAL_PENDING"
+    "runtime_sync_result": "BLOCKED_UNSIGNED_PUBLIC_ASSETS",
+    "public_release_blockers": [
+      "ANDROID_PRODUCTION_SIGNING",
+      "WINDOWS_TRUSTED_SIGNING",
+      "SIGNED_ARTIFACT_PUBLIC_URL_SMOKE"
+    ]
   },
   "stable_consumption_notes": [
     "Root-repo docs and handoff automation should read this file instead of hard-coding bootstrap lane names or scanning versioned artifact folders.",

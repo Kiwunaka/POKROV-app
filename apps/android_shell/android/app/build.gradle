@@ -7,6 +7,16 @@ plugins {
 
 def libcoreAar = file("libs/libcore.aar")
 
+def releaseKeystorePath = System.getenv("POKROV_ANDROID_RELEASE_KEYSTORE")
+def releaseKeystorePassword = System.getenv("POKROV_ANDROID_RELEASE_KEYSTORE_PASSWORD")
+def releaseKeyAlias = System.getenv("POKROV_ANDROID_RELEASE_KEY_ALIAS")
+def releaseKeyPassword = System.getenv("POKROV_ANDROID_RELEASE_KEY_PASSWORD")
+def hasProductionSigning = releaseKeystorePath && releaseKeystorePassword && releaseKeyAlias && releaseKeyPassword
+def allowInternalBetaDebugSigning = providers.gradleProperty("pokrov.allowInternalBetaDebugSigning")
+        .map { it.toBoolean() }
+        .orElse(false)
+        .get()
+
 android {
     namespace = "space.pokrov.pokrov_android_shell"
     compileSdk = flutter.compileSdkVersion
@@ -29,11 +39,26 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        production {
+            if (hasProductionSigning) {
+                storeFile = file(releaseKeystorePath)
+                storePassword = releaseKeystorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // Internal beta only. Public Android remains blocked until trusted
-            // signing and the physical localhost/control-surface audit pass.
-            signingConfig = signingConfigs.debug
+            if (hasProductionSigning) {
+                signingConfig = signingConfigs.production
+            } else if (allowInternalBetaDebugSigning) {
+                // Internal beta only. Public Android release handoffs remain
+                // blocked until trusted production signing is available.
+                signingConfig = signingConfigs.debug
+            }
         }
     }
 }
