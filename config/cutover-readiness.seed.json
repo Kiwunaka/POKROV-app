@@ -1,7 +1,7 @@
 {
   "lane": "POKROV-app/main",
-  "status": "outside_store_beta_uploaded_manual_live_smoke_pending",
-  "public_cutover_allowed": true,
+  "status": "outside_store_beta_uploaded_public_cutover_blocked_manual_live_smoke_pending",
+  "public_cutover_allowed": false,
   "last_updated": "2026-06-05",
   "latest_repo_backed_release": {
     "version": "1.0.0-beta",
@@ -14,7 +14,7 @@
   },
   "android_release": {
     "beta_distribution": "outside_store_apk_staged",
-    "public_approved": true,
+    "public_approved": false,
     "blocked_on": [
       "raw physical-device audit proof if replacing operator attestation",
       "real-user app-session /api/client/apps download smoke",
@@ -27,7 +27,7 @@
   },
   "windows_release": {
     "beta_distribution": "outside_store_unsigned_exe_staged",
-    "public_approved": true,
+    "public_approved": false,
     "required_user_warning": "Microsoft Defender SmartScreen or unknown-publisher warning is expected until trusted signing is complete.",
     "blocked_on": [
       "real-user app-session /api/client/apps download smoke",
@@ -39,7 +39,7 @@
     ]
   },
   "blocking_dependencies": [
-    "public announcement remains manual even though outside-store beta artifacts were refreshed",
+    "public announcement and cutover remain blocked until live smoke, artifact trust, and public hosting gates close",
     "real-user app-session runtime handoff smoke still requires owner access",
     "iOS production connectivity still requires on-device packet-tunnel proof plus reviewed entitlements",
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",

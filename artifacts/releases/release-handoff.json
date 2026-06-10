@@ -7,7 +7,7 @@
   "version": "1.0.0-beta",
   "generated_at": "2026-06-05T19:05:27+03:00",
   "updated_at": "2026-06-05T19:05:27+03:00",
-  "release_state": "github_prerelease_assets_refreshed_phase6_manual_live_smoke_pending",
+  "release_state": "github_prerelease_assets_refreshed_phase6_public_cutover_blocked_manual_live_smoke_pending",
   "built_from_client_commit": "c03ded35ea2dbb3e64377302d2744e640a802540",
   "github_release": {
     "tag": "v1.0.0-beta",
@@ -48,14 +48,14 @@
     "APP_DOCS_URL": "https://pokrov.space/install/"
   },
   "cutover": {
-    "runtime_sync_allowed": true,
+    "runtime_sync_allowed": false,
     "runtime_sync_required": true,
     "runtime_sync_result": "MANUAL_OWNER_TEST_APP_SESSION_REQUIRED",
-    "public_publication_allowed": true,
-    "public_publication_marker": "GO for outside-store beta with accepted skips; GitHub repo visibility is private",
+    "public_publication_allowed": false,
+    "public_publication_marker": "BLOCKED: manual app-session/live install smoke and artifact trust gates remain open; GitHub repo visibility is private",
     "public_announcement_allowed": false,
     "paid_checkout_allowed": false,
-    "reason": "Phase 6 refreshed v1.0.0-beta GitHub prerelease assets and hashes. Unauthenticated curl returns 404 because the GitHub repo is private; authenticated gh release download of SHA256SUMS passed. App-session /api/client/apps and live install/connect smoke remain manual owner tests."
+    "reason": "Phase 6 refreshed v1.0.0-beta GitHub prerelease assets and hashes, but public publication and runtime sync stay blocked. Unauthenticated curl returns 404 because the GitHub repo is private; authenticated gh release download of SHA256SUMS passed. App-session /api/client/apps and live install/connect smoke remain manual owner tests."
   },
   "public_url_smoke": {
     "current_origin": {
@@ -117,8 +117,8 @@
       "format": "apk",
       "signing_state": "internal_beta_debug_signing_release_build",
       "sha256": "EF5A0113C6B4571013593AFD0758D5784CA30134714770E44D2BCB02A81ACECF",
-      "public_release_allowed": true,
-      "publication_gate": "outside_store_beta_with_operator_attestation_manual_live_smoke_pending"
+      "public_release_allowed": false,
+      "publication_gate": "blocked_debug_signed_manual_live_smoke_pending"
     },
     {
       "name": "pokrov-windows-setup-x64.exe",
@@ -126,8 +126,8 @@
       "format": "installer",
       "signing_state": "unsigned_beta",
       "sha256": "40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433",
-      "public_release_allowed": true,
-      "publication_gate": "outside_store_beta_with_unsigned_warning_manual_live_smoke_pending"
+      "public_release_allowed": false,
+      "publication_gate": "blocked_unsigned_manual_live_smoke_pending"
     },
     {
       "name": "pokrov-windows-portable-x64.zip",
@@ -160,5 +160,5 @@
     "RU_ORIGIN_PROBE_IF_CLAIMED",
     "PRODUCTION_WARP_ANDROID_WINDOWS_RUNTIME_PROOF"
   ],
-  "runtime_sync_allowed": true
+  "runtime_sync_allowed": false
 }

@@ -13,7 +13,7 @@
     ]
   },
   "release_truth": {
-    "public_cutover_allowed": true,
+    "public_cutover_allowed": false,
     "canonical_development_repo": "C:/Users/kiwun/Documents/ai/POKROV-app",
     "active_release_metadata_root": "C:/Users/kiwun/Documents/ai/POKROV-app/artifacts/releases",
     "retained_bridge_archive_root": "C:/Users/kiwun/Documents/ai/POKROV-app/artifacts/releases/bridge/0.9.0-beta+20508",
@@ -22,13 +22,13 @@
     "cutover_readiness_source": "config/cutover-readiness.seed.json"
   },
   "latest_repo_backed_release": {
-    "channel": "outside_store_public_beta",
+    "channel": "outside_store_beta_manual_live_smoke_pending",
     "version": "1.0.0-beta",
     "archive_root": "https://github.com/Kiwunaka/POKROV-app/releases/tag/v1.0.0-beta",
     "readme": "https://github.com/Kiwunaka/POKROV-app/releases/tag/v1.0.0-beta",
     "checksums": "https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.0-beta/SHA256SUMS.txt",
     "github_release": "https://github.com/Kiwunaka/POKROV-app/releases/tag/v1.0.0-beta",
-    "runtime_sync_allowed": true,
+    "runtime_sync_allowed": false,
     "public_announcement_allowed": false,
     "paid_checkout_allowed": false,
     "artifacts": [
@@ -40,7 +40,7 @@
         "sha256": "EF5A0113C6B4571013593AFD0758D5784CA30134714770E44D2BCB02A81ACECF",
         "canonical_label": "android_outside_store_beta_apk",
         "evidence_state": "OPERATOR_ATTESTED_MANUAL_LIVE_SMOKE_PENDING",
-        "public_approved": true
+        "public_approved": false
       },
       {
         "platform": "android",
@@ -57,7 +57,7 @@
         "sha256": "40D345F139185F367B28A2B7FDDD48A486A0ACB4D34BE04CFFBB624496455433",
         "canonical_label": "windows_unsigned_outside_store_beta_exe",
         "evidence_state": "UNSIGNED_BETA_RISK_ACCEPTED_MANUAL_LIVE_SMOKE_PENDING",
-        "public_approved": true
+        "public_approved": false
       },
       {
         "platform": "windows",
