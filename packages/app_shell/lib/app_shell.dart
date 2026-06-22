@@ -110,20 +110,6 @@ class PokrovFileFirstLaunchStore implements PokrovFirstLaunchStore {
   }
 }
 
-abstract final class _SeedPalette {
-  static const canvas = PokrovPalette.canvas;
-  static const canvasAlt = PokrovPalette.canvasAlt;
-  static const ink = PokrovPalette.ink;
-  static const accent = PokrovPalette.accent;
-  static const accentBright = PokrovPalette.accentBright;
-  static const success = PokrovPalette.success;
-  static const warning = PokrovPalette.warning;
-  static const surface = PokrovPalette.surface;
-  static const surfaceMuted = PokrovPalette.surfaceMuted;
-  static const line = PokrovPalette.line;
-  static const muted = PokrovPalette.muted;
-}
-
 const _pokrovBrandMarkAsset = PokrovBrandAssets.mark;
 const _selectedAppsEnforcementReady = true;
 const _pokrovAppVersion = '1.0.0-beta.3';

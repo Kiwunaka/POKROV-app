@@ -20,6 +20,7 @@ class _RulesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final p = PokrovPalette.of(context);
     final routeChoices = appContext.runtimeProfile.supportedRouteModes;
     final selectedAppsActive = routeChoices.contains(RouteMode.selectedApps);
     final selectedAppsStaged =
@@ -51,7 +52,7 @@ class _RulesSection extends StatelessWidget {
         Text('Правила подключения', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),
         _SectionCard(
-          title: 'Что идет через POKROV?',
+          title: 'Режим работы',
           tone: _SectionTone.accent,
           lines: ['Сейчас: ${_routeModeShortLabel(selectedRouteMode)}'],
           child: Column(
@@ -67,7 +68,7 @@ class _RulesSection extends StatelessWidget {
                 child: Text(
                   _routeModeRowSummary(selectedRouteMode),
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: _SeedPalette.muted,
+                    color: p.muted,
                     height: 1.32,
                   ),
                 ),
@@ -87,7 +88,7 @@ class _RulesSection extends StatelessWidget {
                     selectedAppsActive
                         ? '${_routeModeShortLabel(RouteMode.selectedApps)}: ${_routeModeRowSummary(RouteMode.selectedApps)}'
                         : selectedAppsStaged
-                            ? '${_routeModeShortLabel(RouteMode.selectedApps)}: появится после системной проверки.'
+                            ? '${_routeModeShortLabel(RouteMode.selectedApps)}: недоступно на этом устройстве.'
                             : '${_routeModeShortLabel(RouteMode.selectedApps)}: недоступно на ${appContext.hostPlatform.label}.',
                   ],
                 ),
@@ -119,12 +120,10 @@ class _RulesSection extends StatelessWidget {
         if (selectedAppsActive || selectedAppsStaged)
           _SectionCard(
             key: const ValueKey('rules-section-selected-apps'),
-            title: 'Выбранные приложения',
+            title: 'Только выбранные',
             lines: [
               selectedAppIds.isEmpty
-                  ? isWindows
-                      ? 'Добавьте процессы, если хотите вести через POKROV только часть приложений.'
-                      : 'Добавьте приложения, если хотите вести через POKROV только часть телефона.'
+                  ? 'POKROV VPN будет работать только для выбранных приложений.'
                   : 'Выбрано: ${selectedAppIds.length}',
             ],
             child: _SelectedAppsEditor(
@@ -152,26 +151,19 @@ class _RouteModeSegmentedControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final p = PokrovPalette.of(context);
+    return Column(
       key: const ValueKey('rules-route-mode-segmented-control'),
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: _SeedPalette.surface.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _SeedPalette.line),
-      ),
-      child: Row(
-        children: [
-          for (final mode in choices)
-            Expanded(
-              child: _RouteModeSegment(
-                mode: mode,
-                selected: selectedRouteMode == mode,
-                onTap: () => onRouteModeSelected(mode),
-              ),
-            ),
+      children: [
+        for (var i = 0; i < choices.length; i += 1) ...[
+          if (i > 0) Divider(height: 1, thickness: 1, color: p.line),
+          _RouteModeSegment(
+            mode: choices[i],
+            selected: selectedRouteMode == choices[i],
+            onTap: () => onRouteModeSelected(choices[i]),
+          ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -190,72 +182,69 @@ class _RouteModeSegment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final motion = _MotionScope.of(context);
+    final p = PokrovPalette.of(context);
     final icon = switch (mode) {
       RouteMode.allExceptRu => Icons.public_rounded,
       RouteMode.fullTunnel => Icons.shield_outlined,
       RouteMode.selectedApps => Icons.apps_rounded,
     };
-    final label = switch (mode) {
-      RouteMode.allExceptRu => 'За рубеж',
-      RouteMode.fullTunnel => 'Все',
-      RouteMode.selectedApps => 'Приложения',
-    };
+    final label = _routeModeShortLabel(mode);
     return Semantics(
       key: ValueKey('rules-mode-row-${mode.name}'),
       button: true,
       selected: selected,
       label: _routeModeRowTitle(mode),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Material(
+        type: MaterialType.transparency,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           onTap: onTap,
           child: AnimatedContainer(
             duration: motion.duration(_MotionTokens.short),
             curve: _MotionTokens.ease,
-            height: 50,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            constraints: const BoxConstraints(minHeight: 56),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
             decoration: BoxDecoration(
               color: selected
-                  ? _SeedPalette.accent.withValues(alpha: 0.12)
+                  ? p.accent.withValues(alpha: 0.10)
                   : Colors.transparent,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: selected
-                    ? _SeedPalette.accent.withValues(alpha: 0.18)
-                    : Colors.transparent,
-              ),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  icon,
-                  size: 18,
-                  color: selected ? _SeedPalette.accent : _SeedPalette.muted,
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? p.accent.withValues(alpha: 0.16)
+                        : p.surfaceMuted,
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 19,
+                    color: selected ? p.accent : p.muted,
+                  ),
                 ),
-                const SizedBox(width: 7),
-                Flexible(
+                const SizedBox(width: 12),
+                Expanded(
                   child: Text(
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: selected
-                              ? _SeedPalette.accent
-                              : _SeedPalette.ink.withValues(alpha: 0.68),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: p.ink,
                           fontWeight:
-                              selected ? FontWeight.w900 : FontWeight.w700,
+                              selected ? FontWeight.w700 : FontWeight.w600,
                         ),
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 8),
                 Icon(
                   Icons.chevron_right_rounded,
-                  size: 16,
-                  color: selected
-                      ? _SeedPalette.accent
-                      : _SeedPalette.ink.withValues(alpha: 0.32),
+                  size: 20,
+                  color: selected ? p.accent : p.ink.withValues(alpha: 0.3),
                 ),
               ],
             ),
@@ -324,7 +313,6 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: _SeedPalette.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -343,11 +331,7 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
 
   @override
   Widget build(BuildContext context) {
-    final hint = switch (widget.hostPlatform) {
-      HostPlatform.windows => 'telegram.exe',
-      HostPlatform.android => 'org.telegram.messenger',
-      HostPlatform.ios || HostPlatform.macos => 'app.identifier',
-    };
+    final p = PokrovPalette.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -359,7 +343,7 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
             icon: const Icon(Icons.add_rounded),
             label: Text(
               widget.hostPlatform == HostPlatform.windows
-                  ? 'Выбрать процесс'
+                  ? 'Выбрать приложение'
                   : 'Добавить приложение',
             ),
           ),
@@ -378,7 +362,7 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
                 : Icons.edit_outlined,
           ),
           label: Text(
-            _manualEntryVisible ? 'Скрыть ручной ввод' : 'Добавить вручную',
+            _manualEntryVisible ? 'Скрыть' : 'Не нашли приложение?',
           ),
         ),
         AnimatedSwitcher(
@@ -396,8 +380,11 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
                           key: const ValueKey('rules-selected-app-input'),
                           controller: _controller,
                           decoration: InputDecoration(
-                            labelText: 'Название приложения',
-                            hintText: hint,
+                            labelText: 'Название для поддержки',
+                            hintText:
+                                'Если поддержка попросила добавить вручную',
+                            helperText:
+                                'Обычный способ - выбрать приложение из списка.',
                           ),
                           onSubmitted: (_) => _submit(),
                         ),
@@ -416,9 +403,9 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
                   key: const ValueKey('rules-selected-app-manual-hint'),
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Если приложения нет в списке, добавьте его вручную.',
+                    'Если приложения нет в списке, добавьте его по просьбе поддержки.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: _SeedPalette.muted,
+                          color: p.muted,
                           height: 1.35,
                         ),
                   ),
@@ -431,14 +418,14 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
             width: double.infinity,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: _SeedPalette.surfaceMuted.withValues(alpha: 0.72),
+              color: p.surfaceMuted.withValues(alpha: 0.72),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _SeedPalette.line),
+              border: Border.all(color: p.line),
             ),
             child: Text(
-              'Добавьте приложения, и POKROV будет работать только для них.',
+              'Добавьте приложения из списка. Ручной ввод нужен только для восстановления или поддержки.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: _SeedPalette.muted,
+                    color: p.muted,
                     height: 1.35,
                   ),
             ),
@@ -447,17 +434,17 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
           Text(
             'Выбрано (${widget.selectedAppIds.length})',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: _SeedPalette.muted,
-                  fontWeight: FontWeight.w800,
+                  color: p.muted,
+                  fontWeight: FontWeight.w600,
                 ),
           ),
           const SizedBox(height: 8),
           Container(
             key: const ValueKey('rules-selected-app-list'),
             decoration: BoxDecoration(
-              color: _SeedPalette.surface,
+              color: p.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _SeedPalette.line),
+              border: Border.all(color: p.line),
             ),
             child: Column(
               children: widget.selectedAppIds
@@ -489,6 +476,7 @@ class _SelectedAppIdRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       child: Row(
@@ -497,26 +485,38 @@ class _SelectedAppIdRow extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: _SeedPalette.accent.withValues(alpha: 0.10),
+              color: p.accent.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.apps_rounded,
-              color: _SeedPalette.accent,
+              color: p.accent,
               size: 18,
             ),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              appId,
+              _friendlySelectedAppName(appId),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: _SeedPalette.ink,
-                    fontWeight: FontWeight.w800,
+                    color: p.ink,
+                    fontWeight: FontWeight.w600,
                   ),
             ),
+          ),
+          IconButton(
+            tooltip: 'Подробности для поддержки',
+            onPressed: () => _showInfoSheet(
+              context,
+              title: _friendlySelectedAppName(appId),
+              lines: [
+                'Служебное имя передается только поддержке.',
+                'Обычным пользователям это не нужно.',
+              ],
+            ),
+            icon: const Icon(Icons.info_outline_rounded),
           ),
           IconButton(
             tooltip: 'Убрать',
@@ -541,13 +541,14 @@ class _LocationFlagBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = _shortLocationCode(code, country);
+    final p = PokrovPalette.of(context);
     return Container(
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: _SeedPalette.surfaceMuted,
+        color: p.surfaceMuted,
         shape: BoxShape.circle,
-        border: Border.all(color: _SeedPalette.line),
+        border: Border.all(color: p.line),
       ),
       child: Center(
         child: Text(
@@ -555,8 +556,8 @@ class _LocationFlagBadge extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: _SeedPalette.accent,
-                fontWeight: FontWeight.w900,
+                color: p.accent,
+                fontWeight: FontWeight.w700,
               ),
         ),
       ),
@@ -575,6 +576,7 @@ class _SignalBars extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalized = score <= 0 ? 0.78 : score.clamp(0.18, 1.0);
     final activeCount = (normalized * 4).ceil().clamp(1, 4);
+    final p = PokrovPalette.of(context);
     return SizedBox(
       width: 28,
       height: 22,
@@ -591,8 +593,8 @@ class _SignalBars extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 1.5),
               decoration: BoxDecoration(
                 color: index < activeCount
-                    ? _SeedPalette.accent
-                    : _SeedPalette.ink.withValues(alpha: 0.13),
+                    ? p.accent
+                    : p.ink.withValues(alpha: 0.13),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -617,27 +619,6 @@ String _shortLocationCode(String code, String country) {
   return letters.isEmpty
       ? raw.toUpperCase().characters.take(2).join()
       : letters;
-}
-
-String _smartConnectNodeCity(SmartConnectNode node) {
-  final code = node.code.trim().toUpperCase();
-  if (code.contains('NL')) {
-    return 'Амстердам';
-  }
-  if (code.contains('DE')) {
-    return 'Франкфурт';
-  }
-  if (code.contains('FI')) {
-    return 'Хельсинки';
-  }
-  if (code.contains('UK') || code.contains('GB')) {
-    return 'Лондон';
-  }
-  final host = node.probeHost.trim();
-  if (host.isNotEmpty) {
-    return host;
-  }
-  return node.code.trim().isEmpty ? 'POKROV' : node.code.trim().toUpperCase();
 }
 
 enum _SelectedAppCandidateSource {
@@ -667,13 +648,13 @@ class _SelectedAppCandidate {
   String get sourceLabel {
     switch (source) {
       case _SelectedAppCandidateSource.installed:
-        return 'Установлено';
+        return 'Приложение';
       case _SelectedAppCandidateSource.installedExecutable:
-        return 'Файл';
+        return 'Приложение';
       case _SelectedAppCandidateSource.runningProcess:
-        return 'Запущено';
+        return 'Открыто';
       case _SelectedAppCandidateSource.suggested:
-        return 'Подсказка';
+        return 'Рекомендуем';
     }
   }
 }
@@ -707,9 +688,8 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final motion = _MotionScope.of(context);
-    final title = widget.hostPlatform == HostPlatform.windows
-        ? 'Процессы Windows'
-        : 'Приложения';
+    final p = PokrovPalette.of(context);
+    final title = 'Выбор приложений';
     return SizedBox(
       key: const ValueKey('rules-selected-app-picker-sheet'),
       height: MediaQuery.sizeOf(context).height * 0.82,
@@ -726,14 +706,14 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: _SeedPalette.accent.withValues(alpha: 0.10),
+                      color: p.accent.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Icon(
                       widget.hostPlatform == HostPlatform.windows
                           ? Icons.desktop_windows_outlined
                           : Icons.apps_rounded,
-                      color: _SeedPalette.accent,
+                      color: p.accent,
                       size: 22,
                     ),
                   ),
@@ -746,19 +726,19 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                           title,
                           style:
                               Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    color: _SeedPalette.ink,
-                                    fontWeight: FontWeight.w900,
+                                    color: p.ink,
+                                    fontWeight: FontWeight.w700,
                                   ),
                         ),
                         Text(
                           widget.hostPlatform == HostPlatform.windows
-                              ? 'Выберите .exe или запущенный процесс.'
+                              ? 'Выберите приложение для режима «только выбранные».'
                               : 'Выберите приложения для режима «только выбранные».',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: _SeedPalette.muted,
+                                    color: p.muted,
                                   ),
                         ),
                       ],
@@ -779,14 +759,14 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                   prefixIcon: const Icon(Icons.search_rounded),
                   labelText: 'Поиск',
                   filled: true,
-                  fillColor: _SeedPalette.surfaceMuted.withValues(alpha: 0.70),
+                  fillColor: p.surfaceMuted.withValues(alpha: 0.70),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    borderSide: const BorderSide(color: _SeedPalette.line),
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: p.line),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    borderSide: const BorderSide(color: _SeedPalette.line),
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: p.line),
                   ),
                 ),
                 onChanged: (value) => setState(() {
@@ -826,7 +806,7 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                           textAlign: TextAlign.center,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: _SeedPalette.muted,
+                                    color: p.muted,
                                   ),
                         ),
                       );
@@ -879,17 +859,18 @@ class _SelectedAppCandidateRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     final content = Container(
       padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
       decoration: BoxDecoration(
         color: selected
-            ? _SeedPalette.accent.withValues(alpha: 0.08)
-            : _SeedPalette.surface,
+            ? p.accent.withValues(alpha: 0.08)
+            : p.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: selected
-              ? _SeedPalette.accent.withValues(alpha: 0.18)
-              : _SeedPalette.line,
+              ? p.accent.withValues(alpha: 0.18)
+              : p.line,
         ),
       ),
       child: Row(
@@ -898,12 +879,12 @@ class _SelectedAppCandidateRow extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: _SeedPalette.accent.withValues(alpha: 0.10),
+              color: p.accent.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Icon(
               candidate.icon,
-              color: _SeedPalette.accent,
+              color: p.accent,
               size: 21,
             ),
           ),
@@ -917,8 +898,8 @@ class _SelectedAppCandidateRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: _SeedPalette.ink,
-                        fontWeight: FontWeight.w900,
+                        color: p.ink,
+                        fontWeight: FontWeight.w700,
                       ),
                 ),
                 const SizedBox(height: 3),
@@ -933,7 +914,7 @@ class _SelectedAppCandidateRow extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: _SeedPalette.accent.withValues(alpha: 0.08),
+                        color: p.accent.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
@@ -941,19 +922,19 @@ class _SelectedAppCandidateRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: _SeedPalette.accent,
-                              fontWeight: FontWeight.w800,
+                              color: p.accent,
+                              fontWeight: FontWeight.w600,
                             ),
                       ),
                     ),
                     const SizedBox(width: 7),
                     Expanded(
                       child: Text(
-                        candidate.subtitle,
+                        _visibleSelectedAppSubtitle(candidate),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: _SeedPalette.muted,
+                              color: p.muted,
                               height: 1.2,
                             ),
                       ),
@@ -968,7 +949,7 @@ class _SelectedAppCandidateRow extends StatelessWidget {
             selected
                 ? Icons.check_circle_rounded
                 : Icons.add_circle_outline_rounded,
-            color: selected ? _SeedPalette.success : _SeedPalette.accent,
+            color: selected ? p.success : p.accent,
           ),
         ],
       ),
@@ -978,6 +959,63 @@ class _SelectedAppCandidateRow extends StatelessWidget {
     }
     return PokrovSettingsRowPressSurface(onTap: onTap!, child: content);
   }
+}
+
+String _visibleSelectedAppSubtitle(_SelectedAppCandidate candidate) {
+  final subtitle = candidate.subtitle.trim();
+  if (candidate.source == _SelectedAppCandidateSource.suggested &&
+      subtitle.isNotEmpty &&
+      !_looksLikeSelectedAppIdentifier(subtitle)) {
+    return subtitle;
+  }
+  return switch (candidate.source) {
+    _SelectedAppCandidateSource.installed => 'Установленное приложение',
+    _SelectedAppCandidateSource.installedExecutable =>
+      'Можно выбрать для POKROV',
+    _SelectedAppCandidateSource.runningProcess => 'Открыто сейчас',
+    _SelectedAppCandidateSource.suggested => 'Рекомендуем',
+  };
+}
+
+String _friendlySelectedAppName(String identifier) {
+  final value = identifier.trim();
+  final lower = value.toLowerCase();
+  const known = <String, String>{
+    'org.telegram.messenger': 'Telegram',
+    'telegram.exe': 'Telegram',
+    'com.android.chrome': 'Chrome',
+    'chrome.exe': 'Chrome',
+    'com.google.android.youtube': 'YouTube',
+    'youtube.exe': 'YouTube',
+    'com.discord': 'Discord',
+    'discord.exe': 'Discord',
+    'steam.exe': 'Steam',
+    'msedge.exe': 'Edge',
+  };
+  final knownName = known[lower];
+  if (knownName != null) {
+    return knownName;
+  }
+  final parts =
+      value.split(RegExp(r'[._:-]+')).where((part) => part.isNotEmpty).toList();
+  final base = lower.endsWith('.exe')
+      ? value.substring(0, value.length - 4)
+      : parts.isEmpty
+          ? value
+          : parts.last;
+  final words = base
+      .replaceAll(RegExp(r'[_:-]+'), ' ')
+      .split(RegExp(r'\s+'))
+      .where((word) => word.isNotEmpty)
+      .map((word) => word[0].toUpperCase() + word.substring(1))
+      .join(' ');
+  return words.isEmpty ? 'Приложение' : words;
+}
+
+bool _looksLikeSelectedAppIdentifier(String value) {
+  final lower = value.trim().toLowerCase();
+  return lower.endsWith('.exe') ||
+      RegExp(r'^[a-z0-9_]+(?:\.[a-z0-9_]+){2,}$').hasMatch(lower);
 }
 
 const _selectedAppsRuntimeChannel =
@@ -1051,7 +1089,7 @@ Future<List<_SelectedAppCandidate>> _loadWindowsProcessCandidates() async {
               ? name.toLowerCase()
               : '${name.toLowerCase()}.exe';
           return _SelectedAppCandidate(
-            label: identifier,
+            label: _friendlySelectedAppName(identifier),
             identifier: identifier,
             subtitle: identifier,
             source: _SelectedAppCandidateSource.runningProcess,
@@ -1134,9 +1172,13 @@ List<_SelectedAppCandidate> _candidatesFromHostMaps(
     }
     final label = item['label']?.toString().trim();
     final subtitle = item['subtitle']?.toString().trim();
+    final safeLabel =
+        label == null || label.isEmpty || _looksLikeSelectedAppIdentifier(label)
+            ? _friendlySelectedAppName(identifier)
+            : label;
     candidates.add(
       _SelectedAppCandidate(
-        label: label == null || label.isEmpty ? identifier : label,
+        label: safeLabel,
         identifier: identifier,
         subtitle: subtitle == null || subtitle.isEmpty ? identifier : subtitle,
         source: source,
@@ -1156,28 +1198,28 @@ List<_SelectedAppCandidate> _suggestedSelectedAppCandidates(
         _SelectedAppCandidate(
           label: 'Telegram',
           identifier: 'org.telegram.messenger',
-          subtitle: 'org.telegram.messenger',
+          subtitle: 'Мессенджер',
           source: _SelectedAppCandidateSource.suggested,
           icon: Icons.send_rounded,
         ),
         _SelectedAppCandidate(
           label: 'YouTube',
           identifier: 'com.google.android.youtube',
-          subtitle: 'com.google.android.youtube',
+          subtitle: 'Видео',
           source: _SelectedAppCandidateSource.suggested,
           icon: Icons.play_circle_fill_rounded,
         ),
         _SelectedAppCandidate(
           label: 'Chrome',
           identifier: 'com.android.chrome',
-          subtitle: 'com.android.chrome',
+          subtitle: 'Браузер',
           source: _SelectedAppCandidateSource.suggested,
           icon: Icons.public_rounded,
         ),
         _SelectedAppCandidate(
           label: 'Discord',
           identifier: 'com.discord',
-          subtitle: 'com.discord',
+          subtitle: 'Голос и чат',
           source: _SelectedAppCandidateSource.suggested,
           icon: Icons.forum_rounded,
         ),
@@ -1187,30 +1229,37 @@ List<_SelectedAppCandidate> _suggestedSelectedAppCandidates(
         _SelectedAppCandidate(
           label: 'Telegram',
           identifier: 'telegram.exe',
-          subtitle: 'telegram.exe',
+          subtitle: 'Мессенджер',
           source: _SelectedAppCandidateSource.suggested,
           icon: Icons.send_rounded,
         ),
         _SelectedAppCandidate(
           label: 'Chrome',
           identifier: 'chrome.exe',
-          subtitle: 'chrome.exe',
+          subtitle: 'Браузер',
           source: _SelectedAppCandidateSource.suggested,
           icon: Icons.public_rounded,
         ),
         _SelectedAppCandidate(
           label: 'Edge',
           identifier: 'msedge.exe',
-          subtitle: 'msedge.exe',
+          subtitle: 'Браузер',
           source: _SelectedAppCandidateSource.suggested,
           icon: Icons.public_rounded,
         ),
         _SelectedAppCandidate(
           label: 'Discord',
           identifier: 'discord.exe',
-          subtitle: 'discord.exe',
+          subtitle: 'Голос и чат',
           source: _SelectedAppCandidateSource.suggested,
           icon: Icons.forum_rounded,
+        ),
+        _SelectedAppCandidate(
+          label: 'Steam',
+          identifier: 'steam.exe',
+          subtitle: 'Игры',
+          source: _SelectedAppCandidateSource.suggested,
+          icon: Icons.sports_esports_rounded,
         ),
       ];
     case HostPlatform.ios:

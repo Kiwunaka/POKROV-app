@@ -117,6 +117,9 @@ void main() {
     expect(snapshot.supportsLiveConnect, isFalse);
     expect(snapshot.canInitialize, isFalse);
     expect(snapshot.coreBinaryPath, contains('libcore.aar'));
+    expect(snapshot.message, contains('Модуль подключения найден'));
+    expect(snapshot.message, isNot(contains('готовится')));
+    expect(snapshot.message, isNot(contains('Скоро')));
   });
 
   test('mobile lane uses a native host bridge to initialize and stage profiles',
@@ -126,6 +129,7 @@ void main() {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
 
     String? stagedConfigPath;
+    Map<Object?, Object?>? stagedArguments;
     messenger.setMockMethodCallHandler(channel, (call) async {
       switch (call.method) {
         case 'runtimeEngine.snapshot':
@@ -150,6 +154,7 @@ void main() {
           };
         case 'runtimeEngine.stageManagedProfile':
           final arguments = Map<Object?, Object?>.from(call.arguments as Map);
+          stagedArguments = arguments;
           stagedConfigPath = '/host/runtime/${arguments['profileName']}.json';
           return <String, Object?>{
             'phase': 'configStaged',
@@ -175,6 +180,14 @@ void main() {
       const ManagedProfilePayload(
         profileName: 'android-seed',
         configPayload: '{"outbounds":[]}',
+        warpPolicy: WarpRuntimePolicy(
+          enabled: true,
+          runtimeReady: true,
+          userConsented: true,
+          state: 'consented',
+          source: 'client_local',
+          id: 'android-warp',
+        ),
       ),
     );
 
@@ -183,6 +196,13 @@ void main() {
     expect(staged.phase, RuntimePhase.configStaged);
     expect(staged.stagedConfigPath, stagedConfigPath);
     expect(staged.message, contains('Managed profile staged'));
+    final optionsJson = stagedArguments?['runtimeOptionsJson'] as String?;
+    expect(optionsJson, isNotNull);
+    final options = jsonDecode(optionsJson!) as Map<String, dynamic>;
+    final warp = options['warp'] as Map<String, dynamic>;
+    expect(warp['enable'], isTrue);
+    expect(warp['id'], 'android-warp');
+    expect(warp['mode'], 'proxy_over_warp');
   });
 
   test('mobile lane forwards materialized runtime configs without re-parsing',
@@ -225,6 +245,7 @@ void main() {
     );
 
     expect(stagedArguments?['materializedForRuntime'], isTrue);
+    expect(stagedArguments?['runtimeOptionsJson'], isA<String>());
   });
 
   test('mobile lane surfaces degraded host diagnostics from the bridge',
@@ -866,5 +887,178 @@ void main() {
     expect(warp['wireguard-config'], '');
     expect(warp.containsKey('wireguardConfig'), isFalse);
     expect(warp.containsKey('account'), isFalse);
+  });
+
+  test('desktop lane applies WARP before the next connect', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-apply-warp-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      connectivityProbe: () async => null,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'apply-warp-next-connect',
+        configPayload:
+            '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.fullTunnel,
+        warpPolicy: WarpRuntimePolicy.clientLocalDefault,
+      ),
+    );
+
+    final applied = await engine.applyWarp(enabled: true);
+
+    expect(applied.applied, isTrue);
+    expect(applied.effectiveAt, 'next_connect');
+    expect(applied.fallbackUsed, isFalse);
+    expect(bindings.changeOptionsCalls, 1);
+    final options =
+        jsonDecode(bindings.lastOptionsJson!) as Map<String, dynamic>;
+    expect((options['warp'] as Map<String, dynamic>)['enable'], isTrue);
+  });
+
+  test('desktop lane exposes honest live stats without fake traffic numbers',
+      () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-live-stats-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      connectivityProbe: () async => null,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'live-stats',
+        configPayload:
+            '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.fullTunnel,
+        smartConnect: SmartConnectProfile(
+          eligible: true,
+          fallbackRequired: false,
+          shortlistReason: 'eligible',
+          shortlistLimit: 1,
+          shortlistRevision: 'r1',
+          transportProfile: 'legacy_reality_fallback',
+          profileRevision: 'p1',
+          fallbackOrder: <String>[],
+          shortlist: <SmartConnectNode>[
+            SmartConnectNode(
+              code: 'nl-ams-01',
+              country: 'Netherlands',
+              rank: 1,
+              rankHint: SmartConnectRankHint(
+                healthScore: 94,
+                cpuPercent: 31,
+                panelLatencyMs: 38,
+                backendPenalty: 0,
+                cpuPenalty: 0,
+                stickyPreferred: false,
+              ),
+            ),
+          ],
+          stickiness: SmartConnectStickiness(
+            preferredNodeCode: '',
+            thresholdPercent: 15,
+            latestSampleAt: '',
+            stickinessApplied: false,
+          ),
+        ),
+      ),
+    );
+    await engine.connect();
+
+    final stats = await engine.liveStats();
+
+    expect(stats.available, isTrue);
+    expect(stats.serverCode, 'nl-ams-01');
+    expect(stats.serverCountry, 'Netherlands');
+    expect(stats.protocol, 'sing-box');
+    expect(stats.uplinkBps, isNull);
+    expect(stats.downlinkBps, isNull);
+  });
+
+  test('mobile lane forwards WARP, live stats, and push token calls', () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      switch (call.method) {
+        case 'runtimeEngine.applyWarp':
+          return <String, Object?>{
+            'applied': call.arguments is Map &&
+                ((call.arguments as Map)['enabled'] == true),
+            'effectiveAt': 'now',
+            'fallbackUsed': false,
+            'reason': null,
+          };
+        case 'runtimeEngine.liveStats':
+          return <String, Object?>{
+            'available': true,
+            'uplinkBps': 10,
+            'downlinkBps': 20,
+            'latencyMs': 38,
+            'since': '2026-06-22T10:00:00Z',
+            'serverCode': 'nl-ams-01',
+            'serverCountry': 'Netherlands',
+            'protocol': 'sing-box',
+          };
+        case 'runtimeEngine.pushToken':
+          return <String, Object?>{
+            'token': 'push-token',
+            'provider': 'fcm',
+          };
+      }
+      return null;
+    });
+
+    const engine = MobileArtifactRuntimeEngine(
+      hostPlatform: HostPlatform.android,
+    );
+
+    final applied = await engine.applyWarp(enabled: true);
+    final stats = await engine.liveStats();
+    final token = await engine.pushToken();
+
+    expect(applied.applied, isTrue);
+    expect(applied.effectiveAt, 'now');
+    expect(stats.available, isTrue);
+    expect(stats.downlinkBps, 20);
+    expect(token.token, 'push-token');
+    expect(token.provider, 'fcm');
   });
 }

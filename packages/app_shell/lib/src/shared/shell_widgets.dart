@@ -16,43 +16,42 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     final colors = switch (tone) {
       _SectionTone.accent => (
-          background: _SeedPalette.accent.withValues(alpha: 0.06),
-          border: _SeedPalette.accent.withValues(alpha: 0.14),
+          background: p.accent.withValues(alpha: 0.06),
+          border: p.accent.withValues(alpha: 0.16),
         ),
       _SectionTone.muted => (
-          background: _SeedPalette.surfaceMuted,
-          border: _SeedPalette.line,
+          background: p.surfaceMuted,
+          border: p.line,
         ),
       _SectionTone.neutral => (
-          background: _SeedPalette.surface,
-          border: _SeedPalette.line,
+          background: p.surface,
+          border: p.line,
         ),
       _SectionTone.reward => (
-          background: const Color(0xFFFFF8E1),
-          border: Color(0x33B99745),
+          background: p.reward.withValues(alpha: 0.12),
+          border: p.reward.withValues(alpha: 0.22),
         ),
     };
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 18),
+      margin: const EdgeInsets.only(bottom: PokrovSpacing.lg),
       decoration: BoxDecoration(
         color: colors.background,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: PokrovRadii.cardLg,
         border: Border.all(color: colors.border),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(PokrovSpacing.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: _SeedPalette.ink,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0,
+                    color: p.ink,
                   ),
             ),
             if (lines.isNotEmpty) ...[
@@ -63,7 +62,7 @@ class _SectionCard extends StatelessWidget {
                   child: Text(
                     line,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: _SeedPalette.muted,
+                          color: p.muted,
                           height: 1.32,
                         ),
                   ),
@@ -90,10 +89,11 @@ class _SeedBackdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     return DecoratedBox(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [_SeedPalette.canvas, _SeedPalette.canvasAlt],
+          colors: [p.canvas, p.canvasAlt],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -120,30 +120,32 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     final background = switch (tone) {
-      _SectionTone.accent => _SeedPalette.accent.withValues(alpha: 0.12),
-      _SectionTone.muted => _SeedPalette.surfaceMuted.withValues(alpha: 0.92),
-      _SectionTone.neutral => Colors.white.withValues(alpha: 0.86),
-      _SectionTone.reward => const Color(0xFFFFF3CF),
+      _SectionTone.accent => p.accent.withValues(alpha: 0.12),
+      _SectionTone.muted => p.surfaceMuted.withValues(alpha: 0.92),
+      _SectionTone.neutral => p.surface.withValues(alpha: 0.86),
+      _SectionTone.reward => p.reward.withValues(alpha: 0.16),
     };
+    final foreground = tone == _SectionTone.reward ? p.reward : p.accent;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: _SeedPalette.line),
+        borderRadius: PokrovRadii.stadium,
+        border: Border.all(color: p.line),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: _SeedPalette.accent),
-          const SizedBox(width: 8),
+          Icon(icon, size: 16, color: foreground),
+          const SizedBox(width: 7),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: _SeedPalette.ink,
-                  fontWeight: FontWeight.w700,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: p.ink,
+                  fontWeight: FontWeight.w600,
                 ),
           ),
         ],
@@ -161,6 +163,7 @@ class _ConnectOrbButton extends StatefulWidget {
     required this.error,
     required this.busy,
     required this.onPressed,
+    this.desktopSize = false,
   });
 
   final String actionLabel;
@@ -170,6 +173,7 @@ class _ConnectOrbButton extends StatefulWidget {
   final bool error;
   final bool busy;
   final VoidCallback? onPressed;
+  final bool desktopSize;
 
   @override
   State<_ConnectOrbButton> createState() => _ConnectOrbButtonState();
@@ -180,6 +184,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
   late final AnimationController _breathController;
   late final AnimationController _sweepController;
   bool _pressed = false;
+  bool _optimisticBusy = false;
 
   @override
   void initState() {
@@ -210,6 +215,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
         oldWidget.busy != widget.busy) {
       _breathController.reset();
       _sweepController.reset();
+      _optimisticBusy = false;
     }
     _syncControllers();
   }
@@ -226,8 +232,10 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
         running: widget.running,
         degraded: widget.degraded,
         error: widget.error,
-        busy: widget.busy,
+        busy: _effectiveBusy,
       );
+
+  bool get _effectiveBusy => widget.busy || _optimisticBusy;
 
   void _syncControllers() {
     final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ??
@@ -260,26 +268,29 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
   @override
   Widget build(BuildContext context) {
     final motion = _MotionScope.of(context);
+    final p = PokrovPalette.of(context);
     final state = _discState;
     final accent = (widget.degraded || widget.error)
-        ? const Color(0xFFB5673A)
+        ? p.warning
         : widget.running
-            ? _SeedPalette.accentBright
-            : _SeedPalette.accent;
+            ? p.accentBright
+            : p.accent;
     final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ??
         WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
             .disableAnimations;
-    final diameter = switch (MediaQuery.sizeOf(context).width) {
-      >= 1100 => 258.0,
-      >= 720 => 236.0,
-      _ => 224.0,
-    };
-    final labelColor = widget.enabled ? _SeedPalette.ink : _SeedPalette.muted;
+    final diameter = widget.desktopSize
+        ? 208.0
+        : switch (MediaQuery.sizeOf(context).width) {
+            >= 600 => 168.0,
+            >= 390 => 158.0,
+            _ => 148.0,
+          };
+    final labelColor = widget.enabled ? p.ink : p.muted;
     final markOpacity = !widget.enabled
         ? 0.34
         : (widget.degraded || widget.error)
             ? 0.62
-            : widget.busy
+            : _effectiveBusy
                 ? 0.72
                 : 1.0;
 
@@ -298,6 +309,9 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
               ? null
               : () {
                   Feedback.forTap(context);
+                  setState(() {
+                    _optimisticBusy = true;
+                  });
                   widget.onPressed?.call();
                 },
           onTapDown: widget.onPressed == null
@@ -326,14 +340,12 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                   child: child,
                 );
               },
-              child: AnimatedContainer(
-                duration: motion.duration(_MotionTokens.standard),
-                curve: _MotionTokens.ease,
+              child: Container(
                 width: diameter,
                 height: diameter,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _SeedPalette.surface,
+                  color: p.surface,
                   border: Border.all(
                     color:
                         accent.withValues(alpha: widget.running ? 0.54 : 0.34),
@@ -351,6 +363,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                           size: Size.square(diameter),
                           painter: _ConnectDiscRimPainter(
                             accent: accent,
+                            warning: p.warning,
                             enabled: widget.enabled,
                             running: widget.running,
                             degraded: widget.degraded || widget.error,
@@ -369,30 +382,30 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                       running: widget.running,
                       degraded: widget.degraded,
                       error: widget.error,
-                      busy: widget.busy,
+                      busy: _effectiveBusy,
                       disableAnimations: disableAnimations,
                     ),
                     DecoratedBox(
                       decoration: BoxDecoration(
-                        color: _SeedPalette.canvas,
+                        color: p.canvas,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: _SeedPalette.line.withValues(alpha: 0.72),
+                          color: p.line.withValues(alpha: 0.72),
                         ),
                       ),
                       child: SizedBox.square(
-                        dimension: diameter * 0.68,
+                        dimension: diameter * 0.70,
                         child: Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               _BrandMark(
-                                size: diameter * 0.28,
+                                size: diameter * 0.23,
                                 opacity: markOpacity,
                               ),
-                              const SizedBox(height: 10),
+                              SizedBox(height: diameter < 180 ? 7 : 9),
                               SizedBox(
-                                width: diameter * 0.50,
+                                width: diameter * 0.66,
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: AnimatedSwitcher(
@@ -411,7 +424,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                                           .titleMedium
                                           ?.copyWith(
                                             color: labelColor,
-                                            fontWeight: FontWeight.w900,
+                                            fontWeight: FontWeight.w700,
                                             letterSpacing: 0,
                                           ),
                                     ),
@@ -467,7 +480,7 @@ class _ConnectSettleLayer extends StatelessWidget {
     );
     final isError = state.isError;
     final isActive = state.isActive;
-    final settleColor = isError ? _SeedPalette.warning : accent;
+    final settleColor = isError ? PokrovPalette.of(context).warning : accent;
     final inset = state.settleInset;
     final opacity = state.settleOpacity;
 
@@ -527,6 +540,7 @@ class _ConnectSettleLayer extends StatelessWidget {
 class _ConnectDiscRimPainter extends CustomPainter {
   const _ConnectDiscRimPainter({
     required this.accent,
+    required this.warning,
     required this.enabled,
     required this.running,
     required this.degraded,
@@ -537,6 +551,7 @@ class _ConnectDiscRimPainter extends CustomPainter {
   });
 
   final Color accent;
+  final Color warning;
   final bool enabled;
   final bool running;
   final bool degraded;
@@ -588,7 +603,7 @@ class _ConnectDiscRimPainter extends CustomPainter {
         ..isAntiAlias = true
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.4
-        ..color = _SeedPalette.warning.withValues(alpha: 0.72);
+        ..color = warning.withValues(alpha: 0.72);
       canvas.drawCircle(center, radius - 1.5, warningPaint);
     } else if (running && enabled) {
       final activePaint = Paint()
@@ -611,6 +626,7 @@ class _ConnectDiscRimPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ConnectDiscRimPainter oldDelegate) {
     return oldDelegate.accent != accent ||
+        oldDelegate.warning != warning ||
         oldDelegate.enabled != enabled ||
         oldDelegate.running != running ||
         oldDelegate.degraded != degraded ||

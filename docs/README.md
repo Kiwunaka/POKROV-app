@@ -1,11 +1,16 @@
 # POKROV App Docs
 
-Last updated: 2026-06-09
+Last updated: 2026-06-13
 
 This folder holds the living client-repo documentation for `POKROV-app/main`.
 
 Current direction note:
 
+- the current app-shell source of truth is the 2026-06-13 owner product/UI
+  direction: POKROV is presented plainly as a VPN app; first launch starts with
+  new/returning access; Home sells `POKROV VPN`, WARP, 5-day access, and the
+  Telegram bonus; admin/news promo slots render only when backend-owned JSON
+  marks them visible
 - the front-end rebuild is now a Premium Shell V2 reset after owner feedback rejected the first card-heavy MVP shell
 - `marketing` owns public acquisition, `webapp` owns browser continuation, and the client shell stays locked to `Protection / Locations / Rules / Profile`
 - public-facing wording should stay calm and non-technical even when the underlying runtime remains transport-rich
@@ -45,6 +50,8 @@ Current client-doc scope:
 
 Current active anchors:
 
+- `design/2026-06-13-pokrov-product-ui-direction.md`
+- `operations/2026-06-13-pokrov-product-ui-plan-closure-audit.md`
 - `product/client-product-contract.md`
 - `architecture/app-first-onboarding-flow.md`
 - `decisions/2026-06-03-client-ux-account-rewards-master-brief.md`

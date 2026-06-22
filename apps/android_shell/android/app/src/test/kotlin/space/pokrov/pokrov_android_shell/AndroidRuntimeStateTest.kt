@@ -211,11 +211,14 @@ class AndroidRuntimeStateTest {
         setPrivateField("environment", null)
         setPrivateField("phase", AndroidRuntimePhase.ARTIFACT_MISSING)
         setPrivateField("stagedConfigPath", null)
+        setPrivateField("stagedBaseConfigPath", null)
+        setPrivateField("stagedRuntimeOptionsJson", null)
         setPrivateField(
             "lastMessage",
             "Native runtime bridge has not inspected this host yet.",
         )
         setPrivateField("lastRunningMessage", null)
+        setPrivateField("runningSince", null)
         setPrivateField("defaultNetworkInterface", null)
         setPrivateField("defaultNetworkIndex", null)
         setPrivateField("dnsReady", false)

@@ -9,7 +9,6 @@ void _showWarpConsentSheet(
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    backgroundColor: _SeedPalette.surface,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -35,15 +34,20 @@ class _WarpConsentSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     final nextValue = !enabled;
-    final ready = lifecycle.phase != PokrovWarpPhase.notReady;
+    final ready = lifecycle.canOffer;
     final active = enabled || lifecycle.phase == PokrovWarpPhase.active;
-    final foreground = active ? Colors.white : _SeedPalette.ink;
-    final secondary =
-        active ? Colors.white.withValues(alpha: 0.72) : _SeedPalette.muted;
-    final panelColor = active ? const Color(0xFF0A1114) : _SeedPalette.surface;
+    final useDarkPanel =
+        active && Theme.of(context).brightness == Brightness.dark;
+    final foreground = useDarkPanel ? Colors.white : p.ink;
+    final secondary = useDarkPanel
+        ? Colors.white.withValues(alpha: 0.72)
+        : p.muted;
+    final panelColor =
+        useDarkPanel ? const Color(0xFF0A1114) : p.surface;
     final lineColor =
-        active ? Colors.white.withValues(alpha: 0.10) : _SeedPalette.line;
+        useDarkPanel ? Colors.white.withValues(alpha: 0.10) : p.line;
     return SafeArea(
       top: false,
       child: Container(
@@ -69,8 +73,8 @@ class _WarpConsentSheet extends StatelessWidget {
                     height: 58,
                     decoration: BoxDecoration(
                       color: active
-                          ? _SeedPalette.accent.withValues(alpha: 0.14)
-                          : _SeedPalette.accent.withValues(alpha: 0.08),
+                          ? p.accent.withValues(alpha: 0.14)
+                          : p.accent.withValues(alpha: 0.08),
                       shape: BoxShape.circle,
                       border: Border.all(color: lineColor),
                     ),
@@ -88,12 +92,12 @@ class _WarpConsentSheet extends StatelessWidget {
                               .headlineSmall
                               ?.copyWith(
                                 color: foreground,
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.w700,
                                 letterSpacing: 0,
                               ),
                         ),
                         Text(
-                          'Расширенная защита',
+                          'Дополнительная защита',
                           style:
                               Theme.of(context).textTheme.titleMedium?.copyWith(
                                     color: secondary,
@@ -107,87 +111,100 @@ class _WarpConsentSheet extends StatelessWidget {
                     key: const ValueKey('home-warp-consent-switch'),
                     value: enabled,
                     activeThumbColor: Colors.white,
-                    activeTrackColor: _SeedPalette.accentBright,
-                    onChanged: (value) {
-                      unawaited(onChanged(value));
-                      Navigator.of(context).pop();
-                    },
+                    activeTrackColor: p.accentBright,
+                    onChanged: ready
+                        ? (value) {
+                            unawaited(onChanged(value));
+                            Navigator.of(context).pop();
+                          }
+                        : null,
                   ),
                 ],
               ),
               const SizedBox(height: 24),
               Text(
-                active
-                    ? 'Включено для следующего подключения'
-                    : ready
-                        ? 'Дополнительный маршрут для сложных сайтов'
-                        : 'POKROV проверит доступность на этом устройстве',
+                ready
+                    ? 'Помогает со сложными сайтами'
+                    : 'Недоступно на этом устройстве',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: active ? _SeedPalette.accentBright : foreground,
-                      fontWeight: FontWeight.w900,
+                      color: active ? p.accent : foreground,
+                      fontWeight: FontWeight.w700,
                       height: 1.25,
                     ),
               ),
               const SizedBox(height: 6),
               Text(
-                lifecycle.publicSheetBody,
+                'Помогает, если сайт открывается нестабильно или обычного VPN недостаточно.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: secondary,
                       height: 1.34,
                     ),
               ),
               const SizedBox(height: 18),
-              Divider(color: lineColor),
-              const SizedBox(height: 6),
-              _WarpInfoRow(
-                icon: Icons.bolt_rounded,
-                title: 'Следующее подключение',
-                value: enabled ? 'С WARP' : 'Обычное',
-                foreground: foreground,
-                muted: secondary,
-                line: lineColor,
-              ),
-              _WarpInfoRow(
-                icon: Icons.undo_rounded,
-                title: 'Можно выключить',
-                value: 'В любой момент',
-                foreground: foreground,
-                muted: secondary,
-                line: lineColor,
-              ),
-              _WarpInfoRow(
-                icon: Icons.info_outline_rounded,
-                title: 'Если сайт не открылся',
-                value: 'Вернемся назад',
-                foreground: foreground,
-                muted: secondary,
-                line: lineColor,
-              ),
+              if (ready) ...[
+                Divider(color: lineColor),
+                const SizedBox(height: 6),
+                _WarpInfoRow(
+                  icon: Icons.bolt_rounded,
+                  title: 'WARP включится при следующем подключении.',
+                  value: '',
+                  foreground: foreground,
+                  muted: secondary,
+                  line: lineColor,
+                ),
+                _WarpInfoRow(
+                  icon: Icons.undo_rounded,
+                  title: 'Его можно выключить в любой момент.',
+                  value: '',
+                  foreground: foreground,
+                  muted: secondary,
+                  line: lineColor,
+                ),
+                _WarpInfoRow(
+                  icon: Icons.info_outline_rounded,
+                  title:
+                      'Если сайт не откроется, POKROV вернется к обычному VPN.',
+                  value: '',
+                  foreground: foreground,
+                  muted: secondary,
+                  line: lineColor,
+                ),
+              ],
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
                   key: const ValueKey('home-warp-enable-action'),
-                  icon: enabled
-                      ? const Icon(Icons.shield_outlined)
-                      : const Icon(Icons.verified_user_rounded),
+                  icon: ready
+                      ? enabled
+                          ? const Icon(Icons.shield_outlined)
+                          : const Icon(Icons.verified_user_rounded)
+                      : const Icon(Icons.info_outline_rounded),
                   label: Text(
-                    enabled ? 'Выключить WARP' : 'Включить WARP',
+                    ready
+                        ? enabled
+                            ? 'Выключить WARP'
+                            : 'Включить WARP'
+                        : 'Понятно',
                   ),
                   onPressed: () {
-                    unawaited(onChanged(nextValue));
+                    if (ready) {
+                      unawaited(onChanged(nextValue));
+                    }
                     Navigator.of(context).pop();
                   },
                 ),
               ),
-              const SizedBox(height: 10),
-              Center(
-                child: TextButton(
-                  key: const ValueKey('home-warp-dismiss-action'),
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Не сейчас'),
+              if (ready) ...[
+                const SizedBox(height: 10),
+                Center(
+                  child: TextButton(
+                    key: const ValueKey('home-warp-dismiss-action'),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Не сейчас'),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
@@ -201,9 +218,9 @@ class _WarpInfoRow extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.value,
-    this.foreground = _SeedPalette.ink,
-    this.muted = _SeedPalette.muted,
-    this.line = _SeedPalette.line,
+    required this.foreground,
+    required this.muted,
+    required this.line,
   });
 
   final IconData icon;
@@ -215,6 +232,7 @@ class _WarpInfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -223,11 +241,11 @@ class _WarpInfoRow extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: _SeedPalette.accent.withValues(alpha: 0.10),
+              color: p.accent.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: line),
             ),
-            child: Icon(icon, size: 18, color: _SeedPalette.accent),
+            child: Icon(icon, size: 18, color: p.accent),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -239,13 +257,14 @@ class _WarpInfoRow extends StatelessWidget {
                   ),
             ),
           ),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: muted,
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
+          if (value.isNotEmpty)
+            Text(
+              value,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: muted,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
         ],
       ),
     );

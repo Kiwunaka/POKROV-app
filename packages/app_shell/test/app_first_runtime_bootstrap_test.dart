@@ -346,7 +346,7 @@ void main() {
               jsonEncode(
                 <String, Object?>{
                   'feature': 'extended_protection',
-                  'public_label': 'Расширенная защита',
+                  'public_label': 'WARP',
                   'technical_label': 'WARP',
                   'enabled': true,
                   'runtime_ready': true,
@@ -375,7 +375,7 @@ void main() {
               jsonEncode(
                 <String, Object?>{
                   'feature': 'extended_protection',
-                  'public_label': 'Расширенная защита',
+                  'public_label': 'WARP',
                   'technical_label': 'WARP',
                   'enabled': true,
                   'runtime_ready': true,
@@ -402,7 +402,7 @@ void main() {
                 <String, Object?>{
                   'ok': true,
                   'feature': 'extended_protection',
-                  'public_label': 'Расширенная защита',
+                  'public_label': 'WARP',
                   'technical_label': 'WARP',
                   'enabled': true,
                   'runtime_ready': true,
@@ -451,7 +451,8 @@ void main() {
       eventName: 'runtime_fallback',
       state: 'fallback',
       reasonCode: 'handshake_failed',
-      message: 'baseline fallback used',
+      message:
+          'baseline fallback used private-key test-private https://connect.pokrov.space/secret',
       meta: const <String, Object?>{
         'safe_detail': 'fallback',
         'wireguard_config': <String, Object?>{'private-key': 'test-private'},
@@ -466,16 +467,17 @@ void main() {
     expect(await warpCacheFile.exists(), isTrue);
     final warpCacheJson = await warpCacheFile.readAsString();
     expect(warpCacheJson, contains('extended_protection'));
-    expect(warpCacheJson, contains('Расширенная защита'));
+    expect(warpCacheJson, contains('WARP'));
     expect(warpCacheJson, contains('fallback'));
     expect(warpCacheJson, isNot(contains('technical_label')));
-    expect(warpCacheJson, isNot(contains('WARP')));
     expect(warpCacheJson, isNot(contains('private-key')));
     expect(warpCacheJson, isNot(contains('wireguard_config')));
     expect(warpCacheJson, isNot(contains('connect.pokrov.space')));
     final runtimeEventJson = jsonEncode(runtimeEventBody);
     expect(runtimeEventJson, contains('safe_detail'));
+    expect(runtimeEventJson, contains('[redacted]'));
     expect(runtimeEventJson, isNot(contains('test-private')));
+    expect(runtimeEventJson, isNot(contains('private-key')));
     expect(runtimeEventJson, isNot(contains('connect.pokrov.space/secret')));
     expect(
       requests,
@@ -1950,6 +1952,26 @@ void main() {
       'GET /api/bonuses/referral/summary',
       'GET /api/client/promo-slots',
     ]);
+  });
+
+  test('bonus feature action requires enabled feature flag', () {
+    const inconsistentBackendState = AppFirstBonusFeatureState(
+      ok: true,
+      enabled: true,
+      state: 'ready',
+      featureFlag: 'BONUS_WHEEL_ENABLED',
+      featureFlagEnabled: false,
+      actionEndpoint: '/api/bonuses/wheel/spin',
+      lastActionAt: '',
+      streakMonths: 0,
+    );
+
+    expect(inconsistentBackendState.canRun, isFalse);
+    expect(inconsistentBackendState.statusLabel, 'Недоступно');
+    expect(
+      inconsistentBackendState.availabilityText,
+      'POKROV покажет эту возможность, когда она станет доступна',
+    );
   });
 
   test('retries a temporary 502 during start-trial and then succeeds',
@@ -4042,5 +4064,361 @@ void main() {
     expect(tunInbound.containsKey('inet6_address'), isFalse);
     expect(tunInbound['domain_strategy'], 'ipv4_only');
     expect(tunInbound['stack'], 'mixed');
+  });
+
+  test('client P0/P1 API additions use the app-first session', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-client-ui-api-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final requests = <String>[];
+    Map<String, dynamic>? pushBody;
+    Map<String, dynamic>? readBody;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add('${request.method} ${request.uri.path}');
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'client-ui-session',
+                    'account_id': 'client-ui-account',
+                  },
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        expect(
+          request.headers.value(HttpHeaders.authorizationHeader),
+          'Bearer client-ui-session',
+        );
+
+        if (request.uri.path == '/api/client/locations') {
+          expect(request.uri.queryParameters['platform'], 'windows');
+          expect(request.uri.queryParameters['q'], 'ams');
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'auto': <String, Object?>{
+                    'enabled': true,
+                    'currentCode': 'nl-ams-01',
+                  },
+                  'freePoolCode': 'nl-free',
+                  'profileRevision': 'rev-locations',
+                  'transportProfile': 'reality',
+                  'countries': <Object?>[
+                    <String, Object?>{
+                      'code': 'nl',
+                      'country': 'Netherlands',
+                      'cities': <Object?>[
+                        <String, Object?>{
+                          'code': 'nl-ams-01',
+                          'city': 'Amsterdam',
+                          'healthScore': 0.94,
+                          'latencyMs': 38,
+                          'premium': true,
+                          'load': 0.31,
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/subscription') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'lane': 'trialPremium',
+                  'expiresAt': '2026-06-27T00:00:00Z',
+                  'daysLeft': 5,
+                  'autoRenew': false,
+                  'renewUrl': 'https://pay.pokrov.space/checkout/client-ui',
+                  'trafficPolicy': <String, Object?>{
+                    'freePoolCode': 'nl-free',
+                    'premiumAccess': true,
+                  },
+                  'plans': <Object?>[
+                    <String, Object?>{
+                      'id': '1m',
+                      'title': '1 month',
+                      'price': '299 RUB',
+                    },
+                  ],
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/devices') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'items': <Object?>[
+                    <String, Object?>{
+                      'id': 'current-device',
+                      'label': 'Windows 11',
+                      'platform': 'windows',
+                      'lastSeen': '2026-06-22T10:00:00Z',
+                      'current': true,
+                    },
+                  ],
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/notifications') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'items': <Object?>[
+                    <String, Object?>{
+                      'id': 'ntf_access',
+                      'kind': 'access',
+                      'title': 'Access ready',
+                      'body': 'You can connect now.',
+                      'createdAt': '2026-06-22T10:01:00Z',
+                      'ctaLabel': 'Open',
+                      'ctaHref': 'https://app.pokrov.space/profile',
+                      'read': false,
+                    },
+                  ],
+                  'nextCursor': null,
+                  'unreadCount': 1,
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/notifications/read') {
+          readBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/push/register') {
+          pushBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ok': true,
+                  'provider': 'wns',
+                  'tokenHash': 'sha256:token',
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+
+    final catalog = await bootstrapper.fetchLocationsCatalog(
+      hostPlatform: HostPlatform.windows,
+      query: 'ams',
+    );
+    expect(catalog.auto.currentCode, 'nl-ams-01');
+    expect(catalog.countries.single.cities.single.city, 'Amsterdam');
+    expect(catalog.countries.single.cities.single.premium, isTrue);
+
+    final subscription = await bootstrapper.fetchClientSubscription(
+      hostPlatform: HostPlatform.windows,
+    );
+    expect(subscription.lane, 'trialPremium');
+    expect(subscription.daysLeft, 5);
+    expect(subscription.plans.single.id, '1m');
+
+    final devices = await bootstrapper.fetchClientDevices(
+      hostPlatform: HostPlatform.windows,
+    );
+    expect(devices.items.single.current, isTrue);
+
+    final inbox = await bootstrapper.fetchClientNotifications(
+      hostPlatform: HostPlatform.windows,
+    );
+    expect(inbox.unreadCount, 1);
+    expect(inbox.items.single.ctaHref?.host, 'app.pokrov.space');
+
+    final read = await bootstrapper.markClientNotificationsRead(
+      hostPlatform: HostPlatform.windows,
+      ids: const <String>['ntf_access'],
+    );
+    expect(read, isTrue);
+    expect(readBody, containsPair('ids', <Object?>['ntf_access']));
+
+    final push = await bootstrapper.registerClientPushToken(
+      hostPlatform: HostPlatform.windows,
+      token: 'wns-token',
+      provider: 'wns',
+    );
+    expect(push.ok, isTrue);
+    expect(push.tokenHash, 'sha256:token');
+    expect(pushBody, containsPair('platform', 'windows'));
+    expect(pushBody, containsPair('provider', 'wns'));
+    expect(pushBody, containsPair('token', 'wns-token'));
+
+    expect(
+      requests,
+      containsAllInOrder(const [
+        'POST /api/client/session/start-trial',
+        'GET /api/client/locations',
+        'GET /api/client/subscription',
+        'GET /api/client/devices',
+        'GET /api/client/notifications',
+        'POST /api/client/notifications/read',
+        'POST /api/client/push/register',
+      ]),
+    );
+  });
+
+  test('client support assistant uses app-session auth', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-client-assistant-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    Map<String, dynamic>? assistantBody;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'assistant-session',
+                    'account_id': 'assistant-account',
+                  },
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        expect(
+          request.headers.value(HttpHeaders.authorizationHeader),
+          'Bearer assistant-session',
+        );
+
+        if (request.uri.path == '/api/client/support/assistant') {
+          assistantBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'reply': 'Try reconnecting once, then send diagnostics.',
+                  'shouldEscalate': false,
+                  'suggestedActions': <Object?>[
+                    <String, Object?>{
+                      'key': 'retry_connect',
+                      'label': 'Retry',
+                    },
+                  ],
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+
+    final reply = await bootstrapper.askSupportAssistant(
+      hostPlatform: HostPlatform.windows,
+      message: 'Connection is closed',
+      ticketId: 77,
+      safeDiagnostics: const <String, Object?>{
+        'phase': 'running',
+        'warp_status': 'active',
+      },
+    );
+
+    expect(reply.reply, contains('reconnecting'));
+    expect(reply.shouldEscalate, isFalse);
+    expect(reply.suggestedActions.single.key, 'retry_connect');
+    expect(assistantBody, containsPair('ticketId', 77));
+    expect(assistantBody, containsPair('message', 'Connection is closed'));
+    expect(
+      assistantBody?['safeDiagnostics'],
+      containsPair('warp_status', 'active'),
+    );
   });
 }

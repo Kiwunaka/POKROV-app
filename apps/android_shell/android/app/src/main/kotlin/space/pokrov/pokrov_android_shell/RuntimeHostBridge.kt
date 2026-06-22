@@ -8,6 +8,7 @@ import java.io.File
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.nekohasekai.mobile.Mobile
+import org.json.JSONObject
 
 class RuntimeHostBridge(
     private val activity: Activity,
@@ -21,6 +22,9 @@ class RuntimeHostBridge(
             METHOD_STAGE_MANAGED_PROFILE -> result.success(stageManagedProfile(call))
             METHOD_CONNECT -> result.success(connect())
             METHOD_DISCONNECT -> result.success(disconnect())
+            METHOD_APPLY_WARP -> result.success(applyWarp(call))
+            METHOD_LIVE_STATS -> result.success(AndroidRuntimeState.liveStats())
+            METHOD_PUSH_TOKEN -> result.success(pushToken())
             METHOD_LIST_INSTALLED_APPS -> result.success(listInstalledApps())
             else -> result.notImplemented()
         }
@@ -134,19 +138,34 @@ class RuntimeHostBridge(
                 return AndroidRuntimeState.snapshot()
             }
         val materializedForRuntime = call.argument<Boolean>("materializedForRuntime") ?: false
+        val runtimeOptionsJson = call.argument<String>("runtimeOptionsJson")
+            ?.takeIf { it.isNotBlank() }
 
         val tempPath = File(runtimeEnvironment.tempDirectory, "$profileName.seed.json")
         val finalPath = File(runtimeEnvironment.configDirectory, "$profileName.json")
+        val basePath = File(runtimeEnvironment.configDirectory, "$profileName.base.json")
 
         return try {
             Mobile.touch()
-            if (materializedForRuntime) {
-                finalPath.writeText(configPayload)
+            val parsedConfig = if (materializedForRuntime) {
+                configPayload
             } else {
                 tempPath.writeText(configPayload)
                 Mobile.parse(finalPath.absolutePath, tempPath.absolutePath, false)
+                finalPath.readText()
             }
-            AndroidRuntimeState.markProfileStaged(finalPath.absolutePath)
+            basePath.writeText(parsedConfig)
+            val runtimeConfig = if (runtimeOptionsJson.isNullOrBlank()) {
+                parsedConfig
+            } else {
+                Mobile.buildConfig(runtimeOptionsJson, parsedConfig)
+            }
+            finalPath.writeText(runtimeConfig)
+            AndroidRuntimeState.markProfileStaged(
+                finalPath.absolutePath,
+                runtimeOptionsJson,
+                basePath.absolutePath,
+            )
             AndroidRuntimeState.snapshot()
         } catch (error: Throwable) {
             AndroidRuntimeState.markFailure(
@@ -207,6 +226,66 @@ class RuntimeHostBridge(
         return AndroidRuntimeState.snapshot()
     }
 
+    private fun applyWarp(call: MethodCall): Map<String, Any?> {
+        val enabled = call.argument<Boolean>("enabled") ?: false
+        val stagedConfigPath = AndroidRuntimeState.stagedConfigPath()
+        val stagedBaseConfigPath = AndroidRuntimeState.stagedBaseConfigPath()
+        val runtimeOptionsJson = AndroidRuntimeState.stagedRuntimeOptionsJson()
+        if (stagedConfigPath.isNullOrBlank()) {
+            return mapOf(
+                "applied" to false,
+                "effectiveAt" to "none",
+                "fallbackUsed" to false,
+                "reason" to "no_staged_profile",
+            )
+        }
+        if (runtimeOptionsJson.isNullOrBlank() || stagedBaseConfigPath.isNullOrBlank()) {
+            return mapOf(
+                "applied" to false,
+                "effectiveAt" to "none",
+                "fallbackUsed" to false,
+                "reason" to "runtime_options_missing",
+            )
+        }
+        return try {
+            val options = JSONObject(runtimeOptionsJson)
+            val warp = options.optJSONObject("warp") ?: JSONObject()
+            warp.put("enable", enabled)
+            if (!warp.has("id")) {
+                warp.put("id", "p1")
+            }
+            if (!warp.has("mode")) {
+                warp.put("mode", "proxy_over_warp")
+            }
+            options.put("warp", warp)
+            val nextOptions = options.toString()
+            val baseConfig = File(stagedBaseConfigPath).readText()
+            val runtimeConfig = Mobile.buildConfig(nextOptions, baseConfig)
+            File(stagedConfigPath).writeText(runtimeConfig)
+            AndroidRuntimeState.markRuntimeOptionsUpdated(nextOptions)
+            mapOf(
+                "applied" to true,
+                "effectiveAt" to "next_connect",
+                "fallbackUsed" to false,
+                "reason" to null,
+            )
+        } catch (error: Throwable) {
+            mapOf(
+                "applied" to false,
+                "effectiveAt" to "none",
+                "fallbackUsed" to false,
+                "reason" to (error.message ?: error.javaClass.simpleName),
+            )
+        }
+    }
+
+    private fun pushToken(): Map<String, Any?> {
+        return mapOf(
+            "token" to "",
+            "provider" to "poll",
+        )
+    }
+
     @Suppress("DEPRECATION")
     private fun listInstalledApps(): List<Map<String, String>> {
         val packageManager = activity.packageManager
@@ -242,6 +321,9 @@ class RuntimeHostBridge(
         private const val METHOD_STAGE_MANAGED_PROFILE = "runtimeEngine.stageManagedProfile"
         private const val METHOD_CONNECT = "runtimeEngine.connect"
         private const val METHOD_DISCONNECT = "runtimeEngine.disconnect"
+        private const val METHOD_APPLY_WARP = "runtimeEngine.applyWarp"
+        private const val METHOD_LIVE_STATS = "runtimeEngine.liveStats"
+        private const val METHOD_PUSH_TOKEN = "runtimeEngine.pushToken"
         private const val METHOD_LIST_INSTALLED_APPS = "runtimeEngine.listInstalledApps"
     }
 }

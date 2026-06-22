@@ -32,20 +32,21 @@ class PokrovBrandMark extends StatelessWidget {
         cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).round(),
         filterQuality: FilterQuality.medium,
         errorBuilder: (context, error, stackTrace) {
+          final tokens = PokrovPalette.of(context);
           return SizedBox(
             width: size,
             height: size,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: PokrovPalette.accent.withValues(alpha: 0.12),
+                color: tokens.accent.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Center(
                 child: Text(
                   'P',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: PokrovPalette.accent,
-                        fontWeight: FontWeight.w900,
+                        color: tokens.accent,
+                        fontWeight: FontWeight.w700,
                       ),
                 ),
               ),

@@ -19,6 +19,24 @@ void main() {
     expect(PokrovPalette.muted, const Color(0xFF697080));
   });
 
+  test('phase 1 palette exposes light and dark app tokens without pure black',
+      () {
+    expect(PokrovPalette.light.canvas, const Color(0xFFF7F8FA));
+    expect(PokrovPalette.light.accent, const Color(0xFF0F725D));
+    expect(PokrovPalette.light.reward, const Color(0xFFC58A24));
+    expect(PokrovPalette.dark.canvas, const Color(0xFF11161D));
+    expect(PokrovPalette.dark.surface, const Color(0xFF171D25));
+    expect(PokrovPalette.dark.reward, const Color(0xFFE2B35B));
+
+    for (final tokens in [PokrovPalette.light, PokrovPalette.dark]) {
+      expect(tokens.canvas, isNot(const Color(0xFF000000)));
+      expect(tokens.canvasAlt, isNot(const Color(0xFF000000)));
+      expect(tokens.surface, isNot(const Color(0xFF000000)));
+      expect(tokens.surfaceMuted, isNot(const Color(0xFF000000)));
+      expect(tokens.ink, isNot(const Color(0xFF000000)));
+    }
+  });
+
   test('motion tokens match the premium shell contract', () {
     expect(PokrovMotionTokens.quick, const Duration(milliseconds: 120));
     expect(PokrovMotionTokens.short, const Duration(milliseconds: 180));
@@ -188,6 +206,15 @@ void main() {
       ),
       1,
     );
+    expect(
+      PokrovConnectDiscMotion.scale(
+        pressed: true,
+        runsSweep: true,
+        breathValue: 1,
+        disableAnimations: true,
+      ),
+      1,
+    );
   });
 
   testWidgets('brand mark uses the official raster asset contract',
@@ -287,6 +314,88 @@ void main() {
     await tester.tap(find.text('Auto'));
     await tester.tap(find.text('Status'));
 
+    expect(taps, 2);
+  });
+
+  testWidgets('phase 1 flat shared controls render stable iOS-like primitives',
+      (tester) async {
+    var warpEnabled = false;
+    var taps = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(
+          extensions: const [PokrovPalette.light],
+        ),
+        darkTheme: ThemeData(
+          brightness: Brightness.dark,
+          extensions: const [PokrovPalette.dark],
+        ),
+        home: PokrovMotionScope(
+          disableAnimations: false,
+          child: Scaffold(
+            body: ListView(
+              children: [
+                PokrovGroupedSection(
+                  title: 'Ваш доступ',
+                  children: [
+                    PokrovListRow(
+                      icon: Icons.workspace_premium_outlined,
+                      title: '5 дней премиум бесплатно',
+                      subtitle: 'После триала можно продлить доступ.',
+                      value: 'Триал',
+                      onTap: () => taps += 1,
+                    ),
+                    PokrovWarpToggleRow(
+                      enabled: warpEnabled,
+                      onChanged: (value) => warpEnabled = value,
+                    ),
+                  ],
+                ),
+                PokrovTrialBanner(
+                  title: '5 дней премиум бесплатно',
+                  detail: 'После триала - продлите доступ.',
+                  onTap: () => taps += 1,
+                ),
+                PokrovTelegramBonusCard(
+                  state: PokrovTelegramBonusState.readyToClaim,
+                  onTap: () => taps += 1,
+                ),
+                const PokrovInfoBanner(
+                  title: 'Сообщение',
+                  detail:
+                      'POKROV покажет важную новость только когда она есть.',
+                ),
+                const PokrovPromoCard(
+                  title: '+10 дней за Telegram',
+                  detail: 'Подпишитесь на канал и заберите бонус.',
+                  actionLabel: 'Получить',
+                ),
+                const PokrovStatusPill(
+                  label: 'VPN включен',
+                  icon: Icons.shield_outlined,
+                  tone: PokrovStatusTone.accent,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(PokrovSurface), findsWidgets);
+    expect(find.byType(PokrovGroupedSection), findsOneWidget);
+    expect(find.byType(PokrovListRow), findsWidgets);
+    expect(find.byType(PokrovPromoCard), findsWidgets);
+    expect(find.byType(PokrovInfoBanner), findsOneWidget);
+    expect(find.byType(PokrovWarpToggleRow), findsOneWidget);
+    expect(find.byType(PokrovTrialBanner), findsOneWidget);
+    expect(find.byType(PokrovTelegramBonusCard), findsOneWidget);
+    expect(find.text('WARP'), findsOneWidget);
+    expect(find.text('Бонус готов'), findsOneWidget);
+
+    await tester.tap(find.text('5 дней премиум бесплатно').last);
+    await tester.tap(find.text('Бонус готов'));
     expect(taps, 2);
   });
 

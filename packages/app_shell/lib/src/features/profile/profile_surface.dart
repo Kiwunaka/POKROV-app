@@ -27,6 +27,16 @@ class _ProfileSection extends StatelessWidget {
     required this.runtimeSnapshot,
     required this.runtimeHeadline,
     required this.onOpenWarp,
+    required this.themeMode,
+    required this.onThemeModeChanged,
+    required this.subscriptionInfo,
+    required this.notifications,
+    required this.notificationsUnread,
+    required this.notificationsBusy,
+    required this.onOpenNotifications,
+    required this.onRefreshNotifications,
+    required this.onFetchDevices,
+    required this.onRevokeDevice,
   });
 
   final SeedAppContext appContext;
@@ -54,6 +64,16 @@ class _ProfileSection extends StatelessWidget {
   final RuntimeSnapshot? runtimeSnapshot;
   final String? runtimeHeadline;
   final Future<void> Function() onOpenWarp;
+  final ThemeMode themeMode;
+  final ValueChanged<ThemeMode> onThemeModeChanged;
+  final ClientSubscriptionInfo? subscriptionInfo;
+  final List<ClientNotificationItem> notifications;
+  final int notificationsUnread;
+  final bool notificationsBusy;
+  final VoidCallback onOpenNotifications;
+  final Future<void> Function() onRefreshNotifications;
+  final Future<ClientDeviceList> Function() onFetchDevices;
+  final Future<bool> Function(String deviceId) onRevokeDevice;
 
   List<String> _bonusSummaryLines() {
     final summary = bonusSummary;
@@ -110,17 +130,10 @@ class _ProfileSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
+              _SectionCard(
                 key: const ValueKey('profile-section-plan-access'),
-                margin: const EdgeInsets.only(bottom: 18),
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: _SeedPalette.surface,
-                  borderRadius: BorderRadius.circular(26),
-                  border: Border.all(
-                    color: _SeedPalette.accent.withValues(alpha: 0.16),
-                  ),
-                ),
+                title: 'Ваш доступ',
+                lines: const [],
                 child: _ProfileAccessOverview(
                   accessLabel: _accessMainLabel(appContext, bonusSummary),
                   accessValue: _accessShortValue(appContext, bonusSummary),
@@ -135,73 +148,129 @@ class _ProfileSection extends StatelessWidget {
                     context,
                     appContext: appContext,
                     hasProvisionedAccess: hasProvisionedAccess,
+                    subscriptionInfo: subscriptionInfo,
                     onOpenHandoff: onOpenHandoff,
                   ),
                   onCheckoutTap: () =>
                       onOpenHandoff('checkout', appContext.checkoutUrl),
                 ),
               ),
-              Padding(
-                key: const ValueKey('profile-section-sync'),
-                padding: const EdgeInsets.fromLTRB(0, 0, 0, 18),
+              _SectionCard(
+                key: const ValueKey('profile-section-account'),
+                title: 'Аккаунт',
+                lines: const [
+                  'Telegram, email и кабинет помогают не потерять доступ.',
+                ],
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _ProfileQuickActionsGrid(
-                      children: [
-                        _ProfileActionTile(
-                          key: const ValueKey('profile-redeem-code-action'),
-                          icon: Icons.key_rounded,
-                          title: 'Ввести код',
-                          subtitle: 'Бот, сайт или письмо',
-                          onTap: () => _showRedeemSheet(
-                            context,
-                            hintCode: appContext.redeemHint,
-                            onRedeem: (code) => onOpenHandoff('redeem', code),
+                    _SettingsRow(
+                      key: const ValueKey('profile-telegram-link-action'),
+                      icon: Icons.send_outlined,
+                      title: 'Telegram',
+                      value: telegramBonusBusy ? 'Проверяем' : 'Привязать',
+                      onTap: telegramBonusBusy ? null : onCreateTelegramLink,
+                    ),
+                    _SettingsRow(
+                      key: const ValueKey('profile-email-action'),
+                      icon: Icons.alternate_email_rounded,
+                      title: 'Email',
+                      value: 'Добавить',
+                      onTap: () => _showEmailRecoverySheet(
+                        context,
+                        appContext: appContext,
+                        onOpenHandoff: onOpenHandoff,
+                      ),
+                    ),
+                    _SettingsRow(
+                      key: const ValueKey('profile-open-cabinet-action'),
+                      icon: Icons.web_outlined,
+                      title: 'Кабинет',
+                      value: 'Аккаунт',
+                      onTap: () =>
+                          onOpenHandoff('cabinet', appContext.cabinetUrl),
+                    ),
+                    _SettingsRow(
+                      key: const ValueKey('profile-devices-action'),
+                      icon: Icons.devices_other_rounded,
+                      title: 'Устройства',
+                      value: 'Управлять',
+                      onTap: () => _showDevicesSheet(
+                        context,
+                        currentPlatformLabel: appContext.hostPlatform.label,
+                        onFetchDevices: onFetchDevices,
+                        onRevokeDevice: onRevokeDevice,
+                      ),
+                    ),
+                    if ((telegramBonusError ?? '').isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          telegramBonusError!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error,
+                            height: 1.3,
                           ),
                         ),
-                        _ProfileActionTile(
-                          key: const ValueKey('profile-open-cabinet-action'),
-                          icon: Icons.web_outlined,
-                          title: 'Кабинет',
-                          subtitle: 'Подписка и платежи',
-                          onTap: () =>
-                              onOpenHandoff('cabinet', appContext.cabinetUrl),
-                        ),
-                        _ProfileActionTile(
-                          key: const ValueKey('profile-telegram-link-action'),
-                          icon: Icons.send_outlined,
-                          title: 'Telegram',
-                          subtitle: telegramBonusBusy
-                              ? 'Проверяем'
-                              : '+${appContext.runtimeProfile.telegramBonusDays} дней',
-                          onTap:
-                              telegramBonusBusy ? null : onCreateTelegramLink,
-                        ),
-                        _ProfileActionTile(
-                          key: const ValueKey('profile-section-support'),
-                          icon: Icons.chat_bubble_outline_rounded,
-                          title: 'Написать',
-                          subtitle: 'Чат поддержки',
-                          onTap: onOpenSupportHub,
-                        ),
-                      ],
-                      footer: (telegramBonusError ?? '').isNotEmpty
-                          ? Text(
-                              telegramBonusError!,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.error,
-                                height: 1.3,
-                              ),
-                            )
-                          : null,
-                    ),
+                      ),
                   ],
                 ),
               ),
               _SectionCard(
+                key: const ValueKey('profile-section-sync'),
+                title: 'Восстановить доступ',
+                lines: const [
+                  'Если у вас уже есть код из Telegram, кабинета, сайта или письма.',
+                ],
+                child: _SettingsRow(
+                  key: const ValueKey('profile-redeem-code-action'),
+                  icon: Icons.key_rounded,
+                  title: 'Код активации',
+                  value: 'Ввести',
+                  onTap: () => _showRedeemSheet(
+                    context,
+                    hintCode: appContext.redeemHint,
+                    onRedeem: (code) => onOpenHandoff('redeem', code),
+                  ),
+                ),
+              ),
+              PokrovSettingsRowPressSurface(
+                key: const ValueKey('profile-section-support'),
+                onTap: onOpenSupportHub,
+                child: _SectionCard(
+                  key: const ValueKey('profile-section-support-group'),
+                  title: 'Поддержка',
+                  lines: const [
+                    'Чат и безопасная сводка состояния без ключей, ссылок и технических логов.',
+                  ],
+                  child: Column(
+                    children: [
+                      _SettingsRow(
+                        key: const ValueKey('profile-open-support-action'),
+                        icon: Icons.chat_bubble_outline_rounded,
+                        title: 'Написать в поддержку',
+                        value: 'Чат',
+                        onTap: onOpenSupportHub,
+                      ),
+                      _SettingsRow(
+                        key: const ValueKey('profile-diagnostics-action'),
+                        icon: Icons.health_and_safety_outlined,
+                        title: 'Сведения для поддержки',
+                        value: 'Открыть',
+                        onTap: () => _showAdvancedSettingsSheet(
+                          context,
+                          hostPlatform: appContext.hostPlatform,
+                          selectedRouteMode: selectedRouteMode,
+                          statusLabel: statusLabel,
+                          warpStatus: warpLifecycle.publicStatus,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              _SectionCard(
                 key: const ValueKey('profile-section-app'),
-                title: 'Настройки приложения',
+                title: 'Настройки',
                 lines: [
                   '${appContext.hostPlatform.label} · ${_routeModeShortLabel(selectedRouteMode)}'
                 ],
@@ -209,11 +278,11 @@ class _ProfileSection extends StatelessWidget {
                   children: [
                     _SettingsRow(
                       icon: Icons.alt_route_rounded,
-                      title: 'Правила',
+                      title: 'Режим работы',
                       value: _routeModeShortLabel(selectedRouteMode),
                       onTap: () => _showInfoSheet(
                         context,
-                        title: 'Правила подключения',
+                        title: 'Режим работы',
                         lines: [
                           _routeModeRowSummary(selectedRouteMode),
                           'Изменить режим можно во вкладке «Правила».',
@@ -235,35 +304,36 @@ class _ProfileSection extends StatelessWidget {
                       },
                     ),
                     _SettingsRow(
-                      key: const ValueKey('profile-email-action'),
-                      icon: Icons.alternate_email_rounded,
-                      title: 'Email',
-                      value: 'Вход',
-                      onTap: () => _showEmailRecoverySheet(
-                        context,
-                        appContext: appContext,
-                        onOpenHandoff: onOpenHandoff,
-                      ),
-                    ),
-                    _SettingsRow(
                       key: const ValueKey('profile-notifications-action'),
-                      icon: Icons.notifications_none_rounded,
+                      icon: notificationsUnread > 0
+                          ? Icons.notifications_active_rounded
+                          : Icons.notifications_none_rounded,
                       title: 'Уведомления',
-                      value: 'События',
-                      onTap: () => _showInfoSheet(
-                        context,
-                        title: 'Уведомления',
-                        lines: const [
-                          'Здесь будут важные сообщения о доступе, оплате и обновлениях.',
-                        ],
-                      ),
+                      value: notificationsBusy
+                          ? 'Обновляем'
+                          : notificationsUnread > 0
+                              ? '$notificationsUnread'
+                              : 'Открыть',
+                      onTap: () {
+                        onOpenNotifications();
+                        _showNotificationsSheet(
+                          context,
+                          notifications: notifications,
+                          onRefresh: onRefreshNotifications,
+                          onOpenHandoff: onOpenHandoff,
+                        );
+                      },
                     ),
                     _SettingsRow(
-                      key: const ValueKey('profile-section-advanced'),
-                      icon: Icons.tune_rounded,
-                      title: 'Диагностика',
-                      value: _pokrovAppVersion,
-                      onTap: () => _showAdvancedSettingsSheet(context),
+                      key: const ValueKey('profile-theme-action'),
+                      icon: Icons.brightness_6_outlined,
+                      title: 'Тема',
+                      value: _themeModeLabel(themeMode),
+                      onTap: () => _showThemeModeSheet(
+                        context,
+                        selected: themeMode,
+                        onChanged: onThemeModeChanged,
+                      ),
                     ),
                   ],
                 ),
@@ -281,17 +351,9 @@ class _ProfileSection extends StatelessWidget {
                         rows: 3,
                       ),
                     _SettingsRow(
-                      key: const ValueKey('profile-telegram-check-action'),
-                      icon: Icons.fact_check_outlined,
-                      title: 'Проверить Telegram',
-                      value: telegramBonusBusy ? 'Проверяем' : 'Канал',
-                      onTap: telegramBonusBusy ? null : onCheckTelegramBonus,
-                    ),
-                    _SettingsRow(
                       key: const ValueKey('profile-telegram-claim-action'),
                       icon: Icons.send_outlined,
-                      title:
-                          'Telegram +${appContext.runtimeProfile.telegramBonusDays} дней',
+                      title: 'Telegram-бонус',
                       value: telegramBonusCanClaim ? 'Получить' : 'Проверить',
                       onTap: telegramBonusBusy
                           ? null
@@ -301,7 +363,7 @@ class _ProfileSection extends StatelessWidget {
                     ),
                     _SettingsRow(
                       key: const ValueKey('profile-bonus-wheel-action'),
-                      icon: Icons.auto_awesome_outlined,
+                      icon: Icons.card_giftcard_outlined,
                       title: 'Бонусы и история',
                       value: _bonusHubValue(),
                       onTap: () => _showRewardsHubSheet(
@@ -313,13 +375,6 @@ class _ProfileSection extends StatelessWidget {
                         onCheckInCalendar: onCheckInCalendar,
                         onOpenHandoff: onOpenHandoff,
                       ),
-                    ),
-                    _SettingsRow(
-                      key: const ValueKey('profile-bonus-summary-refresh'),
-                      icon: Icons.refresh_rounded,
-                      title: 'Обновить',
-                      value: bonusSummaryBusy ? 'Секунду' : 'Сводка',
-                      onTap: bonusSummaryBusy ? null : onRefreshBonusSummary,
                     ),
                     if ((bonusSummaryError ?? '').isNotEmpty)
                       Padding(
@@ -368,18 +423,20 @@ class _ProfileAccessOverview extends StatelessWidget {
       children: [
         LayoutBuilder(
           builder: (context, constraints) {
+            final p = PokrovPalette.of(context);
             final compact = constraints.maxWidth < 430;
-            final identity = Row(
+            final header = Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  width: 74,
-                  height: 74,
+                  width: compact ? 54 : 62,
+                  height: compact ? 54 : 62,
                   decoration: BoxDecoration(
-                    color: _SeedPalette.surface.withValues(alpha: 0.86),
+                    color: p.surface.withValues(alpha: 0.86),
                     shape: BoxShape.circle,
-                    border: Border.all(color: _SeedPalette.line),
+                    border: Border.all(color: p.line),
                   ),
-                  child: const Center(child: _BrandMark(size: 50)),
+                  child: Center(child: _BrandMark(size: compact ? 34 : 40)),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -387,20 +444,20 @@ class _ProfileAccessOverview extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Анонимный пользователь',
+                        accessLabel,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: _SeedPalette.ink,
-                                  fontWeight: FontWeight.w900,
-                                ),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: p.ink,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0,
+                            ),
                       ),
                       const SizedBox(height: 5),
                       Text(
                         poolLabel,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: _SeedPalette.muted,
+                              color: p.muted,
                             ),
                       ),
                       const SizedBox(height: 8),
@@ -425,73 +482,33 @@ class _ProfileAccessOverview extends StatelessWidget {
                 ),
               ],
             );
-            final progress = Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    minHeight: 6,
-                    value: 0.42,
-                    backgroundColor: _SeedPalette.ink.withValues(alpha: 0.10),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                        _SeedPalette.accent),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  accessLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: _SeedPalette.accent,
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-              ],
-            );
-            if (compact) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  identity,
-                  const SizedBox(height: 18),
-                  progress,
-                ],
-              );
-            }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                identity,
-                const SizedBox(height: 18),
-                progress,
-              ],
+              children: [header],
             );
           },
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        Column(
           children: [
-            _ProfileMiniAction(
+            _SettingsRow(
+              key: const ValueKey('profile-status-action'),
               icon: Icons.info_outline_rounded,
-              label: 'Статус',
+              title: 'Статус',
               value: statusLabel,
               onTap: onStatusTap,
             ),
-            _ProfileMiniAction(
+            _SettingsRow(
               key: const ValueKey('profile-plan-details-action'),
               icon: Icons.workspace_premium_outlined,
-              label: 'Подписка',
+              title: 'Подписка',
               value: accessValue,
               onTap: onPlanTap,
             ),
-            _ProfileMiniAction(
+            _SettingsRow(
               key: const ValueKey('profile-checkout-action'),
               icon: Icons.shopping_bag_outlined,
-              label: 'Оплата',
+              title: 'Продлить доступ',
               value: 'Продлить',
               onTap: onCheckoutTap,
             ),
@@ -502,189 +519,104 @@ class _ProfileAccessOverview extends StatelessWidget {
   }
 }
 
-class _ProfileMiniAction extends StatelessWidget {
-  const _ProfileMiniAction({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
+String _themeModeLabel(ThemeMode mode) {
+  return switch (mode) {
+    ThemeMode.system => 'Системная',
+    ThemeMode.light => 'Светлая',
+    ThemeMode.dark => 'Тёмная',
+  };
+}
 
-  final IconData icon;
-  final String label;
-  final String value;
-  final VoidCallback onTap;
+void _showThemeModeSheet(
+  BuildContext context, {
+  required ThemeMode selected,
+  required ValueChanged<ThemeMode> onChanged,
+}) {
+  void select(ThemeMode mode) {
+    Navigator.of(context).pop();
+    onChanged(mode);
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return PokrovSettingsRowPressSurface(
-      onTap: onTap,
-      child: Container(
-        constraints: const BoxConstraints(minWidth: 132),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: _SeedPalette.surface.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _SeedPalette.line),
-        ),
-        child: Row(
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => SafeArea(
+      top: false,
+      child: Padding(
+        key: const ValueKey('profile-theme-sheet'),
+        padding: const EdgeInsets.fromLTRB(22, 4, 22, 24),
+        child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 17, color: _SeedPalette.accent),
-            const SizedBox(width: 7),
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: _SeedPalette.muted,
-                          fontWeight: FontWeight.w700,
-                        ),
+            Text(
+              'Тема',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'POKROV может следовать системе или всегда открываться в выбранном оформлении.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: PokrovPalette.of(context).muted,
+                    height: 1.35,
                   ),
-                  Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: _SeedPalette.ink,
-                          fontWeight: FontWeight.w900,
-                        ),
-                  ),
-                ],
-              ),
+            ),
+            const SizedBox(height: 14),
+            _SettingsRow(
+              key: const ValueKey('profile-theme-system'),
+              icon: Icons.brightness_auto_outlined,
+              title: 'Системная',
+              value: selected == ThemeMode.system ? 'Выбрана' : 'Использовать',
+              onTap: () => select(ThemeMode.system),
+            ),
+            _SettingsRow(
+              key: const ValueKey('profile-theme-light'),
+              icon: Icons.light_mode_outlined,
+              title: 'Светлая',
+              value: selected == ThemeMode.light ? 'Выбрана' : 'Использовать',
+              onTap: () => select(ThemeMode.light),
+            ),
+            _SettingsRow(
+              key: const ValueKey('profile-theme-dark'),
+              icon: Icons.dark_mode_outlined,
+              title: 'Тёмная',
+              value: selected == ThemeMode.dark ? 'Выбрана' : 'Использовать',
+              onTap: () => select(ThemeMode.dark),
             ),
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
 }
 
-class _ProfileQuickActionsGrid extends StatelessWidget {
-  const _ProfileQuickActionsGrid({
-    required this.children,
-    this.footer,
-  });
-
-  final List<Widget> children;
-  final Widget? footer;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 360 ? 2 : 1;
-        final tiles = <Widget>[];
-        for (final child in children) {
-          tiles.add(child);
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: columns,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: columns == 1 ? 5.2 : 3.7,
-              children: tiles,
-            ),
-            if (footer != null) ...[
-              const SizedBox(height: 10),
-              footer!,
-            ],
-          ],
-        );
-      },
-    );
+String _formatClientDate(String iso) {
+  final parsed = DateTime.tryParse(iso.trim());
+  if (parsed == null) {
+    return '';
   }
-}
-
-class _ProfileActionTile extends StatelessWidget {
-  const _ProfileActionTile({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final content = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: _SeedPalette.surface.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _SeedPalette.line),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: _SeedPalette.accent, size: 24),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: _SeedPalette.ink,
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: _SeedPalette.muted,
-                        height: 1.25,
-                      ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: _SeedPalette.ink.withValues(alpha: 0.32),
-          ),
-        ],
-      ),
-    );
-    if (onTap == null) {
-      return content;
-    }
-    return PokrovSettingsRowPressSurface(onTap: onTap!, child: content);
-  }
+  final local = parsed.toLocal();
+  String two(int value) => value.toString().padLeft(2, '0');
+  return '${two(local.day)}.${two(local.month)}.${local.year}';
 }
 
 void _showSubscriptionSheet(
   BuildContext context, {
   required SeedAppContext appContext,
   required bool hasProvisionedAccess,
+  required ClientSubscriptionInfo? subscriptionInfo,
   required void Function(String label, String value) onOpenHandoff,
 }) {
+  final info = subscriptionInfo;
+  final expires = info == null ? '' : _formatClientDate(info.expiresAt);
+  final renewUrl = info?.renewUrl;
+  final renewTarget =
+      renewUrl != null && renewUrl.toString().trim().isNotEmpty
+          ? renewUrl.toString()
+          : appContext.checkoutUrl;
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    backgroundColor: _SeedPalette.surface,
     builder: (context) => SafeArea(
       top: false,
       child: SingleChildScrollView(
@@ -696,10 +628,7 @@ void _showSubscriptionSheet(
           children: [
             Text(
               'Подписка',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: _SeedPalette.ink,
-                    fontWeight: FontWeight.w800,
-                  ),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(
@@ -707,7 +636,7 @@ void _showSubscriptionSheet(
                   ? 'Доступ активен. Продление открывается на защищенной странице оплаты.'
                   : 'Сначала подготовьте устройство, затем продлите доступ через защищенную оплату.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: _SeedPalette.ink.withValues(alpha: 0.72),
+                    color: PokrovPalette.of(context).muted,
                     height: 1.35,
                   ),
             ),
@@ -716,10 +645,48 @@ void _showSubscriptionSheet(
               label: 'Текущий доступ',
               value: appContext.accessLane.label,
             ),
+            if (info != null && info.daysLeft > 0)
+              _KeyValueLine(
+                label: 'Осталось дней',
+                value: '${info.daysLeft}',
+              ),
+            if (expires.isNotEmpty)
+              _KeyValueLine(label: 'Действует до', value: expires),
+            if (info != null)
+              _KeyValueLine(
+                label: 'Автопродление',
+                value: info.autoRenew ? 'Включено' : 'Выключено',
+              ),
             _KeyValueLine(
               label: 'Устройство',
               value: appContext.hostPlatform.label,
             ),
+            if (info != null && info.plans.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Text('Тарифы', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              for (final plan in info.plans)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          plan.title,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                      Text(
+                        plan.price,
+                        style:
+                            Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
             const SizedBox(height: 16),
             Wrap(
               spacing: 10,
@@ -729,7 +696,7 @@ void _showSubscriptionSheet(
                   key: const ValueKey('subscription-checkout-primary'),
                   onPressed: () {
                     Navigator.of(context).pop();
-                    onOpenHandoff('checkout', appContext.checkoutUrl);
+                    onOpenHandoff('checkout', renewTarget);
                   },
                   icon: const Icon(Icons.shopping_bag_outlined),
                   label: const Text('Перейти к оплате'),
@@ -764,7 +731,6 @@ void _showEmailRecoverySheet(
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    backgroundColor: _SeedPalette.surface,
     builder: (context) => SafeArea(
       top: false,
       child: SingleChildScrollView(
@@ -776,16 +742,13 @@ void _showEmailRecoverySheet(
           children: [
             Text(
               'Email и восстановление',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: _SeedPalette.ink,
-                    fontWeight: FontWeight.w800,
-                  ),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(
               'Email нужен для восстановления доступа и входа в кабинет. Все действия открываются через короткую защищенную сессию.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: _SeedPalette.ink.withValues(alpha: 0.72),
+                    color: PokrovPalette.of(context).muted,
                     height: 1.35,
                   ),
             ),

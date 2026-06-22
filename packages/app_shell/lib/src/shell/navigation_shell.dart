@@ -30,12 +30,12 @@ class _SeedContentList extends StatelessWidget {
 class _DesktopShell extends StatelessWidget {
   const _DesktopShell({
     required this.selectedIndex,
-    required this.sections,
+    required this.sectionBuilders,
     required this.onSelected,
   }) : super(key: const ValueKey('desktop-shell'));
 
   final int selectedIndex;
-  final List<Widget> sections;
+  final List<WidgetBuilder> sectionBuilders;
   final ValueChanged<int> onSelected;
 
   @override
@@ -45,28 +45,31 @@ class _DesktopShell extends StatelessWidget {
         if (constraints.maxWidth < 900) {
           return _DesktopDrawerShell(
             selectedIndex: selectedIndex,
-            sections: sections,
+            sectionBuilders: sectionBuilders,
             onSelected: onSelected,
           );
         }
         final collapsed = constraints.maxWidth < 1180;
+        final p = PokrovPalette.of(context);
         return Row(
           children: [
-            _DesktopSidebar(
-              selectedIndex: selectedIndex,
-              onSelected: onSelected,
-              collapsed: collapsed,
+            RepaintBoundary(
+              child: _DesktopSidebar(
+                selectedIndex: selectedIndex,
+                onSelected: onSelected,
+                collapsed: collapsed,
+              ),
             ),
             Expanded(
               child: DecoratedBox(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   border: Border(
-                    left: BorderSide(color: _SeedPalette.line),
+                    left: BorderSide(color: p.line),
                   ),
                 ),
-                child: IndexedStack(
+                child: _LazyIndexedStack(
                   index: selectedIndex,
-                  children: sections,
+                  builders: sectionBuilders,
                 ),
               ),
             ),
@@ -80,31 +83,34 @@ class _DesktopShell extends StatelessWidget {
 class _DesktopDrawerShell extends StatelessWidget {
   const _DesktopDrawerShell({
     required this.selectedIndex,
-    required this.sections,
+    required this.sectionBuilders,
     required this.onSelected,
   }) : super(key: const ValueKey('desktop-drawer-shell'));
 
   final int selectedIndex;
-  final List<Widget> sections;
+  final List<WidgetBuilder> sectionBuilders;
   final ValueChanged<int> onSelected;
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     return Scaffold(
       backgroundColor: Colors.transparent,
-      drawerScrimColor: _SeedPalette.ink.withValues(alpha: 0.18),
+      drawerScrimColor: p.ink.withValues(alpha: 0.18),
       drawer: Drawer(
         key: const ValueKey('desktop-sidebar-drawer'),
-        backgroundColor: _SeedPalette.canvas,
+        backgroundColor: p.canvas,
         child: SafeArea(
-          child: _DesktopSidebar(
-            selectedIndex: selectedIndex,
-            onSelected: (index) {
-              Navigator.of(context).maybePop();
-              onSelected(index);
-            },
-            collapsed: false,
-            drawer: true,
+          child: RepaintBoundary(
+            child: _DesktopSidebar(
+              selectedIndex: selectedIndex,
+              onSelected: (index) {
+                Navigator.of(context).maybePop();
+                onSelected(index);
+              },
+              collapsed: false,
+              drawer: true,
+            ),
           ),
         ),
       ),
@@ -131,9 +137,9 @@ class _DesktopDrawerShell extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: IndexedStack(
+            child: _LazyIndexedStack(
               index: selectedIndex,
-              children: sections,
+              builders: sectionBuilders,
             ),
           ),
         ],
@@ -145,64 +151,74 @@ class _DesktopDrawerShell extends StatelessWidget {
 class _MobileShell extends StatelessWidget {
   const _MobileShell({
     required this.selectedIndex,
-    required this.sections,
+    required this.sectionBuilders,
     required this.onSelected,
   }) : super(key: const ValueKey('mobile-shell'));
 
   final int selectedIndex;
-  final List<Widget> sections;
+  final List<WidgetBuilder> sectionBuilders;
   final ValueChanged<int> onSelected;
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     return Column(
       children: [
         Expanded(
-          child: IndexedStack(
+          child: _LazyIndexedStack(
             index: selectedIndex,
-            children: sections,
+            builders: sectionBuilders,
           ),
         ),
         SafeArea(
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: _SeedPalette.surface.withValues(alpha: 0.96),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: _SeedPalette.line),
-              ),
-              child: NavigationBar(
-                height: 64,
-                selectedIndex: selectedIndex,
-                onDestinationSelected: onSelected,
-                destinations: const [
-                  NavigationDestination(
-                    key: ValueKey('nav-protection'),
-                    icon: Icon(Icons.flash_on_outlined),
-                    selectedIcon: Icon(Icons.flash_on),
-                    label: 'Защита',
-                  ),
-                  NavigationDestination(
-                    key: ValueKey('nav-locations'),
-                    icon: Icon(Icons.public_outlined),
-                    selectedIcon: Icon(Icons.public),
-                    label: 'Локации',
-                  ),
-                  NavigationDestination(
-                    key: ValueKey('nav-rules'),
-                    icon: Icon(Icons.rule_folder_outlined),
-                    selectedIcon: Icon(Icons.rule_folder),
-                    label: 'Правила',
-                  ),
-                  NavigationDestination(
-                    key: ValueKey('nav-profile'),
-                    icon: Icon(Icons.person_outline),
-                    selectedIcon: Icon(Icons.person),
-                    label: 'Профиль',
-                  ),
-                ],
+            child: RepaintBoundary(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: p.surface.withValues(alpha: 0.98),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: p.line),
+                  boxShadow: [
+                    BoxShadow(
+                      color: p.ink.withValues(alpha: 0.06),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: NavigationBar(
+                  height: 64,
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: onSelected,
+                  destinations: const [
+                    NavigationDestination(
+                      key: ValueKey('nav-protection'),
+                      icon: Icon(Icons.flash_on_outlined),
+                      selectedIcon: Icon(Icons.flash_on),
+                      label: 'Защита',
+                    ),
+                    NavigationDestination(
+                      key: ValueKey('nav-locations'),
+                      icon: Icon(Icons.public_outlined),
+                      selectedIcon: Icon(Icons.public),
+                      label: 'Локации',
+                    ),
+                    NavigationDestination(
+                      key: ValueKey('nav-rules'),
+                      icon: Icon(Icons.rule_folder_outlined),
+                      selectedIcon: Icon(Icons.rule_folder),
+                      label: 'Правила',
+                    ),
+                    NavigationDestination(
+                      key: ValueKey('nav-profile'),
+                      icon: Icon(Icons.person_outline),
+                      selectedIcon: Icon(Icons.person),
+                      label: 'Профиль',
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -224,7 +240,8 @@ class _DesktopSidebar extends PokrovDesktopSidebar {
           collapsed: collapsed,
           drawer: drawer,
           brandMarkAssetName: _pokrovBrandMarkAsset,
-          versionLabel: _pokrovAppVersion,
+          versionLabel: '',
+          betaLabel: '',
           destinations: const [
             PokrovSidebarDestination(
               itemKey: ValueKey('nav-protection'),
@@ -254,6 +271,71 @@ class _DesktopSidebar extends PokrovDesktopSidebar {
         );
 }
 
+class _LazyIndexedStack extends StatefulWidget {
+  const _LazyIndexedStack({
+    required this.index,
+    required this.builders,
+  }) : super(key: const ValueKey('lazy-indexed-stack'));
+
+  final int index;
+  final List<WidgetBuilder> builders;
+
+  @override
+  State<_LazyIndexedStack> createState() => _LazyIndexedStackState();
+}
+
+class _LazyIndexedStackState extends State<_LazyIndexedStack> {
+  late List<bool> _initialized;
+
+  @override
+  void initState() {
+    super.initState();
+    _initialized = List<bool>.filled(widget.builders.length, false);
+    _markInitialized(widget.index);
+  }
+
+  @override
+  void didUpdateWidget(_LazyIndexedStack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.builders.length != widget.builders.length) {
+      final previous = _initialized;
+      _initialized = List<bool>.generate(
+        widget.builders.length,
+        (index) => index < previous.length && previous[index],
+      );
+    }
+    _markInitialized(widget.index);
+  }
+
+  void _markInitialized(int index) {
+    if (index >= 0 && index < _initialized.length) {
+      _initialized[index] = true;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _markInitialized(widget.index);
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        for (final entry in widget.builders.indexed)
+          Offstage(
+            offstage: entry.$1 != widget.index,
+            child: TickerMode(
+              enabled: entry.$1 == widget.index,
+              child: RepaintBoundary(
+                child: _initialized[entry.$1]
+                    ? entry.$2(context)
+                    : const SizedBox.shrink(),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class PokrovLegacyDesktopSidebar extends StatelessWidget {
   PokrovLegacyDesktopSidebar({
     required this.selectedIndex,
@@ -274,6 +356,7 @@ class PokrovLegacyDesktopSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = collapsed ? 72.0 : 224.0;
+    final p = PokrovPalette.of(context);
     return AnimatedContainer(
       duration: _MotionScope.of(context).duration(_MotionTokens.standard),
       curve: _MotionTokens.ease,
@@ -297,7 +380,7 @@ class PokrovLegacyDesktopSidebar extends StatelessWidget {
               Text(
                 _pokrovAppVersion,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: _SeedPalette.muted,
+                      color: p.muted,
                     ),
               ),
             ],
@@ -328,7 +411,7 @@ class PokrovLegacyDesktopSidebar extends StatelessWidget {
               selectedIndex: selectedIndex,
               icon: Icons.rule_folder_outlined,
               selectedIcon: Icons.rule_folder,
-              label: 'Режим',
+              label: 'Правила',
               onSelected: onSelected,
               collapsed: collapsed,
             ),
@@ -343,18 +426,7 @@ class PokrovLegacyDesktopSidebar extends StatelessWidget {
               collapsed: collapsed,
             ),
             const Spacer(),
-            if (collapsed)
-              Icon(
-                Icons.info_outline_rounded,
-                color: _SeedPalette.muted,
-                size: 20,
-              )
-            else
-              _StatusPill(
-                label: 'Beta',
-                icon: Icons.info_outline_rounded,
-                tone: _SectionTone.muted,
-              ),
+            const SizedBox.shrink(),
           ],
         ),
       ),
@@ -376,9 +448,9 @@ class _BrandLockup extends StatelessWidget {
     final label = Text(
       'POKROV',
       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: _SeedPalette.ink,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0,
+            color: PokrovPalette.of(context).ink,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
           ),
     );
     final children = [
@@ -430,6 +502,7 @@ class _SidebarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = index == selectedIndex;
+    final p = PokrovPalette.of(context);
     final child = Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: InkWell(
@@ -444,7 +517,7 @@ class _SidebarItem extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: selected
-                ? _SeedPalette.accent.withValues(alpha: 0.08)
+                ? p.accent.withValues(alpha: 0.08)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
@@ -457,7 +530,7 @@ class _SidebarItem extends StatelessWidget {
                   width: 2,
                   height: 20,
                   decoration: BoxDecoration(
-                    color: selected ? _SeedPalette.accent : Colors.transparent,
+                    color: selected ? p.accent : Colors.transparent,
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -466,7 +539,7 @@ class _SidebarItem extends StatelessWidget {
               Icon(
                 selected ? selectedIcon : icon,
                 size: 20,
-                color: selected ? _SeedPalette.accent : _SeedPalette.muted,
+                color: selected ? p.accent : p.muted,
               ),
               if (!collapsed) ...[
                 const SizedBox(width: 10),
@@ -488,11 +561,9 @@ class _SidebarItem extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: selected
-                                ? _SeedPalette.ink
-                                : _SeedPalette.muted,
+                            color: selected ? p.ink : p.muted,
                             fontWeight:
-                                selected ? FontWeight.w800 : FontWeight.w600,
+                                selected ? FontWeight.w600 : FontWeight.w600,
                           ),
                     ),
                   ),

@@ -1,6 +1,6 @@
 part of pokrov_app_shell;
 
-class PokrovSeedApp extends StatelessWidget {
+class PokrovSeedApp extends StatefulWidget {
   const PokrovSeedApp({
     super.key,
     required this.appContext,
@@ -19,101 +19,356 @@ class PokrovSeedApp extends StatelessWidget {
   final Duration runtimeActionTimeout;
 
   @override
-  Widget build(BuildContext context) {
-    const colorScheme = ColorScheme.light(
-      primary: _SeedPalette.accent,
-      onPrimary: Colors.white,
-      secondary: _SeedPalette.accentBright,
-      onSecondary: Colors.white,
-      surface: _SeedPalette.surface,
-      onSurface: _SeedPalette.ink,
-      error: Color(0xFFB33B2E),
-      onError: Colors.white,
-    );
+  State<PokrovSeedApp> createState() => _PokrovSeedAppState();
+}
 
+class _PokrovSeedAppState extends State<PokrovSeedApp> {
+  ThemeMode _themeMode = ThemeMode.system;
+
+  void _setThemeMode(ThemeMode mode) {
+    if (_themeMode == mode) {
+      return;
+    }
+    HapticFeedback.selectionClick();
+    setState(() {
+      _themeMode = mode;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp(
       title: 'POKROV',
-      theme: ThemeData(
-        colorScheme: colorScheme,
-        fontFamily: 'SF Pro Display',
-        fontFamilyFallback: const [
-          'Segoe UI Variable Text',
-          'Segoe UI',
-          'SF Pro Text',
-        ],
-        useMaterial3: true,
-        scaffoldBackgroundColor: Colors.transparent,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          foregroundColor: _SeedPalette.ink,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          surfaceTintColor: Colors.transparent,
-          centerTitle: false,
-        ),
-        cardTheme: CardThemeData(
-          color: _SeedPalette.surface,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          indicatorColor: _SeedPalette.accent.withValues(alpha: 0.1),
-          labelTextStyle: WidgetStateProperty.resolveWith(
-            (states) => TextStyle(
-              fontSize: 12,
-              fontWeight: states.contains(WidgetState.selected)
-                  ? FontWeight.w700
-                  : FontWeight.w500,
-              color: states.contains(WidgetState.selected)
-                  ? _SeedPalette.ink
-                  : _SeedPalette.ink.withValues(alpha: 0.68),
-            ),
-          ),
-          iconTheme: WidgetStateProperty.resolveWith(
-            (states) => IconThemeData(
-              color: states.contains(WidgetState.selected)
-                  ? _SeedPalette.accent
-                  : _SeedPalette.ink.withValues(alpha: 0.68),
-            ),
-          ),
-        ),
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            backgroundColor: _SeedPalette.accent,
-            foregroundColor: Colors.white,
-            minimumSize: const Size(0, 46),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: _SeedPalette.ink,
-            side: BorderSide(color: _SeedPalette.ink.withValues(alpha: 0.16)),
-            minimumSize: const Size(0, 46),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-        ),
+      debugShowCheckedModeBanner: false,
+      themeMode: _themeMode,
+      theme: _buildPokrovTheme(
+        tokens: PokrovPalette.light,
+        brightness: Brightness.light,
+      ),
+      darkTheme: _buildPokrovTheme(
+        tokens: PokrovPalette.dark,
+        brightness: Brightness.dark,
       ),
       home: PokrovSeedShell(
-        appContext: appContext,
-        bootstrapper: bootstrapper,
-        supportTicketService: supportTicketService,
-        handoffLauncher: handoffLauncher,
-        firstLaunchStore: firstLaunchStore,
-        runtimeActionTimeout: runtimeActionTimeout,
+        appContext: widget.appContext,
+        bootstrapper: widget.bootstrapper,
+        supportTicketService: widget.supportTicketService,
+        handoffLauncher: widget.handoffLauncher,
+        firstLaunchStore: widget.firstLaunchStore,
+        runtimeActionTimeout: widget.runtimeActionTimeout,
+        themeMode: _themeMode,
+        onThemeModeChanged: _setThemeMode,
       ),
     );
   }
+}
+
+/// Single source of truth for the POKROV Material theme so light and dark
+/// stay in lockstep. Builds an Apple-grade type ramp plus restrained,
+/// consistent component styling on top of the palette tokens.
+ThemeData _buildPokrovTheme({
+  required PokrovPaletteTokens tokens,
+  required Brightness brightness,
+}) {
+  final isDark = brightness == Brightness.dark;
+  final onAccent = isDark ? const Color(0xFF06251E) : Colors.white;
+  final colorScheme = ColorScheme.fromSeed(
+    seedColor: tokens.accent,
+    brightness: brightness,
+  ).copyWith(
+    primary: tokens.accent,
+    onPrimary: onAccent,
+    secondary: tokens.accentBright,
+    onSecondary: onAccent,
+    surface: tokens.surface,
+    onSurface: tokens.ink,
+    error: tokens.danger,
+    outlineVariant: tokens.line,
+  );
+  final textTheme = _buildPokrovTextTheme(tokens);
+
+  return ThemeData(
+    useMaterial3: true,
+    brightness: brightness,
+    colorScheme: colorScheme,
+    fontFamily: 'SF Pro Display',
+    fontFamilyFallback: const [
+      'Segoe UI Variable Display',
+      'Segoe UI Variable Text',
+      'Segoe UI',
+      'SF Pro Text',
+      'Roboto',
+      'Inter',
+    ],
+    extensions: [isDark ? PokrovPalette.dark : PokrovPalette.light],
+    scaffoldBackgroundColor: Colors.transparent,
+    canvasColor: tokens.canvas,
+    splashColor: tokens.accent.withValues(alpha: 0.06),
+    highlightColor: tokens.accent.withValues(alpha: 0.04),
+    textTheme: textTheme,
+    iconTheme: IconThemeData(color: tokens.ink, size: 22),
+    dividerTheme: DividerThemeData(
+      color: tokens.line,
+      thickness: 1,
+      space: 1,
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.transparent,
+      foregroundColor: tokens.ink,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      centerTitle: false,
+      titleTextStyle: textTheme.headlineSmall,
+    ),
+    cardTheme: CardThemeData(
+      color: tokens.surface,
+      elevation: 0,
+      shape: const RoundedRectangleBorder(borderRadius: PokrovRadii.card),
+      clipBehavior: Clip.antiAlias,
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      height: 64,
+      indicatorColor: tokens.accent.withValues(alpha: isDark ? 0.18 : 0.12),
+      indicatorShape: const StadiumBorder(),
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      labelTextStyle: WidgetStateProperty.resolveWith(
+        (states) => TextStyle(
+          fontSize: 11.5,
+          letterSpacing: 0.1,
+          fontWeight: states.contains(WidgetState.selected)
+              ? FontWeight.w600
+              : FontWeight.w500,
+          color:
+              states.contains(WidgetState.selected) ? tokens.ink : tokens.muted,
+        ),
+      ),
+      iconTheme: WidgetStateProperty.resolveWith(
+        (states) => IconThemeData(
+          size: 24,
+          color: states.contains(WidgetState.selected)
+              ? tokens.accent
+              : tokens.muted,
+        ),
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: tokens.accent,
+        foregroundColor: onAccent,
+        disabledBackgroundColor: tokens.muted.withValues(alpha: 0.18),
+        disabledForegroundColor: tokens.muted,
+        minimumSize: const Size(0, 50),
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+        textStyle: textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0,
+        ),
+        shape: const RoundedRectangleBorder(borderRadius: PokrovRadii.stadium),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: tokens.ink,
+        side: BorderSide(color: tokens.line),
+        minimumSize: const Size(0, 50),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+        shape: const RoundedRectangleBorder(borderRadius: PokrovRadii.stadium),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: tokens.accent,
+        textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+        shape: const RoundedRectangleBorder(borderRadius: PokrovRadii.card),
+      ),
+    ),
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? Colors.white
+            : (isDark ? const Color(0xFFD7DCE4) : Colors.white),
+      ),
+      trackColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? tokens.accent
+            : tokens.muted.withValues(alpha: 0.32),
+      ),
+      trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: tokens.surfaceMuted,
+      hintStyle: textTheme.bodyMedium?.copyWith(color: tokens.muted),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: const OutlineInputBorder(
+        borderRadius: PokrovRadii.cardSm,
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: PokrovRadii.cardSm,
+        borderSide: BorderSide(color: tokens.line),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: PokrovRadii.cardSm,
+        borderSide: BorderSide(color: tokens.accent, width: 1.6),
+      ),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: tokens.surfaceElevated,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(PokrovRadii.xl),
+      ),
+      titleTextStyle: textTheme.titleLarge,
+      contentTextStyle: textTheme.bodyMedium?.copyWith(color: tokens.muted),
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: tokens.surfaceElevated,
+      surfaceTintColor: Colors.transparent,
+      modalBarrierColor: tokens.ink.withValues(alpha: isDark ? 0.6 : 0.32),
+      elevation: 0,
+      shape: const RoundedRectangleBorder(borderRadius: PokrovRadii.sheet),
+    ),
+    listTileTheme: ListTileThemeData(
+      iconColor: tokens.muted,
+      textColor: tokens.ink,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+    ),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: isDark ? tokens.surfaceElevated : tokens.ink,
+      contentTextStyle: textTheme.bodyMedium?.copyWith(
+        color: isDark ? tokens.ink : tokens.canvasAlt,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(PokrovRadii.md),
+      ),
+    ),
+    tooltipTheme: TooltipThemeData(
+      decoration: BoxDecoration(
+        color: tokens.ink.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(PokrovRadii.xs),
+      ),
+      textStyle: textTheme.labelMedium?.copyWith(color: tokens.canvasAlt),
+    ),
+  );
+}
+
+TextTheme _buildPokrovTextTheme(PokrovPaletteTokens tokens) {
+  final ink = tokens.ink;
+  final muted = tokens.muted;
+  return TextTheme(
+    displayLarge: TextStyle(
+      fontSize: 34,
+      height: 1.1,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.8,
+      color: ink,
+    ),
+    displayMedium: TextStyle(
+      fontSize: 28,
+      height: 1.12,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.6,
+      color: ink,
+    ),
+    displaySmall: TextStyle(
+      fontSize: 24,
+      height: 1.16,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.4,
+      color: ink,
+    ),
+    headlineLarge: TextStyle(
+      fontSize: 26,
+      height: 1.18,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.5,
+      color: ink,
+    ),
+    headlineMedium: TextStyle(
+      fontSize: 22,
+      height: 1.2,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.4,
+      color: ink,
+    ),
+    headlineSmall: TextStyle(
+      fontSize: 20,
+      height: 1.22,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.3,
+      color: ink,
+    ),
+    titleLarge: TextStyle(
+      fontSize: 19,
+      height: 1.25,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.2,
+      color: ink,
+    ),
+    titleMedium: TextStyle(
+      fontSize: 16,
+      height: 1.3,
+      fontWeight: FontWeight.w600,
+      letterSpacing: -0.1,
+      color: ink,
+    ),
+    titleSmall: TextStyle(
+      fontSize: 14,
+      height: 1.3,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0,
+      color: ink,
+    ),
+    bodyLarge: TextStyle(
+      fontSize: 16,
+      height: 1.38,
+      fontWeight: FontWeight.w400,
+      letterSpacing: 0,
+      color: ink,
+    ),
+    bodyMedium: TextStyle(
+      fontSize: 14,
+      height: 1.4,
+      fontWeight: FontWeight.w400,
+      letterSpacing: 0,
+      color: ink,
+    ),
+    bodySmall: TextStyle(
+      fontSize: 12,
+      height: 1.36,
+      fontWeight: FontWeight.w400,
+      letterSpacing: 0,
+      color: muted,
+    ),
+    labelLarge: TextStyle(
+      fontSize: 14,
+      height: 1.2,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0,
+      color: ink,
+    ),
+    labelMedium: TextStyle(
+      fontSize: 12,
+      height: 1.2,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.1,
+      color: muted,
+    ),
+    labelSmall: TextStyle(
+      fontSize: 11,
+      height: 1.2,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.2,
+      color: muted,
+    ),
+  );
 }
 
 class PokrovSeedShell extends StatefulWidget {
@@ -125,6 +380,8 @@ class PokrovSeedShell extends StatefulWidget {
     this.handoffLauncher,
     this.firstLaunchStore,
     this.runtimeActionTimeout = const Duration(seconds: 18),
+    required this.themeMode,
+    required this.onThemeModeChanged,
   });
 
   final SeedAppContext appContext;
@@ -133,6 +390,8 @@ class PokrovSeedShell extends StatefulWidget {
   final ExternalHandoffLauncher? handoffLauncher;
   final PokrovFirstLaunchStore? firstLaunchStore;
   final Duration runtimeActionTimeout;
+  final ThemeMode themeMode;
+  final ValueChanged<ThemeMode> onThemeModeChanged;
 
   @override
   State<PokrovSeedShell> createState() => _PokrovSeedShellState();
@@ -149,6 +408,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   late final AppFirstWarpActionService? _warpActionService;
   late final AppFirstReleaseActionService? _releaseActionService;
   late final AppFirstNodePreferenceService? _nodePreferenceService;
+  late final AppFirstClientDataService? _clientDataService;
   late final SupportTicketService _supportTicketService;
   late final PokrovFirstLaunchStore _firstLaunchStore;
   final TextEditingController _firstLaunchRestoreCodeController =
@@ -173,8 +433,15 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   bool _warpRuntimeConsent = false;
   bool _warpPolicyBusy = false;
   SmartConnectProfile? _smartConnectProfile;
+  ClientLocationsCatalog? _locationsCatalog;
   String _preferredNodeCode = '';
   bool _nodePreferenceBusy = false;
+  bool _locationsCatalogBusy = false;
+  String? _locationsCatalogError;
+  ClientSubscriptionInfo? _subscriptionInfo;
+  ClientNotificationInbox? _notificationsInbox;
+  bool _notificationsBusy = false;
+  int _notificationsUnread = 0;
   bool _clientUpdateCheckBusy = false;
   bool _clientUpdatePromptVisible = false;
   String _lastPromptedUpdateKey = '';
@@ -207,6 +474,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _nodePreferenceService = bootstrapper is AppFirstNodePreferenceService
         ? bootstrapper as AppFirstNodePreferenceService
         : null;
+    _clientDataService = bootstrapper is AppFirstClientDataService
+        ? bootstrapper as AppFirstClientDataService
+        : null;
     _supportTicketService = widget.supportTicketService ??
         AppFirstSupportTicketService(
           apiBaseUrl: widget.appContext.apiBaseUrl,
@@ -217,6 +487,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _refreshRuntimeSnapshot();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_checkForClientUpdate());
+      unawaited(_loadBonusSummary());
+      unawaited(_refreshNotifications());
     });
   }
 
@@ -309,9 +581,161 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     setState(() {
       _selectedIndex = tab.index;
     });
+    if (tab == SeedTab.locations) {
+      unawaited(_refreshLocationsCatalog());
+    }
     if (tab == SeedTab.profile && widget.bootstrapper != null) {
       unawaited(_loadBonusSummary());
+      unawaited(_refreshSubscriptionInfo());
+      unawaited(_refreshNotifications());
     }
+  }
+
+  Future<void> _refreshLocationsCatalog() async {
+    final service = _clientDataService;
+    if (service == null || _locationsCatalogBusy) {
+      return;
+    }
+    if (mounted) {
+      setState(() {
+        _locationsCatalogBusy = true;
+        _locationsCatalogError = null;
+      });
+    }
+    try {
+      final catalog = await service.fetchLocationsCatalog(
+        hostPlatform: widget.appContext.hostPlatform,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _locationsCatalog = catalog;
+        _locationsCatalogError = null;
+      });
+    } on BootstrapFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _locationsCatalogError = error.message;
+      });
+    } on Object catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _locationsCatalogError = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _locationsCatalogBusy = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _refreshSubscriptionInfo() async {
+    final service = _clientDataService;
+    if (service == null) {
+      return;
+    }
+    try {
+      final info = await service.fetchClientSubscription(
+        hostPlatform: widget.appContext.hostPlatform,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _subscriptionInfo = info;
+      });
+    } on Object {
+      // Subscription detail is optional; the sheet falls back to access lane.
+    }
+  }
+
+  Future<void> _refreshNotifications() async {
+    final service = _clientDataService;
+    if (service == null || _notificationsBusy) {
+      return;
+    }
+    if (mounted) {
+      setState(() {
+        _notificationsBusy = true;
+      });
+    }
+    try {
+      final inbox = await service.fetchClientNotifications(
+        hostPlatform: widget.appContext.hostPlatform,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _notificationsInbox = inbox;
+        _notificationsUnread = inbox.unreadCount;
+      });
+    } on Object {
+      // Notifications are best-effort; keep the last known inbox.
+    } finally {
+      if (mounted) {
+        setState(() {
+          _notificationsBusy = false;
+        });
+      }
+    }
+  }
+
+  void _markNotificationsRead() {
+    if (_notificationsUnread > 0) {
+      setState(() {
+        _notificationsUnread = 0;
+      });
+    }
+    final service = _clientDataService;
+    final inbox = _notificationsInbox;
+    if (service == null || inbox == null) {
+      return;
+    }
+    final unreadIds = inbox.items
+        .where((item) => !item.read)
+        .map((item) => item.id)
+        .where((id) => id.trim().isNotEmpty)
+        .toList(growable: false);
+    if (unreadIds.isEmpty) {
+      return;
+    }
+    unawaited(
+      service
+          .markClientNotificationsRead(
+            hostPlatform: widget.appContext.hostPlatform,
+            ids: unreadIds,
+          )
+          .catchError((Object _) => false),
+    );
+  }
+
+  Future<ClientDeviceList> _fetchClientDevices() async {
+    final service = _clientDataService;
+    if (service == null) {
+      return const ClientDeviceList(items: <ClientDeviceInfo>[]);
+    }
+    return service.fetchClientDevices(
+      hostPlatform: widget.appContext.hostPlatform,
+    );
+  }
+
+  Future<bool> _revokeClientDevice(String deviceId) async {
+    final service = _clientDataService;
+    if (service == null) {
+      return false;
+    }
+    return service.revokeClientDevice(
+      hostPlatform: widget.appContext.hostPlatform,
+      deviceId: deviceId,
+    );
   }
 
   @override
@@ -326,6 +750,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (state == AppLifecycleState.resumed && !_runtimeBusy) {
       unawaited(_refreshRuntimeSnapshot());
       unawaited(_checkForClientUpdate());
+      unawaited(_refreshNotifications());
     }
   }
 
@@ -816,7 +1241,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _managedProfileDirty = true;
         _runtimeHeadline = '$actionName: награда активирована.';
       });
-      HapticFeedback.heavyImpact();
       final days = result.rewardDays;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1186,10 +1610,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (!policy.canOfferRuntime) {
       _showInfoSheet(
         context,
-        title: 'Расширенная защита',
+        title: 'WARP',
         lines: const [
           'Дополнительный режим пока недоступен для этого устройства.',
-          'Когда он будет доступен, здесь появится отдельный переключатель.',
+          'POKROV оставит обычное подключение и не будет мешать работе VPN.',
         ],
       );
       return;
@@ -1269,9 +1693,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _warpRuntimeConsent = enabled;
         _managedProfileDirty = true;
         _runtimeHeadline = enabled
-            ? 'Расширенная защита включится при следующем подключении.'
-            : 'Расширенная защита выключена для следующих подключений.';
+            ? 'WARP включится при следующем подключении.'
+            : 'WARP выключен для следующих подключений.';
       });
+      // WARP takes effect on the next connection, so respond to the toggle
+      // instantly and push the runtime apply in the background instead of
+      // blocking the UI on a platform round-trip.
+      unawaited(_applyWarpRuntimeConsent(enabled: enabled));
     } on BootstrapFailure catch (error) {
       if (!mounted) {
         return;
@@ -1289,6 +1717,88 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         });
       }
     }
+  }
+
+  Future<WarpApplyResult> _applyWarpRuntimeConsent({
+    required bool enabled,
+  }) async {
+    try {
+      final result = await _withRuntimeActionTimeout(
+        'applyWarp',
+        () => _runtimeEngine.applyWarp(enabled: enabled),
+      );
+      unawaited(_reportWarpApplyResult(enabled: enabled, result: result));
+      return result;
+    } on Object catch (error) {
+      final result = WarpApplyResult.notApplied(
+        reason: _safeWarpApplyReason(error),
+      );
+      unawaited(
+        _reportWarpApplyResult(
+          enabled: enabled,
+          result: result,
+          message: error.toString(),
+        ),
+      );
+      return result;
+    }
+  }
+
+  Future<void> _reportWarpApplyResult({
+    required bool enabled,
+    required WarpApplyResult result,
+    String message = '',
+  }) async {
+    final service = _warpActionService;
+    if (service == null) {
+      return;
+    }
+    try {
+      await service.reportWarpRuntimeEvent(
+        hostPlatform: widget.appContext.hostPlatform,
+        eventName: 'runtime_apply_warp',
+        state: result.applied
+            ? (enabled ? 'active' : 'revoked')
+            : (enabled ? 'deferred' : 'revoked_deferred'),
+        reasonCode:
+            result.applied ? 'applied' : (result.reason ?? 'not_applied'),
+        message: message,
+        meta: <String, Object?>{
+          'enabled': enabled,
+          'applied': result.applied,
+          'effective_at': result.effectiveAt,
+          'fallback_used': result.fallbackUsed,
+          if (result.reason != null) 'reason': result.reason,
+        },
+      );
+    } on BootstrapFailure {
+      // Runtime-proof telemetry must never block the WARP switch.
+    } on Object {
+      // Same rule for transient platform or network failures.
+    }
+  }
+
+  String _safeWarpApplyReason(Object error) {
+    if (error is TimeoutException) {
+      return 'timeout';
+    }
+    if (error is PlatformException) {
+      final code = error.code.trim();
+      return code.isEmpty ? 'platform_error' : code;
+    }
+    final text = error.toString().trim();
+    if (text.isEmpty) {
+      return 'runtime_error';
+    }
+    final normalized = text
+        .toLowerCase()
+        .replaceAll(RegExp('[^a-z0-9_]+'), '_')
+        .replaceAll(RegExp('_+'), '_')
+        .replaceAll(RegExp('^_|_\$'), '');
+    if (normalized.isEmpty) {
+      return 'runtime_error';
+    }
+    return normalized.length > 48 ? normalized.substring(0, 48) : normalized;
   }
 
   Future<void> _toggleRuntime() async {
@@ -1602,79 +2112,96 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final hasProvisionedAccess = !_managedProfileDirty ||
         (_runtimeSnapshot?.phase == RuntimePhase.running) ||
         ((_runtimeSnapshot?.stagedConfigPath ?? '').isNotEmpty);
-    final sections = <Widget>[
-      _QuickConnectSection(
-        appContext: widget.appContext,
-        selectedRouteMode: _selectedRouteMode,
-        runtimeSnapshot: _runtimeSnapshot,
-        runtimeHeadline: _runtimeHeadline,
-        runtimeBusy: _runtimeBusy,
-        primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
-        bonusSummary: _bonusSummary,
-        telegramBonusBusy: _telegramBonusBusy,
-        warpPolicy: _managedWarpPolicy,
-        warpRuntimeConsent: _warpRuntimeConsent,
-        warpBusy: _warpPolicyBusy,
-        onToggleRuntime: _toggleRuntimeFromHome,
-        onTelegramBonus: _telegramBonusBusy
-            ? null
-            : () {
-                if (_telegramBonusCanClaim) {
-                  unawaited(_claimTelegramBonusInApp());
-                } else {
-                  unawaited(_createTelegramLinkInApp());
-                }
-              },
-        onOpenLocations: () => _selectTab(SeedTab.locations),
-        onOpenRules: () => _selectTab(SeedTab.rules),
-        onOpenWarp: _openWarpControl,
-      ),
-      _LocationsSection(
-        appContext: widget.appContext,
-        selectedRouteMode: _selectedRouteMode,
-        hasProvisionedAccess: hasProvisionedAccess,
-        smartConnectProfile: _smartConnectProfile,
-        preferredNodeCode: _preferredNodeCode,
-        nodePreferenceBusy: _nodePreferenceBusy,
-        onPreferredNodeSelected: _setPreferredLocation,
-      ),
-      _RulesSection(
-        appContext: widget.appContext,
-        selectedRouteMode: _selectedRouteMode,
-        selectedAppIds: _selectedAppIds,
-        onRouteModeSelected: (mode) {
-          _selectRouteMode(mode);
-        },
-        onSelectedAppAdded: _addSelectedAppId,
-        onSelectedAppRemoved: _removeSelectedAppId,
-      ),
-      _ProfileSection(
-        appContext: widget.appContext,
-        selectedRouteMode: _selectedRouteMode,
-        hasProvisionedAccess: hasProvisionedAccess,
-        onOpenHandoff: _showSeedHandoff,
-        onOpenSupportHub: _showSupportHub,
-        onCreateTelegramLink: _createTelegramLinkInApp,
-        onCheckTelegramBonus: _checkTelegramBonusInApp,
-        onClaimTelegramBonus: _claimTelegramBonusInApp,
-        telegramBonusStatus: _telegramBonusStatus,
-        telegramBonusBusy: _telegramBonusBusy,
-        telegramBonusCanClaim: _telegramBonusCanClaim,
-        telegramBonusError: _telegramBonusError,
-        bonusSummary: _bonusSummary,
-        bonusSummaryBusy: _bonusSummaryBusy,
-        bonusSummaryError: _bonusSummaryError,
-        bonusRewardBusy: _bonusRewardBusy,
-        onRefreshBonusSummary: () => _loadBonusSummary(force: true),
-        onSpinWheel: _spinBonusWheelInApp,
-        onCheckInCalendar: _checkInBonusCalendarInApp,
-        warpPolicy: _managedWarpPolicy,
-        warpRuntimeConsent: _warpRuntimeConsent,
-        warpBusy: _warpPolicyBusy,
-        runtimeSnapshot: _runtimeSnapshot,
-        runtimeHeadline: _runtimeHeadline,
-        onOpenWarp: _openWarpControl,
-      ),
+    final sectionBuilders = <WidgetBuilder>[
+      (context) => _QuickConnectSection(
+            appContext: widget.appContext,
+            selectedRouteMode: _selectedRouteMode,
+            runtimeSnapshot: _runtimeSnapshot,
+            runtimeHeadline: _runtimeHeadline,
+            runtimeBusy: _runtimeBusy,
+            primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
+            bonusSummary: _bonusSummary,
+            telegramBonusBusy: _telegramBonusBusy,
+            warpPolicy: _managedWarpPolicy,
+            warpRuntimeConsent: _warpRuntimeConsent,
+            warpBusy: _warpPolicyBusy,
+            onToggleRuntime: _toggleRuntimeFromHome,
+            onTelegramBonus: _telegramBonusBusy
+                ? null
+                : () {
+                    if (_telegramBonusCanClaim) {
+                      unawaited(_claimTelegramBonusInApp());
+                    } else {
+                      unawaited(_createTelegramLinkInApp());
+                    }
+                  },
+            onOpenLocations: () => _selectTab(SeedTab.locations),
+            onOpenRules: () => _selectTab(SeedTab.rules),
+            onOpenWarp: _openWarpControl,
+            onWarpConsentChanged: _setWarpRuntimeConsent,
+            onOpenPromoHandoff: _showSeedHandoff,
+          ),
+      (context) => _LocationsSection(
+            appContext: widget.appContext,
+            selectedRouteMode: _selectedRouteMode,
+            hasProvisionedAccess: hasProvisionedAccess,
+            smartConnectProfile: _smartConnectProfile,
+            locationsCatalog: _locationsCatalog,
+            locationsCatalogBusy: _locationsCatalogBusy,
+            locationsCatalogError: _locationsCatalogError,
+            onRefreshLocationsCatalog: _refreshLocationsCatalog,
+            preferredNodeCode: _preferredNodeCode,
+            nodePreferenceBusy: _nodePreferenceBusy,
+            onPreferredNodeSelected: _setPreferredLocation,
+          ),
+      (context) => _RulesSection(
+            appContext: widget.appContext,
+            selectedRouteMode: _selectedRouteMode,
+            selectedAppIds: _selectedAppIds,
+            onRouteModeSelected: (mode) {
+              _selectRouteMode(mode);
+            },
+            onSelectedAppAdded: _addSelectedAppId,
+            onSelectedAppRemoved: _removeSelectedAppId,
+          ),
+      (context) => _ProfileSection(
+            appContext: widget.appContext,
+            selectedRouteMode: _selectedRouteMode,
+            hasProvisionedAccess: hasProvisionedAccess,
+            onOpenHandoff: _showSeedHandoff,
+            onOpenSupportHub: _showSupportHub,
+            onCreateTelegramLink: _createTelegramLinkInApp,
+            onCheckTelegramBonus: _checkTelegramBonusInApp,
+            onClaimTelegramBonus: _claimTelegramBonusInApp,
+            telegramBonusStatus: _telegramBonusStatus,
+            telegramBonusBusy: _telegramBonusBusy,
+            telegramBonusCanClaim: _telegramBonusCanClaim,
+            telegramBonusError: _telegramBonusError,
+            bonusSummary: _bonusSummary,
+            bonusSummaryBusy: _bonusSummaryBusy,
+            bonusSummaryError: _bonusSummaryError,
+            bonusRewardBusy: _bonusRewardBusy,
+            onRefreshBonusSummary: () => _loadBonusSummary(force: true),
+            onSpinWheel: _spinBonusWheelInApp,
+            onCheckInCalendar: _checkInBonusCalendarInApp,
+            warpPolicy: _managedWarpPolicy,
+            warpRuntimeConsent: _warpRuntimeConsent,
+            warpBusy: _warpPolicyBusy,
+            runtimeSnapshot: _runtimeSnapshot,
+            runtimeHeadline: _runtimeHeadline,
+            onOpenWarp: _openWarpControl,
+            themeMode: widget.themeMode,
+            onThemeModeChanged: widget.onThemeModeChanged,
+            subscriptionInfo: _subscriptionInfo,
+            notifications: _notificationsInbox?.items ??
+                const <ClientNotificationItem>[],
+            notificationsUnread: _notificationsUnread,
+            notificationsBusy: _notificationsBusy,
+            onOpenNotifications: _markNotificationsRead,
+            onRefreshNotifications: _refreshNotifications,
+            onFetchDevices: _fetchClientDevices,
+            onRevokeDevice: _revokeClientDevice,
+          ),
     ];
 
     final isDesktopShell = switch (widget.appContext.hostPlatform) {
@@ -1688,14 +2215,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final shell = isDesktopShell
         ? _DesktopShell(
             selectedIndex: _selectedIndex,
-            sections: sections,
+            sectionBuilders: sectionBuilders,
             onSelected: (index) {
               _selectTab(SeedTab.values[index]);
             },
           )
         : _MobileShell(
             selectedIndex: _selectedIndex,
-            sections: sections,
+            sectionBuilders: sectionBuilders,
             onSelected: (index) {
               _selectTab(SeedTab.values[index]);
             },

@@ -18,7 +18,6 @@ void _showInfoSheet(
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    backgroundColor: _SeedPalette.surface,
     builder: (context) => _InfoSheet(title: title, lines: lines),
   );
 }
@@ -34,6 +33,7 @@ class _InfoSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
@@ -45,8 +45,7 @@ class _InfoSheet extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: _SeedPalette.ink,
-                    fontWeight: FontWeight.w800,
+                    color: p.ink,
                   ),
             ),
             const SizedBox(height: 12),
@@ -56,8 +55,8 @@ class _InfoSheet extends StatelessWidget {
                 child: Text(
                   line,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: _SeedPalette.ink.withValues(alpha: 0.72),
-                        height: 1.35,
+                        color: p.muted,
+                        height: 1.4,
                       ),
                 ),
               ),

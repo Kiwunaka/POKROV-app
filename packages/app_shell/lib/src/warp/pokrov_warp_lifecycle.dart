@@ -56,9 +56,9 @@ class PokrovWarpLifecycle {
 
   String get technicalLabel => 'WARP';
 
-  String get publicTitle => 'Расширенная защита';
+  String get publicTitle => 'WARP';
 
-  String get publicSheetTitle => 'Расширенная защита';
+  String get publicSheetTitle => 'WARP';
 
   String get stateKey {
     if (busy) {
@@ -102,9 +102,9 @@ class PokrovWarpLifecycle {
 
   String get publicSheetBody => switch (phase) {
         PokrovWarpPhase.notReady =>
-          'POKROV не показывает этот режим, пока сервер не подтвердит готовность для устройства.',
+          'POKROV не показывает этот режим, пока он недоступен для устройства.',
         PokrovWarpPhase.readyToConsent =>
-          'Дополнительный слой включается отдельно и может менять скорость.',
+          'Дополнительный слой помогает там, где обычного VPN недостаточно.',
         PokrovWarpPhase.consented =>
           'Режим включится при следующем подключении и останется управляемым отсюда.',
         PokrovWarpPhase.active =>
@@ -159,8 +159,8 @@ class PokrovWarpConsentCacheEntry {
 
   static String _safePublicLabel(String value) {
     final text = value.trim();
-    if (text.isEmpty || text.toLowerCase().contains('warp')) {
-      return 'Расширенная защита';
+    if (text.isEmpty) {
+      return 'WARP';
     }
     return text.length > 80 ? text.substring(0, 80) : text;
   }

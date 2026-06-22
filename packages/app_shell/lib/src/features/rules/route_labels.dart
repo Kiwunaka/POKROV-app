@@ -2,26 +2,26 @@ part of pokrov_app_shell;
 
 String _routeModeShortLabel(RouteMode mode) {
   return switch (mode) {
-    RouteMode.allExceptRu => 'Зарубежные сайты',
-    RouteMode.fullTunnel => 'Весь трафик',
-    RouteMode.selectedApps => 'Выбранные приложения',
+    RouteMode.allExceptRu => 'Умный режим',
+    RouteMode.fullTunnel => 'Всё устройство',
+    RouteMode.selectedApps => 'Только выбранные',
   };
 }
 
 String _routeModeRowTitle(RouteMode mode) {
   return switch (mode) {
-    RouteMode.allExceptRu => 'Зарубежные сайты через POKROV',
-    RouteMode.fullTunnel => 'Весь трафик через POKROV',
-    RouteMode.selectedApps => 'Только выбранные приложения',
+    RouteMode.allExceptRu => 'Умный режим',
+    RouteMode.fullTunnel => 'Всё устройство',
+    RouteMode.selectedApps => 'Только выбранные',
   };
 }
 
 String _routeModeRowSummary(RouteMode mode) {
   return switch (mode) {
     RouteMode.allExceptRu =>
-      'Российские и локальные сервисы работают напрямую, остальное идет через POKROV.',
-    RouteMode.fullTunnel => 'Весь трафик устройства идет через POKROV.',
+      'Российские сервисы работают напрямую, остальное через POKROV VPN.',
+    RouteMode.fullTunnel => 'Весь трафик идет через POKROV VPN.',
     RouteMode.selectedApps =>
-      'POKROV используют только выбранные приложения или .exe.',
+      'POKROV VPN работает только для выбранных приложений.',
   };
 }

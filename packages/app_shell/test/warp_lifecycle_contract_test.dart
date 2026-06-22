@@ -80,7 +80,7 @@ void main() {
     );
   });
 
-  test('warp lifecycle keeps public copy product-first and WARP internal', () {
+  test('warp lifecycle keeps WARP copy product-first', () {
     final lifecycle = PokrovWarpLifecycle.resolve(
       policy: const WarpRuntimePolicy(
         enabled: true,
@@ -92,9 +92,10 @@ void main() {
       busy: false,
     );
 
-    expect(lifecycle.publicTitle, 'Расширенная защита');
-    expect(lifecycle.publicStatus, isNot(contains('WARP')));
-    expect(lifecycle.publicActionLabel, isNot(contains('WARP')));
+    expect(lifecycle.publicTitle, 'WARP');
+    expect(lifecycle.publicSheetTitle, 'WARP');
+    expect(lifecycle.publicSheetBody, contains('обычного VPN недостаточно'));
+    expect(lifecycle.publicSheetBody, isNot(contains('скорость')));
     expect(lifecycle.technicalLabel, 'WARP');
     expect(lifecycle.stateKey, 'home-warp-state-ready');
   });

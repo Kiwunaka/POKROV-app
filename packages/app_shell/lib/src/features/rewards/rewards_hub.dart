@@ -12,7 +12,6 @@ void _showRewardsHubSheet(
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    backgroundColor: _SeedPalette.surface,
     isScrollControlled: true,
     builder: (context) => _RewardsHubSheet(
       summary: summary,
@@ -44,6 +43,7 @@ class _RewardsHubSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     final wheel =
         summary?.wheelState ?? AppFirstBonusFeatureState.wheelDisabled;
     final calendar =
@@ -52,6 +52,10 @@ class _RewardsHubSheet extends StatelessWidget {
         ? AppFirstReferralSummary.empty
         : _rewardsReferralSummary(summary!);
     final referralCode = summary?.referralCode.trim() ?? '';
+    final showWheel = wheel.canRun;
+    final showCalendar = calendar.canRun;
+    final promoSlots = summary?.promoSlots ?? AppFirstPromoSlots.empty;
+    final showPromoSlots = promoSlots.visibleSlots.isNotEmpty;
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
@@ -63,83 +67,94 @@ class _RewardsHubSheet extends StatelessWidget {
             Text(
               'Бонусы',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: _SeedPalette.ink,
-                    fontWeight: FontWeight.w800,
+                    color: p.ink,
+                    fontWeight: FontWeight.w600,
                   ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Здесь собраны ваши бонусы, история и доступные акции.',
+              'Ваши дополнительные дни, промокоды и история начислений.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: _SeedPalette.ink.withValues(alpha: 0.72),
+                    color: p.ink.withValues(alpha: 0.72),
                     height: 1.35,
                   ),
             ),
             const SizedBox(height: 14),
+            if (summary == null && rewardBusy) ...[
+              const _MotionSkeletonList(
+                key: ValueKey('rewards-hub-loading'),
+                rows: 4,
+              ),
+              const SizedBox(height: 12),
+            ],
+            _RewardsTelegramCard(
+              summary: summary,
+              onRefreshBonusSummary: onRefreshBonusSummary,
+              onOpenHandoff: onOpenHandoff,
+            ),
+            const SizedBox(height: 12),
             _RewardsReferralCard(
               referralCode: referralCode,
               referralSummary: referralSummary,
               onOpenHandoff: onOpenHandoff,
             ),
             const SizedBox(height: 12),
-            _RewardsPromoSlotsSection(
-              promoSlots: summary?.promoSlots ?? AppFirstPromoSlots.empty,
-              onOpenHandoff: onOpenHandoff,
-            ),
-            const SizedBox(height: 12),
+            if (showPromoSlots) ...[
+              _RewardsPromoSlotsSection(
+                promoSlots: promoSlots,
+                onOpenHandoff: onOpenHandoff,
+              ),
+              const SizedBox(height: 12),
+            ],
             _RewardsHistorySection(
               summary: summary,
             ),
-            const SizedBox(height: 12),
-            _RewardsAchievements(
-              summary: summary,
-            ),
-            const SizedBox(height: 12),
-            _RewardsFeatureCard(
-              key: const ValueKey('rewards-wheel-card'),
-              icon: Icons.casino_outlined,
-              title: 'Рулетка',
-              status: wheel.statusLabel,
-              detail: wheel.availabilityText,
-              lastActionAt: wheel.lastActionAt,
-              actionKey: const ValueKey('rewards-wheel-spin-action'),
-              mutedKey: const ValueKey('rewards-wheel-muted-state'),
-              actionLabel: rewardBusy
-                  ? 'Проверяем'
-                  : wheel.canRun
-                      ? 'Крутить'
-                      : 'Отключено',
-              actionEnabled: wheel.canRun && !rewardBusy,
-              onAction: () {
-                Navigator.of(context).pop();
-                onSpinWheel();
-              },
-            ),
-            const SizedBox(height: 10),
-            _RewardsFeatureCard(
-              key: const ValueKey('rewards-calendar-card'),
-              icon: Icons.calendar_month_outlined,
-              title: 'Календарь активности',
-              status: calendar.statusLabel,
-              detail: calendar.availabilityText,
-              lastActionAt: calendar.lastActionAt,
-              actionKey: const ValueKey('rewards-calendar-checkin-action'),
-              mutedKey: const ValueKey('rewards-calendar-muted-state'),
-              actionLabel: rewardBusy
-                  ? 'Проверяем'
-                  : calendar.canRun
-                      ? 'Отметиться'
-                      : 'Отключено',
-              actionEnabled: calendar.canRun && !rewardBusy,
-              onAction: () {
-                Navigator.of(context).pop();
-                onCheckInCalendar();
-              },
-            ),
-            const SizedBox(height: 12),
-            _RewardsCalendarGrid(
-              activeDays: _rewardActiveDays(summary),
-            ),
+            if (showWheel || showCalendar) ...[
+              const SizedBox(height: 12),
+              _RewardsActivitiesHeader(
+                summary: summary,
+              ),
+              if (showWheel) ...[
+                const SizedBox(height: 10),
+                _RewardsFeatureCard(
+                  key: const ValueKey('rewards-wheel-card'),
+                  icon: Icons.card_giftcard_outlined,
+                  title: 'Бонус дня',
+                  status: wheel.statusLabel,
+                  detail: wheel.availabilityText,
+                  lastActionAt: wheel.lastActionAt,
+                  actionKey: const ValueKey('rewards-wheel-spin-action'),
+                  actionLabel: rewardBusy ? 'Проверяем' : 'Получить бонус',
+                  actionEnabled: wheel.canRun && !rewardBusy,
+                  onAction: () {
+                    Navigator.of(context).pop();
+                    onSpinWheel();
+                  },
+                ),
+              ],
+              if (showCalendar) ...[
+                const SizedBox(height: 10),
+                _RewardsFeatureCard(
+                  key: const ValueKey('rewards-calendar-card'),
+                  icon: Icons.calendar_month_outlined,
+                  title: 'Календарь активности',
+                  status: calendar.statusLabel,
+                  detail: calendar.availabilityText,
+                  lastActionAt: calendar.lastActionAt,
+                  actionKey: const ValueKey('rewards-calendar-checkin-action'),
+                  actionLabel: rewardBusy ? 'Проверяем' : 'Отметиться',
+                  actionEnabled: calendar.canRun && !rewardBusy,
+                  onAction: () {
+                    Navigator.of(context).pop();
+                    onCheckInCalendar();
+                  },
+                ),
+                const SizedBox(height: 12),
+                _RewardsCalendarGrid(
+                  activeDays: _rewardActiveDays(summary),
+                ),
+              ],
+            ],
             const SizedBox(height: 12),
             OutlinedButton.icon(
               key: const ValueKey('rewards-refresh-action'),
@@ -157,6 +172,143 @@ class _RewardsHubSheet extends StatelessWidget {
   }
 }
 
+class _RewardsTelegramCard extends StatelessWidget {
+  const _RewardsTelegramCard({
+    required this.summary,
+    required this.onRefreshBonusSummary,
+    required this.onOpenHandoff,
+  });
+
+  final AppFirstBonusSummary? summary;
+  final VoidCallback onRefreshBonusSummary;
+  final void Function(String label, String value) onOpenHandoff;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final bonusDays = summary?.channelBonusPremiumDays ?? 10;
+    final claimed = (summary?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
+    final channel = (summary?.channelUsername ?? 'pokrov_vpn').trim();
+    final handle = channel.isEmpty
+        ? '@pokrov_vpn'
+        : channel.startsWith('@')
+            ? channel
+            : '@$channel';
+    return Container(
+      key: const ValueKey('rewards-telegram-card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: p.accent.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: p.accent.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: p.accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(Icons.send_outlined, color: p.accent),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  claimed
+                      ? 'Telegram-бонус активен'
+                      : 'Telegram +$bonusDays дней',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: p.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  claimed
+                      ? 'Бонус уже учтен в вашем доступе.'
+                      : 'Подпишитесь на канал и проверьте бонус.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: p.muted,
+                        height: 1.3,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.end,
+            children: [
+              OutlinedButton.icon(
+                key: const ValueKey('rewards-telegram-refresh-action'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  onRefreshBonusSummary();
+                },
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Проверить'),
+              ),
+              IconButton.filled(
+                key: const ValueKey('rewards-telegram-open-channel'),
+                tooltip: 'Открыть канал',
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  onOpenHandoff('community', handle);
+                },
+                icon: const Icon(Icons.open_in_new_rounded),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RewardsActivitiesHeader extends StatelessWidget {
+  const _RewardsActivitiesHeader({
+    required this.summary,
+  });
+
+  final AppFirstBonusSummary? summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    return Column(
+      key: const ValueKey('rewards-activities-section'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Активности',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: p.ink,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Забирайте доступные дни и отмечайте активность в спокойном темпе.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: p.muted,
+                height: 1.3,
+              ),
+        ),
+        const SizedBox(height: 10),
+        _RewardsAchievements(summary: summary),
+      ],
+    );
+  }
+}
+
 class _RewardsFeatureCard extends StatelessWidget {
   const _RewardsFeatureCard({
     super.key,
@@ -166,7 +318,6 @@ class _RewardsFeatureCard extends StatelessWidget {
     required this.detail,
     required this.lastActionAt,
     required this.actionKey,
-    required this.mutedKey,
     required this.actionLabel,
     required this.actionEnabled,
     this.onAction,
@@ -178,21 +329,20 @@ class _RewardsFeatureCard extends StatelessWidget {
   final String detail;
   final String lastActionAt;
   final Key actionKey;
-  final Key mutedKey;
   final String actionLabel;
   final bool actionEnabled;
   final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
-    final inactiveReason = detail.trim().isEmpty ? status : detail;
+    final p = PokrovPalette.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _SeedPalette.surfaceMuted,
+        color: p.surfaceMuted,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _SeedPalette.line),
+        border: Border.all(color: p.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,18 +353,18 @@ class _RewardsFeatureCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: _SeedPalette.accent.withValues(alpha: 0.10),
+                  color: p.accent.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: _SeedPalette.accent, size: 19),
+                child: Icon(icon, color: p.accent, size: 19),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: _SeedPalette.ink,
-                        fontWeight: FontWeight.w800,
+                        color: p.ink,
+                        fontWeight: FontWeight.w600,
                       ),
                 ),
               ),
@@ -229,7 +379,7 @@ class _RewardsFeatureCard extends StatelessWidget {
           Text(
             detail,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: _SeedPalette.ink.withValues(alpha: 0.70),
+                  color: p.ink.withValues(alpha: 0.70),
                   height: 1.32,
                 ),
           ),
@@ -238,7 +388,7 @@ class _RewardsFeatureCard extends StatelessWidget {
             Text(
               'Последнее действие: $lastActionAt',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: _SeedPalette.muted,
+                    color: p.muted,
                     fontWeight: FontWeight.w700,
                   ),
             ),
@@ -251,58 +401,18 @@ class _RewardsFeatureCard extends StatelessWidget {
                 Feedback.forTap(context);
                 onAction?.call();
               },
-              icon: const Icon(Icons.auto_awesome_outlined),
+              icon: const Icon(Icons.card_giftcard_outlined),
               label: Text(actionLabel),
             )
           else
             KeyedSubtree(
               key: actionKey,
-              child: Container(
-                key: mutedKey,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: _SeedPalette.ink.withValues(alpha: 0.045),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: _SeedPalette.line.withValues(alpha: 0.75),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.hourglass_empty_rounded,
-                      size: 18,
-                      color: _SeedPalette.muted,
+              child: Text(
+                actionLabel,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: p.muted,
+                      height: 1.3,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        inactiveReason,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: _SeedPalette.muted,
-                              fontWeight: FontWeight.w800,
-                            ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        status,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.right,
-                        style:
-                            Theme.of(context).textTheme.labelMedium?.copyWith(
-                                  color: _SeedPalette.muted,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
         ],
@@ -320,14 +430,15 @@ class _RewardsCalendarGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     return Container(
       key: const ValueKey('rewards-calendar-grid'),
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _SeedPalette.surface,
+        color: p.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _SeedPalette.line),
+        border: Border.all(color: p.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,8 +446,8 @@ class _RewardsCalendarGrid extends StatelessWidget {
           Text(
             'Активность',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: _SeedPalette.ink,
-                  fontWeight: FontWeight.w800,
+                  color: p.ink,
+                  fontWeight: FontWeight.w600,
                 ),
           ),
           const SizedBox(height: 10),
@@ -356,13 +467,13 @@ class _RewardsCalendarGrid extends StatelessWidget {
                 key: ValueKey('rewards-calendar-day-$index'),
                 decoration: BoxDecoration(
                   color: active
-                      ? _SeedPalette.accent.withValues(alpha: 0.16)
-                      : _SeedPalette.surfaceMuted,
+                      ? p.accent.withValues(alpha: 0.16)
+                      : p.surfaceMuted,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: active
-                        ? _SeedPalette.accent.withValues(alpha: 0.22)
-                        : _SeedPalette.line,
+                        ? p.accent.withValues(alpha: 0.22)
+                        : p.line,
                   ),
                 ),
               );
@@ -383,6 +494,7 @@ class _RewardsAchievements extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     final achievements = <({String title, bool active})>[
       (title: 'Первый старт', active: summary?.openingBonusClaimed ?? false),
       (title: 'Telegram', active: summary?.channelBonusClaimed ?? false),
@@ -394,9 +506,9 @@ class _RewardsAchievements extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _SeedPalette.surface,
+        color: p.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _SeedPalette.line),
+        border: Border.all(color: p.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,8 +516,8 @@ class _RewardsAchievements extends StatelessWidget {
           Text(
             'Достижения',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: _SeedPalette.ink,
-                  fontWeight: FontWeight.w800,
+                  color: p.ink,
+                  fontWeight: FontWeight.w600,
                 ),
           ),
           const SizedBox(height: 10),
@@ -455,14 +567,15 @@ class _RewardsHistorySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = summary?.historyItems ?? const <AppFirstBonusHistoryItem>[];
+    final p = PokrovPalette.of(context);
     return Container(
       key: const ValueKey('rewards-history-section'),
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _SeedPalette.surface,
+        color: p.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _SeedPalette.line),
+        border: Border.all(color: p.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,8 +583,8 @@ class _RewardsHistorySection extends StatelessWidget {
           Text(
             'История',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: _SeedPalette.ink,
-                  fontWeight: FontWeight.w800,
+                  color: p.ink,
+                  fontWeight: FontWeight.w600,
                 ),
           ),
           const SizedBox(height: 8),
@@ -479,7 +592,7 @@ class _RewardsHistorySection extends StatelessWidget {
             Text(
               'Пока пусто.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: _SeedPalette.muted,
+                    color: p.muted,
                     height: 1.35,
                   ),
             )
@@ -509,23 +622,24 @@ class _RewardsPromoSlotsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final slots = promoSlots.visibleSlots;
+    final p = PokrovPalette.of(context);
     return Container(
       key: const ValueKey('rewards-promo-slots-section'),
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _SeedPalette.surface,
+        color: p.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _SeedPalette.line),
+        border: Border.all(color: p.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.local_offer_outlined,
-                color: _SeedPalette.accent,
+                color: p.accent,
                 size: 19,
               ),
               const SizedBox(width: 8),
@@ -533,8 +647,8 @@ class _RewardsPromoSlotsSection extends StatelessWidget {
                 child: Text(
                   'Акции',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: _SeedPalette.ink,
-                        fontWeight: FontWeight.w800,
+                        color: p.ink,
+                        fontWeight: FontWeight.w600,
                       ),
                 ),
               ),
@@ -548,23 +662,13 @@ class _RewardsPromoSlotsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          if (slots.isEmpty)
-            Text(
-              key: const ValueKey('rewards-promo-slot-empty'),
-              'Сейчас нет персональных акций. Промокод можно ввести в поле кода выше.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: _SeedPalette.muted,
-                    height: 1.35,
-                  ),
-            )
-          else
-            ...slots.map(
-              (slot) => _RewardsPromoSlotRow(
-                key: ValueKey('rewards-promo-slot-${slot.slotId}'),
-                slot: slot,
-                onOpenHandoff: onOpenHandoff,
-              ),
+          ...slots.map(
+            (slot) => _RewardsPromoSlotRow(
+              key: ValueKey('rewards-promo-slot-${slot.slotId}'),
+              slot: slot,
+              onOpenHandoff: onOpenHandoff,
             ),
+          ),
         ],
       ),
     );
@@ -585,13 +689,14 @@ class _RewardsPromoSlotRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final safeHref = _safePromoSlotHref(slot.ctaHref);
     final ctaLabel = slot.ctaLabel.trim().isEmpty ? 'Открыть' : slot.ctaLabel;
+    final p = PokrovPalette.of(context);
     return Container(
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _SeedPalette.surfaceMuted,
+        color: p.surfaceMuted,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _SeedPalette.line),
+        border: Border.all(color: p.line),
       ),
       child: Row(
         children: [
@@ -602,8 +707,8 @@ class _RewardsPromoSlotRow extends StatelessWidget {
                 Text(
                   slot.title.trim().isEmpty ? 'POKROV' : slot.title,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: _SeedPalette.ink,
-                        fontWeight: FontWeight.w800,
+                        color: p.ink,
+                        fontWeight: FontWeight.w600,
                       ),
                 ),
                 if (slot.body.trim().isNotEmpty) ...[
@@ -611,7 +716,7 @@ class _RewardsPromoSlotRow extends StatelessWidget {
                   Text(
                     slot.body,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: _SeedPalette.muted,
+                          color: p.muted,
                           height: 1.3,
                         ),
                   ),
@@ -670,6 +775,7 @@ class _RewardsReferralCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     final code = referralSummary.code.trim().isNotEmpty
         ? referralSummary.code.trim()
         : referralCode.isEmpty
@@ -686,13 +792,13 @@ class _RewardsReferralCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _SeedPalette.warning.withValues(alpha: 0.08),
+        color: p.warning.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _SeedPalette.warning.withValues(alpha: 0.18)),
+        border: Border.all(color: p.warning.withValues(alpha: 0.18)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.group_add_outlined, color: _SeedPalette.accent),
+          Icon(Icons.group_add_outlined, color: p.accent),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -701,8 +807,8 @@ class _RewardsReferralCard extends StatelessWidget {
                 Text(
                   code,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: _SeedPalette.ink,
-                        fontWeight: FontWeight.w900,
+                        color: p.ink,
+                        fontWeight: FontWeight.w700,
                       ),
                 ),
                 Text(
@@ -710,7 +816,7 @@ class _RewardsReferralCard extends StatelessWidget {
                       ? 'Приглашений: ${referralSummary.count} · бонус +${referralSummary.bonusDays} дней'
                       : 'Приглашений: ${referralSummary.count}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: _SeedPalette.muted,
+                        color: p.muted,
                       ),
                 ),
               ],
@@ -725,7 +831,7 @@ class _RewardsReferralCard extends StatelessWidget {
               );
             },
             icon: const Icon(Icons.copy_rounded),
-            label: const Text('Копия'),
+            label: const Text('Скопировать'),
           ),
           const SizedBox(width: 8),
           IconButton.outlined(

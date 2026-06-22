@@ -12,14 +12,15 @@ class PokrovSkeletonList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     return RepaintBoundary(
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: PokrovPalette.surface,
+          color: p.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: PokrovPalette.line),
+          border: Border.all(color: p.line),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,14 +65,15 @@ class PokrovAccountSkeletonSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     return RepaintBoundary(
       child: Container(
         key: summaryKey,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: PokrovPalette.surface.withValues(alpha: 0.72),
+          color: p.surface.withValues(alpha: 0.72),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: PokrovPalette.line),
+          border: Border.all(color: p.line),
         ),
         child: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,12 +116,13 @@ class PokrovSkeletonLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     return Container(
       key: lineKey,
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: PokrovPalette.ink.withValues(alpha: opacity),
+        color: p.ink.withValues(alpha: opacity),
         borderRadius: BorderRadius.circular(radius),
       ),
     );

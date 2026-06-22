@@ -14,7 +14,8 @@ class _FakeBootstrapper
         AppFirstAccountActionService,
         AppFirstBonusActionService,
         AppFirstWarpActionService,
-        AppFirstReleaseActionService {
+        AppFirstReleaseActionService,
+        AppFirstClientDataService {
   _FakeBootstrapper(
     this.payload, {
     CabinetHandoff? cabinetHandoff,
@@ -25,6 +26,7 @@ class _FakeBootstrapper
     AppFirstRedeemResult? redeemResult,
     WarpControlStatus? warpStatus,
     ClientAppsMetadata? clientAppsMetadata,
+    ClientLocationsCatalog? locationsCatalog,
     this.bonusSummaryGate,
   })  : cabinetHandoff = cabinetHandoff ??
             CabinetHandoff(
@@ -96,7 +98,16 @@ class _FakeBootstrapper
             ),
         warpStatus =
             warpStatus ?? WarpControlStatus.fromPolicy(payload.warpPolicy),
-        clientAppsMetadata = clientAppsMetadata ?? ClientAppsMetadata.empty;
+        clientAppsMetadata = clientAppsMetadata ?? ClientAppsMetadata.empty,
+        locationsCatalog = locationsCatalog ??
+            const ClientLocationsCatalog(
+              auto: ClientLocationAuto(enabled: true, currentCode: ''),
+              countries: <ClientLocationCountry>[],
+              freePoolCode: '',
+              profileRevision: '',
+              transportProfile: '',
+              query: '',
+            );
 
   final ManagedProfilePayload payload;
   final AppFirstRedeemResult redeemResult;
@@ -106,6 +117,7 @@ class _FakeBootstrapper
   final ChannelBonusClaimResult channelBonusClaimResult;
   final AppFirstBonusSummary bonusSummary;
   final ClientAppsMetadata clientAppsMetadata;
+  final ClientLocationsCatalog locationsCatalog;
   final Future<void>? bonusSummaryGate;
   int calls = 0;
   int redeemCalls = 0;
@@ -121,6 +133,7 @@ class _FakeBootstrapper
   int warpRotationCalls = 0;
   int warpRuntimeEventCalls = 0;
   int clientAppsCalls = 0;
+  int locationsCatalogCalls = 0;
   bool? lastWarpConsentEnabled;
   String? lastWarpRuntimeEventName;
   String? lastWarpRuntimeEventState;
@@ -140,6 +153,8 @@ class _FakeBootstrapper
   HostPlatform? lastCalendarCheckInHostPlatform;
   HostPlatform? lastClientAppsHostPlatform;
   String? lastClientAppsCurrentVersion;
+  HostPlatform? lastLocationsCatalogHostPlatform;
+  String? lastLocationsCatalogQuery;
 
   @override
   Future<ManagedProfilePayload> resolveManagedProfile({
@@ -222,6 +237,96 @@ class _FakeBootstrapper
     lastClientAppsHostPlatform = hostPlatform;
     lastClientAppsCurrentVersion = currentVersion;
     return clientAppsMetadata;
+  }
+
+  @override
+  Future<ClientLocationsCatalog> fetchLocationsCatalog({
+    required HostPlatform hostPlatform,
+    String query = '',
+  }) async {
+    locationsCatalogCalls += 1;
+    lastLocationsCatalogHostPlatform = hostPlatform;
+    lastLocationsCatalogQuery = query;
+    return locationsCatalog;
+  }
+
+  @override
+  Future<ClientSubscriptionInfo> fetchClientSubscription({
+    required HostPlatform hostPlatform,
+  }) async {
+    return ClientSubscriptionInfo(
+      lane: 'trialPremium',
+      expiresAt: '2026-06-27T00:00:00Z',
+      daysLeft: 5,
+      autoRenew: false,
+      renewUrl: Uri.parse('https://pay.pokrov.space/checkout/test'),
+      plans: const <ClientSubscriptionPlan>[
+        ClientSubscriptionPlan(id: '1m', title: '1 month', price: '299 RUB'),
+      ],
+      trafficPolicy: const <String, Object?>{},
+    );
+  }
+
+  @override
+  Future<ClientDeviceList> fetchClientDevices({
+    required HostPlatform hostPlatform,
+  }) async {
+    return const ClientDeviceList(items: <ClientDeviceInfo>[]);
+  }
+
+  @override
+  Future<bool> revokeClientDevice({
+    required HostPlatform hostPlatform,
+    required String deviceId,
+  }) async {
+    return true;
+  }
+
+  @override
+  Future<ClientNotificationInbox> fetchClientNotifications({
+    required HostPlatform hostPlatform,
+    String after = '',
+  }) async {
+    return const ClientNotificationInbox(
+      items: <ClientNotificationItem>[],
+      nextCursor: '',
+      unreadCount: 0,
+    );
+  }
+
+  @override
+  Future<bool> markClientNotificationsRead({
+    required HostPlatform hostPlatform,
+    required List<String> ids,
+  }) async {
+    return true;
+  }
+
+  @override
+  Future<ClientPushRegistration> registerClientPushToken({
+    required HostPlatform hostPlatform,
+    required String token,
+    required String provider,
+  }) async {
+    return ClientPushRegistration(
+      ok: true,
+      provider: provider,
+      tokenHash: 'test-token-hash',
+    );
+  }
+
+  @override
+  Future<ClientSupportAssistantReply> askSupportAssistant({
+    required HostPlatform hostPlatform,
+    required String message,
+    int? ticketId,
+    Map<String, Object?> safeDiagnostics = const <String, Object?>{},
+  }) async {
+    return const ClientSupportAssistantReply(
+      reply: 'Test assistant reply.',
+      shouldEscalate: false,
+      suggestedActions: <ClientSupportAssistantAction>[],
+    );
   }
 
   @override
@@ -492,12 +597,13 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
   }
 }
 
-void _installReadyRuntimeBridgeMock() {
+void _installReadyRuntimeBridgeMock({List<String>? calls}) {
   const channel = MethodChannel('space.pokrov/runtime_engine');
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
 
   messenger.setMockMethodCallHandler(channel, (call) async {
+    calls?.add(call.method);
     switch (call.method) {
       case 'runtimeEngine.snapshot':
         return <String, Object?>{
@@ -550,6 +656,12 @@ void _installReadyRuntimeBridgeMock() {
           'canInitialize': true,
           'canConnect': true,
           'message': 'Runtime service stopped.',
+        };
+      case 'runtimeEngine.applyWarp':
+        return <String, Object?>{
+          'applied': true,
+          'effectiveAt': 'now',
+          'fallbackUsed': false,
         };
     }
     return null;
@@ -711,6 +823,86 @@ void main() {
     );
   });
 
+  testWidgets('first launch choice uses new and returning access copy',
+      (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('POKROV VPN'), findsWidgets);
+    expect(find.text('Добро пожаловать'), findsOneWidget);
+    expect(find.text('Я новый пользователь'), findsOneWidget);
+    expect(find.text('5 дней премиум бесплатно'), findsOneWidget);
+    expect(find.text('У меня уже есть доступ'), findsOneWidget);
+    expect(find.text('Восстановить по коду'), findsOneWidget);
+    expect(find.textContaining('логин'), findsNothing);
+    expect(find.textContaining('регистра'), findsNothing);
+    expect(find.textContaining('raw'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('first-launch-returning-user')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Восстановить доступ'), findsOneWidget);
+    expect(
+      find.text('Введите код из Telegram, сайта, кабинета или письма.'),
+      findsOneWidget,
+    );
+    expect(find.text('Продолжить'), findsOneWidget);
+    expect(find.text('Получить код в Telegram'), findsOneWidget);
+    expect(find.text('Открыть кабинет'), findsOneWidget);
+  });
+
+  testWidgets('seed shell lazily builds tabs and keeps opened tabs alive',
+      (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NavigationDestination), findsNWidgets(4));
+    expect(
+        find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
+    expect(
+      find.byKey(
+        const ValueKey('locations-auto-section'),
+        skipOffstage: false,
+      ),
+      findsNothing,
+    );
+    expect(
+      find.byKey(
+        const ValueKey('profile-compact-account-layer'),
+        skipOffstage: false,
+      ),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('nav-support')), findsNothing);
+
+    await _tapNav(tester, 'nav-profile');
+    expect(
+      find.byKey(
+        const ValueKey('profile-compact-account-layer'),
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
+
+    await _tapNav(tester, 'nav-protection');
+    expect(
+      find.byKey(
+        const ValueKey('profile-compact-account-layer'),
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('new user first launch completion is persisted', (tester) async {
     final store = _FakeFirstLaunchStore();
 
@@ -766,7 +958,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
         handoffLauncher: (uri) async {
           launched.add(uri);
@@ -797,7 +989,7 @@ void main() {
 
     expect(bootstrapper.redeemCalls, 1);
     expect(bootstrapper.lastRedeemCode, 'POKROV-ACCESS-2026');
-    expect(bootstrapper.lastRedeemHostPlatform, HostPlatform.windows);
+    expect(bootstrapper.lastRedeemHostPlatform, HostPlatform.android);
     expect(launched, isEmpty);
     expect(
       find.byKey(const ValueKey('first-launch-restore-screen')),
@@ -821,7 +1013,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
     );
@@ -870,13 +1062,17 @@ void main() {
 
     expect(
         find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
+    expect(find.text('POKROV VPN'), findsOneWidget);
     expect(find.byKey(const ValueKey('home-location-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-route-chip')), findsOneWidget);
     final homeWarpTile = find.byKey(const ValueKey('home-warp-tile'));
     expect(homeWarpTile, findsOneWidget);
-    expect(find.textContaining('Расширенная защита'), findsNothing);
+    expect(find.textContaining('Дополнительная защита'), findsOneWidget);
     expect(find.descendant(of: homeWarpTile, matching: find.text('WARP')),
         findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('home-telegram-bonus-pill')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-news-card')), findsNothing);
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('home-location-chip')),
@@ -916,14 +1112,168 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(support, findsOneWidget);
-    final advanced = find.byKey(const ValueKey('profile-section-advanced'));
+    final diagnostics =
+        find.byKey(const ValueKey('profile-diagnostics-action'));
     await tester.dragUntilVisible(
-      advanced,
+      diagnostics,
       find.byType(Scrollable).first,
       const Offset(0, -260),
     );
     await tester.pumpAndSettle();
-    expect(advanced, findsOneWidget);
+    expect(diagnostics, findsOneWidget);
+  });
+
+  testWidgets('home renders admin promotion only when backend exposes one',
+      (tester) async {
+    const summary = AppFirstBonusSummary(
+      referralCount: 0,
+      referralCode: 'POKROV',
+      referralBonusDays: 10,
+      streakMonths: 0,
+      lastWheelSpin: '',
+      channelBonusPremiumDays: 10,
+      channelBonusClaimedAt: '',
+      openingBonusPremiumDays: 5,
+      openingBonusClaimed: true,
+      channelUsername: 'pokrov_vpn',
+      tierKey: 'starter',
+      tierPercent: 0,
+      paidReferrals: 0,
+      nextTierKey: '',
+      nextTierAt: 0,
+      promoSlots: AppFirstPromoSlots(
+        surface: 'app',
+        accessState: 'trial',
+        remoteAvailable: true,
+        fallbackBehavior: 'contextual_only_when_remote_unavailable',
+        mode: 'whitelist_slots',
+        slots: <AppFirstPromoSlot>[
+          AppFirstPromoSlot(
+            slotId: 'home-tg-bonus',
+            contentId: 'tg-bonus',
+            enabled: true,
+            title: 'Подарок за Telegram',
+            body: 'Подпишитесь на канал и заберите дополнительные дни.',
+            ctaLabel: 'Открыть',
+            ctaHref: 'https://t.me/pokrov_vpn',
+            placement: 'home_banner',
+            dismissible: false,
+            kind: 'promo',
+            goal: 'telegram_bonus',
+          ),
+          AppFirstPromoSlot(
+            slotId: 'rewards-only',
+            contentId: 'rewards',
+            enabled: true,
+            title: 'Только в бонусах',
+            body: 'Не должен появиться на Home.',
+            ctaLabel: 'Открыть',
+            ctaHref: 'https://t.me/pokrov_vpn',
+            placement: 'rewards',
+            kind: 'promo',
+            goal: 'rewards',
+          ),
+        ],
+      ),
+    );
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      bonusSummary: summary,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('home-news-card')), findsNothing);
+    expect(find.byKey(const ValueKey('home-admin-promo-card')), findsOneWidget);
+    expect(find.text('Подарок за Telegram'), findsOneWidget);
+    expect(find.text('Только в бонусах'), findsNothing);
+  });
+
+  testWidgets('home admin promotion ignores unsafe CTA schemes',
+      (tester) async {
+    const summary = AppFirstBonusSummary(
+      referralCount: 0,
+      referralCode: 'POKROV',
+      referralBonusDays: 10,
+      streakMonths: 0,
+      lastWheelSpin: '',
+      channelBonusPremiumDays: 10,
+      channelBonusClaimedAt: '',
+      openingBonusPremiumDays: 5,
+      openingBonusClaimed: true,
+      channelUsername: 'pokrov_vpn',
+      tierKey: 'starter',
+      tierPercent: 0,
+      paidReferrals: 0,
+      nextTierKey: '',
+      nextTierAt: 0,
+      promoSlots: AppFirstPromoSlots(
+        surface: 'app',
+        accessState: 'trial',
+        remoteAvailable: true,
+        fallbackBehavior: 'contextual_only_when_remote_unavailable',
+        mode: 'whitelist_slots',
+        slots: <AppFirstPromoSlot>[
+          AppFirstPromoSlot(
+            slotId: 'unsafe-home-promo',
+            contentId: 'unsafe',
+            enabled: true,
+            title: 'Важное сообщение',
+            body: 'Проверяем безопасную ссылку.',
+            ctaLabel: 'Открыть',
+            ctaHref: 'javascript://pokrov.space/steal',
+            placement: 'home_banner',
+            dismissible: false,
+            kind: 'promo',
+            goal: 'safety',
+          ),
+        ],
+      ),
+    );
+    final opened = <Uri>[];
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      bonusSummary: summary,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        handoffLauncher: (uri) async {
+          opened.add(uri);
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await tester.pumpAndSettle();
+
+    final promo = find.byKey(const ValueKey('home-admin-promo-card'));
+    expect(promo, findsOneWidget);
+    expect(find.text('Открыть'), findsNothing);
+    await tester.ensureVisible(promo);
+    await tester.pumpAndSettle();
+    await tester.tap(promo);
+    await tester.pumpAndSettle();
+    expect(opened, isEmpty);
   });
 
   testWidgets('startup update check shows prompt and opens download',
@@ -945,7 +1295,7 @@ void main() {
           sha256:
               'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
           size: 123456,
-          releaseNotes: 'Small beta fixes.',
+          releaseNotes: 'Небольшие исправления бета-версии.',
           releaseNotesUrl: '',
           publishedAt: '2026-06-07T00:00:00Z',
           update: ClientAppUpdateInfo(
@@ -959,7 +1309,7 @@ void main() {
             sha256:
                 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
             size: 123456,
-            releaseNotes: 'Small beta fixes.',
+            releaseNotes: 'Небольшие исправления бета-версии.',
             releaseNotesUrl: '',
             publishedAt: '2026-06-07T00:00:00Z',
           ),
@@ -987,7 +1337,7 @@ void main() {
     expect(bootstrapper.clientAppsCalls, 1);
     expect(bootstrapper.lastClientAppsCurrentVersion, '1.0.0-beta.3');
     expect(find.byKey(const ValueKey('client-update-prompt')), findsOneWidget);
-    expect(find.text('Small beta fixes.'), findsOneWidget);
+    expect(find.text('Небольшие исправления бета-версии.'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('client-update-download')));
     await tester.pumpAndSettle();
@@ -1054,15 +1404,69 @@ void main() {
     expect(
         find.byKey(const ValueKey('profile-section-support')), findsOneWidget);
 
-    final advanced = find.byKey(const ValueKey('profile-section-advanced'));
+    final diagnostics =
+        find.byKey(const ValueKey('profile-diagnostics-action'));
     await tester.dragUntilVisible(
-      advanced,
+      diagnostics,
       find.byType(Scrollable).first,
       const Offset(0, -260),
     );
     await tester.pumpAndSettle();
 
-    expect(advanced, findsOneWidget);
+    expect(diagnostics, findsOneWidget);
+  });
+
+  testWidgets('profile theme selector switches light and dark mode',
+      (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-profile');
+
+    final themeAction = find.byKey(const ValueKey('profile-theme-action'));
+    await tester.dragUntilVisible(
+      themeAction,
+      find.byType(Scrollable).first,
+      const Offset(0, -220),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(themeAction);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('profile-theme-sheet')), findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-theme-system')), findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-theme-light')), findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-theme-dark')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('profile-theme-dark')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Тёмная'), findsOneWidget);
+    expect(
+      Theme.of(
+              tester.element(find.byKey(const ValueKey('profile-section-app'))))
+          .brightness,
+      Brightness.dark,
+    );
+
+    await tester.tap(themeAction);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('profile-theme-light')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Светлая'), findsOneWidget);
+    expect(
+      Theme.of(
+              tester.element(find.byKey(const ValueKey('profile-section-app'))))
+          .brightness,
+      Brightness.light,
+    );
   });
 
   testWidgets('profile first layer stays compact and hides advanced controls',
@@ -1205,7 +1609,16 @@ void main() {
     await _completeFirstLaunchIfPresent(tester);
 
     await _tapNav(tester, 'nav-profile');
-    await tester.tap(find.byKey(const ValueKey('profile-open-cabinet-action')));
+    final cabinetAction =
+        find.byKey(const ValueKey('profile-open-cabinet-action'));
+    await tester.dragUntilVisible(
+      cabinetAction,
+      find.byType(Scrollable).first,
+      const Offset(0, -220),
+      maxIteration: 8,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(cabinetAction);
     await tester.pumpAndSettle();
 
     expect(bootstrapper.cabinetCalls, 1);
@@ -1260,7 +1673,7 @@ void main() {
     expect(launched.single.queryParameters['start'], 'app-link-2026');
 
     final telegramCheck =
-        find.byKey(const ValueKey('profile-telegram-check-action'));
+        find.byKey(const ValueKey('profile-telegram-claim-action'));
     await tester.dragUntilVisible(
       telegramCheck,
       find.byType(Scrollable).first,
@@ -1348,6 +1761,9 @@ void main() {
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
 
+    expect(
+        find.byKey(const ValueKey('home-telegram-bonus-pill')), findsNothing);
+
     await _tapNav(tester, 'nav-profile');
     await tester.pumpAndSettle();
 
@@ -1364,7 +1780,7 @@ void main() {
     expect(bootstrapper.bonusSummaryCalls, 1);
     expect(bootstrapper.lastBonusSummaryHostPlatform, HostPlatform.android);
     expect(find.byKey(const ValueKey('profile-bonus-summary-refresh')),
-        findsOneWidget);
+        findsNothing);
     expect(find.byKey(const ValueKey('profile-bonus-wheel-action')),
         findsOneWidget);
     expect(find.byKey(const ValueKey('profile-activity-calendar-action')),
@@ -1408,8 +1824,8 @@ void main() {
 
     await _openRewardsHubFromProfile(tester);
 
-    expect(find.byKey(const ValueKey('rewards-wheel-card')), findsOneWidget);
-    expect(find.byKey(const ValueKey('rewards-calendar-card')), findsOneWidget);
+    expect(find.byKey(const ValueKey('rewards-wheel-card')), findsNothing);
+    expect(find.byKey(const ValueKey('rewards-calendar-card')), findsNothing);
   });
 
   testWidgets('profile opens rewards hub with wheel and calendar preview',
@@ -1436,6 +1852,26 @@ void main() {
         paidReferrals: 3,
         nextTierKey: 'pro',
         nextTierAt: 5,
+        wheelState: AppFirstBonusFeatureState(
+          ok: true,
+          enabled: true,
+          state: 'ready',
+          featureFlag: 'BONUS_WHEEL_ENABLED',
+          featureFlagEnabled: true,
+          actionEndpoint: '/api/bonuses/wheel/spin',
+          lastActionAt: '2026-06-03T12:00:00Z',
+          streakMonths: 0,
+        ),
+        calendarState: AppFirstBonusFeatureState(
+          ok: true,
+          enabled: true,
+          state: 'ready',
+          featureFlag: 'BONUS_CALENDAR_ENABLED',
+          featureFlagEnabled: true,
+          actionEndpoint: '/api/bonuses/calendar/checkin',
+          lastActionAt: '',
+          streakMonths: 2,
+        ),
       ),
     );
 
@@ -1476,9 +1912,9 @@ void main() {
         findsOneWidget);
     expect(find.byKey(const ValueKey('rewards-referral-card')), findsOneWidget);
     expect(find.byKey(const ValueKey('rewards-promo-slots-section')),
-        findsOneWidget);
+        findsNothing);
     expect(
-        find.byKey(const ValueKey('rewards-promo-slot-empty')), findsOneWidget);
+        find.byKey(const ValueKey('rewards-promo-slot-empty')), findsNothing);
   });
 
   testWidgets('rewards hub can run live wheel and calendar actions',
@@ -1779,6 +2215,79 @@ void main() {
     expect(launched, isEmpty);
   });
 
+  testWidgets('profile surfaces devices, notifications and subscription detail',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+    );
+    final launched = <Uri>[];
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        handoffLauncher: (uri) async {
+          launched.add(uri);
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-profile');
+    await tester.pumpAndSettle();
+
+    // Subscription detail from the backend (days left + plan tariffs).
+    await tester.tap(find.byKey(const ValueKey('profile-plan-details-action')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('profile-subscription-sheet')),
+        findsOneWidget);
+    expect(find.text('Осталось дней'), findsOneWidget);
+    Navigator.of(tester.element(
+      find.byKey(const ValueKey('profile-subscription-sheet')),
+    )).pop();
+    await tester.pumpAndSettle();
+
+    // Devices sheet lists sessions with a calm empty state.
+    final devicesAction = find.byKey(const ValueKey('profile-devices-action'));
+    await tester.dragUntilVisible(
+      devicesAction,
+      find.byType(Scrollable).first,
+      const Offset(0, -200),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(devicesAction);
+    await tester.pumpAndSettle();
+    expect(
+        find.byKey(const ValueKey('profile-devices-sheet')), findsOneWidget);
+    expect(find.text('Пока нет других устройств.'), findsOneWidget);
+    Navigator.of(tester.element(
+      find.byKey(const ValueKey('profile-devices-sheet')),
+    )).pop();
+    await tester.pumpAndSettle();
+
+    // Notifications inbox replaces the old static info sheet.
+    final notificationsAction =
+        find.byKey(const ValueKey('profile-notifications-action'));
+    await tester.dragUntilVisible(
+      notificationsAction,
+      find.byType(Scrollable).first,
+      const Offset(0, -200),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(notificationsAction);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('profile-notifications-sheet')),
+        findsOneWidget);
+    expect(find.text('Пока нет уведомлений.'), findsOneWidget);
+
+    expect(launched, isEmpty);
+  });
+
   testWidgets('profile keeps account and settings actions grouped',
       (tester) async {
     await tester.pumpWidget(
@@ -1802,7 +2311,7 @@ void main() {
     expect(find.byKey(const ValueKey('profile-section-app')), findsOneWidget);
   });
 
-  testWidgets('disabled rewards render muted states instead of CTAs',
+  testWidgets('disabled rewards stay hidden instead of dead muted cards',
       (tester) async {
     await tester.pumpWidget(
       PokrovSeedApp(
@@ -1825,29 +2334,19 @@ void main() {
     await tester.tap(wheelAction);
     await tester.pumpAndSettle();
 
-    final wheelMuted = find.byKey(const ValueKey('rewards-wheel-muted-state'));
-    final calendarMuted =
-        find.byKey(const ValueKey('rewards-calendar-muted-state'));
-    expect(wheelMuted, findsOneWidget);
-    expect(calendarMuted, findsOneWidget);
+    expect(find.byKey(const ValueKey('rewards-wheel-card')), findsNothing);
+    expect(find.byKey(const ValueKey('rewards-calendar-card')), findsNothing);
     expect(
-      find.descendant(of: wheelMuted, matching: find.byType(FilledButton)),
-      findsNothing,
-    );
-    expect(
-      find.descendant(of: calendarMuted, matching: find.byType(FilledButton)),
-      findsNothing,
-    );
-    expect(find.byKey(const ValueKey('rewards-wheel-spin-action')),
-        findsOneWidget);
+        find.byKey(const ValueKey('rewards-wheel-spin-action')), findsNothing);
     expect(find.byKey(const ValueKey('rewards-calendar-checkin-action')),
-        findsOneWidget);
+        findsNothing);
   });
 
   testWidgets('P4 responsive width matrix keeps the app shell stable',
       (tester) async {
     final cases = <({double width, HostPlatform platform, String shellKey})>[
       (width: 360, platform: HostPlatform.android, shellKey: 'mobile-shell'),
+      (width: 493, platform: HostPlatform.android, shellKey: 'mobile-shell'),
       (width: 700, platform: HostPlatform.android, shellKey: 'mobile-shell'),
       (
         width: 900,
@@ -1942,14 +2441,18 @@ void main() {
     expect(find.byType(NavigationBar), findsNothing);
     expect(
         find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
+    final desktopDiscSize =
+        tester.getSize(find.byKey(const ValueKey('connect-disc-motion')));
+    expect(desktopDiscSize.width, inInclusiveRange(180, 220));
     expect(find.byKey(const ValueKey('home-location-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-route-chip')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-news-card')), findsNothing);
 
     expect(find.text('Р’Р°С€ РѕСЃРЅРѕРІРЅРѕР№ СЂРµРіРёРѕРЅ'), findsNothing);
     expect(find.text('РќРѕРІРѕСЃС‚Рё Рё СѓРІРµРґРѕРјР»РµРЅРёСЏ'), findsNothing);
     expect(find.text('РЈСЃРёР»РµРЅРЅС‹Р№ СЂРµР¶РёРј'), findsNothing);
     expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
-    expect(find.textContaining('Расширенная защита'), findsNothing);
+    expect(find.textContaining('Дополнительная защита'), findsOneWidget);
     expect(find.textContaining('WARP'), findsOneWidget);
 
     await _tapNav(tester, 'nav-profile');
@@ -1963,7 +2466,8 @@ void main() {
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1180, 820));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    _installReadyRuntimeBridgeMock();
+    final runtimeCalls = <String>[];
+    _installReadyRuntimeBridgeMock(calls: runtimeCalls);
 
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
@@ -2008,9 +2512,98 @@ void main() {
 
     expect(bootstrapper.warpConsentCalls, 1);
     expect(bootstrapper.lastWarpConsentEnabled, isTrue);
+    expect(runtimeCalls, contains('runtimeEngine.applyWarp'));
     expect(find.byKey(const ValueKey('home-warp-sheet')), findsNothing);
     await _tapNav(tester, 'nav-protection');
     expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
+  });
+
+  testWidgets('home WARP switch changes consent without opening details',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    _installReadyRuntimeBridgeMock();
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+        warpPolicy: WarpRuntimePolicy(
+          enabled: true,
+          runtimeReady: true,
+          state: 'ready',
+          wireguardConfigJson:
+              '{"private-key":"test-private-key","local-address-ipv4":"172.16.0.2"}',
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('home-warp-inline-switch')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('home-warp-inline-switch')));
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.warpConsentCalls, 1);
+    expect(bootstrapper.lastWarpConsentEnabled, isTrue);
+    expect(find.byKey(const ValueKey('home-warp-sheet')), findsNothing);
+    expect(find.text('Включится при следующем подключении'), findsOneWidget);
+  });
+
+  testWidgets('home WARP uses client-local defaults without server material',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    _installReadyRuntimeBridgeMock();
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+        warpPolicy: WarpRuntimePolicy.disabled,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    final warpTile = find.byKey(const ValueKey('home-warp-tile'));
+    expect(warpTile, findsOneWidget);
+    expect(find.descendant(of: warpTile, matching: find.text('WARP')),
+        findsOneWidget);
+    expect(
+      find.descendant(
+        of: warpTile,
+        matching: find.text('Дополнительная защита'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('home-warp-inline-switch')));
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.warpConsentCalls, 1);
+    expect(bootstrapper.lastWarpConsentEnabled, isTrue);
+    expect(find.byKey(const ValueKey('home-warp-sheet')), findsNothing);
+    expect(
+        find.text('WARP включится при следующем подключении.'), findsOneWidget);
+    expect(find.textContaining('готовится'), findsNothing);
   });
 
   testWidgets('revoking WARP consent clears the local enabled state',
@@ -2105,6 +2698,9 @@ void main() {
 
     expect(find.byKey(const ValueKey('pokrov-brand-mark')), findsWidgets);
     expect(find.byKey(const ValueKey('connect-disc-motion')), findsOneWidget);
+    final discSize =
+        tester.getSize(find.byKey(const ValueKey('connect-disc-motion')));
+    expect(discSize.width, inInclusiveRange(140, 172));
     expect(
       find.ancestor(
         of: find.byKey(const ValueKey('connect-disc-motion')),
@@ -2179,13 +2775,18 @@ void main() {
     await _completeFirstLaunchIfPresent(tester);
     await _tapNav(tester, 'nav-profile');
 
-    final refresh = find.byKey(const ValueKey('profile-bonus-summary-refresh'));
+    final rewards = find.byKey(const ValueKey('profile-bonus-wheel-action'));
     await tester.dragUntilVisible(
-      refresh,
+      rewards,
       find.byType(Scrollable).first,
       const Offset(0, -220),
     );
     await tester.pumpAndSettle();
+    await tester.tap(rewards);
+    await tester.pumpAndSettle();
+
+    final refresh = find.byKey(const ValueKey('rewards-refresh-action'));
+    expect(refresh, findsOneWidget);
     await tester.tap(refresh);
     await tester.pump();
 
@@ -2384,7 +2985,8 @@ void main() {
     expect(supportTicketService.lastHostPlatform, HostPlatform.windows);
     expect(supportTicketService.lastBody, 'РќРµ РїРѕРґРєР»СЋС‡Р°РµС‚СЃСЏ');
     expect(supportTicketService.lastSubject, contains('POKROV'));
-    expect(supportTicketService.lastDiagnostics?['platform'], 'windows');
+    expect(supportTicketService.lastStatusLabel, isEmpty);
+    expect(supportTicketService.lastDiagnostics, isEmpty);
     expect(find.textContaining('#777'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('support-attach-diagnostics')));
@@ -2393,7 +2995,8 @@ void main() {
     expect(find.byKey(const ValueKey('support-diagnostics-preview')),
         findsOneWidget);
     expect(find.textContaining(appContext.hostPlatform.label), findsWidgets);
-    expect(find.textContaining('безопасную сводку'), findsOneWidget);
+    expect(find.text('Что отправим'), findsOneWidget);
+    expect(find.textContaining('статус VPN'), findsOneWidget);
     expect(find.textContaining('Сырые'), findsNothing);
     expect(find.textContaining('config'), findsNothing);
     expect(find.textContaining('конфиг'), findsNothing);
@@ -2513,13 +3116,16 @@ void main() {
     expect(supportTicketService.lastReplyDiagnostics?['connection_status'],
         isNotEmpty);
     expect(
-      supportTicketService.lastReplyDiagnostics?['enhanced_protection_state'],
-      isNotEmpty,
-    );
+        supportTicketService.lastReplyDiagnostics?['warp_status'], isNotEmpty);
     expect(
-      supportTicketService
-          .lastReplyDiagnostics?['enhanced_protection_available'],
-      isNotNull,
+      supportTicketService.lastReplyDiagnostics?.keys.toSet(),
+      <String>{
+        'app_version',
+        'platform',
+        'route_mode',
+        'connection_status',
+        'warp_status',
+      },
     );
     final diagnosticsJson =
         jsonEncode(supportTicketService.lastReplyDiagnostics);
@@ -2872,13 +3478,13 @@ void main() {
     expect(
       find.descendant(
         of: selectedAppsSection,
-        matching: find.text('Выбранные приложения'),
+        matching: find.text('Только выбранные'),
       ),
       findsOneWidget,
     );
     expect(
         find.byKey(const ValueKey('rules-selected-app-pick')), findsOneWidget);
-    expect(find.text('Выбрать процесс'), findsOneWidget);
+    expect(find.text('Выбрать приложение'), findsOneWidget);
   });
 
   testWidgets('rules lets user add a custom selected app identifier',
@@ -2926,7 +3532,8 @@ void main() {
 
     expect(find.byKey(const ValueKey('rules-selected-app-com.example.special')),
         findsOneWidget);
-    expect(find.text('com.example.special'), findsOneWidget);
+    expect(find.text('com.example.special'), findsNothing);
+    expect(find.text('Special'), findsOneWidget);
 
     await _tapNav(tester, 'nav-protection');
     await tester.pumpAndSettle();
@@ -2936,7 +3543,7 @@ void main() {
     expect(
       find.descendant(
         of: routeChip,
-        matching: find.text(RouteMode.selectedApps.label),
+        matching: find.text('Только выбранные'),
       ),
       findsOneWidget,
     );
@@ -2989,7 +3596,7 @@ void main() {
     expect(
       find.descendant(
         of: routeChip,
-        matching: find.text(RouteMode.selectedApps.label),
+        matching: find.text('Только выбранные'),
       ),
       findsOneWidget,
     );
@@ -3065,7 +3672,7 @@ void main() {
 
     await _tapNav(tester, 'nav-profile');
 
-    final advanced = find.byKey(const ValueKey('profile-section-advanced'));
+    final advanced = find.byKey(const ValueKey('profile-diagnostics-action'));
     await tester.dragUntilVisible(
       advanced,
       find.byType(Scrollable).first,
@@ -3080,7 +3687,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('advanced-app-version')), findsOneWidget);
-    expect(find.byKey(const ValueKey('advanced-runtime-core')), findsOneWidget);
+    expect(find.byKey(const ValueKey('advanced-channel')), findsOneWidget);
     expect(find.byType(Checkbox), findsNothing);
     expect(find.byType(FilledButton), findsNothing);
   });
@@ -3206,6 +3813,68 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(BottomSheet), findsOneWidget);
     expect(find.textContaining('POKROV'), findsWidgets);
+  });
+
+  testWidgets('locations screen renders backend catalog cities',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    _installReadyRuntimeBridgeMock();
+
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'managed-from-api',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      locationsCatalog: const ClientLocationsCatalog(
+        auto: ClientLocationAuto(
+          enabled: true,
+          currentCode: 'nl-ams-01',
+        ),
+        countries: <ClientLocationCountry>[
+          ClientLocationCountry(
+            code: 'nl',
+            country: 'Netherlands',
+            cities: <ClientLocationCity>[
+              ClientLocationCity(
+                code: 'nl-ams-01',
+                city: 'Amsterdam',
+                healthScore: 0.94,
+                latencyMs: 38,
+                premium: true,
+                load: 0.31,
+              ),
+            ],
+          ),
+        ],
+        freePoolCode: 'nl-free',
+        profileRevision: 'rev-locations',
+        transportProfile: 'reality',
+        query: '',
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-locations');
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.locationsCatalogCalls, greaterThanOrEqualTo(1));
+    expect(
+      find.byKey(const ValueKey('locations-catalog-city-nl-ams-01')),
+      findsOneWidget,
+    );
+    expect(find.text('Amsterdam'), findsOneWidget);
   });
 
   testWidgets('primary connect action auto-prepares and starts host runtime',
@@ -3390,7 +4059,7 @@ void main() {
 
     final label = find.descendant(
       of: find.byKey(const ValueKey('connect-disc-label')),
-      matching: find.text('Подключить'),
+      matching: find.text('Включить VPN'),
     );
     await tester.tap(label);
     await tester.pumpAndSettle();

@@ -148,11 +148,12 @@ class PokrovConnectDiscMotion {
     required double breathValue,
     required bool disableAnimations,
   }) {
+    if (disableAnimations) {
+      return 1.0;
+    }
     final pressedScale = pressed ? pressScale : 1.0;
     final sweepScale = runsSweep ? busyScale : 1.0;
-    final breathScale = runsSweep || disableAnimations
-        ? 1.0
-        : 1.0 + breathValue * breathAmplitude;
+    final breathScale = runsSweep ? 1.0 : 1.0 + breathValue * breathAmplitude;
     return pressedScale * sweepScale * breathScale;
   }
 }

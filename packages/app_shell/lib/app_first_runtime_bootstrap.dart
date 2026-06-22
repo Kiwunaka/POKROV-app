@@ -115,6 +115,49 @@ abstract interface class AppFirstNodePreferenceService {
   });
 }
 
+abstract interface class AppFirstClientDataService {
+  Future<ClientLocationsCatalog> fetchLocationsCatalog({
+    required HostPlatform hostPlatform,
+    String query = '',
+  });
+
+  Future<ClientSubscriptionInfo> fetchClientSubscription({
+    required HostPlatform hostPlatform,
+  });
+
+  Future<ClientDeviceList> fetchClientDevices({
+    required HostPlatform hostPlatform,
+  });
+
+  Future<bool> revokeClientDevice({
+    required HostPlatform hostPlatform,
+    required String deviceId,
+  });
+
+  Future<ClientNotificationInbox> fetchClientNotifications({
+    required HostPlatform hostPlatform,
+    String after = '',
+  });
+
+  Future<bool> markClientNotificationsRead({
+    required HostPlatform hostPlatform,
+    required List<String> ids,
+  });
+
+  Future<ClientPushRegistration> registerClientPushToken({
+    required HostPlatform hostPlatform,
+    required String token,
+    required String provider,
+  });
+
+  Future<ClientSupportAssistantReply> askSupportAssistant({
+    required HostPlatform hostPlatform,
+    required String message,
+    int? ticketId,
+    Map<String, Object?> safeDiagnostics = const <String, Object?>{},
+  });
+}
+
 class BootstrapFailure implements Exception {
   const BootstrapFailure(
     this.message, {
@@ -126,6 +169,398 @@ class BootstrapFailure implements Exception {
 
   @override
   String toString() => message;
+}
+
+Map<String, dynamic> _clientMap(Object? value) {
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+  if (value is Map) {
+    return value.map((key, item) => MapEntry(key.toString(), item));
+  }
+  return const <String, dynamic>{};
+}
+
+Map<String, Object?> _clientObjectMap(Object? value) {
+  return _clientMap(value).map((key, item) => MapEntry(key, item));
+}
+
+List<Map<String, dynamic>> _clientListOfMaps(Object? value) {
+  if (value is! List) {
+    return const <Map<String, dynamic>>[];
+  }
+  return value
+      .whereType<Map>()
+      .map((item) => item.map((key, value) => MapEntry(key.toString(), value)))
+      .toList(growable: false);
+}
+
+String _clientText(Object? value, {String fallback = ''}) {
+  final text = value == null ? '' : value.toString().trim();
+  return text.isEmpty ? fallback : text;
+}
+
+bool _clientBool(Object? value) {
+  if (value is bool) {
+    return value;
+  }
+  final text = value == null ? '' : value.toString().trim().toLowerCase();
+  return text == '1' || text == 'true' || text == 'yes' || text == 'on';
+}
+
+int _clientInt(Object? value) {
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  return int.tryParse(value?.toString().trim() ?? '') ?? 0;
+}
+
+int? _clientNullableInt(Object? value) {
+  if (value == null) {
+    return null;
+  }
+  return _clientInt(value);
+}
+
+double _clientDouble(Object? value) {
+  if (value is double) {
+    return value;
+  }
+  if (value is int) {
+    return value.toDouble();
+  }
+  if (value is num) {
+    return value.toDouble();
+  }
+  return double.tryParse(value?.toString().trim() ?? '') ?? 0;
+}
+
+Uri? _clientUri(Object? value) {
+  final text = _clientText(value);
+  if (text.isEmpty) {
+    return null;
+  }
+  return Uri.tryParse(text);
+}
+
+class ClientLocationsCatalog {
+  const ClientLocationsCatalog({
+    required this.auto,
+    required this.countries,
+    required this.freePoolCode,
+    required this.profileRevision,
+    required this.transportProfile,
+    required this.query,
+  });
+
+  final ClientLocationAuto auto;
+  final List<ClientLocationCountry> countries;
+  final String freePoolCode;
+  final String profileRevision;
+  final String transportProfile;
+  final String query;
+
+  factory ClientLocationsCatalog.fromJson(Map<String, dynamic> json) {
+    return ClientLocationsCatalog(
+      auto: ClientLocationAuto.fromJson(_clientMap(json['auto'])),
+      countries: _clientListOfMaps(json['countries'])
+          .map(ClientLocationCountry.fromJson)
+          .toList(growable: false),
+      freePoolCode: _clientText(json['freePoolCode'] ?? json['free_pool_code']),
+      profileRevision:
+          _clientText(json['profileRevision'] ?? json['profile_revision']),
+      transportProfile:
+          _clientText(json['transportProfile'] ?? json['transport_profile']),
+      query: _clientText(json['query']),
+    );
+  }
+}
+
+class ClientLocationAuto {
+  const ClientLocationAuto({
+    required this.enabled,
+    required this.currentCode,
+  });
+
+  final bool enabled;
+  final String currentCode;
+
+  factory ClientLocationAuto.fromJson(Map<String, dynamic> json) {
+    return ClientLocationAuto(
+      enabled: _clientBool(json['enabled']),
+      currentCode: _clientText(json['currentCode'] ?? json['current_code']),
+    );
+  }
+}
+
+class ClientLocationCountry {
+  const ClientLocationCountry({
+    required this.code,
+    required this.country,
+    required this.cities,
+  });
+
+  final String code;
+  final String country;
+  final List<ClientLocationCity> cities;
+
+  factory ClientLocationCountry.fromJson(Map<String, dynamic> json) {
+    return ClientLocationCountry(
+      code: _clientText(json['code']),
+      country: _clientText(json['country']),
+      cities: _clientListOfMaps(json['cities'])
+          .map(ClientLocationCity.fromJson)
+          .toList(growable: false),
+    );
+  }
+}
+
+class ClientLocationCity {
+  const ClientLocationCity({
+    required this.code,
+    required this.city,
+    required this.healthScore,
+    required this.latencyMs,
+    required this.premium,
+    required this.load,
+  });
+
+  final String code;
+  final String city;
+  final double healthScore;
+  final int? latencyMs;
+  final bool premium;
+  final double load;
+
+  factory ClientLocationCity.fromJson(Map<String, dynamic> json) {
+    return ClientLocationCity(
+      code: _clientText(json['code']),
+      city: _clientText(json['city']),
+      healthScore: _clientDouble(
+        json['healthScore'] ?? json['health_score'],
+      ),
+      latencyMs: _clientNullableInt(json['latencyMs'] ?? json['latency_ms']),
+      premium: _clientBool(json['premium']),
+      load: _clientDouble(json['load']),
+    );
+  }
+}
+
+class ClientSubscriptionInfo {
+  const ClientSubscriptionInfo({
+    required this.lane,
+    required this.expiresAt,
+    required this.daysLeft,
+    required this.autoRenew,
+    required this.renewUrl,
+    required this.plans,
+    required this.trafficPolicy,
+  });
+
+  final String lane;
+  final String expiresAt;
+  final int daysLeft;
+  final bool autoRenew;
+  final Uri? renewUrl;
+  final List<ClientSubscriptionPlan> plans;
+  final Map<String, Object?> trafficPolicy;
+
+  factory ClientSubscriptionInfo.fromJson(Map<String, dynamic> json) {
+    return ClientSubscriptionInfo(
+      lane: _clientText(json['lane']),
+      expiresAt: _clientText(json['expiresAt'] ?? json['expires_at']),
+      daysLeft: _clientInt(json['daysLeft'] ?? json['days_left']),
+      autoRenew: _clientBool(json['autoRenew'] ?? json['auto_renew']),
+      renewUrl: _clientUri(json['renewUrl'] ?? json['renew_url']),
+      plans: _clientListOfMaps(json['plans'])
+          .map(ClientSubscriptionPlan.fromJson)
+          .toList(growable: false),
+      trafficPolicy: _clientObjectMap(
+        json['trafficPolicy'] ?? json['traffic_policy'],
+      ),
+    );
+  }
+}
+
+class ClientSubscriptionPlan {
+  const ClientSubscriptionPlan({
+    required this.id,
+    required this.title,
+    required this.price,
+  });
+
+  final String id;
+  final String title;
+  final String price;
+
+  factory ClientSubscriptionPlan.fromJson(Map<String, dynamic> json) {
+    return ClientSubscriptionPlan(
+      id: _clientText(json['id']),
+      title: _clientText(json['title']),
+      price: _clientText(json['price']),
+    );
+  }
+}
+
+class ClientDeviceList {
+  const ClientDeviceList({required this.items});
+
+  final List<ClientDeviceInfo> items;
+
+  factory ClientDeviceList.fromJson(Map<String, dynamic> json) {
+    return ClientDeviceList(
+      items: _clientListOfMaps(json['items'])
+          .map(ClientDeviceInfo.fromJson)
+          .toList(growable: false),
+    );
+  }
+}
+
+class ClientDeviceInfo {
+  const ClientDeviceInfo({
+    required this.id,
+    required this.label,
+    required this.platform,
+    required this.lastSeen,
+    required this.current,
+  });
+
+  final String id;
+  final String label;
+  final String platform;
+  final String lastSeen;
+  final bool current;
+
+  factory ClientDeviceInfo.fromJson(Map<String, dynamic> json) {
+    return ClientDeviceInfo(
+      id: _clientText(json['id']),
+      label: _clientText(json['label']),
+      platform: _clientText(json['platform']),
+      lastSeen: _clientText(json['lastSeen'] ?? json['last_seen']),
+      current: _clientBool(json['current']),
+    );
+  }
+}
+
+class ClientNotificationInbox {
+  const ClientNotificationInbox({
+    required this.items,
+    required this.nextCursor,
+    required this.unreadCount,
+  });
+
+  final List<ClientNotificationItem> items;
+  final String nextCursor;
+  final int unreadCount;
+
+  factory ClientNotificationInbox.fromJson(Map<String, dynamic> json) {
+    final items = _clientListOfMaps(json['items'])
+        .map(ClientNotificationItem.fromJson)
+        .toList(growable: false);
+    return ClientNotificationInbox(
+      items: items,
+      nextCursor: _clientText(json['nextCursor'] ?? json['next_cursor']),
+      unreadCount: _clientInt(json['unreadCount'] ?? json['unread_count']),
+    );
+  }
+}
+
+class ClientNotificationItem {
+  const ClientNotificationItem({
+    required this.id,
+    required this.kind,
+    required this.title,
+    required this.body,
+    required this.createdAt,
+    required this.ctaLabel,
+    required this.ctaHref,
+    required this.read,
+  });
+
+  final String id;
+  final String kind;
+  final String title;
+  final String body;
+  final String createdAt;
+  final String ctaLabel;
+  final Uri? ctaHref;
+  final bool read;
+
+  factory ClientNotificationItem.fromJson(Map<String, dynamic> json) {
+    return ClientNotificationItem(
+      id: _clientText(json['id']),
+      kind: _clientText(json['kind']),
+      title: _clientText(json['title']),
+      body: _clientText(json['body']),
+      createdAt: _clientText(json['createdAt'] ?? json['created_at']),
+      ctaLabel: _clientText(json['ctaLabel'] ?? json['cta_label']),
+      ctaHref: _clientUri(json['ctaHref'] ?? json['cta_href']),
+      read: _clientBool(json['read']),
+    );
+  }
+}
+
+class ClientPushRegistration {
+  const ClientPushRegistration({
+    required this.ok,
+    required this.provider,
+    required this.tokenHash,
+  });
+
+  final bool ok;
+  final String provider;
+  final String tokenHash;
+
+  factory ClientPushRegistration.fromJson(Map<String, dynamic> json) {
+    return ClientPushRegistration(
+      ok: json['ok'] != false,
+      provider: _clientText(json['provider']),
+      tokenHash: _clientText(json['tokenHash'] ?? json['token_hash']),
+    );
+  }
+}
+
+class ClientSupportAssistantReply {
+  const ClientSupportAssistantReply({
+    required this.reply,
+    required this.shouldEscalate,
+    required this.suggestedActions,
+  });
+
+  final String reply;
+  final bool shouldEscalate;
+  final List<ClientSupportAssistantAction> suggestedActions;
+
+  factory ClientSupportAssistantReply.fromJson(Map<String, dynamic> json) {
+    return ClientSupportAssistantReply(
+      reply: _clientText(json['reply']),
+      shouldEscalate:
+          _clientBool(json['shouldEscalate'] ?? json['should_escalate']),
+      suggestedActions: _clientListOfMaps(
+        json['suggestedActions'] ?? json['suggested_actions'],
+      ).map(ClientSupportAssistantAction.fromJson).toList(growable: false),
+    );
+  }
+}
+
+class ClientSupportAssistantAction {
+  const ClientSupportAssistantAction({
+    required this.key,
+    required this.label,
+  });
+
+  final String key;
+  final String label;
+
+  factory ClientSupportAssistantAction.fromJson(Map<String, dynamic> json) {
+    return ClientSupportAssistantAction(
+      key: _clientText(json['key']),
+      label: _clientText(json['label']),
+    );
+  }
 }
 
 class SmartConnectPreferenceResult {
@@ -204,7 +639,7 @@ class WarpControlStatus {
 
   static const unavailable = WarpControlStatus(
     feature: 'extended_protection',
-    publicLabel: 'Расширенная защита',
+    publicLabel: 'WARP',
     technicalLabel: 'WARP',
     enabled: false,
     runtimeReady: false,
@@ -296,7 +731,7 @@ class WarpControlStatus {
   static WarpControlStatus fromPolicy(WarpRuntimePolicy policy) {
     return WarpControlStatus(
       feature: 'extended_protection',
-      publicLabel: 'Расширенная защита',
+      publicLabel: 'WARP',
       technicalLabel: 'WARP',
       enabled: policy.enabled,
       runtimeReady: policy.runtimeReady,
@@ -321,7 +756,7 @@ class WarpControlStatus {
       ),
       publicLabel: _readText(
         map['public_label'] ?? map['publicLabel'],
-        fallback: 'Расширенная защита',
+        fallback: 'WARP',
       ),
       technicalLabel: _readText(
         map['technical_label'] ?? map['technicalLabel'],
@@ -625,7 +1060,8 @@ class AppFirstBonusFeatureState {
   final String lastActionAt;
   final int streakMonths;
 
-  bool get canRun => ok && enabled && actionEndpoint.trim().isNotEmpty;
+  bool get canRun =>
+      ok && enabled && featureFlagEnabled && actionEndpoint.trim().isNotEmpty;
 
   String get statusLabel {
     if (canRun) {
@@ -898,7 +1334,8 @@ class AppFirstRuntimeBootstrapper
         AppFirstBonusActionService,
         AppFirstWarpActionService,
         AppFirstReleaseActionService,
-        AppFirstNodePreferenceService {
+        AppFirstNodePreferenceService,
+        AppFirstClientDataService {
   AppFirstRuntimeBootstrapper({
     this.apiBaseUrl = 'https://api.pokrov.space',
     Future<Directory> Function()? supportDirectoryResolver,
@@ -1233,6 +1670,7 @@ class AppFirstRuntimeBootstrapper
     String message = '',
     Map<String, Object?> meta = const <String, Object?>{},
   }) async {
+    final safeMessage = _sanitizeWarpRuntimeMessage(message);
     final response = await _requestWarpJsonWithSession(
       hostPlatform: hostPlatform,
       method: 'POST',
@@ -1246,7 +1684,7 @@ class AppFirstRuntimeBootstrapper
             reasonCode,
             fallback: 'runtime_event',
           ),
-        if (message.trim().isNotEmpty) 'message': message.trim(),
+        if (safeMessage.isNotEmpty) 'message': safeMessage,
         'meta': _sanitizeWarpRuntimeMeta(meta),
       },
     );
@@ -1301,6 +1739,208 @@ class AppFirstRuntimeBootstrapper
       throw const BootstrapFailure(
         'POKROV could not update extended protection.',
       );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  @override
+  Future<ClientLocationsCatalog> fetchLocationsCatalog({
+    required HostPlatform hostPlatform,
+    String query = '',
+  }) async {
+    final params = <String, String>{'platform': hostPlatform.name};
+    final trimmedQuery = query.trim();
+    if (trimmedQuery.isNotEmpty) {
+      params['q'] = trimmedQuery;
+    }
+    final response = await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'GET',
+      path: Uri(
+        path: '/api/client/locations',
+        queryParameters: params,
+      ).toString(),
+    );
+    return ClientLocationsCatalog.fromJson(response);
+  }
+
+  @override
+  Future<ClientSubscriptionInfo> fetchClientSubscription({
+    required HostPlatform hostPlatform,
+  }) async {
+    final response = await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'GET',
+      path: '/api/client/subscription',
+    );
+    return ClientSubscriptionInfo.fromJson(response);
+  }
+
+  @override
+  Future<ClientDeviceList> fetchClientDevices({
+    required HostPlatform hostPlatform,
+  }) async {
+    final response = await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'GET',
+      path: '/api/client/devices',
+    );
+    return ClientDeviceList.fromJson(response);
+  }
+
+  @override
+  Future<bool> revokeClientDevice({
+    required HostPlatform hostPlatform,
+    required String deviceId,
+  }) async {
+    final safeDeviceId = deviceId.trim();
+    if (safeDeviceId.isEmpty) {
+      throw const BootstrapFailure('Device id is required.');
+    }
+    final response = await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'DELETE',
+      path: '/api/client/devices/${Uri.encodeComponent(safeDeviceId)}',
+    );
+    return response['ok'] != false;
+  }
+
+  @override
+  Future<ClientNotificationInbox> fetchClientNotifications({
+    required HostPlatform hostPlatform,
+    String after = '',
+  }) async {
+    final params = <String, String>{};
+    final cursor = after.trim();
+    if (cursor.isNotEmpty) {
+      params['after'] = cursor;
+    }
+    final response = await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'GET',
+      path: Uri(
+        path: '/api/client/notifications',
+        queryParameters: params.isEmpty ? null : params,
+      ).toString(),
+    );
+    return ClientNotificationInbox.fromJson(response);
+  }
+
+  @override
+  Future<bool> markClientNotificationsRead({
+    required HostPlatform hostPlatform,
+    required List<String> ids,
+  }) async {
+    final normalizedIds = ids
+        .map((id) => id.trim())
+        .where((id) => id.isNotEmpty)
+        .take(100)
+        .toList(growable: false);
+    if (normalizedIds.isEmpty) {
+      return true;
+    }
+    final response = await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: '/api/client/notifications/read',
+      body: <String, Object?>{'ids': normalizedIds},
+    );
+    return response['ok'] != false;
+  }
+
+  @override
+  Future<ClientPushRegistration> registerClientPushToken({
+    required HostPlatform hostPlatform,
+    required String token,
+    required String provider,
+  }) async {
+    final safeToken = token.trim();
+    if (safeToken.isEmpty) {
+      throw const BootstrapFailure('Push token is required.');
+    }
+    final response = await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: '/api/client/push/register',
+      body: <String, Object?>{
+        'platform': hostPlatform.name,
+        'token': safeToken,
+        'provider': provider.trim().isEmpty ? 'poll' : provider.trim(),
+      },
+    );
+    return ClientPushRegistration.fromJson(response);
+  }
+
+  @override
+  Future<ClientSupportAssistantReply> askSupportAssistant({
+    required HostPlatform hostPlatform,
+    required String message,
+    int? ticketId,
+    Map<String, Object?> safeDiagnostics = const <String, Object?>{},
+  }) async {
+    final text = message.trim();
+    if (text.isEmpty) {
+      throw const BootstrapFailure('Support message is required.');
+    }
+    final response = await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: '/api/client/support/assistant',
+      body: <String, Object?>{
+        'message': text,
+        'scope': 'support',
+        if (ticketId != null) 'ticketId': ticketId,
+        'safeDiagnostics': _sanitizeWarpRuntimeMeta(safeDiagnostics),
+      },
+    );
+    return ClientSupportAssistantReply.fromJson(response);
+  }
+
+  Future<Map<String, dynamic>> _requestClientJsonWithSession({
+    required HostPlatform hostPlatform,
+    required String method,
+    required String path,
+    Map<String, Object?>? body,
+  }) async {
+    var state = await _loadOrCreateState(hostPlatform);
+    final client = _createHttpClient(hostPlatform);
+    try {
+      for (var attempt = 0; attempt < 2; attempt += 1) {
+        if (!state.hasSession) {
+          state = await _startTrial(
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
+        }
+
+        try {
+          return await _requestJson(
+            method: method,
+            path: path,
+            client: client,
+            bearerToken: state.sessionToken,
+            hostPlatform: hostPlatform,
+            body: body,
+          );
+        } on BootstrapFailure catch (error) {
+          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
+            state = await _startTrial(
+              state: state.copyWith(
+                sessionToken: '',
+                accountId: '',
+              ),
+              hostPlatform: hostPlatform,
+              client: client,
+            );
+            continue;
+          }
+          rethrow;
+        }
+      }
+
+      throw const BootstrapFailure('POKROV could not update app data.');
     } finally {
       client.close(force: true);
     }
@@ -2203,8 +2843,8 @@ class AppFirstRuntimeBootstrapper
 
   String _safeWarpPublicLabel(String value) {
     final text = value.trim();
-    if (text.isEmpty || text.toLowerCase().contains('warp')) {
-      return 'Расширенная защита';
+    if (text.isEmpty) {
+      return 'WARP';
     }
     return text.length > 80 ? text.substring(0, 80) : text;
   }
@@ -2238,7 +2878,7 @@ class AppFirstRuntimeBootstrapper
         _readText(provisioning['status']) == 'ready';
     if (!provisioningReady) {
       throw const BootstrapFailure(
-        'Сервер еще готовит доступ. Попробуйте подключиться через минуту.',
+        'POKROV еще завершает первый запуск. Попробуйте через минуту.',
       );
     }
     final sessionToken = _readText(session['session_token']);
@@ -2329,7 +2969,7 @@ class AppFirstRuntimeBootstrapper
         _readText(provisioning['status']) == 'ready';
     if (!provisioningReady) {
       throw const BootstrapFailure(
-        'Сервер еще готовит доступ. Попробуйте подключиться через минуту.',
+        'POKROV еще завершает первый запуск. Попробуйте через минуту.',
       );
     }
     final supportContext = _readMap(response['support_context']);
@@ -4483,6 +5123,14 @@ class AppFirstRuntimeBootstrapper
           .toList(growable: false);
     }
     return value.toString();
+  }
+
+  String _sanitizeWarpRuntimeMessage(String value) {
+    final sanitized = _sanitizeWarpRuntimeMetaValue(value);
+    if (sanitized is! String) {
+      return '';
+    }
+    return sanitized.length > 240 ? sanitized.substring(0, 240) : sanitized;
   }
 
   bool _isUnsafeWarpMetaKey(String key) {

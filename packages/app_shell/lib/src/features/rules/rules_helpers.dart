@@ -53,7 +53,7 @@ IconData _rulesPresetIcon(String id) {
 String _rulesPresetStatusLabel(RulesPresetState state) {
   return switch (state) {
     RulesPresetState.enabled => 'Активно',
-    RulesPresetState.staged => 'Скоро',
+    RulesPresetState.staged => 'На проверке',
     RulesPresetState.locked => 'Пока нельзя',
   };
 }

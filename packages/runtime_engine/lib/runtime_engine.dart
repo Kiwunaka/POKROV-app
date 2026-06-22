@@ -149,6 +149,177 @@ class RuntimeSnapshot {
   }
 }
 
+class RuntimeLiveStats {
+  const RuntimeLiveStats({
+    required this.available,
+    this.uplinkBps,
+    this.downlinkBps,
+    this.latencyMs,
+    this.since,
+    this.serverCode = '',
+    this.serverCountry = '',
+    this.protocol = '',
+  });
+
+  const RuntimeLiveStats.unavailable()
+      : available = false,
+        uplinkBps = null,
+        downlinkBps = null,
+        latencyMs = null,
+        since = null,
+        serverCode = '',
+        serverCountry = '',
+        protocol = '';
+
+  final bool available;
+  final int? uplinkBps;
+  final int? downlinkBps;
+  final int? latencyMs;
+  final DateTime? since;
+  final String serverCode;
+  final String serverCountry;
+  final String protocol;
+
+  static RuntimeLiveStats fromMap(Object? value) {
+    final map = _runtimeObjectMap(value);
+    if (map.isEmpty) {
+      return const RuntimeLiveStats.unavailable();
+    }
+    return RuntimeLiveStats(
+      available: _runtimeBool(map['available']),
+      uplinkBps: _runtimeNullableInt(map['uplinkBps'] ?? map['uplink_bps']),
+      downlinkBps:
+          _runtimeNullableInt(map['downlinkBps'] ?? map['downlink_bps']),
+      latencyMs: _runtimeNullableInt(map['latencyMs'] ?? map['latency_ms']),
+      since: _runtimeDateTime(map['since']),
+      serverCode: _runtimeText(map['serverCode'] ?? map['server_code']),
+      serverCountry:
+          _runtimeText(map['serverCountry'] ?? map['server_country']),
+      protocol: _runtimeText(map['protocol']),
+    );
+  }
+}
+
+class WarpApplyResult {
+  const WarpApplyResult({
+    required this.applied,
+    required this.effectiveAt,
+    required this.fallbackUsed,
+    this.reason,
+  });
+
+  const WarpApplyResult.notApplied({
+    required String this.reason,
+    this.effectiveAt = 'none',
+    this.fallbackUsed = false,
+  }) : applied = false;
+
+  final bool applied;
+  final String effectiveAt;
+  final bool fallbackUsed;
+  final String? reason;
+
+  static WarpApplyResult fromMap(Object? value) {
+    final map = _runtimeObjectMap(value);
+    if (map.isEmpty) {
+      return const WarpApplyResult.notApplied(reason: 'empty_host_response');
+    }
+    return WarpApplyResult(
+      applied: _runtimeBool(map['applied']),
+      effectiveAt: _runtimeText(map['effectiveAt'] ?? map['effective_at'],
+          fallback: 'none'),
+      fallbackUsed: _runtimeBool(map['fallbackUsed'] ?? map['fallback_used']),
+      reason: _runtimeNullableText(map['reason']),
+    );
+  }
+}
+
+class RuntimePushToken {
+  const RuntimePushToken({
+    required this.token,
+    required this.provider,
+  });
+
+  const RuntimePushToken.unavailable()
+      : token = '',
+        provider = 'poll';
+
+  final String token;
+  final String provider;
+
+  bool get available => token.trim().isNotEmpty;
+
+  static RuntimePushToken fromMap(Object? value) {
+    final map = _runtimeObjectMap(value);
+    if (map.isEmpty) {
+      return const RuntimePushToken.unavailable();
+    }
+    return RuntimePushToken(
+      token: _runtimeText(map['token']),
+      provider: _runtimeText(map['provider'], fallback: 'poll'),
+    );
+  }
+}
+
+Map<String, Object?> _runtimeObjectMap(Object? value) {
+  if (value is Map<String, Object?>) {
+    return value;
+  }
+  if (value is Map) {
+    return value.map((key, item) => MapEntry(key.toString(), item));
+  }
+  return const <String, Object?>{};
+}
+
+String _runtimeText(Object? value, {String fallback = ''}) {
+  final text = value?.toString().trim() ?? '';
+  return text.isEmpty ? fallback : text;
+}
+
+String? _runtimeNullableText(Object? value) {
+  final text = value?.toString().trim() ?? '';
+  return text.isEmpty ? null : text;
+}
+
+bool _runtimeBool(Object? value) {
+  if (value is bool) {
+    return value;
+  }
+  if (value is num) {
+    return value != 0;
+  }
+  switch (value?.toString().trim().toLowerCase()) {
+    case '1':
+    case 'true':
+    case 'yes':
+    case 'ready':
+      return true;
+    default:
+      return false;
+  }
+}
+
+int? _runtimeNullableInt(Object? value) {
+  if (value == null) {
+    return null;
+  }
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  return int.tryParse(value.toString().trim());
+}
+
+DateTime? _runtimeDateTime(Object? value) {
+  final text = value?.toString().trim() ?? '';
+  if (text.isEmpty) {
+    return null;
+  }
+  return DateTime.tryParse(text);
+}
+
 class WarpRuntimePolicy {
   const WarpRuntimePolicy({
     required this.enabled,
@@ -486,6 +657,12 @@ abstract interface class PokrovRuntimeEngine {
   Future<RuntimeSnapshot> connect();
 
   Future<RuntimeSnapshot> disconnect();
+
+  Future<WarpApplyResult> applyWarp({required bool enabled});
+
+  Future<RuntimeLiveStats> liveStats();
+
+  Future<RuntimePushToken> pushToken();
 }
 
 PokrovRuntimeEngine createRuntimeEngine({
@@ -528,6 +705,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   _ResolvedArtifacts? _artifacts;
   ManagedProfilePayload? _stagedPayload;
   String? _stagedConfigPath;
+  DateTime? _runningSince;
   RuntimePhase _phase = RuntimePhase.artifactMissing;
   String _message = _missingArtifactMessage;
   bool _preferWindowsSystemProxy = true;
@@ -725,6 +903,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     }
 
     _phase = RuntimePhase.running;
+    _runningSince ??= DateTime.now().toUtc();
     _message = 'POKROV включен.';
     return snapshot();
   }
@@ -793,12 +972,63 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     _phase = _stagedConfigPath == null
         ? RuntimePhase.initialized
         : RuntimePhase.configStaged;
+    _runningSince = null;
     _message = 'POKROV отключен.';
     return _snapshotPreservingCurrentMessage(
       phase: _phase,
       canInitialize: artifacts.coreBinary != null,
       canConnect: _stagedConfigPath != null,
     );
+  }
+
+  @override
+  Future<WarpApplyResult> applyWarp({required bool enabled}) async {
+    final staged = _stagedPayload;
+    if (staged == null || _bindings == null) {
+      return const WarpApplyResult.notApplied(reason: 'no_staged_profile');
+    }
+    final basePolicy = staged.warpPolicy.canOfferRuntime
+        ? staged.warpPolicy
+        : WarpRuntimePolicy.clientLocalDefault;
+    final nextPolicy = basePolicy
+        .withClientLocalDefaults()
+        .withUserConsent(enabled)
+        .copyWith(state: enabled ? 'consented' : 'revoked');
+    final nextPayload = staged.copyWith(warpPolicy: nextPolicy);
+    final error = _bindings!.changeOptions(
+      configJson: _buildRuntimeOptionsJson(nextPayload),
+    );
+    if (error.isNotEmpty) {
+      _message = 'POKROV could not apply WARP: $error';
+      return WarpApplyResult.notApplied(reason: error);
+    }
+    _stagedPayload = nextPayload;
+    return WarpApplyResult(
+      applied: true,
+      effectiveAt: _phase == RuntimePhase.running ? 'now' : 'next_connect',
+      fallbackUsed: false,
+      reason: null,
+    );
+  }
+
+  @override
+  Future<RuntimeLiveStats> liveStats() async {
+    final running = _phase == RuntimePhase.running;
+    final shortlist = _stagedPayload?.smartConnect?.shortlist;
+    final smartNode =
+        shortlist != null && shortlist.isNotEmpty ? shortlist.first : null;
+    return RuntimeLiveStats(
+      available: running,
+      since: running ? _runningSince : null,
+      serverCode: smartNode?.code ?? '',
+      serverCountry: smartNode?.country ?? '',
+      protocol: _stagedPayload == null ? '' : 'sing-box',
+    );
+  }
+
+  @override
+  Future<RuntimePushToken> pushToken() async {
+    return const RuntimePushToken.unavailable();
   }
 
   Future<RuntimeSnapshot> _snapshotPreservingCurrentMessage({
@@ -957,128 +1187,140 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   }
 
   String _buildRuntimeOptionsJson(ManagedProfilePayload payload) {
-    final routingMode = switch (payload.routeMode) {
-      RouteMode.allExceptRu => 'allExceptRu',
-      RouteMode.selectedApps => 'global',
-      RouteMode.fullTunnel => 'global',
-    };
-    final systemProxyMode =
-        hostPlatform == HostPlatform.windows && _preferWindowsSystemProxy;
-    final directDnsAddress =
-        payload.routeMode == RouteMode.allExceptRu ? 'local' : 'udp://1.1.1.1';
-
-    return jsonEncode(
-      <String, Object?>{
-        'region': 'other',
-        'routing-mode': routingMode,
-        'block-ads': false,
-        'use-xray-core-when-possible': false,
-        'execute-config-as-is': true,
-        'log-level': 'info',
-        'resolve-destination': false,
-        'ipv6-mode': 'ipv4_only',
-        'remote-dns-address': 'https://1.1.1.1/dns-query',
-        'remote-dns-domain-strategy': '',
-        'direct-dns-address': directDnsAddress,
-        'direct-dns-domain-strategy': '',
-        'mixed-port': 22341,
-        'tproxy-port': 22342,
-        'local-dns-port': 22441,
-        'tun-implementation': 'gvisor',
-        'mtu': 9000,
-        'strict-route': true,
-        'connection-test-url': 'http://cp.cloudflare.com',
-        'url-test-interval': 600,
-        'enable-clash-api': false,
-        'clash-api-port': 26756,
-        'enable-tun': !systemProxyMode,
-        'enable-tun-service': false,
-        'set-system-proxy': systemProxyMode,
-        'bypass-lan': false,
-        'allow-connection-from-lan': false,
-        'enable-fake-dns': false,
-        'enable-dns-routing': true,
-        'independent-dns-cache': true,
-        'rules': const <Object?>[],
-        'mux': <String, Object?>{
-          'enable': false,
-          'padding': false,
-          'max-streams': 8,
-          'protocol': 'h2mux',
-        },
-        'tls-tricks': <String, Object?>{
-          'enable-fragment': false,
-          'fragment-size': '10-30',
-          'fragment-sleep': '2-8',
-          'mixed-sni-case': false,
-          'enable-padding': false,
-          'padding-size': '1-1500',
-        },
-        'warp': _warpOptions(payload.warpPolicy),
-        'warp2': _defaultWarpOptions(),
-      },
+    return _runtimeOptionsJsonForPayload(
+      payload,
+      hostPlatform: hostPlatform,
+      preferWindowsSystemProxy: _preferWindowsSystemProxy,
     );
   }
+}
 
-  Map<String, Object?> _warpOptions(WarpRuntimePolicy policy) {
-    final options = _defaultWarpOptions();
-    if (!policy.canEnableRuntime) {
-      return options;
-    }
+String _runtimeOptionsJsonForPayload(
+  ManagedProfilePayload payload, {
+  required HostPlatform hostPlatform,
+  bool preferWindowsSystemProxy = false,
+}) {
+  final routingMode = switch (payload.routeMode) {
+    RouteMode.allExceptRu => 'allExceptRu',
+    RouteMode.selectedApps => 'global',
+    RouteMode.fullTunnel => 'global',
+  };
+  final systemProxyMode =
+      hostPlatform == HostPlatform.windows && preferWindowsSystemProxy;
+  final directDnsAddress =
+      payload.routeMode == RouteMode.allExceptRu ? 'local' : 'udp://1.1.1.1';
 
-    final licenseKey = policy.licenseKey.trim();
-    final warpId = policy.id.trim().isNotEmpty
-        ? policy.id.trim()
-        : licenseKey.isNotEmpty
-            ? licenseKey
-            : 'p1';
-    options
-      ..['enable'] = true
-      ..['id'] = warpId
-      ..['mode'] = policy.mode
-      ..['license-key'] = licenseKey
-      ..['clean-ip'] = policy.cleanIp
-      ..['clean-port'] = policy.cleanPort
-      ..['noise'] = policy.noise
-      ..['noise-size'] = policy.noiseSize
-      ..['noise-delay'] = policy.noiseDelay
-      ..['noise-mode'] = policy.noiseMode;
+  return jsonEncode(
+    <String, Object?>{
+      'region': 'other',
+      'routing-mode': routingMode,
+      'block-ads': false,
+      'use-xray-core-when-possible': false,
+      'execute-config-as-is': true,
+      'log-level': 'info',
+      'resolve-destination': false,
+      'ipv6-mode': 'ipv4_only',
+      'remote-dns-address': 'https://1.1.1.1/dns-query',
+      'remote-dns-domain-strategy': '',
+      'direct-dns-address': directDnsAddress,
+      'direct-dns-domain-strategy': '',
+      'mixed-port': 22341,
+      'tproxy-port': 22342,
+      'local-dns-port': 22441,
+      'tun-implementation': 'gvisor',
+      'mtu': 9000,
+      'strict-route': true,
+      'connection-test-url': 'http://cp.cloudflare.com',
+      'url-test-interval': 600,
+      'enable-clash-api': false,
+      'clash-api-port': 26756,
+      'enable-tun': !systemProxyMode,
+      'enable-tun-service': false,
+      'set-system-proxy': systemProxyMode,
+      'bypass-lan': false,
+      'allow-connection-from-lan': false,
+      'enable-fake-dns': false,
+      'enable-dns-routing': true,
+      'independent-dns-cache': true,
+      'rules': const <Object?>[],
+      'mux': <String, Object?>{
+        'enable': false,
+        'padding': false,
+        'max-streams': 8,
+        'protocol': 'h2mux',
+      },
+      'tls-tricks': <String, Object?>{
+        'enable-fragment': false,
+        'fragment-size': '10-30',
+        'fragment-sleep': '2-8',
+        'mixed-sni-case': false,
+        'enable-padding': false,
+        'padding-size': '1-1500',
+      },
+      'warp': _runtimeWarpOptions(payload.warpPolicy),
+      'warp2': _defaultRuntimeWarpOptions(),
+    },
+  );
+}
 
-    if (policy.wireguardConfigJson.trim().isNotEmpty) {
-      options['wireguard-config'] = policy.wireguardConfigJson;
-    }
-    final wireguardConfig = policy.wireguardConfigObject;
-    if (wireguardConfig != null && wireguardConfig.isNotEmpty) {
-      options['wireguardConfig'] = wireguardConfig;
-    }
-    final account = <String, Object?>{
-      if (policy.accountId.trim().isNotEmpty) 'account-id': policy.accountId,
-      if (policy.accessToken.trim().isNotEmpty)
-        'access-token': policy.accessToken,
-    };
-    if (account.isNotEmpty) {
-      options['account'] = account;
-    }
+Map<String, Object?> _runtimeWarpOptions(WarpRuntimePolicy policy) {
+  final options = _defaultRuntimeWarpOptions();
+  if (!policy.canEnableRuntime) {
     return options;
   }
 
-  Map<String, Object?> _defaultWarpOptions() {
-    return <String, Object?>{
-      'enable': false,
-      'id': 'p1',
-      'mode': 'proxy_over_warp',
-      'wireguard-config': '',
-      'license-key': '',
-      'account-id': '',
-      'access-token': '',
-      'clean-ip': 'auto',
-      'clean-port': 0,
-      'noise': '',
-      'noise-size': '',
-      'noise-delay': '',
-      'noise-mode': 'm4',
-    };
+  final licenseKey = policy.licenseKey.trim();
+  final warpId = policy.id.trim().isNotEmpty
+      ? policy.id.trim()
+      : licenseKey.isNotEmpty
+          ? licenseKey
+          : 'p1';
+  options
+    ..['enable'] = true
+    ..['id'] = warpId
+    ..['mode'] = policy.mode
+    ..['license-key'] = licenseKey
+    ..['clean-ip'] = policy.cleanIp
+    ..['clean-port'] = policy.cleanPort
+    ..['noise'] = policy.noise
+    ..['noise-size'] = policy.noiseSize
+    ..['noise-delay'] = policy.noiseDelay
+    ..['noise-mode'] = policy.noiseMode;
+
+  if (policy.wireguardConfigJson.trim().isNotEmpty) {
+    options['wireguard-config'] = policy.wireguardConfigJson;
   }
+  final wireguardConfig = policy.wireguardConfigObject;
+  if (wireguardConfig != null && wireguardConfig.isNotEmpty) {
+    options['wireguardConfig'] = wireguardConfig;
+  }
+  final account = <String, Object?>{
+    if (policy.accountId.trim().isNotEmpty) 'account-id': policy.accountId,
+    if (policy.accessToken.trim().isNotEmpty)
+      'access-token': policy.accessToken,
+  };
+  if (account.isNotEmpty) {
+    options['account'] = account;
+  }
+  return options;
+}
+
+Map<String, Object?> _defaultRuntimeWarpOptions() {
+  return <String, Object?>{
+    'enable': false,
+    'id': 'p1',
+    'mode': 'proxy_over_warp',
+    'wireguard-config': '',
+    'license-key': '',
+    'account-id': '',
+    'access-token': '',
+    'clean-ip': 'auto',
+    'clean-port': 0,
+    'noise': '',
+    'noise-size': '',
+    'noise-delay': '',
+    'noise-mode': 'm4',
+  };
 }
 
 class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
@@ -1115,7 +1357,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       canInitialize: false,
       canConnect: false,
       message: artifacts.coreArtifact != null
-          ? 'Мобильный модуль найден. Системный запуск еще готовится.'
+          ? 'Модуль подключения найден. Запустите POKROV на устройстве, чтобы подключиться.'
           : 'Модуль подключения не найден в этой сборке. Обновите приложение или проверьте сборку.',
     );
   }
@@ -1137,6 +1379,10 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         'configPayload': payload.configPayload,
         'disableMemoryLimit': payload.disableMemoryLimit,
         'materializedForRuntime': payload.materializedForRuntime,
+        'runtimeOptionsJson': _runtimeOptionsJsonForPayload(
+          payload,
+          hostPlatform: hostPlatform,
+        ),
       },
     );
     return hostSnapshot ?? await snapshot();
@@ -1152,6 +1398,53 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
   Future<RuntimeSnapshot> disconnect() async {
     final hostSnapshot = await _invokeHostSnapshot('runtimeEngine.disconnect');
     return hostSnapshot ?? await snapshot();
+  }
+
+  @override
+  Future<WarpApplyResult> applyWarp({required bool enabled}) async {
+    final response = await _invokeHostMap(
+      'runtimeEngine.applyWarp',
+      arguments: <String, Object?>{'enabled': enabled},
+    );
+    return response == null
+        ? const WarpApplyResult.notApplied(reason: 'host_bridge_unavailable')
+        : WarpApplyResult.fromMap(response);
+  }
+
+  @override
+  Future<RuntimeLiveStats> liveStats() async {
+    final response = await _invokeHostMap('runtimeEngine.liveStats');
+    return response == null
+        ? const RuntimeLiveStats.unavailable()
+        : RuntimeLiveStats.fromMap(response);
+  }
+
+  @override
+  Future<RuntimePushToken> pushToken() async {
+    final response = await _invokeHostMap('runtimeEngine.pushToken');
+    return response == null
+        ? const RuntimePushToken.unavailable()
+        : RuntimePushToken.fromMap(response);
+  }
+
+  Future<Map<String, Object?>?> _invokeHostMap(
+    String method, {
+    Map<String, Object?>? arguments,
+  }) async {
+    if (!hostPlatform.isMobileRuntimeBridgeTarget) {
+      return null;
+    }
+
+    try {
+      return await _runtimeChannel.invokeMapMethod<String, Object?>(
+        method,
+        arguments,
+      );
+    } on MissingPluginException {
+      return null;
+    } on PlatformException {
+      return null;
+    }
   }
 
   Future<RuntimeSnapshot?> _invokeHostSnapshot(

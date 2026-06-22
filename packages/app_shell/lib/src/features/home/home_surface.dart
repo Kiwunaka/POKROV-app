@@ -18,6 +18,8 @@ class _QuickConnectSection extends StatelessWidget {
     required this.onOpenLocations,
     required this.onOpenRules,
     required this.onOpenWarp,
+    required this.onWarpConsentChanged,
+    required this.onOpenPromoHandoff,
   });
 
   final SeedAppContext appContext;
@@ -36,13 +38,16 @@ class _QuickConnectSection extends StatelessWidget {
   final VoidCallback onOpenLocations;
   final VoidCallback onOpenRules;
   final Future<void> Function() onOpenWarp;
+  final Future<void> Function(bool value) onWarpConsentChanged;
+  final void Function(String label, String value) onOpenPromoHandoff;
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     final snapshot = runtimeSnapshot;
     final isRunning = snapshot?.phase == RuntimePhase.running;
     final isHealthyRunning = snapshot?.isCleanlyHealthy ?? false;
-    final statusLabel = _consumerProtectionStatusLabel(
+    final statusLabel = _homeProtectionStatusLabel(
       snapshot,
       busy: runtimeBusy,
     );
@@ -57,24 +62,26 @@ class _QuickConnectSection extends StatelessWidget {
       HostPlatform.android || HostPlatform.ios => false,
     };
     final statusColor = runtimeBusy
-        ? _SeedPalette.warning
+        ? p.warning
         : isRunning
             ? isHealthyRunning
-                ? _SeedPalette.success
-                : _SeedPalette.warning
-            : _SeedPalette.muted;
+                ? p.success
+                : p.warning
+            : p.muted;
     final actionLabel = runtimeBusy
-        ? 'Подключаемся'
+        ? 'Подключается...'
         : isRunning
             ? 'Отключить'
             : primaryActionEnabled
-                ? 'Подключить'
-                : 'Пока недоступно';
+                ? 'Включить VPN'
+                : 'Недоступно';
     final recoveryNotice = _motionRecoveryNotice(
       snapshot,
       headline: runtimeHeadline,
       busy: runtimeBusy,
     );
+    final infoNotice = _homeInfoNotice(runtimeHeadline);
+    final homePromoSlot = _homeAdminPromoSlot(bonusSummary);
 
     return _SeedContentList(
       top: isDesktop ? 34 : 18,
@@ -84,6 +91,7 @@ class _QuickConnectSection extends StatelessWidget {
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: isDesktop ? 1220 : 460),
             child: _HomeStage(
+              preferDesktopLayout: isDesktop,
               statusLabel: statusLabel,
               statusColor: statusColor,
               actionLabel: actionLabel,
@@ -92,8 +100,9 @@ class _QuickConnectSection extends StatelessWidget {
               busy: runtimeBusy,
               degraded: isRunning && !isHealthyRunning,
               recoveryNotice: recoveryNotice,
+              infoNotice: infoNotice,
               accessLabel: _accessMainLabel(appContext, bonusSummary),
-              accessPoolLabel: _accessPoolLabel(appContext.accessLane),
+              accessPoolLabel: _accessHomeSupportLabel(appContext.accessLane),
               telegramBonusLabel: telegramBonusBusy
                   ? 'Проверяем Telegram'
                   : _telegramBonusHomeLabel(appContext, bonusSummary),
@@ -104,6 +113,7 @@ class _QuickConnectSection extends StatelessWidget {
               warpPolicy: warpPolicy,
               warpRuntimeConsent: warpRuntimeConsent,
               warpBusy: warpBusy,
+              homePromoSlot: homePromoSlot,
               onToggleRuntime: onToggleRuntime,
               onTelegramBonus: onTelegramBonus,
               onOpenConnectionDetails: () => _showInfoSheet(
@@ -119,6 +129,8 @@ class _QuickConnectSection extends StatelessWidget {
               onOpenLocations: onOpenLocations,
               onOpenRules: onOpenRules,
               onOpenWarp: onOpenWarp,
+              onWarpConsentChanged: onWarpConsentChanged,
+              onOpenPromoHandoff: onOpenPromoHandoff,
             ),
           ),
         ),
@@ -129,6 +141,7 @@ class _QuickConnectSection extends StatelessWidget {
 
 class _HomeStage extends StatefulWidget {
   const _HomeStage({
+    required this.preferDesktopLayout,
     required this.statusLabel,
     required this.statusColor,
     required this.actionLabel,
@@ -137,6 +150,7 @@ class _HomeStage extends StatefulWidget {
     required this.busy,
     required this.degraded,
     required this.recoveryNotice,
+    required this.infoNotice,
     required this.accessLabel,
     required this.accessPoolLabel,
     required this.telegramBonusLabel,
@@ -146,14 +160,18 @@ class _HomeStage extends StatefulWidget {
     required this.warpPolicy,
     required this.warpRuntimeConsent,
     required this.warpBusy,
+    required this.homePromoSlot,
     required this.onToggleRuntime,
     required this.onTelegramBonus,
     required this.onOpenConnectionDetails,
     required this.onOpenLocations,
     required this.onOpenRules,
     required this.onOpenWarp,
+    required this.onWarpConsentChanged,
+    required this.onOpenPromoHandoff,
   });
 
+  final bool preferDesktopLayout;
   final String statusLabel;
   final Color statusColor;
   final String actionLabel;
@@ -162,6 +180,7 @@ class _HomeStage extends StatefulWidget {
   final bool busy;
   final bool degraded;
   final String? recoveryNotice;
+  final String? infoNotice;
   final String accessLabel;
   final String accessPoolLabel;
   final String telegramBonusLabel;
@@ -171,12 +190,15 @@ class _HomeStage extends StatefulWidget {
   final WarpRuntimePolicy warpPolicy;
   final bool warpRuntimeConsent;
   final bool warpBusy;
+  final AppFirstPromoSlot? homePromoSlot;
   final Future<void> Function() onToggleRuntime;
   final VoidCallback? onTelegramBonus;
   final VoidCallback onOpenConnectionDetails;
   final VoidCallback onOpenLocations;
   final VoidCallback onOpenRules;
   final Future<void> Function() onOpenWarp;
+  final Future<void> Function(bool value) onWarpConsentChanged;
+  final void Function(String label, String value) onOpenPromoHandoff;
 
   @override
   State<_HomeStage> createState() => _HomeStageState();
@@ -221,7 +243,9 @@ class _HomeStageState extends State<_HomeStage>
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final desktop = constraints.maxWidth >= 900;
+        final desktop = widget.preferDesktopLayout
+            ? constraints.maxWidth >= 720
+            : constraints.maxWidth >= 900;
         return Padding(
           key: const ValueKey('home-boot-reveal'),
           padding: EdgeInsets.symmetric(horizontal: desktop ? 0 : 4),
@@ -239,25 +263,15 @@ class _HomeStageState extends State<_HomeStage>
           controller: _revealController,
           begin: 0,
           end: 0.42,
-          child: const _BrandLockup(markSize: 38, center: true),
-        ),
-        const SizedBox(height: 18),
-        _HomeRevealSlice(
-          controller: _revealController,
-          begin: 0.18,
-          end: 0.58,
-          child: _HomeAccessStrip(
-            accessLabel: widget.accessLabel,
-            poolLabel: widget.accessPoolLabel,
-            telegramBonusLabel: widget.telegramBonusLabel,
-            telegramBonusClaimed: widget.telegramBonusClaimed,
-            onTelegramBonus: widget.onTelegramBonus,
+          child: _HomeBrandHeader(
+            center: true,
+            subtitle: widget.accessLabel,
           ),
         ),
         const SizedBox(height: 20),
         _HomeRevealSlice(
           controller: _revealController,
-          begin: 0.2,
+          begin: 0.14,
           end: 0.66,
           child: _ConnectOrbButton(
             actionLabel: widget.actionLabel,
@@ -272,7 +286,7 @@ class _HomeStageState extends State<_HomeStage>
         const SizedBox(height: 14),
         _HomeRevealSlice(
           controller: _revealController,
-          begin: 0.28,
+          begin: 0.26,
           end: 0.78,
           child: _HomeStatusAction(
             statusLabel: widget.statusLabel,
@@ -283,7 +297,7 @@ class _HomeStageState extends State<_HomeStage>
         const SizedBox(height: 14),
         _HomeRevealSlice(
           controller: _revealController,
-          begin: 0.42,
+          begin: 0.38,
           end: 0.88,
           child: _HomeModeChips(
             locationLabel: widget.locationLabel,
@@ -295,26 +309,61 @@ class _HomeStageState extends State<_HomeStage>
         const SizedBox(height: 12),
         _HomeRevealSlice(
           controller: _revealController,
-          begin: 0.54,
+          begin: 0.50,
           end: 1,
           child: _HomeWarpTile(
             policy: widget.warpPolicy,
             runtimeConsent: widget.warpRuntimeConsent,
             busy: widget.warpBusy,
             onOpen: widget.onOpenWarp,
+            onChanged: widget.onWarpConsentChanged,
           ),
         ),
+        if (widget.infoNotice != null) ...[
+          const SizedBox(height: 8),
+          _HomeRevealSlice(
+            controller: _revealController,
+            begin: 0.54,
+            end: 1,
+            child: _HomeInfoNotice(message: widget.infoNotice!),
+          ),
+        ],
         const SizedBox(height: 10),
         _HomeRevealSlice(
           controller: _revealController,
-          begin: 0.62,
+          begin: 0.58,
           end: 1,
-          child: _HomeTelegramBonusTile(
-            label: widget.telegramBonusLabel,
-            claimed: widget.telegramBonusClaimed,
-            onTap: widget.telegramBonusClaimed ? null : widget.onTelegramBonus,
+          child: _HomeAccessStrip(
+            accessLabel: widget.accessLabel,
+            poolLabel: widget.accessPoolLabel,
+            telegramBonusClaimed: widget.telegramBonusClaimed,
           ),
         ),
+        if (!widget.telegramBonusClaimed) ...[
+          const SizedBox(height: 10),
+          _HomeRevealSlice(
+            controller: _revealController,
+            begin: 0.66,
+            end: 1,
+            child: _HomeTelegramBonusTile(
+              label: widget.telegramBonusLabel,
+              claimed: widget.telegramBonusClaimed,
+              onTap: widget.onTelegramBonus,
+            ),
+          ),
+        ],
+        if (widget.homePromoSlot != null) ...[
+          const SizedBox(height: 10),
+          _HomeRevealSlice(
+            controller: _revealController,
+            begin: 0.72,
+            end: 1,
+            child: _HomeAdminPromoCard(
+              slot: widget.homePromoSlot!,
+              onOpenHandoff: widget.onOpenPromoHandoff,
+            ),
+          ),
+        ],
         if (widget.recoveryNotice != null) ...[
           const SizedBox(height: 12),
           _HomeRevealSlice(
@@ -330,6 +379,7 @@ class _HomeStageState extends State<_HomeStage>
 
   Widget _buildDesktop(BuildContext context) {
     final theme = Theme.of(context);
+    final p = PokrovPalette.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -344,18 +394,18 @@ class _HomeStageState extends State<_HomeStage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Защита',
+                      'POKROV VPN',
                       style: theme.textTheme.displaySmall?.copyWith(
-                        color: _SeedPalette.ink,
-                        fontWeight: FontWeight.w900,
+                        color: p.ink,
+                        fontWeight: FontWeight.w700,
                         letterSpacing: 0,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Подключение, правила и доступ рядом.',
+                      widget.accessLabel,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        color: _SeedPalette.muted,
+                        color: p.muted,
                         height: 1.25,
                       ),
                     ),
@@ -414,46 +464,59 @@ class _HomeStageState extends State<_HomeStage>
                     controller: _revealController,
                     begin: 0.22,
                     end: 0.76,
-                    child: _HomeAccessStrip(
-                      accessLabel: widget.accessLabel,
-                      poolLabel: widget.accessPoolLabel,
-                      telegramBonusLabel: widget.telegramBonusLabel,
-                      telegramBonusClaimed: widget.telegramBonusClaimed,
-                      onTelegramBonus: widget.onTelegramBonus,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  _HomeRevealSlice(
-                    controller: _revealController,
-                    begin: 0.34,
-                    end: 0.84,
-                    child: _HomeTelegramBonusTile(
-                      label: widget.telegramBonusLabel,
-                      claimed: widget.telegramBonusClaimed,
-                      onTap: widget.telegramBonusClaimed
-                          ? null
-                          : widget.onTelegramBonus,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  _HomeRevealSlice(
-                    controller: _revealController,
-                    begin: 0.42,
-                    end: 0.92,
                     child: _HomeWarpTile(
                       policy: widget.warpPolicy,
                       runtimeConsent: widget.warpRuntimeConsent,
                       busy: widget.warpBusy,
                       onOpen: widget.onOpenWarp,
+                      onChanged: widget.onWarpConsentChanged,
                     ),
                   ),
+                  if (widget.infoNotice != null) ...[
+                    const SizedBox(height: 10),
+                    _HomeRevealSlice(
+                      controller: _revealController,
+                      begin: 0.26,
+                      end: 0.8,
+                      child: _HomeInfoNotice(message: widget.infoNotice!),
+                    ),
+                  ],
                   const SizedBox(height: 14),
                   _HomeRevealSlice(
                     controller: _revealController,
-                    begin: 0.50,
-                    end: 1,
-                    child: const _HomeNewsCard(),
+                    begin: 0.30,
+                    end: 0.82,
+                    child: _HomeAccessStrip(
+                      accessLabel: widget.accessLabel,
+                      poolLabel: widget.accessPoolLabel,
+                      telegramBonusClaimed: widget.telegramBonusClaimed,
+                    ),
                   ),
+                  if (!widget.telegramBonusClaimed) ...[
+                    const SizedBox(height: 14),
+                    _HomeRevealSlice(
+                      controller: _revealController,
+                      begin: 0.38,
+                      end: 0.9,
+                      child: _HomeTelegramBonusTile(
+                        label: widget.telegramBonusLabel,
+                        claimed: widget.telegramBonusClaimed,
+                        onTap: widget.onTelegramBonus,
+                      ),
+                    ),
+                  ],
+                  if (widget.homePromoSlot != null) ...[
+                    const SizedBox(height: 14),
+                    _HomeRevealSlice(
+                      controller: _revealController,
+                      begin: 0.5,
+                      end: 1,
+                      child: _HomeAdminPromoCard(
+                        slot: widget.homePromoSlot!,
+                        onOpenHandoff: widget.onOpenPromoHandoff,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -503,17 +566,18 @@ class _HomeConnectPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final p = PokrovPalette.of(context);
     return Container(
       key: const ValueKey('home-desktop-connect-panel'),
-      constraints: const BoxConstraints(minHeight: 548),
+      constraints: const BoxConstraints(minHeight: 440),
       padding: const EdgeInsets.fromLTRB(28, 30, 28, 22),
       decoration: BoxDecoration(
-        color: _SeedPalette.surface,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: _SeedPalette.line),
+        color: p.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: p.line),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(height: 18),
           _ConnectOrbButton(
@@ -523,6 +587,7 @@ class _HomeConnectPanel extends StatelessWidget {
             degraded: degraded,
             error: recoveryNotice != null,
             busy: busy,
+            desktopSize: true,
             onPressed: actionEnabled ? onToggleRuntime : null,
           ),
           const SizedBox(height: 22),
@@ -537,49 +602,6 @@ class _HomeConnectPanel extends StatelessWidget {
             routeMode: selectedRouteMode,
             onOpenLocations: onOpenLocations,
             onOpenRules: onOpenRules,
-          ),
-          const SizedBox(height: 46),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _SeedPalette.canvasAlt,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: _SeedPalette.line,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: _SeedPalette.accent.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(
-                    Icons.shield_outlined,
-                    color: _SeedPalette.accent,
-                    size: 19,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    running
-                        ? 'Трафик идет по выбранным правилам POKROV.'
-                        : 'Нажмите главную кнопку, когда будете готовы.',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: _SeedPalette.ink.withValues(alpha: 0.74),
-                      height: 1.28,
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -605,7 +627,7 @@ class _HomeStatusAction extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: _StatusDotLabel(
           label: statusLabel,
           color: statusColor,
@@ -653,92 +675,21 @@ class _HomeModeChips extends StatelessWidget {
   }
 }
 
-class _HomeNewsCard extends StatelessWidget {
-  const _HomeNewsCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      key: const ValueKey('home-news-card'),
-      width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 520),
-      padding: const EdgeInsets.fromLTRB(16, 15, 16, 14),
-      decoration: BoxDecoration(
-        color: _SeedPalette.surface.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _SeedPalette.line),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: _SeedPalette.accent.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: const Icon(
-              Icons.article_outlined,
-              color: _SeedPalette.accent,
-              size: 21,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Новости',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: _SeedPalette.ink,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  'Важные сообщения из @pokrov_vpn появятся здесь.',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: _SeedPalette.muted,
-                    height: 1.28,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: _SeedPalette.ink.withValues(alpha: 0.34),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _HomeAccessStrip extends StatelessWidget {
   const _HomeAccessStrip({
     required this.accessLabel,
     required this.poolLabel,
-    required this.telegramBonusLabel,
     required this.telegramBonusClaimed,
-    required this.onTelegramBonus,
   });
 
   final String accessLabel;
   final String poolLabel;
-  final String telegramBonusLabel;
   final bool telegramBonusClaimed;
-  final VoidCallback? onTelegramBonus;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final p = PokrovPalette.of(context);
     final accessBadgeLabel = telegramBonusClaimed
         ? '+10 дней'
         : accessLabel.startsWith('5 ')
@@ -752,9 +703,9 @@ class _HomeAccessStrip extends StatelessWidget {
       constraints: const BoxConstraints(maxWidth: 520),
       padding: const EdgeInsets.fromLTRB(16, 15, 14, 15),
       decoration: BoxDecoration(
-        color: _SeedPalette.surface,
+        color: p.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _SeedPalette.line),
+        border: Border.all(color: p.line),
       ),
       child: Row(
         children: [
@@ -762,12 +713,12 @@ class _HomeAccessStrip extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: _SeedPalette.accent.withValues(alpha: 0.10),
+              color: p.accent.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.workspace_premium_outlined,
-              color: _SeedPalette.accent,
+              color: p.accent,
               size: 25,
             ),
           ),
@@ -781,8 +732,8 @@ class _HomeAccessStrip extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: _SeedPalette.ink,
-                    fontWeight: FontWeight.w900,
+                    color: p.ink,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -791,7 +742,7 @@ class _HomeAccessStrip extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: _SeedPalette.muted,
+                    color: p.muted,
                     height: 1.25,
                   ),
                 ),
@@ -809,11 +760,7 @@ class _HomeAccessStrip extends StatelessWidget {
         ],
       ),
     );
-    if (onTelegramBonus == null || telegramBonusClaimed) {
-      return content;
-    }
-    return PokrovSettingsRowPressSurface(
-        onTap: onTelegramBonus!, child: content);
+    return content;
   }
 }
 
@@ -830,6 +777,7 @@ class _HomeTelegramBonusTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     final content = Container(
       key: const ValueKey('home-telegram-bonus-pill'),
       width: double.infinity,
@@ -837,11 +785,12 @@ class _HomeTelegramBonusTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
       decoration: BoxDecoration(
         color: claimed
-            ? _SeedPalette.surface.withValues(alpha: 0.96)
-            : const Color(0xFFFFF5D8),
-        borderRadius: BorderRadius.circular(22),
+            ? p.surface.withValues(alpha: 0.96)
+            : p.reward.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: claimed ? _SeedPalette.line : const Color(0x40B99745),
+          color:
+              claimed ? p.line : p.reward.withValues(alpha: 0.30),
         ),
       ),
       child: Row(
@@ -851,15 +800,15 @@ class _HomeTelegramBonusTile extends StatelessWidget {
             height: 42,
             decoration: BoxDecoration(
               color: claimed
-                  ? _SeedPalette.accent.withValues(alpha: 0.10)
-                  : Colors.white.withValues(alpha: 0.70),
-              borderRadius: BorderRadius.circular(16),
+                  ? p.accent.withValues(alpha: 0.10)
+                  : p.reward.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
               claimed
                   ? Icons.check_circle_outline_rounded
                   : Icons.send_outlined,
-              color: _SeedPalette.accent,
+              color: claimed ? p.accent : p.reward,
               size: 22,
             ),
           ),
@@ -873,8 +822,8 @@ class _HomeTelegramBonusTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: _SeedPalette.ink,
-                        fontWeight: FontWeight.w900,
+                        color: p.ink,
+                        fontWeight: FontWeight.w700,
                       ),
                 ),
                 const SizedBox(height: 2),
@@ -883,7 +832,7 @@ class _HomeTelegramBonusTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: _SeedPalette.muted,
+                        color: p.muted,
                         height: 1.25,
                       ),
                 ),
@@ -892,7 +841,7 @@ class _HomeTelegramBonusTile extends StatelessWidget {
           ),
           Icon(
             claimed ? Icons.done_rounded : Icons.chevron_right_rounded,
-            color: _SeedPalette.muted,
+            color: p.muted,
           ),
         ],
       ),
@@ -904,120 +853,167 @@ class _HomeTelegramBonusTile extends StatelessWidget {
   }
 }
 
+class _HomeAdminPromoCard extends StatelessWidget {
+  const _HomeAdminPromoCard({
+    required this.slot,
+    required this.onOpenHandoff,
+  });
+
+  final AppFirstPromoSlot slot;
+  final void Function(String label, String value) onOpenHandoff;
+
+  @override
+  Widget build(BuildContext context) {
+    final safeHref = _safeHomePromoSlotHref(slot.ctaHref);
+    final ctaLabel = slot.ctaLabel.trim().isEmpty ? 'Открыть' : slot.ctaLabel;
+    final title = slot.title.trim();
+    final body = slot.body.trim();
+    return PokrovPromoCard(
+      key: const ValueKey('home-admin-promo-card'),
+      icon: Icons.campaign_outlined,
+      title: title.isEmpty ? 'POKROV' : title,
+      detail: body.isEmpty ? title : body,
+      tone: PokrovSurfaceTone.muted,
+      actionLabel: safeHref == null ? null : ctaLabel,
+      onTap: safeHref == null
+          ? null
+          : () => onOpenHandoff('download', safeHref.toString()),
+    );
+  }
+}
+
 class _HomeWarpTile extends StatelessWidget {
   const _HomeWarpTile({
     required this.policy,
     required this.runtimeConsent,
     required this.busy,
     required this.onOpen,
+    required this.onChanged,
   });
 
   final WarpRuntimePolicy policy;
   final bool runtimeConsent;
   final bool busy;
   final Future<void> Function() onOpen;
+  final Future<void> Function(bool value) onChanged;
 
   @override
   Widget build(BuildContext context) {
     final motion = _MotionScope.of(context);
+    final p = PokrovPalette.of(context);
+    final displayPolicy = policy.withClientLocalDefaults();
     final lifecycle = PokrovWarpLifecycle.resolve(
-      policy: policy,
+      policy: displayPolicy,
       consented: runtimeConsent,
       busy: busy,
     );
     final canOffer = lifecycle.canOffer;
     final enabled = lifecycle.highlightsEnabled;
     const title = 'WARP';
-    final subtitle = switch (lifecycle.phase) {
-      PokrovWarpPhase.notReady => 'Проверим доступность',
-      PokrovWarpPhase.readyToConsent => 'Можно включить',
-      _ => lifecycle.publicStatus,
-    };
+    final subtitle = busy
+        ? 'Применяем настройку'
+        : enabled
+            ? 'Включится при следующем подключении'
+            : canOffer
+                ? 'Дополнительная защита'
+                : 'Недоступно на этом устройстве';
     final iconColor = enabled
-        ? _SeedPalette.accent
-        : _SeedPalette.muted.withValues(alpha: 0.8);
+        ? p.accent
+        : p.muted.withValues(alpha: 0.8);
     final iconBackground = enabled
-        ? _SeedPalette.accent.withValues(alpha: 0.12)
-        : _SeedPalette.surfaceMuted.withValues(alpha: 0.86);
+        ? p.accent.withValues(alpha: 0.12)
+        : p.surfaceMuted.withValues(alpha: 0.86);
 
-    return InkWell(
+    return Semantics(
       key: const ValueKey('home-warp-tile'),
-      borderRadius: BorderRadius.circular(14),
-      onTap: () {
-        unawaited(onOpen());
-      },
+      toggled: enabled,
       child: AnimatedContainer(
         key: ValueKey(lifecycle.stateKey),
         duration: motion.duration(_MotionTokens.short),
         curve: _MotionTokens.ease,
         width: double.infinity,
         constraints: const BoxConstraints(maxWidth: 520),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: enabled
-              ? _SeedPalette.accent.withValues(alpha: 0.09)
-              : _SeedPalette.surface.withValues(alpha: 0.96),
-          borderRadius: BorderRadius.circular(22),
+              ? p.accent.withValues(alpha: 0.09)
+              : p.surface.withValues(alpha: 0.96),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: enabled
-                ? _SeedPalette.accent.withValues(alpha: 0.28)
-                : _SeedPalette.line,
+                ? p.accent.withValues(alpha: 0.28)
+                : p.line,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: iconBackground,
-                borderRadius: BorderRadius.circular(17),
+                borderRadius: BorderRadius.circular(15),
               ),
               child: Icon(
                 enabled ? Icons.verified_user_rounded : Icons.blur_on_rounded,
-                size: 22,
+                size: 20,
                 color: iconColor,
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: _SeedPalette.ink,
-                          fontWeight: FontWeight.w900,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () {
+                  unawaited(onOpen());
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: p.ink,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                      ),
+                      const SizedBox(height: 2),
+                      AnimatedSwitcher(
+                        key: const ValueKey('home-warp-status-label'),
+                        duration: motion.duration(_MotionTokens.short),
+                        transitionBuilder: _fadeSlideTransition,
+                        child: Text(
+                          subtitle,
+                          key: ValueKey(subtitle),
+                          style:
+                              Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    color: enabled
+                                        ? p.accent
+                                        : p.muted,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                         ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  AnimatedSwitcher(
-                    key: const ValueKey('home-warp-status-label'),
-                    duration: motion.duration(_MotionTokens.short),
-                    transitionBuilder: _fadeSlideTransition,
-                    child: Text(
-                      subtitle,
-                      key: ValueKey(subtitle),
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: enabled
-                                ? _SeedPalette.accent
-                                : _SeedPalette.muted,
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
             const SizedBox(width: 8),
-            _HomeWarpSwitchGlyph(
-              enabled: enabled,
-              busy: busy,
-              muted: !canOffer,
+            Switch.adaptive(
+              key: const ValueKey('home-warp-inline-switch'),
+              value: enabled,
+              onChanged: !canOffer || busy
+                  ? null
+                  : (value) {
+                      unawaited(onChanged(value));
+                    },
             ),
           ],
         ),
@@ -1026,61 +1022,152 @@ class _HomeWarpTile extends StatelessWidget {
   }
 }
 
-class _HomeWarpSwitchGlyph extends StatelessWidget {
-  const _HomeWarpSwitchGlyph({
-    required this.enabled,
-    required this.busy,
-    required this.muted,
-  });
+class _HomeBrandHeader extends StatelessWidget {
+  const _HomeBrandHeader({this.center = false, this.subtitle});
 
-  final bool enabled;
-  final bool busy;
-  final bool muted;
+  final bool center;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
-    final motion = _MotionScope.of(context);
-    final active = enabled && !muted;
-    return AnimatedContainer(
-      duration: motion.duration(_MotionTokens.short),
-      curve: _MotionTokens.ease,
-      width: 48,
-      height: 30,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: active
-            ? _SeedPalette.accent
-            : _SeedPalette.ink.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: AnimatedAlign(
-        duration: motion.duration(_MotionTokens.short),
-        curve: _MotionTokens.ease,
-        alignment: active ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: _SeedPalette.surface,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: _SeedPalette.ink.withValues(alpha: 0.10),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
+    final p = PokrovPalette.of(context);
+    final title = Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment:
+          center ? MainAxisAlignment.center : MainAxisAlignment.start,
+      children: [
+        const _BrandMark(size: 38),
+        const SizedBox(width: 10),
+        Text(
+          'POKROV VPN',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: p.ink,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0,
               ),
-            ],
-          ),
-          child: busy
-              ? const Padding(
-                  padding: EdgeInsets.all(6),
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : null,
         ),
-      ),
+      ],
+    );
+    final subtitle = this.subtitle?.trim();
+    if (subtitle == null || subtitle.isEmpty) {
+      return title;
+    }
+    return Column(
+      crossAxisAlignment:
+          center ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      children: [
+        title,
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: center ? TextAlign.center : TextAlign.start,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: p.muted,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+              ),
+        ),
+      ],
     );
   }
+}
+
+String _homeProtectionStatusLabel(
+  RuntimeSnapshot? snapshot, {
+  bool busy = false,
+}) {
+  if (busy) {
+    return 'Подключается...';
+  }
+  if (snapshot?.phase == RuntimePhase.running) {
+    return (snapshot?.isCleanlyHealthy ?? false)
+        ? 'Подключено'
+        : 'Нужно внимание';
+  }
+  if (snapshot?.phase == RuntimePhase.artifactMissing) {
+    return 'Не получилось подключиться';
+  }
+  return 'Не защищено';
+}
+
+String _accessHomeSupportLabel(AccessLane lane) {
+  return switch (lane) {
+    AccessLane.trialPremium => 'После триала — продлите доступ',
+    AccessLane.bonusPremium || AccessLane.paidUnlimited => 'Доступ активен',
+    AccessLane.freeMonthly => 'Можно продлить до премиум-доступа',
+    AccessLane.freeSoftMode => 'Продлите доступ, чтобы подключиться',
+  };
+}
+
+String? _homeInfoNotice(String? headline) {
+  final text = headline?.trim();
+  if (text == null || text.isEmpty) {
+    return null;
+  }
+  if (text.startsWith('WARP ')) {
+    return text;
+  }
+  return null;
+}
+
+AppFirstPromoSlot? _homeAdminPromoSlot(AppFirstBonusSummary? bonusSummary) {
+  final promoSlots = bonusSummary?.promoSlots;
+  if (promoSlots == null) {
+    return null;
+  }
+  const placements = <String>{
+    'home_banner',
+    'home',
+    'home_primary',
+    'protection',
+    'protection_home',
+  };
+  for (final placement in placements) {
+    final slots = promoSlots.visibleForPlacement(placement);
+    for (final slot in slots) {
+      if (_isRenderableHomePromoSlot(slot)) {
+        return slot;
+      }
+    }
+  }
+  return null;
+}
+
+bool _isRenderableHomePromoSlot(AppFirstPromoSlot slot) {
+  final title = slot.title.trim();
+  final body = slot.body.trim();
+  final safeHref = _safeHomePromoSlotHref(slot.ctaHref);
+  if (body.isNotEmpty) {
+    return true;
+  }
+  return title.isNotEmpty && safeHref != null;
+}
+
+Uri? _safeHomePromoSlotHref(String value) {
+  final uri = Uri.tryParse(value.trim());
+  if (uri == null || !uri.hasScheme) {
+    return null;
+  }
+  final scheme = uri.scheme.toLowerCase();
+  final host = uri.host.toLowerCase();
+  if (scheme == 'tg' && (host == 'resolve' || host == 'join')) {
+    return uri;
+  }
+  if (scheme != 'https') {
+    return null;
+  }
+  if (host == 't.me' ||
+      host == 'telegram.me' ||
+      host == 'pokrov.space' ||
+      host.endsWith('.pokrov.space')) {
+    return uri;
+  }
+  if (host == 'github.com' && uri.path.contains('/releases/')) {
+    return uri;
+  }
+  return null;
 }
 
 class _HomeRevealSlice extends StatelessWidget {
@@ -1134,6 +1221,7 @@ class _MotionRecoveryBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final motion = _MotionScope.of(context);
+    final p = PokrovPalette.of(context);
     return AnimatedSwitcher(
       key: const ValueKey('motion-recovery-banner'),
       duration: motion.duration(_MotionTokens.standard),
@@ -1143,10 +1231,10 @@ class _MotionRecoveryBanner extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
-          color: _SeedPalette.warning.withValues(alpha: 0.10),
+          color: p.warning.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: _SeedPalette.warning.withValues(alpha: 0.22),
+            color: p.warning.withValues(alpha: 0.22),
           ),
         ),
         child: Row(
@@ -1155,16 +1243,69 @@ class _MotionRecoveryBanner extends StatelessWidget {
             Icon(
               Icons.info_outline_rounded,
               size: 18,
-              color: _SeedPalette.warning.withValues(alpha: 0.92),
+              color: p.warning.withValues(alpha: 0.92),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 message,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: _SeedPalette.ink.withValues(alpha: 0.78),
+                      color: p.ink.withValues(alpha: 0.78),
                       height: 1.3,
                       fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeInfoNotice extends StatelessWidget {
+  const _HomeInfoNotice({
+    required this.message,
+  });
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final motion = _MotionScope.of(context);
+    final p = PokrovPalette.of(context);
+    return AnimatedSwitcher(
+      key: const ValueKey('home-info-notice'),
+      duration: motion.duration(_MotionTokens.short),
+      transitionBuilder: _fadeSlideTransition,
+      child: Container(
+        key: ValueKey(message),
+        width: double.infinity,
+        constraints: const BoxConstraints(maxWidth: 520),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: p.accent.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: p.accent.withValues(alpha: 0.18),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.check_circle_outline_rounded,
+              size: 18,
+              color: p.accent.withValues(alpha: 0.92),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: p.ink.withValues(alpha: 0.80),
+                      height: 1.25,
+                      fontWeight: FontWeight.w700,
                     ),
               ),
             ),

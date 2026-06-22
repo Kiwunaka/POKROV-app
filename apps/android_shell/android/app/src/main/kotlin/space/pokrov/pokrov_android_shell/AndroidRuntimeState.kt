@@ -4,6 +4,7 @@ import android.content.Context
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.mobile.Mobile
 import java.io.File
+import java.time.Instant
 
 internal data class AndroidRuntimeEnvironment(
     val artifactDirectory: String,
@@ -26,8 +27,11 @@ internal object AndroidRuntimeState {
     private var environment: AndroidRuntimeEnvironment? = null
     private var phase: AndroidRuntimePhase = AndroidRuntimePhase.ARTIFACT_MISSING
     private var stagedConfigPath: String? = null
+    private var stagedBaseConfigPath: String? = null
+    private var stagedRuntimeOptionsJson: String? = null
     private var lastMessage = "POKROV has not checked this device yet."
     private var lastRunningMessage: String? = null
+    private var runningSince: String? = null
     private var defaultNetworkInterface: String? = null
     private var defaultNetworkIndex: Int? = null
     private var dnsReady: Boolean = false
@@ -46,6 +50,9 @@ internal object AndroidRuntimeState {
             environment = null
             phase = AndroidRuntimePhase.ARTIFACT_MISSING
             stagedConfigPath = null
+            stagedBaseConfigPath = null
+            stagedRuntimeOptionsJson = null
+            runningSince = null
             lastMessage = "В этой сборке для Android нет модуля подключения."
             dnsReady = false
             defaultNetworkInterface = null
@@ -112,8 +119,23 @@ internal object AndroidRuntimeState {
     }
 
     @Synchronized
-    fun markProfileStaged(path: String) {
+    fun markProfileStaged(
+        path: String,
+        runtimeOptionsJson: String? = null,
+        baseConfigPath: String? = null,
+    ) {
+        val previousPath = stagedConfigPath
         stagedConfigPath = path
+        stagedBaseConfigPath = when {
+            !baseConfigPath.isNullOrBlank() -> baseConfigPath
+            previousPath == path -> stagedBaseConfigPath
+            else -> null
+        }
+        stagedRuntimeOptionsJson = when {
+            !runtimeOptionsJson.isNullOrBlank() -> runtimeOptionsJson
+            previousPath == path -> stagedRuntimeOptionsJson
+            else -> null
+        }
         phase = AndroidRuntimePhase.CONFIG_STAGED
         lastFailureKind = null
         lastStopReason = null
@@ -130,6 +152,9 @@ internal object AndroidRuntimeState {
         phase = AndroidRuntimePhase.RUNNING
         lastFailureKind = null
         lastStopReason = null
+        if (runningSince.isNullOrBlank()) {
+            runningSince = Instant.now().toString()
+        }
         lastRunningMessage = message
         lastMessage = message
     }
@@ -145,6 +170,7 @@ internal object AndroidRuntimeState {
             else -> AndroidRuntimePhase.ARTIFACT_MISSING
         }
         lastStopReason = stopReason
+        runningSince = null
         lastMessage = message
     }
 
@@ -240,6 +266,32 @@ internal object AndroidRuntimeState {
     fun stagedConfigPath(): String? = stagedConfigPath
 
     @Synchronized
+    fun stagedBaseConfigPath(): String? = stagedBaseConfigPath
+
+    @Synchronized
+    fun stagedRuntimeOptionsJson(): String? = stagedRuntimeOptionsJson
+
+    @Synchronized
+    fun markRuntimeOptionsUpdated(runtimeOptionsJson: String) {
+        stagedRuntimeOptionsJson = runtimeOptionsJson
+        lastMessage = "POKROV updated runtime options for the next connection."
+    }
+
+    @Synchronized
+    fun liveStats(): Map<String, Any?> {
+        return mapOf(
+            "available" to (phase == AndroidRuntimePhase.RUNNING),
+            "uplinkBps" to null,
+            "downlinkBps" to null,
+            "latencyMs" to null,
+            "since" to runningSince,
+            "serverCode" to "",
+            "serverCountry" to "",
+            "protocol" to if (stagedConfigPath.isNullOrBlank()) "" else "sing-box",
+        )
+    }
+
+    @Synchronized
     fun snapshot(): Map<String, Any?> {
         val resolved = environment
         val canInitialize = resolved != null
@@ -262,6 +314,7 @@ internal object AndroidRuntimeState {
             "dns_ready" to dnsReady,
             "last_failure_kind" to lastFailureKind,
             "last_stop_reason" to lastStopReason,
+            "runtime_options_ready" to !stagedRuntimeOptionsJson.isNullOrBlank(),
             "ipv4_route_count" to ipv4RouteCount,
             "ipv6_route_count" to ipv6RouteCount,
             "include_package_count" to includePackageCount,
@@ -273,6 +326,7 @@ internal object AndroidRuntimeState {
             "coreBinaryPath" to resolved?.coreBinaryPath,
             "helperBinaryPath" to null,
             "stagedConfigPath" to stagedConfigPath,
+            "runtimeOptionsReady" to !stagedRuntimeOptionsJson.isNullOrBlank(),
             "supportsLiveConnect" to true,
             "canInitialize" to canInitialize,
             "canConnect" to canConnect,
