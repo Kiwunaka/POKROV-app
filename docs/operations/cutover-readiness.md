@@ -130,6 +130,9 @@ Status: `MANUAL_OWNER_TEST`.
 
 - Install from the public URL, not from the local build output.
 - Run start-trial -> managed profile -> connect -> dashboard.
+- Verify smart-connect candidates -> `/api/client/nodes/select` -> managed
+  profile refresh with selected node, including manual location choice on
+  reconnect and telemetry failure not blocking connect.
 - Run redeem code, cabinet token handoff, support chat, Telegram bonus check,
   and checkout continuation.
 - WARP/enhanced privacy and selected-apps are implemented for guarded beta use.

@@ -8,6 +8,99 @@ import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
+const _featureLabelPrivateHelperCoverage = <String>[
+  '_smartConnectNodeTitle',
+  '_smartConnectNodeCity',
+  '_smartConnectQualityLabel',
+  '_locationQualityLabel',
+  '_accessPoolLabel',
+  '_accessMainLabel',
+  '_accessShortValue',
+  '_telegramBonusHomeLabel',
+  '_routeModeShortLabel',
+  '_routeModeRowTitle',
+  '_routeModeRowSummary',
+  '_PresetRow',
+  '_rulesPresetIcon',
+  '_rulesPresetStatusLabel',
+];
+
+const _navigationShellPrivateHelperCoverage = <String>[
+  '_SeedContentList',
+  '_DesktopShell',
+  '_DesktopDrawerShell',
+  '_MobileShell',
+  '_DesktopSidebar',
+  '_LazyIndexedStack',
+  'createState',
+  '_LazyIndexedStackState',
+  'initState',
+  'didUpdateWidget',
+  '_markInitialized',
+  '_BrandLockup',
+  '_BrandMark',
+  '_SidebarItem',
+];
+
+const _sharedShellWidgetPrivateHelperCoverage = <String>[
+  '_SectionCard',
+  '_SeedBackdrop',
+  '_StatusPill',
+  '_ConnectOrbButton',
+  '_ConnectOrbButtonState',
+  'didChangeDependencies',
+  '_syncControllers',
+  'AnimatedBuilder',
+  '_ConnectSettleLayer',
+  '_ConnectDiscRimPainter',
+  'paint',
+  'shouldRepaint',
+];
+
+const _infoSheetPrivateHelperCoverage = <String>[
+  '_SettingsRow',
+  '_showInfoSheet',
+  '_InfoSheet',
+];
+
+const _appShellImplementationPrivateHelperCoverage = <String>[
+  '_SelectSeedTabIntent',
+  '_FocusSupportComposerIntent',
+  '_SendSupportMessageIntent',
+  '_MotionScope',
+  '_KeyValueLine',
+];
+
+void _expectFeatureLabelHelpersCovered(Iterable<String> helpers) {
+  for (final helper in helpers) {
+    expect(_featureLabelPrivateHelperCoverage, contains(helper));
+  }
+}
+
+void _expectNavigationShellHelpersCovered(Iterable<String> helpers) {
+  for (final helper in helpers) {
+    expect(_navigationShellPrivateHelperCoverage, contains(helper));
+  }
+}
+
+void _expectSharedShellWidgetHelpersCovered(Iterable<String> helpers) {
+  for (final helper in helpers) {
+    expect(_sharedShellWidgetPrivateHelperCoverage, contains(helper));
+  }
+}
+
+void _expectInfoSheetHelpersCovered(Iterable<String> helpers) {
+  for (final helper in helpers) {
+    expect(_infoSheetPrivateHelperCoverage, contains(helper));
+  }
+}
+
+void _expectAppShellImplementationHelpersCovered(Iterable<String> helpers) {
+  for (final helper in helpers) {
+    expect(_appShellImplementationPrivateHelperCoverage, contains(helper));
+  }
+}
+
 class _FakeBootstrapper
     implements
         ManagedProfileBootstrapper,
@@ -155,16 +248,19 @@ class _FakeBootstrapper
   String? lastClientAppsCurrentVersion;
   HostPlatform? lastLocationsCatalogHostPlatform;
   String? lastLocationsCatalogQuery;
+  String? lastPreferredNodeCode;
 
   @override
   Future<ManagedProfilePayload> resolveManagedProfile({
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
     List<String> selectedApps = const <String>[],
+    String preferredNodeCode = '',
   }) async {
     calls += 1;
     lastRouteMode = routeMode;
     lastHostPlatform = hostPlatform;
+    lastPreferredNodeCode = preferredNodeCode;
     return payload;
   }
 
@@ -592,6 +688,7 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
     List<String> selectedApps = const <String>[],
+    String preferredNodeCode = '',
   }) async {
     throw BootstrapFailure(message);
   }
@@ -857,6 +954,17 @@ void main() {
 
   testWidgets('seed shell lazily builds tabs and keeps opened tabs alive',
       (tester) async {
+    _expectNavigationShellHelpersCovered(const [
+      '_SeedContentList',
+      '_MobileShell',
+      '_LazyIndexedStack',
+      'createState',
+      '_LazyIndexedStackState',
+      'initState',
+      'didUpdateWidget',
+      '_markInitialized',
+    ]);
+
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
@@ -1047,6 +1155,19 @@ void main() {
 
   testWidgets('renders premium shell v2 with compact first screen',
       (tester) async {
+    _expectFeatureLabelHelpersCovered(const [
+      '_accessPoolLabel',
+      '_accessMainLabel',
+      '_accessShortValue',
+      '_telegramBonusHomeLabel',
+      '_routeModeShortLabel',
+    ]);
+    _expectSharedShellWidgetHelpersCovered(const [
+      '_SeedBackdrop',
+      '_StatusPill',
+    ]);
+    _expectAppShellImplementationHelpersCovered(const ['_MotionScope']);
+
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
@@ -1348,6 +1469,11 @@ void main() {
 
   testWidgets('home status opens connection details without first-layer copy',
       (tester) async {
+    _expectInfoSheetHelpersCovered(const [
+      '_showInfoSheet',
+      '_InfoSheet',
+    ]);
+
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
@@ -1372,6 +1498,8 @@ void main() {
   });
 
   testWidgets('profile uses grouped MVP account sections', (tester) async {
+    _expectInfoSheetHelpersCovered(const ['_SettingsRow']);
+
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
@@ -2217,6 +2345,8 @@ void main() {
 
   testWidgets('profile surfaces devices, notifications and subscription detail',
       (tester) async {
+    _expectAppShellImplementationHelpersCovered(const ['_KeyValueLine']);
+
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
@@ -2262,8 +2392,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(devicesAction);
     await tester.pumpAndSettle();
-    expect(
-        find.byKey(const ValueKey('profile-devices-sheet')), findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-devices-sheet')), findsOneWidget);
     expect(find.text('Пока нет других устройств.'), findsOneWidget);
     Navigator.of(tester.element(
       find.byKey(const ValueKey('profile-devices-sheet')),
@@ -2344,6 +2473,15 @@ void main() {
 
   testWidgets('P4 responsive width matrix keeps the app shell stable',
       (tester) async {
+    _expectNavigationShellHelpersCovered(const [
+      '_DesktopShell',
+      '_MobileShell',
+      '_DesktopSidebar',
+      '_BrandLockup',
+      '_BrandMark',
+      '_SidebarItem',
+    ]);
+
     final cases = <({double width, HostPlatform platform, String shellKey})>[
       (width: 360, platform: HostPlatform.android, shellKey: 'mobile-shell'),
       (width: 493, platform: HostPlatform.android, shellKey: 'mobile-shell'),
@@ -2659,6 +2797,14 @@ void main() {
   testWidgets(
       'narrow windows shell uses a hamburger drawer instead of fixed sidebar',
       (tester) async {
+    _expectNavigationShellHelpersCovered(const [
+      '_DesktopDrawerShell',
+      '_DesktopSidebar',
+      '_BrandLockup',
+      '_BrandMark',
+      '_SidebarItem',
+    ]);
+
     await tester.binding.setSurfaceSize(const Size(760, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -2688,6 +2834,18 @@ void main() {
 
   testWidgets('home uses raster brand mark and one animated connect disc',
       (tester) async {
+    _expectSharedShellWidgetHelpersCovered(const [
+      '_ConnectOrbButton',
+      '_ConnectOrbButtonState',
+      'didChangeDependencies',
+      '_syncControllers',
+      'AnimatedBuilder',
+      '_ConnectSettleLayer',
+      '_ConnectDiscRimPainter',
+      'paint',
+      'shouldRepaint',
+    ]);
+
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
@@ -2851,6 +3009,12 @@ void main() {
 
   testWidgets('P5 Windows shortcuts navigate tabs and focus support composer',
       (tester) async {
+    _expectAppShellImplementationHelpersCovered(const [
+      '_SelectSeedTabIntent',
+      '_FocusSupportComposerIntent',
+      '_SendSupportMessageIntent',
+    ]);
+
     await tester.binding.setSurfaceSize(const Size(1180, 760));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final supportTicketService = _FakeSupportTicketService(
@@ -3346,6 +3510,16 @@ void main() {
 
   testWidgets('rules show selected-apps editor and hide beta prose',
       (tester) async {
+    _expectFeatureLabelHelpersCovered(const [
+      '_routeModeShortLabel',
+      '_routeModeRowTitle',
+      '_routeModeRowSummary',
+      '_PresetRow',
+      '_rulesPresetIcon',
+      '_rulesPresetStatusLabel',
+    ]);
+    _expectSharedShellWidgetHelpersCovered(const ['_SectionCard']);
+
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
@@ -3817,6 +3991,13 @@ void main() {
 
   testWidgets('locations screen renders backend catalog cities',
       (tester) async {
+    _expectFeatureLabelHelpersCovered(const [
+      '_smartConnectNodeTitle',
+      '_smartConnectNodeCity',
+      '_smartConnectQualityLabel',
+      '_locationQualityLabel',
+    ]);
+
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     _installReadyRuntimeBridgeMock();

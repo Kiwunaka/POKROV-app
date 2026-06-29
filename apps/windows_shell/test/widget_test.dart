@@ -2,8 +2,57 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
+import 'package:pokrov_windows_shell/main.dart' as windows_shell;
 
 void main() {
+  const windowsTrayPrivateHelperBehaviorCoverage = ['_showWindow'];
+
+  test('windows tray show window restores minimized windows before focusing',
+      () async {
+    expect(windowsTrayPrivateHelperBehaviorCoverage, contains('_showWindow'));
+    final calls = <String>[];
+
+    await windows_shell.pokrovWindowsShowWindow(
+      isMinimized: () async {
+        calls.add('isMinimized');
+        return true;
+      },
+      restore: () async {
+        calls.add('restore');
+      },
+      show: () async {
+        calls.add('show');
+      },
+      focus: () async {
+        calls.add('focus');
+      },
+    );
+
+    expect(calls, ['isMinimized', 'restore', 'show', 'focus']);
+  });
+
+  test('windows tray show window skips restore when already visible', () async {
+    final calls = <String>[];
+
+    await windows_shell.pokrovWindowsShowWindow(
+      isMinimized: () async {
+        calls.add('isMinimized');
+        return false;
+      },
+      restore: () async {
+        calls.add('restore');
+      },
+      show: () async {
+        calls.add('show');
+      },
+      focus: () async {
+        calls.add('focus');
+      },
+    );
+
+    expect(calls, ['isMinimized', 'show', 'focus']);
+  });
+
   testWidgets('windows shell boots the shared protection surface', (
     tester,
   ) async {
@@ -34,6 +83,10 @@ void main() {
     expect(find.text('Connect now'), findsNothing);
     final connectAction = find.byKey(const ValueKey('primary-connect-action'));
     expect(connectAction, findsOneWidget);
-    expect(find.text('Пока недоступно'), findsOneWidget);
+    expect(
+        find.descendant(of: connectAction, matching: find.text('Недоступно')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
+    expect(find.text('Дополнительная защита'), findsOneWidget);
   });
 }

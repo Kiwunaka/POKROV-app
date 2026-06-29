@@ -1,6 +1,6 @@
 # App-First Onboarding Flow
 
-Last updated: 2026-06-09
+Last updated: 2026-06-29
 
 ## Document Status
 
@@ -160,18 +160,26 @@ Smart-connect fields:
 - `smart_connect.shortlist[*].rank_hint.panel_latency_ms`
 - `smart_connect.shortlist[*].rank_hint.backend_penalty`
 - `smart_connect.shortlist[*].rank_hint.cpu_penalty`
+- `smart_connect.shortlist[*].rank_hint.capacity_state`
+- `smart_connect.shortlist[*].rank_hint.capacity_score`
+- `smart_connect.shortlist[*].rank_hint.tx_ratio`
+- `smart_connect.shortlist[*].rank_hint.tx_mbps`
+- `smart_connect.shortlist[*].rank_hint.provisioned_clients_count`
+- `smart_connect.shortlist[*].rank_hint.online_connections_hint`
+- `smart_connect.selected_node_code`
 - `smart_connect.stickiness.preferred_node_code`
 - `smart_connect.stickiness.threshold_percent`
 - `smart_connect.fallback_order`
 
 Shortlist rules:
 
-- premium users probe up to `5` eligible non-free nodes
+- premium users probe up to `SMART_CONNECT_SHORTLIST_LIMIT` eligible non-free nodes, default `8`
 - free-tier users stay on `NL-free`
-- shortlist eligibility rejects disabled, draining, unhealthy, stale, overloaded, and transport-incompatible nodes
-- the client performs best-effort TCP RTT probes for shortlist items with an internal probe endpoint and compares candidates with combined RTT and backend penalties
-- the `15%` stickiness threshold prevents unnecessary node flapping
-- `POST /api/client/nodes/latency-samples` records install-scoped RTT evidence for operator visibility without changing the free-vs-premium pool rule
+- shortlist eligibility rejects disabled, draining, unhealthy, stale, dataplane-down, saturated, high-loss/retransmit, overloaded, and transport-incompatible nodes while capacity-aware selection is enabled
+- the client performs best-effort TCP RTT probes for shortlist items with an internal probe endpoint, then calls `POST /api/client/nodes/select` with `mode=auto` for automatic choice or `mode=manual` for saved location choice
+- after a selected node is accepted, the client may refetch `GET /api/client/profile/managed?selected_node_code=...` before materializing the runtime config
+- the default `20%` stickiness threshold prevents unnecessary node flapping
+- `POST /api/client/nodes/latency-samples` remains compatibility telemetry for install-scoped RTT evidence and does not replace `/api/client/nodes/select`
 
 ## Support, Reward, And Recovery Continuation
 

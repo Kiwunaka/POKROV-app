@@ -18,6 +18,10 @@ Current direction note:
   core path by default, while backend lifecycle endpoints store consent/events
   and optional managed material. Production WARP claims still require
   Android/Windows release-build proof
+- smart-connect now uses the platform capacity-aware contract:
+  candidates -> best-effort RTT -> `/api/client/nodes/select` -> managed
+  profile refresh with `selected_node_code`; manual location choice uses
+  `mode=manual` and no fake RTT value
 
 Historical mapping note:
 

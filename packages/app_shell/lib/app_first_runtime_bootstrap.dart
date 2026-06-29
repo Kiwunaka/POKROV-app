@@ -28,6 +28,7 @@ abstract interface class ManagedProfileBootstrapper {
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
     List<String> selectedApps = const <String>[],
+    String preferredNodeCode = '',
   });
 }
 
@@ -581,7 +582,9 @@ class SmartConnectPreferenceResult {
     }
     final json = value.map((key, value) => MapEntry(key.toString(), value));
     return SmartConnectPreferenceResult(
-      preferredNodeCode: _readText(json['preferred_node_code']),
+      preferredNodeCode: _readText(
+        json['preferred_node_code'] ?? json['selected_node_code'],
+      ),
       acceptedSamples: _readInt(json['accepted_samples']),
     );
   }
@@ -1405,6 +1408,7 @@ class AppFirstRuntimeBootstrapper
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
     List<String> selectedApps = const <String>[],
+    String preferredNodeCode = '',
   }) async {
     final normalizedSelectedApps = _normalizeSelectedAppIdentifiers(
       selectedApps,
@@ -1435,6 +1439,7 @@ class AppFirstRuntimeBootstrapper
             hostPlatform: hostPlatform,
             routeMode: routeMode,
             selectedApps: normalizedSelectedApps,
+            preferredNodeCode: preferredNodeCode,
             client: client,
           );
           state = state.copyWith(
@@ -2275,11 +2280,12 @@ class AppFirstRuntimeBootstrapper
         try {
           final response = await _requestJson(
             method: 'POST',
-            path: '/api/client/nodes/latency-samples',
+            path: '/api/client/nodes/select',
             client: client,
             bearerToken: state.sessionToken,
             hostPlatform: hostPlatform,
             body: <String, Object?>{
+              'mode': 'manual',
               'profile_revision': smartConnect.profileRevision,
               'transport_profile': smartConnect.transportProfile,
               'selected_node_code': normalizedNode,
@@ -2287,13 +2293,7 @@ class AppFirstRuntimeBootstrapper
                   smartConnect.stickiness.preferredNodeCode.trim().isEmpty
                       ? null
                       : smartConnect.stickiness.preferredNodeCode.trim(),
-              'stickiness_applied': false,
-              'samples': <Map<String, Object?>>[
-                <String, Object?>{
-                  'node_code': normalizedNode,
-                  'rtt_ms': 1,
-                },
-              ],
+              'samples': const <Map<String, Object?>>[],
             },
           );
           return SmartConnectPreferenceResult.tryParse(response);
@@ -2938,14 +2938,19 @@ class AppFirstRuntimeBootstrapper
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
     required List<String> selectedApps,
+    required String preferredNodeCode,
     required HttpClient client,
   }) async {
     final path = state.managedManifestPath.isEmpty
         ? _defaultManagedManifestPath
         : state.managedManifestPath;
+    final normalizedPreferredNode = preferredNodeCode.trim().toLowerCase();
+    final requestPath = normalizedPreferredNode.isEmpty
+        ? path
+        : '$path${path.contains('?') ? '&' : '?'}selected_node_code=${Uri.encodeQueryComponent(normalizedPreferredNode)}';
     final response = await _requestJson(
       method: 'GET',
-      path: path,
+      path: requestPath,
       client: client,
       bearerToken: state.sessionToken,
       hostPlatform: hostPlatform,
@@ -3100,6 +3105,35 @@ class AppFirstRuntimeBootstrapper
       smartConnect: smartConnect,
       samples: samples,
     );
+    final samplePayload = samples
+        .map(
+          (sample) => <String, Object?>{
+            'node_code': sample.nodeCode,
+            'rtt_ms': sample.rttMs,
+          },
+        )
+        .toList(growable: false);
+    try {
+      await _requestJson(
+        method: 'POST',
+        path: '/api/client/nodes/select',
+        client: client,
+        bearerToken: state.sessionToken,
+        hostPlatform: hostPlatform,
+        body: <String, Object?>{
+          'mode': 'auto',
+          'profile_revision': smartConnect.profileRevision,
+          'transport_profile': smartConnect.transportProfile,
+          'selected_node_code': selection.selectedNodeCode,
+          'previous_node_code': selection.previousNodeCode.isEmpty
+              ? null
+              : selection.previousNodeCode,
+          'samples': samplePayload,
+        },
+      );
+    } on BootstrapFailure {
+      // Selection is advisory. The existing managed profile remains usable.
+    }
     try {
       await _requestJson(
         method: 'POST',
@@ -3115,14 +3149,7 @@ class AppFirstRuntimeBootstrapper
               ? null
               : selection.previousNodeCode,
           'stickiness_applied': selection.stickinessApplied,
-          'samples': samples
-              .map(
-                (sample) => <String, Object?>{
-                  'node_code': sample.nodeCode,
-                  'rtt_ms': sample.rttMs,
-                },
-              )
-              .toList(growable: false),
+          'samples': samplePayload,
         },
       );
     } on BootstrapFailure {

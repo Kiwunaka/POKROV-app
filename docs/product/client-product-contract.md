@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-06-08
+Last updated: 2026-06-29
 
 ## Document Status
 
@@ -152,8 +152,9 @@ After activation:
   shortlist yet
 - when `smart_connect.shortlist` is present, `Locations` shows only those real
   eligible nodes and lets the user save a preferred node
-- saved node choice is sent through the app-first latency-sample endpoint and
-  the next managed profile should order that node first in the selector
+- saved node choice is sent through `POST /api/client/nodes/select` with
+  `mode=manual`, and the next managed profile may be fetched with
+  `selected_node_code` before the runtime config is materialized
 - trial and Telegram-bonus access must read as premium-pool access, never as
   `free node` access
 
@@ -205,11 +206,12 @@ Support contract rules:
 Quick-connect rules:
 
 - the backend builds the shortlist before the client starts latency checks
-- premium users probe up to `5` eligible non-free nodes
+- premium users can probe up to `SMART_CONNECT_SHORTLIST_LIMIT` eligible non-free nodes, default `8`
 - free-tier users stay on `NL-free` only
-- shortlist eligibility rejects disabled, draining, unhealthy, stale, overloaded, and transport-incompatible nodes
-- the client uses backend-provided internal probe targets to combine device RTT with backend CPU and health penalties, then applies a `15%` stickiness threshold before changing nodes
-- explicit user-node assignments still take precedence
+- shortlist eligibility rejects disabled, draining, unhealthy, stale, dataplane-down, saturated, high-loss/retransmit, overloaded, and transport-incompatible nodes while capacity-aware selection is enabled
+- the client uses backend-provided internal probe targets and capacity hints, then posts `mode=auto` or `mode=manual` to `/api/client/nodes/select`; telemetry failure must not block connect
+- the default stickiness threshold is `20%`
+- explicit user-node assignments are provisioning/history state and must not reduce the premium candidate pool
 
 Consumer privacy rules:
 

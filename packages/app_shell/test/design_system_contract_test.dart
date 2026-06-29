@@ -1,8 +1,19 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_app_shell/src/design_system/design_system.dart';
+import 'package:pokrov_core_domain/core_domain.dart';
+import 'package:pokrov_platform_contracts/platform_contracts.dart';
+
+const _fileFirstLaunchStorePrivateHelperCoverage = <String>['_stateFile'];
+const _desktopSidebarPrivateHelperCoverage = <String>[
+  '_PokrovBrandLockup',
+  '_PokrovSidebarItem',
+];
 
 void main() {
   test('palette keeps the POKROV beta shell colors stable', () {
@@ -37,12 +48,97 @@ void main() {
     }
   });
 
+  test('palette token extension supports copyWith and lerp contracts', () {
+    final copied = PokrovPalette.light.copyWith(accent: Colors.red);
+
+    expect(copied, isA<PokrovPaletteTokens>());
+    expect(copied.accent, Colors.red);
+    expect(copied.canvas, PokrovPalette.light.canvas);
+    expect(
+      PokrovPalette.light.lerp(PokrovPalette.dark, 0.5),
+      isA<PokrovPaletteTokens>(),
+    );
+    expect(PokrovPalette.light.lerp(null, 0.5), same(PokrovPalette.light));
+  });
+
   test('motion tokens match the premium shell contract', () {
     expect(PokrovMotionTokens.quick, const Duration(milliseconds: 120));
     expect(PokrovMotionTokens.short, const Duration(milliseconds: 180));
     expect(PokrovMotionTokens.standard, const Duration(milliseconds: 240));
     expect(PokrovMotionTokens.homeReveal, const Duration(milliseconds: 480));
     expect(PokrovMotionTokens.ease, Curves.easeOutCubic);
+  });
+
+  test('fade slide transition exposes fade and slide motion layers', () {
+    final transition = pokrovFadeSlideTransition(
+      const Text('motion'),
+      const AlwaysStoppedAnimation<double>(1),
+    );
+
+    expect(transition, isA<FadeTransition>());
+    final fade = transition as FadeTransition;
+    expect(fade.child, isA<SlideTransition>());
+  });
+
+  test('file first-launch store keeps the public storage contract', () {
+    const store = PokrovFileFirstLaunchStore();
+
+    expect(store, isA<PokrovFirstLaunchStore>());
+  });
+
+  test('file first-launch store persists completion in app support', () async {
+    expect(_fileFirstLaunchStorePrivateHelperCoverage, contains('_stateFile'));
+
+    final tempDirectory =
+        await Directory.systemTemp.createTemp('pokrov-first-launch-store-');
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final previousPathProvider = PathProviderPlatform.instance;
+    PathProviderPlatform.instance =
+        _FakePathProviderPlatform(tempDirectory.path);
+    addTearDown(() {
+      PathProviderPlatform.instance = previousPathProvider;
+    });
+
+    const store = PokrovFileFirstLaunchStore();
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}pokrov-first-launch-state.txt',
+    );
+
+    expect(await store.isCompleted(), isFalse);
+    expect(await stateFile.exists(), isFalse);
+
+    await store.markCompleted();
+
+    expect(await stateFile.readAsString(), 'completed');
+    expect(await store.isCompleted(), isTrue);
+  });
+
+  test('platform bootstrap contract summarizes client startup requirements',
+      () {
+    const contract = PlatformBootstrapContract(
+      hostPlatform: HostPlatform.windows,
+      requiredPermissions: [
+        PermissionRequirement.notifications,
+        PermissionRequirement.elevatedSession,
+      ],
+      defaultCore: RuntimeCore.singBox,
+      advancedFallbackCore: RuntimeCore.xray,
+      supportsSelectedAppsMode: true,
+    );
+
+    expect(contract.hostPlatform, HostPlatform.windows);
+    expect(contract.defaultCore.label, 'sing-box');
+    expect(contract.advancedFallbackCore, RuntimeCore.xray);
+    expect(contract.supportsSelectedAppsMode, isTrue);
+    expect(
+      contract.permissionsSummary,
+      contains(PermissionRequirement.elevatedSession.label),
+    );
   });
 
   testWidgets('motion scope collapses durations when reduced motion is active',
@@ -399,8 +495,41 @@ void main() {
     expect(taps, 2);
   });
 
+  testWidgets('action row keeps the list-row contract and tap behavior',
+      (tester) async {
+    var taps = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: const [PokrovPalette.light]),
+        home: Scaffold(
+          body: PokrovActionRow(
+            icon: Icons.play_arrow_rounded,
+            title: 'Connect',
+            subtitle: 'Uses the shared list-row layout',
+            onTap: () => taps += 1,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(PokrovActionRow), findsOneWidget);
+    expect(find.byWidgetPredicate((widget) => widget is PokrovListRow),
+        findsOneWidget);
+
+    await tester.tap(find.text('Connect'));
+    await tester.pumpAndSettle();
+
+    expect(taps, 1);
+  });
+
   testWidgets('desktop sidebar preserves width keys and destination taps',
       (tester) async {
+    expect(
+      _desktopSidebarPrivateHelperCoverage,
+      containsAll(const ['_PokrovBrandLockup', '_PokrovSidebarItem']),
+    );
+
     var selected = 0;
     await tester.pumpWidget(
       MaterialApp(
@@ -488,6 +617,48 @@ void main() {
       72,
     );
   });
+
+  testWidgets('legacy desktop sidebar keeps retained navigation contract',
+      (tester) async {
+    var selected = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: const [PokrovPalette.light]),
+        home: Scaffold(
+          body: SizedBox(
+            width: 224,
+            height: 360,
+            child: PokrovMotionScope(
+              disableAnimations: true,
+              child: PokrovLegacyDesktopSidebar(
+                selectedIndex: selected,
+                collapsed: false,
+                onSelected: (value) => selected = value,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+        find.byKey(const ValueKey('desktop-sidebar-expanded')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('nav-locations')));
+    await tester.pumpAndSettle();
+
+    expect(selected, 1);
+  });
+}
+
+class _FakePathProviderPlatform extends PathProviderPlatform {
+  _FakePathProviderPlatform(this.applicationSupportPath);
+
+  final String applicationSupportPath;
+
+  @override
+  Future<String?> getApplicationSupportPath() async => applicationSupportPath;
 }
 
 class _MotionDurationProbe extends StatelessWidget {

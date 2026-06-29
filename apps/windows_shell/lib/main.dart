@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
@@ -16,6 +17,20 @@ Future<void> main() async {
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
     ),
   );
+}
+
+@visibleForTesting
+Future<void> pokrovWindowsShowWindow({
+  required Future<bool> Function() isMinimized,
+  required Future<void> Function() restore,
+  required Future<void> Function() show,
+  required Future<void> Function() focus,
+}) async {
+  if (await isMinimized()) {
+    await restore();
+  }
+  await show();
+  await focus();
 }
 
 final class _PokrovWindowsTray with TrayListener {
@@ -52,11 +67,12 @@ final class _PokrovWindowsTray with TrayListener {
   }
 
   Future<void> _showWindow() async {
-    if (await windowManager.isMinimized()) {
-      await windowManager.restore();
-    }
-    await windowManager.show();
-    await windowManager.focus();
+    await pokrovWindowsShowWindow(
+      isMinimized: windowManager.isMinimized,
+      restore: windowManager.restore,
+      show: () => windowManager.show(),
+      focus: windowManager.focus,
+    );
   }
 
   @override

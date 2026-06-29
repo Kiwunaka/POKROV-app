@@ -1524,6 +1524,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       selectedApps: _selectedRouteMode == RouteMode.selectedApps
           ? _selectedAppIds
           : const <String>[],
+      preferredNodeCode: _preferredNodeCode,
     );
     final baseWarpPolicy = payload.warpPolicy.withClientLocalDefaults();
     final warpStatus = await _fetchWarpStatusOrNull();
@@ -2193,8 +2194,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             themeMode: widget.themeMode,
             onThemeModeChanged: widget.onThemeModeChanged,
             subscriptionInfo: _subscriptionInfo,
-            notifications: _notificationsInbox?.items ??
-                const <ClientNotificationItem>[],
+            notifications:
+                _notificationsInbox?.items ?? const <ClientNotificationItem>[],
             notificationsUnread: _notificationsUnread,
             notificationsBusy: _notificationsBusy,
             onOpenNotifications: _markNotificationsRead,

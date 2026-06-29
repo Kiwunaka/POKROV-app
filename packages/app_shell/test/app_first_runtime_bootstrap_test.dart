@@ -671,6 +671,7 @@ void main() {
       'POST /api/client/session/start-trial',
       'POST /api/client/route-policy',
       'GET /api/client/profile/managed',
+      'POST /api/client/nodes/select',
       'POST /api/client/nodes/latency-samples',
     ]);
   });
