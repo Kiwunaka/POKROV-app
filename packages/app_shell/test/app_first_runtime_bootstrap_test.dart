@@ -676,6 +676,147 @@ void main() {
     ]);
   });
 
+  test('manual smart-connect preference does not upload fake RTT samples',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-manual-smart-connect-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final requests = <String>[];
+    Map<String, dynamic>? selectBody;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add('${request.method} ${request.uri.path}');
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'manual-smart-connect-session',
+                    'account_id': 'manual-smart-connect-account',
+                  },
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/nodes/select') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer manual-smart-connect-session',
+          );
+          selectBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ok': true,
+                  'selected_node_code': 'de',
+                  'previous_node_code': 'pl',
+                  'accepted_samples': 0,
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+
+    final smartConnect = SmartConnectProfile(
+      eligible: true,
+      fallbackRequired: false,
+      shortlistReason: 'eligible',
+      shortlistLimit: 5,
+      shortlistRevision: 'short-manual',
+      transportProfile: 'reality',
+      profileRevision: 'rev-manual',
+      fallbackOrder: const <String>['de', 'pl'],
+      shortlist: const <SmartConnectNode>[
+        SmartConnectNode(
+          code: 'de',
+          country: 'Germany',
+          rank: 1,
+          rankHint: SmartConnectRankHint(
+            healthScore: 99,
+            cpuPercent: 10,
+            panelLatencyMs: 40,
+            backendPenalty: 0,
+            cpuPenalty: 0,
+            stickyPreferred: false,
+          ),
+        ),
+        SmartConnectNode(
+          code: 'pl',
+          country: 'Poland',
+          rank: 2,
+          rankHint: SmartConnectRankHint(
+            healthScore: 98,
+            cpuPercent: 12,
+            panelLatencyMs: 55,
+            backendPenalty: 0,
+            cpuPenalty: 0,
+            stickyPreferred: true,
+          ),
+        ),
+      ],
+      stickiness: const SmartConnectStickiness(
+        preferredNodeCode: 'pl',
+        thresholdPercent: 15,
+        latestSampleAt: '2026-06-04T10:00:00Z',
+        stickinessApplied: false,
+      ),
+    );
+
+    final result = await bootstrapper.setPreferredSmartConnectNode(
+      hostPlatform: HostPlatform.windows,
+      smartConnect: smartConnect,
+      nodeCode: ' DE ',
+    );
+
+    expect(result.preferredNodeCode, 'de');
+    expect(result.acceptedSamples, 0);
+    expect(selectBody, isNotNull);
+    expect(selectBody?['mode'], 'manual');
+    expect(selectBody?['profile_revision'], 'rev-manual');
+    expect(selectBody?['transport_profile'], 'reality');
+    expect(selectBody?['selected_node_code'], 'de');
+    expect(selectBody?['previous_node_code'], 'pl');
+    expect(selectBody?['samples'], const <Object?>[]);
+    expect(requests, <String>[
+      'POST /api/client/session/start-trial',
+      'POST /api/client/nodes/select',
+    ]);
+  });
+
   test('uses shortlist probe endpoint for default smart-connect RTT', () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-smart-connect-default-probe-test-',
