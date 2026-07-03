@@ -534,18 +534,16 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Локация сохранена. Переподключите POKROV.'),
-        ),
+      showPokrovSnack(
+        context,
+        'Локация сохранена. Переподключите POKROV.',
+        tone: PokrovSnackTone.success,
       );
     } on BootstrapFailure catch (error) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      showPokrovSnack(context, error.message, tone: PokrovSnackTone.danger);
     } finally {
       if (mounted) {
         setState(() {
@@ -857,9 +855,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       cabinetUrl: widget.appContext.cabinetUrl,
     );
     if (uri == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Сначала введите код активации.')),
-      );
+      showPokrovSnack(context, 'Сначала введите код активации.');
       return;
     }
 
@@ -881,8 +877,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           return;
         }
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Не удалось открыть: $uri')),
+      debugPrint('POKROV handoff open failed: $uri');
+      showPokrovSnack(
+        context,
+        'Не удалось открыть страницу. Попробуйте еще раз.',
+        tone: PokrovSnackTone.danger,
       );
     }
   }
@@ -890,18 +889,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   Future<bool> _redeemCodeInApp(String value) async {
     final code = value.trim();
     if (code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Введите код активации.')),
-      );
+      showPokrovSnack(context, 'Введите код активации.');
       return false;
     }
     if (_looksLikeSubscriptionOrProxyLink(code)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Ссылка подключения не привязывает аккаунт. Введите одноразовый код или ключ активации.',
-          ),
-        ),
+      showPokrovSnack(
+        context,
+        'Ссылка подключения не привязывает аккаунт. Введите одноразовый код или ключ активации.',
       );
       return false;
     }
@@ -931,18 +925,17 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       });
       final confirmationText = _runtimeHeadline ?? '';
       unawaited(_loadBonusSummary(force: true));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(confirmationText),
-        ),
-      );
+      showPokrovSnack(context, confirmationText, tone: PokrovSnackTone.success);
       return true;
     } catch (error) {
+      debugPrint('POKROV redeem code failed: $error');
       if (!mounted) {
         return false;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Не удалось активировать код: $error')),
+      showPokrovSnack(
+        context,
+        'Не удалось активировать код. Проверьте код и попробуйте еще раз.',
+        tone: PokrovSnackTone.danger,
       );
       return false;
     }
@@ -1000,6 +993,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       await _openSafeHandoff('cabinet', value);
     } catch (error) {
+      debugPrint('POKROV cabinet handoff failed: $error');
       if (!mounted) {
         return;
       }
@@ -1014,8 +1008,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Не удалось открыть кабинет: $error')),
+      showPokrovSnack(
+        context,
+        'Не удалось открыть кабинет. Проверьте соединение и попробуйте еще раз.',
+        tone: PokrovSnackTone.danger,
       );
     }
   }
@@ -1052,12 +1048,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         }
       });
     } catch (error) {
+      debugPrint('POKROV telegram link failed: $error');
       if (!mounted) {
         return;
       }
       setState(() {
         _telegramBonusBusy = false;
-        _telegramBonusError = 'Не удалось получить код: $error';
+        _telegramBonusError =
+            'Не удалось получить код для Telegram. Проверьте соединение и попробуйте еще раз.';
       });
     }
   }
@@ -1090,12 +1088,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _telegramBonusStatus = _telegramBonusStatusForStatus(status);
       });
     } catch (error) {
+      debugPrint('POKROV telegram bonus check failed: $error');
       if (!mounted) {
         return;
       }
       setState(() {
         _telegramBonusBusy = false;
-        _telegramBonusError = 'Не удалось проверить бонус: $error';
+        _telegramBonusError =
+            'Не удалось проверить бонус. Попробуйте еще раз через минуту.';
       });
     }
   }
@@ -1123,24 +1123,26 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _telegramBonusBusy = false;
         _telegramBonusCanClaim = false;
         _telegramBonusStatus = result.alreadyClaimed
-            ? '+${result.premiumDays} дней уже активированы'
-            : '+${result.premiumDays} дней активированы';
+            ? 'Бонус уже активирован: +${ruDays(result.premiumDays)}'
+            : 'Бонус активирован: +${ruDays(result.premiumDays)}';
         _managedProfileDirty = true;
         _runtimeHeadline = 'Telegram-бонус активирован.';
       });
       unawaited(_loadBonusSummary(force: true));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('+${result.premiumDays} дней добавлены к доступу.'),
-        ),
+      showPokrovSnack(
+        context,
+        'Доступ продлен на ${ruDays(result.premiumDays)}.',
+        tone: PokrovSnackTone.success,
       );
     } catch (error) {
+      debugPrint('POKROV telegram bonus claim failed: $error');
       if (!mounted) {
         return;
       }
       setState(() {
         _telegramBonusBusy = false;
-        _telegramBonusError = 'Не удалось активировать бонус: $error';
+        _telegramBonusError =
+            'Не удалось активировать бонус. Попробуйте еще раз.';
       });
     }
   }
@@ -1182,12 +1184,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _bonusSummaryBusy = false;
       });
     } catch (error) {
+      debugPrint('POKROV bonus summary refresh failed: $error');
       if (!mounted) {
         return;
       }
       setState(() {
         _bonusSummaryBusy = false;
-        _bonusSummaryError = 'Не удалось обновить сводку: $error';
+        _bonusSummaryError =
+            'Не удалось обновить бонусы. Проверьте соединение и попробуйте еще раз.';
       });
     }
   }
@@ -1242,35 +1246,36 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _runtimeHeadline = '$actionName: награда активирована.';
       });
       final days = result.rewardDays;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            days > 0
-                ? '$actionName: +$days дн. добавлены.'
-                : '$actionName: отметка сохранена.',
-          ),
-        ),
+      showPokrovSnack(
+        context,
+        days > 0
+            ? '$actionName: +${ruDays(days)} к доступу.'
+            : '$actionName: отметка сохранена.',
+        tone: PokrovSnackTone.success,
       );
     } catch (error) {
+      debugPrint('POKROV bonus reward failed ($actionName): $error');
       if (!mounted) {
         return;
       }
       setState(() {
         _bonusRewardBusy = false;
-        _bonusSummaryError = 'Не удалось выполнить действие: $error';
+        _bonusSummaryError = 'Не удалось получить награду. Попробуйте еще раз.';
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Не удалось выполнить действие: $error')),
+      showPokrovSnack(
+        context,
+        'Не удалось получить награду. Попробуйте еще раз.',
+        tone: PokrovSnackTone.danger,
       );
     }
   }
 
   String _telegramBonusStatusForStatus(ChannelBonusStatus status) {
     if (status.alreadyClaimed) {
-      return '+${status.bonusDays} дней активированы';
+      return 'Бонус активирован: +${ruDays(status.bonusDays)}';
     }
     if (status.claimRequired) {
-      return '+${status.bonusDays} дней готовы';
+      return 'Бонус готов: +${ruDays(status.bonusDays)}';
     }
     if (status.linkRequired) {
       return 'Сначала привяжите Telegram';
@@ -1591,9 +1596,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         setState(() {
           _runtimeHeadline = error.message;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.message)),
-        );
+        showPokrovSnack(context, error.message, tone: PokrovSnackTone.danger);
         return;
       } finally {
         if (mounted) {
@@ -1708,9 +1711,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       setState(() {
         _runtimeHeadline = error.message;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      showPokrovSnack(context, error.message, tone: PokrovSnackTone.danger);
     } finally {
       if (mounted) {
         setState(() {
@@ -1902,8 +1903,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         if (current.phase != RuntimePhase.running &&
             current.message.trim().isNotEmpty) {
           unawaited(_reportWarpRuntimeFallback(current));
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(current.message)),
+          showPokrovSnack(
+            context,
+            current.message,
+            tone: PokrovSnackTone.danger,
           );
         }
       }
@@ -1914,9 +1917,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       setState(() {
         _runtimeHeadline = error.message;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      showPokrovSnack(context, error.message, tone: PokrovSnackTone.danger);
     } on Object catch (error) {
       if (!mounted) {
         return;
@@ -1925,9 +1926,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       setState(() {
         _runtimeHeadline = message;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      showPokrovSnack(context, message, tone: PokrovSnackTone.danger);
     } finally {
       if (mounted) {
         setState(() {
@@ -1940,7 +1939,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   String _runtimeUnexpectedErrorMessage(Object error) {
     final rawDetail = switch (error) {
       TimeoutException() =>
-        'системный модуль не ответил вовремя. Попробуйте еще раз или откройте поддержку.',
+        'система не ответила вовремя. Попробуйте еще раз, а если не поможет — напишите в поддержку.',
       PlatformException(:final message, :final code) =>
         (message?.trim().isNotEmpty == true ? message!.trim() : code),
       _ => error.toString().trim(),
@@ -1950,7 +1949,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         ? '${normalizedDetail.substring(0, 180)}...'
         : normalizedDetail;
     if (detail.isEmpty) {
-      return 'POKROV не смог начать подключение. Откройте поддержку и приложите диагностику.';
+      return 'POKROV не смог начать подключение. Попробуйте еще раз, а если не поможет — напишите в поддержку: диагностику можно приложить прямо в чате.';
     }
     return 'POKROV не смог начать подключение: $detail';
   }

@@ -10,6 +10,7 @@ void _showAdvancedSettingsSheet(
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
     builder: (context) {
       return SafeArea(
         top: false,
@@ -36,6 +37,7 @@ void _showRedeemSheet(
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
     builder: (context) => SafeArea(
       top: false,
       child: SingleChildScrollView(
@@ -201,6 +203,7 @@ void _showDevicesSheet(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
     builder: (context) => _DevicesSheet(
       onFetchDevices: onFetchDevices,
       onRevokeDevice: onRevokeDevice,
@@ -305,9 +308,8 @@ class _DevicesSheetState extends State<_DevicesSheet> {
                           key: ValueKey('profile-device-${device.id}'),
                           device: device,
                           busy: _revokingId == device.id,
-                          onRevoke: device.current
-                              ? null
-                              : () => _revoke(device.id),
+                          onRevoke:
+                              device.current ? null : () => _revoke(device.id),
                         ),
                     ],
                   );
@@ -433,6 +435,7 @@ void _showNotificationsSheet(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
     builder: (context) => _NotificationsSheet(
       notifications: notifications,
       onOpenHandoff: onOpenHandoff,
@@ -530,9 +533,8 @@ class _NotificationRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: item.read
-            ? tokens.surface
-            : tokens.accent.withValues(alpha: 0.06),
+        color:
+            item.read ? tokens.surface : tokens.accent.withValues(alpha: 0.06),
         borderRadius: PokrovRadii.card,
         border: Border.all(
           color: item.read ? tokens.line : tokens.accent.withValues(alpha: 0.2),

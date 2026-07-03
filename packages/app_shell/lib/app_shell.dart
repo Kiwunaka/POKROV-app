@@ -27,6 +27,9 @@ part 'src/shell/navigation_shell.dart';
 part 'src/shared/info_sheet.dart';
 part 'src/features/support/support_chat.dart';
 part 'src/shared/shell_widgets.dart';
+part 'src/shared/ru_plural.dart';
+part 'src/shared/pokrov_haptics.dart';
+part 'src/shared/pokrov_snack.dart';
 
 part 'src/features/onboarding/onboarding_flow.dart';
 part 'src/features/home/home_surface.dart';
@@ -119,8 +122,10 @@ const _seedPackageCatalogVersion = '2026-04-13';
 abstract final class _MotionTokens {
   static const short = PokrovMotionTokens.short;
   static const standard = PokrovMotionTokens.standard;
+  static const sheet = PokrovMotionTokens.sheet;
   static const homeReveal = PokrovMotionTokens.homeReveal;
   static const ease = PokrovMotionTokens.ease;
+  static const emphasized = PokrovMotionTokens.emphasized;
 }
 
 class _MotionScope extends PokrovMotionScope {

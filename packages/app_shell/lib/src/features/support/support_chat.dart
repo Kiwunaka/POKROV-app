@@ -422,6 +422,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
+      sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
       builder: (context) {
         final p = PokrovPalette.of(context);
         return SafeArea(
@@ -658,8 +659,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                                 border: Border.all(color: p.line),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: p.ink
-                                        .withValues(alpha: 0.05),
+                                    color: p.ink.withValues(alpha: 0.05),
                                     blurRadius: 18,
                                     offset: const Offset(0, 8),
                                   ),
@@ -735,21 +735,23 @@ class _SupportChatSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      key: const ValueKey('support-chat-skeleton'),
-      padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
-      children: const [
-        PokrovSkeletonLine(width: 210, height: 12),
-        SizedBox(height: 14),
-        PokrovSkeletonLine(height: 72, radius: 16, opacity: 0.08),
-        SizedBox(height: 10),
-        Align(
-          alignment: Alignment.centerRight,
-          child: PokrovSkeletonLine(width: 240, height: 64, radius: 16),
-        ),
-        SizedBox(height: 10),
-        PokrovSkeletonLine(width: 280, height: 74, radius: 16, opacity: 0.08),
-      ],
+    return PokrovSkeletonPulse(
+      child: ListView(
+        key: const ValueKey('support-chat-skeleton'),
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+        children: const [
+          PokrovSkeletonLine(width: 210, height: 12),
+          SizedBox(height: 14),
+          PokrovSkeletonLine(height: 72, radius: 16, opacity: 0.08),
+          SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: PokrovSkeletonLine(width: 240, height: 64, radius: 16),
+          ),
+          SizedBox(height: 10),
+          PokrovSkeletonLine(width: 280, height: 74, radius: 16, opacity: 0.08),
+        ],
+      ),
     );
   }
 }

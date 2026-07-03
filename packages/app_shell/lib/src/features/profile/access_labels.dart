@@ -17,9 +17,10 @@ String _accessMainLabel(
   final claimed = (bonus?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
   final totalDays = baseDays + (claimed ? bonusDays : 0);
   return switch (appContext.accessLane) {
-    AccessLane.trialPremium =>
-      claimed ? '$totalDays дней доступа' : '$baseDays дней пробного доступа',
-    AccessLane.bonusPremium => '$totalDays дней доступа',
+    AccessLane.trialPremium => claimed
+        ? '${ruDays(totalDays)} доступа'
+        : '${ruDays(baseDays)} пробного доступа',
+    AccessLane.bonusPremium => '${ruDays(totalDays)} доступа',
     AccessLane.paidUnlimited => 'Премиум активен',
     AccessLane.freeMonthly => 'Базовый режим',
     AccessLane.freeSoftMode => 'Лимит закончился',
@@ -35,8 +36,8 @@ String _accessShortValue(
   final claimed = (bonus?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
   final totalDays = baseDays + (claimed ? bonusDays : 0);
   return switch (appContext.accessLane) {
-    AccessLane.trialPremium => claimed ? '$totalDays дней' : '$baseDays дней',
-    AccessLane.bonusPremium => '$totalDays дней',
+    AccessLane.trialPremium => claimed ? ruDays(totalDays) : ruDays(baseDays),
+    AccessLane.bonusPremium => ruDays(totalDays),
     AccessLane.paidUnlimited => 'Премиум',
     AccessLane.freeMonthly => 'Базовый',
     AccessLane.freeSoftMode => 'Лимит',
@@ -51,5 +52,5 @@ String _telegramBonusHomeLabel(
   if (claimed) {
     return 'Telegram-бонус активен';
   }
-  return '+${appContext.runtimeProfile.telegramBonusDays} дней за Telegram';
+  return '+${ruDays(appContext.runtimeProfile.telegramBonusDays)} за Telegram';
 }

@@ -67,9 +67,12 @@ class _DesktopShell extends StatelessWidget {
                     left: BorderSide(color: p.line),
                   ),
                 ),
-                child: _LazyIndexedStack(
+                child: _TabTransition(
                   index: selectedIndex,
-                  builders: sectionBuilders,
+                  child: _LazyIndexedStack(
+                    index: selectedIndex,
+                    builders: sectionBuilders,
+                  ),
                 ),
               ),
             ),
@@ -137,9 +140,12 @@ class _DesktopDrawerShell extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: _LazyIndexedStack(
+            child: _TabTransition(
               index: selectedIndex,
-              builders: sectionBuilders,
+              child: _LazyIndexedStack(
+                index: selectedIndex,
+                builders: sectionBuilders,
+              ),
             ),
           ),
         ],
@@ -165,9 +171,12 @@ class _MobileShell extends StatelessWidget {
     return Column(
       children: [
         Expanded(
-          child: _LazyIndexedStack(
+          child: _TabTransition(
             index: selectedIndex,
-            builders: sectionBuilders,
+            child: _LazyIndexedStack(
+              index: selectedIndex,
+              builders: sectionBuilders,
+            ),
           ),
         ),
         SafeArea(
@@ -269,6 +278,71 @@ class _DesktopSidebar extends PokrovDesktopSidebar {
             ),
           ],
         );
+}
+
+/// Calm cross-tab transition: fades 0.92 -> 1 and slides 6px up over
+/// [_MotionTokens.short] whenever the selected index changes, while the
+/// wrapped [_LazyIndexedStack] keeps every opened tab alive. Reduced motion
+/// switches instantly.
+class _TabTransition extends StatefulWidget {
+  const _TabTransition({
+    required this.index,
+    required this.child,
+  }) : super(key: const ValueKey('tab-transition-motion'));
+
+  final int index;
+  final Widget child;
+
+  @override
+  State<_TabTransition> createState() => _TabTransitionState();
+}
+
+class _TabTransitionState extends State<_TabTransition>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: _MotionTokens.short,
+    value: 1,
+  );
+
+  @override
+  void didUpdateWidget(covariant _TabTransition oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.index == widget.index) {
+      return;
+    }
+    if (_MotionScope.of(context).disableAnimations) {
+      _controller.value = 1;
+    } else {
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      child: widget.child,
+      builder: (context, child) {
+        final progress = _MotionScope.of(context).disableAnimations
+            ? 1.0
+            : _MotionTokens.ease.transform(_controller.value);
+        return Opacity(
+          opacity: 0.92 + 0.08 * progress,
+          child: Transform.translate(
+            offset: Offset(0, (1 - progress) * 6),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _LazyIndexedStack extends StatefulWidget {

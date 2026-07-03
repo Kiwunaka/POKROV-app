@@ -74,7 +74,7 @@ class _QuickConnectSection extends StatelessWidget {
             ? 'Отключить'
             : primaryActionEnabled
                 ? 'Включить VPN'
-                : 'Недоступно';
+                : 'Пока недоступно';
     final recoveryNotice = _motionRecoveryNotice(
       snapshot,
       headline: runtimeHeadline,
@@ -789,8 +789,7 @@ class _HomeTelegramBonusTile extends StatelessWidget {
             : p.reward.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color:
-              claimed ? p.line : p.reward.withValues(alpha: 0.30),
+          color: claimed ? p.line : p.reward.withValues(alpha: 0.30),
         ),
       ),
       child: Row(
@@ -917,9 +916,7 @@ class _HomeWarpTile extends StatelessWidget {
             : canOffer
                 ? 'Дополнительная защита'
                 : 'Недоступно на этом устройстве';
-    final iconColor = enabled
-        ? p.accent
-        : p.muted.withValues(alpha: 0.8);
+    final iconColor = enabled ? p.accent : p.muted.withValues(alpha: 0.8);
     final iconBackground = enabled
         ? p.accent.withValues(alpha: 0.12)
         : p.surfaceMuted.withValues(alpha: 0.86);
@@ -940,9 +937,7 @@ class _HomeWarpTile extends StatelessWidget {
               : p.surface.withValues(alpha: 0.96),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: enabled
-                ? p.accent.withValues(alpha: 0.28)
-                : p.line,
+            color: enabled ? p.accent.withValues(alpha: 0.28) : p.line,
           ),
         ),
         child: Row(
@@ -993,9 +988,7 @@ class _HomeWarpTile extends StatelessWidget {
                           key: ValueKey(subtitle),
                           style:
                               Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: enabled
-                                        ? p.accent
-                                        : p.muted,
+                                    color: enabled ? p.accent : p.muted,
                                     fontWeight: FontWeight.w700,
                                   ),
                         ),
@@ -1094,7 +1087,7 @@ String _homeProtectionStatusLabel(
 
 String _accessHomeSupportLabel(AccessLane lane) {
   return switch (lane) {
-    AccessLane.trialPremium => 'После триала — продлите доступ',
+    AccessLane.trialPremium => 'После пробного периода — продлите доступ',
     AccessLane.bonusPremium || AccessLane.paidUnlimited => 'Доступ активен',
     AccessLane.freeMonthly => 'Можно продлить до премиум-доступа',
     AccessLane.freeSoftMode => 'Продлите доступ, чтобы подключиться',
@@ -1192,7 +1185,7 @@ class _HomeRevealSlice extends StatelessWidget {
       animation: controller,
       child: child,
       builder: (context, child) {
-        final progress = Curves.easeOutCubic.transform(
+        final progress = _MotionTokens.emphasized.transform(
           ((controller.value - begin) / (end - begin)).clamp(0.0, 1.0),
         );
         return Opacity(

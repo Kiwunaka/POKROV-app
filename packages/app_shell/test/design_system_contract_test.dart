@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
@@ -241,10 +242,14 @@ void main() {
     expect(disconnecting.settleKey, const ValueKey('connect-disc-busy-settle'));
   });
 
-  test('connect disc motion keeps finite sweep and tactile scale contract', () {
+  test('connect disc motion repeats the busy sweep and settles when done', () {
     expect(
       PokrovConnectDiscMotion.breathDuration,
       const Duration(milliseconds: 900),
+    );
+    expect(
+      PokrovConnectDiscMotion.breathPeriod,
+      const Duration(milliseconds: 1800),
     );
     expect(
       PokrovConnectDiscMotion.sweepDuration,
@@ -273,6 +278,76 @@ void main() {
         sweepValue: 0.75,
       ),
       closeTo(-math.pi / 2, 0.0001),
+    );
+
+    // The busy sweep repeats continuously while a sweep phase is active...
+    expect(
+      PokrovConnectDiscMotion.sweepRepeats(
+        runsSweep: true,
+        disableAnimations: false,
+      ),
+      isTrue,
+    );
+    // ...and settles as soon as the disc leaves the busy family.
+    expect(
+      PokrovConnectDiscMotion.sweepRepeats(
+        runsSweep: false,
+        disableAnimations: false,
+      ),
+      isFalse,
+    );
+    // Reduced motion keeps the static single-pass presentation.
+    expect(
+      PokrovConnectDiscMotion.sweepRepeats(
+        runsSweep: true,
+        disableAnimations: true,
+      ),
+      isFalse,
+    );
+    // Non-looping environments (flutter test) keep the finite pass.
+    expect(
+      PokrovConnectDiscMotion.sweepRepeats(
+        runsSweep: true,
+        disableAnimations: false,
+        loopingEnabled: false,
+      ),
+      isFalse,
+    );
+
+    // The calm breath loops only while connected.
+    expect(
+      PokrovConnectDiscMotion.breathRepeats(
+        phase: PokrovConnectDiscPhase.connected,
+        disableAnimations: false,
+      ),
+      isTrue,
+    );
+    for (final phase in PokrovConnectDiscPhase.values) {
+      if (phase == PokrovConnectDiscPhase.connected) {
+        continue;
+      }
+      expect(
+        PokrovConnectDiscMotion.breathRepeats(
+          phase: phase,
+          disableAnimations: false,
+        ),
+        isFalse,
+      );
+    }
+    expect(
+      PokrovConnectDiscMotion.breathRepeats(
+        phase: PokrovConnectDiscPhase.connected,
+        disableAnimations: true,
+      ),
+      isFalse,
+    );
+    expect(
+      PokrovConnectDiscMotion.breathRepeats(
+        phase: PokrovConnectDiscPhase.connected,
+        disableAnimations: false,
+        loopingEnabled: false,
+      ),
+      isFalse,
     );
 
     expect(
@@ -649,6 +724,192 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(selected, 1);
+  });
+
+  testWidgets('pressable scales down quick on press and releases with spring',
+      (tester) async {
+    var taps = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: const [PokrovPalette.light]),
+        home: PokrovMotionScope(
+          disableAnimations: false,
+          child: Scaffold(
+            body: Center(
+              child: PokrovPressable(
+                child: FilledButton(
+                  onPressed: () => taps += 1,
+                  child: const Text('Продлить доступ'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final motionFinder = find.byKey(PokrovPressable.motionKey);
+    expect(motionFinder, findsOneWidget);
+    AnimatedScale scaleWidget() => tester.widget<AnimatedScale>(motionFinder);
+
+    expect(PokrovPressable.pressedScale, 0.97);
+    expect(PokrovPressable.hoverScale, 1.01);
+    expect(scaleWidget().scale, 1.0);
+    expect(scaleWidget().duration, PokrovMotionTokens.quick);
+    expect(scaleWidget().curve, PokrovMotionTokens.spring);
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('Продлить доступ')),
+    );
+    await tester.pump();
+    expect(scaleWidget().scale, PokrovPressable.pressedScale);
+    expect(scaleWidget().curve, Curves.easeIn);
+
+    await gesture.up();
+    await tester.pump();
+    expect(scaleWidget().scale, 1.0);
+    expect(scaleWidget().curve, PokrovMotionTokens.spring);
+
+    await tester.pumpAndSettle();
+    expect(taps, 1);
+  });
+
+  testWidgets('pokrov snack helper renders toned floating snacks with icons',
+      (tester) async {
+    late BuildContext snackContext;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: const [PokrovPalette.light]),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              snackContext = context;
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      ),
+    );
+
+    showPokrovSnack(
+      snackContext,
+      'Код скопирован',
+      tone: PokrovSnackTone.success,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Код скопирован'), findsOneWidget);
+    expect(find.byIcon(Icons.check_circle), findsOneWidget);
+    final successSnack = tester.widget<SnackBar>(find.byType(SnackBar));
+    expect(successSnack.behavior, SnackBarBehavior.floating);
+    expect(successSnack.duration, const Duration(seconds: 3));
+
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+
+    showPokrovSnack(
+      snackContext,
+      'Не удалось активировать код. Проверьте код и попробуйте еще раз.',
+      tone: PokrovSnackTone.danger,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+
+    showPokrovSnack(snackContext, 'Сначала введите код активации.');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byIcon(Icons.info_outline), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('haptic tiers map to system feedback and stay guarded',
+      (tester) async {
+    final vibrations = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'HapticFeedback.vibrate') {
+          vibrations.add(call.arguments as String? ?? '');
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+
+    PokrovHaptics.tap();
+    PokrovHaptics.impact();
+    PokrovHaptics.success();
+    PokrovHaptics.error();
+    await tester.pump();
+
+    expect(vibrations, const [
+      'HapticFeedbackType.selectionClick',
+      'HapticFeedbackType.lightImpact',
+      'HapticFeedbackType.mediumImpact',
+      'HapticFeedbackType.heavyImpact',
+    ]);
+
+    // Guarded: a failing platform channel must not throw into user flows.
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async => throw PlatformException(code: 'no-haptics'),
+    );
+    expect(PokrovHaptics.error, returnsNormally);
+    await tester.pump();
+  });
+
+  testWidgets('skeleton pulse loops gently and rests under reduced motion',
+      (tester) async {
+    PokrovLoopingMotion.debugLoopingOverride = true;
+    addTearDown(() => PokrovLoopingMotion.debugLoopingOverride = null);
+
+    expect(PokrovSkeletonPulse.period, const Duration(milliseconds: 1100));
+    expect(PokrovSkeletonPulse.minOpacity, 0.55);
+
+    await tester.pumpWidget(
+      const Directionality(
+        textDirection: TextDirection.ltr,
+        child: PokrovMotionScope(
+          disableAnimations: false,
+          child: PokrovSkeletonList(rows: 1),
+        ),
+      ),
+    );
+
+    final pulseFinder = find.byKey(PokrovSkeletonPulse.motionKey);
+    expect(pulseFinder, findsOneWidget);
+    double pulseOpacity() =>
+        tester.widget<FadeTransition>(pulseFinder).opacity.value;
+
+    expect(pulseOpacity(), 1.0);
+    await tester.pump(const Duration(milliseconds: 550));
+    expect(pulseOpacity(), lessThan(1.0));
+    expect(
+      pulseOpacity(),
+      greaterThanOrEqualTo(PokrovSkeletonPulse.minOpacity),
+    );
+
+    await tester.pumpWidget(
+      const Directionality(
+        textDirection: TextDirection.ltr,
+        child: PokrovMotionScope(
+          disableAnimations: true,
+          child: PokrovSkeletonList(rows: 1),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(pulseOpacity(), 1.0);
+
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 }
 

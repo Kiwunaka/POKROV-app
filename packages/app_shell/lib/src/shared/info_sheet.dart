@@ -10,6 +10,23 @@ class _SettingsRow extends PokrovSettingsRow {
   });
 }
 
+/// Shared modal-sheet motion: [PokrovMotionTokens.sheet] with the emphasized
+/// deceleration curve, collapsing to zero duration under reduced motion.
+AnimationStyle _pokrovSheetAnimationStyle(BuildContext context) {
+  if (_MotionScope.of(context).disableAnimations) {
+    return const AnimationStyle(
+      duration: Duration.zero,
+      reverseDuration: Duration.zero,
+    );
+  }
+  return const AnimationStyle(
+    duration: _MotionTokens.sheet,
+    reverseDuration: _MotionTokens.sheet,
+    curve: _MotionTokens.emphasized,
+    reverseCurve: _MotionTokens.emphasized,
+  );
+}
+
 void _showInfoSheet(
   BuildContext context, {
   required String title,
@@ -18,6 +35,7 @@ void _showInfoSheet(
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
     builder: (context) => _InfoSheet(title: title, lines: lines),
   );
 }

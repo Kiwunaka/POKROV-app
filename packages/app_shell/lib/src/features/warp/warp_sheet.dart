@@ -10,6 +10,7 @@ void _showWarpConsentSheet(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
@@ -41,11 +42,9 @@ class _WarpConsentSheet extends StatelessWidget {
     final useDarkPanel =
         active && Theme.of(context).brightness == Brightness.dark;
     final foreground = useDarkPanel ? Colors.white : p.ink;
-    final secondary = useDarkPanel
-        ? Colors.white.withValues(alpha: 0.72)
-        : p.muted;
-    final panelColor =
-        useDarkPanel ? const Color(0xFF0A1114) : p.surface;
+    final secondary =
+        useDarkPanel ? Colors.white.withValues(alpha: 0.72) : p.muted;
+    final panelColor = useDarkPanel ? const Color(0xFF0A1114) : p.surface;
     final lineColor =
         useDarkPanel ? Colors.white.withValues(alpha: 0.10) : p.line;
     return SafeArea(
@@ -173,26 +172,28 @@ class _WarpConsentSheet extends StatelessWidget {
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
-                child: FilledButton.icon(
-                  key: const ValueKey('home-warp-enable-action'),
-                  icon: ready
-                      ? enabled
-                          ? const Icon(Icons.shield_outlined)
-                          : const Icon(Icons.verified_user_rounded)
-                      : const Icon(Icons.info_outline_rounded),
-                  label: Text(
-                    ready
+                child: PokrovPressable(
+                  child: FilledButton.icon(
+                    key: const ValueKey('home-warp-enable-action'),
+                    icon: ready
                         ? enabled
-                            ? 'Выключить WARP'
-                            : 'Включить WARP'
-                        : 'Понятно',
+                            ? const Icon(Icons.shield_outlined)
+                            : const Icon(Icons.verified_user_rounded)
+                        : const Icon(Icons.info_outline_rounded),
+                    label: Text(
+                      ready
+                          ? enabled
+                              ? 'Выключить WARP'
+                              : 'Включить WARP'
+                          : 'Понятно',
+                    ),
+                    onPressed: () {
+                      if (ready) {
+                        unawaited(onChanged(nextValue));
+                      }
+                      Navigator.of(context).pop();
+                    },
                   ),
-                  onPressed: () {
-                    if (ready) {
-                      unawaited(onChanged(nextValue));
-                    }
-                    Navigator.of(context).pop();
-                  },
                 ),
               ),
               if (ready) ...[

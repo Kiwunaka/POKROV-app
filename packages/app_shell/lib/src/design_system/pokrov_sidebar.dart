@@ -204,9 +204,7 @@ class _PokrovSidebarItem extends StatelessWidget {
                       width: 2,
                       height: 20,
                       decoration: BoxDecoration(
-                        color: selected
-                            ? tokens.accent
-                            : Colors.transparent,
+                        color: selected ? tokens.accent : Colors.transparent,
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
@@ -215,8 +213,7 @@ class _PokrovSidebarItem extends StatelessWidget {
                   Icon(
                     selected ? selectedIcon : icon,
                     size: 20,
-                    color:
-                        selected ? tokens.accent : tokens.muted,
+                    color: selected ? tokens.accent : tokens.muted,
                   ),
                   if (!collapsed) ...[
                     const SizedBox(width: 10),
@@ -234,9 +231,7 @@ class _PokrovSidebarItem extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style:
                               Theme.of(context).textTheme.labelLarge?.copyWith(
-                                    color: selected
-                                        ? tokens.ink
-                                        : tokens.muted,
+                                    color: selected ? tokens.ink : tokens.muted,
                                     fontWeight: selected
                                         ? FontWeight.w600
                                         : FontWeight.w600,

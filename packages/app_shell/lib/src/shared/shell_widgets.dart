@@ -213,11 +213,37 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
         oldWidget.degraded != widget.degraded ||
         oldWidget.error != widget.error ||
         oldWidget.busy != widget.busy) {
+      _emitPhaseHaptics(oldWidget);
       _breathController.reset();
       _sweepController.reset();
       _optimisticBusy = false;
     }
     _syncControllers();
+  }
+
+  void _emitPhaseHaptics(_ConnectOrbButton oldWidget) {
+    final oldPhase = PokrovConnectDiscState.resolve(
+      enabled: oldWidget.enabled,
+      running: oldWidget.running,
+      degraded: oldWidget.degraded,
+      error: oldWidget.error,
+      busy: oldWidget.busy,
+    ).phase;
+    final newPhase = PokrovConnectDiscState.resolve(
+      enabled: widget.enabled,
+      running: widget.running,
+      degraded: widget.degraded,
+      error: widget.error,
+      busy: widget.busy,
+    ).phase;
+    if (newPhase == oldPhase) {
+      return;
+    }
+    if (newPhase == PokrovConnectDiscPhase.connected) {
+      PokrovHaptics.success();
+    } else if (newPhase == PokrovConnectDiscPhase.error) {
+      PokrovHaptics.error();
+    }
   }
 
   @override
@@ -243,11 +269,27 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
             .disableAnimations;
     final state = _discState;
     final canAnimate = state.enabled && !disableAnimations;
+    final loopingEnabled = PokrovLoopingMotion.enabled;
 
     if (canAnimate && !state.runsSweep) {
-      if (!_breathController.isAnimating &&
-          _breathController.status != AnimationStatus.completed) {
-        _breathController.forward();
+      if (PokrovConnectDiscMotion.breathRepeats(
+        phase: state.phase,
+        disableAnimations: disableAnimations,
+        loopingEnabled: loopingEnabled,
+      )) {
+        // Calm connected breath: slow continuous inhale/exhale loop.
+        if (!_breathController.isAnimating ||
+            _breathController.duration !=
+                PokrovConnectDiscMotion.breathPeriod) {
+          _breathController.duration = PokrovConnectDiscMotion.breathPeriod;
+          _breathController.repeat(reverse: true);
+        }
+      } else {
+        _breathController.duration = PokrovConnectDiscMotion.breathDuration;
+        if (!_breathController.isAnimating &&
+            _breathController.status != AnimationStatus.completed) {
+          _breathController.forward();
+        }
       }
     } else {
       _breathController.stop();
@@ -255,7 +297,17 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     }
 
     if (canAnimate && state.runsSweep) {
-      if (!_sweepController.isAnimating &&
+      if (PokrovConnectDiscMotion.sweepRepeats(
+        runsSweep: state.runsSweep,
+        disableAnimations: disableAnimations,
+        loopingEnabled: loopingEnabled,
+      )) {
+        // Busy sweep repeats until the phase settles instead of freezing
+        // after a single pass while still connecting.
+        if (!_sweepController.isAnimating) {
+          _sweepController.repeat();
+        }
+      } else if (!_sweepController.isAnimating &&
           _sweepController.status != AnimationStatus.completed) {
         _sweepController.forward(from: 0);
       }
@@ -309,6 +361,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
               ? null
               : () {
                   Feedback.forTap(context);
+                  PokrovHaptics.impact();
                   setState(() {
                     _optimisticBusy = true;
                   });

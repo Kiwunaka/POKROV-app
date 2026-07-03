@@ -13,6 +13,7 @@ void _showRewardsHubSheet(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
     builder: (context) => _RewardsHubSheet(
       summary: summary,
       rewardBusy: rewardBusy,
@@ -58,114 +59,123 @@ class _RewardsHubSheet extends StatelessWidget {
     final showPromoSlots = promoSlots.visibleSlots.isNotEmpty;
     return SafeArea(
       top: false,
-      child: SingleChildScrollView(
-        key: const ValueKey('rewards-hub-sheet'),
-        padding: const EdgeInsets.fromLTRB(18, 4, 18, 28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Бонусы',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: p.ink,
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Ваши дополнительные дни, промокоды и история начислений.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: p.ink.withValues(alpha: 0.72),
-                    height: 1.35,
-                  ),
-            ),
-            const SizedBox(height: 14),
-            if (summary == null && rewardBusy) ...[
-              const _MotionSkeletonList(
-                key: ValueKey('rewards-hub-loading'),
-                rows: 4,
+      child: RefreshIndicator(
+        key: const ValueKey('rewards-refresh-indicator'),
+        color: p.accent,
+        onRefresh: () async {
+          onRefreshBonusSummary();
+        },
+        child: SingleChildScrollView(
+          key: const ValueKey('rewards-hub-sheet'),
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(18, 4, 18, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Бонусы',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: p.ink,
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
-              const SizedBox(height: 12),
-            ],
-            _RewardsTelegramCard(
-              summary: summary,
-              onRefreshBonusSummary: onRefreshBonusSummary,
-              onOpenHandoff: onOpenHandoff,
-            ),
-            const SizedBox(height: 12),
-            _RewardsReferralCard(
-              referralCode: referralCode,
-              referralSummary: referralSummary,
-              onOpenHandoff: onOpenHandoff,
-            ),
-            const SizedBox(height: 12),
-            if (showPromoSlots) ...[
-              _RewardsPromoSlotsSection(
-                promoSlots: promoSlots,
+              const SizedBox(height: 8),
+              Text(
+                'Ваши дополнительные дни, промокоды и история начислений.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: p.ink.withValues(alpha: 0.72),
+                      height: 1.35,
+                    ),
+              ),
+              const SizedBox(height: 14),
+              if (summary == null && rewardBusy) ...[
+                const _MotionSkeletonList(
+                  key: ValueKey('rewards-hub-loading'),
+                  rows: 4,
+                ),
+                const SizedBox(height: 12),
+              ],
+              _RewardsTelegramCard(
+                summary: summary,
+                onRefreshBonusSummary: onRefreshBonusSummary,
                 onOpenHandoff: onOpenHandoff,
               ),
               const SizedBox(height: 12),
-            ],
-            _RewardsHistorySection(
-              summary: summary,
-            ),
-            if (showWheel || showCalendar) ...[
-              const SizedBox(height: 12),
-              _RewardsActivitiesHeader(
-                summary: summary,
+              _RewardsReferralCard(
+                referralCode: referralCode,
+                referralSummary: referralSummary,
+                onOpenHandoff: onOpenHandoff,
               ),
-              if (showWheel) ...[
-                const SizedBox(height: 10),
-                _RewardsFeatureCard(
-                  key: const ValueKey('rewards-wheel-card'),
-                  icon: Icons.card_giftcard_outlined,
-                  title: 'Бонус дня',
-                  status: wheel.statusLabel,
-                  detail: wheel.availabilityText,
-                  lastActionAt: wheel.lastActionAt,
-                  actionKey: const ValueKey('rewards-wheel-spin-action'),
-                  actionLabel: rewardBusy ? 'Проверяем' : 'Получить бонус',
-                  actionEnabled: wheel.canRun && !rewardBusy,
-                  onAction: () {
-                    Navigator.of(context).pop();
-                    onSpinWheel();
-                  },
-                ),
-              ],
-              if (showCalendar) ...[
-                const SizedBox(height: 10),
-                _RewardsFeatureCard(
-                  key: const ValueKey('rewards-calendar-card'),
-                  icon: Icons.calendar_month_outlined,
-                  title: 'Календарь активности',
-                  status: calendar.statusLabel,
-                  detail: calendar.availabilityText,
-                  lastActionAt: calendar.lastActionAt,
-                  actionKey: const ValueKey('rewards-calendar-checkin-action'),
-                  actionLabel: rewardBusy ? 'Проверяем' : 'Отметиться',
-                  actionEnabled: calendar.canRun && !rewardBusy,
-                  onAction: () {
-                    Navigator.of(context).pop();
-                    onCheckInCalendar();
-                  },
+              const SizedBox(height: 12),
+              if (showPromoSlots) ...[
+                _RewardsPromoSlotsSection(
+                  promoSlots: promoSlots,
+                  onOpenHandoff: onOpenHandoff,
                 ),
                 const SizedBox(height: 12),
-                _RewardsCalendarGrid(
-                  activeDays: _rewardActiveDays(summary),
-                ),
               ],
+              _RewardsHistorySection(
+                summary: summary,
+              ),
+              if (showWheel || showCalendar) ...[
+                const SizedBox(height: 12),
+                _RewardsActivitiesHeader(
+                  summary: summary,
+                ),
+                if (showWheel) ...[
+                  const SizedBox(height: 10),
+                  _RewardsFeatureCard(
+                    key: const ValueKey('rewards-wheel-card'),
+                    icon: Icons.card_giftcard_outlined,
+                    title: 'Бонус дня',
+                    status: wheel.statusLabel,
+                    detail: wheel.availabilityText,
+                    lastActionAt: wheel.lastActionAt,
+                    actionKey: const ValueKey('rewards-wheel-spin-action'),
+                    actionLabel: rewardBusy ? 'Проверяем' : 'Получить бонус',
+                    actionEnabled: wheel.canRun && !rewardBusy,
+                    onAction: () {
+                      Navigator.of(context).pop();
+                      onSpinWheel();
+                    },
+                  ),
+                ],
+                if (showCalendar) ...[
+                  const SizedBox(height: 10),
+                  _RewardsFeatureCard(
+                    key: const ValueKey('rewards-calendar-card'),
+                    icon: Icons.calendar_month_outlined,
+                    title: 'Календарь активности',
+                    status: calendar.statusLabel,
+                    detail: calendar.availabilityText,
+                    lastActionAt: calendar.lastActionAt,
+                    actionKey:
+                        const ValueKey('rewards-calendar-checkin-action'),
+                    actionLabel: rewardBusy ? 'Проверяем' : 'Отметиться',
+                    actionEnabled: calendar.canRun && !rewardBusy,
+                    onAction: () {
+                      Navigator.of(context).pop();
+                      onCheckInCalendar();
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _RewardsCalendarGrid(
+                    activeDays: _rewardActiveDays(summary),
+                  ),
+                ],
+              ],
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                key: const ValueKey('rewards-refresh-action'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  onRefreshBonusSummary();
+                },
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Обновить сводку'),
+              ),
             ],
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              key: const ValueKey('rewards-refresh-action'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                onRefreshBonusSummary();
-              },
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Обновить сводку'),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -222,7 +232,7 @@ class _RewardsTelegramCard extends StatelessWidget {
                 Text(
                   claimed
                       ? 'Telegram-бонус активен'
-                      : 'Telegram +$bonusDays дней',
+                      : 'Telegram +${ruDays(bonusDays)}',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: p.ink,
                         fontWeight: FontWeight.w700,
@@ -395,14 +405,16 @@ class _RewardsFeatureCard extends StatelessWidget {
           ],
           const SizedBox(height: 12),
           if (actionEnabled)
-            FilledButton.icon(
-              key: actionKey,
-              onPressed: () {
-                Feedback.forTap(context);
-                onAction?.call();
-              },
-              icon: const Icon(Icons.card_giftcard_outlined),
-              label: Text(actionLabel),
+            PokrovPressable(
+              child: FilledButton.icon(
+                key: actionKey,
+                onPressed: () {
+                  Feedback.forTap(context);
+                  onAction?.call();
+                },
+                icon: const Icon(Icons.card_giftcard_outlined),
+                label: Text(actionLabel),
+              ),
             )
           else
             KeyedSubtree(
@@ -471,9 +483,7 @@ class _RewardsCalendarGrid extends StatelessWidget {
                       : p.surfaceMuted,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: active
-                        ? p.accent.withValues(alpha: 0.22)
-                        : p.line,
+                    color: active ? p.accent.withValues(alpha: 0.22) : p.line,
                   ),
                 ),
               );
@@ -564,6 +574,13 @@ class _RewardsHistorySection extends StatelessWidget {
     }
   }
 
+  String _historyValue(AppFirstBonusHistoryItem item) {
+    if (item.days > 0) {
+      return '+${ruDays(item.days)}';
+    }
+    return item.compactValue;
+  }
+
   @override
   Widget build(BuildContext context) {
     final items = summary?.historyItems ?? const <AppFirstBonusHistoryItem>[];
@@ -602,7 +619,7 @@ class _RewardsHistorySection extends StatelessWidget {
                 key: ValueKey('rewards-history-item-${entry.$1}'),
                 icon: _historyIcon(entry.$2),
                 title: entry.$2.title,
-                value: entry.$2.compactValue,
+                value: _historyValue(entry.$2),
               ),
         ],
       ),
@@ -813,7 +830,7 @@ class _RewardsReferralCard extends StatelessWidget {
                 ),
                 Text(
                   referralSummary.bonusDays > 0
-                      ? 'Приглашений: ${referralSummary.count} · бонус +${referralSummary.bonusDays} дней'
+                      ? 'Приглашений: ${referralSummary.count} · бонус +${ruDays(referralSummary.bonusDays)}'
                       : 'Приглашений: ${referralSummary.count}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: p.muted,
@@ -826,8 +843,10 @@ class _RewardsReferralCard extends StatelessWidget {
             key: const ValueKey('rewards-referral-copy-action'),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: code));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Код скопирован')),
+              showPokrovSnack(
+                context,
+                'Код скопирован',
+                tone: PokrovSnackTone.success,
               );
             },
             icon: const Icon(Icons.copy_rounded),
@@ -843,8 +862,10 @@ class _RewardsReferralCard extends StatelessWidget {
                     Clipboard.setData(
                       ClipboardData(text: shareLink.toString()),
                     );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Ссылка скопирована')),
+                    showPokrovSnack(
+                      context,
+                      'Ссылка скопирована',
+                      tone: PokrovSnackTone.success,
                     );
                   },
             icon: const Icon(Icons.link_rounded),

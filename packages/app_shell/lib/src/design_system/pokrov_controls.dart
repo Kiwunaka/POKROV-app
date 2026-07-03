@@ -590,7 +590,8 @@ class _PokrovHomeChipState extends State<PokrovHomeChip> {
           key: PokrovHomeChip.motionKey,
           scale: scale,
           duration: motion.duration(PokrovMotionTokens.quick),
-          curve: PokrovMotionTokens.ease,
+          // Ease into the press, release with the springy overshoot.
+          curve: _pressed ? PokrovMotionTokens.ease : PokrovMotionTokens.spring,
           child: AnimatedContainer(
             duration: motion.duration(PokrovMotionTokens.short),
             curve: PokrovMotionTokens.ease,
@@ -808,7 +809,8 @@ class _PokrovSettingsRowPressSurfaceState
           key: PokrovSettingsRowPressSurface.feedbackKey,
           scale: scale,
           duration: motion.duration(PokrovMotionTokens.short),
-          curve: PokrovMotionTokens.ease,
+          // Ease into the press, release with the springy overshoot.
+          curve: _pressed ? PokrovMotionTokens.ease : PokrovMotionTokens.spring,
           alignment: Alignment.center,
           child: Material(
             type: MaterialType.transparency,

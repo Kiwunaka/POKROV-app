@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 abstract final class PokrovMotionTokens {
@@ -17,6 +19,19 @@ abstract final class PokrovMotionTokens {
 
   /// Subtle overshoot for tactile, springy confirmations (finite, test-safe).
   static const spring = Cubic(0.34, 1.36, 0.64, 1.0);
+}
+
+/// Gate for endlessly looping motion (skeleton pulse, connected-disc breath,
+/// busy sweep). Loops collapse to a finite, test-safe pass under
+/// `flutter test` so `pumpAndSettle` contracts stay bounded, while release
+/// builds keep the continuous motion.
+abstract final class PokrovLoopingMotion {
+  /// Test hook: force loops on/off regardless of the environment.
+  @visibleForTesting
+  static bool? debugLoopingOverride;
+
+  static bool get enabled =>
+      debugLoopingOverride ?? !Platform.environment.containsKey('FLUTTER_TEST');
 }
 
 class PokrovMotionScope extends InheritedWidget {

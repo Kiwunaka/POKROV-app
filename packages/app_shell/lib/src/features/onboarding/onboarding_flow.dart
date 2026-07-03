@@ -147,7 +147,7 @@ class _FirstLaunchChoiceScreen extends StatelessWidget {
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 520),
                   child: Text(
-                    'Получите ${appContext.runtimeProfile.trialDays} дней премиум-доступа и включите VPN за один шаг.',
+                    'Получите ${ruDays(appContext.runtimeProfile.trialDays)} премиум-доступа и включите VPN за один шаг.',
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
@@ -165,7 +165,7 @@ class _FirstLaunchChoiceScreen extends StatelessWidget {
                 icon: Icons.flash_on_rounded,
                 title: 'Я новый пользователь',
                 subtitle:
-                    '${appContext.runtimeProfile.trialDays} дней премиум бесплатно',
+                    '${ruDays(appContext.runtimeProfile.trialDays)} премиум бесплатно',
                 primary: true,
                 onTap: onNewUser,
               ),
@@ -241,12 +241,9 @@ class _FirstLaunchChoiceCard extends StatelessWidget {
     final background = primary
         ? p.accent.withValues(alpha: 0.09)
         : p.surfaceMuted.withValues(alpha: 0.66);
-    final border = primary
-        ? p.accent.withValues(alpha: 0.20)
-        : p.line;
-    final iconBackground = primary
-        ? p.accent
-        : p.accent.withValues(alpha: 0.10);
+    final border = primary ? p.accent.withValues(alpha: 0.20) : p.line;
+    final iconBackground =
+        primary ? p.accent : p.accent.withValues(alpha: 0.10);
     final iconColor = primary ? Colors.white : p.accent;
     return PokrovSettingsRowPressSurface(
       onTap: onTap,
@@ -276,9 +273,7 @@ class _FirstLaunchChoiceCard extends StatelessWidget {
                 const Spacer(),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: primary
-                      ? p.accent
-                      : p.ink.withValues(alpha: 0.38),
+                  color: primary ? p.accent : p.ink.withValues(alpha: 0.38),
                 ),
               ],
             ),
@@ -410,17 +405,19 @@ class _FirstLaunchRestoreScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              FilledButton.icon(
-                key: const ValueKey('first-launch-restore-redeem'),
-                onPressed: busy ? null : onRedeemCode,
-                icon: busy
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.check_circle_outline_rounded),
-                label: Text(busy ? 'Проверяем' : 'Продолжить'),
+              PokrovPressable(
+                child: FilledButton.icon(
+                  key: const ValueKey('first-launch-restore-redeem'),
+                  onPressed: busy ? null : onRedeemCode,
+                  icon: busy
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check_circle_outline_rounded),
+                  label: Text(busy ? 'Проверяем' : 'Продолжить'),
+                ),
               ),
               const SizedBox(height: 12),
               LayoutBuilder(

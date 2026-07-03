@@ -150,6 +150,10 @@ void main() {
       'Расширенная защита включится',
       'Расширенная защита выключена',
       'heavyImpact(',
+      'триал',
+      'Триал',
+      'системный модуль',
+      'подготовьте устройство',
     ]) {
       expect(combined, isNot(contains(forbidden)), reason: forbidden);
     }
@@ -159,5 +163,26 @@ void main() {
       isNot(contains('heavyImpact(')),
       reason: 'Rewards and bonus actions should stay calm, not casino-like.',
     );
+  });
+
+  test('seed shell copy never leaks raw exceptions into user-facing strings',
+      () {
+    final source = seedShell.readAsStringSync();
+    final lines = source.split('\n');
+    for (final (index, line) in lines.indexed) {
+      if (line.contains(r'$error') && !line.contains('debugPrint')) {
+        fail(
+          'seed_shell.dart:${index + 1} interpolates raw \$error outside '
+          'debugPrint logging: ${line.trim()}',
+        );
+      }
+    }
+
+    for (final forbidden in const <String>[
+      'системный модуль',
+      'приложите диагностику',
+    ]) {
+      expect(source, isNot(contains(forbidden)), reason: forbidden);
+    }
   });
 }

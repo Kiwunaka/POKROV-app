@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
+import 'package:pokrov_app_shell/src/design_system/design_system.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
@@ -4390,7 +4391,7 @@ void main() {
     expect(calls, contains('runtimeEngine.connect'));
     expect(
         find.byKey(const ValueKey('motion-recovery-banner')), findsOneWidget);
-    expect(find.textContaining('системный модуль'), findsWidgets);
+    expect(find.textContaining('система не ответила вовремя'), findsWidgets);
   });
 
   testWidgets(
@@ -4816,6 +4817,90 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(snapshotCalls, greaterThanOrEqualTo(2));
+  });
+
+  testWidgets('tab changes animate through the shared tab transition wrapper',
+      (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('tab-transition-motion')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('lazy-indexed-stack')), findsOneWidget);
+
+    await _tapNav(tester, 'nav-profile');
+    expect(
+      find.byKey(
+        const ValueKey('profile-compact-account-layer'),
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
+
+    await _tapNav(tester, 'nav-protection');
+    expect(
+      find.byKey(const ValueKey('primary-connect-action')),
+      findsOneWidget,
+    );
+    // Previously opened tabs stay alive behind the transition wrapper.
+    expect(
+      find.byKey(
+        const ValueKey('profile-compact-account-layer'),
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('profile and rewards hub expose accent pull-to-refresh',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+        warpPolicy: WarpRuntimePolicy.disabled,
+      ),
+    );
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _tapNav(tester, 'nav-profile');
+    final profileIndicator =
+        find.byKey(const ValueKey('profile-refresh-indicator'));
+    expect(profileIndicator, findsOneWidget);
+    expect(
+      tester.widget<RefreshIndicator>(profileIndicator).color,
+      PokrovPalette.light.accent,
+    );
+
+    final summaryCallsBefore = bootstrapper.bonusSummaryCalls;
+    await tester.fling(
+      find.byType(Scrollable).first,
+      const Offset(0, 320),
+      1000,
+    );
+    await tester.pumpAndSettle();
+    expect(bootstrapper.bonusSummaryCalls, greaterThan(summaryCallsBefore));
+
+    await _openRewardsHubFromProfile(tester);
+    expect(
+      find.byKey(const ValueKey('rewards-refresh-indicator')),
+      findsOneWidget,
+    );
   });
 
   test('builds seed app context for public and readiness-only host lanes', () {

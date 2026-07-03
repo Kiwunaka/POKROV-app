@@ -84,7 +84,7 @@ void main() {
     final connectAction = find.byKey(const ValueKey('primary-connect-action'));
     expect(connectAction, findsOneWidget);
     expect(
-        find.descendant(of: connectAction, matching: find.text('Недоступно')),
+        find.descendant(of: connectAction, matching: find.text('Пока недоступно')),
         findsOneWidget);
     expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
     expect(find.text('Дополнительная защита'), findsOneWidget);

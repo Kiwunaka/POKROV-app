@@ -313,6 +313,7 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
+      sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -863,14 +864,10 @@ class _SelectedAppCandidateRow extends StatelessWidget {
     final content = Container(
       padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
       decoration: BoxDecoration(
-        color: selected
-            ? p.accent.withValues(alpha: 0.08)
-            : p.surface,
+        color: selected ? p.accent.withValues(alpha: 0.08) : p.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: selected
-              ? p.accent.withValues(alpha: 0.18)
-              : p.line,
+          color: selected ? p.accent.withValues(alpha: 0.18) : p.line,
         ),
       ),
       child: Row(

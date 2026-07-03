@@ -86,7 +86,7 @@ class _ProfileSection extends StatelessWidget {
     final referralCode =
         summary.referralCode.isEmpty ? '' : ' · ${summary.referralCode}';
     return [
-      'Telegram +${summary.channelBonusPremiumDays} дней · рефералы ${summary.referralCount}$referralCode',
+      'Telegram +${ruDays(summary.channelBonusPremiumDays)} · рефералы ${summary.referralCount}$referralCode',
     ];
   }
 
@@ -100,7 +100,7 @@ class _ProfileSection extends StatelessWidget {
     }
     final parts = <String>[
       if (summary.channelBonusPremiumDays > 0)
-        '+${summary.channelBonusPremiumDays} дней',
+        '+${ruDays(summary.channelBonusPremiumDays)}',
       if (summary.referralCount > 0) '${summary.referralCount} реф.',
     ];
     return parts.isEmpty ? 'Открыть' : parts.join(' · ');
@@ -109,6 +109,7 @@ class _ProfileSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final p = PokrovPalette.of(context);
     final statusLabel = _consumerProtectionStatusLabel(runtimeSnapshot);
     final statusSummary = _consumerProtectionStatusSummary(
       runtimeSnapshot,
@@ -120,280 +121,289 @@ class _ProfileSection extends StatelessWidget {
       consented: warpRuntimeConsent,
       busy: warpBusy,
     );
-    return _SeedContentList(
-      top: 18,
-      children: [
-        Text('Профиль', style: theme.textTheme.headlineSmall),
-        const SizedBox(height: 12),
-        KeyedSubtree(
-          key: const ValueKey('profile-compact-account-layer'),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _SectionCard(
-                key: const ValueKey('profile-section-plan-access'),
-                title: 'Ваш доступ',
-                lines: const [],
-                child: _ProfileAccessOverview(
-                  accessLabel: _accessMainLabel(appContext, bonusSummary),
-                  accessValue: _accessShortValue(appContext, bonusSummary),
-                  poolLabel: _accessPoolLabel(appContext.accessLane),
-                  statusLabel: statusLabel,
-                  onStatusTap: () => _showInfoSheet(
-                    context,
-                    title: 'Статус',
-                    lines: [statusSummary],
-                  ),
-                  onPlanTap: () => _showSubscriptionSheet(
-                    context,
-                    appContext: appContext,
-                    hasProvisionedAccess: hasProvisionedAccess,
-                    subscriptionInfo: subscriptionInfo,
-                    onOpenHandoff: onOpenHandoff,
-                  ),
-                  onCheckoutTap: () =>
-                      onOpenHandoff('checkout', appContext.checkoutUrl),
-                ),
-              ),
-              _SectionCard(
-                key: const ValueKey('profile-section-account'),
-                title: 'Аккаунт',
-                lines: const [
-                  'Telegram, email и кабинет помогают не потерять доступ.',
-                ],
-                child: Column(
-                  children: [
-                    _SettingsRow(
-                      key: const ValueKey('profile-telegram-link-action'),
-                      icon: Icons.send_outlined,
-                      title: 'Telegram',
-                      value: telegramBonusBusy ? 'Проверяем' : 'Привязать',
-                      onTap: telegramBonusBusy ? null : onCreateTelegramLink,
+    return RefreshIndicator(
+      key: const ValueKey('profile-refresh-indicator'),
+      color: p.accent,
+      onRefresh: () async {
+        // Reuse the existing refresh callbacks; no new backend calls.
+        onRefreshBonusSummary();
+        await onRefreshNotifications();
+      },
+      child: _SeedContentList(
+        top: 18,
+        children: [
+          Text('Профиль', style: theme.textTheme.headlineSmall),
+          const SizedBox(height: 12),
+          KeyedSubtree(
+            key: const ValueKey('profile-compact-account-layer'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _SectionCard(
+                  key: const ValueKey('profile-section-plan-access'),
+                  title: 'Ваш доступ',
+                  lines: const [],
+                  child: _ProfileAccessOverview(
+                    accessLabel: _accessMainLabel(appContext, bonusSummary),
+                    accessValue: _accessShortValue(appContext, bonusSummary),
+                    poolLabel: _accessPoolLabel(appContext.accessLane),
+                    statusLabel: statusLabel,
+                    onStatusTap: () => _showInfoSheet(
+                      context,
+                      title: 'Статус',
+                      lines: [statusSummary],
                     ),
-                    _SettingsRow(
-                      key: const ValueKey('profile-email-action'),
-                      icon: Icons.alternate_email_rounded,
-                      title: 'Email',
-                      value: 'Добавить',
-                      onTap: () => _showEmailRecoverySheet(
-                        context,
-                        appContext: appContext,
-                        onOpenHandoff: onOpenHandoff,
-                      ),
+                    onPlanTap: () => _showSubscriptionSheet(
+                      context,
+                      appContext: appContext,
+                      hasProvisionedAccess: hasProvisionedAccess,
+                      subscriptionInfo: subscriptionInfo,
+                      onOpenHandoff: onOpenHandoff,
                     ),
-                    _SettingsRow(
-                      key: const ValueKey('profile-open-cabinet-action'),
-                      icon: Icons.web_outlined,
-                      title: 'Кабинет',
-                      value: 'Аккаунт',
-                      onTap: () =>
-                          onOpenHandoff('cabinet', appContext.cabinetUrl),
-                    ),
-                    _SettingsRow(
-                      key: const ValueKey('profile-devices-action'),
-                      icon: Icons.devices_other_rounded,
-                      title: 'Устройства',
-                      value: 'Управлять',
-                      onTap: () => _showDevicesSheet(
-                        context,
-                        currentPlatformLabel: appContext.hostPlatform.label,
-                        onFetchDevices: onFetchDevices,
-                        onRevokeDevice: onRevokeDevice,
-                      ),
-                    ),
-                    if ((telegramBonusError ?? '').isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          telegramBonusError!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.error,
-                            height: 1.3,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              _SectionCard(
-                key: const ValueKey('profile-section-sync'),
-                title: 'Восстановить доступ',
-                lines: const [
-                  'Если у вас уже есть код из Telegram, кабинета, сайта или письма.',
-                ],
-                child: _SettingsRow(
-                  key: const ValueKey('profile-redeem-code-action'),
-                  icon: Icons.key_rounded,
-                  title: 'Код активации',
-                  value: 'Ввести',
-                  onTap: () => _showRedeemSheet(
-                    context,
-                    hintCode: appContext.redeemHint,
-                    onRedeem: (code) => onOpenHandoff('redeem', code),
+                    onCheckoutTap: () =>
+                        onOpenHandoff('checkout', appContext.checkoutUrl),
                   ),
                 ),
-              ),
-              PokrovSettingsRowPressSurface(
-                key: const ValueKey('profile-section-support'),
-                onTap: onOpenSupportHub,
-                child: _SectionCard(
-                  key: const ValueKey('profile-section-support-group'),
-                  title: 'Поддержка',
+                _SectionCard(
+                  key: const ValueKey('profile-section-account'),
+                  title: 'Аккаунт',
                   lines: const [
-                    'Чат и безопасная сводка состояния без ключей, ссылок и технических логов.',
+                    'Telegram, email и кабинет помогают не потерять доступ.',
                   ],
                   child: Column(
                     children: [
                       _SettingsRow(
-                        key: const ValueKey('profile-open-support-action'),
-                        icon: Icons.chat_bubble_outline_rounded,
-                        title: 'Написать в поддержку',
-                        value: 'Чат',
-                        onTap: onOpenSupportHub,
+                        key: const ValueKey('profile-telegram-link-action'),
+                        icon: Icons.send_outlined,
+                        title: 'Telegram',
+                        value: telegramBonusBusy ? 'Проверяем' : 'Привязать',
+                        onTap: telegramBonusBusy ? null : onCreateTelegramLink,
                       ),
                       _SettingsRow(
-                        key: const ValueKey('profile-diagnostics-action'),
-                        icon: Icons.health_and_safety_outlined,
-                        title: 'Сведения для поддержки',
-                        value: 'Открыть',
-                        onTap: () => _showAdvancedSettingsSheet(
+                        key: const ValueKey('profile-email-action'),
+                        icon: Icons.alternate_email_rounded,
+                        title: 'Email',
+                        value: 'Добавить',
+                        onTap: () => _showEmailRecoverySheet(
                           context,
-                          hostPlatform: appContext.hostPlatform,
-                          selectedRouteMode: selectedRouteMode,
-                          statusLabel: statusLabel,
-                          warpStatus: warpLifecycle.publicStatus,
+                          appContext: appContext,
+                          onOpenHandoff: onOpenHandoff,
+                        ),
+                      ),
+                      _SettingsRow(
+                        key: const ValueKey('profile-open-cabinet-action'),
+                        icon: Icons.web_outlined,
+                        title: 'Кабинет',
+                        value: 'Аккаунт',
+                        onTap: () =>
+                            onOpenHandoff('cabinet', appContext.cabinetUrl),
+                      ),
+                      _SettingsRow(
+                        key: const ValueKey('profile-devices-action'),
+                        icon: Icons.devices_other_rounded,
+                        title: 'Устройства',
+                        value: 'Управлять',
+                        onTap: () => _showDevicesSheet(
+                          context,
+                          currentPlatformLabel: appContext.hostPlatform.label,
+                          onFetchDevices: onFetchDevices,
+                          onRevokeDevice: onRevokeDevice,
+                        ),
+                      ),
+                      if ((telegramBonusError ?? '').isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            telegramBonusError!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.error,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                _SectionCard(
+                  key: const ValueKey('profile-section-sync'),
+                  title: 'Восстановить доступ',
+                  lines: const [
+                    'Если у вас уже есть код из Telegram, кабинета, сайта или письма.',
+                  ],
+                  child: _SettingsRow(
+                    key: const ValueKey('profile-redeem-code-action'),
+                    icon: Icons.key_rounded,
+                    title: 'Код активации',
+                    value: 'Ввести',
+                    onTap: () => _showRedeemSheet(
+                      context,
+                      hintCode: appContext.redeemHint,
+                      onRedeem: (code) => onOpenHandoff('redeem', code),
+                    ),
+                  ),
+                ),
+                PokrovSettingsRowPressSurface(
+                  key: const ValueKey('profile-section-support'),
+                  onTap: onOpenSupportHub,
+                  child: _SectionCard(
+                    key: const ValueKey('profile-section-support-group'),
+                    title: 'Поддержка',
+                    lines: const [
+                      'Чат и безопасная сводка состояния без ключей, ссылок и технических логов.',
+                    ],
+                    child: Column(
+                      children: [
+                        _SettingsRow(
+                          key: const ValueKey('profile-open-support-action'),
+                          icon: Icons.chat_bubble_outline_rounded,
+                          title: 'Написать в поддержку',
+                          value: 'Чат',
+                          onTap: onOpenSupportHub,
+                        ),
+                        _SettingsRow(
+                          key: const ValueKey('profile-diagnostics-action'),
+                          icon: Icons.health_and_safety_outlined,
+                          title: 'Сведения для поддержки',
+                          value: 'Открыть',
+                          onTap: () => _showAdvancedSettingsSheet(
+                            context,
+                            hostPlatform: appContext.hostPlatform,
+                            selectedRouteMode: selectedRouteMode,
+                            statusLabel: statusLabel,
+                            warpStatus: warpLifecycle.publicStatus,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                _SectionCard(
+                  key: const ValueKey('profile-section-app'),
+                  title: 'Настройки',
+                  lines: [
+                    '${appContext.hostPlatform.label} · ${_routeModeShortLabel(selectedRouteMode)}'
+                  ],
+                  child: Column(
+                    children: [
+                      _SettingsRow(
+                        icon: Icons.alt_route_rounded,
+                        title: 'Режим работы',
+                        value: _routeModeShortLabel(selectedRouteMode),
+                        onTap: () => _showInfoSheet(
+                          context,
+                          title: 'Режим работы',
+                          lines: [
+                            _routeModeRowSummary(selectedRouteMode),
+                            'Изменить режим можно во вкладке «Правила».',
+                          ],
+                        ),
+                      ),
+                      _SettingsRow(
+                        key: const ValueKey(
+                          'profile-enhanced-protection-action',
+                        ),
+                        icon: Icons.privacy_tip_outlined,
+                        title: 'WARP',
+                        value: warpLifecycle.phase ==
+                                PokrovWarpPhase.readyToConsent
+                            ? 'Можно включить'
+                            : warpLifecycle.publicStatus,
+                        onTap: () {
+                          unawaited(onOpenWarp());
+                        },
+                      ),
+                      _SettingsRow(
+                        key: const ValueKey('profile-notifications-action'),
+                        icon: notificationsUnread > 0
+                            ? Icons.notifications_active_rounded
+                            : Icons.notifications_none_rounded,
+                        title: 'Уведомления',
+                        value: notificationsBusy
+                            ? 'Обновляем'
+                            : notificationsUnread > 0
+                                ? '$notificationsUnread'
+                                : 'Открыть',
+                        onTap: () {
+                          onOpenNotifications();
+                          _showNotificationsSheet(
+                            context,
+                            notifications: notifications,
+                            onRefresh: onRefreshNotifications,
+                            onOpenHandoff: onOpenHandoff,
+                          );
+                        },
+                      ),
+                      _SettingsRow(
+                        key: const ValueKey('profile-theme-action'),
+                        icon: Icons.brightness_6_outlined,
+                        title: 'Тема',
+                        value: _themeModeLabel(themeMode),
+                        onTap: () => _showThemeModeSheet(
+                          context,
+                          selected: themeMode,
+                          onChanged: onThemeModeChanged,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              _SectionCard(
-                key: const ValueKey('profile-section-app'),
-                title: 'Настройки',
-                lines: [
-                  '${appContext.hostPlatform.label} · ${_routeModeShortLabel(selectedRouteMode)}'
-                ],
-                child: Column(
-                  children: [
-                    _SettingsRow(
-                      icon: Icons.alt_route_rounded,
-                      title: 'Режим работы',
-                      value: _routeModeShortLabel(selectedRouteMode),
-                      onTap: () => _showInfoSheet(
-                        context,
-                        title: 'Режим работы',
-                        lines: [
-                          _routeModeRowSummary(selectedRouteMode),
-                          'Изменить режим можно во вкладке «Правила».',
-                        ],
+                _SectionCard(
+                  key: const ValueKey('profile-section-bonus-summary'),
+                  title: 'Бонусы',
+                  tone: _SectionTone.reward,
+                  lines: _bonusSummaryLines(),
+                  child: Column(
+                    children: [
+                      if (bonusSummary == null && bonusSummaryBusy)
+                        const _MotionSkeletonList(
+                          key: ValueKey('rewards-skeleton-summary'),
+                          rows: 3,
+                        ),
+                      _SettingsRow(
+                        key: const ValueKey('profile-telegram-claim-action'),
+                        icon: Icons.send_outlined,
+                        title: 'Telegram-бонус',
+                        value: telegramBonusCanClaim ? 'Получить' : 'Проверить',
+                        onTap: telegramBonusBusy
+                            ? null
+                            : telegramBonusCanClaim
+                                ? onClaimTelegramBonus
+                                : onCheckTelegramBonus,
                       ),
-                    ),
-                    _SettingsRow(
-                      key: const ValueKey(
-                        'profile-enhanced-protection-action',
-                      ),
-                      icon: Icons.privacy_tip_outlined,
-                      title: 'WARP',
-                      value:
-                          warpLifecycle.phase == PokrovWarpPhase.readyToConsent
-                              ? 'Можно включить'
-                              : warpLifecycle.publicStatus,
-                      onTap: () {
-                        unawaited(onOpenWarp());
-                      },
-                    ),
-                    _SettingsRow(
-                      key: const ValueKey('profile-notifications-action'),
-                      icon: notificationsUnread > 0
-                          ? Icons.notifications_active_rounded
-                          : Icons.notifications_none_rounded,
-                      title: 'Уведомления',
-                      value: notificationsBusy
-                          ? 'Обновляем'
-                          : notificationsUnread > 0
-                              ? '$notificationsUnread'
-                              : 'Открыть',
-                      onTap: () {
-                        onOpenNotifications();
-                        _showNotificationsSheet(
+                      _SettingsRow(
+                        key: const ValueKey('profile-bonus-wheel-action'),
+                        icon: Icons.card_giftcard_outlined,
+                        title: 'Бонусы и история',
+                        value: _bonusHubValue(),
+                        onTap: () => _showRewardsHubSheet(
                           context,
-                          notifications: notifications,
-                          onRefresh: onRefreshNotifications,
+                          summary: bonusSummary,
+                          rewardBusy: bonusRewardBusy,
+                          onRefreshBonusSummary: onRefreshBonusSummary,
+                          onSpinWheel: onSpinWheel,
+                          onCheckInCalendar: onCheckInCalendar,
                           onOpenHandoff: onOpenHandoff,
-                        );
-                      },
-                    ),
-                    _SettingsRow(
-                      key: const ValueKey('profile-theme-action'),
-                      icon: Icons.brightness_6_outlined,
-                      title: 'Тема',
-                      value: _themeModeLabel(themeMode),
-                      onTap: () => _showThemeModeSheet(
-                        context,
-                        selected: themeMode,
-                        onChanged: onThemeModeChanged,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              _SectionCard(
-                key: const ValueKey('profile-section-bonus-summary'),
-                title: 'Бонусы',
-                tone: _SectionTone.reward,
-                lines: _bonusSummaryLines(),
-                child: Column(
-                  children: [
-                    if (bonusSummary == null && bonusSummaryBusy)
-                      const _MotionSkeletonList(
-                        key: ValueKey('rewards-skeleton-summary'),
-                        rows: 3,
-                      ),
-                    _SettingsRow(
-                      key: const ValueKey('profile-telegram-claim-action'),
-                      icon: Icons.send_outlined,
-                      title: 'Telegram-бонус',
-                      value: telegramBonusCanClaim ? 'Получить' : 'Проверить',
-                      onTap: telegramBonusBusy
-                          ? null
-                          : telegramBonusCanClaim
-                              ? onClaimTelegramBonus
-                              : onCheckTelegramBonus,
-                    ),
-                    _SettingsRow(
-                      key: const ValueKey('profile-bonus-wheel-action'),
-                      icon: Icons.card_giftcard_outlined,
-                      title: 'Бонусы и история',
-                      value: _bonusHubValue(),
-                      onTap: () => _showRewardsHubSheet(
-                        context,
-                        summary: bonusSummary,
-                        rewardBusy: bonusRewardBusy,
-                        onRefreshBonusSummary: onRefreshBonusSummary,
-                        onSpinWheel: onSpinWheel,
-                        onCheckInCalendar: onCheckInCalendar,
-                        onOpenHandoff: onOpenHandoff,
-                      ),
-                    ),
-                    if ((bonusSummaryError ?? '').isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          bonusSummaryError!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.error,
-                            height: 1.3,
-                          ),
                         ),
                       ),
-                  ],
+                      if ((bonusSummaryError ?? '').isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            bonusSummaryError!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.error,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -540,6 +550,7 @@ void _showThemeModeSheet(
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
     builder: (context) => SafeArea(
       top: false,
       child: Padding(
@@ -610,13 +621,13 @@ void _showSubscriptionSheet(
   final info = subscriptionInfo;
   final expires = info == null ? '' : _formatClientDate(info.expiresAt);
   final renewUrl = info?.renewUrl;
-  final renewTarget =
-      renewUrl != null && renewUrl.toString().trim().isNotEmpty
-          ? renewUrl.toString()
-          : appContext.checkoutUrl;
+  final renewTarget = renewUrl != null && renewUrl.toString().trim().isNotEmpty
+      ? renewUrl.toString()
+      : appContext.checkoutUrl;
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
     builder: (context) => SafeArea(
       top: false,
       child: SingleChildScrollView(
@@ -634,7 +645,7 @@ void _showSubscriptionSheet(
             Text(
               hasProvisionedAccess
                   ? 'Доступ активен. Продление открывается на защищенной странице оплаты.'
-                  : 'Сначала подготовьте устройство, затем продлите доступ через защищенную оплату.',
+                  : 'Сначала активируйте доступ на этом устройстве, затем продлите его на защищенной странице оплаты.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: PokrovPalette.of(context).muted,
                     height: 1.35,
@@ -678,10 +689,9 @@ void _showSubscriptionSheet(
                       ),
                       Text(
                         plan.price,
-                        style:
-                            Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
                     ],
                   ),
@@ -692,14 +702,16 @@ void _showSubscriptionSheet(
               spacing: 10,
               runSpacing: 10,
               children: [
-                FilledButton.icon(
-                  key: const ValueKey('subscription-checkout-primary'),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    onOpenHandoff('checkout', renewTarget);
-                  },
-                  icon: const Icon(Icons.shopping_bag_outlined),
-                  label: const Text('Перейти к оплате'),
+                PokrovPressable(
+                  child: FilledButton.icon(
+                    key: const ValueKey('subscription-checkout-primary'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      onOpenHandoff('checkout', renewTarget);
+                    },
+                    icon: const Icon(Icons.shopping_bag_outlined),
+                    label: const Text('Перейти к оплате'),
+                  ),
                 ),
                 OutlinedButton.icon(
                   key: const ValueKey('subscription-cabinet-primary'),
@@ -731,6 +743,7 @@ void _showEmailRecoverySheet(
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
     builder: (context) => SafeArea(
       top: false,
       child: SingleChildScrollView(
