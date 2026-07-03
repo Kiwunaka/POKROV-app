@@ -23,7 +23,7 @@ Included active decision sources:
 - `docs/decisions/2026-06-03-hiddify-karing-happ-client-base-review.md`
 - `docs/decisions/2026-06-03-hiddify-core-warp-status.md`
 - `docs/specs/2026-06-05-p5-warp-approved-design.md`
-- `docs/superpowers/plans/2026-06-05-premium-client-ai-assistant-architecture.md`
+- `docs/archive/superpowers-plans/2026-06-05-premium-client-ai-assistant-architecture.md`
 - `docs/implementation/2026-06-04-decisions-implementation-map.md`
 
 Ignored owner-deprecated inputs:

@@ -1,6 +1,6 @@
 # POKROV App Docs
 
-Last updated: 2026-06-13
+Last updated: 2026-07-03
 
 This folder holds the living client-repo documentation for `POKROV-app/main`.
 
@@ -28,6 +28,8 @@ Historical mapping note:
 - older notes may still reference `external/pokrov-next-client/` or `app-next/`
 - the first local snapshot for this repo was bootstrapped from `C:/Users/kiwun/Documents/ai/VPN/app-next/` on `2026-04-22`
 - `app-next/docs/` in the platform repo now remains transition/reference material instead of the canonical client-doc lane
+- completed client execution plans live under `docs/archive/`; use them as
+  evidence/history, not as active task queues
 
 The lane now includes thin host shells for `Android`, `iOS`, `macOS`, and `Windows` while remaining non-destructive and clean-room.
 The shared shell also models the app-first UX basics for the consumer-first tab set `Protection / Locations / Rules / Profile`, plus route mode, redeem, checkout handoff, support, and location matrices.
@@ -97,7 +99,7 @@ Completed / reference docs:
 - `design/2026-06-05-p5-warp-application-map.md`
 - `design/2026-06-05-p5-application-map-consilium-review.md`
 - `specs/2026-06-05-p5-warp-approved-design.md`
-- `superpowers/plans/2026-06-05-premium-client-ai-assistant-architecture.md`
+- `archive/superpowers-plans/2026-06-05-premium-client-ai-assistant-architecture.md`
 
 Deprecated / legacy inputs:
 

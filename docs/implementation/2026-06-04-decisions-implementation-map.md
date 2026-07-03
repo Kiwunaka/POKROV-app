@@ -182,7 +182,7 @@ research into an implementation contract:
 - [P5 WARP Approved Design](../specs/2026-06-05-p5-warp-approved-design.md)
 - [P5 WARP Application Map](../design/2026-06-05-p5-warp-application-map.md)
 - [P5 Application Map Consilium Review](../design/2026-06-05-p5-application-map-consilium-review.md)
-- [Premium Client AI Assistant Architecture Plan](../superpowers/plans/2026-06-05-premium-client-ai-assistant-architecture.md)
+- [Premium Client AI Assistant Architecture Plan](../archive/superpowers-plans/2026-06-05-premium-client-ai-assistant-architecture.md)
 
 This approval has now been implemented through the Phase 6 local release-beta
 refresh. The contract remains the guardrail for future polish and proof work:
