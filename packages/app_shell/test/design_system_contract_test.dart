@@ -17,27 +17,31 @@ const _desktopSidebarPrivateHelperCoverage = <String>[
 ];
 
 void main() {
-  test('palette keeps the POKROV beta shell colors stable', () {
-    expect(PokrovPalette.canvas, const Color(0xFFF9FAFB));
+  test('palette keeps the POKROV pokrov-clear shell colors stable', () {
+    expect(PokrovPalette.canvas, const Color(0xFFF5F7F6));
     expect(PokrovPalette.canvasAlt, const Color(0xFFFFFFFF));
-    expect(PokrovPalette.ink, const Color(0xFF10131A));
-    expect(PokrovPalette.accent, const Color(0xFF0F725D));
-    expect(PokrovPalette.accentBright, const Color(0xFF16A27B));
-    expect(PokrovPalette.success, const Color(0xFF159A68));
-    expect(PokrovPalette.warning, const Color(0xFFE29A1F));
+    expect(PokrovPalette.ink, const Color(0xFF16181D));
+    expect(PokrovPalette.accent, const Color(0xFF12805A));
+    expect(PokrovPalette.accentBright, const Color(0xFF0F6B47));
+    expect(PokrovPalette.success, const Color(0xFF174F3D));
+    expect(PokrovPalette.warning, const Color(0xFF765D23));
     expect(PokrovPalette.surface, const Color(0xFFFFFFFF));
-    expect(PokrovPalette.surfaceMuted, const Color(0xFFF3F5F8));
-    expect(PokrovPalette.line, const Color(0x1A10131A));
-    expect(PokrovPalette.muted, const Color(0xFF697080));
+    expect(PokrovPalette.surfaceMuted, const Color(0xFFEEF4F1));
+    expect(PokrovPalette.line, const Color(0x14111814));
+    expect(PokrovPalette.muted, const Color(0xFF5E6772));
   });
 
   test('phase 1 palette exposes light and dark app tokens without pure black',
       () {
-    expect(PokrovPalette.light.canvas, const Color(0xFFF7F8FA));
-    expect(PokrovPalette.light.accent, const Color(0xFF0F725D));
+    expect(PokrovPalette.light.canvas, const Color(0xFFF5F7F6));
+    expect(PokrovPalette.light.accent, const Color(0xFF12805A));
+    expect(PokrovPalette.light.accentSoft, const Color(0xFFE6F4ED));
+    expect(PokrovPalette.light.connectedGreen, const Color(0xFF34C759));
     expect(PokrovPalette.light.reward, const Color(0xFFC58A24));
-    expect(PokrovPalette.dark.canvas, const Color(0xFF11161D));
-    expect(PokrovPalette.dark.surface, const Color(0xFF171D25));
+    expect(PokrovPalette.dark.canvas, const Color(0xFF111715));
+    expect(PokrovPalette.dark.surface, const Color(0xFF161D1A));
+    expect(PokrovPalette.dark.accent, const Color(0xFF8AC4AB));
+    expect(PokrovPalette.dark.connectedGreen, const Color(0xFF30D158));
     expect(PokrovPalette.dark.reward, const Color(0xFFE2B35B));
 
     for (final tokens in [PokrovPalette.light, PokrovPalette.dark]) {

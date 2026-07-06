@@ -8,6 +8,8 @@ class PokrovPaletteTokens extends ThemeExtension<PokrovPaletteTokens> {
     required this.ink,
     required this.accent,
     required this.accentBright,
+    required this.accentSoft,
+    required this.connectedGreen,
     required this.success,
     required this.warning,
     required this.reward,
@@ -24,6 +26,16 @@ class PokrovPaletteTokens extends ThemeExtension<PokrovPaletteTokens> {
   final Color ink;
   final Color accent;
   final Color accentBright;
+
+  /// Soft accent tint for selected states and emphasis backgrounds
+  /// (`emerald_soft` in the shared pokrov-clear tokens).
+  final Color accentSoft;
+
+  /// iOS system green from the shared `status_green` token. Reserved for the
+  /// connected state of the connect disc and switch on-tracks only — never
+  /// for text or generic accents (pokrov-clear canon).
+  final Color connectedGreen;
+
   final Color success;
   final Color warning;
   final Color reward;
@@ -41,6 +53,8 @@ class PokrovPaletteTokens extends ThemeExtension<PokrovPaletteTokens> {
     Color? ink,
     Color? accent,
     Color? accentBright,
+    Color? accentSoft,
+    Color? connectedGreen,
     Color? success,
     Color? warning,
     Color? reward,
@@ -57,6 +71,8 @@ class PokrovPaletteTokens extends ThemeExtension<PokrovPaletteTokens> {
       ink: ink ?? this.ink,
       accent: accent ?? this.accent,
       accentBright: accentBright ?? this.accentBright,
+      accentSoft: accentSoft ?? this.accentSoft,
+      connectedGreen: connectedGreen ?? this.connectedGreen,
       success: success ?? this.success,
       warning: warning ?? this.warning,
       reward: reward ?? this.reward,
@@ -83,6 +99,8 @@ class PokrovPaletteTokens extends ThemeExtension<PokrovPaletteTokens> {
       ink: Color.lerp(ink, other.ink, t)!,
       accent: Color.lerp(accent, other.accent, t)!,
       accentBright: Color.lerp(accentBright, other.accentBright, t)!,
+      accentSoft: Color.lerp(accentSoft, other.accentSoft, t)!,
+      connectedGreen: Color.lerp(connectedGreen, other.connectedGreen, t)!,
       success: Color.lerp(success, other.success, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
       reward: Color.lerp(reward, other.reward, t)!,
@@ -96,51 +114,58 @@ class PokrovPaletteTokens extends ThemeExtension<PokrovPaletteTokens> {
   }
 }
 
+/// pokrov-clear alignment (2026-07 redesign wave 3): values mirror the shared
+/// `VPN/shared/design-tokens.json` palette until a generated Flutter export
+/// exists. Change them together with `design_system_contract_test.dart`.
 abstract final class PokrovPalette {
-  static const canvas = Color(0xFFF9FAFB);
+  static const canvas = Color(0xFFF5F7F6);
   static const canvasAlt = Color(0xFFFFFFFF);
-  static const ink = Color(0xFF10131A);
-  static const accent = Color(0xFF0F725D);
-  static const accentBright = Color(0xFF16A27B);
-  static const success = Color(0xFF159A68);
-  static const warning = Color(0xFFE29A1F);
+  static const ink = Color(0xFF16181D);
+  static const accent = Color(0xFF12805A);
+  static const accentBright = Color(0xFF0F6B47);
+  static const success = Color(0xFF174F3D);
+  static const warning = Color(0xFF765D23);
   static const surface = Color(0xFFFFFFFF);
-  static const surfaceMuted = Color(0xFFF3F5F8);
-  static const line = Color(0x1A10131A);
-  static const muted = Color(0xFF697080);
+  static const surfaceMuted = Color(0xFFEEF4F1);
+  static const line = Color(0x14111814);
+  static const muted = Color(0xFF5E6772);
 
   static const light = PokrovPaletteTokens(
-    canvas: Color(0xFFF7F8FA),
+    canvas: Color(0xFFF5F7F6),
     canvasAlt: Color(0xFFFFFFFF),
-    ink: Color(0xFF10131A),
-    accent: Color(0xFF0F725D),
-    accentBright: Color(0xFF16A27B),
-    success: Color(0xFF159A68),
-    warning: Color(0xFFE29A1F),
+    ink: Color(0xFF16181D),
+    accent: Color(0xFF12805A),
+    accentBright: Color(0xFF0F6B47),
+    accentSoft: Color(0xFFE6F4ED),
+    connectedGreen: Color(0xFF34C759),
+    success: Color(0xFF174F3D),
+    warning: Color(0xFF765D23),
     reward: Color(0xFFC58A24),
-    danger: Color(0xFFD94D4D),
+    danger: Color(0xFF8D352E),
     surface: Color(0xFFFFFFFF),
-    surfaceMuted: Color(0xFFF2F5F4),
+    surfaceMuted: Color(0xFFEEF4F1),
     surfaceElevated: Color(0xFFFFFFFF),
-    line: Color(0x1A10131A),
-    muted: Color(0xFF697080),
+    line: Color(0x14111814),
+    muted: Color(0xFF5E6772),
   );
 
   static const dark = PokrovPaletteTokens(
-    canvas: Color(0xFF11161D),
-    canvasAlt: Color(0xFF141A23),
-    ink: Color(0xFFF4F6FA),
-    accent: Color(0xFF34C79A),
-    accentBright: Color(0xFF5BDDB4),
-    success: Color(0xFF45CE8E),
-    warning: Color(0xFFE6B24C),
+    canvas: Color(0xFF111715),
+    canvasAlt: Color(0xFF151C19),
+    ink: Color(0xFFF3F2EC),
+    accent: Color(0xFF8AC4AB),
+    accentBright: Color(0xFFA5D3BF),
+    accentSoft: Color(0x294A9B7A),
+    connectedGreen: Color(0xFF30D158),
+    success: Color(0xFFB8E5D0),
+    warning: Color(0xFFE8D19A),
     reward: Color(0xFFE2B35B),
-    danger: Color(0xFFFF6B6B),
-    surface: Color(0xFF171D25),
-    surfaceMuted: Color(0xFF1F2731),
-    surfaceElevated: Color(0xFF202935),
-    line: Color(0x1FFFFFFF),
-    muted: Color(0xFF9BA4B2),
+    danger: Color(0xFFF0B8B1),
+    surface: Color(0xFF161D1A),
+    surfaceMuted: Color(0xFF17221D),
+    surfaceElevated: Color(0xFF182019),
+    line: Color(0x1FEFF3F1),
+    muted: Color(0xFF78857E),
   );
 
   static PokrovPaletteTokens of(BuildContext context) {
