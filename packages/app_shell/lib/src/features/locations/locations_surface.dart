@@ -135,6 +135,25 @@ class _LocationsSectionState extends State<_LocationsSection> {
           const SizedBox(height: 10),
           const LinearProgressIndicator(minHeight: 3),
         ],
+        if (!widget.locationsCatalogBusy &&
+            widget.hasProvisionedAccess &&
+            (widget.locationsCatalogError ?? '').trim().isNotEmpty) ...[
+          const SizedBox(height: 14),
+          _SectionCard(
+            key: const ValueKey('locations-catalog-error'),
+            title: 'Список стран не обновился',
+            tone: _SectionTone.muted,
+            lines: const [
+              'Не удалось загрузить свежие данные. Проверьте подключение к интернету и повторите.',
+            ],
+            child: PokrovActionRow(
+              key: const ValueKey('locations-catalog-retry'),
+              icon: Icons.refresh_rounded,
+              title: 'Повторить',
+              onTap: widget.onRefreshLocationsCatalog,
+            ),
+          ),
+        ],
         if (hasCatalog) ...[
           _SectionCard(
             title: 'Премиум-локации',

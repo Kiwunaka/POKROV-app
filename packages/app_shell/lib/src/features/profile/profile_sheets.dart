@@ -271,11 +271,42 @@ class _DevicesSheetState extends State<_DevicesSheet> {
     });
   }
 
-  Future<void> _revoke(String deviceId) async {
+  Future<void> _revoke(ClientDeviceInfo device) async {
+    final deviceName =
+        device.label.trim().isEmpty ? device.platform : device.label;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final tokens = PokrovPalette.of(dialogContext);
+        return AlertDialog(
+          key: const ValueKey('profile-device-revoke-confirm'),
+          title: const Text('Отвязать устройство?'),
+          content: Text(
+            '«$deviceName» больше не сможет пользоваться вашим доступом POKROV.',
+          ),
+          actions: [
+            TextButton(
+              key: const ValueKey('profile-device-revoke-cancel'),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Отмена'),
+            ),
+            TextButton(
+              key: const ValueKey('profile-device-revoke-approve'),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: TextButton.styleFrom(foregroundColor: tokens.danger),
+              child: const Text('Отвязать'),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
     setState(() {
-      _revokingId = deviceId;
+      _revokingId = device.id;
     });
-    final ok = await widget.onRevokeDevice(deviceId);
+    final ok = await widget.onRevokeDevice(device.id);
     if (!mounted) {
       return;
     }
@@ -283,7 +314,18 @@ class _DevicesSheetState extends State<_DevicesSheet> {
       _revokingId = null;
     });
     if (ok) {
+      showPokrovSnack(
+        context,
+        'Устройство отвязано.',
+        tone: PokrovSnackTone.success,
+      );
       _reload();
+    } else {
+      showPokrovSnack(
+        context,
+        'Не удалось отвязать устройство. Попробуйте еще раз.',
+        tone: PokrovSnackTone.danger,
+      );
     }
   }
 
@@ -339,8 +381,9 @@ class _DevicesSheetState extends State<_DevicesSheet> {
                           key: ValueKey('profile-device-${device.id}'),
                           device: device,
                           busy: _revokingId == device.id,
-                          onRevoke:
-                              device.current ? null : () => _revoke(device.id),
+                          onRevoke: device.current
+                              ? null
+                              : () => unawaited(_revoke(device)),
                         ),
                     ],
                   );
