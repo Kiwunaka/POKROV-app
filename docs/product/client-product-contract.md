@@ -46,7 +46,7 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - recommended public routing mode: `All except RU`
 - public routing mode set: `All except RU` and `Full tunnel`
 - public recovery order: `POKROV app -> web cabinet -> Telegram fallback`
-- public wording must avoid direct-meaning `VPN` copy outside legacy compatibility labels
+- public wording may present POKROV as a VPN in client UI (owner decision `2026-06-13` in `docs/design/2026-06-13-pokrov-product-ui-direction.md`, aligned with the platform `2026-06-01` visible-wording rule); hidden/cloaked/stuffed usage and unsupported claims remain forbidden
 - public browser surface split is checkout-first `marketing` plus continuation-first `webapp`
 - the current front-end reset is atlas-driven and keeps the client shell locked to `Protection / Locations / Rules / Profile` while public acquisition moves to `marketing`
 

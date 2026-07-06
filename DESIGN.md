@@ -1,7 +1,7 @@
 ---
 name: POKROV Client Design System
 status: active
-updated: 2026-04-26
+updated: 2026-07-06
 ---
 
 # POKROV Client Design System
@@ -18,14 +18,19 @@ POKROV client UI should feel calm, premium, and operationally honest.
 
 ## Tokens
 
-Client tokens must stay aligned with the platform `shared/design-tokens.json` and `shared/design-tokens.schema.json` sources until a generated Flutter export exists.
+Client tokens mirror the platform `shared/design-tokens.json` (`pokrov-clear`, `2026-07-redesign-w01`) until a generated Flutter export exists. The 2026-07 wave-3 alignment landed the values in `packages/app_shell/lib/src/design_system/pokrov_palette.dart`, locked by `design_system_contract_test.dart`:
+
+- light: white surfaces on `#F5F7F6` canvas, ink `#16181D`, emerald accent `#12805A` (pressed `#0F6B47`, tint `#E6F4ED`);
+- dark: off-black greens (`#111715` canvas, `#161D1A` surface — never pure black), mint accent `#8AC4AB` with near-black `#101713` label text;
+- `connectedGreen` (`#34C759` / `#30D158`) is the shared iOS `status_green`: connect-disc connected state and switch on-tracks only, never text or generic accents;
+- brand family: Golos Text (bundled 400–800, latin+cyrillic, OFL) with system fallbacks.
 
 ## Components
 
 - Protection connect surface.
 - Location list with beta/fallback states.
 - Rules and route-mode picker.
-- Profile with subscription, devices, support, and settings.
+- Profile with subscription, devices, support, and settings (theme choice persists via `PokrovFileThemeModeStore`, default system).
 - Warning and blocked-state panels.
 
 ## Do Not
@@ -33,4 +38,4 @@ Client tokens must stay aligned with the platform `shared/design-tokens.json` an
 - Do not present Android as public-safe before the physical audit.
 - Do not expose raw configs or local control surfaces in consumer UI.
 - Do not use generated images as release evidence.
-- Do not use direct public product wording with `VPN` except legacy compatibility labels or unavoidable identifiers.
+- Do not hide, cloak, or stuff `VPN` wording; visible product wording may say VPN per the `2026-06-13` owner direction and the platform `2026-06-01` rule.
