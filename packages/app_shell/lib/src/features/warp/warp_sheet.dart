@@ -39,14 +39,12 @@ class _WarpConsentSheet extends StatelessWidget {
     final nextValue = !enabled;
     final ready = lifecycle.canOffer;
     final active = enabled || lifecycle.phase == PokrovWarpPhase.active;
-    final useDarkPanel =
-        active && Theme.of(context).brightness == Brightness.dark;
-    final foreground = useDarkPanel ? Colors.white : p.ink;
-    final secondary =
-        useDarkPanel ? Colors.white.withValues(alpha: 0.72) : p.muted;
-    final panelColor = useDarkPanel ? const Color(0xFF0A1114) : p.surface;
-    final lineColor =
-        useDarkPanel ? Colors.white.withValues(alpha: 0.10) : p.line;
+    // Palette tokens adapt to light/dark on their own; no hardcoded
+    // white-alpha dark panel.
+    final foreground = p.ink;
+    final secondary = p.muted;
+    final panelColor = p.surface;
+    final lineColor = p.line;
     return SafeArea(
       top: false,
       child: Container(

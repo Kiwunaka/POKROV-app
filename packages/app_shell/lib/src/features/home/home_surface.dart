@@ -414,17 +414,19 @@ class _HomeStageState extends State<_HomeStage>
                   ],
                 ),
               ),
+              // Honest affordances: the icons and tooltips describe the real
+              // targets (connection details sheet and the Rules tab).
               IconButton(
                 key: const ValueKey('home-desktop-notifications-action'),
-                tooltip: 'Уведомления',
+                tooltip: 'Детали подключения',
                 onPressed: widget.onOpenConnectionDetails,
-                icon: const Icon(Icons.notifications_none_rounded),
+                icon: const Icon(Icons.info_outline_rounded),
               ),
               IconButton(
                 key: const ValueKey('home-desktop-settings-action'),
-                tooltip: 'Профиль',
+                tooltip: 'Правила',
                 onPressed: widget.onOpenRules,
-                icon: const Icon(Icons.settings_outlined),
+                icon: const Icon(Icons.tune_rounded),
               ),
             ],
           ),

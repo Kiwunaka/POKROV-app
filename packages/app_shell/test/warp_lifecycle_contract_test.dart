@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
@@ -98,6 +99,23 @@ void main() {
     expect(lifecycle.publicSheetBody, isNot(contains('скорость')));
     expect(lifecycle.technicalLabel, 'WARP');
     expect(lifecycle.stateKey, 'home-warp-state-ready');
+  });
+
+  test('warp consent sheet uses adaptive palette tokens, not white-alpha', () {
+    final source = File(
+      '${Directory.current.path}/lib/src/features/warp/warp_sheet.dart',
+    ).readAsStringSync();
+
+    expect(
+      source,
+      isNot(contains('Colors.white')),
+      reason: 'Consent panel colors must come from PokrovPalette tokens.',
+    );
+    expect(
+      source,
+      isNot(contains('0xFF0A1114')),
+      reason: 'No hardcoded dark panel color; tokens adapt to brightness.',
+    );
   });
 
   test('warp cache payload stores only safe consent status', () {

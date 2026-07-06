@@ -2713,6 +2713,17 @@ void main() {
     expect(find.byKey(const ValueKey('home-route-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-news-card')), findsNothing);
 
+    // Desktop header affordances stay honest: tooltips and icons describe
+    // the actual targets (connection details sheet, rules tab).
+    final detailsAction = tester.widget<IconButton>(
+      find.byKey(const ValueKey('home-desktop-notifications-action')),
+    );
+    expect(detailsAction.tooltip, 'Детали подключения');
+    final rulesAction = tester.widget<IconButton>(
+      find.byKey(const ValueKey('home-desktop-settings-action')),
+    );
+    expect(rulesAction.tooltip, 'Правила');
+
     expect(find.text('Р’Р°С€ РѕСЃРЅРѕРІРЅРѕР№ СЂРµРіРёРѕРЅ'), findsNothing);
     expect(find.text('РќРѕРІРѕСЃС‚Рё Рё СѓРІРµРґРѕРјР»РµРЅРёСЏ'), findsNothing);
     expect(find.text('РЈСЃРёР»РµРЅРЅС‹Р№ СЂРµР¶РёРј'), findsNothing);
