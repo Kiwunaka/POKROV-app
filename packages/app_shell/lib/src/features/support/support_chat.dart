@@ -1232,7 +1232,9 @@ class _SupportChatBubble extends StatelessWidget {
             Text(
               message.body,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isUser ? Colors.white : p.ink,
+                    color: isUser
+                        ? Theme.of(context).colorScheme.onPrimary
+                        : p.ink,
                     height: 1.3,
                   ),
             ),

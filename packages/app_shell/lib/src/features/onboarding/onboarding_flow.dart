@@ -244,7 +244,8 @@ class _FirstLaunchChoiceCard extends StatelessWidget {
     final border = primary ? p.accent.withValues(alpha: 0.20) : p.line;
     final iconBackground =
         primary ? p.accent : p.accent.withValues(alpha: 0.10);
-    final iconColor = primary ? Colors.white : p.accent;
+    final iconColor =
+        primary ? Theme.of(context).colorScheme.onPrimary : p.accent;
     return PokrovSettingsRowPressSurface(
       onTap: onTap,
       child: Container(

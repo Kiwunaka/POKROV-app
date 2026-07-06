@@ -389,6 +389,7 @@ TextTheme _buildPokrovTextTheme(PokrovPaletteTokens tokens) {
       fontWeight: FontWeight.w600,
       letterSpacing: 0,
       color: ink,
+      fontFeatures: [FontFeature.tabularFigures()],
     ),
     labelMedium: TextStyle(
       fontSize: 12,
