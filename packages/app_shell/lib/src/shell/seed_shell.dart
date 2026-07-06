@@ -91,12 +91,11 @@ ThemeData _buildPokrovTheme({
     useMaterial3: true,
     brightness: brightness,
     colorScheme: colorScheme,
-    fontFamily: 'SF Pro Display',
+    fontFamily: 'packages/pokrov_app_shell/Golos Text',
     fontFamilyFallback: const [
       'Segoe UI Variable Display',
       'Segoe UI Variable Text',
       'Segoe UI',
-      'SF Pro Text',
       'Roboto',
       'Inter',
     ],
