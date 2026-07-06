@@ -123,6 +123,43 @@ void main() {
     expect(await store.isCompleted(), isTrue);
   });
 
+  test('file theme-mode store persists the explicit choice and defaults safe',
+      () async {
+    final tempDirectory =
+        await Directory.systemTemp.createTemp('pokrov-theme-store-');
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final previousPathProvider = PathProviderPlatform.instance;
+    PathProviderPlatform.instance =
+        _FakePathProviderPlatform(tempDirectory.path);
+    addTearDown(() {
+      PathProviderPlatform.instance = previousPathProvider;
+    });
+
+    const store = PokrovFileThemeModeStore();
+
+    expect(await store.read(), ThemeMode.system);
+
+    await store.write(ThemeMode.dark);
+    expect(await store.read(), ThemeMode.dark);
+
+    await store.write(ThemeMode.light);
+    expect(await store.read(), ThemeMode.light);
+
+    await store.write(ThemeMode.system);
+    expect(await store.read(), ThemeMode.system);
+
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}pokrov-theme-mode.txt',
+    );
+    await stateFile.writeAsString('garbage');
+    expect(await store.read(), ThemeMode.system);
+  });
+
   test('platform bootstrap contract summarizes client startup requirements',
       () {
     const contract = PlatformBootstrapContract(

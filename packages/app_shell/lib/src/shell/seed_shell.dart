@@ -8,6 +8,7 @@ class PokrovSeedApp extends StatefulWidget {
     this.supportTicketService,
     this.handoffLauncher,
     this.firstLaunchStore,
+    this.themeModeStore = const PokrovFileThemeModeStore(),
     this.runtimeActionTimeout = const Duration(seconds: 18),
   });
 
@@ -16,6 +17,7 @@ class PokrovSeedApp extends StatefulWidget {
   final SupportTicketService? supportTicketService;
   final ExternalHandoffLauncher? handoffLauncher;
   final PokrovFirstLaunchStore? firstLaunchStore;
+  final PokrovFileThemeModeStore themeModeStore;
   final Duration runtimeActionTimeout;
 
   @override
@@ -25,11 +27,28 @@ class PokrovSeedApp extends StatefulWidget {
 class _PokrovSeedAppState extends State<PokrovSeedApp> {
   ThemeMode _themeMode = ThemeMode.system;
 
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_restoreThemeMode());
+  }
+
+  Future<void> _restoreThemeMode() async {
+    final restored = await widget.themeModeStore.read();
+    if (!mounted || restored == _themeMode) {
+      return;
+    }
+    setState(() {
+      _themeMode = restored;
+    });
+  }
+
   void _setThemeMode(ThemeMode mode) {
     if (_themeMode == mode) {
       return;
     }
     HapticFeedback.selectionClick();
+    unawaited(widget.themeModeStore.write(mode));
     setState(() {
       _themeMode = mode;
     });
@@ -71,7 +90,8 @@ ThemeData _buildPokrovTheme({
   required Brightness brightness,
 }) {
   final isDark = brightness == Brightness.dark;
-  final onAccent = isDark ? const Color(0xFF06251E) : Colors.white;
+  // component.button text tokens: white on emerald, near-black on dark mint.
+  final onAccent = isDark ? const Color(0xFF101713) : Colors.white;
   final colorScheme = ColorScheme.fromSeed(
     seedColor: tokens.accent,
     brightness: brightness,
@@ -186,15 +206,13 @@ ThemeData _buildPokrovTheme({
       ),
     ),
     switchTheme: SwitchThemeData(
-      thumbColor: WidgetStateProperty.resolveWith(
-        (states) => states.contains(WidgetState.selected)
-            ? Colors.white
-            : (isDark ? const Color(0xFFD7DCE4) : Colors.white),
-      ),
+      // component.switch canon: iOS system-green on-track, translucent
+      // neutral off-track, always-white thumb.
+      thumbColor: WidgetStateProperty.all(Colors.white),
       trackColor: WidgetStateProperty.resolveWith(
         (states) => states.contains(WidgetState.selected)
-            ? tokens.accent
-            : tokens.muted.withValues(alpha: 0.32),
+            ? tokens.connectedGreen
+            : const Color(0x78787880).withValues(alpha: isDark ? 0.32 : 0.16),
       ),
       trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
     ),

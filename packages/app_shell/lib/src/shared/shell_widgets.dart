@@ -322,10 +322,12 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     final motion = _MotionScope.of(context);
     final p = PokrovPalette.of(context);
     final state = _discState;
+    // pokrov-clear canon: the running (connected) disc is the one place that
+    // uses the shared iOS status green; busy/idle stay on the brand emerald.
     final accent = (widget.degraded || widget.error)
         ? p.warning
         : widget.running
-            ? p.accentBright
+            ? p.connectedGreen
             : p.accent;
     final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ??
         WidgetsBinding.instance.platformDispatcher.accessibilityFeatures

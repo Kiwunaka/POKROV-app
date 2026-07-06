@@ -113,6 +113,46 @@ class PokrovFileFirstLaunchStore implements PokrovFirstLaunchStore {
   }
 }
 
+/// Persists the explicit theme choice in app support (pokrov-clear wave 3).
+/// Best-effort by design: storage failures never break the shell, and the
+/// default stays [ThemeMode.system].
+class PokrovFileThemeModeStore {
+  const PokrovFileThemeModeStore();
+
+  static const _fileName = 'pokrov-theme-mode.txt';
+
+  Future<File> _stateFile() async {
+    final directory = await getApplicationSupportDirectory();
+    await directory.create(recursive: true);
+    return File('${directory.path}${Platform.pathSeparator}$_fileName');
+  }
+
+  Future<ThemeMode> read() async {
+    try {
+      final file = await _stateFile();
+      if (!await file.exists()) {
+        return ThemeMode.system;
+      }
+      return switch ((await file.readAsString()).trim()) {
+        'light' => ThemeMode.light,
+        'dark' => ThemeMode.dark,
+        _ => ThemeMode.system,
+      };
+    } catch (_) {
+      return ThemeMode.system;
+    }
+  }
+
+  Future<void> write(ThemeMode mode) async {
+    try {
+      final file = await _stateFile();
+      await file.writeAsString(mode.name, flush: true);
+    } catch (_) {
+      // Best-effort persistence only.
+    }
+  }
+}
+
 const _pokrovBrandMarkAsset = PokrovBrandAssets.mark;
 const _selectedAppsEnforcementReady = true;
 const _pokrovAppVersion = '1.0.0-beta.3';
