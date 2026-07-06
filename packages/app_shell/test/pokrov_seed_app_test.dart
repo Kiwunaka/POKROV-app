@@ -2825,6 +2825,45 @@ void main() {
     expect(find.text('Включится при следующем подключении'), findsOneWidget);
   });
 
+  testWidgets('home WARP tile is tappable as a whole and toggles the switch',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    _installReadyRuntimeBridgeMock();
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+        warpPolicy: WarpRuntimePolicy(
+          enabled: true,
+          runtimeReady: true,
+          state: 'ready',
+          wireguardConfigJson:
+              '{"private-key":"test-private-key","local-address-ipv4":"172.16.0.2"}',
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    // Tap the tile body (subtitle text), not the inline switch.
+    await tester.tap(find.text('Дополнительная защита'));
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.warpConsentCalls, 1);
+    expect(bootstrapper.lastWarpConsentEnabled, isTrue);
+    expect(find.byKey(const ValueKey('home-warp-sheet')), findsNothing);
+    expect(find.text('Включится при следующем подключении'), findsOneWidget);
+  });
+
   testWidgets('home WARP uses client-local defaults without server material',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(760, 800));

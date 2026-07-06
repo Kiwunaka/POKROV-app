@@ -808,8 +808,8 @@ class PokrovSettingsRow extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           textAlign: compact ? TextAlign.left : TextAlign.right,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: tokens.ink.withValues(alpha: 0.62),
-                fontWeight: FontWeight.w700,
+                color: tokens.muted,
+                fontWeight: FontWeight.w400,
               ),
         );
         final chevron = onTap == null

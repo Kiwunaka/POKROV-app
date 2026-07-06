@@ -47,7 +47,6 @@ class _RulesSection extends StatelessWidget {
         .toList(growable: false);
 
     return _SeedContentList(
-      top: 24,
       children: [
         Text('Правила подключения', style: theme.textTheme.headlineSmall),
         const SizedBox(height: 12),

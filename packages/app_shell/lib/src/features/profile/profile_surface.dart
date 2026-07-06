@@ -136,7 +136,6 @@ class _ProfileSection extends StatelessWidget {
         ]);
       },
       child: _SeedContentList(
-        top: 18,
         children: [
           Text('Профиль', style: theme.textTheme.headlineSmall),
           const SizedBox(height: 12),

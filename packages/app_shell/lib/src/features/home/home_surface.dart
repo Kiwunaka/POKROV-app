@@ -84,7 +84,9 @@ class _QuickConnectSection extends StatelessWidget {
     final homePromoSlot = _homeAdminPromoSlot(bonusSummary);
 
     return _SeedContentList(
-      top: isDesktop ? 34 : 18,
+      // Mobile tabs share the 16px top gutter; the desktop stage keeps its
+      // larger hero offset because it has no headline row above the disc.
+      top: isDesktop ? 34 : 16,
       maxContentWidth: isDesktop ? 1220 : 900,
       children: [
         Center(
@@ -924,45 +926,54 @@ class _HomeWarpTile extends StatelessWidget {
     return Semantics(
       key: const ValueKey('home-warp-tile'),
       toggled: enabled,
-      child: AnimatedContainer(
-        key: ValueKey(lifecycle.stateKey),
-        duration: motion.duration(_MotionTokens.short),
-        curve: _MotionTokens.ease,
-        width: double.infinity,
-        constraints: const BoxConstraints(maxWidth: 520),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: enabled
-              ? p.accent.withValues(alpha: 0.09)
-              : p.surface.withValues(alpha: 0.96),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: enabled ? p.accent.withValues(alpha: 0.28) : p.line,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: iconBackground,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Icon(
-                enabled ? Icons.verified_user_rounded : Icons.blur_on_rounded,
-                size: 20,
-                color: iconColor,
-              ),
+      child: GestureDetector(
+        // The whole tile toggles the switch; the switch itself wins the
+        // gesture arena for taps landing directly on it.
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          if (busy) {
+            return;
+          }
+          if (!canOffer) {
+            unawaited(onOpen());
+            return;
+          }
+          unawaited(onChanged(!enabled));
+        },
+        child: AnimatedContainer(
+          key: ValueKey(lifecycle.stateKey),
+          duration: motion.duration(_MotionTokens.short),
+          curve: _MotionTokens.ease,
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 520),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: enabled
+                ? p.accent.withValues(alpha: 0.09)
+                : p.surface.withValues(alpha: 0.96),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: enabled ? p.accent.withValues(alpha: 0.28) : p.line,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: InkWell(
-                borderRadius: BorderRadius.circular(14),
-                onTap: () {
-                  unawaited(onOpen());
-                },
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: iconBackground,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Icon(
+                  enabled ? Icons.verified_user_rounded : Icons.blur_on_rounded,
+                  size: 20,
+                  color: iconColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2),
                   child: Column(
@@ -988,8 +999,8 @@ class _HomeWarpTile extends StatelessWidget {
                           key: ValueKey(subtitle),
                           style:
                               Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: enabled ? p.accent : p.muted,
-                                    fontWeight: FontWeight.w700,
+                                    color: p.muted,
+                                    fontWeight: FontWeight.w500,
                                   ),
                         ),
                       ),
@@ -997,18 +1008,18 @@ class _HomeWarpTile extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            PokrovSwitch(
-              key: const ValueKey('home-warp-inline-switch'),
-              value: enabled,
-              onChanged: !canOffer || busy
-                  ? null
-                  : (value) {
-                      unawaited(onChanged(value));
-                    },
-            ),
-          ],
+              const SizedBox(width: 8),
+              PokrovSwitch(
+                key: const ValueKey('home-warp-inline-switch'),
+                value: enabled,
+                onChanged: !canOffer || busy
+                    ? null
+                    : (value) {
+                        unawaited(onChanged(value));
+                      },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1058,7 +1069,7 @@ class _HomeBrandHeader extends StatelessWidget {
           textAlign: center ? TextAlign.center : TextAlign.start,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: p.muted,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w400,
                 height: 1.2,
               ),
         ),
@@ -1296,9 +1307,9 @@ class _HomeInfoNotice extends StatelessWidget {
               child: Text(
                 message,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: p.ink.withValues(alpha: 0.80),
+                      color: p.muted,
                       height: 1.25,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
                     ),
               ),
             ),

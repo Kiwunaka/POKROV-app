@@ -3,7 +3,8 @@ part of pokrov_app_shell;
 class _SeedContentList extends StatelessWidget {
   const _SeedContentList({
     required this.children,
-    this.top = 12,
+    // One shared top gutter so the page rhythm does not jump between tabs.
+    this.top = 16,
     this.maxContentWidth = 900,
   });
 
