@@ -435,7 +435,11 @@ class _ClientLocationCityRow extends StatelessWidget {
               ),
             ),
             child: selected
-                ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
+                ? Icon(
+                    Icons.check_rounded,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    size: 18,
+                  )
                 : null,
           ),
         ],
@@ -530,7 +534,11 @@ class _SmartConnectNodeRow extends StatelessWidget {
               ),
             ),
             child: selected
-                ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
+                ? Icon(
+                    Icons.check_rounded,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    size: 18,
+                  )
                 : null,
           ),
         ],
