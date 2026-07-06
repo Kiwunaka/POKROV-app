@@ -37,37 +37,44 @@ void _showRedeemSheet(
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
+    isScrollControlled: true,
     sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
     builder: (context) => SafeArea(
       top: false,
-      child: SingleChildScrollView(
-        key: const ValueKey('profile-redeem-sheet'),
-        padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Код активации',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Введите код из приложения, кабинета, Telegram или письма.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: PokrovPalette.of(context).muted,
-                    height: 1.35,
-                  ),
-            ),
-            const SizedBox(height: 14),
-            _RedeemFields(
-              hintCode: hintCode,
-              onRedeem: (code) {
-                Navigator.of(context).pop();
-                onRedeem(code);
-              },
-            ),
-          ],
+      child: Padding(
+        // Keeps the code field and submit action above the open keyboard.
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: SingleChildScrollView(
+          key: const ValueKey('profile-redeem-sheet'),
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Код активации',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Введите код из приложения, кабинета, Telegram или письма.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: PokrovPalette.of(context).muted,
+                      height: 1.35,
+                    ),
+              ),
+              const SizedBox(height: 14),
+              _RedeemFields(
+                hintCode: hintCode,
+                onRedeem: (code) {
+                  Navigator.of(context).pop();
+                  onRedeem(code);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     ),
@@ -89,6 +96,7 @@ class _RedeemFields extends StatefulWidget {
 
 class _RedeemFieldsState extends State<_RedeemFields> {
   late final TextEditingController _controller;
+  String? _emptyCodeNotice;
 
   @override
   void initState() {
@@ -102,6 +110,19 @@ class _RedeemFieldsState extends State<_RedeemFields> {
     super.dispose();
   }
 
+  /// Validates before the sheet closes: an empty code keeps the sheet open
+  /// and shows an inline notice instead of popping into a dead-end snack.
+  void _submit() {
+    final code = _controller.text.trim();
+    if (code.isEmpty) {
+      setState(() {
+        _emptyCodeNotice = 'Введите код активации.';
+      });
+      return;
+    }
+    widget.onRedeem(code);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -110,15 +131,25 @@ class _RedeemFieldsState extends State<_RedeemFields> {
         TextField(
           key: const ValueKey('profile-redeem-code-field'),
           controller: _controller,
-          decoration: const InputDecoration(
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _submit(),
+          onChanged: (value) {
+            if (_emptyCodeNotice != null && value.trim().isNotEmpty) {
+              setState(() {
+                _emptyCodeNotice = null;
+              });
+            }
+          },
+          decoration: InputDecoration(
             labelText: 'Код активации',
             hintText: 'POKROV-XXXX-XXXX',
+            errorText: _emptyCodeNotice,
           ),
         ),
         const SizedBox(height: 12),
         FilledButton.icon(
           key: const ValueKey('profile-redeem-submit'),
-          onPressed: () => widget.onRedeem(_controller.text.trim()),
+          onPressed: _submit,
           icon: const Icon(Icons.verified_outlined),
           label: const Text('Ввести код'),
         ),

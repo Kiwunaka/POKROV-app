@@ -1704,6 +1704,38 @@ void main() {
     );
   });
 
+  testWidgets('profile redeem keeps the sheet open on empty code',
+      (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-profile');
+    await _openRedeemSheetFromProfile(tester);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('profile-redeem-code-field')),
+      '',
+    );
+    await tester.tap(find.byKey(const ValueKey('profile-redeem-submit')));
+    await tester.pumpAndSettle();
+
+    // Empty input never closes the sheet; the field explains what to do.
+    expect(find.byKey(const ValueKey('profile-redeem-sheet')), findsOneWidget);
+    expect(find.text('Введите код активации.'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('profile-redeem-code-field')),
+      'POKROV-ACCESS-2026',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Введите код активации.'), findsNothing);
+  });
+
   testWidgets('profile cabinet opens through short-lived handoff',
       (tester) async {
     final bootstrapper = _FakeBootstrapper(

@@ -756,11 +756,28 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
               TextField(
                 key: const ValueKey('rules-selected-app-search'),
                 controller: _searchController,
+                textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.search_rounded),
                   labelText: 'Поиск',
                   filled: true,
                   fillColor: p.surfaceMuted.withValues(alpha: 0.70),
+                  suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _searchController,
+                    builder: (context, value, _) => value.text.isEmpty
+                        ? const SizedBox.shrink()
+                        : IconButton(
+                            key: const ValueKey(
+                              'rules-selected-app-search-clear',
+                            ),
+                            tooltip: 'Очистить',
+                            icon: const Icon(Icons.close_rounded),
+                            onPressed: () => setState(() {
+                              _searchController.clear();
+                              _query = '';
+                            }),
+                          ),
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(color: p.line),
@@ -813,6 +830,8 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                       );
                     }
                     return ListView.separated(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
                       itemCount: candidates.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
