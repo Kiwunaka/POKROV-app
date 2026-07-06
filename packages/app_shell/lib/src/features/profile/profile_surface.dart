@@ -543,8 +543,14 @@ void _showThemeModeSheet(
   required ValueChanged<ThemeMode> onChanged,
 }) {
   void select(ThemeMode mode) {
-    Navigator.of(context).pop();
+    // Apply immediately so the springy checkmark is visible, then let the
+    // sheet leave once the selection has settled.
     onChanged(mode);
+    Future<void>.delayed(const Duration(milliseconds: 320), () {
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+    });
   }
 
   showModalBottomSheet<void>(

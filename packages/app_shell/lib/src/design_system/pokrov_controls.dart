@@ -118,7 +118,13 @@ class PokrovGroupedSection extends StatelessWidget {
           ],
           const SizedBox(height: 12),
           for (var index = 0; index < children.length; index += 1) ...[
-            if (index > 0) Divider(height: 1, thickness: 1, color: tokens.line),
+            if (index > 0)
+              Divider(
+                height: 1,
+                thickness: 1,
+                indent: 50,
+                color: tokens.line,
+              ),
             children[index],
           ],
         ],

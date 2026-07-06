@@ -999,7 +999,7 @@ class _HomeWarpTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Switch.adaptive(
+            PokrovSwitch(
               key: const ValueKey('home-warp-inline-switch'),
               value: enabled,
               onChanged: !canOffer || busy

@@ -276,6 +276,7 @@ ThemeData _buildPokrovTheme({
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
+      insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 84),
       backgroundColor: isDark ? tokens.surfaceElevated : tokens.ink,
       contentTextStyle: textTheme.bodyMedium?.copyWith(
         color: isDark ? tokens.ink : tokens.canvasAlt,

@@ -17,11 +17,15 @@ void showPokrovSnack(
   String message, {
   PokrovSnackTone tone = PokrovSnackTone.info,
 }) {
-  final tokens = PokrovPalette.of(context);
+  // The snack surface is inverted in the light theme (near-black ink), so
+  // tone icons always come from the palette that reads on a dark surface.
+  final onSnack = Theme.of(context).brightness == Brightness.light
+      ? PokrovPalette.dark
+      : PokrovPalette.of(context);
   final (IconData icon, Color iconColor) = switch (tone) {
-    PokrovSnackTone.info => (Icons.info_outline, tokens.accentBright),
-    PokrovSnackTone.success => (Icons.check_circle, tokens.success),
-    PokrovSnackTone.danger => (Icons.error_outline, tokens.danger),
+    PokrovSnackTone.info => (Icons.info_outline, onSnack.accentBright),
+    PokrovSnackTone.success => (Icons.check_circle, onSnack.success),
+    PokrovSnackTone.danger => (Icons.error_outline, onSnack.danger),
   };
   switch (tone) {
     case PokrovSnackTone.success:
