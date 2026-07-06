@@ -7,7 +7,10 @@ import 'pokrov_motion.dart';
 /// Scales down to [pressedScale] over [PokrovMotionTokens.quick] with an
 /// ease-in and releases back with the springy
 /// [PokrovMotionTokens.spring] overshoot. Desktop pointers get an optional
-/// gentle [hoverScale]. Pointer events pass through to the wrapped child, so
+/// gentle [hoverScale]. Press tracking uses tap gesture semantics (not raw
+/// pointer events), so starting a scroll on top of the button cancels the
+/// press instead of twitching the scale — the iOS delayed-highlight
+/// pattern. Pointer events still pass through to the wrapped child, so
 /// buttons keep their own semantics and tap handling. Respects
 /// [PokrovMotionScope]: reduced motion collapses the scale animation.
 class PokrovPressable extends StatefulWidget {
@@ -68,10 +71,10 @@ class _PokrovPressableState extends State<PokrovPressable> {
         _setHovered(false);
         _setPressed(false);
       },
-      child: Listener(
-        onPointerDown: (_) => _setPressed(true),
-        onPointerUp: (_) => _setPressed(false),
-        onPointerCancel: (_) => _setPressed(false),
+      child: GestureDetector(
+        onTapDown: (_) => _setPressed(true),
+        onTapUp: (_) => _setPressed(false),
+        onTapCancel: () => _setPressed(false),
         child: AnimatedScale(
           key: PokrovPressable.motionKey,
           scale: scale,

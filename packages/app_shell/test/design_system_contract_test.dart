@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart' show kPressTimeout;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -861,7 +862,9 @@ void main() {
     final gesture = await tester.startGesture(
       tester.getCenter(find.text('Продлить доступ')),
     );
-    await tester.pump();
+    // Tap-gesture press: the highlight is deferred by the press timeout, the
+    // iOS pattern that keeps scroll starts from twitching the scale.
+    await tester.pump(kPressTimeout);
     expect(scaleWidget().scale, PokrovPressable.pressedScale);
     expect(scaleWidget().curve, Curves.easeIn);
 
@@ -870,6 +873,20 @@ void main() {
     expect(scaleWidget().scale, 1.0);
     expect(scaleWidget().curve, PokrovMotionTokens.spring);
 
+    await tester.pumpAndSettle();
+    expect(taps, 1);
+
+    // Starting a drag on top of the button cancels the press instead of
+    // completing it (scroll-twitch regression guard).
+    final drag = await tester.startGesture(
+      tester.getCenter(find.text('Продлить доступ')),
+    );
+    await tester.pump(kPressTimeout);
+    expect(scaleWidget().scale, PokrovPressable.pressedScale);
+    await drag.moveBy(const Offset(0, -40));
+    await tester.pump();
+    expect(scaleWidget().scale, 1.0);
+    await drag.up();
     await tester.pumpAndSettle();
     expect(taps, 1);
   });

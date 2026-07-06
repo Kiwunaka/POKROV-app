@@ -275,6 +275,7 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
   late final TextEditingController _controller;
   Future<List<_SelectedAppCandidate>>? _candidateFuture;
   bool _manualEntryVisible = false;
+  String? _manualError;
 
   @override
   void initState() {
@@ -299,10 +300,19 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
   void _submit() {
     final normalized = _normalizeSelectedAppIdentifier(_controller.text);
     if (normalized == null) {
+      // Inline validation instead of a silent no-op.
+      setState(() {
+        _manualError = _controller.text.trim().isEmpty
+            ? 'Введите название приложения.'
+            : 'Не получилось добавить: используйте латинские буквы, цифры, точки или дефисы.';
+      });
       return;
     }
     widget.onAdd(normalized);
     _controller.clear();
+    setState(() {
+      _manualError = null;
+    });
   }
 
   Future<void> _openPicker() async {
@@ -379,13 +389,25 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
                         child: TextField(
                           key: const ValueKey('rules-selected-app-input'),
                           controller: _controller,
+                          // Revealing the manual field means the user is
+                          // about to type: focus it right away.
+                          autofocus: true,
                           decoration: InputDecoration(
                             labelText: 'Название для поддержки',
                             hintText:
                                 'Если поддержка попросила добавить вручную',
                             helperText:
                                 'Обычный способ - выбрать приложение из списка.',
+                            errorText: _manualError,
+                            errorMaxLines: 3,
                           ),
+                          onChanged: (_) {
+                            if (_manualError != null) {
+                              setState(() {
+                                _manualError = null;
+                              });
+                            }
+                          },
                           onSubmitted: (_) => _submit(),
                         ),
                       ),
@@ -446,16 +468,25 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: p.line),
             ),
-            child: Column(
-              children: widget.selectedAppIds
-                  .map(
-                    (appId) => _SelectedAppIdRow(
-                      key: ValueKey('rules-selected-app-$appId'),
-                      appId: appId,
-                      onRemove: () => widget.onRemove(appId),
-                    ),
-                  )
-                  .toList(growable: false),
+            // Row inserts and removals settle smoothly instead of jumping.
+            child: AnimatedSize(
+              duration: _MotionScope.of(context).duration(_MotionTokens.short),
+              curve: _MotionTokens.ease,
+              alignment: Alignment.topCenter,
+              child: Column(
+                children: widget.selectedAppIds
+                    .map(
+                      (appId) => _SelectedAppIdRow(
+                        key: ValueKey('rules-selected-app-$appId'),
+                        appId: appId,
+                        onRemove: () {
+                          PokrovHaptics.tap();
+                          widget.onRemove(appId);
+                        },
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
             ),
           ),
         ],

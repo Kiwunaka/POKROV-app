@@ -3874,6 +3874,25 @@ void main() {
 
     expect(find.byKey(const ValueKey('rules-selected-app-manual-fields')),
         findsOneWidget);
+    // Revealing the manual field focuses it for immediate typing.
+    final manualInput = tester.widget<TextField>(
+      find.byKey(const ValueKey('rules-selected-app-input')),
+    );
+    expect(manualInput.autofocus, isTrue);
+
+    // Invalid manual input surfaces inline validation instead of silently
+    // doing nothing.
+    await tester.enterText(
+      find.byKey(const ValueKey('rules-selected-app-input')),
+      'плохое имя!',
+    );
+    await tester.tap(find.byKey(const ValueKey('rules-selected-app-add')));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Не получилось добавить'),
+      findsOneWidget,
+    );
+
     await tester.enterText(
       find.byKey(const ValueKey('rules-selected-app-input')),
       'com.example.special',
@@ -3881,6 +3900,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('rules-selected-app-add')));
     await tester.pumpAndSettle();
 
+    expect(find.textContaining('Не получилось добавить'), findsNothing);
     expect(find.byKey(const ValueKey('rules-selected-app-com.example.special')),
         findsOneWidget);
     expect(find.text('com.example.special'), findsNothing);
@@ -4011,6 +4031,33 @@ void main() {
         const ValueKey('rules-selected-app-org.thoughtcrime.securesms'),
       ),
       findsOneWidget,
+    );
+
+    // Rows live inside an AnimatedSize wrapper so inserts/removals settle
+    // smoothly; removing deletes the row.
+    expect(
+      find.ancestor(
+        of: find.byKey(
+          const ValueKey('rules-selected-app-org.thoughtcrime.securesms'),
+        ),
+        matching: find.byType(AnimatedSize),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey('rules-selected-app-org.thoughtcrime.securesms'),
+        ),
+        matching: find.byIcon(Icons.close_rounded),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(
+        const ValueKey('rules-selected-app-org.thoughtcrime.securesms'),
+      ),
+      findsNothing,
     );
   });
 
