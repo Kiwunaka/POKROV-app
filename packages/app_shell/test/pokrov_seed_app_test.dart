@@ -2314,6 +2314,64 @@ void main() {
     expect(launched.single.toString(), contains('start=ref_POKROV1'));
   });
 
+  testWidgets('rewards referral copy confirms in-sheet with icon morph',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await _tapNav(tester, 'nav-profile');
+    await _openRewardsHubFromProfile(tester);
+
+    final copyAction =
+        find.byKey(const ValueKey('rewards-referral-copy-action'));
+    expect(copyAction, findsOneWidget);
+    expect(
+      find.descendant(
+          of: copyAction, matching: find.byIcon(Icons.copy_rounded)),
+      findsOneWidget,
+    );
+
+    await tester.tap(copyAction);
+    await tester.pumpAndSettle();
+
+    // The confirmation morphs inside the sheet instead of a snack that
+    // would render hidden underneath the open sheet.
+    expect(find.byType(SnackBar), findsNothing);
+    expect(
+      find.descendant(
+        of: copyAction,
+        matching: find.byIcon(Icons.check_rounded),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.pump(const Duration(milliseconds: 1700));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+          of: copyAction, matching: find.byIcon(Icons.copy_rounded)),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('rewards-hub-sheet')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('profile opens subscription and email recovery sheets',
       (tester) async {
     final bootstrapper = _FakeBootstrapper(

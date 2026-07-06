@@ -2,9 +2,9 @@ part of pokrov_app_shell;
 
 void _showRewardsHubSheet(
   BuildContext context, {
-  required AppFirstBonusSummary? summary,
-  required bool rewardBusy,
-  required VoidCallback onRefreshBonusSummary,
+  required AppFirstBonusSummary? Function() summary,
+  required bool Function() rewardBusy,
+  required Future<void> Function() onRefreshBonusSummary,
   required VoidCallback onSpinWheel,
   required VoidCallback onCheckInCalendar,
   required void Function(String label, String value) onOpenHandoff,
@@ -15,8 +15,8 @@ void _showRewardsHubSheet(
     isScrollControlled: true,
     sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
     builder: (context) => _RewardsHubSheet(
-      summary: summary,
-      rewardBusy: rewardBusy,
+      summaryGetter: summary,
+      rewardBusyGetter: rewardBusy,
       onRefreshBonusSummary: onRefreshBonusSummary,
       onSpinWheel: onSpinWheel,
       onCheckInCalendar: onCheckInCalendar,
@@ -25,25 +25,41 @@ void _showRewardsHubSheet(
   );
 }
 
-class _RewardsHubSheet extends StatelessWidget {
+class _RewardsHubSheet extends StatefulWidget {
   const _RewardsHubSheet({
-    required this.summary,
-    required this.rewardBusy,
+    required this.summaryGetter,
+    required this.rewardBusyGetter,
     required this.onRefreshBonusSummary,
     required this.onSpinWheel,
     required this.onCheckInCalendar,
     required this.onOpenHandoff,
   });
 
-  final AppFirstBonusSummary? summary;
-  final bool rewardBusy;
-  final VoidCallback onRefreshBonusSummary;
+  final AppFirstBonusSummary? Function() summaryGetter;
+  final bool Function() rewardBusyGetter;
+  final Future<void> Function() onRefreshBonusSummary;
   final VoidCallback onSpinWheel;
   final VoidCallback onCheckInCalendar;
   final void Function(String label, String value) onOpenHandoff;
 
   @override
+  State<_RewardsHubSheet> createState() => _RewardsHubSheetState();
+}
+
+class _RewardsHubSheetState extends State<_RewardsHubSheet> {
+  /// Awaits the real backend refresh so the pull-to-refresh spinner stays
+  /// visible for the request duration, then re-reads the live summary.
+  Future<void> _refresh() async {
+    await widget.onRefreshBonusSummary();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final summary = widget.summaryGetter();
+    final rewardBusy = widget.rewardBusyGetter();
     final p = PokrovPalette.of(context);
     final wheel =
         summary?.wheelState ?? AppFirstBonusFeatureState.wheelDisabled;
@@ -51,7 +67,7 @@ class _RewardsHubSheet extends StatelessWidget {
         summary?.calendarState ?? AppFirstBonusFeatureState.calendarDisabled;
     final referralSummary = summary == null
         ? AppFirstReferralSummary.empty
-        : _rewardsReferralSummary(summary!);
+        : _rewardsReferralSummary(summary);
     final referralCode = summary?.referralCode.trim() ?? '';
     final showWheel = wheel.canRun;
     final showCalendar = calendar.canRun;
@@ -62,9 +78,7 @@ class _RewardsHubSheet extends StatelessWidget {
       child: RefreshIndicator(
         key: const ValueKey('rewards-refresh-indicator'),
         color: p.accent,
-        onRefresh: () async {
-          onRefreshBonusSummary();
-        },
+        onRefresh: _refresh,
         child: SingleChildScrollView(
           key: const ValueKey('rewards-hub-sheet'),
           physics: const AlwaysScrollableScrollPhysics(),
@@ -97,20 +111,20 @@ class _RewardsHubSheet extends StatelessWidget {
               ],
               _RewardsTelegramCard(
                 summary: summary,
-                onRefreshBonusSummary: onRefreshBonusSummary,
-                onOpenHandoff: onOpenHandoff,
+                onRefreshBonusSummary: widget.onRefreshBonusSummary,
+                onOpenHandoff: widget.onOpenHandoff,
               ),
               const SizedBox(height: 12),
               _RewardsReferralCard(
                 referralCode: referralCode,
                 referralSummary: referralSummary,
-                onOpenHandoff: onOpenHandoff,
+                onOpenHandoff: widget.onOpenHandoff,
               ),
               const SizedBox(height: 12),
               if (showPromoSlots) ...[
                 _RewardsPromoSlotsSection(
                   promoSlots: promoSlots,
-                  onOpenHandoff: onOpenHandoff,
+                  onOpenHandoff: widget.onOpenHandoff,
                 ),
                 const SizedBox(height: 12),
               ],
@@ -135,8 +149,8 @@ class _RewardsHubSheet extends StatelessWidget {
                     actionLabel: rewardBusy ? 'Проверяем' : 'Получить бонус',
                     actionEnabled: wheel.canRun && !rewardBusy,
                     onAction: () {
-                      Navigator.of(context).pop();
-                      onSpinWheel();
+                      Navigator.of(context).maybePop();
+                      widget.onSpinWheel();
                     },
                   ),
                 ],
@@ -154,8 +168,8 @@ class _RewardsHubSheet extends StatelessWidget {
                     actionLabel: rewardBusy ? 'Проверяем' : 'Отметиться',
                     actionEnabled: calendar.canRun && !rewardBusy,
                     onAction: () {
-                      Navigator.of(context).pop();
-                      onCheckInCalendar();
+                      Navigator.of(context).maybePop();
+                      widget.onCheckInCalendar();
                     },
                   ),
                   const SizedBox(height: 12),
@@ -168,8 +182,8 @@ class _RewardsHubSheet extends StatelessWidget {
               OutlinedButton.icon(
                 key: const ValueKey('rewards-refresh-action'),
                 onPressed: () {
-                  Navigator.of(context).pop();
-                  onRefreshBonusSummary();
+                  Navigator.of(context).maybePop();
+                  unawaited(widget.onRefreshBonusSummary());
                 },
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Обновить сводку'),
@@ -190,7 +204,7 @@ class _RewardsTelegramCard extends StatelessWidget {
   });
 
   final AppFirstBonusSummary? summary;
-  final VoidCallback onRefreshBonusSummary;
+  final Future<void> Function() onRefreshBonusSummary;
   final void Function(String label, String value) onOpenHandoff;
 
   @override
@@ -260,8 +274,8 @@ class _RewardsTelegramCard extends StatelessWidget {
               OutlinedButton.icon(
                 key: const ValueKey('rewards-telegram-refresh-action'),
                 onPressed: () {
-                  Navigator.of(context).pop();
-                  onRefreshBonusSummary();
+                  Navigator.of(context).maybePop();
+                  unawaited(onRefreshBonusSummary());
                 },
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Проверить'),
@@ -270,7 +284,7 @@ class _RewardsTelegramCard extends StatelessWidget {
                 key: const ValueKey('rewards-telegram-open-channel'),
                 tooltip: 'Открыть канал',
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  Navigator.of(context).maybePop();
                   onOpenHandoff('community', handle);
                 },
                 icon: const Icon(Icons.open_in_new_rounded),
@@ -747,7 +761,7 @@ class _RewardsPromoSlotRow extends StatelessWidget {
             onPressed: safeHref == null
                 ? null
                 : () {
-                    Navigator.of(context).pop();
+                    Navigator.of(context).maybePop();
                     onOpenHandoff('download', safeHref.toString());
                   },
             child: Text(ctaLabel),
@@ -779,7 +793,7 @@ Uri? _safePromoSlotHref(String value) {
   return null;
 }
 
-class _RewardsReferralCard extends StatelessWidget {
+class _RewardsReferralCard extends StatefulWidget {
   const _RewardsReferralCard({
     required this.referralCode,
     required this.referralSummary,
@@ -791,15 +805,83 @@ class _RewardsReferralCard extends StatelessWidget {
   final void Function(String label, String value) onOpenHandoff;
 
   @override
+  State<_RewardsReferralCard> createState() => _RewardsReferralCardState();
+}
+
+class _RewardsReferralCardState extends State<_RewardsReferralCard> {
+  static const _copiedHold = Duration(milliseconds: 1600);
+
+  bool _codeCopied = false;
+  bool _linkCopied = false;
+  Timer? _codeCopiedTimer;
+  Timer? _linkCopiedTimer;
+
+  @override
+  void dispose() {
+    _codeCopiedTimer?.cancel();
+    _linkCopiedTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Confirms the copy inside the open sheet: the copy icon morphs into a
+  /// check for a moment instead of a snack hidden under the sheet.
+  void _flashCopied({required bool link}) {
+    PokrovHaptics.tap();
+    setState(() {
+      if (link) {
+        _linkCopied = true;
+      } else {
+        _codeCopied = true;
+      }
+    });
+    final timer = Timer(_copiedHold, () {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        if (link) {
+          _linkCopied = false;
+        } else {
+          _codeCopied = false;
+        }
+      });
+    });
+    if (link) {
+      _linkCopiedTimer?.cancel();
+      _linkCopiedTimer = timer;
+    } else {
+      _codeCopiedTimer?.cancel();
+      _codeCopiedTimer = timer;
+    }
+  }
+
+  Widget _copyMorphIcon({required bool copied, required IconData idleIcon}) {
+    final motion = _MotionScope.of(context);
+    return AnimatedSwitcher(
+      duration: motion.duration(PokrovMotionTokens.quick),
+      switchInCurve: PokrovMotionTokens.spring,
+      switchOutCurve: PokrovMotionTokens.ease,
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: ScaleTransition(scale: animation, child: child),
+      ),
+      child: Icon(
+        copied ? Icons.check_rounded : idleIcon,
+        key: ValueKey(copied),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    final code = referralSummary.code.trim().isNotEmpty
-        ? referralSummary.code.trim()
-        : referralCode.isEmpty
+    final code = widget.referralSummary.code.trim().isNotEmpty
+        ? widget.referralSummary.code.trim()
+        : widget.referralCode.isEmpty
             ? 'POKROV'
-            : referralCode;
-    final referralShareLink = referralSummary.shareLink.trim().isNotEmpty
-        ? referralSummary.shareLink
+            : widget.referralCode;
+    final referralShareLink = widget.referralSummary.shareLink.trim().isNotEmpty
+        ? widget.referralSummary.shareLink
         : code == 'POKROV'
             ? ''
             : 'https://t.me/pokrov_vpnbot?start=ref_$code';
@@ -829,9 +911,9 @@ class _RewardsReferralCard extends StatelessWidget {
                       ),
                 ),
                 Text(
-                  referralSummary.bonusDays > 0
-                      ? 'Приглашений: ${referralSummary.count} · бонус +${ruDays(referralSummary.bonusDays)}'
-                      : 'Приглашений: ${referralSummary.count}',
+                  widget.referralSummary.bonusDays > 0
+                      ? 'Приглашений: ${widget.referralSummary.count} · бонус +${ruDays(widget.referralSummary.bonusDays)}'
+                      : 'Приглашений: ${widget.referralSummary.count}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: p.muted,
                       ),
@@ -843,13 +925,12 @@ class _RewardsReferralCard extends StatelessWidget {
             key: const ValueKey('rewards-referral-copy-action'),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: code));
-              showPokrovSnack(
-                context,
-                'Код скопирован',
-                tone: PokrovSnackTone.success,
-              );
+              _flashCopied(link: false);
             },
-            icon: const Icon(Icons.copy_rounded),
+            icon: _copyMorphIcon(
+              copied: _codeCopied,
+              idleIcon: Icons.copy_rounded,
+            ),
             label: const Text('Скопировать'),
           ),
           const SizedBox(width: 8),
@@ -862,20 +943,19 @@ class _RewardsReferralCard extends StatelessWidget {
                     Clipboard.setData(
                       ClipboardData(text: shareLink.toString()),
                     );
-                    showPokrovSnack(
-                      context,
-                      'Ссылка скопирована',
-                      tone: PokrovSnackTone.success,
-                    );
+                    _flashCopied(link: true);
                   },
-            icon: const Icon(Icons.link_rounded),
+            icon: _copyMorphIcon(
+              copied: _linkCopied,
+              idleIcon: Icons.link_rounded,
+            ),
           ),
           IconButton.filled(
             key: const ValueKey('rewards-referral-share-action'),
             tooltip: 'Открыть ссылку',
             onPressed: shareLink == null
                 ? null
-                : () => onOpenHandoff('download', shareLink.toString()),
+                : () => widget.onOpenHandoff('download', shareLink.toString()),
             icon: const Icon(Icons.ios_share_rounded),
           ),
         ],

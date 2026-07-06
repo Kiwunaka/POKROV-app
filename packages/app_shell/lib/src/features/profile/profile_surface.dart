@@ -51,11 +51,14 @@ class _ProfileSection extends StatelessWidget {
   final bool telegramBonusBusy;
   final bool telegramBonusCanClaim;
   final String? telegramBonusError;
-  final AppFirstBonusSummary? bonusSummary;
+
+  /// Live getter into the shell state so the rewards sheet stays current
+  /// while it is open (the sheet lives outside this widget's subtree).
+  final AppFirstBonusSummary? Function() bonusSummary;
   final bool bonusSummaryBusy;
   final String? bonusSummaryError;
-  final bool bonusRewardBusy;
-  final VoidCallback onRefreshBonusSummary;
+  final bool Function() bonusRewardBusy;
+  final Future<void> Function() onRefreshBonusSummary;
   final VoidCallback onSpinWheel;
   final VoidCallback onCheckInCalendar;
   final WarpRuntimePolicy warpPolicy;
@@ -76,7 +79,7 @@ class _ProfileSection extends StatelessWidget {
   final Future<bool> Function(String deviceId) onRevokeDevice;
 
   List<String> _bonusSummaryLines() {
-    final summary = bonusSummary;
+    final summary = bonusSummary();
     if (summary == null && bonusSummaryBusy) {
       return const ['Обновляем Telegram, рефералы и промокоды.'];
     }
@@ -91,7 +94,7 @@ class _ProfileSection extends StatelessWidget {
   }
 
   String _bonusHubValue() {
-    final summary = bonusSummary;
+    final summary = bonusSummary();
     if (bonusSummaryBusy) {
       return 'Обновляем';
     }
@@ -110,6 +113,7 @@ class _ProfileSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final p = PokrovPalette.of(context);
+    final currentBonusSummary = bonusSummary();
     final statusLabel = _consumerProtectionStatusLabel(runtimeSnapshot);
     final statusSummary = _consumerProtectionStatusSummary(
       runtimeSnapshot,
@@ -126,8 +130,10 @@ class _ProfileSection extends StatelessWidget {
       color: p.accent,
       onRefresh: () async {
         // Reuse the existing refresh callbacks; no new backend calls.
-        onRefreshBonusSummary();
-        await onRefreshNotifications();
+        await Future.wait<void>([
+          onRefreshBonusSummary(),
+          onRefreshNotifications(),
+        ]);
       },
       child: _SeedContentList(
         top: 18,
@@ -144,8 +150,10 @@ class _ProfileSection extends StatelessWidget {
                   title: 'Ваш доступ',
                   lines: const [],
                   child: _ProfileAccessOverview(
-                    accessLabel: _accessMainLabel(appContext, bonusSummary),
-                    accessValue: _accessShortValue(appContext, bonusSummary),
+                    accessLabel:
+                        _accessMainLabel(appContext, currentBonusSummary),
+                    accessValue:
+                        _accessShortValue(appContext, currentBonusSummary),
                     poolLabel: _accessPoolLabel(appContext.accessLane),
                     statusLabel: statusLabel,
                     onStatusTap: () => _showInfoSheet(
@@ -354,7 +362,7 @@ class _ProfileSection extends StatelessWidget {
                   lines: _bonusSummaryLines(),
                   child: Column(
                     children: [
-                      if (bonusSummary == null && bonusSummaryBusy)
+                      if (currentBonusSummary == null && bonusSummaryBusy)
                         const _MotionSkeletonList(
                           key: ValueKey('rewards-skeleton-summary'),
                           rows: 3,
