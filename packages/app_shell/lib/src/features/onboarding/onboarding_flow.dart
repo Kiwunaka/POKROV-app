@@ -34,41 +34,52 @@ class _FirstLaunchGate extends StatelessWidget {
       left: 0,
       right: 0,
       bottom: 0,
-      child: SafeArea(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: p.canvas.withValues(alpha: 0.96),
-          ),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(18, compactHeight ? 14 : 28, 18, 28),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: math.max(
-                  0,
-                  MediaQuery.sizeOf(context).height -
-                      MediaQuery.paddingOf(context).vertical -
-                      (compactHeight ? 42 : 70),
-                ),
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: step == _FirstLaunchStep.restore ? 560 : 900,
+      child: PopScope(
+        // Android back on the restore step returns to the new/returning
+        // choice instead of backgrounding the app; the choice step keeps
+        // the default system behavior.
+        canPop: step == _FirstLaunchStep.choice,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop && !busy) {
+            onBack();
+          }
+        },
+        child: SafeArea(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: p.canvas.withValues(alpha: 0.96),
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(18, compactHeight ? 14 : 28, 18, 28),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: math.max(
+                    0,
+                    MediaQuery.sizeOf(context).height -
+                        MediaQuery.paddingOf(context).vertical -
+                        (compactHeight ? 42 : 70),
                   ),
-                  child: step == _FirstLaunchStep.restore
-                      ? _FirstLaunchRestoreScreen(
-                          codeController: restoreCodeController,
-                          busy: busy,
-                          onBack: onBack,
-                          onRedeemCode: onRedeemCode,
-                          onOpenTelegram: onOpenTelegram,
-                          onOpenCabinet: onOpenCabinet,
-                        )
-                      : _FirstLaunchChoiceScreen(
-                          appContext: appContext,
-                          onNewUser: onNewUser,
-                          onReturningUser: onReturningUser,
-                        ),
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: step == _FirstLaunchStep.restore ? 560 : 900,
+                    ),
+                    child: step == _FirstLaunchStep.restore
+                        ? _FirstLaunchRestoreScreen(
+                            codeController: restoreCodeController,
+                            busy: busy,
+                            onBack: onBack,
+                            onRedeemCode: onRedeemCode,
+                            onOpenTelegram: onOpenTelegram,
+                            onOpenCabinet: onOpenCabinet,
+                          )
+                        : _FirstLaunchChoiceScreen(
+                            appContext: appContext,
+                            onNewUser: onNewUser,
+                            onReturningUser: onReturningUser,
+                          ),
+                  ),
                 ),
               ),
             ),
@@ -383,6 +394,10 @@ class _FirstLaunchRestoreScreen extends StatelessWidget {
                 key: const ValueKey('first-launch-restore-code-field'),
                 controller: codeController,
                 enabled: !busy,
+                autofocus: true,
+                textCapitalization: TextCapitalization.characters,
+                autocorrect: false,
+                enableSuggestions: false,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) {
                   if (!busy) {

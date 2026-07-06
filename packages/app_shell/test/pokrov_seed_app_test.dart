@@ -953,6 +953,42 @@ void main() {
     expect(find.text('Открыть кабинет'), findsOneWidget);
   });
 
+  testWidgets('restore step focuses the code field and back returns to choice',
+      (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('first-launch-returning-user')));
+    await tester.pumpAndSettle();
+
+    final fieldFinder =
+        find.byKey(const ValueKey('first-launch-restore-code-field'));
+    expect(fieldFinder, findsOneWidget);
+    final field = tester.widget<TextField>(fieldFinder);
+    expect(field.autofocus, isTrue);
+    expect(field.textCapitalization, TextCapitalization.characters);
+    expect(field.autocorrect, isFalse);
+    expect(field.enableSuggestions, isFalse);
+
+    // Android system back returns to the new/returning choice instead of
+    // backgrounding the app.
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('first-launch-restore-screen')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('first-launch-choice-screen')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('seed shell lazily builds tabs and keeps opened tabs alive',
       (tester) async {
     _expectNavigationShellHelpersCovered(const [

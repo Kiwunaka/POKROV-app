@@ -1401,6 +1401,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   void _backToFirstLaunchChoice() {
+    HapticFeedback.selectionClick();
     setState(() {
       _firstLaunchStep = _FirstLaunchStep.choice;
     });
