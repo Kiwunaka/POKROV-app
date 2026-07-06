@@ -3775,6 +3775,9 @@ void main() {
       ),
       findsOneWidget,
     );
+    // Settle the iOS bounce-back ballistic left by the picker drag before
+    // the tree is disposed (BouncingScrollPhysics keeps a timer otherwise).
+    await tester.pumpAndSettle();
   });
 
   testWidgets('rules app picker can use native Android catalog',

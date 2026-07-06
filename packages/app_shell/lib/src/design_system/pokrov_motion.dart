@@ -2,6 +2,28 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+/// iPhone-feel scrolling on every platform: iOS bouncing physics and no
+/// Android glow/stretch overscroll indicator.
+class PokrovScrollBehavior extends MaterialScrollBehavior {
+  const PokrovScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const BouncingScrollPhysics(
+      parent: AlwaysScrollableScrollPhysics(),
+    );
+  }
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    return child;
+  }
+}
+
 abstract final class PokrovMotionTokens {
   static const instant = Duration.zero;
   static const quick = Duration(milliseconds: 120);

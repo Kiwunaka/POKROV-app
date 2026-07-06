@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'pokrov_motion.dart';
 import 'pokrov_palette.dart';
@@ -419,6 +421,121 @@ class PokrovTelegramBonusCard extends StatelessWidget {
   }
 }
 
+/// The iOS system switch (real Cupertino widget on every platform), themed
+/// with the shared `status_green` on-track per the pokrov-clear control
+/// canon. A selection tick fires on toggle so the control feels physical.
+class PokrovSwitch extends StatelessWidget {
+  const PokrovSwitch({
+    required this.value,
+    required this.onChanged,
+    super.key,
+  });
+
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = PokrovPalette.of(context);
+    final onChanged = this.onChanged;
+    return CupertinoSwitch(
+      value: value,
+      activeTrackColor: tokens.connectedGreen,
+      onChanged: onChanged == null
+          ? null
+          : (next) {
+              HapticFeedback.selectionClick();
+              onChanged(next);
+            },
+    );
+  }
+}
+
+/// iOS Settings-style picker row: leading icon, title, and a springy
+/// emerald checkmark on the selected entry.
+class PokrovCheckRow extends StatelessWidget {
+  const PokrovCheckRow({
+    required this.icon,
+    required this.title,
+    required this.selected,
+    required this.onTap,
+    this.subtitle,
+    super.key,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = PokrovPalette.of(context);
+    final motion = PokrovMotionScope.of(context);
+    return PokrovSettingsRowPressSurface(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: tokens.accent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 18, color: tokens.accent),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: tokens.ink,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: tokens.muted,
+                            height: 1.25,
+                          ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            AnimatedScale(
+              scale: selected ? 1 : 0.4,
+              duration: motion.duration(PokrovMotionTokens.short),
+              curve: PokrovMotionTokens.spring,
+              child: AnimatedOpacity(
+                opacity: selected ? 1 : 0,
+                duration: motion.duration(PokrovMotionTokens.quick),
+                curve: Curves.easeOut,
+                child: Icon(
+                  Icons.check_rounded,
+                  size: 22,
+                  color: tokens.accent,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class PokrovWarpToggleRow extends StatelessWidget {
   const PokrovWarpToggleRow({
     required this.enabled,
@@ -477,7 +594,7 @@ class PokrovWarpToggleRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Switch.adaptive(
+          PokrovSwitch(
             value: enabled,
             onChanged: busy ? null : onChanged,
           ),

@@ -106,11 +106,9 @@ class _WarpConsentSheet extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Switch(
+                  PokrovSwitch(
                     key: const ValueKey('home-warp-consent-switch'),
                     value: enabled,
-                    activeThumbColor: Colors.white,
-                    activeTrackColor: p.accentBright,
                     onChanged: ready
                         ? (value) {
                             unawaited(onChanged(value));

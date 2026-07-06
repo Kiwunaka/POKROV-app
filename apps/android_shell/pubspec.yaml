@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_displaymode: ^0.6.0
   pokrov_app_shell:
     path: ../../packages/app_shell
   pokrov_core_domain:

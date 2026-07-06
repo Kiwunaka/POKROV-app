@@ -573,25 +573,25 @@ void _showThemeModeSheet(
                   ),
             ),
             const SizedBox(height: 14),
-            _SettingsRow(
+            PokrovCheckRow(
               key: const ValueKey('profile-theme-system'),
               icon: Icons.brightness_auto_outlined,
               title: 'Системная',
-              value: selected == ThemeMode.system ? 'Выбрана' : 'Использовать',
+              selected: selected == ThemeMode.system,
               onTap: () => select(ThemeMode.system),
             ),
-            _SettingsRow(
+            PokrovCheckRow(
               key: const ValueKey('profile-theme-light'),
               icon: Icons.light_mode_outlined,
               title: 'Светлая',
-              value: selected == ThemeMode.light ? 'Выбрана' : 'Использовать',
+              selected: selected == ThemeMode.light,
               onTap: () => select(ThemeMode.light),
             ),
-            _SettingsRow(
+            PokrovCheckRow(
               key: const ValueKey('profile-theme-dark'),
               icon: Icons.dark_mode_outlined,
               title: 'Тёмная',
-              value: selected == ThemeMode.dark ? 'Выбрана' : 'Использовать',
+              selected: selected == ThemeMode.dark,
               onTap: () => select(ThemeMode.dark),
             ),
           ],

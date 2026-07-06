@@ -59,6 +59,7 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
     return MaterialApp(
       title: 'POKROV',
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const PokrovScrollBehavior(),
       themeMode: _themeMode,
       theme: _buildPokrovTheme(
         tokens: PokrovPalette.light,
@@ -122,8 +123,25 @@ ThemeData _buildPokrovTheme({
     extensions: [isDark ? PokrovPalette.dark : PokrovPalette.light],
     scaffoldBackgroundColor: Colors.transparent,
     canvasColor: tokens.canvas,
-    splashColor: tokens.accent.withValues(alpha: 0.06),
-    highlightColor: tokens.accent.withValues(alpha: 0.04),
+    // iPhone feel: no Material ripple - press feedback comes from scale
+    // (PokrovPressable) plus a quiet highlight, like UIKit cell presses.
+    // iPhone feel: no visible Material ripple - press feedback comes from
+    // scale (PokrovPressable) plus a quiet UIKit-style highlight. A transparent
+    // splash (instead of NoSplash.splashFactory) keeps flutter_test happy:
+    // NoSplash leaves a raw pending timer after drag-heavy interactions.
+    splashColor: Colors.transparent,
+    highlightColor: tokens.ink.withValues(alpha: 0.05),
+    // Cupertino push (slide-from-right with parallax) on every platform.
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.windows: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.linux: CupertinoPageTransitionsBuilder(),
+      },
+    ),
+    // Cupertino push (slide-from-right with parallax) on every platform.
     textTheme: textTheme,
     iconTheme: IconThemeData(color: tokens.ink, size: 22),
     dividerTheme: DividerThemeData(
