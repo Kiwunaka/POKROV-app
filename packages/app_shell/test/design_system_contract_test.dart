@@ -529,6 +529,65 @@ void main() {
     expect(taps, 2);
   });
 
+  testWidgets('disabled rows dim to 0.45, ignore taps, keep basic cursor',
+      (tester) async {
+    var taps = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: const [PokrovPalette.light]),
+        home: Scaffold(
+          body: Column(
+            children: [
+              PokrovSettingsRow(
+                icon: Icons.send_outlined,
+                title: 'Telegram',
+                value: 'Проверяем',
+                enabled: false,
+                onTap: () => taps += 1,
+              ),
+              PokrovListRow(
+                icon: Icons.card_giftcard_outlined,
+                title: 'Telegram-бонус',
+                enabled: false,
+                onTap: () => taps += 1,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(PokrovListRow.disabledOpacity, 0.45);
+    for (final label in const ['Telegram', 'Telegram-бонус']) {
+      final dim = tester.widget<Opacity>(
+        find.ancestor(of: find.text(label), matching: find.byType(Opacity)),
+      );
+      expect(dim.opacity, PokrovListRow.disabledOpacity, reason: label);
+      expect(
+        find.ancestor(
+          of: find.text(label),
+          matching: find.byType(IgnorePointer),
+        ),
+        findsWidgets,
+        reason: label,
+      );
+      // No press surface: disabled rows must not scale or show a hand cursor.
+      expect(
+        find.ancestor(
+          of: find.text(label),
+          matching: find.byType(PokrovSettingsRowPressSurface),
+        ),
+        findsNothing,
+        reason: label,
+      );
+    }
+
+    await tester.tap(find.text('Telegram'), warnIfMissed: false);
+    await tester.tap(find.text('Telegram-бонус'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(taps, 0);
+  });
+
   testWidgets('phase 1 flat shared controls render stable iOS-like primitives',
       (tester) async {
     var warpEnabled = false;

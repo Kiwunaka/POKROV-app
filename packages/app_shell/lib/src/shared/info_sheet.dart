@@ -7,6 +7,7 @@ class _SettingsRow extends PokrovSettingsRow {
     required super.title,
     required super.value,
     super.onTap,
+    super.enabled,
   });
 }
 

@@ -140,14 +140,22 @@ class PokrovListRow extends StatelessWidget {
     this.subtitle,
     this.value,
     this.onTap,
+    this.enabled = true,
     super.key,
   });
+
+  /// Opacity applied to rows that are temporarily inert (busy states).
+  static const disabledOpacity = 0.45;
 
   final IconData icon;
   final String title;
   final String? subtitle;
   final String? value;
   final VoidCallback? onTap;
+
+  /// When false the row dims, ignores taps, and keeps the basic cursor —
+  /// visibly "asleep" instead of alive-looking but dead.
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -220,6 +228,14 @@ class PokrovListRow extends StatelessWidget {
         ],
       ),
     );
+    if (!enabled) {
+      return IgnorePointer(
+        child: Opacity(
+          opacity: PokrovListRow.disabledOpacity,
+          child: MouseRegion(cursor: SystemMouseCursors.basic, child: row),
+        ),
+      );
+    }
     if (onTap == null) {
       return row;
     }
@@ -234,6 +250,7 @@ class PokrovActionRow extends PokrovListRow {
     super.subtitle,
     super.value,
     super.onTap,
+    super.enabled,
     super.key,
   });
 }
@@ -771,12 +788,17 @@ class PokrovSettingsRow extends StatelessWidget {
     required this.title,
     required this.value,
     this.onTap,
+    this.enabled = true,
   });
 
   final IconData icon;
   final String title;
   final String value;
   final VoidCallback? onTap;
+
+  /// When false the row dims, ignores taps, and keeps the basic cursor —
+  /// visibly "asleep" instead of alive-looking but dead.
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -866,6 +888,14 @@ class PokrovSettingsRow extends StatelessWidget {
       },
     );
 
+    if (!enabled) {
+      return IgnorePointer(
+        child: Opacity(
+          opacity: PokrovListRow.disabledOpacity,
+          child: MouseRegion(cursor: SystemMouseCursors.basic, child: row),
+        ),
+      );
+    }
     if (onTap == null) {
       return row;
     }

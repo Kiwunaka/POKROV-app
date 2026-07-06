@@ -120,36 +120,17 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final p = PokrovPalette.of(context);
-    final background = switch (tone) {
-      _SectionTone.accent => p.accent.withValues(alpha: 0.12),
-      _SectionTone.muted => p.surfaceMuted.withValues(alpha: 0.92),
-      _SectionTone.neutral => p.surface.withValues(alpha: 0.86),
-      _SectionTone.reward => p.reward.withValues(alpha: 0.16),
-    };
-    final foreground = tone == _SectionTone.reward ? p.reward : p.accent;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: PokrovRadii.stadium,
-        border: Border.all(color: p.line),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: foreground),
-          const SizedBox(width: 7),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: p.ink,
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-        ],
-      ),
+    // Thin wrapper over the design-system pill so every status badge in the
+    // product shares one height, padding, and type size.
+    return PokrovStatusPill(
+      label: label,
+      icon: icon,
+      tone: switch (tone) {
+        _SectionTone.accent => PokrovStatusTone.accent,
+        _SectionTone.muted => PokrovStatusTone.muted,
+        _SectionTone.neutral => PokrovStatusTone.neutral,
+        _SectionTone.reward => PokrovStatusTone.reward,
+      },
     );
   }
 }

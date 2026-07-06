@@ -184,7 +184,8 @@ class _ProfileSection extends StatelessWidget {
                         icon: Icons.send_outlined,
                         title: 'Telegram',
                         value: telegramBonusBusy ? 'Проверяем' : 'Привязать',
-                        onTap: telegramBonusBusy ? null : onCreateTelegramLink,
+                        enabled: !telegramBonusBusy,
+                        onTap: onCreateTelegramLink,
                       ),
                       _SettingsRow(
                         key: const ValueKey('profile-email-action'),
@@ -371,11 +372,10 @@ class _ProfileSection extends StatelessWidget {
                         icon: Icons.send_outlined,
                         title: 'Telegram-бонус',
                         value: telegramBonusCanClaim ? 'Получить' : 'Проверить',
-                        onTap: telegramBonusBusy
-                            ? null
-                            : telegramBonusCanClaim
-                                ? onClaimTelegramBonus
-                                : onCheckTelegramBonus,
+                        enabled: !telegramBonusBusy,
+                        onTap: telegramBonusCanClaim
+                            ? onClaimTelegramBonus
+                            : onCheckTelegramBonus,
                       ),
                       _SettingsRow(
                         key: const ValueKey('profile-bonus-wheel-action'),
