@@ -26,6 +26,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
 
   late final TextEditingController _composer;
   late final FocusNode _composerFocusNode;
+  late final ScrollController _messageListController;
   Timer? _threadPollTimer;
   bool _sending = false;
   bool _loadingThread = true;
@@ -44,6 +45,9 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
     super.initState();
     _composer = TextEditingController();
     _composerFocusNode = FocusNode(debugLabel: 'support-composer');
+    _messageListController = ScrollController(
+      debugLabel: 'support-message-list',
+    );
     unawaited(_loadInitialThread());
   }
 
@@ -51,8 +55,32 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
   void dispose() {
     _threadPollTimer?.cancel();
     _composerFocusNode.dispose();
+    _messageListController.dispose();
     _composer.dispose();
     super.dispose();
+  }
+
+  /// Keeps the freshly appended message visible: after the frame with the
+  /// new bubble is laid out, the list settles to its end. Respects reduced
+  /// motion by jumping instead of animating.
+  void _scrollToLatestMessage() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_messageListController.hasClients) {
+        return;
+      }
+      final target = _messageListController.position.maxScrollExtent;
+      if (PokrovMotionScope.of(context).disableAnimations) {
+        _messageListController.jumpTo(target);
+        return;
+      }
+      unawaited(
+        _messageListController.animateTo(
+          target,
+          duration: _MotionTokens.standard,
+          curve: _MotionTokens.ease,
+        ),
+      );
+    });
   }
 
   Future<void> _loadInitialThread() async {
@@ -254,9 +282,9 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
     setState(() {
       _messages
           .add(_SupportChatMessage(role: _SupportChatRole.user, body: text));
-      _composer.clear();
       _sending = true;
     });
+    _scrollToLatestMessage();
 
     try {
       final activeTicketId = _ticketId;
@@ -272,11 +300,13 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
         if (!mounted) {
           return;
         }
+        _clearComposerAfterSend(text);
         setState(() {
           _sending = false;
           _attachDiagnosticsToNextMessage = false;
           _applyThread(thread);
         });
+        _scrollToLatestMessage();
         _syncThreadPolling();
         return;
       }
@@ -293,6 +323,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
       if (!mounted) {
         return;
       }
+      _clearComposerAfterSend(text);
       setState(() {
         _sending = false;
         _attachDiagnosticsToNextMessage = false;
@@ -305,6 +336,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
           ),
         );
       });
+      _scrollToLatestMessage();
       _syncThreadPolling();
       try {
         final thread = await widget.supportTicketService.getTicket(
@@ -317,6 +349,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
         setState(() {
           _applyThread(thread);
         });
+        _scrollToLatestMessage();
         _syncThreadPolling();
       } catch (_) {
         // Keep the local confirmation when the immediate refresh is unavailable.
@@ -335,6 +368,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
           ),
         );
       });
+      _scrollToLatestMessage();
     } catch (_) {
       if (!mounted) {
         return;
@@ -349,6 +383,16 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
           ),
         );
       });
+      _scrollToLatestMessage();
+    }
+  }
+
+  /// The draft is cleared only after the backend accepted the message, so a
+  /// failed send never loses the typed text. If the user already typed a new
+  /// draft while the send was in flight, that draft is preserved too.
+  void _clearComposerAfterSend(String sentText) {
+    if (_composer.text.trim() == sentText) {
+      _composer.clear();
     }
   }
 
@@ -617,6 +661,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                             : ListView.builder(
                                 key:
                                     const ValueKey('support-chat-message-list'),
+                                controller: _messageListController,
                                 padding:
                                     const EdgeInsets.fromLTRB(18, 0, 18, 12),
                                 itemCount: _messages.length,
