@@ -153,6 +153,43 @@ class PokrovFileThemeModeStore {
   }
 }
 
+/// Persists the one-time "first connection" hint dismissal on the home disc.
+/// Best-effort by design: storage failures never break the shell — the hint
+/// simply shows again until the done marker can be written.
+class PokrovFileConnectHintStore {
+  const PokrovFileConnectHintStore();
+
+  static const _fileName = 'pokrov-connect-hint-state.txt';
+  static const _doneMarker = 'done';
+
+  Future<File> _stateFile() async {
+    final directory = await getApplicationSupportDirectory();
+    await directory.create(recursive: true);
+    return File('${directory.path}${Platform.pathSeparator}$_fileName');
+  }
+
+  Future<bool> isCompleted() async {
+    try {
+      final file = await _stateFile();
+      if (!await file.exists()) {
+        return false;
+      }
+      return (await file.readAsString()).trim() == _doneMarker;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> markCompleted() async {
+    try {
+      final file = await _stateFile();
+      await file.writeAsString(_doneMarker, flush: true);
+    } catch (_) {
+      // Best-effort persistence only.
+    }
+  }
+}
+
 const _pokrovBrandMarkAsset = PokrovBrandAssets.mark;
 const _selectedAppsEnforcementReady = true;
 const _pokrovAppVersion = '1.0.0-beta.3';
@@ -168,14 +205,8 @@ abstract final class _MotionTokens {
   static const emphasized = PokrovMotionTokens.emphasized;
 }
 
-class _MotionScope extends PokrovMotionScope {
-  const _MotionScope({
-    required super.child,
-    required super.disableAnimations,
-    super.key,
-  });
-
-  static PokrovMotionScope of(BuildContext context) {
-    return PokrovMotionScope.of(context);
-  }
-}
+// Class alias, not a subclass: `dependOnInheritedWidgetOfExactType` matches
+// the widget's exact runtime type, so a private subclass would make
+// `PokrovMotionScope.of` fall back to "animations enabled" and silently
+// ignore the platform reduced-motion setting.
+typedef _MotionScope = PokrovMotionScope;

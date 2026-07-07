@@ -9,6 +9,7 @@ class PokrovSeedApp extends StatefulWidget {
     this.handoffLauncher,
     this.firstLaunchStore,
     this.themeModeStore = const PokrovFileThemeModeStore(),
+    this.connectHintStore = const PokrovFileConnectHintStore(),
     this.runtimeActionTimeout = const Duration(seconds: 18),
   });
 
@@ -18,6 +19,7 @@ class PokrovSeedApp extends StatefulWidget {
   final ExternalHandoffLauncher? handoffLauncher;
   final PokrovFirstLaunchStore? firstLaunchStore;
   final PokrovFileThemeModeStore themeModeStore;
+  final PokrovFileConnectHintStore connectHintStore;
   final Duration runtimeActionTimeout;
 
   @override
@@ -75,6 +77,7 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
         supportTicketService: widget.supportTicketService,
         handoffLauncher: widget.handoffLauncher,
         firstLaunchStore: widget.firstLaunchStore,
+        connectHintStore: widget.connectHintStore,
         runtimeActionTimeout: widget.runtimeActionTimeout,
         themeMode: _themeMode,
         onThemeModeChanged: _setThemeMode,
@@ -416,6 +419,7 @@ class PokrovSeedShell extends StatefulWidget {
     this.supportTicketService,
     this.handoffLauncher,
     this.firstLaunchStore,
+    this.connectHintStore = const PokrovFileConnectHintStore(),
     this.runtimeActionTimeout = const Duration(seconds: 18),
     required this.themeMode,
     required this.onThemeModeChanged,
@@ -426,6 +430,7 @@ class PokrovSeedShell extends StatefulWidget {
   final SupportTicketService? supportTicketService;
   final ExternalHandoffLauncher? handoffLauncher;
   final PokrovFirstLaunchStore? firstLaunchStore;
+  final PokrovFileConnectHintStore connectHintStore;
   final Duration runtimeActionTimeout;
   final ThemeMode themeMode;
   final ValueChanged<ThemeMode> onThemeModeChanged;
@@ -454,6 +459,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   bool _runtimeBusy = false;
   bool _firstLaunchBusy = false;
   bool _managedProfileDirty = true;
+  // Hidden until the store confirms the hint was never dismissed, so the
+  // one-time pulse never flashes for returning users while the read is
+  // in flight.
+  bool _connectHintDismissed = true;
   _FirstLaunchStep _firstLaunchStep = _FirstLaunchStep.choice;
   String? _runtimeHeadline;
   String _telegramBonusStatus = 'Получить код';
@@ -521,6 +530,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _firstLaunchStore =
         widget.firstLaunchStore ?? const PokrovFileFirstLaunchStore();
     unawaited(_loadFirstLaunchState());
+    unawaited(_loadConnectHintState());
     _refreshRuntimeSnapshot();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_checkForClientUpdate());
@@ -1386,7 +1396,30 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     });
   }
 
+  Future<void> _loadConnectHintState() async {
+    final completed = await widget.connectHintStore.isCompleted();
+    if (!mounted || completed) {
+      return;
+    }
+    setState(() {
+      _connectHintDismissed = false;
+    });
+  }
+
+  /// The hint is one-shot: the first disc tap hides it with a fade and
+  /// persists the done marker so it never comes back.
+  void _dismissConnectHint() {
+    if (_connectHintDismissed) {
+      return;
+    }
+    setState(() {
+      _connectHintDismissed = true;
+    });
+    unawaited(widget.connectHintStore.markCompleted());
+  }
+
   Future<void> _toggleRuntimeFromHome() async {
+    _dismissConnectHint();
     if (_firstLaunchStep != _FirstLaunchStep.ready) {
       _completeFirstLaunchAsNewUser();
     }
@@ -2158,6 +2191,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             runtimeHeadline: _runtimeHeadline,
             runtimeBusy: _runtimeBusy,
             primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
+            connectHintVisible: !_connectHintDismissed,
             bonusSummary: _bonusSummary,
             telegramBonusBusy: _telegramBonusBusy,
             warpPolicy: _managedWarpPolicy,

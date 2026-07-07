@@ -8,6 +8,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.runtimeHeadline,
     required this.runtimeBusy,
     required this.primaryConnectEnabled,
+    required this.connectHintVisible,
     required this.bonusSummary,
     required this.telegramBonusBusy,
     required this.warpPolicy,
@@ -28,6 +29,7 @@ class _QuickConnectSection extends StatelessWidget {
   final String? runtimeHeadline;
   final bool runtimeBusy;
   final bool primaryConnectEnabled;
+  final bool connectHintVisible;
   final AppFirstBonusSummary? bonusSummary;
   final bool telegramBonusBusy;
   final WarpRuntimePolicy warpPolicy;
@@ -101,6 +103,7 @@ class _QuickConnectSection extends StatelessWidget {
               running: isRunning,
               busy: runtimeBusy,
               degraded: isRunning && !isHealthyRunning,
+              connectHintVisible: connectHintVisible,
               recoveryNotice: recoveryNotice,
               infoNotice: infoNotice,
               accessLabel: _accessMainLabel(appContext, bonusSummary),
@@ -151,6 +154,7 @@ class _HomeStage extends StatefulWidget {
     required this.running,
     required this.busy,
     required this.degraded,
+    required this.connectHintVisible,
     required this.recoveryNotice,
     required this.infoNotice,
     required this.accessLabel,
@@ -181,6 +185,7 @@ class _HomeStage extends StatefulWidget {
   final bool running;
   final bool busy;
   final bool degraded;
+  final bool connectHintVisible;
   final String? recoveryNotice;
   final String? infoNotice;
   final String accessLabel;
@@ -241,6 +246,16 @@ class _HomeStageState extends State<_HomeStage>
     super.dispose();
   }
 
+  /// The one-time hint only makes sense while the disc is idle and the
+  /// primary connect action is actually available.
+  bool get _showConnectHint =>
+      widget.connectHintVisible &&
+      widget.actionEnabled &&
+      !widget.running &&
+      !widget.busy &&
+      !widget.degraded &&
+      widget.recoveryNotice == null;
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -275,14 +290,17 @@ class _HomeStageState extends State<_HomeStage>
           controller: _revealController,
           begin: 0.14,
           end: 0.66,
-          child: _ConnectOrbButton(
-            actionLabel: widget.actionLabel,
-            enabled: widget.actionEnabled,
-            running: widget.running,
-            degraded: widget.degraded,
-            error: widget.recoveryNotice != null,
-            busy: widget.busy,
-            onPressed: widget.actionEnabled ? widget.onToggleRuntime : null,
+          child: _ConnectHintHalo(
+            visible: _showConnectHint,
+            child: _ConnectOrbButton(
+              actionLabel: widget.actionLabel,
+              enabled: widget.actionEnabled,
+              running: widget.running,
+              degraded: widget.degraded,
+              error: widget.recoveryNotice != null,
+              busy: widget.busy,
+              onPressed: widget.actionEnabled ? widget.onToggleRuntime : null,
+            ),
           ),
         ),
         const SizedBox(height: 14),
@@ -449,6 +467,7 @@ class _HomeStageState extends State<_HomeStage>
                   running: widget.running,
                   busy: widget.busy,
                   degraded: widget.degraded,
+                  connectHintVisible: _showConnectHint,
                   recoveryNotice: widget.recoveryNotice,
                   selectedRouteMode: widget.selectedRouteMode,
                   locationLabel: widget.locationLabel,
@@ -544,6 +563,7 @@ class _HomeConnectPanel extends StatelessWidget {
     required this.running,
     required this.busy,
     required this.degraded,
+    required this.connectHintVisible,
     required this.recoveryNotice,
     required this.selectedRouteMode,
     required this.locationLabel,
@@ -560,6 +580,7 @@ class _HomeConnectPanel extends StatelessWidget {
   final bool running;
   final bool busy;
   final bool degraded;
+  final bool connectHintVisible;
   final String? recoveryNotice;
   final RouteMode selectedRouteMode;
   final String locationLabel;
@@ -584,15 +605,18 @@ class _HomeConnectPanel extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(height: 18),
-          _ConnectOrbButton(
-            actionLabel: actionLabel,
-            enabled: actionEnabled,
-            running: running,
-            degraded: degraded,
-            error: recoveryNotice != null,
-            busy: busy,
-            desktopSize: true,
-            onPressed: actionEnabled ? onToggleRuntime : null,
+          _ConnectHintHalo(
+            visible: connectHintVisible,
+            child: _ConnectOrbButton(
+              actionLabel: actionLabel,
+              enabled: actionEnabled,
+              running: running,
+              degraded: degraded,
+              error: recoveryNotice != null,
+              busy: busy,
+              desktopSize: true,
+              onPressed: actionEnabled ? onToggleRuntime : null,
+            ),
           ),
           const SizedBox(height: 22),
           _HomeStatusAction(
@@ -1317,6 +1341,151 @@ class _HomeInfoNotice extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// One-time "first connection" hint around the idle connect disc: a soft
+/// expanding pulse ring behind the disc plus a small "tap to connect" pill
+/// below it. Motion is transform/opacity-only; under reduced motion the ring
+/// is statically off and only the calm pill remains. Visibility is decided
+/// by the caller and the dismissal is persisted by the shell through
+/// [PokrovFileConnectHintStore].
+class _ConnectHintHalo extends StatelessWidget {
+  const _ConnectHintHalo({
+    required this.visible,
+    required this.child,
+  });
+
+  final bool visible;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final motion = _MotionScope.of(context);
+    final p = PokrovPalette.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            if (visible && !motion.disableAnimations)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: _ConnectHintPulseRing(
+                    key: const ValueKey('home-connect-hint-pulse'),
+                    accent: p.accent,
+                  ),
+                ),
+              ),
+            child,
+          ],
+        ),
+        AnimatedSwitcher(
+          key: const ValueKey('home-connect-hint-pill-motion'),
+          duration: motion.duration(_MotionTokens.standard),
+          switchInCurve: _MotionTokens.ease,
+          switchOutCurve: _MotionTokens.ease,
+          transitionBuilder: (child, animation) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          child: !visible
+              ? const SizedBox.shrink(
+                  key: ValueKey('home-connect-hint-empty'),
+                )
+              : Padding(
+                  key: const ValueKey('home-connect-hint-pill'),
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: p.surface,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: p.line),
+                    ),
+                    child: Text(
+                      'Нажмите, чтобы подключиться',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: p.muted,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Soft expanding ring behind the idle disc: scale 1.0 -> 1.14 with the
+/// low-alpha accent stroke fading out over ~2.4s. Loops continuously in
+/// release builds and collapses to one finite pass under `flutter test`
+/// (see [PokrovLoopingMotion]); it is not built at all under reduced motion.
+class _ConnectHintPulseRing extends StatefulWidget {
+  const _ConnectHintPulseRing({
+    super.key,
+    required this.accent,
+  });
+
+  final Color accent;
+
+  @override
+  State<_ConnectHintPulseRing> createState() => _ConnectHintPulseRingState();
+}
+
+class _ConnectHintPulseRingState extends State<_ConnectHintPulseRing>
+    with SingleTickerProviderStateMixin {
+  static const _period = Duration(milliseconds: 2400);
+
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: _period);
+    if (PokrovLoopingMotion.enabled) {
+      _controller.repeat();
+    } else {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          final progress = Curves.easeOutCubic.transform(_controller.value);
+          return Transform.scale(
+            scale: 1.0 + progress * 0.14,
+            child: Opacity(
+              opacity: (1 - progress) * 0.35,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: widget.accent.withValues(alpha: 0.55),
+                    width: 2,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
