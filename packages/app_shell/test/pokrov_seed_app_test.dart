@@ -121,6 +121,8 @@ class _FakeBootstrapper
     WarpControlStatus? warpStatus,
     ClientAppsMetadata? clientAppsMetadata,
     ClientLocationsCatalog? locationsCatalog,
+    ClientSupportAssistantReply? assistantReply,
+    this.assistantGate,
     this.bonusSummaryGate,
   })  : cabinetHandoff = cabinetHandoff ??
             CabinetHandoff(
@@ -193,6 +195,12 @@ class _FakeBootstrapper
         warpStatus =
             warpStatus ?? WarpControlStatus.fromPolicy(payload.warpPolicy),
         clientAppsMetadata = clientAppsMetadata ?? ClientAppsMetadata.empty,
+        assistantReply = assistantReply ??
+            const ClientSupportAssistantReply(
+              reply: 'Test assistant reply.',
+              shouldEscalate: false,
+              suggestedActions: <ClientSupportAssistantAction>[],
+            ),
         locationsCatalog = locationsCatalog ??
             const ClientLocationsCatalog(
               auto: ClientLocationAuto(enabled: true, currentCode: ''),
@@ -212,9 +220,14 @@ class _FakeBootstrapper
   final AppFirstBonusSummary bonusSummary;
   final ClientAppsMetadata clientAppsMetadata;
   final ClientLocationsCatalog locationsCatalog;
+  final ClientSupportAssistantReply assistantReply;
+  final Future<void>? assistantGate;
   final Future<void>? bonusSummaryGate;
   int calls = 0;
   int redeemCalls = 0;
+  int assistantCalls = 0;
+  String? lastAssistantMessage;
+  Map<String, Object?>? lastAssistantDiagnostics;
   int cabinetCalls = 0;
   int telegramLinkCalls = 0;
   int channelBonusCheckCalls = 0;
@@ -419,11 +432,11 @@ class _FakeBootstrapper
     int? ticketId,
     Map<String, Object?> safeDiagnostics = const <String, Object?>{},
   }) async {
-    return const ClientSupportAssistantReply(
-      reply: 'Test assistant reply.',
-      shouldEscalate: false,
-      suggestedActions: <ClientSupportAssistantAction>[],
-    );
+    await assistantGate;
+    assistantCalls += 1;
+    lastAssistantMessage = message;
+    lastAssistantDiagnostics = safeDiagnostics;
+    return assistantReply;
   }
 
   @override
@@ -830,6 +843,21 @@ Future<void> _openRewardsHubFromProfile(WidgetTester tester) async {
   await tester.tap(action);
   await tester.pumpAndSettle();
   expect(find.byKey(const ValueKey('rewards-hub-sheet')), findsOneWidget);
+}
+
+Future<void> _openSupportChatFromProfile(WidgetTester tester) async {
+  await _tapNav(tester, 'nav-profile');
+  final support = find.byKey(const ValueKey('profile-section-support'));
+  await tester.dragUntilVisible(
+    support,
+    find.byType(Scrollable).first,
+    const Offset(0, -260),
+    maxIteration: 12,
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(support);
+  await tester.pumpAndSettle();
+  expect(find.byKey(const ValueKey('support-chat-screen')), findsOneWidget);
 }
 
 void main() {
@@ -3535,6 +3563,179 @@ void main() {
       find.byKey(const ValueKey('support-chat-composer')),
     );
     expect(composer.controller?.text, contains('Не подключается'));
+  });
+
+  testWidgets(
+      'support AI assistant opens an honest mini chat and answers from the '
+      'knowledge base', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final assistantGate = Completer<void>();
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      assistantReply: const ClientSupportAssistantReply(
+        reply: 'Проверьте доступ и попробуйте переподключиться.',
+        shouldEscalate: false,
+        suggestedActions: <ClientSupportAssistantAction>[],
+      ),
+      assistantGate: assistantGate.future,
+    );
+    final supportTicketService = _FakeSupportTicketService(
+      const SupportTicketReceipt(
+        ticketId: 910,
+        statusTitle: 'Open',
+        messageCount: 1,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        supportTicketService: supportTicketService,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _openSupportChatFromProfile(tester);
+
+    // The existing automation greeting bubble now carries the unified
+    // sparkle badge, matching the AI sheet styling.
+    expect(find.text('ИИ'), findsOneWidget);
+
+    final entry = find.byKey(const ValueKey('support-ai-entry'));
+    expect(entry, findsOneWidget);
+    expect(find.text('Спросить ИИ-помощника'), findsOneWidget);
+    expect(find.text('Мгновенные ответы по базе знаний'), findsOneWidget);
+
+    await tester.tap(entry);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('support-assistant-sheet')),
+      findsOneWidget,
+    );
+    expect(find.text('ИИ-помощник'), findsOneWidget);
+    expect(
+      find.text('Отвечает автоматика по базе знаний POKROV'),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('assistant-sheet-escalate')),
+      findsOneWidget,
+    );
+    final sheetComposer = tester.widget<TextField>(
+      find.byKey(const ValueKey('assistant-sheet-composer')),
+    );
+    expect(sheetComposer.textInputAction, TextInputAction.send);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('assistant-sheet-composer')),
+      'Не получается подключиться',
+    );
+    await tester.tap(find.byKey(const ValueKey('assistant-sheet-send')));
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey('assistant-typing-indicator')),
+      findsOneWidget,
+    );
+
+    assistantGate.complete();
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.assistantCalls, 1);
+    expect(bootstrapper.lastAssistantMessage, 'Не получается подключиться');
+    expect(
+      bootstrapper.lastAssistantDiagnostics?.keys.toSet(),
+      <String>{'app_version', 'platform', 'route_mode', 'connection_status'},
+    );
+    expect(
+      find.byKey(const ValueKey('assistant-typing-indicator')),
+      findsNothing,
+    );
+    expect(find.text('Не получается подключиться'), findsOneWidget);
+    expect(
+      find.text('Проверьте доступ и попробуйте переподключиться.'),
+      findsOneWidget,
+    );
+    expect(find.text('ИИ'), findsWidgets);
+
+    await tester.tap(find.byKey(const ValueKey('assistant-sheet-escalate')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('support-assistant-sheet')),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('support-chat-screen')), findsOneWidget);
+    final ticketComposer = tester.widget<TextField>(
+      find.byKey(const ValueKey('support-chat-composer')),
+    );
+    expect(ticketComposer.focusNode?.hasFocus, isTrue);
+  });
+
+  testWidgets(
+      'support AI assistant admits a missing answer instead of improvising',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      assistantReply: const ClientSupportAssistantReply(
+        reply: '',
+        shouldEscalate: true,
+        suggestedActions: <ClientSupportAssistantAction>[],
+      ),
+    );
+    final supportTicketService = _FakeSupportTicketService(
+      const SupportTicketReceipt(
+        ticketId: 911,
+        statusTitle: 'Open',
+        messageCount: 1,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        supportTicketService: supportTicketService,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _openSupportChatFromProfile(tester);
+
+    await tester.tap(find.byKey(const ValueKey('support-ai-entry')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('assistant-sheet-composer')),
+      'Вопрос без ответа в базе',
+    );
+    // textInputAction.send submits the composer like the keyboard would.
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.assistantCalls, 1);
+    expect(
+      find.text('Не нашёл ответа. Напишите в поддержку — ответит человек.'),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('assistant-sheet-escalate')),
+      findsOneWidget,
+    );
+    expect(supportTicketService.calls, 0);
   });
 
   testWidgets('support chat polls active ticket and shows operator reply',

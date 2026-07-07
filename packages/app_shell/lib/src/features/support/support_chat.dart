@@ -7,6 +7,7 @@ class _SupportChatScreen extends StatefulWidget {
     required this.statusLabel,
     required this.extraDiagnostics,
     required this.supportTicketService,
+    required this.askAssistant,
     required this.onOpenHandoff,
   });
 
@@ -15,6 +16,11 @@ class _SupportChatScreen extends StatefulWidget {
   final String statusLabel;
   final Map<String, Object?> extraDiagnostics;
   final SupportTicketService supportTicketService;
+
+  /// Knowledge-base question -> answer lane for the AI assistant sheet.
+  /// `null` hides the entry point (no client data service available).
+  final Future<ClientSupportAssistantReply> Function(String message)?
+      askAssistant;
   final void Function(String label, String value) onOpenHandoff;
 
   @override
@@ -462,6 +468,37 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
     };
   }
 
+  /// Opens the AI mini chat sheet. When the user picks the human escape row
+  /// inside, the sheet closes and focus lands on the existing ticket
+  /// composer so escalation stays one motion away.
+  Future<void> _openAssistantSheet() async {
+    final askAssistant = widget.askAssistant;
+    if (askAssistant == null) {
+      return;
+    }
+    PokrovHaptics.tap();
+    var escalated = false;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
+      builder: (sheetContext) {
+        return _AssistantChatSheet(
+          askAssistant: askAssistant,
+          onEscalate: () {
+            escalated = true;
+            Navigator.of(sheetContext).maybePop();
+          },
+        );
+      },
+    );
+    if (!mounted || !escalated) {
+      return;
+    }
+    _composerFocusNode.requestFocus();
+  }
+
   void _showDiagnosticsPreview() {
     showModalBottomSheet<void>(
       context: context,
@@ -623,6 +660,13 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                           onRetry: _retrySupportLifecycle,
                         ),
                       ),
+                      if (!_loadingThread && widget.askAssistant != null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+                          child: _SupportAssistantEntry(
+                            onTap: () => unawaited(_openAssistantSheet()),
+                          ),
+                        ),
                       if (!_loadingThread)
                         Padding(
                           padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
@@ -1249,6 +1293,11 @@ class _SupportChatBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
     final isUser = message.role == _SupportChatRole.user;
+    // Automation bubbles share one visual language with the AI sheet: the
+    // mint tone plus the small sparkle badge keep it honest that no human
+    // wrote this text. Operator replies stay on the neutral surface.
+    final isAutomation = message.role == _SupportChatRole.assistant &&
+        message.label == 'Помощник POKROV';
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -1256,21 +1305,40 @@ class _SupportChatBubble extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 520),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
-          color: isUser ? p.accent : p.surface,
+          color: isUser
+              ? p.accent
+              : isAutomation
+                  ? p.accentSoft
+                  : p.surface,
           borderRadius: BorderRadius.circular(16),
-          border: isUser ? null : Border.all(color: p.line),
+          border: isUser
+              ? null
+              : Border.all(
+                  color: isAutomation
+                      ? p.accent.withValues(alpha: 0.14)
+                      : p.line,
+                ),
         ),
         child: Column(
           crossAxisAlignment:
               isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             if (!isUser && message.label.isNotEmpty) ...[
-              Text(
-                message.label,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: p.muted,
-                      fontWeight: FontWeight.w600,
-                    ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isAutomation) ...[
+                    const _PokrovAiBadge(),
+                    const SizedBox(width: 6),
+                  ],
+                  Text(
+                    message.label,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: p.muted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
             ],
@@ -1284,6 +1352,539 @@ class _SupportChatBubble extends StatelessWidget {
                   ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Small sparkle badge that marks machine-written replies. One shared widget
+/// keeps the ticket chat and the AI sheet visually honest in the same way.
+class _PokrovAiBadge extends StatelessWidget {
+  const _PokrovAiBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: p.accent.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.auto_awesome_rounded, size: 11, color: p.accent),
+          const SizedBox(width: 4),
+          Text(
+            'ИИ',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: p.accent,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Entry point into the AI mini chat: a calm mint row above the ticket flow.
+class _SupportAssistantEntry extends StatelessWidget {
+  const _SupportAssistantEntry({
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    return PokrovSettingsRowPressSurface(
+      onTap: onTap,
+      child: Container(
+        key: const ValueKey('support-ai-entry'),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: p.accentSoft,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: p.accent.withValues(alpha: 0.16)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: p.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                Icons.auto_awesome_rounded,
+                size: 20,
+                color: p.accent,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Спросить ИИ-помощника',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: p.ink,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Мгновенные ответы по базе знаний',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: p.muted,
+                          height: 1.25,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.chevron_right_rounded, color: p.muted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Honest AI mini chat over the POKROV knowledge base. The header names the
+/// automation, the escape row to a human stays pinned below the composer,
+/// and a missing answer is admitted instead of improvised.
+class _AssistantChatSheet extends StatefulWidget {
+  const _AssistantChatSheet({
+    required this.askAssistant,
+    required this.onEscalate,
+  });
+
+  final Future<ClientSupportAssistantReply> Function(String message)
+      askAssistant;
+  final VoidCallback onEscalate;
+
+  @override
+  State<_AssistantChatSheet> createState() => _AssistantChatSheetState();
+}
+
+class _AssistantChatSheetState extends State<_AssistantChatSheet> {
+  static const _noAnswerFallback =
+      'Не нашёл ответа. Напишите в поддержку — ответит человек.';
+
+  late final TextEditingController _composer;
+  late final FocusNode _composerFocusNode;
+  late final ScrollController _listController;
+  final List<PokrovAssistantMessage> _messages = <PokrovAssistantMessage>[
+    PokrovAssistantMessage.assistant(
+      id: 'assistant-greeting',
+      body: 'Задайте вопрос про подключение, доступ или бонусы — '
+          'отвечу по базе знаний POKROV.',
+    ),
+  ];
+  bool _thinking = false;
+  int _messageSeq = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _composer = TextEditingController();
+    _composerFocusNode = FocusNode(debugLabel: 'assistant-sheet-composer');
+    _listController = ScrollController(
+      debugLabel: 'assistant-sheet-message-list',
+    );
+  }
+
+  @override
+  void dispose() {
+    _listController.dispose();
+    _composerFocusNode.dispose();
+    _composer.dispose();
+    super.dispose();
+  }
+
+  void _scrollToLatest() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_listController.hasClients) {
+        return;
+      }
+      _listController.jumpTo(_listController.position.maxScrollExtent);
+    });
+  }
+
+  void _applySuggestion(PokrovAssistantSuggestion suggestion) {
+    setState(() {
+      _composer.text = suggestion.prompt;
+      _composer.selection = TextSelection.collapsed(
+        offset: _composer.text.length,
+      );
+    });
+    _composerFocusNode.requestFocus();
+  }
+
+  Future<void> _send() async {
+    final text = _composer.text.trim();
+    if (text.isEmpty || _thinking) {
+      return;
+    }
+    PokrovHaptics.tap();
+    _messageSeq += 1;
+    setState(() {
+      _messages.add(
+        PokrovAssistantMessage(
+          id: 'user-$_messageSeq',
+          role: PokrovAssistantRole.user,
+          body: text,
+        ),
+      );
+      _thinking = true;
+    });
+    _composer.clear();
+    _scrollToLatest();
+
+    var answer = _noAnswerFallback;
+    try {
+      final reply = await widget.askAssistant(text);
+      final body = reply.reply.trim();
+      if (body.isNotEmpty) {
+        answer = body;
+      }
+    } catch (_) {
+      // Keep the honest no-answer fallback; the human escape row stays below.
+    }
+    if (!mounted) {
+      return;
+    }
+    _messageSeq += 1;
+    setState(() {
+      _thinking = false;
+      _messages.add(
+        PokrovAssistantMessage.assistant(
+          id: 'assistant-$_messageSeq',
+          body: answer,
+        ),
+      );
+    });
+    _scrollToLatest();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.85;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final showSuggestions = _messages.length <= 1 && !_thinking;
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: SafeArea(
+        top: false,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          child: Padding(
+            key: const ValueKey('support-assistant-sheet'),
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: p.accent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 20,
+                        color: p.accent,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'ИИ-помощник',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  color: p.ink,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Отвечает автоматика по базе знаний POKROV',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                  color: p.muted,
+                                  height: 1.25,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView(
+                    key: const ValueKey('assistant-sheet-message-list'),
+                    controller: _listController,
+                    shrinkWrap: true,
+                    children: [
+                      for (final message in _messages)
+                        _AssistantSheetBubble(message: message),
+                      if (_thinking) const _AssistantTypingBubble(),
+                    ],
+                  ),
+                ),
+                if (showSuggestions) ...[
+                  const SizedBox(height: 2),
+                  SingleChildScrollView(
+                    key: const ValueKey('assistant-sheet-suggestions'),
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (final suggestion in PokrovAssistantContract
+                            .defaultSupportSuggestions) ...[
+                          ActionChip(
+                            key: ValueKey(
+                              'assistant-sheet-${suggestion.key}',
+                            ),
+                            avatar: const Icon(
+                              Icons.auto_awesome_rounded,
+                              size: 16,
+                            ),
+                            label: Text(suggestion.title),
+                            visualDensity: VisualDensity.compact,
+                            side: BorderSide(color: p.line),
+                            backgroundColor: p.surface,
+                            onPressed: () => _applySuggestion(suggestion),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: p.surface,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: p.line),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 4, 6, 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            key: const ValueKey('assistant-sheet-composer'),
+                            controller: _composer,
+                            focusNode: _composerFocusNode,
+                            autofocus: true,
+                            minLines: 1,
+                            maxLines: 3,
+                            textInputAction: TextInputAction.send,
+                            decoration: const InputDecoration(
+                              hintText: 'Напишите вопрос',
+                              border: InputBorder.none,
+                              isDense: true,
+                            ),
+                            onSubmitted: (_) => unawaited(_send()),
+                          ),
+                        ),
+                        IconButton(
+                          key: const ValueKey('assistant-sheet-send'),
+                          tooltip: 'Отправить',
+                          onPressed: _thinking ? null : () => unawaited(_send()),
+                          icon: const Icon(Icons.send_rounded),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton.icon(
+                    key: const ValueKey('assistant-sheet-escalate'),
+                    onPressed: () {
+                      PokrovHaptics.tap();
+                      widget.onEscalate();
+                    },
+                    icon: const Icon(Icons.support_agent_rounded, size: 18),
+                    label: const Text('Нужен человек? Создать обращение'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AssistantSheetBubble extends StatelessWidget {
+  const _AssistantSheetBubble({
+    required this.message,
+  });
+
+  final PokrovAssistantMessage message;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final isUser = message.role == PokrovAssistantRole.user;
+    return Align(
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        constraints: const BoxConstraints(maxWidth: 420),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        decoration: BoxDecoration(
+          color: isUser ? p.accent : p.accentSoft,
+          borderRadius: BorderRadius.circular(16),
+          border: isUser
+              ? null
+              : Border.all(color: p.accent.withValues(alpha: 0.14)),
+        ),
+        child: Column(
+          crossAxisAlignment:
+              isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            if (!isUser) ...[
+              const _PokrovAiBadge(),
+              const SizedBox(height: 6),
+            ],
+            Text(
+              message.safeBody,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: isUser
+                        ? Theme.of(context).colorScheme.onPrimary
+                        : p.ink,
+                    height: 1.3,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Quiet "typing" indicator: three low-alpha accent dots animated with
+/// opacity only. The loop runs through [PokrovLoopingMotion] (finite pass in
+/// tests) and collapses to static dots under reduced motion.
+class _AssistantTypingBubble extends StatefulWidget {
+  const _AssistantTypingBubble();
+
+  @override
+  State<_AssistantTypingBubble> createState() => _AssistantTypingBubbleState();
+}
+
+class _AssistantTypingBubbleState extends State<_AssistantTypingBubble>
+    with SingleTickerProviderStateMixin {
+  static const _period = Duration(milliseconds: 1200);
+
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: _period);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final disableAnimations = _MotionScope.of(context).disableAnimations;
+    if (disableAnimations || !PokrovLoopingMotion.enabled) {
+      _controller.stop();
+      _controller.value = 0;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double _dotOpacity(int index) {
+    if (!_controller.isAnimating) {
+      return 0.4;
+    }
+    final phase = (_controller.value - index * 0.18) % 1.0;
+    final wave = (math.sin(phase * math.pi * 2) + 1) / 2;
+    return 0.25 + wave * 0.55;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        key: const ValueKey('assistant-typing-indicator'),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: p.accentSoft,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: p.accent.withValues(alpha: 0.14)),
+        ),
+        child: RepaintBoundary(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) {
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var i = 0; i < 3; i += 1) ...[
+                    if (i > 0) const SizedBox(width: 5),
+                    Opacity(
+                      opacity: _dotOpacity(i),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: p.accent,
+                        ),
+                        child: const SizedBox.square(dimension: 6),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

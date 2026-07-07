@@ -1476,10 +1476,35 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             ),
             extraDiagnostics: _extendedProtectionDiagnostics(),
             supportTicketService: _supportTicketService,
+            askAssistant:
+                _clientDataService == null ? null : _askSupportAssistant,
             onOpenHandoff: _showSeedHandoff,
           );
         },
       ),
+    );
+  }
+
+  /// Knowledge-base question -> answer lane for the support AI sheet. Reuses
+  /// the existing backend assistant endpoint with the same safe diagnostic
+  /// keys the ticket flow sends; nothing raw ever leaves the device.
+  Future<ClientSupportAssistantReply> _askSupportAssistant(String message) {
+    final service = _clientDataService;
+    if (service == null) {
+      throw const BootstrapFailure('Помощник недоступен на этом устройстве.');
+    }
+    return service.askSupportAssistant(
+      hostPlatform: widget.appContext.hostPlatform,
+      message: message,
+      safeDiagnostics: <String, Object?>{
+        'app_version': _pokrovAppVersion,
+        'platform': widget.appContext.hostPlatform.name,
+        'route_mode': _selectedRouteMode.name,
+        'connection_status': _consumerProtectionStatusLabel(
+          _runtimeSnapshot,
+          busy: _runtimeBusy,
+        ),
+      },
     );
   }
 
