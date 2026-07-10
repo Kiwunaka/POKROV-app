@@ -200,6 +200,10 @@ void main() {
     expect(optionsJson, isNotNull);
     final options = jsonDecode(optionsJson!) as Map<String, dynamic>;
     final warp = options['warp'] as Map<String, dynamic>;
+    expect(options['allow-connection-from-lan'], isFalse);
+    expect(options['enable-clash-api'], isFalse);
+    expect(options['mixed-port'], 22341);
+    expect(options['clash-api-port'], 26756);
     expect(warp['enable'], isTrue);
     expect(warp['id'], 'android-warp');
     expect(warp['mode'], 'proxy_over_warp');

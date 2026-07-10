@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-06-05
+Last updated: 2026-07-10
 
 This document is the concrete Windows readiness note for the `POKROV-app` lane.
 
@@ -18,6 +18,8 @@ Historical mapping note:
 - `scripts/build-windows-release.ps1` now runs the local Windows verification lane: seed validation, tests, `flutter analyze`, `flutter build windows --release`, bundle verification, unsigned portable ZIP staging, and unsigned beta setup EXE staging through Windows `iexpress.exe`
 - the seed validation inside that helper now aligns with the current product canon: `Android + Windows` public scope, `iOS + macOS` readiness-only hosts
 - the built executable is explicitly marked as a prerelease seed but now presents the public product name `POKROV` in Windows metadata and window chrome
+- app-first session secrets must not remain in plaintext JSON state; the current source implements legacy `session_token` migration into platform secure storage, atomically replaces the JSON state, and writes only a `session_token_storage=secure` marker after a durable write; a marker whose platform secret is missing enters recovery instead of minting another trial, while exact-artifact restart proof remains a release gate
+- local runtime/control surfaces must stay loopback-only: mixed/system-proxy ports bind to `127.0.0.1`, Clash/control APIs stay disabled unless explicitly protected by a per-install random secret, and no unauthenticated LAN listener is release-acceptable
 - public download copy must match the actual handoff URL and signing state
 - support macros must explain SmartScreen or unknown-publisher behavior for gated beta testers
 
@@ -34,6 +36,24 @@ flutter build windows --release
 Pop-Location
 powershell -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 -SyncRuntime
 ```
+
+After launching the exact candidate once, resolve its live application-support
+directory from diagnostics and inspect the state file there:
+
+```powershell
+$statePath = '<application-support-path>\app-first-session-windows.json'
+$state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
+if ($null -ne $state.session_token) { throw 'Raw session_token remains in JSON state.' }
+if ($state.session_token_storage -ne 'secure') { throw 'Secure-storage marker is missing.' }
+```
+
+Restart the candidate and perform an authenticated profile refresh before
+accepting this check. Expected result: no raw `session_token` value in app
+state, support export, or logs, and the existing session still works.
+The runtime options test must also keep LAN control exposure closed:
+`allow-connection-from-lan=false`, `enable-clash-api=false`, and local ports on
+`127.0.0.1` only unless a future release explicitly documents a protected
+control API.
 
 For a gated beta packaging smoke where tests/analyze already ran:
 

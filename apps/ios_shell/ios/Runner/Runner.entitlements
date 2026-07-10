@@ -10,5 +10,7 @@
 	<array>
 		<string>$(POKROV_IOS_APP_GROUP)</string>
 	</array>
+	<key>keychain-access-groups</key>
+	<array/>
 </dict>
 </plist>

@@ -1,7 +1,7 @@
 # Android Release Audit
 
 Status: owner-attested for outside-store beta; raw audit remains manual owner test
-Last updated: 2026-05-26
+Last updated: 2026-07-10
 
 ## Required Dependency
 
@@ -23,6 +23,8 @@ Set `ANDROID_AUDIT_PACKAGE` to `space.pokrov.pokrov_android_shell` unless a rele
 - `Full tunnel` route-mode smoke.
 - DNS split and leak checks for both public routing modes.
 - No raw config in UI or logcat.
+- No `session_token` in app-first JSON state; migrated session material must live in the app secure secret store.
+- Android backup and device-transfer rules exclude all local app state so encrypted session material cannot be restored without its Keystore key.
 - No unexpected localhost/control ports exposed.
 - No sensitive external control surface.
 - Uninstall/reinstall cleanup.

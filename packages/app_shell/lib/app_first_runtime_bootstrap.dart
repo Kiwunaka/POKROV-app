@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
@@ -35,6 +36,147 @@ abstract interface class ManagedProfileBootstrapper {
 typedef SmartConnectLatencyProbe = Future<int?> Function(
   SmartConnectNode node,
 );
+
+typedef AppFirstStateFileWriter = Future<void> Function(
+  File file,
+  String contents,
+);
+
+Future<void> _writeAppFirstStateFileAtomically(
+  File file,
+  String contents,
+) async {
+  final nextFile = File('${file.path}.next');
+  final backupFile = File('${file.path}.bak');
+  await file.parent.create(recursive: true);
+
+  if (await nextFile.exists()) {
+    await nextFile.delete();
+  }
+  await nextFile.writeAsString(contents, flush: true);
+  final decoded = jsonDecode(await nextFile.readAsString());
+  if (decoded is! Map) {
+    throw const FormatException('App-first state must be a JSON object.');
+  }
+
+  if (await backupFile.exists()) {
+    await backupFile.delete();
+  }
+  if (await file.exists()) {
+    await file.rename(backupFile.path);
+  }
+
+  try {
+    await nextFile.rename(file.path);
+  } catch (_) {
+    if (!await file.exists() && await backupFile.exists()) {
+      await backupFile.rename(file.path);
+    }
+    rethrow;
+  }
+
+  if (await backupFile.exists()) {
+    await backupFile.delete();
+  }
+}
+
+abstract interface class AppFirstSessionSecretStore {
+  Future<String?> readSessionToken({
+    required HostPlatform hostPlatform,
+    required String installId,
+  });
+
+  Future<void> writeSessionToken({
+    required HostPlatform hostPlatform,
+    required String installId,
+    required String sessionToken,
+  });
+
+  Future<void> deleteSessionToken({
+    required HostPlatform hostPlatform,
+    required String installId,
+  });
+}
+
+class FlutterSecureAppFirstSessionSecretStore
+    implements AppFirstSessionSecretStore {
+  FlutterSecureAppFirstSessionSecretStore({
+    FlutterSecureStorage? storage,
+  }) : _storage = storage ?? const FlutterSecureStorage();
+
+  final FlutterSecureStorage _storage;
+
+  String _key({
+    required HostPlatform hostPlatform,
+    required String installId,
+  }) =>
+      'pokrov.app_first.session.${hostPlatform.name}.${installId.trim()}';
+
+  @override
+  Future<String?> readSessionToken({
+    required HostPlatform hostPlatform,
+    required String installId,
+  }) async {
+    final key = _key(hostPlatform: hostPlatform, installId: installId);
+    return _storage.read(key: key);
+  }
+
+  @override
+  Future<void> writeSessionToken({
+    required HostPlatform hostPlatform,
+    required String installId,
+    required String sessionToken,
+  }) async {
+    final key = _key(hostPlatform: hostPlatform, installId: installId);
+    final value = sessionToken.trim();
+    if (value.isEmpty) {
+      await deleteSessionToken(
+          hostPlatform: hostPlatform, installId: installId);
+      return;
+    }
+    await _storage.write(key: key, value: value);
+  }
+
+  @override
+  Future<void> deleteSessionToken({
+    required HostPlatform hostPlatform,
+    required String installId,
+  }) async {
+    final key = _key(hostPlatform: hostPlatform, installId: installId);
+    await _storage.delete(key: key);
+  }
+}
+
+class MemoryAppFirstSessionSecretStore implements AppFirstSessionSecretStore {
+  final Map<String, String> _values = <String, String>{};
+
+  String _key(HostPlatform hostPlatform, String installId) =>
+      '${hostPlatform.name}:${installId.trim()}';
+
+  @override
+  Future<String?> readSessionToken({
+    required HostPlatform hostPlatform,
+    required String installId,
+  }) async =>
+      _values[_key(hostPlatform, installId)];
+
+  @override
+  Future<void> writeSessionToken({
+    required HostPlatform hostPlatform,
+    required String installId,
+    required String sessionToken,
+  }) async {
+    _values[_key(hostPlatform, installId)] = sessionToken.trim();
+  }
+
+  @override
+  Future<void> deleteSessionToken({
+    required HostPlatform hostPlatform,
+    required String installId,
+  }) async {
+    _values.remove(_key(hostPlatform, installId));
+  }
+}
 
 abstract interface class AppFirstAccountActionService {
   Future<AppFirstRedeemResult> redeemCode({
@@ -1351,12 +1493,17 @@ class AppFirstRuntimeBootstrapper
     Duration allExceptRuRuleSetCacheMaxAge = const Duration(hours: 6),
     List<String> Function(String tag)? allExceptRuRuleSetUrlsResolver,
     this.smartConnectLatencyProbe,
+    AppFirstSessionSecretStore? sessionSecretStore,
+    AppFirstStateFileWriter? stateFileWriter,
   })  : _supportDirectoryResolver =
             supportDirectoryResolver ?? getApplicationSupportDirectory,
         _httpClientFactory = httpClientFactory ?? HttpClient.new,
         _delayScheduler = delayScheduler ?? Future<void>.delayed,
         _allExceptRuRuleSetCacheMaxAge = allExceptRuRuleSetCacheMaxAge,
-        _allExceptRuRuleSetUrlsResolver = allExceptRuRuleSetUrlsResolver;
+        _allExceptRuRuleSetUrlsResolver = allExceptRuRuleSetUrlsResolver,
+        _sessionSecretStore =
+            sessionSecretStore ?? FlutterSecureAppFirstSessionSecretStore(),
+        _stateFileWriter = stateFileWriter ?? _writeAppFirstStateFileAtomically;
 
   final String apiBaseUrl;
   final Future<Directory> Function() _supportDirectoryResolver;
@@ -1369,6 +1516,8 @@ class AppFirstRuntimeBootstrapper
   final Duration _allExceptRuRuleSetCacheMaxAge;
   final List<String> Function(String tag)? _allExceptRuRuleSetUrlsResolver;
   final SmartConnectLatencyProbe? smartConnectLatencyProbe;
+  final AppFirstSessionSecretStore _sessionSecretStore;
+  final AppFirstStateFileWriter _stateFileWriter;
 
   static const _appVersion = '1.0.0-beta.3';
   static const _defaultManagedManifestPath = '/api/client/profile/managed';
@@ -2778,6 +2927,10 @@ class AppFirstRuntimeBootstrapper
 
   Future<_StoredBootstrapState?> _loadState(HostPlatform hostPlatform) async {
     final file = await _stateFile(hostPlatform);
+    final backupFile = File('${file.path}.bak');
+    if (!await file.exists() && await backupFile.exists()) {
+      await backupFile.rename(file.path);
+    }
     if (!await file.exists()) {
       return null;
     }
@@ -2788,11 +2941,52 @@ class AppFirstRuntimeBootstrapper
         'This device needs to be set up again before it can connect.',
       );
     }
-    return _StoredBootstrapState.fromJson(
+    final parsed = _StoredBootstrapState.fromJson(
       decoded.map(
         (key, value) => MapEntry(key.toString(), value),
       ),
     );
+    final secureToken = (await _sessionSecretStore.readSessionToken(
+              hostPlatform: hostPlatform,
+              installId: parsed.installId,
+            ) ??
+            '')
+        .trim();
+    if (secureToken.isNotEmpty) {
+      if (parsed.sessionToken.isNotEmpty) {
+        await _saveState(
+            hostPlatform, parsed.copyWith(sessionToken: secureToken));
+      }
+      await _cleanupStateWriteArtifacts(file);
+      return parsed.copyWith(sessionToken: secureToken);
+    }
+    if (parsed.sessionToken.isNotEmpty) {
+      await _sessionSecretStore.writeSessionToken(
+        hostPlatform: hostPlatform,
+        installId: parsed.installId,
+        sessionToken: parsed.sessionToken,
+      );
+      await _saveState(hostPlatform, parsed);
+      await _cleanupStateWriteArtifacts(file);
+      return parsed;
+    }
+    if (parsed.expectsSecureSessionToken) {
+      throw const BootstrapFailure(
+        'Сохраненная сессия устройства недоступна. Используйте почту или код, '
+        'чтобы восстановить доступ.',
+      );
+    }
+    await _cleanupStateWriteArtifacts(file);
+    return parsed;
+  }
+
+  Future<void> _cleanupStateWriteArtifacts(File file) async {
+    for (final suffix in const <String>['.bak', '.next']) {
+      final artifact = File('${file.path}$suffix');
+      if (await artifact.exists()) {
+        await artifact.delete();
+      }
+    }
   }
 
   Future<void> _saveState(
@@ -2801,7 +2995,19 @@ class AppFirstRuntimeBootstrapper
   ) async {
     final file = await _stateFile(hostPlatform);
     await file.parent.create(recursive: true);
-    await file.writeAsString(jsonEncode(state.toJson()));
+    if (state.sessionToken.trim().isNotEmpty) {
+      await _sessionSecretStore.writeSessionToken(
+        hostPlatform: hostPlatform,
+        installId: state.installId,
+        sessionToken: state.sessionToken,
+      );
+    } else {
+      await _sessionSecretStore.deleteSessionToken(
+        hostPlatform: hostPlatform,
+        installId: state.installId,
+      );
+    }
+    await _stateFileWriter(file, jsonEncode(state.toJson()));
   }
 
   Future<File> _stateFile(HostPlatform hostPlatform) async {
@@ -5850,6 +6056,7 @@ class _StoredBootstrapState {
     required this.accountId,
     required this.managedManifestPath,
     required this.profileRevision,
+    this.expectsSecureSessionToken = false,
   });
 
   final String installId;
@@ -5857,6 +6064,7 @@ class _StoredBootstrapState {
   final String accountId;
   final String managedManifestPath;
   final String profileRevision;
+  final bool expectsSecureSessionToken;
 
   bool get hasSession => sessionToken.trim().isNotEmpty;
 
@@ -5866,6 +6074,7 @@ class _StoredBootstrapState {
     String? accountId,
     String? managedManifestPath,
     String? profileRevision,
+    bool? expectsSecureSessionToken,
   }) {
     return _StoredBootstrapState(
       installId: installId ?? this.installId,
@@ -5873,13 +6082,16 @@ class _StoredBootstrapState {
       accountId: accountId ?? this.accountId,
       managedManifestPath: managedManifestPath ?? this.managedManifestPath,
       profileRevision: profileRevision ?? this.profileRevision,
+      expectsSecureSessionToken:
+          expectsSecureSessionToken ?? this.expectsSecureSessionToken,
     );
   }
 
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'install_id': installId,
-      'session_token': sessionToken,
+      if (sessionToken.trim().isNotEmpty || expectsSecureSessionToken)
+        'session_token_storage': 'secure',
       'account_id': accountId,
       'managed_manifest_path': managedManifestPath,
       'profile_revision': profileRevision,
@@ -5895,6 +6107,8 @@ class _StoredBootstrapState {
               AppFirstRuntimeBootstrapper._defaultManagedManifestPath)
           .toString(),
       profileRevision: (json['profile_revision'] ?? '').toString(),
+      expectsSecureSessionToken:
+          (json['session_token_storage'] ?? '').toString() == 'secure',
     );
   }
 }

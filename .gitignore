@@ -27,3 +27,6 @@ artifacts/libcore/
 # Seed-local config outputs
 config/local/*
 !config/local/.gitkeep
+
+# Local isolated implementation worktrees
+.worktrees/

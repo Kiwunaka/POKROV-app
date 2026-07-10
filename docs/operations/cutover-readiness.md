@@ -1,6 +1,6 @@
 # Cutover Readiness
 
-Last updated: 2026-06-05
+Last updated: 2026-07-10
 
 This document tracks what must be true before `POKROV-app/main` is approved as the public `Android + Windows` release lane.
 
@@ -74,6 +74,15 @@ Status: `UNSIGNED_RELEASE_APPROVED_BY_OWNER_MANUAL_TEST_PENDING`.
   outside-store beta copy.
 - Run the physical-device release-build localhost/control-surface audit.
 - Attach raw evidence if replacing the existing operator attestation.
+- Confirm release state JSON does not contain `session_token`; session material
+  must be migrated to the app secure secret store.
+- Confirm a secure-store write failure leaves the legacy JSON token untouched
+  and fails closed instead of claiming that migration succeeded.
+- Confirm `session_token_storage=secure` with a missing platform secret enters
+  account recovery and never requests a replacement trial session.
+- Confirm state-file replacement is atomic: a failed JSON write preserves the
+  previous install/session locator, and an interrupted replacement restores its
+  validated backup on the next launch.
 - Install the exact APK that will be uploaded, then verify start-trial,
   managed profile, connect/disconnect, support, cabinet handoff, and Telegram
   bonus paths.
@@ -85,6 +94,14 @@ Status: `UNSIGNED_RELEASE_APPROVED_BY_OWNER_MANUAL_TEST_PENDING`.
 - Trusted Windows signing is an accepted skip for the current outside-store
   beta; keep explicit SmartScreen/unknown-publisher copy.
 - Install the exact setup EXE that will be uploaded.
+- Confirm local runtime ports bind only to loopback, LAN access remains disabled,
+  and the Clash API is disabled unless a future audited secret-gated control
+  path replaces it.
+- Confirm release state JSON does not contain `session_token`; session material
+  must be migrated to the app secure secret store.
+- Confirm a missing secure secret enters recovery rather than silently creating
+  another account or trial, and restart recovery survives an interrupted state
+  file replacement.
 - Verify first launch, start-trial, managed profile, connect/disconnect,
   support, cabinet handoff, and recovery after reconnect.
 
@@ -135,6 +152,8 @@ Status: `MANUAL_OWNER_TEST`.
   reconnect and telemetry failure not blocking connect.
 - Run redeem code, cabinet token handoff, support chat, Telegram bonus check,
   and checkout continuation.
+- Confirm support diagnostics/export payloads redact session tokens,
+  subscription URLs, WireGuard/WARP material, and raw generated configs.
 - WARP/enhanced privacy and selected-apps are implemented for guarded beta use.
   Keep production WARP, DNS/leak, and exact-artifact runtime claims behind
   release-build proof.

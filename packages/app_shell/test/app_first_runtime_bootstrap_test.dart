@@ -2,6 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
+import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
@@ -70,7 +74,424 @@ Map<String, Object?> _supportMessageJson({
   };
 }
 
+class _FailingFlutterSecureStorage extends FlutterSecureStorage {
+  const _FailingFlutterSecureStorage({
+    this.failRead = false,
+    this.failWrite = false,
+    this.failDelete = false,
+  });
+
+  final bool failRead;
+  final bool failWrite;
+  final bool failDelete;
+
+  @override
+  Future<String?> read({
+    required String key,
+    AppleOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    AppleOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async {
+    if (failRead) {
+      throw PlatformException(code: 'secure-store-read-unavailable');
+    }
+    return super.read(
+      key: key,
+      iOptions: iOptions,
+      aOptions: aOptions,
+      lOptions: lOptions,
+      webOptions: webOptions,
+      mOptions: mOptions,
+      wOptions: wOptions,
+    );
+  }
+
+  @override
+  Future<void> write({
+    required String key,
+    required String? value,
+    AppleOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    AppleOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async {
+    if (failWrite) {
+      throw PlatformException(code: 'secure-store-write-unavailable');
+    }
+    await super.write(
+      key: key,
+      value: value,
+      iOptions: iOptions,
+      aOptions: aOptions,
+      lOptions: lOptions,
+      webOptions: webOptions,
+      mOptions: mOptions,
+      wOptions: wOptions,
+    );
+  }
+
+  @override
+  Future<void> delete({
+    required String key,
+    AppleOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    AppleOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async {
+    if (failDelete) {
+      throw PlatformException(code: 'secure-store-delete-unavailable');
+    }
+    await super.delete(
+      key: key,
+      iOptions: iOptions,
+      aOptions: aOptions,
+      lOptions: lOptions,
+      webOptions: webOptions,
+      mOptions: mOptions,
+      wOptions: wOptions,
+    );
+  }
+}
+
 void main() {
+  final defaultSecureStoragePlatform = FlutterSecureStoragePlatform.instance;
+  setUp(() {
+    FlutterSecureStoragePlatform.instance =
+        TestFlutterSecureStoragePlatform(<String, String>{});
+  });
+  tearDown(() {
+    FlutterSecureStoragePlatform.instance = defaultSecureStoragePlatform;
+  });
+
+  test(
+      'secure session store fails closed when the platform store is unavailable',
+      () async {
+    final store = FlutterSecureAppFirstSessionSecretStore(
+      storage: const _FailingFlutterSecureStorage(failWrite: true),
+    );
+
+    await expectLater(
+      store.writeSessionToken(
+        hostPlatform: HostPlatform.android,
+        installId: 'install-fail-closed',
+        sessionToken: 'must-not-fall-back-to-memory',
+      ),
+      throwsA(isA<PlatformException>()),
+    );
+  });
+
+  test('secure session store fails closed when token reads fail', () async {
+    final store = FlutterSecureAppFirstSessionSecretStore(
+      storage: const _FailingFlutterSecureStorage(failRead: true),
+    );
+
+    await expectLater(
+      store.readSessionToken(
+        hostPlatform: HostPlatform.windows,
+        installId: 'install-read-failure',
+      ),
+      throwsA(isA<PlatformException>()),
+    );
+  });
+
+  test('secure session store fails closed when token deletion fails', () async {
+    final store = FlutterSecureAppFirstSessionSecretStore(
+      storage: const _FailingFlutterSecureStorage(failDelete: true),
+    );
+
+    await expectLater(
+      store.deleteSessionToken(
+        hostPlatform: HostPlatform.android,
+        installId: 'install-delete-failure',
+      ),
+      throwsA(isA<PlatformException>()),
+    );
+  });
+
+  test('migrates a legacy JSON session token into secure storage', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-migration-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}'
+      'app-first-session-windows.json',
+    );
+    await stateFile.writeAsString(
+      jsonEncode(<String, Object?>{
+        'install_id': 'legacy-install',
+        'session_token': 'legacy-session-token',
+        'account_id': '42',
+        'managed_manifest_path': '/api/client/profile/managed',
+        'profile_revision': 'legacy-revision',
+      }),
+    );
+
+    final requests = <String>[];
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add('${request.method} ${request.uri.path}');
+        expect(
+          request.headers.value(HttpHeaders.authorizationHeader),
+          'Bearer legacy-session-token',
+        );
+        if (request.uri.path == '/api/client/route-policy') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+          await request.response.close();
+          continue;
+        }
+        if (request.uri.path == '/api/client/profile/managed') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(<String, Object?>{
+                'provisioning': <String, Object?>{
+                  'status': 'ready',
+                  'sync_ok': true,
+                },
+                'profile_revision': 'migrated-revision',
+                'config_format': 'singbox-json',
+                'config_payload': <String, Object?>{
+                  'outbounds': <Object?>[
+                    <String, Object?>{'type': 'selector', 'tag': 'proxy'},
+                  ],
+                  'route': <String, Object?>{'final': 'proxy'},
+                },
+              }),
+            );
+          await request.response.close();
+          continue;
+        }
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final sessionSecretStore = MemoryAppFirstSessionSecretStore();
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: sessionSecretStore,
+    );
+
+    await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+
+    final restartedBootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: sessionSecretStore,
+    );
+    await restartedBootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+
+    final interruptedWriteBackup = File('${stateFile.path}.bak');
+    await stateFile.rename(interruptedWriteBackup.path);
+    final recoveredBootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: sessionSecretStore,
+    );
+    await recoveredBootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    expect(await stateFile.exists(), isTrue);
+    expect(await interruptedWriteBackup.exists(), isFalse);
+
+    final migrated =
+        jsonDecode(await stateFile.readAsString()) as Map<String, dynamic>;
+    expect(migrated.containsKey('session_token'), isFalse);
+    expect(migrated['session_token_storage'], 'secure');
+    expect(
+      await sessionSecretStore.readSessionToken(
+        hostPlatform: HostPlatform.windows,
+        installId: 'legacy-install',
+      ),
+      'legacy-session-token',
+    );
+    expect(
+      requests,
+      containsAllInOrder(const <String>[
+        'POST /api/client/route-policy',
+        'GET /api/client/profile/managed',
+      ]),
+    );
+    expect(requests, isNot(contains('POST /api/client/session/start-trial')));
+  });
+
+  test('keeps a legacy JSON token when secure migration cannot persist it',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-migration-failure-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}'
+      'app-first-session-windows.json',
+    );
+    await stateFile.writeAsString(
+      jsonEncode(<String, Object?>{
+        'install_id': 'legacy-install-write-failure',
+        'session_token': 'legacy-token-must-survive',
+        'account_id': '42',
+        'managed_manifest_path': '/api/client/profile/managed',
+        'profile_revision': 'legacy-revision',
+      }),
+    );
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:1/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: FlutterSecureAppFirstSessionSecretStore(
+        storage: const _FailingFlutterSecureStorage(failWrite: true),
+      ),
+    );
+
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(isA<PlatformException>()),
+    );
+
+    final preserved =
+        jsonDecode(await stateFile.readAsString()) as Map<String, dynamic>;
+    expect(preserved['session_token'], 'legacy-token-must-survive');
+    expect(preserved.containsKey('session_token_storage'), isFalse);
+  });
+
+  test('requires recovery when secure session marker has no stored token',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-missing-secret-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}'
+      'app-first-session-windows.json',
+    );
+    await stateFile.writeAsString(
+      jsonEncode(<String, Object?>{
+        'install_id': 'secure-session-without-secret',
+        'session_token_storage': 'secure',
+        'account_id': '42',
+        'managed_manifest_path': '/api/client/profile/managed',
+        'profile_revision': 'stored-revision',
+      }),
+    );
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:1/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: MemoryAppFirstSessionSecretStore(),
+      maxRequestAttempts: 1,
+      connectionTimeout: const Duration(milliseconds: 50),
+      requestTimeout: const Duration(milliseconds: 50),
+    );
+
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(
+        isA<BootstrapFailure>().having(
+          (error) => error.message,
+          'message',
+          contains('восстановить доступ'),
+        ),
+      ),
+    );
+
+    final preserved =
+        jsonDecode(await stateFile.readAsString()) as Map<String, dynamic>;
+    expect(preserved['install_id'], 'secure-session-without-secret');
+    expect(preserved['session_token_storage'], 'secure');
+  });
+
+  test('keeps legacy JSON token when atomic state persistence fails', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-state-write-failure-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}'
+      'app-first-session-windows.json',
+    );
+    await stateFile.writeAsString(
+      jsonEncode(<String, Object?>{
+        'install_id': 'legacy-install-state-write-failure',
+        'session_token': 'legacy-token-survives-state-write-failure',
+        'account_id': '42',
+        'managed_manifest_path': '/api/client/profile/managed',
+        'profile_revision': 'legacy-revision',
+      }),
+    );
+    final sessionSecretStore = MemoryAppFirstSessionSecretStore();
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:1/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: sessionSecretStore,
+      stateFileWriter: (file, contents) async {
+        throw FileSystemException('simulated atomic state write failure');
+      },
+    );
+
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(isA<FileSystemException>()),
+    );
+
+    final preserved =
+        jsonDecode(await stateFile.readAsString()) as Map<String, dynamic>;
+    expect(
+      preserved['session_token'],
+      'legacy-token-survives-state-write-failure',
+    );
+    expect(preserved.containsKey('session_token_storage'), isFalse);
+    expect(
+      await sessionSecretStore.readSessionToken(
+        hostPlatform: HostPlatform.windows,
+        installId: 'legacy-install-state-write-failure',
+      ),
+      'legacy-token-survives-state-write-failure',
+    );
+  });
+
   test(
       'android bootstrap can map canonical API host to a direct control-plane IP',
       () {
@@ -243,9 +664,11 @@ void main() {
       }
     }());
 
+    final sessionSecretStore = MemoryAppFirstSessionSecretStore();
     final bootstrapper = AppFirstRuntimeBootstrapper(
       apiBaseUrl: 'http://127.0.0.1:${server.port}/',
       supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: sessionSecretStore,
     );
 
     final payload = await bootstrapper.resolveManagedProfile(
@@ -287,7 +710,15 @@ void main() {
     expect(await stateFile.exists(), isTrue);
     final state =
         jsonDecode(await stateFile.readAsString()) as Map<String, dynamic>;
-    expect(state['session_token'], 'session-token-1');
+    expect(state.containsKey('session_token'), isFalse);
+    expect(state['session_token_storage'], 'secure');
+    expect(
+      await sessionSecretStore.readSessionToken(
+        hostPlatform: HostPlatform.windows,
+        installId: state['install_id'] as String,
+      ),
+      'session-token-1',
+    );
     expect(state['managed_manifest_path'], '/api/client/profile/managed');
   });
 
