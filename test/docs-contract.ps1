@@ -13,21 +13,11 @@ function Get-PhysicalLineCount {
 function Test-HasByteOrderMark {
   param([byte[]]$Bytes)
 
-  if ($Bytes.Length -ge 4) {
-    if (($Bytes[0] -eq 0x00 -and $Bytes[1] -eq 0x00 -and $Bytes[2] -eq 0xFE -and $Bytes[3] -eq 0xFF) -or
-        ($Bytes[0] -eq 0xFF -and $Bytes[1] -eq 0xFE -and $Bytes[2] -eq 0x00 -and $Bytes[3] -eq 0x00)) {
-      return $true
-    }
-  }
-  if ($Bytes.Length -ge 3 -and $Bytes[0] -eq 0xEF -and $Bytes[1] -eq 0xBB -and $Bytes[2] -eq 0xBF) {
-    return $true
-  }
-  if ($Bytes.Length -ge 2 -and
-      (($Bytes[0] -eq 0xFE -and $Bytes[1] -eq 0xFF) -or
-       ($Bytes[0] -eq 0xFF -and $Bytes[1] -eq 0xFE))) {
-    return $true
-  }
-  return $false
+  if ($Bytes.Length -eq 0) { return $false }
+  $prefix = [BitConverter]::ToString($Bytes, 0, [Math]::Min(4, $Bytes.Length)).Replace('-', '')
+  return $prefix.StartsWith('EFBBBF') -or $prefix.StartsWith('FEFF') -or
+    $prefix.StartsWith('FFFE') -or $prefix.StartsWith('0000FEFF') -or
+    $prefix.StartsWith('FFFE0000')
 }
 
 function ConvertFrom-StrictDocumentBytes {
@@ -258,71 +248,73 @@ function Get-UniqueMarkdownTable {
   }
 }
 
-function New-ExpectedRegistryPathClasses {
-  $map = [System.Collections.Generic.Dictionary[string, string]]::new([StringComparer]::Ordinal)
-  $entries = @(
-    'CANONICAL|docs/README.md',
-    'CANONICAL|README.md',
-    'CANONICAL|DESIGN.md',
-    'CANONICAL|docs/product/client-product-contract.md',
-    'CANONICAL|docs/architecture/app-first-onboarding-flow.md',
-    'CANONICAL|docs/architecture/folder-structure.md',
-    'CANONICAL|docs/architecture/package-boundaries.md',
-    'CANONICAL|docs/architecture/bootstrap-workflow.md',
-    'CANONICAL|docs/architecture/in-app-ai-assistant-contract.md',
-    'CANONICAL|docs/design/2026-06-13-pokrov-product-ui-direction.md',
-    'CANONICAL|config/product-contract.seed.json',
-    'CANONICAL|config/platform-matrix.seed.json',
-    'CANONICAL|config/runtime-profile.seed.json',
-    'CANONICAL|config/cutover-readiness.seed.json',
-    'CANONICAL|config/release-handoff.seed.json',
-    'ACTIVE_EXECUTION|docs/implementation/client-release-backlog.md',
-    'ACTIVE_EXECUTION|docs/operations/cutover-readiness.md',
-    'ACTIVE_EXECUTION|docs/operations/android-release-audit.md',
-    'ACTIVE_EXECUTION|docs/operations/windows-release-readiness.md',
-    'ACTIVE_EXECUTION|docs/operations/warp-runtime-proof-checklist.md',
-    'ACTIVE_EXECUTION|docs/operations/responsive-golden-capture-plan.md',
-    'ACTIVE_EXECUTION|docs/operations/client-motion-performance-checklist.md',
-    'ACTIVE_EXECUTION|docs/operations/apple-release-readiness.md',
-    'EVIDENCE|docs/product/client-public-beta-prd.md',
-    'EVIDENCE|docs/operations/2026-06-04-public-beta-operator-handoff.md',
-    'EVIDENCE|docs/operations/2026-06-05-phase-6-release-beta-handoff.md',
-    'EVIDENCE|docs/operations/2026-06-05-final-beta-closure-except-manual-tests-signing.md',
-    'EVIDENCE|docs/operations/2026-06-13-pokrov-product-ui-plan-closure-audit.md',
-    'EVIDENCE|docs/operations/client-ui-api-additions.md',
-    'EVIDENCE|docs/developer/work-orders/2026-04-open-beta-v4/INDEX.md',
-    'EVIDENCE|docs/implementation/2026-06-03-client-build-readiness-and-api-plan.md',
-    'EVIDENCE|docs/implementation/2026-06-03-client-mvp-shell-implementation.md',
-    'EVIDENCE|docs/implementation/2026-06-04-decisions-implementation-map.md',
-    'EVIDENCE|docs/implementation/2026-06-05-p6-overload-correction-plan.md',
-    'HISTORICAL_REFERENCE|docs/design/DESIGN.md',
-    'HISTORICAL_REFERENCE|docs/specs/2026-04-18-wave-7-new-base-client-scaffold.md',
-    'HISTORICAL_REFERENCE|docs/specs/2026-06-05-p5-warp-approved-design.md',
-    'HISTORICAL_REFERENCE|docs/decisions/2026-06-03-hiddify-karing-happ-client-base-review.md',
-    'HISTORICAL_REFERENCE|docs/decisions/2026-06-03-hiddify-core-warp-status.md',
-    'HISTORICAL_REFERENCE|docs/decisions/2026-06-03-client-ux-account-rewards-master-brief.md',
-    'HISTORICAL_REFERENCE|docs/decisions/2026-06-03-client-chat-responsive-warp-motion-review.md',
-    'HISTORICAL_REFERENCE|docs/decisions/2026-06-03-client-best-mvp-consilium.md',
-    'HISTORICAL_REFERENCE|docs/decisions/2026-06-02-karing-base-reopen.md',
-    'HISTORICAL_REFERENCE|docs/decisions/2026-04-18-karing-vs-clean-room-gate.md',
-    'HISTORICAL_REFERENCE|docs/design/2026-06-03-client-premium-shell-v2-brief.md',
-    'HISTORICAL_REFERENCE|docs/design/2026-06-03-client-screen-component-rules.md',
-    'HISTORICAL_REFERENCE|docs/design/2026-06-03-client-quiet-emerald-style-brief.md',
-    'HISTORICAL_REFERENCE|docs/design/2026-06-03-client-chat-responsive-warp-motion-brief.md',
-    'HISTORICAL_REFERENCE|docs/design/2026-06-03-client-best-mvp-build-brief.md',
-    'HISTORICAL_REFERENCE|docs/design/2026-06-05-p5-warp-application-map.md',
-    'HISTORICAL_REFERENCE|docs/design/2026-06-05-p5-application-map-consilium-review.md',
-    'HISTORICAL_REFERENCE|docs/design/2026-06-05-p6-overload-ux-consilium.md',
-    'HISTORICAL_REFERENCE|docs/design/assets/',
-    'HISTORICAL_REFERENCE|docs/design/generated/2026-06-09-app-screen-variants/',
-    'HISTORICAL_REFERENCE|docs/archive/'
+function New-ExpectedRegistryManifest {
+  $encodedRows = @(
+    'CANONICAL|RECONCILED|Client docs routing|docs/README.md',
+    'CANONICAL|PENDING_COLLISION_REVIEW|Client repository overview|README.md',
+    'CANONICAL|PENDING_COLLISION_REVIEW|Client design system|DESIGN.md',
+    'CANONICAL|PENDING_COLLISION_REVIEW|Client product|docs/product/client-product-contract.md',
+    'CANONICAL|PENDING_COLLISION_REVIEW|App-first onboarding|docs/architecture/app-first-onboarding-flow.md',
+    'CANONICAL|PENDING_COLLISION_REVIEW|Repository structure|docs/architecture/folder-structure.md',
+    'CANONICAL|PENDING_COLLISION_REVIEW|Package boundaries|docs/architecture/package-boundaries.md',
+    'CANONICAL|PENDING_COLLISION_REVIEW|Runtime bootstrap|docs/architecture/bootstrap-workflow.md',
+    'CANONICAL|PENDING_COLLISION_REVIEW|In-app assistant|docs/architecture/in-app-ai-assistant-contract.md',
+    'CANONICAL|PENDING_COLLISION_REVIEW|Current product/UI direction|docs/design/2026-06-13-pokrov-product-ui-direction.md',
+    'CANONICAL|PENDING_COLLISION_REVIEW|Machine product facts|config/product-contract.seed.json',
+    'CANONICAL|PENDING_COLLISION_REVIEW|Public/readiness platform scope|config/platform-matrix.seed.json',
+    'CANONICAL|PENDING_COLLISION_REVIEW|Runtime profile facts|config/runtime-profile.seed.json',
+    'CANONICAL|PENDING_COLLISION_REVIEW|Cutover readiness facts|config/cutover-readiness.seed.json',
+    'CANONICAL|PENDING_COLLISION_REVIEW|Release handoff facts|config/release-handoff.seed.json',
+    'ACTIVE_EXECUTION|PENDING_COLLISION_REVIEW|Client release execution|docs/implementation/client-release-backlog.md',
+    'ACTIVE_EXECUTION|PENDING_COLLISION_REVIEW|Cutover checklist|docs/operations/cutover-readiness.md',
+    'ACTIVE_EXECUTION|PENDING_COLLISION_REVIEW|Android readiness|docs/operations/android-release-audit.md',
+    'ACTIVE_EXECUTION|PENDING_COLLISION_REVIEW|Windows readiness|docs/operations/windows-release-readiness.md',
+    'ACTIVE_EXECUTION|PENDING_COLLISION_REVIEW|WARP runtime proof|docs/operations/warp-runtime-proof-checklist.md',
+    'ACTIVE_EXECUTION|PENDING_COLLISION_REVIEW|Responsive proof|docs/operations/responsive-golden-capture-plan.md',
+    'ACTIVE_EXECUTION|PENDING_COLLISION_REVIEW|Motion/performance proof|docs/operations/client-motion-performance-checklist.md',
+    'ACTIVE_EXECUTION|PENDING_COLLISION_REVIEW|Apple readiness|docs/operations/apple-release-readiness.md',
+    'EVIDENCE|REVIEWED_NO_CHANGE|Public beta product evidence|docs/product/client-public-beta-prd.md',
+    'EVIDENCE|REVIEWED_NO_CHANGE|Dated handoffs and closure audits|docs/operations/2026-06-04-public-beta-operator-handoff.md;docs/operations/2026-06-05-phase-6-release-beta-handoff.md;docs/operations/2026-06-05-final-beta-closure-except-manual-tests-signing.md;docs/operations/2026-06-13-pokrov-product-ui-plan-closure-audit.md',
+    'EVIDENCE|REVIEWED_NO_CHANGE|Client/API additions record|docs/operations/client-ui-api-additions.md',
+    'EVIDENCE|REVIEWED_NO_CHANGE|Retained beta work order|docs/developer/work-orders/2026-04-open-beta-v4/INDEX.md',
+    'EVIDENCE|REVIEWED_NO_CHANGE|Completed implementation maps|docs/implementation/2026-06-03-client-build-readiness-and-api-plan.md;docs/implementation/2026-06-03-client-mvp-shell-implementation.md;docs/implementation/2026-06-04-decisions-implementation-map.md;docs/implementation/2026-06-05-p6-overload-correction-plan.md',
+    'HISTORICAL_REFERENCE|PENDING_COLLISION_REVIEW|Superseded local design entry|docs/design/DESIGN.md',
+    'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Earlier scaffold spec|docs/specs/2026-04-18-wave-7-new-base-client-scaffold.md',
+    'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Completed WARP design spec|docs/specs/2026-06-05-p5-warp-approved-design.md',
+    'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Retired base/runtime reviews|docs/decisions/2026-06-03-hiddify-karing-happ-client-base-review.md;docs/decisions/2026-06-03-hiddify-core-warp-status.md',
+    'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Earlier UX master brief|docs/decisions/2026-06-03-client-ux-account-rewards-master-brief.md',
+    'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Earlier responsive review|docs/decisions/2026-06-03-client-chat-responsive-warp-motion-review.md',
+    'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Earlier MVP consilium|docs/decisions/2026-06-03-client-best-mvp-consilium.md',
+    'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Retired Karing reopen input|docs/decisions/2026-06-02-karing-base-reopen.md',
+    'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Retired clean-room gate input|docs/decisions/2026-04-18-karing-vs-clean-room-gate.md',
+    'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Earlier premium-shell brief|docs/design/2026-06-03-client-premium-shell-v2-brief.md',
+    'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Earlier visual/copy briefs|docs/design/2026-06-03-client-screen-component-rules.md;docs/design/2026-06-03-client-quiet-emerald-style-brief.md;docs/design/2026-06-03-client-chat-responsive-warp-motion-brief.md;docs/design/2026-06-03-client-best-mvp-build-brief.md',
+    'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Completed application-map briefs|docs/design/2026-06-05-p5-warp-application-map.md;docs/design/2026-06-05-p5-application-map-consilium-review.md;docs/design/2026-06-05-p6-overload-ux-consilium.md',
+    'HISTORICAL_REFERENCE|UNRESOLVED_OWNER_DECISION|Generated visual references|docs/design/assets/;docs/design/generated/2026-06-09-app-screen-variants/',
+    'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Archived completed plans|docs/archive/',
+    'OPERATOR_PLAYBOOK|REVIEWED_NO_CHANGE|no client-local owner; platform tools do not enter the client default route|<NO_LOCAL_OWNER>',
+    'EXPERIMENTAL|REVIEWED_NO_CHANGE|no client-local owner; platform tools do not enter the client default route|<NO_LOCAL_OWNER>'
   )
 
-  foreach ($entry in $entries) {
-    $parts = $entry -split '\|', 2
-    $map.Add($parts[1], $parts[0])
+  $manifest = [System.Collections.Generic.List[object]]::new()
+  $logicalKeys = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+  $separator = [string][char]0x001F
+  foreach ($encodedRow in $encodedRows) {
+    $fields = $encodedRow -split '\|', 4
+    if ($fields.Count -ne 4) { throw "Invalid embedded registry manifest row: $encodedRow" }
+    $paths = $(if ($fields[3] -ceq '<NO_LOCAL_OWNER>') { @() } else { [string[]]($fields[3] -split ';') })
+    $logicalKey = $fields[0] + $separator + $fields[2]
+    if (-not $logicalKeys.Add($logicalKey)) { throw "Duplicate embedded registry logical key: $logicalKey" }
+    [void]$manifest.Add([pscustomobject]@{
+      Class = $fields[0]
+      Review = $fields[1]
+      Owner = $fields[2]
+      Paths = $paths
+      LogicalKey = $logicalKey
+    })
   }
-  return ,$map
+  if ($manifest.Count -ne 44) { throw "Embedded registry manifest must contain 44 rows, got $($manifest.Count)" }
+  return $manifest.ToArray()
 }
 
 function Test-RegistryRelativePath {
@@ -370,7 +362,7 @@ function Test-RegistryRelativePath {
   }
 }
 
-function Test-AgentContract {
+function Get-AgentContractStructure {
   param(
     [string]$Text,
     [System.Collections.Generic.List[string]]$Errors
@@ -403,35 +395,134 @@ function Test-AgentContract {
     [void]$Errors.Add("AGENTS.md must use the exact ordered H2 section set: $($requiredHeadings -join ', ')")
   }
 
+  $sections = [System.Collections.Generic.Dictionary[string, string]]::new([StringComparer]::Ordinal)
   for ($headingIndex = 0; $headingIndex -lt $headingPositions.Count; $headingIndex++) {
     $start = $headingPositions[$headingIndex] + 1
     $end = $(if ($headingIndex + 1 -lt $headingPositions.Count) { $headingPositions[$headingIndex + 1] - 1 } else { $visible.Count - 1 })
     $nonEmpty = 0
     $listItems = 0
+    $bodyLines = [System.Collections.Generic.List[string]]::new()
     for ($lineIndex = $start; $lineIndex -le $end; $lineIndex++) {
       if ($lineIndex -lt 0 -or $lineIndex -ge $visible.Count) { continue }
       $line = $visible[$lineIndex].Text
+      [void]$bodyLines.Add($line)
       if (-not [string]::IsNullOrWhiteSpace($line)) { $nonEmpty++ }
       if ($line -match '^\s*(?:- |\d+\.\s+)') { $listItems++ }
     }
     if ($nonEmpty -eq 0 -or $listItems -eq 0) {
       [void]$Errors.Add("AGENTS.md section '$($headingNames[$headingIndex])' must contain meaningful list content")
     }
+    if (-not $sections.ContainsKey($headingNames[$headingIndex])) {
+      $sections.Add($headingNames[$headingIndex], ($bodyLines -join "`n"))
+    }
   }
 
-  foreach ($required in @(
-    'POKROV-app/main',
-    'docs/README.md',
-    'Android',
-    'Windows',
-    'iOS',
-    'macOS',
-    'MANUAL_OWNER_TEST',
-    'artifacts/releases',
-    'git diff --check'
-  )) {
-    if (-not $Text.Contains($required)) {
-      [void]$Errors.Add("AGENTS.md is missing semantic guard: $required")
+  $h1Position = -1
+  if ($h1Lines.Count -eq 1) {
+    for ($index = 0; $index -lt $visible.Count; $index++) {
+      if ($visible[$index].LineNumber -eq $h1Lines[0].LineNumber) {
+        $h1Position = $index
+        break
+      }
+    }
+  }
+  $firstHeadingPosition = $(if ($headingPositions.Count -gt 0) { $headingPositions[0] } else { $visible.Count })
+  $preambleLines = [System.Collections.Generic.List[string]]::new()
+  for ($index = $h1Position + 1; $index -lt $firstHeadingPosition; $index++) {
+    if ($index -ge 0 -and $index -lt $visible.Count) {
+      [void]$preambleLines.Add($visible[$index].Text)
+    }
+  }
+  $preamble = $preambleLines -join "`n"
+  if ([string]::IsNullOrWhiteSpace($preamble)) {
+    [void]$Errors.Add('AGENTS.md preamble must state the repository boundary')
+  }
+
+  return [pscustomobject]@{
+    Preamble = $preamble
+    Sections = $sections
+    HeadingNames = $headingNames.ToArray()
+  }
+}
+
+function Test-AgentContract {
+  param(
+    [string]$Text,
+    [System.Collections.Generic.List[string]]$Errors
+  )
+
+  $structure = Get-AgentContractStructure -Text $Text -Errors $Errors
+  $scopeTexts = [System.Collections.Generic.Dictionary[string, string]]::new([StringComparer]::Ordinal)
+  $scopeTexts.Add('Preamble', $structure.Preamble)
+  foreach ($sectionName in $structure.Sections.Keys) {
+    $scopeTexts.Add($sectionName, $structure.Sections[$sectionName])
+  }
+
+  $contracts = [ordered]@{
+    'Preamble' = @(
+      'canonical client-development lane for POKROV',
+      'Promote client work through `POKROV-app/main`',
+      'The separate platform repository owns backend behavior, public web surfaces, and cross-surface shared facts'
+    )
+    'Start Every Task' = @(
+      'Classify the task with the route in `docs/README.md`',
+      'State the intended write set, authority owners, verification, and documentation impact',
+      'Inspect current code, tests, Git worktrees, and conflicting evidence',
+      'Never edit or clean another branch or worktree'
+    )
+    'Authority' = @(
+      'Task authority: Codex system/developer instructions',
+      'Intended product authority: owner-approved decisions and machine-readable contracts',
+      'current code/tests',
+      'When code and intended canon disagree, record the conflict',
+      'Archive and evidence can explain why a decision happened'
+    )
+    'Repository Boundary' = @(
+      '`Android` and `Windows` are the current public outside-store client surfaces',
+      '`iOS` and `macOS` are readiness tracks only',
+      'Platform-owned facts and API contracts live under `C:/Users/kiwun/Documents/ai/VPN/shared/`',
+      'Client product, shell, runtime, host integration, and client release-readiness truth belongs in this repository'
+    )
+    'Runtime And Security' = @(
+      'Do not replace the default runtime core',
+      'alter tunnel or WARP lifecycle',
+      'tokens, credentials, signing material, private keys, raw profiles, and provider data',
+      'Never downgrade secure storage to plaintext',
+      'Signing identities, entitlements, provisioning, device proof, and store access are operator-owned gates'
+    )
+    'Evidence And Destructive Operations' = @(
+      'Do not modify `artifacts/releases/**`',
+      'Preserve audit evidence, retained release lineage, historical decisions, and generated references',
+      'Never run broad clean, reset, stash drop, worktree removal, recursive deletion, or bulk regeneration',
+      'Machine-local files are not automatically disposable'
+    )
+    'Release Honesty' = @(
+      'Never infer stable, signed, store-ready, device-proven, WARP-proven, or publicly downloadable status',
+      '`MANUAL_OWNER_TEST`, `BLOCKED_BY_ACCESS`, `SKIPPED_BY_OWNER`, `OPERATOR_ATTESTED`, or `NOT_REQUESTED`',
+      'Documentation-only work must not run Android or Windows release builds'
+    )
+    'Verification And Documentation' = @(
+      'run the narrowest relevant Flutter analyze/tests first',
+      'Android host changes: run focused Flutter and Gradle tests',
+      'Docs/config changes: run `powershell -ExecutionPolicy Bypass -File .\scripts\validate-seed.ps1`',
+      'Every task runs `git diff --check`',
+      'Update the owning canonical doc in the same task',
+      'Handoff with changed files, commands and results, remaining manual gates, blockers, and rollback notes'
+    )
+  }
+
+  foreach ($ownerScope in $contracts.Keys) {
+    $ownerText = $(if ($scopeTexts.ContainsKey($ownerScope)) { $scopeTexts[$ownerScope] } else { '' })
+    foreach ($marker in $contracts[$ownerScope]) {
+      if ($ownerText.IndexOf($marker, [StringComparison]::Ordinal) -lt 0) {
+        [void]$Errors.Add("AGENTS.md $ownerScope is missing section-owned semantic marker '$marker'")
+      }
+      foreach ($otherScope in $scopeTexts.Keys) {
+        if ($otherScope -cne $ownerScope -and
+            $scopeTexts[$otherScope].IndexOf($marker, [StringComparison]::Ordinal) -ge 0) {
+          [void]$Errors.Add("AGENTS.md semantic marker '$marker' belongs to $ownerScope but appears in $otherScope")
+        }
+      }
     }
   }
 
@@ -511,14 +602,32 @@ function Test-DocumentationRegistry {
     [void]$allowedReviews.Add($value)
   }
 
-  $expectedPathClasses = New-ExpectedRegistryPathClasses
+  $expectedManifest = @(New-ExpectedRegistryManifest)
+  $expectedPathClasses = [System.Collections.Generic.Dictionary[string, string]]::new([StringComparer]::Ordinal)
+  $expectedRowsByKey = [System.Collections.Generic.Dictionary[string, object]]::new([StringComparer]::Ordinal)
+  foreach ($expectedRow in $expectedManifest) {
+    $expectedRowsByKey.Add($expectedRow.LogicalKey, $expectedRow)
+    foreach ($relativePath in $expectedRow.Paths) {
+      if ($expectedPathClasses.ContainsKey($relativePath)) {
+        throw "Duplicate path in embedded registry manifest: $relativePath"
+      }
+      $expectedPathClasses.Add($relativePath, $expectedRow.Class)
+    }
+  }
+  if ($expectedPathClasses.Count -ne 55) {
+    throw "Embedded registry manifest must contain 55 concrete paths, got $($expectedPathClasses.Count)"
+  }
+  if ($registryTable.Rows.Count -ne $expectedManifest.Count) {
+    [void]$Errors.Add("Document registry must match the exact 44-row manifest (actual rows: $($registryTable.Rows.Count))")
+  }
+
   $observedClasses = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
   $observedPaths = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
-  $logicalRows = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
-  $noLocalOwnerCounts = @{ OPERATOR_PLAYBOOK = 0; EXPERIMENTAL = 0 }
-  $noLocalOwnerText = 'no client-local owner; platform tools do not enter the client default route'
+  $logicalKeys = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+  $logicalSeparator = [string][char]0x001F
 
-  foreach ($row in $registryTable.Rows) {
+  for ($rowIndex = 0; $rowIndex -lt $registryTable.Rows.Count; $rowIndex++) {
+    $row = $registryTable.Rows[$rowIndex]
     if ($row.Cells.Count -ne 4) { continue }
     $class = $row.Cells[0]
     $review = $row.Cells[1]
@@ -545,31 +654,33 @@ function Test-DocumentationRegistry {
       [void]$Errors.Add("Document registry row at line $($row.LineNumber) has invalid review: $review")
     }
 
-    $logicalSeparator = [string][char]0x001F
-    $logicalSignature = $class + $logicalSeparator + $review + $logicalSeparator + $owner + $logicalSeparator + $pathCell
-    if (-not $logicalRows.Add($logicalSignature)) {
-      [void]$Errors.Add("Document registry contains a duplicate logical row at line $($row.LineNumber)")
+    $logicalKey = $class + $logicalSeparator + $owner
+    if (-not $logicalKeys.Add($logicalKey)) {
+      [void]$Errors.Add("Document registry contains a duplicate logical key at line $($row.LineNumber): $class / $owner")
+    } elseif (-not $expectedRowsByKey.ContainsKey($logicalKey)) {
+      [void]$Errors.Add("Document registry contains an unexpected logical key at line $($row.LineNumber): $class / $owner")
     }
 
-    if ($class -eq 'OPERATOR_PLAYBOOK' -or $class -eq 'EXPERIMENTAL') {
-      $noLocalOwnerCounts[$class]++
-      if ($owner -cne $noLocalOwnerText -or $pathCell -cne ([string][char]0x2014)) {
-        [void]$Errors.Add("$class must use the explicit no-client-local-owner row")
-      }
-      continue
-    }
-
+    $actualPaths = [System.Collections.Generic.List[string]]::new()
     $pathMatches = [regex]::Matches($pathCell, '`([^`\r\n]+)`')
-    if ($pathMatches.Count -eq 0) {
-      [void]$Errors.Add("Document registry row at line $($row.LineNumber) has no concrete backticked path")
-      continue
+    foreach ($match in $pathMatches) {
+      [void]$actualPaths.Add($match.Groups[1].Value)
     }
 
-    $formattedPaths = [System.Collections.Generic.List[string]]::new()
-    foreach ($match in $pathMatches) {
-      $relativePath = $match.Groups[1].Value
-      [void]$formattedPaths.Add(([string][char]96) + $relativePath + ([string][char]96))
+    if ($pathCell -ceq ([string][char]0x2014)) {
+      if ($actualPaths.Count -ne 0) {
+        [void]$Errors.Add("Document registry sentinel row at line $($row.LineNumber) must not contain concrete paths")
+      }
+    } elseif ($actualPaths.Count -eq 0) {
+      [void]$Errors.Add("Document registry row at line $($row.LineNumber) has no concrete backticked path")
+    } else {
+      $canonicalPathCell = ConvertTo-RegistryPathCell -Paths $actualPaths.ToArray()
+      if ($pathCell -cne $canonicalPathCell) {
+        [void]$Errors.Add("Document registry path cell at line $($row.LineNumber) contains prose or non-canonical separators")
+      }
+    }
 
+    foreach ($relativePath in $actualPaths) {
       if (-not $observedPaths.Add($relativePath)) {
         [void]$Errors.Add("Document registry contains duplicate path: $relativePath")
       }
@@ -581,23 +692,29 @@ function Test-DocumentationRegistry {
       Test-RegistryRelativePath -RepositoryRoot $RepositoryRoot -RelativePath $relativePath -Errors $Errors
     }
 
-    $canonicalPathCell = $formattedPaths -join '; '
-    if ($pathCell -cne $canonicalPathCell) {
-      [void]$Errors.Add("Document registry path cell at line $($row.LineNumber) contains prose or non-canonical separators")
+    if ($expectedRowsByKey.ContainsKey($logicalKey)) {
+      $expectedRow = $expectedRowsByKey[$logicalKey]
+      if ($review -cne $expectedRow.Review -or -not (Test-StringArraysEqual -Left $actualPaths.ToArray() -Right $expectedRow.Paths)) {
+        [void]$Errors.Add("Document registry logical row '$class / $owner' does not match the embedded exact manifest")
+      }
+      $expectedPathCell = $(if ($expectedRow.Paths.Count -eq 0) { [string][char]0x2014 } else { ConvertTo-RegistryPathCell -Paths $expectedRow.Paths })
+      if ($pathCell -cne $expectedPathCell) {
+        [void]$Errors.Add("Document registry logical row '$class / $owner' does not preserve its ordered path group")
+      }
     }
   }
 
   if (-not $allowedClasses.SetEquals($observedClasses)) {
     [void]$Errors.Add('Document registry must represent exactly all six documentation classes')
   }
-  foreach ($class in @('OPERATOR_PLAYBOOK', 'EXPERIMENTAL')) {
-    if ($noLocalOwnerCounts[$class] -ne 1) {
-      [void]$Errors.Add("Document registry must contain exactly one explicit no-client-local-owner row for $class")
-    }
-  }
   foreach ($relativePath in $expectedPathClasses.Keys) {
     if (-not $observedPaths.Contains($relativePath)) {
       [void]$Errors.Add("Document registry is missing expected path: $relativePath")
+    }
+  }
+  foreach ($expectedRow in $expectedManifest) {
+    if (-not $logicalKeys.Contains($expectedRow.LogicalKey)) {
+      [void]$Errors.Add("Document registry is missing expected logical row: $($expectedRow.Class) / $($expectedRow.Owner)")
     }
   }
 }
@@ -656,17 +773,161 @@ function Assert-ContractRejected {
   }
 }
 
-function Assert-ContractAccepted {
+function ConvertTo-MarkdownTableRow {
+  param([string[]]$Cells)
+  return '| ' + ($Cells -join ' | ') + ' |'
+}
+
+function ConvertTo-RegistryPathCell {
+  param([string[]]$Paths)
+
+  $formatted = [System.Collections.Generic.List[string]]::new()
+  foreach ($path in $Paths) {
+    [void]$formatted.Add(([string][char]96) + $path + ([string][char]96))
+  }
+  return $formatted -join '; '
+}
+
+function Edit-MarkdownTableRows {
   param(
-    [string]$Name,
-    [string]$RepositoryRoot,
-    [byte[]]$AgentsBytes,
-    [byte[]]$RegistryBytes
+    [string]$Text,
+    [string[]]$Header,
+    [scriptblock]$Mutation,
+    [int]$ExpectedMutationCount,
+    [object[]]$MutationArguments = @()
   )
 
-  $validationErrors = @(Invoke-ClientDocsValidation -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes $RegistryBytes)
-  if ($validationErrors.Count -ne 0) {
-    throw "Contract self-test '$Name' expected acceptance. Errors: $($validationErrors -join ' | ')"
+  $parseErrors = [System.Collections.Generic.List[string]]::new()
+  $visible = @(Get-VisibleMarkdownLines -Text $Text -Name 'self-test fixture' -Errors $parseErrors)
+  $table = Get-UniqueMarkdownTable -VisibleLines $visible -Header $Header -Name 'self-test table' -Errors $parseErrors
+  if ($parseErrors.Count -ne 0) {
+    throw "Cannot parse self-test table: $($parseErrors -join ' | ')"
+  }
+
+  $rows = [System.Collections.Generic.List[object]]::new()
+  foreach ($row in $table.Rows) {
+    $cellCopy = New-Object string[] $row.Cells.Count
+    [Array]::Copy($row.Cells, $cellCopy, $row.Cells.Count)
+    [void]$rows.Add([pscustomobject]@{ Cells = $cellCopy })
+  }
+
+  $mutationOutput = @(& $Mutation $rows @MutationArguments)
+  if ($mutationOutput.Count -ne 1 -or [int]$mutationOutput[0] -ne $ExpectedMutationCount) {
+    throw "Self-test mutation count mismatch. Expected $ExpectedMutationCount, got $($mutationOutput -join ', ')"
+  }
+
+  $physicalLines = [System.Collections.Generic.List[string]]::new()
+  foreach ($line in [regex]::Split($Text, "\r\n|\n|\r")) {
+    [void]$physicalLines.Add($line)
+  }
+  $dataStartIndex = $(if ($table.Rows.Count -gt 0) { $table.Rows[0].LineNumber - 1 } else { $table.HeaderLine + 1 })
+  for ($index = 0; $index -lt $table.Rows.Count; $index++) {
+    $physicalLines.RemoveAt($dataStartIndex)
+  }
+  for ($index = 0; $index -lt $rows.Count; $index++) {
+    $physicalLines.Insert($dataStartIndex + $index, (ConvertTo-MarkdownTableRow -Cells $rows[$index].Cells))
+  }
+  return $physicalLines -join "`n"
+}
+
+function Get-ExpectedRegistryRowByOwner {
+  param([string]$Owner)
+
+  $matches = @(New-ExpectedRegistryManifest | Where-Object { $_.Owner -ceq $Owner })
+  if ($matches.Count -ne 1) {
+    throw "Expected exactly one embedded manifest row for owner '$Owner', got $($matches.Count)"
+  }
+  return $matches[0]
+}
+
+function Find-RegistryRowIndex {
+  param(
+    [System.Collections.Generic.List[object]]$Rows,
+    [object]$ExpectedRow
+  )
+
+  $matches = @()
+  for ($index = 0; $index -lt $Rows.Count; $index++) {
+    if ($Rows[$index].Cells.Count -eq 4 -and
+        $Rows[$index].Cells[0] -ceq $ExpectedRow.Class -and
+        $Rows[$index].Cells[2] -ceq $ExpectedRow.Owner) {
+      $matches += $index
+    }
+  }
+  if ($matches.Count -ne 1) {
+    throw "Expected one parsed row for '$($ExpectedRow.Class) / $($ExpectedRow.Owner)', got $($matches.Count)"
+  }
+  return $matches[0]
+}
+
+function Set-RegistryRowCell {
+  param([string]$Text, [string]$Owner, [int]$CellIndex, [string]$Value)
+
+  $mutation = {
+    param($rows, $ownerArgument, $cellIndexArgument, $valueArgument)
+    $index = Find-RegistryRowIndex -Rows $rows -ExpectedRow (Get-ExpectedRegistryRowByOwner -Owner $ownerArgument)
+    $rows[$index].Cells[$cellIndexArgument] = $valueArgument
+    return 1
+  }
+  return Edit-MarkdownTableRows -Text $Text -Header @('Class', 'Review', 'Owner', 'Path') -Mutation $mutation -ExpectedMutationCount 1 -MutationArguments @($Owner, $CellIndex, $Value)
+}
+
+function Copy-TableCells {
+  param([string[]]$Cells)
+
+  $copy = New-Object string[] $Cells.Count
+  [Array]::Copy($Cells, $copy, $Cells.Count)
+  return ,$copy
+}
+
+function Move-AgentLineBetweenSections {
+  param(
+    [string]$Text,
+    [string]$Marker,
+    [string]$SourceSection,
+    [string]$TargetSection
+  )
+
+  $lines = [System.Collections.Generic.List[string]]::new()
+  foreach ($line in [regex]::Split($Text, "\r\n|\n|\r")) { [void]$lines.Add($line) }
+  $currentSection = 'Preamble'
+  $sourceMatches = @()
+  for ($index = 0; $index -lt $lines.Count; $index++) {
+    if ($lines[$index] -match '^## (?<name>.+?)\s*$') { $currentSection = $Matches['name']; continue }
+    if ($currentSection -ceq $SourceSection -and $lines[$index].Contains($Marker)) { $sourceMatches += $index }
+  }
+  if ($sourceMatches.Count -ne 1) { throw "Expected one source marker '$Marker', got $($sourceMatches.Count)" }
+  $movedLine = $lines[$sourceMatches[0]]
+  $lines.RemoveAt($sourceMatches[0])
+
+  $targetMatches = @()
+  for ($index = 0; $index -lt $lines.Count; $index++) {
+    if ($lines[$index] -ceq "## $TargetSection") { $targetMatches += $index }
+  }
+  if ($targetMatches.Count -ne 1) { throw "Expected one target section '$TargetSection', got $($targetMatches.Count)" }
+  $lines.Insert($targetMatches[0] + 1, $movedLine)
+  return $lines -join "`n"
+}
+
+function Assert-StrictBytesRejected {
+  param([string]$Name, [byte[]]$Bytes, [string]$ExpectedErrorPattern)
+
+  $fixtureErrors = [System.Collections.Generic.List[string]]::new()
+  [void](ConvertFrom-StrictDocumentBytes -Bytes $Bytes -Name $Name -MaximumBytes 128 -MaximumLines 16 -Errors $fixtureErrors)
+  if ($fixtureErrors.Count -eq 0 -or -not (($fixtureErrors -join ' | ') -match $ExpectedErrorPattern)) {
+    throw "Strict-byte self-test '$Name' did not fail as expected: $($fixtureErrors -join ' | ')"
+  }
+}
+
+function Assert-TableParserFixture {
+  param([string]$Name, [string]$Text, [bool]$ShouldPass)
+
+  $fixtureErrors = [System.Collections.Generic.List[string]]::new()
+  $visible = @(Get-VisibleMarkdownLines -Text $Text -Name $Name -Errors $fixtureErrors)
+  $table = Get-UniqueMarkdownTable -VisibleLines $visible -Header @('Key', 'Value') -Name $Name -Errors $fixtureErrors
+  $passed = $fixtureErrors.Count -eq 0 -and $table.Rows.Count -eq 1 -and $table.Rows[0].Cells[0] -ceq 'real'
+  if ($passed -ne $ShouldPass) {
+    throw "Table-parser self-test '$Name' produced unexpected result. Errors: $($fixtureErrors -join ' | ')"
   }
 }
 
@@ -680,86 +941,141 @@ function Invoke-ContractSelfTests {
   $agentsText = [Text.UTF8Encoding]::new($false, $true).GetString($AgentsBytes)
   $registryText = [Text.UTF8Encoding]::new($false, $true).GetString($RegistryBytes)
 
-  Assert-ContractAccepted -Name 'current contract baseline' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes $RegistryBytes
+  $decorativeSections = @'
+# POKROV-app Codex Contract
+POKROV-app/main
 
-  $tokenBag = "# POKROV-app Codex Contract POKROV-app/main docs/README.md Android Windows iOS macOS MANUAL_OWNER_TEST artifacts/releases git diff --check`n"
-  Assert-ContractRejected -Name 'one-line AGENTS token bag' -RepositoryRoot $RepositoryRoot -AgentsBytes (ConvertTo-Utf8Bytes $tokenBag) -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'exact ordered H2 section set'
+## Start Every Task
+- docs/README.md Android Windows iOS macOS MANUAL_OWNER_TEST artifacts/releases git diff --check
 
-  $malformedUtf8 = New-Object byte[] ($AgentsBytes.Length + 2)
-  [Array]::Copy($AgentsBytes, 0, $malformedUtf8, 0, $AgentsBytes.Length)
-  $malformedUtf8[$AgentsBytes.Length] = 0xC3
-  $malformedUtf8[$AgentsBytes.Length + 1] = 0x28
-  Assert-ContractRejected -Name 'malformed UTF-8' -RepositoryRoot $RepositoryRoot -AgentsBytes $malformedUtf8 -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'not valid strict UTF-8'
+## Authority
+- Decorative authority words.
 
-  $bomAgents = New-Object byte[] ($AgentsBytes.Length + 3)
-  $bomAgents[0] = 0xEF
-  $bomAgents[1] = 0xBB
-  $bomAgents[2] = 0xBF
-  [Array]::Copy($AgentsBytes, 0, $bomAgents, 3, $AgentsBytes.Length)
-  Assert-ContractRejected -Name 'UTF-8 BOM' -RepositoryRoot $RepositoryRoot -AgentsBytes $bomAgents -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'BOM'
+## Repository Boundary
+- Decorative repository words.
 
-  $routingRow = '| CANONICAL | RECONCILED | Client docs routing | `docs/README.md` |'
-  $deletedRowRegistry = $registryText.Replace($routingRow + "`n", '')
-  Assert-ContractRejected -Name 'deleted registry row' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $deletedRowRegistry) -ExpectedErrorPattern 'missing expected path: docs/README.md'
+## Runtime And Security
+- Decorative runtime words.
 
-  $registryRowsPattern = [regex]::new('(?ms)(\| Class \| Review \| Owner \| Path \|\r?\n\| --- \| --- \| --- \| --- \|\r?\n)(?:\|.*\|\r?\n)+')
-  $emptyRegistry = $registryRowsPattern.Replace($registryText, '$1', 1)
-  Assert-ContractRejected -Name 'all registry rows deleted' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $emptyRegistry) -ExpectedErrorPattern 'must represent exactly all six'
+## Evidence And Destructive Operations
+- Decorative safety words.
 
-  $invalidReviewRegistry = $registryText.Replace($routingRow, '| CANONICAL | APPROVED | Client docs routing | `docs/README.md` |')
+## Release Honesty
+- Decorative release words.
+
+## Verification And Documentation
+- Decorative verification words.
+'@
+  Assert-ContractRejected -Name 'decorative seven-section token bag' -RepositoryRoot $RepositoryRoot -AgentsBytes (ConvertTo-Utf8Bytes ($decorativeSections + "`n")) -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'section-owned semantic marker'
+
+  Assert-StrictBytesRejected -Name 'malformed UTF-8 fixture' -Bytes ([byte[]]@(0x61, 0xC3, 0x28, 0x0A)) -ExpectedErrorPattern 'not valid strict UTF-8'
+  Assert-StrictBytesRejected -Name 'UTF-8 BOM fixture' -Bytes ([byte[]]@(0xEF, 0xBB, 0xBF, 0x61, 0x0A)) -ExpectedErrorPattern 'BOM'
+
+  $registryHeader = @('Class', 'Review', 'Owner', 'Path')
+  $deletedRowRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 1 -Mutation {
+    param($rows)
+    $index = Find-RegistryRowIndex -Rows $rows -ExpectedRow (Get-ExpectedRegistryRowByOwner -Owner 'Client docs routing')
+    $rows.RemoveAt($index)
+    return 1
+  }
+  Assert-ContractRejected -Name 'deleted registry row' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $deletedRowRegistry) -ExpectedErrorPattern 'exact 44-row manifest'
+
+  $emptyRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 44 -Mutation {
+    param($rows)
+    $removed = $rows.Count
+    $rows.Clear()
+    return $removed
+  }
+  Assert-ContractRejected -Name 'all registry rows deleted' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $emptyRegistry) -ExpectedErrorPattern 'exact 44-row manifest'
+
+  $invalidReviewRegistry = Set-RegistryRowCell -Text $registryText -Owner 'Client docs routing' -CellIndex 1 -Value 'APPROVED'
   Assert-ContractRejected -Name 'invalid review enum' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $invalidReviewRegistry) -ExpectedErrorPattern 'invalid review: APPROVED'
 
-  $invalidClassRegistry = $registryText.Replace($routingRow, '| CURRENT | RECONCILED | Client docs routing | `docs/README.md` |')
+  $invalidClassRegistry = Set-RegistryRowCell -Text $registryText -Owner 'Client docs routing' -CellIndex 0 -Value 'CURRENT'
   Assert-ContractRejected -Name 'invalid registry class' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $invalidClassRegistry) -ExpectedErrorPattern 'invalid class: CURRENT'
 
-  $invalidPathRegistry = $registryText.Replace($routingRow, '| CANONICAL | RECONCILED | Client docs routing | `../outside.md` |')
+  $invalidPathRegistry = Set-RegistryRowCell -Text $registryText -Owner 'Client docs routing' -CellIndex 3 -Value (ConvertTo-RegistryPathCell -Paths @('../outside.md'))
   Assert-ContractRejected -Name 'escaping registry path' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $invalidPathRegistry) -ExpectedErrorPattern "must not contain '.' or '..' segments"
 
-  $backslashPathRegistry = $registryText.Replace($routingRow, '| CANONICAL | RECONCILED | Client docs routing | `docs\README.md` |')
-  Assert-ContractRejected -Name 'non-normalized backslash registry path' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $backslashPathRegistry) -ExpectedErrorPattern 'must use forward slashes'
+  $ownerChangedRegistry = Set-RegistryRowCell -Text $registryText -Owner 'Client docs routing' -CellIndex 2 -Value 'Client documentation routing'
+  Assert-ContractRejected -Name 'live owner prose changed without manifest update' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $ownerChangedRegistry) -ExpectedErrorPattern 'unexpected logical key'
 
-  $duplicateRowRegistry = $registryText.Replace($routingRow, $routingRow + "`n" + $routingRow)
-  Assert-ContractRejected -Name 'duplicate registry row' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $duplicateRowRegistry) -ExpectedErrorPattern 'duplicate logical row'
+  $duplicateRowRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 1 -Mutation {
+    param($rows)
+    $index = Find-RegistryRowIndex -Rows $rows -ExpectedRow (Get-ExpectedRegistryRowByOwner -Owner 'Client docs routing')
+    $rows.Insert($index + 1, [pscustomobject]@{ Cells = (Copy-TableCells -Cells $rows[$index].Cells) })
+    return 1
+  }
+  Assert-ContractRejected -Name 'duplicate registry row' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $duplicateRowRegistry) -ExpectedErrorPattern 'duplicate logical key'
 
-  $duplicateRouteTable = @'
-| Task | Read first | Inspect | Verify | Docs impact |
-| --- | --- | --- | --- | --- |
-'@
-  $duplicateTableRegistry = $registryText.Replace('## Classes And Review State', $duplicateRouteTable + "`n## Classes And Review State")
-  Assert-ContractRejected -Name 'duplicate route table' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $duplicateTableRegistry) -ExpectedErrorPattern 'header must appear exactly once'
-
-  $unexpectedRouteRegistry = $registryText.Replace('| Shell, UI, or copy |', '| Unplanned route |')
+  $unexpectedRouteRegistry = Edit-MarkdownTableRows -Text $registryText -Header @('Task', 'Read first', 'Inspect', 'Verify', 'Docs impact') -ExpectedMutationCount 1 -Mutation {
+    param($rows)
+    $matches = @()
+    for ($index = 0; $index -lt $rows.Count; $index++) {
+      if ($rows[$index].Cells[0] -ceq 'Shell, UI, or copy') { $matches += $index }
+    }
+    if ($matches.Count -ne 1) { throw "Expected one shell route, got $($matches.Count)" }
+    $rows[$matches[0]].Cells[0] = 'Unplanned route'
+    return 1
+  }
   Assert-ContractRejected -Name 'unexpected route' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $unexpectedRouteRegistry) -ExpectedErrorPattern 'exact required nine-route set'
 
-  $activePlansAgents = $agentsText.Replace('## Repository Boundary', "- Do not copy active plans into this contract.`n`n## Repository Boundary")
-  Assert-ContractRejected -Name 'retained active-plans prohibition' -RepositoryRoot $RepositoryRoot -AgentsBytes (ConvertTo-Utf8Bytes $activePlansAgents) -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'active plans'
+  $splitRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 1 -Mutation {
+    param($rows)
+    $expected = Get-ExpectedRegistryRowByOwner -Owner 'Dated handoffs and closure audits'
+    if ($expected.Paths.Count -ne 4) { throw "Expected four manifest paths, got $($expected.Paths.Count)" }
+    $targetIndex = Find-RegistryRowIndex -Rows $rows -ExpectedRow $expected
+    $firstCells = Copy-TableCells -Cells $rows[$targetIndex].Cells
+    $secondCells = Copy-TableCells -Cells $rows[$targetIndex].Cells
+    $firstCells[3] = ConvertTo-RegistryPathCell -Paths $expected.Paths[0..1]
+    $secondCells[3] = ConvertTo-RegistryPathCell -Paths $expected.Paths[2..3]
+    $rows[$targetIndex] = [pscustomobject]@{ Cells = $firstCells }
+    $rows.Insert($targetIndex + 1, [pscustomobject]@{ Cells = $secondCells })
+    return 1
+  }
+  Assert-ContractRejected -Name 'four-path registry row split' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $splitRegistry) -ExpectedErrorPattern 'exact 44-row manifest'
 
-  $genericModelAgents = $agentsText.Replace('## Repository Boundary', "- Keep the local data model explicit in code and tests.`n`n## Repository Boundary")
-  Assert-ContractAccepted -Name 'generic data model wording' -RepositoryRoot $RepositoryRoot -AgentsBytes (ConvertTo-Utf8Bytes $genericModelAgents) -RegistryBytes $RegistryBytes
+  $wrongSectionAgents = Move-AgentLineBetweenSections -Text $agentsText -Marker 'Every task runs `git diff --check`' -SourceSection 'Verification And Documentation' -TargetSection 'Start Every Task'
+  Assert-ContractRejected -Name 'verification marker moved to wrong section' -RepositoryRoot $RepositoryRoot -AgentsBytes (ConvertTo-Utf8Bytes $wrongSectionAgents) -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'belongs to Verification And Documentation'
 
-  $backtickFence = @'
+  $backtickFenceFixture = @'
 ````markdown
-| Task | Read first | Inspect | Verify | Docs impact |
-| --- | --- | --- | --- | --- |
+| Key | Value |
+| --- | --- |
 ```
-| Class | Review | Owner | Path |
-| --- | --- | --- | --- |
+| Key | Value |
+| --- | --- |
 ````
+| Key | Value |
+| --- | --- |
+| real | row |
 '@
-  $backtickFenceRegistry = $registryText + "`n" + $backtickFence + "`n"
-  Assert-ContractAccepted -Name 'long backtick fence ignores shorter marker and table examples' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $backtickFenceRegistry)
+  Assert-TableParserFixture -Name 'long backtick fence' -Text $backtickFenceFixture -ShouldPass $true
 
-  $tildeFence = @'
+  $tildeFenceFixture = @'
 ~~~~markdown
-| Task | Read first | Inspect | Verify | Docs impact |
-| --- | --- | --- | --- | --- |
+| Key | Value |
+| --- | --- |
 ~~~
-| Class | Review | Owner | Path |
-| --- | --- | --- | --- |
+| Key | Value |
+| --- | --- |
 ~~~~
+| Key | Value |
+| --- | --- |
+| real | row |
 '@
-  $tildeFenceRegistry = $registryText + "`n" + $tildeFence + "`n"
-  Assert-ContractAccepted -Name 'long tilde fence ignores shorter marker and table examples' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $tildeFenceRegistry)
+  Assert-TableParserFixture -Name 'long tilde fence' -Text $tildeFenceFixture -ShouldPass $true
+
+  $duplicateTableFixture = @'
+| Key | Value |
+| --- | --- |
+| real | row |
+
+| Key | Value |
+| --- | --- |
+| duplicate | row |
+'@
+  Assert-TableParserFixture -Name 'duplicate real table' -Text $duplicateTableFixture -ShouldPass $false
 }
 
 $agentsPath = Join-Path $root 'AGENTS.md'
