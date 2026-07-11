@@ -1,33 +1,19 @@
-# Client Design Notes
+# Superseded Client Design Notes
 
-Status: active  
-Last updated: 2026-06-03
+Status: `HISTORICAL_REFERENCE`
 
-The root `DESIGN.md` in this repo is the client design source for the Open Beta v4 wave. This file tracks client-specific implementation notes and screenshot evidence.
+This path is retained so old links keep their provenance. It no longer defines
+the client design system or the next implementation pass.
 
-The platform design source for this branch lands with `C:/Users/kiwun/Documents/ai/VPN/DESIGN.md`, with machine-readable tokens in `C:/Users/kiwun/Documents/ai/VPN/shared/design-tokens.json`. Until that platform branch is merged, the existing shared token JSON remains the minimum active baseline.
+Use the current owners:
 
-## Current V2 Direction
+- root [DESIGN.md](../../DESIGN.md) for the active client design contract;
+- [2026-06-13 POKROV product/UI direction](2026-06-13-pokrov-product-ui-direction.md)
+  for the owner-approved `pokrov-clear` direction;
+- `C:/Users/kiwun/Documents/ai/VPN/DESIGN.md` and
+  `C:/Users/kiwun/Documents/ai/VPN/shared/design-tokens.json` for platform
+  design and token authority.
 
-The next Android/Windows client UI pass must start from
-`docs/design/2026-06-03-client-premium-shell-v2-brief.md`.
-
-That brief is an owner-feedback override after the first MVP shell was rejected
-as too card-heavy, text-heavy, mobile-stretched, and not premium enough. When it
-conflicts with earlier `Quiet Emerald` notes, the Premium Shell V2 brief wins
-for the next implementation pass.
-
-## Screenshot Plan
-
-- Android small phone.
-- Android common phone.
-- Windows compact window.
-- Windows wide window.
-- Profile, support, route-mode, and subscription states.
-- Outside-store beta download available and account-gated unavailable states.
-- Android audit `OPERATOR_ATTESTED` beta state plus raw-audit manual-test state.
-- Windows unsigned beta warning state.
-
-## Evidence Rule
-
-Screenshots may show UI states, but must not show raw configs, secrets, tokens, private links, payment customer data, or full user identifiers.
+Older V2 briefs, screenshot plans, and visual references remain historical
+evidence. They may explain prior choices but cannot override the current root
+contract.

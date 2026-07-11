@@ -40,34 +40,34 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | Class | Review | Owner | Path |
 | --- | --- | --- | --- |
 | CANONICAL | RECONCILED | Client docs routing | `docs/README.md` |
-| CANONICAL | PENDING_COLLISION_REVIEW | Client repository overview | `README.md` |
-| CANONICAL | PENDING_COLLISION_REVIEW | Client design system | `DESIGN.md` |
-| CANONICAL | PENDING_COLLISION_REVIEW | Client product | `docs/product/client-product-contract.md` |
-| CANONICAL | PENDING_COLLISION_REVIEW | App-first onboarding | `docs/architecture/app-first-onboarding-flow.md` |
-| CANONICAL | PENDING_COLLISION_REVIEW | Repository structure | `docs/architecture/folder-structure.md` |
-| CANONICAL | PENDING_COLLISION_REVIEW | Package boundaries | `docs/architecture/package-boundaries.md` |
-| CANONICAL | PENDING_COLLISION_REVIEW | Runtime bootstrap | `docs/architecture/bootstrap-workflow.md` |
-| CANONICAL | PENDING_COLLISION_REVIEW | In-app assistant | `docs/architecture/in-app-ai-assistant-contract.md` |
-| CANONICAL | PENDING_COLLISION_REVIEW | Current product/UI direction | `docs/design/2026-06-13-pokrov-product-ui-direction.md` |
-| CANONICAL | PENDING_COLLISION_REVIEW | Machine product facts | `config/product-contract.seed.json` |
-| CANONICAL | PENDING_COLLISION_REVIEW | Public/readiness platform scope | `config/platform-matrix.seed.json` |
-| CANONICAL | PENDING_COLLISION_REVIEW | Runtime profile facts | `config/runtime-profile.seed.json` |
-| CANONICAL | PENDING_COLLISION_REVIEW | Cutover readiness facts | `config/cutover-readiness.seed.json` |
-| CANONICAL | PENDING_COLLISION_REVIEW | Release handoff facts | `config/release-handoff.seed.json` |
-| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | Client release execution | `docs/implementation/client-release-backlog.md` |
-| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | Cutover checklist | `docs/operations/cutover-readiness.md` |
-| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | Android readiness | `docs/operations/android-release-audit.md` |
-| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | Windows readiness | `docs/operations/windows-release-readiness.md` |
-| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | WARP runtime proof | `docs/operations/warp-runtime-proof-checklist.md` |
-| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | Responsive proof | `docs/operations/responsive-golden-capture-plan.md` |
-| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | Motion/performance proof | `docs/operations/client-motion-performance-checklist.md` |
-| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | Apple readiness | `docs/operations/apple-release-readiness.md` |
+| CANONICAL | RECONCILED | Client repository overview | `README.md` |
+| CANONICAL | REVIEWED_NO_CHANGE | Client design system | `DESIGN.md` |
+| CANONICAL | RECONCILED | Client product | `docs/product/client-product-contract.md` |
+| CANONICAL | RECONCILED | App-first onboarding | `docs/architecture/app-first-onboarding-flow.md` |
+| CANONICAL | REVIEWED_NO_CHANGE | Repository structure | `docs/architecture/folder-structure.md` |
+| CANONICAL | REVIEWED_NO_CHANGE | Package boundaries | `docs/architecture/package-boundaries.md` |
+| CANONICAL | RECONCILED | Runtime bootstrap | `docs/architecture/bootstrap-workflow.md` |
+| CANONICAL | RECONCILED | In-app assistant | `docs/architecture/in-app-ai-assistant-contract.md` |
+| CANONICAL | REVIEWED_NO_CHANGE | Current product/UI direction | `docs/design/2026-06-13-pokrov-product-ui-direction.md` |
+| CANONICAL | RECONCILED | Machine product facts | `config/product-contract.seed.json` |
+| CANONICAL | RECONCILED | Public/readiness platform scope | `config/platform-matrix.seed.json` |
+| CANONICAL | REVIEWED_NO_CHANGE | Runtime profile facts | `config/runtime-profile.seed.json` |
+| CANONICAL | RECONCILED | Cutover readiness facts | `config/cutover-readiness.seed.json` |
+| CANONICAL | REVIEWED_NO_CHANGE | Release handoff facts | `config/release-handoff.seed.json` |
+| ACTIVE_EXECUTION | RECONCILED | Client release execution | `docs/implementation/client-release-backlog.md` |
+| ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Cutover checklist | `docs/operations/cutover-readiness.md` |
+| ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Android readiness | `docs/operations/android-release-audit.md` |
+| ACTIVE_EXECUTION | RECONCILED | Windows readiness | `docs/operations/windows-release-readiness.md` |
+| ACTIVE_EXECUTION | RECONCILED | WARP runtime proof | `docs/operations/warp-runtime-proof-checklist.md` |
+| ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Responsive proof | `docs/operations/responsive-golden-capture-plan.md` |
+| ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Motion/performance proof | `docs/operations/client-motion-performance-checklist.md` |
+| ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Apple readiness | `docs/operations/apple-release-readiness.md` |
 | EVIDENCE | REVIEWED_NO_CHANGE | Public beta product evidence | `docs/product/client-public-beta-prd.md` |
 | EVIDENCE | REVIEWED_NO_CHANGE | Dated handoffs and closure audits | `docs/operations/2026-06-04-public-beta-operator-handoff.md`; `docs/operations/2026-06-05-phase-6-release-beta-handoff.md`; `docs/operations/2026-06-05-final-beta-closure-except-manual-tests-signing.md`; `docs/operations/2026-06-13-pokrov-product-ui-plan-closure-audit.md` |
 | EVIDENCE | REVIEWED_NO_CHANGE | Client/API additions record | `docs/operations/client-ui-api-additions.md` |
 | EVIDENCE | REVIEWED_NO_CHANGE | Retained beta work order | `docs/developer/work-orders/2026-04-open-beta-v4/INDEX.md` |
 | EVIDENCE | REVIEWED_NO_CHANGE | Completed implementation maps | `docs/implementation/2026-06-03-client-build-readiness-and-api-plan.md`; `docs/implementation/2026-06-03-client-mvp-shell-implementation.md`; `docs/implementation/2026-06-04-decisions-implementation-map.md`; `docs/implementation/2026-06-05-p6-overload-correction-plan.md` |
-| HISTORICAL_REFERENCE | PENDING_COLLISION_REVIEW | Superseded local design entry | `docs/design/DESIGN.md` |
+| HISTORICAL_REFERENCE | RECONCILED | Superseded local design entry | `docs/design/DESIGN.md` |
 | HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Earlier scaffold spec | `docs/specs/2026-04-18-wave-7-new-base-client-scaffold.md` |
 | HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Completed WARP design spec | `docs/specs/2026-06-05-p5-warp-approved-design.md` |
 | HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Retired base/runtime reviews | `docs/decisions/2026-06-03-hiddify-karing-happ-client-base-review.md`; `docs/decisions/2026-06-03-hiddify-core-warp-status.md` |

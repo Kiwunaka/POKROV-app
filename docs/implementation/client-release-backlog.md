@@ -1,10 +1,14 @@
 # POKROV Client Release Backlog
 
-Last updated: 2026-06-05
+Last updated: 2026-07-11
 
 ## Document Status
 
-This file tracks the current public-release blockers and follow-up backlog for `POKROV-app/main`.
+Registry class: `ACTIVE_EXECUTION`.
+
+This file tracks current manual gates and follow-up work for
+`POKROV-app/main`. Dated build, upload, and handoff entries below are evidence
+for their recorded candidate; they do not become reusable release passes.
 
 ## Current Status
 
@@ -230,7 +234,9 @@ Retained only as fork/reference hardening backlog:
 
 - keep `/api/client/apps` payloads, install docs, and signed release handoff aligned
 - rebuild or redeploy static download surfaces whenever public Android or Windows URLs change
-- keep public-facing version labels on `0.x.x-beta` across client, docs, and release notes
+- keep public-facing version labels on `1.0.0-beta` or an explicit beta-patch
+  label across client, docs, and release notes; never shorten them to stable
+  `1.0.0`
 - selected-apps picker and policy plumbing are closed for beta; richer native
   icons/file-dialog polish and exact-artifact OS runtime proof remain follow-up
   quality/manual-test work, not repo-side beta blockers

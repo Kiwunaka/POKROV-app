@@ -1,9 +1,10 @@
 # WARP Runtime Proof Checklist
 
-Last updated: 2026-06-09
+Last updated: 2026-07-11
 
-This checklist is the client evidence gate for the internal WARP lane that is
-shown to normal users as `Расширенная защита` / `Расширенная приватность`.
+This checklist is the client evidence gate for the WARP lane. Current client UI
+may use the owner-approved labels `WARP`, `Расширенная защита`, or
+`Расширенная приватность`.
 
 Until this checklist has current Android and Windows release-build evidence,
 the app may ship the client lifecycle, consent, fallback, and diagnostics
@@ -22,9 +23,9 @@ Implementation update on 2026-06-09:
 
 ## Evidence Rules
 
-- Public UI uses `Расширенная защита` / `Расширенная приватность`.
-- Literal `WARP`, WireGuard material, hostnames, subscription URLs, tokens,
-  private keys, and raw config fragments stay out of screenshots, support
+- Public UI and screenshots may use the literal feature label `WARP`.
+- Raw WireGuard material, hostnames, subscription URLs, tokens, private keys,
+  topology, and raw config fragments stay out of screenshots, support
   payloads, logs, and normal user-facing text.
 - Evidence may mark owner-only device work as `MANUAL_OWNER_TEST` when the
   local agent cannot access a physical Android device, Windows release
@@ -38,7 +39,8 @@ Implementation update on 2026-06-09:
 - Start from a clean app install and complete app-first onboarding.
 - Fetch managed profile; WARP should be available even when the backend has no
   server-managed WireGuard material.
-- Open the home tile and confirm the sheet uses public wording only.
+- Open the home tile and confirm the sheet uses an approved public WARP label
+  without raw WireGuard or topology details.
 - Enable consent and reconnect.
 - Record one of these runtime states: `active`, `degraded`, or `fallback`.
 - If fallback occurs, verify baseline POKROV connection remains usable.
@@ -55,7 +57,8 @@ Implementation update on 2026-06-09:
   available even when the backend has no server-managed WireGuard material.
 - Confirm responsive shell remains stable at `700`, `900`, `1024`, `1180`,
   and `1440` px widths.
-- Open the home tile and confirm public wording only.
+- Open the home tile and confirm an approved public WARP label without raw
+  WireGuard or topology details.
 - Enable consent and reconnect.
 - Record one of these runtime states: `active`, `degraded`, or `fallback`.
 - If fallback occurs, verify baseline POKROV connection remains usable.

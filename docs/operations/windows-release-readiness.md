@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-07-10
+Last updated: 2026-07-11
 
 This document is the concrete Windows readiness note for the `POKROV-app` lane.
 
@@ -106,11 +106,10 @@ Latest local packaging note:
   -SkipAnalyze` succeeded after the P5/WARP pass and produced local
   `1.0.0-beta` unsigned artifacts under
   `apps/windows_shell/build/release_bundle/pokrov-windows-beta-x64-1.0.0-beta*`.
-- Phase 6 refreshed GitHub prerelease `v1.0.0-beta` with
-  `pokrov-windows-setup-x64.exe`:
-  `B4CC0BF82DCFF7F021F7325E513226856B8E1D0686242744888D64D26FB82EBB`.
-  The rebuilt asset is now published in the public release-only repository
-  `Kiwunaka/pokrov`; unauthenticated range smoke returns `206`.
+- Phase 6 uploaded `pokrov-windows-setup-x64.exe` on `2026-06-05`; its
+  recorded hash is dated evidence and was superseded by the `2026-06-08`
+  refresh. Read `config/release-handoff.seed.json` for the current exact
+  filename, hash, size, public repository, and download-smoke state.
 
 ## Safe Claims
 
@@ -135,8 +134,9 @@ Not safe to claim now:
 - a trusted-signed production installer or `MSIX` publication flow is ready
 - Microsoft Store, WinGet, or SmartScreen reputation is approved
 - the Windows lane is approved for broad public distribution
-- this lane is shipping truth or release truth for Windows
-- this lane by itself is the canonical post-Wave-0 client repo
+- this lane is trusted-signed, store, or stable release truth for Windows
+- this repo alone authorizes a later candidate without its own current handoff
+  and evidence
 
 ## External Blockers
 
@@ -148,14 +148,19 @@ Not safe to claim now:
 - outside-store Windows beta distribution is no longer blocked on unsigned
   posture: the owner accepted unsigned beta risk and the setup EXE is uploaded.
   Stronger broad/trusted distribution remains blocked on signing, live
-  exact-artifact runtime route-mode smoke, DNS/leak validation, and public
-  anonymous hosting if that surface is required
-- this wave does not migrate the current shipping git ownership or release process
+  exact-artifact runtime route-mode smoke, and DNS/leak validation
+- platform publishing policy remains outside this client readiness document
 
 ## Blocked Runtime Verification
 
-Before public Windows claims, attach evidence for:
+The current outside-store beta handoff remains valid for its recorded
+candidate. Before reusing that result for a later candidate or making stronger
+trusted/stable claims, attach:
 
+- exact-artifact install, restart, session restore, secure-storage, and
+  selected-app process-routing smoke: `MANUAL_OWNER_TEST`.
+- `Only selected apps` picker, persistence, route-policy echo, and generated
+  `process_name` / `process_path` behavior.
 - `Full tunnel` route-mode smoke.
 - `All except RU` route-mode smoke.
 - DNS split behavior and leak checks.
@@ -166,6 +171,6 @@ Before public Windows claims, attach evidence for:
 
 Windows outside-store beta upload is complete for `1.0.0-beta` with approved
 unsigned-warning posture. Stronger trusted/stable/store claims remain blocked
-until live install smoke, trusted signing/SmartScreen reputation,
-support-copy evidence, and anonymous/public hosting requirements are approved
-for that broader channel.
+until exact-artifact live install/restart/secure-storage smoke, trusted
+signing/SmartScreen reputation, support-copy evidence, and the target channel's
+publishing requirements are approved.
