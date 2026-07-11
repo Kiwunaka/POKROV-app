@@ -1,98 +1,105 @@
 # In-App AI Assistant Contract
 
-Last updated: 2026-06-05
+Last updated: 2026-07-11
 
-This document defines the POKROV in-app AI helper for the `1.0.0-beta` client lane.
+This document defines the support-scoped POKROV assistant for the
+`1.0.0-beta` client line.
 
 ## Product Boundary
 
-- The assistant is support-scoped.
-- It is not a fifth top-level tab.
-- It does not pretend to be a human operator.
-- Operator escalation remains ticket-backed through the existing support flow.
-- Telegram support remains a fallback, not the primary app UX.
+- The assistant belongs to Support. It is not a fifth top-level tab.
+- It identifies itself as an automated helper, not a human operator.
+- It may explain recovery steps and return safe suggested actions.
+- It cannot change settings, navigate, attach diagnostics, or open a handoff
+  without explicit user confirmation.
+- Ticket-backed operator escalation remains the human-support path.
+- Telegram support remains a fallback, not the primary in-app flow.
 
-## Current Client Surface
+## Implemented API
 
-- Support chat shows compact AI helper suggestions above the composer.
-- Suggestions only prefill the composer; they do not run app changes.
-- Diagnostics still require the existing explicit attach action.
-- Any future AI-proposed app action must be modeled as a safe action and require user confirmation before navigation, diagnostics attach, handoff opening, or setting changes.
+The app-shell calls:
 
-## Client Models
+```text
+POST /api/client/support/assistant
+Authorization: Bearer <short-lived app session token>
+```
 
-The app-shell contract lives in:
+Request fields:
 
-- `packages/app_shell/lib/src/assistant/pokrov_ai_assistant.dart`
+- `message`: non-empty user text;
+- `scope`: fixed to `support`;
+- `ticketId`: optional active ticket ID;
+- `safeDiagnostics`: redacted support-safe values only.
 
-Current model families:
+The current client reads the assistant reply, escalation flag, and safe
+suggested actions. App-session renewal follows the same client API behavior as
+other app-first calls. The focused contract is covered by
+`app_first_runtime_bootstrap_test.dart` under
+`client support assistant uses app-session auth`.
 
-- `PokrovAssistantSession`: support-only session state and optional ticket ID.
-- `PokrovAssistantMessage`: user, assistant, operator, and system message roles.
-- `PokrovAssistantSuggestion`: support-scoped prompt starter.
-- `PokrovAssistantDiagnosticAttachment`: redacted diagnostic payload.
-- `PokrovAssistantEscalation`: ticket-backed operator escalation.
-- `PokrovAssistantSafeAction`: explicit-confirmation app action.
-- `PokrovAssistantApiPlan`: planned backend paths.
-- `PokrovAssistantRedactor`: prompt/diagnostic redaction rules.
-
-## Planned Backend API
-
-The existing ticket APIs remain the fallback:
+Ticket APIs remain the operator escalation and continuity lane:
 
 - `POST /api/tickets`
 - `GET /api/tickets`
 - `GET /api/tickets/{id}`
 - `POST /api/tickets/{id}/messages`
 
-If ticket APIs are not enough for live AI help, add session-scoped assistant APIs:
+The platform owns backend endpoint behavior. This client document owns how the
+app invokes it and what the UI may expose.
 
-- `POST /api/assistant/sessions`
-- `POST /api/assistant/sessions/{id}/messages`
-- `GET /api/assistant/sessions/{id}/stream`
-- `GET /api/assistant/sessions/{id}/status`
-- `POST /api/assistant/sessions/{id}/escalate`
-- `POST /api/assistant/actions/confirm`
+## Current Client Surface
 
-All assistant endpoints must use the same short-lived app session token model as the app-first client APIs.
+- Support exposes a compact assistant sheet and prompt suggestions.
+- Suggestions prefill or submit support questions; they do not run app
+  mutations.
+- Diagnostics require the existing explicit attach/confirmation flow.
+- The user can leave the assistant for ticket-backed human support.
 
-## Safety Rules
+The shared client contract lives in:
+
+- `packages/app_shell/lib/src/assistant/pokrov_ai_assistant.dart`
+- `packages/app_shell/lib/app_first_runtime_bootstrap.dart`
+- `packages/app_shell/lib/src/features/support/support_chat.dart`
+
+## Data Boundary
+
+Allowed input is limited to support-safe values such as:
+
+- platform and app version;
+- route mode and user-visible connection state;
+- selected public region/country label;
+- support-safe health and enhanced-protection state;
+- optional ticket ID.
 
 The assistant must not receive or emit:
 
-- raw sing-box config;
-- subscription URLs;
-- protocol links;
-- keys, tokens, UUIDs, access keys, or bearer material;
-- server hostnames, IP topology, hidden node metadata, or WARP material;
-- hidden routing internals not already shown in support-safe diagnostics.
+- raw sing-box config or subscription/protocol links;
+- keys, tokens, UUIDs, access keys, bearer material, or raw profiles;
+- private hostnames, IP topology, hidden node metadata, or control surfaces;
+- WireGuard keys, raw WARP material, or hidden routing internals.
 
-The assistant may receive:
+Redaction is required in both client-side diagnostic construction and the
+platform endpoint. A safe UI label such as `WARP` does not relax this boundary.
 
-- platform;
-- app version/build;
-- route mode;
-- user-visible connection status;
-- selected public region/country label;
-- support-safe health category.
+## Response And Action Rules
 
-## Prompt Rules
-
-- State that AI is a helper, not a human operator.
-- Prefer user-facing recovery steps: reconnect, refresh profile, change location, attach diagnostics, open ticket, or open Telegram fallback.
-- Do not suggest editing raw configs to normal users.
-- Do not suggest Xray unless the user is already in Advanced/recovery context.
-- Do not claim anonymity, unlimited access, store readiness, trusted signing, RU-origin readiness, or production WARP proof.
+- Prefer recovery steps users can understand: reconnect, refresh profile,
+  change location, attach diagnostics, open a ticket, or use Telegram fallback.
+- Do not suggest raw-config editing to normal users.
+- Do not suggest Xray outside an explicit Advanced/recovery context.
+- Suggested actions are proposals, never automatic commands.
+- Do not claim anonymity, unlimited access, stable/store readiness, trusted
+  signing, RU-origin readiness, or production WARP proof.
 
 ## Escalation
 
 Escalate to ticket-backed operator support when:
 
-- user asks for a human;
+- the user asks for a human;
 - assistant confidence is low;
-- payment/subscription identity is ambiguous;
-- runtime repeatedly fails after basic recovery;
-- diagnostics indicate unavailable backend or account state;
-- user attempts to paste raw keys/configs or secrets.
+- payment or subscription identity is ambiguous;
+- runtime recovery repeatedly fails;
+- diagnostics show unavailable backend/account state;
+- the user attempts to paste secrets, keys, or raw configuration.
 
-The escalation payload must include only `PokrovAssistantDiagnosticAttachment.safeDiagnostics`.
+Escalation may include only the already-redacted safe diagnostic payload.

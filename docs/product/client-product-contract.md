@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-06-29
+Last updated: 2026-07-11
 
 ## Document Status
 
@@ -12,7 +12,19 @@ This repo is the canonical client-development lane for `POKROV`.
 
 - public `v1` scope: `Android + Windows`
 - `iOS` and `macOS`: readiness, packaging, and signing-preparation only in this wave
-- cross-surface product facts inherit from the platform canon in `C:/Users/kiwun/Documents/ai/VPN/docs/`
+- cross-surface product facts inherit from the exact platform owners listed
+  below; this client contract must not fork them
+
+Platform-owned contracts:
+
+- product: `C:/Users/kiwun/Documents/ai/VPN/docs/product/portal-vpn-product.md`
+- app-first identity and bonuses:
+  `C:/Users/kiwun/Documents/ai/VPN/docs/architecture/app-first-and-bonus-flows.md`
+- public client delivery:
+  `C:/Users/kiwun/Documents/ai/VPN/docs/architecture/client-downloads-flow.md`
+- publishing and signing:
+  `C:/Users/kiwun/Documents/ai/VPN/docs/operations/publishing-and-signing-guide.md`
+- shared machine facts: `C:/Users/kiwun/Documents/ai/VPN/shared/product-facts.json`
 
 ## Summary
 
@@ -48,7 +60,9 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - public recovery order: `POKROV app -> web cabinet -> Telegram fallback`
 - public wording may present POKROV as a VPN in client UI (owner decision `2026-06-13` in `docs/design/2026-06-13-pokrov-product-ui-direction.md`, aligned with the platform `2026-06-01` visible-wording rule); hidden/cloaked/stuffed usage and unsupported claims remain forbidden
 - public browser surface split is checkout-first `marketing` plus continuation-first `webapp`
-- the current front-end reset is atlas-driven and keeps the client shell locked to `Protection / Locations / Rules / Profile` while public acquisition moves to `marketing`
+- the current client direction is `pokrov-clear`, approved on `2026-06-13`,
+  and keeps the shell on `Protection / Locations / Rules / Profile` while
+  public acquisition stays platform-owned
 
 ## Release Gate Reality
 
@@ -132,8 +146,10 @@ Product rules for that choice:
   diagnostics, not first-layer user copy
 - `Rules` must not expose raw rule-set filenames, geo labels, CIDR, JSON,
   protocol names, ports, or engine internals in the normal UI
-- low-level selected-apps route-policy plumbing is active for app-managed
-  profiles, but raw rule editing remains hidden behind advanced/debug gates
+- selected-app picker, route-policy sync, persistence, and runtime
+  materialization are beta-active on Android and Windows; public production
+  behavior remains gated on exact-artifact physical-device and clean-VM proof
+- raw selected-app rule editing remains hidden behind advanced/debug gates
 - if the chosen desktop route mode requires elevation, the app must explain that before connect and guide the user to relaunch as administrator
 - first-layer UX must not force users into raw system-proxy, service-mode, or low-level transport toggles
 

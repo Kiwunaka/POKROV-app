@@ -1,6 +1,9 @@
 # Bootstrap Workflow
 
-This repo is the bootstrapped clean-room client lane and gives later workers a consistent way to validate the tree, resolve Flutter dependencies, run local tests, and materialize local-only config for the four-host Wave 7 runtime lane under `POKROV-app/`.
+This workflow gives client workers a consistent way to validate the canonical
+`POKROV-app` tree, resolve Flutter dependencies, run local tests, and
+materialize local-only config. The clean-room/Wave 7 wording below is retained
+only where it explains bootstrap provenance.
 
 Historical mapping note:
 
@@ -46,7 +49,10 @@ The clean-room starter now includes:
 
 ## Runtime Boundary
 
-This workflow proves that the Flutter workspace and shared shell are runnable. It does not yet prove that the lane can replace the bridge release client as public release truth.
+This workflow proves that the Flutter workspace and shared shell are runnable.
+The current `1.0.0-beta` public handoff is owned by
+`config/release-handoff.seed.json`; regenerated workflow output cannot replace
+that candidate-specific release truth.
 
 Current blocking dependency:
 
@@ -81,7 +87,9 @@ Current blocking dependency:
 - the Android foreground notification now exposes a direct `Disconnect` action, so operators and testers can stop the live runtime from the system shade without reopening the shared shell
 - `All except RU` now has a client-side classification lane on both Android and Windows: the shared bootstrapper caches local sing-box `.srs` files under `getApplicationSupportDirectory()/pokrov-runtime/data/rule-set/all-except-ru-rule-sets`, injects those rule-sets into staged routing before connect, and still preserves `.ru`, `.xn--p1ai`, and `.su` suffix rules as a fail-open fallback when the cache cannot refresh
 - the current `All except RU` cache pulls RU-focused geosite overlays from hydraponique `roscomvpn-geosite`, whitelist CIDR overlays from hydraponique `roscomvpn-geoip`, and the upstream `SagerNet/sing-geoip` `geoip-ru` rule-set for the broad RU IP catch-all
-- selected-apps parity is still explicitly out of scope for this cycle in `POKROV-app`; the current hardening wave is for `Full tunnel`, and per-app Android parity remains deferred
+- selected-apps picker, route-policy sync, persistence, and runtime
+  materialization are beta-active for Android and Windows; public production
+  behavior remains gated on exact-artifact physical-device and clean-VM proof
 - `iOS` host now reaches a source-backed packet-tunnel lane: it can initialize libcore, stage a managed profile into the shared app-group runtime directory, persist a `NETunnelProviderManager`, and request tunnel start or stop against the checked-in `PacketTunnelExtension` target; the provider now boots `MobileSetup` plus `LibboxSetup`, starts a Libbox command server and service, and opens tun through `NEPacketTunnelFlow`, but this still lacks signed Apple validation on a real device
 - `macOS` now copies synced `libcore.dylib` and `HiddifyCli` artifacts into the app bundle and the desktop FFI lane can discover them from the built host layout
 - `Windows` now copies synced `libcore.dll` into the release bundle, applies runtime options before `libcore start`, prefers a system-proxy desktop host mode in the current seed, and `build-windows-release.ps1` verifies the bundle metadata and stages an unsigned setup EXE, portable ZIP, and manifest under `apps/windows_shell/build/release_bundle`
@@ -119,4 +127,6 @@ The Apple placeholder inputs that now shape later operator work live in:
 - no trusted signing, trusted public installer or `MSIX` publishing, or deploy wiring
 - no git-model migration for the shipping client or release lanes
 
-That keeps the seed safe whether the next wave chooses `Karing` adaptation or a clean-room client lane.
+That keeps local bootstrap work separate from public release authority. The
+active client lane remains `POKROV-app/main`; historical Karing and clean-room
+inputs cannot reopen it without a new owner decision.

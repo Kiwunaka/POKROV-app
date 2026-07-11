@@ -1092,6 +1092,30 @@ if (-not (Test-Path -LiteralPath $registryPath -PathType Leaf)) {
 Invoke-ContractSelfTests -RepositoryRoot $root -AgentsBytes $agentsBytes -RegistryBytes $registryBytes
 
 $errors = @(Invoke-ClientDocsValidation -RepositoryRoot $root -AgentsBytes $agentsBytes -RegistryBytes $registryBytes)
+
+$forbiddenByFile = @{
+  'README.md' = @(
+    'no release wiring',
+    'Selected-apps parity is still outside this cycle'
+  )
+  'docs\architecture\app-first-onboarding-flow.md' = @('0.x.x-beta')
+  'docs\architecture\bootstrap-workflow.md' = @(
+    'per-app Android parity remains deferred'
+  )
+  'docs\architecture\in-app-ai-assistant-contract.md' = @(
+    'If ticket APIs are not enough for live AI help'
+  )
+}
+
+foreach ($relativePath in $forbiddenByFile.Keys) {
+  $text = [IO.File]::ReadAllText((Join-Path $root $relativePath))
+  foreach ($forbidden in $forbiddenByFile[$relativePath]) {
+    if ($text.Contains($forbidden)) {
+      $errors += "$relativePath contains stale text: $forbidden"
+    }
+  }
+}
+
 if ($errors.Count -gt 0) {
   throw "Client docs contract failed:`n$($errors -join "`n")"
 }

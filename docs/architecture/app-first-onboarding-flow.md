@@ -1,10 +1,15 @@
 # App-First Onboarding Flow
 
-Last updated: 2026-06-29
+Last updated: 2026-07-11
 
 ## Document Status
 
 This file is the living client architecture note for app-first identity, onboarding, and managed provisioning in `POKROV-app/main`.
+
+The platform contract owner is
+`C:/Users/kiwun/Documents/ai/VPN/docs/architecture/app-first-and-bonus-flows.md`.
+Public download behavior belongs to
+`C:/Users/kiwun/Documents/ai/VPN/docs/architecture/client-downloads-flow.md`.
 
 ## Goal
 
@@ -110,6 +115,9 @@ Current implementation bridge:
   `Российский регион`, `Выбранные процессы`) instead of mobile-only presets
   such as banks, Gosuslugi, or marketplaces
 - raw rule editing remains outside normal UI
+- this beta implementation does not clear exact-artifact Android
+  physical-device or Windows clean-VM routing proof; those remain
+  `MANUAL_OWNER_TEST` release gates
 
 ## Managed Provisioning And Smart Connect
 
@@ -241,6 +249,10 @@ Support rules:
 - the app should prepare context before opening the ticket flow or fallback channels
 - authenticated browser and cabinet support is ticket-backed through `/api/tickets*`
 - app ticket creation attaches safe diagnostics automatically; follow-up replies attach diagnostics only after explicit one-message user confirmation
+- the support-scoped AI helper calls the implemented
+  `POST /api/client/support/assistant` endpoint with app-session
+  authorization, a user message, optional ticket ID, and redacted safe
+  diagnostics; ticket-backed operator support remains the escalation path
 - the app may poll the active ticket while the support screen is open and show
   lifecycle hints such as checking, operator reply, closed, or temporarily
   offline
@@ -264,7 +276,8 @@ Support rules:
 - release handoff updates those runtime `APP_*` URLs for the app, bot, and authenticated web surfaces
 - static marketing download CTA is build-time and must be rebuilt or redeployed when public Android or Windows URLs change
 - `AAB`, `MSIX`, and portable `ZIP` remain store/operator artifacts rather than first-layer client download targets
-- public-facing build surfaces should present the beta line `0.x.x-beta`
+- public-facing build surfaces should present `1.0.0-beta` or an explicit
+  beta patch/build label; none of those labels authorizes stable `1.0.0`
 - app handoffs for checkout, cabinet downloads, support, community, feedback, and key redemption open safe external destinations instead of exposing raw profiles or local control surfaces
 
 ## Release And Audit Expectations
