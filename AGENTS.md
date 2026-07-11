@@ -27,6 +27,7 @@ This repository is the canonical client-development lane for POKROV. Promote cli
 
 ## Runtime And Security
 
+- Authorized defensive validation is limited to local POKROV repositories, POKROV-owned runtime surfaces, and isolated fixtures; third-party systems, accounts, credentials, and data are out of scope.
 - Do not replace the default runtime core, alter tunnel or WARP lifecycle, or change platform privileges without the matching architecture route and focused tests.
 - Keep tokens, credentials, signing material, private keys, raw profiles, and provider data out of Git, logs, fixtures, screenshots, and handoffs.
 - Never downgrade secure storage to plaintext or log authentication/session values. Preserve logout, revocation, migration, and corrupt-state behavior.
