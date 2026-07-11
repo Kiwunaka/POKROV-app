@@ -1,115 +1,89 @@
-# POKROV App Docs
+# POKROV App Documentation Router
 
-Last updated: 2026-07-03
+Use this index to load only the context required for the current client task. `POKROV-app/main` owns client implementation and client release-readiness. The platform repository owns backend behavior, shared public facts, public delivery contracts, and cross-surface policy.
 
-This folder holds the living client-repo documentation for `POKROV-app/main`.
+## Authority Boundaries
 
-Current direction note:
+- Resolve intended product behavior through owner-approved machine-readable contracts, canonical docs, then current code and tests. Record conflicts instead of silently choosing a winner.
+- Resolve observed runtime state through current provider/runtime state and candidate-specific evidence. Runtime observation does not create product authority.
+- Resolve release claims through an exact candidate, current gate evidence, required manual checks, and a current release decision. A dated handoff is evidence, not a reusable pass.
+- Use history to answer why. Never let archive, completed plans, generated references, or old decisions determine what to implement now.
+- Platform owners include `C:/Users/kiwun/Documents/ai/VPN/shared/`, `C:/Users/kiwun/Documents/ai/VPN/docs/product/portal-vpn-product.md`, `C:/Users/kiwun/Documents/ai/VPN/docs/architecture/app-first-and-bonus-flows.md`, `C:/Users/kiwun/Documents/ai/VPN/docs/architecture/client-downloads-flow.md`, and `C:/Users/kiwun/Documents/ai/VPN/docs/operations/publishing-and-signing-guide.md`.
 
-- the current app-shell source of truth is the 2026-06-13 owner product/UI
-  direction: POKROV is presented plainly as a VPN app; first launch starts with
-  new/returning access; Home sells `POKROV VPN`, WARP, 5-day access, and the
-  Telegram bonus; admin/news promo slots render only when backend-owned JSON
-  marks them visible
-- the front-end rebuild is now a Premium Shell V2 reset after owner feedback rejected the first card-heavy MVP shell
-- `marketing` owns public acquisition, `webapp` owns browser continuation, and the client shell stays locked to `Protection / Locations / Rules / Profile`
-- public-facing wording should stay calm and non-technical even when the underlying runtime remains transport-rich
-- `hiddify-core` is the pinned runtime base; WARP now uses the client-local
-  core path by default, while backend lifecycle endpoints store consent/events
-  and optional managed material. Production WARP claims still require
-  Android/Windows release-build proof
-- smart-connect now uses the platform capacity-aware contract:
-  candidates -> best-effort RTT -> `/api/client/nodes/select` -> managed
-  profile refresh with `selected_node_code`; manual location choice uses
-  `mode=manual` and no fake RTT value
+## Task Routes
 
-Historical mapping note:
+| Task | Read first | Inspect | Verify | Docs impact |
+| --- | --- | --- | --- | --- |
+| Shell, UI, or copy | `product/client-product-contract.md`; `design/2026-06-13-pokrov-product-ui-direction.md`; root `DESIGN.md` | `packages/app_shell/`; affected `apps/*_shell/`; assets and copy tests | Focused Flutter widget/copy/design tests; `scripts/validate-seed.ps1`; `git diff --check` | Product contract, current design direction, and affected host docs |
+| App-first, account, or API | `architecture/app-first-onboarding-flow.md`; platform app-first contract | `packages/app_shell/`; API/session/support clients; secure storage | Focused bootstrap, assistant, auth, logout, migration, and corrupt-state tests | Client onboarding/assistant docs and the platform API owner when the contract changes |
+| Runtime, core, or WARP | `architecture/bootstrap-workflow.md`; `operations/warp-runtime-proof-checklist.md`; `config/runtime-profile.seed.json` | `packages/runtime_engine/`; host bridges; runtime artifact contract | Focused runtime/WARP tests and only the affected host checks; no docs-only release build | Bootstrap/runtime architecture and WARP proof checklist |
+| Android | `operations/android-release-audit.md`; `config/platform-matrix.seed.json` | `apps/android_shell/`; Android bridge, service, manifest, Gradle tests | Focused Android Flutter/JVM tests through `scripts/run-tests.ps1`; manual device gates stay explicit | Android audit plus shared runtime/onboarding docs when behavior changes |
+| Windows | `operations/windows-release-readiness.md`; `config/windows-release.seed.json` | `apps/windows_shell/`; Windows FFI and packaging scripts | Focused Flutter/runtime tests; package smoke only for an authorized packaging task | Windows readiness, runtime docs, and release metadata owner |
+| Apple readiness | `operations/apple-release-readiness.md`; `config/apple-release.seed.json` | `apps/ios_shell/`; `apps/macos_shell/`; entitlements and runtime bridges | Analyze/tests that do not require credentials; keep signing, archive, notarization, device, and store checks manual | Apple readiness only; never broaden public scope from inventory |
+| Release metadata | `config/release-handoff.seed.json`; `operations/cutover-readiness.md`; platform publishing owner | Release/cutover seeds, packaging scripts, exact candidate evidence | `scripts/validate-seed.ps1`; artifact diff; current manual gates; no historical pass reuse | Current readiness/backlog and platform delivery/publishing owners |
+| Design | Root `DESIGN.md`; `design/2026-06-13-pokrov-product-ui-direction.md` | `packages/app_shell/`; brand assets; generated references only when requested | Focused design-system and copy tests; responsive proof when layout changes | Current root design contract and direction; keep older briefs historical |
+| Docs or history | This file; the registry row for the subject | Canonical owner first, then evidence/history for rationale | `test/docs-contract.ps1`; `scripts/validate-seed.ps1`; `git diff --check` | Update classification/review state without rewriting retained evidence |
 
-- older notes may still reference `external/pokrov-next-client/` or `app-next/`
-- the first local snapshot for this repo was bootstrapped from `C:/Users/kiwun/Documents/ai/VPN/app-next/` on `2026-04-22`
-- `app-next/docs/` in the platform repo now remains transition/reference material instead of the canonical client-doc lane
-- completed client execution plans live under `docs/archive/`; use them as
-  evidence/history, not as active task queues
+## Classes And Review State
 
-The lane now includes thin host shells for `Android`, `iOS`, `macOS`, and `Windows` while remaining non-destructive and clean-room.
-The shared shell also models the app-first UX basics for the consumer-first tab set `Protection / Locations / Rules / Profile`, plus route mode, redeem, checkout handoff, support, and location matrices.
-The docs here should make these things explicit:
+- `CANONICAL`: current product, architecture, design, operations, or machine-readable contract.
+- `ACTIVE_EXECUTION`: current backlog, readiness checklist, or unresolved execution state; never product authority.
+- `EVIDENCE`: audit, handoff, work-order, or completed implementation record tied to its recorded scope.
+- `HISTORICAL_REFERENCE`: superseded decision, old brief, generated reference, archive, or rollback provenance.
+- `OPERATOR_PLAYBOOK`: optional client-local operator workflow outside normal coding context.
+- `EXPERIMENTAL`: opt-in research or helper that does not define normal behavior.
 
-- the four-host Wave 7 runtime lane is real and locally runnable
-- this repo is now the canonical client development lane for that work
-- the lane now has a pinned `libcore` artifact contract plus host-sync tooling, but it still lacks reviewed production provenance and public release automation
-- the Windows lane now has a local unsigned build-and-package path that verifies the real runtime bundle
-- Apple metadata present in the host shells is inventory only, not store readiness
-- regenerated `config/local/*` and host `build/` outputs are local-only artifacts, not release truth
-- `config/release-handoff.seed.json` is the stable root-repo handoff source for canonical lane identity and latest repo-backed release metadata
+Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`, and `UNRESOLVED_OWNER_DECISION`.
 
-Current client-doc scope:
+## Document Registry
 
-- living client contract and release-readiness docs for `POKROV-app/main`
-- public `v1` scope: `Android + Windows`
-- current paid beta evidence line: `1.0.0-beta`
-- Android status: `1.0.0-beta outside-store APK uploaded / live owner smoke pending`
-- Windows status: `1.0.0-beta unsigned beta uploaded / SmartScreen warning and live owner smoke pending`
-- `iOS` and `macOS`: readiness, packaging, and signing-preparation only in this wave
-- cross-surface product facts still inherit from the platform canon under `C:/Users/kiwun/Documents/ai/VPN/docs/`
-- browser continuation outside the app inherits the platform surface split: checkout-first marketing, continuation-first cabinet, and status-gated public email when the platform runtime reports delivery-ready mode
+| Class | Review | Owner | Path |
+| --- | --- | --- | --- |
+| CANONICAL | RECONCILED | Client docs routing | `docs/README.md` |
+| CANONICAL | PENDING_COLLISION_REVIEW | Client repository overview | `README.md` |
+| CANONICAL | PENDING_COLLISION_REVIEW | Client design system | `DESIGN.md` |
+| CANONICAL | PENDING_COLLISION_REVIEW | Client product | `docs/product/client-product-contract.md` |
+| CANONICAL | PENDING_COLLISION_REVIEW | App-first onboarding | `docs/architecture/app-first-onboarding-flow.md` |
+| CANONICAL | PENDING_COLLISION_REVIEW | Repository structure | `docs/architecture/folder-structure.md` |
+| CANONICAL | PENDING_COLLISION_REVIEW | Package boundaries | `docs/architecture/package-boundaries.md` |
+| CANONICAL | PENDING_COLLISION_REVIEW | Runtime bootstrap | `docs/architecture/bootstrap-workflow.md` |
+| CANONICAL | PENDING_COLLISION_REVIEW | In-app assistant | `docs/architecture/in-app-ai-assistant-contract.md` |
+| CANONICAL | PENDING_COLLISION_REVIEW | Current product/UI direction | `docs/design/2026-06-13-pokrov-product-ui-direction.md` |
+| CANONICAL | PENDING_COLLISION_REVIEW | Machine product facts | `config/product-contract.seed.json` |
+| CANONICAL | PENDING_COLLISION_REVIEW | Public/readiness platform scope | `config/platform-matrix.seed.json` |
+| CANONICAL | PENDING_COLLISION_REVIEW | Runtime profile facts | `config/runtime-profile.seed.json` |
+| CANONICAL | PENDING_COLLISION_REVIEW | Cutover readiness facts | `config/cutover-readiness.seed.json` |
+| CANONICAL | PENDING_COLLISION_REVIEW | Release handoff facts | `config/release-handoff.seed.json` |
+| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | Client release execution | `docs/implementation/client-release-backlog.md` |
+| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | Cutover checklist | `docs/operations/cutover-readiness.md` |
+| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | Android readiness | `docs/operations/android-release-audit.md` |
+| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | Windows readiness | `docs/operations/windows-release-readiness.md` |
+| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | WARP runtime proof | `docs/operations/warp-runtime-proof-checklist.md` |
+| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | Responsive proof | `docs/operations/responsive-golden-capture-plan.md` |
+| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | Motion/performance proof | `docs/operations/client-motion-performance-checklist.md` |
+| ACTIVE_EXECUTION | PENDING_COLLISION_REVIEW | Apple readiness | `docs/operations/apple-release-readiness.md` |
+| EVIDENCE | REVIEWED_NO_CHANGE | Public beta product evidence | `docs/product/client-public-beta-prd.md` |
+| EVIDENCE | REVIEWED_NO_CHANGE | Dated handoffs and closure audits | `docs/operations/2026-06-04-public-beta-operator-handoff.md`; `docs/operations/2026-06-05-phase-6-release-beta-handoff.md`; `docs/operations/2026-06-05-final-beta-closure-except-manual-tests-signing.md`; `docs/operations/2026-06-13-pokrov-product-ui-plan-closure-audit.md` |
+| EVIDENCE | REVIEWED_NO_CHANGE | Client/API additions record | `docs/operations/client-ui-api-additions.md` |
+| EVIDENCE | REVIEWED_NO_CHANGE | Retained beta work order | `docs/developer/work-orders/2026-04-open-beta-v4/INDEX.md` |
+| EVIDENCE | REVIEWED_NO_CHANGE | Completed implementation maps | `docs/implementation/2026-06-03-client-build-readiness-and-api-plan.md`; `docs/implementation/2026-06-03-client-mvp-shell-implementation.md`; `docs/implementation/2026-06-04-decisions-implementation-map.md`; `docs/implementation/2026-06-05-p6-overload-correction-plan.md` |
+| HISTORICAL_REFERENCE | PENDING_COLLISION_REVIEW | Superseded local design entry | `docs/design/DESIGN.md` |
+| HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Earlier scaffold spec | `docs/specs/2026-04-18-wave-7-new-base-client-scaffold.md` |
+| HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Completed WARP design spec | `docs/specs/2026-06-05-p5-warp-approved-design.md` |
+| HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Retired base/runtime reviews | `docs/decisions/2026-06-03-hiddify-karing-happ-client-base-review.md`; `docs/decisions/2026-06-03-hiddify-core-warp-status.md` |
+| HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Earlier UX master brief | `docs/decisions/2026-06-03-client-ux-account-rewards-master-brief.md` |
+| HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Earlier responsive review | `docs/decisions/2026-06-03-client-chat-responsive-warp-motion-review.md` |
+| HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Earlier MVP consilium | `docs/decisions/2026-06-03-client-best-mvp-consilium.md` |
+| HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Retired Karing reopen input | `docs/decisions/2026-06-02-karing-base-reopen.md` |
+| HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Retired clean-room gate input | `docs/decisions/2026-04-18-karing-vs-clean-room-gate.md` |
+| HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Earlier premium-shell brief | `docs/design/2026-06-03-client-premium-shell-v2-brief.md` |
+| HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Earlier visual/copy briefs | `docs/design/2026-06-03-client-screen-component-rules.md`; `docs/design/2026-06-03-client-quiet-emerald-style-brief.md`; `docs/design/2026-06-03-client-chat-responsive-warp-motion-brief.md`; `docs/design/2026-06-03-client-best-mvp-build-brief.md` |
+| HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Completed application-map briefs | `docs/design/2026-06-05-p5-warp-application-map.md`; `docs/design/2026-06-05-p5-application-map-consilium-review.md`; `docs/design/2026-06-05-p6-overload-ux-consilium.md` |
+| HISTORICAL_REFERENCE | UNRESOLVED_OWNER_DECISION | Generated visual references | `docs/design/assets/`; `docs/design/generated/2026-06-09-app-screen-variants/` |
+| HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Archived completed plans | `docs/archive/` |
+| OPERATOR_PLAYBOOK | REVIEWED_NO_CHANGE | no client-local owner; platform tools do not enter the client default route | — |
+| EXPERIMENTAL | REVIEWED_NO_CHANGE | no client-local owner; platform tools do not enter the client default route | — |
 
-Current active anchors:
+## Change Rule
 
-- `design/2026-06-13-pokrov-product-ui-direction.md`
-- `operations/2026-06-13-pokrov-product-ui-plan-closure-audit.md`
-- `product/client-product-contract.md`
-- `architecture/app-first-onboarding-flow.md`
-- `decisions/2026-06-03-client-ux-account-rewards-master-brief.md`
-- `architecture/folder-structure.md`
-- `architecture/package-boundaries.md`
-- `architecture/bootstrap-workflow.md`
-- `architecture/in-app-ai-assistant-contract.md`
-- `implementation/client-release-backlog.md`
-- `operations/android-release-audit.md`
-- `operations/windows-release-readiness.md`
-- `operations/2026-06-05-phase-6-release-beta-handoff.md`
-- `operations/2026-06-05-final-beta-closure-except-manual-tests-signing.md`
-- `operations/warp-runtime-proof-checklist.md`
-- `operations/responsive-golden-capture-plan.md`
-- `operations/cutover-readiness.md`
-- `operations/client-motion-performance-checklist.md`
-- `product/client-public-beta-prd.md`
-- `design/DESIGN.md`
-- `design/2026-06-03-client-screen-component-rules.md`
-- root `DESIGN.md`
-- root `docs/operations/client-delivery-update-content-plan.md`
-- `developer/work-orders/2026-04-open-beta-v4/INDEX.md`
-
-Completed / reference docs:
-
-- `specs/2026-04-18-wave-7-new-base-client-scaffold.md`
-- `decisions/2026-06-03-hiddify-karing-happ-client-base-review.md`
-- `decisions/2026-06-03-hiddify-core-warp-status.md`
-- `decisions/2026-06-03-client-chat-responsive-warp-motion-review.md`
-- `decisions/2026-06-03-client-best-mvp-consilium.md`
-- `implementation/2026-06-04-decisions-implementation-map.md`
-- `implementation/2026-06-03-client-build-readiness-and-api-plan.md`
-- `implementation/2026-06-03-client-mvp-shell-implementation.md`
-- `operations/apple-release-readiness.md`
-- `design/2026-06-03-client-premium-shell-v2-brief.md`
-- `design/2026-06-03-client-quiet-emerald-style-brief.md`
-- `design/2026-06-03-client-chat-responsive-warp-motion-brief.md`
-- `design/2026-06-03-client-best-mvp-build-brief.md`
-- `design/2026-06-05-p5-warp-application-map.md`
-- `design/2026-06-05-p5-application-map-consilium-review.md`
-- `specs/2026-06-05-p5-warp-approved-design.md`
-- `archive/superpowers-plans/2026-06-05-premium-client-ai-assistant-architecture.md`
-
-Deprecated / legacy inputs:
-
-- `decisions/2026-06-02-karing-base-reopen.md`
-- `decisions/2026-04-18-karing-vs-clean-room-gate.md`
-
-These legacy inputs are not release blockers and should not be used as the
-starting point for current `1.0.0-beta` work unless the owner explicitly
-reopens them.
-
-These docs are now the live client-documentation lane for the bootstrapped `POKROV-app` repo.
-The product contract, app-first onboarding contract, consumer-first shell IA, route-mode/support/download behavior, and current Android+Windows blockers should live here instead of only in retained bridge docs.
-`app-next/docs/` remains historical bootstrap context inside the platform workspace.
+When behavior changes, update the owning `CANONICAL` document in the same task. Update `ACTIVE_EXECUTION` only for execution state, attach new `EVIDENCE` to its exact candidate or scope, and leave `HISTORICAL_REFERENCE` content intact unless its classification or provenance is wrong.

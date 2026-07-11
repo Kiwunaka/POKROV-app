@@ -37,6 +37,7 @@ $requiredDirectories = @(
 )
 
 $requiredFiles = @(
+  "AGENTS.md",
   "README.md",
   ".gitignore",
   ".editorconfig",
@@ -47,6 +48,8 @@ $requiredFiles = @(
   "config\\runtime-profile.seed.json",
   "config\\runtime-artifacts.seed.json",
   "config\\windows-release.seed.json",
+  "config\\cutover-readiness.seed.json",
+  "config\\release-handoff.seed.json",
   "config\\templates\\local.env.example",
   "config\\templates\\device-overrides.seed.json",
   "docs\\README.md",
@@ -96,6 +99,7 @@ $requiredFiles = @(
   "scripts\\run-tests.ps1",
   "scripts\\validate-seed.ps1",
   "test\\README.md",
+  "test\\docs-contract.ps1",
   "test\\seed-layout.ps1",
   "packages\\app_shell\\test\\pokrov_seed_app_test.dart"
 )
@@ -106,6 +110,8 @@ $jsonFiles = @(
   "config\\runtime-profile.seed.json",
   "config\\runtime-artifacts.seed.json",
   "config\\windows-release.seed.json",
+  "config\\cutover-readiness.seed.json",
+  "config\\release-handoff.seed.json",
   "config\\templates\\device-overrides.seed.json"
 )
 
@@ -353,6 +359,15 @@ if ($missing.Count -gt 0 -or $invalidJson.Count -gt 0 -or $manifestErrors.Count 
   $manifestErrors | ForEach-Object { Write-Host $_ }
 
   exit 1
+}
+
+try {
+  & (Join-Path $root "test\\docs-contract.ps1")
+  if (-not $?) {
+    throw "Client docs contract returned an unsuccessful PowerShell status."
+  }
+} catch {
+  throw "Client docs contract failed during seed validation: $($_.Exception.Message)"
 }
 
 Write-Host "Seed scaffold OK:" -ForegroundColor Green
