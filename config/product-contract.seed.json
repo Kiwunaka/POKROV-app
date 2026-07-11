@@ -35,9 +35,9 @@
     "selected_apps"
   ],
   "selected_apps_status": {
-    "android": "beta_mvp_route_sync_only",
-    "windows": "beta_mvp_route_sync_only",
-    "public_claim": "picker_and_os_enforcement_limited_in_beta"
+    "android": "beta_picker_and_policy_active",
+    "windows": "beta_picker_and_policy_active",
+    "public_claim": "picker_and_policy_active_production_proof_gated"
   },
   "location_variant_order": [
     "vless_reality",

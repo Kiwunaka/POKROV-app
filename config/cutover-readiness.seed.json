@@ -2,15 +2,15 @@
   "lane": "POKROV-app/main",
   "status": "outside_store_beta_repo_and_handoff_closed_manual_tests_and_signing_remaining",
   "public_cutover_allowed": true,
-  "last_updated": "2026-06-05",
+  "last_updated": "2026-07-11",
   "latest_repo_backed_release": {
     "version": "1.0.0-beta",
-    "github_release": "https://github.com/Kiwunaka/POKROV-app/releases/tag/v1.0.0-beta",
-    "asset_refresh_utc": "2026-06-05T20:37:34Z",
-    "github_repo_visibility": "private",
-    "anonymous_download_smoke": "BLOCKED_PRIVATE_REPO_404",
-    "authenticated_github_release_smoke": "PASS_GH_RELEASE_DOWNLOAD_ALL_ASSETS",
-    "live_app_session_download_smoke": "MANUAL_OWNER_TEST"
+    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta",
+    "asset_refresh_utc": "2026-06-08T13:19:45Z",
+    "github_repo_visibility": "public",
+    "anonymous_download_smoke": "PASS_PUBLIC_GITHUB_RELEASES_206_REFRESHED",
+    "authenticated_github_release_smoke": "PASS_PUBLIC_RELEASE_VIEW_DIGESTS_REFRESHED",
+    "live_app_session_download_smoke": "PASS_BRAIN_SIGNED_SYNTHETIC_INITDATA_REAL_USER_MANUAL_PENDING_REFRESHED"
   },
   "android_release": {
     "beta_distribution": "outside_store_apk_staged",

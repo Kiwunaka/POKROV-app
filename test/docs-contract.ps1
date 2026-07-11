@@ -1116,6 +1116,29 @@ foreach ($relativePath in $forbiddenByFile.Keys) {
   }
 }
 
+$product = [IO.File]::ReadAllText((Join-Path $root 'config\product-contract.seed.json')) | ConvertFrom-Json
+$platform = [IO.File]::ReadAllText((Join-Path $root 'config\platform-matrix.seed.json')) | ConvertFrom-Json
+$release = [IO.File]::ReadAllText((Join-Path $root 'config\release-handoff.seed.json')) | ConvertFrom-Json
+$cutover = [IO.File]::ReadAllText((Join-Path $root 'config\cutover-readiness.seed.json')) | ConvertFrom-Json
+$runtime = [IO.File]::ReadAllText((Join-Path $root 'config\runtime-profile.seed.json')) | ConvertFrom-Json
+
+if ($product.client_version_line -ne $release.latest_repo_backed_release.version) {
+  $errors += 'Product and release version lines disagree'
+}
+if ($cutover.latest_repo_backed_release.github_release -ne $release.latest_repo_backed_release.github_release) {
+  $errors += 'Cutover and release-handoff URLs disagree'
+}
+if ($cutover.latest_repo_backed_release.github_repo_visibility -ne 'public') {
+  $errors += 'Cutover seed still describes the release repo as private'
+}
+if ($cutover.latest_repo_backed_release.anonymous_download_smoke -notmatch '^PASS_') {
+  $errors += 'Cutover seed lacks public anonymous-download proof'
+}
+if ($product.trial_days -ne $runtime.trial_days -or
+    $product.telegram_bonus_days -ne $runtime.telegram_bonus_days) {
+  $errors += 'Product and runtime trial/reward facts disagree'
+}
+
 if ($errors.Count -gt 0) {
   throw "Client docs contract failed:`n$($errors -join "`n")"
 }

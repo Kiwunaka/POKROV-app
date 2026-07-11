@@ -14,10 +14,10 @@
     "windows": "apps/windows_shell"
   },
   "release_readiness": {
-    "android": "seed_only_non_release_lane",
-    "ios": "apple_shell_ready_store_blocked",
-    "macos": "apple_shell_ready_notarization_blocked",
-    "windows": "runtime_shell_buildable_signing_blocked"
+    "android": "outside_store_beta_public_manual_live_smoke_pending",
+    "ios": "readiness_only_store_blocked",
+    "macos": "readiness_only_notarization_blocked",
+    "windows": "outside_store_unsigned_beta_public_manual_live_smoke_pending"
   },
   "shared_packages": {
     "app_shell": "packages/app_shell",
