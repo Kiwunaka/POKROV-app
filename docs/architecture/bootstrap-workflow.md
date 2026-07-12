@@ -17,9 +17,16 @@ From `POKROV-app/`:
 
 1. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\validate-seed.ps1`.
 2. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\bootstrap-workspace.ps1`.
+   If the ignored Android Gradle wrapper BAT or JAR is missing, bootstrap first
+   creates a GUID-named project under the system temp directory with Flutter's
+   supported `--no-overwrite` Android flow, copies only the missing BAT/JAR,
+   and removes the verified temp directory. Flutter never repairs the tracked
+   Android shell in place or replaces existing Android customization.
 3. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\fetch-libcore-assets.ps1 -Platforms @('windows') -SyncToHosts` when you want the Windows host shell refreshed against the pinned runtime artifacts.
 4. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\run-tests.ps1`.
    This now covers the shared Flutter lane, `apps/android_shell` Flutter tests, and `apps/android_shell/android/gradlew.bat testDebugUnitTest`.
+   On a clean checkout, the bootstrap phase materializes the ignored wrapper
+   BAT and JAR before `testDebugUnitTest` runs.
 5. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\build-windows-release.ps1 -SyncRuntime` when you want the local Windows analyze, test, build, and unsigned-package lane.
 6. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\bootstrap-local.ps1 -DryRun`.
 7. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\bootstrap-local.ps1` only if you want local config files under `config/local/`.
@@ -32,9 +39,24 @@ From `POKROV-app/`:
 - `config/templates/local.env.example` -> `config/local/local.env`
 - `config/templates/device-overrides.seed.json` -> `config/local/device-overrides.json`
 
+When either required Android Gradle wrapper file is absent,
+`bootstrap-workspace.ps1` also runs Flutter's conditional `--no-overwrite`
+Android generation in an isolated GUID-named temp directory and copies only:
+
+- `apps/android_shell/android/gradlew.bat`
+- `apps/android_shell/android/gradle/wrapper/gradle-wrapper.jar`
+
+The bootstrap does not copy the generated Unix wrapper, Kotlin DSL files,
+IDE metadata, Flutter metadata, or any other temporary project content. It
+also skips each destination that already exists and fails if the BAT or JAR is
+still absent after repair.
+
 The generated files are git-ignored and can be deleted or regenerated freely.
 
-Treat everything under `config/local/*` as regenerated local-only workstation config. It is useful for local prototyping and validation, but it is not shipping truth or release truth.
+Treat everything under `config/local/*` and the generated Android wrapper files
+as regenerated local-only workstation state. They are useful for local
+prototyping and validation, but they are not release artifacts, product truth,
+shipping truth, or release truth.
 
 ## Runnable Pieces
 

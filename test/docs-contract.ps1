@@ -1093,6 +1093,102 @@ Invoke-ContractSelfTests -RepositoryRoot $root -AgentsBytes $agentsBytes -Regist
 
 $errors = @(Invoke-ClientDocsValidation -RepositoryRoot $root -AgentsBytes $agentsBytes -RegistryBytes $registryBytes)
 
+$bootstrapWorkspaceScript = [IO.File]::ReadAllText((Join-Path $root 'scripts\bootstrap-workspace.ps1'))
+$androidWrapperContractStartMarker = '$androidWrapperRelativePaths = @('
+$androidWrapperRepairStartMarker = 'if ($missingAndroidWrapperFiles.Count -gt 0) {'
+$androidWrapperContractEndMarker = '$workspacePackages = @('
+$androidWrapperContractStartIndex = $bootstrapWorkspaceScript.IndexOf($androidWrapperContractStartMarker, [StringComparison]::Ordinal)
+$androidWrapperRepairStartIndex = $bootstrapWorkspaceScript.IndexOf($androidWrapperRepairStartMarker, [StringComparison]::Ordinal)
+$androidWrapperContractEndIndex = $bootstrapWorkspaceScript.IndexOf($androidWrapperContractEndMarker, [StringComparison]::Ordinal)
+$androidWrapperRepairCommand = 'flutter create --platforms=android --no-pub --no-overwrite --org space.pokrov --project-name pokrov_android_shell .'
+$validAndroidWrapperBoundaries = $androidWrapperContractStartIndex -ge 0 -and
+  $androidWrapperRepairStartIndex -gt $androidWrapperContractStartIndex -and
+  $androidWrapperContractEndIndex -gt $androidWrapperRepairStartIndex
+if (-not $validAndroidWrapperBoundaries) {
+  $errors += 'Workspace bootstrap lacks one isolated Android wrapper repair contract block'
+} else {
+  $androidWrapperContractBlock = $bootstrapWorkspaceScript.Substring(
+    $androidWrapperContractStartIndex,
+    $androidWrapperContractEndIndex - $androidWrapperContractStartIndex
+  )
+  $androidWrapperRepairBlock = $bootstrapWorkspaceScript.Substring(
+    $androidWrapperRepairStartIndex,
+    $androidWrapperContractEndIndex - $androidWrapperRepairStartIndex
+  )
+  $androidWrapperRepairIndex = $androidWrapperRepairBlock.IndexOf($androidWrapperRepairCommand, [StringComparison]::Ordinal)
+  if ($androidWrapperRepairIndex -lt 0) {
+    $errors += 'Workspace bootstrap isolated repair lacks supported no-overwrite Flutter Android generation'
+  }
+
+  foreach ($requiredMarker in @(
+    '[IO.Path]::GetTempPath()',
+    '[Guid]::NewGuid().ToString("N")',
+    '$androidWrapperRepairLocationPushed = $false',
+    'Push-Location -LiteralPath $androidWrapperRepairPath -ErrorAction Stop',
+    '$androidWrapperRepairLocationPushed = $true',
+    'if ($androidWrapperRepairLocationPushed) {',
+    'Pop-Location -ErrorAction Stop',
+    'Copy-Item -LiteralPath $sourceAndroidWrapperFile -Destination $destinationAndroidWrapperFile -ErrorAction Stop',
+    'Test-AndroidWrapperRepairPath -Path $androidWrapperRepairPath -TempRoot $androidWrapperRepairTempRoot',
+    'Remove-Item -LiteralPath $androidWrapperRepairPath -Recurse -Force -ErrorAction Stop'
+  )) {
+    if ($androidWrapperRepairBlock.IndexOf($requiredMarker, [StringComparison]::Ordinal) -lt 0) {
+      $errors += "Workspace bootstrap lacks isolated Android wrapper repair marker: $requiredMarker"
+    }
+  }
+  if ($androidWrapperRepairBlock.IndexOf('Push-Location $androidShellPath', [StringComparison]::Ordinal) -ge 0) {
+    $errors += 'Flutter Android wrapper repair must not run in the tracked Android shell project'
+  }
+
+  $exactAndroidWrapperPathBlock = @'
+$androidWrapperRelativePaths = @(
+  "android\gradlew.bat",
+  "android\gradle\wrapper\gradle-wrapper.jar"
+)
+'@
+  if ($androidWrapperContractBlock.IndexOf($exactAndroidWrapperPathBlock, [StringComparison]::Ordinal) -lt 0) {
+    $errors += 'Workspace bootstrap Android wrapper copy contract must contain exactly the BAT/JAR relative path pair'
+  }
+
+  if ($androidWrapperRepairIndex -ge 0) {
+    $postRepairValidation = $androidWrapperRepairBlock.Substring($androidWrapperRepairIndex + $androidWrapperRepairCommand.Length)
+    foreach ($requiredMarker in @(
+      '$androidWrapperRepairExitCode -ne 0',
+      'foreach ($androidWrapperFile in $androidWrapperFiles)',
+      'Test-Path -LiteralPath $androidWrapperFile -PathType Leaf',
+      'Flutter Android wrapper repair did not materialize required file'
+    )) {
+      if ($postRepairValidation.IndexOf($requiredMarker, [StringComparison]::Ordinal) -lt 0) {
+        $errors += "Workspace bootstrap lacks post-repair Android BAT/JAR validation marker: $requiredMarker"
+      }
+    }
+
+    $destinationGuard = 'if (-not (Test-Path -LiteralPath $destinationAndroidWrapperFile -PathType Leaf)) {'
+    $copyCommand = 'Copy-Item -LiteralPath $sourceAndroidWrapperFile -Destination $destinationAndroidWrapperFile -ErrorAction Stop'
+    $destinationGuardIndex = $postRepairValidation.IndexOf($destinationGuard, [StringComparison]::Ordinal)
+    $copyCommandIndex = $postRepairValidation.IndexOf($copyCommand, [StringComparison]::Ordinal)
+    if ($destinationGuardIndex -lt 0 -or $copyCommandIndex -lt 0 -or $destinationGuardIndex -gt $copyCommandIndex) {
+      $errors += 'Workspace bootstrap Android wrapper copy must be guarded against destination overwrite'
+    }
+
+    $cleanupCommand = 'Remove-Item -LiteralPath $androidWrapperRepairPath -Recurse -Force -ErrorAction Stop'
+    $cleanupIndex = $postRepairValidation.IndexOf($cleanupCommand, [StringComparison]::Ordinal)
+    if ($cleanupIndex -lt 0) {
+      $errors += 'Workspace bootstrap lacks verified Android wrapper repair temp cleanup'
+    } else {
+      $postCleanupValidation = $postRepairValidation.Substring($cleanupIndex + $cleanupCommand.Length)
+      foreach ($requiredMarker in @(
+        'Test-Path -LiteralPath $androidWrapperRepairPath',
+        'Flutter Android wrapper repair temp cleanup left a directory'
+      )) {
+        if ($postCleanupValidation.IndexOf($requiredMarker, [StringComparison]::Ordinal) -lt 0) {
+          $errors += "Workspace bootstrap lacks post-cleanup Android temp validation marker: $requiredMarker"
+        }
+      }
+    }
+  }
+}
+
 $forbiddenByFile = @{
   'README.md' = @(
     'no release wiring',
