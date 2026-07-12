@@ -931,6 +931,40 @@ function Assert-TableParserFixture {
   }
 }
 
+function Get-GitAttributeEolRules {
+  param([string[]]$Lines)
+
+  $rules = [System.Collections.Generic.List[string]]::new()
+  foreach ($rawLine in $Lines) {
+    $line = $rawLine.Trim()
+    if ($line.Length -eq 0 -or $line.StartsWith('#', [StringComparison]::Ordinal)) {
+      continue
+    }
+
+    [string[]]$tokens = @($line -split '\s+')
+    if ($tokens.Count -lt 2) {
+      continue
+    }
+    for ($index = 1; $index -lt $tokens.Count; $index++) {
+      if ($tokens[$index] -cmatch '^eol=\S+$') {
+        [void]$rules.Add($line)
+      }
+    }
+  }
+  return $rules.ToArray()
+}
+
+function Assert-GitAttributeEolParserFixture {
+  param([string]$Name, [string[]]$Lines, [string[]]$ExpectedRules)
+
+  $actualRules = @(Get-GitAttributeEolRules -Lines $Lines)
+  if (-not (Test-StringArraysEqual -Left $actualRules -Right $ExpectedRules)) {
+    $expectedText = $ExpectedRules -join ', '
+    $actualText = $actualRules -join ', '
+    throw "Git-attribute parser self-test '$Name' expected '$expectedText' but got '$actualText'"
+  }
+}
+
 function Invoke-ContractSelfTests {
   param(
     [string]$RepositoryRoot,
@@ -970,6 +1004,9 @@ POKROV-app/main
 
   Assert-StrictBytesRejected -Name 'malformed UTF-8 fixture' -Bytes ([byte[]]@(0x61, 0xC3, 0x28, 0x0A)) -ExpectedErrorPattern 'not valid strict UTF-8'
   Assert-StrictBytesRejected -Name 'UTF-8 BOM fixture' -Bytes ([byte[]]@(0xEF, 0xBB, 0xBF, 0x61, 0x0A)) -ExpectedErrorPattern 'BOM'
+  Assert-GitAttributeEolParserFixture -Name 'comment eol example' -Lines @('# example: eol=crlf') -ExpectedRules @()
+  Assert-GitAttributeEolParserFixture -Name 'eol-shaped pattern' -Lines @('eol=fixture text') -ExpectedRules @()
+  Assert-GitAttributeEolParserFixture -Name 'real eol attribute' -Lines @('AGENTS.md text eol=crlf') -ExpectedRules @('AGENTS.md text eol=crlf')
 
   $registryHeader = @('Class', 'Review', 'Owner', 'Path')
   $deletedRowRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 1 -Mutation {
@@ -1092,6 +1129,72 @@ if (-not (Test-Path -LiteralPath $registryPath -PathType Leaf)) {
 Invoke-ContractSelfTests -RepositoryRoot $root -AgentsBytes $agentsBytes -RegistryBytes $registryBytes
 
 $errors = @(Invoke-ClientDocsValidation -RepositoryRoot $root -AgentsBytes $agentsBytes -RegistryBytes $registryBytes)
+
+$attributesPath = Join-Path $root '.gitattributes'
+if (-not (Test-Path -LiteralPath $attributesPath -PathType Leaf)) {
+  $errors += '.gitattributes is required'
+} else {
+  $attributeLines = [IO.File]::ReadAllLines($attributesPath)
+  $requiredLineEndingAttributes = @(
+    'AGENTS.md text eol=lf',
+    'docs/README.md text eol=lf'
+  )
+
+  foreach ($requiredAttribute in $requiredLineEndingAttributes) {
+    $matches = @($attributeLines | Where-Object { $_ -ceq $requiredAttribute })
+    if ($matches.Count -ne 1) {
+      $errors += ".gitattributes must contain exactly one explicit '$requiredAttribute' rule"
+    }
+  }
+
+  $lineEndingAttributeRules = @(Get-GitAttributeEolRules -Lines $attributeLines)
+  $unexpectedLineEndingAttributes = @(
+    $lineEndingAttributeRules | Where-Object { $requiredLineEndingAttributes -cnotcontains $_ }
+  )
+  if ($unexpectedLineEndingAttributes.Count -gt 0) {
+    $errors += ".gitattributes must not define additional eol attributes beyond the two client contract files: $($unexpectedLineEndingAttributes -join ', ')"
+  }
+
+  $effectiveAttributeOutput = @(& git -C $root check-attr text eol -- AGENTS.md docs/README.md 2>&1)
+  $effectiveAttributeExitCode = $LASTEXITCODE
+  if ($effectiveAttributeExitCode -ne 0) {
+    $errors += "git check-attr failed with exit $effectiveAttributeExitCode`: $($effectiveAttributeOutput -join ' | ')"
+  } else {
+    $effectiveAttributes = @{}
+    foreach ($outputLine in $effectiveAttributeOutput) {
+      $line = $outputLine.ToString()
+      $match = [regex]::Match(
+        $line,
+        '^(?<path>AGENTS\.md|docs/README\.md): (?<attribute>text|eol): (?<value>\S+)$'
+      )
+      if (-not $match.Success) {
+        $errors += "git check-attr returned unexpected output: $line"
+        continue
+      }
+
+      $key = "$($match.Groups['path'].Value)|$($match.Groups['attribute'].Value)"
+      if ($effectiveAttributes.ContainsKey($key)) {
+        $errors += "git check-attr returned duplicate output for $key"
+        continue
+      }
+      $effectiveAttributes[$key] = $match.Groups['value'].Value
+    }
+
+    $requiredEffectiveAttributes = [ordered]@{
+      'AGENTS.md|text' = 'set'
+      'AGENTS.md|eol' = 'lf'
+      'docs/README.md|text' = 'set'
+      'docs/README.md|eol' = 'lf'
+    }
+    foreach ($key in $requiredEffectiveAttributes.Keys) {
+      if (-not $effectiveAttributes.ContainsKey($key)) {
+        $errors += "git check-attr did not return $key"
+      } elseif ($effectiveAttributes[$key] -cne $requiredEffectiveAttributes[$key]) {
+        $errors += "git check-attr must resolve $key to '$($requiredEffectiveAttributes[$key])' (actual: '$($effectiveAttributes[$key])')"
+      }
+    }
+  }
+}
 
 $bootstrapWorkspaceScript = [IO.File]::ReadAllText((Join-Path $root 'scripts\bootstrap-workspace.ps1'))
 $androidWrapperContractStartMarker = '$androidWrapperRelativePaths = @('
