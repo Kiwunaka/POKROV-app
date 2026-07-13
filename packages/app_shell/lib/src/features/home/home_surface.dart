@@ -1123,7 +1123,7 @@ String _homeProtectionStatusLabel(
   bool busy = false,
 }) {
   if (busy) {
-    return 'Подключается...';
+    return 'Подключается…';
   }
   if (snapshot?.phase == RuntimePhase.running) {
     return (snapshot?.isCleanlyHealthy ?? false)

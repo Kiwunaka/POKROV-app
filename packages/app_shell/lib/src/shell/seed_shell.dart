@@ -171,7 +171,7 @@ ThemeData _buildPokrovTheme({
       backgroundColor: Colors.transparent,
       elevation: 0,
       height: 64,
-      indicatorColor: tokens.accent.withValues(alpha: isDark ? 0.18 : 0.12),
+      indicatorColor: Colors.transparent,
       indicatorShape: const StadiumBorder(),
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       labelTextStyle: WidgetStateProperty.resolveWith(
