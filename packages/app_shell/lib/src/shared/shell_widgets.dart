@@ -344,7 +344,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
               ? null
               : () {
                   Feedback.forTap(context);
-                  PokrovHaptics.impact();
+                  PokrovHaptics.tap();
                   setState(() {
                     _optimisticBusy = true;
                   });
@@ -368,7 +368,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                     : Curves.easeInOut.transform(_breathController.value);
                 return Transform.scale(
                   scale: PokrovConnectDiscMotion.scale(
-                    pressed: _pressed,
+                    pressed: false,
                     runsSweep: state.runsSweep,
                     breathValue: breath,
                     disableAnimations: disableAnimations,
@@ -376,7 +376,16 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                   child: child,
                 );
               },
-              child: Container(
+              // Physical press: compress eases in fast, release springs back.
+              // Kept outside the breath/sweep transform so the press reads
+              // instantly even mid-loop (HIG: the primary control feels real).
+              child: AnimatedScale(
+                scale: _pressed && !disableAnimations
+                    ? PokrovConnectDiscMotion.pressScale
+                    : 1.0,
+                duration: motion.duration(PokrovMotionTokens.quick),
+                curve: _pressed ? Curves.easeIn : PokrovMotionTokens.spring,
+                child: Container(
                 width: diameter,
                 height: diameter,
                 decoration: BoxDecoration(
@@ -387,6 +396,21 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                         accent.withValues(alpha: widget.running ? 0.54 : 0.34),
                     width: widget.running ? 2.6 : 2.1,
                   ),
+                  // Soft accent-tinted lift: the hero control floats above
+                  // the canvas instead of sitting flat on it.
+                  boxShadow: [
+                    BoxShadow(
+                      color: (widget.running ? accent : p.ink).withValues(
+                        alpha: Theme.of(context).brightness == Brightness.dark
+                            ? 0.35
+                            : widget.running
+                                ? 0.18
+                                : 0.08,
+                      ),
+                      blurRadius: 30,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
                 ),
                 child: Stack(
                   alignment: Alignment.center,
@@ -421,9 +445,17 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                       busy: _effectiveBusy,
                       disableAnimations: disableAnimations,
                     ),
-                    DecoratedBox(
+                    // Connected morph: the inner plate takes a faint green
+                    // wash so the state is glanceable, not forensic. The disc
+                    // is the one sanctioned connectedGreen surface.
+                    AnimatedContainer(
+                      duration: motion.duration(_MotionTokens.standard),
+                      curve: _MotionTokens.ease,
                       decoration: BoxDecoration(
-                        color: p.canvas,
+                        color: widget.running
+                            ? Color.alphaBlend(
+                                accent.withValues(alpha: 0.10), p.canvas)
+                            : p.canvas,
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: p.line.withValues(alpha: 0.72),
@@ -473,6 +505,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                       ),
                     ),
                   ],
+                ),
                 ),
               ),
             ),

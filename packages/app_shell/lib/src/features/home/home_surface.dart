@@ -64,14 +64,14 @@ class _QuickConnectSection extends StatelessWidget {
       HostPlatform.android || HostPlatform.ios => false,
     };
     final statusColor = runtimeBusy
-        ? p.warning
+        ? p.muted
         : isRunning
             ? isHealthyRunning
                 ? p.success
                 : p.warning
             : p.muted;
     final actionLabel = runtimeBusy
-        ? 'Подключается...'
+        ? 'Подключается…'
         : isRunning
             ? 'Отключить'
             : primaryActionEnabled
@@ -650,15 +650,29 @@ class _HomeStatusAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
     return InkWell(
       key: const ValueKey('home-connection-details-action'),
       borderRadius: BorderRadius.circular(999),
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: _StatusDotLabel(
-          label: statusLabel,
-          color: statusColor,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: _StatusDotLabel(
+                label: statusLabel,
+                color: statusColor,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 16,
+              color: p.muted.withValues(alpha: 0.6),
+            ),
+          ],
         ),
       ),
     );
@@ -783,7 +797,7 @@ class _HomeAccessStrip extends StatelessWidget {
             icon: telegramBonusClaimed
                 ? Icons.check_circle_outline_rounded
                 : Icons.calendar_today_outlined,
-            tone: _SectionTone.reward,
+            tone: _SectionTone.accent,
           ),
         ],
       ),
@@ -1473,7 +1487,9 @@ class _ConnectHintPulseRingState extends State<_ConnectHintPulseRing>
           return Transform.scale(
             scale: 1.0 + progress * 0.14,
             child: Opacity(
-              opacity: (1 - progress) * 0.35,
+              // Sine envelope: the attention ring fades in and out without
+              // the hard restart pop a linear (1 - t) loop produces.
+              opacity: math.sin(math.pi * progress) * 0.35,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,

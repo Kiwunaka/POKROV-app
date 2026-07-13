@@ -192,7 +192,17 @@ class _MobileShell extends StatelessWidget {
                   border: Border.all(color: p.line),
                   boxShadow: [
                     BoxShadow(
-                      color: p.ink.withValues(alpha: 0.06),
+                      // Shadows darken, they never emit: ink is near-white in
+                      // dark mode, so anchor the dark-mode shadow on black.
+                      color: (Theme.of(context).brightness == Brightness.dark
+                              ? Colors.black
+                              : p.ink)
+                          .withValues(
+                        alpha:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? 0.35
+                                : 0.06,
+                      ),
                       blurRadius: 24,
                       offset: const Offset(0, 8),
                     ),
@@ -205,8 +215,8 @@ class _MobileShell extends StatelessWidget {
                   destinations: const [
                     NavigationDestination(
                       key: ValueKey('nav-protection'),
-                      icon: Icon(Icons.flash_on_outlined),
-                      selectedIcon: Icon(Icons.flash_on),
+                      icon: Icon(Icons.shield_outlined),
+                      selectedIcon: Icon(Icons.shield_rounded),
                       label: 'Защита',
                     ),
                     NavigationDestination(
@@ -255,8 +265,8 @@ class _DesktopSidebar extends PokrovDesktopSidebar {
           destinations: const [
             PokrovSidebarDestination(
               itemKey: ValueKey('nav-protection'),
-              icon: Icons.flash_on_outlined,
-              selectedIcon: Icons.flash_on,
+              icon: Icons.shield_outlined,
+              selectedIcon: Icons.shield_rounded,
               label: 'Защита',
             ),
             PokrovSidebarDestination(
@@ -464,8 +474,8 @@ class PokrovLegacyDesktopSidebar extends StatelessWidget {
               itemKey: const ValueKey('nav-protection'),
               index: 0,
               selectedIndex: selectedIndex,
-              icon: Icons.flash_on_outlined,
-              selectedIcon: Icons.flash_on,
+              icon: Icons.shield_outlined,
+              selectedIcon: Icons.shield_rounded,
               label: 'Защита',
               onSelected: onSelected,
               collapsed: collapsed,

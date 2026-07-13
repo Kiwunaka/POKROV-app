@@ -22,9 +22,10 @@ AnimationStyle _pokrovSheetAnimationStyle(BuildContext context) {
   }
   return const AnimationStyle(
     duration: _MotionTokens.sheet,
-    reverseDuration: _MotionTokens.sheet,
+    // Present gently, dismiss briskly: symmetric sheets feel sluggish.
+    reverseDuration: Duration(milliseconds: 200),
     curve: _MotionTokens.emphasized,
-    reverseCurve: _MotionTokens.emphasized,
+    reverseCurve: Curves.easeInCubic,
   );
 }
 
