@@ -44,6 +44,26 @@ String _accessShortValue(
   };
 }
 
+/// Numeric twin of [_accessShortValue] for lanes whose value is a day count;
+/// null for the label-only lanes so callers fall back to static text.
+int? _accessShortDays(
+  SeedAppContext appContext,
+  AppFirstBonusSummary? bonus,
+) {
+  final baseDays = appContext.runtimeProfile.trialDays;
+  final bonusDays = bonus?.channelBonusPremiumDays ?? 0;
+  final claimed = (bonus?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
+  final totalDays = baseDays + (claimed ? bonusDays : 0);
+  return switch (appContext.accessLane) {
+    AccessLane.trialPremium => claimed ? totalDays : baseDays,
+    AccessLane.bonusPremium => totalDays,
+    AccessLane.paidUnlimited ||
+    AccessLane.freeMonthly ||
+    AccessLane.freeSoftMode =>
+      null,
+  };
+}
+
 String _telegramBonusHomeLabel(
   SeedAppContext appContext,
   AppFirstBonusSummary? bonus,
