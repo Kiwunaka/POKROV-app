@@ -280,10 +280,9 @@ class _HomeStageState extends State<_HomeStage>
           controller: _revealController,
           begin: 0,
           end: 0.42,
-          child: _HomeBrandHeader(
-            center: true,
-            subtitle: widget.accessLabel,
-          ),
+          // Access is stated once per screen: _HomeAccessStrip below owns
+          // the label, so the brand header is a pure lockup.
+          child: _HomeBrandHeader(center: true),
         ),
         const SizedBox(height: 20),
         _HomeRevealSlice(
@@ -1067,15 +1066,14 @@ class _HomeWarpTile extends StatelessWidget {
 }
 
 class _HomeBrandHeader extends StatelessWidget {
-  const _HomeBrandHeader({this.center = false, this.subtitle});
+  const _HomeBrandHeader({this.center = false});
 
   final bool center;
-  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    final title = Row(
+    return Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment:
           center ? MainAxisAlignment.center : MainAxisAlignment.start,
@@ -1088,29 +1086,6 @@ class _HomeBrandHeader extends StatelessWidget {
                 color: p.ink,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0,
-              ),
-        ),
-      ],
-    );
-    final subtitle = this.subtitle?.trim();
-    if (subtitle == null || subtitle.isEmpty) {
-      return title;
-    }
-    return Column(
-      crossAxisAlignment:
-          center ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-      children: [
-        title,
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: center ? TextAlign.center : TextAlign.start,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: p.muted,
-                fontWeight: FontWeight.w400,
-                height: 1.2,
               ),
         ),
       ],

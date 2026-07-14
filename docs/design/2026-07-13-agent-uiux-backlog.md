@@ -19,32 +19,35 @@ against the worktree at `10e98ee` with current line numbers.
 
 NTU = needs-test-update.
 
-## Status @ 10e98ee + uncommitted 2026-07-13 fixes (verified in code)
+## Status @ 10e98ee + follow-up commits 2026-07-13 (verified in code)
 
-### HIG critique — 10 done, 10 pending
+### HIG critique — 19 done, 1 deferred
 
-| # | Item | Status | Evidence @ 10e98ee |
+| # | Item | Status | Evidence |
 | --- | --- | --- | --- |
 | 1 | Disc press compression (AnimatedScale) | DONE | shared/shell_widgets.dart:382 |
 | 2 | Disc shadow / layering | DONE | shared/shell_widgets.dart:401 |
 | 3 | Connected morph green inner plate | DONE | shared/shell_widgets.dart:450-456 |
-| 4 | Haptics discipline (tap()=selectionClick, drop _emitPhaseHaptics) | PENDING | _emitPhaseHaptics still at shared/shell_widgets.dart:197,205 |
-| 5 | Hint pulse on sine | DONE | features/home/home_surface.dart:1492 |
-| 6 | Busy not-warning + true ellipsis | DONE | :74 in 10e98ee; second site `_homeProtectionStatusLabel` :1126 fixed in follow-up (no test pins; app_shell 162/162 green) |
-| 7 | Status pill chevron (+ overflow fix) | DONE | features/home/home_surface.dart:671 |
-| 8 | Access label rendered twice | PENDING | subtitle still passed at features/home/home_surface.dart:285 |
-| 9 | Access badge gold → accent | DONE | features/home/home_surface.dart:800 |
-| 10 | Profile group inset separators | PENDING | no Divider interleave in profile_surface.dart section cards |
-| 11 | Action rows accent verb values | PENDING | pokrov_controls.dart unchanged |
-| 12 | Rules checkmarks instead of chevrons (NTU) | PENDING | chevron still at features/rules/rules_surface.dart:244 |
-| 13 | Busy location rows dimming | PENDING | no IgnorePointer/Opacity in locations_surface.dart disabled branch |
-| 14 | Sheet brisk exit (200ms easeInCubic) | DONE | shared/info_sheet.dart:26-28 |
-| 15 | Dark sheets elevation lift | PENDING | no elevation/shadowColor on sheet theme in seed_shell.dart |
-| 16 | Dark tab bar black shadow | DONE | shell/navigation_shell.dart:198 |
-| 17 | Shield glyph + M3 pill | DONE | shield in 10e98ee (navigation_shell.dart:218,268,477); indicator → Colors.transparent in follow-up (seed_shell.dart:174; selected state reads from accent icon + ink label :177-195) |
-| 18 | Skeletons instead of LinearProgressIndicator | PENDING | locations_surface.dart:136,362 |
-| 19 | Onboarding choice tiles → compact rows | PENDING | minHeight: 150 at onboarding_flow.dart:426 |
-| 20 | Referral card retint + action wrap + type tiers | PENDING | p.warning tint at rewards_hub.dart:894-896 |
+| 4 | Haptics discipline (tap()=selectionClick, drop _emitPhaseHaptics) | DEFERRED | owner-skipped 2026-07-13; resolve together with motion concept 1 (Arc Handoff), whose landing haptic leans on the phase-change emission this item deletes |
+| 5 | Hint pulse on sine | DONE | features/home/home_surface.dart |
+| 6 | Busy not-warning + true ellipsis | DONE | both sites; no test pins |
+| 7 | Status pill chevron (+ overflow fix) | DONE | features/home/home_surface.dart |
+| 8 | Access label rendered twice | DONE | subtitle param removed — _HomeBrandHeader is a pure lockup; _HomeAccessStrip owns the label |
+| 9 | Access badge gold → accent | DONE | features/home/home_surface.dart |
+| 10 | Profile group inset separators | DONE | _SettingsRowDivider (indent 46) interleaved in account/support/settings/bonus groups, access overview and diagnostics sheet |
+| 11 | Action rows accent verb values | DONE | PokrovSettingsRow.valueIsAction → accent+w600; applied to Привязать/Добавить/Управлять/Ввести/Продлить/Получить |
+| 12 | Rules checkmarks instead of chevrons (NTU) | DONE | check_rounded morph in _RouteModeSegment (PokrovCheckRow recipe); test pin updated: check findsOneWidget, chevron findsNothing |
+| 13 | Busy location rows dimming | DONE | IgnorePointer + Opacity(PokrovListRow.disabledOpacity) in _ClientLocationCityRow and _SmartConnectNodeRow |
+| 14 | Sheet brisk exit (200ms easeInCubic) | DONE | shared/info_sheet.dart |
+| 15 | Dark sheets elevation lift | DONE | bottomSheetTheme elevation 20 + Colors.black shadowColor (0.55 dark / 0.16 light), surfaceTintColor stays transparent |
+| 16 | Dark tab bar black shadow | DONE | shell/navigation_shell.dart |
+| 17 | Shield glyph + M3 pill | DONE | shield + transparent indicator |
+| 18 | Skeletons instead of LinearProgressIndicator | DONE | first catalog load → _MotionSkeletonList(rows: 3); refresh-with-data and node apply → 16px CupertinoActivityIndicator trailing in the auto card |
+| 19 | Onboarding choice tiles → compact rows | DONE | compact branch renders minHeight-72 rows (44 icon · title/subtitle · chevron); wide branch keeps cards; keys/strings unchanged |
+| 20 | Referral card retint + action wrap + type tiers | DONE | reward tint 0.10/0.20; actions on their own Wrap row (survives 320pt); _SectionCard titles → titleMedium/w600 |
+
+Verification for the 2026-07-13 follow-up wave: flutter analyze clean,
+app_shell 162/162 green (incl. updated rules pin).
 
 ### Motion concepts — 0 of 12 started
 
@@ -166,27 +169,27 @@ Line numbers as of the pre-10e98ee tree.
 1. Disc press snaps instead of compressing — shared/shell_widgets.dart:365-378. _pressed flips Transform.scale 1.0→0.97 in a raw rebuild (the AnimatedBuilder only listens to breath/sweep). Wrap the disc Container (line 379) in AnimatedScale(scale: _pressed ? PokrovConnectDiscMotion.pressScale : 1, duration: motion.duration(PokrovMotionTokens.quick), curve: _pressed ? Curves.easeIn : PokrovMotionTokens.spring) and drop pressed from PokrovConnectDiscMotion.scale. HIG: buttons feel physical — compression eases in, releases with spring; the app's #1 affordance is its only unanimated press. Risk: NTU — design_system_contract_test.dart:396-405 pins scale(pressed:). **[DONE @ 10e98ee]**
 2. Disc is flat — no layering — shared/shell_widgets.dart:382-390. Add to the decoration: boxShadow: [BoxShadow(color: (running ? accent : p.ink).withValues(alpha: isDark ? 0.35 : (running ? 0.20 : 0.08)), blurRadius: 30, offset: Offset(0, 12))] (black-based in dark). HIG: depth communicates the primary interactive layer; hero controls float above the canvas. Risk: safe. **[DONE @ 10e98ee]**
 3. Connected morph is a hairline, not a moment — shared/shell_widgets.dart:424-431. Inner circle stays p.canvas in every phase. Make it AnimatedContainer (_MotionTokens.standard, ease): running ? Color.alphaBlend(p.connectedGreen.withValues(alpha: 0.10), p.canvas) : p.canvas. Canon-legal (disc is the sanctioned connectedGreen surface). HIG: state must be glanceable, not forensic. Risk: safe. **[DONE @ 10e98ee]**
-4. Haptics off-discipline — shared/shell_widgets.dart:347 fires lightImpact per tap; :205-228 fires mediumImpact/heavyImpact on phase change (shared/pokrov_haptics.dart:14-20). Replace tap with PokrovHaptics.tap() (selectionClick), delete _emitPhaseHaptics, and add the missing HapticFeedback.selectionClick() to _selectRouteMode (shell/seed_shell.dart:542-547) to match theme (:52) and location (:556) picks. HIG: haptics sparse and same-class-consistent; selectionClick only per canon ("calm, not casino"). Risk: safe (heavyImpact( literal leaves the codebase entirely).
+4. Haptics off-discipline — shared/shell_widgets.dart:347 fires lightImpact per tap; :205-228 fires mediumImpact/heavyImpact on phase change (shared/pokrov_haptics.dart:14-20). Replace tap with PokrovHaptics.tap() (selectionClick), delete _emitPhaseHaptics, and add the missing HapticFeedback.selectionClick() to _selectRouteMode (shell/seed_shell.dart:542-547) to match theme (:52) and location (:556) picks. HIG: haptics sparse and same-class-consistent; selectionClick only per canon ("calm, not casino"). Risk: safe (heavyImpact( literal leaves the codebase entirely). **[DEFERRED — owner call 2026-07-13: do together with motion concept 1, whose landing haptic depends on phase-change emission]**
 5. Hint pulse pops each loop — features/home/home_surface.dart:1472-1487. opacity: (1 - progress) * 0.35 starts at 0.35 hard every 2.4 s. Use opacity: math.sin(math.pi * progress) * 0.35. HIG motion: continuous, no discontinuities in an attention loop. Risk: safe. **[DONE @ 10e98ee]**
 
 ### Status discipline
 
 6. Busy state dressed as a warning — features/home/home_surface.dart:66-72. runtimeBusy ? p.warning paints normal progress amber. Use p.muted (transitional = neutral); reserve warning for degraded/error. Also replace three-dot 'Подключается...' with true ellipsis 'Подключается…' at :74 and :1112. HIG: warning hues mean problems; … is baseline typographic polish. Risk: safe (Подключается absent from pokrov_seed_app_test.dart pins — re-grep before merge). **[DONE — :74 @ 10e98ee; :1126 fixed in follow-up]**
 7. Status pill hides its tappability — features/home/home_surface.dart:652-665. InkWell (key home-connection-details-action) shows only dot+label. Append Icon(Icons.chevron_right_rounded, size: 16, color: p.muted.withValues(alpha: 0.6)) inside the padding row. HIG: interactive elements must look interactive. Risk: safe (key/strings kept). **[DONE @ 10e98ee + overflow fix]**
-8. Access label rendered twice on one screen — features/home/home_surface.dart:283-286 (_HomeBrandHeader(subtitle: widget.accessLabel)) duplicates _HomeAccessStrip's title (:356-360). Pass subtitle: null on mobile. HIG: economy of information; calm means saying it once. Risk: safe.
+8. Access label rendered twice on one screen — features/home/home_surface.dart:283-286 (_HomeBrandHeader(subtitle: widget.accessLabel)) duplicates _HomeAccessStrip's title (:356-360). Pass subtitle: null on mobile. HIG: economy of information; calm means saying it once. Risk: safe. **[DONE — follow-up 2026-07-13; subtitle param removed entirely]**
 9. Amber creep — features/home/home_surface.dart:786. Access badge tone: _SectionTone.reward puts a third gold element above the fold. Change to _SectionTone.accent; keep reward tint solely on the Telegram bonus tile. HIG: one color = one meaning. Risk: safe. **[DONE @ 10e98ee]**
 
 ### Grouped-list fidelity
 
-10. Profile groups have no separators — features/profile/profile_surface.dart:180-233 (and every _SectionCard child Column): rows butt together. Interleave Divider(height: 1, thickness: 1, indent: 46, color: p.line) (34 icon + 12 gap), the exact pattern already in design_system/pokrov_controls.dart:120-127. HIG: grouped tables use inset hairlines aligned to text, not blank stacking. Risk: safe.
-11. Action rows look disabled — design_system/pokrov_controls.dart:827-836. Verb values ('Привязать', 'Ввести', 'Управлять') render muted w400 — the visual grammar of inert text. Add valueIsAction → color: tokens.accent, fontWeight: FontWeight.w600 when onTap != null and value is a verb. HIG: iOS Settings tints actionable text with the app accent. Risk: safe (color only).
-12. Route-mode rows lie with chevrons — features/rules/rules_surface.dart:242-248. Radio-style choices show chevron_right_rounded (= navigation). Replace with the PokrovCheckRow morph (pokrov_controls.dart:540-554): AnimatedScale 0.4→1 spring + fade Icons.check_rounded accent, reserving 22 px. HIG: chevron promises a push; checkmark states a selection. Risk: NTU — pokrov_seed_app_test.dart:3924-3930 pins the chevron inside rules-mode-row-allExceptRu.
-13. Busy location rows go silently dead — features/locations/locations_surface.dart:466-469 and :565-568: if (disabled) return content; with zero dimming. Return IgnorePointer(child: Opacity(opacity: PokrovListRow.disabledOpacity, child: content)). HIG: never leave live-looking dead controls. Risk: safe.
+10. Profile groups have no separators — features/profile/profile_surface.dart:180-233 (and every _SectionCard child Column): rows butt together. Interleave Divider(height: 1, thickness: 1, indent: 46, color: p.line) (34 icon + 12 gap), the exact pattern already in design_system/pokrov_controls.dart:120-127. HIG: grouped tables use inset hairlines aligned to text, not blank stacking. Risk: safe. **[DONE — follow-up 2026-07-13; _SettingsRowDivider, also in diagnostics sheet]**
+11. Action rows look disabled — design_system/pokrov_controls.dart:827-836. Verb values ('Привязать', 'Ввести', 'Управлять') render muted w400 — the visual grammar of inert text. Add valueIsAction → color: tokens.accent, fontWeight: FontWeight.w600 when onTap != null and value is a verb. HIG: iOS Settings tints actionable text with the app accent. Risk: safe (color only). **[DONE — follow-up 2026-07-13; valueIsAction opt-in]**
+12. Route-mode rows lie with chevrons — features/rules/rules_surface.dart:242-248. Radio-style choices show chevron_right_rounded (= navigation). Replace with the PokrovCheckRow morph (pokrov_controls.dart:540-554): AnimatedScale 0.4→1 spring + fade Icons.check_rounded accent, reserving 22 px. HIG: chevron promises a push; checkmark states a selection. Risk: NTU — pokrov_seed_app_test.dart:3924-3930 pins the chevron inside rules-mode-row-allExceptRu. **[DONE — follow-up 2026-07-13; pin updated: check findsOneWidget + chevron findsNothing]**
+13. Busy location rows go silently dead — features/locations/locations_surface.dart:466-469 and :565-568: if (disabled) return content; with zero dimming. Return IgnorePointer(child: Opacity(opacity: PokrovListRow.disabledOpacity, child: content)). HIG: never leave live-looking dead controls. Risk: safe. **[DONE — follow-up 2026-07-13]**
 
 ### Sheets & dark elevation
 
 14. Sheet exit mirrors its entrance — shared/info_sheet.dart:23-28. 280 ms emphasized both ways. Set reverseDuration: Duration(milliseconds: 200), reverseCurve: Curves.easeInCubic. HIG: present gently, dismiss briskly — symmetric sheets feel sluggish. Risk: safe. **[DONE @ 10e98ee]**
-15. Dark sheets don't lift — shell/seed_shell.dart:268-274. surfaceElevated #182019 vs surface #161D1A is ~invisible and elevation: 0. Keep palette (contract-locked); add elevation: 20, shadowColor: Colors.black.withValues(alpha: isDark ? 0.55 : 0.16) with surfaceTintColor still transparent. HIG dark mode: elevated layers must visibly separate. Risk: safe.
+15. Dark sheets don't lift — shell/seed_shell.dart:268-274. surfaceElevated #182019 vs surface #161D1A is ~invisible and elevation: 0. Keep palette (contract-locked); add elevation: 20, shadowColor: Colors.black.withValues(alpha: isDark ? 0.55 : 0.16) with surfaceTintColor still transparent. HIG dark mode: elevated layers must visibly separate. Risk: safe. **[DONE — follow-up 2026-07-13]**
 16. White "shadow" under dark tab bar — shell/navigation_shell.dart:193-199. BoxShadow(color: p.ink.withValues(alpha: 0.06)) — ink is near-white in dark, producing a glow. Use (isDark ? Colors.black : p.ink).withValues(alpha: isDark ? 0.35 : 0.06). HIG: shadows darken; they never emit. Risk: safe. **[DONE @ 10e98ee]**
 
 ### Chrome & tabs
@@ -195,10 +198,11 @@ Line numbers as of the pre-10e98ee tree.
 
 ### Loading / empty / onboarding / rewards / type
 
-18. Material progress bars in an iOS shell — features/locations/locations_surface.dart:134-137 and :360-363. Empty + busy → _MotionSkeletonList(rows: 3); refreshing-with-data → 16 px CupertinoActivityIndicator trailing in the auto card. HIG: indeterminate linear bars are foreign to iOS; skeletons also stay loop-gated under flutter test (the indeterminate bar never settles). Risk: safe (no byType(LinearProgressIndicator) pins).
-19. Onboarding choice tiles are hollow towers on phones — features/onboarding/onboarding_flow.dart:426 (minHeight: 150) + :464 (fixed SizedBox(height: 34)). In the compact branch render rows: Row(44 icon, 12, Expanded(title titleMedium + subtitle bodySmall), chevron), minHeight: 72, spacer removed. HIG: choices on phones are comfortable rows within thumb reach, not dead-space cards. Risk: safe (keys first-launch-new-user/-returning-user and pinned strings unchanged).
-20. Referral card: warning tint + 3 inline actions — features/rewards/rewards_hub.dart:889-897 amber p.warning container for a reward feature; :898-961 icon+code+button+2 icon-buttons in one row overflows near 320 pt. Retint to p.reward.withValues(alpha: 0.10) / border 0.20; move the three keyed actions to a second Wrap(spacing: 8) row. Bonus tier fix: shared/shell_widgets.dart:51-56 — card titles titleLarge(19/w700) sit 1 px under page headers headlineSmall(20); drop card titles to titleMedium(16/w600) for two honest tiers. HIG: color semantics, resilient layout, distinct type hierarchy. Risk: safe (rewards-referral-copy-action copy→check morph widgets preserved, test :2408-2430).
+18. Material progress bars in an iOS shell — features/locations/locations_surface.dart:134-137 and :360-363. Empty + busy → _MotionSkeletonList(rows: 3); refreshing-with-data → 16 px CupertinoActivityIndicator trailing in the auto card. HIG: indeterminate linear bars are foreign to iOS; skeletons also stay loop-gated under flutter test (the indeterminate bar never settles). Risk: safe (no byType(LinearProgressIndicator) pins). **[DONE — follow-up 2026-07-13; skeleton on first load, Cupertino spinner on refresh]**
+19. Onboarding choice tiles are hollow towers on phones — features/onboarding/onboarding_flow.dart:426 (minHeight: 150) + :464 (fixed SizedBox(height: 34)). In the compact branch render rows: Row(44 icon, 12, Expanded(title titleMedium + subtitle bodySmall), chevron), minHeight: 72, spacer removed. HIG: choices on phones are comfortable rows within thumb reach, not dead-space cards. Risk: safe (keys first-launch-new-user/-returning-user and pinned strings unchanged). **[DONE — follow-up 2026-07-13; compact branch only, wide keeps cards]**
+20. Referral card: warning tint + 3 inline actions — features/rewards/rewards_hub.dart:889-897 amber p.warning container for a reward feature; :898-961 icon+code+button+2 icon-buttons in one row overflows near 320 pt. Retint to p.reward.withValues(alpha: 0.10) / border 0.20; move the three keyed actions to a second Wrap(spacing: 8) row. Bonus tier fix: shared/shell_widgets.dart:51-56 — card titles titleLarge(19/w700) sit 1 px under page headers headlineSmall(20); drop card titles to titleMedium(16/w600) for two honest tiers. HIG: color semantics, resilient layout, distinct type hierarchy. Risk: safe (rewards-referral-copy-action copy→check morph widgets preserved, test :2408-2430). **[DONE — follow-up 2026-07-13; all three parts incl. titleMedium card tier]**
 
 Sharpest wins for "premium in one day" (per the critique): 1, 2, 3 (the hero
 finally feels alive), 10, 12 (grouped-list honesty), 15, 16 (dark mode stops
-looking web-made). Of these, 10, 12 and 15 remain open.
+looking web-made). All closed as of 2026-07-13; only 4 (haptics) is deferred
+into the Arc Handoff wave.

@@ -269,7 +269,10 @@ ThemeData _buildPokrovTheme({
       backgroundColor: tokens.surfaceElevated,
       surfaceTintColor: Colors.transparent,
       modalBarrierColor: tokens.ink.withValues(alpha: isDark ? 0.6 : 0.32),
-      elevation: 0,
+      // The palette step surface→surfaceElevated is nearly invisible in dark,
+      // so the sheet lift comes from a real shadow, never a tint overlay.
+      elevation: 20,
+      shadowColor: Colors.black.withValues(alpha: isDark ? 0.55 : 0.16),
       shape: const RoundedRectangleBorder(borderRadius: PokrovRadii.sheet),
     ),
     listTileTheme: ListTileThemeData(

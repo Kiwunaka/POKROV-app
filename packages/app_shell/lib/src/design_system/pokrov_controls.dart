@@ -789,6 +789,7 @@ class PokrovSettingsRow extends StatelessWidget {
     required this.value,
     this.onTap,
     this.enabled = true,
+    this.valueIsAction = false,
   });
 
   final IconData icon;
@@ -800,12 +801,18 @@ class PokrovSettingsRow extends StatelessWidget {
   /// visibly "asleep" instead of alive-looking but dead.
   final bool enabled;
 
+  /// Marks verb values ('Привязать', 'Ввести', 'Управлять') as actionable:
+  /// accent + w600 like iOS Settings, instead of muted text whose visual
+  /// grammar reads as inert state.
+  final bool valueIsAction;
+
   @override
   Widget build(BuildContext context) {
     final row = LayoutBuilder(
       builder: (context, constraints) {
         final tokens = PokrovPalette.of(context);
         final compact = constraints.maxWidth < 360;
+        final actionable = valueIsAction && onTap != null;
         final leading = Container(
           width: 34,
           height: 34,
@@ -830,8 +837,8 @@ class PokrovSettingsRow extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           textAlign: compact ? TextAlign.left : TextAlign.right,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: tokens.muted,
-                fontWeight: FontWeight.w400,
+                color: actionable ? tokens.accent : tokens.muted,
+                fontWeight: actionable ? FontWeight.w600 : FontWeight.w400,
               ),
         );
         final chevron = onTap == null

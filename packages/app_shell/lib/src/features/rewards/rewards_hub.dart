@@ -891,72 +891,88 @@ class _RewardsReferralCardState extends State<_RewardsReferralCard> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: p.warning.withValues(alpha: 0.08),
+        // Reward feature wears the reward tint — warning amber means trouble.
+        color: p.reward.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: p.warning.withValues(alpha: 0.18)),
+        border: Border.all(color: p.reward.withValues(alpha: 0.20)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.group_add_outlined, color: p.accent),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  code,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: p.ink,
-                        fontWeight: FontWeight.w700,
-                      ),
+          Row(
+            children: [
+              Icon(Icons.group_add_outlined, color: p.accent),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      code,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: p.ink,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    Text(
+                      widget.referralSummary.bonusDays > 0
+                          ? 'Приглашений: ${widget.referralSummary.count} · бонус +${ruDays(widget.referralSummary.bonusDays)}'
+                          : 'Приглашений: ${widget.referralSummary.count}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: p.muted,
+                          ),
+                    ),
+                  ],
                 ),
-                Text(
-                  widget.referralSummary.bonusDays > 0
-                      ? 'Приглашений: ${widget.referralSummary.count} · бонус +${ruDays(widget.referralSummary.bonusDays)}'
-                      : 'Приглашений: ${widget.referralSummary.count}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: p.muted,
-                      ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Actions live on their own wrapping row so the card survives
+          // 320pt widths instead of overflowing a single crowded line.
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                key: const ValueKey('rewards-referral-copy-action'),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: code));
+                  _flashCopied(link: false);
+                },
+                icon: _copyMorphIcon(
+                  copied: _codeCopied,
+                  idleIcon: Icons.copy_rounded,
                 ),
-              ],
-            ),
-          ),
-          OutlinedButton.icon(
-            key: const ValueKey('rewards-referral-copy-action'),
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: code));
-              _flashCopied(link: false);
-            },
-            icon: _copyMorphIcon(
-              copied: _codeCopied,
-              idleIcon: Icons.copy_rounded,
-            ),
-            label: const Text('Скопировать'),
-          ),
-          const SizedBox(width: 8),
-          IconButton.outlined(
-            key: const ValueKey('rewards-referral-copy-link-action'),
-            tooltip: 'Скопировать ссылку',
-            onPressed: shareLink == null
-                ? null
-                : () {
-                    Clipboard.setData(
-                      ClipboardData(text: shareLink.toString()),
-                    );
-                    _flashCopied(link: true);
-                  },
-            icon: _copyMorphIcon(
-              copied: _linkCopied,
-              idleIcon: Icons.link_rounded,
-            ),
-          ),
-          IconButton.filled(
-            key: const ValueKey('rewards-referral-share-action'),
-            tooltip: 'Открыть ссылку',
-            onPressed: shareLink == null
-                ? null
-                : () => widget.onOpenHandoff('download', shareLink.toString()),
-            icon: const Icon(Icons.ios_share_rounded),
+                label: const Text('Скопировать'),
+              ),
+              IconButton.outlined(
+                key: const ValueKey('rewards-referral-copy-link-action'),
+                tooltip: 'Скопировать ссылку',
+                onPressed: shareLink == null
+                    ? null
+                    : () {
+                        Clipboard.setData(
+                          ClipboardData(text: shareLink.toString()),
+                        );
+                        _flashCopied(link: true);
+                      },
+                icon: _copyMorphIcon(
+                  copied: _linkCopied,
+                  idleIcon: Icons.link_rounded,
+                ),
+              ),
+              IconButton.filled(
+                key: const ValueKey('rewards-referral-share-action'),
+                tooltip: 'Открыть ссылку',
+                onPressed: shareLink == null
+                    ? null
+                    : () =>
+                        widget.onOpenHandoff('download', shareLink.toString()),
+                icon: const Icon(Icons.ios_share_rounded),
+              ),
+            ],
           ),
         ],
       ),

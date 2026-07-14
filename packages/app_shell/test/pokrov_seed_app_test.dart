@@ -3924,9 +3924,16 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('rules-mode-row-allExceptRu')),
-        matching: find.byIcon(Icons.chevron_right_rounded),
+        matching: find.byIcon(Icons.check_rounded),
       ),
       findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('rules-mode-row-allExceptRu')),
+        matching: find.byIcon(Icons.chevron_right_rounded),
+      ),
+      findsNothing,
     );
 
     final selectedAppsStatus =

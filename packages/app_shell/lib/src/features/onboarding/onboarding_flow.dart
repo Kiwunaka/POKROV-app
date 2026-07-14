@@ -268,6 +268,7 @@ class _FirstLaunchChoiceScreen extends StatelessWidget {
                 subtitle:
                     '${ruDays(appContext.runtimeProfile.trialDays)} премиум бесплатно',
                 primary: true,
+                compact: compact,
                 onTap: onNewUser,
               ),
               _FirstLaunchChoiceCard(
@@ -276,6 +277,7 @@ class _FirstLaunchChoiceScreen extends StatelessWidget {
                 title: 'У меня уже есть доступ',
                 subtitle: 'Восстановить по коду',
                 primary: false,
+                compact: compact,
                 onTap: onReturningUser,
               ),
             ];
@@ -400,6 +402,7 @@ class _FirstLaunchChoiceCard extends StatelessWidget {
     required this.subtitle,
     required this.primary,
     required this.onTap,
+    this.compact = false,
   });
 
   final IconData icon;
@@ -407,6 +410,10 @@ class _FirstLaunchChoiceCard extends StatelessWidget {
   final String subtitle;
   final bool primary;
   final VoidCallback onTap;
+
+  /// Phones get comfortable thumb-reach rows; the hollow-tower card layout
+  /// stays reserved for the wide two-column branch.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -420,6 +427,79 @@ class _FirstLaunchChoiceCard extends StatelessWidget {
         primary ? p.accent : p.accent.withValues(alpha: 0.10);
     final iconColor =
         primary ? Theme.of(context).colorScheme.onPrimary : p.accent;
+    final iconBox = Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: iconBackground,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: primary
+            ? [
+                BoxShadow(
+                  color: p.accent.withValues(alpha: 0.28),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : null,
+      ),
+      child: Icon(icon, color: iconColor, size: 23),
+    );
+    final chevron = Icon(
+      Icons.chevron_right_rounded,
+      color: primary ? p.accent : p.ink.withValues(alpha: 0.38),
+    );
+    final titleText = Text(
+      title,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.titleMedium?.copyWith(
+        color: p.ink,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+    final subtitleText = Text(
+      subtitle,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: p.muted,
+        height: 1.28,
+      ),
+    );
+    if (compact) {
+      return PokrovSettingsRowPressSurface(
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 72),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: border),
+          ),
+          child: Row(
+            children: [
+              iconBox,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    titleText,
+                    const SizedBox(height: 3),
+                    subtitleText,
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              chevron,
+            ],
+          ),
+        ),
+      );
+    }
     return PokrovSettingsRowPressSurface(
       onTap: onTap,
       child: Container(
@@ -436,51 +516,15 @@ class _FirstLaunchChoiceCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: iconBackground,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: primary
-                        ? [
-                            BoxShadow(
-                              color: p.accent.withValues(alpha: 0.28),
-                              blurRadius: 18,
-                              offset: const Offset(0, 8),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Icon(icon, color: iconColor, size: 23),
-                ),
+                iconBox,
                 const Spacer(),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: primary ? p.accent : p.ink.withValues(alpha: 0.38),
-                ),
+                chevron,
               ],
             ),
             const SizedBox(height: 34),
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: p.ink,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            titleText,
             const SizedBox(height: 5),
-            Text(
-              subtitle,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: p.muted,
-                height: 1.28,
-              ),
-            ),
+            subtitleText,
           ],
         ),
       ),

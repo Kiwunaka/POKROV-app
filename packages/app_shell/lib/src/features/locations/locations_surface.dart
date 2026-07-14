@@ -121,7 +121,8 @@ class _LocationsSectionState extends State<_LocationsSection> {
               ? 'POKROV выберет быстрый маршрут. $premiumPool · ${_routeModeShortLabel(widget.selectedRouteMode)}'
               : 'Сначала включите POKROV VPN',
           value: widget.preferredNodeCode.trim().isEmpty ? 'Авто' : 'Выбрано',
-          busy: widget.nodePreferenceBusy,
+          busy: widget.nodePreferenceBusy ||
+              (widget.locationsCatalogBusy && hasList),
           onTap: () => _showInfoSheet(
             context,
             title: 'Автоматически',
@@ -131,10 +132,6 @@ class _LocationsSectionState extends State<_LocationsSection> {
             ],
           ),
         ),
-        if (widget.locationsCatalogBusy && widget.hasProvisionedAccess) ...[
-          const SizedBox(height: 10),
-          const LinearProgressIndicator(minHeight: 3),
-        ],
         if (!widget.locationsCatalogBusy &&
             widget.hasProvisionedAccess &&
             (widget.locationsCatalogError ?? '').trim().isNotEmpty) ...[
@@ -213,13 +210,21 @@ class _LocationsSectionState extends State<_LocationsSection> {
                   ),
           ),
         ] else if (widget.hasProvisionedAccess) ...[
-          _SectionCard(
-            title: 'Выбор страны',
-            tone: _SectionTone.muted,
-            lines: const [
-              'Пока доступен автоматический выбор. Список стран обновится вместе с доступом.',
-            ],
-          ),
+          // First catalog load: skeleton rows instead of an indeterminate
+          // Material bar — same loading language as the rest of the shell.
+          if (widget.locationsCatalogBusy)
+            const _MotionSkeletonList(
+              key: ValueKey('locations-catalog-loading-skeleton'),
+              rows: 3,
+            )
+          else
+            _SectionCard(
+              title: 'Выбор страны',
+              tone: _SectionTone.muted,
+              lines: const [
+                'Пока доступен автоматический выбор. Список стран обновится вместе с доступом.',
+              ],
+            ),
         ] else ...[
           const _MotionSkeletonList(
             key: ValueKey('locations-skeleton-list'),
@@ -348,6 +353,16 @@ class _AutoLocationCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
+              if (busy) ...[
+                // Quiet refresh signal beside the status pill — indeterminate
+                // Material bars read as foreign in this shell.
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CupertinoActivityIndicator(radius: 8),
+                ),
+                const SizedBox(width: 10),
+              ],
               _StatusPill(
                 label: value,
                 icon: enabled
@@ -357,10 +372,6 @@ class _AutoLocationCard extends StatelessWidget {
               ),
             ],
           ),
-          if (busy) ...[
-            const SizedBox(height: 12),
-            const LinearProgressIndicator(minHeight: 3),
-          ],
         ],
       ),
     );
@@ -465,7 +476,13 @@ class _ClientLocationCityRow extends StatelessWidget {
       ),
     );
     if (disabled) {
-      return content;
+      // Busy rows go visibly asleep instead of live-looking but dead.
+      return IgnorePointer(
+        child: Opacity(
+          opacity: PokrovListRow.disabledOpacity,
+          child: content,
+        ),
+      );
     }
     return PokrovSettingsRowPressSurface(
       onTap: onTap,
@@ -564,7 +581,13 @@ class _SmartConnectNodeRow extends StatelessWidget {
       ),
     );
     if (disabled) {
-      return content;
+      // Busy rows go visibly asleep instead of live-looking but dead.
+      return IgnorePointer(
+        child: Opacity(
+          opacity: PokrovListRow.disabledOpacity,
+          child: content,
+        ),
+      );
     }
     return PokrovSettingsRowPressSurface(
       onTap: onTap,

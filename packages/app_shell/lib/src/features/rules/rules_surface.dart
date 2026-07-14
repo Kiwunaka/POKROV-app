@@ -240,10 +240,23 @@ class _RouteModeSegment extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: selected ? p.accent : p.ink.withValues(alpha: 0.3),
+                // Radio-style choice: a checkmark states the selection; a
+                // chevron would promise navigation. Same morph recipe as
+                // PokrovCheckRow, 22px reserved so rows never reflow.
+                AnimatedScale(
+                  scale: selected ? 1 : 0.4,
+                  duration: motion.duration(PokrovMotionTokens.short),
+                  curve: PokrovMotionTokens.spring,
+                  child: AnimatedOpacity(
+                    opacity: selected ? 1 : 0,
+                    duration: motion.duration(PokrovMotionTokens.quick),
+                    curve: Curves.easeOut,
+                    child: Icon(
+                      Icons.check_rounded,
+                      size: 22,
+                      color: p.accent,
+                    ),
+                  ),
                 ),
               ],
             ),

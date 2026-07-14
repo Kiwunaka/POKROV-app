@@ -184,20 +184,24 @@ class _ProfileSection extends StatelessWidget {
                         icon: Icons.send_outlined,
                         title: 'Telegram',
                         value: telegramBonusBusy ? 'Проверяем' : 'Привязать',
+                        valueIsAction: !telegramBonusBusy,
                         enabled: !telegramBonusBusy,
                         onTap: onCreateTelegramLink,
                       ),
+                      const _SettingsRowDivider(),
                       _SettingsRow(
                         key: const ValueKey('profile-email-action'),
                         icon: Icons.alternate_email_rounded,
                         title: 'Email',
                         value: 'Добавить',
+                        valueIsAction: true,
                         onTap: () => _showEmailRecoverySheet(
                           context,
                           appContext: appContext,
                           onOpenHandoff: onOpenHandoff,
                         ),
                       ),
+                      const _SettingsRowDivider(),
                       _SettingsRow(
                         key: const ValueKey('profile-open-cabinet-action'),
                         icon: Icons.web_outlined,
@@ -206,11 +210,13 @@ class _ProfileSection extends StatelessWidget {
                         onTap: () =>
                             onOpenHandoff('cabinet', appContext.cabinetUrl),
                       ),
+                      const _SettingsRowDivider(),
                       _SettingsRow(
                         key: const ValueKey('profile-devices-action'),
                         icon: Icons.devices_other_rounded,
                         title: 'Устройства',
                         value: 'Управлять',
+                        valueIsAction: true,
                         onTap: () => _showDevicesSheet(
                           context,
                           currentPlatformLabel: appContext.hostPlatform.label,
@@ -243,6 +249,7 @@ class _ProfileSection extends StatelessWidget {
                     icon: Icons.key_rounded,
                     title: 'Код активации',
                     value: 'Ввести',
+                    valueIsAction: true,
                     onTap: () => _showRedeemSheet(
                       context,
                       hintCode: appContext.redeemHint,
@@ -268,6 +275,7 @@ class _ProfileSection extends StatelessWidget {
                           value: 'Чат',
                           onTap: onOpenSupportHub,
                         ),
+                        const _SettingsRowDivider(),
                         _SettingsRow(
                           key: const ValueKey('profile-diagnostics-action'),
                           icon: Icons.health_and_safety_outlined,
@@ -306,6 +314,7 @@ class _ProfileSection extends StatelessWidget {
                           ],
                         ),
                       ),
+                      const _SettingsRowDivider(),
                       _SettingsRow(
                         key: const ValueKey(
                           'profile-enhanced-protection-action',
@@ -320,6 +329,7 @@ class _ProfileSection extends StatelessWidget {
                           unawaited(onOpenWarp());
                         },
                       ),
+                      const _SettingsRowDivider(),
                       _SettingsRow(
                         key: const ValueKey('profile-notifications-action'),
                         icon: notificationsUnread > 0
@@ -341,6 +351,7 @@ class _ProfileSection extends StatelessWidget {
                           );
                         },
                       ),
+                      const _SettingsRowDivider(),
                       _SettingsRow(
                         key: const ValueKey('profile-theme-action'),
                         icon: Icons.brightness_6_outlined,
@@ -372,11 +383,13 @@ class _ProfileSection extends StatelessWidget {
                         icon: Icons.send_outlined,
                         title: 'Telegram-бонус',
                         value: telegramBonusCanClaim ? 'Получить' : 'Проверить',
+                        valueIsAction: !telegramBonusBusy,
                         enabled: !telegramBonusBusy,
                         onTap: telegramBonusCanClaim
                             ? onClaimTelegramBonus
                             : onCheckTelegramBonus,
                       ),
+                      const _SettingsRowDivider(),
                       _SettingsRow(
                         key: const ValueKey('profile-bonus-wheel-action'),
                         icon: Icons.card_giftcard_outlined,
@@ -515,6 +528,7 @@ class _ProfileAccessOverview extends StatelessWidget {
               value: statusLabel,
               onTap: onStatusTap,
             ),
+            const _SettingsRowDivider(),
             _SettingsRow(
               key: const ValueKey('profile-plan-details-action'),
               icon: Icons.workspace_premium_outlined,
@@ -522,17 +536,31 @@ class _ProfileAccessOverview extends StatelessWidget {
               value: accessValue,
               onTap: onPlanTap,
             ),
+            const _SettingsRowDivider(),
             _SettingsRow(
               key: const ValueKey('profile-checkout-action'),
               icon: Icons.shopping_bag_outlined,
               title: 'Продлить доступ',
               value: 'Продлить',
+              valueIsAction: true,
               onTap: onCheckoutTap,
             ),
           ],
         ),
       ],
     );
+  }
+}
+
+/// Inset hairline between grouped settings rows, iOS grouped-table style:
+/// aligned to the text column (34px icon + 12px gap), never full-bleed.
+class _SettingsRowDivider extends StatelessWidget {
+  const _SettingsRowDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    return Divider(height: 1, thickness: 1, indent: 46, color: p.line);
   }
 }
 

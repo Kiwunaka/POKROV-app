@@ -50,8 +50,11 @@ class _SectionCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              // titleMedium/w600 keeps card titles a clear tier below the
+              // headlineSmall page headers instead of 1px apart.
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: p.ink,
+                    fontWeight: FontWeight.w600,
                   ),
             ),
             if (lines.isNotEmpty) ...[
