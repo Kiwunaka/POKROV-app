@@ -467,6 +467,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   // in flight.
   bool _connectHintDismissed = true;
   _FirstLaunchStep _firstLaunchStep = _FirstLaunchStep.choice;
+
+  /// Welcome Handover plays only for user-driven gate exits; the silent
+  /// boot resolve for returning users stays an instant removal so the gate
+  /// never ghost-fades over their home screen.
+  bool _firstLaunchExitAnimated = false;
   String? _runtimeHeadline;
   String _telegramBonusStatus = 'Получить код';
   bool _telegramBonusBusy = false;
@@ -1398,6 +1403,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     HapticFeedback.selectionClick();
     unawaited(_markFirstLaunchCompleted());
     setState(() {
+      _firstLaunchExitAnimated = true;
       _firstLaunchStep = _FirstLaunchStep.ready;
     });
   }
@@ -1463,6 +1469,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _firstLaunchBusy = false;
       if (ok) {
         unawaited(_markFirstLaunchCompleted());
+        // Restore success exits through the same handover as the new-user
+        // path — one gate, one choreography.
+        _firstLaunchExitAnimated = true;
         _firstLaunchStep = _FirstLaunchStep.ready;
       }
     });
@@ -2223,6 +2232,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             runtimeBusy: _runtimeBusy,
             primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
             connectHintVisible: !_connectHintDismissed,
+            revealHold: _firstLaunchStep != _FirstLaunchStep.ready,
             bonusSummary: _bonusSummary,
             telegramBonusBusy: _telegramBonusBusy,
             warpPolicy: _managedWarpPolicy,
@@ -2358,22 +2368,47 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                   child: Stack(
                     children: [
                       Positioned.fill(child: shell),
-                      if (_firstLaunchStep != _FirstLaunchStep.ready)
-                        _FirstLaunchGate(
-                          appContext: widget.appContext,
-                          step: _firstLaunchStep,
-                          restoreCodeController:
-                              _firstLaunchRestoreCodeController,
-                          busy: _firstLaunchBusy,
-                          onNewUser: _completeFirstLaunchAsNewUser,
-                          onReturningUser: _openFirstLaunchRestore,
-                          onBack: _backToFirstLaunchChoice,
-                          onRedeemCode: _redeemFirstLaunchRestoreCode,
-                          onOpenTelegram: _createTelegramLinkInApp,
-                          onOpenCabinet: () => _openCabinetWithHandoff(
-                            widget.appContext.cabinetUrl,
+                      // Welcome Handover: the gate leaves with a fade and a
+                      // gentle 1.02 scale while the home reveal rises under
+                      // it — onboarding hands over instead of hard-cutting.
+                      Positioned.fill(
+                        child: AnimatedSwitcher(
+                          duration:
+                              _firstLaunchExitAnimated && !disableAnimations
+                                  ? _MotionTokens.standard
+                                  : Duration.zero,
+                          switchInCurve: _MotionTokens.emphasized,
+                          switchOutCurve: _MotionTokens.emphasized,
+                          transitionBuilder: (child, animation) =>
+                              FadeTransition(
+                            opacity: animation,
+                            child: ScaleTransition(
+                              scale: Tween<double>(begin: 1.02, end: 1)
+                                  .animate(animation),
+                              child: child,
+                            ),
                           ),
+                          child: _firstLaunchStep != _FirstLaunchStep.ready
+                              ? _FirstLaunchGate(
+                                  appContext: widget.appContext,
+                                  step: _firstLaunchStep,
+                                  restoreCodeController:
+                                      _firstLaunchRestoreCodeController,
+                                  busy: _firstLaunchBusy,
+                                  onNewUser: _completeFirstLaunchAsNewUser,
+                                  onReturningUser: _openFirstLaunchRestore,
+                                  onBack: _backToFirstLaunchChoice,
+                                  onRedeemCode: _redeemFirstLaunchRestoreCode,
+                                  onOpenTelegram: _createTelegramLinkInApp,
+                                  onOpenCabinet: () => _openCabinetWithHandoff(
+                                    widget.appContext.cabinetUrl,
+                                  ),
+                                )
+                              : const SizedBox.shrink(
+                                  key: ValueKey('first-launch-gate-exited'),
+                                ),
                         ),
+                      ),
                     ],
                   ),
                 ),

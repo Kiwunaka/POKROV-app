@@ -9,6 +9,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.runtimeBusy,
     required this.primaryConnectEnabled,
     required this.connectHintVisible,
+    required this.revealHold,
     required this.bonusSummary,
     required this.telegramBonusBusy,
     required this.warpPolicy,
@@ -30,6 +31,10 @@ class _QuickConnectSection extends StatelessWidget {
   final bool runtimeBusy;
   final bool primaryConnectEnabled;
   final bool connectHintVisible;
+
+  /// Welcome Handover: true while the first-launch gate covers the shell,
+  /// so the staged reveal waits for the handover instead of burning at boot.
+  final bool revealHold;
   final AppFirstBonusSummary? bonusSummary;
   final bool telegramBonusBusy;
   final WarpRuntimePolicy warpPolicy;
@@ -96,6 +101,7 @@ class _QuickConnectSection extends StatelessWidget {
             constraints: BoxConstraints(maxWidth: isDesktop ? 1220 : 460),
             child: _HomeStage(
               preferDesktopLayout: isDesktop,
+              revealHold: revealHold,
               statusLabel: statusLabel,
               statusColor: statusColor,
               actionLabel: actionLabel,
@@ -147,6 +153,7 @@ class _QuickConnectSection extends StatelessWidget {
 class _HomeStage extends StatefulWidget {
   const _HomeStage({
     required this.preferDesktopLayout,
+    required this.revealHold,
     required this.statusLabel,
     required this.statusColor,
     required this.actionLabel,
@@ -178,6 +185,10 @@ class _HomeStage extends StatefulWidget {
   });
 
   final bool preferDesktopLayout;
+
+  /// Welcome Handover: while true the staged reveal stays parked at zero;
+  /// the flip to false starts it a beat into the gate's exit.
+  final bool revealHold;
   final String statusLabel;
   final Color statusColor;
   final String actionLabel;
@@ -215,6 +226,7 @@ class _HomeStageState extends State<_HomeStage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _revealController;
   bool _revealStarted = false;
+  Timer? _revealTimer;
 
   @override
   void initState() {
@@ -234,14 +246,35 @@ class _HomeStageState extends State<_HomeStage>
       _revealStarted = true;
       return;
     }
-    if (!_revealStarted) {
+    if (!_revealStarted && !widget.revealHold) {
       _revealStarted = true;
       _revealController.forward();
     }
   }
 
   @override
+  void didUpdateWidget(covariant _HomeStage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.revealHold || widget.revealHold || _revealStarted) {
+      return;
+    }
+    _revealStarted = true;
+    if (_MotionScope.of(context).disableAnimations) {
+      _revealController.value = 1;
+      return;
+    }
+    // Welcome Handover: the reveal starts a beat into the gate's exit so
+    // the brand lockup reads as one mark persisting across the crossfade.
+    _revealTimer = Timer(const Duration(milliseconds: 80), () {
+      if (mounted) {
+        _revealController.forward();
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    _revealTimer?.cancel();
     _revealController.dispose();
     super.dispose();
   }
