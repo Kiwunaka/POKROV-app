@@ -70,6 +70,7 @@ class _DesktopShell extends StatelessWidget {
                 ),
                 child: _TabTransition(
                   index: selectedIndex,
+                  axis: Axis.vertical,
                   child: _LazyIndexedStack(
                     index: selectedIndex,
                     builders: sectionBuilders,
@@ -211,7 +212,12 @@ class _MobileShell extends StatelessWidget {
                 child: NavigationBar(
                   height: 64,
                   selectedIndex: selectedIndex,
-                  onDestinationSelected: onSelected,
+                  onDestinationSelected: (index) {
+                    // Selection tick for the thumb — pointer navigation on
+                    // desktop stays silent.
+                    PokrovHaptics.tap();
+                    onSelected(index);
+                  },
                   destinations: const [
                     NavigationDestination(
                       key: ValueKey('nav-protection'),
@@ -291,18 +297,23 @@ class _DesktopSidebar extends PokrovDesktopSidebar {
         );
 }
 
-/// Calm cross-tab transition: fades 0.92 -> 1 and slides 6px up over
-/// [_MotionTokens.short] whenever the selected index changes, while the
-/// wrapped [_LazyIndexedStack] keeps every opened tab alive. Reduced motion
-/// switches instantly.
+/// Calm cross-tab transition: fades 0.92 -> 1 over [_MotionTokens.short]
+/// while the content drifts 8px in from the side of travel (vertically for
+/// the desktop sidebar), confirming the spatial model of the navigation.
+/// The wrapped [_LazyIndexedStack] keeps every opened tab alive and reduced
+/// motion switches instantly.
 class _TabTransition extends StatefulWidget {
   const _TabTransition({
     required this.index,
     required this.child,
+    this.axis = Axis.horizontal,
   }) : super(key: const ValueKey('tab-transition-motion'));
 
   final int index;
   final Widget child;
+
+  /// Travel axis of the hosting navigation row or rail.
+  final Axis axis;
 
   @override
   State<_TabTransition> createState() => _TabTransitionState();
@@ -316,12 +327,17 @@ class _TabTransitionState extends State<_TabTransition>
     value: 1,
   );
 
+  /// +1 when moving to a later tab, -1 for an earlier one: the new content
+  /// enters from the direction of travel.
+  double _direction = 1;
+
   @override
   void didUpdateWidget(covariant _TabTransition oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.index == widget.index) {
       return;
     }
+    _direction = widget.index > oldWidget.index ? 1 : -1;
     if (_MotionScope.of(context).disableAnimations) {
       _controller.value = 1;
     } else {
@@ -343,11 +359,16 @@ class _TabTransitionState extends State<_TabTransition>
       builder: (context, child) {
         final progress = _MotionScope.of(context).disableAnimations
             ? 1.0
-            : _MotionTokens.ease.transform(_controller.value);
+            : _MotionTokens.emphasized.transform(_controller.value);
+        // Hard-capped at 8px: any more and the fade-dominant transition
+        // starts reading as a carousel.
+        final drift = (1 - progress) * 8 * _direction;
         return Opacity(
           opacity: 0.92 + 0.08 * progress,
           child: Transform.translate(
-            offset: Offset(0, (1 - progress) * 6),
+            offset: widget.axis == Axis.horizontal
+                ? Offset(drift, 0)
+                : Offset(0, drift),
             child: child,
           ),
         );

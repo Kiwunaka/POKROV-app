@@ -627,7 +627,7 @@ class PokrovWarpToggleRow extends StatelessWidget {
   }
 }
 
-class PokrovStatusDotLabel extends StatelessWidget {
+class PokrovStatusDotLabel extends StatefulWidget {
   const PokrovStatusDotLabel({
     required this.label,
     required this.color,
@@ -641,33 +641,83 @@ class PokrovStatusDotLabel extends StatelessWidget {
   final Color color;
 
   @override
+  State<PokrovStatusDotLabel> createState() => _PokrovStatusDotLabelState();
+}
+
+class _PokrovStatusDotLabelState extends State<PokrovStatusDotLabel> {
+  /// Set only when the phase-family color actually changes, so the ping
+  /// never fires on mount or on text-only headline churn.
+  Color? _pingColor;
+
+  @override
+  void didUpdateWidget(covariant PokrovStatusDotLabel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.color != widget.color) {
+      _pingColor = widget.color;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final motion = PokrovMotionScope.of(context);
     final tokens = PokrovPalette.of(context);
+    final pingColor = _pingColor;
     return Wrap(
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: 8,
       runSpacing: 4,
       children: [
-        AnimatedContainer(
-          key: dotMotionKey,
-          duration: motion.duration(PokrovMotionTokens.short),
-          curve: PokrovMotionTokens.ease,
+        SizedBox(
           width: 8,
           height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              // Status ping: one soft expanding ring per state change —
+              // AirPods-connect language, never a persistent blinker.
+              if (pingColor != null && !motion.disableAnimations)
+                TweenAnimationBuilder<double>(
+                  key: ValueKey('status-ping-${pingColor.toARGB32()}'),
+                  tween: Tween(begin: 0, end: 1),
+                  duration: motion.duration(PokrovMotionTokens.standard),
+                  curve: PokrovMotionTokens.emphasized,
+                  builder: (context, t, _) => Opacity(
+                    opacity: (1 - t) * 0.4,
+                    child: Transform.scale(
+                      scale: 1 + 1.2 * t,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: pingColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const SizedBox.square(dimension: 8),
+                      ),
+                    ),
+                  ),
+                ),
+              AnimatedContainer(
+                key: PokrovStatusDotLabel.dotMotionKey,
+                duration: motion.duration(PokrovMotionTokens.short),
+                curve: PokrovMotionTokens.ease,
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: widget.color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
           ),
         ),
         AnimatedSwitcher(
-          key: switcherKey,
+          key: PokrovStatusDotLabel.switcherKey,
           duration: motion.duration(PokrovMotionTokens.short),
           transitionBuilder: pokrovFadeSlideTransition,
           child: Text(
-            label,
-            key: ValueKey(label),
+            widget.label,
+            key: ValueKey(widget.label),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: tokens.ink,
