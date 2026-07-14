@@ -136,6 +136,31 @@ class PokrovConnectDiscMotion {
   static const connectedArcStartAngle = -math.pi * 0.62;
   static const connectedArcSweepRadians = math.pi * 1.24;
 
+  /// The busy sweep lands into the connected arc (and unwinds back into its
+  /// tail on release) over one standard beat.
+  static const arcSettleDuration = Duration(milliseconds: 240);
+
+  /// Shortest signed angular distance from [from] to [to], so the landing
+  /// morph never travels more than half a turn to reach its home angle.
+  static double shortestAngleDelta(double from, double to) {
+    const tau = math.pi * 2;
+    var delta = (to - from) % tau;
+    if (delta > math.pi) {
+      delta -= tau;
+    }
+    return delta;
+  }
+
+  /// Start angle of the landing morph at progress [t]: the captured busy
+  /// sweep angle at 0, the canonical connected arc angle at 1.
+  static double settleStartAngle({
+    required double fromAngle,
+    required double t,
+  }) {
+    return fromAngle +
+        shortestAngleDelta(fromAngle, connectedArcStartAngle) * t;
+  }
+
   static double sweepStartAngle({
     required bool disableAnimations,
     required double sweepValue,

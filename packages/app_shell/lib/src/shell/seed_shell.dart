@@ -543,6 +543,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   void _selectRouteMode(RouteMode mode) {
+    // Same selection tick as the theme and location picks — one class of
+    // interaction, one haptic.
+    HapticFeedback.selectionClick();
     setState(() {
       _selectedRouteMode = mode;
       _managedProfileDirty = true;
