@@ -17,6 +17,7 @@ void showPokrovSnack(
   String message, {
   PokrovSnackTone tone = PokrovSnackTone.info,
 }) {
+  final motion = _MotionScope.of(context);
   // The snack surface is inverted in the light theme (near-black ink), so
   // tone icons always come from the palette that reads on a dark surface.
   final onSnack = Theme.of(context).brightness == Brightness.light
@@ -35,13 +36,38 @@ void showPokrovSnack(
     case PokrovSnackTone.info:
       break;
   }
+  // Two-beat entrance: the surface arrives first (standard, emphasized),
+  // then the tone icon spring-pops ~40ms later — layered, not simultaneous.
+  Widget leadingIcon = Icon(icon, size: 18, color: iconColor);
+  if (!motion.disableAnimations) {
+    leadingIcon = TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.6, end: 1),
+      duration: const Duration(milliseconds: 220),
+      curve: Interval(0.18, 1, curve: PokrovMotionTokens.spring),
+      builder: (context, scale, child) =>
+          Transform.scale(scale: scale, child: child),
+      child: leadingIcon,
+    );
+  }
   ScaffoldMessenger.of(context).showSnackBar(
+    snackBarAnimationStyle: motion.disableAnimations
+        ? const AnimationStyle(
+            duration: Duration.zero,
+            reverseDuration: Duration.zero,
+          )
+        : const AnimationStyle(
+            duration: _MotionTokens.standard,
+            curve: _MotionTokens.emphasized,
+            // Present gently, dismiss briskly — same grammar as the sheets.
+            reverseDuration: PokrovMotionTokens.quick,
+            reverseCurve: _MotionTokens.ease,
+          ),
     SnackBar(
       behavior: SnackBarBehavior.floating,
       duration: const Duration(seconds: 3),
       content: Row(
         children: [
-          Icon(icon, size: 18, color: iconColor),
+          leadingIcon,
           const SizedBox(width: 10),
           Expanded(child: Text(message)),
         ],

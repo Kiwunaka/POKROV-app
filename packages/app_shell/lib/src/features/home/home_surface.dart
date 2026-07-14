@@ -763,6 +763,7 @@ class _HomeAccessStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final motion = _MotionScope.of(context);
     final p = PokrovPalette.of(context);
     final accessBadgeLabel = telegramBonusClaimed
         ? '+10 дней'
@@ -824,12 +825,27 @@ class _HomeAccessStrip extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          _StatusPill(
-            label: accessBadgeLabel,
-            icon: telegramBonusClaimed
-                ? Icons.check_circle_outline_rounded
-                : Icons.calendar_today_outlined,
-            tone: _SectionTone.accent,
+          // Claim settle bloom: the badge does one spring overshoot when the
+          // bonus lands — keyed on the data flip, not on rebuilds.
+          TweenAnimationBuilder<double>(
+            key: ValueKey('home-access-badge-bloom-$telegramBonusClaimed'),
+            tween: Tween(
+              begin: telegramBonusClaimed && !motion.disableAnimations
+                  ? 0.9
+                  : 1.0,
+              end: 1,
+            ),
+            duration: motion.duration(_MotionTokens.standard),
+            curve: PokrovMotionTokens.spring,
+            builder: (context, scale, child) =>
+                Transform.scale(scale: scale, child: child),
+            child: _StatusPill(
+              label: accessBadgeLabel,
+              icon: telegramBonusClaimed
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.calendar_today_outlined,
+              tone: _SectionTone.accent,
+            ),
           ),
         ],
       ),
@@ -851,9 +867,15 @@ class _HomeTelegramBonusTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final motion = _MotionScope.of(context);
     final p = PokrovPalette.of(context);
-    final content = Container(
+    // Claim settle: the tile acknowledges in place — reward tint relaxes to
+    // surface and the send icon morphs into a check (rewards copy-morph
+    // recipe), keyed off the data change so it plays wherever it's visible.
+    final content = AnimatedContainer(
       key: const ValueKey('home-telegram-bonus-pill'),
+      duration: motion.duration(_MotionTokens.standard),
+      curve: _MotionTokens.emphasized,
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 520),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
@@ -868,7 +890,9 @@ class _HomeTelegramBonusTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
+          AnimatedContainer(
+            duration: motion.duration(_MotionTokens.standard),
+            curve: _MotionTokens.ease,
             width: 42,
             height: 42,
             decoration: BoxDecoration(
@@ -877,12 +901,22 @@ class _HomeTelegramBonusTile extends StatelessWidget {
                   : p.reward.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(
-              claimed
-                  ? Icons.check_circle_outline_rounded
-                  : Icons.send_outlined,
-              color: claimed ? p.accent : p.reward,
-              size: 22,
+            child: AnimatedSwitcher(
+              duration: motion.duration(PokrovMotionTokens.quick),
+              switchInCurve: PokrovMotionTokens.spring,
+              switchOutCurve: _MotionTokens.ease,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(scale: animation, child: child),
+              ),
+              child: Icon(
+                claimed
+                    ? Icons.check_circle_outline_rounded
+                    : Icons.send_outlined,
+                key: ValueKey(claimed),
+                color: claimed ? p.accent : p.reward,
+                size: 22,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -1010,6 +1044,8 @@ class _HomeWarpTile extends StatelessWidget {
             unawaited(onOpen());
             return;
           }
+          // Same selection tick as the inline switch emits for direct taps.
+          PokrovHaptics.tap();
           unawaited(onChanged(!enabled));
         },
         child: AnimatedContainer(
@@ -1031,17 +1067,46 @@ class _HomeWarpTile extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: iconBackground,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Icon(
-                  enabled ? Icons.verified_user_rounded : Icons.blur_on_rounded,
-                  size: 20,
-                  color: iconColor,
+              // Consent settle: turning WARP on lands the shield with a small
+              // spring — the promise reads committed. The off direction fades
+              // only: downgrades stay deliberately quieter.
+              AnimatedSwitcher(
+                duration: motion.duration(_MotionTokens.short),
+                switchInCurve: _MotionTokens.ease,
+                switchOutCurve: _MotionTokens.ease,
+                transitionBuilder: (child, animation) {
+                  final fade = FadeTransition(opacity: animation, child: child);
+                  if (child.key != const ValueKey(true)) {
+                    return fade;
+                  }
+                  return FadeTransition(
+                    opacity: animation,
+                    child: ScaleTransition(
+                      scale: Tween<double>(begin: 0.9, end: 1).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: PokrovMotionTokens.spring,
+                        ),
+                      ),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Container(
+                  key: ValueKey(enabled),
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: iconBackground,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Icon(
+                    enabled
+                        ? Icons.verified_user_rounded
+                        : Icons.blur_on_rounded,
+                    size: 20,
+                    color: iconColor,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
