@@ -173,6 +173,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
   late final AnimationController _settleController;
   double _settleFromAngle = PokrovConnectDiscMotion.connectedArcStartAngle;
   bool _pressed = false;
+  bool _discHovered = false;
   bool _optimisticBusy = false;
 
   @override
@@ -388,6 +389,8 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
         cursor: widget.onPressed == null
             ? SystemMouseCursors.basic
             : SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _discHovered = true),
+        onExit: (_) => setState(() => _discHovered = false),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: widget.onPressed == null
@@ -502,23 +505,35 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                             _settleController,
                           ]),
                           builder: (context, _) {
-                            return CustomPaint(
-                              size: Size.square(diameter),
-                              painter: _ConnectDiscRimPainter(
-                                accent: accent,
-                                brandAccent: p.accent,
-                                connectedAccent: p.connectedGreen,
-                                warning: p.warning,
-                                enabled: widget.enabled,
-                                running: widget.running,
-                                degraded: widget.degraded || widget.error,
-                                busy: state.runsSweep,
-                                disableAnimations: disableAnimations,
-                                breathValue: _breathController.value,
-                                sweepValue: _sweepController.value,
-                                settleT: PokrovMotionTokens.emphasized
-                                    .transform(_settleController.value),
-                                settleFromAngle: _settleFromAngle,
+                            // Pointer grammar: hover lifts the rim and shows a
+                            // hairline focus ring — material, not geometry.
+                            return TweenAnimationBuilder<double>(
+                              tween: Tween(
+                                begin: 0,
+                                end: _discHovered && widget.enabled ? 1.0 : 0.0,
+                              ),
+                              duration:
+                                  motion.duration(PokrovMotionTokens.quick),
+                              curve: _MotionTokens.ease,
+                              builder: (context, hoverT, _) => CustomPaint(
+                                size: Size.square(diameter),
+                                painter: _ConnectDiscRimPainter(
+                                  accent: accent,
+                                  brandAccent: p.accent,
+                                  connectedAccent: p.connectedGreen,
+                                  warning: p.warning,
+                                  enabled: widget.enabled,
+                                  running: widget.running,
+                                  degraded: widget.degraded || widget.error,
+                                  busy: state.runsSweep,
+                                  disableAnimations: disableAnimations,
+                                  breathValue: _breathController.value,
+                                  sweepValue: _sweepController.value,
+                                  settleT: PokrovMotionTokens.emphasized
+                                      .transform(_settleController.value),
+                                  settleFromAngle: _settleFromAngle,
+                                  hoverT: hoverT,
+                                ),
                               ),
                             );
                           },
@@ -711,6 +726,7 @@ class _ConnectDiscRimPainter extends CustomPainter {
     required this.sweepValue,
     required this.settleT,
     required this.settleFromAngle,
+    required this.hoverT,
   });
 
   final Color accent;
@@ -733,6 +749,10 @@ class _ConnectDiscRimPainter extends CustomPainter {
   /// travels from here to [PokrovConnectDiscMotion.connectedArcStartAngle].
   final double settleFromAngle;
 
+  /// Pointer hover progress: lifts the rim opacity slightly and fades in a
+  /// hairline focus ring 4px inside the rim.
+  final double hoverT;
+
   static double _lerp(double a, double b, double t) => a + (b - a) * t;
 
   @override
@@ -747,9 +767,11 @@ class _ConnectDiscRimPainter extends CustomPainter {
     final morphT = morphActive ? settleT : 0.0;
     final landAccent = Color.lerp(brandAccent, connectedAccent, morphT)!;
     final rimAccent = morphActive ? landAccent : accent;
-    final baseOpacity = enabled
-        ? _lerp(0.18 + breath * 0.04, 0.40, running ? morphT : 0.0)
-        : 0.08;
+    final baseOpacity = (enabled
+            ? _lerp(0.18 + breath * 0.04, 0.40, running ? morphT : 0.0) +
+                0.06 * hoverT
+            : 0.08)
+        .clamp(0.0, 1.0);
     final basePaint = Paint()
       ..isAntiAlias = true
       ..style = PaintingStyle.stroke
@@ -757,6 +779,15 @@ class _ConnectDiscRimPainter extends CustomPainter {
       ..color = rimAccent.withValues(alpha: baseOpacity);
 
     canvas.drawCircle(center, radius, basePaint);
+
+    if (hoverT > 0 && enabled) {
+      final ringPaint = Paint()
+        ..isAntiAlias = true
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = rimAccent.withValues(alpha: 0.28 * hoverT);
+      canvas.drawCircle(center, radius - 4, ringPaint);
+    }
 
     final rect = Rect.fromCircle(center: center, radius: radius);
     if (busy && enabled) {
@@ -841,6 +872,7 @@ class _ConnectDiscRimPainter extends CustomPainter {
         oldDelegate.breathValue != breathValue ||
         oldDelegate.sweepValue != sweepValue ||
         oldDelegate.settleT != settleT ||
-        oldDelegate.settleFromAngle != settleFromAngle;
+        oldDelegate.settleFromAngle != settleFromAngle ||
+        oldDelegate.hoverT != hoverT;
   }
 }

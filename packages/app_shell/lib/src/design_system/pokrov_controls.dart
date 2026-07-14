@@ -1000,7 +1000,7 @@ class _PokrovSettingsRowPressSurfaceState
   @override
   Widget build(BuildContext context) {
     final motion = PokrovMotionScope.of(context);
-    final scale = _pressed ? 0.985 : (_hovered ? 1.006 : 1.0);
+    final tokens = PokrovPalette.of(context);
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() {
@@ -1017,17 +1017,35 @@ class _PokrovSettingsRowPressSurfaceState
         onTapUp: (_) => _setPressed(false),
         child: AnimatedScale(
           key: PokrovSettingsRowPressSurface.feedbackKey,
-          scale: scale,
+          // Press keeps its physical compression; hover deliberately does
+          // not scale — large surfaces respond as material (tint + border),
+          // macOS-style, never as geometry.
+          scale: _pressed ? 0.985 : 1.0,
           duration: motion.duration(PokrovMotionTokens.short),
           // Ease into the press, release with the springy overshoot.
           curve: _pressed ? PokrovMotionTokens.ease : PokrovMotionTokens.spring,
           alignment: Alignment.center,
-          child: Material(
-            type: MaterialType.transparency,
-            child: InkWell(
-              onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: motion.duration(PokrovMotionTokens.quick),
+            curve: PokrovMotionTokens.ease,
+            decoration: BoxDecoration(
+              color: _hovered
+                  ? tokens.ink.withValues(alpha: 0.02)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(14),
-              child: widget.child,
+              border: Border.all(
+                color: _hovered
+                    ? tokens.accent.withValues(alpha: 0.18)
+                    : Colors.transparent,
+              ),
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                onTap: widget.onTap,
+                borderRadius: BorderRadius.circular(14),
+                child: widget.child,
+              ),
             ),
           ),
         ),

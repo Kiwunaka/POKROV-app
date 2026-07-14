@@ -149,7 +149,7 @@ class _PokrovBrandLockup extends StatelessWidget {
   }
 }
 
-class _PokrovSidebarItem extends StatelessWidget {
+class _PokrovSidebarItem extends StatefulWidget {
   const _PokrovSidebarItem({
     required this.itemKey,
     required this.index,
@@ -171,84 +171,114 @@ class _PokrovSidebarItem extends StatelessWidget {
   final bool collapsed;
 
   @override
+  State<_PokrovSidebarItem> createState() => _PokrovSidebarItemState();
+}
+
+class _PokrovSidebarItemState extends State<_PokrovSidebarItem> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    final selected = index == selectedIndex;
+    final selected = widget.index == widget.selectedIndex;
     final tokens = PokrovPalette.of(context);
+    final motion = PokrovMotionScope.of(context);
     final child = Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
-          key: itemKey,
+          key: widget.itemKey,
           borderRadius: BorderRadius.circular(10),
-          onTap: () => onSelected(index),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: selected
-                  ? tokens.accent.withValues(alpha: 0.08)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: collapsed ? 8 : 12,
-                vertical: 10,
+          onTap: () => widget.onSelected(widget.index),
+          child: MouseRegion(
+            onEnter: (_) => setState(() => _hovered = true),
+            onExit: (_) => setState(() => _hovered = false),
+            // Pointer grammar: the material responds (tint), the geometry
+            // barely moves — only the 2px indicator stretches with a spring.
+            child: AnimatedContainer(
+              duration: motion.duration(PokrovMotionTokens.quick),
+              curve: PokrovMotionTokens.ease,
+              decoration: BoxDecoration(
+                color: selected
+                    ? tokens.accent.withValues(alpha: 0.08)
+                    : _hovered
+                        ? tokens.ink.withValues(alpha: 0.02)
+                        : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Row(
-                mainAxisAlignment: collapsed
-                    ? MainAxisAlignment.center
-                    : MainAxisAlignment.start,
-                children: [
-                  if (!collapsed) ...[
-                    Container(
-                      width: 2,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: selected ? tokens.accent : Colors.transparent,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                    const SizedBox(width: 9),
-                  ],
-                  Icon(
-                    selected ? selectedIcon : icon,
-                    size: 20,
-                    color: selected ? tokens.accent : tokens.muted,
-                  ),
-                  if (!collapsed) ...[
-                    const SizedBox(width: 10),
-                    Expanded(
-                      key: PokrovDesktopSidebar.labelMotionKey,
-                      child: AnimatedOpacity(
-                        duration: PokrovMotionScope.of(context).duration(
-                          PokrovMotionTokens.short,
-                        ),
-                        curve: PokrovMotionTokens.ease,
-                        opacity: collapsed ? 0 : 1,
-                        child: Text(
-                          label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.labelLarge?.copyWith(
-                                    color: selected ? tokens.ink : tokens.muted,
-                                    fontWeight: selected
-                                        ? FontWeight.w600
-                                        : FontWeight.w600,
-                                  ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: widget.collapsed ? 8 : 12,
+                  vertical: 10,
+                ),
+                child: Row(
+                  mainAxisAlignment: widget.collapsed
+                      ? MainAxisAlignment.center
+                      : MainAxisAlignment.start,
+                  children: [
+                    if (!widget.collapsed) ...[
+                      SizedBox(
+                        width: 2,
+                        height: 24,
+                        child: Center(
+                          child: AnimatedContainer(
+                            duration: motion.duration(PokrovMotionTokens.quick),
+                            curve: PokrovMotionTokens.spring,
+                            width: 2,
+                            height: _hovered || selected ? 24 : 20,
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? tokens.accent
+                                  : _hovered
+                                      ? tokens.accent.withValues(alpha: 0.30)
+                                      : Colors.transparent,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 9),
+                    ],
+                    Icon(
+                      selected ? widget.selectedIcon : widget.icon,
+                      size: 20,
+                      color: selected ? tokens.accent : tokens.muted,
                     ),
+                    if (!widget.collapsed) ...[
+                      const SizedBox(width: 10),
+                      Expanded(
+                        key: PokrovDesktopSidebar.labelMotionKey,
+                        child: AnimatedOpacity(
+                          duration: motion.duration(
+                            PokrovMotionTokens.short,
+                          ),
+                          curve: PokrovMotionTokens.ease,
+                          opacity: widget.collapsed ? 0 : 1,
+                          child: Text(
+                            widget.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelLarge
+                                ?.copyWith(
+                                  color: selected ? tokens.ink : tokens.muted,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
         ),
       ),
     );
-    if (collapsed) {
-      return Tooltip(message: label, child: child);
+    if (widget.collapsed) {
+      return Tooltip(message: widget.label, child: child);
     }
     return child;
   }
