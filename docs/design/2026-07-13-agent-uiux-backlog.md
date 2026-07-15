@@ -21,14 +21,16 @@ NTU = needs-test-update.
 
 ## Status @ 10e98ee + follow-up commits 2026-07-13 (verified in code)
 
-### HIG critique — 19 done, 1 deferred
+Backlog complete: 20/20 HIG items and 12/12 motion concepts landed.
+
+### HIG critique — 20 done
 
 | # | Item | Status | Evidence |
 | --- | --- | --- | --- |
 | 1 | Disc press compression (AnimatedScale) | DONE | shared/shell_widgets.dart:382 |
 | 2 | Disc shadow / layering | DONE | shared/shell_widgets.dart:401 |
 | 3 | Connected morph green inner plate | DONE | shared/shell_widgets.dart:450-456 |
-| 4 | Haptics discipline (tap()=selectionClick, drop _emitPhaseHaptics) | DEFERRED | owner-skipped 2026-07-13; resolve together with motion concept 1 (Arc Handoff), whose landing haptic leans on the phase-change emission this item deletes |
+| 4 | Haptics discipline (tap()=selectionClick, drop _emitPhaseHaptics) | DONE | resolved inside motion concept 1 (5cc1d01) as deferred: _emitPhaseHaptics deleted; the disc's whole phase budget is one success() at arc landing + a quiet tap() at rest, errors stay with snacks; _selectRouteMode got the standard selection tick |
 | 5 | Hint pulse on sine | DONE | features/home/home_surface.dart |
 | 6 | Busy not-warning + true ellipsis | DONE | both sites; no test pins |
 | 7 | Status pill chevron (+ overflow fix) | DONE | features/home/home_surface.dart |
@@ -46,15 +48,29 @@ NTU = needs-test-update.
 | 19 | Onboarding choice tiles → compact rows | DONE | compact branch renders minHeight-72 rows (44 icon · title/subtitle · chevron); wide branch keeps cards; keys/strings unchanged |
 | 20 | Referral card retint + action wrap + type tiers | DONE | reward tint 0.10/0.20; actions on their own Wrap row (survives 320pt); _SectionCard titles → titleMedium/w600 |
 
-Verification for the 2026-07-13 follow-up wave: flutter analyze clean,
-app_shell 162/162 green (incl. updated rules pin).
+Verification for the 2026-07-13 follow-up waves: flutter analyze clean,
+app_shell 162/162 green per wave (incl. updated rules and refresh pins).
 
-### Motion concepts — 0 of 12 started
+### Motion concepts — 12 of 12 done (2026-07-13 wave)
 
-All 12 remain. Session plan named 1 (Arc Handoff), 7 (Welcome Handover),
-8 (Signature-Arc Refresh) as the next-session delight wave. Commit `5ac80ac`
-(staged first-launch welcome reveal) is adjacent groundwork for concept 7.
-Suggested build order from the critique: 1 → 7 → 4 → 6 → 2 → 9 → 5 → 3 → 10 → 12 → 11 → 8.
+| # | Concept | Commit |
+| --- | --- | --- |
+| 1 | Arc Handoff — busy sweep lands into the connected arc (shortest-path angle, sweep/stroke/color morph; settle constants in PokrovConnectDiscMotion) | 5cc1d01 |
+| 2 | Soft Release — arc unwinds into its tail, border and compression spring back, quiet tap at rest | 5cc1d01 |
+| 3 | Directional Tab Drift — 8px drift from the side of travel (vertical on desktop rail), tap tick on mobile bar | 4cbe4c2 |
+| 4 | Two-Beat Snack — surface enters standard/emphasized, icon spring-pops ~40ms later via Interval | ae553af |
+| 5 | Living Days Counter — profile pill and subscription sheet count old→new with per-frame RU plurals and a landing pulse | 8c86e7f |
+| 6 | Claim Settle Bloom — bonus tile relaxes reward→surface, send→check morph, access badge spring bloom keyed on data | ae553af |
+| 7 | Welcome Handover — reveal parked while the gate is up; gate exits fade+1.02 (user-driven only), reveal rises 80ms in | 0d9cfc4 |
+| 8 | Signature-Arc Refresh — CupertinoSliverRefreshControl drawing the connected arc in profile and rewards | 12b21b4 |
+| 9 | Pointer Grammar — material hover (tint+hairline border, no scale), sidebar indicator 20→24 spring, disc rim lift + focus ring | 6cbe931 |
+| 10 | Status Ping — one expanding ring per phase-family change, keyed on color, no boot ping | 4cbe4c2 |
+| 11 | Sheet Cascade — _SheetReveal (30ms stagger, cap 5) in info and subscription sheets | 8c86e7f |
+| 12 | Consent Settle — WARP shield springs in on consent, off direction fades only, selection tick on tile taps | ae553af |
+
+Suggested build order from the critique was honored: 1 → 7 → 4 → 6 → 2 → 9 → 5 → 3 → 10 → 12 → 11 → 8.
+Commit `5ac80ac` (staged first-launch welcome reveal) was the pre-existing
+groundwork for concept 7.
 
 ---
 
@@ -169,7 +185,7 @@ Line numbers as of the pre-10e98ee tree.
 1. Disc press snaps instead of compressing — shared/shell_widgets.dart:365-378. _pressed flips Transform.scale 1.0→0.97 in a raw rebuild (the AnimatedBuilder only listens to breath/sweep). Wrap the disc Container (line 379) in AnimatedScale(scale: _pressed ? PokrovConnectDiscMotion.pressScale : 1, duration: motion.duration(PokrovMotionTokens.quick), curve: _pressed ? Curves.easeIn : PokrovMotionTokens.spring) and drop pressed from PokrovConnectDiscMotion.scale. HIG: buttons feel physical — compression eases in, releases with spring; the app's #1 affordance is its only unanimated press. Risk: NTU — design_system_contract_test.dart:396-405 pins scale(pressed:). **[DONE @ 10e98ee]**
 2. Disc is flat — no layering — shared/shell_widgets.dart:382-390. Add to the decoration: boxShadow: [BoxShadow(color: (running ? accent : p.ink).withValues(alpha: isDark ? 0.35 : (running ? 0.20 : 0.08)), blurRadius: 30, offset: Offset(0, 12))] (black-based in dark). HIG: depth communicates the primary interactive layer; hero controls float above the canvas. Risk: safe. **[DONE @ 10e98ee]**
 3. Connected morph is a hairline, not a moment — shared/shell_widgets.dart:424-431. Inner circle stays p.canvas in every phase. Make it AnimatedContainer (_MotionTokens.standard, ease): running ? Color.alphaBlend(p.connectedGreen.withValues(alpha: 0.10), p.canvas) : p.canvas. Canon-legal (disc is the sanctioned connectedGreen surface). HIG: state must be glanceable, not forensic. Risk: safe. **[DONE @ 10e98ee]**
-4. Haptics off-discipline — shared/shell_widgets.dart:347 fires lightImpact per tap; :205-228 fires mediumImpact/heavyImpact on phase change (shared/pokrov_haptics.dart:14-20). Replace tap with PokrovHaptics.tap() (selectionClick), delete _emitPhaseHaptics, and add the missing HapticFeedback.selectionClick() to _selectRouteMode (shell/seed_shell.dart:542-547) to match theme (:52) and location (:556) picks. HIG: haptics sparse and same-class-consistent; selectionClick only per canon ("calm, not casino"). Risk: safe (heavyImpact( literal leaves the codebase entirely). **[DEFERRED — owner call 2026-07-13: do together with motion concept 1, whose landing haptic depends on phase-change emission]**
+4. Haptics off-discipline — shared/shell_widgets.dart:347 fires lightImpact per tap; :205-228 fires mediumImpact/heavyImpact on phase change (shared/pokrov_haptics.dart:14-20). Replace tap with PokrovHaptics.tap() (selectionClick), delete _emitPhaseHaptics, and add the missing HapticFeedback.selectionClick() to _selectRouteMode (shell/seed_shell.dart:542-547) to match theme (:52) and location (:556) picks. HIG: haptics sparse and same-class-consistent; selectionClick only per canon ("calm, not casino"). Risk: safe (heavyImpact( literal leaves the codebase entirely). **[DONE — resolved inside motion concept 1 (5cc1d01): one success() at landing, quiet tap() at rest, errors stay with snacks]**
 5. Hint pulse pops each loop — features/home/home_surface.dart:1472-1487. opacity: (1 - progress) * 0.35 starts at 0.35 hard every 2.4 s. Use opacity: math.sin(math.pi * progress) * 0.35. HIG motion: continuous, no discontinuities in an attention loop. Risk: safe. **[DONE @ 10e98ee]**
 
 ### Status discipline
@@ -204,5 +220,5 @@ Line numbers as of the pre-10e98ee tree.
 
 Sharpest wins for "premium in one day" (per the critique): 1, 2, 3 (the hero
 finally feels alive), 10, 12 (grouped-list honesty), 15, 16 (dark mode stops
-looking web-made). All closed as of 2026-07-13; only 4 (haptics) is deferred
-into the Arc Handoff wave.
+looking web-made). All closed as of 2026-07-13; the haptics item (4) landed
+with the Arc Handoff wave the same day.
