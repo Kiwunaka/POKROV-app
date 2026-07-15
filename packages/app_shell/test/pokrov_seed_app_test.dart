@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
-import 'package:pokrov_app_shell/src/design_system/design_system.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
@@ -5313,12 +5312,17 @@ void main() {
     await tester.pumpAndSettle();
 
     await _tapNav(tester, 'nav-profile');
-    final profileIndicator =
-        find.byKey(const ValueKey('profile-refresh-indicator'));
+    // Signature-arc refresh: the stock Material indicator is replaced by the
+    // product's own connect-arc control; at rest the sliver has zero extent,
+    // so the finder must not skip offstage.
+    final profileIndicator = find.byKey(
+      const ValueKey('profile-refresh-indicator'),
+      skipOffstage: false,
+    );
     expect(profileIndicator, findsOneWidget);
     expect(
-      tester.widget<RefreshIndicator>(profileIndicator).color,
-      PokrovPalette.light.accent,
+      find.byType(RefreshIndicator),
+      findsNothing,
     );
 
     final summaryCallsBefore = bootstrapper.bonusSummaryCalls;
@@ -5332,7 +5336,10 @@ void main() {
 
     await _openRewardsHubFromProfile(tester);
     expect(
-      find.byKey(const ValueKey('rewards-refresh-indicator')),
+      find.byKey(
+        const ValueKey('rewards-refresh-indicator'),
+        skipOffstage: false,
+      ),
       findsOneWidget,
     );
   });

@@ -6,11 +6,18 @@ class _SeedContentList extends StatelessWidget {
     // One shared top gutter so the page rhythm does not jump between tabs.
     this.top = 16,
     this.maxContentWidth = 900,
+    this.onRefresh,
+    this.refreshIndicatorKey,
   });
 
   final List<Widget> children;
   final double top;
   final double maxContentWidth;
+
+  /// When set, the list mounts the signature-arc pull-to-refresh control
+  /// above its content (sliver route; plain [ListView] otherwise).
+  final Future<void> Function()? onRefresh;
+  final Key? refreshIndicatorKey;
 
   @override
   Widget build(BuildContext context) {
@@ -19,12 +26,188 @@ class _SeedContentList extends StatelessWidget {
         final sidePadding = constraints.maxWidth >= 980
             ? math.max(24.0, (constraints.maxWidth - maxContentWidth) / 2)
             : 24.0;
-        return ListView(
-          padding: EdgeInsets.fromLTRB(sidePadding, top, sidePadding, 160),
-          children: children,
+        final padding = EdgeInsets.fromLTRB(sidePadding, top, sidePadding, 160);
+        final onRefresh = this.onRefresh;
+        if (onRefresh == null) {
+          return ListView(padding: padding, children: children);
+        }
+        return CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            CupertinoSliverRefreshControl(
+              key: refreshIndicatorKey,
+              onRefresh: onRefresh,
+              builder: _pokrovRefreshArcBuilder,
+            ),
+            SliverPadding(
+              padding: padding,
+              sliver: SliverList.list(children: children),
+            ),
+          ],
         );
       },
     );
+  }
+}
+
+/// Signature-arc pull-to-refresh: while dragging, the connect arc draws in
+/// proportionally (sweep = drag share of the connected arc); armed and
+/// refreshing it rotates with the disc's busy-sweep period until the real
+/// future completes; the settle fades out briskly. One signature shape is
+/// the refresh language app-wide — direct manipulation, no foreign spinner.
+Widget _pokrovRefreshArcBuilder(
+  BuildContext context,
+  RefreshIndicatorMode refreshState,
+  double pulledExtent,
+  double refreshTriggerPullDistance,
+  double refreshIndicatorExtent,
+) {
+  return _PokrovRefreshArc(
+    mode: refreshState,
+    drag: (pulledExtent / refreshTriggerPullDistance).clamp(0.0, 1.0),
+  );
+}
+
+class _PokrovRefreshArc extends StatefulWidget {
+  const _PokrovRefreshArc({
+    required this.mode,
+    required this.drag,
+  });
+
+  final RefreshIndicatorMode mode;
+  final double drag;
+
+  @override
+  State<_PokrovRefreshArc> createState() => _PokrovRefreshArcState();
+}
+
+class _PokrovRefreshArcState extends State<_PokrovRefreshArc>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _spin = AnimationController(
+    vsync: this,
+    duration: PokrovConnectDiscMotion.sweepDuration,
+  );
+
+  bool get _spinning =>
+      widget.mode == RefreshIndicatorMode.armed ||
+      widget.mode == RefreshIndicatorMode.refresh;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncSpin();
+  }
+
+  @override
+  void didUpdateWidget(covariant _PokrovRefreshArc oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.mode == RefreshIndicatorMode.drag &&
+        widget.mode == RefreshIndicatorMode.armed) {
+      // Direct manipulation acknowledged: one tick at the arm threshold.
+      PokrovHaptics.tap();
+    }
+    _syncSpin();
+  }
+
+  /// Progress rotation, not decoration: it loops only behind the shared
+  /// looping gate and keeps the finite single pass under `flutter test`,
+  /// so `pumpAndSettle` contracts stay bounded.
+  void _syncSpin() {
+    final disableAnimations = _MotionScope.of(context).disableAnimations;
+    if (_spinning && !disableAnimations) {
+      if (PokrovLoopingMotion.enabled) {
+        if (!_spin.isAnimating) {
+          _spin.repeat();
+        }
+      } else if (!_spin.isAnimating &&
+          _spin.status != AnimationStatus.completed) {
+        _spin.forward(from: 0);
+      }
+    } else {
+      _spin.stop();
+      if (!_spinning) {
+        _spin.value = 0;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _spin.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final motion = _MotionScope.of(context);
+    return Center(
+      child: AnimatedOpacity(
+        // Settle: the arc fades out briskly once the refresh resolves.
+        duration: motion.duration(PokrovMotionTokens.quick),
+        curve: _MotionTokens.ease,
+        opacity: widget.mode == RefreshIndicatorMode.done ? 0 : 1,
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: AnimatedBuilder(
+            animation: _spin,
+            builder: (context, _) => CustomPaint(
+              painter: _PokrovRefreshArcPainter(
+                color: p.accent,
+                sweep: _spinning
+                    ? PokrovConnectDiscMotion.connectedArcSweepRadians
+                    : PokrovConnectDiscMotion.connectedArcSweepRadians *
+                        widget.drag,
+                rotation: _spin.value * math.pi * 2,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PokrovRefreshArcPainter extends CustomPainter {
+  const _PokrovRefreshArcPainter({
+    required this.color,
+    required this.sweep,
+    required this.rotation,
+  });
+
+  final Color color;
+  final double sweep;
+  final double rotation;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (sweep <= 0.01) {
+      return;
+    }
+    final paint = Paint()
+      ..isAntiAlias = true
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 2.4
+      ..color = color;
+    canvas.drawArc(
+      Rect.fromCircle(
+        center: size.center(Offset.zero),
+        radius: size.shortestSide / 2 - 1.5,
+      ),
+      PokrovConnectDiscMotion.connectedArcStartAngle + rotation,
+      sweep,
+      false,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _PokrovRefreshArcPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.sweep != sweep ||
+        oldDelegate.rotation != rotation;
   }
 }
 
@@ -199,10 +382,9 @@ class _MobileShell extends StatelessWidget {
                               ? Colors.black
                               : p.ink)
                           .withValues(
-                        alpha:
-                            Theme.of(context).brightness == Brightness.dark
-                                ? 0.35
-                                : 0.06,
+                        alpha: Theme.of(context).brightness == Brightness.dark
+                            ? 0.35
+                            : 0.06,
                       ),
                       blurRadius: 24,
                       offset: const Offset(0, 8),

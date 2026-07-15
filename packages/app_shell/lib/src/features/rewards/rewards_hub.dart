@@ -75,122 +75,133 @@ class _RewardsHubSheetState extends State<_RewardsHubSheet> {
     final showPromoSlots = promoSlots.visibleSlots.isNotEmpty;
     return SafeArea(
       top: false,
-      child: RefreshIndicator(
-        key: const ValueKey('rewards-refresh-indicator'),
-        color: p.accent,
-        onRefresh: _refresh,
-        child: SingleChildScrollView(
-          key: const ValueKey('rewards-hub-sheet'),
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(18, 4, 18, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Бонусы',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: p.ink,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Ваши дополнительные дни, промокоды и история начислений.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: p.ink.withValues(alpha: 0.72),
-                      height: 1.35,
-                    ),
-              ),
-              const SizedBox(height: 14),
-              if (summary == null && rewardBusy) ...[
-                const _MotionSkeletonList(
-                  key: ValueKey('rewards-hub-loading'),
-                  rows: 4,
-                ),
-                const SizedBox(height: 12),
-              ],
-              _RewardsTelegramCard(
-                summary: summary,
-                onRefreshBonusSummary: widget.onRefreshBonusSummary,
-                onOpenHandoff: widget.onOpenHandoff,
-              ),
-              const SizedBox(height: 12),
-              _RewardsReferralCard(
-                referralCode: referralCode,
-                referralSummary: referralSummary,
-                onOpenHandoff: widget.onOpenHandoff,
-              ),
-              const SizedBox(height: 12),
-              if (showPromoSlots) ...[
-                _RewardsPromoSlotsSection(
-                  promoSlots: promoSlots,
-                  onOpenHandoff: widget.onOpenHandoff,
-                ),
-                const SizedBox(height: 12),
-              ],
-              _RewardsHistorySection(
-                summary: summary,
-              ),
-              if (showWheel || showCalendar) ...[
-                const SizedBox(height: 12),
-                _RewardsActivitiesHeader(
-                  summary: summary,
-                ),
-                if (showWheel) ...[
-                  const SizedBox(height: 10),
-                  _RewardsFeatureCard(
-                    key: const ValueKey('rewards-wheel-card'),
-                    icon: Icons.card_giftcard_outlined,
-                    title: 'Бонус дня',
-                    status: wheel.statusLabel,
-                    detail: wheel.availabilityText,
-                    lastActionAt: wheel.lastActionAt,
-                    actionKey: const ValueKey('rewards-wheel-spin-action'),
-                    actionLabel: rewardBusy ? 'Проверяем' : 'Получить бонус',
-                    actionEnabled: wheel.canRun && !rewardBusy,
-                    onAction: () {
-                      Navigator.of(context).maybePop();
-                      widget.onSpinWheel();
-                    },
+      // Signature-arc pull-to-refresh: same arc language as the profile list.
+      child: CustomScrollView(
+        key: const ValueKey('rewards-hub-sheet'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        shrinkWrap: true,
+        slivers: [
+          CupertinoSliverRefreshControl(
+            key: const ValueKey('rewards-refresh-indicator'),
+            onRefresh: _refresh,
+            builder: _pokrovRefreshArcBuilder,
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(18, 4, 18, 28),
+            // Box adapter, not a lazy list: the sheet is one short page and
+            // its content contract (tests included) expects every card built.
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Бонусы',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: p.ink,
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
-                ],
-                if (showCalendar) ...[
-                  const SizedBox(height: 10),
-                  _RewardsFeatureCard(
-                    key: const ValueKey('rewards-calendar-card'),
-                    icon: Icons.calendar_month_outlined,
-                    title: 'Календарь активности',
-                    status: calendar.statusLabel,
-                    detail: calendar.availabilityText,
-                    lastActionAt: calendar.lastActionAt,
-                    actionKey:
-                        const ValueKey('rewards-calendar-checkin-action'),
-                    actionLabel: rewardBusy ? 'Проверяем' : 'Отметиться',
-                    actionEnabled: calendar.canRun && !rewardBusy,
-                    onAction: () {
-                      Navigator.of(context).maybePop();
-                      widget.onCheckInCalendar();
-                    },
+                  const SizedBox(height: 8),
+                  Text(
+                    'Ваши дополнительные дни, промокоды и история начислений.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: p.ink.withValues(alpha: 0.72),
+                          height: 1.35,
+                        ),
+                  ),
+                  const SizedBox(height: 14),
+                  if (summary == null && rewardBusy) ...[
+                    const _MotionSkeletonList(
+                      key: ValueKey('rewards-hub-loading'),
+                      rows: 4,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  _RewardsTelegramCard(
+                    summary: summary,
+                    onRefreshBonusSummary: widget.onRefreshBonusSummary,
+                    onOpenHandoff: widget.onOpenHandoff,
                   ),
                   const SizedBox(height: 12),
-                  _RewardsCalendarGrid(
-                    activeDays: _rewardActiveDays(summary),
+                  _RewardsReferralCard(
+                    referralCode: referralCode,
+                    referralSummary: referralSummary,
+                    onOpenHandoff: widget.onOpenHandoff,
+                  ),
+                  const SizedBox(height: 12),
+                  if (showPromoSlots) ...[
+                    _RewardsPromoSlotsSection(
+                      promoSlots: promoSlots,
+                      onOpenHandoff: widget.onOpenHandoff,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  _RewardsHistorySection(
+                    summary: summary,
+                  ),
+                  if (showWheel || showCalendar) ...[
+                    const SizedBox(height: 12),
+                    _RewardsActivitiesHeader(
+                      summary: summary,
+                    ),
+                    if (showWheel) ...[
+                      const SizedBox(height: 10),
+                      _RewardsFeatureCard(
+                        key: const ValueKey('rewards-wheel-card'),
+                        icon: Icons.card_giftcard_outlined,
+                        title: 'Бонус дня',
+                        status: wheel.statusLabel,
+                        detail: wheel.availabilityText,
+                        lastActionAt: wheel.lastActionAt,
+                        actionKey: const ValueKey('rewards-wheel-spin-action'),
+                        actionLabel:
+                            rewardBusy ? 'Проверяем' : 'Получить бонус',
+                        actionEnabled: wheel.canRun && !rewardBusy,
+                        onAction: () {
+                          Navigator.of(context).maybePop();
+                          widget.onSpinWheel();
+                        },
+                      ),
+                    ],
+                    if (showCalendar) ...[
+                      const SizedBox(height: 10),
+                      _RewardsFeatureCard(
+                        key: const ValueKey('rewards-calendar-card'),
+                        icon: Icons.calendar_month_outlined,
+                        title: 'Календарь активности',
+                        status: calendar.statusLabel,
+                        detail: calendar.availabilityText,
+                        lastActionAt: calendar.lastActionAt,
+                        actionKey:
+                            const ValueKey('rewards-calendar-checkin-action'),
+                        actionLabel: rewardBusy ? 'Проверяем' : 'Отметиться',
+                        actionEnabled: calendar.canRun && !rewardBusy,
+                        onAction: () {
+                          Navigator.of(context).maybePop();
+                          widget.onCheckInCalendar();
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _RewardsCalendarGrid(
+                        activeDays: _rewardActiveDays(summary),
+                      ),
+                    ],
+                  ],
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    key: const ValueKey('rewards-refresh-action'),
+                    onPressed: () {
+                      Navigator.of(context).maybePop();
+                      unawaited(widget.onRefreshBonusSummary());
+                    },
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Обновить сводку'),
                   ),
                 ],
-              ],
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                key: const ValueKey('rewards-refresh-action'),
-                onPressed: () {
-                  Navigator.of(context).maybePop();
-                  unawaited(widget.onRefreshBonusSummary());
-                },
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Обновить сводку'),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
