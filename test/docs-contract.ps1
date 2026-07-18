@@ -265,9 +265,9 @@ function New-ExpectedRegistryManifest {
     'CANONICAL|RECONCILED|Public/readiness platform scope|config/platform-matrix.seed.json',
     'CANONICAL|REVIEWED_NO_CHANGE|Runtime profile facts|config/runtime-profile.seed.json',
     'CANONICAL|RECONCILED|Cutover readiness facts|config/cutover-readiness.seed.json',
-    'CANONICAL|REVIEWED_NO_CHANGE|Release handoff facts|config/release-handoff.seed.json',
+    'CANONICAL|RECONCILED|Release handoff facts|config/release-handoff.seed.json',
     'ACTIVE_EXECUTION|RECONCILED|Client release execution|docs/implementation/client-release-backlog.md',
-    'ACTIVE_EXECUTION|REVIEWED_NO_CHANGE|Cutover checklist|docs/operations/cutover-readiness.md',
+    'ACTIVE_EXECUTION|RECONCILED|Cutover checklist|docs/operations/cutover-readiness.md',
     'ACTIVE_EXECUTION|RECONCILED|Android readiness|docs/operations/android-release-audit.md',
     'ACTIVE_EXECUTION|RECONCILED|Windows readiness|docs/operations/windows-release-readiness.md',
     'ACTIVE_EXECUTION|RECONCILED|WARP runtime proof|docs/operations/warp-runtime-proof-checklist.md',
@@ -1321,6 +1321,8 @@ $platform = [IO.File]::ReadAllText((Join-Path $root 'config\platform-matrix.seed
 $release = [IO.File]::ReadAllText((Join-Path $root 'config\release-handoff.seed.json')) | ConvertFrom-Json
 $cutover = [IO.File]::ReadAllText((Join-Path $root 'config\cutover-readiness.seed.json')) | ConvertFrom-Json
 $runtime = [IO.File]::ReadAllText((Join-Path $root 'config\runtime-profile.seed.json')) | ConvertFrom-Json
+$windowsRelease = [IO.File]::ReadAllText((Join-Path $root 'config\windows-release.seed.json')) | ConvertFrom-Json
+$androidGradle = [IO.File]::ReadAllText((Join-Path $root 'apps\android_shell\android\app\build.gradle'))
 
 if ($product.client_version_line -ne $release.latest_repo_backed_release.version) {
   $errors += 'Product and release version lines disagree'
@@ -1337,6 +1339,120 @@ if ($cutover.latest_repo_backed_release.anonymous_download_smoke -notmatch '^PAS
 if ($product.trial_days -ne $runtime.trial_days -or
     $product.telegram_bonus_days -ne $runtime.telegram_bonus_days) {
   $errors += 'Product and runtime trial/reward facts disagree'
+}
+
+foreach ($requiredAndroidSigningMarker in @(
+  'ANDROID_SIGNING_KEY',
+  'ANDROID_SIGNING_STORE_PASSWORD',
+  'ANDROID_SIGNING_KEY_PASSWORD',
+  'ANDROID_SIGNING_KEY_ALIAS',
+  'pokrov.allowInternalBetaDebugSigning',
+  'hasProductionReleaseSigning',
+  'releaseArtifactTaskRequested',
+  '/^assemble.*Release$/',
+  '/^bundle.*Release$/',
+  '/^package.*Release(?:Bundle|UniversalApk)?$/',
+  '/^sign.*ReleaseBundle$/',
+  'releaseArtifactTaskRequested && !hasProductionReleaseSigning && !allowInternalBetaDebugSigning'
+)) {
+  if (-not $androidGradle.Contains($requiredAndroidSigningMarker)) {
+    $errors += "Android release signing config lacks fail-closed marker: $requiredAndroidSigningMarker"
+  }
+}
+
+if ($release.release_truth.public_cutover_allowed -ne $cutover.public_cutover_allowed) {
+  $errors += 'Cutover and release-handoff public approval disagree'
+}
+if (($release.latest_repo_backed_release.runtime_sync_allowed -eq $true) -and
+    ($release.release_truth.public_cutover_allowed -ne $true)) {
+  $errors += 'Release handoff allows runtime sync while public cutover is blocked'
+}
+if (($cutover.public_cutover_allowed -eq $true) -and
+    (($cutover.android_release.public_approved -ne $true) -or
+     ($cutover.windows_release.public_approved -ne $true))) {
+  $errors += 'Cutover seed allows global public cutover while a public platform gate is blocked'
+}
+
+$androidArtifacts = @($release.latest_repo_backed_release.artifacts | Where-Object { $_.platform -eq 'android' })
+$windowsArtifacts = @($release.latest_repo_backed_release.artifacts | Where-Object { $_.platform -eq 'windows' })
+$androidApprovedArtifacts = @($androidArtifacts | Where-Object { $_.public_approved -eq $true })
+$windowsApprovedArtifacts = @($windowsArtifacts | Where-Object { $_.public_approved -eq $true })
+
+foreach ($requiredPublicTarget in @('android', 'windows')) {
+  if (@($platform.public_release_targets) -notcontains $requiredPublicTarget) {
+    $errors += "Platform matrix lacks public release target: $requiredPublicTarget"
+  }
+}
+
+$blockedAndroidReadiness = 'outside_store_beta_retained_new_public_promotion_blocked_pending_production_signing'
+$blockedWindowsReadiness = 'outside_store_unsigned_beta_retained_new_public_promotion_blocked_pending_trusted_signing'
+if ($cutover.android_release.public_approved -ne $true -and
+    $platform.release_readiness.android -ne $blockedAndroidReadiness) {
+  $errors += 'Platform matrix does not preserve the blocked Android promotion state'
+}
+if ($cutover.windows_release.public_approved -ne $true -and
+    $platform.release_readiness.windows -ne $blockedWindowsReadiness) {
+  $errors += 'Platform matrix does not preserve the blocked Windows promotion state'
+}
+if ($cutover.android_release.public_approved -eq $true -and
+    $platform.release_readiness.android -match 'blocked') {
+  $errors += 'Platform matrix keeps Android blocked while cutover approves it'
+}
+if ($cutover.windows_release.public_approved -eq $true -and
+    $platform.release_readiness.windows -match 'blocked') {
+  $errors += 'Platform matrix keeps Windows blocked while cutover approves it'
+}
+
+if ($release.latest_repo_backed_release.version -eq '1.0.0-beta') {
+  if ($release.latest_repo_backed_release.recorded_publication_state -ne
+      'PUBLISHED_2026_BETA_WITH_OWNER_ACCEPTED_SIGNING_SKIPS') {
+    $errors += 'Retained 1.0.0-beta lacks its historical publication-state label'
+  }
+  if ($release.latest_repo_backed_release.reuse_for_new_promotion -ne $false) {
+    $errors += 'Retained 1.0.0-beta can be reused for a new promotion'
+  }
+  if (($release.latest_repo_backed_release.signing_evidence.android -ne 'SKIPPED_BY_OWNER') -or
+      ($release.latest_repo_backed_release.signing_evidence.windows -ne 'SKIPPED_BY_OWNER')) {
+    $errors += 'Retained 1.0.0-beta signing evidence does not preserve owner-accepted skips'
+  }
+}
+
+if ($androidApprovedArtifacts.Count -gt 0) {
+  if ($cutover.android_release.public_approved -ne $true) {
+    $errors += 'Release handoff public-approves Android while the Android cutover gate is blocked'
+  }
+  if ($release.latest_repo_backed_release.signing_evidence.android -ne 'PASS') {
+    $errors += 'Release handoff public-approves Android without exact-candidate production-signing PASS'
+  }
+}
+
+if ($cutover.android_release.public_approved -eq $true) {
+  if ($androidApprovedArtifacts.Count -eq 0) {
+    $errors += 'Android cutover is approved without a matching public-approved artifact'
+  }
+  if ($release.latest_repo_backed_release.signing_evidence.android -ne 'PASS') {
+    $errors += 'Android cutover is approved without exact-candidate production-signing PASS'
+  }
+}
+
+if ($windowsApprovedArtifacts.Count -gt 0) {
+  if ($cutover.windows_release.public_approved -ne $true) {
+    $errors += 'Release handoff public-approves Windows while the Windows cutover gate is blocked'
+  }
+  if (($windowsRelease.public_approved -ne $true) -or
+      ($release.latest_repo_backed_release.signing_evidence.windows -ne 'PASS')) {
+    $errors += 'Release handoff public-approves Windows without exact-candidate trusted-signing PASS'
+  }
+}
+
+if ($cutover.windows_release.public_approved -eq $true) {
+  if ($windowsApprovedArtifacts.Count -eq 0) {
+    $errors += 'Windows cutover is approved without a matching public-approved artifact'
+  }
+  if (($windowsRelease.public_approved -ne $true) -or
+      ($release.latest_repo_backed_release.signing_evidence.windows -ne 'PASS')) {
+    $errors += 'Windows cutover is approved without exact-candidate trusted-signing PASS'
+  }
 }
 
 $legacyDesign = [IO.File]::ReadAllText((Join-Path $root 'docs\design\DESIGN.md'))

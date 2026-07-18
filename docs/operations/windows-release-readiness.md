@@ -26,7 +26,8 @@ Historical mapping note:
   canonical compact drawer remains reachable, and hides to tray on window
   close; tray `Выход` disposes tray state before requesting native teardown
 - source and widget tests prove lifecycle ordering, but connected exact-artifact
-  tray exit still requires runtime-stop and system-proxy-restoration proof
+  tray exit still requires runtime/TUN teardown and any compatibility
+  system-proxy restoration proof
 
 ## Local Verification Commands
 
@@ -126,7 +127,11 @@ Safe to claim now:
 - the Windows seed lane has a reproducible unsigned package step with a manifest, portable ZIP, and first-layer setup EXE for gated beta inspection
 - the current `1.0.0-beta` unsigned setup EXE is uploaded to the public
   GitHub prerelease for outside-store beta access
-- the current Windows seed connect lane applies runtime options before `libcore start` and prefers a system-proxy host mode with dedicated local ports instead of assuming an elevated TUN session
+- the current Windows source applies runtime options before `libcore start` and
+  keeps `Full tunnel`, `All except RU`, and selected-process routing TUN-backed
+  by default; system proxy remains a disabled compatibility-only path
+- this source-level change does not prove elevation, route capture, DNS/leak
+  behavior, or teardown on the published or any future exact candidate
 - this Windows lane now lives in the canonical `POKROV-app` repo
 - this Windows lane is the current repo-backed outside-store beta release truth
   for Windows, but not a trusted-signed, store, or broad stable distribution
@@ -171,8 +176,9 @@ trusted/stable claims, attach:
 - DNS split behavior and leak checks.
 - Connect, reconnect, disconnect, and recovery after failure.
 - Close while connected -> hidden tray state -> reopen without losing the
-  running session; then tray `Выход` -> process/runtime stop and system proxy
-  restoration: `MANUAL_OWNER_TEST` for the exact candidate.
+  running session; then tray `Выход` -> process/runtime and TUN stop, plus any
+  compatibility system-proxy restoration: `MANUAL_OWNER_TEST` for the exact
+  candidate.
 - current-origin, brain-origin, and RU-origin checks where runtime reachability matters.
 
 ## Release Rule

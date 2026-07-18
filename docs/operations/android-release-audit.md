@@ -42,6 +42,11 @@ Set `ANDROID_AUDIT_PACKAGE` to `space.pokrov.pokrov_android_shell` unless a rele
 ## Commands
 
 ```powershell
+# Public-candidate builds require all four operator-owned signing inputs.
+$env:ANDROID_SIGNING_KEY="<absolute-keystore-path>"
+$env:ANDROID_SIGNING_STORE_PASSWORD="<operator-secret>"
+$env:ANDROID_SIGNING_KEY_PASSWORD="<operator-secret>"
+$env:ANDROID_SIGNING_KEY_ALIAS="<operator-key-alias>"
 flutter build apk --release --dart-define=POKROV_API_BASE_URL=https://api.pokrov.space
 adb devices
 $env:ANDROID_AUDIT_PACKAGE="space.pokrov.pokrov_android_shell"
@@ -50,6 +55,17 @@ $env:PLATFORM_REPO="C:\Users\kiwun\Documents\ai\VPN"
 python "$env:PLATFORM_REPO/scripts/android_localhost_audit.py" --serial $env:ANDROID_AUDIT_SERIAL --package $env:ANDROID_AUDIT_PACKAGE --release-evidence $env:ANDROID_AUDIT_RELEASE_EVIDENCE --require-release-build --connect-wait-sec 30 --disconnect-wait-sec 15
 ```
 
+For an explicitly non-public local rehearsal only, set
+`POKROV_ALLOW_INTERNAL_BETA_DEBUG_SIGNING=true` around the build and remove it
+afterwards. That artifact may exercise the audit flow, but its signing result is
+`NOT_REQUESTED`: production signing was not part of that internal smoke. It cannot
+be promoted, synced, or described as public, trusted, store-ready, or stable.
+
 ## Release Rule
 
-Android outside-store public beta uses the retained `2026-05-15` owner attestation. A fresh raw physical-device PASS remains required before trusted, store, stable, or raw-audited Android claims.
+The retained `2026-05-15` owner attestation explains the published beta wave;
+its exact-candidate production-signing state remains `SKIPPED_BY_OWNER`, and it
+does not authorize a rebuild. A new public Android candidate requires
+production-signing `PASS` for that exact artifact plus the applicable manual
+device gates. A fresh raw physical-device `PASS` remains required before
+trusted, store, stable, or raw-audited Android claims.

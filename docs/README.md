@@ -54,9 +54,9 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | CANONICAL | RECONCILED | Public/readiness platform scope | `config/platform-matrix.seed.json` |
 | CANONICAL | REVIEWED_NO_CHANGE | Runtime profile facts | `config/runtime-profile.seed.json` |
 | CANONICAL | RECONCILED | Cutover readiness facts | `config/cutover-readiness.seed.json` |
-| CANONICAL | REVIEWED_NO_CHANGE | Release handoff facts | `config/release-handoff.seed.json` |
+| CANONICAL | RECONCILED | Release handoff facts | `config/release-handoff.seed.json` |
 | ACTIVE_EXECUTION | RECONCILED | Client release execution | `docs/implementation/client-release-backlog.md` |
-| ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Cutover checklist | `docs/operations/cutover-readiness.md` |
+| ACTIVE_EXECUTION | RECONCILED | Cutover checklist | `docs/operations/cutover-readiness.md` |
 | ACTIVE_EXECUTION | RECONCILED | Android readiness | `docs/operations/android-release-audit.md` |
 | ACTIVE_EXECUTION | RECONCILED | Windows readiness | `docs/operations/windows-release-readiness.md` |
 | ACTIVE_EXECUTION | RECONCILED | WARP runtime proof | `docs/operations/warp-runtime-proof-checklist.md` |

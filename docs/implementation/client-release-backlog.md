@@ -12,7 +12,12 @@ for their recorded candidate; they do not become reusable release passes.
 
 ## Current Status
 
-The app-first foundation and the consumer information architecture are in place in the new client repo. Android and Windows artifacts are approved for the outside-store public beta on the `1.0.0-beta` line, with accepted limitations: Android raw physical-device evidence is replaced by owner attestation for this beta, Windows remains unsigned, live install/app-session smoke remains manual, and RU-origin readiness is not claimed.
+The app-first foundation and consumer information architecture are in place.
+The published `1.0.0-beta` URLs, hashes, and upload/download checks remain
+exact-candidate evidence, but current promotion and runtime sync are blocked.
+A later public candidate needs production Android signing and trusted Windows
+signing evidence for the exact artifacts; live install/app-session smoke and
+RU-origin readiness also remain unproven.
 
 As of the final `2026-06-05` closure pass, repo-side P0-P6 implementation,
 authenticated GitHub release upload/checksum proof, Android build-tool refresh,
@@ -34,9 +39,9 @@ Latest documented repo-level gate note:
   `2.1.0`, then re-verifies Android analyze/test/APK/AAB without the older
   Flutter Gradle/AGP/Kotlin future-support warnings; the GitHub prerelease
   Android APK and `SHA256SUMS.txt` were refreshed after this rebuild
-- owner decision on `2026-06-04`: current outside-store beta release is
-  allowed without production Android signing and without trusted Windows
-  signing; this does not authorize store/trusted/stable claims
+- owner decision on `2026-06-04`: the recorded beta wave used accepted signing
+  limitations; that dated decision is evidence, not approval to rebuild,
+  republish, or sync a later candidate
 - live app-session runtime download smoke still needs owner/operator proof for
   the exact `1.0.0-beta` payload rather than relying on local green snapshots
 - Android physical-device audit is operator-attested for this beta wave; do not describe it as raw repo evidence unless a retained audit artifact is attached
@@ -121,11 +126,9 @@ Already verified locally by the current engineering lane:
 
 ## Public Android+Windows Blockers
 
-These items no longer block the already-approved outside-store beta when they
-require owner hardware/accounts, exact-artifact local tests, signing/store
-access, live deploy approval, or RU probe access. After the final `2026-06-05`
-closure pass, they are the only remaining gates for stronger stable, store,
-trusted-signing, raw Android-audit, production-WARP, or RU-origin claims.
+The recorded `1.0.0-beta` wave remains retained evidence. These items block a
+new public promotion or runtime sync and also remain gates for stable, store,
+trusted-signing, raw Android-audit, production-WARP, and RU-origin claims.
 
 ### Android local-surface security gate
 
@@ -159,10 +162,11 @@ trusted-signing, raw Android-audit, production-WARP, or RU-origin claims.
 - keep Windows package identity, executable naming, installer naming, and public artifacts on the canonical `POKROV` / `pokrov` line
 - build fresh Android and Windows release candidates after every branding,
   runtime, or release-copy sync
-- keep trusted signing as a later trust upgrade; it is not required for this outside-store beta wave
-- production Android signing and trusted Windows signing are accepted skips for
-  the current `1.0.0-beta` outside-store beta, with explicit beta/unsigned
-  copy required
+- require production Android signing and trusted Windows signing for the exact
+  next public candidate; neither an old approval nor a successful local build
+  is reusable signing evidence
+- keep debug-signed Android and unsigned Windows outputs explicitly non-public,
+  beta-labeled engineering smoke only
 - keep Android APK runtime/public download tied to the verified runtime APP_* sync and live download smoke from the current evidence pack; re-run before changing artifacts or URLs
 - Android build-tool future-support warnings are closed as of the `2026-06-05`
   toolchain refresh; keep later Gradle, Android Gradle Plugin, and Kotlin

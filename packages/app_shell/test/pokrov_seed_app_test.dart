@@ -1474,7 +1474,7 @@ void main() {
         android: ClientAppPlatformMetadata(
           platform: 'android',
           primaryUrl:
-              'https://github.com/example/pokrov/releases/download/v1.0.1-beta/pokrov-android-universal.apk',
+              'https://github.com/Kiwunaka/pokrov/releases/download/v1.0.1-beta/pokrov-android-universal.apk',
           mirrorUrl: '',
           version: '1.0.1-beta',
           sha256:
@@ -1490,7 +1490,7 @@ void main() {
             minSupportedVersion: '1.0.0-beta',
             updatePolicy: 'recommended',
             url:
-                'https://github.com/example/pokrov/releases/download/v1.0.1-beta/pokrov-android-universal.apk',
+                'https://github.com/Kiwunaka/pokrov/releases/download/v1.0.1-beta/pokrov-android-universal.apk',
             sha256:
                 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
             size: 123456,
@@ -1529,6 +1529,68 @@ void main() {
 
     expect(launched, hasLength(1));
     expect(launched.single.host, 'github.com');
+  });
+
+  testWidgets('startup update check ignores untrusted download metadata',
+      (tester) async {
+    final launched = <Uri>[];
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      clientAppsMetadata: const ClientAppsMetadata(
+        android: ClientAppPlatformMetadata(
+          platform: 'android',
+          primaryUrl:
+              'https://github.com/Kiwunaka/pokrov/releases/download/v1.0.1-beta/pokrov-android-universal.apk',
+          mirrorUrl: '',
+          version: '1.0.1-beta',
+          sha256:
+              'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          size: 123456,
+          releaseNotes: 'Небольшие исправления бета-версии.',
+          releaseNotesUrl: '',
+          publishedAt: '2026-06-07T00:00:00Z',
+          update: ClientAppUpdateInfo(
+            platform: 'android',
+            channel: 'beta',
+            latestVersion: '1.0.1-beta',
+            minSupportedVersion: '1.0.0-beta',
+            updatePolicy: 'required',
+            url: 'https://evil.example/pokrov-android-universal.apk',
+            sha256:
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            size: 123456,
+            releaseNotes: 'Небольшие исправления бета-версии.',
+            releaseNotesUrl: '',
+            publishedAt: '2026-06-07T00:00:00Z',
+          ),
+        ),
+        windows: ClientAppPlatformMetadata.emptyWindows,
+        docsUrl: 'https://pokrov.space/install/',
+        updatedAt: '2026-06-07T00:00:00Z',
+        updateCheckMode: 'prompt',
+        silentUpdate: false,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        handoffLauncher: (uri) async {
+          launched.add(uri);
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.clientAppsCalls, 1);
+    expect(find.byKey(const ValueKey('client-update-prompt')), findsNothing);
+    expect(launched, isEmpty);
   });
 
   testWidgets('home status opens connection details without first-layer copy',

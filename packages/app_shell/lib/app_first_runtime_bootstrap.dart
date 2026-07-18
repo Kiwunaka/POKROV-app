@@ -1432,8 +1432,42 @@ class ClientAppUpdateInfo {
   final String releaseNotesUrl;
   final String publishedAt;
 
+  static final RegExp _sha256Pattern = RegExp(r'^[a-fA-F0-9]{64}$');
+  static const _canonicalReleaseHost = 'github.com';
+  static const _canonicalReleaseOwner = 'kiwunaka';
+  static const _canonicalReleaseRepository = 'pokrov';
+
+  /// Validates metadata for an external browser handoff. This does not verify
+  /// the bytes that the browser eventually downloads.
+  Uri? get trustedHandoffUri {
+    if (!_sha256Pattern.hasMatch(sha256.trim()) || size <= 0) {
+      return null;
+    }
+    final uri = Uri.tryParse(url.trim());
+    if (uri == null ||
+        uri.scheme.toLowerCase() != 'https' ||
+        uri.host.toLowerCase() != _canonicalReleaseHost ||
+        uri.userInfo.isNotEmpty ||
+        uri.hasPort ||
+        uri.hasQuery ||
+        uri.hasFragment) {
+      return null;
+    }
+    final segments = uri.pathSegments;
+    if (segments.length != 6 ||
+        segments[0].toLowerCase() != _canonicalReleaseOwner ||
+        segments[1].toLowerCase() != _canonicalReleaseRepository ||
+        segments[2].toLowerCase() != 'releases' ||
+        segments[3].toLowerCase() != 'download' ||
+        segments[4].trim().isEmpty ||
+        segments[5].trim().isEmpty) {
+      return null;
+    }
+    return uri;
+  }
+
   bool get shouldPrompt =>
-      url.trim().isNotEmpty &&
+      trustedHandoffUri != null &&
       (updatePolicy == 'recommended' || updatePolicy == 'required');
 
   bool get isRequired => updatePolicy == 'required';

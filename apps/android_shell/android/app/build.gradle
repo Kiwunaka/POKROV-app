@@ -7,6 +7,25 @@ plugins {
 
 def libcoreAar = file("libs/libcore.aar")
 
+def productionSigningInputs = [
+    storeFile: System.getenv("ANDROID_SIGNING_KEY"),
+    storePassword: System.getenv("ANDROID_SIGNING_STORE_PASSWORD"),
+    keyPassword: System.getenv("ANDROID_SIGNING_KEY_PASSWORD"),
+    keyAlias: System.getenv("ANDROID_SIGNING_KEY_ALIAS"),
+]
+def configuredProductionSigningInputs = productionSigningInputs.values().findAll { value ->
+    value != null && !value.toString().trim().isEmpty()
+}
+def hasAnyProductionReleaseSigning = !configuredProductionSigningInputs.isEmpty()
+def hasProductionReleaseSigning =
+        configuredProductionSigningInputs.size() == productionSigningInputs.size()
+def allowInternalBetaDebugSigning = providers
+        .gradleProperty("pokrov.allowInternalBetaDebugSigning")
+        .orElse(providers.environmentVariable("POKROV_ALLOW_INTERNAL_BETA_DEBUG_SIGNING"))
+        .map { value -> value.toBoolean() }
+        .orElse(false)
+        .get()
+
 android {
     namespace = "space.pokrov.pokrov_android_shell"
     compileSdk = flutter.compileSdkVersion
@@ -29,12 +48,59 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        production {
+            if (hasProductionReleaseSigning) {
+                storeFile = file(productionSigningInputs.storeFile)
+                storePassword = productionSigningInputs.storePassword
+                keyPassword = productionSigningInputs.keyPassword
+                keyAlias = productionSigningInputs.keyAlias
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // Internal beta only. Public Android remains blocked until trusted
-            // signing and the physical localhost/control-surface audit pass.
-            signingConfig = signingConfigs.debug
+            if (hasProductionReleaseSigning) {
+                signingConfig = signingConfigs.production
+            } else if (allowInternalBetaDebugSigning) {
+                // Explicit local/operator smoke only. This output is not a
+                // public, trusted, store, stable, or signing-proven candidate.
+                signingConfig = signingConfigs.debug
+            }
         }
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    def releaseArtifactTaskRequested = graph.allTasks.any { task ->
+        def taskName = task.name
+        task.project == project && (
+                taskName ==~ /^assemble.*Release$/ ||
+                taskName ==~ /^bundle.*Release$/ ||
+                taskName ==~ /^package.*Release(?:Bundle|UniversalApk)?$/ ||
+                taskName ==~ /^sign.*ReleaseBundle$/
+        )
+    }
+
+    if (releaseArtifactTaskRequested && hasAnyProductionReleaseSigning && !hasProductionReleaseSigning) {
+        throw new GradleException(
+            "Android production signing inputs are incomplete. Configure all four canonical ANDROID_SIGNING_* inputs."
+        )
+    }
+
+    if (releaseArtifactTaskRequested && hasProductionReleaseSigning &&
+            !file(productionSigningInputs.storeFile).isFile()) {
+        throw new GradleException(
+            "Android production signing keystore is unavailable. No signing path or credential value is printed."
+        )
+    }
+
+    if (releaseArtifactTaskRequested && !hasProductionReleaseSigning && !allowInternalBetaDebugSigning) {
+        throw new GradleException(
+            "Android release builds are fail-closed without production signing. " +
+            "Use POKROV_ALLOW_INTERNAL_BETA_DEBUG_SIGNING=true only for an explicitly non-public smoke artifact."
+        )
     }
 }
 

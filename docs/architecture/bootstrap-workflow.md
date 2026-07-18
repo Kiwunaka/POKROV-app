@@ -114,9 +114,23 @@ Current blocking dependency:
   behavior remains gated on exact-artifact physical-device and clean-VM proof
 - `iOS` host now reaches a source-backed packet-tunnel lane: it can initialize libcore, stage a managed profile into the shared app-group runtime directory, persist a `NETunnelProviderManager`, and request tunnel start or stop against the checked-in `PacketTunnelExtension` target; the provider now boots `MobileSetup` plus `LibboxSetup`, starts a Libbox command server and service, and opens tun through `NEPacketTunnelFlow`, but this still lacks signed Apple validation on a real device
 - `macOS` now copies synced `libcore.dylib` and `HiddifyCli` artifacts into the app bundle and the desktop FFI lane can discover them from the built host layout
-- `Windows` now copies synced `libcore.dll` into the release bundle, applies runtime options before `libcore start`, prefers a system-proxy desktop host mode in the current seed, and `build-windows-release.ps1` verifies the bundle metadata and stages an unsigned setup EXE, portable ZIP, and manifest under `apps/windows_shell/build/release_bundle`
+- `Windows` now copies synced `libcore.dll` into the release bundle and applies runtime options before `libcore start`; `Full tunnel`, `All except RU`, and selected-process routing stay TUN-backed by default so non-proxy-aware traffic is not silently left outside the chosen route policy, while system proxy remains a disabled compatibility-only path
+- source-level runtime tests cover the Windows TUN options for all three route modes; exact-candidate clean-VM routing, DNS/leak, elevation, connect, and teardown proof remains `MANUAL_OWNER_TEST`
+- `build-windows-release.ps1` verifies the Windows bundle metadata and stages an unsigned setup EXE, portable ZIP, and manifest under `apps/windows_shell/build/release_bundle`
 - host `build/` outputs and staged local bundles remain disposable local verification artifacts; they are not release truth for any public lane
 - treat future live connect, service ownership, and traffic-carrying runtime work as one shared contract owned by the lane, not four host-local improvisations
+
+## Update Handoff Boundary
+
+The shared shell may present and open an update only when the metadata carries a
+positive byte size, a 64-hex SHA-256, and the exact canonical browser target
+`https://github.com/Kiwunaka/pokrov/releases/download/<tag>/<asset>`. Alternate
+hosts or repositories, URL authority fields, explicit ports, query strings, and
+fragments fail closed, and the same validation runs again at tap time.
+
+This is an external-browser handoff, not downloaded-byte verification. The app
+does not receive or hash the bytes downloaded by the browser; checksum, signing,
+install, runtime, and exact-candidate proof remain separate manual release gates.
 
 ## Apple Boundary
 

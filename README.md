@@ -27,11 +27,15 @@ The root [AGENTS.md](AGENTS.md) is the short Codex operating contract.
 ## Release Truth
 
 `config/release-handoff.seed.json` is the machine-readable owner for the latest
-repo-backed public beta handoff. It records the public `Kiwunaka/pokrov`
-GitHub Release, candidate hashes, current download evidence, and manual gates.
+repo-backed beta handoff. It retains the observed public `Kiwunaka/pokrov`
+GitHub Release, candidate hashes, download evidence, and manual gates without
+turning old evidence into approval for a later candidate.
 
-The handoff authorizes the current outside-store Android and unsigned Windows
-beta with its recorded limitations. It does not prove:
+The retained `1.0.0-beta` publication is evidence for that exact artifact set.
+New public promotion and runtime sync are blocked until exact-candidate signing
+evidence is recorded. Android production signing is fail-closed by default;
+debug signing requires an explicit non-public smoke opt-in. The handoff does
+not prove:
 
 - stable `1.0.0`;
 - Play, Microsoft Store, WinGet, TestFlight, App Store, or notarized delivery;

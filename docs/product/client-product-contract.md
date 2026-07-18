@@ -67,9 +67,16 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 ## Release Gate Reality
 
 - `Android + Windows` remain the only public release pair for this wave
-- outside-store public beta for Android + Windows is `GO` from the `2026-05-15` platform launch-decision evidence pack
-- `Windows` may proceed for this outside-store beta as an unsigned EXE while unknown-publisher warning copy is visible
-- `Android` is operator-attested for this beta wave; raw audit evidence remains optional replacement evidence, not a public claim
+- the published `1.0.0-beta` handoff and `2026-05-15` decision pack are retained
+  exact-candidate evidence; neither is reusable approval for a rebuild
+- new public promotion and runtime sync are blocked until exact-candidate
+  signing gates pass; a local build or an old public URL is not signing proof
+- Android release builds require the operator-provided production signing
+  inputs by default; debug signing is an explicit non-public smoke path only
+- Windows unsigned packaging remains useful for gated engineering smoke, but
+  it does not satisfy the current public-promotion signing gate
+- the retained Android owner attestation is not raw physical-device evidence
+  and does not prove signing for a later candidate
 - the current green repo/static gate snapshot is necessary but not sufficient for future candidates; the `2026-05-15` beta pack includes runtime handoff validation, paid/email evidence, and separate `current-origin`, `brain-origin`, and accepted-skip `RU-origin` handling
 - emulator or adb-only Android audits are valid preflight, not final release approval
 - `iOS` and `macOS` readiness work does not block the public Android+Windows ship, but it also does not expand the public promise
@@ -266,10 +273,15 @@ Release continuity rules:
 
 - public-facing build surfaces must present the beta line `1.0.0-beta` or an
   explicit beta patch label such as `1.0.0-beta.3`
-- Android APK distribution is approved for the outside-store beta after operator-attested physical audit and the `2026-05-15` runtime handoff proof; re-verify before changing artifacts or public URLs
-- Windows unsigned bundles may be gated to beta users only with a SmartScreen or unknown-publisher warning
+- the `2026-05-15` Android handoff explains the retained beta publication but
+  does not approve a replacement artifact; new public APK promotion requires
+  exact-candidate production-signing evidence and the applicable device gates
+- unsigned Windows bundles are non-public engineering smoke with a SmartScreen
+  or unknown-publisher warning; public promotion requires trusted signing
 - signed release builds inject updater and source metadata through the documented `PORTAL_RELEASE_*` environment variables
 - local non-release builds keep updater and source-code surfaces disabled instead of falling back to a personal repository URL
+- an update prompt or tap may hand off only to `https://github.com/Kiwunaka/pokrov/releases/download/<tag>/<asset>` when metadata also carries a 64-hex SHA-256 and a positive byte size; alternate hosts, repositories, URL authority fields, query strings, and fragments fail closed
+- this is an external-browser handoff boundary, not downloaded-byte verification: the app does not receive or hash the browser's bytes, so checksum, install, signing, and exact-candidate runtime proof remain manual release gates
 - release handoff must keep app, bot, and authenticated web surfaces aligned with the same runtime `APP_*` URLs
 
 ## Branding Requirements

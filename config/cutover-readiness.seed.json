@@ -1,8 +1,8 @@
 {
   "lane": "POKROV-app/main",
-  "status": "outside_store_beta_repo_and_handoff_closed_manual_tests_and_signing_remaining",
-  "public_cutover_allowed": true,
-  "last_updated": "2026-07-11",
+  "status": "outside_store_beta_retained_new_public_cutover_blocked_pending_exact_candidate_signing",
+  "public_cutover_allowed": false,
+  "last_updated": "2026-07-18",
   "latest_repo_backed_release": {
     "version": "1.0.0-beta",
     "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta",
@@ -14,8 +14,9 @@
   },
   "android_release": {
     "beta_distribution": "outside_store_apk_staged",
-    "public_approved": true,
+    "public_approved": false,
     "blocked_on": [
+      "production Android signing PASS for the exact next public candidate",
       "raw physical-device audit proof if replacing operator attestation",
       "real-user app-session /api/client/apps download smoke",
       "live install/connect/dashboard smoke from exact uploaded APK",
@@ -27,9 +28,10 @@
   },
   "windows_release": {
     "beta_distribution": "outside_store_unsigned_exe_staged",
-    "public_approved": true,
+    "public_approved": false,
     "required_user_warning": "Microsoft Defender SmartScreen or unknown-publisher warning is expected until trusted signing is complete.",
     "blocked_on": [
+      "trusted Windows signing PASS for the exact next public candidate",
       "real-user app-session /api/client/apps download smoke",
       "live install/connect/dashboard smoke from exact uploaded unsigned setup EXE",
       "trusted signing and SmartScreen reputation for later broad distribution"
@@ -39,13 +41,13 @@
     ]
   },
   "blocking_dependencies": [
-    "public announcement remains manual even though outside-store beta artifacts were refreshed",
+    "new public artifact promotion and runtime sync remain blocked until exact-candidate signing gates pass",
     "real-user app-session runtime handoff smoke still requires owner access",
     "iOS production connectivity still requires on-device packet-tunnel proof plus reviewed entitlements",
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
-    "Windows trusted signing remains a later trust upgrade; live install smoke and broad-distribution trust checks remain operator work outside this lane"
+    "Android production signing and Windows trusted signing remain operator-owned exact-candidate gates"
   ],
   "repo_side_closed": [
     "P0-P6 beta implementation scope",

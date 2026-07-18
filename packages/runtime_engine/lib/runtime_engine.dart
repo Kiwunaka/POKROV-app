@@ -708,7 +708,9 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   DateTime? _runningSince;
   RuntimePhase _phase = RuntimePhase.artifactMissing;
   String _message = _missingArtifactMessage;
-  bool _preferWindowsSystemProxy = true;
+  // System proxy is a compatibility-only path. The current Windows runtime
+  // keeps device-wide and selected-process routing on TUN by default.
+  bool _preferWindowsSystemProxy = false;
 
   static const defaultLibcoreTag = 'v3.1.8';
   static const _missingArtifactMessage =
@@ -1205,8 +1207,11 @@ String _runtimeOptionsJsonForPayload(
     RouteMode.selectedApps => 'global',
     RouteMode.fullTunnel => 'global',
   };
-  final systemProxyMode =
-      hostPlatform == HostPlatform.windows && preferWindowsSystemProxy;
+  final allowsSystemProxyCompatibility =
+      payload.routeMode == RouteMode.selectedApps;
+  final systemProxyMode = hostPlatform == HostPlatform.windows &&
+      preferWindowsSystemProxy &&
+      allowsSystemProxyCompatibility;
   final directDnsAddress =
       payload.routeMode == RouteMode.allExceptRu ? 'local' : 'udp://1.1.1.1';
 

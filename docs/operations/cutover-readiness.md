@@ -12,7 +12,7 @@ Historical mapping note:
 
 ## Current Status
 
-- cutover state: `outside-store public beta GO with accepted skips`
+- cutover state: `retained 1.0.0-beta evidence; new public promotion and runtime sync BLOCKED pending exact-candidate signing`
 - lane path: `C:/Users/kiwun/Documents/ai/POKROV-app`
 - lane ownership: `canonical client development repo for POKROV-app/main`
 - public scope in this document: `Android + Windows`
@@ -23,11 +23,11 @@ Historical mapping note:
 - Windows release state: `unsigned outside-store beta setup EXE refreshed for 1.0.0-beta; live install/app-session smoke remains manual`
 - Android and Windows engineering verification: `2026-05-15 beta evidence retained; 2026-06-03 local Task 8 verification passed for app-first backend tests, Flutter analyze/test, Android debug APK smoke, and Windows release build; 2026-06-04 local RC built Android release-smoke APK/AAB and unsigned Windows setup/zip/manifest; 2026-06-05 local 1.0.0-beta P6 refreshed focused Flutter tests/analyze, root preflight, Android release APK, Windows unsigned setup/zip/manifest, and GitHub prerelease assets; 2026-06-05 Android toolchain refresh moved the host lane to Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0 with Android analyze/test/APK/AAB green; final closure pass verified authenticated GitHub download hashes for all current release assets`
 - public store readiness: `not approved`
-- public cutover approval: `outside-store beta only`
-- public Android release approval: `outside-store beta with operator attestation`
-- public Android release blockers: `raw device audit proof, store readiness, and stronger Android safety claims remain manual follow-up`
-- public Windows release approval: `outside-store unsigned beta only`
-- public Windows release blockers: `trusted signing is an accepted skip for the current outside-store beta; store/trusted distribution claims remain follow-up`
+- public cutover approval: `blocked for a new candidate`
+- public Android release approval: `blocked pending production-signing PASS for the exact candidate`
+- public Android release blockers: `production signing, applicable exact-artifact device gates, store readiness, and stronger Android safety claims`
+- public Windows release approval: `blocked pending trusted-signing PASS for the exact candidate`
+- public Windows release blockers: `trusted signing, exact-artifact install smoke, and store/trusted distribution proof`
 - long-term repo truth: `yes`
 - repo-backed alpha or beta archive: `allowed`
 
@@ -35,6 +35,11 @@ This repo is already the canonical development lane for new client work.
 This document tracks public release approval and cutover readiness, not whether the repo exists as engineering truth.
 
 ## Stages From Local RC To Public Release
+
+The completed stage results below are retained evidence for their named 2026
+candidates. They are not reusable approval. Effective policy for a new
+candidate is fail-closed: signing evidence, artifact identity, manual gates,
+and public/runtime handoff must be re-established for that exact candidate.
 
 ### Stage 0: local exact-candidate package
 
@@ -67,11 +72,12 @@ Status: `MANUAL_OWNER_TEST`.
 
 ### Stage 2: Android public-beta gate
 
-Status: `UNSIGNED_RELEASE_APPROVED_BY_OWNER_MANUAL_TEST_PENDING`.
+Recorded status for the 2026 beta: `UNSIGNED_RELEASE_APPROVED_BY_OWNER_MANUAL_TEST_PENDING`.
+Current reuse status: `BLOCKED_PENDING_EXACT_CANDIDATE_PRODUCTION_SIGNING`.
 
-- Production Android signing is an accepted skip for the current outside-store
-  beta; retain the current internal beta signing posture with explicit
-  outside-store beta copy.
+- The dated signing skip explains the retained beta evidence only. A new public
+  APK requires production signing; debug signing is an explicit non-public
+  smoke path and never promotion authority.
 - Run the physical-device release-build localhost/control-surface audit.
 - Attach raw evidence if replacing the existing operator attestation.
 - Confirm release state JSON does not contain `session_token`; session material
@@ -89,10 +95,12 @@ Status: `UNSIGNED_RELEASE_APPROVED_BY_OWNER_MANUAL_TEST_PENDING`.
 
 ### Stage 3: Windows public-beta gate
 
-Status: `UNSIGNED_RELEASE_APPROVED_BY_OWNER_MANUAL_TEST_PENDING`.
+Recorded status for the 2026 beta: `UNSIGNED_RELEASE_APPROVED_BY_OWNER_MANUAL_TEST_PENDING`.
+Current reuse status: `BLOCKED_PENDING_EXACT_CANDIDATE_TRUSTED_SIGNING`.
 
-- Trusted Windows signing is an accepted skip for the current outside-store
-  beta; keep explicit SmartScreen/unknown-publisher copy.
+- The dated unsigned-risk acceptance explains the retained beta evidence only.
+  A new public Windows candidate requires trusted-signing evidence; unsigned
+  output remains non-public engineering smoke with explicit warning copy.
 - Install the exact setup EXE that will be uploaded.
 - Confirm local runtime ports bind only to loopback, LAN access remains disabled,
   and the Clash API is disabled unless a future audited secret-gated control
@@ -174,7 +182,9 @@ Status: `READY_GUARDRAILS_RECORDED_OPERATOR_MONITORING_AFTER_ANNOUNCEMENT`.
 1. Keep the client product contract, app-first onboarding contract, route-mode behavior, support flow, and download behavior documented in this repo.
 2. Prove one real native-core provenance and packaging contract for the public Android and Windows artifacts.
 3. Retain the operator-attested Android release-build localhost/control-surface audit note, or replace it with raw evidence if available.
-4. Keep Windows unsigned beta posture explicit; trusted signing is not required for this outside-store beta pass, but unknown-publisher warnings must be shown.
+4. Require trusted Windows signing for a new public candidate; keep every
+   unsigned engineering artifact non-public and show the unknown-publisher
+   warning during operator smoke.
 5. Verify runtime download handoff, checkout continuation, support continuation, and Telegram bonus behavior in release-mode builds.
 6. Keep release handoff evidence explicit for `current-origin`, `brain-origin`, and `RU-origin` checks where reachability matters.
 
@@ -338,7 +348,8 @@ rotation proof, or production WARP readiness.
 - [x] `flutter build appbundle --release` succeeds when store/operator artifacts are requested
 - [x] Physical-device localhost/control-surface audit is operator-attested for this beta wave
 - [ ] Raw audit evidence is attached if replacing the operator attestation
-- [x] Public download handoff is approved for Android `APK` / mirror; `Play` remains empty for outside-store beta
+- [ ] Production Android signing is `PASS` for the exact next public candidate
+- [ ] Public download handoff is re-approved for the exact signed Android `APK`; `Play` remains empty until store readiness passes
 - [x] Release handoff includes runtime URL verification and origin evidence for the `2026-05-15` beta evidence pack
 - [x] Any APK shown to testers is official, beta-labeled, outside-store, and not described as Play/store-ready
 
@@ -377,10 +388,10 @@ They do not expand the public `Android + Windows` release scope tracked by this 
 - [x] Shared runtime and widget tests pass
 - [x] `flutter build windows --release` succeeds
 - [x] Local release bundle contains `pokrov_windows_beta.exe` and `libcore.dll`
-- [x] Unsigned beta risk is accepted for this outside-store beta wave
-- [ ] Trusted code-signing identity is available for a later trusted Windows distribution
-- [x] EXE first-layer beta path is chosen for this outside-store wave; `MSIX` / portable `ZIP` stay operator/store artifacts
-- [x] Public hosting and handoff path are approved for the `2026-05-15` outside-store beta evidence pack
+- [x] Unsigned beta risk acceptance is retained as evidence for the recorded beta wave only
+- [ ] Trusted code-signing identity and exact-candidate signing proof are available for the next public Windows distribution
+- [x] EXE first-layer beta path is retained; `MSIX` / portable `ZIP` stay operator/store artifacts
+- [ ] Public hosting and handoff are re-approved for the exact signed candidate
 - [x] Gated beta download copy warns about Microsoft Defender SmartScreen or unknown-publisher prompts while unsigned
 
 ## Safe Claims
@@ -399,13 +410,15 @@ Safe to claim now:
 - Windows now has a real local runtime build-and-bundle lane with unsigned package staging
 - the `2026-06-04` local RC pack exists for engineering/operator inspection
   under `artifacts/releases/pokrov-app/0.2.0-beta.1+20260604-rc-local/`
-- the current Windows beta artifact may be shared only behind approved beta access with the unsigned warning
-- Android + Windows outside-store public beta is `GO` as of the `2026-05-15` launch decision evidence pack
+- debug-signed Android and unsigned Windows artifacts may be used only for
+  explicitly non-public engineering smoke
+- the `2026-05-15` launch decision and published `1.0.0-beta` handoff remain
+  exact-candidate evidence, not current rebuild or republish authority
 - current Android + Windows `1.0.0-beta` assets are uploaded to the GitHub
   prerelease and authenticated download/checksum proof passes for every listed
   asset
 - Android physical-device audit is accepted as `OPERATOR_ATTESTED` for this beta wave, not as raw repository evidence
-- Windows signing is not required for this outside-store beta wave, but trusted signing must not be claimed
+- current public promotion is blocked until exact-candidate signing gates pass
 
 Not safe to claim now:
 
@@ -425,12 +438,15 @@ Not safe to claim now:
 
 Blocked-by note:
 
-- the local repo bootstrap step is complete, and public Android + Windows outside-store beta approval is green from the `2026-05-15` platform evidence pack
+- the local repo bootstrap step is complete; the `2026-05-15` approval is
+  retained evidence and does not authorize a new candidate
 - Android is operator-attested for this beta wave; do not upgrade that to raw audit evidence unless a retained audit artifact is attached
-- Windows remains unsigned beta only; trusted signing is a later trust upgrade, not a blocker for this outside-store beta pass
-- real-user Telegram/WebApp checks, raw Android device audit replacement evidence, signing, store access, and RU-origin probes remain manual owner or operator checks, not blockers for local docs/code synchronization
+- Android production signing and Windows trusted signing are operator-owned
+  blockers for the next public promotion and runtime sync
+- real-user Telegram/WebApp checks, raw Android device audit replacement
+  evidence, store access, and RU-origin probes remain separate manual gates
 - `POKROV-app/artifacts/releases/pokrov-app/` may retain repo-backed alpha and beta bundles built directly from this lane for engineering and tester handoff
-- local RC packs must not be promoted to runtime download truth by themselves;
-  the current `v1.0.0-beta` GitHub prerelease handoff is the repo-backed beta
-  artifact truth, while live app-session `APP_*` proof remains manual
+- local RC packs and the retained `v1.0.0-beta` handoff must not be promoted or
+  re-synced by themselves; a new exact candidate needs fresh signing and
+  live app-session `APP_*` proof
 - rollback and compatibility lanes may still exist elsewhere, but this document tracks approval of the `POKROV-app` release lane itself rather than treating another repo as the primary frame

@@ -953,7 +953,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                           label: const Text('Скачать'),
                           onPressed: () {
                             Navigator.of(sheetContext).pop();
-                            unawaited(_openSafeHandoff('download', update.url));
+                            unawaited(_openClientUpdateDownload(update));
                           },
                         ),
                       ),
@@ -978,6 +978,29 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     } finally {
       _clientUpdatePromptVisible = false;
     }
+  }
+
+  Future<void> _openClientUpdateDownload(ClientAppUpdateInfo update) async {
+    final uri = update.trustedHandoffUri;
+    if (uri == null) {
+      if (mounted) {
+        showPokrovSnack(
+          context,
+          'Ссылка обновления отклонена. Попробуйте позже.',
+          tone: PokrovSnackTone.danger,
+        );
+      }
+      return;
+    }
+    final opened = await _launchExternalHandoff(uri);
+    if (!mounted || opened) {
+      return;
+    }
+    showPokrovSnack(
+      context,
+      'Не удалось открыть страницу обновления. Попробуйте еще раз.',
+      tone: PokrovSnackTone.danger,
+    );
   }
 
   Future<void> _openSafeHandoff(String label, String value) async {

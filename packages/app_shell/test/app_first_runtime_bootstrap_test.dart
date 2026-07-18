@@ -14,6 +14,30 @@ const _ruDomainWhitelistRuleSetTag = 'pokrov-ru-domain-whitelist';
 const _ruDomainCategoryRuleSetTag = 'pokrov-ru-domain-category';
 const _ruIpCountryRuleSetTag = 'pokrov-ru-ip-country';
 const _ruIpWhitelistRuleSetTag = 'pokrov-ru-ip-whitelist';
+const _validClientUpdateSha256 =
+    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
+ClientAppUpdateInfo _clientUpdateInfo({
+  String url =
+      'https://github.com/Kiwunaka/pokrov/releases/download/v1.0.1-beta/pokrov-android-arm64-v8a.apk',
+  String sha256 = _validClientUpdateSha256,
+  int size = 123456,
+  String updatePolicy = 'recommended',
+}) {
+  return ClientAppUpdateInfo(
+    platform: 'android',
+    channel: 'beta',
+    latestVersion: '1.0.1-beta',
+    minSupportedVersion: '1.0.0-beta',
+    updatePolicy: updatePolicy,
+    url: url,
+    sha256: sha256,
+    size: size,
+    releaseNotes: 'Small beta fixes.',
+    releaseNotesUrl: '',
+    publishedAt: '2026-06-07T00:00:00Z',
+  );
+}
 
 String _expectedRuleSetCachePath(Directory tempDirectory, String fileName) {
   return '${tempDirectory.path}${Platform.pathSeparator}'
@@ -168,6 +192,37 @@ void main() {
   });
   tearDown(() {
     FlutterSecureStoragePlatform.instance = defaultSecureStoragePlatform;
+  });
+
+  group('ClientAppUpdateInfo download trust', () {
+    test('prompts for the canonical release URL with complete metadata', () {
+      expect(_clientUpdateInfo().shouldPrompt, isTrue);
+    });
+
+    test('rejects non-canonical or ambiguous download URLs', () {
+      const untrustedUrls = <String>[
+        'http://github.com/Kiwunaka/pokrov/releases/download/v1.0.1-beta/pokrov.apk',
+        'https://user@github.com/Kiwunaka/pokrov/releases/download/v1.0.1-beta/pokrov.apk',
+        'https://github.com:444/Kiwunaka/pokrov/releases/download/v1.0.1-beta/pokrov.apk',
+        'https://github.com/attacker/pokrov/releases/download/v1.0.1-beta/pokrov.apk',
+        'https://github.com/Kiwunaka/POKROV-app/releases/download/v1.0.1-beta/pokrov.apk',
+        'https://evil.example/Kiwunaka/pokrov/releases/download/v1.0.1-beta/pokrov.apk',
+        'https://github.com/Kiwunaka/pokrov/releases/download/v1.0.1-beta/nested/pokrov.apk',
+        'https://github.com/Kiwunaka/pokrov/releases/download/v1.0.1-beta/pokrov.apk?source=api',
+        'intent://github.com/Kiwunaka/pokrov/releases/download/v1.0.1-beta/pokrov.apk',
+      ];
+
+      for (final url in untrustedUrls) {
+        expect(_clientUpdateInfo(url: url).shouldPrompt, isFalse, reason: url);
+      }
+    });
+
+    test('requires a SHA-256 digest and positive expected size', () {
+      expect(_clientUpdateInfo(sha256: '').shouldPrompt, isFalse);
+      expect(_clientUpdateInfo(sha256: 'not-a-sha256').shouldPrompt, isFalse);
+      expect(_clientUpdateInfo(size: 0).shouldPrompt, isFalse);
+      expect(_clientUpdateInfo(size: -1).shouldPrompt, isFalse);
+    });
   });
 
   test(

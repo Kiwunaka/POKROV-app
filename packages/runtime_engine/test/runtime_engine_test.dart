@@ -501,7 +501,8 @@ void main() {
     );
   });
 
-  test('desktop lane syncs runtime options before libcore start', () async {
+  test('desktop lane keeps Windows full tunnel on TUN before libcore start',
+      () async {
     final root = await Directory.systemTemp.createTemp(
       'pokrov-runtime-desktop-connect-',
     );
@@ -537,8 +538,91 @@ void main() {
     expect(running.phase, RuntimePhase.running);
     expect(bindings.changeOptionsCalls, 1);
     expect(bindings.startCalls, 1);
-    expect(bindings.lastOptionsJson, contains('"set-system-proxy":true'));
-    expect(bindings.lastOptionsJson, contains('"enable-tun":false'));
+    expect(bindings.lastOptionsJson, contains('"set-system-proxy":false'));
+    expect(bindings.lastOptionsJson, contains('"enable-tun":true'));
+  });
+
+  test('desktop lane keeps Windows all-except-RU on TUN before libcore start',
+      () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-connect-rules-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'connect-desktop-rules',
+        configPayload:
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.allExceptRu,
+      ),
+    );
+
+    final running = await engine.connect();
+
+    expect(running.phase, RuntimePhase.running);
+    expect(bindings.changeOptionsCalls, 1);
+    expect(bindings.startCalls, 1);
+    expect(bindings.lastOptionsJson, contains('"routing-mode":"allExceptRu"'));
+    expect(bindings.lastOptionsJson, contains('"set-system-proxy":false'));
+    expect(bindings.lastOptionsJson, contains('"enable-tun":true'));
+  });
+
+  test('desktop lane keeps Windows selected-app routing on TUN', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-connect-selected-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'connect-desktop-selected',
+        configPayload:
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"rules":[{"process_name":["browser.exe"],"outbound":"proxy"}],"final":"direct"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.selectedApps,
+      ),
+    );
+
+    final running = await engine.connect();
+
+    expect(running.phase, RuntimePhase.running);
+    expect(bindings.changeOptionsCalls, 1);
+    expect(bindings.startCalls, 1);
+    expect(bindings.lastOptionsJson, contains('"routing-mode":"global"'));
+    expect(bindings.lastOptionsJson, contains('"set-system-proxy":false'));
+    expect(bindings.lastOptionsJson, contains('"enable-tun":true'));
   });
 
   test('desktop lane preserves setup errors instead of generic ready text',
