@@ -7,6 +7,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.runtimeSnapshot,
     required this.runtimeHeadline,
     required this.runtimeBusy,
+    required this.runtimeDisconnecting,
     required this.primaryConnectEnabled,
     required this.connectHintVisible,
     required this.revealHold,
@@ -29,6 +30,7 @@ class _QuickConnectSection extends StatelessWidget {
   final RuntimeSnapshot? runtimeSnapshot;
   final String? runtimeHeadline;
   final bool runtimeBusy;
+  final bool runtimeDisconnecting;
   final bool primaryConnectEnabled;
   final bool connectHintVisible;
 
@@ -57,6 +59,7 @@ class _QuickConnectSection extends StatelessWidget {
     final statusLabel = _homeProtectionStatusLabel(
       snapshot,
       busy: runtimeBusy,
+      disconnecting: runtimeDisconnecting,
     );
     final statusSummary = _consumerProtectionStatusSummary(
       snapshot,
@@ -71,17 +74,21 @@ class _QuickConnectSection extends StatelessWidget {
     final statusColor = runtimeBusy
         ? p.muted
         : isRunning
-            ? isHealthyRunning
-                ? p.success
-                : p.warning
-            : p.muted;
+        ? isHealthyRunning
+              ? p.success
+              : p.warning
+        : p.muted;
     final actionLabel = runtimeBusy
-        ? 'Подключается…'
+        // Honest direction while busy: tearing the tunnel down must never
+        // read as if a connection is being established.
+        ? runtimeDisconnecting
+              ? 'Отключаем…'
+              : 'Подключаемся…'
         : isRunning
-            ? 'Отключить'
-            : primaryActionEnabled
-                ? 'Включить VPN'
-                : 'Пока недоступно';
+        ? 'Отключить'
+        : primaryActionEnabled
+        ? 'Включить VPN'
+        : 'Пока недоступно';
     final recoveryNotice = _motionRecoveryNotice(
       snapshot,
       headline: runtimeHeadline,
@@ -117,8 +124,9 @@ class _QuickConnectSection extends StatelessWidget {
               telegramBonusLabel: telegramBonusBusy
                   ? 'Проверяем Telegram'
                   : _telegramBonusHomeLabel(appContext, bonusSummary),
-              telegramBonusClaimed:
-                  (bonusSummary?.channelBonusClaimedAt ?? '').trim().isNotEmpty,
+              telegramBonusClaimed: (bonusSummary?.channelBonusClaimedAt ?? '')
+                  .trim()
+                  .isNotEmpty,
               selectedRouteMode: selectedRouteMode,
               locationLabel: 'Автоматически',
               warpPolicy: warpPolicy,
@@ -683,28 +691,28 @@ class _HomeStatusAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    return InkWell(
+    // Keep the design branch's disclosure affordance while using the shared
+    // press-scale grammar instead of a one-off InkWell.
+    return KeyedSubtree(
       key: const ValueKey('home-connection-details-action'),
-      borderRadius: BorderRadius.circular(999),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: _StatusDotLabel(
-                label: statusLabel,
-                color: statusColor,
+      child: PokrovSettingsRowPressSurface(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: _StatusDotLabel(label: statusLabel, color: statusColor),
               ),
-            ),
-            const SizedBox(width: 2),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 16,
-              color: p.muted.withValues(alpha: 0.6),
-            ),
-          ],
+              const SizedBox(width: 2),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 16,
+                color: p.muted.withValues(alpha: 0.6),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -768,10 +776,10 @@ class _HomeAccessStrip extends StatelessWidget {
     final accessBadgeLabel = telegramBonusClaimed
         ? '+10 дней'
         : accessLabel.startsWith('5 ')
-            ? '5 дней'
-            : accessLabel.toLowerCase().contains('премиум')
-                ? 'Премиум'
-                : 'Активен';
+        ? '5 дней'
+        : accessLabel.toLowerCase().contains('премиум')
+        ? 'Премиум'
+        : 'Активен';
     final content = Container(
       key: const ValueKey('home-access-strip'),
       width: double.infinity,
@@ -929,19 +937,18 @@ class _HomeTelegramBonusTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: p.ink,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: p.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   claimed ? label : 'Подпишитесь на канал и заберите бонус',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: p.muted,
-                        height: 1.25,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: p.muted, height: 1.25),
                 ),
               ],
             ),
@@ -961,10 +968,7 @@ class _HomeTelegramBonusTile extends StatelessWidget {
 }
 
 class _HomeAdminPromoCard extends StatelessWidget {
-  const _HomeAdminPromoCard({
-    required this.slot,
-    required this.onOpenHandoff,
-  });
+  const _HomeAdminPromoCard({required this.slot, required this.onOpenHandoff});
 
   final AppFirstPromoSlot slot;
   final void Function(String label, String value) onOpenHandoff;
@@ -1020,10 +1024,10 @@ class _HomeWarpTile extends StatelessWidget {
     final subtitle = busy
         ? 'Применяем настройку'
         : enabled
-            ? 'Включится при следующем подключении'
-            : canOffer
-                ? 'Дополнительная защита'
-                : 'Недоступно на этом устройстве';
+        ? 'Включится при следующем подключении'
+        : canOffer
+        ? 'Дополнительная защита'
+        : 'Недоступно на этом устройстве';
     final iconColor = enabled ? p.accent : p.muted.withValues(alpha: 0.8);
     final iconBackground = enabled
         ? p.accent.withValues(alpha: 0.12)
@@ -1120,11 +1124,11 @@ class _HomeWarpTile extends StatelessWidget {
                         title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: p.ink,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: p.ink,
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
                       const SizedBox(height: 2),
                       AnimatedSwitcher(
@@ -1134,11 +1138,11 @@ class _HomeWarpTile extends StatelessWidget {
                         child: Text(
                           subtitle,
                           key: ValueKey(subtitle),
-                          style:
-                              Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: p.muted,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: p.muted,
+                                fontWeight: FontWeight.w500,
+                              ),
                         ),
                       ),
                     ],
@@ -1173,18 +1177,19 @@ class _HomeBrandHeader extends StatelessWidget {
     final p = PokrovPalette.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment:
-          center ? MainAxisAlignment.center : MainAxisAlignment.start,
+      mainAxisAlignment: center
+          ? MainAxisAlignment.center
+          : MainAxisAlignment.start,
       children: [
         const _BrandMark(size: 38),
         const SizedBox(width: 10),
         Text(
           'POKROV VPN',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: p.ink,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0,
-              ),
+            color: p.ink,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0,
+          ),
         ),
       ],
     );
@@ -1194,9 +1199,10 @@ class _HomeBrandHeader extends StatelessWidget {
 String _homeProtectionStatusLabel(
   RuntimeSnapshot? snapshot, {
   bool busy = false,
+  bool disconnecting = false,
 }) {
   if (busy) {
-    return 'Подключается…';
+    return disconnecting ? 'Отключаем…' : 'Подключаемся…';
   }
   if (snapshot?.phase == RuntimePhase.running) {
     return (snapshot?.isCleanlyHealthy ?? false)
@@ -1329,9 +1335,7 @@ Widget _fadeSlideTransition(Widget child, Animation<double> animation) {
 }
 
 class _MotionRecoveryBanner extends StatelessWidget {
-  const _MotionRecoveryBanner({
-    required this.message,
-  });
+  const _MotionRecoveryBanner({required this.message});
 
   final String message;
 
@@ -1350,9 +1354,7 @@ class _MotionRecoveryBanner extends StatelessWidget {
         decoration: BoxDecoration(
           color: p.warning.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: p.warning.withValues(alpha: 0.22),
-          ),
+          border: Border.all(color: p.warning.withValues(alpha: 0.22)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1367,10 +1369,10 @@ class _MotionRecoveryBanner extends StatelessWidget {
               child: Text(
                 message,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: p.ink.withValues(alpha: 0.78),
-                      height: 1.3,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: p.ink.withValues(alpha: 0.78),
+                  height: 1.3,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -1381,9 +1383,7 @@ class _MotionRecoveryBanner extends StatelessWidget {
 }
 
 class _HomeInfoNotice extends StatelessWidget {
-  const _HomeInfoNotice({
-    required this.message,
-  });
+  const _HomeInfoNotice({required this.message});
 
   final String message;
 
@@ -1403,9 +1403,7 @@ class _HomeInfoNotice extends StatelessWidget {
         decoration: BoxDecoration(
           color: p.accent.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: p.accent.withValues(alpha: 0.18),
-          ),
+          border: Border.all(color: p.accent.withValues(alpha: 0.18)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1420,10 +1418,10 @@ class _HomeInfoNotice extends StatelessWidget {
               child: Text(
                 message,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: p.muted,
-                      height: 1.25,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  color: p.muted,
+                  height: 1.25,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
@@ -1440,10 +1438,7 @@ class _HomeInfoNotice extends StatelessWidget {
 /// by the caller and the dismissal is persisted by the shell through
 /// [PokrovFileConnectHintStore].
 class _ConnectHintHalo extends StatelessWidget {
-  const _ConnectHintHalo({
-    required this.visible,
-    required this.child,
-  });
+  const _ConnectHintHalo({required this.visible, required this.child});
 
   final bool visible;
   final Widget child;
@@ -1480,9 +1475,7 @@ class _ConnectHintHalo extends StatelessWidget {
             return FadeTransition(opacity: animation, child: child);
           },
           child: !visible
-              ? const SizedBox.shrink(
-                  key: ValueKey('home-connect-hint-empty'),
-                )
+              ? const SizedBox.shrink(key: ValueKey('home-connect-hint-empty'))
               : Padding(
                   key: const ValueKey('home-connect-hint-pill'),
                   padding: const EdgeInsets.only(top: 12),
@@ -1499,9 +1492,9 @@ class _ConnectHintHalo extends StatelessWidget {
                     child: Text(
                       'Нажмите, чтобы подключиться',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: p.muted,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: p.muted,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -1516,10 +1509,7 @@ class _ConnectHintHalo extends StatelessWidget {
 /// release builds and collapses to one finite pass under `flutter test`
 /// (see [PokrovLoopingMotion]); it is not built at all under reduced motion.
 class _ConnectHintPulseRing extends StatefulWidget {
-  const _ConnectHintPulseRing({
-    super.key,
-    required this.accent,
-  });
+  const _ConnectHintPulseRing({super.key, required this.accent});
 
   final Color accent;
 
@@ -1581,10 +1571,7 @@ class _ConnectHintPulseRingState extends State<_ConnectHintPulseRing>
 }
 
 class _StatusDotLabel extends PokrovStatusDotLabel {
-  const _StatusDotLabel({
-    required super.label,
-    required super.color,
-  });
+  const _StatusDotLabel({required super.label, required super.color});
 }
 
 class _HomeChip extends PokrovHomeChip {
@@ -1598,8 +1585,5 @@ class _HomeChip extends PokrovHomeChip {
 }
 
 class _MotionSkeletonList extends PokrovSkeletonList {
-  const _MotionSkeletonList({
-    super.key,
-    super.rows = 4,
-  });
+  const _MotionSkeletonList({super.key, super.rows = 4});
 }

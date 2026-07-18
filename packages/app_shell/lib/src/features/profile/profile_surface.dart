@@ -86,8 +86,9 @@ class _ProfileSection extends StatelessWidget {
     if (summary == null) {
       return const ['Telegram · рефералы · промокоды'];
     }
-    final referralCode =
-        summary.referralCode.isEmpty ? '' : ' · ${summary.referralCode}';
+    final referralCode = summary.referralCode.isEmpty
+        ? ''
+        : ' · ${summary.referralCode}';
     return [
       'Telegram +${ruDays(summary.channelBonusPremiumDays)} · рефералы ${summary.referralCount}$referralCode',
     ];
@@ -148,10 +149,14 @@ class _ProfileSection extends StatelessWidget {
                 title: 'Ваш доступ',
                 lines: const [],
                 child: _ProfileAccessOverview(
-                  accessLabel:
-                      _accessMainLabel(appContext, currentBonusSummary),
-                  accessValue:
-                      _accessShortValue(appContext, currentBonusSummary),
+                  accessLabel: _accessMainLabel(
+                    appContext,
+                    currentBonusSummary,
+                  ),
+                  accessValue: _accessShortValue(
+                    appContext,
+                    currentBonusSummary,
+                  ),
                   accessDays: _accessShortDays(appContext, currentBonusSummary),
                   poolLabel: _accessPoolLabel(appContext.accessLane),
                   statusLabel: statusLabel,
@@ -297,7 +302,7 @@ class _ProfileSection extends StatelessWidget {
                 key: const ValueKey('profile-section-app'),
                 title: 'Настройки',
                 lines: [
-                  '${appContext.hostPlatform.label} · ${_routeModeShortLabel(selectedRouteMode)}'
+                  '${appContext.hostPlatform.label} · ${_routeModeShortLabel(selectedRouteMode)}',
                 ],
                 child: Column(
                   children: [
@@ -316,15 +321,13 @@ class _ProfileSection extends StatelessWidget {
                     ),
                     const _SettingsRowDivider(),
                     _SettingsRow(
-                      key: const ValueKey(
-                        'profile-enhanced-protection-action',
-                      ),
+                      key: const ValueKey('profile-enhanced-protection-action'),
                       icon: Icons.privacy_tip_outlined,
                       title: 'WARP',
                       value:
                           warpLifecycle.phase == PokrovWarpPhase.readyToConsent
-                              ? 'Можно включить'
-                              : warpLifecycle.publicStatus,
+                          ? 'Можно включить'
+                          : warpLifecycle.publicStatus,
                       onTap: () {
                         unawaited(onOpenWarp());
                       },
@@ -339,8 +342,8 @@ class _ProfileSection extends StatelessWidget {
                       value: notificationsBusy
                           ? 'Обновляем'
                           : notificationsUnread > 0
-                              ? '$notificationsUnread'
-                              : 'Открыть',
+                          ? '$notificationsUnread'
+                          : 'Открыть',
                       onTap: () {
                         onOpenNotifications();
                         _showNotificationsSheet(
@@ -482,17 +485,17 @@ class _ProfileAccessOverview extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: p.ink,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0,
-                            ),
+                          color: p.ink,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0,
+                        ),
                       ),
                       const SizedBox(height: 5),
                       Text(
                         poolLabel,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: p.muted,
-                            ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(color: p.muted),
                       ),
                       const SizedBox(height: 8),
                       Wrap(
@@ -584,10 +587,7 @@ class _SettingsRowDivider extends StatelessWidget {
 /// lands with one soft spring pulse. Static under reduced motion or when the
 /// target is zero — bad news is never dramatized.
 class _LivingDaysCount extends StatefulWidget {
-  const _LivingDaysCount({
-    required this.days,
-    required this.builder,
-  });
+  const _LivingDaysCount({required this.days, required this.builder});
 
   final int days;
   final Widget Function(BuildContext context, int days) builder;
@@ -649,9 +649,13 @@ void _showThemeModeSheet(
 }) {
   void select(ThemeMode mode) {
     // Apply immediately so the springy checkmark is visible, then let the
-    // sheet leave once the selection has settled.
+    // sheet leave once the selection has settled. The settle delay follows
+    // the motion scope: under reduced motion the sheet pops right away.
     onChanged(mode);
-    Future<void>.delayed(const Duration(milliseconds: 320), () {
+    final settle = _MotionScope.of(
+      context,
+    ).duration(const Duration(milliseconds: 320));
+    Future<void>.delayed(settle, () {
       if (context.mounted) {
         Navigator.of(context).pop();
       }
@@ -671,17 +675,14 @@ void _showThemeModeSheet(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Тема',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text('Тема', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             Text(
               'POKROV может следовать системе или всегда открываться в выбранном оформлении.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: PokrovPalette.of(context).muted,
-                    height: 1.35,
-                  ),
+                color: PokrovPalette.of(context).muted,
+                height: 1.35,
+              ),
             ),
             const SizedBox(height: 14),
             PokrovCheckRow(
@@ -763,9 +764,9 @@ void _showSubscriptionSheet(
                     ? 'Доступ активен. Продление открывается на защищенной странице оплаты.'
                     : 'Сначала активируйте доступ на этом устройстве, затем продлите его на защищенной странице оплаты.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: PokrovPalette.of(context).muted,
-                      height: 1.35,
-                    ),
+                  color: PokrovPalette.of(context).muted,
+                  height: 1.35,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -788,9 +789,9 @@ void _showSubscriptionSheet(
                       '$days',
                       textAlign: TextAlign.right,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: PokrovPalette.of(context).ink,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: PokrovPalette.of(context).ink,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -819,8 +820,10 @@ void _showSubscriptionSheet(
               const SizedBox(height: 14),
               _SheetReveal(
                 order: 5,
-                child: Text('Тарифы',
-                    style: Theme.of(context).textTheme.titleSmall),
+                child: Text(
+                  'Тарифы',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
               ),
               const SizedBox(height: 8),
               for (final plan in info.plans)
@@ -838,10 +841,8 @@ void _showSubscriptionSheet(
                         ),
                         Text(
                           plan.price,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -890,10 +891,12 @@ void _showEmailRecoverySheet(
   required SeedAppContext appContext,
   required void Function(String label, String value) onOpenHandoff,
 }) {
-  final emailUrl =
-      Uri.parse(appContext.cabinetUrl).replace(path: '/account/email');
-  final recoveryUrl =
-      Uri.parse(appContext.cabinetUrl).replace(path: '/auth/recovery');
+  final emailUrl = Uri.parse(
+    appContext.cabinetUrl,
+  ).replace(path: '/account/email');
+  final recoveryUrl = Uri.parse(
+    appContext.cabinetUrl,
+  ).replace(path: '/auth/recovery');
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
@@ -915,9 +918,9 @@ void _showEmailRecoverySheet(
             Text(
               'Email нужен для восстановления доступа и входа в кабинет. Все действия открываются через короткую защищенную сессию.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: PokrovPalette.of(context).muted,
-                    height: 1.35,
-                  ),
+                color: PokrovPalette.of(context).muted,
+                height: 1.35,
+              ),
             ),
             const SizedBox(height: 16),
             Wrap(

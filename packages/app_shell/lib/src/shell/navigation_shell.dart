@@ -396,7 +396,10 @@ class _MobileShell extends StatelessWidget {
                   selectedIndex: selectedIndex,
                   onDestinationSelected: (index) {
                     // Selection tick for the thumb — pointer navigation on
-                    // desktop stays silent.
+                    // desktop and same-tab taps stay silent.
+                    if (index == selectedIndex) {
+                      return;
+                    }
                     PokrovHaptics.tap();
                     onSelected(index);
                   },

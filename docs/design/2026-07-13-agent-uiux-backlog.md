@@ -1,8 +1,9 @@
 # Agent UI/UX Backlog — 12 Motion Concepts + HIG Critique (20)
 
 Date: 2026-07-13
-Status: active design backlog / working note (not in docs/README.md registry)
+Status: completed implementation evidence; not product authority
 Owner: design/app-onboarding-uiux
+Source branch tip: `5948039357a6af6fbbd87cec7eb6a61fe9f3bdc0`
 
 ## Provenance
 

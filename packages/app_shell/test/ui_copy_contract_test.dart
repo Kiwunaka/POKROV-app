@@ -4,110 +4,125 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   final packageRoot = Directory.current;
-  final rulesSurface =
-      File('${packageRoot.path}/lib/src/features/rules/rules_surface.dart');
-  final routeLabels =
-      File('${packageRoot.path}/lib/src/features/rules/route_labels.dart');
+  final rulesSurface = File(
+    '${packageRoot.path}/lib/src/features/rules/rules_surface.dart',
+  );
+  final routeLabels = File(
+    '${packageRoot.path}/lib/src/features/rules/route_labels.dart',
+  );
   final locationsSurface = File(
-      '${packageRoot.path}/lib/src/features/locations/locations_surface.dart');
+    '${packageRoot.path}/lib/src/features/locations/locations_surface.dart',
+  );
   final locationLabels = File(
-      '${packageRoot.path}/lib/src/features/locations/location_labels.dart');
-  final homeSurface =
-      File('${packageRoot.path}/lib/src/features/home/home_surface.dart');
+    '${packageRoot.path}/lib/src/features/locations/location_labels.dart',
+  );
+  final homeSurface = File(
+    '${packageRoot.path}/lib/src/features/home/home_surface.dart',
+  );
   final onboardingFlow = File(
-      '${packageRoot.path}/lib/src/features/onboarding/onboarding_flow.dart');
-  final warpSheet =
-      File('${packageRoot.path}/lib/src/features/warp/warp_sheet.dart');
-  final profileSurface =
-      File('${packageRoot.path}/lib/src/features/profile/profile_surface.dart');
-  final profileSheets =
-      File('${packageRoot.path}/lib/src/features/profile/profile_sheets.dart');
-  final supportChat =
-      File('${packageRoot.path}/lib/src/features/support/support_chat.dart');
-  final rewardsHub =
-      File('${packageRoot.path}/lib/src/features/rewards/rewards_hub.dart');
-  final rulesHelpers =
-      File('${packageRoot.path}/lib/src/features/rules/rules_helpers.dart');
+    '${packageRoot.path}/lib/src/features/onboarding/onboarding_flow.dart',
+  );
+  final warpSheet = File(
+    '${packageRoot.path}/lib/src/features/warp/warp_sheet.dart',
+  );
+  final profileSurface = File(
+    '${packageRoot.path}/lib/src/features/profile/profile_surface.dart',
+  );
+  final profileSheets = File(
+    '${packageRoot.path}/lib/src/features/profile/profile_sheets.dart',
+  );
+  final supportChat = File(
+    '${packageRoot.path}/lib/src/features/support/support_chat.dart',
+  );
+  final rewardsHub = File(
+    '${packageRoot.path}/lib/src/features/rewards/rewards_hub.dart',
+  );
+  final rulesHelpers = File(
+    '${packageRoot.path}/lib/src/features/rules/rules_helpers.dart',
+  );
   final seedShell = File('${packageRoot.path}/lib/src/shell/seed_shell.dart');
 
-  test('rules normal UI copy uses final route labels and friendly app names',
-      () {
-    final rules = rulesSurface.readAsStringSync();
-    final labels = routeLabels.readAsStringSync();
-    final combined = '$rules\n$labels';
+  test(
+    'rules normal UI copy uses final route labels and friendly app names',
+    () {
+      final rules = rulesSurface.readAsStringSync();
+      final labels = routeLabels.readAsStringSync();
+      final combined = '$rules\n$labels';
 
-    expect(combined, contains('Умный режим'));
-    expect(combined, contains('Всё устройство'));
-    expect(combined, contains('Только выбранные'));
-    expect(
-      combined,
-      contains(
-        'Российские сервисы работают напрямую, остальное через POKROV VPN.',
-      ),
-    );
-    expect(combined, contains('Весь трафик идет через POKROV VPN.'));
-    expect(
-      combined,
-      contains('POKROV VPN работает только для выбранных приложений.'),
-    );
+      expect(combined, contains('Умный режим'));
+      expect(combined, contains('Всё устройство'));
+      expect(combined, contains('Только выбранные'));
+      expect(
+        combined,
+        contains(
+          'Российские сервисы работают напрямую, остальное через POKROV VPN.',
+        ),
+      );
+      expect(combined, contains('Весь трафик идет через POKROV VPN.'));
+      expect(
+        combined,
+        contains('POKROV VPN работает только для выбранных приложений.'),
+      );
 
-    for (final forbidden in const <String>[
-      'За рубеж',
-      'Зарубежные сайты',
-      'Весь трафик устройства идет через POKROV.',
-      'POKROV используют только выбранные приложения или .exe.',
-      'Выберите .exe или запущенный процесс.',
-      "subtitle: 'telegram.exe'",
-      "subtitle: 'org.telegram.messenger'",
-      "hintText: hint",
-      'split tunneling',
-      'TUN',
-      'CIDR',
-      'regex',
-      'domain editor',
-      'Только выбранные приложения',
-      'Техническое имя',
-      'Технические сведения',
-      'Файл',
-      'Запущено',
-      'Сейчас запущено',
-      'Подсказка',
-    ]) {
-      expect(combined, isNot(contains(forbidden)), reason: forbidden);
-    }
-  });
+      for (final forbidden in const <String>[
+        'За рубеж',
+        'Зарубежные сайты',
+        'Весь трафик устройства идет через POKROV.',
+        'POKROV используют только выбранные приложения или .exe.',
+        'Выберите .exe или запущенный процесс.',
+        "subtitle: 'telegram.exe'",
+        "subtitle: 'org.telegram.messenger'",
+        "hintText: hint",
+        'split tunneling',
+        'TUN',
+        'CIDR',
+        'regex',
+        'domain editor',
+        'Только выбранные приложения',
+        'Техническое имя',
+        'Технические сведения',
+        'Файл',
+        'Запущено',
+        'Сейчас запущено',
+        'Подсказка',
+      ]) {
+        expect(combined, isNot(contains(forbidden)), reason: forbidden);
+      }
+    },
+  );
 
   test(
-      'locations normal UI copy keeps auto first and hides technical node data',
-      () {
-    final locations = locationsSurface.readAsStringSync();
-    final labels = locationLabels.readAsStringSync();
-    final combined = '$locations\n$labels';
+    'locations normal UI copy keeps auto first and hides technical node data',
+    () {
+      final locations = locationsSurface.readAsStringSync();
+      final labels = locationLabels.readAsStringSync();
+      final combined = '$locations\n$labels';
 
-    expect(combined, contains('Автоматически'));
-    expect(combined, contains('Отлично'));
-    expect(combined, contains('Хорошо'));
-    expect(combined, contains('Стабильно'));
-    expect(combined, contains('Медленно'));
+      expect(combined, contains('Автоматически'));
+      expect(combined, contains('Отлично'));
+      expect(combined, contains('Хорошо'));
+      expect(combined, contains('Стабильно'));
+      expect(combined, contains('Медленно'));
 
-    for (final forbidden in const <String>[
-      'Автоматический выбор',
-      ' ms',
-      'ms ',
-      ' мс',
-      'мс ',
-      'panelLatencyMs',
-      'probeHost',
-      'probe.host',
-      'hostname',
-      'node.code.trim().isEmpty ?',
-      'сервер',
-      'сервера',
-      'профиля',
-    ]) {
-      expect(combined, isNot(contains(forbidden)), reason: forbidden);
-    }
-  });
+      for (final forbidden in const <String>[
+        'Автоматический выбор',
+        ' ms',
+        'ms ',
+        ' мс',
+        'мс ',
+        'panelLatencyMs',
+        'probeHost',
+        'probe.host',
+        'hostname',
+        'node.code.trim().isEmpty ?',
+        'сервер',
+        'сервера',
+        'профиля',
+      ]) {
+        expect(combined, isNot(contains(forbidden)), reason: forbidden);
+      }
+    },
+  );
 
   test('normal UI copy has no dead placeholders for shipped app shell', () {
     final combined = <String>[
@@ -154,6 +169,11 @@ void main() {
       'Триал',
       'системный модуль',
       'подготовьте устройство',
+      // 2026-07 status dialect unification: one busy/connected vocabulary
+      // («Подключаемся...» / «Подключено» / «Отключаем...» / «Не защищено»).
+      'Подключается',
+      "'Подключаемся'",
+      "'Включено' : 'Нужно внимание'",
     ]) {
       expect(combined, isNot(contains(forbidden)), reason: forbidden);
     }
@@ -165,24 +185,30 @@ void main() {
     );
   });
 
-  test('seed shell copy never leaks raw exceptions into user-facing strings',
-      () {
-    final source = seedShell.readAsStringSync();
-    final lines = source.split('\n');
-    for (final (index, line) in lines.indexed) {
-      if (line.contains(r'$error') && !line.contains('debugPrint')) {
-        fail(
-          'seed_shell.dart:${index + 1} interpolates raw \$error outside '
-          'debugPrint logging: ${line.trim()}',
-        );
+  test(
+    'seed shell copy never leaks raw exceptions into user-facing strings',
+    () {
+      final source = seedShell.readAsStringSync();
+      final lines = source.split('\n');
+      for (final (index, line) in lines.indexed) {
+        if (line.contains(r'$error') && !line.contains('debugPrint')) {
+          fail(
+            'seed_shell.dart:${index + 1} interpolates raw \$error outside '
+            'debugPrint logging: ${line.trim()}',
+          );
+        }
       }
-    }
 
-    for (final forbidden in const <String>[
-      'системный модуль',
-      'приложите диагностику',
-    ]) {
-      expect(source, isNot(contains(forbidden)), reason: forbidden);
-    }
-  });
+      for (final forbidden in const <String>[
+        'системный модуль',
+        'приложите диагностику',
+        // Status dialect: connect success says «подключен», not «включен».
+        'POKROV включен',
+        // Consumer copy never names infra hosts.
+        'Настройки обновлены с',
+      ]) {
+        expect(source, isNot(contains(forbidden)), reason: forbidden);
+      }
+    },
+  );
 }

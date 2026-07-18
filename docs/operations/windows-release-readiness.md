@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-07-11
+Last updated: 2026-07-18
 
 This document is the concrete Windows readiness note for the `POKROV-app` lane.
 
@@ -22,6 +22,11 @@ Historical mapping note:
 - local runtime/control surfaces must stay loopback-only: mixed/system-proxy ports bind to `127.0.0.1`, Clash/control APIs stay disabled unless explicitly protected by a per-install random secret, and no unauthenticated LAN listener is release-acceptable
 - public download copy must match the actual handoff URL and signing state
 - support macros must explain SmartScreen or unknown-publisher behavior for gated beta testers
+- the shell opens centered at 1280x720, permits resize down to 700x640 so the
+  canonical compact drawer remains reachable, and hides to tray on window
+  close; tray `Выход` disposes tray state before requesting native teardown
+- source and widget tests prove lifecycle ordering, but connected exact-artifact
+  tray exit still requires runtime-stop and system-proxy-restoration proof
 
 ## Local Verification Commands
 
@@ -165,6 +170,9 @@ trusted/stable claims, attach:
 - `All except RU` route-mode smoke.
 - DNS split behavior and leak checks.
 - Connect, reconnect, disconnect, and recovery after failure.
+- Close while connected -> hidden tray state -> reopen without losing the
+  running session; then tray `Выход` -> process/runtime stop and system proxy
+  restoration: `MANUAL_OWNER_TEST` for the exact candidate.
 - current-origin, brain-origin, and RU-origin checks where runtime reachability matters.
 
 ## Release Rule

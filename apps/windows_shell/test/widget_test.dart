@@ -5,31 +5,37 @@ import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_windows_shell/main.dart' as windows_shell;
 
 void main() {
+  test('windows minimum size keeps the compact drawer lane reachable', () {
+    expect(windows_shell.pokrovWindowsMinimumSize, const Size(700, 640));
+  });
+
   const windowsTrayPrivateHelperBehaviorCoverage = ['_showWindow'];
 
-  test('windows tray show window restores minimized windows before focusing',
-      () async {
-    expect(windowsTrayPrivateHelperBehaviorCoverage, contains('_showWindow'));
-    final calls = <String>[];
+  test(
+    'windows tray show window restores minimized windows before focusing',
+    () async {
+      expect(windowsTrayPrivateHelperBehaviorCoverage, contains('_showWindow'));
+      final calls = <String>[];
 
-    await windows_shell.pokrovWindowsShowWindow(
-      isMinimized: () async {
-        calls.add('isMinimized');
-        return true;
-      },
-      restore: () async {
-        calls.add('restore');
-      },
-      show: () async {
-        calls.add('show');
-      },
-      focus: () async {
-        calls.add('focus');
-      },
-    );
+      await windows_shell.pokrovWindowsShowWindow(
+        isMinimized: () async {
+          calls.add('isMinimized');
+          return true;
+        },
+        restore: () async {
+          calls.add('restore');
+        },
+        show: () async {
+          calls.add('show');
+        },
+        focus: () async {
+          calls.add('focus');
+        },
+      );
 
-    expect(calls, ['isMinimized', 'restore', 'show', 'focus']);
-  });
+      expect(calls, ['isMinimized', 'restore', 'show', 'focus']);
+    },
+  );
 
   test('windows tray show window skips restore when already visible', () async {
     final calls = <String>[];
@@ -51,6 +57,56 @@ void main() {
     );
 
     expect(calls, ['isMinimized', 'show', 'focus']);
+  });
+
+  test('windows close hides to tray while prevent-close is active', () async {
+    final calls = <String>[];
+
+    await windows_shell.pokrovWindowsHandleClose(
+      isPreventClose: () async {
+        calls.add('isPreventClose');
+        return true;
+      },
+      hide: () async {
+        calls.add('hide');
+      },
+    );
+
+    expect(calls, ['isPreventClose', 'hide']);
+  });
+
+  test(
+    'windows close leaves the window alone when prevent-close is off',
+    () async {
+      final calls = <String>[];
+
+      await windows_shell.pokrovWindowsHandleClose(
+        isPreventClose: () async {
+          calls.add('isPreventClose');
+          return false;
+        },
+        hide: () async {
+          calls.add('hide');
+        },
+      );
+
+      expect(calls, ['isPreventClose']);
+    },
+  );
+
+  test('windows tray exit destroys tray before the native window', () async {
+    final calls = <String>[];
+
+    await windows_shell.pokrovWindowsExit(
+      destroyTray: () async {
+        calls.add('destroyTray');
+      },
+      destroyWindow: () async {
+        calls.add('destroyWindow');
+      },
+    );
+
+    expect(calls, ['destroyTray', 'destroyWindow']);
   });
 
   testWidgets('windows shell boots the shared protection surface', (
@@ -84,8 +140,12 @@ void main() {
     final connectAction = find.byKey(const ValueKey('primary-connect-action'));
     expect(connectAction, findsOneWidget);
     expect(
-        find.descendant(of: connectAction, matching: find.text('Пока недоступно')),
-        findsOneWidget);
+      find.descendant(
+        of: connectAction,
+        matching: find.text('Пока недоступно'),
+      ),
+      findsOneWidget,
+    );
     expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
     expect(find.text('Дополнительная защита'), findsOneWidget);
   });

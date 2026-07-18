@@ -1,7 +1,7 @@
 ---
 name: POKROV Client Design System
 status: active
-updated: 2026-07-06
+updated: 2026-07-18
 ---
 
 # POKROV Client Design System
@@ -15,6 +15,8 @@ POKROV client UI should feel calm, premium, and operationally honest.
 - Diagnostics are available behind details, not first-layer UI.
 - Android and Windows availability labels must reflect gate status.
 - Motion should be quiet and respect reduced-motion settings.
+- Progress, success, disconnect, and error must use distinct status language;
+  transitional states stay neutral rather than warning-colored.
 
 ## Tokens
 
@@ -32,6 +34,24 @@ Client tokens mirror the platform `shared/design-tokens.json` (`pokrov-clear`, `
 - Rules and route-mode picker.
 - Profile with subscription, devices, support, and settings (theme choice persists via `PokrovFileThemeModeStore`, default system).
 - Warning and blocked-state panels.
+
+## Interaction And Motion Grammar
+
+- Mobile tab selection emits one light selection tick; desktop pointer
+  navigation stays silent.
+- The connect disc owns the connection ritual: one success confirmation at
+  landing and a quiet release at rest. Error haptics stay with the error
+  surface instead of firing twice.
+- First launch hands over to Home through the shared reduced-motion-aware
+  reveal; sheets and refresh indicators use the same motion scope.
+- Motion is finite or token-bound, and the connect arc is the signature
+  progress language for connection and pull-to-refresh rather than a generic
+  spinner vocabulary.
+- Disabled rows dim, ignore input, and keep a non-click cursor so unavailable
+  actions never look live.
+- Windows must keep the compact drawer reachable at 700 and 900 logical px.
+- Android system chrome may run edge-to-edge only with theme-matched icons and
+  safe-area protection.
 
 ## Do Not
 

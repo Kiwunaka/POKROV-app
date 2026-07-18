@@ -252,14 +252,15 @@ function New-ExpectedRegistryManifest {
   $encodedRows = @(
     'CANONICAL|RECONCILED|Client docs routing|docs/README.md',
     'CANONICAL|RECONCILED|Client repository overview|README.md',
-    'CANONICAL|REVIEWED_NO_CHANGE|Client design system|DESIGN.md',
+    'CANONICAL|RECONCILED|Client design system|DESIGN.md',
     'CANONICAL|RECONCILED|Client product|docs/product/client-product-contract.md',
     'CANONICAL|RECONCILED|App-first onboarding|docs/architecture/app-first-onboarding-flow.md',
     'CANONICAL|REVIEWED_NO_CHANGE|Repository structure|docs/architecture/folder-structure.md',
     'CANONICAL|REVIEWED_NO_CHANGE|Package boundaries|docs/architecture/package-boundaries.md',
     'CANONICAL|RECONCILED|Runtime bootstrap|docs/architecture/bootstrap-workflow.md',
     'CANONICAL|RECONCILED|In-app assistant|docs/architecture/in-app-ai-assistant-contract.md',
-    'CANONICAL|REVIEWED_NO_CHANGE|Current product/UI direction|docs/design/2026-06-13-pokrov-product-ui-direction.md',
+    'CANONICAL|RECONCILED|Current product/UI direction|docs/design/2026-06-13-pokrov-product-ui-direction.md',
+    'EVIDENCE|RECONCILED|Completed motion/HIG implementation record|docs/design/2026-07-13-agent-uiux-backlog.md',
     'CANONICAL|RECONCILED|Machine product facts|config/product-contract.seed.json',
     'CANONICAL|RECONCILED|Public/readiness platform scope|config/platform-matrix.seed.json',
     'CANONICAL|REVIEWED_NO_CHANGE|Runtime profile facts|config/runtime-profile.seed.json',
@@ -267,7 +268,7 @@ function New-ExpectedRegistryManifest {
     'CANONICAL|REVIEWED_NO_CHANGE|Release handoff facts|config/release-handoff.seed.json',
     'ACTIVE_EXECUTION|RECONCILED|Client release execution|docs/implementation/client-release-backlog.md',
     'ACTIVE_EXECUTION|REVIEWED_NO_CHANGE|Cutover checklist|docs/operations/cutover-readiness.md',
-    'ACTIVE_EXECUTION|REVIEWED_NO_CHANGE|Android readiness|docs/operations/android-release-audit.md',
+    'ACTIVE_EXECUTION|RECONCILED|Android readiness|docs/operations/android-release-audit.md',
     'ACTIVE_EXECUTION|RECONCILED|Windows readiness|docs/operations/windows-release-readiness.md',
     'ACTIVE_EXECUTION|RECONCILED|WARP runtime proof|docs/operations/warp-runtime-proof-checklist.md',
     'ACTIVE_EXECUTION|REVIEWED_NO_CHANGE|Responsive proof|docs/operations/responsive-golden-capture-plan.md',
@@ -313,7 +314,7 @@ function New-ExpectedRegistryManifest {
       LogicalKey = $logicalKey
     })
   }
-  if ($manifest.Count -ne 44) { throw "Embedded registry manifest must contain 44 rows, got $($manifest.Count)" }
+  if ($manifest.Count -ne 45) { throw "Embedded registry manifest must contain 45 rows, got $($manifest.Count)" }
   return $manifest.ToArray()
 }
 
@@ -614,11 +615,11 @@ function Test-DocumentationRegistry {
       $expectedPathClasses.Add($relativePath, $expectedRow.Class)
     }
   }
-  if ($expectedPathClasses.Count -ne 55) {
-    throw "Embedded registry manifest must contain 55 concrete paths, got $($expectedPathClasses.Count)"
+  if ($expectedPathClasses.Count -ne 56) {
+    throw "Embedded registry manifest must contain 56 concrete paths, got $($expectedPathClasses.Count)"
   }
   if ($registryTable.Rows.Count -ne $expectedManifest.Count) {
-    [void]$Errors.Add("Document registry must match the exact 44-row manifest (actual rows: $($registryTable.Rows.Count))")
+    [void]$Errors.Add("Document registry must match the exact 45-row manifest (actual rows: $($registryTable.Rows.Count))")
   }
 
   $observedClasses = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
@@ -1015,15 +1016,15 @@ POKROV-app/main
     $rows.RemoveAt($index)
     return 1
   }
-  Assert-ContractRejected -Name 'deleted registry row' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $deletedRowRegistry) -ExpectedErrorPattern 'exact 44-row manifest'
+  Assert-ContractRejected -Name 'deleted registry row' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $deletedRowRegistry) -ExpectedErrorPattern 'exact 45-row manifest'
 
-  $emptyRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 44 -Mutation {
+  $emptyRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 45 -Mutation {
     param($rows)
     $removed = $rows.Count
     $rows.Clear()
     return $removed
   }
-  Assert-ContractRejected -Name 'all registry rows deleted' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $emptyRegistry) -ExpectedErrorPattern 'exact 44-row manifest'
+  Assert-ContractRejected -Name 'all registry rows deleted' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $emptyRegistry) -ExpectedErrorPattern 'exact 45-row manifest'
 
   $invalidReviewRegistry = Set-RegistryRowCell -Text $registryText -Owner 'Client docs routing' -CellIndex 1 -Value 'APPROVED'
   Assert-ContractRejected -Name 'invalid review enum' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $invalidReviewRegistry) -ExpectedErrorPattern 'invalid review: APPROVED'
@@ -1070,7 +1071,7 @@ POKROV-app/main
     $rows.Insert($targetIndex + 1, [pscustomobject]@{ Cells = $secondCells })
     return 1
   }
-  Assert-ContractRejected -Name 'four-path registry row split' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $splitRegistry) -ExpectedErrorPattern 'exact 44-row manifest'
+  Assert-ContractRejected -Name 'four-path registry row split' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $splitRegistry) -ExpectedErrorPattern 'exact 45-row manifest'
 
   $wrongSectionAgents = Move-AgentLineBetweenSections -Text $agentsText -Marker 'Every task runs `git diff --check`' -SourceSection 'Verification And Documentation' -TargetSection 'Start Every Task'
   Assert-ContractRejected -Name 'verification marker moved to wrong section' -RepositoryRoot $RepositoryRoot -AgentsBytes (ConvertTo-Utf8Bytes $wrongSectionAgents) -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'belongs to Verification And Documentation'

@@ -41,14 +41,15 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | --- | --- | --- | --- |
 | CANONICAL | RECONCILED | Client docs routing | `docs/README.md` |
 | CANONICAL | RECONCILED | Client repository overview | `README.md` |
-| CANONICAL | REVIEWED_NO_CHANGE | Client design system | `DESIGN.md` |
+| CANONICAL | RECONCILED | Client design system | `DESIGN.md` |
 | CANONICAL | RECONCILED | Client product | `docs/product/client-product-contract.md` |
 | CANONICAL | RECONCILED | App-first onboarding | `docs/architecture/app-first-onboarding-flow.md` |
 | CANONICAL | REVIEWED_NO_CHANGE | Repository structure | `docs/architecture/folder-structure.md` |
 | CANONICAL | REVIEWED_NO_CHANGE | Package boundaries | `docs/architecture/package-boundaries.md` |
 | CANONICAL | RECONCILED | Runtime bootstrap | `docs/architecture/bootstrap-workflow.md` |
 | CANONICAL | RECONCILED | In-app assistant | `docs/architecture/in-app-ai-assistant-contract.md` |
-| CANONICAL | REVIEWED_NO_CHANGE | Current product/UI direction | `docs/design/2026-06-13-pokrov-product-ui-direction.md` |
+| CANONICAL | RECONCILED | Current product/UI direction | `docs/design/2026-06-13-pokrov-product-ui-direction.md` |
+| EVIDENCE | RECONCILED | Completed motion/HIG implementation record | `docs/design/2026-07-13-agent-uiux-backlog.md` |
 | CANONICAL | RECONCILED | Machine product facts | `config/product-contract.seed.json` |
 | CANONICAL | RECONCILED | Public/readiness platform scope | `config/platform-matrix.seed.json` |
 | CANONICAL | REVIEWED_NO_CHANGE | Runtime profile facts | `config/runtime-profile.seed.json` |
@@ -56,7 +57,7 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | CANONICAL | REVIEWED_NO_CHANGE | Release handoff facts | `config/release-handoff.seed.json` |
 | ACTIVE_EXECUTION | RECONCILED | Client release execution | `docs/implementation/client-release-backlog.md` |
 | ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Cutover checklist | `docs/operations/cutover-readiness.md` |
-| ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Android readiness | `docs/operations/android-release-audit.md` |
+| ACTIVE_EXECUTION | RECONCILED | Android readiness | `docs/operations/android-release-audit.md` |
 | ACTIVE_EXECUTION | RECONCILED | Windows readiness | `docs/operations/windows-release-readiness.md` |
 | ACTIVE_EXECUTION | RECONCILED | WARP runtime proof | `docs/operations/warp-runtime-proof-checklist.md` |
 | ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Responsive proof | `docs/operations/responsive-golden-capture-plan.md` |

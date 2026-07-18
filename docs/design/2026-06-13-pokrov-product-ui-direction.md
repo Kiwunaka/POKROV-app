@@ -92,3 +92,18 @@ light/dark token contract, no-pure-black rule, and the existence of the shared
 flat controls. Additional widget and copy contracts live in
 `packages/app_shell/test/pokrov_seed_app_test.dart` and
 `packages/app_shell/test/ui_copy_contract_test.dart`.
+
+## 2026-07 Implementation Reconciliation
+
+The completed motion/HIG pass is retained as implementation evidence in
+`docs/design/2026-07-13-agent-uiux-backlog.md`; it is not a second active
+design owner. The current implementation keeps:
+
+- one status dialect: `Подключаемся…`, `Подключено`, `Отключаем…`,
+  `Не защищено`;
+- directional busy copy while preserving the shared connect-disc handoff and
+  reduced-motion behavior;
+- one mobile navigation haptic and silent desktop pointer navigation;
+- Windows compact/drawer behavior at 700 and 900 px;
+- Android adaptive launcher/splash assets and edge-to-edge system chrome tied
+  to the existing POKROV brand source.

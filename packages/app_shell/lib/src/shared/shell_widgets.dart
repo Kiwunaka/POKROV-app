@@ -19,21 +19,15 @@ class _SectionCard extends StatelessWidget {
     final p = PokrovPalette.of(context);
     final colors = switch (tone) {
       _SectionTone.accent => (
-          background: p.accent.withValues(alpha: 0.06),
-          border: p.accent.withValues(alpha: 0.16),
-        ),
-      _SectionTone.muted => (
-          background: p.surfaceMuted,
-          border: p.line,
-        ),
-      _SectionTone.neutral => (
-          background: p.surface,
-          border: p.line,
-        ),
+        background: p.accent.withValues(alpha: 0.06),
+        border: p.accent.withValues(alpha: 0.16),
+      ),
+      _SectionTone.muted => (background: p.surfaceMuted, border: p.line),
+      _SectionTone.neutral => (background: p.surface, border: p.line),
       _SectionTone.reward => (
-          background: p.reward.withValues(alpha: 0.12),
-          border: p.reward.withValues(alpha: 0.22),
-        ),
+        background: p.reward.withValues(alpha: 0.12),
+        border: p.reward.withValues(alpha: 0.22),
+      ),
     };
 
     return Container(
@@ -53,9 +47,9 @@ class _SectionCard extends StatelessWidget {
               // titleMedium/w600 keeps card titles a clear tier below the
               // headlineSmall page headers instead of 1px apart.
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: p.ink,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: p.ink,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             if (lines.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -65,9 +59,9 @@ class _SectionCard extends StatelessWidget {
                   child: Text(
                     line,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: p.muted,
-                          height: 1.32,
-                        ),
+                      color: p.muted,
+                      height: 1.32,
+                    ),
                   ),
                 ),
               ),
@@ -84,9 +78,7 @@ class _SectionCard extends StatelessWidget {
 }
 
 class _SeedBackdrop extends StatelessWidget {
-  const _SeedBackdrop({
-    required this.child,
-  });
+  const _SeedBackdrop({required this.child});
 
   final Widget child;
 
@@ -101,11 +93,7 @@ class _SeedBackdrop extends StatelessWidget {
           end: Alignment.bottomCenter,
         ),
       ),
-      child: Stack(
-        children: [
-          child,
-        ],
-      ),
+      child: Stack(children: [child]),
     );
   }
 }
@@ -240,8 +228,12 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     if (newPhase == oldPhase) {
       return;
     }
-    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ??
-        WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
+    final disableAnimations =
+        MediaQuery.maybeOf(context)?.disableAnimations ??
+        WidgetsBinding
+            .instance
+            .platformDispatcher
+            .accessibilityFeatures
             .disableAnimations;
     if (newPhase == PokrovConnectDiscPhase.connected) {
       _settleFromAngle = PokrovConnectDiscMotion.sweepStartAngle(
@@ -286,18 +278,22 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
   }
 
   PokrovConnectDiscState get _discState => PokrovConnectDiscState.resolve(
-        enabled: widget.enabled,
-        running: widget.running,
-        degraded: widget.degraded,
-        error: widget.error,
-        busy: _effectiveBusy,
-      );
+    enabled: widget.enabled,
+    running: widget.running,
+    degraded: widget.degraded,
+    error: widget.error,
+    busy: _effectiveBusy,
+  );
 
   bool get _effectiveBusy => widget.busy || _optimisticBusy;
 
   void _syncControllers() {
-    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ??
-        WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
+    final disableAnimations =
+        MediaQuery.maybeOf(context)?.disableAnimations ??
+        WidgetsBinding
+            .instance
+            .platformDispatcher
+            .accessibilityFeatures
             .disableAnimations;
     final state = _discState;
     final canAnimate = state.enabled && !disableAnimations;
@@ -359,10 +355,14 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     final accent = (widget.degraded || widget.error)
         ? p.warning
         : widget.running
-            ? p.connectedGreen
-            : p.accent;
-    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ??
-        WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
+        ? p.connectedGreen
+        : p.accent;
+    final disableAnimations =
+        MediaQuery.maybeOf(context)?.disableAnimations ??
+        WidgetsBinding
+            .instance
+            .platformDispatcher
+            .accessibilityFeatures
             .disableAnimations;
     final diameter = widget.desktopSize
         ? 208.0
@@ -375,10 +375,10 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     final markOpacity = !widget.enabled
         ? 0.34
         : (widget.degraded || widget.error)
-            ? 0.62
-            : _effectiveBusy
-                ? 0.72
-                : 1.0;
+        ? 0.62
+        : _effectiveBusy
+        ? 0.72
+        : 1.0;
 
     return Semantics(
       key: const ValueKey('primary-connect-action'),
@@ -413,8 +413,10 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
           child: RepaintBoundary(
             child: AnimatedBuilder(
               key: const ValueKey('connect-disc-motion'),
-              animation:
-                  Listenable.merge([_breathController, _sweepController]),
+              animation: Listenable.merge([
+                _breathController,
+                _sweepController,
+              ]),
               builder: (context, child) {
                 final breath = disableAnimations
                     ? 0.0
@@ -478,15 +480,16 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                           // above the canvas instead of sitting flat on it.
                           boxShadow: [
                             BoxShadow(
-                              color:
-                                  (widget.running ? accent : p.ink).withValues(
-                                alpha: Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? 0.35
-                                    : widget.running
+                              color: (widget.running ? accent : p.ink)
+                                  .withValues(
+                                    alpha:
+                                        Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? 0.35
+                                        : widget.running
                                         ? 0.18
                                         : 0.08,
-                              ),
+                                  ),
                               blurRadius: 30,
                               offset: const Offset(0, 12),
                             ),
@@ -512,8 +515,9 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                                 begin: 0,
                                 end: _discHovered && widget.enabled ? 1.0 : 0.0,
                               ),
-                              duration:
-                                  motion.duration(PokrovMotionTokens.quick),
+                              duration: motion.duration(
+                                PokrovMotionTokens.quick,
+                              ),
                               curve: _MotionTokens.ease,
                               builder: (context, hoverT, _) => CustomPaint(
                                 size: Size.square(diameter),
@@ -557,7 +561,9 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                           decoration: BoxDecoration(
                             color: widget.running
                                 ? Color.alphaBlend(
-                                    accent.withValues(alpha: 0.10), p.canvas)
+                                    accent.withValues(alpha: 0.10),
+                                    p.canvas,
+                                  )
                                 : p.canvas,
                             shape: BoxShape.circle,
                             border: Border.all(
@@ -581,9 +587,11 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                                       fit: BoxFit.scaleDown,
                                       child: AnimatedSwitcher(
                                         key: const ValueKey(
-                                            'connect-disc-label'),
-                                        duration: motion
-                                            .duration(_MotionTokens.short),
+                                          'connect-disc-label',
+                                        ),
+                                        duration: motion.duration(
+                                          _MotionTokens.short,
+                                        ),
                                         transitionBuilder: _fadeSlideTransition,
                                         child: Text(
                                           widget.actionLabel,
@@ -697,9 +705,7 @@ class _ConnectSettleLayer extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: settleColor.withValues(alpha: opacity),
                   border: Border.all(
-                    color: settleColor.withValues(
-                      alpha: isError ? 0.28 : 0.18,
-                    ),
+                    color: settleColor.withValues(alpha: isError ? 0.28 : 0.18),
                   ),
                 ),
               ),
@@ -759,19 +765,21 @@ class _ConnectDiscRimPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2 - 5;
-    final breath =
-        disableAnimations ? 0.0 : Curves.easeInOut.transform(breathValue);
+    final breath = disableAnimations
+        ? 0.0
+        : Curves.easeInOut.transform(breathValue);
     // The landing morph tints brand emerald toward the connected green in
     // step with the geometry, so color and shape arrive together.
     final morphActive = !degraded && (running || (busy && settleT > 0));
     final morphT = morphActive ? settleT : 0.0;
     final landAccent = Color.lerp(brandAccent, connectedAccent, morphT)!;
     final rimAccent = morphActive ? landAccent : accent;
-    final baseOpacity = (enabled
-            ? _lerp(0.18 + breath * 0.04, 0.40, running ? morphT : 0.0) +
-                0.06 * hoverT
-            : 0.08)
-        .clamp(0.0, 1.0);
+    final baseOpacity =
+        (enabled
+                ? _lerp(0.18 + breath * 0.04, 0.40, running ? morphT : 0.0) +
+                      0.06 * hoverT
+                : 0.08)
+            .clamp(0.0, 1.0);
     final basePaint = Paint()
       ..isAntiAlias = true
       ..style = PaintingStyle.stroke
@@ -802,7 +810,8 @@ class _ConnectDiscRimPainter extends CustomPainter {
           ..color = landAccent.withValues(alpha: _lerp(0.74, 0.56, settleT));
         final sweep =
             PokrovConnectDiscMotion.connectedArcSweepRadians * settleT;
-        final start = PokrovConnectDiscMotion.connectedArcStartAngle +
+        final start =
+            PokrovConnectDiscMotion.connectedArcStartAngle +
             PokrovConnectDiscMotion.connectedArcSweepRadians * (1 - settleT);
         canvas.drawArc(rect, start, sweep, false, remnantPaint);
       } else {

@@ -49,7 +49,7 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
     if (_themeMode == mode) {
       return;
     }
-    HapticFeedback.selectionClick();
+    PokrovHaptics.tap();
     unawaited(widget.themeModeStore.write(mode));
     setState(() {
       _themeMode = mode;
@@ -96,19 +96,20 @@ ThemeData _buildPokrovTheme({
   final isDark = brightness == Brightness.dark;
   // component.button text tokens: white on emerald, near-black on dark mint.
   final onAccent = isDark ? const Color(0xFF101713) : Colors.white;
-  final colorScheme = ColorScheme.fromSeed(
-    seedColor: tokens.accent,
-    brightness: brightness,
-  ).copyWith(
-    primary: tokens.accent,
-    onPrimary: onAccent,
-    secondary: tokens.accentBright,
-    onSecondary: onAccent,
-    surface: tokens.surface,
-    onSurface: tokens.ink,
-    error: tokens.danger,
-    outlineVariant: tokens.line,
-  );
+  final colorScheme =
+      ColorScheme.fromSeed(
+        seedColor: tokens.accent,
+        brightness: brightness,
+      ).copyWith(
+        primary: tokens.accent,
+        onPrimary: onAccent,
+        secondary: tokens.accentBright,
+        onSecondary: onAccent,
+        surface: tokens.surface,
+        onSurface: tokens.ink,
+        error: tokens.danger,
+        outlineVariant: tokens.line,
+      );
   final textTheme = _buildPokrovTextTheme(tokens);
 
   return ThemeData(
@@ -147,11 +148,7 @@ ThemeData _buildPokrovTheme({
     // Cupertino push (slide-from-right with parallax) on every platform.
     textTheme: textTheme,
     iconTheme: IconThemeData(color: tokens.ink, size: 22),
-    dividerTheme: DividerThemeData(
-      color: tokens.line,
-      thickness: 1,
-      space: 1,
-    ),
+    dividerTheme: DividerThemeData(color: tokens.line, thickness: 1, space: 1),
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
       foregroundColor: tokens.ink,
@@ -181,8 +178,9 @@ ThemeData _buildPokrovTheme({
           fontWeight: states.contains(WidgetState.selected)
               ? FontWeight.w600
               : FontWeight.w500,
-          color:
-              states.contains(WidgetState.selected) ? tokens.ink : tokens.muted,
+          color: states.contains(WidgetState.selected)
+              ? tokens.ink
+              : tokens.muted,
         ),
       ),
       iconTheme: WidgetStateProperty.resolveWith(
@@ -460,6 +458,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       TextEditingController();
   RuntimeSnapshot? _runtimeSnapshot;
   bool _runtimeBusy = false;
+  // Direction of the current busy transition so the UI can honestly say
+  // «Отключаем...» instead of pretending every busy state is a connect.
+  bool _runtimeDisconnecting = false;
   bool _firstLaunchBusy = false;
   bool _managedProfileDirty = true;
   // Hidden until the store confirms the hint was never dismissed, so the
@@ -508,10 +509,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _runtimeEngine = createRuntimeEngine(
       hostPlatform: widget.appContext.hostPlatform,
     );
-    final bootstrapper = widget.bootstrapper ??
-        AppFirstRuntimeBootstrapper(
-          apiBaseUrl: widget.appContext.apiBaseUrl,
-        );
+    final bootstrapper =
+        widget.bootstrapper ??
+        AppFirstRuntimeBootstrapper(apiBaseUrl: widget.appContext.apiBaseUrl);
     _bootstrapper = bootstrapper;
     _accountActionService = bootstrapper is AppFirstAccountActionService
         ? bootstrapper as AppFirstAccountActionService
@@ -531,10 +531,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _clientDataService = bootstrapper is AppFirstClientDataService
         ? bootstrapper as AppFirstClientDataService
         : null;
-    _supportTicketService = widget.supportTicketService ??
-        AppFirstSupportTicketService(
-          apiBaseUrl: widget.appContext.apiBaseUrl,
-        );
+    _supportTicketService =
+        widget.supportTicketService ??
+        AppFirstSupportTicketService(apiBaseUrl: widget.appContext.apiBaseUrl);
     _firstLaunchStore =
         widget.firstLaunchStore ?? const PokrovFileFirstLaunchStore();
     unawaited(_loadFirstLaunchState());
@@ -564,7 +563,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return;
     }
 
-    HapticFeedback.selectionClick();
+    PokrovHaptics.tap();
     setState(() {
       _nodePreferenceBusy = true;
       _preferredNodeCode = normalized;
@@ -618,8 +617,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     setState(() {
       _selectedAppIds.add(normalized);
-      if (widget.appContext.runtimeProfile.supportedRouteModes
-          .contains(RouteMode.selectedApps)) {
+      if (widget.appContext.runtimeProfile.supportedRouteModes.contains(
+        RouteMode.selectedApps,
+      )) {
         _selectedRouteMode = RouteMode.selectedApps;
       }
       _managedProfileDirty = true;
@@ -811,11 +811,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<bool> _launchExternalHandoff(Uri uri) {
-    final launcher = widget.handoffLauncher ??
-        (Uri target) => launchUrl(
-              target,
-              mode: LaunchMode.externalApplication,
-            );
+    final launcher =
+        widget.handoffLauncher ??
+        (Uri target) => launchUrl(target, mode: LaunchMode.externalApplication);
     return launcher(uri);
   }
 
@@ -855,49 +853,125 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return;
     }
     _clientUpdatePromptVisible = true;
-    final title =
-        update.isRequired ? 'Нужно обновить POKROV' : 'Доступно обновление';
+    final title = update.isRequired
+        ? 'Нужно обновить POKROV'
+        : 'Доступно обновление';
     final version = update.latestVersion.trim();
     final notes = update.releaseNotes.trim();
     try {
-      await showDialog<void>(
+      // House sheet language instead of a stock Material dialog: drag
+      // handle, rounded top, PokrovPressable primary action — the same
+      // pattern as the WARP and profile sheets.
+      await showModalBottomSheet<void>(
         context: context,
-        barrierDismissible: !update.isRequired,
-        builder: (dialogContext) {
-          return AlertDialog(
-            key: const ValueKey('client-update-prompt'),
-            title: Text(title),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  version.isEmpty
-                      ? 'Установите свежую версию, чтобы получить исправления и актуальные правила.'
-                      : 'Свежая версия: $version.',
-                ),
-                if (notes.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(notes),
-                ],
-              ],
-            ),
-            actions: [
-              if (!update.isRequired)
-                TextButton(
-                  key: const ValueKey('client-update-later'),
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Позже'),
-                ),
-              FilledButton(
-                key: const ValueKey('client-update-download'),
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  unawaited(_openSafeHandoff('download', update.url));
-                },
-                child: const Text('Скачать'),
+        // Honest affordances: a required update shows no drag handle and
+        // cannot be swiped away.
+        showDragHandle: !update.isRequired,
+        isScrollControlled: true,
+        isDismissible: !update.isRequired,
+        enableDrag: !update.isRequired,
+        sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        builder: (sheetContext) {
+          final p = PokrovPalette.of(sheetContext);
+          final theme = Theme.of(sheetContext);
+          return SafeArea(
+            top: false,
+            child: Container(
+              key: const ValueKey('client-update-prompt'),
+              width: double.infinity,
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.82,
               ),
-            ],
+              padding: EdgeInsets.fromLTRB(
+                22,
+                update.isRequired ? 22 : 6,
+                22,
+                26,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: p.accent.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(
+                            Icons.system_update_alt_rounded,
+                            color: p.accent,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 13),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: p.ink,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      version.isEmpty
+                          ? 'Установите свежую версию, чтобы получить исправления и актуальные правила.'
+                          : 'Свежая версия: $version.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: p.muted,
+                        height: 1.35,
+                      ),
+                    ),
+                    if (notes.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        notes,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: p.muted,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      child: PokrovPressable(
+                        child: FilledButton.icon(
+                          key: const ValueKey('client-update-download'),
+                          icon: const Icon(Icons.download_rounded),
+                          label: const Text('Скачать'),
+                          onPressed: () {
+                            Navigator.of(sheetContext).pop();
+                            unawaited(_openSafeHandoff('download', update.url));
+                          },
+                        ),
+                      ),
+                    ),
+                    if (!update.isRequired) ...[
+                      const SizedBox(height: 10),
+                      Center(
+                        child: TextButton(
+                          key: const ValueKey('client-update-later'),
+                          onPressed: () => Navigator.of(sheetContext).pop(),
+                          child: const Text('Позже'),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
           );
         },
       );
@@ -922,10 +996,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return;
     }
     if (!opened) {
-      final fallback = _safeHandoffFallbackUri(
-        label: label,
-        value: value,
-      );
+      final fallback = _safeHandoffFallbackUri(label: label, value: value);
       if (fallback != null && fallback != uri) {
         final fallbackOpened = await _launchExternalHandoff(fallback);
         if (!mounted) {
@@ -965,7 +1036,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
 
     try {
-      HapticFeedback.selectionClick();
+      PokrovHaptics.tap();
       final result = await accountActions.redeemCode(
         hostPlatform: widget.appContext.hostPlatform,
         code: code,
@@ -1089,7 +1160,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _telegramBonusError = null;
     });
     try {
-      HapticFeedback.selectionClick();
+      PokrovHaptics.tap();
       final result = await bonusActions.createTelegramLink(
         hostPlatform: widget.appContext.hostPlatform,
       );
@@ -1099,8 +1170,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _telegramBonusBusy = false;
-        _telegramBonusStatus =
-            result.linked ? 'Telegram привязан' : 'Код открыт в Telegram';
+        _telegramBonusStatus = result.linked
+            ? 'Telegram привязан'
+            : 'Код открыт в Telegram';
         if (!opened) {
           _telegramBonusError = 'Не удалось открыть Telegram автоматически.';
         }
@@ -1133,7 +1205,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _telegramBonusError = null;
     });
     try {
-      HapticFeedback.selectionClick();
+      PokrovHaptics.tap();
       final status = await bonusActions.checkChannelBonus(
         hostPlatform: widget.appContext.hostPlatform,
       );
@@ -1170,7 +1242,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _telegramBonusError = null;
     });
     try {
-      HapticFeedback.selectionClick();
+      PokrovHaptics.tap();
       final result = await bonusActions.claimChannelBonus(
         hostPlatform: widget.appContext.hostPlatform,
       );
@@ -1229,7 +1301,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     });
     try {
       if (force) {
-        HapticFeedback.selectionClick();
+        PokrovHaptics.tap();
       }
       final summary = await bonusActions.fetchBonusSummary(
         hostPlatform: widget.appContext.hostPlatform,
@@ -1257,9 +1329,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   Future<void> _spinBonusWheelInApp() async {
     await _runBonusRewardInApp(
       actionName: 'Рулетка',
-      run: (service) => service.spinBonusWheel(
-        hostPlatform: widget.appContext.hostPlatform,
-      ),
+      run: (service) =>
+          service.spinBonusWheel(hostPlatform: widget.appContext.hostPlatform),
     );
   }
 
@@ -1276,7 +1347,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     required String actionName,
     required Future<AppFirstBonusRewardResult> Function(
       AppFirstBonusActionService service,
-    ) run,
+    )
+    run,
   }) async {
     if (_bonusRewardBusy) {
       return;
@@ -1292,7 +1364,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _bonusSummaryError = null;
     });
     try {
-      HapticFeedback.selectionClick();
+      PokrovHaptics.tap();
       final result = await run(bonusActions);
       if (!mounted) {
         return;
@@ -1400,7 +1472,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   void _completeFirstLaunchAsNewUser() {
-    HapticFeedback.selectionClick();
+    PokrovHaptics.tap();
     unawaited(_markFirstLaunchCompleted());
     setState(() {
       _firstLaunchExitAnimated = true;
@@ -1439,14 +1511,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   void _openFirstLaunchRestore() {
-    HapticFeedback.selectionClick();
+    PokrovHaptics.tap();
     setState(() {
       _firstLaunchStep = _FirstLaunchStep.restore;
     });
   }
 
   void _backToFirstLaunchChoice() {
-    HapticFeedback.selectionClick();
+    PokrovHaptics.tap();
     setState(() {
       _firstLaunchStep = _FirstLaunchStep.choice;
     });
@@ -1459,9 +1531,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     setState(() {
       _firstLaunchBusy = true;
     });
-    final ok = await _redeemCodeInApp(
-      _firstLaunchRestoreCodeController.text,
-    );
+    final ok = await _redeemCodeInApp(_firstLaunchRestoreCodeController.text);
     if (!mounted) {
       return;
     }
@@ -1478,7 +1548,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _showSupportHub() {
-    HapticFeedback.selectionClick();
+    PokrovHaptics.tap();
     return Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (routeContext) {
@@ -1488,11 +1558,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             statusLabel: _consumerProtectionStatusLabel(
               _runtimeSnapshot,
               busy: _runtimeBusy,
+              disconnecting: _runtimeDisconnecting,
             ),
             extraDiagnostics: _extendedProtectionDiagnostics(),
             supportTicketService: _supportTicketService,
-            askAssistant:
-                _clientDataService == null ? null : _askSupportAssistant,
+            askAssistant: _clientDataService == null
+                ? null
+                : _askSupportAssistant,
             onOpenHandoff: _showSeedHandoff,
           );
         },
@@ -1518,6 +1590,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         'connection_status': _consumerProtectionStatusLabel(
           _runtimeSnapshot,
           busy: _runtimeBusy,
+          disconnecting: _runtimeDisconnecting,
         ),
       },
     );
@@ -1570,10 +1643,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  Uri? _safeHandoffFallbackUri({
-    required String label,
-    required String value,
-  }) {
+  Uri? _safeHandoffFallbackUri({required String label, required String value}) {
     final trimmed = value.trim();
     switch (label) {
       case 'community':
@@ -1646,7 +1716,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final warpStatus = await _fetchWarpStatusOrNull();
     final displayWarpPolicy =
         warpStatus?.applyTo(baseWarpPolicy) ?? baseWarpPolicy;
-    final warpConsentStillValid = ((warpStatus?.consented ?? false) ||
+    final warpConsentStillValid =
+        ((warpStatus?.consented ?? false) ||
             _warpRuntimeConsent ||
             baseWarpPolicy.userConsented) &&
         displayWarpPolicy.canOfferRuntime;
@@ -1661,8 +1732,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _smartConnectProfile = payload.smartConnect;
         _preferredNodeCode =
             payload.smartConnect?.stickiness.preferredNodeCode.trim() ?? '';
-        _runtimeHeadline = 'Настройки обновлены с '
-            '${Uri.parse(widget.appContext.apiBaseUrl).host}.';
+        // Consumer copy: no infra hostnames on the first layer.
+        _runtimeHeadline = 'Настройки обновлены.';
       });
     }
     return runtimePayload;
@@ -1752,7 +1823,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     final localPolicy = _managedWarpPolicy.withClientLocalDefaults();
     final requestedEnabled = value && localPolicy.canOfferRuntime;
-    HapticFeedback.selectionClick();
+    PokrovHaptics.tap();
     setState(() {
       _warpPolicyBusy = true;
       _managedWarpPolicy = localPolicy;
@@ -1873,8 +1944,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         state: result.applied
             ? (enabled ? 'active' : 'revoked')
             : (enabled ? 'deferred' : 'revoked_deferred'),
-        reasonCode:
-            result.applied ? 'applied' : (result.reason ?? 'not_applied'),
+        reasonCode: result.applied
+            ? 'applied'
+            : (result.reason ?? 'not_applied'),
         message: message,
         meta: <String, Object?>{
           'enabled': enabled,
@@ -1924,19 +1996,25 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
     setState(() {
       _runtimeBusy = true;
+      _runtimeDisconnecting = _runtimeSnapshot?.phase == RuntimePhase.running;
     });
 
     try {
-      final RuntimeSnapshot snapshot = _runtimeSnapshot ??
-          await _withRuntimeActionTimeout(
-            'snapshot',
-            _runtimeEngine.snapshot,
-          );
+      final RuntimeSnapshot snapshot =
+          _runtimeSnapshot ??
+          await _withRuntimeActionTimeout('snapshot', _runtimeEngine.snapshot);
       if (!mounted) {
         return;
       }
 
       if (snapshot.phase == RuntimePhase.running) {
+        if (!_runtimeDisconnecting) {
+          // The pre-busy guess was made without a snapshot; fix the copy
+          // before the disconnect actually starts.
+          setState(() {
+            _runtimeDisconnecting = true;
+          });
+        }
         var current = await _withRuntimeActionTimeout(
           'disconnect',
           _runtimeEngine.disconnect,
@@ -2007,8 +2085,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _runtimeSnapshot = current;
           _runtimeHeadline = current.phase == RuntimePhase.running
               ? current.isCleanlyHealthy
-                  ? 'POKROV включен.'
-                  : 'POKROV включен, но требует внимания.'
+                    ? 'POKROV подключен.'
+                    : 'POKROV подключен, но требует внимания.'
               : current.message;
         });
         if (current.phase != RuntimePhase.running &&
@@ -2042,6 +2120,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (mounted) {
         setState(() {
           _runtimeBusy = false;
+          _runtimeDisconnecting = false;
         });
       }
     }
@@ -2079,8 +2158,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         hostPlatform: widget.appContext.hostPlatform,
         eventName: 'runtime_fallback',
         state: 'fallback',
-        reasonCode:
-            failureKind.isNotEmpty ? failureKind : 'connect_not_running',
+        reasonCode: failureKind.isNotEmpty
+            ? failureKind
+            : 'connect_not_running',
         message: snapshot.message,
         meta: <String, Object?>{
           'phase': snapshot.phase.name,
@@ -2098,7 +2178,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       final nextPolicy = status.applyTo(_managedWarpPolicy);
       setState(() {
         _managedWarpPolicy = nextPolicy;
-        _warpRuntimeConsent = (status.consented || _warpRuntimeConsent) &&
+        _warpRuntimeConsent =
+            (status.consented || _warpRuntimeConsent) &&
             nextPolicy.canOfferRuntime;
       });
     } on BootstrapFailure {
@@ -2116,9 +2197,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
 
     var current = snapshot;
-    final maxAttempts = current.message.toLowerCase().contains(
-              'permission requested',
-            )
+    final maxAttempts =
+        current.message.toLowerCase().contains('permission requested')
         ? 40
         : 10;
     for (var attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -2220,101 +2300,103 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   @override
   Widget build(BuildContext context) {
-    final hasProvisionedAccess = !_managedProfileDirty ||
+    final hasProvisionedAccess =
+        !_managedProfileDirty ||
         (_runtimeSnapshot?.phase == RuntimePhase.running) ||
         ((_runtimeSnapshot?.stagedConfigPath ?? '').isNotEmpty);
     final sectionBuilders = <WidgetBuilder>[
       (context) => _QuickConnectSection(
-            appContext: widget.appContext,
-            selectedRouteMode: _selectedRouteMode,
-            runtimeSnapshot: _runtimeSnapshot,
-            runtimeHeadline: _runtimeHeadline,
-            runtimeBusy: _runtimeBusy,
-            primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
-            connectHintVisible: !_connectHintDismissed,
-            revealHold: _firstLaunchStep != _FirstLaunchStep.ready,
-            bonusSummary: _bonusSummary,
-            telegramBonusBusy: _telegramBonusBusy,
-            warpPolicy: _managedWarpPolicy,
-            warpRuntimeConsent: _warpRuntimeConsent,
-            warpBusy: _warpPolicyBusy,
-            onToggleRuntime: _toggleRuntimeFromHome,
-            onTelegramBonus: _telegramBonusBusy
-                ? null
-                : () {
-                    if (_telegramBonusCanClaim) {
-                      unawaited(_claimTelegramBonusInApp());
-                    } else {
-                      unawaited(_createTelegramLinkInApp());
-                    }
-                  },
-            onOpenLocations: () => _selectTab(SeedTab.locations),
-            onOpenRules: () => _selectTab(SeedTab.rules),
-            onOpenWarp: _openWarpControl,
-            onWarpConsentChanged: _setWarpRuntimeConsent,
-            onOpenPromoHandoff: _showSeedHandoff,
-          ),
+        appContext: widget.appContext,
+        selectedRouteMode: _selectedRouteMode,
+        runtimeSnapshot: _runtimeSnapshot,
+        runtimeHeadline: _runtimeHeadline,
+        runtimeBusy: _runtimeBusy,
+        runtimeDisconnecting: _runtimeDisconnecting,
+        primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
+        connectHintVisible: !_connectHintDismissed,
+        revealHold: _firstLaunchStep != _FirstLaunchStep.ready,
+        bonusSummary: _bonusSummary,
+        telegramBonusBusy: _telegramBonusBusy,
+        warpPolicy: _managedWarpPolicy,
+        warpRuntimeConsent: _warpRuntimeConsent,
+        warpBusy: _warpPolicyBusy,
+        onToggleRuntime: _toggleRuntimeFromHome,
+        onTelegramBonus: _telegramBonusBusy
+            ? null
+            : () {
+                if (_telegramBonusCanClaim) {
+                  unawaited(_claimTelegramBonusInApp());
+                } else {
+                  unawaited(_createTelegramLinkInApp());
+                }
+              },
+        onOpenLocations: () => _selectTab(SeedTab.locations),
+        onOpenRules: () => _selectTab(SeedTab.rules),
+        onOpenWarp: _openWarpControl,
+        onWarpConsentChanged: _setWarpRuntimeConsent,
+        onOpenPromoHandoff: _showSeedHandoff,
+      ),
       (context) => _LocationsSection(
-            appContext: widget.appContext,
-            selectedRouteMode: _selectedRouteMode,
-            hasProvisionedAccess: hasProvisionedAccess,
-            smartConnectProfile: _smartConnectProfile,
-            locationsCatalog: _locationsCatalog,
-            locationsCatalogBusy: _locationsCatalogBusy,
-            locationsCatalogError: _locationsCatalogError,
-            onRefreshLocationsCatalog: _refreshLocationsCatalog,
-            preferredNodeCode: _preferredNodeCode,
-            nodePreferenceBusy: _nodePreferenceBusy,
-            onPreferredNodeSelected: _setPreferredLocation,
-          ),
+        appContext: widget.appContext,
+        selectedRouteMode: _selectedRouteMode,
+        hasProvisionedAccess: hasProvisionedAccess,
+        smartConnectProfile: _smartConnectProfile,
+        locationsCatalog: _locationsCatalog,
+        locationsCatalogBusy: _locationsCatalogBusy,
+        locationsCatalogError: _locationsCatalogError,
+        onRefreshLocationsCatalog: _refreshLocationsCatalog,
+        preferredNodeCode: _preferredNodeCode,
+        nodePreferenceBusy: _nodePreferenceBusy,
+        onPreferredNodeSelected: _setPreferredLocation,
+      ),
       (context) => _RulesSection(
-            appContext: widget.appContext,
-            selectedRouteMode: _selectedRouteMode,
-            selectedAppIds: _selectedAppIds,
-            onRouteModeSelected: (mode) {
-              _selectRouteMode(mode);
-            },
-            onSelectedAppAdded: _addSelectedAppId,
-            onSelectedAppRemoved: _removeSelectedAppId,
-          ),
+        appContext: widget.appContext,
+        selectedRouteMode: _selectedRouteMode,
+        selectedAppIds: _selectedAppIds,
+        onRouteModeSelected: (mode) {
+          _selectRouteMode(mode);
+        },
+        onSelectedAppAdded: _addSelectedAppId,
+        onSelectedAppRemoved: _removeSelectedAppId,
+      ),
       (context) => _ProfileSection(
-            appContext: widget.appContext,
-            selectedRouteMode: _selectedRouteMode,
-            hasProvisionedAccess: hasProvisionedAccess,
-            onOpenHandoff: _showSeedHandoff,
-            onOpenSupportHub: _showSupportHub,
-            onCreateTelegramLink: _createTelegramLinkInApp,
-            onCheckTelegramBonus: _checkTelegramBonusInApp,
-            onClaimTelegramBonus: _claimTelegramBonusInApp,
-            telegramBonusStatus: _telegramBonusStatus,
-            telegramBonusBusy: _telegramBonusBusy,
-            telegramBonusCanClaim: _telegramBonusCanClaim,
-            telegramBonusError: _telegramBonusError,
-            bonusSummary: () => _bonusSummary,
-            bonusSummaryBusy: _bonusSummaryBusy,
-            bonusSummaryError: _bonusSummaryError,
-            bonusRewardBusy: () => _bonusRewardBusy,
-            onRefreshBonusSummary: () => _loadBonusSummary(force: true),
-            onSpinWheel: _spinBonusWheelInApp,
-            onCheckInCalendar: _checkInBonusCalendarInApp,
-            warpPolicy: _managedWarpPolicy,
-            warpRuntimeConsent: _warpRuntimeConsent,
-            warpBusy: _warpPolicyBusy,
-            runtimeSnapshot: _runtimeSnapshot,
-            runtimeHeadline: _runtimeHeadline,
-            onOpenWarp: _openWarpControl,
-            themeMode: widget.themeMode,
-            onThemeModeChanged: widget.onThemeModeChanged,
-            subscriptionInfo: _subscriptionInfo,
-            notifications:
-                _notificationsInbox?.items ?? const <ClientNotificationItem>[],
-            notificationsUnread: _notificationsUnread,
-            notificationsBusy: _notificationsBusy,
-            onOpenNotifications: _markNotificationsRead,
-            onRefreshNotifications: _refreshNotifications,
-            onFetchDevices: _fetchClientDevices,
-            onRevokeDevice: _revokeClientDevice,
-          ),
+        appContext: widget.appContext,
+        selectedRouteMode: _selectedRouteMode,
+        hasProvisionedAccess: hasProvisionedAccess,
+        onOpenHandoff: _showSeedHandoff,
+        onOpenSupportHub: _showSupportHub,
+        onCreateTelegramLink: _createTelegramLinkInApp,
+        onCheckTelegramBonus: _checkTelegramBonusInApp,
+        onClaimTelegramBonus: _claimTelegramBonusInApp,
+        telegramBonusStatus: _telegramBonusStatus,
+        telegramBonusBusy: _telegramBonusBusy,
+        telegramBonusCanClaim: _telegramBonusCanClaim,
+        telegramBonusError: _telegramBonusError,
+        bonusSummary: () => _bonusSummary,
+        bonusSummaryBusy: _bonusSummaryBusy,
+        bonusSummaryError: _bonusSummaryError,
+        bonusRewardBusy: () => _bonusRewardBusy,
+        onRefreshBonusSummary: () => _loadBonusSummary(force: true),
+        onSpinWheel: _spinBonusWheelInApp,
+        onCheckInCalendar: _checkInBonusCalendarInApp,
+        warpPolicy: _managedWarpPolicy,
+        warpRuntimeConsent: _warpRuntimeConsent,
+        warpBusy: _warpPolicyBusy,
+        runtimeSnapshot: _runtimeSnapshot,
+        runtimeHeadline: _runtimeHeadline,
+        onOpenWarp: _openWarpControl,
+        themeMode: widget.themeMode,
+        onThemeModeChanged: widget.onThemeModeChanged,
+        subscriptionInfo: _subscriptionInfo,
+        notifications:
+            _notificationsInbox?.items ?? const <ClientNotificationItem>[],
+        notificationsUnread: _notificationsUnread,
+        notificationsBusy: _notificationsBusy,
+        onOpenNotifications: _markNotificationsRead,
+        onRefreshNotifications: _refreshNotifications,
+        onFetchDevices: _fetchClientDevices,
+        onRevokeDevice: _revokeClientDevice,
+      ),
     ];
 
     final isDesktopShell = switch (widget.appContext.hostPlatform) {
@@ -2322,8 +2404,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       HostPlatform.android || HostPlatform.ios => false,
     };
 
-    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ??
-        WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
+    final disableAnimations =
+        MediaQuery.maybeOf(context)?.disableAnimations ??
+        WidgetsBinding
+            .instance
+            .platformDispatcher
+            .accessibilityFeatures
             .disableAnimations;
     final shell = isDesktopShell
         ? _DesktopShell(
@@ -2340,6 +2426,19 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
               _selectTab(SeedTab.values[index]);
             },
           );
+
+    // Edge-to-edge system chrome: transparent bars with icon brightness
+    // following the active theme. Android reads this annotation; desktop
+    // hosts ignore it.
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    final overlayStyle =
+        (isDarkTheme ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark)
+            .copyWith(
+              statusBarColor: Colors.transparent,
+              systemNavigationBarColor: Colors.transparent,
+              systemNavigationBarDividerColor: Colors.transparent,
+              systemNavigationBarContrastEnforced: false,
+            );
 
     return _MotionScope(
       key: const ValueKey('motion-policy'),
@@ -2361,55 +2460,61 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           child: Focus(
             key: const ValueKey('desktop-shell-focus-root'),
             autofocus: true,
-            child: Scaffold(
-              extendBody: !isDesktopShell,
-              body: _SeedBackdrop(
-                child: SafeArea(
-                  child: Stack(
-                    children: [
-                      Positioned.fill(child: shell),
-                      // Welcome Handover: the gate leaves with a fade and a
-                      // gentle 1.02 scale while the home reveal rises under
-                      // it — onboarding hands over instead of hard-cutting.
-                      Positioned.fill(
-                        child: AnimatedSwitcher(
-                          duration:
-                              _firstLaunchExitAnimated && !disableAnimations
-                                  ? _MotionTokens.standard
-                                  : Duration.zero,
-                          switchInCurve: _MotionTokens.emphasized,
-                          switchOutCurve: _MotionTokens.emphasized,
-                          transitionBuilder: (child, animation) =>
-                              FadeTransition(
-                            opacity: animation,
-                            child: ScaleTransition(
-                              scale: Tween<double>(begin: 1.02, end: 1)
-                                  .animate(animation),
-                              child: child,
-                            ),
-                          ),
-                          child: _firstLaunchStep != _FirstLaunchStep.ready
-                              ? _FirstLaunchGate(
-                                  appContext: widget.appContext,
-                                  step: _firstLaunchStep,
-                                  restoreCodeController:
-                                      _firstLaunchRestoreCodeController,
-                                  busy: _firstLaunchBusy,
-                                  onNewUser: _completeFirstLaunchAsNewUser,
-                                  onReturningUser: _openFirstLaunchRestore,
-                                  onBack: _backToFirstLaunchChoice,
-                                  onRedeemCode: _redeemFirstLaunchRestoreCode,
-                                  onOpenTelegram: _createTelegramLinkInApp,
-                                  onOpenCabinet: () => _openCabinetWithHandoff(
-                                    widget.appContext.cabinetUrl,
+            child: AnnotatedRegion<SystemUiOverlayStyle>(
+              value: overlayStyle,
+              child: Scaffold(
+                extendBody: !isDesktopShell,
+                body: _SeedBackdrop(
+                  child: SafeArea(
+                    child: Stack(
+                      children: [
+                        Positioned.fill(child: shell),
+                        // Welcome Handover: the gate leaves with a fade and a
+                        // gentle 1.02 scale while the home reveal rises under
+                        // it — onboarding hands over instead of hard-cutting.
+                        Positioned.fill(
+                          child: AnimatedSwitcher(
+                            duration:
+                                _firstLaunchExitAnimated && !disableAnimations
+                                ? _MotionTokens.standard
+                                : Duration.zero,
+                            switchInCurve: _MotionTokens.emphasized,
+                            switchOutCurve: _MotionTokens.emphasized,
+                            transitionBuilder: (child, animation) =>
+                                FadeTransition(
+                                  opacity: animation,
+                                  child: ScaleTransition(
+                                    scale: Tween<double>(
+                                      begin: 1.02,
+                                      end: 1,
+                                    ).animate(animation),
+                                    child: child,
                                   ),
-                                )
-                              : const SizedBox.shrink(
-                                  key: ValueKey('first-launch-gate-exited'),
                                 ),
+                            child: _firstLaunchStep != _FirstLaunchStep.ready
+                                ? _FirstLaunchGate(
+                                    appContext: widget.appContext,
+                                    step: _firstLaunchStep,
+                                    restoreCodeController:
+                                        _firstLaunchRestoreCodeController,
+                                    busy: _firstLaunchBusy,
+                                    onNewUser: _completeFirstLaunchAsNewUser,
+                                    onReturningUser: _openFirstLaunchRestore,
+                                    onBack: _backToFirstLaunchChoice,
+                                    onRedeemCode: _redeemFirstLaunchRestoreCode,
+                                    onOpenTelegram: _createTelegramLinkInApp,
+                                    onOpenCabinet: () =>
+                                        _openCabinetWithHandoff(
+                                          widget.appContext.cabinetUrl,
+                                        ),
+                                  )
+                                : const SizedBox.shrink(
+                                    key: ValueKey('first-launch-gate-exited'),
+                                  ),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

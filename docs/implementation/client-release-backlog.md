@@ -1,6 +1,6 @@
 # POKROV Client Release Backlog
 
-Last updated: 2026-07-11
+Last updated: 2026-07-18
 
 ## Document Status
 
@@ -190,6 +190,9 @@ trusted-signing, raw Android-audit, production-WARP, or RU-origin claims.
 - confirm app, bot, and authenticated web surfaces consume the same runtime `APP_*` values after handoff
 - split release-reachability evidence into `current-origin`, `brain-origin`, and `RU-origin` checks when regional reachability matters
 - keep real-user Telegram/WebApp opening as a manual owner test; synthetic brain-signed init data proves backend/runtime policy, not a real user session
+- on the exact Windows candidate, verify close-to-tray/reopen while connected
+  and tray `Выход` runtime shutdown plus system-proxy restoration; source-level
+  lifecycle ordering is complete, exact-artifact proof remains manual
 
 ## Archived Karing-Based Candidate Lane
 

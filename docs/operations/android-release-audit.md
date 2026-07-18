@@ -1,7 +1,7 @@
 # Android Release Audit
 
 Status: owner-attested for outside-store beta; raw audit remains manual owner test
-Last updated: 2026-07-10
+Last updated: 2026-07-18
 
 ## Required Dependency
 
@@ -30,6 +30,14 @@ Set `ANDROID_AUDIT_PACKAGE` to `space.pokrov.pokrov_android_shell` unless a rele
 - Uninstall/reinstall cleanup.
 - Battery/background sanity.
 - Small-screen accessibility screenshot.
+- Adaptive launcher mask keeps the POKROV mark inside the safe zone on the
+  device launchers in scope.
+- Android 12+ light and dark splash surfaces use the canonical mark and the
+  matching POKROV canvas color without clipping or a flash of the wrong theme.
+- Edge-to-edge status/navigation bars preserve safe-area content and readable
+  system icons in light and dark themes.
+- Predictive-back navigation returns through onboarding, sheets, support, and
+  the main shell without closing or exposing an invalid state.
 
 ## Commands
 

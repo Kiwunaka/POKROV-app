@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-07-11
+Last updated: 2026-07-18
 
 ## Document Status
 
@@ -101,6 +101,11 @@ Primary navigation:
 2. `Locations`
 3. `Rules`
 4. `Profile`
+
+Daily shell state language is shared across Home and support diagnostics:
+`Подключаемся…`, `Подключено`, `Отключаем…`, and `Не защищено`. A disconnect
+must never be described as a connection attempt. First-layer refresh copy says
+that settings were updated without exposing the API hostname.
 
 Nested under `Profile`:
 
@@ -281,6 +286,16 @@ Replace or keep aligned:
 - release artifact names
 - visible inherited `Hiddify` references in UI
 - the canonical public URI scheme `pokrov`
+
+Host behavior:
+
+- Android uses the canonical POKROV mark for adaptive launcher and Android 12+
+  splash surfaces; edge-to-edge system chrome must preserve safe areas and
+  theme-matched system icon contrast.
+- Windows opens centered, remains resizable down to the 700 px compact/drawer
+  lane, and treats window close as hide-to-tray. The explicit tray `Выход`
+  action requests native teardown; exact-artifact runtime shutdown and system
+  proxy restoration remain a manual release check.
 
 Compatibility-only residue may still exist in internal identifiers, imports, namespaces, or hidden handlers such as `pokrovvpn://`, but it must not define the user-facing product story.
 

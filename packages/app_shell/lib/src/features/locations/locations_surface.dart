@@ -121,7 +121,8 @@ class _LocationsSectionState extends State<_LocationsSection> {
               ? 'POKROV выберет быстрый маршрут. $premiumPool · ${_routeModeShortLabel(widget.selectedRouteMode)}'
               : 'Сначала включите POKROV VPN',
           value: widget.preferredNodeCode.trim().isEmpty ? 'Авто' : 'Выбрано',
-          busy: widget.nodePreferenceBusy ||
+          busy:
+              widget.nodePreferenceBusy ||
               (widget.locationsCatalogBusy && hasList),
           onTap: () => _showInfoSheet(
             context,
@@ -170,7 +171,8 @@ class _LocationsSectionState extends State<_LocationsSection> {
                         .map(
                           (entry) => _ClientLocationCityRow(
                             entry: entry,
-                            selected: entry.city.code.trim().toLowerCase() ==
+                            selected:
+                                entry.city.code.trim().toLowerCase() ==
                                 widget.preferredNodeCode.trim().toLowerCase(),
                             disabled: widget.nodePreferenceBusy,
                             onTap: () =>
@@ -199,7 +201,8 @@ class _LocationsSectionState extends State<_LocationsSection> {
                         .map(
                           (node) => _SmartConnectNodeRow(
                             node: node,
-                            selected: node.code.trim().toLowerCase() ==
+                            selected:
+                                node.code.trim().toLowerCase() ==
                                 widget.preferredNodeCode.trim().toLowerCase(),
                             disabled: widget.nodePreferenceBusy,
                             onTap: () =>
@@ -232,9 +235,7 @@ class _LocationsSectionState extends State<_LocationsSection> {
           ),
           _SectionCard(
             title: 'Список стран откроется после первого подключения',
-            lines: [
-              'Нажмите «Подключить» на главном экране.',
-            ],
+            lines: ['Нажмите «Подключить» на главном экране.'],
           ),
         ],
       ],
@@ -335,9 +336,9 @@ class _AutoLocationCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: p.ink,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: p.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -345,9 +346,9 @@ class _AutoLocationCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: p.muted,
-                            height: 1.25,
-                          ),
+                        color: p.muted,
+                        height: 1.25,
+                      ),
                     ),
                   ],
                 ),
@@ -383,10 +384,7 @@ class _AutoLocationCard extends StatelessWidget {
 }
 
 class _ClientLocationEntry {
-  const _ClientLocationEntry({
-    required this.country,
-    required this.city,
-  });
+  const _ClientLocationEntry({required this.country, required this.city});
 
   final ClientLocationCountry country;
   final ClientLocationCity city;
@@ -432,19 +430,18 @@ class _ClientLocationCityRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: p.ink,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: p.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: p.muted,
-                        height: 1.25,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: p.muted, height: 1.25),
                 ),
               ],
             ),
@@ -476,18 +473,16 @@ class _ClientLocationCityRow extends StatelessWidget {
       ),
     );
     if (disabled) {
-      // Busy rows go visibly asleep instead of live-looking but dead.
+      // Same "asleep" convention as PokrovListRow: dim, ignore taps, keep
+      // the basic cursor while the preference write is in flight.
       return IgnorePointer(
         child: Opacity(
           opacity: PokrovListRow.disabledOpacity,
-          child: content,
+          child: MouseRegion(cursor: SystemMouseCursors.basic, child: content),
         ),
       );
     }
-    return PokrovSettingsRowPressSurface(
-      onTap: onTap,
-      child: content,
-    );
+    return PokrovSettingsRowPressSurface(onTap: onTap, child: content);
   }
 }
 
@@ -527,19 +522,18 @@ class _SmartConnectNodeRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: p.ink,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: p.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   city,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: p.muted,
-                        height: 1.25,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: p.muted, height: 1.25),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -547,9 +541,9 @@ class _SmartConnectNodeRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: selected ? p.accent : p.muted,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: selected ? p.accent : p.muted,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
@@ -581,17 +575,15 @@ class _SmartConnectNodeRow extends StatelessWidget {
       ),
     );
     if (disabled) {
-      // Busy rows go visibly asleep instead of live-looking but dead.
+      // Same "asleep" convention as PokrovListRow: dim, ignore taps, keep
+      // the basic cursor while the preference write is in flight.
       return IgnorePointer(
         child: Opacity(
           opacity: PokrovListRow.disabledOpacity,
-          child: content,
+          child: MouseRegion(cursor: SystemMouseCursors.basic, child: content),
         ),
       );
     }
-    return PokrovSettingsRowPressSurface(
-      onTap: onTap,
-      child: content,
-    );
+    return PokrovSettingsRowPressSurface(onTap: onTap, child: content);
   }
 }
