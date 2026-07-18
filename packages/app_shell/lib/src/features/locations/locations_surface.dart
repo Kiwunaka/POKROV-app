@@ -465,7 +465,17 @@ class _ClientLocationCityRow extends StatelessWidget {
       ),
     );
     if (disabled) {
-      return content;
+      // Same "asleep" convention as PokrovListRow: dim, ignore taps, keep
+      // the basic cursor while the preference write is in flight.
+      return IgnorePointer(
+        child: Opacity(
+          opacity: PokrovListRow.disabledOpacity,
+          child: MouseRegion(
+            cursor: SystemMouseCursors.basic,
+            child: content,
+          ),
+        ),
+      );
     }
     return PokrovSettingsRowPressSurface(
       onTap: onTap,
@@ -564,7 +574,17 @@ class _SmartConnectNodeRow extends StatelessWidget {
       ),
     );
     if (disabled) {
-      return content;
+      // Same "asleep" convention as PokrovListRow: dim, ignore taps, keep
+      // the basic cursor while the preference write is in flight.
+      return IgnorePointer(
+        child: Opacity(
+          opacity: PokrovListRow.disabledOpacity,
+          child: MouseRegion(
+            cursor: SystemMouseCursors.basic,
+            child: content,
+          ),
+        ),
+      );
     }
     return PokrovSettingsRowPressSurface(
       onTap: onTap,

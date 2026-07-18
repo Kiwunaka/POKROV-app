@@ -551,9 +551,13 @@ void _showThemeModeSheet(
 }) {
   void select(ThemeMode mode) {
     // Apply immediately so the springy checkmark is visible, then let the
-    // sheet leave once the selection has settled.
+    // sheet leave once the selection has settled. The settle delay follows
+    // the motion scope: under reduced motion the sheet pops right away.
     onChanged(mode);
-    Future<void>.delayed(const Duration(milliseconds: 320), () {
+    final settle = _MotionScope.of(context).duration(
+      const Duration(milliseconds: 320),
+    );
+    Future<void>.delayed(settle, () {
       if (context.mounted) {
         Navigator.of(context).pop();
       }

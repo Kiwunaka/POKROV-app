@@ -53,6 +53,39 @@ void main() {
     expect(calls, ['isMinimized', 'show', 'focus']);
   });
 
+  test('windows close hides to tray while prevent-close is active', () async {
+    final calls = <String>[];
+
+    await windows_shell.pokrovWindowsHandleClose(
+      isPreventClose: () async {
+        calls.add('isPreventClose');
+        return true;
+      },
+      hide: () async {
+        calls.add('hide');
+      },
+    );
+
+    expect(calls, ['isPreventClose', 'hide']);
+  });
+
+  test('windows close leaves the window alone when prevent-close is off',
+      () async {
+    final calls = <String>[];
+
+    await windows_shell.pokrovWindowsHandleClose(
+      isPreventClose: () async {
+        calls.add('isPreventClose');
+        return false;
+      },
+      hide: () async {
+        calls.add('hide');
+      },
+    );
+
+    expect(calls, ['isPreventClose']);
+  });
+
   testWidgets('windows shell boots the shared protection surface', (
     tester,
   ) async {

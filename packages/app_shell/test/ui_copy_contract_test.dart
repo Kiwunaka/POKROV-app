@@ -154,6 +154,11 @@ void main() {
       'Триал',
       'системный модуль',
       'подготовьте устройство',
+      // 2026-07 status dialect unification: one busy/connected vocabulary
+      // («Подключаемся...» / «Подключено» / «Отключаем...» / «Не защищено»).
+      'Подключается',
+      "'Подключаемся'",
+      "'Включено' : 'Нужно внимание'",
     ]) {
       expect(combined, isNot(contains(forbidden)), reason: forbidden);
     }
@@ -181,6 +186,10 @@ void main() {
     for (final forbidden in const <String>[
       'системный модуль',
       'приложите диагностику',
+      // Status dialect: connect success says «подключен», not «включен».
+      'POKROV включен',
+      // Consumer copy never names infra hosts.
+      'Настройки обновлены с',
     ]) {
       expect(source, isNot(contains(forbidden)), reason: forbidden);
     }

@@ -7,6 +7,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.runtimeSnapshot,
     required this.runtimeHeadline,
     required this.runtimeBusy,
+    required this.runtimeDisconnecting,
     required this.primaryConnectEnabled,
     required this.connectHintVisible,
     required this.bonusSummary,
@@ -28,6 +29,7 @@ class _QuickConnectSection extends StatelessWidget {
   final RuntimeSnapshot? runtimeSnapshot;
   final String? runtimeHeadline;
   final bool runtimeBusy;
+  final bool runtimeDisconnecting;
   final bool primaryConnectEnabled;
   final bool connectHintVisible;
   final AppFirstBonusSummary? bonusSummary;
@@ -52,6 +54,7 @@ class _QuickConnectSection extends StatelessWidget {
     final statusLabel = _homeProtectionStatusLabel(
       snapshot,
       busy: runtimeBusy,
+      disconnecting: runtimeDisconnecting,
     );
     final statusSummary = _consumerProtectionStatusSummary(
       snapshot,
@@ -71,7 +74,11 @@ class _QuickConnectSection extends StatelessWidget {
                 : p.warning
             : p.muted;
     final actionLabel = runtimeBusy
-        ? 'Подключается...'
+        // Honest direction while busy: tearing the tunnel down must never
+        // read as if a connection is being established.
+        ? runtimeDisconnecting
+            ? 'Отключаем...'
+            : 'Подключаемся...'
         : isRunning
             ? 'Отключить'
             : primaryActionEnabled
@@ -650,15 +657,18 @@ class _HomeStatusAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    // Same press-scale feedback as every other tappable surface (chips,
+    // settings rows) instead of a bare InkWell with no tactile response.
+    return KeyedSubtree(
       key: const ValueKey('home-connection-details-action'),
-      borderRadius: BorderRadius.circular(999),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: _StatusDotLabel(
-          label: statusLabel,
-          color: statusColor,
+      child: PokrovSettingsRowPressSurface(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: _StatusDotLabel(
+            label: statusLabel,
+            color: statusColor,
+          ),
         ),
       ),
     );
@@ -1107,9 +1117,10 @@ class _HomeBrandHeader extends StatelessWidget {
 String _homeProtectionStatusLabel(
   RuntimeSnapshot? snapshot, {
   bool busy = false,
+  bool disconnecting = false,
 }) {
   if (busy) {
-    return 'Подключается...';
+    return disconnecting ? 'Отключаем...' : 'Подключаемся...';
   }
   if (snapshot?.phase == RuntimePhase.running) {
     return (snapshot?.isCleanlyHealthy ?? false)

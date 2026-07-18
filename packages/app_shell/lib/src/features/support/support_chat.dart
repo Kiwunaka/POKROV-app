@@ -1894,23 +1894,23 @@ class _AssistantTypingBubbleState extends State<_AssistantTypingBubble>
 String _consumerProtectionStatusLabel(
   RuntimeSnapshot? snapshot, {
   bool busy = false,
+  bool disconnecting = false,
 }) {
+  // One status dialect across the app:
+  // «Подключаемся...» / «Подключено» / «Отключаем...» / «Не защищено».
   if (busy) {
-    return 'Подключаемся';
+    return disconnecting ? 'Отключаем...' : 'Подключаемся...';
   }
   if (snapshot == null) {
     return 'Проверяем статус';
   }
   if (snapshot.phase == RuntimePhase.running) {
-    return snapshot.isCleanlyHealthy ? 'Включено' : 'Нужно внимание';
+    return snapshot.isCleanlyHealthy ? 'Подключено' : 'Нужно внимание';
   }
   if (snapshot.phase == RuntimePhase.artifactMissing) {
     return 'Недоступно';
   }
-  if ((snapshot.stagedConfigPath ?? '').isNotEmpty) {
-    return 'Можно подключаться';
-  }
-  return 'Готово';
+  return 'Не защищено';
 }
 
 String? _motionRecoveryNotice(
@@ -1966,7 +1966,7 @@ String _consumerProtectionStatusSummary(
   if (snapshot.phase == RuntimePhase.running) {
     return snapshot.isCleanlyHealthy
         ? 'POKROV работает на этом устройстве.'
-        : 'POKROV включен, но заметил состояние, которое стоит проверить.';
+        : 'POKROV подключен, но заметил состояние, которое стоит проверить.';
   }
   if (snapshot.phase == RuntimePhase.artifactMissing) {
     return 'Устройство еще завершает подготовку перед подключением.';

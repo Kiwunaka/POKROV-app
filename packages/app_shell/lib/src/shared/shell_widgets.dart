@@ -224,6 +224,13 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
       PokrovHaptics.success();
     } else if (newPhase == PokrovConnectDiscPhase.error) {
       PokrovHaptics.error();
+    } else if (newPhase == PokrovConnectDiscPhase.idle &&
+        (oldPhase == PokrovConnectDiscPhase.disconnecting ||
+            oldPhase == PokrovConnectDiscPhase.reconnecting)) {
+      // Disconnect settled: a light tick closes the loop, mirroring the
+      // medium confirmation on connect. Boot refreshes (connecting -> idle)
+      // stay silent.
+      PokrovHaptics.impact();
     }
   }
 
