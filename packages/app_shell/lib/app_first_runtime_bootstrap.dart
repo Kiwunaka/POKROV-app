@@ -347,7 +347,10 @@ String _clientText(Object? value, {String fallback = ''}) {
 final RegExp _assistantSessionIdPattern = RegExp(r'^[A-Za-z0-9_-]{16,64}$');
 
 String? _clientAssistantSessionId(Object? value) {
-  final text = _clientText(value).trim();
+  if (value is! String) {
+    return null;
+  }
+  final text = value.trim();
   return _assistantSessionIdPattern.hasMatch(text) ? text : null;
 }
 

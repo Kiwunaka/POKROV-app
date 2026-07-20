@@ -4952,7 +4952,8 @@ void main() {
     );
   });
 
-  test('client support assistant uses app-session auth', () async {
+  test('client support assistant uses app-session auth and a safe wire token',
+      () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-client-assistant-test-',
     );
@@ -4962,7 +4963,7 @@ void main() {
       }
     });
 
-    Map<String, dynamic>? assistantBody;
+    final assistantBodies = <Map<String, dynamic>>[];
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
     unawaited(() async {
@@ -4998,14 +4999,19 @@ void main() {
         );
 
         if (request.uri.path == '/api/client/support/assistant') {
-          assistantBody = jsonDecode(body) as Map<String, dynamic>;
+          final assistantBody = jsonDecode(body) as Map<String, dynamic>;
+          assistantBodies.add(assistantBody);
+          final requestNumber = assistantBodies.length;
           request.response
             ..headers.contentType = ContentType.json
             ..write(
               jsonEncode(
                 <String, Object?>{
                   'reply': 'Try reconnecting once, then send diagnostics.',
-                  'assistantSessionId': 'session_1234567890abcdef',
+                  if (requestNumber == 1)
+                    'assistantSessionId': 'session_1234567890abcdef',
+                  if (requestNumber == 2)
+                    'assistant_session_id': 'snake_1234567890abcdef',
                   'shouldEscalate': false,
                   'suggestedActions': <Object?>[
                     <String, Object?>{
@@ -5030,7 +5036,7 @@ void main() {
       supportDirectoryResolver: () async => tempDirectory,
     );
 
-    final reply = await bootstrapper.askSupportAssistant(
+    final camelReply = await bootstrapper.askSupportAssistant(
       hostPlatform: HostPlatform.windows,
       message: 'Connection is closed',
       ticketId: 77,
@@ -5040,20 +5046,88 @@ void main() {
         'warp_status': 'active',
       },
     );
+    final snakeReply = await bootstrapper.askSupportAssistant(
+      hostPlatform: HostPlatform.windows,
+      message: 'Connection is still closed',
+      safeDiagnostics: const <String, Object?>{
+        'phase': 'degraded',
+        'warp_status': 'inactive',
+      },
+    );
+    final invalidOutboundReply = await bootstrapper.askSupportAssistant(
+      hostPlatform: HostPlatform.windows,
+      message: 'Start a clean assistant request',
+      assistantSessionId: 'invalid token',
+      safeDiagnostics: const <String, Object?>{
+        'phase': 'idle',
+        'warp_status': 'inactive',
+      },
+    );
 
-    expect(reply.reply, contains('reconnecting'));
-    expect(reply.assistantSessionId, 'session_1234567890abcdef');
-    expect(reply.shouldEscalate, isFalse);
-    expect(reply.suggestedActions.single.key, 'retry_connect');
-    expect(assistantBody, containsPair('ticketId', 77));
-    expect(assistantBody, containsPair('message', 'Connection is closed'));
+    expect(camelReply.reply, contains('reconnecting'));
+    expect(camelReply.assistantSessionId, 'session_1234567890abcdef');
+    expect(camelReply.shouldEscalate, isFalse);
+    expect(camelReply.suggestedActions.single.key, 'retry_connect');
+    expect(snakeReply.assistantSessionId, 'snake_1234567890abcdef');
+    expect(invalidOutboundReply.assistantSessionId, isNull);
+    expect(assistantBodies, hasLength(3));
+    expect(assistantBodies.first, containsPair('ticketId', 77));
     expect(
-      assistantBody,
+      assistantBodies.first,
+      containsPair('message', 'Connection is closed'),
+    );
+    expect(
+      assistantBodies.first,
       containsPair('assistantSessionId', 'session_abcdefghijklmnop'),
     );
     expect(
-      assistantBody?['safeDiagnostics'],
+      assistantBodies.first['safeDiagnostics'],
       containsPair('warp_status', 'active'),
     );
+    expect(assistantBodies.first, containsPair('scope', 'support'));
+    expect(assistantBodies[1], isNot(contains('assistantSessionId')));
+    expect(assistantBodies[2], isNot(contains('assistantSessionId')));
+    expect(
+      assistantBodies.map((body) => body['safeDiagnostics']),
+      everyElement(isA<Map<String, dynamic>>()),
+    );
+  });
+
+  test(
+      'client support assistant accepts token boundaries and rejects malformed tokens',
+      () {
+    const token16 = 'abcdefghijklmnop';
+    final token64 = List<String>.filled(64, 'a').join();
+    final token15 = List<String>.filled(15, 'a').join();
+    final token65 = List<String>.filled(65, 'a').join();
+
+    ClientSupportAssistantReply parse(String key, Object? value) {
+      return ClientSupportAssistantReply.fromJson(<String, dynamic>{
+        'reply': 'ok',
+        key: value,
+        'shouldEscalate': false,
+        'suggestedActions': <Object?>[],
+      });
+    }
+
+    expect(parse('assistantSessionId', token16).assistantSessionId, token16);
+    expect(
+      parse('assistant_session_id', token64).assistantSessionId,
+      token64,
+    );
+    for (final malformed in <Object?>[
+      null,
+      token15,
+      token65,
+      'contains whitespace',
+      'invalid!character123',
+      1234567890123456,
+    ]) {
+      expect(
+        parse('assistantSessionId', malformed).assistantSessionId,
+        isNull,
+        reason: 'must reject malformed token: $malformed',
+      );
+    }
   });
 }

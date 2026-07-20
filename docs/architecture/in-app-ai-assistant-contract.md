@@ -36,7 +36,7 @@ The current client reads the assistant reply, escalation flag, and safe
 suggested actions. App-session renewal follows the same client API behavior as
 other app-first calls. The focused contract is covered by
 `app_first_runtime_bootstrap_test.dart` under
-`client support assistant uses app-session auth`.
+`client support assistant uses app-session auth and a safe wire token`.
 
 Ticket APIs remain the operator escalation and continuity lane:
 
@@ -58,11 +58,17 @@ app invokes it and what the UI may expose.
 
 ## Assistant Continuity
 
+- Every assistant request sends the fixed `scope="support"`; the client does
+  not let the sheet or caller select another scope.
 - The assistant-session token is optional and opaque. The server binds it to
-  the authenticated owner and `support` surface; it is not authentication.
+  the authenticated owner and isolates it under `surface="app"`; it is not
+  authentication.
 - The assistant sheet retains a returned token only for its open lifetime.
   Closing the sheet, reopening it, or restarting the app begins fresh
   continuity; no chat history is persisted by the client.
+- If a continued request or its reply parsing fails, the sheet discards its
+  local token before the next request so an unseen server reply cannot rejoin
+  later visible context.
 - The four request diagnostics (`app_version`, `platform`, `route_mode`, and
   `connection_status`) remain request context only and do not enter model
   memory.

@@ -122,6 +122,7 @@ class _FakeBootstrapper
     ClientLocationsCatalog? locationsCatalog,
     ClientSupportAssistantReply? assistantReply,
     this.assistantGate,
+    this.assistantFailureCalls = const <int>{},
     this.bonusSummaryGate,
   })  : cabinetHandoff = cabinetHandoff ??
             CabinetHandoff(
@@ -221,11 +222,14 @@ class _FakeBootstrapper
   final ClientLocationsCatalog locationsCatalog;
   final ClientSupportAssistantReply assistantReply;
   final Future<void>? assistantGate;
+  final Set<int> assistantFailureCalls;
   final Future<void>? bonusSummaryGate;
   int calls = 0;
   int redeemCalls = 0;
   int assistantCalls = 0;
   final List<String?> assistantSessionIds = <String?>[];
+  final List<Map<String, Object?>> assistantDiagnostics =
+      <Map<String, Object?>>[];
   String? lastAssistantMessage;
   Map<String, Object?>? lastAssistantDiagnostics;
   int cabinetCalls = 0;
@@ -436,8 +440,12 @@ class _FakeBootstrapper
     await assistantGate;
     assistantCalls += 1;
     assistantSessionIds.add(assistantSessionId);
+    assistantDiagnostics.add(Map<String, Object?>.of(safeDiagnostics));
     lastAssistantMessage = message;
     lastAssistantDiagnostics = safeDiagnostics;
+    if (assistantFailureCalls.contains(assistantCalls)) {
+      throw const BootstrapFailure('Test assistant request failure.');
+    }
     return assistantReply;
   }
 
@@ -3744,7 +3752,7 @@ void main() {
   });
 
   testWidgets(
-      'support AI assistant keeps one server session only while sheet is open',
+      'support AI assistant resets a failed continuation and keeps sessions sheet-local',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(760, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -3760,6 +3768,7 @@ void main() {
         suggestedActions: <ClientSupportAssistantAction>[],
         assistantSessionId: 'session_1234567890abcdef',
       ),
+      assistantFailureCalls: const <int>{2},
     );
     final supportTicketService = _FakeSupportTicketService(
       const SupportTicketReceipt(
@@ -3797,9 +3806,28 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('assistant-sheet-send')));
     await tester.pumpAndSettle();
 
+    await tester.enterText(
+      find.byKey(const ValueKey('assistant-sheet-composer')),
+      'Начнём новую видимую цепочку',
+    );
+    await tester.tap(find.byKey(const ValueKey('assistant-sheet-send')));
+    await tester.pumpAndSettle();
+
     expect(
       bootstrapper.assistantSessionIds,
-      <String?>[null, 'session_1234567890abcdef'],
+      <String?>[null, 'session_1234567890abcdef', null],
+    );
+    expect(
+      bootstrapper.assistantDiagnostics
+          .map((diagnostics) => diagnostics.keys.toSet()),
+      everyElement(
+        <String>{
+          'app_version',
+          'platform',
+          'route_mode',
+          'connection_status',
+        },
+      ),
     );
 
     await tester.binding.handlePopRoute();
@@ -3820,11 +3848,7 @@ void main() {
 
     expect(
       bootstrapper.assistantSessionIds,
-      <String?>[null, 'session_1234567890abcdef', null],
-    );
-    expect(
-      bootstrapper.lastAssistantDiagnostics?.keys.toSet(),
-      <String>{'app_version', 'platform', 'route_mode', 'connection_status'},
+      <String?>[null, 'session_1234567890abcdef', null, null],
     );
   });
 
