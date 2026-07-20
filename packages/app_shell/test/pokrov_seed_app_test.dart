@@ -429,6 +429,7 @@ class _FakeBootstrapper
     required HostPlatform hostPlatform,
     required String message,
     int? ticketId,
+    String? assistantSessionId,
     Map<String, Object?> safeDiagnostics = const <String, Object?>{},
   }) async {
     await assistantGate;
