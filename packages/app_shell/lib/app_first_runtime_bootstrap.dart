@@ -297,6 +297,7 @@ abstract interface class AppFirstClientDataService {
     required HostPlatform hostPlatform,
     required String message,
     int? ticketId,
+    String? assistantSessionId,
     Map<String, Object?> safeDiagnostics = const <String, Object?>{},
   });
 }
@@ -341,6 +342,13 @@ List<Map<String, dynamic>> _clientListOfMaps(Object? value) {
 String _clientText(Object? value, {String fallback = ''}) {
   final text = value == null ? '' : value.toString().trim();
   return text.isEmpty ? fallback : text;
+}
+
+final RegExp _assistantSessionIdPattern = RegExp(r'^[A-Za-z0-9_-]{16,64}$');
+
+String? _clientAssistantSessionId(Object? value) {
+  final text = _clientText(value).trim();
+  return _assistantSessionIdPattern.hasMatch(text) ? text : null;
 }
 
 bool _clientBool(Object? value) {
@@ -671,15 +679,20 @@ class ClientSupportAssistantReply {
     required this.reply,
     required this.shouldEscalate,
     required this.suggestedActions,
+    this.assistantSessionId,
   });
 
   final String reply;
   final bool shouldEscalate;
   final List<ClientSupportAssistantAction> suggestedActions;
+  final String? assistantSessionId;
 
   factory ClientSupportAssistantReply.fromJson(Map<String, dynamic> json) {
     return ClientSupportAssistantReply(
       reply: _clientText(json['reply']),
+      assistantSessionId: _clientAssistantSessionId(
+        json['assistantSessionId'] ?? json['assistant_session_id'],
+      ),
       shouldEscalate:
           _clientBool(json['shouldEscalate'] ?? json['should_escalate']),
       suggestedActions: _clientListOfMaps(
@@ -2065,12 +2078,14 @@ class AppFirstRuntimeBootstrapper
     required HostPlatform hostPlatform,
     required String message,
     int? ticketId,
+    String? assistantSessionId,
     Map<String, Object?> safeDiagnostics = const <String, Object?>{},
   }) async {
     final text = message.trim();
     if (text.isEmpty) {
       throw const BootstrapFailure('Support message is required.');
     }
+    final validSessionId = _clientAssistantSessionId(assistantSessionId);
     final response = await _requestClientJsonWithSession(
       hostPlatform: hostPlatform,
       method: 'POST',
@@ -2079,6 +2094,7 @@ class AppFirstRuntimeBootstrapper
         'message': text,
         'scope': 'support',
         if (ticketId != null) 'ticketId': ticketId,
+        if (validSessionId != null) 'assistantSessionId': validSessionId,
         'safeDiagnostics': _sanitizeWarpRuntimeMeta(safeDiagnostics),
       },
     );

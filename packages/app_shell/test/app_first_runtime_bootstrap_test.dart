@@ -5005,6 +5005,7 @@ void main() {
               jsonEncode(
                 <String, Object?>{
                   'reply': 'Try reconnecting once, then send diagnostics.',
+                  'assistantSessionId': 'session_1234567890abcdef',
                   'shouldEscalate': false,
                   'suggestedActions': <Object?>[
                     <String, Object?>{
@@ -5033,6 +5034,7 @@ void main() {
       hostPlatform: HostPlatform.windows,
       message: 'Connection is closed',
       ticketId: 77,
+      assistantSessionId: 'session_abcdefghijklmnop',
       safeDiagnostics: const <String, Object?>{
         'phase': 'running',
         'warp_status': 'active',
@@ -5040,10 +5042,15 @@ void main() {
     );
 
     expect(reply.reply, contains('reconnecting'));
+    expect(reply.assistantSessionId, 'session_1234567890abcdef');
     expect(reply.shouldEscalate, isFalse);
     expect(reply.suggestedActions.single.key, 'retry_connect');
     expect(assistantBody, containsPair('ticketId', 77));
     expect(assistantBody, containsPair('message', 'Connection is closed'));
+    expect(
+      assistantBody,
+      containsPair('assistantSessionId', 'session_abcdefghijklmnop'),
+    );
     expect(
       assistantBody?['safeDiagnostics'],
       containsPair('warp_status', 'active'),
