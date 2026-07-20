@@ -225,6 +225,7 @@ class _FakeBootstrapper
   int calls = 0;
   int redeemCalls = 0;
   int assistantCalls = 0;
+  final List<String?> assistantSessionIds = <String?>[];
   String? lastAssistantMessage;
   Map<String, Object?>? lastAssistantDiagnostics;
   int cabinetCalls = 0;
@@ -434,6 +435,7 @@ class _FakeBootstrapper
   }) async {
     await assistantGate;
     assistantCalls += 1;
+    assistantSessionIds.add(assistantSessionId);
     lastAssistantMessage = message;
     lastAssistantDiagnostics = safeDiagnostics;
     return assistantReply;
@@ -3739,6 +3741,91 @@ void main() {
       find.byKey(const ValueKey('support-chat-composer')),
     );
     expect(ticketComposer.focusNode?.hasFocus, isTrue);
+  });
+
+  testWidgets(
+      'support AI assistant keeps one server session only while sheet is open',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      assistantReply: const ClientSupportAssistantReply(
+        reply: 'Продолжаем проверку подключения.',
+        shouldEscalate: false,
+        suggestedActions: <ClientSupportAssistantAction>[],
+        assistantSessionId: 'session_1234567890abcdef',
+      ),
+    );
+    final supportTicketService = _FakeSupportTicketService(
+      const SupportTicketReceipt(
+        ticketId: 912,
+        statusTitle: 'Open',
+        messageCount: 1,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        supportTicketService: supportTicketService,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _openSupportChatFromProfile(tester);
+
+    await tester.tap(find.byKey(const ValueKey('support-ai-entry')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('assistant-sheet-composer')),
+      'Не подключается',
+    );
+    await tester.tap(find.byKey(const ValueKey('assistant-sheet-send')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('assistant-sheet-composer')),
+      'Сайты всё ещё не открываются',
+    );
+    await tester.tap(find.byKey(const ValueKey('assistant-sheet-send')));
+    await tester.pumpAndSettle();
+
+    expect(
+      bootstrapper.assistantSessionIds,
+      <String?>[null, 'session_1234567890abcdef'],
+    );
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('support-assistant-sheet')),
+      findsNothing,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('support-ai-entry')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('assistant-sheet-composer')),
+      'Начнём заново',
+    );
+    await tester.tap(find.byKey(const ValueKey('assistant-sheet-send')));
+    await tester.pumpAndSettle();
+
+    expect(
+      bootstrapper.assistantSessionIds,
+      <String?>[null, 'session_1234567890abcdef', null],
+    );
+    expect(
+      bootstrapper.lastAssistantDiagnostics?.keys.toSet(),
+      <String>{'app_version', 'platform', 'route_mode', 'connection_status'},
+    );
   });
 
   testWidgets(

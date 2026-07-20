@@ -29,6 +29,7 @@ Request fields:
 - `message`: non-empty user text;
 - `scope`: fixed to `support`;
 - `ticketId`: optional active ticket ID;
+- `assistantSessionId`: optional opaque server-issued continuity token;
 - `safeDiagnostics`: redacted support-safe values only.
 
 The current client reads the assistant reply, escalation flag, and safe
@@ -54,6 +55,17 @@ app invokes it and what the UI may expose.
   mutations.
 - Diagnostics require the existing explicit attach/confirmation flow.
 - The user can leave the assistant for ticket-backed human support.
+
+## Assistant Continuity
+
+- The assistant-session token is optional and opaque. The server binds it to
+  the authenticated owner and `support` surface; it is not authentication.
+- The assistant sheet retains a returned token only for its open lifetime.
+  Closing the sheet, reopening it, or restarting the app begins fresh
+  continuity; no chat history is persisted by the client.
+- The four request diagnostics (`app_version`, `platform`, `route_mode`, and
+  `connection_status`) remain request context only and do not enter model
+  memory.
 
 The shared client contract lives in:
 

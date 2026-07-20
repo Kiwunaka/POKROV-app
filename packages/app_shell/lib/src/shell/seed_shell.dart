@@ -96,20 +96,19 @@ ThemeData _buildPokrovTheme({
   final isDark = brightness == Brightness.dark;
   // component.button text tokens: white on emerald, near-black on dark mint.
   final onAccent = isDark ? const Color(0xFF101713) : Colors.white;
-  final colorScheme =
-      ColorScheme.fromSeed(
-        seedColor: tokens.accent,
-        brightness: brightness,
-      ).copyWith(
-        primary: tokens.accent,
-        onPrimary: onAccent,
-        secondary: tokens.accentBright,
-        onSecondary: onAccent,
-        surface: tokens.surface,
-        onSurface: tokens.ink,
-        error: tokens.danger,
-        outlineVariant: tokens.line,
-      );
+  final colorScheme = ColorScheme.fromSeed(
+    seedColor: tokens.accent,
+    brightness: brightness,
+  ).copyWith(
+    primary: tokens.accent,
+    onPrimary: onAccent,
+    secondary: tokens.accentBright,
+    onSecondary: onAccent,
+    surface: tokens.surface,
+    onSurface: tokens.ink,
+    error: tokens.danger,
+    outlineVariant: tokens.line,
+  );
   final textTheme = _buildPokrovTextTheme(tokens);
 
   return ThemeData(
@@ -178,9 +177,8 @@ ThemeData _buildPokrovTheme({
           fontWeight: states.contains(WidgetState.selected)
               ? FontWeight.w600
               : FontWeight.w500,
-          color: states.contains(WidgetState.selected)
-              ? tokens.ink
-              : tokens.muted,
+          color:
+              states.contains(WidgetState.selected) ? tokens.ink : tokens.muted,
         ),
       ),
       iconTheme: WidgetStateProperty.resolveWith(
@@ -509,8 +507,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _runtimeEngine = createRuntimeEngine(
       hostPlatform: widget.appContext.hostPlatform,
     );
-    final bootstrapper =
-        widget.bootstrapper ??
+    final bootstrapper = widget.bootstrapper ??
         AppFirstRuntimeBootstrapper(apiBaseUrl: widget.appContext.apiBaseUrl);
     _bootstrapper = bootstrapper;
     _accountActionService = bootstrapper is AppFirstAccountActionService
@@ -531,8 +528,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _clientDataService = bootstrapper is AppFirstClientDataService
         ? bootstrapper as AppFirstClientDataService
         : null;
-    _supportTicketService =
-        widget.supportTicketService ??
+    _supportTicketService = widget.supportTicketService ??
         AppFirstSupportTicketService(apiBaseUrl: widget.appContext.apiBaseUrl);
     _firstLaunchStore =
         widget.firstLaunchStore ?? const PokrovFileFirstLaunchStore();
@@ -811,8 +807,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<bool> _launchExternalHandoff(Uri uri) {
-    final launcher =
-        widget.handoffLauncher ??
+    final launcher = widget.handoffLauncher ??
         (Uri target) => launchUrl(target, mode: LaunchMode.externalApplication);
     return launcher(uri);
   }
@@ -853,9 +848,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return;
     }
     _clientUpdatePromptVisible = true;
-    final title = update.isRequired
-        ? 'Нужно обновить POKROV'
-        : 'Доступно обновление';
+    final title =
+        update.isRequired ? 'Нужно обновить POKROV' : 'Доступно обновление';
     final version = update.latestVersion.trim();
     final notes = update.releaseNotes.trim();
     try {
@@ -1193,9 +1187,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _telegramBonusBusy = false;
-        _telegramBonusStatus = result.linked
-            ? 'Telegram привязан'
-            : 'Код открыт в Telegram';
+        _telegramBonusStatus =
+            result.linked ? 'Telegram привязан' : 'Код открыт в Telegram';
         if (!opened) {
           _telegramBonusError = 'Не удалось открыть Telegram автоматически.';
         }
@@ -1370,8 +1363,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     required String actionName,
     required Future<AppFirstBonusRewardResult> Function(
       AppFirstBonusActionService service,
-    )
-    run,
+    ) run,
   }) async {
     if (_bonusRewardBusy) {
       return;
@@ -1585,9 +1577,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             ),
             extraDiagnostics: _extendedProtectionDiagnostics(),
             supportTicketService: _supportTicketService,
-            askAssistant: _clientDataService == null
-                ? null
-                : _askSupportAssistant,
+            askAssistant:
+                _clientDataService == null ? null : _askSupportAssistant,
             onOpenHandoff: _showSeedHandoff,
           );
         },
@@ -1598,7 +1589,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   /// Knowledge-base question -> answer lane for the support AI sheet. Reuses
   /// the existing backend assistant endpoint with the same safe diagnostic
   /// keys the ticket flow sends; nothing raw ever leaves the device.
-  Future<ClientSupportAssistantReply> _askSupportAssistant(String message) {
+  Future<ClientSupportAssistantReply> _askSupportAssistant(
+    String message,
+    String? assistantSessionId,
+  ) {
     final service = _clientDataService;
     if (service == null) {
       throw const BootstrapFailure('Помощник недоступен на этом устройстве.');
@@ -1606,6 +1600,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     return service.askSupportAssistant(
       hostPlatform: widget.appContext.hostPlatform,
       message: message,
+      assistantSessionId: assistantSessionId,
       safeDiagnostics: <String, Object?>{
         'app_version': _pokrovAppVersion,
         'platform': widget.appContext.hostPlatform.name,
@@ -1739,8 +1734,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final warpStatus = await _fetchWarpStatusOrNull();
     final displayWarpPolicy =
         warpStatus?.applyTo(baseWarpPolicy) ?? baseWarpPolicy;
-    final warpConsentStillValid =
-        ((warpStatus?.consented ?? false) ||
+    final warpConsentStillValid = ((warpStatus?.consented ?? false) ||
             _warpRuntimeConsent ||
             baseWarpPolicy.userConsented) &&
         displayWarpPolicy.canOfferRuntime;
@@ -1967,9 +1961,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         state: result.applied
             ? (enabled ? 'active' : 'revoked')
             : (enabled ? 'deferred' : 'revoked_deferred'),
-        reasonCode: result.applied
-            ? 'applied'
-            : (result.reason ?? 'not_applied'),
+        reasonCode:
+            result.applied ? 'applied' : (result.reason ?? 'not_applied'),
         message: message,
         meta: <String, Object?>{
           'enabled': enabled,
@@ -2023,8 +2016,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     });
 
     try {
-      final RuntimeSnapshot snapshot =
-          _runtimeSnapshot ??
+      final RuntimeSnapshot snapshot = _runtimeSnapshot ??
           await _withRuntimeActionTimeout('snapshot', _runtimeEngine.snapshot);
       if (!mounted) {
         return;
@@ -2108,8 +2100,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _runtimeSnapshot = current;
           _runtimeHeadline = current.phase == RuntimePhase.running
               ? current.isCleanlyHealthy
-                    ? 'POKROV подключен.'
-                    : 'POKROV подключен, но требует внимания.'
+                  ? 'POKROV подключен.'
+                  : 'POKROV подключен, но требует внимания.'
               : current.message;
         });
         if (current.phase != RuntimePhase.running &&
@@ -2181,9 +2173,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         hostPlatform: widget.appContext.hostPlatform,
         eventName: 'runtime_fallback',
         state: 'fallback',
-        reasonCode: failureKind.isNotEmpty
-            ? failureKind
-            : 'connect_not_running',
+        reasonCode:
+            failureKind.isNotEmpty ? failureKind : 'connect_not_running',
         message: snapshot.message,
         meta: <String, Object?>{
           'phase': snapshot.phase.name,
@@ -2201,8 +2192,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       final nextPolicy = status.applyTo(_managedWarpPolicy);
       setState(() {
         _managedWarpPolicy = nextPolicy;
-        _warpRuntimeConsent =
-            (status.consented || _warpRuntimeConsent) &&
+        _warpRuntimeConsent = (status.consented || _warpRuntimeConsent) &&
             nextPolicy.canOfferRuntime;
       });
     } on BootstrapFailure {
@@ -2222,8 +2212,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     var current = snapshot;
     final maxAttempts =
         current.message.toLowerCase().contains('permission requested')
-        ? 40
-        : 10;
+            ? 40
+            : 10;
     for (var attempt = 0; attempt < maxAttempts; attempt += 1) {
       await Future<void>.delayed(const Duration(milliseconds: 450));
       current = await _withRuntimeActionTimeout(
@@ -2323,103 +2313,102 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   @override
   Widget build(BuildContext context) {
-    final hasProvisionedAccess =
-        !_managedProfileDirty ||
+    final hasProvisionedAccess = !_managedProfileDirty ||
         (_runtimeSnapshot?.phase == RuntimePhase.running) ||
         ((_runtimeSnapshot?.stagedConfigPath ?? '').isNotEmpty);
     final sectionBuilders = <WidgetBuilder>[
       (context) => _QuickConnectSection(
-        appContext: widget.appContext,
-        selectedRouteMode: _selectedRouteMode,
-        runtimeSnapshot: _runtimeSnapshot,
-        runtimeHeadline: _runtimeHeadline,
-        runtimeBusy: _runtimeBusy,
-        runtimeDisconnecting: _runtimeDisconnecting,
-        primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
-        connectHintVisible: !_connectHintDismissed,
-        revealHold: _firstLaunchStep != _FirstLaunchStep.ready,
-        bonusSummary: _bonusSummary,
-        telegramBonusBusy: _telegramBonusBusy,
-        warpPolicy: _managedWarpPolicy,
-        warpRuntimeConsent: _warpRuntimeConsent,
-        warpBusy: _warpPolicyBusy,
-        onToggleRuntime: _toggleRuntimeFromHome,
-        onTelegramBonus: _telegramBonusBusy
-            ? null
-            : () {
-                if (_telegramBonusCanClaim) {
-                  unawaited(_claimTelegramBonusInApp());
-                } else {
-                  unawaited(_createTelegramLinkInApp());
-                }
-              },
-        onOpenLocations: () => _selectTab(SeedTab.locations),
-        onOpenRules: () => _selectTab(SeedTab.rules),
-        onOpenWarp: _openWarpControl,
-        onWarpConsentChanged: _setWarpRuntimeConsent,
-        onOpenPromoHandoff: _showSeedHandoff,
-      ),
+            appContext: widget.appContext,
+            selectedRouteMode: _selectedRouteMode,
+            runtimeSnapshot: _runtimeSnapshot,
+            runtimeHeadline: _runtimeHeadline,
+            runtimeBusy: _runtimeBusy,
+            runtimeDisconnecting: _runtimeDisconnecting,
+            primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
+            connectHintVisible: !_connectHintDismissed,
+            revealHold: _firstLaunchStep != _FirstLaunchStep.ready,
+            bonusSummary: _bonusSummary,
+            telegramBonusBusy: _telegramBonusBusy,
+            warpPolicy: _managedWarpPolicy,
+            warpRuntimeConsent: _warpRuntimeConsent,
+            warpBusy: _warpPolicyBusy,
+            onToggleRuntime: _toggleRuntimeFromHome,
+            onTelegramBonus: _telegramBonusBusy
+                ? null
+                : () {
+                    if (_telegramBonusCanClaim) {
+                      unawaited(_claimTelegramBonusInApp());
+                    } else {
+                      unawaited(_createTelegramLinkInApp());
+                    }
+                  },
+            onOpenLocations: () => _selectTab(SeedTab.locations),
+            onOpenRules: () => _selectTab(SeedTab.rules),
+            onOpenWarp: _openWarpControl,
+            onWarpConsentChanged: _setWarpRuntimeConsent,
+            onOpenPromoHandoff: _showSeedHandoff,
+          ),
       (context) => _LocationsSection(
-        appContext: widget.appContext,
-        selectedRouteMode: _selectedRouteMode,
-        hasProvisionedAccess: hasProvisionedAccess,
-        smartConnectProfile: _smartConnectProfile,
-        locationsCatalog: _locationsCatalog,
-        locationsCatalogBusy: _locationsCatalogBusy,
-        locationsCatalogError: _locationsCatalogError,
-        onRefreshLocationsCatalog: _refreshLocationsCatalog,
-        preferredNodeCode: _preferredNodeCode,
-        nodePreferenceBusy: _nodePreferenceBusy,
-        onPreferredNodeSelected: _setPreferredLocation,
-      ),
+            appContext: widget.appContext,
+            selectedRouteMode: _selectedRouteMode,
+            hasProvisionedAccess: hasProvisionedAccess,
+            smartConnectProfile: _smartConnectProfile,
+            locationsCatalog: _locationsCatalog,
+            locationsCatalogBusy: _locationsCatalogBusy,
+            locationsCatalogError: _locationsCatalogError,
+            onRefreshLocationsCatalog: _refreshLocationsCatalog,
+            preferredNodeCode: _preferredNodeCode,
+            nodePreferenceBusy: _nodePreferenceBusy,
+            onPreferredNodeSelected: _setPreferredLocation,
+          ),
       (context) => _RulesSection(
-        appContext: widget.appContext,
-        selectedRouteMode: _selectedRouteMode,
-        selectedAppIds: _selectedAppIds,
-        onRouteModeSelected: (mode) {
-          _selectRouteMode(mode);
-        },
-        onSelectedAppAdded: _addSelectedAppId,
-        onSelectedAppRemoved: _removeSelectedAppId,
-      ),
+            appContext: widget.appContext,
+            selectedRouteMode: _selectedRouteMode,
+            selectedAppIds: _selectedAppIds,
+            onRouteModeSelected: (mode) {
+              _selectRouteMode(mode);
+            },
+            onSelectedAppAdded: _addSelectedAppId,
+            onSelectedAppRemoved: _removeSelectedAppId,
+          ),
       (context) => _ProfileSection(
-        appContext: widget.appContext,
-        selectedRouteMode: _selectedRouteMode,
-        hasProvisionedAccess: hasProvisionedAccess,
-        onOpenHandoff: _showSeedHandoff,
-        onOpenSupportHub: _showSupportHub,
-        onCreateTelegramLink: _createTelegramLinkInApp,
-        onCheckTelegramBonus: _checkTelegramBonusInApp,
-        onClaimTelegramBonus: _claimTelegramBonusInApp,
-        telegramBonusStatus: _telegramBonusStatus,
-        telegramBonusBusy: _telegramBonusBusy,
-        telegramBonusCanClaim: _telegramBonusCanClaim,
-        telegramBonusError: _telegramBonusError,
-        bonusSummary: () => _bonusSummary,
-        bonusSummaryBusy: _bonusSummaryBusy,
-        bonusSummaryError: _bonusSummaryError,
-        bonusRewardBusy: () => _bonusRewardBusy,
-        onRefreshBonusSummary: () => _loadBonusSummary(force: true),
-        onSpinWheel: _spinBonusWheelInApp,
-        onCheckInCalendar: _checkInBonusCalendarInApp,
-        warpPolicy: _managedWarpPolicy,
-        warpRuntimeConsent: _warpRuntimeConsent,
-        warpBusy: _warpPolicyBusy,
-        runtimeSnapshot: _runtimeSnapshot,
-        runtimeHeadline: _runtimeHeadline,
-        onOpenWarp: _openWarpControl,
-        themeMode: widget.themeMode,
-        onThemeModeChanged: widget.onThemeModeChanged,
-        subscriptionInfo: _subscriptionInfo,
-        notifications:
-            _notificationsInbox?.items ?? const <ClientNotificationItem>[],
-        notificationsUnread: _notificationsUnread,
-        notificationsBusy: _notificationsBusy,
-        onOpenNotifications: _markNotificationsRead,
-        onRefreshNotifications: _refreshNotifications,
-        onFetchDevices: _fetchClientDevices,
-        onRevokeDevice: _revokeClientDevice,
-      ),
+            appContext: widget.appContext,
+            selectedRouteMode: _selectedRouteMode,
+            hasProvisionedAccess: hasProvisionedAccess,
+            onOpenHandoff: _showSeedHandoff,
+            onOpenSupportHub: _showSupportHub,
+            onCreateTelegramLink: _createTelegramLinkInApp,
+            onCheckTelegramBonus: _checkTelegramBonusInApp,
+            onClaimTelegramBonus: _claimTelegramBonusInApp,
+            telegramBonusStatus: _telegramBonusStatus,
+            telegramBonusBusy: _telegramBonusBusy,
+            telegramBonusCanClaim: _telegramBonusCanClaim,
+            telegramBonusError: _telegramBonusError,
+            bonusSummary: () => _bonusSummary,
+            bonusSummaryBusy: _bonusSummaryBusy,
+            bonusSummaryError: _bonusSummaryError,
+            bonusRewardBusy: () => _bonusRewardBusy,
+            onRefreshBonusSummary: () => _loadBonusSummary(force: true),
+            onSpinWheel: _spinBonusWheelInApp,
+            onCheckInCalendar: _checkInBonusCalendarInApp,
+            warpPolicy: _managedWarpPolicy,
+            warpRuntimeConsent: _warpRuntimeConsent,
+            warpBusy: _warpPolicyBusy,
+            runtimeSnapshot: _runtimeSnapshot,
+            runtimeHeadline: _runtimeHeadline,
+            onOpenWarp: _openWarpControl,
+            themeMode: widget.themeMode,
+            onThemeModeChanged: widget.onThemeModeChanged,
+            subscriptionInfo: _subscriptionInfo,
+            notifications:
+                _notificationsInbox?.items ?? const <ClientNotificationItem>[],
+            notificationsUnread: _notificationsUnread,
+            notificationsBusy: _notificationsBusy,
+            onOpenNotifications: _markNotificationsRead,
+            onRefreshNotifications: _refreshNotifications,
+            onFetchDevices: _fetchClientDevices,
+            onRevokeDevice: _revokeClientDevice,
+          ),
     ];
 
     final isDesktopShell = switch (widget.appContext.hostPlatform) {
@@ -2427,12 +2416,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       HostPlatform.android || HostPlatform.ios => false,
     };
 
-    final disableAnimations =
-        MediaQuery.maybeOf(context)?.disableAnimations ??
-        WidgetsBinding
-            .instance
-            .platformDispatcher
-            .accessibilityFeatures
+    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ??
+        WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
             .disableAnimations;
     final shell = isDesktopShell
         ? _DesktopShell(
@@ -2457,11 +2442,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final overlayStyle =
         (isDarkTheme ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark)
             .copyWith(
-              statusBarColor: Colors.transparent,
-              systemNavigationBarColor: Colors.transparent,
-              systemNavigationBarDividerColor: Colors.transparent,
-              systemNavigationBarContrastEnforced: false,
-            );
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarContrastEnforced: false,
+    );
 
     return _MotionScope(
       key: const ValueKey('motion-policy'),
@@ -2499,21 +2484,21 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                           child: AnimatedSwitcher(
                             duration:
                                 _firstLaunchExitAnimated && !disableAnimations
-                                ? _MotionTokens.standard
-                                : Duration.zero,
+                                    ? _MotionTokens.standard
+                                    : Duration.zero,
                             switchInCurve: _MotionTokens.emphasized,
                             switchOutCurve: _MotionTokens.emphasized,
                             transitionBuilder: (child, animation) =>
                                 FadeTransition(
-                                  opacity: animation,
-                                  child: ScaleTransition(
-                                    scale: Tween<double>(
-                                      begin: 1.02,
-                                      end: 1,
-                                    ).animate(animation),
-                                    child: child,
-                                  ),
-                                ),
+                              opacity: animation,
+                              child: ScaleTransition(
+                                scale: Tween<double>(
+                                  begin: 1.02,
+                                  end: 1,
+                                ).animate(animation),
+                                child: child,
+                              ),
+                            ),
                             child: _firstLaunchStep != _FirstLaunchStep.ready
                                 ? _FirstLaunchGate(
                                     appContext: widget.appContext,
@@ -2528,8 +2513,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                                     onOpenTelegram: _createTelegramLinkInApp,
                                     onOpenCabinet: () =>
                                         _openCabinetWithHandoff(
-                                          widget.appContext.cabinetUrl,
-                                        ),
+                                      widget.appContext.cabinetUrl,
+                                    ),
                                   )
                                 : const SizedBox.shrink(
                                     key: ValueKey('first-launch-gate-exited'),
