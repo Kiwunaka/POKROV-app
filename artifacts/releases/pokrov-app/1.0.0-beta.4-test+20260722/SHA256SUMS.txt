@@ -1,0 +1,7 @@
+ef4e482e7ef43dde3e479fdd15b9f4d20e0d02673ba7338f025b2166b65af5b7  pokrov-android-arm64-v8a-1.0.0-beta.4-test.apk
+d9daaa0a9124e0d5bc66edee83f72d429ba66fdf1c525da4bb355e52734244e5  pokrov-android-armeabi-v7a-1.0.0-beta.4-test.apk
+c23488b849ecf2fd7d35f0a21b2a7f127606d915ef91a5cac82e3ff4b9e6bef7  pokrov-tester-manifest-1.0.0-beta.4-test.json
+13bc71990165e6af1d07706683fff2a0d88eb52d8849a6e26e394b4d4ac1bb5f  pokrov-windows-1.0.0-beta.4-test.manifest.json
+dc897dfbe4f4f960f3de9e158bc6e7ab6d2896d5ec833175238239a67fe24f26  pokrov-windows-portable-x64-1.0.0-beta.4-test.zip
+668047139893d27029939091adb56cdf0fdba2b0e03b3c839e1749e412750dce  pokrov-windows-setup-x64-1.0.0-beta.4-test.exe
+f07d292f66498924d5e59d5416011042fa3233aa0b2907ca1fcd6b91653fb962  release-handoff.json

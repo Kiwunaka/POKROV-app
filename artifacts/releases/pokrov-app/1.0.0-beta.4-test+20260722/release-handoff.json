@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "product": "POKROV",
+  "client_lane": "pokrov-app",
+  "release_id": "1.0.0-beta.4-test+20260722",
+  "release_version": "1.0.0-beta.4-test",
+  "version": "1.0.0-beta.4",
+  "artifact_dir": "C:/Users/kiwun/Documents/ai/POKROV-app/artifacts/releases/pokrov-app/1.0.0-beta.4-test+20260722",
+  "generated_at": "2026-07-22T00:51:35.8485967Z",
+  "release_state": "public_internal_tester_prerelease_manual_install_pending",
+  "github_release": {
+    "tag": "v1.0.0-beta.4-test.20260722",
+    "url": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta.4-test.20260722",
+    "is_prerelease": true,
+    "is_draft": false,
+    "published_at": "2026-07-22T00:52:42Z"
+  },
+  "downloads": {
+    "android": {
+      "play_url": "",
+      "apk_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta.4-test.20260722/pokrov-android-arm64-v8a-1.0.0-beta.4-test.apk",
+      "apk_arm64_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta.4-test.20260722/pokrov-android-arm64-v8a-1.0.0-beta.4-test.apk",
+      "apk_armeabi_v7a_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta.4-test.20260722/pokrov-android-armeabi-v7a-1.0.0-beta.4-test.apk",
+      "apk_variants": [
+        {
+          "abi": "arm64-v8a",
+          "url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta.4-test.20260722/pokrov-android-arm64-v8a-1.0.0-beta.4-test.apk",
+          "sha256": "ef4e482e7ef43dde3e479fdd15b9f4d20e0d02673ba7338f025b2166b65af5b7",
+          "size_bytes": 65423084
+        },
+        {
+          "abi": "armeabi-v7a",
+          "url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta.4-test.20260722/pokrov-android-armeabi-v7a-1.0.0-beta.4-test.apk",
+          "sha256": "d9daaa0a9124e0d5bc66edee83f72d429ba66fdf1c525da4bb355e52734244e5",
+          "size_bytes": 59478810
+        }
+      ],
+      "mirror_url": ""
+    },
+    "windows": {
+      "exe_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.0-beta.4-test.20260722/pokrov-windows-setup-x64-1.0.0-beta.4-test.exe",
+      "mirror_url": "",
+      "sha256": "668047139893d27029939091adb56cdf0fdba2b0e03b3c839e1749e412750dce",
+      "size_bytes": 28774400
+    },
+    "docs_url": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta.4-test.20260722"
+  },
+  "cutover": {
+    "runtime_sync_allowed": false,
+    "runtime_sync_required": false,
+    "public_publication_allowed": true,
+    "public_announcement_allowed": false,
+    "reason": "Internal tester assets only. Debug Android signing, unsigned Windows, exact-device tests, and trusted/store gates are not complete. Production APP_* remains on v1.0.0-beta."
+  },
+  "client_repo": {
+    "repository": "Kiwunaka/POKROV-app",
+    "commit": "7bc561ffecef01c2d6bd58e80782bb00c1557015",
+    "branch_policy": "POKROV-app/main",
+    "dirty_worktree_at_build": false
+  },
+  "platform_repo": {
+    "repository": "Kiwunaka/portal",
+    "commit": "b250b39a38e82a5502824f800bb3e2ab11fc65ec",
+    "branch_policy": "portal/master",
+    "production_deploy": "PASS"
+  },
+  "verification": {
+    "focused_tests": "PASS: 127",
+    "app_shell_analyze": "PASS",
+    "android_split_apk": "PASS",
+    "android_aab": "FAIL_LOCAL_COMPILER_CRASH_NOT_PUBLISHED",
+    "android_signing": "DEBUG_SIGNED_NOT_FOR_PUBLIC_PROMOTION",
+    "windows_bundle": "PASS",
+    "windows_signing": "UNSIGNED",
+    "github_anonymous_range": "PASS",
+    "github_digest_match": "PASS"
+  },
+  "manual_gates": [
+    "ANDROID_PHYSICAL_DEVICE_INSTALL_AND_RUNTIME",
+    "WINDOWS_CLEAN_MACHINE_INSTALL_AND_RUNTIME",
+    "SECURE_STORAGE_RESTART_AND_RECOVERY",
+    "DNS_LEAK_AND_ROUTE_MODES",
+    "WARP_EXACT_ARTIFACT",
+    "PRODUCTION_ANDROID_SIGNING",
+    "TRUSTED_WINDOWS_SIGNING",
+    "STORE_SUBMISSION"
+  ],
+  "runtime_sync_allowed": false
+}

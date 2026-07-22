@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "candidate": {
+    "tag": "v1.0.0-beta.4-test.20260722",
+    "channel": "internal_tester_prerelease",
+    "client_repository": "Kiwunaka/POKROV-app",
+    "client_branch": "main",
+    "client_commit": "7bc561ffecef01c2d6bd58e80782bb00c1557015",
+    "platform_repository": "Kiwunaka/portal",
+    "platform_commit": "b250b39a38e82a5502824f800bb3e2ab11fc65ec",
+    "built_at_utc": "2026-07-22T00:51:35.8485967Z",
+    "android_package_version": "1.0.0-beta.4",
+    "android_arm64_version_code": 2004,
+    "android_armv7_version_code": 1004,
+    "windows_package_version": "1.0.0-beta.4",
+    "api_base_url": "https://api.pokrov.space",
+    "runtime_release_tag": "libcore-v3.1.8"
+  },
+  "publication": {
+    "release_url": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta.4-test.20260722",
+    "published_at_utc": "2026-07-22T00:52:42Z",
+    "prerelease": true,
+    "anonymous_range_access": "PASS",
+    "github_asset_digest_match": "PASS",
+    "production_download_pointer_update": "NOT_REQUESTED"
+  },
+  "verification": {
+    "focused_onboarding_runtime_shell_tests": "PASS: 127 tests",
+    "app_shell_flutter_analyze": "PASS",
+    "android_split_apk_build": "PASS",
+    "android_apk_signature": "PASS: Android Debug certificate, APK Signature Scheme v2",
+    "android_production_signing": "NOT_REQUESTED",
+    "android_aab": "FAIL_LOCAL_COMPILER_CRASH_NOT_PUBLISHED",
+    "android_physical_device": "MANUAL_OWNER_TEST",
+    "android_store": "NOT_REQUESTED",
+    "windows_bundle_contract": "PASS",
+    "windows_authenticode": "UNSIGNED",
+    "windows_install_runtime": "MANUAL_OWNER_TEST",
+    "platform_production_deploy": "PASS: b250b39",
+    "trusted_or_stable_claim": "NOT_ALLOWED"
+  },
+  "artifacts": [
+    {
+      "file_name": "pokrov-android-arm64-v8a-1.0.0-beta.4-test.apk",
+      "platform": "android",
+      "kind": "apk",
+      "abi": "arm64-v8a",
+      "size_bytes": 65423084,
+      "sha256": "ef4e482e7ef43dde3e479fdd15b9f4d20e0d02673ba7338f025b2166b65af5b7",
+      "signing": "DEBUG_SIGNED_NOT_FOR_PUBLIC_PROMOTION"
+    },
+    {
+      "file_name": "pokrov-android-armeabi-v7a-1.0.0-beta.4-test.apk",
+      "platform": "android",
+      "kind": "apk",
+      "abi": "armeabi-v7a",
+      "size_bytes": 59478810,
+      "sha256": "d9daaa0a9124e0d5bc66edee83f72d429ba66fdf1c525da4bb355e52734244e5",
+      "signing": "DEBUG_SIGNED_NOT_FOR_PUBLIC_PROMOTION"
+    },
+    {
+      "file_name": "pokrov-windows-setup-x64-1.0.0-beta.4-test.exe",
+      "platform": "windows",
+      "kind": "setup_exe",
+      "abi": "x64",
+      "size_bytes": 28774400,
+      "sha256": "668047139893d27029939091adb56cdf0fdba2b0e03b3c839e1749e412750dce",
+      "signing": "UNSIGNED"
+    },
+    {
+      "file_name": "pokrov-windows-portable-x64-1.0.0-beta.4-test.zip",
+      "platform": "windows",
+      "kind": "portable_zip",
+      "abi": "x64",
+      "size_bytes": 28869281,
+      "sha256": "dc897dfbe4f4f960f3de9e158bc6e7ab6d2896d5ec833175238239a67fe24f26",
+      "signing": "UNSIGNED"
+    },
+    {
+      "file_name": "pokrov-windows-1.0.0-beta.4-test.manifest.json",
+      "platform": "windows",
+      "kind": "manifest",
+      "abi": "x64",
+      "size_bytes": 3391,
+      "sha256": "13bc71990165e6af1d07706683fff2a0d88eb52d8849a6e26e394b4d4ac1bb5f",
+      "signing": "METADATA_ONLY"
+    }
+  ]
+}
