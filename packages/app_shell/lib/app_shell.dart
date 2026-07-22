@@ -197,7 +197,7 @@ class PokrovFileConnectHintStore {
 
 const _pokrovBrandMarkAsset = PokrovBrandAssets.mark;
 const _selectedAppsEnforcementReady = true;
-const _pokrovAppVersion = '1.0.0-beta.3';
+const _pokrovAppVersion = '1.0.0-beta.4';
 const _seedRulesetVersion = '2026-04-13';
 const _seedPackageCatalogVersion = '2026-04-13';
 

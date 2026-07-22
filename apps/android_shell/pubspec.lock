@@ -270,7 +270,7 @@ packages:
       path: "../../packages/app_shell"
       relative: true
     source: path
-    version: "1.0.0-beta.3"
+    version: "1.0.0-beta.4"
   pokrov_core_domain:
     dependency: "direct main"
     description:
