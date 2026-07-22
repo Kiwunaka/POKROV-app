@@ -450,6 +450,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   late final AppFirstBonusActionService? _bonusActionService;
   late final AppFirstWarpActionService? _warpActionService;
   late final AppFirstReleaseActionService? _releaseActionService;
+  late final AppFirstExperienceService? _experienceService;
   late final AppFirstNodePreferenceService? _nodePreferenceService;
   late final AppFirstClientDataService? _clientDataService;
   late final SupportTicketService _supportTicketService;
@@ -524,6 +525,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         : null;
     _releaseActionService = bootstrapper is AppFirstReleaseActionService
         ? bootstrapper as AppFirstReleaseActionService
+        : null;
+    _experienceService = bootstrapper is AppFirstExperienceService
+        ? bootstrapper as AppFirstExperienceService
         : null;
     _nodePreferenceService = bootstrapper is AppFirstNodePreferenceService
         ? bootstrapper as AppFirstNodePreferenceService
@@ -1513,8 +1517,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     });
   }
 
-  /// The hint is one-shot: the first disc tap hides it with a fade and
-  /// persists the done marker so it never comes back.
+  /// The hint is one-shot: only a confirmed running runtime hides it and
+  /// persists the done marker. A failed first tap must leave recovery context.
   void _dismissConnectHint() {
     if (_connectHintDismissed) {
       return;
@@ -1526,7 +1530,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _toggleRuntimeFromHome() async {
-    _dismissConnectHint();
     if (_firstLaunchStep != _FirstLaunchStep.ready) {
       _completeFirstLaunchAsNewUser();
     }
@@ -2035,6 +2038,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
 
       if (snapshot.phase == RuntimePhase.running) {
+        _dismissConnectHint();
+        unawaited(_syncSuccessfulConnectionExperience(snapshot));
         if (!_runtimeDisconnecting) {
           // The pre-busy guess was made without a snapshot; fix the copy
           // before the disconnect actually starts.
@@ -2108,6 +2113,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         if (!mounted) {
           return;
         }
+        if (current.phase == RuntimePhase.running) {
+          _dismissConnectHint();
+          unawaited(_syncSuccessfulConnectionExperience(current));
+        }
         setState(() {
           _runtimeSnapshot = current;
           _runtimeHeadline = current.phase == RuntimePhase.running
@@ -2150,6 +2159,31 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _runtimeDisconnecting = false;
         });
       }
+    }
+  }
+
+  Future<void> _syncSuccessfulConnectionExperience(
+    RuntimeSnapshot snapshot,
+  ) async {
+    final service = _experienceService;
+    if (service == null) {
+      return;
+    }
+    try {
+      await service.reportRuntimeStats(
+        hostPlatform: widget.appContext.hostPlatform,
+        runtimePhase: snapshot.phase.name,
+        connected: snapshot.phase == RuntimePhase.running,
+      );
+    } catch (_) {
+      // UX telemetry must never turn a working tunnel into a failed connect.
+    }
+    try {
+      await service.completeAccountOnboarding(
+        hostPlatform: widget.appContext.hostPlatform,
+      );
+    } catch (_) {
+      // Account-scoped onboarding sync is best-effort and retried on connect.
     }
   }
 

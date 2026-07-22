@@ -25,8 +25,12 @@ class _CompletedFirstLaunchStore implements PokrovFirstLaunchStore {
   Future<void> markCompleted() async {}
 }
 
-class _StubBootstrapper implements ManagedProfileBootstrapper {
-  const _StubBootstrapper();
+class _StubBootstrapper
+    implements ManagedProfileBootstrapper, AppFirstExperienceService {
+  const _StubBootstrapper({this.onRuntimeStats, this.onOnboardingCompleted});
+
+  final void Function(String runtimePhase, bool connected)? onRuntimeStats;
+  final VoidCallback? onOnboardingCompleted;
 
   @override
   Future<ManagedProfilePayload> resolveManagedProfile({
@@ -41,9 +45,25 @@ class _StubBootstrapper implements ManagedProfileBootstrapper {
       materializedForRuntime: true,
     );
   }
+
+  @override
+  Future<void> reportRuntimeStats({
+    required HostPlatform hostPlatform,
+    required String runtimePhase,
+    required bool connected,
+  }) async {
+    onRuntimeStats?.call(runtimePhase, connected);
+  }
+
+  @override
+  Future<void> completeAccountOnboarding({
+    required HostPlatform hostPlatform,
+  }) async {
+    onOnboardingCompleted?.call();
+  }
 }
 
-void _installReadyRuntimeBridgeMock() {
+void _installReadyRuntimeBridgeMock({bool connectSucceeds = true}) {
   const channel = MethodChannel('space.pokrov/runtime_engine');
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
@@ -83,14 +103,16 @@ void _installReadyRuntimeBridgeMock() {
         };
       case 'runtimeEngine.connect':
         return <String, Object?>{
-          'phase': 'running',
+          'phase': connectSucceeds ? 'running' : 'configStaged',
           'artifactDirectory': '/host/runtime',
           'coreBinaryPath': '/host/runtime/libcore.aar',
           'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': true,
-          'message': 'Runtime service is running.',
+          'message': connectSucceeds
+              ? 'Runtime service is running.'
+              : 'Connection failed.',
         };
     }
     return null;
@@ -111,14 +133,18 @@ Future<void> _flushRealIo(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _pumpReadyHome(WidgetTester tester) async {
+Future<void> _pumpReadyHome(
+  WidgetTester tester, {
+  bool connectSucceeds = true,
+  ManagedProfileBootstrapper bootstrapper = const _StubBootstrapper(),
+}) async {
   await tester.binding.setSurfaceSize(const Size(760, 800));
   addTearDown(() => tester.binding.setSurfaceSize(null));
-  _installReadyRuntimeBridgeMock();
+  _installReadyRuntimeBridgeMock(connectSucceeds: connectSucceeds);
   await tester.pumpWidget(
     PokrovSeedApp(
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
-      bootstrapper: const _StubBootstrapper(),
+      bootstrapper: bootstrapper,
       firstLaunchStore: _CompletedFirstLaunchStore(),
     ),
   );
@@ -160,9 +186,17 @@ void main() {
   });
 
   testWidgets(
-      'fresh store shows the first-connect hint and the first disc tap '
-      'dismisses it for good', (tester) async {
-    await _pumpReadyHome(tester);
+      'successful first connection dismisses the hint and reports UX state',
+      (tester) async {
+    final reports = <(String, bool)>[];
+    var onboardingCompleted = 0;
+    await _pumpReadyHome(
+      tester,
+      bootstrapper: _StubBootstrapper(
+        onRuntimeStats: (phase, connected) => reports.add((phase, connected)),
+        onOnboardingCompleted: () => onboardingCompleted += 1,
+      ),
+    );
 
     expect(
       find.byKey(const ValueKey('home-connect-hint-pill')),
@@ -182,6 +216,31 @@ void main() {
     expect(find.text('Нажмите, чтобы подключиться'), findsNothing);
     expect(find.byKey(const ValueKey('home-connect-hint-pulse')), findsNothing);
     expect(hintStateFile().readAsStringSync().trim(), 'done');
+    expect(reports, <(String, bool)>[('running', true)]);
+    expect(onboardingCompleted, 1);
+  });
+
+  testWidgets('failed first connection keeps the milestone pending',
+      (tester) async {
+    final reports = <(String, bool)>[];
+    var onboardingCompleted = 0;
+    await _pumpReadyHome(
+      tester,
+      connectSucceeds: false,
+      bootstrapper: _StubBootstrapper(
+        onRuntimeStats: (phase, connected) => reports.add((phase, connected)),
+        onOnboardingCompleted: () => onboardingCompleted += 1,
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
+    await _flushRealIo(tester);
+
+    expect(find.textContaining('Connection failed.'), findsWidgets);
+    expect(hintStateFile().existsSync(), isFalse);
+    expect(reports, isEmpty);
+    expect(onboardingCompleted, 0);
   });
 
   testWidgets('completed store never renders the hint on an idle ready disc',

@@ -777,6 +777,106 @@ void main() {
     expect(state['managed_manifest_path'], '/api/client/profile/managed');
   });
 
+  test('reports a successful runtime connection through the app session',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-stats-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final requests = <String>[];
+    Map<String, dynamic>? statsBody;
+    Map<String, dynamic>? onboardingBody;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add('${request.method} ${request.uri.path}');
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'runtime-stats-session',
+                    'account_id': 'account-runtime-stats',
+                  },
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+        if (request.uri.path == '/api/client/runtime/stats') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer runtime-stats-session',
+          );
+          statsBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+          await request.response.close();
+          continue;
+        }
+        if (request.uri.path == '/api/account/experience/onboarding') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer runtime-stats-session',
+          );
+          onboardingBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+          await request.response.close();
+          continue;
+        }
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://${server.address.address}:${server.port}',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: MemoryAppFirstSessionSecretStore(),
+      maxRequestAttempts: 1,
+    );
+
+    await bootstrapper.reportRuntimeStats(
+      hostPlatform: HostPlatform.android,
+      runtimePhase: 'RUNNING',
+      connected: true,
+    );
+    await bootstrapper.completeAccountOnboarding(
+      hostPlatform: HostPlatform.android,
+    );
+
+    expect(requests, <String>[
+      'POST /api/client/session/start-trial',
+      'POST /api/client/runtime/stats',
+      'POST /api/account/experience/onboarding',
+    ]);
+    expect(statsBody, <String, Object?>{
+      'runtime_phase': 'running',
+      'connected': true,
+    });
+    expect(onboardingBody, <String, Object?>{'status': 'completed'});
+  });
+
   test('warp lifecycle actions use app session and sanitize runtime metadata',
       () async {
     final tempDirectory = await Directory.systemTemp.createTemp(

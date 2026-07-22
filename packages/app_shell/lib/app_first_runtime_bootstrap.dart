@@ -250,6 +250,20 @@ abstract interface class AppFirstReleaseActionService {
   });
 }
 
+/// Best-effort app UX telemetry. The platform must not treat this as trusted
+/// connection evidence; observer traffic remains the verification authority.
+abstract interface class AppFirstExperienceService {
+  Future<void> reportRuntimeStats({
+    required HostPlatform hostPlatform,
+    required String runtimePhase,
+    required bool connected,
+  });
+
+  Future<void> completeAccountOnboarding({
+    required HostPlatform hostPlatform,
+  });
+}
+
 abstract interface class AppFirstNodePreferenceService {
   Future<SmartConnectPreferenceResult> setPreferredSmartConnectNode({
     required HostPlatform hostPlatform,
@@ -1529,6 +1543,7 @@ class AppFirstRuntimeBootstrapper
         AppFirstBonusActionService,
         AppFirstWarpActionService,
         AppFirstReleaseActionService,
+        AppFirstExperienceService,
         AppFirstNodePreferenceService,
         AppFirstClientDataService {
   AppFirstRuntimeBootstrapper({
@@ -1895,6 +1910,36 @@ class AppFirstRuntimeBootstrapper
     final status = WarpControlStatus.tryParse(response);
     await _saveWarpConsentCache(hostPlatform, status);
     return status;
+  }
+
+  @override
+  Future<void> reportRuntimeStats({
+    required HostPlatform hostPlatform,
+    required String runtimePhase,
+    required bool connected,
+  }) async {
+    final phase = runtimePhase.trim().toLowerCase();
+    await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: '/api/client/runtime/stats',
+      body: <String, Object?>{
+        'runtime_phase': phase.length <= 32 ? phase : phase.substring(0, 32),
+        'connected': connected,
+      },
+    );
+  }
+
+  @override
+  Future<void> completeAccountOnboarding({
+    required HostPlatform hostPlatform,
+  }) async {
+    await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: '/api/account/experience/onboarding',
+      body: <String, Object?>{'status': 'completed'},
+    );
   }
 
   Future<Map<String, dynamic>> _requestWarpJsonWithSession({

@@ -1,6 +1,6 @@
 # App-First Onboarding Flow
 
-Last updated: 2026-07-11
+Last updated: 2026-07-22
 
 ## Document Status
 
@@ -35,15 +35,40 @@ The backend must create a real account, a real device record, a real app session
    - `client_policy`
    - `access`
    - `provisioning`
-   - experience payload
 9. the app silently imports the managed profile
 10. the app asks `How should this device work?` before the first live route activation
 11. the app saves the chosen per-device route policy
 12. the shell changes to `Quick Connect`
+13. only after the runtime settles in `RuntimePhase.running`, the app reports
+    connected runtime state and completes account onboarding through the active
+    app session
 
 UX guardrail:
 
 - until provisioning succeeds with a real subscription payload, `Locations` stays behind an activation gate and must not render fake/demo countries
+- a tap, permission prompt, timeout, or failed connection must not dismiss the
+  first-connect milestone
+
+## Account Experience And Connection Evidence
+
+The native welcome shown before account creation is necessarily install-scoped.
+Once a real app session exists, onboarding continuation and first-connection UX
+belong to the account rather than a device-local flag:
+
+- after a confirmed `RuntimePhase.running`, the app posts connected state to
+  `POST /api/client/runtime/stats` and marks onboarding complete through
+  `POST /api/account/experience/onboarding`
+- both writes use the active app session and are best-effort UX synchronization;
+  failure does not disconnect the already-running tunnel
+- `GET /api/user/{tg_id}` is the current account experience read model for the
+  cabinet and other authenticated continuations
+- client-authored runtime state produces only `reported` progress; it cannot
+  activate a trial, grant days, or prove that traffic traversed the intended
+  route
+- only signed backend observer evidence produces `verified` and remains the
+  authority for the trusted first-connection milestone
+- the local first-connect hint is persisted as complete only after the runtime
+  reaches `running`; failed attempts leave it available for the next try
 
 ## Contract Rules
 
