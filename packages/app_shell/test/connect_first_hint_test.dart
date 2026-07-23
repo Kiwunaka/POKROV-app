@@ -8,6 +8,9 @@ import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
+const _materializedRuntimeConfig =
+    '{"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}';
+
 class _FakePathProviderPlatform extends PathProviderPlatform {
   _FakePathProviderPlatform(this.supportPath);
 
@@ -41,7 +44,7 @@ class _StubBootstrapper
   }) async {
     return const ManagedProfilePayload(
       profileName: 'test-profile',
-      configPayload: '{}',
+      configPayload: _materializedRuntimeConfig,
       materializedForRuntime: true,
     );
   }
@@ -74,7 +77,7 @@ void _installReadyRuntimeBridgeMock({bool connectSucceeds = true}) {
         return <String, Object?>{
           'phase': 'artifactReady',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': false,
@@ -84,7 +87,7 @@ void _installReadyRuntimeBridgeMock({bool connectSucceeds = true}) {
         return <String, Object?>{
           'phase': 'initialized',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': false,
@@ -94,7 +97,7 @@ void _installReadyRuntimeBridgeMock({bool connectSucceeds = true}) {
         return <String, Object?>{
           'phase': 'configStaged',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
           'supportsLiveConnect': true,
           'canInitialize': true,
@@ -105,7 +108,7 @@ void _installReadyRuntimeBridgeMock({bool connectSucceeds = true}) {
         return <String, Object?>{
           'phase': connectSucceeds ? 'running' : 'configStaged',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
           'supportsLiveConnect': true,
           'canInitialize': true,

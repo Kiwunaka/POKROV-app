@@ -1,28 +1,59 @@
 {
-  "libcore": {
-    "repository": "hiddify/hiddify-core",
-    "release_tag": "v3.1.8",
+  "core": {
+    "repository": "Kiwunaka/POKROV-core",
+    "release_tag": "v1.0.0",
+    "source_commit": "3720cb052e56ccd68f0120cc9efaf5804ec84e0b",
+    "sing_box_version": "1.13.0",
+    "sing_dependency": "v0.8.0-beta.12",
+    "go_toolchain": "go1.25.12",
+    "activation_state": "active",
+    "desktop_abi": {
+      "name": "pokrov-core",
+      "version": 2,
+      "required_symbol": "pokrovCoreAbiVersion",
+      "secure_file_symbol": "pokrovSecureFile"
+    },
     "assets": {
       "android": {
-        "asset": "hiddify-core-android.tar.gz",
-        "entry": "libcore.aar",
-        "sync_destination": "apps/android_shell/android/app/libs"
+        "entry": "pokrov-core.aar",
+        "size": 106833028,
+        "sha256": "ca3ee922ff10897545da86ea3aa6df942ecf36d7f687b2782b0bc285e9a15cb3",
+        "sync_policy": "pokrov_release",
+        "sync_destination": "apps/android_shell/android/app/libs",
+        "platform_state": "active_local_build_pending_device_proof"
       },
       "ios": {
-        "asset": "hiddify-core-ios.tar.gz",
-        "entry": "Libcore.xcframework",
-        "sync_destination": "apps/ios_shell/ios/Frameworks"
+        "entry": "PokrovCore.xcframework",
+        "size": null,
+        "sha256": null,
+        "sync_policy": "manual_core_build",
+        "sync_destination": "apps/ios_shell/ios/Frameworks",
+        "platform_state": "MANUAL_OWNER_TEST"
       },
       "macos": {
-        "asset": "hiddify-core-macos-universal.tar.gz",
-        "entry": "libcore.dylib",
-        "helper": "HiddifyCli",
-        "sync_destination": "apps/macos_shell/macos/Runner/Frameworks"
+        "entry": "pokrov-core.dylib",
+        "size": null,
+        "sha256": null,
+        "sync_policy": "manual_core_build",
+        "sync_destination": "apps/macos_shell/macos/Runner/Frameworks",
+        "platform_state": "MANUAL_OWNER_TEST"
       },
       "windows": {
-        "asset": "hiddify-core-windows-amd64.tar.gz",
-        "entry": "libcore.dll",
-        "sync_destination": "apps/windows_shell/windows/runner/resources/runtime"
+        "entry": "pokrov-core.dll",
+        "size": 55118848,
+        "sha256": "4587448c7eec4bf9ec70508f698764a71dfa7318baeebc9598a41b79f7dc4e2d",
+        "runtime_dependencies": [
+          "libcronet.dll"
+        ],
+        "runtime_dependency_size": {
+          "libcronet.dll": 8596992
+        },
+        "runtime_dependency_sha256": {
+          "libcronet.dll": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+        },
+        "sync_policy": "pokrov_release",
+        "sync_destination": "apps/windows_shell/windows/runner/resources/runtime",
+        "platform_state": "active_local_build_raw_start_and_abi_probe_passed"
       }
     }
   }

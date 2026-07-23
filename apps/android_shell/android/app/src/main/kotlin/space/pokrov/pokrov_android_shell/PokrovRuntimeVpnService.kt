@@ -18,17 +18,22 @@ import android.os.Process
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import io.nekohasekai.libbox.BoxService
-import io.nekohasekai.libbox.InterfaceUpdateListener
-import io.nekohasekai.libbox.Libbox
-import io.nekohasekai.libbox.LocalDNSTransport
-import io.nekohasekai.libbox.NetworkInterfaceIterator
-import io.nekohasekai.libbox.PlatformInterface
-import io.nekohasekai.libbox.RoutePrefix
-import io.nekohasekai.libbox.RoutePrefixIterator
-import io.nekohasekai.libbox.StringIterator
-import io.nekohasekai.libbox.TunOptions
-import io.nekohasekai.libbox.WIFIState
+import space.pokrov.core.libbox.CommandServer
+import space.pokrov.core.libbox.CommandServerHandler
+import space.pokrov.core.libbox.ConnectionOwner
+import space.pokrov.core.libbox.InterfaceUpdateListener
+import space.pokrov.core.libbox.Libbox
+import space.pokrov.core.libbox.LocalDNSTransport
+import space.pokrov.core.libbox.NetworkInterfaceIterator
+import space.pokrov.core.libbox.Notification as LibboxNotification
+import space.pokrov.core.libbox.OverrideOptions
+import space.pokrov.core.libbox.PlatformInterface
+import space.pokrov.core.libbox.RoutePrefix
+import space.pokrov.core.libbox.RoutePrefixIterator
+import space.pokrov.core.libbox.StringIterator
+import space.pokrov.core.libbox.SystemProxyStatus
+import space.pokrov.core.libbox.TunOptions
+import space.pokrov.core.libbox.WIFIState
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NetworkInterface as JavaNetworkInterface
@@ -36,8 +41,9 @@ import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
-    private var boxService: BoxService? = null
+class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHandler {
+    private var commandServer: CommandServer? = null
+    private var activeConfigContent: String? = null
     private var activeTun: ParcelFileDescriptor? = null
     private val runtimeExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -91,7 +97,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
     }
 
     override fun onDestroy() {
-        if (boxService != null || activeTun != null) {
+        if (commandServer != null || activeTun != null) {
             runtimeExecutor.execute {
                 stopRuntime(
                     message = "POKROV выключен на этом устройстве.",
@@ -132,10 +138,13 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
             }
             Log.i(LOG_TAG, "Starting Android runtime using staged config $configPath")
             AndroidDefaultNetworkMonitor.ensureStarted(this)
-            Libbox.registerLocalDNSTransport(AndroidLocalResolver as LocalDNSTransport)
-            boxService?.close()
-            boxService = Libbox.newService(content, this)
-            boxService?.start()
+            commandServer?.closeService()
+            commandServer?.close()
+            val nextServer = Libbox.newCommandServer(this, this)
+            nextServer.start()
+            nextServer.startOrReloadService(content, OverrideOptions())
+            commandServer = nextServer
+            activeConfigContent = content
             AndroidRuntimeState.markProfileStaged(configPath)
             Log.i(LOG_TAG, "Android runtime service start requested successfully; waiting for tun establishment.")
         } catch (error: Throwable) {
@@ -152,11 +161,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
         Log.i(LOG_TAG, "Stopping Android runtime service: $message")
         markServiceStopped()
         try {
-            boxService?.close()
+            commandServer?.closeService()
         } catch (_: Throwable) {
         }
-        boxService = null
-        runCatching { Libbox.registerLocalDNSTransport(null) }
+        runCatching { commandServer?.close() }
+        commandServer = null
+        activeConfigContent = null
         AndroidDefaultNetworkMonitor.stop(null)
         try {
             activeTun?.close()
@@ -260,9 +270,11 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
         sourcePort: Int,
         destinationAddress: String,
         destinationPort: Int,
-    ): Int {
+    ): ConnectionOwner {
+        val owner = ConnectionOwner()
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            return -1
+            owner.setUserId(-1)
+            return owner
         }
         val connectivityManager =
             getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -271,20 +283,22 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
             InetSocketAddress(sourceAddress, sourcePort),
             InetSocketAddress(destinationAddress, destinationPort),
         )
-        return if (uid == Process.INVALID_UID) {
-            -1
-        } else {
-            uid
+        owner.setUserId(if (uid == Process.INVALID_UID) -1 else uid)
+        if (uid != Process.INVALID_UID) {
+            val packageName = packageManager.getPackagesForUid(uid)?.firstOrNull().orEmpty()
+            owner.setAndroidPackageName(packageName)
+            owner.setUserName(packageName)
         }
+        return owner
     }
 
     override fun getInterfaces(): NetworkInterfaceIterator {
         val iterator = JavaNetworkInterface.getNetworkInterfaces()
-        val interfaces = mutableListOf<io.nekohasekai.libbox.NetworkInterface>()
+        val interfaces = mutableListOf<space.pokrov.core.libbox.NetworkInterface>()
         while (iterator.hasMoreElements()) {
             val resolvedInterface = iterator.nextElement()
             runCatching {
-                io.nekohasekai.libbox.NetworkInterface().apply {
+                space.pokrov.core.libbox.NetworkInterface().apply {
                     setIndex(resolvedInterface.index)
                     setMTU(runCatching { resolvedInterface.mtu }.getOrDefault(0))
                     setName(resolvedInterface.name ?: "")
@@ -352,7 +366,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
             ipv6AddressCount += 1
         }
         if (options.getAutoRoute()) {
-            val dnsServerAddress = runCatching { options.getDNSServerAddress() }.getOrNull()
+            val dnsServerAddress =
+                runCatching { options.getDNSServerAddress().getValue() }.getOrNull()
             dnsServerAddress
                 ?.takeIf { it.isNotBlank() }
                 ?.let(builder::addDnsServer)
@@ -454,7 +469,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
             ?: throw IllegalStateException("VpnService.Builder.establish() returned null.")
         activeTun = tun
         val runtimeMessage =
-            "Android tun established. dns=${runCatching { options.getDNSServerAddress() }.getOrNull() ?: "<none>"} " +
+            "Android tun established. dns=${runCatching { options.getDNSServerAddress().getValue() }.getOrNull() ?: "<none>"} " +
                 "ipv4Routes=$ipv4RouteCount ipv6Routes=$ipv6RouteCount " +
                 "defaultIpv4=$hasIpv4DefaultRoute defaultIpv6=$hasIpv6DefaultRoute"
         markTunEstablished(runtimeMessage)
@@ -471,18 +486,10 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
         return tun.fd
     }
 
-    override fun packageNameByUid(uid: Int): String {
-        return packageManager.getPackagesForUid(uid)?.firstOrNull().orEmpty()
-    }
-
     override fun readWIFIState(): WIFIState? = null
 
     override fun startDefaultInterfaceMonitor(listener: InterfaceUpdateListener) {
         AndroidDefaultNetworkMonitor.start(this, listener)
-    }
-
-    override fun uidByPackageName(packageName: String): Int {
-        return packageManager.getApplicationInfo(packageName, 0).uid
     }
 
     override fun underNetworkExtension(): Boolean = false
@@ -491,17 +498,55 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
         AndroidPlatformRuntimeBridge.supportFlags(Build.VERSION.SDK_INT)
             .usePlatformAutoDetectInterfaceControl
 
-    override fun usePlatformDefaultInterfaceMonitor(): Boolean =
-        AndroidPlatformRuntimeBridge.supportFlags(Build.VERSION.SDK_INT)
-            .usePlatformDefaultInterfaceMonitor
-
-    override fun usePlatformInterfaceGetter(): Boolean =
-        AndroidPlatformRuntimeBridge.supportFlags(Build.VERSION.SDK_INT)
-            .usePlatformInterfaceGetter
-
     override fun useProcFS(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
 
-    override fun writeLog(message: String) {
+    override fun localDNSTransport(): LocalDNSTransport = AndroidLocalResolver
+
+    override fun systemCertificates(): StringIterator = LibboxStringIterator(emptyList())
+
+    override fun sendNotification(notification: LibboxNotification) {
+        val title = notification.getTitle().ifBlank { "POKROV" }
+        val body = notification.getBody().ifBlank { notification.getSubtitle() }
+        mainHandler.post {
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.notify(
+                NOTIFICATION_ID,
+                buildNotification(
+                    contentText = body.ifBlank { "POKROV работает на этом устройстве." },
+                    title = title,
+                ),
+            )
+        }
+    }
+
+    override fun getSystemProxyStatus(): SystemProxyStatus =
+        SystemProxyStatus().apply {
+            setAvailable(false)
+            setEnabled(false)
+        }
+
+    override fun setSystemProxyEnabled(enabled: Boolean) {
+        if (enabled) {
+            Log.w(LOG_TAG, "System proxy request ignored: Android runtime is TUN-only.")
+        }
+    }
+
+    override fun serviceReload() {
+        val content = activeConfigContent ?: return
+        commandServer?.startOrReloadService(content, OverrideOptions())
+    }
+
+    override fun serviceStop() {
+        runtimeExecutor.execute {
+            stopRuntime(
+                message = "POKROV выключен на этом устройстве.",
+                stopReason = "command_server_requested",
+            )
+            mainHandler.post { stopSelf() }
+        }
+    }
+
+    override fun writeDebugMessage(message: String) {
         Log.d(LOG_TAG, message)
     }
 
@@ -549,17 +594,19 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface {
 
         override fun hasNext(): Boolean = index < values.size
 
+        override fun len(): Int = values.size
+
         override fun next(): String = values[index++]
     }
 
     private class LibboxNetworkInterfaceIterator(
-        private val values: List<io.nekohasekai.libbox.NetworkInterface>,
+        private val values: List<space.pokrov.core.libbox.NetworkInterface>,
     ) : NetworkInterfaceIterator {
         private var index = 0
 
         override fun hasNext(): Boolean = index < values.size
 
-        override fun next(): io.nekohasekai.libbox.NetworkInterface = values[index++]
+        override fun next(): space.pokrov.core.libbox.NetworkInterface = values[index++]
     }
 
     companion object {

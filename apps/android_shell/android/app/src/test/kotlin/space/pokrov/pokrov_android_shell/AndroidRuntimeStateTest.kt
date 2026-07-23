@@ -26,7 +26,7 @@ class AndroidRuntimeStateTest {
             "environment",
             AndroidRuntimeEnvironment(
                 artifactDirectory = "artifacts",
-                coreBinaryPath = "libbox.so",
+                coreBinaryPath = "libpokrov-core.so",
                 baseDirectory = File("build/test/base"),
                 workingDirectory = File("build/test/working"),
                 tempDirectory = File("build/test/temp"),
@@ -62,7 +62,7 @@ class AndroidRuntimeStateTest {
             "environment",
             AndroidRuntimeEnvironment(
                 artifactDirectory = "artifacts",
-                coreBinaryPath = "libbox.so",
+                coreBinaryPath = "libpokrov-core.so",
                 baseDirectory = File("build/test/base"),
                 workingDirectory = File("build/test/working"),
                 tempDirectory = File("build/test/temp"),
@@ -117,7 +117,7 @@ class AndroidRuntimeStateTest {
             "environment",
             AndroidRuntimeEnvironment(
                 artifactDirectory = "artifacts",
-                coreBinaryPath = "libbox.so",
+                coreBinaryPath = "libpokrov-core.so",
                 baseDirectory = File("build/test/base"),
                 workingDirectory = File("build/test/working"),
                 tempDirectory = File("build/test/temp"),
@@ -154,7 +154,7 @@ class AndroidRuntimeStateTest {
             "environment",
             AndroidRuntimeEnvironment(
                 artifactDirectory = "artifacts",
-                coreBinaryPath = "libbox.so",
+                coreBinaryPath = "libpokrov-core.so",
                 baseDirectory = File("build/test/base"),
                 workingDirectory = File("build/test/working"),
                 tempDirectory = File("build/test/temp"),
@@ -182,7 +182,7 @@ class AndroidRuntimeStateTest {
             "environment",
             AndroidRuntimeEnvironment(
                 artifactDirectory = "artifacts",
-                coreBinaryPath = "libbox.so",
+                coreBinaryPath = "libpokrov-core.so",
                 baseDirectory = File("build/test/base"),
                 workingDirectory = File("build/test/working"),
                 tempDirectory = File("build/test/temp"),
@@ -211,8 +211,6 @@ class AndroidRuntimeStateTest {
         setPrivateField("environment", null)
         setPrivateField("phase", AndroidRuntimePhase.ARTIFACT_MISSING)
         setPrivateField("stagedConfigPath", null)
-        setPrivateField("stagedBaseConfigPath", null)
-        setPrivateField("stagedRuntimeOptionsJson", null)
         setPrivateField(
             "lastMessage",
             "Native runtime bridge has not inspected this host yet.",

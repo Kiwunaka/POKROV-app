@@ -254,11 +254,11 @@ Reduced motion:
 - no pulse, sweep, scale, or slide.
 - use fade-only or instant state changes.
 
-## Flutter / Hiddify Implementation Notes
+## Flutter / Pokrov Implementation Notes
 
 UI architecture:
 
-- replace first-layer Hiddify UI with POKROV widgets and themes.
+- replace first-layer Pokrov UI with POKROV widgets and themes.
 - keep core runtime boundaries intact until the runtime gate is proven.
 - model tokens through a typed Flutter theme or `ThemeExtension`.
 - no scattered hex values in widgets.

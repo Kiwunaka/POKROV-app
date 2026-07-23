@@ -162,7 +162,7 @@ Rules:
 
 ## Runtime And WARP
 
-Hiddify WARP support is treated as a runtime primitive.
+Pokrov WARP support is treated as a runtime primitive.
 
 MVP does not activate it. Real activation requires:
 

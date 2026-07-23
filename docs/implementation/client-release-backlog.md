@@ -79,7 +79,7 @@ Already verified locally by the current engineering lane:
     `apps/android_shell/build/app/outputs/flutter-apk/app-debug.apk`
   - Windows release build produced
     `apps/windows_shell/build/windows/x64/runner/Release/pokrov_windows_beta.exe`
-    with `libcore.dll` present in the same release bundle
+    with `pokrov-core.dll` present in the same release bundle
   - final local handoff pack retained under
     `artifacts/releases/pokrov-app/0.2.0-beta.1+20260603-local-mvp/`
     with verified checksums and a non-public `release-handoff.json`
@@ -217,7 +217,7 @@ Retained only as fork/reference hardening backlog:
 
 ### User-facing wording cleanup
 
-- remove remaining user-visible inherited `Hiddify` or legacy power-user wording from advanced surfaces
+- remove remaining user-visible inherited `Pokrov` or legacy power-user wording from advanced surfaces
 - polish Russian copy where inherited text still feels technical or legacy
 - keep advanced networking controls out of first-layer onboarding and daily-use screens
 - `2026-06-05` P3 cleanup moved selected-app manual identifiers behind an

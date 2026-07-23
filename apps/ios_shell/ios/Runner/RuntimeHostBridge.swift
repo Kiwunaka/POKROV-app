@@ -1,6 +1,6 @@
 import Foundation
 import Flutter
-import Libcore
+import PokrovCore
 import NetworkExtension
 
 final class RuntimeHostBridge: NSObject, FlutterPlugin {
@@ -15,6 +15,7 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
   private let packetTunnelController = PacketTunnelSeedController()
   private var phase: RuntimePhase = .artifactMissing
   private var stagedConfigPath: String?
+  private var didSetupRuntime = false
   private var lastMessage = "Native runtime bridge has not inspected this host yet."
 
   static func register(with messenger: FlutterBinaryMessenger) {
@@ -38,6 +39,12 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
       connect(result: result)
     case "runtimeEngine.disconnect":
       disconnect(result: result)
+    case "runtimeEngine.applyWarp":
+      result(applyWarp(call.arguments))
+    case "runtimeEngine.liveStats":
+      result(["available": false])
+    case "runtimeEngine.pushToken":
+      result(["token": "", "provider": "poll"])
     default:
       result(FlutterMethodNotImplemented)
     }
@@ -47,7 +54,7 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
     guard let environment = runtimeEnvironment() else {
       phase = .artifactMissing
       stagedConfigPath = nil
-      lastMessage = "Libcore.framework is not embedded in this iOS host build."
+      lastMessage = "PokrovCore.framework is not embedded in this iOS host build."
       return buildSnapshot(
         artifactDirectory: nil,
         coreBinaryPath: nil,
@@ -58,7 +65,7 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
 
     if phase == .artifactMissing {
       phase = .artifactReady
-      lastMessage = "iOS host bridge found the bundled libcore framework and can initialize it."
+      lastMessage = "iOS host bridge found the bundled POKROV Core framework and can initialize it."
     }
 
     return buildSnapshot(
@@ -74,17 +81,32 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
       return snapshot()
     }
 
-    var error: NSError?
-    let ok = MobileSetup(
-      environment.baseDirectory.path,
-      environment.workingDirectory.path,
-      environment.tempDirectory.path,
-      false,
-      &error
-    )
-    if ok {
+    if didSetupRuntime {
       phase = phase == .running ? .running : .initialized
-      lastMessage = "Runtime bootstrap completed on the iOS host bridge."
+      return buildSnapshot(
+        artifactDirectory: environment.artifactDirectory,
+        coreBinaryPath: environment.coreBinaryPath,
+        canInitialize: true,
+        canConnect: stagedConfigPath != nil
+      )
+    }
+
+    let options = LibboxSetupOptions()
+    options.basePath = environment.baseDirectory.path
+    options.workingPath = environment.workingDirectory.path
+    options.tempPath = environment.tempDirectory.path
+    options.fixAndroidStack = false
+    options.commandServerListenPort = 0
+    options.commandServerSecret = ""
+    options.logMaxLines = 30
+    options.debug = false
+
+    var error: NSError?
+    let ok = LibboxSetup(options, &error)
+    if ok {
+      didSetupRuntime = true
+      phase = phase == .running ? .running : .initialized
+      lastMessage = "POKROV Core bootstrap completed on the iOS host bridge."
     } else {
       phase = .artifactReady
       lastMessage = "iOS runtime setup failed: \(error?.localizedDescription ?? "unknown error")"
@@ -102,29 +124,21 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
     guard
       let environment = runtimeEnvironment(),
       let payload = arguments as? [String: Any],
-      let profileName = payload["profileName"] as? String,
-      let configPayload = payload["configPayload"] as? String
+      let configPayload = payload["configPayload"] as? String,
+      payload["materializedForRuntime"] as? Bool == true
     else {
       return unavailableSnapshot(message: "Missing managed-profile payload for iOS host staging.")
     }
 
     _ = initialize()
 
-    let tempPath = environment.tempDirectory.appendingPathComponent("\(profileName).seed.json")
-    let finalPath = environment.configDirectory.appendingPathComponent("\(profileName).json")
+    let finalPath = environment.configDirectory.appendingPathComponent("managed-profile.json")
 
     do {
-      try configPayload.write(to: tempPath, atomically: true, encoding: .utf8)
-      var error: NSError?
-      let ok = MobileParse(finalPath.path, tempPath.path, false, &error)
-      if ok {
-        phase = .configStaged
-        stagedConfigPath = finalPath.path
-        lastMessage = "Managed profile staged on the iOS host bridge."
-      } else {
-        phase = .initialized
-        lastMessage = "iOS managed profile staging failed: \(error?.localizedDescription ?? "unknown error")"
-      }
+      try writePrivateConfig(configPayload, to: finalPath)
+      phase = .configStaged
+      stagedConfigPath = finalPath.path
+      lastMessage = "Materialized POKROV Core profile staged on the iOS host bridge."
     } catch {
       phase = .initialized
       lastMessage = "iOS managed profile staging failed: \(error.localizedDescription)"
@@ -135,6 +149,65 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
       coreBinaryPath: environment.coreBinaryPath,
       canInitialize: true,
       canConnect: stagedConfigPath != nil
+    )
+  }
+
+  private func applyWarp(_ arguments: Any?) -> [String: Any?] {
+    guard let stagedConfigPath else {
+      return warpResult(applied: false, reason: "no_staged_profile")
+    }
+    guard
+      let payload = arguments as? [String: Any],
+      let configPayload = payload["configPayload"] as? String,
+      !configPayload.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    else {
+      return warpResult(applied: false, reason: "config_payload_missing")
+    }
+
+    do {
+      try writePrivateConfig(configPayload, to: URL(fileURLWithPath: stagedConfigPath))
+      return warpResult(applied: true, effectiveAt: "next_connect")
+    } catch {
+      return warpResult(applied: false, reason: error.localizedDescription)
+    }
+  }
+
+  private func warpResult(
+    applied: Bool,
+    effectiveAt: String = "none",
+    reason: String? = nil
+  ) -> [String: Any?] {
+    [
+      "applied": applied,
+      "effectiveAt": effectiveAt,
+      "fallbackUsed": false,
+      "reason": reason,
+    ]
+  }
+
+  private func writePrivateConfig(_ content: String, to target: URL) throws {
+    try FileManager.default.createDirectory(
+      at: target.deletingLastPathComponent(),
+      withIntermediateDirectories: true,
+      attributes: [.posixPermissions: 0o700]
+    )
+    guard let data = content.data(using: .utf8) else {
+      throw NSError(
+        domain: "space.pokrov.ios.RuntimeHostBridge",
+        code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "Managed profile is not valid UTF-8."]
+      )
+    }
+    try data.write(
+      to: target,
+      options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication]
+    )
+    try FileManager.default.setAttributes(
+      [
+        .posixPermissions: 0o600,
+        .protectionKey: FileProtectionType.completeUntilFirstUserAuthentication,
+      ],
+      ofItemAtPath: target.path
     )
   }
 
@@ -271,8 +344,8 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
     }
 
     let frameworkPath = URL(fileURLWithPath: frameworksPath)
-      .appendingPathComponent("Libcore.framework", isDirectory: true)
-    let binaryPath = frameworkPath.appendingPathComponent("Libcore")
+      .appendingPathComponent("PokrovCore.framework", isDirectory: true)
+    let binaryPath = frameworkPath.appendingPathComponent("PokrovCore")
     guard FileManager.default.fileExists(atPath: binaryPath.path) else {
       return nil
     }

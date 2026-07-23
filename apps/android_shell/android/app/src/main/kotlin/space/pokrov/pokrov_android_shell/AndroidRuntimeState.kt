@@ -1,8 +1,9 @@
 package space.pokrov.pokrov_android_shell
 
 import android.content.Context
-import io.nekohasekai.libbox.Libbox
-import io.nekohasekai.mobile.Mobile
+import space.pokrov.core.libbox.Libbox
+import space.pokrov.core.libbox.SetupOptions
+import go.Seq
 import java.io.File
 import java.time.Instant
 
@@ -27,8 +28,6 @@ internal object AndroidRuntimeState {
     private var environment: AndroidRuntimeEnvironment? = null
     private var phase: AndroidRuntimePhase = AndroidRuntimePhase.ARTIFACT_MISSING
     private var stagedConfigPath: String? = null
-    private var stagedBaseConfigPath: String? = null
-    private var stagedRuntimeOptionsJson: String? = null
     private var lastMessage = "POKROV has not checked this device yet."
     private var lastRunningMessage: String? = null
     private var runningSince: String? = null
@@ -45,13 +44,11 @@ internal object AndroidRuntimeState {
     @Synchronized
     fun resolveEnvironment(context: Context): AndroidRuntimeEnvironment? {
         val nativeLibraryDir = context.applicationInfo.nativeLibraryDir ?: return null
-        val libbox = File(nativeLibraryDir, "libbox.so")
+        val libbox = File(nativeLibraryDir, "libpokrov-core.so")
         if (!libbox.exists()) {
             environment = null
             phase = AndroidRuntimePhase.ARTIFACT_MISSING
             stagedConfigPath = null
-            stagedBaseConfigPath = null
-            stagedRuntimeOptionsJson = null
             runningSince = null
             lastMessage = "В этой сборке для Android нет модуля подключения."
             dnsReady = false
@@ -90,19 +87,17 @@ internal object AndroidRuntimeState {
     fun initialize(context: Context): Boolean {
         val resolved = resolveEnvironment(context) ?: return false
         return try {
-            Mobile.touch()
+            Seq.setContext(context.applicationContext)
             Libbox.touch()
             Libbox.setup(
-                resolved.baseDirectory.absolutePath,
-                resolved.workingDirectory.absolutePath,
-                resolved.tempDirectory.absolutePath,
-                false,
-            )
-            Mobile.setup(
-                resolved.baseDirectory.absolutePath,
-                resolved.workingDirectory.absolutePath,
-                resolved.tempDirectory.absolutePath,
-                false,
+                SetupOptions().apply {
+                    setBasePath(resolved.baseDirectory.absolutePath)
+                    setWorkingPath(resolved.workingDirectory.absolutePath)
+                    setTempPath(resolved.tempDirectory.absolutePath)
+                    setFixAndroidStack(true)
+                    setDebug(false)
+                    setLogMaxLines(3000)
+                },
             )
             phase = if (phase == AndroidRuntimePhase.RUNNING) {
                 AndroidRuntimePhase.RUNNING
@@ -119,23 +114,8 @@ internal object AndroidRuntimeState {
     }
 
     @Synchronized
-    fun markProfileStaged(
-        path: String,
-        runtimeOptionsJson: String? = null,
-        baseConfigPath: String? = null,
-    ) {
-        val previousPath = stagedConfigPath
+    fun markProfileStaged(path: String) {
         stagedConfigPath = path
-        stagedBaseConfigPath = when {
-            !baseConfigPath.isNullOrBlank() -> baseConfigPath
-            previousPath == path -> stagedBaseConfigPath
-            else -> null
-        }
-        stagedRuntimeOptionsJson = when {
-            !runtimeOptionsJson.isNullOrBlank() -> runtimeOptionsJson
-            previousPath == path -> stagedRuntimeOptionsJson
-            else -> null
-        }
         phase = AndroidRuntimePhase.CONFIG_STAGED
         lastFailureKind = null
         lastStopReason = null
@@ -266,18 +246,6 @@ internal object AndroidRuntimeState {
     fun stagedConfigPath(): String? = stagedConfigPath
 
     @Synchronized
-    fun stagedBaseConfigPath(): String? = stagedBaseConfigPath
-
-    @Synchronized
-    fun stagedRuntimeOptionsJson(): String? = stagedRuntimeOptionsJson
-
-    @Synchronized
-    fun markRuntimeOptionsUpdated(runtimeOptionsJson: String) {
-        stagedRuntimeOptionsJson = runtimeOptionsJson
-        lastMessage = "POKROV updated runtime options for the next connection."
-    }
-
-    @Synchronized
     fun liveStats(): Map<String, Any?> {
         return mapOf(
             "available" to (phase == AndroidRuntimePhase.RUNNING),
@@ -314,7 +282,6 @@ internal object AndroidRuntimeState {
             "dns_ready" to dnsReady,
             "last_failure_kind" to lastFailureKind,
             "last_stop_reason" to lastStopReason,
-            "runtime_options_ready" to !stagedRuntimeOptionsJson.isNullOrBlank(),
             "ipv4_route_count" to ipv4RouteCount,
             "ipv6_route_count" to ipv6RouteCount,
             "include_package_count" to includePackageCount,
@@ -326,7 +293,6 @@ internal object AndroidRuntimeState {
             "coreBinaryPath" to resolved?.coreBinaryPath,
             "helperBinaryPath" to null,
             "stagedConfigPath" to stagedConfigPath,
-            "runtimeOptionsReady" to !stagedRuntimeOptionsJson.isNullOrBlank(),
             "supportsLiveConnect" to true,
             "canInitialize" to canInitialize,
             "canConnect" to canConnect,

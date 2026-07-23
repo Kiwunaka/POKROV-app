@@ -21,7 +21,7 @@ coverage/
 outputs/
 
 # Runtime artifact cache
-artifacts/libcore/
+artifacts/pokrov-core/
 !artifacts/README.md
 
 # Seed-local config outputs

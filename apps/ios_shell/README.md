@@ -6,7 +6,7 @@ Current responsibility:
 - wiring the seed `app_shell` package into an iOS-facing starter
 - carrying a seed `NETunnelProviderManager` connect/disconnect request lane from the Flutter runtime bridge into a real checked-in packet-tunnel target
 - staging managed profiles through a shared app-group runtime directory that both the host and packet-tunnel provider can read
-- carrying a checked-in Libbox-backed packet-tunnel provider that boots `MobileSetup`, `LibboxSetup`, a command server, and a service-backed `openTun` path
+- carrying POKROV Core packet-tunnel provider source that boots `LibboxSetup`, starts raw materialized configs through `CommandServer.startOrReloadService`, and owns the `openTun` path
 - carrying placeholder Apple signing, bundle metadata, and Network Extension entitlements for the next-client lane
 
 Deferred responsibility:
@@ -26,8 +26,9 @@ Checked-in Apple-readiness placeholders:
 
 Current packet-tunnel scaffold behavior:
 
-- the host bridge stages the parsed managed profile into the shared runtime directory and points `NETunnelProviderManager` at the real `space.pokrov.app.ios.networkextension` bundle ID placeholder
-- the checked-in provider target resolves the shared app-group container, runs `MobileSetup` plus `LibboxSetup`, validates the staged config with `LibboxCheckConfig`, starts a Libbox command server, opens `NEPacketTunnelFlow` through an extension-side platform interface, and starts a real Libbox service when the Apple app-group entitlement is actually available
+- the host bridge stages one already-materialized raw sing-box profile with private file protection and points `NETunnelProviderManager` at the real `space.pokrov.app.ios.networkextension` bundle ID placeholder
+- the checked-in provider target resolves the shared app-group container, runs the POKROV Core `LibboxSetup` contract, starts a `LibboxCommandServer`, opens `NEPacketTunnelFlow` through an extension-side platform interface, and calls `startOrReloadService` when the Apple app-group entitlement is actually available
+- `PokrovCore.xcframework` must be built from POKROV Core 1.0.0 on macOS before the host can compile or claim runtime proof
 - the target removes the previous in-repo gap where the host only pointed at a hypothetical bundle ID
 
 Still blocked before real iOS publication:

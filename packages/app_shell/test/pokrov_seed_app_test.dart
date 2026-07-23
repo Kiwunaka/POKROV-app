@@ -8,6 +8,9 @@ import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
+const _materializedRuntimeConfig =
+    '{"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}';
+
 const _featureLabelPrivateHelperCoverage = <String>[
   '_smartConnectNodeTitle',
   '_smartConnectNodeCity',
@@ -730,7 +733,7 @@ void _installReadyRuntimeBridgeMock({List<String>? calls}) {
         return <String, Object?>{
           'phase': 'artifactReady',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': false,
@@ -740,7 +743,7 @@ void _installReadyRuntimeBridgeMock({List<String>? calls}) {
         return <String, Object?>{
           'phase': 'initialized',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': false,
@@ -750,7 +753,7 @@ void _installReadyRuntimeBridgeMock({List<String>? calls}) {
         return <String, Object?>{
           'phase': 'configStaged',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
           'supportsLiveConnect': true,
           'canInitialize': true,
@@ -761,7 +764,7 @@ void _installReadyRuntimeBridgeMock({List<String>? calls}) {
         return <String, Object?>{
           'phase': 'running',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
           'supportsLiveConnect': true,
           'canInitialize': true,
@@ -772,7 +775,7 @@ void _installReadyRuntimeBridgeMock({List<String>? calls}) {
         return <String, Object?>{
           'phase': 'initialized',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': true,
@@ -1133,7 +1136,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -1189,7 +1192,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -1375,7 +1378,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       bonusSummary: summary,
@@ -1442,7 +1445,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       bonusSummary: summary,
@@ -1478,7 +1481,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       clientAppsMetadata: const ClientAppsMetadata(
@@ -1548,7 +1551,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       clientAppsMetadata: const ClientAppsMetadata(
@@ -1763,7 +1766,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -1803,7 +1806,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       redeemResult: const AppFirstRedeemResult(
@@ -1877,7 +1880,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       cabinetHandoff: CabinetHandoff(
@@ -1933,7 +1936,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -2007,7 +2010,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       bonusSummary: const AppFirstBonusSummary(
@@ -2130,7 +2133,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       bonusSummary: const AppFirstBonusSummary(
@@ -2258,7 +2261,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       bonusSummary: summary,
@@ -2321,7 +2324,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       bonusSummary: const AppFirstBonusSummary(
@@ -2401,7 +2404,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -2455,7 +2458,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -2513,7 +2516,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -2577,7 +2580,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -2785,7 +2788,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -2848,7 +2851,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
         warpPolicy: WarpRuntimePolicy(
           enabled: true,
@@ -2902,7 +2905,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
         warpPolicy: WarpRuntimePolicy(
           enabled: true,
@@ -2944,7 +2947,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
         warpPolicy: WarpRuntimePolicy(
           enabled: true,
@@ -2983,7 +2986,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
         warpPolicy: WarpRuntimePolicy.disabled,
       ),
@@ -3030,7 +3033,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
         warpPolicy: WarpRuntimePolicy(
           enabled: true,
@@ -3194,7 +3197,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       bonusSummaryGate: gate.future,
@@ -3646,7 +3649,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       assistantReply: const ClientSupportAssistantReply(
@@ -3759,7 +3762,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       assistantReply: const ClientSupportAssistantReply(
@@ -3860,7 +3863,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       assistantReply: const ClientSupportAssistantReply(
@@ -4224,7 +4227,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -4487,7 +4490,7 @@ void main() {
           return <String, Object?>{
             'phase': 'running',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -4532,7 +4535,7 @@ void main() {
           return <String, Object?>{
             'phase': 'running',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -4613,7 +4616,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'managed-from-api',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       locationsCatalog: const ClientLocationsCatalog(
@@ -4678,6 +4681,7 @@ void main() {
         profileName: 'managed-from-api',
         configPayload:
             '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
       ),
     );
 
@@ -4688,7 +4692,7 @@ void main() {
           return <String, Object?>{
             'phase': 'artifactReady',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4698,7 +4702,7 @@ void main() {
           return <String, Object?>{
             'phase': 'initialized',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4710,7 +4714,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -4721,7 +4725,7 @@ void main() {
           return <String, Object?>{
             'phase': 'running',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -4786,7 +4790,7 @@ void main() {
           return <String, Object?>{
             'phase': 'artifactReady',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4796,7 +4800,7 @@ void main() {
           return <String, Object?>{
             'phase': 'initialized',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4806,7 +4810,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -4817,7 +4821,7 @@ void main() {
           return <String, Object?>{
             'phase': 'running',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -4839,6 +4843,7 @@ void main() {
             profileName: 'managed-from-api',
             configPayload:
                 '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+            materializedForRuntime: true,
           ),
         ),
       ),
@@ -4877,7 +4882,7 @@ void main() {
           return <String, Object?>{
             'phase': 'artifactReady',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4887,7 +4892,7 @@ void main() {
           return <String, Object?>{
             'phase': 'initialized',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4940,7 +4945,7 @@ void main() {
           return <String, Object?>{
             'phase': 'artifactReady',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4950,7 +4955,7 @@ void main() {
           return <String, Object?>{
             'phase': 'initialized',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4960,7 +4965,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -4985,6 +4990,7 @@ void main() {
             profileName: 'managed-from-api',
             configPayload:
                 '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+            materializedForRuntime: true,
           ),
         ),
       ),
@@ -5013,6 +5019,7 @@ void main() {
         profileName: 'managed-from-api',
         configPayload:
             '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
       ),
     );
 
@@ -5023,7 +5030,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/previous-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5034,7 +5041,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5045,7 +5052,7 @@ void main() {
           return <String, Object?>{
             'phase': 'running',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5119,7 +5126,7 @@ void main() {
         bootstrapper: _FakeBootstrapper(
           const ManagedProfilePayload(
             profileName: 'unused',
-            configPayload: '{}',
+            configPayload: _materializedRuntimeConfig,
           ),
         ),
       ),
@@ -5157,7 +5164,7 @@ void main() {
             return <String, Object?>{
               'phase': 'running',
               'artifactDirectory': '/host/runtime',
-              'coreBinaryPath': '/host/runtime/libcore.aar',
+              'coreBinaryPath': '/host/runtime/pokrov-core.aar',
               'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
               'supportsLiveConnect': true,
               'canInitialize': true,
@@ -5168,7 +5175,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5180,7 +5187,7 @@ void main() {
           return <String, Object?>{
             'phase': 'initialized',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -5190,7 +5197,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5201,7 +5208,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5224,6 +5231,7 @@ void main() {
             profileName: 'managed-from-api',
             configPayload:
                 '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+            materializedForRuntime: true,
           ),
         ),
       ),
@@ -5267,7 +5275,7 @@ void main() {
             return <String, Object?>{
               'phase': 'running',
               'artifactDirectory': '/host/runtime',
-              'coreBinaryPath': '/host/runtime/libcore.aar',
+              'coreBinaryPath': '/host/runtime/pokrov-core.aar',
               'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
               'supportsLiveConnect': true,
               'canInitialize': true,
@@ -5278,7 +5286,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5289,7 +5297,7 @@ void main() {
           return <String, Object?>{
             'phase': 'initialized',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -5299,7 +5307,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5310,7 +5318,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5332,6 +5340,7 @@ void main() {
             profileName: 'managed-from-api',
             configPayload:
                 '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+            materializedForRuntime: true,
           ),
         ),
       ),
@@ -5374,7 +5383,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5385,7 +5394,7 @@ void main() {
         return <String, Object?>{
           'phase': 'running',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
           'supportsLiveConnect': true,
           'canInitialize': true,
@@ -5471,7 +5480,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
         warpPolicy: WarpRuntimePolicy.disabled,
       ),

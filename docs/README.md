@@ -16,7 +16,7 @@ Use this index to load only the context required for the current client task. `P
 | --- | --- | --- | --- | --- |
 | Shell, UI, or copy | `product/client-product-contract.md`; `design/2026-06-13-pokrov-product-ui-direction.md`; root `DESIGN.md` | `packages/app_shell/`; affected `apps/*_shell/`; assets and copy tests | Focused Flutter widget/copy/design tests; `scripts/validate-seed.ps1`; `git diff --check` | Product contract, current design direction, and affected host docs |
 | App-first, account, or API | `architecture/app-first-onboarding-flow.md`; platform app-first contract | `packages/app_shell/`; API/session/support clients; secure storage | Focused bootstrap, assistant, auth, logout, migration, and corrupt-state tests | Client onboarding/assistant docs and the platform API owner when the contract changes |
-| Runtime, core, or WARP | `architecture/bootstrap-workflow.md`; `operations/warp-runtime-proof-checklist.md`; `config/runtime-profile.seed.json` | `packages/runtime_engine/`; host bridges; runtime artifact contract | Focused runtime/WARP tests and only the affected host checks; no docs-only release build | Bootstrap/runtime architecture and WARP proof checklist |
+| Runtime, core, or WARP | `architecture/bootstrap-workflow.md`; `decisions/2026-07-23-pokrov-core-1.0.0-activation.md`; `operations/warp-runtime-proof-checklist.md`; `config/runtime-profile.seed.json` | `packages/runtime_engine/`; host bridges; runtime artifact contract | Focused runtime/WARP tests and only the affected host checks; no docs-only release build | Bootstrap/runtime architecture, active core decision, and WARP proof checklist |
 | Android | `operations/android-release-audit.md`; `config/platform-matrix.seed.json` | `apps/android_shell/`; Android bridge, service, manifest, Gradle tests | Focused Android Flutter/JVM tests through `scripts/run-tests.ps1`; manual device gates stay explicit | Android audit plus shared runtime/onboarding docs when behavior changes |
 | Windows | `operations/windows-release-readiness.md`; `config/windows-release.seed.json` | `apps/windows_shell/`; Windows FFI and packaging scripts | Focused Flutter/runtime tests; package smoke only for an authorized packaging task | Windows readiness, runtime docs, and release metadata owner |
 | Apple readiness | `operations/apple-release-readiness.md`; `config/apple-release.seed.json` | `apps/ios_shell/`; `apps/macos_shell/`; entitlements and runtime bridges | Analyze/tests that do not require credentials; keep signing, archive, notarization, device, and store checks manual | Apple readiness only; never broaden public scope from inventory |
@@ -45,8 +45,9 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | CANONICAL | RECONCILED | Client product | `docs/product/client-product-contract.md` |
 | CANONICAL | RECONCILED | App-first onboarding | `docs/architecture/app-first-onboarding-flow.md` |
 | CANONICAL | REVIEWED_NO_CHANGE | Repository structure | `docs/architecture/folder-structure.md` |
-| CANONICAL | REVIEWED_NO_CHANGE | Package boundaries | `docs/architecture/package-boundaries.md` |
+| CANONICAL | RECONCILED | Package boundaries | `docs/architecture/package-boundaries.md` |
 | CANONICAL | RECONCILED | Runtime bootstrap | `docs/architecture/bootstrap-workflow.md` |
+| CANONICAL | RECONCILED | Active POKROV Core 1.0.0 runtime decision | `docs/decisions/2026-07-23-pokrov-core-1.0.0-activation.md` |
 | CANONICAL | RECONCILED | In-app assistant | `docs/architecture/in-app-ai-assistant-contract.md` |
 | CANONICAL | RECONCILED | Current product/UI direction | `docs/design/2026-06-13-pokrov-product-ui-direction.md` |
 | EVIDENCE | RECONCILED | Completed motion/HIG implementation record | `docs/design/2026-07-13-agent-uiux-backlog.md` |
@@ -62,7 +63,7 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | ACTIVE_EXECUTION | RECONCILED | WARP runtime proof | `docs/operations/warp-runtime-proof-checklist.md` |
 | ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Responsive proof | `docs/operations/responsive-golden-capture-plan.md` |
 | ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Motion/performance proof | `docs/operations/client-motion-performance-checklist.md` |
-| ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Apple readiness | `docs/operations/apple-release-readiness.md` |
+| ACTIVE_EXECUTION | RECONCILED | Apple readiness | `docs/operations/apple-release-readiness.md` |
 | EVIDENCE | REVIEWED_NO_CHANGE | Public beta product evidence | `docs/product/client-public-beta-prd.md` |
 | EVIDENCE | REVIEWED_NO_CHANGE | Dated handoffs and closure audits | `docs/operations/2026-06-04-public-beta-operator-handoff.md`; `docs/operations/2026-06-05-phase-6-release-beta-handoff.md`; `docs/operations/2026-06-05-final-beta-closure-except-manual-tests-signing.md`; `docs/operations/2026-06-13-pokrov-product-ui-plan-closure-audit.md` |
 | EVIDENCE | REVIEWED_NO_CHANGE | Client/API additions record | `docs/operations/client-ui-api-additions.md` |
@@ -71,7 +72,6 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | HISTORICAL_REFERENCE | RECONCILED | Superseded local design entry | `docs/design/DESIGN.md` |
 | HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Earlier scaffold spec | `docs/specs/2026-04-18-wave-7-new-base-client-scaffold.md` |
 | HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Completed WARP design spec | `docs/specs/2026-06-05-p5-warp-approved-design.md` |
-| HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Retired base/runtime reviews | `docs/decisions/2026-06-03-hiddify-karing-happ-client-base-review.md`; `docs/decisions/2026-06-03-hiddify-core-warp-status.md` |
 | HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Earlier UX master brief | `docs/decisions/2026-06-03-client-ux-account-rewards-master-brief.md` |
 | HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Earlier responsive review | `docs/decisions/2026-06-03-client-chat-responsive-warp-motion-review.md` |
 | HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Earlier MVP consilium | `docs/decisions/2026-06-03-client-best-mvp-consilium.md` |

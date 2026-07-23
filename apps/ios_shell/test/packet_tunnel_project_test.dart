@@ -15,10 +15,12 @@ void main() {
     final entitlementsFile = File(
       '$projectRoot/ios/PacketTunnelExtension/PacketTunnelExtension.entitlements',
     );
-    final hostEntitlements =
-        File('$projectRoot/ios/Runner/Runner.entitlements');
-    final projectFile =
-        File('$projectRoot/ios/Runner.xcodeproj/project.pbxproj');
+    final hostEntitlements = File(
+      '$projectRoot/ios/Runner/Runner.entitlements',
+    );
+    final projectFile = File(
+      '$projectRoot/ios/Runner.xcodeproj/project.pbxproj',
+    );
 
     expect(extensionDirectory.existsSync(), isTrue);
     expect(providerFile.existsSync(), isTrue);
@@ -36,9 +38,10 @@ void main() {
     expect(projectText, contains('PacketTunnelProvider.swift in Sources'));
     expect(projectText, contains('Embed App Extensions'));
     expect(projectText, contains('com.apple.product-type.app-extension'));
+    expect(projectText, contains('PokrovCore.xcframework'));
   });
 
-  test('packet tunnel provider carries live libbox service wiring markers', () {
+  test('packet tunnel provider carries the POKROV Core command-server path', () {
     final projectRoot = Directory.current.path;
     final providerFile = File(
       '$projectRoot/ios/PacketTunnelExtension/PacketTunnelProvider.swift',
@@ -60,12 +63,22 @@ void main() {
     expect(
       providerText,
       contains('LibboxNewCommandServer'),
-      reason: 'the provider should start the libbox command server',
+      reason: 'the provider should start the POKROV Core command server',
     );
     expect(
       providerText,
-      contains('LibboxNewService'),
-      reason: 'the provider should boot a real libbox box service',
+      contains('startOrReloadService'),
+      reason: 'the provider should start a raw materialized config',
+    );
+    expect(
+      providerText,
+      isNot(contains('LibboxNewService')),
+      reason: 'the retired standalone service API must not return',
+    );
+    expect(
+      providerText,
+      isNot(contains('MobileSetup')),
+      reason: 'the iOS host owns the POKROV Core command-server path directly',
     );
     expect(
       providerText,

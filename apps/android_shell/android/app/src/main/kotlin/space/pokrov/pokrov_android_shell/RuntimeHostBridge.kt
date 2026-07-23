@@ -7,8 +7,6 @@ import android.net.VpnService
 import java.io.File
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import io.nekohasekai.mobile.Mobile
-import org.json.JSONObject
 
 class RuntimeHostBridge(
     private val activity: Activity,
@@ -138,34 +136,16 @@ class RuntimeHostBridge(
                 return AndroidRuntimeState.snapshot()
             }
         val materializedForRuntime = call.argument<Boolean>("materializedForRuntime") ?: false
-        val runtimeOptionsJson = call.argument<String>("runtimeOptionsJson")
-            ?.takeIf { it.isNotBlank() }
-
-        val tempPath = File(runtimeEnvironment.tempDirectory, "$profileName.seed.json")
-        val finalPath = File(runtimeEnvironment.configDirectory, "$profileName.json")
-        val basePath = File(runtimeEnvironment.configDirectory, "$profileName.base.json")
+        val finalPath = File(runtimeEnvironment.configDirectory, "managed-profile.json")
 
         return try {
-            Mobile.touch()
-            val parsedConfig = if (materializedForRuntime) {
-                configPayload
-            } else {
-                tempPath.writeText(configPayload)
-                Mobile.parse(finalPath.absolutePath, tempPath.absolutePath, false)
-                finalPath.readText()
+            if (!materializedForRuntime) {
+                throw IllegalArgumentException(
+                    "POKROV Core requires a materialized sing-box profile.",
+                )
             }
-            basePath.writeText(parsedConfig)
-            val runtimeConfig = if (runtimeOptionsJson.isNullOrBlank()) {
-                parsedConfig
-            } else {
-                Mobile.buildConfig(runtimeOptionsJson, parsedConfig)
-            }
-            finalPath.writeText(runtimeConfig)
-            AndroidRuntimeState.markProfileStaged(
-                finalPath.absolutePath,
-                runtimeOptionsJson,
-                basePath.absolutePath,
-            )
+            writePrivateConfig(finalPath, configPayload)
+            AndroidRuntimeState.markProfileStaged(finalPath.absolutePath)
             AndroidRuntimeState.snapshot()
         } catch (error: Throwable) {
             AndroidRuntimeState.markFailure(
@@ -227,10 +207,8 @@ class RuntimeHostBridge(
     }
 
     private fun applyWarp(call: MethodCall): Map<String, Any?> {
-        val enabled = call.argument<Boolean>("enabled") ?: false
         val stagedConfigPath = AndroidRuntimeState.stagedConfigPath()
-        val stagedBaseConfigPath = AndroidRuntimeState.stagedBaseConfigPath()
-        val runtimeOptionsJson = AndroidRuntimeState.stagedRuntimeOptionsJson()
+        val configPayload = call.argument<String>("configPayload")
         if (stagedConfigPath.isNullOrBlank()) {
             return mapOf(
                 "applied" to false,
@@ -239,30 +217,16 @@ class RuntimeHostBridge(
                 "reason" to "no_staged_profile",
             )
         }
-        if (runtimeOptionsJson.isNullOrBlank() || stagedBaseConfigPath.isNullOrBlank()) {
+        if (configPayload.isNullOrBlank()) {
             return mapOf(
                 "applied" to false,
                 "effectiveAt" to "none",
                 "fallbackUsed" to false,
-                "reason" to "runtime_options_missing",
+                "reason" to "config_payload_missing",
             )
         }
         return try {
-            val options = JSONObject(runtimeOptionsJson)
-            val warp = options.optJSONObject("warp") ?: JSONObject()
-            warp.put("enable", enabled)
-            if (!warp.has("id")) {
-                warp.put("id", "p1")
-            }
-            if (!warp.has("mode")) {
-                warp.put("mode", "proxy_over_warp")
-            }
-            options.put("warp", warp)
-            val nextOptions = options.toString()
-            val baseConfig = File(stagedBaseConfigPath).readText()
-            val runtimeConfig = Mobile.buildConfig(nextOptions, baseConfig)
-            File(stagedConfigPath).writeText(runtimeConfig)
-            AndroidRuntimeState.markRuntimeOptionsUpdated(nextOptions)
+            writePrivateConfig(File(stagedConfigPath), configPayload)
             mapOf(
                 "applied" to true,
                 "effectiveAt" to "next_connect",
@@ -276,6 +240,23 @@ class RuntimeHostBridge(
                 "fallbackUsed" to false,
                 "reason" to (error.message ?: error.javaClass.simpleName),
             )
+        }
+    }
+
+    private fun writePrivateConfig(target: File, content: String) {
+        target.parentFile?.mkdirs()
+        val next = File(target.parentFile, "${target.name}.next")
+        next.writeText(content)
+        next.setReadable(false, false)
+        next.setWritable(false, false)
+        next.setExecutable(false, false)
+        check(next.setReadable(true, true)) { "Could not restrict profile read access." }
+        check(next.setWritable(true, true)) { "Could not restrict profile write access." }
+        if (target.exists() && !target.delete()) {
+            throw IllegalStateException("Could not replace the staged profile.")
+        }
+        if (!next.renameTo(target)) {
+            throw IllegalStateException("Could not activate the staged profile.")
         }
     }
 

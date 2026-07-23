@@ -3340,6 +3340,10 @@ class AppFirstRuntimeBootstrapper
     final baseConfig = decoded.map(
       (key, value) => MapEntry(key.toString(), value),
     );
+    _applyRealityTlsFragmentPolicy(
+      baseConfig: baseConfig,
+      supportContext: supportContext,
+    );
     if (hostPlatform != HostPlatform.android &&
         _looksRuntimeReady(baseConfig)) {
       final sanitized = _sanitizeRuntimeReadyConfig(
@@ -3865,7 +3869,6 @@ class AppFirstRuntimeBootstrapper
     }
 
     final remoteDnsAddress = _preferredAndroidRemoteDnsAddress(baseServers);
-    const directDnsAddress = '1.1.1.1';
     dns['servers'] = <Map<String, dynamic>>[
       <String, dynamic>{
         'tag': remoteServerTag,
@@ -3875,7 +3878,7 @@ class AppFirstRuntimeBootstrapper
       },
       <String, dynamic>{
         'tag': directServerTag,
-        'address': directDnsAddress,
+        'address': remoteDnsAddress,
         'address_resolver': localServerTag,
         'detour': directTag,
       },
@@ -4325,10 +4328,14 @@ class AppFirstRuntimeBootstrapper
   }) {
     final ipVersionPreference =
         _readText(supportContext['ip_version_preference']).toLowerCase();
+    final requestedTunMtu = _readInt(supportContext['tun_mtu']);
+    const allowedTunMtuValues = <int>{1280, 1400, 1492, 1500, 9000};
+    final tunMtu =
+        allowedTunMtuValues.contains(requestedTunMtu) ? requestedTunMtu : 9000;
     final tunInbound = <String, dynamic>{
       'type': 'tun',
       'tag': 'tun-in',
-      'mtu': 9000,
+      'mtu': tunMtu,
       'auto_route': true,
       'strict_route': true,
       'endpoint_independent_nat': true,
@@ -4979,18 +4986,75 @@ class AppFirstRuntimeBootstrapper
 
   String _preferredAndroidRemoteDnsAddress(List<Map<String, dynamic>> servers) {
     for (final server in servers) {
-      final address = _readText(server['address']).toLowerCase();
-      if (address.isEmpty || address == 'local') {
+      final address = _readText(server['address']);
+      final normalizedAddress = address.toLowerCase();
+      if (normalizedAddress.isEmpty || normalizedAddress == 'local') {
         continue;
       }
-      if (address == '1.1.1.1' ||
-          address == 'udp://1.1.1.1' ||
-          address == 'tls://1.1.1.1' ||
-          address == 'https://1.1.1.1/dns-query') {
-        return '1.1.1.1';
+      if (normalizedAddress.startsWith('https://')) {
+        return address;
       }
     }
-    return '1.1.1.1';
+    return 'https://1.1.1.1/dns-query';
+  }
+
+  void _applyRealityTlsFragmentPolicy({
+    required Map<String, dynamic> baseConfig,
+    required Map<String, dynamic> supportContext,
+  }) {
+    final policy = _readMap(supportContext['reality_tls_fragment']);
+    if (!_readBool(policy['enabled'])) {
+      return;
+    }
+
+    final fragment =
+        policy.containsKey('fragment') ? _readBool(policy['fragment']) : false;
+    final recordFragment = policy.containsKey('record_fragment')
+        ? _readBool(policy['record_fragment'])
+        : true;
+    if (!fragment && !recordFragment) {
+      return;
+    }
+    final fallbackDelay = _readText(policy['fragment_fallback_delay']);
+    final validFallbackDelay =
+        RegExp(r'^\d+(?:ns|us|µs|ms|s|m|h)$').hasMatch(fallbackDelay);
+
+    final outbounds = _readListOfMaps(baseConfig['outbounds'])
+        .map((outbound) => Map<String, dynamic>.from(outbound))
+        .toList(growable: false);
+    var changed = false;
+    for (final outbound in outbounds) {
+      if (_readText(outbound['type']).toLowerCase() != 'vless') {
+        continue;
+      }
+      final transport = _readMap(outbound['transport']);
+      if (_readText(transport['type']).isNotEmpty) {
+        continue;
+      }
+      final tls = _readMap(outbound['tls']);
+      final reality = _readMap(tls['reality']);
+      if (!_readBool(reality['enabled'])) {
+        continue;
+      }
+
+      final patchedTls = Map<String, dynamic>.from(tls);
+      if (!patchedTls.containsKey('fragment')) {
+        patchedTls['fragment'] = fragment;
+      }
+      if (!patchedTls.containsKey('record_fragment')) {
+        patchedTls['record_fragment'] = recordFragment;
+      }
+      if (validFallbackDelay &&
+          !patchedTls.containsKey('fragment_fallback_delay')) {
+        patchedTls['fragment_fallback_delay'] = fallbackDelay;
+      }
+      outbound['tls'] = patchedTls;
+      outbound['tcp_fast_open'] = false;
+      changed = true;
+    }
+    if (changed) {
+      baseConfig['outbounds'] = outbounds;
+    }
   }
 
   bool _isProxyTransportOutbound(Map<String, dynamic> outbound) {

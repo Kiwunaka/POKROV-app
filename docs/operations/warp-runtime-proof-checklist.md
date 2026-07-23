@@ -1,6 +1,6 @@
 # WARP Runtime Proof Checklist
 
-Last updated: 2026-07-11
+Last updated: 2026-07-22
 
 This checklist is the client evidence gate for the WARP lane. Current client UI
 may use the owner-approved labels `WARP`, `Расширенная защита`, or
@@ -11,15 +11,20 @@ the app may ship the client lifecycle, consent, fallback, and diagnostics
 contract, but public copy must not claim production-ready anonymity or a
 fully proven WARP runtime.
 
-Implementation update on 2026-06-09:
+Implementation update on 2026-07-22:
 
-- WARP is now a client-local Hiddify-core lane. The app passes `warp.enable`,
+- WARP is now a client-local Pokrov-core lane. The app passes `warp.enable`,
   `id=p1`, mode, and safe defaults to core; backend-provided WireGuard material
   is optional rather than required.
 - Backend `/api/client/warp/*` endpoints are the consent/status/event ledger.
   They must not block the client because server-side WARP material is absent.
 - The UI may show a normal WARP control after explicit consent, while runtime
   proof still remains an owner/manual release-build gate.
+- POKROV Core receives a materialized sing-box WARP endpoint. The shared
+  adapter materializes a `warp` endpoint into raw sing-box config, supports
+  direct or proxy-backed WARP bootstrap plus proxy-over-WARP and
+  WARP-over-proxy without route cycles, and
+  restores the untouched managed profile when WARP is disabled.
 
 ## Evidence Rules
 
@@ -77,5 +82,21 @@ Implementation update on 2026-06-09:
   server material: implemented.
 - Safe consent cache: implemented.
 - Support diagnostics redaction: implemented.
+- POKROV Core 1.0.0 source commit, sizes, and SHA-256 values: pinned.
+- POKROV desktop ABI 2, private staged-file contract, and fail-closed
+  adapter boundary: implemented.
+- POKROV Core client-local WARP materialization and enable/disable parity: implemented
+  in shared runtime tests.
+- The pinned sing-box fork includes the reviewed WireGuard shutdown ordering:
+  unregister callback, `Down`, then `Close`. The exact Windows DLL completed
+  100 serial start/stop cycles; real WARP teardown on Android and Windows
+  release candidates remains `MANUAL_OWNER_TEST`.
+- POKROV Core Android host bridge and JVM contract tests: implemented.
+- POKROV Core iOS host bridge: implemented in source; Xcode build and signed
+  physical-device tunnel proof remain `MANUAL_OWNER_TEST`.
+- Windows POKROV DLL reproducible build, export check, ABI probe, and private
+  ACL probe: implemented locally.
+- macOS POKROV universal dylib build and ABI probe: `MANUAL_OWNER_TEST` on a
+  Mac with Xcode.
 - Android physical release-build proof: `MANUAL_OWNER_TEST`.
 - Windows end-user release-build proof: `MANUAL_OWNER_TEST`.

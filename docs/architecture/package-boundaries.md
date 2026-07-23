@@ -31,18 +31,18 @@ Rules:
 ## Native-Core Artifact Rule
 
 - The four host shells should share one documented native-core dependency story.
-- In this wave, that means keeping one pinned seed contract plus host-sync tooling, without pretending that release provenance and packaging review are finished.
-- `platform_contracts` is the only shared package that should grow the future `libcore` artifact source, version, checksum, and load-policy contract.
+- The active contract pins POKROV Core 1.0.0 at one exact source commit. Android and Windows consume only artifacts built by that repository; Apple artifacts remain manual until built and proven on macOS.
+- `platform_contracts` is the only shared package that should grow the POKROV Core artifact source, version, checksum, and load-policy contract.
 - Host shells should consume that contract later instead of baking host-specific runtime provenance into `Android`, `iOS`, `macOS`, or `Windows` independently.
 
 ## Runtime Host Bridge Boundary
 
 - `runtime_engine` now owns the shared runtime snapshot and managed-profile staging contract for the next-client lane.
-- `Android` and `iOS` host shells register a native bridge at `space.pokrov/runtime_engine` so Dart can request `snapshot`, `initialize`, `stageManagedProfile`, `connect`, and `disconnect` against app-owned runtime directories.
-- `Android` now owns a real host-side `VpnService` seed: the bridge requests VPN permission, starts a foreground `PokrovRuntimeVpnService`, validates staged config through `Libbox`, and opens the app-owned tun device through the libbox `PlatformInterface`.
-- `iOS` now owns a source-backed packet-tunnel lane through `NETunnelProviderManager`: the bridge can save or reload a tunnel manager, stage managed profiles into the shared app-group runtime directory, and request start or stop against the checked-in `PacketTunnelExtension` bundle identifier; the provider target now boots `MobileSetup` plus `LibboxSetup`, starts a Libbox command server and service, and opens tun through `NEPacketTunnelFlow`, but reviewed entitlement validation and signed-device proof are still operator work.
-- `macOS` stays on the desktop FFI lane, but the host build now copies synced `libcore.dylib` and `HiddifyCli` artifacts into the app bundle under `Contents/Frameworks/Runtime` so `runtime_engine` can discover them predictably.
-- `Windows` stays on the desktop FFI lane and now copies synced `libcore.dll` directly into the release bundle, where the local Windows build helper verifies metadata, file presence, and package staging.
+- `Android` and `iOS` host shells register a native bridge at `space.pokrov/runtime_engine` so Dart can request `snapshot`, `initialize`, raw materialized `stageManagedProfile`, `applyWarp`, `connect`, and `disconnect` against app-owned runtime directories.
+- `Android` owns the host-side `VpnService`: the bridge requests VPN permission, starts a foreground `PokrovRuntimeVpnService`, validates staged config through POKROV Core `Libbox`, and opens the app-owned tun device through `PlatformInterface` and `CommandServer`.
+- `iOS` owns the packet-tunnel lane through `NETunnelProviderManager`: the bridge stages one protected materialized profile in the shared app group and the provider uses POKROV Core `LibboxSetup` plus `CommandServer.startOrReloadService`; the framework build, entitlement review, Xcode archive, and signed-device proof are still operator work.
+- `macOS` stays on the desktop FFI lane and copies only `pokrov-core.dylib` under `Contents/Frameworks/Runtime`.
+- `Windows` stays on desktop ABI 2 and copies the reproducible POKROV-built `pokrov-core.dll` plus pinned `libcronet.dll` into the release bundle, where the build helper verifies metadata, exact files, and package staging.
 - Host shells should still stay thin. Native code should implement only the host-specific bridge and packaging steps required by the shared runtime contract.
 
 ## Four-Platform Shape

@@ -247,7 +247,7 @@ Consumer privacy rules:
 - route labels and support diagnostics should stay safe and human-readable
 - public-facing copy should prefer plain user language over transport acronyms, raw profile terms, or operator jargon
 - Home and Profile may show `WARP` as the owner-approved feature label because
-  the default runtime path is client-local Hiddify-core WARP. The UI must still
+  the default runtime path is client-local Pokrov-core WARP. The UI must still
   avoid claiming production-proof anonymity or stronger privacy until
   Android/Windows release-build WARP evidence exists.
 - raw subscription copy, edit, regenerate, or share actions stay out of the first-layer consumer path
@@ -296,7 +296,7 @@ Replace or keep aligned:
 - tray icons
 - update metadata
 - release artifact names
-- visible inherited `Hiddify` references in UI
+- visible inherited `Pokrov` references in UI
 - the canonical public URI scheme `pokrov`
 
 Host behavior:

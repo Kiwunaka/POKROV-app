@@ -162,17 +162,27 @@ Managed-profile fields:
 - `smart_connect`
 - `warp_policy`
 
+Internal staged `support_context` controls:
+
+- `reality_tls_fragment.enabled`, `fragment`, `record_fragment`, and optional
+  `fragment_fallback_delay` apply only to VLESS + REALITY over TCP. The control
+  defaults off and is not a public user setting; production activation requires
+  PCAP and RU LTE/5G evidence.
+- `tun_mtu` accepts only `1280`, `1400`, `1492`, `1500`, or `9000` for a managed
+  backtest matrix. Unsupported values fall back to `9000`; no new default is
+  selected without blocked-ICMP, large-transfer, and QUIC evidence.
+
 WARP policy rule:
 
 - `client_policy.warp_policy` is sanitized metadata only.
-- The default WARP path is client-local Hiddify-core WARP. The app may expose
+- The default WARP path is client-local Pokrov-core WARP. The app may expose
   `WARP / Расширенная защита` when the local runtime lane is available; it must
   not wait for backend-provisioned WireGuard/account material before offering
   consent.
 - Managed-profile `warp_policy` may still carry backend-provisioned
   WireGuard/account material as an optional operator lane, but this material is
   not the normal prerequisite for WARP.
-- Before setting Hiddify `warp.enable=true`, the app must ask for explicit local
+- Before setting Pokrov `warp.enable=true`, the app must ask for explicit local
   consent and persist that choice on the device.
 - Backend WARP status, consent, revoke, and event endpoints are lifecycle ledger
   surfaces. They must not reject or clear client-local WARP solely because
@@ -307,7 +317,7 @@ Support rules:
 
 ## Release And Audit Expectations
 
-- release verification must start from a clean `libcore` checkout pinned to the parent repo SHA
+- release verification must start from a clean POKROV Core checkout pinned to the exact client contract SHA
 - `python scripts/run_client_release_gate.py preflight` is the canonical repo-local preflight before Flutter tests or artifact builds
 - when Android build gates are requested, release approval also requires `python scripts/android_localhost_audit.py` against a release-installed build on physical hardware via `ANDROID_AUDIT_SERIAL`
 - the latest local green `python scripts/release_orchestrator.py --gates-only` snapshot is necessary but not sufficient; Android publication still waits for production signing, the physical-device localhost audit, and separate `current-origin`, `brain-origin`, and `RU-origin` evidence

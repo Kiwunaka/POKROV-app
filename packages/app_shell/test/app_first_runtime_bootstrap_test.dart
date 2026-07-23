@@ -2886,6 +2886,14 @@ void main() {
                   },
                   'profile_revision': 'rev-materialized',
                   'config_format': 'singbox-json',
+                  'support_context': <String, Object?>{
+                    'reality_tls_fragment': <String, Object?>{
+                      'enabled': true,
+                      'fragment': true,
+                      'record_fragment': true,
+                      'fragment_fallback_delay': '250ms',
+                    },
+                  },
                   'config_payload': <String, Object?>{
                     '_meta': <String, Object?>{
                       'source': 'managed',
@@ -2897,6 +2905,16 @@ void main() {
                         'server': 'nl.kiwunaka.space',
                         'server_port': 443,
                         'uuid': 'test-uuid',
+                        'tcp_fast_open': true,
+                        'tls': <String, Object?>{
+                          'enabled': true,
+                          'server_name': 'www.cloudflare.com',
+                          'reality': <String, Object?>{
+                            'enabled': true,
+                            'public_key': 'test-public-key',
+                            'short_id': '0123456789abcdef',
+                          },
+                        },
                       },
                     ],
                   },
@@ -2923,6 +2941,12 @@ void main() {
     );
     final config = jsonDecode(payload.configPayload) as Map<String, dynamic>;
     final inbounds = (config['inbounds'] as List).cast<Map<String, dynamic>>();
+    final outbounds =
+        (config['outbounds'] as List).cast<Map<String, dynamic>>();
+    final realityOutbound = outbounds.singleWhere(
+      (outbound) => outbound['tag'] == 'legacy-reality-fallback',
+    );
+    final realityTls = realityOutbound['tls'] as Map<String, dynamic>;
     final route = config['route'] as Map<String, dynamic>;
 
     expect(inbounds, isNotEmpty);
@@ -2931,6 +2955,10 @@ void main() {
     expect(route['final'], 'select');
     expect(route['auto_detect_interface'], true);
     expect(config['outbounds'].toString(), contains('urltest'));
+    expect(realityTls['fragment'], true);
+    expect(realityTls['record_fragment'], true);
+    expect(realityTls['fragment_fallback_delay'], '250ms');
+    expect(realityOutbound['tcp_fast_open'], false);
   });
 
   test('android materialization excludes desktop loopback listener inbounds',
@@ -3384,12 +3412,14 @@ void main() {
     );
     expect(servers.map((server) => server['address']), contains('local'));
     expect(
-      servers.map((server) => server['address']),
-      contains('1.1.1.1'),
+      servers.where(
+        (server) => server['address'] == 'https://1.1.1.1/dns-query',
+      ),
+      hasLength(2),
     );
     expect(
       servers.map((server) => server['address']),
-      contains('1.1.1.1'),
+      isNot(contains('1.1.1.1')),
     );
     expect(servers.map((server) => server['address']),
         isNot(contains('tls://127.0.0.1:853')));
@@ -4496,7 +4526,7 @@ void main() {
                         },
                         <String, Object?>{
                           'tag': 'bootstrap-direct',
-                          'address': '8.8.8.8',
+                          'address': 'https://1.1.1.1/dns-query',
                           'detour': 'direct',
                         },
                       ],
@@ -4553,7 +4583,7 @@ void main() {
     );
 
     expect(dns['final'], 'dns-remote');
-    expect(finalServer['address'], '1.1.1.1');
+    expect(finalServer['address'], 'https://1.1.1.1/dns-query');
     expect(finalServer['detour'], 'proxy');
     expect(finalServer['address_resolver'], 'local');
   });
@@ -4747,6 +4777,7 @@ void main() {
                   'config_format': 'singbox-json',
                   'support_context': <String, Object?>{
                     'ip_version_preference': 'ipv4_only',
+                    'tun_mtu': 1400,
                   },
                   'config_payload': <String, Object?>{
                     'outbounds': <Object?>[
@@ -4792,6 +4823,7 @@ void main() {
     expect(tunInbound.containsKey('inet6_address'), isFalse);
     expect(tunInbound['domain_strategy'], 'ipv4_only');
     expect(tunInbound['stack'], 'mixed');
+    expect(tunInbound['mtu'], 1400);
   });
 
   test('client P0/P1 API additions use the app-first session', () async {

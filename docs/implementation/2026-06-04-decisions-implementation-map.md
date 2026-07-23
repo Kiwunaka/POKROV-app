@@ -23,8 +23,8 @@ Owner definition for this lane:
 - `docs/decisions/2026-06-03-client-ux-account-rewards-master-brief.md`
 - `docs/decisions/2026-06-03-client-best-mvp-consilium.md`
 - `docs/decisions/2026-06-03-client-chat-responsive-warp-motion-review.md`
-- `docs/decisions/2026-06-03-hiddify-karing-happ-client-base-review.md`
-- `docs/decisions/2026-06-03-hiddify-core-warp-status.md`
+- `docs/decisions/2026-06-03-pokrov-karing-happ-client-base-review.md`
+- `docs/decisions/2026-06-03-pokrov-core-warp-status.md`
 
 Explicitly ignored as old/archive input:
 
@@ -65,9 +65,9 @@ The current code slice is:
 10. embedded support chat now polls the active ticket, refreshes status, and
     shows operator replies plus ticket lifecycle hints in-app without forcing
     the user back to Telegram;
-11. WARP/enhanced privacy now uses the client-local Hiddify-core path by
+11. WARP/enhanced privacy now uses the client-local Pokrov-core path by
     default, with sanitized backend metadata, optional managed-profile material,
-    client parsing, and a Home consent gate that keeps Hiddify
+    client parsing, and a Home consent gate that keeps Pokrov
     `warp.enable=false` until the user explicitly turns it on.
 12. Account now has a compact details sheet for access/device/mode/cabinet,
     settings rows have tactile press feedback, and the desktop sidebar animates
@@ -88,7 +88,7 @@ clarity before a richer Rewards Hub can safely exist.
 
 | Decision | Status | Current Evidence | Next Action |
 | --- | --- | --- | --- |
-| Hiddify-based runtime direction | Done for MVP | active lane uses pinned `hiddify-core v3.1.8` artifacts through the runtime bridge; clean-room POKROV shell remains current; Android/Windows host runtime paths and managed-profile connect tests exist | separate Hiddify fork/provenance packet remains a release-hardening or replacement-lane gate, not a P0 blocker for the current shell |
+| POKROV Core runtime direction | Done for MVP | active lane uses pinned POKROV Core 1.0.0 artifacts through the runtime bridge; Android/Windows host runtime paths and managed-profile connect tests exist | exact-candidate physical-device and clean-VM proof remain release gates |
 | First-launch `new / returning` split | Done for MVP | startup asks new vs returning; completion is file-backed and tested | keep wording lightweight while runtime gates evolve |
 | Returning-user restore screen | Done for MVP | first-launch restore panel uses unified redeem, Telegram, cabinet, and raw-key warning | expand accepted code families on backend over time |
 | Unified redeem API contract | Done for MVP | platform `POST /api/redeem` supports paid access keys, legacy gift-card codes, and promo codes; app uses `AppFirstAccountActionService.redeemCode`; raw subscription/proxy links are rejected locally and by backend | claim-token/email-code families stay out until backend support is explicit |
@@ -154,7 +154,7 @@ states.
 | Support realtime lifecycle | Done for polling lifecycle, partial for SSE | embedded ticket-backed support chat, explicit diagnostic attachment, active-ticket polling, operator-reply hints, closed/offline lifecycle hints, and manual refresh action exist; the app updates messages/status from `GET /api/tickets/{id}` while the screen is open | add SSE or tuned polling cadence only after real operator workflow proof; do not fake typing, read receipts, or operator presence |
 | Native email linking and recovery | Evidence-gated handoff for P4 beta | email/recovery handoff and cabinet continuation exist through short-lived sessions; native password/token forms remain out of app while delivery/account-linking readiness is operator-gated | implement native forms only after delivery readiness, recovery UX, and account-link semantics stay green |
 | Detailed account and cabinet management | Done for P4 beta entrypoints | app opens cabinet through short-lived token, shows compact access/account summary, and has a details sheet for access/device/mode/cabinet/downloads/email | deeper cabinet management remains webapp-first |
-| WARP as a working feature | Done for guarded beta feature, proof-gated for production claim | Home shows the enhanced-protection tile honestly; public `client_policy.warp_policy` is sanitized; the default runtime path is client-local Hiddify-core WARP; backend status/consent/revoke/event endpoints are a lifecycle ledger and no longer require server-managed WireGuard material for client-local consent; authenticated managed profiles may still carry optional runtime material; client bootstrap parses and normalizes `warp_policy`; the Home tile can request explicit user consent when the local runtime lane is available; desktop runtime maps consented WARP into Hiddify options with `warp.enable=true` and local `id=p1`; runtime fallback events are reported to the backend and the admin dashboard has a redacted WARP lifecycle summary | Android release-build proof, Windows release-build proof, and reconnect/recovery smoke remain required before claiming production WARP |
+| WARP as a working feature | Done for guarded beta feature, proof-gated for production claim | Home shows the enhanced-protection tile honestly; public `client_policy.warp_policy` is sanitized; the default runtime path is client-local Pokrov-core WARP; backend status/consent/revoke/event endpoints are a lifecycle ledger and no longer require server-managed WireGuard material for client-local consent; authenticated managed profiles may still carry optional runtime material; client bootstrap parses and normalizes `warp_policy`; the Home tile can request explicit user consent when the local runtime lane is available; desktop runtime maps consented WARP into Pokrov options with `warp.enable=true` and local `id=p1`; runtime fallback events are reported to the backend and the admin dashboard has a redacted WARP lifecycle summary | Android release-build proof, Windows release-build proof, and reconnect/recovery smoke remain required before claiming production WARP |
 | Responsive/golden width verification | Done for widget matrix, visual screenshots still manual | widget tests cover `360`, `700`, `900`, `1024`, `1180`, and `1440` shell behavior, Home WARP tile, primary connect action, mobile bottom navigation, desktop icon rail, and expanded sidebar | keep screenshot/golden capture as release polish when visual baselines are approved |
 | Premium motion pass | Done for P4 beta foundation | connect ritual, status switcher, geometry-matched skeletons, row/chip tactile feedback, muted disabled rewards, sidebar label opacity/width transition, and reduced-motion hooks are covered by code/tests | continue P5 taste polish without changing product claims |
 

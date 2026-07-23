@@ -256,8 +256,9 @@ function New-ExpectedRegistryManifest {
     'CANONICAL|RECONCILED|Client product|docs/product/client-product-contract.md',
     'CANONICAL|RECONCILED|App-first onboarding|docs/architecture/app-first-onboarding-flow.md',
     'CANONICAL|REVIEWED_NO_CHANGE|Repository structure|docs/architecture/folder-structure.md',
-    'CANONICAL|REVIEWED_NO_CHANGE|Package boundaries|docs/architecture/package-boundaries.md',
+    'CANONICAL|RECONCILED|Package boundaries|docs/architecture/package-boundaries.md',
     'CANONICAL|RECONCILED|Runtime bootstrap|docs/architecture/bootstrap-workflow.md',
+    'CANONICAL|RECONCILED|Active POKROV Core 1.0.0 runtime decision|docs/decisions/2026-07-23-pokrov-core-1.0.0-activation.md',
     'CANONICAL|RECONCILED|In-app assistant|docs/architecture/in-app-ai-assistant-contract.md',
     'CANONICAL|RECONCILED|Current product/UI direction|docs/design/2026-06-13-pokrov-product-ui-direction.md',
     'EVIDENCE|RECONCILED|Completed motion/HIG implementation record|docs/design/2026-07-13-agent-uiux-backlog.md',
@@ -273,7 +274,7 @@ function New-ExpectedRegistryManifest {
     'ACTIVE_EXECUTION|RECONCILED|WARP runtime proof|docs/operations/warp-runtime-proof-checklist.md',
     'ACTIVE_EXECUTION|REVIEWED_NO_CHANGE|Responsive proof|docs/operations/responsive-golden-capture-plan.md',
     'ACTIVE_EXECUTION|REVIEWED_NO_CHANGE|Motion/performance proof|docs/operations/client-motion-performance-checklist.md',
-    'ACTIVE_EXECUTION|REVIEWED_NO_CHANGE|Apple readiness|docs/operations/apple-release-readiness.md',
+    'ACTIVE_EXECUTION|RECONCILED|Apple readiness|docs/operations/apple-release-readiness.md',
     'EVIDENCE|REVIEWED_NO_CHANGE|Public beta product evidence|docs/product/client-public-beta-prd.md',
     'EVIDENCE|REVIEWED_NO_CHANGE|Dated handoffs and closure audits|docs/operations/2026-06-04-public-beta-operator-handoff.md;docs/operations/2026-06-05-phase-6-release-beta-handoff.md;docs/operations/2026-06-05-final-beta-closure-except-manual-tests-signing.md;docs/operations/2026-06-13-pokrov-product-ui-plan-closure-audit.md',
     'EVIDENCE|REVIEWED_NO_CHANGE|Client/API additions record|docs/operations/client-ui-api-additions.md',
@@ -282,7 +283,6 @@ function New-ExpectedRegistryManifest {
     'HISTORICAL_REFERENCE|RECONCILED|Superseded local design entry|docs/design/DESIGN.md',
     'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Earlier scaffold spec|docs/specs/2026-04-18-wave-7-new-base-client-scaffold.md',
     'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Completed WARP design spec|docs/specs/2026-06-05-p5-warp-approved-design.md',
-    'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Retired base/runtime reviews|docs/decisions/2026-06-03-hiddify-karing-happ-client-base-review.md;docs/decisions/2026-06-03-hiddify-core-warp-status.md',
     'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Earlier UX master brief|docs/decisions/2026-06-03-client-ux-account-rewards-master-brief.md',
     'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Earlier responsive review|docs/decisions/2026-06-03-client-chat-responsive-warp-motion-review.md',
     'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Earlier MVP consilium|docs/decisions/2026-06-03-client-best-mvp-consilium.md',
@@ -615,8 +615,8 @@ function Test-DocumentationRegistry {
       $expectedPathClasses.Add($relativePath, $expectedRow.Class)
     }
   }
-  if ($expectedPathClasses.Count -ne 56) {
-    throw "Embedded registry manifest must contain 56 concrete paths, got $($expectedPathClasses.Count)"
+  if ($expectedPathClasses.Count -ne 55) {
+    throw "Embedded registry manifest must contain 55 concrete paths, got $($expectedPathClasses.Count)"
   }
   if ($registryTable.Rows.Count -ne $expectedManifest.Count) {
     [void]$Errors.Add("Document registry must match the exact 45-row manifest (actual rows: $($registryTable.Rows.Count))")

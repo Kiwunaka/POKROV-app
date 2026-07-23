@@ -21,7 +21,7 @@ config_seeds:
 runtime_dependency:
   default_core: sing-box
   advanced_fallback_core: xray
-  native_core_artifact: libcore_not_wired_in_seed
+  native_core_artifact: pokrov_core_1_0_0
   release_gate_owner: bridge_client_only_for_now
 future_scope:
   public_release_targets:

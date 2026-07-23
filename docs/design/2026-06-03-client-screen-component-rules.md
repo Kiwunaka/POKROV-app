@@ -677,7 +677,7 @@ Flutter hints:
 
 ### Phase 0: Decisions Before UI Build
 
-- provenance/license decision for Hiddify-based work.
+- provenance/license decision for Pokrov-based work.
 - final runtime gate direction.
 - connect-control fixed to circular `128dp` progress-ring control.
 - final smart-mode copy.

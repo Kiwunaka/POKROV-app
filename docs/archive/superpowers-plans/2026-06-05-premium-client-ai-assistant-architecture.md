@@ -4,7 +4,7 @@
 
 **Goal:** turn the current `1.0.0-beta` Android/Windows client from a completed beta contour into a high-class, lightweight, platform-native POKROV client with a maintainable motion/design foundation, honest WARP lifecycle, and an in-app AI support/settings assistant.
 
-**Architecture:** keep the existing Flutter shared shell and hiddify-core runtime lane, but stop growing the monolithic `app_shell.dart`. Extract design, motion, responsive shell, WARP, support, and assistant contracts into small internal modules with focused tests before changing visible behavior.
+**Architecture:** keep the existing Flutter shared shell and pokrov-core runtime lane, but stop growing the monolithic `app_shell.dart`. Extract design, motion, responsive shell, WARP, support, and assistant contracts into small internal modules with focused tests before changing visible behavior.
 
 **Tech Stack:** Flutter/Dart shared shell, Android/Windows host runners, existing `pokrov_runtime_engine`, app-first platform APIs, ticket/support API, existing WARP backend contracts, GitHub prerelease beta artifacts.
 

@@ -1,15 +1,21 @@
 # Scripts
 
-This folder is for non-destructive local helpers only.
+This folder contains non-destructive client helpers.
 
-Current helpers:
+- `validate-seed.ps1` validates the client layout and machine-readable runtime and release contracts.
+- `bootstrap-workspace.ps1` restores only missing ignored Flutter/Gradle workstation files and resolves package dependencies.
+- `run-tests.ps1` runs the shared runtime, Android, Windows, and Android JVM checks.
+- `bootstrap-local.ps1` copies example local configuration without touching production paths unless explicitly forced.
+- `sync-pokrov-core-runtime.ps1` copies the exact POKROV Core 1.0.0 Android and Windows artifacts from the separate core checkout after verifying its commit, version, file sizes, and SHA-256 values.
+- `build-windows-release.ps1` can sync that pinned Windows runtime, validate the client, build the unsigned Flutter bundle, and stage the local installer/ZIP manifest.
 
-- `validate-seed.ps1`: checks that the Wave 7 scaffold files, four host shells, starter packages, and JSON config seeds exist
-- `bootstrap-workspace.ps1`: conditionally creates an isolated GUID-named temporary Flutter Android project with `--no-overwrite`, copies only a missing ignored Gradle wrapper BAT/JAR into the existing shell, removes the verified temporary directory, then runs `flutter pub get` across the clean-room packages and four host entrypoints; pass `-OfflinePubGet` when an old Flutter/Dart pub advisory fetch breaks online dependency resolution but the local package cache is already populated
-- `run-tests.ps1`: bootstraps the workspace, runs the shared, runtime, Android, and Windows Flutter tests, then runs Android `testDebugUnitTest`; accepts `-OfflinePubGet` and forwards it to bootstrap
-- `bootstrap-local.ps1`: copies example config seeds into `config/local/` without touching production paths unless explicitly forced
-- `build-windows-release.ps1`: validates the seed, optionally syncs Windows runtime artifacts, runs analyze and tests, builds `flutter build windows --release`, verifies the release bundle, and stages an unsigned setup EXE, portable ZIP, and manifest under `apps/windows_shell/build/release_bundle`; accepts `-OfflinePubGet` for known-good cached release reruns when online pub advisories are broken
+POKROV Core is built and released from the separate `POKROV-core` repository.
+The client repository does not apply core patches, fetch a mutable latest
+release, or maintain a hidden legacy-runtime fallback.
 
-The Windows helper is still local and unsigned. It does not create a trusted-signed public release, `MSIX`, store submission, or deploy hook.
+The Windows helper remains local and unsigned. It does not create a
+trusted-signed public release, MSIX, store submission, or deploy hook.
 
-On a clean checkout, `run-tests.ps1` materializes the ignored `apps/android_shell/android/gradlew.bat` and `apps/android_shell/android/gradle/wrapper/gradle-wrapper.jar` before invoking `testDebugUnitTest`. Repair runs outside the tracked app project and never overwrites an existing destination file. These generated workstation files are not tracked release artifacts or product truth.
+On a clean checkout, `run-tests.ps1` may materialize the ignored Android Gradle
+wrapper BAT/JAR before invoking `testDebugUnitTest`. It does not overwrite an
+existing wrapper.

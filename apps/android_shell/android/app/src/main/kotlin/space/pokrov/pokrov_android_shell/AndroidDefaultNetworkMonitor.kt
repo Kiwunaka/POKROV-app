@@ -10,7 +10,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import io.nekohasekai.libbox.InterfaceUpdateListener
+import space.pokrov.core.libbox.InterfaceUpdateListener
 import java.net.NetworkInterface
 
 internal object AndroidDefaultNetworkMonitor {
@@ -298,7 +298,15 @@ internal object AndroidDefaultNetworkMonitor {
         interfaceIndex: Int?,
         dnsReady: Boolean,
     ) {
-        listener?.updateDefaultInterface(interfaceName.orEmpty(), interfaceIndex ?: -1)
+        val capabilities = currentNetwork?.let { network ->
+            appContext?.let(::connectivity)?.getNetworkCapabilities(network)
+        }
+        listener?.updateDefaultInterface(
+            interfaceName.orEmpty(),
+            interfaceIndex ?: -1,
+            capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) == false,
+            capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED) == false,
+        )
         AndroidRuntimeState.updateDefaultNetwork(
             interfaceName = interfaceName,
             interfaceIndex = interfaceIndex,

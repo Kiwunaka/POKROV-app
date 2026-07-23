@@ -6,7 +6,8 @@ param(
   [switch]$SkipBuild,
   [switch]$SkipZip,
   [switch]$SkipInstaller,
-  [switch]$OfflinePubGet
+  [switch]$OfflinePubGet,
+  [string]$CoreRoot
 )
 
 $ErrorActionPreference = "Stop"
@@ -118,6 +119,9 @@ $runtimeRequiredFiles = @(
 if ($windowsReleaseConfig.runtime.PSObject.Properties.Name -contains "helper_binary") {
   $runtimeRequiredFiles += $windowsReleaseConfig.runtime.helper_binary
 }
+if ($windowsReleaseConfig.runtime.PSObject.Properties.Name -contains "runtime_dependencies") {
+  $runtimeRequiredFiles += @($windowsReleaseConfig.runtime.runtime_dependencies)
+}
 
 if (-not $SkipValidateSeed) {
   & (Join-Path $PSScriptRoot "validate-seed.ps1")
@@ -127,7 +131,13 @@ if (-not $SkipValidateSeed) {
 }
 
 if ($SyncRuntime -or (Test-RequiredFiles -BasePath $runtimeDirectory -RelativePaths $runtimeRequiredFiles).Count -gt 0) {
-  & (Join-Path $PSScriptRoot "fetch-libcore-assets.ps1") -Platforms @("windows") -SyncToHosts
+  $syncArguments = @{
+    Platforms = @("windows")
+  }
+  if ($CoreRoot) {
+    $syncArguments.CoreRoot = $CoreRoot
+  }
+  & (Join-Path $PSScriptRoot "sync-pokrov-core-runtime.ps1") @syncArguments
   if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
   }
@@ -328,7 +338,7 @@ $manifest = [ordered]@{
   generated_at_utc = (Get-Date).ToUniversalTime().ToString("o")
   display_name = $windowsReleaseConfig.display_name
   version = $version
-  runtime_release_tag = $runtimeArtifactsConfig.libcore.release_tag
+  runtime_release_tag = $runtimeArtifactsConfig.core.release_tag
   release_output_directory = $releaseOutputDirectory
   staged_bundle_directory = $stagedBundleDirectory
   zip_path = if ($SkipZip) { $null } else { $zipPath }

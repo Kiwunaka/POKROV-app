@@ -10,7 +10,7 @@ The owner approved the P5/WARP direction after the OpenCode-go consilium pass
 and requested the direction be recorded before implementation.
 
 This contract supersedes loose chat memory for the next P5 and WARP wave. As
-of 2026-06-09, WARP uses the client-local Hiddify-core path by default:
+of 2026-06-09, WARP uses the client-local Pokrov-core path by default:
 the app passes WARP options to core and does not require backend-provided
 WireGuard material. Backend WARP lifecycle endpoints remain the
 consent/status/event ledger; encrypted-at-rest scoped provisioning is retained
@@ -22,7 +22,7 @@ remains an open gate.
 - Current implementation map:
   [../implementation/2026-06-04-decisions-implementation-map.md](../implementation/2026-06-04-decisions-implementation-map.md)
 - WARP guardrail:
-  [../decisions/2026-06-03-hiddify-core-warp-status.md](../decisions/2026-06-03-hiddify-core-warp-status.md)
+  [../decisions/2026-06-03-pokrov-core-warp-status.md](../decisions/2026-06-03-pokrov-core-warp-status.md)
 - Premium shell direction:
   [../design/2026-06-03-client-premium-shell-v2-brief.md](../design/2026-06-03-client-premium-shell-v2-brief.md)
 - Chat/responsive/WARP/motion brief:
@@ -52,7 +52,7 @@ P5 is a premium-feel wave, not another information-architecture rewrite. The
 app should feel like a quiet daily utility: fast, tactile, predictable, and
 platform-native.
 
-WARP is implemented as a client-local Hiddify-core lifecycle feature. The
+WARP is implemented as a client-local Pokrov-core lifecycle feature. The
 current code has policy parsing, desktop runtime option mapping without
 mandatory server material, `/api/client/warp/*` status/consent/revoke/rotate
 /events endpoints, a sanitized `WarpEvent` ledger, encrypted-at-rest
@@ -349,7 +349,7 @@ Client/runtime work required:
   `POST /api/client/warp/events` with client-side metadata sanitization.
 - Prove the optional managed-material path is safe before returning real
   WireGuard private keys or access tokens to the app.
-- For the default path, pass client-local Hiddify-core WARP options after
+- For the default path, pass client-local Pokrov-core WARP options after
   consent (`warp.enable=true`, local `id=p1`) without requiring server-managed
   WireGuard/account material.
 - Extend runtime state with WARP readiness, active/degraded/failure, and last
@@ -357,7 +357,7 @@ Client/runtime work required:
 - Add fallback: if WARP start or handshake fails, retry baseline without WARP
   and tell the user the enhanced path was paused.
 - Verify Android host bridge receives and applies WARP-capable runtime options.
-- Verify Windows `libcore.dll` accepts the WARP options and can connect,
+- Verify Windows `pokrov-core.dll` accepts the WARP options and can connect,
   disconnect, fail, and recover.
 
 Manual proof required before WARP is called production-proven:
