@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-07-18
+Last updated: 2026-07-23
 
 ## Document Status
 
@@ -170,7 +170,10 @@ Product rules for that choice:
 Before the device receives a real subscription payload:
 
 - the onboarding card remains the primary connection surface
-- `Locations` stays gated and must not show fake/demo countries
+- `Locations` may show only a real backend or cached catalog for search and
+  favorites, never fake/demo countries; server selection stays locked until a
+  managed access payload and Smart Connect profile exist, with an explicit
+  first-connect explanation instead of a silently ignored tap
 - `Support` may prepare context, but real ticket history appears only after a linked session exists
 - Telegram remains optional and secondary
 
@@ -254,6 +257,57 @@ Consumer privacy rules:
 - raw connection or subscription links must not be treated as account proof in
   first-launch restore or normal code redemption
 - manual import and recovery tools may remain behind explicit compatibility or recovery surfaces
+
+## Protection, Routing And Recovery Contract
+
+The Android and Windows client now treats protection as several independent,
+observable checks instead of one decorative connected badge:
+
+- tunnel lifecycle comes from the runtime snapshot;
+- DNS availability comes from runtime-owned diagnostics;
+- internet reachability is a bounded HTTPS probe to the configured POKROV API;
+- route ownership is described from the active runtime profile and routing mode;
+- unknown or stale evidence stays unknown and cannot render as healthy;
+- one repair action runs at most one staged cycle: disconnect, resolve a fresh
+  managed profile, stage, connect, then refresh the checks. It has no retry loop
+  and cannot overlap another repair.
+
+The client persists only bounded local experience state: favorites, recent
+locations, cached location/inbox responses with timestamps, the last 20 local
+protection events, up to six user-owned HTTPS shortcuts, and validated routing
+preferences. Cached content is explicitly marked as cached or stale when a
+refresh fails.
+
+Routing preferences are applied to the resolved sing-box profile before it is
+staged. They include:
+
+- purpose groups for Video, AI, Social, Games, and RU-direct;
+- explicit domain, IP, and subnet overrides to VPN or direct;
+- Automatic, Cloudflare, Google, AdGuard, and validated custom DoH;
+- LAN direct access;
+- trusted Wi-Fi names with optional disconnect on an exact current-SSID match.
+
+Changing a route, DNS, or LAN preference marks the managed profile dirty and
+takes effect on the next connection. The route explainer uses the same
+validated preferences and reports a routing-lesson completion event on a
+best-effort basis. Android Wi-Fi inspection requests the platform permission
+when required; Windows uses the current WLAN interface. Failure to identify a
+network never counts as a trusted match.
+
+Android exposes a Quick Settings tile backed by the same runtime service and
+permission handoff as the main connect action. Windows tray connect/disconnect
+delegates to the same shell controller. Neither host control owns a second VPN
+state machine.
+
+Device continuation uses a short-lived, one-time pairing code created by an
+already authenticated device or cabinet. The new device receives its own
+revocable session and still obeys the account device limit. The app never
+shares an Apple Account or a reusable raw subscription secret for pairing.
+
+The rewards surface may show backend-confirmed referral conversion/history,
+achievements, and useful quests. Product quests do not grant money or days
+automatically. Wheel discounts are server-owned, one-use, non-stackable, and
+the maximum jackpot remains 30 days.
 
 ## Download And Release Continuity
 

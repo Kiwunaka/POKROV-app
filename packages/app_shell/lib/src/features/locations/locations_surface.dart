@@ -9,10 +9,15 @@ class _LocationsSection extends StatefulWidget {
     required this.locationsCatalog,
     required this.locationsCatalogBusy,
     required this.locationsCatalogError,
+    required this.locationsUsingCache,
+    required this.locationsCachedAt,
     required this.onRefreshLocationsCatalog,
     required this.preferredNodeCode,
     required this.nodePreferenceBusy,
     required this.onPreferredNodeSelected,
+    required this.favoriteNodeCodes,
+    required this.recentNodeCodes,
+    required this.onFavoriteNodeToggle,
   });
 
   final SeedAppContext appContext;
@@ -22,10 +27,15 @@ class _LocationsSection extends StatefulWidget {
   final ClientLocationsCatalog? locationsCatalog;
   final bool locationsCatalogBusy;
   final String? locationsCatalogError;
+  final bool locationsUsingCache;
+  final String locationsCachedAt;
   final VoidCallback onRefreshLocationsCatalog;
   final String preferredNodeCode;
   final bool nodePreferenceBusy;
   final ValueChanged<String> onPreferredNodeSelected;
+  final List<String> favoriteNodeCodes;
+  final List<String> recentNodeCodes;
+  final ValueChanged<String> onFavoriteNodeToggle;
 
   @override
   State<_LocationsSection> createState() => _LocationsSectionState();
@@ -40,6 +50,9 @@ class _LocationsSectionState extends State<_LocationsSection> {
     _searchController.dispose();
     super.dispose();
   }
+
+  bool get _canSelectLocation =>
+      widget.hasProvisionedAccess && widget.smartConnectProfile != null;
 
   bool _matches(SmartConnectNode node) {
     if (_query.isEmpty) {
@@ -77,6 +90,53 @@ class _LocationsSectionState extends State<_LocationsSection> {
     return entries;
   }
 
+  Widget _catalogSection({
+    required String title,
+    required List<_ClientLocationEntry> entries,
+    bool showEmpty = false,
+  }) {
+    final theme = Theme.of(context);
+    final tokens = PokrovPalette.of(context);
+    if (entries.isEmpty && !showEmpty) {
+      return const SizedBox.shrink();
+    }
+    return _SectionCard(
+      title: title,
+      lines: const [],
+      child: entries.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Ничего не найдено',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: tokens.muted,
+                ),
+              ),
+            )
+          : Column(
+              children: entries
+                  .map(
+                    (entry) => _ClientLocationCityRow(
+                      entry: entry,
+                      selected: entry.city.code.trim().toLowerCase() ==
+                          widget.preferredNodeCode.trim().toLowerCase(),
+                      favorite: widget.favoriteNodeCodes.contains(
+                        entry.city.code.trim().toLowerCase(),
+                      ),
+                      disabled: widget.nodePreferenceBusy,
+                      selectionEnabled:
+                          _canSelectLocation && !widget.nodePreferenceBusy,
+                      onTap: () =>
+                          widget.onPreferredNodeSelected(entry.city.code),
+                      onFavoriteToggle: () =>
+                          widget.onFavoriteNodeToggle(entry.city.code),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -91,6 +151,25 @@ class _LocationsSectionState extends State<_LocationsSection> {
     final filteredCatalog = hasCatalog
         ? catalogEntries.where(_matchesCatalog).toList(growable: false)
         : const <_ClientLocationEntry>[];
+    final favoriteCodes = widget.favoriteNodeCodes.toSet();
+    final recentCodes = widget.recentNodeCodes.toSet();
+    final favoriteEntries = filteredCatalog
+        .where((entry) => favoriteCodes.contains(entry.city.code.toLowerCase()))
+        .toList(growable: false);
+    final recentEntries = filteredCatalog
+        .where(
+          (entry) =>
+              !favoriteCodes.contains(entry.city.code.toLowerCase()) &&
+              recentCodes.contains(entry.city.code.toLowerCase()),
+        )
+        .toList(growable: false);
+    final remainingEntries = filteredCatalog
+        .where(
+          (entry) =>
+              !favoriteCodes.contains(entry.city.code.toLowerCase()) &&
+              !recentCodes.contains(entry.city.code.toLowerCase()),
+        )
+        .toList(growable: false);
     final filtered = hasShortlist
         ? shortlist.where(_matches).toList(growable: false)
         : const <SmartConnectNode>[];
@@ -121,8 +200,7 @@ class _LocationsSectionState extends State<_LocationsSection> {
               ? 'POKROV выберет быстрый маршрут. $premiumPool · ${_routeModeShortLabel(widget.selectedRouteMode)}'
               : 'Сначала включите POKROV VPN',
           value: widget.preferredNodeCode.trim().isEmpty ? 'Авто' : 'Выбрано',
-          busy:
-              widget.nodePreferenceBusy ||
+          busy: widget.nodePreferenceBusy ||
               (widget.locationsCatalogBusy && hasList),
           onTap: () => _showInfoSheet(
             context,
@@ -133,16 +211,31 @@ class _LocationsSectionState extends State<_LocationsSection> {
             ],
           ),
         ),
+        if (hasList && !_canSelectLocation) ...[
+          const SizedBox(height: 14),
+          const _SectionCard(
+            key: ValueKey('locations-selection-locked'),
+            title: 'Выбор откроется после первого подключения',
+            tone: _SectionTone.muted,
+            lines: [
+              'Сначала подготовьте доступ кнопкой «Подключить». Локации уже можно искать и добавлять в избранное.',
+            ],
+          ),
+        ],
         if (!widget.locationsCatalogBusy &&
             widget.hasProvisionedAccess &&
             (widget.locationsCatalogError ?? '').trim().isNotEmpty) ...[
           const SizedBox(height: 14),
           _SectionCard(
             key: const ValueKey('locations-catalog-error'),
-            title: 'Список стран не обновился',
+            title: widget.locationsUsingCache
+                ? 'Нет свежих данных'
+                : 'Список стран не обновился',
             tone: _SectionTone.muted,
-            lines: const [
-              'Не удалось загрузить свежие данные. Проверьте подключение к интернету и повторите.',
+            lines: [
+              widget.locationsUsingCache
+                  ? 'Показываем сохранённый список. ${_locationCacheLabel(widget.locationsCachedAt)}'
+                  : 'Не удалось загрузить данные. Проверьте подключение к интернету и повторите.',
             ],
             child: PokrovActionRow(
               key: const ValueKey('locations-catalog-retry'),
@@ -153,34 +246,14 @@ class _LocationsSectionState extends State<_LocationsSection> {
           ),
         ],
         if (hasCatalog) ...[
-          _SectionCard(
-            title: 'Премиум-локации',
-            lines: const [],
-            child: filteredCatalog.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text(
-                      'Ничего не найдено',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: tokens.muted,
-                      ),
-                    ),
-                  )
-                : Column(
-                    children: filteredCatalog
-                        .map(
-                          (entry) => _ClientLocationCityRow(
-                            entry: entry,
-                            selected:
-                                entry.city.code.trim().toLowerCase() ==
-                                widget.preferredNodeCode.trim().toLowerCase(),
-                            disabled: widget.nodePreferenceBusy,
-                            onTap: () =>
-                                widget.onPreferredNodeSelected(entry.city.code),
-                          ),
-                        )
-                        .toList(growable: false),
-                  ),
+          _catalogSection(title: 'Избранное', entries: favoriteEntries),
+          if (favoriteEntries.isNotEmpty) const SizedBox(height: 14),
+          _catalogSection(title: 'Недавние', entries: recentEntries),
+          if (recentEntries.isNotEmpty) const SizedBox(height: 14),
+          _catalogSection(
+            title: 'Все локации',
+            entries: remainingEntries,
+            showEmpty: filteredCatalog.isEmpty,
           ),
         ] else if (hasList) ...[
           _SectionCard(
@@ -201,12 +274,18 @@ class _LocationsSectionState extends State<_LocationsSection> {
                         .map(
                           (node) => _SmartConnectNodeRow(
                             node: node,
-                            selected:
-                                node.code.trim().toLowerCase() ==
+                            selected: node.code.trim().toLowerCase() ==
                                 widget.preferredNodeCode.trim().toLowerCase(),
+                            favorite: widget.favoriteNodeCodes.contains(
+                              node.code.trim().toLowerCase(),
+                            ),
                             disabled: widget.nodePreferenceBusy,
+                            selectionEnabled: _canSelectLocation &&
+                                !widget.nodePreferenceBusy,
                             onTap: () =>
                                 widget.onPreferredNodeSelected(node.code),
+                            onFavoriteToggle: () =>
+                                widget.onFavoriteNodeToggle(node.code),
                           ),
                         )
                         .toList(growable: false),
@@ -336,9 +415,9 @@ class _AutoLocationCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: p.ink,
-                        fontWeight: FontWeight.w700,
-                      ),
+                            color: p.ink,
+                            fontWeight: FontWeight.w700,
+                          ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -346,9 +425,9 @@ class _AutoLocationCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: p.muted,
-                        height: 1.25,
-                      ),
+                            color: p.muted,
+                            height: 1.25,
+                          ),
                     ),
                   ],
                 ),
@@ -394,14 +473,20 @@ class _ClientLocationCityRow extends StatelessWidget {
   const _ClientLocationCityRow({
     required this.entry,
     required this.selected,
+    required this.favorite,
     required this.disabled,
+    required this.selectionEnabled,
     required this.onTap,
+    required this.onFavoriteToggle,
   });
 
   final _ClientLocationEntry entry;
   final bool selected;
+  final bool favorite;
   final bool disabled;
+  final bool selectionEnabled;
   final VoidCallback onTap;
+  final VoidCallback onFavoriteToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -409,6 +494,7 @@ class _ClientLocationCityRow extends StatelessWidget {
     final city = entry.city;
     final country = entry.country;
     final quality = _locationQualityLabel(city.healthScore);
+    final metrics = _locationMetricsLabel(city);
     final subtitle = <String>[
       country.country,
       quality,
@@ -430,9 +516,9 @@ class _ClientLocationCityRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: p.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
+                        color: p.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -443,32 +529,69 @@ class _ClientLocationCityRow extends StatelessWidget {
                     context,
                   ).textTheme.bodySmall?.copyWith(color: p.muted, height: 1.25),
                 ),
+                const SizedBox(height: 2),
+                Text(
+                  metrics,
+                  key: ValueKey('locations-catalog-metrics-${city.code}'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: p.muted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
               ],
             ),
           ),
           const SizedBox(width: 12),
+          IconButton(
+            key: ValueKey('locations-favorite-${city.code}'),
+            tooltip: favorite ? 'Убрать из избранного' : 'Добавить в избранное',
+            onPressed: disabled ? null : onFavoriteToggle,
+            visualDensity: VisualDensity.compact,
+            icon: Icon(
+              favorite ? Icons.star_rounded : Icons.star_border_rounded,
+              color: favorite ? p.reward : p.muted,
+              size: 22,
+            ),
+          ),
           _SignalBars(score: city.healthScore),
           const SizedBox(width: 14),
-          AnimatedContainer(
-            duration: _MotionScope.of(context).duration(_MotionTokens.short),
-            curve: _MotionTokens.ease,
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: selected ? p.accent : Colors.transparent,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: selected ? p.accent : p.ink.withValues(alpha: 0.22),
+          if (selectionEnabled)
+            AnimatedContainer(
+              duration: _MotionScope.of(context).duration(_MotionTokens.short),
+              curve: _MotionTokens.ease,
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: selected ? p.accent : Colors.transparent,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selected ? p.accent : p.ink.withValues(alpha: 0.22),
+                ),
+              ),
+              child: selected
+                  ? Icon(
+                      Icons.check_rounded,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      size: 18,
+                    )
+                  : null,
+            )
+          else
+            Tooltip(
+              message: 'Сначала подключите POKROV',
+              child: SizedBox(
+                key: ValueKey('locations-selection-locked-${city.code}'),
+                width: 30,
+                height: 30,
+                child: Icon(
+                  Icons.lock_outline_rounded,
+                  color: p.muted,
+                  size: 19,
+                ),
               ),
             ),
-            child: selected
-                ? Icon(
-                    Icons.check_rounded,
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    size: 18,
-                  )
-                : null,
-          ),
         ],
       ),
     );
@@ -482,6 +605,9 @@ class _ClientLocationCityRow extends StatelessWidget {
         ),
       );
     }
+    if (!selectionEnabled) {
+      return content;
+    }
     return PokrovSettingsRowPressSurface(onTap: onTap, child: content);
   }
 }
@@ -490,20 +616,27 @@ class _SmartConnectNodeRow extends StatelessWidget {
   const _SmartConnectNodeRow({
     required this.node,
     required this.selected,
+    required this.favorite,
     required this.disabled,
+    required this.selectionEnabled,
     required this.onTap,
+    required this.onFavoriteToggle,
   });
 
   final SmartConnectNode node;
   final bool selected;
+  final bool favorite;
   final bool disabled;
+  final bool selectionEnabled;
   final VoidCallback onTap;
+  final VoidCallback onFavoriteToggle;
 
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
     final city = _smartConnectNodeCity(node);
     final quality = _smartConnectQualityLabel(node);
+    final latency = _locationLatencyLabel(node.rankHint.panelLatencyMs);
     final content = Padding(
       key: ValueKey('locations-smart-node-${node.code}'),
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -522,9 +655,9 @@ class _SmartConnectNodeRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: p.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
+                        color: p.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -537,40 +670,66 @@ class _SmartConnectNodeRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  quality,
+                  '$quality · $latency',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: selected ? p.accent : p.muted,
-                    fontWeight: FontWeight.w700,
-                  ),
+                        color: selected ? p.accent : p.muted,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 12),
+          IconButton(
+            key: ValueKey('locations-favorite-${node.code}'),
+            tooltip: favorite ? 'Убрать из избранного' : 'Добавить в избранное',
+            onPressed: disabled ? null : onFavoriteToggle,
+            visualDensity: VisualDensity.compact,
+            icon: Icon(
+              favorite ? Icons.star_rounded : Icons.star_border_rounded,
+              color: favorite ? p.reward : p.muted,
+              size: 22,
+            ),
+          ),
           _SignalBars(score: node.rankHint.healthScore),
           const SizedBox(width: 14),
-          AnimatedContainer(
-            duration: _MotionScope.of(context).duration(_MotionTokens.short),
-            curve: _MotionTokens.ease,
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: selected ? p.accent : Colors.transparent,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: selected ? p.accent : p.ink.withValues(alpha: 0.22),
+          if (selectionEnabled)
+            AnimatedContainer(
+              duration: _MotionScope.of(context).duration(_MotionTokens.short),
+              curve: _MotionTokens.ease,
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: selected ? p.accent : Colors.transparent,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selected ? p.accent : p.ink.withValues(alpha: 0.22),
+                ),
+              ),
+              child: selected
+                  ? Icon(
+                      Icons.check_rounded,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      size: 18,
+                    )
+                  : null,
+            )
+          else
+            Tooltip(
+              message: 'Сначала подключите POKROV',
+              child: SizedBox(
+                key: ValueKey('locations-selection-locked-${node.code}'),
+                width: 30,
+                height: 30,
+                child: Icon(
+                  Icons.lock_outline_rounded,
+                  color: p.muted,
+                  size: 19,
+                ),
               ),
             ),
-            child: selected
-                ? Icon(
-                    Icons.check_rounded,
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    size: 18,
-                  )
-                : null,
-          ),
         ],
       ),
     );
@@ -583,6 +742,9 @@ class _SmartConnectNodeRow extends StatelessWidget {
           child: MouseRegion(cursor: SystemMouseCursors.basic, child: content),
         ),
       );
+    }
+    if (!selectionEnabled) {
+      return content;
     }
     return PokrovSettingsRowPressSurface(onTap: onTap, child: content);
   }

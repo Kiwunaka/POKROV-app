@@ -9,6 +9,33 @@ void main() {
     expect(windows_shell.pokrovWindowsMinimumSize, const Size(700, 640));
   });
 
+  test('windows tray connection label reports actionable state', () {
+    expect(
+      windows_shell.pokrovWindowsTrayConnectionLabel(
+        attached: false,
+        connected: false,
+        busy: false,
+      ),
+      'Подключение загружается',
+    );
+    expect(
+      windows_shell.pokrovWindowsTrayConnectionLabel(
+        attached: true,
+        connected: false,
+        busy: false,
+      ),
+      'Подключить VPN',
+    );
+    expect(
+      windows_shell.pokrovWindowsTrayConnectionLabel(
+        attached: true,
+        connected: true,
+        busy: false,
+      ),
+      'Отключить VPN',
+    );
+  });
+
   const windowsTrayPrivateHelperBehaviorCoverage = ['_showWindow'];
 
   test(

@@ -17,6 +17,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.warpRuntimeConsent,
     required this.warpBusy,
     required this.onToggleRuntime,
+    required this.onOpenConnectionDetails,
     required this.onTelegramBonus,
     required this.onOpenLocations,
     required this.onOpenRules,
@@ -43,6 +44,7 @@ class _QuickConnectSection extends StatelessWidget {
   final bool warpRuntimeConsent;
   final bool warpBusy;
   final Future<void> Function() onToggleRuntime;
+  final VoidCallback onOpenConnectionDetails;
   final VoidCallback? onTelegramBonus;
   final VoidCallback onOpenLocations;
   final VoidCallback onOpenRules;
@@ -61,11 +63,6 @@ class _QuickConnectSection extends StatelessWidget {
       busy: runtimeBusy,
       disconnecting: runtimeDisconnecting,
     );
-    final statusSummary = _consumerProtectionStatusSummary(
-      snapshot,
-      headline: runtimeHeadline,
-      hostPlatform: appContext.hostPlatform,
-    );
     final primaryActionEnabled = !runtimeBusy && primaryConnectEnabled;
     final isDesktop = switch (appContext.hostPlatform) {
       HostPlatform.windows || HostPlatform.macos => true,
@@ -74,21 +71,21 @@ class _QuickConnectSection extends StatelessWidget {
     final statusColor = runtimeBusy
         ? p.muted
         : isRunning
-        ? isHealthyRunning
-              ? p.success
-              : p.warning
-        : p.muted;
+            ? isHealthyRunning
+                ? p.success
+                : p.warning
+            : p.muted;
     final actionLabel = runtimeBusy
         // Honest direction while busy: tearing the tunnel down must never
         // read as if a connection is being established.
         ? runtimeDisconnecting
-              ? 'Отключаем…'
-              : 'Подключаемся…'
+            ? 'Отключаем…'
+            : 'Подключаемся…'
         : isRunning
-        ? 'Отключить'
-        : primaryActionEnabled
-        ? 'Включить VPN'
-        : 'Пока недоступно';
+            ? 'Отключить'
+            : primaryActionEnabled
+                ? 'Включить VPN'
+                : 'Пока недоступно';
     final recoveryNotice = _motionRecoveryNotice(
       snapshot,
       headline: runtimeHeadline,
@@ -124,9 +121,8 @@ class _QuickConnectSection extends StatelessWidget {
               telegramBonusLabel: telegramBonusBusy
                   ? 'Проверяем Telegram'
                   : _telegramBonusHomeLabel(appContext, bonusSummary),
-              telegramBonusClaimed: (bonusSummary?.channelBonusClaimedAt ?? '')
-                  .trim()
-                  .isNotEmpty,
+              telegramBonusClaimed:
+                  (bonusSummary?.channelBonusClaimedAt ?? '').trim().isNotEmpty,
               selectedRouteMode: selectedRouteMode,
               locationLabel: 'Автоматически',
               warpPolicy: warpPolicy,
@@ -135,16 +131,7 @@ class _QuickConnectSection extends StatelessWidget {
               homePromoSlot: homePromoSlot,
               onToggleRuntime: onToggleRuntime,
               onTelegramBonus: onTelegramBonus,
-              onOpenConnectionDetails: () => _showInfoSheet(
-                context,
-                title: 'Подключение',
-                lines: [
-                  statusSummary,
-                  'Доступ: ${_accessMainLabel(appContext, bonusSummary)}.',
-                  'Локация: автоматический выбор.',
-                  'Режим: ${_routeModeShortLabel(selectedRouteMode)}.',
-                ],
-              ),
+              onOpenConnectionDetails: onOpenConnectionDetails,
               onOpenLocations: onOpenLocations,
               onOpenRules: onOpenRules,
               onOpenWarp: onOpenWarp,
@@ -776,10 +763,10 @@ class _HomeAccessStrip extends StatelessWidget {
     final accessBadgeLabel = telegramBonusClaimed
         ? '+10 дней'
         : accessLabel.startsWith('5 ')
-        ? '5 дней'
-        : accessLabel.toLowerCase().contains('премиум')
-        ? 'Премиум'
-        : 'Активен';
+            ? '5 дней'
+            : accessLabel.toLowerCase().contains('премиум')
+                ? 'Премиум'
+                : 'Активен';
     final content = Container(
       key: const ValueKey('home-access-strip'),
       width: double.infinity,
@@ -838,9 +825,8 @@ class _HomeAccessStrip extends StatelessWidget {
           TweenAnimationBuilder<double>(
             key: ValueKey('home-access-badge-bloom-$telegramBonusClaimed'),
             tween: Tween(
-              begin: telegramBonusClaimed && !motion.disableAnimations
-                  ? 0.9
-                  : 1.0,
+              begin:
+                  telegramBonusClaimed && !motion.disableAnimations ? 0.9 : 1.0,
               end: 1,
             ),
             duration: motion.duration(_MotionTokens.standard),
@@ -937,9 +923,9 @@ class _HomeTelegramBonusTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: p.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
+                        color: p.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -1024,142 +1010,154 @@ class _HomeWarpTile extends StatelessWidget {
     final subtitle = busy
         ? 'Применяем настройку'
         : enabled
-        ? 'Включится при следующем подключении'
-        : canOffer
-        ? 'Дополнительная защита'
-        : 'Недоступно на этом устройстве';
+            ? 'Включится при следующем подключении'
+            : canOffer
+                ? 'Дополнительная защита'
+                : 'Недоступно на этом устройстве';
     final iconColor = enabled ? p.accent : p.muted.withValues(alpha: 0.8);
     final iconBackground = enabled
         ? p.accent.withValues(alpha: 0.12)
         : p.surfaceMuted.withValues(alpha: 0.86);
 
+    void handleTap() {
+      if (busy) {
+        return;
+      }
+      if (!canOffer) {
+        unawaited(onOpen());
+        return;
+      }
+      // Same selection tick as the inline switch emits for direct taps.
+      PokrovHaptics.tap();
+      unawaited(onChanged(!enabled));
+    }
+
     return Semantics(
       key: const ValueKey('home-warp-tile'),
+      container: true,
+      enabled: !busy,
+      label: title,
+      value: subtitle,
       toggled: enabled,
-      child: GestureDetector(
-        // The whole tile toggles the switch; the switch itself wins the
-        // gesture arena for taps landing directly on it.
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          if (busy) {
-            return;
-          }
-          if (!canOffer) {
-            unawaited(onOpen());
-            return;
-          }
-          // Same selection tick as the inline switch emits for direct taps.
-          PokrovHaptics.tap();
-          unawaited(onChanged(!enabled));
-        },
-        child: AnimatedContainer(
-          key: ValueKey(lifecycle.stateKey),
-          duration: motion.duration(_MotionTokens.short),
-          curve: _MotionTokens.ease,
-          width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 520),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: enabled
-                ? p.accent.withValues(alpha: 0.09)
-                : p.surface.withValues(alpha: 0.96),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: enabled ? p.accent.withValues(alpha: 0.28) : p.line,
+      onTap: busy ? null : handleTap,
+      child: ExcludeSemantics(
+        child: GestureDetector(
+          // Pointer input still works on the whole tile and on the inline
+          // switch. ExcludeSemantics keeps TalkBack on one toggle node.
+          behavior: HitTestBehavior.opaque,
+          onTap: handleTap,
+          child: AnimatedContainer(
+            key: ValueKey(lifecycle.stateKey),
+            duration: motion.duration(_MotionTokens.short),
+            curve: _MotionTokens.ease,
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 520),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: enabled
+                  ? p.accent.withValues(alpha: 0.09)
+                  : p.surface.withValues(alpha: 0.96),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: enabled ? p.accent.withValues(alpha: 0.28) : p.line,
+              ),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Consent settle: turning WARP on lands the shield with a small
-              // spring — the promise reads committed. The off direction fades
-              // only: downgrades stay deliberately quieter.
-              AnimatedSwitcher(
-                duration: motion.duration(_MotionTokens.short),
-                switchInCurve: _MotionTokens.ease,
-                switchOutCurve: _MotionTokens.ease,
-                transitionBuilder: (child, animation) {
-                  final fade = FadeTransition(opacity: animation, child: child);
-                  if (child.key != const ValueKey(true)) {
-                    return fade;
-                  }
-                  return FadeTransition(
-                    opacity: animation,
-                    child: ScaleTransition(
-                      scale: Tween<double>(begin: 0.9, end: 1).animate(
-                        CurvedAnimation(
-                          parent: animation,
-                          curve: PokrovMotionTokens.spring,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Consent settle: turning WARP on lands the shield with a small
+                // spring — the promise reads committed. The off direction fades
+                // only: downgrades stay deliberately quieter.
+                AnimatedSwitcher(
+                  duration: motion.duration(_MotionTokens.short),
+                  switchInCurve: _MotionTokens.ease,
+                  switchOutCurve: _MotionTokens.ease,
+                  transitionBuilder: (child, animation) {
+                    final fade =
+                        FadeTransition(opacity: animation, child: child);
+                    if (child.key != const ValueKey(true)) {
+                      return fade;
+                    }
+                    return FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(
+                        scale: Tween<double>(begin: 0.9, end: 1).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: PokrovMotionTokens.spring,
+                          ),
                         ),
+                        child: child,
                       ),
-                      child: child,
+                    );
+                  },
+                  child: Container(
+                    key: ValueKey(enabled),
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: iconBackground,
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                  );
-                },
-                child: Container(
-                  key: ValueKey(enabled),
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: iconBackground,
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Icon(
-                    enabled
-                        ? Icons.verified_user_rounded
-                        : Icons.blur_on_rounded,
-                    size: 20,
-                    color: iconColor,
+                    child: Icon(
+                      enabled
+                          ? Icons.verified_user_rounded
+                          : Icons.blur_on_rounded,
+                      size: 20,
+                      color: iconColor,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: p.ink,
-                              fontWeight: FontWeight.w700,
-                            ),
-                      ),
-                      const SizedBox(height: 2),
-                      AnimatedSwitcher(
-                        key: const ValueKey('home-warp-status-label'),
-                        duration: motion.duration(_MotionTokens.short),
-                        transitionBuilder: _fadeSlideTransition,
-                        child: Text(
-                          subtitle,
-                          key: ValueKey(subtitle),
-                          style: Theme.of(context).textTheme.labelMedium
-                              ?.copyWith(
-                                color: p.muted,
-                                fontWeight: FontWeight.w500,
-                              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: p.ink,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        AnimatedSwitcher(
+                          key: const ValueKey('home-warp-status-label'),
+                          duration: motion.duration(_MotionTokens.short),
+                          transitionBuilder: _fadeSlideTransition,
+                          child: Text(
+                            subtitle,
+                            key: ValueKey(subtitle),
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(
+                                  color: p.muted,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              PokrovSwitch(
-                key: const ValueKey('home-warp-inline-switch'),
-                value: enabled,
-                onChanged: !canOffer || busy
-                    ? null
-                    : (value) {
-                        unawaited(onChanged(value));
-                      },
-              ),
-            ],
+                const SizedBox(width: 8),
+                PokrovSwitch(
+                  key: const ValueKey('home-warp-inline-switch'),
+                  value: enabled,
+                  onChanged: !canOffer || busy
+                      ? null
+                      : (value) {
+                          unawaited(onChanged(value));
+                        },
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1177,19 +1175,18 @@ class _HomeBrandHeader extends StatelessWidget {
     final p = PokrovPalette.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: center
-          ? MainAxisAlignment.center
-          : MainAxisAlignment.start,
+      mainAxisAlignment:
+          center ? MainAxisAlignment.center : MainAxisAlignment.start,
       children: [
         const _BrandMark(size: 38),
         const SizedBox(width: 10),
         Text(
           'POKROV VPN',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: p.ink,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0,
-          ),
+                color: p.ink,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0,
+              ),
         ),
       ],
     );
@@ -1369,10 +1366,10 @@ class _MotionRecoveryBanner extends StatelessWidget {
               child: Text(
                 message,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: p.ink.withValues(alpha: 0.78),
-                  height: 1.3,
-                  fontWeight: FontWeight.w600,
-                ),
+                      color: p.ink.withValues(alpha: 0.78),
+                      height: 1.3,
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
             ),
           ],
@@ -1418,10 +1415,10 @@ class _HomeInfoNotice extends StatelessWidget {
               child: Text(
                 message,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: p.muted,
-                  height: 1.25,
-                  fontWeight: FontWeight.w500,
-                ),
+                      color: p.muted,
+                      height: 1.25,
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
             ),
           ],
@@ -1492,9 +1489,9 @@ class _ConnectHintHalo extends StatelessWidget {
                     child: Text(
                       'Нажмите, чтобы подключиться',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: p.muted,
-                        fontWeight: FontWeight.w600,
-                      ),
+                            color: p.muted,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
                   ),
                 ),

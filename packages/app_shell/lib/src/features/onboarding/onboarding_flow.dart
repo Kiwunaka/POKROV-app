@@ -593,7 +593,7 @@ class _FirstLaunchRestoreScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Введите код из Telegram, сайта, кабинета или письма.',
+                'Введите одноразовый код устройства из кабинета или код активации из Telegram, сайта или письма.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: p.muted,
                   height: 1.35,
@@ -615,8 +615,8 @@ class _FirstLaunchRestoreScreen extends StatelessWidget {
                   }
                 },
                 decoration: InputDecoration(
-                  labelText: 'Код активации',
-                  hintText: 'POKROV-XXXX-XXXX',
+                  labelText: 'Код входа или активации',
+                  hintText: 'ABCD-EFGH или POKROV-…',
                   prefixIcon: const Icon(Icons.key_rounded),
                   filled: true,
                   fillColor: p.surfaceMuted.withValues(alpha: 0.64),

@@ -20,10 +20,12 @@ import 'package:pokrov_support_context/support_context.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app_first_runtime_bootstrap.dart';
+import 'client_routing_preferences.dart';
 import 'src/assistant/pokrov_ai_assistant.dart';
 import 'src/design_system/design_system.dart';
 import 'src/warp/pokrov_warp_lifecycle.dart';
 export 'app_first_runtime_bootstrap.dart';
+export 'client_routing_preferences.dart';
 part 'app_shell_ui_helpers.dart';
 
 part 'src/seed/seed_context.dart';
@@ -35,9 +37,12 @@ part 'src/shared/shell_widgets.dart';
 part 'src/shared/ru_plural.dart';
 part 'src/shared/pokrov_haptics.dart';
 part 'src/shared/pokrov_snack.dart';
+part 'src/shared/client_experience_store.dart';
+part 'src/shared/system_network_controls.dart';
 
 part 'src/features/onboarding/onboarding_flow.dart';
 part 'src/features/home/home_surface.dart';
+part 'src/features/home/protection_center.dart';
 part 'src/features/locations/locations_surface.dart';
 part 'src/features/locations/location_labels.dart';
 part 'src/features/profile/profile_surface.dart';
@@ -45,6 +50,7 @@ part 'src/features/profile/profile_sheets.dart';
 part 'src/features/profile/access_labels.dart';
 part 'src/features/rewards/rewards_hub.dart';
 part 'src/features/rules/rules_surface.dart';
+part 'src/features/rules/routing_controls.dart';
 part 'src/features/rules/rules_helpers.dart';
 part 'src/features/rules/route_labels.dart';
 part 'src/features/warp/warp_sheet.dart';

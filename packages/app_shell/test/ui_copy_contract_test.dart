@@ -103,14 +103,12 @@ void main() {
       expect(combined, contains('Хорошо'));
       expect(combined, contains('Стабильно'));
       expect(combined, contains('Медленно'));
+      expect(combined, contains(r"return '$latencyMs мс';"));
+      expect(combined, contains(r'нагрузка ${percent.round()}%'));
+      expect(combined, contains('замер устарел'));
 
       for (final forbidden in const <String>[
         'Автоматический выбор',
-        ' ms',
-        'ms ',
-        ' мс',
-        'мс ',
-        'panelLatencyMs',
         'probeHost',
         'probe.host',
         'hostname',

@@ -59,7 +59,7 @@ void _showRedeemSheet(
               ),
               const SizedBox(height: 8),
               Text(
-                'Введите код из приложения, кабинета, Telegram или письма.',
+                'Введите одноразовый код устройства из кабинета или код активации из Telegram или письма.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: PokrovPalette.of(context).muted,
                       height: 1.35,
@@ -141,8 +141,8 @@ class _RedeemFieldsState extends State<_RedeemFields> {
             }
           },
           decoration: InputDecoration(
-            labelText: 'Код активации',
-            hintText: 'POKROV-XXXX-XXXX',
+            labelText: 'Код входа или активации',
+            hintText: 'ABCD-EFGH или POKROV-…',
             errorText: _emptyCodeNotice,
           ),
         ),
@@ -234,6 +234,8 @@ void _showDevicesSheet(
   required String currentPlatformLabel,
   required Future<ClientDeviceList> Function() onFetchDevices,
   required Future<bool> Function(String deviceId) onRevokeDevice,
+  required Future<ClientDevicePairingCode> Function() onIssuePairingCode,
+  required Future<bool> Function(String pairingId) onCancelPairingCode,
 }) {
   showModalBottomSheet<void>(
     context: context,
@@ -243,6 +245,8 @@ void _showDevicesSheet(
     builder: (context) => _DevicesSheet(
       onFetchDevices: onFetchDevices,
       onRevokeDevice: onRevokeDevice,
+      onIssuePairingCode: onIssuePairingCode,
+      onCancelPairingCode: onCancelPairingCode,
     ),
   );
 }
@@ -251,10 +255,14 @@ class _DevicesSheet extends StatefulWidget {
   const _DevicesSheet({
     required this.onFetchDevices,
     required this.onRevokeDevice,
+    required this.onIssuePairingCode,
+    required this.onCancelPairingCode,
   });
 
   final Future<ClientDeviceList> Function() onFetchDevices;
   final Future<bool> Function(String deviceId) onRevokeDevice;
+  final Future<ClientDevicePairingCode> Function() onIssuePairingCode;
+  final Future<bool> Function(String pairingId) onCancelPairingCode;
 
   @override
   State<_DevicesSheet> createState() => _DevicesSheetState();
@@ -263,6 +271,9 @@ class _DevicesSheet extends StatefulWidget {
 class _DevicesSheetState extends State<_DevicesSheet> {
   late Future<ClientDeviceList> _future;
   String? _revokingId;
+  ClientDevicePairingCode? _pairingCode;
+  bool _pairingBusy = false;
+  String? _pairingError;
 
   @override
   void initState() {
@@ -274,6 +285,73 @@ class _DevicesSheetState extends State<_DevicesSheet> {
     setState(() {
       _future = widget.onFetchDevices();
     });
+  }
+
+  Future<void> _issuePairingCode() async {
+    if (_pairingBusy) {
+      return;
+    }
+    setState(() {
+      _pairingBusy = true;
+      _pairingError = null;
+    });
+    try {
+      final code = await widget.onIssuePairingCode();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _pairingCode = code;
+      });
+    } on BootstrapFailure catch (error) {
+      if (mounted) {
+        setState(() {
+          _pairingError = error.message;
+        });
+      }
+    } on Object {
+      if (mounted) {
+        setState(() {
+          _pairingError = 'Не удалось создать код устройства.';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _pairingBusy = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _cancelPairingCode() async {
+    final pairing = _pairingCode;
+    if (pairing == null || _pairingBusy) {
+      return;
+    }
+    setState(() {
+      _pairingBusy = true;
+      _pairingError = null;
+    });
+    try {
+      final ok = await widget.onCancelPairingCode(pairing.id);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        if (ok) {
+          _pairingCode = null;
+        } else {
+          _pairingError = 'Не удалось отменить код устройства.';
+        }
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _pairingBusy = false;
+        });
+      }
+    }
   }
 
   Future<void> _revoke(ClientDeviceInfo device) async {
@@ -359,6 +437,122 @@ class _DevicesSheetState extends State<_DevicesSheet> {
                       height: 1.35,
                     ),
               ),
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: tokens.surfaceMuted.withValues(alpha: 0.62),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: tokens.line),
+                ),
+                child: _pairingCode == null
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Добавить устройство',
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Одноразовый код на 10 минут. Для Android TV его можно ввести вручную.',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: tokens.muted,
+                                      height: 1.35,
+                                    ),
+                          ),
+                          const SizedBox(height: 10),
+                          OutlinedButton.icon(
+                            key: const ValueKey(
+                              'profile-device-pairing-issue',
+                            ),
+                            onPressed: _pairingBusy
+                                ? null
+                                : () => unawaited(_issuePairingCode()),
+                            icon: _pairingBusy
+                                ? const SizedBox.square(
+                                    dimension: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.add_link_rounded),
+                            label: const Text('Создать код'),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _pairingCode!.code,
+                            key: const ValueKey(
+                              'profile-device-pairing-code',
+                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 2.2,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Введите в POKROV на новом устройстве. После первого использования код закроется.',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: tokens.muted,
+                                      height: 1.35,
+                                    ),
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              OutlinedButton.icon(
+                                key: const ValueKey(
+                                  'profile-device-pairing-copy',
+                                ),
+                                onPressed: () {
+                                  Clipboard.setData(
+                                    ClipboardData(text: _pairingCode!.code),
+                                  );
+                                  showPokrovSnack(
+                                    context,
+                                    'Код скопирован.',
+                                    tone: PokrovSnackTone.success,
+                                  );
+                                },
+                                icon: const Icon(Icons.copy_rounded),
+                                label: const Text('Скопировать'),
+                              ),
+                              TextButton(
+                                key: const ValueKey(
+                                  'profile-device-pairing-cancel',
+                                ),
+                                onPressed: _pairingBusy
+                                    ? null
+                                    : () => unawaited(_cancelPairingCode()),
+                                child: const Text('Отменить'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+              ),
+              if ((_pairingError ?? '').isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _pairingError!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: tokens.danger,
+                      ),
+                ),
+              ],
               const SizedBox(height: 14),
               FutureBuilder<ClientDeviceList>(
                 future: _future,
@@ -507,6 +701,8 @@ class _DeviceRow extends StatelessWidget {
 void _showNotificationsSheet(
   BuildContext context, {
   required List<ClientNotificationItem> notifications,
+  required bool usingCache,
+  required String cachedAt,
   required Future<void> Function() onRefresh,
   required void Function(String label, String value) onOpenHandoff,
 }) {
@@ -517,6 +713,9 @@ void _showNotificationsSheet(
     sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
     builder: (context) => _NotificationsSheet(
       notifications: notifications,
+      usingCache: usingCache,
+      cachedAt: cachedAt,
+      onRefresh: onRefresh,
       onOpenHandoff: onOpenHandoff,
     ),
   );
@@ -525,10 +724,16 @@ void _showNotificationsSheet(
 class _NotificationsSheet extends StatelessWidget {
   const _NotificationsSheet({
     required this.notifications,
+    required this.usingCache,
+    required this.cachedAt,
+    required this.onRefresh,
     required this.onOpenHandoff,
   });
 
   final List<ClientNotificationItem> notifications;
+  final bool usingCache;
+  final String cachedAt;
+  final Future<void> Function() onRefresh;
   final void Function(String label, String value) onOpenHandoff;
 
   @override
@@ -547,10 +752,46 @@ class _NotificationsSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Уведомления',
-                style: Theme.of(context).textTheme.titleLarge,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Уведомления',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  IconButton(
+                    key: const ValueKey('profile-notifications-refresh'),
+                    tooltip: 'Обновить',
+                    onPressed: () async {
+                      await onRefresh();
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    icon: const Icon(Icons.refresh_rounded),
+                  ),
+                ],
               ),
+              if (usingCache) ...[
+                const SizedBox(height: 6),
+                Container(
+                  key: const ValueKey('profile-notifications-cache-notice'),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: tokens.muted.withValues(alpha: 0.08),
+                    borderRadius: PokrovRadii.cardSm,
+                    border: Border.all(color: tokens.line),
+                  ),
+                  child: Text(
+                    'Нет свежих данных. Показываем сохранённые уведомления. ${_locationCacheLabel(cachedAt)}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: tokens.muted,
+                          height: 1.35,
+                        ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               if (notifications.isEmpty)
                 Padding(

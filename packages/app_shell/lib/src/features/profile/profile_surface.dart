@@ -33,10 +33,14 @@ class _ProfileSection extends StatelessWidget {
     required this.notifications,
     required this.notificationsUnread,
     required this.notificationsBusy,
+    required this.notificationsUsingCache,
+    required this.notificationsCachedAt,
     required this.onOpenNotifications,
     required this.onRefreshNotifications,
     required this.onFetchDevices,
     required this.onRevokeDevice,
+    required this.onIssuePairingCode,
+    required this.onCancelPairingCode,
   });
 
   final SeedAppContext appContext;
@@ -73,10 +77,14 @@ class _ProfileSection extends StatelessWidget {
   final List<ClientNotificationItem> notifications;
   final int notificationsUnread;
   final bool notificationsBusy;
+  final bool notificationsUsingCache;
+  final String notificationsCachedAt;
   final VoidCallback onOpenNotifications;
   final Future<void> Function() onRefreshNotifications;
   final Future<ClientDeviceList> Function() onFetchDevices;
   final Future<bool> Function(String deviceId) onRevokeDevice;
+  final Future<ClientDevicePairingCode> Function() onIssuePairingCode;
+  final Future<bool> Function(String pairingId) onCancelPairingCode;
 
   List<String> _bonusSummaryLines() {
     final summary = bonusSummary();
@@ -86,9 +94,8 @@ class _ProfileSection extends StatelessWidget {
     if (summary == null) {
       return const ['Telegram · рефералы · промокоды'];
     }
-    final referralCode = summary.referralCode.isEmpty
-        ? ''
-        : ' · ${summary.referralCode}';
+    final referralCode =
+        summary.referralCode.isEmpty ? '' : ' · ${summary.referralCode}';
     return [
       'Telegram +${ruDays(summary.channelBonusPremiumDays)} · рефералы ${summary.referralCount}$referralCode',
     ];
@@ -227,6 +234,8 @@ class _ProfileSection extends StatelessWidget {
                         currentPlatformLabel: appContext.hostPlatform.label,
                         onFetchDevices: onFetchDevices,
                         onRevokeDevice: onRevokeDevice,
+                        onIssuePairingCode: onIssuePairingCode,
+                        onCancelPairingCode: onCancelPairingCode,
                       ),
                     ),
                     if ((telegramBonusError ?? '').isNotEmpty)
@@ -247,12 +256,12 @@ class _ProfileSection extends StatelessWidget {
                 key: const ValueKey('profile-section-sync'),
                 title: 'Восстановить доступ',
                 lines: const [
-                  'Если у вас уже есть код из Telegram, кабинета, сайта или письма.',
+                  'Одноразовый вход с другого устройства или активация доступа.',
                 ],
                 child: _SettingsRow(
                   key: const ValueKey('profile-redeem-code-action'),
                   icon: Icons.key_rounded,
-                  title: 'Код активации',
+                  title: 'Код входа или активации',
                   value: 'Ввести',
                   valueIsAction: true,
                   onTap: () => _showRedeemSheet(
@@ -279,6 +288,17 @@ class _ProfileSection extends StatelessWidget {
                         title: 'Написать в поддержку',
                         value: 'Чат',
                         onTap: onOpenSupportHub,
+                      ),
+                      const _SettingsRowDivider(),
+                      _SettingsRow(
+                        key: const ValueKey('profile-guides-action'),
+                        icon: Icons.menu_book_outlined,
+                        title: 'Пошаговые инструкции',
+                        value: 'Открыть',
+                        onTap: () => onOpenHandoff(
+                          'download',
+                          'https://pokrov.space/guides/',
+                        ),
                       ),
                       const _SettingsRowDivider(),
                       _SettingsRow(
@@ -326,8 +346,8 @@ class _ProfileSection extends StatelessWidget {
                       title: 'WARP',
                       value:
                           warpLifecycle.phase == PokrovWarpPhase.readyToConsent
-                          ? 'Можно включить'
-                          : warpLifecycle.publicStatus,
+                              ? 'Можно включить'
+                              : warpLifecycle.publicStatus,
                       onTap: () {
                         unawaited(onOpenWarp());
                       },
@@ -341,14 +361,18 @@ class _ProfileSection extends StatelessWidget {
                       title: 'Уведомления',
                       value: notificationsBusy
                           ? 'Обновляем'
-                          : notificationsUnread > 0
-                          ? '$notificationsUnread'
-                          : 'Открыть',
+                          : notificationsUsingCache
+                              ? 'Сохранено'
+                              : notificationsUnread > 0
+                                  ? '$notificationsUnread'
+                                  : 'Открыть',
                       onTap: () {
                         onOpenNotifications();
                         _showNotificationsSheet(
                           context,
                           notifications: notifications,
+                          usingCache: notificationsUsingCache,
+                          cachedAt: notificationsCachedAt,
                           onRefresh: onRefreshNotifications,
                           onOpenHandoff: onOpenHandoff,
                         );
@@ -485,10 +509,10 @@ class _ProfileAccessOverview extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: p.ink,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0,
-                        ),
+                              color: p.ink,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0,
+                            ),
                       ),
                       const SizedBox(height: 5),
                       Text(
@@ -680,9 +704,9 @@ void _showThemeModeSheet(
             Text(
               'POKROV может следовать системе или всегда открываться в выбранном оформлении.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: PokrovPalette.of(context).muted,
-                height: 1.35,
-              ),
+                    color: PokrovPalette.of(context).muted,
+                    height: 1.35,
+                  ),
             ),
             const SizedBox(height: 14),
             PokrovCheckRow(
@@ -764,9 +788,9 @@ void _showSubscriptionSheet(
                     ? 'Доступ активен. Продление открывается на защищенной странице оплаты.'
                     : 'Сначала активируйте доступ на этом устройстве, затем продлите его на защищенной странице оплаты.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: PokrovPalette.of(context).muted,
-                  height: 1.35,
-                ),
+                      color: PokrovPalette.of(context).muted,
+                      height: 1.35,
+                    ),
               ),
             ),
             const SizedBox(height: 16),
@@ -789,9 +813,9 @@ void _showSubscriptionSheet(
                       '$days',
                       textAlign: TextAlign.right,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: PokrovPalette.of(context).ink,
-                        fontWeight: FontWeight.w600,
-                      ),
+                            color: PokrovPalette.of(context).ink,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
                   ),
                 ),
@@ -841,7 +865,9 @@ void _showSubscriptionSheet(
                         ),
                         Text(
                           plan.price,
-                          style: Theme.of(context).textTheme.bodyMedium
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
                               ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                       ],
@@ -918,9 +944,9 @@ void _showEmailRecoverySheet(
             Text(
               'Email нужен для восстановления доступа и входа в кабинет. Все действия открываются через короткую защищенную сессию.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: PokrovPalette.of(context).muted,
-                height: 1.35,
-              ),
+                    color: PokrovPalette.of(context).muted,
+                    height: 1.35,
+                  ),
             ),
             const SizedBox(height: 16),
             Wrap(

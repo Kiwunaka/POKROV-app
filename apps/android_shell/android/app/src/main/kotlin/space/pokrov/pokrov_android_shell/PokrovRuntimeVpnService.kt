@@ -160,6 +160,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     private fun stopRuntime(message: String, stopReason: String) {
         Log.i(LOG_TAG, "Stopping Android runtime service: $message")
         markServiceStopped()
+        PokrovQuickSettingsTileService.requestRefresh(this)
         try {
             commandServer?.closeService()
         } catch (_: Throwable) {
@@ -473,6 +474,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 "ipv4Routes=$ipv4RouteCount ipv6Routes=$ipv6RouteCount " +
                 "defaultIpv4=$hasIpv4DefaultRoute defaultIpv6=$hasIpv6DefaultRoute"
         markTunEstablished(runtimeMessage)
+        PokrovQuickSettingsTileService.requestRefresh(this)
         AndroidRuntimeState.markRunning(runtimeMessage)
         Log.i(LOG_TAG, runtimeMessage)
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -646,6 +648,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 putExtra(EXTRA_CONFIG_PATH, configPath)
             }
             ContextCompat.startForegroundService(context, intent)
+            PokrovQuickSettingsTileService.requestRefresh(context)
         }
 
         fun stop(context: Context) {
@@ -653,6 +656,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 action = ACTION_STOP
             }
             context.startService(intent)
+            PokrovQuickSettingsTileService.requestRefresh(context)
         }
     }
 }

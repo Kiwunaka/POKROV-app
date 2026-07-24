@@ -139,11 +139,11 @@ class _RewardsHubSheetState extends State<_RewardsHubSheet> {
                   _RewardsHistorySection(
                     summary: summary,
                   ),
+                  const SizedBox(height: 12),
+                  _RewardsAchievements(summary: summary),
                   if (showWheel || showCalendar) ...[
                     const SizedBox(height: 12),
-                    _RewardsActivitiesHeader(
-                      summary: summary,
-                    ),
+                    const _RewardsActivitiesHeader(),
                     if (showWheel) ...[
                       const SizedBox(height: 10),
                       _RewardsFeatureCard(
@@ -309,11 +309,7 @@ class _RewardsTelegramCard extends StatelessWidget {
 }
 
 class _RewardsActivitiesHeader extends StatelessWidget {
-  const _RewardsActivitiesHeader({
-    required this.summary,
-  });
-
-  final AppFirstBonusSummary? summary;
+  const _RewardsActivitiesHeader();
 
   @override
   Widget build(BuildContext context) {
@@ -337,8 +333,6 @@ class _RewardsActivitiesHeader extends StatelessWidget {
                 height: 1.3,
               ),
         ),
-        const SizedBox(height: 10),
-        _RewardsAchievements(summary: summary),
       ],
     );
   }
@@ -530,12 +524,33 @@ class _RewardsAchievements extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    final achievements = <({String title, bool active})>[
-      (title: 'Первый старт', active: summary?.openingBonusClaimed ?? false),
-      (title: 'Telegram', active: summary?.channelBonusClaimed ?? false),
-      (title: 'Рефералы', active: (summary?.referralCount ?? 0) > 0),
-      (title: 'Серия', active: (summary?.streakMonths ?? 0) > 0),
-    ];
+    final remoteAchievements =
+        summary?.achievementItems ?? const <AppFirstAchievementItem>[];
+    final achievements = remoteAchievements.isNotEmpty
+        ? remoteAchievements
+            .map(
+              (item) => (title: item.title, active: item.unlocked),
+            )
+            .toList(growable: false)
+        : <({String title, bool active})>[
+            (
+              title: 'Первый старт',
+              active: summary?.openingBonusClaimed ?? false,
+            ),
+            (
+              title: 'Telegram',
+              active: summary?.channelBonusClaimed ?? false,
+            ),
+            (
+              title: 'Рефералы',
+              active: (summary?.referralCount ?? 0) > 0,
+            ),
+            (
+              title: 'Серия',
+              active: (summary?.streakMonths ?? 0) > 0,
+            ),
+          ];
+    final quests = summary?.questItems ?? const <AppFirstQuestItem>[];
     return Container(
       key: const ValueKey('rewards-achievements-section'),
       width: double.infinity,
@@ -572,6 +587,108 @@ class _RewardsAchievements extends StatelessWidget {
                   ),
                 )
                 .toList(growable: false),
+          ),
+          if (quests.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Divider(height: 1, color: p.line),
+            const SizedBox(height: 14),
+            Text(
+              'Полезные задачи',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: p.ink,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Прогресс подтверждает сервер. Автоматических денежных наград здесь нет.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: p.muted,
+                    height: 1.35,
+                  ),
+            ),
+            const SizedBox(height: 10),
+            for (var index = 0; index < quests.length; index += 1) ...[
+              if (index > 0) const SizedBox(height: 8),
+              _QuestProgressRow(quest: quests[index]),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _QuestProgressRow extends StatelessWidget {
+  const _QuestProgressRow({required this.quest});
+
+  final AppFirstQuestItem quest;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final safeProgress = quest.progress.clamp(0, quest.target);
+    final ratio = quest.target <= 0 ? 0.0 : safeProgress / quest.target;
+    return Container(
+      key: ValueKey('rewards-quest-${quest.id}'),
+      padding: const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: p.surfaceMuted,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            quest.completed ? Icons.check_circle_rounded : Icons.flag_outlined,
+            color: quest.completed ? p.success : p.accent,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        quest.title,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: p.ink,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ),
+                    Text(
+                      '$safeProgress/${quest.target}',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: p.muted,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  quest.description,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: p.muted,
+                        height: 1.3,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    value: ratio,
+                    minHeight: 5,
+                    backgroundColor: p.line,
+                    color: quest.completed ? p.success : p.accent,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -938,6 +1055,93 @@ class _RewardsReferralCardState extends State<_RewardsReferralCard> {
               ),
             ],
           ),
+          if (widget.referralSummary.conversion.invited > 0 ||
+              widget.referralSummary.history.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Divider(height: 1, color: p.line),
+            const SizedBox(height: 12),
+            Text(
+              'Конверсия',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: p.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _ReferralMetric(
+                  label: 'Приглашено',
+                  value: widget.referralSummary.conversion.invited,
+                ),
+                _ReferralMetric(
+                  label: 'Активировано',
+                  value: widget.referralSummary.conversion.activated,
+                ),
+                _ReferralMetric(
+                  label: 'Оплатили',
+                  value: widget.referralSummary.conversion.paid,
+                ),
+                _ReferralMetric(
+                  label: 'Начислено',
+                  value: widget.referralSummary.conversion.rewarded,
+                ),
+              ],
+            ),
+            if (widget.referralSummary.history.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Text(
+                'Последние приглашения',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: p.ink,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 6),
+              for (final item in widget.referralSummary.history.take(3))
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _referralStatusIcon(item.status),
+                        color: item.status == 'rewarded' ? p.success : p.muted,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _referralStatusLabel(item.status),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: p.ink,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                      ),
+                      Text(
+                        _shortReferralDate(item.createdAt),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: p.muted,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+            const SizedBox(height: 6),
+            Text(
+              widget.referralSummary.privacy.trim().isEmpty
+                  ? 'Имена и аккаунты приглашённых не показываются.'
+                  : widget.referralSummary.privacy,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: p.muted,
+                    height: 1.3,
+                  ),
+            ),
+          ],
           const SizedBox(height: 12),
           // Actions live on their own wrapping row so the card survives
           // 320pt widths instead of overflowing a single crowded line.
@@ -989,6 +1193,72 @@ class _RewardsReferralCardState extends State<_RewardsReferralCard> {
       ),
     );
   }
+}
+
+class _ReferralMetric extends StatelessWidget {
+  const _ReferralMetric({required this.label, required this.value});
+
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    return Container(
+      constraints: const BoxConstraints(minWidth: 112),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: p.surface.withValues(alpha: 0.68),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: p.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$value',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: p.ink,
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: p.muted,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _referralStatusLabel(String value) => switch (value) {
+      'activated' => 'Активировал доступ',
+      'hold' => 'Оплата на проверке',
+      'paid' => 'Оплата подтверждена',
+      'rewarded' => 'Бонус начислен',
+      'review' => 'Требует проверки',
+      _ => 'Перешёл по приглашению',
+    };
+
+IconData _referralStatusIcon(String value) => switch (value) {
+      'rewarded' => Icons.check_circle_rounded,
+      'paid' || 'hold' => Icons.payments_outlined,
+      'activated' => Icons.person_add_alt_1_rounded,
+      'review' => Icons.schedule_rounded,
+      _ => Icons.link_rounded,
+    };
+
+String _shortReferralDate(String value) {
+  final parsed = DateTime.tryParse(value)?.toLocal();
+  if (parsed == null) {
+    return '';
+  }
+  final day = parsed.day.toString().padLeft(2, '0');
+  final month = parsed.month.toString().padLeft(2, '0');
+  return '$day.$month';
 }
 
 AppFirstReferralSummary _rewardsReferralSummary(AppFirstBonusSummary summary) {
