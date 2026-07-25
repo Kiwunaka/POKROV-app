@@ -66,11 +66,34 @@ backtest.
 
 The machine-readable owner is `config/runtime-artifacts.seed.json`.
 
+## Artifact Provenance Exception
+
+The retained Android and Windows artifacts are the exact candidates that passed
+the client host and package checks, but they are not reproducible byte-for-byte
+from the clean `v1.0.0` tag.
+
+`go version -m` records `vcs.revision=47bbc21f58bff1113a03be41ad967cb1f8d96b8c`
+and `vcs.modified=true` in the pinned binaries. A clean build of
+`3720cb052e56ccd68f0120cc9efaf5804ec84e0b` with Go 1.25.12 is deterministic
+on the current workstation but produces different identities:
+
+| Platform | Clean rebuild size | Clean rebuild SHA-256 |
+| --- | ---: | --- |
+| Android | `106833379` | `bf87e881fc20e166a289c7b722323f54b74ac9aed1d322a62241fd756c0d0a83` |
+| Windows x64 | `55118336` | `953922a197299c3b43692e9116b78e9675b233cad54e3a74f39da367379fc4db` |
+
+`libcronet.dll` remains byte-identical. This does not replace or invalidate the
+already tested pinned client candidate, but it blocks a clean-build provenance
+claim and any republication of tag `v1.0.0`. Keep the pinned artifacts in the
+client tree. The next artifact promotion must use a new patch release built
+from a clean committed tree, then update sizes, hashes, host tests, and release
+evidence together.
+
 ## Release Gates
 
 Android and Windows activation requires:
 
-1. exact source commit, version, artifact size, and SHA-256 validation;
+1. exact release source, embedded provenance, artifact size, and SHA-256 validation;
 2. focused runtime, Android host, and Windows contract tests;
 3. the exact Windows DLL 100-cycle start/stop backtest;
 4. no obsolete branded identifier in the promotion tree or native payloads;

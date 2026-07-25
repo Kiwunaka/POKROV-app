@@ -94,8 +94,9 @@ Implementation update on 2026-07-22:
 - POKROV Core Android host bridge and JVM contract tests: implemented.
 - POKROV Core iOS host bridge: implemented in source; Xcode build and signed
   physical-device tunnel proof remain `MANUAL_OWNER_TEST`.
-- Windows POKROV DLL reproducible build, export check, ABI probe, and private
-  ACL probe: implemented locally.
+- Windows POKROV DLL export check, ABI probe, and private ACL probe:
+  implemented locally. Clean-tag byte reproducibility is blocked by the
+  documented `v1.0.0` dirty-build provenance exception.
 - macOS POKROV universal dylib build and ABI probe: `MANUAL_OWNER_TEST` on a
   Mac with Xcode.
 - Android physical release-build proof: `MANUAL_OWNER_TEST`.

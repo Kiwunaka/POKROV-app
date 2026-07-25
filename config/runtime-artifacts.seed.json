@@ -6,6 +6,24 @@
     "sing_box_version": "1.13.0",
     "sing_dependency": "v0.8.0-beta.12",
     "go_toolchain": "go1.25.12",
+    "artifact_provenance": {
+      "status": "pinned_dirty_build_not_reproducible_from_clean_tag",
+      "embedded_vcs_revision": "47bbc21f58bff1113a03be41ad967cb1f8d96b8c",
+      "embedded_vcs_modified": true,
+      "clean_tag_commit": "3720cb052e56ccd68f0120cc9efaf5804ec84e0b",
+      "clean_rebuild": {
+        "android": {
+          "size": 106833379,
+          "sha256": "bf87e881fc20e166a289c7b722323f54b74ac9aed1d322a62241fd756c0d0a83"
+        },
+        "windows": {
+          "size": 55118336,
+          "sha256": "953922a197299c3b43692e9116b78e9675b233cad54e3a74f39da367379fc4db"
+        },
+        "libcronet_sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+      },
+      "promotion_rule": "retain_pinned_v1.0.0_candidate_until_new_patch_release"
+    },
     "activation_state": "active",
     "desktop_abi": {
       "name": "pokrov-core",
