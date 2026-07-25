@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-07-18
+Last updated: 2026-07-22
 
 This document is the concrete Windows readiness note for the `POKROV-app` lane.
 
@@ -13,8 +13,9 @@ Historical mapping note:
 ## Current Truth
 
 - the Windows shell is not a blank stub; it boots the shared app shell and drives the desktop FFI `runtime_engine` lane
-- pinned runtime artifacts are synced from `config/runtime-artifacts.seed.json` into `apps/windows_shell/windows/runner/resources/runtime`
-- `flutter build windows --release` copies `libcore.dll` next to the Flutter runner in the release bundle
+- the active runtime is POKROV Core `v1.0.0` desktop ABI 2; its exact source commit, DLL hash, and `libcronet.dll` hash are pinned in `config/runtime-artifacts.seed.json`
+- `flutter build windows --release` copies `pokrov-core.dll` and `libcronet.dll` next to the Flutter runner
+- `scripts/sync-pokrov-core-runtime.ps1` accepts only the exact locally built core commit and artifacts before syncing them into the host
 - `scripts/build-windows-release.ps1` now runs the local Windows verification lane: seed validation, tests, `flutter analyze`, `flutter build windows --release`, bundle verification, unsigned portable ZIP staging, and unsigned beta setup EXE staging through Windows `iexpress.exe`
 - the seed validation inside that helper now aligns with the current product canon: `Android + Windows` public scope, `iOS + macOS` readiness-only hosts
 - the built executable is explicitly marked as a prerelease seed but now presents the public product name `POKROV` in Windows metadata and window chrome
@@ -34,7 +35,7 @@ Historical mapping note:
 From `POKROV-app/`:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\fetch-libcore-assets.ps1 -Platforms @('windows') -SyncToHosts
+powershell -ExecutionPolicy Bypass -File .\scripts\sync-pokrov-core-runtime.ps1 -CoreRoot '<POKROV-core checkout>' -Platforms windows
 powershell -ExecutionPolicy Bypass -File .\scripts\run-tests.ps1
 Push-Location .\apps\windows_shell
 flutter analyze
@@ -80,7 +81,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 -Sy
 - expected release files:
   - `pokrov_windows_beta.exe`
   - `flutter_windows.dll`
-  - `libcore.dll`
+  - `pokrov-core.dll`
+  - `libcronet.dll`
   - `data/app.so`
   - `data/icudtl.dat`
 - staged manifest:
@@ -122,14 +124,14 @@ Latest local packaging note:
 Safe to claim now:
 
 - the Windows host shell uses the real desktop FFI runtime lane
-- the Windows connect path now fetches a live managed profile from the app-first API before it stages and starts libcore
-- the local release build bundles the pinned runtime artifacts into the Windows runner output
+- the Windows connect path fetches a live managed profile, materializes route mode and optional WARP in Dart, secures the staged file, and starts POKROV Core through desktop ABI 2
+- the local release build bundles the pinned POKROV DLL and `libcronet.dll` into the Windows runner output
 - the Windows seed lane has a reproducible unsigned package step with a manifest, portable ZIP, and first-layer setup EXE for gated beta inspection
 - the current `1.0.0-beta` unsigned setup EXE is uploaded to the public
   GitHub prerelease for outside-store beta access
-- the current Windows source applies runtime options before `libcore start` and
-  keeps `Full tunnel`, `All except RU`, and selected-process routing TUN-backed
-  by default; system proxy remains a disabled compatibility-only path
+- the current Windows source materializes `Full tunnel`, `All except RU`,
+  selected-process routing, and client-local WARP into raw config before the
+  POKROV Core start call; system proxy remains a disabled compatibility-only path
 - this source-level change does not prove elevation, route capture, DNS/leak
   behavior, or teardown on the published or any future exact candidate
 - this Windows lane now lives in the canonical `POKROV-app` repo
@@ -169,6 +171,13 @@ trusted/stable claims, attach:
 
 - exact-artifact install, restart, session restore, secure-storage, and
   selected-app process-routing smoke: `MANUAL_OWNER_TEST`.
+- POKROV Core ABI/export/hash probe is locally complete; clean-profile traffic,
+  Naive/libcronet loading, Windows version compatibility, and user-only ACL
+  behavior inside the packaged exact candidate remain `MANUAL_OWNER_TEST`.
+- The rebuilt exact DLL completed 100 serial raw start/stop cycles locally.
+  This is `PASS` for the narrow DLL shutdown backtest only; sleep/resume,
+  interface changes, permission/elevation, real WARP, Naive/Cronet, and packaged
+  TUN behavior remain `MANUAL_OWNER_TEST`.
 - `Only selected apps` picker, persistence, route-policy echo, and generated
   `process_name` / `process_path` behavior.
 - `Full tunnel` route-mode smoke.

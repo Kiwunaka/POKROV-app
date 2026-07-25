@@ -1,5 +1,5 @@
 name: pokrov_runtime_engine
-description: Runtime wiring and libcore artifact handling for the POKROV next client.
+description: POKROV Core runtime wiring for the POKROV client.
 publish_to: none
 version: 1.0.0-beta
 

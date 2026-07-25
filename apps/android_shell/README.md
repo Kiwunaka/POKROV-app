@@ -6,7 +6,7 @@ Current responsibility:
 - wiring the shared `app_shell` package into an Android-facing starter
 - hosting the runtime bridge at `space.pokrov/runtime_engine`
 - requesting `VpnService` permission and starting the foreground runtime lane
-- supporting one-tap `connect` from the shared shell by auto-initializing libcore, syncing a live managed profile, and staging that profile before runtime start
+- supporting one-tap `connect` from the shared shell by auto-initializing POKROV Core, syncing a live managed profile, and staging that profile before runtime start
 - keeping the Android consumer lane `tun`-first, with desktop loopback listener surfaces stripped from the staged mobile runtime config and only present address families receiving default routes
 - preserving backend-managed mobile-safe `dns` and `route` semantics instead of collapsing Android into a seed-only universal DNS profile
 - keeping Android route ownership explicit with `auto_detect_interface`, `override_android_vpn`, and a self-package bypass rule for `space.pokrov.pokrov_android_shell`, so live control traffic does not fold back into the TUN

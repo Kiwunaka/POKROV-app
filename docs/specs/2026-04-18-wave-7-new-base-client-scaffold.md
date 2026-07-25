@@ -95,7 +95,7 @@ The seed is complete when:
 - Route-mode UX already models `Full tunnel`, `Selected apps`, and `All except RU`, while respecting host support for split tunneling.
 - Locations already show `Auto-select best` plus the fixed transport ordering `VLESS+REALITY`, `VMess`, `Trojan`, `XHTTP`, with launch gating for `XHTTP`.
 - `Profile` now owns free fallback, community bonus, redeem entry, and support-safe handoff surfaces, with any standalone support leftovers treated as transitional seed UI rather than final product IA.
-- Windows now uses real `libcore` FFI loading, live managed-profile bootstrap, and build-verified runtime startup.
+- Windows now uses POKROV Core FFI loading, live managed-profile bootstrap, and build-verified runtime startup.
 - Windows now also has a local unsigned build-and-package helper that verifies bundle composition and prerelease metadata.
 - macOS now has bundle-aware runtime discovery and host artifact copy wiring.
 - Android now has a seed `VpnService` full-tunnel lane plus runtime-bridge `initialize -> managed bootstrap -> stage -> connect -> disconnect`.
@@ -104,7 +104,7 @@ The seed is complete when:
 ## Runtime Lane Limits
 
 - The lane is real enough to validate package boundaries, host-shell bootstraps, shared-shell behavior, and a meaningful portion of native runtime integration.
-- The lane now pins and syncs `hiddify-core v3.1.8` artifacts into the host shells through `config/runtime-artifacts.seed.json` and `scripts/fetch-libcore-assets.ps1`.
+- The active lane pins POKROV Core artifacts through `config/runtime-artifacts.seed.json` and the separate core repository.
 - No trusted signing, public installer or `MSIX` publication, or store automation in this subtree should be treated as production-ready.
 - Public cutover stays blocked until signed Apple release proof, Apple on-device tunnel evidence, Android device validation, four-platform verification, and release automation all exist together.
 - Regenerated `config/local/*`, host `build/` outputs, and staged local bundles are local verification artifacts only; they are not shipping truth or release truth.
@@ -113,8 +113,8 @@ The seed is complete when:
 
 | Host | Present in Wave 7 | Missing before readiness |
 | --- | --- | --- |
-| `iOS` | host shell, placeholder release bundle ID, deployment target `12.0`, host + extension app-group entitlements, deep-link plist, bundled `Libcore.xcframework`, shared runtime staging, checked-in `PacketTunnelExtension` target scaffold, `NETunnelProviderManager` start/stop requests, checked-in Libbox command server plus service wiring, `RunnerTests` target | reviewed production entitlements, real signing team, provisioning profiles, archive/export proof, signed on-device tunnel evidence, TestFlight or App Store metadata |
-| `macOS` | host shell, placeholder release bundle ID, deployment target `10.14`, tightened sandbox entitlements, hardened-runtime placeholder, deep-link plist, bundle-time copy of `libcore.dylib` and `HiddifyCli`, `RunnerTests` target | real signing team, signed archive, notarization flow execution, Gatekeeper proof, provisioning inventory, Mac App Store metadata |
+| `iOS` | host shell, placeholder release bundle ID, deployment target `12.0`, host + extension app-group entitlements, deep-link plist, POKROV Core framework path, shared runtime staging, checked-in `PacketTunnelExtension` target scaffold, `NETunnelProviderManager` start/stop requests, checked-in Libbox command server plus service wiring, `RunnerTests` target | POKROV Core framework build, reviewed production entitlements, real signing team, provisioning profiles, archive/export proof, signed on-device tunnel evidence, TestFlight or App Store metadata |
+| `macOS` | host shell, placeholder release bundle ID, deployment target `10.14`, tightened sandbox entitlements, hardened-runtime placeholder, deep-link plist, POKROV Core dylib bundle path, `RunnerTests` target | POKROV Core macOS build, real signing team, signed archive, notarization flow execution, Gatekeeper proof, provisioning inventory, Mac App Store metadata |
 
 These inventories should be read as implementation notes, not as ship approval.
 

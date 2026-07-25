@@ -16,7 +16,8 @@ const Size pokrovWindowsMinimumSize = Size(700, 640);
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
-  await _PokrovWindowsTray.install();
+  final shellController = PokrovShellController();
+  await _PokrovWindowsTray.install(shellController);
   if (Platform.isWindows) {
     // Tray-first lifecycle: the ✕ button hides to tray, the VPN keeps
     // running, and only the tray «Выход» actually quits.
@@ -36,6 +37,7 @@ Future<void> main() async {
   runApp(
     PokrovSeedApp(
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      shellController: shellController,
     ),
   );
 }
@@ -81,30 +83,87 @@ Future<void> pokrovWindowsExit({
   }
 }
 
+@visibleForTesting
+String pokrovWindowsTrayConnectionLabel({
+  required bool attached,
+  required bool connected,
+  required bool busy,
+}) {
+  if (!attached) {
+    return 'Подключение загружается';
+  }
+  if (busy) {
+    return connected ? 'Отключение…' : 'Подключение…';
+  }
+  return connected ? 'Отключить VPN' : 'Подключить VPN';
+}
+
 final class _PokrovWindowsTray with TrayListener, WindowListener {
   _PokrovWindowsTray._();
 
   static final _PokrovWindowsTray _instance = _PokrovWindowsTray._();
+  PokrovShellController? _shellController;
+  Future<void> _menuUpdate = Future<void>.value();
 
-  static Future<void> install() async {
+  static Future<void> install(PokrovShellController shellController) async {
     if (!Platform.isWindows) {
       return;
     }
+    _instance._shellController = shellController;
+    shellController.addListener(_instance._scheduleMenuUpdate);
     trayManager.addListener(_instance);
     windowManager.addListener(_instance);
     await trayManager.setIcon('windows/runner/resources/app_icon.ico');
-    // The tooltip doubles as the "closed to tray" hint: hovering the icon
-    // explains that POKROV keeps running in the background.
-    await trayManager.setToolTip('POKROV работает в фоне');
+    await _instance._applyControllerState();
+  }
+
+  void _scheduleMenuUpdate() {
+    _menuUpdate = _menuUpdate.then((_) => _applyControllerState()).catchError(
+      (_) {
+        // A transient native tray failure must not break later state updates.
+      },
+    );
+  }
+
+  Future<void> _applyControllerState() async {
+    final controller = _shellController;
+    final attached = controller?.attached ?? false;
+    final connected = controller?.isConnected ?? false;
+    final busy = controller?.isBusy ?? false;
+    await trayManager.setToolTip(
+      connected ? 'POKROV подключен' : 'POKROV отключен',
+    );
     await trayManager.setContextMenu(
       Menu(
         items: [
           MenuItem(key: 'show_window', label: 'Открыть POKROV'),
+          MenuItem(
+            key: 'toggle_connection',
+            label: pokrovWindowsTrayConnectionLabel(
+              attached: attached,
+              connected: connected,
+              busy: busy,
+            ),
+            disabled: controller?.canToggle != true,
+          ),
           MenuItem.separator(),
           MenuItem(key: 'exit_app', label: 'Выход'),
         ],
       ),
     );
+  }
+
+  Future<void> _toggleConnection() async {
+    await _shellController?.toggleConnection();
+    await _applyControllerState();
+  }
+
+  Future<void> _destroyTray() async {
+    _shellController?.removeListener(_scheduleMenuUpdate);
+    _shellController = null;
+    trayManager.removeListener(this);
+    windowManager.removeListener(this);
+    await trayManager.destroy();
   }
 
   Future<void> _showWindow() async {
@@ -142,10 +201,13 @@ final class _PokrovWindowsTray with TrayListener, WindowListener {
       case 'show_window':
         unawaited(_showWindow());
         break;
+      case 'toggle_connection':
+        unawaited(_toggleConnection());
+        break;
       case 'exit_app':
         unawaited(
           pokrovWindowsExit(
-            destroyTray: trayManager.destroy,
+            destroyTray: _destroyTray,
             destroyWindow: windowManager.destroy,
           ),
         );

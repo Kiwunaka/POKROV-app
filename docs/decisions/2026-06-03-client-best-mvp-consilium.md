@@ -85,11 +85,11 @@ timers, or fake cross-device history are allowed.
 
 ## WARP Decision
 
-Use Hiddify WARP as a runtime primitive, not as a raw product surface.
+Use Pokrov WARP as a runtime primitive, not as a raw product surface.
 
 Current facts:
 
-- Hiddify-style `warp` and `warp2` options exist in runtime configuration.
+- POKROV Core `warp` and `warp2` options exist in runtime configuration.
 - POKROV runtime defaults keep WARP disabled.
 - POKROV has no verified backend/profile contract, WARP account/config
   provisioning, Android proof, Windows proof, or support diagnostics for an

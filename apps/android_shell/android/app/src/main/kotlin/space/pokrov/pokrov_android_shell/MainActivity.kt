@@ -26,12 +26,14 @@ class MainActivity : FlutterActivity() {
     override fun onResume() {
         super.onResume()
         runtimeHostBridge?.handleDebugIntent(intent)
+        runtimeHostBridge?.handleSystemIntent(intent)
     }
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         runtimeHostBridge?.handleDebugIntent(intent)
+        runtimeHostBridge?.handleSystemIntent(intent)
     }
 
     @Deprecated("Uses the platform VPN permission callback for the seed runtime lane.")

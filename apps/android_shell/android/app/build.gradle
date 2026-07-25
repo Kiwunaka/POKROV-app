@@ -5,7 +5,7 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
-def libcoreAar = file("libs/libcore.aar")
+def pokrovCoreAar = file("libs/pokrov-core.aar")
 
 def productionSigningInputs = [
     storeFile: System.getenv("ANDROID_SIGNING_KEY"),
@@ -109,7 +109,7 @@ flutter {
 }
 
 repositories {
-    if (libcoreAar.exists()) {
+    if (pokrovCoreAar.exists()) {
         flatDir {
             dirs "libs"
         }
@@ -117,8 +117,8 @@ repositories {
 }
 
 dependencies {
-    if (libcoreAar.exists()) {
-        implementation(name: "libcore", ext: "aar")
+    if (pokrovCoreAar.exists()) {
+        implementation(name: "pokrov-core", ext: "aar")
     }
 
     testImplementation "junit:junit:4.13.2"

@@ -219,7 +219,7 @@ Build artifacts verified locally:
 
 - `apps/android_shell/build/app/outputs/flutter-apk/app-debug.apk`
 - `apps/windows_shell/build/windows/x64/runner/Release/pokrov_windows_beta.exe`
-- `apps/windows_shell/build/windows/x64/runner/Release/libcore.dll`
+- `apps/windows_shell/build/windows/x64/runner/Release/pokrov-core.dll`
 
 Final local handoff pack:
 

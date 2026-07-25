@@ -29,3 +29,66 @@ String _locationQualityLabel(double rawScore) {
   }
   return 'Медленно';
 }
+
+String _locationLatencyLabel(int? latencyMs) {
+  if (latencyMs == null || latencyMs < 0) {
+    return 'ping —';
+  }
+  return '$latencyMs мс';
+}
+
+String _locationLoadLabel(double? rawLoad) {
+  if (rawLoad == null || !rawLoad.isFinite || rawLoad < 0) {
+    return 'нагрузка —';
+  }
+  final percent = (rawLoad <= 1 ? rawLoad * 100 : rawLoad).clamp(0, 100);
+  return 'нагрузка ${percent.round()}%';
+}
+
+String _locationFreshnessLabel(String rawIso, {DateTime? now}) {
+  final measuredAt = DateTime.tryParse(rawIso.trim())?.toUtc();
+  if (measuredAt == null) {
+    return 'замер —';
+  }
+  final clock = (now ?? DateTime.now()).toUtc();
+  final age = clock.difference(measuredAt);
+  if (age.isNegative && age.abs() > const Duration(minutes: 5)) {
+    return 'время замера —';
+  }
+  if (age <= const Duration(minutes: 2)) {
+    return 'замер сейчас';
+  }
+  if (age <= const Duration(minutes: 15)) {
+    return 'замер ${age.inMinutes} мин назад';
+  }
+  return 'замер устарел';
+}
+
+String _locationMetricsLabel(ClientLocationCity city) {
+  return <String>[
+    _locationLatencyLabel(city.latencyMs),
+    _locationLoadLabel(city.load),
+    _locationFreshnessLabel(city.measuredAt),
+  ].join(' · ');
+}
+
+String _locationCacheLabel(String rawIso, {DateTime? now}) {
+  final cachedAt = DateTime.tryParse(rawIso.trim())?.toUtc();
+  if (cachedAt == null) {
+    return 'Время сохранения неизвестно.';
+  }
+  final age = (now ?? DateTime.now()).toUtc().difference(cachedAt);
+  if (age.isNegative) {
+    return 'Время сохранения неизвестно.';
+  }
+  if (age < const Duration(minutes: 2)) {
+    return 'Сохранено только что.';
+  }
+  if (age < const Duration(hours: 1)) {
+    return 'Сохранено ${age.inMinutes} мин назад.';
+  }
+  if (age < const Duration(days: 2)) {
+    return 'Сохранено ${age.inHours} ч назад.';
+  }
+  return 'Сохранено ${age.inDays} дн назад.';
+}

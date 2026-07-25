@@ -1,7 +1,7 @@
 # Android Release Audit
 
 Status: owner-attested for outside-store beta; raw audit remains manual owner test
-Last updated: 2026-07-18
+Last updated: 2026-07-22
 
 ## Required Dependency
 
@@ -14,14 +14,33 @@ Set `ANDROID_AUDIT_PACKAGE` to `space.pokrov.pokrov_android_shell` unless a rele
 - Release APK installed on physical hardware.
 - First launch and app-first session bootstrap.
 - Connect and disconnect from app.
+- Confirm the exact APK contains POKROV Core 1.0.0 `libpokrov-core.so` from
+  the pinned `pokrov-core.aar`.
 - Disconnect from foreground notification.
 - System VPN permission revoke.
 - Relaunch while connected.
 - Rapid reconnect.
+- Wi-Fi to LTE/5G and LTE/5G to Wi-Fi handoff while connected; record uplink,
+  DNS readiness, traffic recovery, and whether a stale session survives.
 - Offline or DNS failure warning.
+- Block UDP/53 and prove the HTTPS DoH remote and direct-bootstrap lanes still
+  resolve and carry traffic without a silent plaintext DNS downgrade.
 - `All except RU` route-mode smoke.
 - `Full tunnel` route-mode smoke.
 - DNS split and leak checks for both public routing modes.
+- Enable client-local WARP, reconnect, verify traffic and fallback behavior,
+  then disable it and verify the original managed profile is restored.
+- VLESS + REALITY Vision traffic smoke on Russian mobile data where that
+  protocol is part of the exact managed profile; small initial transfer is not
+  sufficient proof of a healthy session.
+- For the staged TLS-fragment experiment, retain PCAP for disabled versus
+  record-fragment enabled behavior on RU LTE/5G. Do not enable the managed
+  production policy from config-shape tests alone.
+- Run MTU `1280/1400/1492/1500/9000` under blocked ICMP with a large transfer
+  and QUIC; record failures and throughput before changing the default.
+- Run 100 start/stop cycles, Wi-Fi to LTE and back, airplane mode, sleep/resume,
+  and VPN-permission revoke/regrant. Fix only failures reproduced by POKROV's
+  exact APK and retain the failing logs.
 - No raw config in UI or logcat.
 - No `session_token` in app-first JSON state; migrated session material must live in the app secure secret store.
 - Android backup and device-transfer rules exclude all local app state so encrypted session material cannot be restored without its Keystore key.

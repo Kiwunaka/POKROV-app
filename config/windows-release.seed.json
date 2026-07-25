@@ -13,7 +13,8 @@
   "required_files": [
     "pokrov_windows_beta.exe",
     "flutter_windows.dll",
-    "libcore.dll",
+    "pokrov-core.dll",
+    "libcronet.dll",
     "data/app.so",
     "data/icudtl.dat"
   ],
@@ -25,7 +26,12 @@
   "runtime": {
     "platform": "windows",
     "artifact_directory": "apps/windows_shell/windows/runner/resources/runtime",
-    "core_binary": "libcore.dll"
+    "core_binary": "pokrov-core.dll",
+    "runtime_dependencies": [
+      "libcronet.dll"
+    ],
+    "release_tag": "v1.0.0",
+    "desktop_abi": 2
   },
   "signing": {
     "status": "unsigned_beta_blocker",
@@ -38,7 +44,7 @@
   },
   "safe_claims": [
     "The Windows beta shell uses the desktop FFI runtime lane.",
-    "The local release build bundles libcore.dll next to the Flutter runner.",
+    "The local release build bundles POKROV Core 1.0.0 and its pinned libcronet.dll dependency next to the Flutter runner.",
     "Local packaging produces an unsigned beta installer EXE and portable ZIP; share only through gated beta access with the SmartScreen warning above."
   ],
   "blocked_on": [

@@ -20,8 +20,8 @@ Included active decision sources:
 - `docs/decisions/2026-06-03-client-ux-account-rewards-master-brief.md`
 - `docs/decisions/2026-06-03-client-best-mvp-consilium.md`
 - `docs/decisions/2026-06-03-client-chat-responsive-warp-motion-review.md`
-- `docs/decisions/2026-06-03-hiddify-karing-happ-client-base-review.md`
-- `docs/decisions/2026-06-03-hiddify-core-warp-status.md`
+- `docs/decisions/2026-06-03-pokrov-karing-happ-client-base-review.md`
+- `docs/decisions/2026-06-03-pokrov-core-warp-status.md`
 - `docs/specs/2026-06-05-p5-warp-approved-design.md`
 - `docs/archive/superpowers-plans/2026-06-05-premium-client-ai-assistant-architecture.md`
 - `docs/implementation/2026-06-04-decisions-implementation-map.md`
@@ -48,7 +48,7 @@ Ignored owner-deprecated inputs:
   consumer-safe diagnostics without raw profiles, hostnames, keys, or topology.
 - Guarded WARP/enhanced-protection feature: backend policy, encrypted material
   provisioning contract, consent/revoke/event lifecycle, safe local consent
-  cache, hiddify-core option mapping only when runtime-ready and consented,
+  cache, pokrov-core option mapping only when runtime-ready and consented,
   fallback reporting, and redacted admin/support telemetry.
 - Premium UX foundation: responsive shell at `360`, `700`, `900`, `1024`,
   `1180`, and `1440`, desktop sidebar collapse/opacity, connect-disc ritual,

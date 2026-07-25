@@ -22,12 +22,12 @@ From `POKROV-app/`:
    supported `--no-overwrite` Android flow, copies only the missing BAT/JAR,
    and removes the verified temp directory. Flutter never repairs the tracked
    Android shell in place or replaces existing Android customization.
-3. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\fetch-libcore-assets.ps1 -Platforms @('windows') -SyncToHosts` when you want the Windows host shell refreshed against the pinned runtime artifacts.
+3. Build POKROV Core from its separate repository, then run `scripts/sync-pokrov-core-runtime.ps1 -CoreRoot <path> -Platforms android,windows`. The sync helper accepts only the exact source commit, version, sizes, and hashes pinned by the client contract. Apple artifacts must be built on macOS and remain manual.
 4. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\run-tests.ps1`.
    This now covers the shared Flutter lane, `apps/android_shell` Flutter tests, and `apps/android_shell/android/gradlew.bat testDebugUnitTest`.
    On a clean checkout, the bootstrap phase materializes the ignored wrapper
    BAT and JAR before `testDebugUnitTest` runs.
-5. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\build-windows-release.ps1 -SyncRuntime` when you want the local Windows analyze, test, build, and unsigned-package lane.
+5. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\build-windows-release.ps1 -SyncRuntime -CoreRoot <path>` when you want the local Windows analyze, test, build, and unsigned-package lane.
 6. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\bootstrap-local.ps1 -DryRun`.
 7. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\bootstrap-local.ps1` only if you want local config files under `config/local/`.
 8. Treat `melos.yaml` as the future workspace entry once Flutter tooling is available.
@@ -78,8 +78,8 @@ that candidate-specific release truth.
 
 Current blocking dependency:
 
-- the lane now has a real staged-artifact contour: `fetch-libcore-assets.ps1` pins the current `libcore` tag, syncs all four host artifacts, and the shared `runtime_engine` can verify those artifacts at runtime
-- `Android` host now reaches a real service-backed connect lane: it can initialize libcore, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
+- the active runtime is the exact pinned POKROV Core `v1.0.0` candidate associated with source commit `3720cb052e56ccd68f0120cc9efaf5804ec84e0b`; its binaries retain a documented dirty-build provenance exception and must not be replaced by the different clean-tag rebuild without a new patch release
+- `Android` host now reaches a real service-backed connect lane: it can initialize POKROV Core, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
 - Android runtime materialization is intentionally `tun`-only in this lane; desktop loopback listener inbounds such as `mixed-in` and `dns-in` stay disabled for the mobile `VpnService` path
 - Android runtime materialization now keeps backend-managed `dns` servers, selector choice, and route-rule semantics whenever they are already mobile-safe, instead of swapping the whole profile into a custom universal DNS lane
 - the Android bootstrap client can preserve the HTTPS host while dialing the canonical control-plane IP for `api.pokrov.space`, which keeps emulator-grade DNS flakiness from blocking app-first session start
@@ -88,8 +88,8 @@ Current blocking dependency:
 - the Android host runtime now registers a local DNS transport backed by Android `DnsResolver` and the current default network, which keeps the mobile lane off desktop-only loopback DNS stubs when `libbox` resolves staged profile dependencies
 - the Android default-network monitor now sticks to the callback-owned uplink after connect instead of re-sampling `ConnectivityManager.activeNetwork`, which keeps mobile DNS from accidentally treating the VPN network as its resolver uplink
 - the Android manifest must also declare `ACCESS_NETWORK_STATE` and `CHANGE_NETWORK_STATE`, otherwise the `ConnectivityManager`-backed default-interface monitor fails before runtime start
-- the Android `tun` inbound now uses the Hiddify-style `mixed` stack instead of the desktop-oriented `system` stack, and the materialized mobile runtime no longer injects the old `android-private-dns-in` loopback bridge into the staged config
-- the Android DNS block now stays close to the Hiddify mobile default: a plain `1.1.1.1` remote resolver, a direct bootstrap resolver, and no desktop loopback DNS surfaces in the staged mobile lane
+- the Android `tun` inbound now uses the `mixed` stack instead of the desktop-oriented `system` stack, and the materialized mobile runtime no longer injects the old `android-private-dns-in` loopback bridge into the staged config
+- the Android fallback DNS block preserves HTTPS DoH and its path in both the proxied remote and direct bootstrap lanes; it does not downgrade `https://1.1.1.1/dns-query` to UDP/53 or inject desktop loopback DNS surfaces
 - the Android DNS block also keeps resolver caches independent so direct bootstrap lookups do not poison the remote resolver lane used for blocked-service traffic
 - the Android host route planner now adds IPv4 and IPv6 default routes only for address families that are actually present in the staged profile, and `ipv4_only` sessions no longer keep an unnecessary IPv6 tunnel lane for blocked-service traffic
 - the Android default-network monitor now filters out VPN networks before exposing the current uplink to `DnsResolver` or libbox, and it retries interface-index lookup before publishing interface updates
@@ -112,13 +112,32 @@ Current blocking dependency:
 - selected-apps picker, route-policy sync, persistence, and runtime
   materialization are beta-active for Android and Windows; public production
   behavior remains gated on exact-artifact physical-device and clean-VM proof
-- `iOS` host now reaches a source-backed packet-tunnel lane: it can initialize libcore, stage a managed profile into the shared app-group runtime directory, persist a `NETunnelProviderManager`, and request tunnel start or stop against the checked-in `PacketTunnelExtension` target; the provider now boots `MobileSetup` plus `LibboxSetup`, starts a Libbox command server and service, and opens tun through `NEPacketTunnelFlow`, but this still lacks signed Apple validation on a real device
-- `macOS` now copies synced `libcore.dylib` and `HiddifyCli` artifacts into the app bundle and the desktop FFI lane can discover them from the built host layout
-- `Windows` now copies synced `libcore.dll` into the release bundle and applies runtime options before `libcore start`; `Full tunnel`, `All except RU`, and selected-process routing stay TUN-backed by default so non-proxy-aware traffic is not silently left outside the chosen route policy, while system proxy remains a disabled compatibility-only path
+- `iOS` source carries the POKROV Core packet-tunnel bridge: it stages one materialized profile in the shared app-group directory, persists a `NETunnelProviderManager`, boots `LibboxSetup`, starts or reloads `CommandServer`, and opens tun through `NEPacketTunnelFlow`; the framework build, signing, and device validation remain manual
+- `macOS` stays on the desktop ABI 2 lane and expects only `pokrov-core.dylib`; the universal dylib must be built and probed on macOS before that host is runnable
+- `Windows` copies the exact pinned `pokrov-core.dll` plus pinned `libcronet.dll` into the release bundle; the active runtime decision records why the current `v1.0.0` binary is not claimed as a clean reproducible build. Raw materialized config, WARP, `Full tunnel`, `All except RU`, and selected-process routing are owned by the shared adapter, while system proxy remains a disabled compatibility-only path
 - source-level runtime tests cover the Windows TUN options for all three route modes; exact-candidate clean-VM routing, DNS/leak, elevation, connect, and teardown proof remains `MANUAL_OWNER_TEST`
 - `build-windows-release.ps1` verifies the Windows bundle metadata and stages an unsigned setup EXE, portable ZIP, and manifest under `apps/windows_shell/build/release_bundle`
 - host `build/` outputs and staged local bundles remain disposable local verification artifacts; they are not release truth for any public lane
 - treat future live connect, service ownership, and traffic-carrying runtime work as one shared contract owned by the lane, not four host-local improvisations
+
+## POKROV Core 1.0.0
+
+POKROV Core is an independent repository and release line. The client pins
+`v1.0.0` and commit `3720cb052e56ccd68f0120cc9efaf5804ec84e0b`.
+
+- Android package namespace: `space.pokrov.core`.
+- Android artifact: `pokrov-core.aar`.
+- Windows artifact: `pokrov-core.dll` with pinned `libcronet.dll`.
+- Apple artifacts are intentionally absent until built and proven on macOS.
+- Desktop ABI `2` exposes `pokrovCoreAbiVersion`, `pokrovSecureFile`,
+  caller-owned strings through `freeString`, and raw materialized-config start.
+- Shared Dart materialization owns route modes and client-local WARP before the
+  config crosses a host boundary.
+- There is no mutable latest-release download and no hidden legacy fallback.
+
+Exact artifacts and platform gates are owned by
+`config/runtime-artifacts.seed.json` and
+`docs/decisions/2026-07-23-pokrov-core-1.0.0-activation.md`.
 
 ## Update Handoff Boundary
 

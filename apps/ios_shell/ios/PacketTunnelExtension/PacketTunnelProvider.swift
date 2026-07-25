@@ -1,5 +1,5 @@
 import Foundation
-import Libcore
+import PokrovCore
 import NetworkExtension
 
 final class PacketTunnelProvider: NEPacketTunnelProvider {
@@ -26,7 +26,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   private var stagedConfigPath: String?
   private var stagedConfig: String?
   private var commandServer: LibboxCommandServer?
-  private var boxService: LibboxBoxService?
+  private var serviceRunning = false
   private var platformInterface: PacketTunnelPlatformInterface?
   private var lastMessage = "Packet tunnel provider has not started yet."
   private var lastErrorMessage: String?
@@ -53,10 +53,10 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
 
       let platformInterface = getOrCreatePlatformInterface()
       try startCommandServer(using: platformInterface)
-      try startService(with: platformInterface)
+      try startService()
 
       providerState = .running
-      writeMessage("Packet tunnel provider started the Libbox service.")
+      writeMessage("Packet tunnel provider started the POKROV Core service.")
       completionHandler(nil)
     } catch {
       providerState = .failed
@@ -96,11 +96,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
 
   func writeMessage(_ message: String) {
     lastMessage = message
-    if let commandServer {
-      commandServer.writeMessage(message)
-    } else {
-      NSLog("%@", message)
-    }
+    NSLog("%@", message)
   }
 
   func writeError(_ message: String) {
@@ -126,18 +122,21 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       reasserting = false
     }
 
-    stopService()
     self.stagedConfig = stagedConfig
-    try startService(with: getOrCreatePlatformInterface())
+    try startService()
     providerState = .running
   }
 
-  func markServiceClosed() {
-    boxService = nil
-    commandServer?.setService(nil)
+  func markServiceStopped() {
+    serviceRunning = false
     platformInterface?.reset()
     providerState = .stopped
-    writeMessage("Packet tunnel provider observed service shutdown.")
+    writeMessage("Packet tunnel provider observed the POKROV Core service shutdown.")
+  }
+
+  func stopServiceFromCommand() {
+    stopService()
+    markServiceStopped()
   }
 
   func applyNetworkSettings(_ settings: NEPacketTunnelNetworkSettings?) async throws {
@@ -201,17 +200,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     do {
-      let configPayload = try String(contentsOfFile: path, encoding: .utf8)
-      var validationError: NSError?
-      let isValid = LibboxCheckConfig(configPayload, &validationError)
-      guard isValid else {
-        throw seedError(
-          code: 1006,
-          message:
-            "Packet tunnel provider loaded the staged config, but Libbox validation failed: \(validationError?.localizedDescription ?? "unknown error")."
-        )
-      }
-      return configPayload
+      return try String(contentsOfFile: path, encoding: .utf8)
     } catch let error as NSError where error.domain == "space.pokrov.ios.PacketTunnelExtension" {
       throw error
     } catch {
@@ -227,29 +216,25 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     environment: PacketTunnelSharedPaths.RuntimeEnvironment,
     disableMemoryLimit: Bool
   ) throws {
-    var mobileError: NSError?
-    let didSetupMobile = MobileSetup(
-      environment.baseDirectory.path,
-      environment.workingDirectory.path,
-      environment.tempDirectory.path,
-      false,
-      &mobileError
-    )
-    guard didSetupMobile else {
+    let options = LibboxSetupOptions()
+    options.basePath = environment.baseDirectory.path
+    options.workingPath = environment.workingDirectory.path
+    options.tempPath = environment.tempDirectory.path
+    options.fixAndroidStack = false
+    options.commandServerListenPort = 0
+    options.commandServerSecret = ""
+    options.logMaxLines = 30
+    options.debug = false
+
+    var setupError: NSError?
+    let didSetup = LibboxSetup(options, &setupError)
+    guard didSetup else {
       throw seedError(
         code: 1005,
         message:
-          "Packet tunnel provider failed Mobile setup: \(mobileError?.localizedDescription ?? "unknown error")."
+          "Packet tunnel provider failed POKROV Core setup: \(setupError?.localizedDescription ?? "unknown error")."
       )
     }
-
-    LibboxSetup(
-      environment.baseDirectory.path,
-      environment.workingDirectory.path,
-      environment.tempDirectory.path,
-      false
-    )
-    LibboxClearServiceError()
 
     if let stderrLogURL {
       var stderrError: NSError?
@@ -262,7 +247,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     LibboxSetMemoryLimit(!disableMemoryLimit)
-    writeMessage("Packet tunnel provider initialized Mobile and Libbox runtimes.")
+    writeMessage("Packet tunnel provider initialized the POKROV Core runtime.")
   }
 
   private func getOrCreatePlatformInterface() -> PacketTunnelPlatformInterface {
@@ -280,10 +265,18 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       return
     }
 
-    guard let commandServer = LibboxNewCommandServer(platformInterface, Int32(30)) else {
+    var creationError: NSError?
+    guard
+      let commandServer = LibboxNewCommandServer(
+        platformInterface,
+        platformInterface,
+        &creationError
+      )
+    else {
       throw seedError(
         code: 1101,
-        message: "Packet tunnel provider could not create the Libbox command server."
+        message:
+          "Packet tunnel provider could not create the POKROV Core command server: \(creationError?.localizedDescription ?? "unknown error")."
       )
     }
 
@@ -300,7 +293,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
   }
 
-  private func startService(using platformInterface: PacketTunnelPlatformInterface) throws {
+  private func startService() throws {
     guard let stagedConfig else {
       throw seedError(
         code: 1103,
@@ -308,60 +301,43 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       )
     }
 
-    var creationError: NSError?
-    let service = LibboxNewService(stagedConfig, platformInterface, &creationError)
-    if let creationError {
+    guard let commandServer else {
       throw seedError(
         code: 1104,
-        message:
-          "Packet tunnel provider could not create the Libbox service: \(creationError.localizedDescription)."
-      )
-    }
-    guard let service else {
-      throw seedError(
-        code: 1105,
-        message:
-          "Packet tunnel provider did not receive a Libbox service instance: \(readServiceError() ?? "unknown service error")."
+        message: "Packet tunnel provider cannot start without the POKROV Core command server."
       )
     }
 
     do {
-      try service.start()
-      boxService = service
-      commandServer?.setService(service)
+      try commandServer.checkConfig(stagedConfig)
+      try commandServer.startOrReloadService(stagedConfig, options: LibboxOverrideOptions())
+      serviceRunning = true
     } catch {
       throw seedError(
-        code: 1106,
+        code: 1105,
         message:
-          "Packet tunnel provider could not start the Libbox service: \(readServiceError() ?? error.localizedDescription)."
+          "Packet tunnel provider could not start the POKROV Core service: \(error.localizedDescription)."
       )
     }
   }
 
   private func stopService() {
-    if let service = boxService {
+    if serviceRunning, let commandServer {
       do {
-        try service.close()
+        try commandServer.closeService()
       } catch {
         writeMessage(
-          "Packet tunnel provider could not stop the Libbox service cleanly: \(error.localizedDescription)"
+          "Packet tunnel provider could not stop the POKROV Core service cleanly: \(error.localizedDescription)"
         )
       }
-      boxService = nil
-      commandServer?.setService(nil)
     }
+    serviceRunning = false
     platformInterface?.reset()
   }
 
   private func closeCommandServer() {
     if let commandServer {
-      do {
-        try commandServer.close()
-      } catch {
-        writeMessage(
-          "Packet tunnel provider could not stop the Libbox command server cleanly: \(error.localizedDescription)"
-        )
-      }
+      commandServer.close()
       self.commandServer = nil
     }
   }
@@ -427,7 +403,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       "status": providerState.rawValue,
       "message": lastMessage,
       "lastErrorMessage": lastErrorMessage,
-      "serviceRunning": boxService != nil,
+      "serviceRunning": serviceRunning,
       "commandServerRunning": commandServer != nil,
       "stagedConfigPath": stagedConfigPath,
       "usesSharedAppGroup": runtimeEnvironment?.usesSharedAppGroup ?? false,
@@ -443,20 +419,6 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
 
     let compactPayload = payload.compactMapValues { $0 }
     return try? JSONSerialization.data(withJSONObject: compactPayload, options: [])
-  }
-
-  private func readServiceError() -> String? {
-    var serviceError: NSError?
-    let detail = LibboxReadServiceError(&serviceError).trimmingCharacters(
-      in: .whitespacesAndNewlines
-    )
-    if !detail.isEmpty {
-      return detail
-    }
-    if let serviceError {
-      return serviceError.localizedDescription
-    }
-    return nil
   }
 
   private func normalizedPath(_ value: String?) -> String? {
@@ -523,11 +485,7 @@ final class PacketTunnelPlatformInterface: NSObject,
     if options.getAutoRoute() {
       settings.mtu = NSNumber(value: options.getMTU())
 
-      var dnsError: NSError?
-      let dnsServer = options.getDNSServerAddress(&dnsError)
-      if let dnsError {
-        throw dnsError
-      }
+      let dnsServer = try options.getDNSServerAddress().value
       settings.dnsSettings = NEDNSSettings(servers: [dnsServer])
 
       let ipv4Prefixes = routePrefixes(from: options.getInet4Address())
@@ -622,7 +580,7 @@ final class PacketTunnelPlatformInterface: NSObject,
   }
 
   func usePlatformAutoDetectInterfaceControl() -> Bool {
-    true
+    false
   }
 
   func autoDetectInterfaceControl(_: Int32) throws {}
@@ -632,42 +590,18 @@ final class PacketTunnelPlatformInterface: NSObject,
     sourceAddress _: String?,
     sourcePort _: Int32,
     destinationAddress _: String?,
-    destinationPort _: Int32,
-    ret0_ _: UnsafeMutablePointer<Int32>?
-  ) throws {
+    destinationPort _: Int32
+  ) throws -> LibboxConnectionOwner {
     throw NSError(domain: "PacketTunnelProvider", code: 2004)
-  }
-
-  func packageName(byUid _: Int32, error _: NSErrorPointer) -> String {
-    ""
-  }
-
-  func uid(byPackageName _: String?, ret0_ _: UnsafeMutablePointer<Int32>?) throws {
-    throw NSError(domain: "PacketTunnelProvider", code: 2005)
   }
 
   func useProcFS() -> Bool {
     false
   }
 
-  func writeLog(_ message: String?) {
-    guard let message else {
-      return
-    }
-    tunnel.writeMessage(message)
-  }
-
-  func usePlatformDefaultInterfaceMonitor() -> Bool {
-    false
-  }
-
   func startDefaultInterfaceMonitor(_: LibboxInterfaceUpdateListenerProtocol?) throws {}
 
   func closeDefaultInterfaceMonitor(_: LibboxInterfaceUpdateListenerProtocol?) throws {}
-
-  func usePlatformInterfaceGetter() -> Bool {
-    false
-  }
 
   func getInterfaces() throws -> LibboxNetworkInterfaceIteratorProtocol {
     throw NSError(domain: "PacketTunnelProvider", code: 2006)
@@ -707,7 +641,11 @@ final class PacketTunnelPlatformInterface: NSObject,
     try tunnel.reloadService()
   }
 
-  func getSystemProxyStatus() -> LibboxSystemProxyStatus? {
+  func serviceStop() throws {
+    tunnel.stopServiceFromCommand()
+  }
+
+  func getSystemProxyStatus() throws -> LibboxSystemProxyStatus {
     let status = LibboxSystemProxyStatus()
     guard let proxySettings = networkSettings?.proxySettings else {
       return status
@@ -745,8 +683,27 @@ final class PacketTunnelPlatformInterface: NSObject,
     }
   }
 
-  func postServiceClose() {
-    tunnel.markServiceClosed()
+  func writeDebugMessage(_ message: String?) {
+    guard let message else {
+      return
+    }
+    tunnel.writeMessage(message)
+  }
+
+  func send(_ notification: LibboxNotification?) throws {
+    guard let notification else {
+      return
+    }
+    let detail = notification.body.isEmpty ? notification.subtitle : notification.body
+    tunnel.writeMessage("Pokrov notification: \(notification.title) \(detail)")
+  }
+
+  func localDNSTransport() -> LibboxLocalDNSTransportProtocol? {
+    nil
+  }
+
+  func systemCertificates() -> LibboxStringIteratorProtocol? {
+    nil
   }
 
   func reset() {

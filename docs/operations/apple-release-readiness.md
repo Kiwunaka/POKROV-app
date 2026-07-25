@@ -1,6 +1,6 @@
 # Apple Release Readiness
 
-Last updated: 2026-04-18
+Last updated: 2026-07-22
 
 This document is the concrete Apple release-prep checklist for the next-client lane.
 
@@ -35,13 +35,16 @@ Checked in now:
 - deep-link scheme placeholder: `pokrov`
 - checked-in `PacketTunnelExtension` target scaffold with real provider source, plist, and entitlements
 - shared runtime-path helper so the host and packet-tunnel target point at the same staged managed-profile directory
-- checked-in Libbox-backed provider wiring for command server startup, service startup, tunnel-network settings, and `NEPacketTunnelFlow` handoff
+- POKROV Core packet-tunnel provider source wired for `LibboxSetup`, `CommandServer.checkConfig`, `startOrReloadService`, tunnel-network settings, and `NEPacketTunnelFlow` handoff
+- `PokrovCore.xcframework` is intentionally not claimed or committed until it is built on macOS and verified
+- the host writes one atomically replaced data-protected `managed-profile.json` with private permissions and rewrites that raw materialized config when WARP changes
 - explicit placeholders for Apple team, provisioning-profile specifier, TestFlight group, SKU, and App Store ID
 
 Still missing before iOS release:
 
 - Apple Developer team assignment
-- signed proof that the checked-in provider can start and hold the shared app-group lane on real Apple hardware
+- Xcode compile proof for the exact POKROV Core framework and Swift binding surface
+- signed proof that the checked-in provider can start, reload, carry traffic, survive network changes, and stop cleanly on real Apple hardware
 - reviewed production Network Extension entitlements and signed `iphoneos` validation
 - device-signing validation on `iphoneos`
 - archive and export from Xcode
@@ -51,7 +54,7 @@ Still missing before iOS release:
 Mac/operator commands to run later:
 
 ```bash
-cd external/pokrov-next-client/apps/ios_shell
+cd apps/ios_shell
 xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos -showBuildSettings
 xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos archive -archivePath build/Runner.xcarchive
 ```
@@ -65,11 +68,14 @@ Checked in now:
 - explicit placeholders for Apple team, provisioning profile, notary profile, App Store SKU, and App Store ID
 - tighter release entitlements with sandbox, shared app group, and client networking
 - hardened-runtime build placeholder for release signing
+- packaging expects only the POKROV Core desktop ABI 2 `pokrov-core.dylib`
 
 Still missing before macOS release:
 
 - Apple Developer team assignment
 - chosen distribution path: Developer ID direct or Mac App Store first
+- Go 1.25.12/Xcode build and ABI probe of POKROV Core 1.0.0 from the core repository
+- exact-dylib connect, WARP, route-mode, sleep/wake, network-change, DNS/leak, and teardown proof
 - signed archive or exported `.app`
 - notarization submission, success result, and stapled artifact
 - Gatekeeper validation on the signed artifact
@@ -78,7 +84,8 @@ Still missing before macOS release:
 Mac/operator commands to run later:
 
 ```bash
-cd external/pokrov-next-client/apps/macos_shell
+./scripts/build-apple.sh
+cd apps/macos_shell
 xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release -showBuildSettings
 xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release archive -archivePath build/Runner.xcarchive
 xcrun notarytool submit build/Runner.zip --keychain-profile "REPLACE_WITH_NOTARY_PROFILE" --wait

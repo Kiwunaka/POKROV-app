@@ -496,63 +496,74 @@ class PokrovCheckRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = PokrovPalette.of(context);
     final motion = PokrovMotionScope.of(context);
-    return PokrovSettingsRowPressSurface(
+    return Semantics(
+      container: true,
+      button: true,
+      selected: selected,
+      label: title,
+      hint: subtitle,
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 11),
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: tokens.accent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, size: 18, color: tokens.accent),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: tokens.ink,
-                          fontWeight: FontWeight.w600,
-                        ),
+      child: ExcludeSemantics(
+        child: PokrovSettingsRowPressSurface(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 11),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: tokens.accent.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: tokens.muted,
-                            height: 1.25,
-                          ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            AnimatedScale(
-              scale: selected ? 1 : 0.4,
-              duration: motion.duration(PokrovMotionTokens.short),
-              curve: PokrovMotionTokens.spring,
-              child: AnimatedOpacity(
-                opacity: selected ? 1 : 0,
-                duration: motion.duration(PokrovMotionTokens.quick),
-                curve: Curves.easeOut,
-                child: Icon(
-                  Icons.check_rounded,
-                  size: 22,
-                  color: tokens.accent,
+                  child: Icon(icon, size: 18, color: tokens.accent),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: tokens.ink,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: tokens.muted,
+                                    height: 1.25,
+                                  ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                AnimatedScale(
+                  scale: selected ? 1 : 0.4,
+                  duration: motion.duration(PokrovMotionTokens.short),
+                  curve: PokrovMotionTokens.spring,
+                  child: AnimatedOpacity(
+                    opacity: selected ? 1 : 0,
+                    duration: motion.duration(PokrovMotionTokens.quick),
+                    curve: Curves.easeOut,
+                    child: Icon(
+                      Icons.check_rounded,
+                      size: 22,
+                      color: tokens.accent,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

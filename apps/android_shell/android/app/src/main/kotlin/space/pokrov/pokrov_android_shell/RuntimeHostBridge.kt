@@ -1,14 +1,22 @@
 package space.pokrov.pokrov_android_shell
 
 import android.app.Activity
+import android.Manifest
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.VpnService
+import android.net.wifi.WifiInfo
+import android.net.wifi.WifiManager
+import android.os.Build
+import android.provider.Settings
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import java.io.File
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import io.nekohasekai.mobile.Mobile
-import org.json.JSONObject
 
 class RuntimeHostBridge(
     private val activity: Activity,
@@ -26,6 +34,10 @@ class RuntimeHostBridge(
             METHOD_LIVE_STATS -> result.success(AndroidRuntimeState.liveStats())
             METHOD_PUSH_TOKEN -> result.success(pushToken())
             METHOD_LIST_INSTALLED_APPS -> result.success(listInstalledApps())
+            METHOD_CURRENT_WIFI -> result.success(currentWifi())
+            METHOD_REQUEST_WIFI_PERMISSION ->
+                result.success(requestWifiPermission())
+            METHOD_OPEN_VPN_SETTINGS -> result.success(openVpnSettings())
             else -> result.notImplemented()
         }
     }
@@ -100,7 +112,17 @@ class RuntimeHostBridge(
         }
     }
 
+    fun handleSystemIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_TILE_CONNECT, false) != true) {
+            return
+        }
+        intent.removeExtra(EXTRA_TILE_CONNECT)
+        AndroidRuntimeProfileStore.restoreIntoRuntimeState(activity)
+        connect()
+    }
+
     private fun snapshot(): Map<String, Any?> {
+        AndroidRuntimeProfileStore.restoreIntoRuntimeState(activity)
         if (AndroidRuntimeState.resolveEnvironment(activity) == null) {
             return AndroidRuntimeState.snapshot()
         }
@@ -112,6 +134,7 @@ class RuntimeHostBridge(
     }
 
     private fun initialize(): Map<String, Any?> {
+        AndroidRuntimeProfileStore.restoreIntoRuntimeState(activity)
         AndroidRuntimeState.initialize(activity)
         return AndroidRuntimeState.snapshot()
     }
@@ -138,33 +161,21 @@ class RuntimeHostBridge(
                 return AndroidRuntimeState.snapshot()
             }
         val materializedForRuntime = call.argument<Boolean>("materializedForRuntime") ?: false
-        val runtimeOptionsJson = call.argument<String>("runtimeOptionsJson")
-            ?.takeIf { it.isNotBlank() }
-
-        val tempPath = File(runtimeEnvironment.tempDirectory, "$profileName.seed.json")
-        val finalPath = File(runtimeEnvironment.configDirectory, "$profileName.json")
-        val basePath = File(runtimeEnvironment.configDirectory, "$profileName.base.json")
+        val finalPath = File(runtimeEnvironment.configDirectory, "managed-profile.json")
 
         return try {
-            Mobile.touch()
-            val parsedConfig = if (materializedForRuntime) {
-                configPayload
-            } else {
-                tempPath.writeText(configPayload)
-                Mobile.parse(finalPath.absolutePath, tempPath.absolutePath, false)
-                finalPath.readText()
+            if (!materializedForRuntime) {
+                throw IllegalArgumentException(
+                    "POKROV Core requires a materialized sing-box profile.",
+                )
             }
-            basePath.writeText(parsedConfig)
-            val runtimeConfig = if (runtimeOptionsJson.isNullOrBlank()) {
-                parsedConfig
-            } else {
-                Mobile.buildConfig(runtimeOptionsJson, parsedConfig)
-            }
-            finalPath.writeText(runtimeConfig)
-            AndroidRuntimeState.markProfileStaged(
-                finalPath.absolutePath,
-                runtimeOptionsJson,
-                basePath.absolutePath,
+            writePrivateConfig(finalPath, configPayload)
+            AndroidRuntimeState.markProfileStaged(finalPath.absolutePath)
+            AndroidRuntimeProfileStore.save(
+                activity,
+                PersistedRuntimeProfile(
+                    configPath = finalPath.absolutePath,
+                ),
             )
             AndroidRuntimeState.snapshot()
         } catch (error: Throwable) {
@@ -177,6 +188,7 @@ class RuntimeHostBridge(
     }
 
     private fun connect(): Map<String, Any?> {
+        AndroidRuntimeProfileStore.restoreIntoRuntimeState(activity)
         if (AndroidRuntimeState.resolveEnvironment(activity) == null) {
             return snapshot()
         }
@@ -227,10 +239,8 @@ class RuntimeHostBridge(
     }
 
     private fun applyWarp(call: MethodCall): Map<String, Any?> {
-        val enabled = call.argument<Boolean>("enabled") ?: false
         val stagedConfigPath = AndroidRuntimeState.stagedConfigPath()
-        val stagedBaseConfigPath = AndroidRuntimeState.stagedBaseConfigPath()
-        val runtimeOptionsJson = AndroidRuntimeState.stagedRuntimeOptionsJson()
+        val configPayload = call.argument<String>("configPayload")
         if (stagedConfigPath.isNullOrBlank()) {
             return mapOf(
                 "applied" to false,
@@ -239,30 +249,22 @@ class RuntimeHostBridge(
                 "reason" to "no_staged_profile",
             )
         }
-        if (runtimeOptionsJson.isNullOrBlank() || stagedBaseConfigPath.isNullOrBlank()) {
+        if (configPayload.isNullOrBlank()) {
             return mapOf(
                 "applied" to false,
                 "effectiveAt" to "none",
                 "fallbackUsed" to false,
-                "reason" to "runtime_options_missing",
+                "reason" to "config_payload_missing",
             )
         }
         return try {
-            val options = JSONObject(runtimeOptionsJson)
-            val warp = options.optJSONObject("warp") ?: JSONObject()
-            warp.put("enable", enabled)
-            if (!warp.has("id")) {
-                warp.put("id", "p1")
-            }
-            if (!warp.has("mode")) {
-                warp.put("mode", "proxy_over_warp")
-            }
-            options.put("warp", warp)
-            val nextOptions = options.toString()
-            val baseConfig = File(stagedBaseConfigPath).readText()
-            val runtimeConfig = Mobile.buildConfig(nextOptions, baseConfig)
-            File(stagedConfigPath).writeText(runtimeConfig)
-            AndroidRuntimeState.markRuntimeOptionsUpdated(nextOptions)
+            writePrivateConfig(File(stagedConfigPath), configPayload)
+            AndroidRuntimeProfileStore.save(
+                activity,
+                PersistedRuntimeProfile(
+                    configPath = stagedConfigPath,
+                ),
+            )
             mapOf(
                 "applied" to true,
                 "effectiveAt" to "next_connect",
@@ -279,11 +281,129 @@ class RuntimeHostBridge(
         }
     }
 
+    private fun writePrivateConfig(target: File, content: String) {
+        target.parentFile?.mkdirs()
+        val next = File(target.parentFile, "${target.name}.next")
+        next.writeText(content)
+        next.setReadable(false, false)
+        next.setWritable(false, false)
+        next.setExecutable(false, false)
+        check(next.setReadable(true, true)) { "Could not restrict profile read access." }
+        check(next.setWritable(true, true)) { "Could not restrict profile write access." }
+        if (target.exists() && !target.delete()) {
+            throw IllegalStateException("Could not replace the staged profile.")
+        }
+        if (!next.renameTo(target)) {
+            throw IllegalStateException("Could not activate the staged profile.")
+        }
+    }
+
     private fun pushToken(): Map<String, Any?> {
         return mapOf(
             "token" to "",
             "provider" to "poll",
         )
+    }
+
+    private fun currentWifi(): Map<String, Any?> {
+        val connectivityManager = activity.getSystemService(
+            ConnectivityManager::class.java,
+        )
+        val activeNetwork = connectivityManager?.activeNetwork
+        val capabilities = activeNetwork?.let(connectivityManager::getNetworkCapabilities)
+        val connected = capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+        if (!connected) {
+            return mapOf(
+                "connected" to false,
+                "name" to null,
+                "permissionRequired" to false,
+                "reason" to "not_connected",
+            )
+        }
+
+        val permission = wifiPermissionName()
+        val permissionGranted = ContextCompat.checkSelfPermission(activity, permission) ==
+            PackageManager.PERMISSION_GRANTED
+        if (!permissionGranted) {
+            return mapOf(
+                "connected" to true,
+                "name" to null,
+                "permissionRequired" to true,
+                "reason" to "permission_required",
+            )
+        }
+
+        return try {
+            @Suppress("DEPRECATION")
+            val wifiInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                capabilities.transportInfo as? WifiInfo
+            } else {
+                activity.applicationContext
+                    .getSystemService(WifiManager::class.java)
+                    ?.connectionInfo
+            }
+            val name = wifiInfo?.ssid
+                ?.trim()
+                ?.removeSurrounding("\"")
+                ?.takeUnless {
+                    it.isBlank() || it.equals(WifiManager.UNKNOWN_SSID, ignoreCase = true)
+                }
+            mapOf(
+                "connected" to true,
+                "name" to name,
+                "permissionRequired" to (name == null),
+                "reason" to if (name == null) "ssid_unavailable" else null,
+            )
+        } catch (_: SecurityException) {
+            mapOf(
+                "connected" to true,
+                "name" to null,
+                "permissionRequired" to true,
+                "reason" to "permission_required",
+            )
+        }
+    }
+
+    private fun requestWifiPermission(): Map<String, Any?> {
+        val permission = wifiPermissionName()
+        if (
+            ContextCompat.checkSelfPermission(activity, permission) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            return mapOf("requested" to false, "granted" to true)
+        }
+        activity.runOnUiThread {
+            ActivityCompat.requestPermissions(
+                activity,
+                arrayOf(permission),
+                REQUEST_WIFI_PERMISSION,
+            )
+        }
+        return mapOf("requested" to true, "granted" to false)
+    }
+
+    private fun wifiPermissionName(): String =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.NEARBY_WIFI_DEVICES
+        } else {
+            Manifest.permission.ACCESS_FINE_LOCATION
+        }
+
+    private fun openVpnSettings(): Boolean {
+        return runCatching {
+            activity.runOnUiThread {
+                val intent = Intent(Settings.ACTION_VPN_SETTINGS)
+                activity.startActivity(intent)
+            }
+            true
+        }.getOrElse {
+            runCatching {
+                activity.runOnUiThread {
+                    activity.startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
+                }
+                true
+            }.getOrDefault(false)
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -316,6 +436,7 @@ class RuntimeHostBridge(
         const val REQUEST_VPN_PERMISSION = 14071
         const val EXTRA_DEBUG_RUNTIME_PATH = "space.pokrov.debug.RUNTIME_PATH"
         const val EXTRA_DEBUG_AUTO_CONNECT = "space.pokrov.debug.AUTO_CONNECT"
+        const val EXTRA_TILE_CONNECT = "space.pokrov.tile.CONNECT"
         private const val METHOD_SNAPSHOT = "runtimeEngine.snapshot"
         private const val METHOD_INITIALIZE = "runtimeEngine.initialize"
         private const val METHOD_STAGE_MANAGED_PROFILE = "runtimeEngine.stageManagedProfile"
@@ -325,5 +446,10 @@ class RuntimeHostBridge(
         private const val METHOD_LIVE_STATS = "runtimeEngine.liveStats"
         private const val METHOD_PUSH_TOKEN = "runtimeEngine.pushToken"
         private const val METHOD_LIST_INSTALLED_APPS = "runtimeEngine.listInstalledApps"
+        private const val METHOD_CURRENT_WIFI = "runtimeEngine.currentWifi"
+        private const val METHOD_REQUEST_WIFI_PERMISSION =
+            "runtimeEngine.requestWifiPermission"
+        private const val METHOD_OPEN_VPN_SETTINGS = "runtimeEngine.openVpnSettings"
+        private const val REQUEST_WIFI_PERMISSION = 14073
     }
 }

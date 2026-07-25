@@ -692,7 +692,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     Future<String?> Function()? connectivityProbe,
     DesktopRuntimeBindings Function(String libraryPath)? bindingsLoader,
   })  : _connectivityProbe = connectivityProbe,
-        _bindingsLoader = bindingsLoader ?? _LibcoreBindings.load;
+        _bindingsLoader = bindingsLoader ?? _PokrovCoreBindingsLoader.load;
 
   final HostPlatform hostPlatform;
   final String? assetRootOverride;
@@ -708,11 +708,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   DateTime? _runningSince;
   RuntimePhase _phase = RuntimePhase.artifactMissing;
   String _message = _missingArtifactMessage;
-  // System proxy is a compatibility-only path. The current Windows runtime
-  // keeps device-wide and selected-process routing on TUN by default.
-  bool _preferWindowsSystemProxy = false;
-
-  static const defaultLibcoreTag = 'v3.1.8';
+  static const defaultCoreTag = 'v1.0.0';
   static const _missingArtifactMessage =
       'Модуль подключения не найден в этой сборке. Обновите приложение или проверьте сборку.';
 
@@ -815,33 +811,46 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       return before;
     }
 
-    final tempPath = p.join(
-      _directories!.tempDir.path,
-      '${payload.profileName}.seed.json',
-    );
+    if (!payload.materializedForRuntime) {
+      _phase = RuntimePhase.initialized;
+      _message =
+          'POKROV Core нужен уже собранный sing-box профиль. Обновите приложение или профиль доступа.';
+      return _snapshotPreservingCurrentMessage(
+        phase: _phase,
+        canInitialize: true,
+        canConnect: false,
+      );
+    }
+
     final finalPath = p.join(
       _directories!.configDir.path,
-      '${payload.profileName}.json',
+      'managed-profile.json',
     );
-
-    if (payload.materializedForRuntime) {
-      await File(finalPath).writeAsString(payload.configPayload);
-    } else {
-      await File(tempPath).writeAsString(payload.configPayload);
-      final parseError = _bindings!.parse(
-        outputPath: finalPath,
-        tempPath: tempPath,
-        debug: false,
+    try {
+      final configPayload = _materializePokrovCoreConfig(
+        payload.configPayload,
+        payload.warpPolicy,
       );
-      if (parseError.isNotEmpty) {
-        _phase = RuntimePhase.initialized;
-        _message = 'Профиль доступа не прошел проверку: $parseError';
-        return _snapshotPreservingCurrentMessage(
-          phase: _phase,
-          canInitialize: true,
-          canConnect: false,
-        );
-      }
+      await File(finalPath).writeAsString(configPayload, flush: true);
+    } on Object catch (error) {
+      _phase = RuntimePhase.initialized;
+      _message = 'Профиль доступа не прошел проверку: $error';
+      return _snapshotPreservingCurrentMessage(
+        phase: _phase,
+        canInitialize: true,
+        canConnect: false,
+      );
+    }
+
+    final secureError = _bindings!.secureFile(finalPath);
+    if (secureError.isNotEmpty) {
+      _phase = RuntimePhase.initialized;
+      _message = 'POKROV не смог защитить файл профиля: $secureError';
+      return _snapshotPreservingCurrentMessage(
+        phase: _phase,
+        canInitialize: true,
+        canConnect: false,
+      );
     }
 
     _stagedPayload = payload;
@@ -860,19 +869,6 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         phase: _phase,
         canInitialize: before.canInitialize,
         canConnect: before.canConnect,
-      );
-    }
-
-    final optionsError = _bindings!.changeOptions(
-      configJson: _buildRuntimeOptionsJson(_stagedPayload!),
-    );
-    if (optionsError.isNotEmpty) {
-      _phase = RuntimePhase.configStaged;
-      _message = 'POKROV не смог применить параметры runtime: $optionsError';
-      return _snapshotPreservingCurrentMessage(
-        phase: _phase,
-        canInitialize: true,
-        canConnect: true,
       );
     }
 
@@ -915,25 +911,33 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     if (injectedProbe != null) {
       return injectedProbe();
     }
-    await Future<void>.delayed(const Duration(milliseconds: 900));
-    final proxyProbe = await _probeHttp(
-      useLocalProxy: true,
-      timeout: const Duration(seconds: 8),
-    );
-    if (proxyProbe != null) {
-      return proxyProbe;
+    final mixedProxyPort = await _stagedMixedProxyPort();
+    final attempts =
+        _stagedPayload?.warpPolicy.canEnableRuntime == true ? 3 : 1;
+    String? lastError;
+    for (var attempt = 0; attempt < attempts; attempt += 1) {
+      await Future<void>.delayed(
+        Duration(milliseconds: attempt == 0 ? 900 : 1500),
+      );
+      lastError = await _probeHttp(
+        proxyPort: mixedProxyPort,
+        timeout: const Duration(seconds: 6),
+      );
+      if (lastError == null) {
+        return null;
+      }
     }
-    return null;
+    return lastError;
   }
 
   Future<String?> _probeHttp({
-    required bool useLocalProxy,
+    required int? proxyPort,
     required Duration timeout,
   }) async {
     final client = HttpClient();
     client.connectionTimeout = timeout;
-    if (useLocalProxy) {
-      client.findProxy = (uri) => 'PROXY 127.0.0.1:22341';
+    if (proxyPort != null) {
+      client.findProxy = (uri) => 'PROXY 127.0.0.1:$proxyPort';
     }
     try {
       final request = await client
@@ -951,6 +955,35 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     } finally {
       client.close(force: true);
     }
+  }
+
+  Future<int?> _stagedMixedProxyPort() async {
+    final configPath = _stagedConfigPath;
+    if (configPath == null) {
+      return null;
+    }
+    try {
+      final decoded = jsonDecode(await File(configPath).readAsString());
+      if (decoded is! Map || decoded['inbounds'] is! List) {
+        return null;
+      }
+      for (final inbound in decoded['inbounds'] as List<dynamic>) {
+        if (inbound is! Map || inbound['type'] != 'mixed') {
+          continue;
+        }
+        final listen = inbound['listen']?.toString().trim().toLowerCase();
+        if (listen != '127.0.0.1' && listen != 'localhost' && listen != '::1') {
+          continue;
+        }
+        final port = inbound['listen_port'];
+        if (port is int && port > 0 && port <= 65535) {
+          return port;
+        }
+      }
+    } on Object {
+      return null;
+    }
+    return null;
   }
 
   @override
@@ -997,19 +1030,28 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         .withUserConsent(enabled)
         .copyWith(state: enabled ? 'consented' : 'revoked');
     final nextPayload = staged.copyWith(warpPolicy: nextPolicy);
-    final error = _bindings!.changeOptions(
-      configJson: _buildRuntimeOptionsJson(nextPayload),
-    );
-    if (error.isNotEmpty) {
-      _message = 'POKROV could not apply WARP: $error';
-      return WarpApplyResult.notApplied(reason: error);
+    final configPath = _stagedConfigPath;
+    if (configPath == null) {
+      return const WarpApplyResult.notApplied(reason: 'no_staged_profile');
+    }
+    try {
+      final config = _materializePokrovCoreConfig(
+        staged.configPayload,
+        nextPolicy,
+      );
+      await File(configPath).writeAsString(config, flush: true);
+      final secureError = _bindings!.secureFile(configPath);
+      if (secureError.isNotEmpty) {
+        return WarpApplyResult.notApplied(reason: secureError);
+      }
+    } on Object catch (error) {
+      return WarpApplyResult.notApplied(reason: error.toString());
     }
     _stagedPayload = nextPayload;
-    return WarpApplyResult(
+    return const WarpApplyResult(
       applied: true,
-      effectiveAt: _phase == RuntimePhase.running ? 'now' : 'next_connect',
+      effectiveAt: 'next_connect',
       fallbackUsed: false,
-      reason: null,
     );
   }
 
@@ -1052,8 +1094,8 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     final executableDirectory = File(Platform.resolvedExecutable).parent;
     final candidateDirectories = <Directory>{
       if (assetRootOverride != null) Directory(assetRootOverride!),
-      if (Platform.environment.containsKey('POKROV_LIBCORE_ROOT'))
-        Directory(Platform.environment['POKROV_LIBCORE_ROOT']!),
+      if (Platform.environment.containsKey('POKROV_CORE_ROOT'))
+        Directory(Platform.environment['POKROV_CORE_ROOT']!),
       executableDirectory,
       Directory(p.join(executableDirectory.path, 'runtime')),
       Directory(p.join(executableDirectory.path, 'resources', 'runtime')),
@@ -1066,33 +1108,25 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       );
     }
 
-    final coreFileName = switch (hostPlatform) {
-      HostPlatform.windows => 'libcore.dll',
-      HostPlatform.macos => 'libcore.dylib',
-      HostPlatform.android || HostPlatform.ios => '',
-    };
-    final helperFileName = switch (hostPlatform) {
-      HostPlatform.windows => null,
-      HostPlatform.macos => 'HiddifyCli',
-      HostPlatform.android || HostPlatform.ios => null,
+    final coreFileNames = switch (hostPlatform) {
+      HostPlatform.windows => const ['pokrov-core.dll'],
+      HostPlatform.macos => const ['pokrov-core.dylib'],
+      HostPlatform.android || HostPlatform.ios => const <String>[],
     };
 
     for (final directory in candidateDirectories) {
-      final coreBinary = File(p.join(directory.path, coreFileName));
-      if (!coreBinary.existsSync()) {
-        continue;
-      }
+      for (final coreFileName in coreFileNames) {
+        final coreBinary = File(p.join(directory.path, coreFileName));
+        if (!coreBinary.existsSync()) {
+          continue;
+        }
 
-      final helperBinary = helperFileName == null
-          ? null
-          : File(p.join(directory.path, helperFileName));
-      return _ResolvedArtifacts(
-        artifactDirectory: directory,
-        coreBinary: coreBinary,
-        helperBinary: helperBinary != null && helperBinary.existsSync()
-            ? helperBinary
-            : null,
-      );
+        return _ResolvedArtifacts(
+          artifactDirectory: directory,
+          coreBinary: coreBinary,
+          helperBinary: null,
+        );
+      }
     }
 
     return const _ResolvedArtifacts(
@@ -1115,9 +1149,9 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
 
     for (final candidate in [
       p.join(base.path, platformSegment),
-      p.join(base.path, 'libcore', platformSegment),
-      p.join(base.path, 'artifacts', 'libcore', platformSegment),
-      p.join(base.path, 'artifacts', 'libcore', defaultLibcoreTag,
+      p.join(base.path, 'pokrov-core', platformSegment),
+      p.join(base.path, 'artifacts', 'pokrov-core', platformSegment),
+      p.join(base.path, 'artifacts', 'pokrov-core', defaultCoreTag,
           platformSegment),
       if (platform == HostPlatform.macos) p.join(base.path, '..', 'Frameworks'),
       if (platform == HostPlatform.macos)
@@ -1187,157 +1221,291 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       message: _message,
     );
   }
+}
 
-  String _buildRuntimeOptionsJson(ManagedProfilePayload payload) {
-    return _runtimeOptionsJsonForPayload(
-      payload,
-      hostPlatform: hostPlatform,
-      preferWindowsSystemProxy: _preferWindowsSystemProxy,
+const _pokrovWarpEndpointTag = 'pokrov-warp';
+
+String _materializePokrovCoreConfig(
+  String configPayload,
+  WarpRuntimePolicy policy,
+) {
+  final decoded = jsonDecode(configPayload);
+  if (decoded is! Map) {
+    throw const FormatException('sing-box config must be a JSON object');
+  }
+  final config = decoded.map<String, Object?>(
+    (key, value) => MapEntry(key.toString(), value),
+  );
+  if (!policy.canEnableRuntime) {
+    return const JsonEncoder.withIndent('  ').convert(config);
+  }
+
+  final outbounds = _runtimeMapList(config['outbounds']);
+  final route = Map<String, Object?>.from(_runtimeObjectMap(config['route']));
+  if (outbounds.isEmpty || route.isEmpty) {
+    throw const FormatException(
+      'WARP requires a materialized sing-box route and outbounds',
     );
   }
-}
 
-String _runtimeOptionsJsonForPayload(
-  ManagedProfilePayload payload, {
-  required HostPlatform hostPlatform,
-  bool preferWindowsSystemProxy = false,
-}) {
-  final routingMode = switch (payload.routeMode) {
-    RouteMode.allExceptRu => 'allExceptRu',
-    RouteMode.selectedApps => 'global',
-    RouteMode.fullTunnel => 'global',
-  };
-  final allowsSystemProxyCompatibility =
-      payload.routeMode == RouteMode.selectedApps;
-  final systemProxyMode = hostPlatform == HostPlatform.windows &&
-      preferWindowsSystemProxy &&
-      allowsSystemProxyCompatibility;
-  final directDnsAddress =
-      payload.routeMode == RouteMode.allExceptRu ? 'local' : 'udp://1.1.1.1';
+  final directTag = _firstOutboundTagByType(outbounds, const {'direct'});
+  final proxyTag = _primaryProxyTag(outbounds, route);
+  final warpOverProxy = policy.mode == 'warp_over_proxy';
+  if (warpOverProxy && proxyTag == null) {
+    throw const FormatException('WARP-over-proxy requires a proxy outbound');
+  }
 
-  return jsonEncode(
-    <String, Object?>{
-      'region': 'other',
-      'routing-mode': routingMode,
-      'block-ads': false,
-      'use-xray-core-when-possible': false,
-      'execute-config-as-is': true,
-      'log-level': 'info',
-      'resolve-destination': false,
-      'ipv6-mode': 'ipv4_only',
-      'remote-dns-address': 'https://1.1.1.1/dns-query',
-      'remote-dns-domain-strategy': '',
-      'direct-dns-address': directDnsAddress,
-      'direct-dns-domain-strategy': '',
-      'mixed-port': 22341,
-      'tproxy-port': 22342,
-      'local-dns-port': 22441,
-      'tun-implementation': 'gvisor',
-      'mtu': 9000,
-      'strict-route': true,
-      'connection-test-url': 'http://cp.cloudflare.com',
-      'url-test-interval': 600,
-      'enable-clash-api': false,
-      'clash-api-port': 26756,
-      'enable-tun': !systemProxyMode,
-      'enable-tun-service': false,
-      'set-system-proxy': systemProxyMode,
-      'bypass-lan': false,
-      'allow-connection-from-lan': false,
-      'enable-fake-dns': false,
-      'enable-dns-routing': true,
-      'independent-dns-cache': true,
-      'rules': const <Object?>[],
-      'mux': <String, Object?>{
-        'enable': false,
-        'padding': false,
-        'max-streams': 8,
-        'protocol': 'h2mux',
-      },
-      'tls-tricks': <String, Object?>{
-        'enable-fragment': false,
-        'fragment-size': '10-30',
-        'fragment-sleep': '2-8',
-        'mixed-sni-case': false,
-        'enable-padding': false,
-        'padding-size': '1-1500',
-      },
-      'warp': _runtimeWarpOptions(payload.warpPolicy),
-      'warp2': _defaultRuntimeWarpOptions(),
+  final profile = <String, Object?>{
+    if (policy.accountId.trim().isNotEmpty &&
+        policy.accessToken.trim().isNotEmpty) ...{
+      'id': policy.accountId.trim(),
+      'auth_token': policy.accessToken.trim(),
     },
-  );
-}
-
-Map<String, Object?> _runtimeWarpOptions(WarpRuntimePolicy policy) {
-  final options = _defaultRuntimeWarpOptions();
-  if (!policy.canEnableRuntime) {
-    return options;
-  }
-
-  final licenseKey = policy.licenseKey.trim();
-  final warpId = policy.id.trim().isNotEmpty
-      ? policy.id.trim()
-      : licenseKey.isNotEmpty
-          ? licenseKey
-          : 'p1';
-  options
-    ..['enable'] = true
-    ..['id'] = warpId
-    ..['mode'] = policy.mode
-    ..['license-key'] = licenseKey
-    ..['clean-ip'] = policy.cleanIp
-    ..['clean-port'] = policy.cleanPort
-    ..['noise'] = policy.noise
-    ..['noise-size'] = policy.noiseSize
-    ..['noise-delay'] = policy.noiseDelay
-    ..['noise-mode'] = policy.noiseMode;
-
-  if (policy.wireguardConfigJson.trim().isNotEmpty) {
-    options['wireguard-config'] = policy.wireguardConfigJson;
-  }
+    if (policy.licenseKey.trim().isNotEmpty)
+      'license': policy.licenseKey.trim(),
+    if (warpOverProxy && proxyTag != null)
+      'detour': proxyTag
+    else if (directTag != null)
+      'detour': directTag,
+  };
   final wireguardConfig = policy.wireguardConfigObject;
-  if (wireguardConfig != null && wireguardConfig.isNotEmpty) {
-    options['wireguardConfig'] = wireguardConfig;
+  final legacyPrivateKey = _runtimeText(
+    wireguardConfig?['private_key'] ?? wireguardConfig?['private-key'],
+  );
+  if (legacyPrivateKey.isNotEmpty) {
+    profile['private_key'] = legacyPrivateKey;
   }
-  final account = <String, Object?>{
-    if (policy.accountId.trim().isNotEmpty) 'account-id': policy.accountId,
-    if (policy.accessToken.trim().isNotEmpty)
-      'access-token': policy.accessToken,
+
+  final endpoint = <String, Object?>{
+    'type': 'warp',
+    'tag': _pokrovWarpEndpointTag,
+    'unique_identifier': policy.id.trim().isEmpty ? 'p1' : policy.id.trim(),
+    'profile': profile,
+    'mtu': 1280,
+    if (warpOverProxy && proxyTag != null)
+      'detour': proxyTag
+    else if (directTag != null)
+      'detour': directTag,
   };
-  if (account.isNotEmpty) {
-    options['account'] = account;
+  _mergeNativeWarpConfig(endpoint, wireguardConfig);
+
+  final cleanIp = policy.cleanIp.trim();
+  if (cleanIp.isNotEmpty &&
+      !const {'auto', 'auto4', 'auto6', 'default', 'random'}
+          .contains(cleanIp.toLowerCase())) {
+    endpoint['server'] = cleanIp;
+    if (policy.cleanPort > 0 && policy.cleanPort <= 65535) {
+      endpoint['server_port'] = policy.cleanPort;
+    }
   }
-  return options;
+  final noiseCount = policy.noise.trim();
+  if (noiseCount.isNotEmpty) {
+    endpoint['noise'] = <String, Object?>{
+      'fake_packet': <String, Object?>{
+        'enabled': true,
+        'count': noiseCount,
+        'size':
+            policy.noiseSize.trim().isEmpty ? '10-30' : policy.noiseSize.trim(),
+        'delay': policy.noiseDelay.trim().isEmpty
+            ? '10-30'
+            : policy.noiseDelay.trim(),
+        'mode':
+            policy.noiseMode.trim().isEmpty ? 'm4' : policy.noiseMode.trim(),
+      },
+    };
+  }
+
+  final endpoints = _runtimeMapList(config['endpoints'])
+    ..removeWhere(
+      (item) => _runtimeText(item['tag']) == _pokrovWarpEndpointTag,
+    )
+    ..add(endpoint);
+  config['endpoints'] = endpoints;
+
+  if (warpOverProxy) {
+    _replaceOutboundReference(route, proxyTag!, _pokrovWarpEndpointTag);
+    final dns = Map<String, Object?>.from(_runtimeObjectMap(config['dns']));
+    _replaceDetourReference(dns, proxyTag, _pokrovWarpEndpointTag);
+    if (dns.isNotEmpty) {
+      config['dns'] = dns;
+    }
+  } else {
+    for (final outbound in outbounds) {
+      if (_isProxyTransportForWarp(outbound)) {
+        outbound['detour'] = _pokrovWarpEndpointTag;
+      }
+    }
+  }
+  config['outbounds'] = outbounds;
+  config['route'] = route;
+
+  final experimental =
+      Map<String, Object?>.from(_runtimeObjectMap(config['experimental']));
+  final cacheFile =
+      Map<String, Object?>.from(_runtimeObjectMap(experimental['cache_file']));
+  cacheFile
+    ..['enabled'] = true
+    ..['store_warp_config'] = true;
+  if (_runtimeText(cacheFile['path']).isEmpty) {
+    cacheFile['path'] = 'data/clash.db';
+  }
+  experimental['cache_file'] = cacheFile;
+  config['experimental'] = experimental;
+
+  return const JsonEncoder.withIndent('  ').convert(config);
 }
 
-Map<String, Object?> _defaultRuntimeWarpOptions() {
-  return <String, Object?>{
-    'enable': false,
-    'id': 'p1',
-    'mode': 'proxy_over_warp',
-    'wireguard-config': '',
-    'license-key': '',
-    'account-id': '',
-    'access-token': '',
-    'clean-ip': 'auto',
-    'clean-port': 0,
-    'noise': '',
-    'noise-size': '',
-    'noise-delay': '',
-    'noise-mode': 'm4',
+List<Map<String, Object?>> _runtimeMapList(Object? value) {
+  if (value is! List) {
+    return <Map<String, Object?>>[];
+  }
+  return value
+      .whereType<Map>()
+      .map(
+        (item) => item.map<String, Object?>(
+          (key, entryValue) => MapEntry(key.toString(), entryValue),
+        ),
+      )
+      .toList(growable: true);
+}
+
+String? _firstOutboundTagByType(
+  List<Map<String, Object?>> outbounds,
+  Set<String> types,
+) {
+  for (final outbound in outbounds) {
+    if (types.contains(_runtimeText(outbound['type']).toLowerCase())) {
+      final tag = _runtimeText(outbound['tag']);
+      if (tag.isNotEmpty) {
+        return tag;
+      }
+    }
+  }
+  return null;
+}
+
+String? _primaryProxyTag(
+  List<Map<String, Object?>> outbounds,
+  Map<String, Object?> route,
+) {
+  final byTag = <String, Map<String, Object?>>{
+    for (final outbound in outbounds)
+      if (_runtimeText(outbound['tag']).isNotEmpty)
+        _runtimeText(outbound['tag']): outbound,
   };
+  final routeFinal = _runtimeText(route['final']);
+  final finalOutbound = byTag[routeFinal];
+  if (finalOutbound != null && !_isAuxiliaryOutboundForWarp(finalOutbound)) {
+    return routeFinal;
+  }
+  final groupTag = _firstOutboundTagByType(
+    outbounds,
+    const {'selector', 'urltest', 'url-test', 'balancer'},
+  );
+  if (groupTag != null) {
+    return groupTag;
+  }
+  for (final outbound in outbounds) {
+    if (_isProxyTransportForWarp(outbound)) {
+      final tag = _runtimeText(outbound['tag']);
+      if (tag.isNotEmpty) {
+        return tag;
+      }
+    }
+  }
+  return null;
+}
+
+bool _isAuxiliaryOutboundForWarp(Map<String, Object?> outbound) {
+  final type = _runtimeText(outbound['type']).toLowerCase();
+  return const {'direct', 'block', 'dns', 'warp'}.contains(type);
+}
+
+bool _isProxyTransportForWarp(Map<String, Object?> outbound) {
+  final type = _runtimeText(outbound['type']).toLowerCase();
+  return !const {
+    'direct',
+    'block',
+    'dns',
+    'selector',
+    'urltest',
+    'url-test',
+    'balancer',
+    'warp',
+  }.contains(type);
+}
+
+void _replaceOutboundReference(
+  Object? value,
+  String from,
+  String to,
+) {
+  if (value is Map) {
+    for (final key in value.keys.toList(growable: false)) {
+      if (key.toString() == 'outbound' && value[key] == from) {
+        value[key] = to;
+      } else {
+        _replaceOutboundReference(value[key], from, to);
+      }
+    }
+  } else if (value is List) {
+    for (final item in value) {
+      _replaceOutboundReference(item, from, to);
+    }
+  }
+}
+
+void _replaceDetourReference(Object? value, String from, String to) {
+  if (value is Map) {
+    for (final key in value.keys.toList(growable: false)) {
+      if (key.toString() == 'detour' && value[key] == from) {
+        value[key] = to;
+      } else {
+        _replaceDetourReference(value[key], from, to);
+      }
+    }
+  } else if (value is List) {
+    for (final item in value) {
+      _replaceDetourReference(item, from, to);
+    }
+  }
+}
+
+void _mergeNativeWarpConfig(
+  Map<String, Object?> endpoint,
+  Map<String, Object?>? rawConfig,
+) {
+  if (rawConfig == null || rawConfig.isEmpty) {
+    return;
+  }
+  final nested = _runtimeObjectMap(rawConfig['config']);
+  final config = nested.isEmpty ? rawConfig : nested;
+  final privateKey = _runtimeText(config['private_key']);
+  final interface = _runtimeObjectMap(config['interface']);
+  final peers = config['peers'];
+  if (privateKey.isEmpty ||
+      interface.isEmpty ||
+      peers is! List ||
+      peers.isEmpty) {
+    return;
+  }
+  endpoint
+    ..['private_key'] = privateKey
+    ..['interface'] = interface
+    ..['peers'] = peers;
 }
 
 class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
-  const MobileArtifactRuntimeEngine({
+  MobileArtifactRuntimeEngine({
     required this.hostPlatform,
     this.assetRootOverride,
   });
 
   final HostPlatform hostPlatform;
   final String? assetRootOverride;
+  ManagedProfilePayload? _stagedPayload;
 
-  static const defaultLibcoreTag = DesktopRuntimeEngine.defaultLibcoreTag;
+  static const defaultCoreTag = DesktopRuntimeEngine.defaultCoreTag;
   static const _runtimeChannel = MethodChannel('space.pokrov/runtime_engine');
 
   @override
@@ -1377,17 +1545,21 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
   Future<RuntimeSnapshot> stageManagedProfile(
     ManagedProfilePayload payload,
   ) async {
+    if (!payload.materializedForRuntime) {
+      return await snapshot();
+    }
+    final configPayload = _materializePokrovCoreConfig(
+      payload.configPayload,
+      payload.warpPolicy,
+    );
+    _stagedPayload = payload;
     final hostSnapshot = await _invokeHostSnapshot(
       'runtimeEngine.stageManagedProfile',
       arguments: <String, Object?>{
         'profileName': payload.profileName,
-        'configPayload': payload.configPayload,
+        'configPayload': configPayload,
         'disableMemoryLimit': payload.disableMemoryLimit,
-        'materializedForRuntime': payload.materializedForRuntime,
-        'runtimeOptionsJson': _runtimeOptionsJsonForPayload(
-          payload,
-          hostPlatform: hostPlatform,
-        ),
+        'materializedForRuntime': true,
       },
     );
     return hostSnapshot ?? await snapshot();
@@ -1407,13 +1579,36 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
 
   @override
   Future<WarpApplyResult> applyWarp({required bool enabled}) async {
+    final staged = _stagedPayload;
+    if (staged == null) {
+      return const WarpApplyResult.notApplied(reason: 'no_staged_profile');
+    }
+    final basePolicy = staged.warpPolicy.canOfferRuntime
+        ? staged.warpPolicy
+        : WarpRuntimePolicy.clientLocalDefault;
+    final nextPolicy = basePolicy
+        .withClientLocalDefaults()
+        .withUserConsent(enabled)
+        .copyWith(state: enabled ? 'consented' : 'revoked');
+    final nextPayload = staged.copyWith(warpPolicy: nextPolicy);
+    final configPayload = _materializePokrovCoreConfig(
+      staged.configPayload,
+      nextPolicy,
+    );
     final response = await _invokeHostMap(
       'runtimeEngine.applyWarp',
-      arguments: <String, Object?>{'enabled': enabled},
+      arguments: <String, Object?>{
+        'enabled': enabled,
+        'configPayload': configPayload,
+      },
     );
-    return response == null
+    final result = response == null
         ? const WarpApplyResult.notApplied(reason: 'host_bridge_unavailable')
         : WarpApplyResult.fromMap(response);
+    if (result.applied) {
+      _stagedPayload = nextPayload;
+    }
+    return result;
   }
 
   @override
@@ -2021,25 +2216,25 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       HostPlatform.windows || HostPlatform.macos => '',
     };
     final artifactName = switch (hostPlatform) {
-      HostPlatform.android => 'libcore.aar',
-      HostPlatform.ios => 'Libcore.xcframework',
+      HostPlatform.android => 'pokrov-core.aar',
+      HostPlatform.ios => 'PokrovCore.xcframework',
       HostPlatform.windows || HostPlatform.macos => '',
     };
 
     final candidateDirectories = <Directory>{
       if (assetRootOverride != null) Directory(assetRootOverride!),
-      if (Platform.environment.containsKey('POKROV_LIBCORE_ROOT'))
-        Directory(Platform.environment['POKROV_LIBCORE_ROOT']!),
+      if (Platform.environment.containsKey('POKROV_CORE_ROOT'))
+        Directory(Platform.environment['POKROV_CORE_ROOT']!),
       Directory.current,
     };
 
     for (final base in candidateDirectories.toList()) {
       candidateDirectories.addAll([
         Directory(p.join(base.path, platformSegment)),
-        Directory(p.join(base.path, 'libcore', platformSegment)),
-        Directory(p.join(base.path, 'artifacts', 'libcore', platformSegment)),
+        Directory(p.join(base.path, 'pokrov-core', platformSegment)),
+        Directory(p.join(base.path, 'artifacts', 'pokrov-core', platformSegment)),
         Directory(
-          p.join(base.path, 'artifacts', 'libcore', defaultLibcoreTag,
+          p.join(base.path, 'artifacts', 'pokrov-core', defaultCoreTag,
               platformSegment),
         ),
       ]);
@@ -2105,22 +2300,14 @@ class _ResolvedMobileArtifacts {
 }
 
 abstract interface class DesktopRuntimeBindings {
+  String secureFile(String path);
+
   String setup({
     required String baseDir,
     required String workingDir,
     required String tempDir,
     required int statusPort,
     required bool debug,
-  });
-
-  String parse({
-    required String outputPath,
-    required String tempPath,
-    required bool debug,
-  });
-
-  String changeOptions({
-    required String configJson,
   });
 
   String start({
@@ -2131,80 +2318,119 @@ abstract interface class DesktopRuntimeBindings {
   String stop();
 }
 
-class _LibcoreBindings implements DesktopRuntimeBindings {
-  _LibcoreBindings._({
+class _PokrovCoreBindingsLoader {
+  static DesktopRuntimeBindings load(String libraryPath) {
+    final dynamicLibrary = DynamicLibrary.open(libraryPath);
+    final pokrovCoreAbi = _pokrovCoreAbiVersion(dynamicLibrary);
+    if (pokrovCoreAbi == null) {
+      throw UnsupportedError(
+        'Unrecognized runtime binary. '
+        'The POKROV Core ABI marker is missing.',
+      );
+    }
+    if (pokrovCoreAbi != _PokrovCoreBindings.supportedAbiVersion) {
+      throw UnsupportedError(
+        'Unsupported POKROV Core desktop ABI: $pokrovCoreAbi',
+      );
+    }
+    return _PokrovCoreBindings.load(dynamicLibrary);
+  }
+
+  static int? _pokrovCoreAbiVersion(DynamicLibrary dynamicLibrary) {
+    try {
+      final version =
+          dynamicLibrary.lookupFunction<Int32 Function(), int Function()>(
+              'pokrovCoreAbiVersion');
+      return version();
+    } on ArgumentError {
+      return null;
+    }
+  }
+}
+
+class _PokrovCoreBindings implements DesktopRuntimeBindings {
+  _PokrovCoreBindings._({
     required Pointer<Char> Function(
       Pointer<Char>,
       Pointer<Char>,
       Pointer<Char>,
       int,
+      Pointer<Char>,
+      Pointer<Char>,
       int,
+      bool,
     ) setup,
-    required Pointer<Char> Function(Pointer<Char>, Pointer<Char>, int) parse,
-    required Pointer<Char> Function(Pointer<Char>) changeOptions,
-    required Pointer<Char> Function(Pointer<Char>, int) start,
+    required Pointer<Char> Function(Pointer<Char>, bool) start,
     required Pointer<Char> Function() stop,
+    required Pointer<Char> Function(Pointer<Char>) secureFile,
+    required void Function(Pointer<Char>) freeString,
   })  : _setup = setup,
-        _parse = parse,
-        _changeOptions = changeOptions,
         _start = start,
-        _stop = stop;
+        _stop = stop,
+        _secureFile = secureFile,
+        _freeString = freeString;
+
+  static const supportedAbiVersion = 2;
 
   final Pointer<Char> Function(
     Pointer<Char>,
     Pointer<Char>,
     Pointer<Char>,
     int,
+    Pointer<Char>,
+    Pointer<Char>,
     int,
+    bool,
   ) _setup;
-  final Pointer<Char> Function(Pointer<Char>, Pointer<Char>, int) _parse;
-  final Pointer<Char> Function(Pointer<Char>) _changeOptions;
-  final Pointer<Char> Function(Pointer<Char>, int) _start;
+  final Pointer<Char> Function(Pointer<Char>, bool) _start;
   final Pointer<Char> Function() _stop;
+  final Pointer<Char> Function(Pointer<Char>) _secureFile;
+  final void Function(Pointer<Char>) _freeString;
 
-  static DesktopRuntimeBindings load(String libraryPath) {
-    final dynamicLibrary = DynamicLibrary.open(libraryPath);
-    final setupOnce = dynamicLibrary.lookupFunction<
-        Void Function(Pointer<Void>), void Function(Pointer<Void>)>(
-      'setupOnce',
-    );
+  static DesktopRuntimeBindings load(DynamicLibrary dynamicLibrary) {
     final setup = dynamicLibrary.lookupFunction<
         Pointer<Char> Function(
           Pointer<Char>,
           Pointer<Char>,
           Pointer<Char>,
+          Int32,
+          Pointer<Char>,
+          Pointer<Char>,
           Int64,
-          Uint8,
+          Bool,
         ),
         Pointer<Char> Function(
           Pointer<Char>,
           Pointer<Char>,
           Pointer<Char>,
           int,
+          Pointer<Char>,
+          Pointer<Char>,
           int,
+          bool,
         )>('setup');
-    final parse = dynamicLibrary.lookupFunction<
-        Pointer<Char> Function(Pointer<Char>, Pointer<Char>, Uint8),
-        Pointer<Char> Function(Pointer<Char>, Pointer<Char>, int)>('parse');
-    final changeOptions = dynamicLibrary.lookupFunction<
-        Pointer<Char> Function(Pointer<Char>),
-        Pointer<Char> Function(Pointer<Char>)>('changeHiddifyOptions');
     final start = dynamicLibrary.lookupFunction<
-        Pointer<Char> Function(Pointer<Char>, Uint8),
-        Pointer<Char> Function(Pointer<Char>, int)>('start');
+        Pointer<Char> Function(Pointer<Char>, Bool),
+        Pointer<Char> Function(Pointer<Char>, bool)>('start');
     final stop = dynamicLibrary.lookupFunction<Pointer<Char> Function(),
         Pointer<Char> Function()>('stop');
+    final freeString = dynamicLibrary.lookupFunction<
+        Void Function(Pointer<Char>),
+        void Function(Pointer<Char>)>('freeString');
+    final secureFile = dynamicLibrary.lookupFunction<
+        Pointer<Char> Function(Pointer<Char>),
+        Pointer<Char> Function(Pointer<Char>)>('pokrovSecureFile');
 
-    setupOnce(NativeApi.initializeApiDLData);
-    return _LibcoreBindings._(
+    return _PokrovCoreBindings._(
       setup: setup,
-      parse: parse,
-      changeOptions: changeOptions,
       start: start,
       stop: stop,
+      secureFile: secureFile,
+      freeString: freeString,
     );
   }
 
+  @override
   String setup({
     required String baseDir,
     required String workingDir,
@@ -2215,59 +2441,41 @@ class _LibcoreBindings implements DesktopRuntimeBindings {
     final base = baseDir.toNativeUtf8();
     final working = workingDir.toNativeUtf8();
     final temp = tempDir.toNativeUtf8();
+    final listen = ''.toNativeUtf8();
+    final secret = ''.toNativeUtf8();
     try {
       return _stringResult(
         _setup(
           base.cast<Char>(),
           working.cast<Char>(),
           temp.cast<Char>(),
+          0,
+          listen.cast<Char>(),
+          secret.cast<Char>(),
           statusPort,
-          debug ? 1 : 0,
+          debug,
         ),
       );
     } finally {
       calloc.free(base);
       calloc.free(working);
       calloc.free(temp);
+      calloc.free(listen);
+      calloc.free(secret);
     }
   }
 
-  String parse({
-    required String outputPath,
-    required String tempPath,
-    required bool debug,
-  }) {
-    final output = outputPath.toNativeUtf8();
-    final temp = tempPath.toNativeUtf8();
+  @override
+  String secureFile(String path) {
+    final nativePath = path.toNativeUtf8();
     try {
-      return _stringResult(
-        _parse(
-          output.cast<Char>(),
-          temp.cast<Char>(),
-          debug ? 1 : 0,
-        ),
-      );
+      return _stringResult(_secureFile(nativePath.cast<Char>()));
     } finally {
-      calloc.free(output);
-      calloc.free(temp);
+      calloc.free(nativePath);
     }
   }
 
-  String changeOptions({
-    required String configJson,
-  }) {
-    final options = configJson.toNativeUtf8();
-    try {
-      return _stringResult(
-        _changeOptions(
-          options.cast<Char>(),
-        ),
-      );
-    } finally {
-      calloc.free(options);
-    }
-  }
-
+  @override
   String start({
     required String configPath,
     required bool disableMemoryLimit,
@@ -2275,22 +2483,24 @@ class _LibcoreBindings implements DesktopRuntimeBindings {
     final config = configPath.toNativeUtf8();
     try {
       return _stringResult(
-        _start(
-          config.cast<Char>(),
-          disableMemoryLimit ? 1 : 0,
-        ),
+        _start(config.cast<Char>(), disableMemoryLimit),
       );
     } finally {
       calloc.free(config);
     }
   }
 
+  @override
   String stop() => _stringResult(_stop());
 
   String _stringResult(Pointer<Char> pointer) {
     if (pointer.address == 0) {
       return '';
     }
-    return pointer.cast<Utf8>().toDartString();
+    try {
+      return pointer.cast<Utf8>().toDartString();
+    } finally {
+      _freeString(pointer);
+    }
   }
 }

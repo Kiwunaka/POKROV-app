@@ -4,8 +4,8 @@ This package carries the non-UI runtime lane for the Wave 7 next-client program.
 
 Current scope:
 
-- desktop `libcore` FFI bootstrap for `Windows` and `macOS`
-- artifact discovery from local host folders or `POKROV_LIBCORE_ROOT`
+- POKROV Core FFI bootstrap for `Windows` and `macOS`
+- artifact discovery from local host folders or `POKROV_CORE_ROOT`
 - staging and starting a managed profile payload once a real config exists
 - mobile artifact readiness summaries for `Android` and `iOS`
 

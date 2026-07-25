@@ -6,8 +6,8 @@ import android.os.CancellationSignal
 import android.system.ErrnoException
 import android.util.Log
 import androidx.annotation.RequiresApi
-import io.nekohasekai.libbox.ExchangeContext
-import io.nekohasekai.libbox.LocalDNSTransport
+import space.pokrov.core.libbox.ExchangeContext
+import space.pokrov.core.libbox.LocalDNSTransport
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch

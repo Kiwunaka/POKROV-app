@@ -9,23 +9,25 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 class _FakeDesktopBindings implements DesktopRuntimeBindings {
   _FakeDesktopBindings({
     this.setupResult = '',
-    this.parseResult = '',
-    this.changeOptionsResult = '',
+    this.secureFileResult = '',
     this.startResult = '',
     this.stopResult = '',
   });
 
   int setupCalls = 0;
-  int parseCalls = 0;
-  int changeOptionsCalls = 0;
   int startCalls = 0;
   int stopCalls = 0;
-  String? lastOptionsJson;
+  int secureFileCalls = 0;
   final String setupResult;
-  final String parseResult;
-  final String changeOptionsResult;
+  final String secureFileResult;
   final String startResult;
   final String stopResult;
+
+  @override
+  String secureFile(String path) {
+    secureFileCalls += 1;
+    return secureFileResult;
+  }
 
   @override
   String setup({
@@ -37,25 +39,6 @@ class _FakeDesktopBindings implements DesktopRuntimeBindings {
   }) {
     setupCalls += 1;
     return setupResult;
-  }
-
-  @override
-  String parse({
-    required String outputPath,
-    required String tempPath,
-    required bool debug,
-  }) {
-    parseCalls += 1;
-    return parseResult;
-  }
-
-  @override
-  String changeOptions({
-    required String configJson,
-  }) {
-    changeOptionsCalls += 1;
-    lastOptionsJson = configJson;
-    return changeOptionsResult;
   }
 
   @override
@@ -104,7 +87,8 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\android')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.aar').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\pokrov-core.aar')
+        .writeAsStringSync('stub');
 
     final engine = createRuntimeEngine(
       hostPlatform: HostPlatform.android,
@@ -116,7 +100,7 @@ void main() {
     expect(snapshot.phase, RuntimePhase.artifactReady);
     expect(snapshot.supportsLiveConnect, isFalse);
     expect(snapshot.canInitialize, isFalse);
-    expect(snapshot.coreBinaryPath, contains('libcore.aar'));
+    expect(snapshot.coreBinaryPath, contains('pokrov-core.aar'));
     expect(snapshot.message, contains('Модуль подключения найден'));
     expect(snapshot.message, isNot(contains('готовится')));
     expect(snapshot.message, isNot(contains('Скоро')));
@@ -136,7 +120,7 @@ void main() {
           return <String, Object?>{
             'phase': 'artifactReady',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -146,7 +130,7 @@ void main() {
           return <String, Object?>{
             'phase': 'initialized',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -159,7 +143,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': stagedConfigPath,
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -179,7 +163,9 @@ void main() {
     final staged = await engine.stageManagedProfile(
       const ManagedProfilePayload(
         profileName: 'android-seed',
-        configPayload: '{"outbounds":[]}',
+        configPayload:
+            '{"outbounds":[{"type":"vless","tag":"node"},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
         warpPolicy: WarpRuntimePolicy(
           enabled: true,
           runtimeReady: true,
@@ -196,17 +182,16 @@ void main() {
     expect(staged.phase, RuntimePhase.configStaged);
     expect(staged.stagedConfigPath, stagedConfigPath);
     expect(staged.message, contains('Managed profile staged'));
-    final optionsJson = stagedArguments?['runtimeOptionsJson'] as String?;
-    expect(optionsJson, isNotNull);
-    final options = jsonDecode(optionsJson!) as Map<String, dynamic>;
-    final warp = options['warp'] as Map<String, dynamic>;
-    expect(options['allow-connection-from-lan'], isFalse);
-    expect(options['enable-clash-api'], isFalse);
-    expect(options['mixed-port'], 22341);
-    expect(options['clash-api-port'], 26756);
-    expect(warp['enable'], isTrue);
-    expect(warp['id'], 'android-warp');
-    expect(warp['mode'], 'proxy_over_warp');
+    expect(stagedArguments?['runtimeOptionsJson'], isNull);
+    final config = jsonDecode(stagedArguments?['configPayload']! as String)
+        as Map<String, dynamic>;
+    final endpoints = config['endpoints'] as List<dynamic>;
+    final warp = endpoints.single as Map<String, dynamic>;
+    expect(warp['type'], 'warp');
+    expect(warp['unique_identifier'], 'android-warp');
+    final node =
+        (config['outbounds'] as List<dynamic>).first as Map<String, dynamic>;
+    expect(node['detour'], 'pokrov-warp');
   });
 
   test('mobile lane forwards materialized runtime configs without re-parsing',
@@ -223,7 +208,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/materialized.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -249,7 +234,8 @@ void main() {
     );
 
     expect(stagedArguments?['materializedForRuntime'], isTrue);
-    expect(stagedArguments?['runtimeOptionsJson'], isA<String>());
+    expect(stagedArguments?['runtimeOptionsJson'], isNull);
+    expect(stagedArguments?['configPayload'], isA<String>());
   });
 
   test('mobile lane surfaces degraded host diagnostics from the bridge',
@@ -264,7 +250,7 @@ void main() {
           return <String, Object?>{
             'phase': 'running',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': true,
@@ -308,7 +294,7 @@ void main() {
           return <String, Object?>{
             'phase': 'running',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': true,
@@ -346,18 +332,22 @@ void main() {
     );
   });
 
-  test('mobile lane uses host bridge connect and disconnect control', () async {
+  test('mobile lane survives 100 serial host bridge start-stop cycles',
+      () async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    var connectCalls = 0;
+    var disconnectCalls = 0;
 
     messenger.setMockMethodCallHandler(channel, (call) async {
       switch (call.method) {
         case 'runtimeEngine.connect':
+          connectCalls += 1;
           return <String, Object?>{
             'phase': 'running',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/android-seed.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -365,10 +355,11 @@ void main() {
             'message': 'Android runtime service is running.',
           };
         case 'runtimeEngine.disconnect':
+          disconnectCalls += 1;
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/android-seed.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -384,16 +375,76 @@ void main() {
 
     final engine = createRuntimeEngine(hostPlatform: HostPlatform.android);
 
-    final running = await engine.connect();
-    final stopped = await engine.disconnect();
+    for (var cycle = 0; cycle < 100; cycle += 1) {
+      final running = await engine.connect();
+      final stopped = await engine.disconnect();
 
-    expect(running.phase, RuntimePhase.running);
-    expect(running.message, contains('running'));
-    expect(stopped.phase, RuntimePhase.configStaged);
-    expect(stopped.message, contains('stopped cleanly'));
+      expect(running.phase, RuntimePhase.running, reason: 'cycle $cycle');
+      expect(running.message, contains('running'), reason: 'cycle $cycle');
+      expect(stopped.phase, RuntimePhase.configStaged, reason: 'cycle $cycle');
+      expect(stopped.message, contains('stopped cleanly'),
+          reason: 'cycle $cycle');
+    }
+    expect(connectCalls, 100);
+    expect(disconnectCalls, 100);
   });
 
-  test('desktop lane discovers a local libcore artifact directory', () async {
+  test(
+    'real Windows POKROV Core 1.0.0 survives 100 start-stop cycles',
+    () async {
+      final artifactRoot =
+          Platform.environment['POKROV_REAL_CORE_ROOT']!.trim();
+      final socket = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      final listenPort = socket.port;
+      await socket.close();
+
+      final engine = DesktopRuntimeEngine(
+        hostPlatform: HostPlatform.windows,
+        assetRootOverride: artifactRoot,
+        connectivityProbe: () async => null,
+      );
+      final staged = await engine.stageManagedProfile(
+        ManagedProfilePayload(
+          profileName: 'pokrov-core-real-start-stop-backtest',
+          configPayload: jsonEncode(<String, Object?>{
+            'log': <String, Object?>{'disabled': true},
+            'inbounds': <Object?>[
+              <String, Object?>{
+                'type': 'mixed',
+                'tag': 'mixed-in',
+                'listen': '127.0.0.1',
+                'listen_port': listenPort,
+              },
+            ],
+            'outbounds': <Object?>[
+              <String, Object?>{'type': 'direct', 'tag': 'direct'},
+            ],
+            'route': <String, Object?>{'final': 'direct'},
+          }),
+          materializedForRuntime: true,
+        ),
+      );
+      expect(staged.phase, RuntimePhase.configStaged);
+
+      for (var cycle = 0; cycle < 100; cycle += 1) {
+        final running = await engine.connect();
+        expect(running.phase, RuntimePhase.running, reason: 'cycle $cycle');
+        final stopped = await engine.disconnect();
+        expect(stopped.phase, RuntimePhase.configStaged,
+            reason: 'cycle $cycle');
+      }
+    },
+    skip: !Platform.isWindows ||
+            (Platform.environment['POKROV_REAL_CORE_ROOT'] ?? '')
+                .trim()
+                .isEmpty
+        ? 'Set POKROV_REAL_CORE_ROOT to run the exact DLL backtest.'
+        : false,
+    timeout: const Timeout(Duration(minutes: 10)),
+  );
+
+  test('desktop lane does not silently activate a foreign runtime artifact',
+      () async {
     final root = await Directory.systemTemp.createTemp('pokrov-runtime-test-');
     addTearDown(() async {
       if (await root.exists()) {
@@ -403,7 +454,7 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\foreign-core.dll').writeAsStringSync('stub');
 
     final engine = createRuntimeEngine(
       hostPlatform: HostPlatform.windows,
@@ -413,10 +464,37 @@ void main() {
     final snapshot = await engine.snapshot();
 
     expect(snapshot.lane, RuntimeLane.desktopFfi);
-    expect(snapshot.phase, RuntimePhase.artifactReady);
-    expect(snapshot.coreBinaryPath, contains('libcore.dll'));
+    expect(snapshot.phase, RuntimePhase.artifactMissing);
+    expect(snapshot.coreBinaryPath, isNull);
     expect(snapshot.helperBinaryPath, isNull);
-    expect(snapshot.canInitialize, isTrue);
+    expect(snapshot.canInitialize, isFalse);
+  });
+
+  test('desktop lane discovers the active POKROV Core artifact', () async {
+    final root =
+        await Directory.systemTemp.createTemp('pokrov-core-runtime-test-');
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory(
+      '${root.path}\\artifacts\\pokrov-core\\v1.0.0\\windows',
+    )..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+
+    final engine = createRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+    );
+
+    final snapshot = await engine.snapshot();
+
+    expect(snapshot.phase, RuntimePhase.artifactReady);
+    expect(snapshot.coreBinaryPath, contains('pokrov-core.dll'));
+    expect(snapshot.helperBinaryPath, isNull);
   });
 
   test(
@@ -435,8 +513,8 @@ void main() {
     final runtimeDirectory = Directory(
       '${root.path}\\Pokrov.app\\Contents\\Frameworks\\Runtime',
     )..createSync(recursive: true);
-    File('${runtimeDirectory.path}\\libcore.dylib').writeAsStringSync('stub');
-    File('${runtimeDirectory.path}\\HiddifyCli').writeAsStringSync('stub');
+    File('${runtimeDirectory.path}\\pokrov-core.dylib')
+        .writeAsStringSync('stub');
 
     final engine = createRuntimeEngine(
       hostPlatform: HostPlatform.macos,
@@ -446,8 +524,8 @@ void main() {
     final snapshot = await engine.snapshot();
 
     expect(snapshot.phase, RuntimePhase.artifactReady);
-    expect(snapshot.coreBinaryPath, contains('libcore.dylib'));
-    expect(snapshot.helperBinaryPath, contains('HiddifyCli'));
+    expect(snapshot.coreBinaryPath, contains('pokrov-core.dylib'));
+    expect(snapshot.helperBinaryPath, isNull);
   });
 
   test('desktop lane stages a materialized runtime config without parse',
@@ -463,7 +541,8 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
     final engine = DesktopRuntimeEngine(
@@ -484,8 +563,8 @@ void main() {
 
     expect(staged.phase, RuntimePhase.configStaged);
     expect(bindings.setupCalls, 1);
-    expect(bindings.parseCalls, 0);
     final stagedFile = File(staged.stagedConfigPath!);
+    expect(stagedFile.uri.pathSegments.last, 'managed-profile.json');
     expect(await stagedFile.readAsString(), contains('"inbounds"'));
     expect(
       Directory(
@@ -501,7 +580,308 @@ void main() {
     );
   });
 
-  test('desktop lane keeps Windows full tunnel on TUN before libcore start',
+  test('POKROV Core desktop ABI starts only a materialized profile',
+      () async {
+    final root =
+        await Directory.systemTemp.createTemp('pokrov-core-connect-');
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      connectivityProbe: () async => null,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'pokrov-core-materialized',
+        configPayload:
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"direct","tag":"direct"}],"route":{"final":"direct"}}',
+        materializedForRuntime: true,
+      ),
+    );
+    final running = await engine.connect();
+
+    expect(running.phase, RuntimePhase.running);
+    expect(bindings.startCalls, 1);
+  });
+
+  test('POKROV Core health probe uses the materialized loopback mixed port',
+      () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-core-probe-',
+    );
+    final proxy = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    proxy.listen((request) async {
+      request.response.statusCode = HttpStatus.noContent;
+      await request.response.close();
+    });
+    addTearDown(() async {
+      await proxy.close(force: true);
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      ManagedProfilePayload(
+        profileName: 'pokrov-core-probe',
+        configPayload: jsonEncode(<String, Object?>{
+          'inbounds': <Object?>[
+            <String, Object?>{'type': 'tun'},
+            <String, Object?>{
+              'type': 'mixed',
+              'listen': '127.0.0.1',
+              'listen_port': proxy.port,
+            },
+          ],
+          'outbounds': <Object?>[
+            <String, Object?>{'type': 'direct', 'tag': 'direct'},
+          ],
+          'route': <String, Object?>{'final': 'direct'},
+        }),
+        materializedForRuntime: true,
+      ),
+    );
+
+    final running = await engine.connect();
+
+    expect(running.phase, RuntimePhase.running);
+    expect(bindings.startCalls, 1);
+  });
+
+  test('POKROV Core desktop ABI rejects a nonmaterialized profile',
+      () async {
+    final root =
+        await Directory.systemTemp.createTemp('pokrov-core-parse-');
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      bindingsLoader: (_) => bindings,
+    );
+
+    final snapshot = await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'pokrov-core-unmaterialized',
+        configPayload: 'vless://example',
+        materializedForRuntime: false,
+      ),
+    );
+
+    expect(snapshot.phase, RuntimePhase.initialized);
+    expect(snapshot.canConnect, isFalse);
+    expect(snapshot.message, contains('уже собранный sing-box профиль'));
+  });
+
+  test('POKROV Core materializes client-local WARP before start', () async {
+    final root =
+        await Directory.systemTemp.createTemp('pokrov-core-warp-');
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      connectivityProbe: () async => null,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'pokrov-core-warp',
+        configPayload:
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"vless","tag":"node"},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        warpPolicy: WarpRuntimePolicy(
+          enabled: true,
+          runtimeReady: true,
+          userConsented: true,
+          state: 'consented',
+          source: 'client_local',
+          id: 'p1',
+        ),
+      ),
+    );
+    final snapshot = await engine.connect();
+
+    expect(snapshot.phase, RuntimePhase.running);
+    expect(bindings.startCalls, 1);
+    final stagedConfig = jsonDecode(
+      await File(snapshot.stagedConfigPath!).readAsString(),
+    ) as Map<String, dynamic>;
+    expect(
+      ((stagedConfig['endpoints'] as List<dynamic>).single
+          as Map<String, dynamic>)['type'],
+      'warp',
+    );
+    expect(
+      ((stagedConfig['outbounds'] as List<dynamic>).first
+          as Map<String, dynamic>)['detour'],
+      'pokrov-warp',
+    );
+    expect(bindings.secureFileCalls, 1);
+  });
+
+  test('POKROV Core WARP-over-proxy preserves selected-app direct routing', () async {
+    final root =
+        await Directory.systemTemp.createTemp('pokrov-core-warp-chain-');
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      bindingsLoader: (_) => bindings,
+    );
+
+    final staged = await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'pokrov-core-warp-over-proxy',
+        configPayload:
+            '{"outbounds":[{"type":"vless","tag":"node"},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"dns":{"servers":[{"tag":"remote","address":"1.1.1.1","detour":"proxy"}]},"route":{"rules":[{"process_name":["browser.exe"],"outbound":"proxy"}],"final":"direct"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.selectedApps,
+        warpPolicy: WarpRuntimePolicy(
+          enabled: true,
+          runtimeReady: true,
+          userConsented: true,
+          state: 'consented',
+          mode: 'warp_over_proxy',
+          source: 'backend_managed',
+          id: 'account-warp',
+          accountId: 'account-id',
+          accessToken: 'access-token',
+        ),
+      ),
+    );
+
+    final config = jsonDecode(
+      await File(staged.stagedConfigPath!).readAsString(),
+    ) as Map<String, dynamic>;
+    final endpoint =
+        (config['endpoints'] as List<dynamic>).single as Map<String, dynamic>;
+    expect(endpoint['detour'], 'proxy');
+    expect((endpoint['profile'] as Map<String, dynamic>)['detour'], 'proxy');
+    expect((endpoint['profile'] as Map<String, dynamic>)['id'], 'account-id');
+    final route = config['route'] as Map<String, dynamic>;
+    expect(route['final'], 'direct');
+    expect(
+      ((route['rules'] as List<dynamic>).single
+          as Map<String, dynamic>)['outbound'],
+      'pokrov-warp',
+    );
+    expect(
+      (((config['dns'] as Map<String, dynamic>)['servers'] as List<dynamic>)
+          .single as Map<String, dynamic>)['detour'],
+      'pokrov-warp',
+    );
+    expect(
+      ((config['experimental'] as Map<String, dynamic>)['cache_file']
+          as Map<String, dynamic>)['store_warp_config'],
+      isTrue,
+    );
+  });
+
+  test('POKROV Core disabling WARP restores the staged base config', () async {
+    final root =
+        await Directory.systemTemp.createTemp('pokrov-core-warp-off-');
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      bindingsLoader: (_) => bindings,
+    );
+    final staged = await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'pokrov-core-warp-toggle',
+        configPayload:
+            '{"outbounds":[{"type":"vless","tag":"node"},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        warpPolicy: WarpRuntimePolicy.clientLocalDefault,
+      ),
+    );
+
+    expect((await engine.applyWarp(enabled: true)).applied, isTrue);
+    var config = jsonDecode(
+      await File(staged.stagedConfigPath!).readAsString(),
+    ) as Map<String, dynamic>;
+    expect(config['endpoints'], isNotEmpty);
+    expect(
+      ((config['outbounds'] as List<dynamic>).first
+          as Map<String, dynamic>)['detour'],
+      'pokrov-warp',
+    );
+
+    expect((await engine.applyWarp(enabled: false)).applied, isTrue);
+    config = jsonDecode(
+      await File(staged.stagedConfigPath!).readAsString(),
+    ) as Map<String, dynamic>;
+    expect(config.containsKey('endpoints'), isFalse);
+    expect(
+      ((config['outbounds'] as List<dynamic>).first
+          as Map<String, dynamic>)['detour'],
+      isNull,
+    );
+    expect(bindings.secureFileCalls, 3);
+  });
+
+  test('desktop lane keeps Windows full tunnel on TUN before core start',
       () async {
     final root = await Directory.systemTemp.createTemp(
       'pokrov-runtime-desktop-connect-',
@@ -514,7 +894,8 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
     final engine = DesktopRuntimeEngine(
@@ -523,7 +904,7 @@ void main() {
       bindingsLoader: (_) => bindings,
     );
 
-    await engine.stageManagedProfile(
+    final staged = await engine.stageManagedProfile(
       const ManagedProfilePayload(
         profileName: 'connect-desktop',
         configPayload:
@@ -534,15 +915,21 @@ void main() {
     );
 
     final running = await engine.connect();
+    final config = jsonDecode(
+      await File(staged.stagedConfigPath!).readAsString(),
+    ) as Map<String, dynamic>;
 
     expect(running.phase, RuntimePhase.running);
-    expect(bindings.changeOptionsCalls, 1);
     expect(bindings.startCalls, 1);
-    expect(bindings.lastOptionsJson, contains('"set-system-proxy":false'));
-    expect(bindings.lastOptionsJson, contains('"enable-tun":true'));
+    expect(
+      ((config['inbounds'] as List<dynamic>).single
+          as Map<String, dynamic>)['type'],
+      'tun',
+    );
+    expect((config['route'] as Map<String, dynamic>)['final'], 'proxy');
   });
 
-  test('desktop lane keeps Windows all-except-RU on TUN before libcore start',
+  test('desktop lane keeps Windows all-except-RU on TUN before core start',
       () async {
     final root = await Directory.systemTemp.createTemp(
       'pokrov-runtime-desktop-connect-rules-',
@@ -555,7 +942,8 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
     final engine = DesktopRuntimeEngine(
@@ -568,20 +956,26 @@ void main() {
       const ManagedProfilePayload(
         profileName: 'connect-desktop-rules',
         configPayload:
-            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"selector","tag":"proxy"},{"type":"direct","tag":"direct"}],"route":{"rules":[{"domain_suffix":["ru","xn--p1ai","su"],"outbound":"direct"}],"final":"proxy"}}',
         materializedForRuntime: true,
         routeMode: RouteMode.allExceptRu,
       ),
     );
 
     final running = await engine.connect();
+    final config = jsonDecode(
+      await File(running.stagedConfigPath!).readAsString(),
+    ) as Map<String, dynamic>;
+    final route = config['route'] as Map<String, dynamic>;
+    final rule =
+        (route['rules'] as List<dynamic>).single as Map<String, dynamic>;
 
     expect(running.phase, RuntimePhase.running);
-    expect(bindings.changeOptionsCalls, 1);
     expect(bindings.startCalls, 1);
-    expect(bindings.lastOptionsJson, contains('"routing-mode":"allExceptRu"'));
-    expect(bindings.lastOptionsJson, contains('"set-system-proxy":false'));
-    expect(bindings.lastOptionsJson, contains('"enable-tun":true'));
+    expect(
+        rule['domain_suffix'], containsAll(<String>['ru', 'xn--p1ai', 'su']));
+    expect(rule['outbound'], 'direct');
+    expect(route['final'], 'proxy');
   });
 
   test('desktop lane keeps Windows selected-app routing on TUN', () async {
@@ -596,7 +990,8 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
     final engine = DesktopRuntimeEngine(
@@ -616,13 +1011,18 @@ void main() {
     );
 
     final running = await engine.connect();
+    final config = jsonDecode(
+      await File(running.stagedConfigPath!).readAsString(),
+    ) as Map<String, dynamic>;
+    final route = config['route'] as Map<String, dynamic>;
+    final rule =
+        (route['rules'] as List<dynamic>).single as Map<String, dynamic>;
 
     expect(running.phase, RuntimePhase.running);
-    expect(bindings.changeOptionsCalls, 1);
     expect(bindings.startCalls, 1);
-    expect(bindings.lastOptionsJson, contains('"routing-mode":"global"'));
-    expect(bindings.lastOptionsJson, contains('"set-system-proxy":false'));
-    expect(bindings.lastOptionsJson, contains('"enable-tun":true'));
+    expect(rule['process_name'], <String>['browser.exe']);
+    expect(rule['outbound'], 'proxy');
+    expect(route['final'], 'direct');
   });
 
   test('desktop lane preserves setup errors instead of generic ready text',
@@ -638,7 +1038,8 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(setupResult: 'setup failed');
 
     final engine = DesktopRuntimeEngine(
@@ -666,7 +1067,8 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(startResult: 'start failed');
 
     final engine = DesktopRuntimeEngine(
@@ -692,7 +1094,7 @@ void main() {
     expect(snapshot.canConnect, isTrue);
   });
 
-  test('desktop lane preserves parse errors after profile download', () async {
+  test('desktop lane rejects invalid materialized core config', () async {
     final root = await Directory.systemTemp.createTemp(
       'pokrov-runtime-desktop-parse-error-',
     );
@@ -704,8 +1106,9 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
-    final bindings = _FakeDesktopBindings(parseResult: 'parse failed');
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
 
     final engine = DesktopRuntimeEngine(
       hostPlatform: HostPlatform.windows,
@@ -716,19 +1119,18 @@ void main() {
     final snapshot = await engine.stageManagedProfile(
       const ManagedProfilePayload(
         profileName: 'connect-desktop-parse-error',
-        configPayload:
-            '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
-        materializedForRuntime: false,
+        configPayload: 'not-json',
+        materializedForRuntime: true,
         routeMode: RouteMode.fullTunnel,
       ),
     );
 
     expect(snapshot.phase, RuntimePhase.initialized);
-    expect(snapshot.message, contains('parse failed'));
+    expect(snapshot.message, contains('не прошел проверку'));
     expect(snapshot.canConnect, isFalse);
   });
 
-  test('desktop lane preserves option sync errors before start', () async {
+  test('desktop lane preserves secure-file errors before start', () async {
     final root = await Directory.systemTemp.createTemp(
       'pokrov-runtime-desktop-options-error-',
     );
@@ -740,9 +1142,10 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(
-      changeOptionsResult: 'options failed',
+      secureFileResult: 'secure file failed',
     );
 
     final engine = DesktopRuntimeEngine(
@@ -751,7 +1154,7 @@ void main() {
       bindingsLoader: (_) => bindings,
     );
 
-    await engine.stageManagedProfile(
+    final snapshot = await engine.stageManagedProfile(
       const ManagedProfilePayload(
         profileName: 'connect-desktop-options-error',
         configPayload:
@@ -761,11 +1164,9 @@ void main() {
       ),
     );
 
-    final snapshot = await engine.connect();
-
-    expect(snapshot.phase, RuntimePhase.configStaged);
-    expect(snapshot.message, contains('options failed'));
-    expect(snapshot.canConnect, isTrue);
+    expect(snapshot.phase, RuntimePhase.initialized);
+    expect(snapshot.message, contains('secure file failed'));
+    expect(snapshot.canConnect, isFalse);
     expect(bindings.startCalls, 0);
   });
 
@@ -781,7 +1182,8 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(stopResult: 'stop failed');
 
     final engine = DesktopRuntimeEngine(
@@ -821,7 +1223,8 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
     final engine = DesktopRuntimeEngine(
@@ -831,7 +1234,7 @@ void main() {
       bindingsLoader: (_) => bindings,
     );
 
-    await engine.stageManagedProfile(
+    final staged = await engine.stageManagedProfile(
       const ManagedProfilePayload(
         profileName: 'connect-desktop-warp-no-consent',
         configPayload:
@@ -854,15 +1257,14 @@ void main() {
 
     await engine.connect();
 
-    final options =
-        jsonDecode(bindings.lastOptionsJson!) as Map<String, dynamic>;
-    final warp = options['warp'] as Map<String, dynamic>;
-    expect(warp['enable'], isFalse);
-    expect(warp.containsKey('account'), isFalse);
-    expect(warp.containsKey('wireguardConfig'), isFalse);
+    final stagedText = await File(staged.stagedConfigPath!).readAsString();
+    final config = jsonDecode(stagedText) as Map<String, dynamic>;
+    expect(config.containsKey('endpoints'), isFalse);
+    expect(stagedText, isNot(contains('test-private-key')));
+    expect(stagedText, isNot(contains('test-access-token')));
   });
 
-  test('desktop lane maps consented runtime-ready WARP policy into options',
+  test('desktop lane maps consented runtime-ready WARP into core endpoint',
       () async {
     final root = await Directory.systemTemp.createTemp(
       'pokrov-runtime-desktop-warp-consent-',
@@ -875,7 +1277,8 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
     final engine = DesktopRuntimeEngine(
@@ -885,7 +1288,7 @@ void main() {
       bindingsLoader: (_) => bindings,
     );
 
-    await engine.stageManagedProfile(
+    final staged = await engine.stageManagedProfile(
       const ManagedProfilePayload(
         profileName: 'connect-desktop-warp-consent',
         configPayload:
@@ -909,18 +1312,17 @@ void main() {
 
     await engine.connect();
 
-    final options =
-        jsonDecode(bindings.lastOptionsJson!) as Map<String, dynamic>;
-    final warp = options['warp'] as Map<String, dynamic>;
-    final warp2 = options['warp2'] as Map<String, dynamic>;
-    expect(warp['enable'], isTrue);
-    expect(warp['mode'], 'proxy_over_warp');
-    expect(warp['wireguard-config'], contains('test-private-key'));
-    expect((warp['wireguardConfig'] as Map<String, dynamic>)['private-key'],
-        'test-private-key');
-    expect((warp['account'] as Map<String, dynamic>)['account-id'],
-        'test-account-id');
-    expect(warp2['enable'], isFalse);
+    final config = jsonDecode(
+      await File(staged.stagedConfigPath!).readAsString(),
+    ) as Map<String, dynamic>;
+    final endpoint =
+        (config['endpoints'] as List<dynamic>).single as Map<String, dynamic>;
+    final profile = endpoint['profile'] as Map<String, dynamic>;
+    expect(endpoint['type'], 'warp');
+    expect(endpoint['unique_identifier'], 'p1');
+    expect(profile['id'], 'test-account-id');
+    expect(profile['auth_token'], 'test-access-token');
+    expect(profile['private_key'], 'test-private-key');
   });
 
   test('desktop lane enables client-local WARP without server material',
@@ -936,7 +1338,8 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
     final engine = DesktopRuntimeEngine(
@@ -946,7 +1349,7 @@ void main() {
       bindingsLoader: (_) => bindings,
     );
 
-    await engine.stageManagedProfile(
+    final staged = await engine.stageManagedProfile(
       const ManagedProfilePayload(
         profileName: 'connect-desktop-warp-client-local',
         configPayload:
@@ -966,15 +1369,17 @@ void main() {
 
     await engine.connect();
 
-    final options =
-        jsonDecode(bindings.lastOptionsJson!) as Map<String, dynamic>;
-    final warp = options['warp'] as Map<String, dynamic>;
-    expect(warp['enable'], isTrue);
-    expect(warp['id'], 'p1');
-    expect(warp['mode'], 'proxy_over_warp');
-    expect(warp['wireguard-config'], '');
-    expect(warp.containsKey('wireguardConfig'), isFalse);
-    expect(warp.containsKey('account'), isFalse);
+    final config = jsonDecode(
+      await File(staged.stagedConfigPath!).readAsString(),
+    ) as Map<String, dynamic>;
+    final endpoint =
+        (config['endpoints'] as List<dynamic>).single as Map<String, dynamic>;
+    final profile = endpoint['profile'] as Map<String, dynamic>;
+    expect(endpoint['type'], 'warp');
+    expect(endpoint['unique_identifier'], 'p1');
+    expect(profile.containsKey('id'), isFalse);
+    expect(profile.containsKey('auth_token'), isFalse);
+    expect(profile.containsKey('private_key'), isFalse);
   });
 
   test('desktop lane applies WARP before the next connect', () async {
@@ -989,7 +1394,8 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
     final engine = DesktopRuntimeEngine(
@@ -1015,10 +1421,14 @@ void main() {
     expect(applied.applied, isTrue);
     expect(applied.effectiveAt, 'next_connect');
     expect(applied.fallbackUsed, isFalse);
-    expect(bindings.changeOptionsCalls, 1);
-    final options =
-        jsonDecode(bindings.lastOptionsJson!) as Map<String, dynamic>;
-    expect((options['warp'] as Map<String, dynamic>)['enable'], isTrue);
+    final config = jsonDecode(
+      await File((await engine.snapshot()).stagedConfigPath!).readAsString(),
+    ) as Map<String, dynamic>;
+    final endpoint =
+        (config['endpoints'] as List<dynamic>).single as Map<String, dynamic>;
+    expect(endpoint['type'], 'warp');
+    expect(endpoint['unique_identifier'], 'p1');
+    expect(bindings.secureFileCalls, 2);
   });
 
   test('desktop lane exposes honest live stats without fake traffic numbers',
@@ -1034,7 +1444,8 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\libcore.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
     final engine = DesktopRuntimeEngine(
@@ -1106,6 +1517,17 @@ void main() {
 
     messenger.setMockMethodCallHandler(channel, (call) async {
       switch (call.method) {
+        case 'runtimeEngine.stageManagedProfile':
+          return <String, Object?>{
+            'phase': 'configStaged',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+            'stagedConfigPath': '/host/runtime/profile.json',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': true,
+            'message': 'staged',
+          };
         case 'runtimeEngine.applyWarp':
           return <String, Object?>{
             'applied': call.arguments is Map &&
@@ -1134,10 +1556,19 @@ void main() {
       return null;
     });
 
-    const engine = MobileArtifactRuntimeEngine(
+    final engine = MobileArtifactRuntimeEngine(
       hostPlatform: HostPlatform.android,
     );
 
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'mobile-warp',
+        configPayload:
+            '{"outbounds":[{"type":"vless","tag":"node"},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        warpPolicy: WarpRuntimePolicy.clientLocalDefault,
+      ),
+    );
     final applied = await engine.applyWarp(enabled: true);
     final stats = await engine.liveStats();
     final token = await engine.pushToken();

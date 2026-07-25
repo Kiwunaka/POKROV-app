@@ -5,17 +5,29 @@ class _RulesSection extends StatelessWidget {
     required this.appContext,
     required this.selectedRouteMode,
     required this.selectedAppIds,
+    required this.routingPreferences,
     required this.onRouteModeSelected,
     required this.onSelectedAppAdded,
     required this.onSelectedAppRemoved,
+    required this.onRoutingPreferencesChanged,
+    required this.onReadCurrentWifi,
+    required this.onRequestWifiPermission,
+    required this.onOpenVpnSettings,
+    required this.onRoutingLessonCompleted,
   });
 
   final SeedAppContext appContext;
   final RouteMode selectedRouteMode;
   final List<String> selectedAppIds;
+  final PokrovRoutingPreferences routingPreferences;
   final ValueChanged<RouteMode> onRouteModeSelected;
   final ValueChanged<String> onSelectedAppAdded;
   final ValueChanged<String> onSelectedAppRemoved;
+  final ValueChanged<PokrovRoutingPreferences> onRoutingPreferencesChanged;
+  final PokrovWifiProbe onReadCurrentWifi;
+  final PokrovWifiPermissionRequester onRequestWifiPermission;
+  final PokrovVpnSettingsLauncher onOpenVpnSettings;
+  final VoidCallback onRoutingLessonCompleted;
 
   @override
   Widget build(BuildContext context) {
@@ -132,6 +144,31 @@ class _RulesSection extends StatelessWidget {
               onRemove: onSelectedAppRemoved,
             ),
           ),
+        _PurposeRoutingCard(
+          preferences: routingPreferences,
+          onChanged: onRoutingPreferencesChanged,
+        ),
+        _CustomRoutingCard(
+          preferences: routingPreferences,
+          fallbackMode: selectedRouteMode,
+          onChanged: onRoutingPreferencesChanged,
+          onRoutingLessonCompleted: onRoutingLessonCompleted,
+        ),
+        _DnsAndLanCard(
+          preferences: routingPreferences,
+          onChanged: onRoutingPreferencesChanged,
+        ),
+        _TrustedWifiCard(
+          hostPlatform: appContext.hostPlatform,
+          preferences: routingPreferences,
+          onChanged: onRoutingPreferencesChanged,
+          onReadCurrentWifi: onReadCurrentWifi,
+          onRequestWifiPermission: onRequestWifiPermission,
+        ),
+        _AlwaysOnGuideCard(
+          hostPlatform: appContext.hostPlatform,
+          onOpenVpnSettings: onOpenVpnSettings,
+        ),
       ],
     );
   }

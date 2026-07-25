@@ -179,6 +179,11 @@ class MemoryAppFirstSessionSecretStore implements AppFirstSessionSecretStore {
 }
 
 abstract interface class AppFirstAccountActionService {
+  Future<DevicePairingClaimResult> claimDevicePairingCode({
+    required HostPlatform hostPlatform,
+    required String code,
+  });
+
   Future<AppFirstRedeemResult> redeemCode({
     required HostPlatform hostPlatform,
     required String code,
@@ -289,6 +294,15 @@ abstract interface class AppFirstClientDataService {
   Future<bool> revokeClientDevice({
     required HostPlatform hostPlatform,
     required String deviceId,
+  });
+
+  Future<ClientDevicePairingCode> issueDevicePairingCode({
+    required HostPlatform hostPlatform,
+  });
+
+  Future<bool> cancelDevicePairingCode({
+    required HostPlatform hostPlatform,
+    required String pairingId,
   });
 
   Future<ClientNotificationInbox> fetchClientNotifications({
@@ -406,6 +420,16 @@ double _clientDouble(Object? value) {
   return double.tryParse(value?.toString().trim() ?? '') ?? 0;
 }
 
+double? _clientNullableDouble(Object? value) {
+  if (value == null) {
+    return null;
+  }
+  if (value is num) {
+    return value.toDouble();
+  }
+  return double.tryParse(value.toString().trim());
+}
+
 Uri? _clientUri(Object? value) {
   final text = _clientText(value);
   if (text.isEmpty) {
@@ -445,6 +469,16 @@ class ClientLocationsCatalog {
       query: _clientText(json['query']),
     );
   }
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'auto': auto.toJson(),
+        'countries':
+            countries.map((item) => item.toJson()).toList(growable: false),
+        'freePoolCode': freePoolCode,
+        'profileRevision': profileRevision,
+        'transportProfile': transportProfile,
+        'query': query,
+      };
 }
 
 class ClientLocationAuto {
@@ -462,6 +496,11 @@ class ClientLocationAuto {
       currentCode: _clientText(json['currentCode'] ?? json['current_code']),
     );
   }
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'enabled': enabled,
+        'currentCode': currentCode,
+      };
 }
 
 class ClientLocationCountry {
@@ -484,6 +523,12 @@ class ClientLocationCountry {
           .toList(growable: false),
     );
   }
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'code': code,
+        'country': country,
+        'cities': cities.map((item) => item.toJson()).toList(growable: false),
+      };
 }
 
 class ClientLocationCity {
@@ -494,6 +539,7 @@ class ClientLocationCity {
     required this.latencyMs,
     required this.premium,
     required this.load,
+    this.measuredAt = '',
   });
 
   final String code;
@@ -501,7 +547,8 @@ class ClientLocationCity {
   final double healthScore;
   final int? latencyMs;
   final bool premium;
-  final double load;
+  final double? load;
+  final String measuredAt;
 
   factory ClientLocationCity.fromJson(Map<String, dynamic> json) {
     return ClientLocationCity(
@@ -512,9 +559,20 @@ class ClientLocationCity {
       ),
       latencyMs: _clientNullableInt(json['latencyMs'] ?? json['latency_ms']),
       premium: _clientBool(json['premium']),
-      load: _clientDouble(json['load']),
+      load: _clientNullableDouble(json['load']),
+      measuredAt: _clientText(json['measuredAt'] ?? json['measured_at']),
     );
   }
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'code': code,
+        'city': city,
+        'healthScore': healthScore,
+        if (latencyMs != null) 'latencyMs': latencyMs,
+        'premium': premium,
+        if (load != null) 'load': load,
+        if (measuredAt.isNotEmpty) 'measuredAt': measuredAt,
+      };
 }
 
 class ClientSubscriptionInfo {
@@ -634,6 +692,12 @@ class ClientNotificationInbox {
       unreadCount: _clientInt(json['unreadCount'] ?? json['unread_count']),
     );
   }
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'items': items.map((item) => item.toJson()).toList(growable: false),
+        'nextCursor': nextCursor,
+        'unreadCount': unreadCount,
+      };
 }
 
 class ClientNotificationItem {
@@ -669,6 +733,17 @@ class ClientNotificationItem {
       read: _clientBool(json['read']),
     );
   }
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'id': id,
+        'kind': kind,
+        'title': title,
+        'body': body,
+        'createdAt': createdAt,
+        'ctaLabel': ctaLabel,
+        if (ctaHref != null) 'ctaHref': ctaHref.toString(),
+        'read': read,
+      };
 }
 
 class ClientPushRegistration {
@@ -996,6 +1071,44 @@ class AppFirstRedeemResult {
   final Map<String, dynamic> result;
 }
 
+class ClientDevicePairingCode {
+  const ClientDevicePairingCode({
+    required this.id,
+    required this.code,
+    required this.pairingUri,
+    required this.expiresAt,
+    required this.ttlSeconds,
+  });
+
+  final String id;
+  final String code;
+  final String pairingUri;
+  final String expiresAt;
+  final int ttlSeconds;
+
+  factory ClientDevicePairingCode.fromJson(Map<String, dynamic> json) {
+    return ClientDevicePairingCode(
+      id: _clientText(json['id']),
+      code: _clientText(json['code']),
+      pairingUri: _clientText(json['pairing_uri']),
+      expiresAt: _clientText(json['expires_at']),
+      ttlSeconds: _clientInt(json['ttl_seconds']),
+    );
+  }
+}
+
+class DevicePairingClaimResult {
+  const DevicePairingClaimResult({
+    required this.ok,
+    required this.accountId,
+    required this.installId,
+  });
+
+  final bool ok;
+  final String accountId;
+  final String installId;
+}
+
 class CabinetHandoff {
   const CabinetHandoff({
     required this.token,
@@ -1102,6 +1215,8 @@ class AppFirstBonusSummary {
     this.referralSummary = AppFirstReferralSummary.empty,
     this.promoSlots = AppFirstPromoSlots.empty,
     this.historyItems = const <AppFirstBonusHistoryItem>[],
+    this.achievementItems = const <AppFirstAchievementItem>[],
+    this.questItems = const <AppFirstQuestItem>[],
   });
 
   final int referralCount;
@@ -1124,8 +1239,52 @@ class AppFirstBonusSummary {
   final AppFirstReferralSummary referralSummary;
   final AppFirstPromoSlots promoSlots;
   final List<AppFirstBonusHistoryItem> historyItems;
+  final List<AppFirstAchievementItem> achievementItems;
+  final List<AppFirstQuestItem> questItems;
 
   bool get channelBonusClaimed => channelBonusClaimedAt.trim().isNotEmpty;
+}
+
+abstract interface class AppFirstQuestEventService {
+  Future<void> completeRoutingLesson({
+    required HostPlatform hostPlatform,
+  });
+}
+
+class AppFirstAchievementItem {
+  const AppFirstAchievementItem({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.unlocked,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final bool unlocked;
+}
+
+class AppFirstQuestItem {
+  const AppFirstQuestItem({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.progress,
+    required this.target,
+    required this.completed,
+    required this.actionHref,
+    required this.verification,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final int progress;
+  final int target;
+  final bool completed;
+  final String actionHref;
+  final String verification;
 }
 
 class AppFirstBonusRewardResult {
@@ -1135,6 +1294,9 @@ class AppFirstBonusRewardResult {
     required this.rewardKey,
     required this.expiryAt,
     required this.summary,
+    this.rewardKind = 'days',
+    this.rewardValue = 0,
+    this.discountPct = 0,
   });
 
   final bool ok;
@@ -1142,6 +1304,9 @@ class AppFirstBonusRewardResult {
   final String rewardKey;
   final String expiryAt;
   final AppFirstBonusSummary summary;
+  final String rewardKind;
+  final int rewardValue;
+  final int discountPct;
 }
 
 class AppFirstReferralSummary {
@@ -1155,6 +1320,9 @@ class AppFirstReferralSummary {
     required this.paidReferrals,
     required this.nextTierKey,
     required this.nextTierAt,
+    this.conversion = AppFirstReferralConversion.empty,
+    this.history = const <AppFirstReferralHistoryItem>[],
+    this.privacy = '',
   });
 
   static const empty = AppFirstReferralSummary(
@@ -1167,6 +1335,9 @@ class AppFirstReferralSummary {
     paidReferrals: 0,
     nextTierKey: '',
     nextTierAt: null,
+    conversion: AppFirstReferralConversion.empty,
+    history: <AppFirstReferralHistoryItem>[],
+    privacy: '',
   );
 
   final int count;
@@ -1178,6 +1349,9 @@ class AppFirstReferralSummary {
   final int paidReferrals;
   final String nextTierKey;
   final int? nextTierAt;
+  final AppFirstReferralConversion conversion;
+  final List<AppFirstReferralHistoryItem> history;
+  final String privacy;
 
   String get shareLink {
     final direct = link.trim();
@@ -1190,6 +1364,53 @@ class AppFirstReferralSummary {
     }
     return 'https://t.me/pokrov_vpnbot?start=ref_$safeCode';
   }
+}
+
+class AppFirstReferralConversion {
+  const AppFirstReferralConversion({
+    required this.invited,
+    required this.activated,
+    required this.paid,
+    required this.rewarded,
+    required this.activationPct,
+    required this.paidPct,
+  });
+
+  static const empty = AppFirstReferralConversion(
+    invited: 0,
+    activated: 0,
+    paid: 0,
+    rewarded: 0,
+    activationPct: 0,
+    paidPct: 0,
+  );
+
+  final int invited;
+  final int activated;
+  final int paid;
+  final int rewarded;
+  final double activationPct;
+  final double paidPct;
+}
+
+class AppFirstReferralHistoryItem {
+  const AppFirstReferralHistoryItem({
+    required this.id,
+    required this.status,
+    required this.createdAt,
+    required this.activatedAt,
+    required this.paidAt,
+    required this.holdUntil,
+    required this.rewardedAt,
+  });
+
+  final String id;
+  final String status;
+  final String createdAt;
+  final String activatedAt;
+  final String paidAt;
+  final String holdUntil;
+  final String rewardedAt;
 }
 
 class AppFirstBonusFeatureState {
@@ -1544,6 +1765,7 @@ class AppFirstRuntimeBootstrapper
         AppFirstWarpActionService,
         AppFirstReleaseActionService,
         AppFirstExperienceService,
+        AppFirstQuestEventService,
         AppFirstNodePreferenceService,
         AppFirstClientDataService {
   AppFirstRuntimeBootstrapper({
@@ -1752,6 +1974,84 @@ class AppFirstRuntimeBootstrapper
     }
   }
 
+  @override
+  Future<DevicePairingClaimResult> claimDevicePairingCode({
+    required HostPlatform hostPlatform,
+    required String code,
+  }) async {
+    final normalized =
+        code.trim().toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+    if (normalized.length != 8) {
+      throw const BootstrapFailure(
+        'Код входа должен содержать восемь символов.',
+      );
+    }
+
+    final state = await _loadOrCreateState(hostPlatform);
+    // A first launch may already have created a trial identity. Pairing uses a
+    // fresh install id so that an abandoned trial device cannot conflict with
+    // the account selected by the user. The old token is removed only after a
+    // successful claim; a failed code leaves the current session untouched.
+    final pairedInstallId = _generateInstallId(hostPlatform);
+    final client = _createHttpClient(hostPlatform);
+    try {
+      final response = await _requestJson(
+        method: 'POST',
+        path: '/api/client/device-pairing/claim',
+        client: client,
+        hostPlatform: hostPlatform,
+        body: <String, Object?>{
+          'code': normalized,
+          'install_id': pairedInstallId,
+          'device_name': _deviceName(hostPlatform),
+          'platform': hostPlatform.name,
+          'os_version': _trim(Platform.operatingSystemVersion, 64),
+          'app_version': _appVersion,
+          'locale': _trim(Platform.localeName, 32),
+          'time_zone': _trim(DateTime.now().timeZoneName, 64),
+        },
+      );
+      final session = _readMap(response['session']);
+      final sessionToken = _readText(
+        response['access_token'] ??
+            response['session_token'] ??
+            response['token'] ??
+            session['session_token'],
+      );
+      final accountId = _readText(
+        response['canonical_account_id'] ?? session['account_id'],
+      );
+      if (sessionToken.isEmpty || accountId.isEmpty) {
+        throw const BootstrapFailure(
+          'POKROV не получил подтверждённую сессию устройства.',
+        );
+      }
+
+      if (state.installId != pairedInstallId) {
+        await _sessionSecretStore.deleteSessionToken(
+          hostPlatform: hostPlatform,
+          installId: state.installId,
+        );
+      }
+      final nextState = state.copyWith(
+        installId: pairedInstallId,
+        sessionToken: sessionToken,
+        accountId: accountId,
+        managedManifestPath: _defaultManagedManifestPath,
+        profileRevision: '',
+        expectsSecureSessionToken: true,
+      );
+      await _saveState(hostPlatform, nextState);
+      return DevicePairingClaimResult(
+        ok: response['ok'] != false,
+        accountId: accountId,
+        installId: pairedInstallId,
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
   Future<CabinetHandoff> createCabinetHandoff({
     required HostPlatform hostPlatform,
     String targetPath = '/',
@@ -1942,6 +2242,22 @@ class AppFirstRuntimeBootstrapper
     );
   }
 
+  @override
+  Future<void> completeRoutingLesson({
+    required HostPlatform hostPlatform,
+  }) async {
+    await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: '/api/events',
+      body: const <String, Object?>{
+        'event_name': 'routing_lesson_completed',
+        'source': 'app',
+        'meta': <String, Object?>{'surface': 'route_explainer'},
+      },
+    );
+  }
+
   Future<Map<String, dynamic>> _requestWarpJsonWithSession({
     required HostPlatform hostPlatform,
     required String method,
@@ -2051,6 +2367,43 @@ class AppFirstRuntimeBootstrapper
       hostPlatform: hostPlatform,
       method: 'DELETE',
       path: '/api/client/devices/${Uri.encodeComponent(safeDeviceId)}',
+    );
+    return response['ok'] != false;
+  }
+
+  @override
+  Future<ClientDevicePairingCode> issueDevicePairingCode({
+    required HostPlatform hostPlatform,
+  }) async {
+    final response = await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: '/api/client/device-pairing/codes',
+    );
+    final pairing = ClientDevicePairingCode.fromJson(
+      _readMap(response['pairing']),
+    );
+    if (pairing.id.isEmpty || pairing.code.isEmpty) {
+      throw const BootstrapFailure(
+        'POKROV не получил одноразовый код устройства.',
+      );
+    }
+    return pairing;
+  }
+
+  @override
+  Future<bool> cancelDevicePairingCode({
+    required HostPlatform hostPlatform,
+    required String pairingId,
+  }) async {
+    final id = pairingId.trim();
+    if (id.isEmpty) {
+      return true;
+    }
+    final response = await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'DELETE',
+      path: '/api/client/device-pairing/codes/${Uri.encodeComponent(id)}',
     );
     return response['ok'] != false;
   }
@@ -2595,6 +2948,7 @@ class AppFirstRuntimeBootstrapper
           final tier = _readMap(response['points_tier']);
           final wheel = _readMap(response['wheel']);
           final calendar = _readMap(response['calendar']);
+          final achievements = _readMap(response['achievements']);
           final referralCount = _readInt(response['referral_count']);
           final referralCode = _readText(response['referral_code']);
           final referralBonusDays = _readInt(response['referral_bonus_days']);
@@ -2659,6 +3013,39 @@ class AppFirstRuntimeBootstrapper
             referralSummary: referralSummary,
             promoSlots: promoSlots,
             historyItems: historyItems,
+            achievementItems: _readListOfMaps(achievements['items'])
+                .map(
+                  (item) => AppFirstAchievementItem(
+                    id: _readText(item['id']),
+                    title: _readText(item['title']),
+                    description: _readText(item['description']),
+                    unlocked: item['unlocked'] == true,
+                  ),
+                )
+                .where((item) => item.id.isNotEmpty && item.title.isNotEmpty)
+                .take(20)
+                .toList(growable: false),
+            questItems: _readListOfMaps(achievements['quests'])
+                .map(
+                  (item) => AppFirstQuestItem(
+                    id: _readText(item['id']),
+                    title: _readText(item['title']),
+                    description: _readText(item['description']),
+                    progress: _readInt(item['progress']),
+                    target: _readInt(item['target']),
+                    completed: item['completed'] == true,
+                    actionHref: _readText(item['action_href']),
+                    verification: _readText(item['verification']),
+                  ),
+                )
+                .where(
+                  (item) =>
+                      item.id.isNotEmpty &&
+                      item.title.isNotEmpty &&
+                      item.target > 0,
+                )
+                .take(10)
+                .toList(growable: false),
           );
         } on BootstrapFailure catch (error) {
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
@@ -2740,6 +3127,11 @@ class AppFirstRuntimeBootstrapper
             rewardKey: _readText(response['reward_key']),
             expiryAt: _readText(response['expiry_at']),
             summary: summary,
+            rewardKind: _readText(response['reward_kind']).isEmpty
+                ? 'days'
+                : _readText(response['reward_kind']),
+            rewardValue: _readInt(response['reward_value']),
+            discountPct: _readInt(response['discount_pct']),
           );
         } on BootstrapFailure catch (error) {
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
@@ -2855,6 +3247,7 @@ class AppFirstRuntimeBootstrapper
         ? _readMap(data['points_tier'])
         : _readMap(data['tier']);
     final resolvedTier = tier.isEmpty ? fallbackTier : tier;
+    final conversion = _readMap(data['conversion']);
     return AppFirstReferralSummary(
       count: data.containsKey('count')
           ? _readInt(data['count'])
@@ -2877,6 +3270,30 @@ class AppFirstRuntimeBootstrapper
       paidReferrals: _readInt(resolvedTier['paid_referrals']),
       nextTierKey: _readText(resolvedTier['next_tier_key']),
       nextTierAt: _readNullableInt(resolvedTier['next_tier_at']),
+      conversion: AppFirstReferralConversion(
+        invited: _readInt(conversion['invited']),
+        activated: _readInt(conversion['activated']),
+        paid: _readInt(conversion['paid']),
+        rewarded: _readInt(conversion['rewarded']),
+        activationPct: _readDouble(conversion['activation_pct']),
+        paidPct: _readDouble(conversion['paid_pct']),
+      ),
+      history: _readListOfMaps(data['history'])
+          .map(
+            (item) => AppFirstReferralHistoryItem(
+              id: _readText(item['id']),
+              status: _readText(item['status']),
+              createdAt: _readText(item['created_at']),
+              activatedAt: _readText(item['activated_at']),
+              paidAt: _readText(item['paid_at']),
+              holdUntil: _readText(item['hold_until']),
+              rewardedAt: _readText(item['rewarded_at']),
+            ),
+          )
+          .where((item) => item.id.isNotEmpty && item.status.isNotEmpty)
+          .take(20)
+          .toList(growable: false),
+      privacy: _readText(data['privacy']),
     );
   }
 
@@ -3339,6 +3756,10 @@ class AppFirstRuntimeBootstrapper
 
     final baseConfig = decoded.map(
       (key, value) => MapEntry(key.toString(), value),
+    );
+    _applyRealityTlsFragmentPolicy(
+      baseConfig: baseConfig,
+      supportContext: supportContext,
     );
     if (hostPlatform != HostPlatform.android &&
         _looksRuntimeReady(baseConfig)) {
@@ -3865,7 +4286,6 @@ class AppFirstRuntimeBootstrapper
     }
 
     final remoteDnsAddress = _preferredAndroidRemoteDnsAddress(baseServers);
-    const directDnsAddress = '1.1.1.1';
     dns['servers'] = <Map<String, dynamic>>[
       <String, dynamic>{
         'tag': remoteServerTag,
@@ -3875,7 +4295,7 @@ class AppFirstRuntimeBootstrapper
       },
       <String, dynamic>{
         'tag': directServerTag,
-        'address': directDnsAddress,
+        'address': remoteDnsAddress,
         'address_resolver': localServerTag,
         'detour': directTag,
       },
@@ -4325,10 +4745,14 @@ class AppFirstRuntimeBootstrapper
   }) {
     final ipVersionPreference =
         _readText(supportContext['ip_version_preference']).toLowerCase();
+    final requestedTunMtu = _readInt(supportContext['tun_mtu']);
+    const allowedTunMtuValues = <int>{1280, 1400, 1492, 1500, 9000};
+    final tunMtu =
+        allowedTunMtuValues.contains(requestedTunMtu) ? requestedTunMtu : 9000;
     final tunInbound = <String, dynamic>{
       'type': 'tun',
       'tag': 'tun-in',
-      'mtu': 9000,
+      'mtu': tunMtu,
       'auto_route': true,
       'strict_route': true,
       'endpoint_independent_nat': true,
@@ -4979,18 +5403,75 @@ class AppFirstRuntimeBootstrapper
 
   String _preferredAndroidRemoteDnsAddress(List<Map<String, dynamic>> servers) {
     for (final server in servers) {
-      final address = _readText(server['address']).toLowerCase();
-      if (address.isEmpty || address == 'local') {
+      final address = _readText(server['address']);
+      final normalizedAddress = address.toLowerCase();
+      if (normalizedAddress.isEmpty || normalizedAddress == 'local') {
         continue;
       }
-      if (address == '1.1.1.1' ||
-          address == 'udp://1.1.1.1' ||
-          address == 'tls://1.1.1.1' ||
-          address == 'https://1.1.1.1/dns-query') {
-        return '1.1.1.1';
+      if (normalizedAddress.startsWith('https://')) {
+        return address;
       }
     }
-    return '1.1.1.1';
+    return 'https://1.1.1.1/dns-query';
+  }
+
+  void _applyRealityTlsFragmentPolicy({
+    required Map<String, dynamic> baseConfig,
+    required Map<String, dynamic> supportContext,
+  }) {
+    final policy = _readMap(supportContext['reality_tls_fragment']);
+    if (!_readBool(policy['enabled'])) {
+      return;
+    }
+
+    final fragment =
+        policy.containsKey('fragment') ? _readBool(policy['fragment']) : false;
+    final recordFragment = policy.containsKey('record_fragment')
+        ? _readBool(policy['record_fragment'])
+        : true;
+    if (!fragment && !recordFragment) {
+      return;
+    }
+    final fallbackDelay = _readText(policy['fragment_fallback_delay']);
+    final validFallbackDelay =
+        RegExp(r'^\d+(?:ns|us|µs|ms|s|m|h)$').hasMatch(fallbackDelay);
+
+    final outbounds = _readListOfMaps(baseConfig['outbounds'])
+        .map((outbound) => Map<String, dynamic>.from(outbound))
+        .toList(growable: false);
+    var changed = false;
+    for (final outbound in outbounds) {
+      if (_readText(outbound['type']).toLowerCase() != 'vless') {
+        continue;
+      }
+      final transport = _readMap(outbound['transport']);
+      if (_readText(transport['type']).isNotEmpty) {
+        continue;
+      }
+      final tls = _readMap(outbound['tls']);
+      final reality = _readMap(tls['reality']);
+      if (!_readBool(reality['enabled'])) {
+        continue;
+      }
+
+      final patchedTls = Map<String, dynamic>.from(tls);
+      if (!patchedTls.containsKey('fragment')) {
+        patchedTls['fragment'] = fragment;
+      }
+      if (!patchedTls.containsKey('record_fragment')) {
+        patchedTls['record_fragment'] = recordFragment;
+      }
+      if (validFallbackDelay &&
+          !patchedTls.containsKey('fragment_fallback_delay')) {
+        patchedTls['fragment_fallback_delay'] = fallbackDelay;
+      }
+      outbound['tls'] = patchedTls;
+      outbound['tcp_fast_open'] = false;
+      changed = true;
+    }
+    if (changed) {
+      baseConfig['outbounds'] = outbounds;
+    }
   }
 
   bool _isProxyTransportOutbound(Map<String, dynamic> outbound) {
@@ -5521,7 +6002,10 @@ class AppFirstRuntimeBootstrapper
     try {
       final decoded = jsonDecode(text);
       if (decoded is Map<String, dynamic>) {
-        final detail = _readText(decoded['detail']);
+        final detailValue = decoded['detail'];
+        final detail = detailValue is Map
+            ? _readText(detailValue['message'] ?? detailValue['detail'])
+            : _readText(detailValue);
         if (detail.isNotEmpty) {
           return detail;
         }

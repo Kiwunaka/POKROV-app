@@ -1,7 +1,7 @@
 # Karing Base Reopen
 
 Date: 2026-06-02
-Status: superseded by `2026-06-03-hiddify-karing-happ-client-base-review.md`
+Status: superseded by `2026-06-03-pokrov-karing-happ-client-base-review.md`
 Decision owner: owner/operator
 
 ## Decision
@@ -24,7 +24,7 @@ imports are missing locally.
 
 Karing remains useful as a feature reference for rules, DNS, diagnostics,
 per-app routing, backup/sync, and novice mode. The preferred spike direction
-after the broader Hiddify/Karing/Happ review is Hiddify as the base candidate,
+after the broader Pokrov/Karing/Happ review is Pokrov as the base candidate,
 Karing as feature reference, and Happ as UX/packaging reference.
 
 ## Non-Goals

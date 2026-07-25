@@ -8,6 +8,9 @@ import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
+const _materializedRuntimeConfig =
+    '{"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}';
+
 const _featureLabelPrivateHelperCoverage = <String>[
   '_smartConnectNodeTitle',
   '_smartConnectNodeCity',
@@ -124,6 +127,8 @@ class _FakeBootstrapper
     this.assistantGate,
     this.assistantFailureCalls = const <int>{},
     this.bonusSummaryGate,
+    this.locationsCatalogFailure,
+    this.notificationsFailure,
   })  : cabinetHandoff = cabinetHandoff ??
             CabinetHandoff(
               token: 'short-cabinet-token',
@@ -224,8 +229,11 @@ class _FakeBootstrapper
   final Future<void>? assistantGate;
   final Set<int> assistantFailureCalls;
   final Future<void>? bonusSummaryGate;
+  final String? locationsCatalogFailure;
+  final String? notificationsFailure;
   int calls = 0;
   int redeemCalls = 0;
+  int pairingClaimCalls = 0;
   int assistantCalls = 0;
   final List<String?> assistantSessionIds = <String?>[];
   final List<Map<String, Object?>> assistantDiagnostics =
@@ -245,6 +253,8 @@ class _FakeBootstrapper
   int warpRuntimeEventCalls = 0;
   int clientAppsCalls = 0;
   int locationsCatalogCalls = 0;
+  int pairingIssueCalls = 0;
+  int pairingCancelCalls = 0;
   bool? lastWarpConsentEnabled;
   String? lastWarpRuntimeEventName;
   String? lastWarpRuntimeEventState;
@@ -253,6 +263,7 @@ class _FakeBootstrapper
   RouteMode? lastRouteMode;
   HostPlatform? lastHostPlatform;
   String? lastRedeemCode;
+  String? lastPairingCode;
   HostPlatform? lastRedeemHostPlatform;
   String? lastCabinetTargetPath;
   HostPlatform? lastCabinetHostPlatform;
@@ -291,6 +302,21 @@ class _FakeBootstrapper
     lastRedeemHostPlatform = hostPlatform;
     lastRedeemCode = code;
     return redeemResult;
+  }
+
+  @override
+  Future<DevicePairingClaimResult> claimDevicePairingCode({
+    required HostPlatform hostPlatform,
+    required String code,
+  }) async {
+    pairingClaimCalls += 1;
+    lastPairingCode = code;
+    lastRedeemHostPlatform = hostPlatform;
+    return const DevicePairingClaimResult(
+      ok: true,
+      accountId: 'paired-account',
+      installId: 'paired-install',
+    );
   }
 
   @override
@@ -361,6 +387,9 @@ class _FakeBootstrapper
     locationsCatalogCalls += 1;
     lastLocationsCatalogHostPlatform = hostPlatform;
     lastLocationsCatalogQuery = query;
+    if (locationsCatalogFailure != null) {
+      throw BootstrapFailure(locationsCatalogFailure!);
+    }
     return locationsCatalog;
   }
 
@@ -397,10 +426,36 @@ class _FakeBootstrapper
   }
 
   @override
+  Future<ClientDevicePairingCode> issueDevicePairingCode({
+    required HostPlatform hostPlatform,
+  }) async {
+    pairingIssueCalls += 1;
+    return const ClientDevicePairingCode(
+      id: 'pairing-1',
+      code: 'ABCD-9XYZ',
+      pairingUri: 'pokrov://pair?code=ABCD-9XYZ',
+      expiresAt: '2030-01-01T00:10:00Z',
+      ttlSeconds: 600,
+    );
+  }
+
+  @override
+  Future<bool> cancelDevicePairingCode({
+    required HostPlatform hostPlatform,
+    required String pairingId,
+  }) async {
+    pairingCancelCalls += 1;
+    return true;
+  }
+
+  @override
   Future<ClientNotificationInbox> fetchClientNotifications({
     required HostPlatform hostPlatform,
     String after = '',
   }) async {
+    if (notificationsFailure != null) {
+      throw BootstrapFailure(notificationsFailure!);
+    }
     return const ClientNotificationInbox(
       items: <ClientNotificationItem>[],
       nextCursor: '',
@@ -665,6 +720,28 @@ class _FakeFirstLaunchStore implements PokrovFirstLaunchStore {
   }
 }
 
+class _FakeClientExperienceStore implements PokrovClientExperienceStore {
+  _FakeClientExperienceStore([
+    this.state = const PokrovClientExperienceState.empty(),
+  ]);
+
+  PokrovClientExperienceState state;
+  int readCalls = 0;
+  int writeCalls = 0;
+
+  @override
+  Future<PokrovClientExperienceState> read() async {
+    readCalls += 1;
+    return state;
+  }
+
+  @override
+  Future<void> write(PokrovClientExperienceState next) async {
+    writeCalls += 1;
+    state = next;
+  }
+}
+
 SupportTicketThread _supportThread({
   required int id,
   String status = 'open',
@@ -730,7 +807,7 @@ void _installReadyRuntimeBridgeMock({List<String>? calls}) {
         return <String, Object?>{
           'phase': 'artifactReady',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': false,
@@ -740,7 +817,7 @@ void _installReadyRuntimeBridgeMock({List<String>? calls}) {
         return <String, Object?>{
           'phase': 'initialized',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': false,
@@ -750,7 +827,7 @@ void _installReadyRuntimeBridgeMock({List<String>? calls}) {
         return <String, Object?>{
           'phase': 'configStaged',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
           'supportsLiveConnect': true,
           'canInitialize': true,
@@ -761,7 +838,7 @@ void _installReadyRuntimeBridgeMock({List<String>? calls}) {
         return <String, Object?>{
           'phase': 'running',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
           'supportsLiveConnect': true,
           'canInitialize': true,
@@ -772,7 +849,7 @@ void _installReadyRuntimeBridgeMock({List<String>? calls}) {
         return <String, Object?>{
           'phase': 'initialized',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': true,
@@ -983,7 +1060,9 @@ void main() {
 
     expect(find.text('Восстановить доступ'), findsOneWidget);
     expect(
-      find.text('Введите код из Telegram, сайта, кабинета или письма.'),
+      find.text(
+        'Введите одноразовый код устройства из кабинета или код активации из Telegram, сайта или письма.',
+      ),
       findsOneWidget,
     );
     expect(find.text('Продолжить'), findsOneWidget);
@@ -1133,7 +1212,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -1184,12 +1263,49 @@ void main() {
     );
   });
 
-  testWidgets('returning first launch rejects raw subscription links locally',
+  testWidgets('returning first launch claims a one-time device code',
       (tester) async {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
         configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('first-launch-returning-user')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('first-launch-restore-code-field')),
+      'ABCD-9XYZ',
+    );
+    await tester.tap(find.byKey(const ValueKey('first-launch-restore-redeem')));
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.pairingClaimCalls, 1);
+    expect(bootstrapper.lastPairingCode, 'ABCD-9XYZ');
+    expect(bootstrapper.redeemCalls, 0);
+    expect(
+      find.byKey(const ValueKey('first-launch-restore-screen')),
+      findsNothing,
+    );
+    expect(find.text('Устройство привязано. Код больше не действует.'),
+        findsOneWidget);
+  });
+
+  testWidgets('returning first launch rejects raw subscription links locally',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -1308,6 +1424,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(support, findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-guides-action')), findsOneWidget);
     final diagnostics =
         find.byKey(const ValueKey('profile-diagnostics-action'));
     await tester.dragUntilVisible(
@@ -1375,7 +1492,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       bonusSummary: summary,
@@ -1442,7 +1559,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       bonusSummary: summary,
@@ -1478,7 +1595,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       clientAppsMetadata: const ClientAppsMetadata(
@@ -1548,7 +1665,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       clientAppsMetadata: const ClientAppsMetadata(
@@ -1604,16 +1721,12 @@ void main() {
     expect(launched, isEmpty);
   });
 
-  testWidgets('home status opens connection details without first-layer copy',
+  testWidgets('home status opens independent protection checks',
       (tester) async {
-    _expectInfoSheetHelpersCovered(const [
-      '_showInfoSheet',
-      '_InfoSheet',
-    ]);
-
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        protectionProbe: (_) async => const PokrovHttpsProbeResult.healthy(),
       ),
     );
     await tester.pumpAndSettle();
@@ -1621,7 +1734,7 @@ void main() {
 
     expect(find.byKey(const ValueKey('home-connection-details-action')),
         findsOneWidget);
-    expect(find.text('Подключение'), findsNothing);
+    expect(find.text('Состояние защиты'), findsNothing);
 
     await tester.tap(
       find.byKey(const ValueKey('home-connection-details-action')),
@@ -1629,9 +1742,163 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(BottomSheet), findsOneWidget);
-    expect(find.text('Подключение'), findsOneWidget);
-    expect(find.textContaining('Локация:'), findsOneWidget);
-    expect(find.textContaining('Режим:'), findsOneWidget);
+    expect(find.text('Состояние защиты'), findsOneWidget);
+    expect(find.text('Туннель'), findsOneWidget);
+    expect(find.text('DNS'), findsOneWidget);
+    expect(find.text('Интернет / HTTPS'), findsOneWidget);
+    expect(find.text('Маршруты'), findsOneWidget);
+    expect(find.textContaining('не доказывают отсутствие'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('protection-repair-action')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+      'protection repair runs one bounded disconnect stage connect loop',
+      (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final runtimeCalls = <String>[];
+    var phase = 'running';
+
+    Map<String, Object?> snapshot(
+        {String message = 'Runtime service is running.'}) {
+      return <String, Object?>{
+        'phase': phase,
+        'artifactDirectory': '/host/runtime',
+        'coreBinaryPath': '/host/runtime/libcore.aar',
+        if (phase == 'running' || phase == 'configStaged')
+          'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+        'supportsLiveConnect': true,
+        'canInitialize': true,
+        'canConnect': phase != 'artifactReady',
+        'message': message,
+        'hostHealth': phase == 'running' ? 'healthy' : 'unknown',
+        'dnsState': phase == 'running' ? 'healthy' : 'unknown',
+        'uplinkState': phase == 'running' ? 'healthy' : 'unknown',
+        'ipv4RouteCount': phase == 'running' ? 2 : 0,
+        'ipv6RouteCount': phase == 'running' ? 1 : 0,
+      };
+    }
+
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      runtimeCalls.add(call.method);
+      switch (call.method) {
+        case 'runtimeEngine.snapshot':
+          return snapshot();
+        case 'runtimeEngine.disconnect':
+          phase = 'initialized';
+          return snapshot(message: 'Runtime service stopped.');
+        case 'runtimeEngine.stageManagedProfile':
+          phase = 'configStaged';
+          return snapshot(message: 'Managed profile staged.');
+        case 'runtimeEngine.connect':
+          phase = 'running';
+          return snapshot();
+        case 'runtimeEngine.liveStats':
+          return <String, Object?>{
+            'available': true,
+            'latencyMs': 41,
+            'downlinkBps': 2048,
+            'uplinkBps': 1024,
+            'serverCode': 'nl-ams-01',
+            'serverCountry': 'NL',
+            'protocol': 'VLESS Reality',
+          };
+      }
+      return null;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'managed-from-api',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+    );
+    final store = _FakeClientExperienceStore();
+    final launched = <Uri>[];
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        protectionProbe: (_) async => const PokrovHttpsProbeResult.healthy(),
+        clientExperienceStore: store,
+        handoffLauncher: (uri) async {
+          launched.add(uri);
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await tester.tap(
+      find.byKey(const ValueKey('home-connection-details-action')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Активен'), findsOneWidget);
+    expect(find.text('Работает'), findsOneWidget);
+    expect(find.text('Доступен'), findsOneWidget);
+    expect(find.text('Назначены'), findsOneWidget);
+    expect(find.textContaining('41 мс'), findsOneWidget);
+
+    runtimeCalls.clear();
+    final repairAction = find.byKey(const ValueKey('protection-repair-action'));
+    await tester.ensureVisible(repairAction);
+    await tester.pumpAndSettle();
+    await tester.tap(repairAction);
+    await tester.pumpAndSettle();
+
+    expect(
+      runtimeCalls,
+      containsAllInOrder(const <String>[
+        'runtimeEngine.disconnect',
+        'runtimeEngine.stageManagedProfile',
+        'runtimeEngine.connect',
+      ]),
+    );
+    expect(
+      runtimeCalls.where((call) => call == 'runtimeEngine.disconnect'),
+      hasLength(1),
+    );
+    expect(
+      runtimeCalls.where((call) => call == 'runtimeEngine.connect'),
+      hasLength(1),
+    );
+    expect(bootstrapper.calls, greaterThanOrEqualTo(1));
+    expect(find.text('Активен'), findsOneWidget);
+    expect(store.state.protectionEvents.first.kind, 'repair_success');
+    expect(find.text('История защиты'), findsOneWidget);
+
+    final addShortcut = find.byKey(const ValueKey('post-connect-shortcut-add'));
+    await tester.ensureVisible(addShortcut);
+    await tester.pumpAndSettle();
+    await tester.tap(addShortcut);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('post-connect-shortcut-label')),
+      'Docs',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('post-connect-shortcut-href')),
+      'https://docs.example/start',
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('post-connect-shortcut-save')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(store.state.postConnectShortcuts.single.label, 'Docs');
+    expect(launched, isEmpty);
+    final shortcut = find.text('Docs');
+    await tester.ensureVisible(shortcut);
+    await tester.tap(shortcut);
+    await tester.pumpAndSettle();
+    expect(launched.single, Uri.parse('https://docs.example/start'));
   });
 
   testWidgets('profile uses grouped MVP account sections', (tester) async {
@@ -1683,6 +1950,7 @@ void main() {
 
   testWidgets('profile theme selector switches light and dark mode',
       (tester) async {
+    final semantics = tester.ensureSemantics();
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
@@ -1708,6 +1976,20 @@ void main() {
     expect(find.byKey(const ValueKey('profile-theme-system')), findsOneWidget);
     expect(find.byKey(const ValueKey('profile-theme-light')), findsOneWidget);
     expect(find.byKey(const ValueKey('profile-theme-dark')), findsOneWidget);
+    expect(
+      tester
+          .widget<Semantics>(
+            find
+                .descendant(
+                  of: find.byKey(const ValueKey('profile-theme-system')),
+                  matching: find.byType(Semantics),
+                )
+                .first,
+          )
+          .properties
+          .selected,
+      isTrue,
+    );
 
     await tester.tap(find.byKey(const ValueKey('profile-theme-dark')));
     await tester.pumpAndSettle();
@@ -1722,6 +2004,20 @@ void main() {
 
     await tester.tap(themeAction);
     await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<Semantics>(
+            find
+                .descendant(
+                  of: find.byKey(const ValueKey('profile-theme-dark')),
+                  matching: find.byType(Semantics),
+                )
+                .first,
+          )
+          .properties
+          .selected,
+      isTrue,
+    );
     await tester.tap(find.byKey(const ValueKey('profile-theme-light')));
     await tester.pumpAndSettle();
 
@@ -1732,6 +2028,7 @@ void main() {
           .brightness,
       Brightness.light,
     );
+    semantics.dispose();
   });
 
   testWidgets('profile first layer stays compact and hides advanced controls',
@@ -1763,7 +2060,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -1803,7 +2100,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       redeemResult: const AppFirstRedeemResult(
@@ -1877,7 +2174,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       cabinetHandoff: CabinetHandoff(
@@ -1933,7 +2230,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -2007,7 +2304,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       bonusSummary: const AppFirstBonusSummary(
@@ -2026,6 +2323,57 @@ void main() {
         paidReferrals: 2,
         nextTierKey: 'pro',
         nextTierAt: 5,
+        referralSummary: AppFirstReferralSummary(
+          count: 4,
+          code: 'POKROV3',
+          link: 'https://t.me/pokrov_vpnbot?start=ref_POKROV3',
+          bonusDays: 10,
+          tierKey: 'starter',
+          tierPercent: 5,
+          paidReferrals: 2,
+          nextTierKey: 'pro',
+          nextTierAt: 5,
+          conversion: AppFirstReferralConversion(
+            invited: 4,
+            activated: 3,
+            paid: 2,
+            rewarded: 1,
+            activationPct: 75,
+            paidPct: 50,
+          ),
+          history: <AppFirstReferralHistoryItem>[
+            AppFirstReferralHistoryItem(
+              id: 'ref-2',
+              status: 'rewarded',
+              createdAt: '2026-06-02T12:00:00Z',
+              activatedAt: '2026-06-02T12:05:00Z',
+              paidAt: '2026-06-03T12:00:00Z',
+              holdUntil: '2026-06-10T12:00:00Z',
+              rewardedAt: '2026-06-10T12:00:00Z',
+            ),
+          ],
+          privacy: 'Имена и аккаунты приглашённых не показываются.',
+        ),
+        achievementItems: <AppFirstAchievementItem>[
+          AppFirstAchievementItem(
+            id: 'first_tunnel',
+            title: 'Первый туннель',
+            description: 'Подключение подтверждено.',
+            unlocked: true,
+          ),
+        ],
+        questItems: <AppFirstQuestItem>[
+          AppFirstQuestItem(
+            id: 'second_device',
+            title: 'Добавить второе устройство',
+            description: 'Свяжите ещё одно устройство.',
+            progress: 1,
+            target: 2,
+            completed: false,
+            actionHref: '/devices/',
+            verification: 'active_account_devices',
+          ),
+        ],
         historyItems: <AppFirstBonusHistoryItem>[
           AppFirstBonusHistoryItem(
             kind: 'promo',
@@ -2098,6 +2446,14 @@ void main() {
     expect(find.text('Telegram-бонус получен'), findsOneWidget);
     expect(find.textContaining('POKROV2'), findsWidgets);
     expect(find.textContaining('+10'), findsWidgets);
+    expect(find.text('Конверсия'), findsOneWidget);
+    expect(find.text('Последние приглашения'), findsOneWidget);
+    expect(find.text('Бонус начислен'), findsOneWidget);
+    expect(find.text('Имена и аккаунты приглашённых не показываются.'),
+        findsOneWidget);
+    expect(find.text('Полезные задачи'), findsOneWidget);
+    expect(find.byKey(const ValueKey('rewards-quest-second_device')),
+        findsOneWidget);
   });
 
   testWidgets('bonus preview keeps wheel and activity calendar non-mutating',
@@ -2130,7 +2486,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       bonusSummary: const AppFirstBonusSummary(
@@ -2258,7 +2614,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       bonusSummary: summary,
@@ -2321,7 +2677,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       bonusSummary: const AppFirstBonusSummary(
@@ -2401,7 +2757,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -2455,7 +2811,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -2513,7 +2869,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -2577,7 +2933,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -2621,6 +2977,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('profile-devices-sheet')), findsOneWidget);
     expect(find.text('Пока нет других устройств.'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('profile-device-pairing-issue')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('profile-device-pairing-issue')),
+    );
+    await tester.pumpAndSettle();
+    expect(bootstrapper.pairingIssueCalls, 1);
+    expect(find.text('ABCD-9XYZ'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey('profile-device-pairing-cancel')),
+    );
+    await tester.pumpAndSettle();
+    expect(bootstrapper.pairingCancelCalls, 1);
+    expect(find.text('ABCD-9XYZ'), findsNothing);
     Navigator.of(tester.element(
       find.byKey(const ValueKey('profile-devices-sheet')),
     )).pop();
@@ -2785,7 +3157,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -2848,7 +3220,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
         warpPolicy: WarpRuntimePolicy(
           enabled: true,
@@ -2896,13 +3268,14 @@ void main() {
 
   testWidgets('home WARP switch changes consent without opening details',
       (tester) async {
+    final semantics = tester.ensureSemantics();
     await tester.binding.setSurfaceSize(const Size(760, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     _installReadyRuntimeBridgeMock();
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
         warpPolicy: WarpRuntimePolicy(
           enabled: true,
@@ -2926,6 +3299,7 @@ void main() {
     expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
     expect(
         find.byKey(const ValueKey('home-warp-inline-switch')), findsOneWidget);
+    expect(find.bySemanticsLabel('WARP'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('home-warp-inline-switch')));
     await tester.pumpAndSettle();
@@ -2934,6 +3308,7 @@ void main() {
     expect(bootstrapper.lastWarpConsentEnabled, isTrue);
     expect(find.byKey(const ValueKey('home-warp-sheet')), findsNothing);
     expect(find.text('Включится при следующем подключении'), findsOneWidget);
+    semantics.dispose();
   });
 
   testWidgets('home WARP tile is tappable as a whole and toggles the switch',
@@ -2944,7 +3319,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
         warpPolicy: WarpRuntimePolicy(
           enabled: true,
@@ -2983,7 +3358,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
         warpPolicy: WarpRuntimePolicy.disabled,
       ),
@@ -3030,7 +3405,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
         warpPolicy: WarpRuntimePolicy(
           enabled: true,
@@ -3194,7 +3569,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       bonusSummaryGate: gate.future,
@@ -3646,7 +4021,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       assistantReply: const ClientSupportAssistantReply(
@@ -3759,7 +4134,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       assistantReply: const ClientSupportAssistantReply(
@@ -3860,7 +4235,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       assistantReply: const ClientSupportAssistantReply(
@@ -4126,6 +4501,13 @@ void main() {
     final gosuslugiPreset =
         find.byKey(const ValueKey('rules-preset-gosuslugi'));
 
+    await tester.dragUntilVisible(
+      banksPreset,
+      find.byType(Scrollable).first,
+      const Offset(0, 180),
+    );
+    await tester.pumpAndSettle();
+
     expect(banksPreset, findsOneWidget);
     expect(gosuslugiPreset, findsOneWidget);
     expect(find.byKey(const ValueKey('rules-preset-messengers')), findsNothing);
@@ -4137,6 +4519,13 @@ void main() {
       find.descendant(of: gosuslugiPreset, matching: find.text('Активно')),
       findsOneWidget,
     );
+
+    await tester.dragUntilVisible(
+      selectedAppsStatus,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
     expect(
       find.descendant(
         of: selectedAppsStatus,
@@ -4219,12 +4608,288 @@ void main() {
     expect(find.text('Выбрать приложение'), findsOneWidget);
   });
 
+  testWidgets('advanced routing controls persist real rules, DNS and LAN',
+      (tester) async {
+    final semantics = tester.ensureSemantics();
+    await tester.binding.setSurfaceSize(const Size(760, 980));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final store = _FakeClientExperienceStore();
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        clientExperienceStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-rules');
+
+    final purposeCard = find.byKey(const ValueKey('rules-purpose-routes'));
+    await tester.dragUntilVisible(
+      purposeCard,
+      find.byType(Scrollable).first,
+      const Offset(0, -320),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('rules-purpose-video')));
+    await tester.pumpAndSettle();
+    expect(
+      store.state.routingPreferences.purposeRoutes,
+      contains(PokrovPurposeRoute.video),
+    );
+
+    final customCard = find.byKey(const ValueKey('rules-custom-routes'));
+    await tester.dragUntilVisible(
+      customCard,
+      find.byType(Scrollable).first,
+      const Offset(0, -360),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('rules-custom-add')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('rules-custom-value-input')),
+      'private.example',
+    );
+    await tester.tap(find.byKey(const ValueKey('rules-custom-save')));
+    await tester.pumpAndSettle();
+    expect(store.state.routingPreferences.overrides, hasLength(1));
+    expect(
+      store.state.routingPreferences.overrides.single.value,
+      'private.example',
+    );
+
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey('rules-route-explainer')),
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('rules-route-explainer-input')),
+      'private.example',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('rules-route-explainer-result')),
+      findsOneWidget,
+    );
+    expect(find.text('Через POKROV VPN'), findsOneWidget);
+
+    final dnsCard = find.byKey(const ValueKey('rules-dns-lan'));
+    await tester.dragUntilVisible(
+      dnsCard,
+      find.byType(Scrollable).first,
+      const Offset(0, -360),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('rules-dns-picker')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('rules-dns-cloudflare')));
+    await tester.pumpAndSettle();
+    expect(
+      store.state.routingPreferences.dnsPreset,
+      PokrovDnsPreset.cloudflare,
+    );
+
+    expect(find.bySemanticsLabel('Локальная сеть'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('rules-lan-toggle')));
+    await tester.pumpAndSettle();
+    expect(store.state.routingPreferences.allowLan, isFalse);
+    expect(store.writeCalls, greaterThanOrEqualTo(4));
+    semantics.dispose();
+  });
+
+  testWidgets('trusted Wi-Fi detects, stores and enables a real network rule',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 980));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final store = _FakeClientExperienceStore();
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        clientExperienceStore: store,
+        currentWifiProbe: () async => const PokrovWifiNetworkStatus(
+          connected: true,
+          name: 'Home WiFi',
+          permissionRequired: false,
+          reason: null,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-rules');
+
+    final card = find.byKey(const ValueKey('rules-trusted-wifi'));
+    await tester.dragUntilVisible(
+      card,
+      find.byType(Scrollable).first,
+      const Offset(0, -520),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('rules-trusted-wifi-detect')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(store.state.routingPreferences.trustedWifiNames, ['Home WiFi']);
+    expect(find.text('Сеть «Home WiFi» добавлена.'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey('rules-trusted-wifi-toggle')),
+    );
+    await tester.pumpAndSettle();
+    expect(store.state.routingPreferences.pauseOnTrustedWifi, isTrue);
+  });
+
+  testWidgets('trusted Wi-Fi accepts a manual network without framework errors',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 980));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final store = _FakeClientExperienceStore();
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        clientExperienceStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-rules');
+
+    final card = find.byKey(const ValueKey('rules-trusted-wifi'));
+    await tester.dragUntilVisible(
+      card,
+      find.byType(Scrollable).first,
+      const Offset(0, -520),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('rules-trusted-wifi-manual')),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('rules-trusted-wifi-manual-input')),
+      'POKROV-QA-TEST',
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('rules-trusted-wifi-manual-save')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(
+      store.state.routingPreferences.trustedWifiNames,
+      <String>['POKROV-QA-TEST'],
+    );
+  });
+
+  testWidgets('trusted Wi-Fi blocks connect before runtime staging',
+      (tester) async {
+    final runtimeCalls = <String>[];
+    _installReadyRuntimeBridgeMock(calls: runtimeCalls);
+    final store = _FakeClientExperienceStore(
+      const PokrovClientExperienceState.empty().copyWith(
+        routingPreferences: const PokrovRoutingPreferences.defaults().copyWith(
+          trustedWifiNames: const ['Home WiFi'],
+          pauseOnTrustedWifi: true,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: _FakeBootstrapper(
+          const ManagedProfilePayload(
+            profileName: 'test-profile',
+            configPayload: '{}',
+            materializedForRuntime: true,
+          ),
+        ),
+        clientExperienceStore: store,
+        currentWifiProbe: () async => const PokrovWifiNetworkStatus(
+          connected: true,
+          name: 'Home WiFi',
+          permissionRequired: false,
+          reason: null,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    runtimeCalls.clear();
+
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
+
+    expect(runtimeCalls, isNot(contains('runtimeEngine.initialize')));
+    expect(runtimeCalls, isNot(contains('runtimeEngine.stageManagedProfile')));
+    expect(runtimeCalls, isNot(contains('runtimeEngine.connect')));
+    expect(find.textContaining('доверенной сети «Home WiFi»'), findsWidgets);
+  });
+
+  testWidgets('Android rules open the host VPN settings action',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 980));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    var openCalls = 0;
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        vpnSettingsLauncher: () async {
+          openCalls += 1;
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-rules');
+
+    final action = find.byKey(const ValueKey('rules-open-vpn-settings'));
+    await tester.dragUntilVisible(
+      action,
+      find.byType(Scrollable).first,
+      const Offset(0, -620),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+
+    expect(openCalls, 1);
+  });
+
+  testWidgets('desktop shell controller attaches and detaches with the app',
+      (tester) async {
+    final controller = PokrovShellController();
+    expect(controller.attached, isFalse);
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        shellController: controller,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(controller.attached, isTrue);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+    expect(controller.attached, isFalse);
+  });
+
   testWidgets('rules lets user add a custom selected app identifier',
       (tester) async {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -4487,7 +5152,7 @@ void main() {
           return <String, Object?>{
             'phase': 'running',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -4532,7 +5197,7 @@ void main() {
           return <String, Object?>{
             'phase': 'running',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -4613,7 +5278,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'managed-from-api',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
       locationsCatalog: const ClientLocationsCatalog(
@@ -4633,6 +5298,7 @@ void main() {
                 latencyMs: 38,
                 premium: true,
                 load: 0.31,
+                measuredAt: '2026-07-23T10:15:00+00:00',
               ),
             ],
           ),
@@ -4664,6 +5330,259 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Amsterdam'), findsOneWidget);
+    expect(find.textContaining('38 мс'), findsOneWidget);
+    expect(find.textContaining('нагрузка 31%'), findsOneWidget);
+  });
+
+  testWidgets(
+      'locations explain locked selection before Smart Connect while favorites work',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    const cachedCatalog = ClientLocationsCatalog(
+      auto: ClientLocationAuto(enabled: true, currentCode: 'nl-ams-01'),
+      countries: <ClientLocationCountry>[
+        ClientLocationCountry(
+          code: 'nl',
+          country: 'Netherlands',
+          cities: <ClientLocationCity>[
+            ClientLocationCity(
+              code: 'nl-ams-01',
+              city: 'Amsterdam',
+              healthScore: 0.94,
+              latencyMs: 38,
+              premium: false,
+              load: 0.31,
+              measuredAt: '2026-07-23T10:15:00Z',
+            ),
+          ],
+        ),
+      ],
+      freePoolCode: 'nl-free',
+      profileRevision: 'rev-locations',
+      transportProfile: 'reality',
+      query: '',
+    );
+    final store = _FakeClientExperienceStore(
+      const PokrovClientExperienceState(
+        favoriteNodeCodes: <String>[],
+        recentNodeCodes: <String>[],
+        protectionEvents: <PokrovProtectionEvent>[],
+        postConnectShortcuts: <PokrovPostConnectShortcut>[],
+        cachedLocations: cachedCatalog,
+        locationsCachedAt: '2026-07-23T10:15:01Z',
+        cachedNotifications: null,
+        notificationsCachedAt: '',
+      ),
+    );
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'managed-without-smart-connect',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      locationsCatalogFailure: 'offline',
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        clientExperienceStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-locations');
+
+    final city = find.byKey(const ValueKey('locations-catalog-city-nl-ams-01'));
+    expect(city, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('locations-selection-locked')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const ValueKey('locations-selection-locked-nl-ams-01'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(city, warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(store.state.recentNodeCodes, isEmpty);
+
+    await tester.tap(
+      find.byKey(const ValueKey('locations-favorite-nl-ams-01')),
+    );
+    await tester.pumpAndSettle();
+    expect(store.state.favoriteNodeCodes, <String>['nl-ams-01']);
+    expect(store.state.recentNodeCodes, isEmpty);
+  });
+
+  testWidgets('locations keep cached catalog favorites and recents offline',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    _installReadyRuntimeBridgeMock();
+
+    const cachedCatalog = ClientLocationsCatalog(
+      auto: ClientLocationAuto(enabled: true, currentCode: 'nl-ams-01'),
+      countries: <ClientLocationCountry>[
+        ClientLocationCountry(
+          code: 'nl',
+          country: 'Netherlands',
+          cities: <ClientLocationCity>[
+            ClientLocationCity(
+              code: 'nl-ams-01',
+              city: 'Amsterdam',
+              healthScore: 0.94,
+              latencyMs: 38,
+              premium: true,
+              load: 0.31,
+              measuredAt: '2026-07-23T10:15:00Z',
+            ),
+          ],
+        ),
+      ],
+      freePoolCode: 'nl-free',
+      profileRevision: 'rev-locations',
+      transportProfile: 'reality',
+      query: '',
+    );
+    final store = _FakeClientExperienceStore(
+      const PokrovClientExperienceState(
+        favoriteNodeCodes: <String>['nl-ams-01'],
+        recentNodeCodes: <String>[],
+        protectionEvents: <PokrovProtectionEvent>[],
+        postConnectShortcuts: <PokrovPostConnectShortcut>[],
+        cachedLocations: cachedCatalog,
+        locationsCachedAt: '2026-07-23T10:15:01Z',
+        cachedNotifications: null,
+        notificationsCachedAt: '',
+      ),
+    );
+    const smartConnect = SmartConnectProfile(
+      eligible: true,
+      fallbackRequired: false,
+      shortlistReason: 'eligible',
+      shortlistLimit: 5,
+      shortlistRevision: 'short-test',
+      transportProfile: 'reality',
+      profileRevision: 'rev-locations',
+      fallbackOrder: <String>['nl-ams-01'],
+      shortlist: <SmartConnectNode>[],
+      stickiness: SmartConnectStickiness(
+        preferredNodeCode: '',
+        thresholdPercent: 15,
+        latestSampleAt: '',
+        stickinessApplied: false,
+      ),
+    );
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'managed-from-api',
+        configPayload: '{}',
+        materializedForRuntime: true,
+        smartConnect: smartConnect,
+      ),
+      locationsCatalogFailure: 'offline',
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        clientExperienceStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-locations');
+
+    expect(find.text('Amsterdam'), findsOneWidget);
+    expect(find.text('Избранное'), findsOneWidget);
+    expect(find.text('Нет свежих данных'), findsOneWidget);
+    expect(
+        find.textContaining('Показываем сохранённый список'), findsOneWidget);
+
+    final favoriteAction =
+        find.byKey(const ValueKey('locations-favorite-nl-ams-01'));
+    await tester.tap(favoriteAction);
+    await tester.pumpAndSettle();
+    expect(store.state.favoriteNodeCodes, isEmpty);
+
+    await tester.tap(
+      find.byKey(const ValueKey('locations-catalog-city-nl-ams-01')),
+    );
+    await tester.pumpAndSettle();
+    expect(store.state.recentNodeCodes, <String>['nl-ams-01']);
+    expect(store.writeCalls, greaterThanOrEqualTo(2));
+  });
+
+  testWidgets('profile keeps cached notifications when refresh is offline',
+      (tester) async {
+    final store = _FakeClientExperienceStore(
+      const PokrovClientExperienceState(
+        favoriteNodeCodes: <String>[],
+        recentNodeCodes: <String>[],
+        protectionEvents: <PokrovProtectionEvent>[],
+        postConnectShortcuts: <PokrovPostConnectShortcut>[],
+        cachedLocations: null,
+        locationsCachedAt: '',
+        cachedNotifications: ClientNotificationInbox(
+          items: <ClientNotificationItem>[
+            ClientNotificationItem(
+              id: 'incident.cached',
+              kind: 'incident',
+              title: 'Сохранённый инцидент',
+              body: 'Последняя подтверждённая сводка.',
+              createdAt: '2026-07-23T10:15:00Z',
+              ctaLabel: '',
+              ctaHref: null,
+              read: false,
+            ),
+          ],
+          nextCursor: '',
+          unreadCount: 1,
+        ),
+        notificationsCachedAt: '2026-07-23T10:15:01Z',
+      ),
+    );
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'managed-from-api',
+        configPayload: '{}',
+        materializedForRuntime: true,
+      ),
+      notificationsFailure: 'offline',
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        clientExperienceStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-profile');
+    await tester.pumpAndSettle();
+
+    final action = find.byKey(const ValueKey('profile-notifications-action'));
+    await tester.ensureVisible(action);
+    await tester.pumpAndSettle();
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Сохранённый инцидент'), findsOneWidget);
+    expect(
+      find.textContaining('Показываем сохранённые уведомления'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('primary connect action auto-prepares and starts host runtime',
@@ -4678,6 +5597,7 @@ void main() {
         profileName: 'managed-from-api',
         configPayload:
             '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
       ),
     );
 
@@ -4688,7 +5608,7 @@ void main() {
           return <String, Object?>{
             'phase': 'artifactReady',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4698,7 +5618,7 @@ void main() {
           return <String, Object?>{
             'phase': 'initialized',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4710,7 +5630,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -4721,7 +5641,7 @@ void main() {
           return <String, Object?>{
             'phase': 'running',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -4786,7 +5706,7 @@ void main() {
           return <String, Object?>{
             'phase': 'artifactReady',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4796,7 +5716,7 @@ void main() {
           return <String, Object?>{
             'phase': 'initialized',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4806,7 +5726,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -4817,7 +5737,7 @@ void main() {
           return <String, Object?>{
             'phase': 'running',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -4839,6 +5759,7 @@ void main() {
             profileName: 'managed-from-api',
             configPayload:
                 '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+            materializedForRuntime: true,
           ),
         ),
       ),
@@ -4877,7 +5798,7 @@ void main() {
           return <String, Object?>{
             'phase': 'artifactReady',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4887,7 +5808,7 @@ void main() {
           return <String, Object?>{
             'phase': 'initialized',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4940,7 +5861,7 @@ void main() {
           return <String, Object?>{
             'phase': 'artifactReady',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4950,7 +5871,7 @@ void main() {
           return <String, Object?>{
             'phase': 'initialized',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -4960,7 +5881,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -4985,6 +5906,7 @@ void main() {
             profileName: 'managed-from-api',
             configPayload:
                 '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+            materializedForRuntime: true,
           ),
         ),
       ),
@@ -5013,6 +5935,7 @@ void main() {
         profileName: 'managed-from-api',
         configPayload:
             '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
       ),
     );
 
@@ -5023,7 +5946,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/previous-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5034,7 +5957,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5045,7 +5968,7 @@ void main() {
           return <String, Object?>{
             'phase': 'running',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5119,7 +6042,7 @@ void main() {
         bootstrapper: _FakeBootstrapper(
           const ManagedProfilePayload(
             profileName: 'unused',
-            configPayload: '{}',
+            configPayload: _materializedRuntimeConfig,
           ),
         ),
       ),
@@ -5157,7 +6080,7 @@ void main() {
             return <String, Object?>{
               'phase': 'running',
               'artifactDirectory': '/host/runtime',
-              'coreBinaryPath': '/host/runtime/libcore.aar',
+              'coreBinaryPath': '/host/runtime/pokrov-core.aar',
               'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
               'supportsLiveConnect': true,
               'canInitialize': true,
@@ -5168,7 +6091,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5180,7 +6103,7 @@ void main() {
           return <String, Object?>{
             'phase': 'initialized',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -5190,7 +6113,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5201,7 +6124,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5224,6 +6147,7 @@ void main() {
             profileName: 'managed-from-api',
             configPayload:
                 '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+            materializedForRuntime: true,
           ),
         ),
       ),
@@ -5267,7 +6191,7 @@ void main() {
             return <String, Object?>{
               'phase': 'running',
               'artifactDirectory': '/host/runtime',
-              'coreBinaryPath': '/host/runtime/libcore.aar',
+              'coreBinaryPath': '/host/runtime/pokrov-core.aar',
               'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
               'supportsLiveConnect': true,
               'canInitialize': true,
@@ -5278,7 +6202,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5289,7 +6213,7 @@ void main() {
           return <String, Object?>{
             'phase': 'initialized',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': false,
@@ -5299,7 +6223,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5310,7 +6234,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5332,6 +6256,7 @@ void main() {
             profileName: 'managed-from-api',
             configPayload:
                 '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+            materializedForRuntime: true,
           ),
         ),
       ),
@@ -5374,7 +6299,7 @@ void main() {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
-            'coreBinaryPath': '/host/runtime/libcore.aar',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
             'supportsLiveConnect': true,
             'canInitialize': true,
@@ -5385,7 +6310,7 @@ void main() {
         return <String, Object?>{
           'phase': 'running',
           'artifactDirectory': '/host/runtime',
-          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
           'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
           'supportsLiveConnect': true,
           'canInitialize': true,
@@ -5471,7 +6396,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
         warpPolicy: WarpRuntimePolicy.disabled,
       ),

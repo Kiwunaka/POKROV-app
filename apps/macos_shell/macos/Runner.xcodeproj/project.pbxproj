@@ -322,7 +322,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nSRC=\"$PROJECT_DIR/Runner/Frameworks\"\nDST=\"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/Runtime\"\nmkdir -p \"$DST\"\nif [ -f \"$SRC/libcore.dylib\" ]; then\n  cp -f \"$SRC/libcore.dylib\" \"$DST/libcore.dylib\"\n  chmod +x \"$DST/libcore.dylib\"\nfi\nif [ -f \"$SRC/HiddifyCli\" ]; then\n  cp -f \"$SRC/HiddifyCli\" \"$DST/HiddifyCli\"\n  chmod +x \"$DST/HiddifyCli\"\nfi\n";
+			shellScript = "set -e\nSRC=\"$PROJECT_DIR/Runner/Frameworks\"\nDST=\"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/Runtime\"\nmkdir -p \"$DST\"\nif [ -f \"$SRC/pokrov-core.dylib\" ]; then\n  cp -f \"$SRC/pokrov-core.dylib\" \"$DST/pokrov-core.dylib\"\n  chmod +x \"$DST/pokrov-core.dylib\"\nfi\n";
 		};
 		33CC111E2044C6BF0003C045 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;

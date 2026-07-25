@@ -97,11 +97,13 @@ endif()
 
 set(POKROV_RUNTIME_DIR
   "${CMAKE_CURRENT_SOURCE_DIR}/runner/resources/runtime")
-if(EXISTS "${POKROV_RUNTIME_DIR}/libcore.dll")
-  install(FILES "${POKROV_RUNTIME_DIR}/libcore.dll"
-    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
-    COMPONENT Runtime)
-endif()
+foreach(POKROV_RUNTIME_FILE pokrov-core.dll libcronet.dll)
+  if(EXISTS "${POKROV_RUNTIME_DIR}/${POKROV_RUNTIME_FILE}")
+    install(FILES "${POKROV_RUNTIME_DIR}/${POKROV_RUNTIME_FILE}"
+      DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+      COMPONENT Runtime)
+  endif()
+endforeach()
 
 # Fully re-copy the assets directory on each build to avoid having stale files
 # from a previous install.

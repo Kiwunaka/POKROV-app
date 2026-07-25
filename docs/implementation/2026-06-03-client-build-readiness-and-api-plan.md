@@ -36,7 +36,7 @@ Local synthesis keeps POKROV canon above model output.
 Start with a runtime spike now.
 
 Do not start a broad UI build until the runtime spike proves that a
-Hiddify-based fork can build and run on Android and Windows with POKROV-managed
+Pokrov-based fork can build and run on Android and Windows with POKROV-managed
 profiles.
 
 The backend already covers most of the first app path:
@@ -54,10 +54,10 @@ The backend already covers most of the first app path:
 
 The biggest immediate risk is not the visual shell. It is the fork/runtime gate:
 
-- missing `hiddify-core/bin` artifacts;
+- missing `pokrov-core/bin` artifacts;
 - Windows core build requirements;
 - provenance/license packet;
-- Hiddify rebrand/telemetry/updater/deeplink cleanup.
+- Pokrov rebrand/telemetry/updater/deeplink cleanup.
 
 The first build should be narrow:
 
@@ -77,9 +77,9 @@ casino-like bonus surfaces in the first build.
 
 ### P0 Owner/Architecture Decisions
 
-These should be locked before forking/copying Hiddify code:
+These should be locked before forking/copying Pokrov code:
 
-1. Hiddify fork provenance:
+1. Pokrov fork provenance:
    - upstream commit/tag or source snapshot;
    - GPL/notice obligations;
    - what is copied, forked, or only studied;
@@ -95,8 +95,8 @@ These should be locked before forking/copying Hiddify code:
    - Windows app identity/product name;
    - deep link scheme, recommended `pokrov://`;
    - canonical app/cabinet handoff URLs.
-4. Hiddify cleanup policy:
-   - remove/replace Hiddify branding;
+4. Pokrov cleanup policy:
+   - remove/replace Pokrov branding;
    - remove/replace Sentry DSN;
    - remove/replace updater endpoints;
    - replace public links, deep links, package IDs, release metadata.
@@ -370,7 +370,7 @@ Must cover:
 
 Do this before broad UI implementation.
 
-1. Hiddify provenance and workspace decision:
+1. Pokrov provenance and workspace decision:
    - identify exact source snapshot;
    - record license/NOTICE requirements;
    - create fork branch/worktree only after provenance is recorded.
@@ -382,7 +382,7 @@ Do this before broad UI implementation.
 3. Minimal Flutter runner:
    - build Android debug;
    - build Windows debug;
-   - launch without inherited Hiddify user-visible branding.
+   - launch without inherited Pokrov user-visible branding.
 4. Managed profile parse:
    - call `GET /api/client/profile/managed`;
    - parse manifest;
@@ -405,10 +405,10 @@ Do this before broad UI implementation.
    - upload latency samples;
    - apply stickiness.
 8. Rebrand smoke:
-   - no Hiddify app ID;
-   - no Hiddify deep links;
-   - no Hiddify updater endpoint;
-   - no Hiddify Sentry/project telemetry;
+   - no Pokrov app ID;
+   - no Pokrov deep links;
+   - no Pokrov updater endpoint;
+   - no Pokrov Sentry/project telemetry;
    - no inherited public support links.
 
 Runtime spike exit criteria:
@@ -424,7 +424,7 @@ Runtime spike exit criteria:
 ### Phase 0: Foundation And Runtime
 
 - provenance/license packet;
-- Hiddify fork/build workspace;
+- Pokrov fork/build workspace;
 - core artifacts;
 - POKROV app identity/deep links;
 - basic Flutter build on Android and Windows;
@@ -601,9 +601,9 @@ unless current evidence exists and is recorded.
 
 Reject implementation if it includes:
 
-- Hiddify branding, deep links, updater URLs, Sentry DSN, app ID, or public
+- Pokrov branding, deep links, updater URLs, Sentry DSN, app ID, or public
   support links in POKROV production UI/builds.
-- Karing source merged into a Hiddify fork without a separate GPL/provenance
+- Karing source merged into a Pokrov fork without a separate GPL/provenance
   decision.
 - Xray as default core.
 - Xray fallback outside advanced settings.
@@ -621,7 +621,7 @@ Reject implementation if it includes:
 
 ## Owner Decisions Still Needed
 
-1. Hiddify fork provenance:
+1. Pokrov fork provenance:
    - source snapshot;
    - public fork strategy;
    - attribution/NOTICE handling.
@@ -662,12 +662,12 @@ Status on 2026-06-05: superseded by
 `docs/implementation/2026-06-04-decisions-implementation-map.md` and
 `docs/operations/2026-06-05-phase-6-release-beta-handoff.md`.
 
-- [x] Hiddify provenance/license decision: owner moved this out of the active
+- [x] Pokrov provenance/license decision: owner moved this out of the active
   `1.0.0-beta` beta blocker set; it remains fork-hardening only.
-- [x] Android `hiddify-core` runtime artifact path: proven through the pinned
-  `hiddify-core v3.1.8` artifact contract and Android release APK build.
-- [x] Windows `hiddify-core` runtime artifact path: proven through the pinned
-  `hiddify-core v3.1.8` artifact contract and unsigned Windows release bundle.
+- [x] Android `pokrov-core` runtime artifact path: proven through the pinned
+  POKROV Core 1.0.0 artifact contract and Android release APK build.
+- [x] Windows `pokrov-core` runtime artifact path: proven through the pinned
+  POKROV Core 1.0.0 artifact contract and unsigned Windows release bundle.
 - [x] POKROV app identity constants: active Android/Windows beta hosts use the
   POKROV product identity and `1.0.0-beta` version line.
 - [x] `install_id` persistence and `start-trial` idempotency: implemented and
@@ -685,6 +685,6 @@ Status on 2026-06-05: superseded by
 
 ## One-Line Plan
 
-Prove the Hiddify runtime first, then build the POKROV shell around the existing
+Prove the Pokrov runtime first, then build the POKROV shell around the existing
 app-first backend, using adapters for redeem/bonus gaps and feature flags for
 everything not backed by current API evidence.

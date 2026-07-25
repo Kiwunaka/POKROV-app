@@ -1,6 +1,6 @@
 # Cutover Readiness
 
-Last updated: 2026-07-10
+Last updated: 2026-07-22
 
 This document tracks what must be true before `POKROV-app/main` is approved as the public `Android + Windows` release lane.
 
@@ -232,7 +232,7 @@ support/chat, bonus, routing, smart-connect, and WARP-staging slices:
   - Windows release bundle:
     `apps/windows_shell/build/windows/x64/runner/Release/pokrov_windows_beta.exe`
   - Windows runtime bundle member:
-    `apps/windows_shell/build/windows/x64/runner/Release/libcore.dll`
+    `apps/windows_shell/build/windows/x64/runner/Release/pokrov-core.dll`
 - retained local handoff pack:
   - `artifacts/releases/pokrov-app/0.2.0-beta.1+20260603-local-mvp/`
   - checksum verification passed against `SHA256SUMS.txt`
@@ -383,11 +383,11 @@ They do not expand the public `Android + Windows` release scope tracked by this 
 
 ## Windows Gate Checklist
 
-- [x] Runtime artifacts are synced into `apps/windows_shell/windows/runner/resources/runtime`
+- [x] POKROV Core 1.0.0 `pokrov-core.dll` and pinned `libcronet.dll` are synced into `apps/windows_shell/windows/runner/resources/runtime`
 - [x] `flutter analyze` passes in `apps/windows_shell`
 - [x] Shared runtime and widget tests pass
 - [x] `flutter build windows --release` succeeds
-- [x] Local release bundle contains `pokrov_windows_beta.exe` and `libcore.dll`
+- [x] Local source-candidate release bundle contains `pokrov_windows_beta.exe`, ABI 2 `pokrov-core.dll`, and pinned `libcronet.dll`
 - [x] Unsigned beta risk acceptance is retained as evidence for the recorded beta wave only
 - [ ] Trusted code-signing identity and exact-candidate signing proof are available for the next public Windows distribution
 - [x] EXE first-layer beta path is retained; `MSIX` / portable `ZIP` stay operator/store artifacts

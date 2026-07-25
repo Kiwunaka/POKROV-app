@@ -7,7 +7,7 @@ Decision owner: owner/operator
 ## Purpose
 
 Collect the current product direction for the future POKROV Android and Windows
-client after the local Hiddify/Karing/Happ review, screenshot review, and
+client after the local Pokrov/Karing/Happ review, screenshot review, and
 OpenCode consilium passes.
 
 This is not an implementation plan and does not claim that the new app is built.
@@ -18,7 +18,7 @@ It is the shared brief for the client spike and later detailed specs.
 - Owner direction in the 2026-06-03 discussion.
 - Screenshots in `C:/Users/kiwun/Documents/ai/VPN/.tmp/design 0306`.
 - Local source/material review:
-  - Hiddify as primary base candidate.
+  - Pokrov as primary base candidate.
   - Karing as feature reference.
   - Happ as UX and packaging reference.
 - OpenCode-go consilium passes:
@@ -34,7 +34,7 @@ It is the shared brief for the client spike and later detailed specs.
 
 Use the reviewed clients with clear roles:
 
-- Hiddify: primary technical base candidate, especially `sing-box` runtime,
+- Pokrov: primary technical base candidate, especially `sing-box` runtime,
   route-rule model, profile parsing, WARP/chain settings, and Flutter
   Android/Windows structure.
 - Karing: feature reference for rule groups, DNS behavior, per-app routing,
@@ -302,7 +302,7 @@ The ruleset catalogue should be backend-synced and versioned.
 
 ## Enhanced Mode
 
-Hiddify WARP/chain capabilities should be exposed as a human feature.
+Pokrov WARP/chain capabilities should be exposed as a human feature.
 
 Preferred label:
 
@@ -639,7 +639,7 @@ Diagnostics should be redacted and support-safe.
 
 ### P0
 
-- Hiddify-based spike base decision and runtime gate.
+- Pokrov-based spike base decision and runtime gate.
 - First-launch `new / returning` split.
 - Returning-user restore screen.
 - Unified redeem API contract.

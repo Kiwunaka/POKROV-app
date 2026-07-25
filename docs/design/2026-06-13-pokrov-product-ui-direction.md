@@ -107,3 +107,35 @@ design owner. The current implementation keeps:
 - Windows compact/drawer behavior at 700 and 900 px;
 - Android adaptive launcher/splash assets and edge-to-edge system chrome tied
   to the existing POKROV brand source.
+
+## 2026-07 Protection And Competitor-Parity Surfaces
+
+The selected feature pass extends `pokrov-clear` without introducing a second
+visual language:
+
+- the Protection center is an 86%-height iOS-like sheet with one grouped list
+  for tunnel, DNS, HTTPS, and route ownership, followed by measured stats,
+  user shortcuts, local history, and one full-width repair action;
+- healthy, warning, danger, and unknown states use the existing palette and
+  status-pill dialect; unknown data is never decorated as success;
+- Locations keeps automatic selection first, then compact Favorites and Recent
+  groups, with ping/load/health and freshness in secondary text;
+- before Smart Connect exists, location rows show a lock and no press surface,
+  while search and the independent favorite action remain available; one
+  explanatory card tells the user to complete the first connection;
+- Rules uses grouped settings rows for purpose routes, explicit overrides,
+  DNS, LAN, and trusted Wi-Fi. Advanced values stay behind focused sheets;
+- compound switch rows expose one accessibility action, not a tappable parent
+  plus a duplicate native switch; picker rows expose their selected state;
+- Rewards keeps referral metrics, achievements, quests, discounts, and history
+  in flat grouped sections. It must not use flashing, countdown pressure,
+  oversized jackpot treatment, or casino copy;
+- guides are one clear external action under Support/Profile and open the
+  canonical searchable guide registry rather than duplicating long articles in
+  the app;
+- Quick Settings and tray actions mirror the main connection state and never
+  invent their own success state.
+
+The same mobile composition must remain usable in the Windows compact lane;
+desktop may widen content but must not replace the grouped hierarchy with an
+operator dashboard.

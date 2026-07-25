@@ -791,6 +791,7 @@ void main() {
     final requests = <String>[];
     Map<String, dynamic>? statsBody;
     Map<String, dynamic>? onboardingBody;
+    Map<String, dynamic>? questBody;
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
     unawaited(() async {
@@ -844,6 +845,18 @@ void main() {
           await request.response.close();
           continue;
         }
+        if (request.uri.path == '/api/events') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer runtime-stats-session',
+          );
+          questBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+          await request.response.close();
+          continue;
+        }
         request.response.statusCode = HttpStatus.notFound;
         await request.response.close();
       }
@@ -864,17 +877,26 @@ void main() {
     await bootstrapper.completeAccountOnboarding(
       hostPlatform: HostPlatform.android,
     );
+    await bootstrapper.completeRoutingLesson(
+      hostPlatform: HostPlatform.android,
+    );
 
     expect(requests, <String>[
       'POST /api/client/session/start-trial',
       'POST /api/client/runtime/stats',
       'POST /api/account/experience/onboarding',
+      'POST /api/events',
     ]);
     expect(statsBody, <String, Object?>{
       'runtime_phase': 'running',
       'connected': true,
     });
     expect(onboardingBody, <String, Object?>{'status': 'completed'});
+    expect(questBody, <String, Object?>{
+      'event_name': 'routing_lesson_completed',
+      'source': 'app',
+      'meta': <String, Object?>{'surface': 'route_explainer'},
+    });
   });
 
   test('warp lifecycle actions use app session and sanitize runtime metadata',
@@ -2097,6 +2119,86 @@ void main() {
     ]);
   });
 
+  test('claims a one-time device code without starting or persisting a trial',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-device-pairing-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final requests = <String>[];
+    Map<String, dynamic>? claimBody;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add('${request.method} ${request.uri.path}');
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/device-pairing/claim') {
+          claimBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'ok': true,
+                  'access_token': 'paired-access-token',
+                  'refresh_token': 'paired-refresh-token',
+                  'canonical_account_id': 'paired-account-id',
+                  'session': <String, Object?>{
+                    'session_id': 'paired-session-id',
+                    'account_id': 'paired-account-id',
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final sessionSecretStore = MemoryAppFirstSessionSecretStore();
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: sessionSecretStore,
+    );
+
+    final result = await bootstrapper.claimDevicePairingCode(
+      hostPlatform: HostPlatform.windows,
+      code: 'ABCD-9XYZ',
+    );
+
+    expect(result.ok, isTrue);
+    expect(result.accountId, 'paired-account-id');
+    expect(result.installId, startsWith('windows-'));
+    expect(claimBody?['code'], 'ABCD9XYZ');
+    expect(claimBody?['install_id'], result.installId);
+    expect(requests, <String>['POST /api/client/device-pairing/claim']);
+
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}app-first-session-windows.json',
+    );
+    final stateText = await stateFile.readAsString();
+    expect(stateText, isNot(contains('ABCD9XYZ')));
+    expect(stateText, isNot(contains('paired-access-token')));
+    expect(stateText, isNot(contains('paired-refresh-token')));
+    expect(
+      await sessionSecretStore.readSessionToken(
+        hostPlatform: HostPlatform.windows,
+        installId: result.installId,
+      ),
+      'paired-access-token',
+    );
+  });
+
   test('creates a short-lived cabinet handoff through the app-first API',
       () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
@@ -2502,6 +2604,28 @@ void main() {
                     'last_wheel_spin': '2026-06-03T12:00:00Z',
                     'streak_months': 3,
                   },
+                  'achievements': <String, Object?>{
+                    'items': <Object?>[
+                      <String, Object?>{
+                        'id': 'first_tunnel',
+                        'title': 'Первый туннель',
+                        'description': 'Подключение подтверждено.',
+                        'unlocked': true,
+                      },
+                    ],
+                    'quests': <Object?>[
+                      <String, Object?>{
+                        'id': 'second_device',
+                        'title': 'Добавить второе устройство',
+                        'description': 'Свяжите ещё одно устройство.',
+                        'progress': 1,
+                        'target': 2,
+                        'completed': false,
+                        'action_href': '/devices/',
+                        'verification': 'active_account_devices',
+                      },
+                    ],
+                  },
                 },
               ),
             );
@@ -2569,6 +2693,26 @@ void main() {
                     'next_tier_key': 'pro',
                     'next_tier_at': 5,
                   },
+                  'conversion': <String, Object?>{
+                    'invited': 4,
+                    'activated': 3,
+                    'paid': 2,
+                    'rewarded': 1,
+                    'activation_pct': 75,
+                    'paid_pct': 50,
+                  },
+                  'history': <Object?>[
+                    <String, Object?>{
+                      'id': 'ref-2',
+                      'status': 'rewarded',
+                      'created_at': '2026-06-02T12:00:00Z',
+                      'activated_at': '2026-06-02T12:05:00Z',
+                      'paid_at': '2026-06-03T12:00:00Z',
+                      'hold_until': '2026-06-10T12:00:00Z',
+                      'rewarded_at': '2026-06-10T12:00:00Z',
+                    },
+                  ],
+                  'privacy': 'Имена и аккаунты приглашённых не показываются.',
                 },
               ),
             );
@@ -2652,6 +2796,13 @@ void main() {
       '/api/bonuses/calendar/checkin',
     );
     expect(summary.historyItems, hasLength(2));
+    expect(summary.achievementItems, hasLength(1));
+    expect(summary.achievementItems.single.id, 'first_tunnel');
+    expect(summary.achievementItems.single.unlocked, isTrue);
+    expect(summary.questItems, hasLength(1));
+    expect(summary.questItems.single.id, 'second_device');
+    expect(summary.questItems.single.progress, 1);
+    expect(summary.questItems.single.target, 2);
     expect(summary.historyItems.first.kind, 'promo');
     expect(summary.historyItems.first.days, 7);
     expect(summary.historyItems.first.codePreview, '...DAYS');
@@ -2660,6 +2811,12 @@ void main() {
         'https://t.me/pokrov_vpnbot?start=ref_POKROV2');
     expect(summary.referralSummary.bonusDays, 10);
     expect(summary.referralSummary.tierKey, 'starter');
+    expect(summary.referralSummary.conversion.invited, 4);
+    expect(summary.referralSummary.conversion.activated, 3);
+    expect(summary.referralSummary.conversion.paidPct, 50);
+    expect(summary.referralSummary.history, hasLength(1));
+    expect(summary.referralSummary.history.single.status, 'rewarded');
+    expect(summary.referralSummary.privacy, contains('не показываются'));
     expect(summary.promoSlots.remoteAvailable, isTrue);
     expect(summary.promoSlots.visibleSlots, hasLength(1));
     expect(summary.promoSlots.visibleSlots.single.title, 'Telegram +10 days');
@@ -2886,6 +3043,14 @@ void main() {
                   },
                   'profile_revision': 'rev-materialized',
                   'config_format': 'singbox-json',
+                  'support_context': <String, Object?>{
+                    'reality_tls_fragment': <String, Object?>{
+                      'enabled': true,
+                      'fragment': true,
+                      'record_fragment': true,
+                      'fragment_fallback_delay': '250ms',
+                    },
+                  },
                   'config_payload': <String, Object?>{
                     '_meta': <String, Object?>{
                       'source': 'managed',
@@ -2897,6 +3062,16 @@ void main() {
                         'server': 'nl.kiwunaka.space',
                         'server_port': 443,
                         'uuid': 'test-uuid',
+                        'tcp_fast_open': true,
+                        'tls': <String, Object?>{
+                          'enabled': true,
+                          'server_name': 'www.cloudflare.com',
+                          'reality': <String, Object?>{
+                            'enabled': true,
+                            'public_key': 'test-public-key',
+                            'short_id': '0123456789abcdef',
+                          },
+                        },
                       },
                     ],
                   },
@@ -2923,6 +3098,12 @@ void main() {
     );
     final config = jsonDecode(payload.configPayload) as Map<String, dynamic>;
     final inbounds = (config['inbounds'] as List).cast<Map<String, dynamic>>();
+    final outbounds =
+        (config['outbounds'] as List).cast<Map<String, dynamic>>();
+    final realityOutbound = outbounds.singleWhere(
+      (outbound) => outbound['tag'] == 'legacy-reality-fallback',
+    );
+    final realityTls = realityOutbound['tls'] as Map<String, dynamic>;
     final route = config['route'] as Map<String, dynamic>;
 
     expect(inbounds, isNotEmpty);
@@ -2931,6 +3112,10 @@ void main() {
     expect(route['final'], 'select');
     expect(route['auto_detect_interface'], true);
     expect(config['outbounds'].toString(), contains('urltest'));
+    expect(realityTls['fragment'], true);
+    expect(realityTls['record_fragment'], true);
+    expect(realityTls['fragment_fallback_delay'], '250ms');
+    expect(realityOutbound['tcp_fast_open'], false);
   });
 
   test('android materialization excludes desktop loopback listener inbounds',
@@ -3384,12 +3569,14 @@ void main() {
     );
     expect(servers.map((server) => server['address']), contains('local'));
     expect(
-      servers.map((server) => server['address']),
-      contains('1.1.1.1'),
+      servers.where(
+        (server) => server['address'] == 'https://1.1.1.1/dns-query',
+      ),
+      hasLength(2),
     );
     expect(
       servers.map((server) => server['address']),
-      contains('1.1.1.1'),
+      isNot(contains('1.1.1.1')),
     );
     expect(servers.map((server) => server['address']),
         isNot(contains('tls://127.0.0.1:853')));
@@ -4496,7 +4683,7 @@ void main() {
                         },
                         <String, Object?>{
                           'tag': 'bootstrap-direct',
-                          'address': '8.8.8.8',
+                          'address': 'https://1.1.1.1/dns-query',
                           'detour': 'direct',
                         },
                       ],
@@ -4553,7 +4740,7 @@ void main() {
     );
 
     expect(dns['final'], 'dns-remote');
-    expect(finalServer['address'], '1.1.1.1');
+    expect(finalServer['address'], 'https://1.1.1.1/dns-query');
     expect(finalServer['detour'], 'proxy');
     expect(finalServer['address_resolver'], 'local');
   });
@@ -4747,6 +4934,7 @@ void main() {
                   'config_format': 'singbox-json',
                   'support_context': <String, Object?>{
                     'ip_version_preference': 'ipv4_only',
+                    'tun_mtu': 1400,
                   },
                   'config_payload': <String, Object?>{
                     'outbounds': <Object?>[
@@ -4792,6 +4980,7 @@ void main() {
     expect(tunInbound.containsKey('inet6_address'), isFalse);
     expect(tunInbound['domain_strategy'], 'ipv4_only');
     expect(tunInbound['stack'], 'mixed');
+    expect(tunInbound['mtu'], 1400);
   });
 
   test('client P0/P1 API additions use the app-first session', () async {
@@ -4869,6 +5058,7 @@ void main() {
                           'latencyMs': 38,
                           'premium': true,
                           'load': 0.31,
+                          'measuredAt': '2026-07-23T10:15:00+00:00',
                         },
                       ],
                     },
@@ -5001,6 +5191,12 @@ void main() {
     expect(catalog.auto.currentCode, 'nl-ams-01');
     expect(catalog.countries.single.cities.single.city, 'Amsterdam');
     expect(catalog.countries.single.cities.single.premium, isTrue);
+    expect(catalog.countries.single.cities.single.latencyMs, 38);
+    expect(catalog.countries.single.cities.single.load, 0.31);
+    expect(
+      catalog.countries.single.cities.single.measuredAt,
+      '2026-07-23T10:15:00+00:00',
+    );
 
     final subscription = await bootstrapper.fetchClientSubscription(
       hostPlatform: HostPlatform.windows,
