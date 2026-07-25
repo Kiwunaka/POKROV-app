@@ -64,15 +64,6 @@ foreach ($platform in $Platforms) {
   $asset = $runtime.assets.$platform
   $sourceRoot = Join-Path $CoreRoot "dist\$platform"
   $sourceEntry = Join-Path $sourceRoot $asset.entry
-  $knownCleanRebuild = $runtime.artifact_provenance.clean_rebuild.$platform
-  if ($knownCleanRebuild -and (Test-Path -LiteralPath $sourceEntry -PathType Leaf)) {
-    $sourceFile = Get-Item -LiteralPath $sourceEntry
-    $sourceSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $sourceEntry).Hash.ToLowerInvariant()
-    if ($sourceFile.Length -eq [int64]$knownCleanRebuild.size -and
-        $sourceSha256 -eq [string]$knownCleanRebuild.sha256) {
-      throw "The clean $($runtime.release_tag) $platform rebuild is not byte-identical to the retained client candidate. Keep the pinned artifact and publish a new patch release before syncing a replacement."
-    }
-  }
   Assert-FileIdentity `
     -Path $sourceEntry `
     -ExpectedSize ([int64]$asset.size) `
