@@ -708,7 +708,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   DateTime? _runningSince;
   RuntimePhase _phase = RuntimePhase.artifactMissing;
   String _message = _missingArtifactMessage;
-  static const defaultCoreTag = 'v1.0.0';
+  static const defaultCoreTag = 'v1.0.1';
   static const _missingArtifactMessage =
       'Модуль подключения не найден в этой сборке. Обновите приложение или проверьте сборку.';
 

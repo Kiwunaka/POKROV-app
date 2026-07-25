@@ -74,7 +74,7 @@ Still missing before macOS release:
 
 - Apple Developer team assignment
 - chosen distribution path: Developer ID direct or Mac App Store first
-- Go 1.25.12/Xcode build and ABI probe of POKROV Core 1.0.0 from the core repository
+- Go 1.25.12/Xcode build and ABI probe of POKROV Core 1.0.1 from the core repository
 - exact-dylib connect, WARP, route-mode, sleep/wake, network-change, DNS/leak, and teardown proof
 - signed archive or exported `.app`
 - notarization submission, success result, and stapled artifact

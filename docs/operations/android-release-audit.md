@@ -14,7 +14,7 @@ Set `ANDROID_AUDIT_PACKAGE` to `space.pokrov.pokrov_android_shell` unless a rele
 - Release APK installed on physical hardware.
 - First launch and app-first session bootstrap.
 - Connect and disconnect from app.
-- Confirm the exact APK contains POKROV Core 1.0.0 `libpokrov-core.so` from
+- Confirm the exact APK contains POKROV Core 1.0.1 `libpokrov-core.so` from
   the pinned `pokrov-core.aar`.
 - Disconnect from foreground notification.
 - System VPN permission revoke.

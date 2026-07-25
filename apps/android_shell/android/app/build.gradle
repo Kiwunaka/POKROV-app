@@ -48,6 +48,14 @@ android {
         versionName = flutter.versionName
     }
 
+    packaging {
+        jniLibs {
+            // Preserve the published Core identity inside APK/AAB packages.
+            // Android's strip task otherwise rewrites the Go ELF section table.
+            keepDebugSymbols += ["**/libpokrov-core.so"]
+        }
+    }
+
     signingConfigs {
         production {
             if (hasProductionReleaseSigning) {

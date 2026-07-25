@@ -13,7 +13,7 @@ Historical mapping note:
 ## Current Truth
 
 - the Windows shell is not a blank stub; it boots the shared app shell and drives the desktop FFI `runtime_engine` lane
-- the active runtime is POKROV Core `v1.0.0` desktop ABI 2; its exact source commit, DLL hash, and `libcronet.dll` hash are pinned in `config/runtime-artifacts.seed.json`
+- the active runtime is POKROV Core `v1.0.1` desktop ABI 2; its exact release commit, DLL hash, and `libcronet.dll` hash are pinned in `config/runtime-artifacts.seed.json`
 - `flutter build windows --release` copies `pokrov-core.dll` and `libcronet.dll` next to the Flutter runner
 - `scripts/sync-pokrov-core-runtime.ps1` accepts only the exact locally built core commit and artifacts before syncing them into the host
 - `scripts/build-windows-release.ps1` now runs the local Windows verification lane: seed validation, tests, `flutter analyze`, `flutter build windows --release`, bundle verification, unsigned portable ZIP staging, and unsigned beta setup EXE staging through Windows `iexpress.exe`
