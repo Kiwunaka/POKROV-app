@@ -56,12 +56,14 @@ class RuntimeSnapshot {
     this.defaultNetworkInterface,
     this.defaultNetworkIndex,
     this.dnsReady,
+    this.coreEgressValidated,
     this.lastFailureKind,
     this.lastStopReason,
     this.ipv4RouteCount,
     this.ipv6RouteCount,
     this.includePackageCount,
     this.excludePackageCount,
+    this.connectionPending = false,
   });
 
   final HostPlatform hostPlatform;
@@ -82,20 +84,36 @@ class RuntimeSnapshot {
   final String? defaultNetworkInterface;
   final int? defaultNetworkIndex;
   final bool? dnsReady;
+  final bool? coreEgressValidated;
   final String? lastFailureKind;
   final String? lastStopReason;
   final int? ipv4RouteCount;
   final int? ipv6RouteCount;
   final int? includePackageCount;
   final int? excludePackageCount;
+  final bool connectionPending;
+
+  /// Android owns a selected-outbound Core probe after its TUN is established.
+  /// A running service alone is not proof that user traffic can leave through
+  /// the selected location.
+  bool get requiresCoreEgressValidation => hostPlatform == HostPlatform.android;
+
+  bool get isCoreEgressValidationPending =>
+      requiresCoreEgressValidation && coreEgressValidated == null;
+
+  bool get hasCoreEgressValidationFailure =>
+      requiresCoreEgressValidation && coreEgressValidated == false;
 
   bool get hasDegradedHostDiagnostics =>
       hostHealth == RuntimeHostHealth.degraded ||
       dnsState == RuntimeDiagnosticState.degraded ||
-      uplinkState == RuntimeDiagnosticState.degraded;
+      uplinkState == RuntimeDiagnosticState.degraded ||
+      hasCoreEgressValidationFailure;
 
   bool get isCleanlyHealthy =>
-      phase == RuntimePhase.running && !hasDegradedHostDiagnostics;
+      phase == RuntimePhase.running &&
+      !hasDegradedHostDiagnostics &&
+      (!requiresCoreEgressValidation || coreEgressValidated == true);
 
   String get laneLabel {
     switch (lane) {
@@ -119,7 +137,9 @@ class RuntimeSnapshot {
       case RuntimePhase.running:
         return hasDegradedHostDiagnostics
             ? 'Подключено с предупреждением'
-            : 'Подключено';
+            : isCoreEgressValidationPending
+                ? 'Проверяем выход через VPN'
+                : 'Подключено';
     }
   }
 
@@ -192,10 +212,13 @@ class RuntimeLiveStats {
           _runtimeNullableInt(map['downlinkBps'] ?? map['downlink_bps']),
       latencyMs: _runtimeNullableInt(map['latencyMs'] ?? map['latency_ms']),
       since: _runtimeDateTime(map['since']),
-      serverCode: _runtimeText(map['serverCode'] ?? map['server_code']),
-      serverCountry:
-          _runtimeText(map['serverCountry'] ?? map['server_country']),
-      protocol: _runtimeText(map['protocol']),
+      serverCode: _publicRuntimeNodeCode(
+        map['serverCode'] ?? map['server_code'],
+      ),
+      serverCountry: _publicRuntimeCountryCode(
+        map['serverCountry'] ?? map['server_country'],
+      ),
+      protocol: _publicRuntimeProtocol(map['protocol']),
     );
   }
 }
@@ -226,10 +249,11 @@ class WarpApplyResult {
     }
     return WarpApplyResult(
       applied: _runtimeBool(map['applied']),
-      effectiveAt: _runtimeText(map['effectiveAt'] ?? map['effective_at'],
-          fallback: 'none'),
+      effectiveAt: _publicWarpEffectiveAt(
+        map['effectiveAt'] ?? map['effective_at'],
+      ),
       fallbackUsed: _runtimeBool(map['fallbackUsed'] ?? map['fallback_used']),
-      reason: _runtimeNullableText(map['reason']),
+      reason: _publicWarpReason(map['reason']),
     );
   }
 }
@@ -279,6 +303,183 @@ String _runtimeText(Object? value, {String fallback = ''}) {
 String? _runtimeNullableText(Object? value) {
   final text = value?.toString().trim() ?? '';
   return text.isEmpty ? null : text;
+}
+
+const _publicRuntimeFailureKinds = <String>{
+  'runtime_initialization_failed',
+  'runtime_start_after_permission_failed',
+  'runtime_start_failed',
+  'runtime_service_start_failed',
+  'foreground_start_failed',
+  'runtime_stop_failed',
+  'core_egress_probe_failed',
+  'core_egress_probe_unavailable',
+  'profile_staging_failed',
+  'config_apply_failed',
+  'notification_permission_denied',
+  'resolver_response_error',
+  'resolver_callback_error',
+  'resolver_timeout',
+  'default_network_unavailable',
+  'default_network_interface_unresolved',
+  'default_network_index_unresolved',
+};
+
+const _publicRuntimeStopReasons = <String>{
+  'user_requested',
+  'quick_settings',
+  'service_destroyed',
+  'vpn_permission_revoked',
+  'command_server_requested',
+  'core_egress_probe_failed',
+  'core_egress_probe_unavailable',
+};
+
+String? _publicRuntimeFailureKind(Object? value) {
+  final normalized = _runtimeNullableText(value)?.toLowerCase();
+  if (normalized == null) {
+    return null;
+  }
+  if (_publicRuntimeFailureKinds.contains(normalized)) {
+    return normalized;
+  }
+  if (normalized.startsWith('resolver_') || normalized.startsWith('dns_')) {
+    return 'dns_failure';
+  }
+  if (normalized.startsWith('default_network_')) {
+    return 'network_unavailable';
+  }
+  if (normalized.startsWith('vless_') ||
+      normalized.startsWith('reality_') ||
+      normalized == 'tls_handshake_failed') {
+    return 'tunnel_handshake_failed';
+  }
+  return 'runtime_failure';
+}
+
+String? _publicRuntimeStopReason(Object? value) {
+  final normalized = _runtimeNullableText(value)?.toLowerCase();
+  if (normalized == null) {
+    return null;
+  }
+  return _publicRuntimeStopReasons.contains(normalized)
+      ? normalized
+      : 'runtime_stopped';
+}
+
+String? _publicNetworkInterface(Object? value) {
+  return _runtimeNullableText(value) == null ? null : 'network_available';
+}
+
+String _publicRuntimeNodeCode(Object? value) {
+  final normalized = _runtimeNullableText(value)?.toLowerCase();
+  if (normalized == null || normalized.length > 48) {
+    return '';
+  }
+  return RegExp(r'^[a-z]{2,3}(?:-[a-z0-9]{2,16}){1,3}$').hasMatch(normalized)
+      ? normalized
+      : '';
+}
+
+String _publicRuntimeCountryCode(Object? value) {
+  final normalized = _runtimeNullableText(value)?.toUpperCase();
+  if (normalized == null || !RegExp(r'^[A-Z]{2}$').hasMatch(normalized)) {
+    return '';
+  }
+  return normalized;
+}
+
+String _publicRuntimeProtocol(Object? value) {
+  final normalized = _runtimeNullableText(value)?.toLowerCase();
+  return switch (normalized) {
+    'sing-box' ||
+    'vless' ||
+    'vmess' ||
+    'trojan' ||
+    'shadowsocks' ||
+    'wireguard' ||
+    'hysteria2' ||
+    'tuic' =>
+      normalized!,
+    _ => '',
+  };
+}
+
+String? _publicWarpReason(Object? value) {
+  final reason = _runtimeNullableText(value);
+  if (reason == null) {
+    return null;
+  }
+  switch (reason) {
+    case 'empty_host_response':
+    case 'host_bridge_unavailable':
+    case 'no_staged_profile':
+      return reason;
+    default:
+      return 'runtime_failure';
+  }
+}
+
+String _publicWarpEffectiveAt(Object? value) {
+  return switch (_runtimeNullableText(value)?.toLowerCase()) {
+    'now' => 'now',
+    'next_connect' => 'next_connect',
+    'none' => 'none',
+    _ => 'none',
+  };
+}
+
+String _publicRuntimeMessage({
+  required RuntimePhase phase,
+  String? failureKind,
+  bool hostBridgeUnavailable = false,
+}) {
+  if (hostBridgeUnavailable) {
+    return 'Не удалось связаться с системным модулем.';
+  }
+  switch (failureKind) {
+    case 'runtime_initialization_failed':
+      return 'POKROV не смог подготовить устройство.';
+    case 'runtime_start_after_permission_failed':
+    case 'runtime_start_failed':
+    case 'runtime_service_start_failed':
+      return 'POKROV не смог подключиться на этом устройстве.';
+    case 'foreground_start_failed':
+      return 'POKROV не смог запустить системное подключение.';
+    case 'runtime_stop_failed':
+      return 'POKROV не смог корректно отключиться.';
+    case 'core_egress_probe_failed':
+      return 'POKROV не подтвердил защищенное подключение и отключил системный VPN.';
+    case 'core_egress_probe_unavailable':
+      return 'POKROV не завершил проверку защищенного подключения и отключил системный VPN. Попробуйте еще раз.';
+    case 'profile_staging_failed':
+      return 'POKROV не смог подготовить настройки подключения.';
+    case 'config_apply_failed':
+      return 'POKROV не смог применить настройки подключения.';
+    case 'notification_permission_denied':
+      return 'Системное уведомление POKROV скрыто в настройках Android.';
+    case 'resolver_response_error':
+    case 'resolver_callback_error':
+    case 'resolver_timeout':
+    case 'dns_failure':
+    case 'default_network_unavailable':
+    case 'default_network_interface_unresolved':
+    case 'default_network_index_unresolved':
+    case 'network_unavailable':
+      return 'POKROV не смог подтвердить DNS-подключение устройства.';
+    case 'tunnel_handshake_failed':
+      return 'POKROV подключил системный VPN, но защищенный канал до локации не отвечает.';
+    case 'runtime_failure':
+      return 'POKROV не смог завершить действие на устройстве.';
+  }
+  return switch (phase) {
+    RuntimePhase.artifactMissing =>
+      'Модуль подключения не найден в этой сборке. Обновите приложение или проверьте сборку.',
+    RuntimePhase.artifactReady => 'Файлы подключения готовы.',
+    RuntimePhase.initialized => 'Подготовка подключения завершена.',
+    RuntimePhase.configStaged => 'Настройки POKROV готовы.',
+    RuntimePhase.running => 'POKROV включен.',
+  };
 }
 
 bool _runtimeBool(Object? value) {
@@ -604,33 +805,176 @@ class WarpRuntimePolicy {
   }
 }
 
+enum FreeProfileTransition {
+  standard,
+  softTransitionPending,
+  softActive,
+  resetPending,
+  error,
+  unknown,
+}
+
+/// Sanitized free-tier access facts returned alongside a managed profile.
+///
+/// This deliberately retains only stable state/capability fields.  The
+/// backend's error code is available for fixed client-side recovery copy, but
+/// must never be rendered directly to a consumer.
+class FreeProfileAccess {
+  const FreeProfileAccess({
+    required this.accessState,
+    required this.transition,
+    required this.activeRole,
+    required this.softModeActive,
+    required this.provisioningJobId,
+    required this.errorCode,
+    required this.isConsistent,
+  });
+
+  final String accessState;
+  final FreeProfileTransition transition;
+  final String activeRole;
+  final bool softModeActive;
+  final int? provisioningJobId;
+  final String? errorCode;
+  final bool isConsistent;
+
+  bool get isFreeAccess =>
+      accessState == 'free_monthly' || accessState == 'free_soft_mode';
+  bool get hasKnownAccessState => const <String>{
+        'trial_premium',
+        'bonus_premium',
+        'free_monthly',
+        'free_soft_mode',
+        'paid_unlimited',
+        'expired_or_blocked',
+      }.contains(accessState);
+  bool get isPending =>
+      transition == FreeProfileTransition.softTransitionPending ||
+      transition == FreeProfileTransition.resetPending;
+  bool get hasRecoverableError => transition == FreeProfileTransition.error;
+  bool get isConfirmedSoftMode =>
+      isConsistent &&
+      accessState == 'free_soft_mode' &&
+      transition == FreeProfileTransition.softActive &&
+      activeRole == 'free_soft' &&
+      softModeActive;
+  bool get needsConservativePresentation =>
+      !hasKnownAccessState ||
+      (isFreeAccess &&
+          (!isConsistent || transition == FreeProfileTransition.unknown));
+
+  static FreeProfileAccess? tryParse({
+    Object? access,
+    Object? freeCaps,
+  }) {
+    final accessMap = _asMap(access);
+    final capsMap = _asMap(freeCaps);
+    if (accessMap.isEmpty && capsMap.isEmpty) {
+      return null;
+    }
+
+    final accessState = _text(accessMap['access_state']);
+    final accessTransition = _text(accessMap['free_profile_state']);
+    final capsTransition = _text(capsMap['transition_state']);
+    final accessRole = _text(accessMap['free_profile_active_role']);
+    final capsRole = _text(capsMap['active_role']);
+    final transitionText =
+        capsTransition.isNotEmpty ? capsTransition : accessTransition;
+    final activeRole = capsRole.isNotEmpty ? capsRole : accessRole;
+    final consistent = (accessTransition.isEmpty ||
+            capsTransition.isEmpty ||
+            accessTransition == capsTransition) &&
+        (accessRole.isEmpty || capsRole.isEmpty || accessRole == capsRole);
+
+    return FreeProfileAccess(
+      accessState: accessState,
+      transition: _transition(transitionText),
+      activeRole: activeRole,
+      softModeActive: accessMap['soft_mode_active'] == true,
+      provisioningJobId: _integer(
+        capsMap['provisioning_job_id'] ?? accessMap['free_profile_job_id'],
+      ),
+      errorCode: _nullableText(
+        capsMap['error_code'] ?? accessMap['free_profile_error_code'],
+      ),
+      isConsistent: consistent,
+    );
+  }
+
+  static Map<String, Object?> _asMap(Object? value) {
+    if (value is! Map) {
+      return const <String, Object?>{};
+    }
+    return value.map((key, item) => MapEntry(key.toString(), item));
+  }
+
+  static String _text(Object? value) =>
+      value?.toString().trim().toLowerCase() ?? '';
+
+  static String? _nullableText(Object? value) {
+    final text = _text(value);
+    return text.isEmpty ? null : text;
+  }
+
+  static int? _integer(Object? value) {
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value?.toString().trim() ?? '');
+  }
+
+  static FreeProfileTransition _transition(String value) => switch (value) {
+        'standard' => FreeProfileTransition.standard,
+        'soft_transition_pending' =>
+          FreeProfileTransition.softTransitionPending,
+        'soft_active' => FreeProfileTransition.softActive,
+        'reset_pending' => FreeProfileTransition.resetPending,
+        'error' => FreeProfileTransition.error,
+        _ => FreeProfileTransition.unknown,
+      };
+}
+
 class ManagedProfilePayload {
   const ManagedProfilePayload({
     required this.profileName,
     required this.configPayload,
     this.disableMemoryLimit = false,
     this.materializedForRuntime = false,
+    this.quickSettingsEligible = false,
     this.routeMode = RouteMode.fullTunnel,
     this.smartConnect,
+    this.resolvedNodeCode = '',
     this.warpPolicy = WarpRuntimePolicy.disabled,
+    this.freeProfileAccess,
   });
 
   final String profileName;
   final String configPayload;
   final bool disableMemoryLimit;
   final bool materializedForRuntime;
+
+  /// Android only: set after Flutter confirms first-connect route scope for
+  /// this newly resolved manifest. Hosts fail closed when it is omitted.
+  final bool quickSettingsEligible;
   final RouteMode routeMode;
   final SmartConnectProfile? smartConnect;
+
+  /// Exact Smart Connect node materialized into the selector default.
+  final String resolvedNodeCode;
   final WarpRuntimePolicy warpPolicy;
+  final FreeProfileAccess? freeProfileAccess;
 
   ManagedProfilePayload copyWith({
     String? profileName,
     String? configPayload,
     bool? disableMemoryLimit,
     bool? materializedForRuntime,
+    bool? quickSettingsEligible,
     RouteMode? routeMode,
     SmartConnectProfile? smartConnect,
+    String? resolvedNodeCode,
     WarpRuntimePolicy? warpPolicy,
+    FreeProfileAccess? freeProfileAccess,
   }) {
     return ManagedProfilePayload(
       profileName: profileName ?? this.profileName,
@@ -638,9 +982,13 @@ class ManagedProfilePayload {
       disableMemoryLimit: disableMemoryLimit ?? this.disableMemoryLimit,
       materializedForRuntime:
           materializedForRuntime ?? this.materializedForRuntime,
+      quickSettingsEligible:
+          quickSettingsEligible ?? this.quickSettingsEligible,
       routeMode: routeMode ?? this.routeMode,
       smartConnect: smartConnect ?? this.smartConnect,
+      resolvedNodeCode: resolvedNodeCode ?? this.resolvedNodeCode,
       warpPolicy: warpPolicy ?? this.warpPolicy,
+      freeProfileAccess: freeProfileAccess ?? this.freeProfileAccess,
     );
   }
 }
@@ -653,6 +1001,10 @@ abstract interface class PokrovRuntimeEngine {
   Future<RuntimeSnapshot> stageManagedProfile(
     ManagedProfilePayload payload,
   );
+
+  /// Removes a reusable host profile after a user changes profile-owned
+  /// preferences. It must not interrupt an already running tunnel.
+  Future<RuntimeSnapshot> invalidateManagedProfile();
 
   Future<RuntimeSnapshot> connect();
 
@@ -708,7 +1060,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   DateTime? _runningSince;
   RuntimePhase _phase = RuntimePhase.artifactMissing;
   String _message = _missingArtifactMessage;
-  static const defaultCoreTag = 'v1.0.1';
+  static const defaultCoreTag = 'v1.0.2';
   static const _missingArtifactMessage =
       'Модуль подключения не найден в этой сборке. Обновите приложение или проверьте сборку.';
 
@@ -779,7 +1131,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       );
       if (error.isNotEmpty) {
         _phase = RuntimePhase.artifactReady;
-        _message = 'Не удалось подготовить подключение: $error';
+        _message = 'Не удалось подготовить подключение.';
         return _snapshotPreservingCurrentMessage(
           phase: _phase,
           canInitialize: true,
@@ -789,9 +1141,9 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         _phase = RuntimePhase.initialized;
         _message = 'Подготовка подключения завершена.';
       }
-    } catch (error) {
+    } catch (_) {
       _phase = RuntimePhase.artifactReady;
-      _message = 'Не удалось загрузить модуль подключения: $error';
+      _message = 'Не удалось загрузить модуль подключения.';
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: true,
@@ -832,9 +1184,9 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         payload.warpPolicy,
       );
       await File(finalPath).writeAsString(configPayload, flush: true);
-    } on Object catch (error) {
+    } on Object catch (_) {
       _phase = RuntimePhase.initialized;
-      _message = 'Профиль доступа не прошел проверку: $error';
+      _message = 'Профиль доступа не прошел проверку.';
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: true,
@@ -845,7 +1197,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     final secureError = _bindings!.secureFile(finalPath);
     if (secureError.isNotEmpty) {
       _phase = RuntimePhase.initialized;
-      _message = 'POKROV не смог защитить файл профиля: $secureError';
+      _message = 'POKROV не смог защитить файл профиля.';
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: true,
@@ -859,6 +1211,9 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     _message = 'Настройки POKROV готовы.';
     return snapshot();
   }
+
+  @override
+  Future<RuntimeSnapshot> invalidateManagedProfile() => snapshot();
 
   @override
   Future<RuntimeSnapshot> connect() async {
@@ -878,7 +1233,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     );
     if (error.isNotEmpty) {
       _phase = RuntimePhase.configStaged;
-      _message = 'POKROV не смог подключиться: $error';
+      _message = 'POKROV не смог подключиться.';
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: true,
@@ -888,11 +1243,9 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
 
     final probeError = await _verifyStartedRuntime();
     if (probeError != null) {
-      final stopError = _bindings!.stop();
+      _bindings!.stop();
       _phase = RuntimePhase.configStaged;
-      _message = stopError.isEmpty
-          ? 'POKROV запустил модуль, но трафик не проходит: $probeError'
-          : 'POKROV запустил модуль, но трафик не проходит: $probeError; остановка тоже не удалась: $stopError';
+      _message = 'POKROV запустил модуль, но трафик не проходит.';
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: true,
@@ -950,8 +1303,8 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         return null;
       }
       return 'проверка соединения вернула HTTP ${response.statusCode}';
-    } on Object catch (error) {
-      return 'проверка соединения не прошла (${error.toString()})';
+    } on Object catch (_) {
+      return 'Проверка соединения не прошла.';
     } finally {
       client.close(force: true);
     }
@@ -996,7 +1349,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
 
     final error = _bindings!.stop();
     if (error.isNotEmpty) {
-      _message = 'POKROV не смог отключиться: $error';
+      _message = 'POKROV не смог отключиться.';
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: artifacts.coreBinary != null,
@@ -1042,10 +1395,10 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       await File(configPath).writeAsString(config, flush: true);
       final secureError = _bindings!.secureFile(configPath);
       if (secureError.isNotEmpty) {
-        return WarpApplyResult.notApplied(reason: secureError);
+        return const WarpApplyResult.notApplied(reason: 'runtime_failure');
       }
-    } on Object catch (error) {
-      return WarpApplyResult.notApplied(reason: error.toString());
+    } on Object catch (_) {
+      return const WarpApplyResult.notApplied(reason: 'runtime_failure');
     }
     _stagedPayload = nextPayload;
     return const WarpApplyResult(
@@ -1236,6 +1589,7 @@ String _materializePokrovCoreConfig(
   final config = decoded.map<String, Object?>(
     (key, value) => MapEntry(key.toString(), value),
   );
+  _pinDnsHijackBeforeBypasses(config);
   if (!policy.canEnableRuntime) {
     return const JsonEncoder.withIndent('  ').convert(config);
   }
@@ -1354,6 +1708,23 @@ String _materializePokrovCoreConfig(
 
   return const JsonEncoder.withIndent('  ').convert(config);
 }
+
+void _pinDnsHijackBeforeBypasses(Map<String, Object?> config) {
+  final route = Map<String, Object?>.from(_runtimeObjectMap(config['route']));
+  final rules = _runtimeMapList(route['rules']);
+  final hijackRules = rules.where(_isRuntimeDnsHijackRule).toList();
+  if (hijackRules.isEmpty) {
+    return;
+  }
+  rules.removeWhere(_isRuntimeDnsHijackRule);
+  rules.insert(0, hijackRules.first);
+  route['rules'] = rules;
+  config['route'] = route;
+}
+
+bool _isRuntimeDnsHijackRule(Map<String, Object?> rule) =>
+    _runtimeText(rule['protocol']).toLowerCase() == 'dns' &&
+    _runtimeText(rule['action']).toLowerCase() == 'hijack-dns';
 
 List<Map<String, Object?>> _runtimeMapList(Object? value) {
   if (value is! List) {
@@ -1560,7 +1931,18 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         'configPayload': configPayload,
         'disableMemoryLimit': payload.disableMemoryLimit,
         'materializedForRuntime': true,
+        'quickSettingsEligible': payload.quickSettingsEligible,
+        'routeMode': payload.routeMode.name,
       },
+    );
+    return hostSnapshot ?? await snapshot();
+  }
+
+  @override
+  Future<RuntimeSnapshot> invalidateManagedProfile() async {
+    _stagedPayload = null;
+    final hostSnapshot = await _invokeHostSnapshot(
+      'runtimeEngine.invalidateManagedProfile',
     );
     return hostSnapshot ?? await snapshot();
   }
@@ -1667,9 +2049,9 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       return _snapshotFromHostMap(response);
     } on MissingPluginException {
       return null;
-    } on PlatformException catch (error) {
+    } on PlatformException {
       if (method != 'runtimeEngine.snapshot') {
-        final fallback = await _trySnapshotAfterPlatformError(error);
+        final fallback = await _trySnapshotAfterPlatformError();
         if (fallback != null) {
           return fallback;
         }
@@ -1685,16 +2067,15 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         supportsLiveConnect: true,
         canInitialize: true,
         canConnect: false,
-        message: error.message?.trim().isNotEmpty == true
-            ? error.message!.trim()
-            : 'Не удалось связаться с системным модулем: ${error.code}',
+        message: _publicRuntimeMessage(
+          phase: RuntimePhase.artifactMissing,
+          hostBridgeUnavailable: true,
+        ),
       );
     }
   }
 
-  Future<RuntimeSnapshot?> _trySnapshotAfterPlatformError(
-    PlatformException error,
-  ) async {
+  Future<RuntimeSnapshot?> _trySnapshotAfterPlatformError() async {
     try {
       final fallback = await _runtimeChannel.invokeMapMethod<String, Object?>(
         'runtimeEngine.snapshot',
@@ -1702,36 +2083,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       if (fallback == null) {
         return null;
       }
-      final snapshot = _snapshotFromHostMap(fallback);
-      final detail = error.message?.trim();
-      return RuntimeSnapshot(
-        hostPlatform: snapshot.hostPlatform,
-        lane: snapshot.lane,
-        phase: snapshot.phase,
-        artifactDirectory: snapshot.artifactDirectory,
-        coreBinaryPath: snapshot.coreBinaryPath,
-        helperBinaryPath: snapshot.helperBinaryPath,
-        stagedConfigPath: snapshot.stagedConfigPath,
-        supportsLiveConnect: snapshot.supportsLiveConnect,
-        canInitialize: snapshot.canInitialize,
-        canConnect: snapshot.canConnect,
-        message: detail == null || detail.isEmpty
-            ? snapshot.message
-            : '${snapshot.message} ($detail)',
-        hostHealth: snapshot.hostHealth,
-        dnsState: snapshot.dnsState,
-        uplinkState: snapshot.uplinkState,
-        hostDiagnosticsSummary: snapshot.hostDiagnosticsSummary,
-        defaultNetworkInterface: snapshot.defaultNetworkInterface,
-        defaultNetworkIndex: snapshot.defaultNetworkIndex,
-        dnsReady: snapshot.dnsReady,
-        lastFailureKind: snapshot.lastFailureKind,
-        lastStopReason: snapshot.lastStopReason,
-        ipv4RouteCount: snapshot.ipv4RouteCount,
-        ipv6RouteCount: snapshot.ipv6RouteCount,
-        includePackageCount: snapshot.includePackageCount,
-        excludePackageCount: snapshot.excludePackageCount,
-      );
+      return _snapshotFromHostMap(fallback);
     } on MissingPluginException {
       return null;
     } on PlatformException {
@@ -1742,15 +2094,17 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
   RuntimeSnapshot _snapshotFromHostMap(Map<String, Object?> response) {
     final hostDiagnostics = _readObjectMap(response['hostDiagnostics']);
     final phase = _runtimePhaseFromWireValue(response['phase']);
-    final defaultNetworkInterface = _firstNonEmptyString(
-      response,
-      hostDiagnostics,
-      const [
-        'defaultNetworkInterface',
-        'default_network_interface',
-        'defaultInterface',
-        'default_interface',
-      ],
+    final defaultNetworkInterface = _publicNetworkInterface(
+      _firstNonEmptyString(
+        response,
+        hostDiagnostics,
+        const [
+          'defaultNetworkInterface',
+          'default_network_interface',
+          'defaultInterface',
+          'default_interface',
+        ],
+      ),
     );
     final defaultNetworkIndex = _firstIntValue(
       response,
@@ -1768,25 +2122,37 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         'dns_ready',
       ],
     );
-    final lastFailureKind = _firstNonEmptyString(
+    final coreEgressValidated = _firstBoolValue(
       response,
       hostDiagnostics,
       const [
-        'lastFailureKind',
-        'last_failure_kind',
-        'failureKind',
-        'failure_kind',
+        'coreEgressValidated',
+        'core_egress_validated',
       ],
     );
-    final lastStopReason = _firstNonEmptyString(
-      response,
-      hostDiagnostics,
-      const [
-        'lastStopReason',
-        'last_stop_reason',
-        'stopReason',
-        'stop_reason',
-      ],
+    final lastFailureKind = _publicRuntimeFailureKind(
+      _firstNonEmptyString(
+        response,
+        hostDiagnostics,
+        const [
+          'lastFailureKind',
+          'last_failure_kind',
+          'failureKind',
+          'failure_kind',
+        ],
+      ),
+    );
+    final lastStopReason = _publicRuntimeStopReason(
+      _firstNonEmptyString(
+        response,
+        hostDiagnostics,
+        const [
+          'lastStopReason',
+          'last_stop_reason',
+          'stopReason',
+          'stop_reason',
+        ],
+      ),
     );
     final ipv4RouteCount = _firstIntValue(
       response,
@@ -1820,6 +2186,12 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         'exclude_package_count',
       ],
     );
+    final connectionPending = _firstBoolValue(
+          response,
+          hostDiagnostics,
+          const ['connectionPending', 'connection_pending'],
+        ) ??
+        false;
     final hostHealth = _runtimeHostHealthFromWireValue(
       _firstDefinedValue(
         response,
@@ -1870,31 +2242,19 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
             lastFailureKind: lastFailureKind,
           )
         : hostHealth;
-    final hostDiagnosticsSummary = _firstNonEmptyString(
-          response,
-          hostDiagnostics,
-          const [
-            'hostDiagnosticsSummary',
-            'host_diagnostics_summary',
-            'diagnosticsSummary',
-            'diagnostics_summary',
-            'summary',
-          ],
-        ) ??
-        _deriveDiagnosticsSummary(
-          phase: phase,
-          hostHealth: resolvedHostHealth,
-          dnsState: resolvedDnsState,
-          uplinkState: resolvedUplinkState,
-          defaultNetworkInterface: defaultNetworkInterface,
-          defaultNetworkIndex: defaultNetworkIndex,
-          dnsReady: dnsReady,
-          lastFailureKind: lastFailureKind,
-          ipv4RouteCount: ipv4RouteCount,
-          ipv6RouteCount: ipv6RouteCount,
-          includePackageCount: includePackageCount,
-          excludePackageCount: excludePackageCount,
-        );
+    final hostDiagnosticsSummary = _deriveDiagnosticsSummary(
+      phase: phase,
+      hostHealth: resolvedHostHealth,
+      dnsState: resolvedDnsState,
+      uplinkState: resolvedUplinkState,
+      defaultNetworkInterface: defaultNetworkInterface,
+      dnsReady: dnsReady,
+      lastFailureKind: lastFailureKind,
+      ipv4RouteCount: ipv4RouteCount,
+      ipv6RouteCount: ipv6RouteCount,
+      includePackageCount: includePackageCount,
+      excludePackageCount: excludePackageCount,
+    );
     return RuntimeSnapshot(
       hostPlatform: hostPlatform,
       lane: RuntimeLane.mobileArtifact,
@@ -1906,21 +2266,25 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       supportsLiveConnect: response['supportsLiveConnect'] as bool? ?? false,
       canInitialize: response['canInitialize'] as bool? ?? false,
       canConnect: response['canConnect'] as bool? ?? false,
-      message: response['message'] as String? ??
-          'Runtime не вернул статус подключения.',
+      message: _publicRuntimeMessage(
+        phase: phase,
+        failureKind: lastFailureKind,
+      ),
       hostHealth: resolvedHostHealth,
       dnsState: resolvedDnsState,
       uplinkState: resolvedUplinkState,
       hostDiagnosticsSummary: hostDiagnosticsSummary,
       defaultNetworkInterface: defaultNetworkInterface,
-      defaultNetworkIndex: defaultNetworkIndex,
+      defaultNetworkIndex: null,
       dnsReady: dnsReady,
+      coreEgressValidated: coreEgressValidated,
       lastFailureKind: lastFailureKind,
       lastStopReason: lastStopReason,
       ipv4RouteCount: ipv4RouteCount,
       ipv6RouteCount: ipv6RouteCount,
       includePackageCount: includePackageCount,
       excludePackageCount: excludePackageCount,
+      connectionPending: connectionPending,
     );
   }
 
@@ -2167,7 +2531,6 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     required RuntimeDiagnosticState dnsState,
     required RuntimeDiagnosticState uplinkState,
     required String? defaultNetworkInterface,
-    required int? defaultNetworkIndex,
     required bool? dnsReady,
     required String? lastFailureKind,
     required int? ipv4RouteCount,
@@ -2181,9 +2544,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
 
     final details = <String>[
       if ((defaultNetworkInterface?.trim().isNotEmpty ?? false))
-        defaultNetworkIndex != null
-            ? 'Сеть $defaultNetworkInterface (#$defaultNetworkIndex)'
-            : 'Сеть $defaultNetworkInterface'
+        'Сеть доступна'
       else if (uplinkState == RuntimeDiagnosticState.degraded)
         'Сеть не определена',
       if (dnsReady != null)
@@ -2232,7 +2593,8 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       candidateDirectories.addAll([
         Directory(p.join(base.path, platformSegment)),
         Directory(p.join(base.path, 'pokrov-core', platformSegment)),
-        Directory(p.join(base.path, 'artifacts', 'pokrov-core', platformSegment)),
+        Directory(
+            p.join(base.path, 'artifacts', 'pokrov-core', platformSegment)),
         Directory(
           p.join(base.path, 'artifacts', 'pokrov-core', defaultCoreTag,
               platformSegment),

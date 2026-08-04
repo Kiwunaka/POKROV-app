@@ -26,20 +26,27 @@ class MainActivity : FlutterActivity() {
     override fun onResume() {
         super.onResume()
         runtimeHostBridge?.handleDebugIntent(intent)
-        runtimeHostBridge?.handleSystemIntent(intent)
     }
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         runtimeHostBridge?.handleDebugIntent(intent)
-        runtimeHostBridge?.handleSystemIntent(intent)
     }
 
     @Deprecated("Uses the platform VPN permission callback for the seed runtime lane.")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
         runtimeHostBridge?.onActivityResult(requestCode, resultCode)
         super.onActivityResult(requestCode, resultCode, data)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        runtimeHostBridge?.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {

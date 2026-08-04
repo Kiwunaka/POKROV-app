@@ -169,7 +169,12 @@ if (-not $SkipBuild) {
   if (Test-Path -LiteralPath $windowsBuildDirectory) {
     Remove-Item -Recurse -Force -LiteralPath $windowsBuildDirectory
   }
-  Invoke-External -FilePath "flutter" -Arguments @("build", "windows", "--release") -WorkingDirectory $appDirectory
+  Invoke-External -FilePath "flutter" -Arguments @(
+    "build",
+    "windows",
+    "--release",
+    "--dart-define=POKROV_APP_VERSION=$version"
+  ) -WorkingDirectory $appDirectory
 }
 
 $releaseOutputDirectory = Join-Path $root $windowsReleaseConfig.bundle_root

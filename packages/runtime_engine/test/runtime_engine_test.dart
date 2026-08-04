@@ -6,6 +6,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
+const _sensitiveRuntimeDetail =
+    'vless://9f4a4b2c-7e10-4e9b-9df3-1a2b3c4d5e6f@203.0.113.17:443?token=runtime-test-token';
+
+void _expectNoSensitiveRuntimeDetail(String value) {
+  expect(value, isNot(contains('vless://')));
+  expect(value, isNot(contains('203.0.113.17:443')));
+  expect(value, isNot(contains('9f4a4b2c-7e10-4e9b-9df3-1a2b3c4d5e6f')));
+  expect(value, isNot(contains('runtime-test-token')));
+}
+
 class _FakeDesktopBindings implements DesktopRuntimeBindings {
   _FakeDesktopBindings({
     this.setupResult = '',
@@ -57,8 +67,116 @@ class _FakeDesktopBindings implements DesktopRuntimeBindings {
   }
 }
 
+RuntimeSnapshot _runningSnapshot({
+  required HostPlatform hostPlatform,
+  bool? coreEgressValidated,
+}) {
+  return RuntimeSnapshot(
+    hostPlatform: hostPlatform,
+    lane: hostPlatform == HostPlatform.windows
+        ? RuntimeLane.desktopFfi
+        : RuntimeLane.mobileArtifact,
+    phase: RuntimePhase.running,
+    artifactDirectory: '/host/runtime',
+    coreBinaryPath: '/host/runtime/pokrov-core',
+    helperBinaryPath: null,
+    stagedConfigPath: '/host/runtime/pokrov-seed-runtime.json',
+    supportsLiveConnect: true,
+    canInitialize: true,
+    canConnect: true,
+    message: 'Runtime service is running.',
+    hostHealth: RuntimeHostHealth.healthy,
+    dnsState: RuntimeDiagnosticState.healthy,
+    uplinkState: RuntimeDiagnosticState.healthy,
+    coreEgressValidated: coreEgressValidated,
+  );
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('parses the managed-profile free access contract conservatively', () {
+    final pending = FreeProfileAccess.tryParse(
+      access: <String, Object?>{
+        'access_state': 'free_monthly',
+        'soft_mode_active': false,
+        'free_profile_state': 'soft_transition_pending',
+        'free_profile_active_role': 'free_standard',
+        'free_profile_job_id': 81,
+      },
+      freeCaps: <String, Object?>{
+        'transition_state': 'soft_transition_pending',
+        'active_role': 'free_standard',
+        'provisioning_job_id': 81,
+      },
+    );
+    expect(pending?.isPending, isTrue);
+    expect(pending?.isFreeAccess, isTrue);
+    expect(pending?.provisioningJobId, 81);
+
+    final soft = FreeProfileAccess.tryParse(
+      access: <String, Object?>{
+        'access_state': 'free_soft_mode',
+        'soft_mode_active': true,
+        'free_profile_state': 'soft_active',
+        'free_profile_active_role': 'free_soft',
+      },
+      freeCaps: <String, Object?>{
+        'transition_state': 'soft_active',
+        'active_role': 'free_soft',
+      },
+    );
+    expect(soft?.isConfirmedSoftMode, isTrue);
+
+    final mismatch = FreeProfileAccess.tryParse(
+      access: <String, Object?>{
+        'access_state': 'free_monthly',
+        'free_profile_state': 'standard',
+      },
+      freeCaps: <String, Object?>{
+        'transition_state': 'soft_active',
+      },
+    );
+    expect(mismatch?.needsConservativePresentation, isTrue);
+
+    final unknown = FreeProfileAccess.tryParse(
+      access: <String, Object?>{'access_state': 'future_access_state'},
+      freeCaps: <String, Object?>{'transition_state': 'future_transition'},
+    );
+    expect(unknown?.needsConservativePresentation, isTrue);
+  });
+
+  test('Android clean health requires selected-outbound egress proof', () {
+    final pending = _runningSnapshot(
+      hostPlatform: HostPlatform.android,
+    );
+    final failed = _runningSnapshot(
+      hostPlatform: HostPlatform.android,
+      coreEgressValidated: false,
+    );
+    final validated = _runningSnapshot(
+      hostPlatform: HostPlatform.android,
+      coreEgressValidated: true,
+    );
+    final windows = _runningSnapshot(hostPlatform: HostPlatform.windows);
+
+    expect(pending.isCoreEgressValidationPending, isTrue);
+    expect(pending.hasDegradedHostDiagnostics, isFalse);
+    expect(pending.isCleanlyHealthy, isFalse);
+    expect(pending.phaseLabel, 'Проверяем выход через VPN');
+
+    expect(failed.hasCoreEgressValidationFailure, isTrue);
+    expect(failed.hasDegradedHostDiagnostics, isTrue);
+    expect(failed.isCleanlyHealthy, isFalse);
+    expect(failed.phaseLabel, 'Подключено с предупреждением');
+
+    expect(validated.isCleanlyHealthy, isTrue);
+    expect(validated.phaseLabel, 'Подключено');
+
+    expect(windows.requiresCoreEgressValidation, isFalse);
+    expect(windows.isCleanlyHealthy, isTrue);
+    expect(windows.phaseLabel, 'Подключено');
+  });
 
   test('mobile lane reports artifact-missing without a synced core asset',
       () async {
@@ -166,6 +284,7 @@ void main() {
         configPayload:
             '{"outbounds":[{"type":"vless","tag":"node"},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
         materializedForRuntime: true,
+        quickSettingsEligible: true,
         warpPolicy: WarpRuntimePolicy(
           enabled: true,
           runtimeReady: true,
@@ -181,8 +300,9 @@ void main() {
     expect(initialized.supportsLiveConnect, isTrue);
     expect(staged.phase, RuntimePhase.configStaged);
     expect(staged.stagedConfigPath, stagedConfigPath);
-    expect(staged.message, contains('Managed profile staged'));
+    expect(staged.message, 'Настройки POKROV готовы.');
     expect(stagedArguments?['runtimeOptionsJson'], isNull);
+    expect(stagedArguments?['quickSettingsEligible'], isTrue);
     final config = jsonDecode(stagedArguments?['configPayload']! as String)
         as Map<String, dynamic>;
     final endpoints = config['endpoints'] as List<dynamic>;
@@ -228,14 +348,84 @@ void main() {
       const ManagedProfilePayload(
         profileName: 'materialized',
         configPayload:
-            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"direct","tag":"direct"}],"route":{"final":"direct"}}',
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"direct","tag":"direct"}],"route":{"rules":[{"ip_is_private":true,"outbound":"direct"},{"protocol":"dns","action":"hijack-dns"}],"final":"direct"}}',
         materializedForRuntime: true,
       ),
     );
 
     expect(stagedArguments?['materializedForRuntime'], isTrue);
+    expect(stagedArguments?['quickSettingsEligible'], isFalse);
     expect(stagedArguments?['runtimeOptionsJson'], isNull);
     expect(stagedArguments?['configPayload'], isA<String>());
+    final stagedConfig =
+        jsonDecode(stagedArguments?['configPayload']! as String)
+            as Map<String, dynamic>;
+    final route = stagedConfig['route'] as Map<String, dynamic>;
+    final rules = (route['rules'] as List).cast<Map<String, dynamic>>();
+    expect(rules.first, <String, dynamic>{
+      'protocol': 'dns',
+      'action': 'hijack-dns',
+    });
+    expect(rules[1]['ip_is_private'], isTrue);
+  });
+
+  test('mobile invalidation removes the reusable host profile before restaging',
+      () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final calls = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call.method);
+      switch (call.method) {
+        case 'runtimeEngine.stageManagedProfile':
+          return <String, Object?>{
+            'phase': 'configStaged',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+            'stagedConfigPath': '/host/runtime/managed.json',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': true,
+            'message': 'Managed profile staged.',
+          };
+        case 'runtimeEngine.invalidateManagedProfile':
+          return <String, Object?>{
+            'phase': 'initialized',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': false,
+            'message': 'Reusable profile invalidated.',
+          };
+      }
+      return null;
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.android);
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'managed',
+        configPayload:
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"direct","tag":"direct"}],"route":{"final":"direct"}}',
+        materializedForRuntime: true,
+      ),
+    );
+    final invalidated = await engine.invalidateManagedProfile();
+
+    expect(
+      calls,
+      containsAllInOrder(const <String>[
+        'runtimeEngine.stageManagedProfile',
+        'runtimeEngine.invalidateManagedProfile',
+      ]),
+    );
+    expect(invalidated.stagedConfigPath, isNull);
+    expect(invalidated.canConnect, isFalse);
   });
 
   test('mobile lane surfaces degraded host diagnostics from the bridge',
@@ -279,7 +469,7 @@ void main() {
     expect(snapshot.hasDegradedHostDiagnostics, isTrue);
     expect(snapshot.isCleanlyHealthy, isFalse);
     expect(snapshot.phaseLabel, 'Подключено с предупреждением');
-    expect(snapshot.diagnosticsLabel, 'DNS degraded on the current uplink.');
+    expect(snapshot.diagnosticsLabel, 'DNS требует проверки');
   });
 
   test('mobile lane derives Android diagnostics from top-level host fields',
@@ -302,6 +492,7 @@ void main() {
             'default_network_interface': 'wlan0',
             'default_network_index': 42,
             'dns_ready': true,
+            'core_egress_validated': false,
             'ipv4_route_count': 3,
             'ipv6_route_count': 1,
           };
@@ -319,17 +510,119 @@ void main() {
     expect(snapshot.hostHealth, RuntimeHostHealth.healthy);
     expect(snapshot.dnsState, RuntimeDiagnosticState.healthy);
     expect(snapshot.uplinkState, RuntimeDiagnosticState.healthy);
-    expect(snapshot.defaultNetworkInterface, 'wlan0');
-    expect(snapshot.defaultNetworkIndex, 42);
+    expect(snapshot.defaultNetworkInterface, 'network_available');
+    expect(snapshot.defaultNetworkIndex, isNull);
     expect(snapshot.dnsReady, isTrue);
+    expect(snapshot.coreEgressValidated, isFalse);
     expect(snapshot.ipv4RouteCount, 3);
     expect(snapshot.ipv6RouteCount, 1);
     expect(snapshot.lastFailureKind, isNull);
-    expect(snapshot.phaseLabel, 'Подключено');
+    expect(snapshot.hasDegradedHostDiagnostics, isTrue);
+    expect(snapshot.isCleanlyHealthy, isFalse);
+    expect(snapshot.phaseLabel, 'Подключено с предупреждением');
     expect(
       snapshot.diagnosticsLabel,
-      'Сеть wlan0 (#42) | DNS готов | Правила v4=3 v6=1',
+      'Сеть доступна | DNS готов | Правила v4=3 v6=1',
     );
+    expect(snapshot.diagnosticsLabel, isNot(contains('#42')));
+  });
+
+  test('WARP effective time accepts only the bridge wire enum', () {
+    for (final effectiveAt in <String>['now', 'next_connect', 'none']) {
+      final result = WarpApplyResult.fromMap(<String, Object?>{
+        'applied': true,
+        'effectiveAt': effectiveAt,
+      });
+      expect(result.effectiveAt, effectiveAt);
+    }
+
+    final hostile = WarpApplyResult.fromMap(<String, Object?>{
+      'applied': true,
+      'effectiveAt': _sensitiveRuntimeDetail,
+    });
+
+    expect(hostile.effectiveAt, 'none');
+    _expectNoSensitiveRuntimeDetail(hostile.effectiveAt);
+    _expectNoSensitiveRuntimeDetail(hostile.toString());
+  });
+
+  test('mobile lane redacts native runtime details from public snapshots',
+      () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.snapshot') {
+        return <String, Object?>{
+          'phase': 'running',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'message': _sensitiveRuntimeDetail,
+          'default_network_interface': _sensitiveRuntimeDetail,
+          'last_failure_kind': _sensitiveRuntimeDetail,
+          'last_stop_reason': _sensitiveRuntimeDetail,
+          'hostDiagnostics': <String, Object?>{
+            'summary': _sensitiveRuntimeDetail,
+          },
+        };
+      }
+      return null;
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    final snapshot =
+        await createRuntimeEngine(hostPlatform: HostPlatform.android)
+            .snapshot();
+    final warp = WarpApplyResult.fromMap(<String, Object?>{
+      'applied': false,
+      'reason': _sensitiveRuntimeDetail,
+    });
+
+    expect(
+        snapshot.message, 'POKROV не смог завершить действие на устройстве.');
+    expect(snapshot.defaultNetworkInterface, 'network_available');
+    expect(snapshot.lastFailureKind, 'runtime_failure');
+    expect(snapshot.lastStopReason, 'runtime_stopped');
+    expect(warp.reason, 'runtime_failure');
+    for (final value in <String>[
+      snapshot.message,
+      snapshot.diagnosticsLabel ?? '',
+      snapshot.defaultNetworkInterface ?? '',
+      snapshot.lastFailureKind ?? '',
+      snapshot.lastStopReason ?? '',
+      snapshot.toString(),
+      warp.reason ?? '',
+      warp.toString(),
+    ]) {
+      _expectNoSensitiveRuntimeDetail(value);
+    }
+  });
+
+  test('mobile lane redacts PlatformException details after fallback fails',
+      () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      throw PlatformException(
+        code: _sensitiveRuntimeDetail,
+        message: _sensitiveRuntimeDetail,
+        details: _sensitiveRuntimeDetail,
+      );
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    final snapshot =
+        await createRuntimeEngine(hostPlatform: HostPlatform.android).connect();
+
+    expect(snapshot.message, 'Не удалось связаться с системным модулем.');
+    _expectNoSensitiveRuntimeDetail(snapshot.message);
+    _expectNoSensitiveRuntimeDetail(snapshot.toString());
   });
 
   test('mobile lane survives 100 serial host bridge start-stop cycles',
@@ -380,9 +673,9 @@ void main() {
       final stopped = await engine.disconnect();
 
       expect(running.phase, RuntimePhase.running, reason: 'cycle $cycle');
-      expect(running.message, contains('running'), reason: 'cycle $cycle');
+      expect(running.message, 'POKROV включен.', reason: 'cycle $cycle');
       expect(stopped.phase, RuntimePhase.configStaged, reason: 'cycle $cycle');
-      expect(stopped.message, contains('stopped cleanly'),
+      expect(stopped.message, 'Настройки POKROV готовы.',
           reason: 'cycle $cycle');
     }
     expect(connectCalls, 100);
@@ -390,7 +683,7 @@ void main() {
   });
 
   test(
-    'real Windows POKROV Core 1.0.1 survives 100 start-stop cycles',
+    'real Windows POKROV Core 1.0.2 survives 100 start-stop cycles',
     () async {
       final artifactRoot =
           Platform.environment['POKROV_REAL_CORE_ROOT']!.trim();
@@ -435,9 +728,7 @@ void main() {
       }
     },
     skip: !Platform.isWindows ||
-            (Platform.environment['POKROV_REAL_CORE_ROOT'] ?? '')
-                .trim()
-                .isEmpty
+            (Platform.environment['POKROV_REAL_CORE_ROOT'] ?? '').trim().isEmpty
         ? 'Set POKROV_REAL_CORE_ROOT to run the exact DLL backtest.'
         : false,
     timeout: const Timeout(Duration(minutes: 10)),
@@ -454,7 +745,8 @@ void main() {
 
     final platformDirectory = Directory('${root.path}\\windows')
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\foreign-core.dll').writeAsStringSync('stub');
+    File('${platformDirectory.path}\\foreign-core.dll')
+        .writeAsStringSync('stub');
 
     final engine = createRuntimeEngine(
       hostPlatform: HostPlatform.windows,
@@ -480,7 +772,7 @@ void main() {
     });
 
     final platformDirectory = Directory(
-      '${root.path}\\artifacts\\pokrov-core\\v1.0.1\\windows',
+      '${root.path}\\artifacts\\pokrov-core\\v1.0.2\\windows',
     )..createSync(recursive: true);
     File('${platformDirectory.path}\\pokrov-core.dll')
         .writeAsStringSync('stub');
@@ -580,10 +872,8 @@ void main() {
     );
   });
 
-  test('POKROV Core desktop ABI starts only a materialized profile',
-      () async {
-    final root =
-        await Directory.systemTemp.createTemp('pokrov-core-connect-');
+  test('POKROV Core desktop ABI starts only a materialized profile', () async {
+    final root = await Directory.systemTemp.createTemp('pokrov-core-connect-');
     addTearDown(() async {
       if (await root.exists()) {
         await root.delete(recursive: true);
@@ -671,10 +961,8 @@ void main() {
     expect(bindings.startCalls, 1);
   });
 
-  test('POKROV Core desktop ABI rejects a nonmaterialized profile',
-      () async {
-    final root =
-        await Directory.systemTemp.createTemp('pokrov-core-parse-');
+  test('POKROV Core desktop ABI rejects a nonmaterialized profile', () async {
+    final root = await Directory.systemTemp.createTemp('pokrov-core-parse-');
     addTearDown(() async {
       if (await root.exists()) {
         await root.delete(recursive: true);
@@ -706,8 +994,7 @@ void main() {
   });
 
   test('POKROV Core materializes client-local WARP before start', () async {
-    final root =
-        await Directory.systemTemp.createTemp('pokrov-core-warp-');
+    final root = await Directory.systemTemp.createTemp('pokrov-core-warp-');
     addTearDown(() async {
       if (await root.exists()) {
         await root.delete(recursive: true);
@@ -762,7 +1049,8 @@ void main() {
     expect(bindings.secureFileCalls, 1);
   });
 
-  test('POKROV Core WARP-over-proxy preserves selected-app direct routing', () async {
+  test('POKROV Core WARP-over-proxy preserves selected-app direct routing',
+      () async {
     final root =
         await Directory.systemTemp.createTemp('pokrov-core-warp-chain-');
     addTearDown(() async {
@@ -830,8 +1118,7 @@ void main() {
   });
 
   test('POKROV Core disabling WARP restores the staged base config', () async {
-    final root =
-        await Directory.systemTemp.createTemp('pokrov-core-warp-off-');
+    final root = await Directory.systemTemp.createTemp('pokrov-core-warp-off-');
     addTearDown(() async {
       if (await root.exists()) {
         await root.delete(recursive: true);
@@ -1025,7 +1312,7 @@ void main() {
     expect(route['final'], 'direct');
   });
 
-  test('desktop lane preserves setup errors instead of generic ready text',
+  test('desktop lane redacts setup errors instead of generic ready text',
       () async {
     final root = await Directory.systemTemp.createTemp(
       'pokrov-runtime-desktop-setup-error-',
@@ -1040,7 +1327,7 @@ void main() {
       ..createSync(recursive: true);
     File('${platformDirectory.path}\\pokrov-core.dll')
         .writeAsStringSync('stub');
-    final bindings = _FakeDesktopBindings(setupResult: 'setup failed');
+    final bindings = _FakeDesktopBindings(setupResult: _sensitiveRuntimeDetail);
 
     final engine = DesktopRuntimeEngine(
       hostPlatform: HostPlatform.windows,
@@ -1051,11 +1338,12 @@ void main() {
     final snapshot = await engine.initialize();
 
     expect(snapshot.phase, RuntimePhase.artifactReady);
-    expect(snapshot.message, contains('setup failed'));
+    expect(snapshot.message, 'Не удалось подготовить подключение.');
+    _expectNoSensitiveRuntimeDetail(snapshot.message);
     expect(snapshot.canConnect, isFalse);
   });
 
-  test('desktop lane preserves start errors after profile staging', () async {
+  test('desktop lane redacts start errors after profile staging', () async {
     final root = await Directory.systemTemp.createTemp(
       'pokrov-runtime-desktop-start-error-',
     );
@@ -1069,7 +1357,7 @@ void main() {
       ..createSync(recursive: true);
     File('${platformDirectory.path}\\pokrov-core.dll')
         .writeAsStringSync('stub');
-    final bindings = _FakeDesktopBindings(startResult: 'start failed');
+    final bindings = _FakeDesktopBindings(startResult: _sensitiveRuntimeDetail);
 
     final engine = DesktopRuntimeEngine(
       hostPlatform: HostPlatform.windows,
@@ -1090,7 +1378,8 @@ void main() {
     final snapshot = await engine.connect();
 
     expect(snapshot.phase, RuntimePhase.configStaged);
-    expect(snapshot.message, contains('start failed'));
+    expect(snapshot.message, 'POKROV не смог подключиться.');
+    _expectNoSensitiveRuntimeDetail(snapshot.message);
     expect(snapshot.canConnect, isTrue);
   });
 
@@ -1130,7 +1419,7 @@ void main() {
     expect(snapshot.canConnect, isFalse);
   });
 
-  test('desktop lane preserves secure-file errors before start', () async {
+  test('desktop lane redacts secure-file errors before start', () async {
     final root = await Directory.systemTemp.createTemp(
       'pokrov-runtime-desktop-options-error-',
     );
@@ -1145,7 +1434,7 @@ void main() {
     File('${platformDirectory.path}\\pokrov-core.dll')
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(
-      secureFileResult: 'secure file failed',
+      secureFileResult: _sensitiveRuntimeDetail,
     );
 
     final engine = DesktopRuntimeEngine(
@@ -1165,12 +1454,13 @@ void main() {
     );
 
     expect(snapshot.phase, RuntimePhase.initialized);
-    expect(snapshot.message, contains('secure file failed'));
+    expect(snapshot.message, 'POKROV не смог защитить файл профиля.');
+    _expectNoSensitiveRuntimeDetail(snapshot.message);
     expect(snapshot.canConnect, isFalse);
     expect(bindings.startCalls, 0);
   });
 
-  test('desktop lane preserves disconnect errors', () async {
+  test('desktop lane redacts disconnect errors', () async {
     final root = await Directory.systemTemp.createTemp(
       'pokrov-runtime-desktop-stop-error-',
     );
@@ -1184,7 +1474,7 @@ void main() {
       ..createSync(recursive: true);
     File('${platformDirectory.path}\\pokrov-core.dll')
         .writeAsStringSync('stub');
-    final bindings = _FakeDesktopBindings(stopResult: 'stop failed');
+    final bindings = _FakeDesktopBindings(stopResult: _sensitiveRuntimeDetail);
 
     final engine = DesktopRuntimeEngine(
       hostPlatform: HostPlatform.windows,
@@ -1207,7 +1497,48 @@ void main() {
     final snapshot = await engine.disconnect();
 
     expect(snapshot.phase, RuntimePhase.running);
-    expect(snapshot.message, contains('stop failed'));
+    expect(snapshot.message, 'POKROV не смог отключиться.');
+    _expectNoSensitiveRuntimeDetail(snapshot.message);
+  });
+
+  test('desktop lane redacts hostile probe failures', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-probe-redaction-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      connectivityProbe: () async => _sensitiveRuntimeDetail,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'probe-redaction',
+        configPayload:
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.fullTunnel,
+      ),
+    );
+    final snapshot = await engine.connect();
+
+    expect(snapshot.phase, RuntimePhase.configStaged);
+    expect(snapshot.message, 'POKROV запустил модуль, но трафик не проходит.');
+    expect(bindings.stopCalls, 1);
+    _expectNoSensitiveRuntimeDetail(snapshot.message);
+    _expectNoSensitiveRuntimeDetail(snapshot.toString());
   });
 
   test('desktop lane keeps runtime-ready WARP disabled without user consent',
@@ -1544,7 +1875,7 @@ void main() {
             'latencyMs': 38,
             'since': '2026-06-22T10:00:00Z',
             'serverCode': 'nl-ams-01',
-            'serverCountry': 'Netherlands',
+            'serverCountry': 'NL',
             'protocol': 'sing-box',
           };
         case 'runtimeEngine.pushToken':
@@ -1577,7 +1908,54 @@ void main() {
     expect(applied.effectiveAt, 'now');
     expect(stats.available, isTrue);
     expect(stats.downlinkBps, 20);
+    expect(stats.serverCode, 'nl-ams-01');
+    expect(stats.serverCountry, 'NL');
+    expect(stats.protocol, 'sing-box');
     expect(token.token, 'push-token');
     expect(token.provider, 'fcm');
+  });
+
+  test('mobile live stats retain only allowlisted public labels', () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    var response = <String, Object?>{
+      'available': true,
+      'serverCode': 'NL-AMS-01',
+      'serverCountry': 'nl',
+      'protocol': 'sing-box',
+    };
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      return call.method == 'runtimeEngine.liveStats' ? response : null;
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    final engine =
+        MobileArtifactRuntimeEngine(hostPlatform: HostPlatform.android);
+    final benign = await engine.liveStats();
+    response = <String, Object?>{
+      'available': true,
+      'serverCode': _sensitiveRuntimeDetail,
+      'serverCountry': _sensitiveRuntimeDetail,
+      'protocol': _sensitiveRuntimeDetail,
+    };
+    final hostile = await engine.liveStats();
+
+    expect(benign.serverCode, 'nl-ams-01');
+    expect(benign.serverCountry, 'NL');
+    expect(benign.protocol, 'sing-box');
+    expect(hostile.serverCode, isEmpty);
+    expect(hostile.serverCountry, isEmpty);
+    expect(hostile.protocol, isEmpty);
+    for (final value in <String>[
+      hostile.serverCode,
+      hostile.serverCountry,
+      hostile.protocol,
+      hostile.toString(),
+    ]) {
+      _expectNoSensitiveRuntimeDetail(value);
+    }
   });
 }

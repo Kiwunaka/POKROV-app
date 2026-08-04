@@ -5,7 +5,7 @@
   "default_runtime_core": "sing-box",
   "advanced_fallback_core": "xray",
   "trial_days": 5,
-  "telegram_bonus_days": 10,
+  "telegram_bonus_days": 5,
   "free_tier": {
     "node_pool": "NL-free",
     "traffic_gb": 5,

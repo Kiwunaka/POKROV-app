@@ -105,6 +105,7 @@ class PokrovAssistantMessage {
     required this.id,
     required this.role,
     required this.body,
+    this.sourceLabel,
     Iterable<PokrovAssistantSuggestion> suggestions =
         const <PokrovAssistantSuggestion>[],
     Iterable<PokrovAssistantSafeAction> actions =
@@ -115,6 +116,7 @@ class PokrovAssistantMessage {
   factory PokrovAssistantMessage.assistant({
     required String id,
     required String body,
+    String? sourceLabel,
     Iterable<PokrovAssistantSuggestion> suggestions =
         const <PokrovAssistantSuggestion>[],
     Iterable<PokrovAssistantSafeAction> actions =
@@ -124,6 +126,7 @@ class PokrovAssistantMessage {
       id: id,
       role: PokrovAssistantRole.assistant,
       body: body,
+      sourceLabel: sourceLabel,
       suggestions: suggestions,
       actions: actions,
     );
@@ -132,6 +135,7 @@ class PokrovAssistantMessage {
   final String id;
   final PokrovAssistantRole role;
   final String body;
+  final String? sourceLabel;
   final List<PokrovAssistantSuggestion> suggestions;
   final List<PokrovAssistantSafeAction> actions;
 

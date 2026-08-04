@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
+import 'package:pokrov_core_domain/core_domain.dart';
 
 void main() {
   test('client experience store survives restart without runtime secrets',
@@ -81,6 +82,14 @@ void main() {
       locationsCachedAt: '2026-07-23T10:15:01Z',
       cachedNotifications: inbox,
       notificationsCachedAt: '2026-07-23T10:20:01Z',
+      preferredNodeCode: 'nl-ams-01',
+      automaticNodeQuarantineUntil: const <String, String>{
+        'de-fra-01': '2026-07-23T10:35:00Z',
+      },
+      selectedAppIds: const <String>[
+        'org.telegram.messenger',
+        'pokrov.exe',
+      ],
       routingPreferences: PokrovRoutingPreferences.defaults().copyWith(
         purposeRoutes: const <PokrovPurposeRoute>{PokrovPurposeRoute.video},
         dnsPreset: PokrovDnsPreset.cloudflare,
@@ -99,6 +108,15 @@ void main() {
 
     expect(restored.favoriteNodeCodes, <String>['nl-ams-01']);
     expect(restored.recentNodeCodes, <String>['nl-ams-01']);
+    expect(restored.preferredNodeCode, 'nl-ams-01');
+    expect(
+      restored.automaticNodeQuarantineUntil,
+      <String, String>{'de-fra-01': '2026-07-23T10:35:00Z'},
+    );
+    expect(
+      restored.selectedAppIds,
+      <String>['org.telegram.messenger', 'pokrov.exe'],
+    );
     expect(restored.protectionEvents.single.kind, 'connected');
     expect(restored.postConnectShortcuts.single.href.scheme, 'https');
     expect(
@@ -112,7 +130,8 @@ void main() {
     );
     expect(restored.routingPreferences.dnsPreset, PokrovDnsPreset.cloudflare);
     expect(restored.routingPreferences.allowLan, isFalse);
-    expect(restored.routingPreferences.overrides.single.value, 'private.example');
+    expect(
+        restored.routingPreferences.overrides.single.value, 'private.example');
 
     final file =
         await directory.list().where((item) => item is File).single as File;
@@ -149,5 +168,72 @@ void main() {
       ),
       isNotNull,
     );
+  });
+
+  test(
+      'selected app persistence normalizes Android packages, Windows exe, and caps at 128',
+      () {
+    final identifiers = <Object?>[
+      'ORG.Telegram.Messenger',
+      'POKROV.EXE',
+      'bad/path',
+      for (var index = 0; index < 140; index += 1) 'com.example.app$index',
+    ];
+    final restored = PokrovClientExperienceState.fromJson(<String, dynamic>{
+      'selectedAppIds': identifiers,
+    });
+
+    expect(restored.selectedAppIds.first, 'org.telegram.messenger');
+    expect(restored.selectedAppIds, contains('pokrov.exe'));
+    expect(restored.selectedAppIds, isNot(contains('bad/path')));
+    expect(restored.selectedAppIds, hasLength(128));
+  });
+
+  test('automatic node quarantine ignores malformed data and caps at eight',
+      () {
+    final restored = PokrovClientExperienceState.fromJson(<String, dynamic>{
+      'automaticNodeQuarantineUntil': <String, Object?>{
+        'BAD/NODE': '2026-07-23T10:35:00Z',
+        'bad-date': 'tomorrow',
+        for (var index = 0; index < 12; index += 1)
+          'node-$index': '2026-07-23T10:${35 + index}:00Z',
+      },
+    });
+
+    expect(restored.automaticNodeQuarantineUntil, hasLength(8));
+    expect(restored.automaticNodeQuarantineUntil, contains('node-0'));
+    expect(restored.automaticNodeQuarantineUntil, isNot(contains('bad/node')));
+    expect(restored.automaticNodeQuarantineUntil, isNot(contains('bad-date')));
+  });
+
+  test('selected app identifiers use the same bounded platform rules', () {
+    expect(
+      normalizePokrovSelectedAppIdentifier(
+        'COM.FOO',
+        hostPlatform: HostPlatform.android,
+      ),
+      'com.foo',
+    );
+    expect(
+      normalizePokrovSelectedAppIdentifier(
+        'com.foo',
+        hostPlatform: HostPlatform.windows,
+      ),
+      isNull,
+    );
+    expect(
+      normalizePokrovSelectedAppIdentifier(
+        'POKROV.EXE',
+        hostPlatform: HostPlatform.windows,
+      ),
+      'pokrov.exe',
+    );
+    for (final invalid in <String>[
+      '../bad.exe',
+      'com.bad/name',
+      '${'a' * 93}.exe',
+    ]) {
+      expect(normalizePokrovSelectedAppIdentifier(invalid), isNull);
+    }
   });
 }

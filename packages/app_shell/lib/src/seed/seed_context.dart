@@ -301,7 +301,7 @@ SeedAppContext buildSeedAppContext({
           RouteMode.selectedApps,
       ],
       trialDays: 5,
-      telegramBonusDays: 10,
+      telegramBonusDays: 5,
       freeTier: const FreeTierPolicy(
         trafficGb: 5,
         periodDays: 30,
@@ -321,7 +321,7 @@ SeedAppContext buildSeedAppContext({
       safeNotes:
           'Поддержка видит только версию приложения, платформу, режим и статус подключения.',
       recommendedRouteMode: RouteMode.allExceptRu,
-      channelBonusDays: 10,
+      channelBonusDays: 5,
     ),
     rulesPresetContract: _seedRulesPresetContractFor(hostPlatform),
     locations: const [

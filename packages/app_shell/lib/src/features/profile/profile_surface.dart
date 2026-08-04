@@ -3,6 +3,7 @@ part of pokrov_app_shell;
 class _ProfileSection extends StatelessWidget {
   const _ProfileSection({
     required this.appContext,
+    required this.freeProfileAccess,
     required this.selectedRouteMode,
     required this.hasProvisionedAccess,
     required this.onOpenHandoff,
@@ -44,6 +45,7 @@ class _ProfileSection extends StatelessWidget {
   });
 
   final SeedAppContext appContext;
+  final FreeProfileAccess? freeProfileAccess;
   final RouteMode selectedRouteMode;
   final bool hasProvisionedAccess;
   final void Function(String label, String value) onOpenHandoff;
@@ -92,12 +94,18 @@ class _ProfileSection extends StatelessWidget {
       return const ['Обновляем Telegram, рефералы и промокоды.'];
     }
     if (summary == null) {
-      return const ['Telegram · рефералы · промокоды'];
+      return const ['Telegram +5 дней · рефералы · промокоды'];
     }
     final referralCode =
         summary.referralCode.isEmpty ? '' : ' · ${summary.referralCode}';
+    final claimed = summary.channelBonusClaimed;
+    final bonusDays = claimed
+        ? summary.channelBonusPremiumDays
+        : _availableTelegramBonusDays(summary);
+    final telegramLabel =
+        bonusDays > 0 ? 'Telegram +${ruDays(bonusDays)}' : 'Telegram';
     return [
-      'Telegram +${ruDays(summary.channelBonusPremiumDays)} · рефералы ${summary.referralCount}$referralCode',
+      '$telegramLabel · рефералы ${summary.referralCount}$referralCode',
     ];
   }
 
@@ -109,9 +117,12 @@ class _ProfileSection extends StatelessWidget {
     if (summary == null) {
       return 'Открыть';
     }
+    final claimed = summary.channelBonusClaimed;
+    final bonusDays = claimed
+        ? summary.channelBonusPremiumDays
+        : _availableTelegramBonusDays(summary);
     final parts = <String>[
-      if (summary.channelBonusPremiumDays > 0)
-        '+${ruDays(summary.channelBonusPremiumDays)}',
+      if (bonusDays > 0) '+${ruDays(bonusDays)}',
       if (summary.referralCount > 0) '${summary.referralCount} реф.',
     ];
     return parts.isEmpty ? 'Открыть' : parts.join(' · ');
@@ -159,13 +170,23 @@ class _ProfileSection extends StatelessWidget {
                   accessLabel: _accessMainLabel(
                     appContext,
                     currentBonusSummary,
+                    freeProfileAccess,
                   ),
                   accessValue: _accessShortValue(
                     appContext,
                     currentBonusSummary,
+                    freeProfileAccess,
                   ),
-                  accessDays: _accessShortDays(appContext, currentBonusSummary),
-                  poolLabel: _accessPoolLabel(appContext.accessLane),
+                  accessDays: _accessShortDays(
+                    appContext,
+                    currentBonusSummary,
+                    freeProfileAccess,
+                  ),
+                  poolLabel: _accessPoolLabelFor(
+                    appContext.accessLane,
+                    freeProfileAccess,
+                  ),
+                  accessNotice: _freeProfileAccessNotice(freeProfileAccess),
                   statusLabel: statusLabel,
                   onStatusTap: () => _showInfoSheet(
                     context,
@@ -460,6 +481,7 @@ class _ProfileAccessOverview extends StatelessWidget {
     required this.accessValue,
     required this.accessDays,
     required this.poolLabel,
+    required this.accessNotice,
     required this.statusLabel,
     required this.onStatusTap,
     required this.onPlanTap,
@@ -473,6 +495,7 @@ class _ProfileAccessOverview extends StatelessWidget {
   /// living count-up so the entitlement feels owned, not printed.
   final int? accessDays;
   final String poolLabel;
+  final String? accessNotice;
   final String statusLabel;
   final VoidCallback onStatusTap;
   final VoidCallback onPlanTap;
@@ -555,7 +578,20 @@ class _ProfileAccessOverview extends StatelessWidget {
             );
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [header],
+              children: [
+                header,
+                if (accessNotice != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    accessNotice!,
+                    key: const ValueKey('profile-free-access-notice'),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: p.muted,
+                          height: 1.35,
+                        ),
+                  ),
+                ],
+              ],
             );
           },
         ),

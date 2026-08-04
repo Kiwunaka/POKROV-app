@@ -1,6 +1,7 @@
 package space.pokrov.pokrov_android_shell
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import space.pokrov.core.libbox.Libbox
 import space.pokrov.core.libbox.SetupOptions
 import go.Seq
@@ -34,12 +35,16 @@ internal object AndroidRuntimeState {
     private var defaultNetworkInterface: String? = null
     private var defaultNetworkIndex: Int? = null
     private var dnsReady: Boolean = false
+    private var vpnValidated: Boolean? = null
+    private var coreEgressValidated: Boolean? = null
     private var lastFailureKind: String? = null
     private var lastStopReason: String? = null
     private var ipv4RouteCount: Int = 0
     private var ipv6RouteCount: Int = 0
     private var includePackageCount: Int = 0
     private var excludePackageCount: Int = 0
+    private var systemNotificationWarning: Boolean = false
+    private var connectionPending: Boolean = false
 
     @Synchronized
     fun resolveEnvironment(context: Context): AndroidRuntimeEnvironment? {
@@ -95,7 +100,11 @@ internal object AndroidRuntimeState {
                     setWorkingPath(resolved.workingDirectory.absolutePath)
                     setTempPath(resolved.tempDirectory.absolutePath)
                     setFixAndroidStack(true)
-                    setDebug(false)
+                    // Debug builds classify native failures into fixed safe categories.
+                    // Raw Core messages are never forwarded to logcat.
+                    setDebug(
+                        context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0,
+                    )
                     setLogMaxLines(3000)
                 },
             )
@@ -106,37 +115,100 @@ internal object AndroidRuntimeState {
             }
             lastMessage = "POKROV подготовил устройство."
             true
-        } catch (error: Throwable) {
+        } catch (_: Throwable) {
             phase = AndroidRuntimePhase.ARTIFACT_READY
-            lastMessage = "POKROV не смог подготовить устройство: ${error.message ?: error.javaClass.simpleName}"
+            connectionPending = false
+            lastFailureKind = "runtime_initialization_failed"
+            lastMessage = AndroidRuntimeSafety.publicFailureMessage(
+                "runtime_initialization_failed",
+            )
             false
         }
     }
 
     @Synchronized
-    fun markProfileStaged(path: String) {
+    fun markProfileStaged(
+        path: String,
+        preserveConnectionPending: Boolean = false,
+    ) {
         stagedConfigPath = path
         phase = AndroidRuntimePhase.CONFIG_STAGED
-        lastFailureKind = null
+        if (!preserveConnectionPending) {
+            connectionPending = false
+        }
+        if (!systemNotificationWarning) {
+            lastFailureKind = null
+        }
         lastStopReason = null
-        lastMessage = "POKROV подготовил профиль для этого устройства."
+        lastMessage = if (systemNotificationWarning) {
+            AndroidRuntimeSafety.publicFailureMessage("notification_permission_denied")
+        } else {
+            "POKROV подготовил профиль для этого устройства."
+        }
+    }
+
+    /**
+     * Drops a reusable profile pointer without touching a live TUN. The active
+     * service owns its already-open configuration; after it stops there is no
+     * staged profile for Quick Settings to restart.
+     */
+    @Synchronized
+    fun invalidateStagedProfile() {
+        stagedConfigPath = null
+        connectionPending = false
+        if (phase != AndroidRuntimePhase.RUNNING) {
+            phase = if (environment != null) {
+                AndroidRuntimePhase.INITIALIZED
+            } else {
+                AndroidRuntimePhase.ARTIFACT_MISSING
+            }
+            lastMessage = "Настройки POKROV изменены. Перед подключением обновите профиль."
+        }
     }
 
     @Synchronized
+    fun markConnectionRequested() {
+        connectionPending = true
+        vpnValidated = null
+        coreEgressValidated = null
+    }
+
+    @Synchronized
+    fun cancelPendingConnection() {
+        connectionPending = false
+    }
+
+    @Synchronized
+    fun isConnectionPending(): Boolean = connectionPending
+
+    @Synchronized
     fun markPermissionRequested() {
-        lastMessage = "Android просит разрешение, чтобы POKROV мог подключить это устройство."
+        connectionPending = true
+        lastMessage = if (systemNotificationWarning) {
+            AndroidRuntimeSafety.publicFailureMessage("notification_permission_denied")
+        } else {
+            "Android просит разрешение, чтобы POKROV мог подключить это устройство."
+        }
     }
 
     @Synchronized
     fun markRunning(message: String) {
         phase = AndroidRuntimePhase.RUNNING
-        lastFailureKind = null
+        connectionPending = false
         lastStopReason = null
         if (runningSince.isNullOrBlank()) {
             runningSince = Instant.now().toString()
         }
         lastRunningMessage = message
-        lastMessage = message
+        if (systemNotificationWarning) {
+            lastFailureKind = "notification_permission_denied"
+            lastMessage = AndroidRuntimeSafety.publicFailureMessage(
+                "notification_permission_denied",
+            )
+        } else {
+            lastFailureKind = null
+            lastMessage = message
+        }
     }
 
     @Synchronized
@@ -144,6 +216,7 @@ internal object AndroidRuntimeState {
         message: String = "Отключаем POKROV на этом устройстве...",
         stopReason: String = "user_requested",
     ) {
+        connectionPending = false
         phase = when {
             stagedConfigPath != null -> AndroidRuntimePhase.CONFIG_STAGED
             environment != null -> AndroidRuntimePhase.INITIALIZED
@@ -151,6 +224,8 @@ internal object AndroidRuntimeState {
         }
         lastStopReason = stopReason
         runningSince = null
+        vpnValidated = null
+        coreEgressValidated = null
         lastMessage = message
     }
 
@@ -159,15 +234,40 @@ internal object AndroidRuntimeState {
         message: String,
         stopReason: String = "service_stopped",
     ) {
+        connectionPending = false
         phase = when {
             stagedConfigPath != null -> AndroidRuntimePhase.CONFIG_STAGED
             environment != null -> AndroidRuntimePhase.INITIALIZED
             else -> AndroidRuntimePhase.ARTIFACT_MISSING
         }
         lastStopReason = stopReason
+        vpnValidated = null
+        coreEgressValidated = null
         if (message == "POKROV отключен на этом устройстве." && shouldPreserveFailureMessage()) {
             return
         }
+        lastMessage = message
+    }
+
+    @Synchronized
+    fun markStoppedAfterCoreEgressFailure(
+        failureKind: String,
+        message: String,
+        stopReason: String,
+    ) {
+        connectionPending = false
+        // This is a terminal dataplane failure, not an ordinary disconnect.
+        // The profile must not remain staged for Quick Settings reuse.
+        stagedConfigPath = null
+        phase = when {
+            environment != null -> AndroidRuntimePhase.INITIALIZED
+            else -> AndroidRuntimePhase.ARTIFACT_MISSING
+        }
+        lastFailureKind = failureKind
+        lastStopReason = stopReason
+        runningSince = null
+        vpnValidated = null
+        coreEgressValidated = false
         lastMessage = message
     }
 
@@ -178,6 +278,7 @@ internal object AndroidRuntimeState {
 
     @Synchronized
     fun markFailure(kind: String, message: String) {
+        connectionPending = false
         if (environment == null) {
             phase = AndroidRuntimePhase.ARTIFACT_MISSING
         } else if (stagedConfigPath != null) {
@@ -194,6 +295,37 @@ internal object AndroidRuntimeState {
         lastFailureKind = failureKind
         if (phase == AndroidRuntimePhase.RUNNING) {
             lastMessage = message
+        }
+    }
+
+    @Synchronized
+    fun markConnectionPending() {
+        connectionPending = true
+        if (phase != AndroidRuntimePhase.RUNNING && !systemNotificationWarning) {
+            lastMessage = "POKROV готовит подключение на этом устройстве."
+        }
+    }
+
+    @Synchronized
+    fun markSystemNotificationWarning() {
+        systemNotificationWarning = true
+        lastFailureKind = "notification_permission_denied"
+        lastMessage = AndroidRuntimeSafety.publicFailureMessage(
+            "notification_permission_denied",
+        )
+    }
+
+    @Synchronized
+    fun clearSystemNotificationWarning() {
+        if (!systemNotificationWarning) {
+            return
+        }
+        systemNotificationWarning = false
+        if (lastFailureKind == "notification_permission_denied") {
+            lastFailureKind = null
+        }
+        if (phase == AndroidRuntimePhase.RUNNING && !lastRunningMessage.isNullOrBlank()) {
+            lastMessage = lastRunningMessage!!
         }
     }
 
@@ -225,6 +357,41 @@ internal object AndroidRuntimeState {
             lastFailureKind = null
         }
         if (dnsReady && phase == AndroidRuntimePhase.RUNNING && !lastRunningMessage.isNullOrBlank()) {
+            lastMessage = lastRunningMessage!!
+        }
+    }
+
+    @Synchronized
+    fun markDnsTransportFailure(failureKind: String, message: String) {
+        dnsReady = false
+        lastFailureKind = failureKind
+        if (phase == AndroidRuntimePhase.RUNNING) {
+            lastMessage = message
+        }
+    }
+
+    @Synchronized
+    fun updateVpnValidation(validated: Boolean?) {
+        vpnValidated = validated
+        if (
+            validated == true &&
+                phase == AndroidRuntimePhase.RUNNING &&
+                !lastRunningMessage.isNullOrBlank() &&
+                lastFailureKind.isNullOrBlank()
+        ) {
+            lastMessage = lastRunningMessage!!
+        }
+    }
+
+    @Synchronized
+    fun updateCoreEgressValidation(validated: Boolean?) {
+        coreEgressValidated = validated
+        if (
+            validated == true &&
+                phase == AndroidRuntimePhase.RUNNING &&
+                !lastRunningMessage.isNullOrBlank() &&
+                lastFailureKind.isNullOrBlank()
+        ) {
             lastMessage = lastRunningMessage!!
         }
     }
@@ -280,12 +447,16 @@ internal object AndroidRuntimeState {
             "default_network_interface" to defaultNetworkInterface,
             "default_network_index" to defaultNetworkIndex,
             "dns_ready" to dnsReady,
+            "vpn_validated" to vpnValidated,
+            "core_egress_validated" to coreEgressValidated,
             "last_failure_kind" to lastFailureKind,
             "last_stop_reason" to lastStopReason,
             "ipv4_route_count" to ipv4RouteCount,
             "ipv6_route_count" to ipv6RouteCount,
             "include_package_count" to includePackageCount,
             "exclude_package_count" to excludePackageCount,
+            "system_notification_warning" to systemNotificationWarning,
+            "connection_pending" to connectionPending,
         )
         return mapOf(
             "phase" to phase.wireValue,
@@ -303,12 +474,16 @@ internal object AndroidRuntimeState {
             "default_network_interface" to defaultNetworkInterface,
             "default_network_index" to defaultNetworkIndex,
             "dns_ready" to dnsReady,
+            "vpn_validated" to vpnValidated,
+            "core_egress_validated" to coreEgressValidated,
             "last_failure_kind" to lastFailureKind,
             "last_stop_reason" to lastStopReason,
             "ipv4_route_count" to ipv4RouteCount,
             "ipv6_route_count" to ipv6RouteCount,
             "include_package_count" to includePackageCount,
             "exclude_package_count" to excludePackageCount,
+            "system_notification_warning" to systemNotificationWarning,
+            "connection_pending" to connectionPending,
             "hostDiagnostics" to hostDiagnostics,
             "message" to lastMessage,
         )
@@ -323,6 +498,7 @@ internal object AndroidRuntimeState {
             return
         }
         phase = AndroidRuntimePhase.RUNNING
+        connectionPending = false
         lastStopReason = null
         val resolvedMessage = when {
             !runningMessage.isNullOrBlank() -> runningMessage
@@ -330,6 +506,13 @@ internal object AndroidRuntimeState {
             else -> "POKROV включен на этом устройстве."
         }
         lastRunningMessage = resolvedMessage
+        if (systemNotificationWarning) {
+            lastFailureKind = "notification_permission_denied"
+            lastMessage = AndroidRuntimeSafety.publicFailureMessage(
+                "notification_permission_denied",
+            )
+            return
+        }
         val normalizedMessage = lastMessage.lowercase()
         if (
             normalizedMessage.contains("staged") ||
@@ -356,7 +539,10 @@ internal object AndroidRuntimeState {
             dnsState == "degraded" -> "degraded"
             uplinkState == "degraded" -> "degraded"
             !lastFailureKind.isNullOrBlank() -> "degraded"
-            dnsState == "healthy" && uplinkState == "healthy" -> "healthy"
+            coreEgressValidated == false -> "degraded"
+            coreEgressValidated == true && dnsState == "healthy" && uplinkState == "healthy" ->
+                "healthy"
+            vpnValidated == false -> "degraded"
             else -> "unknown"
         }
     }
@@ -395,17 +581,24 @@ internal object AndroidRuntimeState {
         }
 
         val details = mutableListOf<String>()
-        val interfaceName = defaultNetworkInterface?.takeIf { it.isNotBlank() }
         when {
-            interfaceName != null && defaultNetworkIndex != null ->
-                details += "Сеть $interfaceName (#$defaultNetworkIndex)"
-            interfaceName != null ->
-                details += "Сеть $interfaceName"
+            !defaultNetworkInterface.isNullOrBlank() && defaultNetworkIndex != null ->
+                details += "Сеть готова"
+            !defaultNetworkInterface.isNullOrBlank() ->
+                details += "Сеть определяется"
             uplinkState == "degraded" ->
                 details += "Сеть не определена"
         }
 
         details += if (dnsReady) "DNS готов" else "DNS ждет"
+        if (vpnValidated == false) details += when (vpnValidated) {
+            true -> "Интернет подтвержден"
+            false -> "Интернет не подтвержден"
+            null -> "Интернет проверяется"
+        }
+        if (coreEgressValidated == false) {
+            details += "Выход в интернет не подтвержден"
+        }
         details += "Правила v4=$ipv4RouteCount v6=$ipv6RouteCount"
 
         if (includePackageCount > 0 || excludePackageCount > 0) {

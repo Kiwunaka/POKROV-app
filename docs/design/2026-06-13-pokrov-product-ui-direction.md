@@ -120,6 +120,9 @@ visual language:
   status-pill dialect; unknown data is never decorated as success;
 - Locations keeps automatic selection first, then compact Favorites and Recent
   groups, with ping/load/health and freshness in secondary text;
+- stale, future-dated, or invalid location measurements use a neutral signal
+  treatment and do not keep showing old ping/load or qualitative health values
+  as if they were current; missing or out-of-range health scores stay neutral;
 - before Smart Connect exists, location rows show a lock and no press surface,
   while search and the independent favorite action remain available; one
   explanatory card tells the user to complete the first connection;
@@ -127,6 +130,9 @@ visual language:
   DNS, LAN, and trusted Wi-Fi. Advanced values stay behind focused sheets;
 - compound switch rows expose one accessibility action, not a tappable parent
   plus a duplicate native switch; picker rows expose their selected state;
+- the primary connect disc supports focus plus Enter/Space activation, and
+  location/app picker rows expose their selected state without leaking raw
+  package identifiers;
 - Rewards keeps referral metrics, achievements, quests, discounts, and history
   in flat grouped sections. It must not use flashing, countdown pressure,
   oversized jackpot treatment, or casino copy;

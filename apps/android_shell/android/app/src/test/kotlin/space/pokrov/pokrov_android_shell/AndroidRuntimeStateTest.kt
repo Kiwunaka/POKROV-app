@@ -85,6 +85,8 @@ class AndroidRuntimeStateTest {
         )
         AndroidRuntimeState.markRunning("POKROV включен на этом устройстве.")
 
+        AndroidRuntimeState.updateVpnValidation(true)
+        AndroidRuntimeState.updateCoreEgressValidation(true)
         val snapshot = AndroidRuntimeState.snapshot()
         @Suppress("UNCHECKED_CAST")
         val hostDiagnostics = snapshot["hostDiagnostics"] as Map<String, Any?>
@@ -94,12 +96,14 @@ class AndroidRuntimeStateTest {
         assertEquals("healthy", snapshot["dnsState"])
         assertEquals("healthy", snapshot["uplinkState"])
         assertEquals(
-            "Сеть wlan0 (#42) | DNS готов | Правила v4=3 v6=2 | Приложения include=4 exclude=1",
+            "Сеть готова | DNS готов | Правила v4=3 v6=2 | Приложения include=4 exclude=1",
             snapshot["hostDiagnosticsSummary"],
         )
         assertEquals("wlan0", snapshot["default_network_interface"])
         assertEquals(42, snapshot["default_network_index"])
         assertEquals(true, snapshot["dns_ready"])
+        assertEquals(true, snapshot["vpn_validated"])
+        assertEquals(true, snapshot["core_egress_validated"])
         assertEquals(3, snapshot["ipv4_route_count"])
         assertEquals(2, snapshot["ipv6_route_count"])
         assertEquals(4, snapshot["include_package_count"])
@@ -177,6 +181,137 @@ class AndroidRuntimeStateTest {
     }
 
     @Test
+    fun coreEgressProbeOwnsEndToEndHealthWithoutUsingRequestLogs() {
+        setPrivateField(
+            "environment",
+            AndroidRuntimeEnvironment(
+                artifactDirectory = "artifacts",
+                coreBinaryPath = "libpokrov-core.so",
+                baseDirectory = File("build/test/base"),
+                workingDirectory = File("build/test/working"),
+                tempDirectory = File("build/test/temp"),
+                configDirectory = File("build/test/config"),
+            ),
+        )
+        setPrivateField("phase", AndroidRuntimePhase.RUNNING)
+        AndroidRuntimeState.updateDefaultNetwork("wlan0", 42, dnsReady = true)
+
+        AndroidRuntimeState.updateVpnValidation(true)
+        assertEquals("unknown", AndroidRuntimeState.snapshot()["hostHealth"])
+
+        AndroidRuntimeState.updateCoreEgressValidation(false)
+        assertEquals("degraded", AndroidRuntimeState.snapshot()["hostHealth"])
+
+        AndroidRuntimeState.updateCoreEgressValidation(true)
+        val snapshot = AndroidRuntimeState.snapshot()
+        assertEquals("healthy", snapshot["hostHealth"])
+        assertEquals(true, snapshot["vpn_validated"])
+    }
+
+    @Test
+    fun coreEgressFailure_stopsRuntimeAndPreservesSafeFailureSnapshot() {
+        setPrivateField(
+            "environment",
+            AndroidRuntimeEnvironment(
+                artifactDirectory = "artifacts",
+                coreBinaryPath = "libpokrov-core.so",
+                baseDirectory = File("build/test/base"),
+                workingDirectory = File("build/test/working"),
+                tempDirectory = File("build/test/temp"),
+                configDirectory = File("build/test/config"),
+            ),
+        )
+        setPrivateField("phase", AndroidRuntimePhase.RUNNING)
+        setPrivateField("stagedConfigPath", "/tmp/pokrov-runtime.json")
+        AndroidRuntimeState.markStoppedAfterCoreEgressFailure(
+            failureKind = "core_egress_probe_failed",
+            message = AndroidRuntimeSafety.publicFailureMessage("core_egress_probe_failed"),
+            stopReason = "core_egress_probe_failed",
+        )
+
+        val snapshot = AndroidRuntimeState.snapshot()
+
+        assertEquals("initialized", snapshot["phase"])
+        assertEquals(null, snapshot["stagedConfigPath"])
+        assertEquals(false, AndroidRuntimeState.liveStats()["available"])
+        assertEquals(false, snapshot["core_egress_validated"])
+        assertEquals("core_egress_probe_failed", snapshot["last_failure_kind"])
+        assertEquals("core_egress_probe_failed", snapshot["last_stop_reason"])
+        assertEquals(
+            "POKROV не подтвердил защищенное подключение и отключил системный VPN.",
+            snapshot["message"],
+        )
+    }
+
+    @Test
+    fun coreEgressFailure_isNotPromotedBackToRunningAfterTunClosed() {
+        setPrivateField(
+            "environment",
+            AndroidRuntimeEnvironment(
+                artifactDirectory = "artifacts",
+                coreBinaryPath = "libpokrov-core.so",
+                baseDirectory = File("build/test/base"),
+                workingDirectory = File("build/test/working"),
+                tempDirectory = File("build/test/temp"),
+                configDirectory = File("build/test/config"),
+            ),
+        )
+        setPrivateField("phase", AndroidRuntimePhase.RUNNING)
+        setPrivateField("stagedConfigPath", "/tmp/pokrov-runtime.json")
+        AndroidRuntimeState.markStoppedAfterCoreEgressFailure(
+            failureKind = "core_egress_probe_failed",
+            message = AndroidRuntimeSafety.publicFailureMessage("core_egress_probe_failed"),
+            stopReason = "core_egress_probe_failed",
+        )
+
+        AndroidRuntimeState.reconcileActiveRuntime(
+            tunEstablished = false,
+            runningMessage = "POKROV подключен на этом устройстве.",
+        )
+        val snapshot = AndroidRuntimeState.snapshot()
+
+        assertEquals("initialized", snapshot["phase"])
+        assertEquals(null, snapshot["stagedConfigPath"])
+        assertEquals(false, snapshot["core_egress_validated"])
+        assertEquals("core_egress_probe_failed", snapshot["last_failure_kind"])
+        assertEquals("core_egress_probe_failed", snapshot["last_stop_reason"])
+    }
+
+    @Test
+    fun coreEgressFailure_clearsStagedReuseSoQuickSettingsCannotStart() {
+        setPrivateField(
+            "environment",
+            AndroidRuntimeEnvironment(
+                artifactDirectory = "artifacts",
+                coreBinaryPath = "libpokrov-core.so",
+                baseDirectory = File("build/test/base"),
+                workingDirectory = File("build/test/working"),
+                tempDirectory = File("build/test/temp"),
+                configDirectory = File("build/test/config"),
+            ),
+        )
+        AndroidRuntimeState.markProfileStaged("/tmp/pokrov-runtime.json")
+
+        AndroidRuntimeState.markStoppedAfterCoreEgressFailure(
+            failureKind = "core_egress_probe_failed",
+            message = AndroidRuntimeSafety.publicFailureMessage("core_egress_probe_failed"),
+            stopReason = "core_egress_probe_failed",
+        )
+
+        val snapshot = AndroidRuntimeState.snapshot()
+        assertEquals(null, snapshot["stagedConfigPath"])
+        assertEquals(
+            QuickTileAction.OPEN_APP,
+            resolveQuickTileAction(
+                isRunning = false,
+                hasStagedProfile = snapshot["stagedConfigPath"] != null,
+                quickSettingsEligible = false,
+                vpnPermissionRequired = false,
+            ),
+        )
+    }
+
+    @Test
     fun reconcileActiveRuntime_promotesStagedSnapshotBackToRunning() {
         setPrivateField(
             "environment",
@@ -207,6 +342,165 @@ class AndroidRuntimeStateTest {
         assertEquals(null, snapshot["last_stop_reason"])
     }
 
+    @Test
+    fun pendingConnection_remainsObservableUntilRuntimeResolvesIt() {
+        setPrivateField(
+            "environment",
+            AndroidRuntimeEnvironment(
+                artifactDirectory = "artifacts",
+                coreBinaryPath = "libpokrov-core.so",
+                baseDirectory = File("build/test/base"),
+                workingDirectory = File("build/test/working"),
+                tempDirectory = File("build/test/temp"),
+                configDirectory = File("build/test/config"),
+            ),
+        )
+        AndroidRuntimeState.markProfileStaged("/tmp/pokrov-runtime.json")
+        AndroidRuntimeState.markConnectionRequested()
+
+        assertTrue(AndroidRuntimeState.snapshot()["connection_pending"] as Boolean)
+
+        AndroidRuntimeState.markStopRequested()
+        assertFalse(AndroidRuntimeState.snapshot()["connection_pending"] as Boolean)
+
+        AndroidRuntimeState.markConnectionRequested()
+        AndroidRuntimeState.markRunning("POKROV включен на этом устройстве.")
+        assertFalse(AndroidRuntimeState.snapshot()["connection_pending"] as Boolean)
+    }
+
+    @Test
+    fun initializationFailure_clearsPendingConnectionState() {
+        setPrivateField(
+            "environment",
+            AndroidRuntimeEnvironment(
+                artifactDirectory = "artifacts",
+                coreBinaryPath = "libpokrov-core.so",
+                baseDirectory = File("build/test/base"),
+                workingDirectory = File("build/test/working"),
+                tempDirectory = File("build/test/temp"),
+                configDirectory = File("build/test/config"),
+            ),
+        )
+        setPrivateField("phase", AndroidRuntimePhase.CONFIG_STAGED)
+        setPrivateField("stagedConfigPath", "/tmp/pokrov-runtime.json")
+        AndroidRuntimeState.markConnectionRequested()
+
+        AndroidRuntimeState.markFailure(
+            kind = "runtime_initialization_failed",
+            message = AndroidRuntimeSafety.publicFailureMessage("runtime_initialization_failed"),
+        )
+
+        val snapshot = AndroidRuntimeState.snapshot()
+        assertFalse(snapshot["connection_pending"] as Boolean)
+        assertEquals("configStaged", snapshot["phase"])
+        assertEquals("runtime_initialization_failed", snapshot["last_failure_kind"])
+    }
+
+    @Test
+    fun dnsTransportFailure_marksRunningSnapshotDegradedBeforeFailClose() {
+        setPrivateField(
+            "environment",
+            AndroidRuntimeEnvironment(
+                artifactDirectory = "artifacts",
+                coreBinaryPath = "libpokrov-core.so",
+                baseDirectory = File("build/test/base"),
+                workingDirectory = File("build/test/working"),
+                tempDirectory = File("build/test/temp"),
+                configDirectory = File("build/test/config"),
+            ),
+        )
+        setPrivateField("phase", AndroidRuntimePhase.RUNNING)
+        AndroidRuntimeState.updateDefaultNetwork("wlan0", 42, dnsReady = true)
+        AndroidRuntimeState.updateVpnValidation(true)
+        AndroidRuntimeState.updateCoreEgressValidation(true)
+
+        AndroidRuntimeState.markDnsTransportFailure(
+            failureKind = AndroidResolverPolicy.TIMEOUT,
+            message = AndroidRuntimeSafety.publicFailureMessage(AndroidResolverPolicy.TIMEOUT),
+        )
+
+        val snapshot = AndroidRuntimeState.snapshot()
+        assertEquals("degraded", snapshot["dnsState"])
+        assertEquals("degraded", snapshot["hostHealth"])
+        assertFalse(snapshot["dns_ready"] as Boolean)
+        assertEquals(AndroidResolverPolicy.TIMEOUT, snapshot["last_failure_kind"])
+    }
+
+    @Test
+    fun invalidatedProfile_keepsRunningTunnelStoppable_butLeavesNoRestartProfile() {
+        setPrivateField(
+            "environment",
+            AndroidRuntimeEnvironment(
+                artifactDirectory = "artifacts",
+                coreBinaryPath = "libpokrov-core.so",
+                baseDirectory = File("build/test/base"),
+                workingDirectory = File("build/test/working"),
+                tempDirectory = File("build/test/temp"),
+                configDirectory = File("build/test/config"),
+            ),
+        )
+        AndroidRuntimeState.markProfileStaged("/tmp/pokrov-runtime.json")
+        AndroidRuntimeState.markRunning("POKROV включен на этом устройстве.")
+
+        AndroidRuntimeState.invalidateStagedProfile()
+
+        var snapshot = AndroidRuntimeState.snapshot()
+        assertEquals("running", snapshot["phase"])
+        assertEquals(null, snapshot["stagedConfigPath"])
+        AndroidRuntimeState.markStopRequested(stopReason = "quick_settings")
+
+        snapshot = AndroidRuntimeState.snapshot()
+        assertEquals("initialized", snapshot["phase"])
+        assertEquals(null, snapshot["stagedConfigPath"])
+        assertEquals(false, snapshot["canConnect"])
+
+        AndroidRuntimeState.markProfileStaged("/tmp/pokrov-fresh-runtime.json")
+        snapshot = AndroidRuntimeState.snapshot()
+        assertEquals("configStaged", snapshot["phase"])
+        assertEquals("/tmp/pokrov-fresh-runtime.json", snapshot["stagedConfigPath"])
+        assertEquals(true, snapshot["canConnect"])
+        assertEquals(
+            QuickTileAction.START,
+            resolveQuickTileAction(
+                isRunning = false,
+                hasStagedProfile = true,
+                quickSettingsEligible = true,
+                vpnPermissionRequired = false,
+            ),
+        )
+    }
+
+    @Test
+    fun notificationPermissionWarning_persistsAfterRunningUntilPermissionIsGranted() {
+        setPrivateField(
+            "environment",
+            AndroidRuntimeEnvironment(
+                artifactDirectory = "artifacts",
+                coreBinaryPath = "libpokrov-core.so",
+                baseDirectory = File("build/test/base"),
+                workingDirectory = File("build/test/working"),
+                tempDirectory = File("build/test/temp"),
+                configDirectory = File("build/test/config"),
+            ),
+        )
+        setPrivateField("phase", AndroidRuntimePhase.CONFIG_STAGED)
+
+        AndroidRuntimeState.markSystemNotificationWarning()
+        AndroidRuntimeState.markRunning("POKROV подключен на этом устройстве.")
+
+        var snapshot = AndroidRuntimeState.snapshot()
+        assertEquals("notification_permission_denied", snapshot["last_failure_kind"])
+        assertEquals(
+            "Системное уведомление POKROV скрыто в настройках Android.",
+            snapshot["message"],
+        )
+
+        AndroidRuntimeState.clearSystemNotificationWarning()
+        snapshot = AndroidRuntimeState.snapshot()
+        assertNull(snapshot["last_failure_kind"])
+        assertEquals("POKROV подключен на этом устройстве.", snapshot["message"])
+    }
+
     private fun resetState() {
         setPrivateField("environment", null)
         setPrivateField("phase", AndroidRuntimePhase.ARTIFACT_MISSING)
@@ -220,12 +514,16 @@ class AndroidRuntimeStateTest {
         setPrivateField("defaultNetworkInterface", null)
         setPrivateField("defaultNetworkIndex", null)
         setPrivateField("dnsReady", false)
+        setPrivateField("vpnValidated", null)
+        setPrivateField("coreEgressValidated", null)
         setPrivateField("lastFailureKind", null)
         setPrivateField("lastStopReason", null)
         setPrivateField("ipv4RouteCount", 0)
         setPrivateField("ipv6RouteCount", 0)
         setPrivateField("includePackageCount", 0)
         setPrivateField("excludePackageCount", 0)
+        setPrivateField("systemNotificationWarning", false)
+        setPrivateField("connectionPending", false)
     }
 
     private fun setPrivateField(name: String, value: Any?) {

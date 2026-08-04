@@ -23,5 +23,5 @@ Still blocked before real macOS publication:
 
 - no committed Apple team, provisioning profile, Developer ID identity, or notary profile
 - no signed archive, notarized app bundle, stapled artifact, or Gatekeeper validation from a Mac
-- no Windows-produced substitute is accepted for the required universal `pokrov-core.dylib`; build POKROV Core 1.0.1 on macOS
+- no Windows-produced substitute is accepted for the required universal `pokrov-core.dylib`; build POKROV Core 1.0.2 on macOS
 - no operator decision yet on direct Developer ID distribution versus Mac App Store-only packaging

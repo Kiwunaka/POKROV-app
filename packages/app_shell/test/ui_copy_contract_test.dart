@@ -209,4 +209,12 @@ void main() {
       }
     },
   );
+
+  test('external handoff logging never includes a full URI or query', () {
+    final source = seedShell.readAsStringSync();
+    expect(
+      source,
+      isNot(contains(r"debugPrint('POKROV handoff open failed: $uri')")),
+    );
+  });
 }

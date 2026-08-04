@@ -221,8 +221,10 @@ class _RewardsTelegramCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    final bonusDays = summary?.channelBonusPremiumDays ?? 10;
     final claimed = (summary?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
+    final reportedBonusDays = summary?.channelBonusPremiumDays ?? 0;
+    final bonusDays =
+        claimed ? reportedBonusDays : _availableTelegramBonusDays(summary);
     final channel = (summary?.channelUsername ?? 'pokrov_vpn').trim();
     final handle = channel.isEmpty
         ? '@pokrov_vpn'
@@ -273,6 +275,16 @@ class _RewardsTelegramCard extends StatelessWidget {
                         height: 1.3,
                       ),
                 ),
+                if (claimed && bonusDays > 0) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '+${ruDays(bonusDays)} добавлены к доступу.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: p.muted,
+                          height: 1.3,
+                        ),
+                  ),
+                ],
               ],
             ),
           ),

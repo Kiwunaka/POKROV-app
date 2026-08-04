@@ -17,6 +17,24 @@ const _ruIpWhitelistRuleSetTag = 'pokrov-ru-ip-whitelist';
 const _validClientUpdateSha256 =
     'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
+Map<String, Object?> _readyManagedProfile(String revision,
+    {bool pending = false}) {
+  return <String, Object?>{
+    'provisioning': <String, Object?>{
+      'status': pending ? 'pending_sync' : 'ready',
+      'sync_ok': !pending,
+    },
+    'profile_revision': revision,
+    'config_format': 'singbox-json',
+    'config_payload': <String, Object?>{
+      'outbounds': <Object?>[
+        <String, Object?>{'type': 'selector', 'tag': 'proxy'},
+      ],
+      'route': <String, Object?>{'final': 'proxy'},
+    },
+  };
+}
+
 ClientAppUpdateInfo _clientUpdateInfo({
   String url =
       'https://github.com/Kiwunaka/pokrov/releases/download/v1.0.1-beta/pokrov-android-arm64-v8a.apk',
@@ -491,6 +509,58 @@ void main() {
     expect(preserved['session_token_storage'], 'secure');
   });
 
+  test('control-plane SocketException exposes neutral recovery copy', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-safe-network-error-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final reservedServer =
+        await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final unavailablePort = reservedServer.port;
+    await reservedServer.close(force: true);
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:$unavailablePort/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: MemoryAppFirstSessionSecretStore(),
+      maxRequestAttempts: 1,
+      connectionTimeout: const Duration(milliseconds: 50),
+      requestTimeout: const Duration(milliseconds: 50),
+    );
+
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.android,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(
+        isA<BootstrapFailure>()
+            .having(
+              (error) => error.message,
+              'message',
+              'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
+            )
+            .having(
+              (error) => error.operation,
+              'operation',
+              'POST /api/client/session/start-trial',
+            )
+            .having(
+              (error) => error.message,
+              'internal details',
+              allOf(
+                isNot(contains('SocketException')),
+                isNot(contains('127.0.0.1')),
+                isNot(contains('port =')),
+              ),
+            ),
+      ),
+    );
+  });
+
   test('keeps legacy JSON token when atomic state persistence fails', () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-bootstrap-state-write-failure-test-',
@@ -547,30 +617,139 @@ void main() {
     );
   });
 
-  test(
-      'android bootstrap can map canonical API host to a direct control-plane IP',
-      () {
-    expect(
-      bootstrapDirectAddressForRequest(
-        requestUri: Uri.parse('https://api.pokrov.space/api/health'),
-        hostPlatform: HostPlatform.android,
-      )?.address,
-      '82.21.114.104',
+  test('serializes overlapping app-first state writes without leaking secrets',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-state-write-queue-test-',
     );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final firstWriterEntered = Completer<void>();
+    final releaseFirstWriter = Completer<void>();
+    var activeWriters = 0;
+    var peakActiveWriters = 0;
+    var writerCalls = 0;
+    Future<void> writer(File file, String contents) async {
+      activeWriters += 1;
+      if (activeWriters > peakActiveWriters) {
+        peakActiveWriters = activeWriters;
+      }
+      try {
+        writerCalls += 1;
+        if (writerCalls == 1) {
+          firstWriterEntered.complete();
+          await releaseFirstWriter.future;
+        }
+        final nextFile = File('${file.path}.next');
+        final backupFile = File('${file.path}.bak');
+        if (await nextFile.exists()) {
+          await nextFile.delete();
+        }
+        await nextFile.writeAsString(contents, flush: true);
+        expect(jsonDecode(await nextFile.readAsString()), isA<Map>());
+        if (await backupFile.exists()) {
+          await backupFile.delete();
+        }
+        if (await file.exists()) {
+          await file.rename(backupFile.path);
+        }
+        try {
+          await nextFile.rename(file.path);
+        } catch (_) {
+          if (!await file.exists() && await backupFile.exists()) {
+            await backupFile.rename(file.path);
+          }
+          rethrow;
+        }
+        if (await backupFile.exists()) {
+          await backupFile.delete();
+        }
+      } finally {
+        activeWriters -= 1;
+      }
+    }
+
+    var starts = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        switch (request.uri.path) {
+          case '/api/client/session/start-trial':
+            starts += 1;
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(<String, Object?>{
+                'access_token': 'overlap-access-$starts',
+                'refresh_token': 'overlap-refresh-$starts',
+                'account_id': '64',
+                'provisioning': <String, Object?>{
+                  'status': 'ready',
+                  'sync_ok': true,
+                },
+              }));
+          case '/api/client/route-policy':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write('{"ok":true}');
+          case '/api/client/profile/managed':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(_readyManagedProfile('overlap')));
+          default:
+            request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+
+    final secretStore = MemoryAppFirstSessionSecretStore();
+    AppFirstRuntimeBootstrapper createBootstrapper() =>
+        AppFirstRuntimeBootstrapper(
+          apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+          supportDirectoryResolver: () async => tempDirectory,
+          sessionSecretStore: secretStore,
+          stateFileWriter: writer,
+          maxRequestAttempts: 1,
+        );
+
+    final firstResolve = createBootstrapper().resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    await firstWriterEntered.future;
+    final secondResolve = createBootstrapper().resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(peakActiveWriters, 1);
+
+    releaseFirstWriter.complete();
+    await Future.wait(<Future<dynamic>>[firstResolve, secondResolve]);
+
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}'
+      'app-first-session-windows.json',
+    );
+    final state =
+        jsonDecode(await stateFile.readAsString()) as Map<String, dynamic>;
+    expect(state['session_token_storage'], 'secure');
+    expect(state.containsKey('session_token'), isFalse);
+    expect(state.containsKey('refresh_token'), isFalse);
     expect(
-      bootstrapDirectAddressForRequest(
-        requestUri: Uri.parse('https://api.pokrov.space/api/health'),
+      await secretStore.readSessionPair(
         hostPlatform: HostPlatform.windows,
+        installId: state['install_id'] as String,
       ),
-      isNull,
+      isNotNull,
     );
-    expect(
-      bootstrapDirectAddressForRequest(
-        requestUri: Uri.parse('https://pokrov.space/'),
-        hostPlatform: HostPlatform.android,
-      ),
-      isNull,
-    );
+    expect(await File('${stateFile.path}.next').exists(), isFalse);
+    expect(await File('${stateFile.path}.bak').exists(), isFalse);
   });
 
   test('bootstraps and persists a managed profile from the app-first API',
@@ -594,6 +773,7 @@ void main() {
         if (request.uri.path == '/api/client/session/start-trial') {
           final decoded = jsonDecode(body) as Map<String, dynamic>;
           expect(decoded['install_id'], isNotEmpty);
+          expect(decoded['app_version'], pokrovClientVersion);
           expect(decoded.containsKey('trial_days'), isFalse);
           request.response
             ..headers.contentType = ContentType.json
@@ -647,6 +827,19 @@ void main() {
                     'sync_ok': true,
                   },
                   'profile_revision': 'rev-007',
+                  'access': <String, Object?>{
+                    'access_state': 'free_monthly',
+                    'soft_mode_active': false,
+                    'free_profile_state': 'soft_transition_pending',
+                    'free_profile_active_role': 'free_standard',
+                    'free_profile_job_id': 81,
+                  },
+                  'free_caps': <String, Object?>{
+                    'transition_state': 'soft_transition_pending',
+                    'active_role': 'free_standard',
+                    'provisioning_job_id': 81,
+                    'error_code': null,
+                  },
                   'smart_connect': <String, Object?>{
                     'eligible': true,
                     'fallback_required': false,
@@ -729,6 +922,7 @@ void main() {
     final payload = await bootstrapper.resolveManagedProfile(
       hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.selectedApps,
+      selectedApps: const ['pokrov-test.exe'],
     );
 
     expect(payload.profileName, 'pokrov-windows-rev-007');
@@ -737,6 +931,9 @@ void main() {
     expect(payload.smartConnect?.shortlist.single.code, 'pl');
     expect(payload.smartConnect?.shortlist.single.rankHint.panelLatencyMs, 42);
     expect(payload.smartConnect?.stickiness.preferredNodeCode, 'pl');
+    expect(payload.freeProfileAccess?.isPending, isTrue);
+    expect(payload.freeProfileAccess?.activeRole, 'free_standard');
+    expect(payload.freeProfileAccess?.provisioningJobId, 81);
     expect(payload.warpPolicy.enabled, isTrue);
     expect(payload.warpPolicy.runtimeReady, isTrue);
     expect(payload.warpPolicy.state, 'ready');
@@ -748,8 +945,9 @@ void main() {
         payload.warpPolicy.wireguardConfigJson, contains('test-private-key'));
     expect(payload.warpPolicy.accountId, 'test-account-id');
     expect(payload.configPayload, contains('"type": "tun"'));
-    expect(payload.configPayload, contains('"final": "proxy"'));
+    expect(payload.configPayload, contains('"final": "direct"'));
     expect(payload.configPayload, contains('"auto_detect_interface": true'));
+    expect(payload.configPayload, isNot(contains('"override_android_vpn"')));
     expect(
       requests,
       containsAllInOrder(const [
@@ -1111,6 +1309,7 @@ void main() {
 
     final requests = <String>[];
     Map<String, dynamic>? latencyBody;
+    final telemetryUploaded = Completer<void>();
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
     unawaited(() async {
@@ -1241,6 +1440,9 @@ void main() {
               ),
             );
           await request.response.close();
+          if (!telemetryUploaded.isCompleted) {
+            telemetryUploaded.complete();
+          }
           continue;
         }
 
@@ -1263,6 +1465,7 @@ void main() {
       hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.fullTunnel,
     );
+    await telemetryUploaded.future.timeout(const Duration(seconds: 2));
 
     expect(payload.smartConnect?.shortlistRevision, 'short-009');
     expect(latencyBody, isNotNull);
@@ -1280,8 +1483,198 @@ void main() {
       'POST /api/client/route-policy',
       'GET /api/client/profile/managed',
       'POST /api/client/nodes/select',
+      'GET /api/client/profile/managed',
       'POST /api/client/nodes/latency-samples',
     ]);
+  });
+
+  test(
+      'uses local selection and promotes the profile when Smart Connect advisory stalls',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-smart-connect-background-telemetry-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final selectStarted = Completer<void>();
+    var latencyUploads = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{
+              'session': <String, Object?>{
+                'session_token': 'background-session',
+                'account_id': 'background-account',
+              },
+              'provisioning': <String, Object?>{
+                'status': 'ready',
+                'sync_ok': true,
+              },
+            }));
+          await request.response.close();
+          continue;
+        }
+        if (request.uri.path == '/api/client/route-policy') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write('{"ok":true}');
+          await request.response.close();
+          continue;
+        }
+        if (request.uri.path == '/api/client/profile/managed') {
+          final profile = _readyManagedProfile('background')
+            ..['smart_connect'] = <String, Object?>{
+              'eligible': true,
+              'shortlist': <Object?>[
+                <String, Object?>{
+                  'code': 'pl',
+                  'rank': 1,
+                  'probe': <String, Object?>{'host': '127.0.0.1', 'port': 1},
+                  'rank_hint': <String, Object?>{},
+                },
+              ],
+            };
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(profile));
+          await request.response.close();
+          continue;
+        }
+        if (request.uri.path == '/api/client/nodes/select') {
+          if (!selectStarted.isCompleted) {
+            selectStarted.complete();
+          }
+          await Future<void>.delayed(const Duration(seconds: 1));
+          try {
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write('{"ok":true}');
+            await request.response.close();
+          } on Object {
+            // The client closes this best-effort request at its deadline.
+          }
+          continue;
+        }
+        if (request.uri.path == '/api/client/nodes/latency-samples') {
+          latencyUploads += 1;
+        }
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      smartConnectTelemetryDeadline: const Duration(milliseconds: 80),
+      smartConnectLatencyProbe: (_) async => 42,
+    );
+    final stopwatch = Stopwatch()..start();
+    final payload = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    stopwatch.stop();
+
+    expect(payload.profileName, 'pokrov-windows-background');
+    expect(stopwatch.elapsed, lessThan(const Duration(seconds: 2)));
+    await selectStarted.future.timeout(const Duration(seconds: 1));
+    await Future<void>.delayed(const Duration(milliseconds: 160));
+    expect(latencyUploads, 1);
+  });
+
+  test('bounds hanging Smart Connect probes by concurrency and deadline',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-smart-connect-background-probe-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{
+              'session': <String, Object?>{
+                'session_token': 'probe-session',
+                'account_id': 'probe-account',
+              },
+              'provisioning': <String, Object?>{
+                'status': 'ready',
+                'sync_ok': true,
+              },
+            }));
+        } else if (request.uri.path == '/api/client/route-policy') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write('{"ok":true}');
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          final profile = _readyManagedProfile('probe')
+            ..['smart_connect'] = <String, Object?>{
+              'eligible': true,
+              'shortlist': List<Object?>.generate(
+                8,
+                (index) => <String, Object?>{
+                  'code': 'node-$index',
+                  'rank': index + 1,
+                  'probe': <String, Object?>{
+                    'host': '127.0.0.1',
+                    'port': index + 1,
+                  },
+                  'rank_hint': <String, Object?>{},
+                },
+              ),
+            };
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(profile));
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+
+    var probesStarted = 0;
+    final neverCompletes = Completer<int?>();
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      smartConnectTelemetryDeadline: const Duration(milliseconds: 80),
+      smartConnectProbeTimeout: const Duration(seconds: 5),
+      smartConnectProbeConcurrency: 3,
+      smartConnectLatencyProbe: (_) {
+        probesStarted += 1;
+        return neverCompletes.future;
+      },
+    );
+    final stopwatch = Stopwatch()..start();
+    await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    stopwatch.stop();
+
+    expect(stopwatch.elapsed, lessThan(const Duration(milliseconds: 500)));
+    await Future<void>.delayed(const Duration(milliseconds: 160));
+    expect(probesStarted, 3);
   });
 
   test('manual smart-connect preference does not upload fake RTT samples',
@@ -1445,6 +1838,7 @@ void main() {
     }());
 
     Map<String, dynamic>? latencyBody;
+    final telemetryUploaded = Completer<void>();
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
     unawaited(() async {
@@ -1561,6 +1955,9 @@ void main() {
               ),
             );
           await request.response.close();
+          if (!telemetryUploaded.isCompleted) {
+            telemetryUploaded.complete();
+          }
           continue;
         }
 
@@ -1578,6 +1975,7 @@ void main() {
       hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.fullTunnel,
     );
+    await telemetryUploaded.future.timeout(const Duration(seconds: 2));
 
     final samples = latencyBody?['samples'] as List<Object?>?;
     expect(samples, hasLength(1));
@@ -1676,7 +2074,7 @@ void main() {
       subject: 'Connection help',
       body: 'Cannot connect on first launch',
       diagnostics: const <String, Object?>{
-        'app_version': '1.0.0-beta.4',
+        'app_version': pokrovClientVersion,
         'platform': 'windows',
         'route_mode': 'all_except_ru',
         'connection_status': 'Ready',
@@ -1992,7 +2390,7 @@ void main() {
       routeMode: RouteMode.allExceptRu,
       statusLabel: 'Ready',
       diagnostics: const <String, Object?>{
-        'app_version': '1.0.0-beta.4',
+        'app_version': pokrovClientVersion,
         'platform': 'windows',
         'route_mode': 'all_except_ru',
         'connection_status': 'Ready',
@@ -2446,7 +2844,7 @@ void main() {
                   'link_required': false,
                   'claim_required': true,
                   'already_claimed': false,
-                  'bonus_days': 10,
+                  'bonus_days': 5,
                 },
               ),
             );
@@ -2466,7 +2864,7 @@ void main() {
                 <String, Object?>{
                   'ok': true,
                   'already_claimed': false,
-                  'premium_days': 10,
+                  'premium_days': 5,
                   'claimed_at': '2026-06-03T12:00:00Z',
                   'expiry_at': '2026-06-13T12:00:00Z',
                   'sub_type': 'BONUS',
@@ -2500,9 +2898,9 @@ void main() {
     expect(status.ok, isTrue);
     expect(status.subscriber, isTrue);
     expect(status.claimRequired, isTrue);
-    expect(status.bonusDays, 10);
+    expect(status.bonusDays, 5);
     expect(claim.ok, isTrue);
-    expect(claim.premiumDays, 10);
+    expect(claim.premiumDays, 5);
     expect(claim.subType, 'BONUS');
     expect(claim.claimedAt, '2026-06-03T12:00:00Z');
     expect(requests, <String>[
@@ -2742,7 +3140,7 @@ void main() {
                       'slot_id': 'rewards_top',
                       'content_id': 'telegram_bonus',
                       'enabled': true,
-                      'title': 'Telegram +10 days',
+                      'title': 'Telegram +5 days',
                       'body': 'Connect Telegram and claim the reward.',
                       'image_url': 'https://cdn.example.com/promo.png',
                       'cta_label': 'Open',
@@ -2819,7 +3217,7 @@ void main() {
     expect(summary.referralSummary.privacy, contains('не показываются'));
     expect(summary.promoSlots.remoteAvailable, isTrue);
     expect(summary.promoSlots.visibleSlots, hasLength(1));
-    expect(summary.promoSlots.visibleSlots.single.title, 'Telegram +10 days');
+    expect(summary.promoSlots.visibleSlots.single.title, 'Telegram +5 days');
     expect(summary.promoSlots.visibleSlots.single.imageUrl,
         'https://cdn.example.com/promo.png');
     expect(summary.promoSlots.visibleSlots.single.placement, 'home_banner');
@@ -2859,8 +3257,7 @@ void main() {
     );
   });
 
-  test('retries a temporary 502 during start-trial and then succeeds',
-      () async {
+  test('does not retry a temporary 502 during start-trial', () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-bootstrap-retry-test-',
     );
@@ -2875,38 +3272,13 @@ void main() {
     addTearDown(server.close);
     unawaited(() async {
       await for (final request in server) {
-        final body = await utf8.decoder.bind(request).join();
+        await utf8.decoder.bind(request).join();
         if (request.uri.path == '/api/client/session/start-trial') {
           startTrialAttempts += 1;
-          if (startTrialAttempts == 1) {
-            request.response
-              ..statusCode = HttpStatus.badGateway
-              ..headers.contentType = ContentType.text
-              ..write('temporary upstream outage');
-            await request.response.close();
-            continue;
-          }
-          final decoded = jsonDecode(body) as Map<String, dynamic>;
-          expect(decoded['install_id'], isNotEmpty);
           request.response
-            ..headers.contentType = ContentType.json
-            ..write(
-              jsonEncode(
-                <String, Object?>{
-                  'session': <String, Object?>{
-                    'session_token': 'session-token-2',
-                    'account_id': '84',
-                  },
-                  'provisioning': <String, Object?>{
-                    'status': 'ready',
-                    'sync_ok': true,
-                    'managed_manifest': <String, Object?>{
-                      'url': '/api/client/profile/managed',
-                    },
-                  },
-                },
-              ),
-            );
+            ..statusCode = HttpStatus.badGateway
+            ..headers.contentType = ContentType.text
+            ..write('temporary upstream outage');
           await request.response.close();
           continue;
         }
@@ -2968,16 +3340,938 @@ void main() {
       delayScheduler: (_) async {},
     );
 
-    final payload = await bootstrapper.resolveManagedProfile(
-      hostPlatform: HostPlatform.android,
-      routeMode: RouteMode.fullTunnel,
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.android,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(
+        isA<BootstrapFailure>()
+            .having((error) => error.statusCode, 'statusCode',
+                HttpStatus.badGateway)
+            .having(
+              (error) => error.operation,
+              'operation',
+              'POST /api/client/session/start-trial',
+            ),
+      ),
     );
 
-    expect(startTrialAttempts, 2);
-    expect(payload.profileName, 'pokrov-android-rev-retry');
-    expect(payload.configPayload, contains('"type": "tun"'));
-    expect(payload.configPayload, contains('"override_android_vpn": true'));
-    expect(payload.configPayload, contains('"final": "proxy"'));
+    expect(startTrialAttempts, 1);
+  });
+
+  test('refreshes an expired access session without starting a second trial',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-refresh-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists())
+        await tempDirectory.delete(recursive: true);
+    });
+    var starts = 0;
+    var refreshes = 0;
+    var profiles = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        final path = request.uri.path;
+        if (path == '/api/client/session/start-trial') {
+          starts += 1;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{
+              'access_token': 'expired-access',
+              'refresh_token': 'refresh-one',
+              'account_id': '42',
+              'session': <String, Object?>{'session_token': 'expired-access'},
+              'provisioning': <String, Object?>{
+                'status': 'ready',
+                'sync_ok': true
+              },
+            }));
+        } else if (path == '/api/client/session/refresh') {
+          refreshes += 1;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{
+              'access_token': 'fresh-access',
+              'refresh_token': 'refresh-two',
+              'account_id': '42',
+            }));
+        } else if (path == '/api/client/route-policy') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write('{"ok":true}');
+        } else if (path == '/api/client/profile/managed') {
+          profiles += 1;
+          if (profiles == 1)
+            request.response.statusCode = HttpStatus.unauthorized;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(profiles == 1
+                ? '{"detail":"expired"}'
+                : jsonEncode(_readyManagedProfile('refresh')));
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      delayScheduler: (_) async {},
+    );
+    final payload = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    expect(payload.profileName, 'pokrov-windows-refresh');
+    expect(starts, 1);
+    expect(refreshes, 1);
+  });
+
+  test('keeps pending-sync credentials for a later managed-profile retry',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-pending-sync-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists())
+        await tempDirectory.delete(recursive: true);
+    });
+    var starts = 0;
+    var profiles = 0;
+    final secretStore = MemoryAppFirstSessionSecretStore();
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          starts += 1;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{
+              'access_token': 'pending-access',
+              'refresh_token': 'pending-refresh',
+              'account_id': '84',
+              'provisioning': <String, Object?>{
+                'status': 'pending_sync',
+                'sync_ok': false
+              },
+            }));
+        } else if (request.uri.path == '/api/client/route-policy') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write('{"ok":true}');
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          profiles += 1;
+          final pending = profiles == 1;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+                jsonEncode(_readyManagedProfile('pending', pending: pending)));
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: secretStore,
+      delayScheduler: (_) async {},
+    );
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(isA<BootstrapFailure>()),
+    );
+    expect(starts, 1);
+    final payload = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    expect(payload.profileName, 'pokrov-windows-pending');
+    expect(starts, 1);
+  });
+
+  test('refresh failure never starts a second trial for an existing install',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-refresh-failure-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists())
+        await tempDirectory.delete(recursive: true);
+    });
+    var starts = 0;
+    var refreshes = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          starts += 1;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{
+              'access_token': 'expired-access',
+              'refresh_token': 'refresh-one',
+              'account_id': '42',
+              'provisioning': <String, Object?>{
+                'status': 'ready',
+                'sync_ok': true
+              },
+            }));
+        } else if (request.uri.path == '/api/client/route-policy') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write('{"ok":true}');
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          request.response.statusCode = HttpStatus.unauthorized;
+        } else if (request.uri.path == '/api/client/session/refresh') {
+          refreshes += 1;
+          request.response
+            ..statusCode = HttpStatus.unauthorized
+            ..headers.set('X-POKROV-Auth-Error', 'fresh_auth_required');
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      delayScheduler: (_) async {},
+    );
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(
+        isA<BootstrapFailure>()
+            .having(
+              (error) => error.message,
+              'message',
+              contains('восстановить доступ'),
+            )
+            .having(
+              (error) => error.code,
+              'code',
+              'fresh_auth_required',
+            ),
+      ),
+    );
+    expect(starts, 1);
+    expect(refreshes, 1);
+  });
+
+  test(
+      'temporary refresh failure remains manually retryable and retains the session pair',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-refresh-temporary-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists())
+        await tempDirectory.delete(recursive: true);
+    });
+    var starts = 0;
+    var refreshes = 0;
+    var profiles = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        switch (request.uri.path) {
+          case '/api/client/session/start-trial':
+            starts += 1;
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(<String, Object?>{
+                'access_token': 'expired-access',
+                'refresh_token': 'refresh-one',
+                'account_id': '42',
+                'provisioning': <String, Object?>{
+                  'status': 'ready',
+                  'sync_ok': true
+                },
+              }));
+          case '/api/client/route-policy':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write('{"ok":true}');
+          case '/api/client/profile/managed':
+            profiles += 1;
+            if (profiles <= 2)
+              request.response.statusCode = HttpStatus.unauthorized;
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(profiles <= 2
+                  ? '{"detail":"expired"}'
+                  : jsonEncode(_readyManagedProfile('refreshed')));
+          case '/api/client/session/refresh':
+            refreshes += 1;
+            if (refreshes == 1) {
+              request.response.statusCode = HttpStatus.serviceUnavailable;
+              request.response.write('temporary outage');
+            } else {
+              request.response
+                ..headers.contentType = ContentType.json
+                ..write(jsonEncode(<String, Object?>{
+                  'access_token': 'fresh-access',
+                  'refresh_token': 'refresh-two',
+                  'account_id': '42',
+                }));
+            }
+          default:
+            request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      delayScheduler: (_) async {},
+    );
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(isA<BootstrapFailure>().having(
+        (error) => error.statusCode,
+        'statusCode',
+        HttpStatus.serviceUnavailable,
+      )),
+    );
+    expect(starts, 1);
+    expect(refreshes, 1);
+    final payload = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    expect(payload.profileName, 'pokrov-windows-refreshed');
+    expect(starts, 1);
+    expect(refreshes, 2);
+  });
+
+  test(
+      'captures only normalized platform error codes without changing user copy',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-error-code-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final errorHeaders = <String?>[
+      'device_recovery_required',
+      'Auth_Session_Expired',
+      'invalid-code',
+      'a' * 65,
+      null,
+    ];
+    var requestIndex = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        final header = errorHeaders[requestIndex];
+        final headerName =
+            requestIndex == 0 ? 'x-pOkRoV-aUtH-eRrOr' : 'X-POKROV-Auth-Error';
+        requestIndex += 1;
+        request.response
+          ..statusCode = HttpStatus.unauthorized
+          ..headers.contentType = ContentType.json;
+        if (header != null) {
+          request.response.headers.set(headerName, header);
+        }
+        request.response.write('{"detail":"Обновите сессию."}');
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      delayScheduler: (_) async {},
+      maxRequestAttempts: 1,
+    );
+
+    final failures = <BootstrapFailure>[];
+    for (var index = 0; index < errorHeaders.length; index += 1) {
+      try {
+        await bootstrapper.resolveManagedProfile(
+          hostPlatform: HostPlatform.windows,
+          routeMode: RouteMode.fullTunnel,
+        );
+        fail('Expected BootstrapFailure');
+      } on BootstrapFailure catch (error) {
+        failures.add(error);
+      }
+    }
+
+    expect(requestIndex, errorHeaders.length);
+    expect(
+      failures.map((failure) => failure.code),
+      <String>[
+        'device_recovery_required',
+        'auth_session_expired',
+        '',
+        '',
+        '',
+      ],
+    );
+    for (final failure in failures) {
+      expect(failure.statusCode, HttpStatus.unauthorized);
+      expect(failure.operation, 'POST /api/client/session/start-trial');
+      expect(failure.message, 'Обновите сессию.');
+      expect(failure.message, isNot(contains('device_recovery_required')));
+      expect(failure.message, isNot(contains('auth_session_expired')));
+    }
+  });
+
+  test('keeps the service failure copy when a platform error code is present',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-service-error-code-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response
+          ..statusCode = HttpStatus.serviceUnavailable
+          ..headers.contentType = ContentType.json;
+        request.response.headers
+            .set('X-POKROV-Auth-Error', 'node_capacity_exhausted');
+        request.response.write('{"detail":"internal detail"}');
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      delayScheduler: (_) async {},
+      maxRequestAttempts: 1,
+    );
+
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(
+        isA<BootstrapFailure>()
+            .having(
+              (error) => error.code,
+              'code',
+              'node_capacity_exhausted',
+            )
+            .having(
+              (error) => error.message,
+              'message',
+              'Сервис подготовки временно недоступен. Попробуйте ещё раз.',
+            ),
+      ),
+    );
+  });
+
+  test('shares a rotated refresh session across concurrent API flows',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-refresh-single-flight-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    const installId = 'refresh-single-flight-install';
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}'
+      'app-first-session-windows.json',
+    );
+    await stateFile.writeAsString(jsonEncode(<String, Object?>{
+      'install_id': installId,
+      'session_token_storage': 'secure',
+      'account_id': '42',
+      'managed_manifest_path': '/api/client/profile/managed',
+      'profile_revision': '',
+    }));
+    final secretStore = MemoryAppFirstSessionSecretStore();
+    await secretStore.writeSessionPair(
+      hostPlatform: HostPlatform.windows,
+      installId: installId,
+      pair: const AppFirstSessionCredentials(
+        accessToken: 'old-access',
+        refreshToken: 'old-refresh',
+      ),
+    );
+    var refreshes = 0;
+    var starts = 0;
+    var oldAccessRequests = 0;
+    final firstRefreshStarted = Completer<void>();
+    final bothOldAccessRequests = Completer<void>();
+    final releaseRefresh = Completer<void>();
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+
+    Future<void> handle(HttpRequest request) async {
+      await utf8.decoder.bind(request).join();
+      final path = request.uri.path;
+      if (path == '/api/client/session/start-trial') {
+        starts += 1;
+        request.response.statusCode = HttpStatus.notFound;
+      } else if (path == '/api/client/session/refresh') {
+        refreshes += 1;
+        if (refreshes == 1) {
+          firstRefreshStarted.complete();
+          await bothOldAccessRequests.future;
+          await releaseRefresh.future;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{
+              'access_token': 'rotated-access',
+              'refresh_token': 'rotated-refresh',
+              'account_id': '42',
+            }));
+        } else {
+          request.response.statusCode = HttpStatus.unauthorized;
+        }
+      } else {
+        final authorization =
+            request.headers.value(HttpHeaders.authorizationHeader);
+        if (authorization != 'Bearer rotated-access') {
+          oldAccessRequests += 1;
+          if (oldAccessRequests == 2) {
+            bothOldAccessRequests.complete();
+          }
+          request.response.statusCode = HttpStatus.unauthorized;
+        } else if (path == '/api/client/apps') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write('{"android":{},"windows":{},"update_check":{}}');
+        } else if (path == '/api/client/cabinet-token') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              '{"token":"cabinet-token","handoff_url":"https://cabinet.pokrov.space/","expires_in":60}',
+            );
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+      }
+      await request.response.close();
+    }
+
+    unawaited(() async {
+      await for (final request in server) {
+        unawaited(handle(request));
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: secretStore,
+      delayScheduler: (_) async {},
+      maxRequestAttempts: 1,
+    );
+    final apps = bootstrapper.fetchClientApps(
+      hostPlatform: HostPlatform.windows,
+      currentVersion: '1.0.1',
+    );
+    final handoff = bootstrapper.createCabinetHandoff(
+      hostPlatform: HostPlatform.windows,
+    );
+
+    await firstRefreshStarted.future;
+    await bothOldAccessRequests.future;
+    expect(refreshes, 1);
+    releaseRefresh.complete();
+    final results = await Future.wait<dynamic>(<Future<dynamic>>[
+      apps,
+      handoff,
+    ]);
+
+    expect((results[1] as CabinetHandoff).token, 'cabinet-token');
+    expect(refreshes, 1);
+    expect(starts, 0);
+    final pair = await secretStore.readSessionPair(
+      hostPlatform: HostPlatform.windows,
+      installId: installId,
+    );
+    expect(pair?.accessToken, 'rotated-access');
+    expect(pair?.refreshToken, 'rotated-refresh');
+  });
+
+  test('shares a retryable refresh failure without starting another trial',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-refresh-single-flight-failure-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    const installId = 'refresh-single-flight-failure-install';
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}'
+      'app-first-session-windows.json',
+    );
+    await stateFile.writeAsString(jsonEncode(<String, Object?>{
+      'install_id': installId,
+      'session_token_storage': 'secure',
+      'account_id': '42',
+      'managed_manifest_path': '/api/client/profile/managed',
+      'profile_revision': '',
+    }));
+    final secretStore = MemoryAppFirstSessionSecretStore();
+    await secretStore.writeSessionPair(
+      hostPlatform: HostPlatform.windows,
+      installId: installId,
+      pair: const AppFirstSessionCredentials(
+        accessToken: 'old-access',
+        refreshToken: 'old-refresh',
+      ),
+    );
+    var refreshes = 0;
+    var starts = 0;
+    var oldAccessRequests = 0;
+    final firstRefreshStarted = Completer<void>();
+    final bothOldAccessRequests = Completer<void>();
+    final releaseRefresh = Completer<void>();
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+
+    Future<void> handle(HttpRequest request) async {
+      await utf8.decoder.bind(request).join();
+      if (request.uri.path == '/api/client/session/start-trial') {
+        starts += 1;
+        request.response.statusCode = HttpStatus.notFound;
+      } else if (request.uri.path == '/api/client/session/refresh') {
+        refreshes += 1;
+        if (refreshes == 1) {
+          firstRefreshStarted.complete();
+          await bothOldAccessRequests.future;
+          await releaseRefresh.future;
+          request.response
+            ..statusCode = HttpStatus.serviceUnavailable
+            ..write('temporary refresh outage');
+        } else {
+          request.response.statusCode = HttpStatus.unauthorized;
+        }
+      } else {
+        oldAccessRequests += 1;
+        if (oldAccessRequests == 2) {
+          bothOldAccessRequests.complete();
+        }
+        request.response.statusCode = HttpStatus.unauthorized;
+      }
+      await request.response.close();
+    }
+
+    unawaited(() async {
+      await for (final request in server) {
+        unawaited(handle(request));
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: secretStore,
+      delayScheduler: (_) async {},
+      maxRequestAttempts: 1,
+    );
+    final apps = bootstrapper.fetchClientApps(
+      hostPlatform: HostPlatform.windows,
+      currentVersion: '1.0.1',
+    );
+    final handoff = bootstrapper.createCabinetHandoff(
+      hostPlatform: HostPlatform.windows,
+    );
+
+    await firstRefreshStarted.future;
+    await bothOldAccessRequests.future;
+    expect(refreshes, 1);
+    releaseRefresh.complete();
+    await Future.wait<void>(<Future<void>>[
+      expectLater(
+        apps,
+        throwsA(isA<BootstrapFailure>().having(
+          (error) => error.statusCode,
+          'statusCode',
+          HttpStatus.serviceUnavailable,
+        )),
+      ),
+      expectLater(
+        handoff,
+        throwsA(isA<BootstrapFailure>().having(
+          (error) => error.statusCode,
+          'statusCode',
+          HttpStatus.serviceUnavailable,
+        )),
+      ),
+    ]);
+
+    expect(refreshes, 1);
+    expect(starts, 0);
+    final pair = await secretStore.readSessionPair(
+      hostPlatform: HostPlatform.windows,
+      installId: installId,
+    );
+    expect(pair?.accessToken, 'old-access');
+    expect(pair?.refreshToken, 'old-refresh');
+  });
+
+  test('route-policy server failure aborts without a manifest or new session',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-route-policy-failure-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    var starts = 0;
+    var refreshes = 0;
+    var routePolicies = 0;
+    var profiles = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        switch (request.uri.path) {
+          case '/api/client/session/start-trial':
+            starts += 1;
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(<String, Object?>{
+                'access_token': 'route-policy-access',
+                'refresh_token': 'route-policy-refresh',
+                'account_id': '64',
+                'provisioning': <String, Object?>{
+                  'status': 'ready',
+                  'sync_ok': true,
+                },
+              }));
+          case '/api/client/session/refresh':
+            refreshes += 1;
+            request.response.statusCode = HttpStatus.internalServerError;
+          case '/api/client/route-policy':
+            routePolicies += 1;
+            request.response
+              ..statusCode = HttpStatus.serviceUnavailable
+              ..headers.contentType = ContentType.json
+              ..write('{"detail":"route policy unavailable"}');
+          case '/api/client/profile/managed':
+            profiles += 1;
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(_readyManagedProfile('unexpected')));
+          default:
+            request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      delayScheduler: (_) async {},
+      maxRequestAttempts: 1,
+    );
+
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(
+        isA<BootstrapFailure>()
+            .having(
+              (error) => error.statusCode,
+              'statusCode',
+              HttpStatus.serviceUnavailable,
+            )
+            .having(
+              (error) => error.message,
+              'message',
+              'Сервис подготовки временно недоступен. Попробуйте ещё раз.',
+            ),
+      ),
+    );
+    expect(starts, 1);
+    expect(refreshes, 0);
+    expect(routePolicies, 1);
+    expect(profiles, 0);
+  });
+
+  test('rejects unsafe backend detail and non-JSON error bodies', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-unsafe-error-detail-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        switch (request.uri.path) {
+          case '/api/client/session/start-trial':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(<String, Object?>{
+                'session': <String, Object?>{
+                  'session_token': 'unsafe-detail-access',
+                  'account_id': '65',
+                },
+                'provisioning': <String, Object?>{
+                  'status': 'ready',
+                  'sync_ok': true,
+                },
+              }));
+          case '/api/client/route-policy':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write('{"ok":true}');
+          case '/api/client/profile/managed':
+            request.response
+              ..statusCode = HttpStatus.badRequest
+              ..headers.contentType = ContentType.json
+              ..write(
+                '{"detail":"SocketException: https://10.24.0.5:443/vless?token=secret"}',
+              );
+          default:
+            request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      delayScheduler: (_) async {},
+      maxRequestAttempts: 1,
+    );
+
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(
+        isA<BootstrapFailure>().having(
+          (error) => error.message,
+          'message',
+          'Не удалось выполнить запрос. Попробуйте ещё раз.',
+        ),
+      ),
+    );
+  });
+
+  test('managed-profile generic 500 exposes a safe retryable error', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-managed-profile-500-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        switch (request.uri.path) {
+          case '/api/client/session/start-trial':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(<String, Object?>{
+                'session': <String, Object?>{
+                  'session_token': 'managed-profile-access',
+                  'account_id': '65',
+                },
+                'provisioning': <String, Object?>{
+                  'status': 'ready',
+                  'sync_ok': true,
+                },
+              }));
+          case '/api/client/route-policy':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write('{"ok":true}');
+          case '/api/client/profile/managed':
+            request.response
+              ..statusCode = HttpStatus.internalServerError
+              ..write('Internal Server Error');
+          default:
+            request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      delayScheduler: (_) async {},
+      maxRequestAttempts: 1,
+    );
+
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(
+        isA<BootstrapFailure>()
+            .having(
+              (error) => error.statusCode,
+              'statusCode',
+              HttpStatus.internalServerError,
+            )
+            .having(
+              (error) => error.operation,
+              'operation',
+              'GET /api/client/profile/managed',
+            )
+            .having(
+              (error) => error.message,
+              'message',
+              'Сервис подготовки временно недоступен. Попробуйте ещё раз.',
+            ),
+      ),
+    );
   });
 
   test(
@@ -3111,11 +4405,277 @@ void main() {
     expect(config.containsKey('_meta'), isFalse);
     expect(route['final'], 'select');
     expect(route['auto_detect_interface'], true);
+    expect(route.containsKey('override_android_vpn'), isFalse);
     expect(config['outbounds'].toString(), contains('urltest'));
     expect(realityTls['fragment'], true);
     expect(realityTls['record_fragment'], true);
     expect(realityTls['fragment_fallback_delay'], '250ms');
     expect(realityOutbound['tcp_fast_open'], false);
+  });
+
+  test('materialization verifies an explicit Smart Connect location', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-preferred-node-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    Map<String, Object?> managedResponse({
+      required bool duplicateRuProxy,
+      required bool ambiguousFinalSelector,
+    }) =>
+        <String, Object?>{
+          'provisioning': <String, Object?>{'status': 'ready', 'sync_ok': true},
+          'profile_revision': 'rev-preferred-node',
+          'config_format': 'singbox-json',
+          'smart_connect': <String, Object?>{
+            'eligible': true,
+            'shortlist': <Object?>[
+              <String, Object?>{
+                'code': 'ru-spb',
+              },
+              <String, Object?>{
+                'code': 'de-ber',
+                'probe': <String, Object?>{
+                  'host': 'de-ber.example.test',
+                  'port': 443,
+                },
+              },
+              <String, Object?>{
+                'code': 'ru-mismatch',
+                'probe': <String, Object?>{
+                  'host': 'missing.example.test',
+                  'port': 443,
+                },
+              },
+              <String, Object?>{
+                'code': 'ru-duplicate',
+                'probe': <String, Object?>{
+                  'host': 'ru-spb.example.test',
+                  'port': 8443,
+                },
+              },
+              <String, Object?>{
+                'code': 'selector-ambiguous',
+                'probe': <String, Object?>{
+                  'host': 'de-ber.example.test',
+                  'port': 443,
+                },
+              },
+            ],
+          },
+          'config_payload': <String, Object?>{
+            'route': <String, Object?>{'final': 'proxy'},
+            'outbounds': <Object?>[
+              <String, Object?>{
+                'type': 'selector',
+                'tag': 'proxy',
+                'outbounds': <String>[
+                  'de-ber',
+                  '🇷🇺 Россия Spb',
+                  'bridge-ru-spb',
+                ],
+                'default': 'de-ber',
+              },
+              if (ambiguousFinalSelector)
+                <String, Object?>{
+                  'type': 'urltest',
+                  'tag': 'proxy',
+                  'outbounds': <String>['de-ber'],
+                },
+              <String, Object?>{
+                'type': 'vless',
+                'tag': 'de-ber',
+                'server': 'de-ber.example.test',
+                'server_port': 443,
+              },
+              <String, Object?>{
+                'type': 'vless',
+                'tag': '🇷🇺 Россия Spb',
+                'server': 'ru-spb.example.test',
+                'server_port': 443,
+              },
+              <String, Object?>{
+                'type': 'vless',
+                'tag': 'bridge-ru-spb',
+                'server': 'ru-spb.example.test',
+                'server_port': 443,
+                'detour': 'ru-spb',
+              },
+              if (duplicateRuProxy)
+                <String, Object?>{
+                  'type': 'vless',
+                  'tag': 'ru-spb-duplicate',
+                  'server': 'ru-spb.example.test',
+                  'server_port': 8443,
+                },
+              <String, Object?>{
+                'type': 'vless',
+                'tag': 'ru-spb-duplicate-2',
+                'server': 'ru-spb.example.test',
+                'server_port': 8443,
+              },
+            ],
+          },
+        };
+
+    final managedProfileQueries = <String?>[];
+    final nodeSelectionBodies = <Map<String, dynamic>>[];
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(<String, Object?>{
+                'session': <String, Object?>{
+                  'session_token': 'test-session',
+                  'account_id': '1',
+                },
+                'provisioning': <String, Object?>{
+                  'status': 'ready',
+                  'sync_ok': true,
+                  'managed_manifest': <String, Object?>{
+                    'url': '/api/client/profile/managed',
+                  },
+                },
+              }),
+            );
+        } else if (request.uri.path == '/api/client/route-policy') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          final code = request.uri.queryParameters['selected_node_code'];
+          managedProfileQueries.add(code);
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                managedResponse(
+                  duplicateRuProxy: code == 'ru-duplicate',
+                  ambiguousFinalSelector: code == 'selector-ambiguous',
+                ),
+              ),
+            );
+        } else if (request.uri.path == '/api/client/nodes/select') {
+          nodeSelectionBodies.add(
+            jsonDecode(await utf8.decoder.bind(request).join())
+                as Map<String, dynamic>,
+          );
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(<String, Object?>{
+                'ok': true,
+                'selected_node_code': 'ru-spb',
+                'requires_profile_refresh': true,
+              }),
+            );
+        } else if (request.uri.path == '/api/client/nodes/latency-samples') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      smartConnectLatencyProbe: (node) async => node.code == 'de-ber' ? 20 : 40,
+    );
+
+    final automatic = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.fullTunnel,
+    );
+    final automaticOutbounds = (jsonDecode(automatic.configPayload)
+        as Map<String, dynamic>)['outbounds'] as List;
+    final automaticSelector = automaticOutbounds.cast<Map>().singleWhere(
+          (outbound) => outbound['tag'] == 'proxy',
+        );
+    expect(automaticSelector['default'], '🇷🇺 Россия Spb');
+    expect(automatic.resolvedNodeCode, 'ru-spb');
+    expect(managedProfileQueries, <String?>[null]);
+
+    final failover = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.fullTunnel,
+      excludedNodeCodes: const <String>{'ru-spb'},
+    );
+    final failoverOutbounds = (jsonDecode(failover.configPayload)
+        as Map<String, dynamic>)['outbounds'] as List;
+    final failoverSelector = failoverOutbounds.cast<Map>().singleWhere(
+          (outbound) => outbound['tag'] == 'proxy',
+        );
+    expect(failoverSelector['default'], 'de-ber');
+    expect(failover.resolvedNodeCode, 'de-ber');
+    expect(managedProfileQueries, <String?>[null, null]);
+    expect(
+      nodeSelectionBodies.last['excluded_node_codes'],
+      <String>['ru-spb'],
+    );
+
+    final preferred = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.fullTunnel,
+      preferredNodeCode: 'ru-spb',
+    );
+    final preferredOutbounds = (jsonDecode(preferred.configPayload)
+        as Map<String, dynamic>)['outbounds'] as List;
+    final preferredSelector = preferredOutbounds.cast<Map>().singleWhere(
+          (outbound) => outbound['tag'] == 'proxy',
+        );
+    expect(preferredSelector['default'], '🇷🇺 Россия Spb');
+    expect((preferredSelector['outbounds'] as List).first, '🇷🇺 Россия Spb');
+
+    await expectLater(
+      () => bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.android,
+        routeMode: RouteMode.fullTunnel,
+        preferredNodeCode: 'not-in-shortlist',
+      ),
+      throwsA(
+        isA<BootstrapFailure>().having(
+          (error) => error.message,
+          'message',
+          'Выбранная локация недоступна.',
+        ),
+      ),
+    );
+    await expectLater(
+      () => bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.android,
+        routeMode: RouteMode.fullTunnel,
+        preferredNodeCode: 'ru-mismatch',
+      ),
+      throwsA(isA<BootstrapFailure>()),
+    );
+    await expectLater(
+      () => bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.android,
+        routeMode: RouteMode.fullTunnel,
+        preferredNodeCode: 'ru-duplicate',
+      ),
+      throwsA(isA<BootstrapFailure>()),
+    );
+    await expectLater(
+      () => bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.android,
+        routeMode: RouteMode.fullTunnel,
+        preferredNodeCode: 'selector-ambiguous',
+      ),
+      throwsA(isA<BootstrapFailure>()),
+    );
   });
 
   test('android materialization excludes desktop loopback listener inbounds',
@@ -3234,6 +4794,11 @@ void main() {
       'mixed',
     );
     expect(
+      inbounds.singleWhere(
+          (inbound) => inbound['type'] == 'tun')['exclude_package'],
+      <String>['space.pokrov.pokrov_android_shell'],
+    );
+    expect(
       inbounds
           .singleWhere((inbound) => inbound['type'] == 'tun')['inet6_address'],
       isNotNull,
@@ -3249,8 +4814,8 @@ void main() {
       rules.where((rule) => rule['inbound'] == 'dns-in'),
       isEmpty,
     );
-    expect(route['auto_detect_interface'], true);
-    expect(route['override_android_vpn'], true);
+    expect(route['auto_detect_interface'], false);
+    expect(route.containsKey('override_android_vpn'), isFalse);
     expect(
       rules.any(
         (rule) =>
@@ -3264,7 +4829,7 @@ void main() {
     );
     expect(dns['final'], isNotEmpty);
     expect(
-      servers.any((server) => server['address'] == 'local'),
+      servers.any((server) => server['type'] == 'local'),
       isTrue,
     );
     expect(
@@ -3272,9 +4837,15 @@ void main() {
           (rule['domain'] as List?)?.contains('nl.kiwunaka.space') ?? false),
       isTrue,
     );
+    expect(rules.first, <String, dynamic>{
+      'protocol': 'dns',
+      'action': 'hijack-dns',
+    });
     expect(
-      rules.any((rule) => rule['port'] == 53 && rule['outbound'] == 'dns-out'),
-      isTrue,
+      (config['outbounds'] as List).cast<Map<String, dynamic>>().where(
+            (outbound) => outbound['type'] == 'dns',
+          ),
+      isEmpty,
     );
     expect(
       rules.where((rule) =>
@@ -3545,8 +5116,8 @@ void main() {
 
     expect(config.containsKey('_meta'), isFalse);
     expect(payload.configPayload, isNot(contains('"dns-in"')));
-    expect(payload.configPayload, contains('"override_android_vpn": true'));
-    expect(payload.configPayload, contains('"auto_detect_interface": true'));
+    expect(payload.configPayload, isNot(contains('"override_android_vpn"')));
+    expect(payload.configPayload, contains('"auto_detect_interface": false'));
     expect(inbounds, hasLength(1));
     expect(inbounds.where((inbound) => inbound['type'] == 'tun'), hasLength(1));
     expect(
@@ -3558,6 +5129,11 @@ void main() {
       'mixed',
     );
     expect(
+      inbounds.singleWhere(
+          (inbound) => inbound['type'] == 'tun')['exclude_package'],
+      <String>['space.pokrov.pokrov_android_shell'],
+    );
+    expect(
       inbounds
           .singleWhere((inbound) => inbound['type'] == 'tun')['inet6_address'],
       isNotNull,
@@ -3567,7 +5143,7 @@ void main() {
           (inbound) => inbound['type'] == 'tun')['domain_strategy'],
       'prefer_ipv4',
     );
-    expect(servers.map((server) => server['address']), contains('local'));
+    expect(servers.map((server) => server['type']), contains('local'));
     expect(
       servers.where(
         (server) => server['address'] == 'https://1.1.1.1/dns-query',
@@ -3592,11 +5168,32 @@ void main() {
     final ipPrivateRule = dnsRules.singleWhere(
       (rule) => rule['ip_is_private'] == true,
     );
-    expect(serverDomainRule['server'], isNot('local'));
-    expect(ipPrivateRule['server'], isNot(serverDomainRule['server']));
+    final localServer = servers.singleWhere(
+      (server) => server['type'] == 'local',
+    );
+    expect(serverDomainRule['server'], localServer['tag']);
+    expect(ipPrivateRule['server'], serverDomainRule['server']);
+    final vlessOutbound =
+        (config['outbounds'] as List).cast<Map<String, dynamic>>().singleWhere(
+              (outbound) => outbound['type'] == 'vless',
+            );
+    expect(vlessOutbound['domain_resolver'], localServer['tag']);
     expect(route['final'], 'proxy');
-    expect(rules.where((rule) => rule['protocol'] == 'dns'), isNotEmpty);
-    expect(rules.where((rule) => rule['port'] == 53), isNotEmpty);
+    expect(rules.first, <String, dynamic>{
+      'protocol': 'dns',
+      'action': 'hijack-dns',
+    });
+    expect(
+      rules[1],
+      containsPair(
+          'package_name', <String>['space.pokrov.pokrov_android_shell']),
+    );
+    expect(
+      (config['outbounds'] as List).cast<Map<String, dynamic>>().where(
+            (outbound) => outbound['type'] == 'dns',
+          ),
+      isEmpty,
+    );
     expect(
       rules.where((rule) =>
           rule['ip_is_private'] == true && rule['outbound'] == 'direct'),
@@ -3726,6 +5323,10 @@ void main() {
                       ],
                       'rules': <Object?>[
                         <String, Object?>{
+                          'ip_is_private': true,
+                          'outbound': 'direct',
+                        },
+                        <String, Object?>{
                           'rule_set': <Object?>['geoip-ru'],
                           'outbound': 'direct',
                         },
@@ -3787,8 +5388,8 @@ void main() {
       ),
       isFalse,
     );
-    expect(route['auto_detect_interface'], true);
-    expect(route['override_android_vpn'], true);
+    expect(route['auto_detect_interface'], false);
+    expect(route.containsKey('override_android_vpn'), isFalse);
     expect(
       routeRules.any(
         (rule) =>
@@ -4016,9 +5617,19 @@ void main() {
       ),
       isTrue,
     );
-    expect(route['auto_detect_interface'], true);
-    expect(route['override_android_vpn'], true);
+    expect(route['auto_detect_interface'], false);
+    expect(route.containsKey('override_android_vpn'), isFalse);
     expect(route['final'], 'proxy');
+    expect(routeRules.first, <String, dynamic>{
+      'protocol': 'dns',
+      'action': 'hijack-dns',
+    });
+    expect(
+      (config['outbounds'] as List).cast<Map<String, dynamic>>().where(
+            (outbound) => outbound['type'] == 'dns',
+          ),
+      isEmpty,
+    );
   });
 
   test('windows all-except-ru injects cached local rule-set definitions',
@@ -4464,7 +6075,29 @@ void main() {
       'org.telegram.messenger',
       'com.example.special',
     ]);
+    expect(tunInbound.containsKey('exclude_package'), isFalse);
     expect(config['route'], containsPair('final', 'proxy'));
+  });
+
+  test('selected-apps mode rejects an empty selection before bootstrap sync',
+      () async {
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:1/',
+    );
+
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.android,
+        routeMode: RouteMode.selectedApps,
+      ),
+      throwsA(
+        isA<BootstrapFailure>().having(
+          (error) => error.message,
+          'message',
+          'Выберите хотя бы одно приложение в разделе «Правила».',
+        ),
+      ),
+    );
   });
 
   test(
@@ -4740,6 +6373,16 @@ void main() {
     );
 
     expect(dns['final'], 'dns-remote');
+    expect(
+      servers.singleWhere((server) => server['tag'] == 'local')['type'],
+      'local',
+    );
+    expect(
+      servers
+          .singleWhere((server) => server['tag'] == 'local')
+          .containsKey('address'),
+      isFalse,
+    );
     expect(finalServer['address'], 'https://1.1.1.1/dns-query');
     expect(finalServer['detour'], 'proxy');
     expect(finalServer['address_resolver'], 'local');
@@ -4868,6 +6511,10 @@ void main() {
     expect(selector['outbounds'], isNot(contains('direct')));
     expect(selector['default'], isNot('direct'));
     expect(urltest['outbounds'], isNot(contains('direct')));
+    expect(
+      urltest['url'],
+      'https://api.pokrov.space/api/public/authenticated-egress-probe',
+    );
     expect(route['final'], 'select');
   });
 
@@ -5060,6 +6707,14 @@ void main() {
                           'load': 0.31,
                           'measuredAt': '2026-07-23T10:15:00+00:00',
                         },
+                        <String, Object?>{
+                          'code': 'nl-ams-unknown',
+                          'city': 'Amsterdam unknown',
+                          'latencyMs': 44,
+                          'premium': false,
+                          'load': 0.42,
+                          'measuredAt': '2026-07-23T10:15:00+00:00',
+                        },
                       ],
                     },
                   ],
@@ -5189,14 +6844,18 @@ void main() {
       query: 'ams',
     );
     expect(catalog.auto.currentCode, 'nl-ams-01');
-    expect(catalog.countries.single.cities.single.city, 'Amsterdam');
-    expect(catalog.countries.single.cities.single.premium, isTrue);
-    expect(catalog.countries.single.cities.single.latencyMs, 38);
-    expect(catalog.countries.single.cities.single.load, 0.31);
+    final cities = catalog.countries.single.cities;
+    expect(cities.first.city, 'Amsterdam');
+    expect(cities.first.premium, isTrue);
+    expect(cities.first.latencyMs, 38);
+    expect(cities.first.load, 0.31);
     expect(
-      catalog.countries.single.cities.single.measuredAt,
+      cities.first.measuredAt,
       '2026-07-23T10:15:00+00:00',
     );
+    expect(cities.last.city, 'Amsterdam unknown');
+    expect(cities.last.healthScore, isNull);
+    expect(cities.last.toJson(), isNot(contains('healthScore')));
 
     final subscription = await bootstrapper.fetchClientSubscription(
       hostPlatform: HostPlatform.windows,
@@ -5423,6 +7082,799 @@ void main() {
         parse('assistantSessionId', malformed).assistantSessionId,
         isNull,
         reason: 'must reject malformed token: $malformed',
+      );
+    }
+  });
+
+  test('client support assistant sanitizes backend source for consumers', () {
+    ClientSupportAssistantSource sourceFor(Object? source) {
+      return ClientSupportAssistantReply.fromJson(<String, dynamic>{
+        'reply': 'ok',
+        'source': source,
+        'shouldEscalate': false,
+        'suggestedActions': <Object?>[],
+      }).source;
+    }
+
+    expect(
+      sourceFor('support_agent'),
+      ClientSupportAssistantSource.pokrovAssistant,
+    );
+    expect(
+        sourceFor('support_ai'), ClientSupportAssistantSource.pokrovAssistant);
+    expect(
+      sourceFor('local_fallback'),
+      ClientSupportAssistantSource.localFallback,
+    );
+    expect(sourceFor('unrecognized-backend'),
+        ClientSupportAssistantSource.localFallback);
+    expect(sourceFor(null), ClientSupportAssistantSource.localFallback);
+  });
+
+  test('shares initial state and start-trial across concurrent client services',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-initial-single-flight-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final startRead = Completer<void>();
+    final releaseStart = Completer<void>();
+    var starts = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        switch (request.uri.path) {
+          case '/api/client/session/start-trial':
+            starts += 1;
+            startRead.complete();
+            await releaseStart.future;
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(<String, Object?>{
+                'access_token': 'shared-access',
+                'refresh_token': 'shared-refresh',
+                'account_id': '42',
+                'provisioning': <String, Object?>{
+                  'status': 'ready',
+                  'sync_ok': true,
+                },
+              }));
+          case '/api/client/apps':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write('{"android":{},"windows":{},"update_check":{}}');
+          case '/api/client/subscription':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write('{}');
+          case '/api/client/devices':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write('{"devices":[]}');
+          default:
+            request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+
+    final secretStore = MemoryAppFirstSessionSecretStore();
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: secretStore,
+      maxRequestAttempts: 3,
+    );
+    final services = <Future<dynamic>>[
+      bootstrapper.fetchClientApps(
+        hostPlatform: HostPlatform.windows,
+        currentVersion: '1.0.1',
+      ),
+      bootstrapper.fetchClientSubscription(hostPlatform: HostPlatform.windows),
+      bootstrapper.fetchClientDevices(hostPlatform: HostPlatform.windows),
+    ];
+
+    await startRead.future;
+    await Future<void>.delayed(Duration.zero);
+    expect(starts, 1);
+    releaseStart.complete();
+    await Future.wait<dynamic>(services);
+
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}'
+      'app-first-session-windows.json',
+    );
+    final state =
+        jsonDecode(await stateFile.readAsString()) as Map<String, dynamic>;
+    expect(starts, 1);
+    expect(state['session_token_storage'], 'secure');
+    expect(state.containsKey('session_token'), isFalse);
+    final pair = await secretStore.readSessionPair(
+      hostPlatform: HostPlatform.windows,
+      installId: state['install_id'] as String,
+    );
+    expect(pair?.hasAccessToken, isTrue);
+  });
+
+  test(
+      'does not replay start-trial after the server commits then loses response',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-start-trial-one-attempt-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    var starts = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          starts += 1;
+          final socket = await request.response.detachSocket(
+            writeHeaders: false,
+          );
+          socket.destroy();
+          continue;
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      delayScheduler: (_) async {},
+    );
+
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(isA<BootstrapFailure>().having(
+        (error) => error.message,
+        'message',
+        'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
+      )),
+    );
+    expect(starts, 1);
+  });
+
+  test('does not replay refresh after the server commits then loses response',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-refresh-one-attempt-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    const installId = 'refresh-one-attempt-install';
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}'
+      'app-first-session-windows.json',
+    );
+    await stateFile.writeAsString(jsonEncode(<String, Object?>{
+      'install_id': installId,
+      'session_token_storage': 'secure',
+      'managed_manifest_path': '/api/client/profile/managed',
+      'profile_revision': '',
+    }));
+    final secretStore = MemoryAppFirstSessionSecretStore();
+    await secretStore.writeSessionPair(
+      hostPlatform: HostPlatform.windows,
+      installId: installId,
+      pair: const AppFirstSessionCredentials(
+        accessToken: 'expired-access',
+        refreshToken: 'old-refresh',
+      ),
+    );
+    var refreshes = 0;
+    var starts = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        switch (request.uri.path) {
+          case '/api/client/profile/managed':
+            request.response.statusCode = HttpStatus.unauthorized;
+          case '/api/client/session/refresh':
+            refreshes += 1;
+            final socket = await request.response.detachSocket(
+              writeHeaders: false,
+            );
+            socket.destroy();
+            continue;
+          case '/api/client/session/start-trial':
+            starts += 1;
+            request.response.statusCode = HttpStatus.notFound;
+          case '/api/client/route-policy':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write('{"ok":true}');
+          default:
+            request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: secretStore,
+      delayScheduler: (_) async {},
+    );
+
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(isA<BootstrapFailure>().having(
+        (error) => error.message,
+        'message',
+        'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
+      )),
+    );
+    expect(refreshes, 1);
+    expect(starts, 0);
+  });
+
+  test('does not treat a missing client resource as session expiry', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-missing-resource-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    const installId = 'missing-resource-install';
+    await File(
+      '${tempDirectory.path}${Platform.pathSeparator}'
+      'app-first-session-windows.json',
+    ).writeAsString(jsonEncode(<String, Object?>{
+      'install_id': installId,
+      'session_token_storage': 'secure',
+      'managed_manifest_path': '/api/client/profile/managed',
+      'profile_revision': '',
+    }));
+    final secretStore = MemoryAppFirstSessionSecretStore();
+    await secretStore.writeSessionPair(
+      hostPlatform: HostPlatform.windows,
+      installId: installId,
+      pair: const AppFirstSessionCredentials(
+        accessToken: 'resource-access',
+        refreshToken: 'resource-refresh',
+      ),
+    );
+    var devices = 0;
+    var starts = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/devices') {
+          devices += 1;
+          request.response.statusCode = HttpStatus.notFound;
+        } else if (request.uri.path == '/api/client/session/start-trial') {
+          starts += 1;
+          request.response.statusCode = HttpStatus.notFound;
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: secretStore,
+      maxRequestAttempts: 1,
+    );
+
+    await expectLater(
+      bootstrapper.fetchClientDevices(hostPlatform: HostPlatform.windows),
+      throwsA(isA<BootstrapFailure>().having(
+        (error) => error.statusCode,
+        'statusCode',
+        HttpStatus.notFound,
+      )),
+    );
+    expect(devices, 1);
+    expect(starts, 0);
+  });
+
+  test('bounds a stalled JSON response body with safe recovery copy', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-stalled-json-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    var starts = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          starts += 1;
+          request.response.write('{"partial":');
+          await request.response.flush();
+          await Future<void>.delayed(const Duration(milliseconds: 120));
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      requestTimeout: const Duration(milliseconds: 25),
+      maxRequestAttempts: 1,
+    );
+
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(
+        isA<BootstrapFailure>()
+            .having((error) => error.statusCode, 'statusCode',
+                HttpStatus.gatewayTimeout)
+            .having(
+              (error) => error.message,
+              'message',
+              'Сервис не ответил вовремя. Попробуйте ещё раз.',
+            ),
+      ),
+    );
+    expect(starts, 1);
+  });
+
+  test('rejects an oversized JSON response before buffering it', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-oversized-json-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    var starts = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          starts += 1;
+          request.response.add(List<int>.filled(8 * 1024 * 1024 + 1, 0));
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      maxRequestAttempts: 1,
+    );
+
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(isA<BootstrapFailure>().having(
+        (error) => error.message,
+        'message',
+        'Ответ сервиса оказался слишком большим. Попробуйте ещё раз.',
+      )),
+    );
+    expect(starts, 1);
+  });
+
+  test('rejects oversized rulesets without caching partial bytes', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-oversized-ruleset-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    var rulesetRequests = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    final oversizedRuleSetUrl = 'http://127.0.0.1:${server.port}/ruleset.srs';
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        switch (request.uri.path) {
+          case '/api/client/session/start-trial':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(<String, Object?>{
+                'access_token': 'ruleset-access',
+                'refresh_token': 'ruleset-refresh',
+                'account_id': '42',
+                'provisioning': <String, Object?>{
+                  'status': 'ready',
+                  'sync_ok': true,
+                },
+              }));
+          case '/api/client/route-policy':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write('{"ok":true}');
+          case '/api/client/profile/managed':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(_readyManagedProfile('oversized-ruleset')));
+          case '/ruleset.srs':
+            rulesetRequests += 1;
+            request.response.contentLength = 33 * 1024 * 1024;
+            request.response.add(<int>[0]);
+            await request.response.flush();
+            await Future<void>.delayed(const Duration(milliseconds: 25));
+            try {
+              await request.response.close();
+            } on HttpException {
+              // The client rejects the advertised oversize before body drain.
+            }
+            continue;
+          default:
+            request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      allExceptRuRuleSetUrlsResolver: (_) => <String>[oversizedRuleSetUrl],
+      maxRequestAttempts: 1,
+    );
+
+    await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.allExceptRu,
+    );
+
+    expect(rulesetRequests, 4);
+    for (final fileName in const <String>[
+      'ru-domain-whitelist.srs',
+      'ru-domain-category.srs',
+      'ru-ip-country.srs',
+      'ru-ip-whitelist.srs',
+    ]) {
+      expect(
+          await File(_expectedRuleSetCachePath(tempDirectory, fileName))
+              .exists(),
+          isFalse);
+    }
+  });
+
+  test('accepts only canonical relative managed manifest paths', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-managed-path-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final paths = <String>[
+      '/api/client/profile/managed?release=2026_08',
+      'https://untrusted.invalid/api/client/profile/managed',
+      '//untrusted.invalid/api/client/profile/managed',
+      '/api/client/profile/managed/../other',
+      '/api/client/other',
+    ];
+    var startIndex = 0;
+    var profileRequests = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        switch (request.uri.path) {
+          case '/api/client/session/start-trial':
+            final path = paths[startIndex++];
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(<String, Object?>{
+                'access_token': 'path-access-$startIndex',
+                'refresh_token': 'path-refresh-$startIndex',
+                'account_id': '42',
+                'provisioning': <String, Object?>{
+                  'status': 'ready',
+                  'sync_ok': true,
+                  'managed_manifest': <String, Object?>{'url': path},
+                },
+              }));
+          case '/api/client/route-policy':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write('{"ok":true}');
+          case '/api/client/profile/managed':
+            profileRequests += 1;
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(_readyManagedProfile('safe-path')));
+          default:
+            request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+
+    AppFirstRuntimeBootstrapper bootstrapperFor(int index) =>
+        AppFirstRuntimeBootstrapper(
+          apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+          supportDirectoryResolver: () async => Directory(
+            '${tempDirectory.path}${Platform.pathSeparator}$index',
+          ),
+          maxRequestAttempts: 1,
+        );
+
+    final valid = await bootstrapperFor(0).resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    expect(valid.profileName, 'pokrov-windows-safe-path');
+    expect(profileRequests, 1);
+
+    for (var index = 1; index < paths.length; index += 1) {
+      await expectLater(
+        bootstrapperFor(index).resolveManagedProfile(
+          hostPlatform: HostPlatform.windows,
+          routeMode: RouteMode.fullTunnel,
+        ),
+        throwsA(isA<BootstrapFailure>().having(
+          (error) => error.message,
+          'message',
+          'POKROV получил недопустимый путь профиля. Обновите настройки и попробуйте ещё раз.',
+        )),
+      );
+    }
+    expect(profileRequests, 1);
+  });
+
+  test(
+      'rejects a hostile persisted managed manifest before authorized requests',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-persisted-managed-path-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    const installId = 'hostile-persisted-managed-path';
+    await File(
+      '${tempDirectory.path}${Platform.pathSeparator}'
+      'app-first-session-windows.json',
+    ).writeAsString(jsonEncode(<String, Object?>{
+      'install_id': installId,
+      'session_token_storage': 'secure',
+      'managed_manifest_path': 'https://untrusted.invalid/profile',
+      'profile_revision': '',
+    }));
+    final secretStore = MemoryAppFirstSessionSecretStore();
+    await secretStore.writeSessionPair(
+      hostPlatform: HostPlatform.windows,
+      installId: installId,
+      pair: const AppFirstSessionCredentials(
+        accessToken: 'persisted-access',
+        refreshToken: 'persisted-refresh',
+      ),
+    );
+    var requests = 0;
+    var authorizedRequests = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    unawaited(() async {
+      await for (final request in server) {
+        requests += 1;
+        if ((request.headers.value(HttpHeaders.authorizationHeader) ?? '')
+            .isNotEmpty) {
+          authorizedRequests += 1;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: secretStore,
+    );
+
+    await expectLater(
+      bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel,
+      ),
+      throwsA(isA<BootstrapFailure>().having(
+        (error) => error.message,
+        'message',
+        'POKROV получил недопустимый путь профиля. Обновите настройки и попробуйте ещё раз.',
+      )),
+    );
+    expect(requests, 0);
+    expect(authorizedRequests, 0);
+  });
+
+  test('retries a managed-profile GET after 5xx and uses the final response',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-managed-get-retry-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    var profileRequests = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        switch (request.uri.path) {
+          case '/api/client/session/start-trial':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(<String, Object?>{
+                'access_token': 'managed-retry-access',
+                'refresh_token': 'managed-retry-refresh',
+                'account_id': '42',
+                'provisioning': <String, Object?>{
+                  'status': 'ready',
+                  'sync_ok': true,
+                },
+              }));
+          case '/api/client/route-policy':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write('{"ok":true}');
+          case '/api/client/profile/managed':
+            profileRequests += 1;
+            if (profileRequests == 1) {
+              request.response
+                ..statusCode = HttpStatus.serviceUnavailable
+                ..write('temporary profile failure');
+            } else {
+              request.response
+                ..headers.contentType = ContentType.json
+                ..write(jsonEncode(_readyManagedProfile('managed-get-final')));
+            }
+          default:
+            request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      maxRequestAttempts: 2,
+      delayScheduler: (_) async {},
+    );
+
+    final payload = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+
+    expect(profileRequests, 2);
+    expect(payload.profileName, 'pokrov-windows-managed-get-final');
+  });
+
+  test('retries rule-set GETs after 5xx and caches only final bytes', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-ruleset-get-retry-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final requestsByTag = <String, int>{};
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        switch (request.uri.path) {
+          case '/api/client/session/start-trial':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(<String, Object?>{
+                'access_token': 'ruleset-retry-access',
+                'refresh_token': 'ruleset-retry-refresh',
+                'account_id': '42',
+                'provisioning': <String, Object?>{
+                  'status': 'ready',
+                  'sync_ok': true,
+                },
+              }));
+          case '/api/client/route-policy':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write('{"ok":true}');
+          case '/api/client/profile/managed':
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode(_readyManagedProfile('ruleset-get-final')));
+          default:
+            if (request.uri.path.startsWith('/rule-sets/')) {
+              final tag =
+                  request.uri.pathSegments.last.replaceFirst('.srs', '');
+              final count = (requestsByTag[tag] ?? 0) + 1;
+              requestsByTag[tag] = count;
+              if (count == 1) {
+                request.response
+                  ..statusCode = HttpStatus.serviceUnavailable
+                  ..write('stale ruleset bytes');
+              } else {
+                request.response.add(utf8.encode('final-ruleset-$tag'));
+              }
+            } else {
+              request.response.statusCode = HttpStatus.notFound;
+            }
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      allExceptRuRuleSetUrlsResolver: (tag) =>
+          <String>['http://127.0.0.1:${server.port}/rule-sets/$tag.srs'],
+      maxRequestAttempts: 2,
+      delayScheduler: (_) async {},
+    );
+
+    await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.allExceptRu,
+    );
+
+    for (final entry in <String, String>{
+      _ruDomainWhitelistRuleSetTag: 'ru-domain-whitelist.srs',
+      _ruDomainCategoryRuleSetTag: 'ru-domain-category.srs',
+      _ruIpCountryRuleSetTag: 'ru-ip-country.srs',
+      _ruIpWhitelistRuleSetTag: 'ru-ip-whitelist.srs',
+    }.entries) {
+      expect(requestsByTag[entry.key], 2);
+      expect(
+        await File(_expectedRuleSetCachePath(tempDirectory, entry.value))
+            .readAsBytes(),
+        utf8.encode('final-ruleset-${entry.key}'),
       );
     }
   });

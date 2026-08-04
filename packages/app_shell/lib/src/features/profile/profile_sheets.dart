@@ -186,7 +186,7 @@ class _AdvancedSettingsCard extends StatelessWidget {
             key: const ValueKey('advanced-app-version'),
             icon: Icons.info_outline_rounded,
             title: 'Версия',
-            value: _pokrovAppVersion,
+            value: pokrovClientVersion,
           ),
           const _SettingsRowDivider(),
           _SettingsRow(

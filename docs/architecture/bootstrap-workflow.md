@@ -78,14 +78,15 @@ that candidate-specific release truth.
 
 Current blocking dependency:
 
-- the active runtime is the clean reproducible POKROV Core `v1.0.1` release at source commit `3c256e5560220f2b4233d72ed057d1b72e8d3ad5`; clients accept only the published AAR/DLL identities pinned in `config/runtime-artifacts.seed.json`
+- the active runtime is the clean reproducible POKROV Core `v1.0.2` release at source commit `a469240dc3e1e1736ff73348b113f164c277492a`; clients accept only the published AAR/DLL identities pinned in `config/runtime-artifacts.seed.json`
 - `Android` host now reaches a real service-backed connect lane: it can initialize POKROV Core, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
 - Android runtime materialization is intentionally `tun`-only in this lane; desktop loopback listener inbounds such as `mixed-in` and `dns-in` stay disabled for the mobile `VpnService` path
 - Android runtime materialization now keeps backend-managed `dns` servers, selector choice, and route-rule semantics whenever they are already mobile-safe, instead of swapping the whole profile into a custom universal DNS lane
-- the Android bootstrap client can preserve the HTTPS host while dialing the canonical control-plane IP for `api.pokrov.space`, which keeps emulator-grade DNS flakiness from blocking app-first session start
-- the Android route block now keeps `auto_detect_interface` and `override_android_vpn` enabled and injects a self-package bypass rule for `space.pokrov.pokrov_android_shell`, so the live Android lane can preserve a working uplink owner while `tun.auto_route` is active
-- the Android host runtime now advertises platform auto-detect and default-network monitor hooks, so libbox can follow Android `ConnectivityManager` state instead of falling back to a desktop netlink monitor path
+- the Android bootstrap client uses the canonical `api.pokrov.space` hostname through the platform DNS/TLS transport; provider IPs are not baked into the client
+- the Android route block now forces `auto_detect_interface: false`, removes `override_android_vpn`, writes `tun.exclude_package` for `space.pokrov.pokrov_android_shell`, injects a route-level self-package bypass rule, and enforces the same package exclusion through `VpnService.Builder`; this preserves the physical uplink owner while `tun.auto_route` is active and avoids routing the core back into its own TUN
+- the Android host runtime retains default-network monitor hooks for DNS, uplink diagnostics, and network-change handling, while staged Android routes deliberately do not delegate outbound-interface selection to libbox auto-detection
 - the Android host runtime now registers a local DNS transport backed by Android `DnsResolver` and the current default network, which keeps the mobile lane off desktop-only loopback DNS stubs when `libbox` resolves staged profile dependencies
+- an active Android DNS transport callback failure or timeout is terminal and fail-closes the core, TUN, and foreground service with a safe host snapshot; ordinary DNS response codes and canceled or stale callbacks stay non-terminal
 - the Android default-network monitor now sticks to the callback-owned uplink after connect instead of re-sampling `ConnectivityManager.activeNetwork`, which keeps mobile DNS from accidentally treating the VPN network as its resolver uplink
 - the Android manifest must also declare `ACCESS_NETWORK_STATE` and `CHANGE_NETWORK_STATE`, otherwise the `ConnectivityManager`-backed default-interface monitor fails before runtime start
 - the Android `tun` inbound now uses the `mixed` stack instead of the desktop-oriented `system` stack, and the materialized mobile runtime no longer injects the old `android-private-dns-in` loopback bridge into the staged config
@@ -97,9 +98,15 @@ Current blocking dependency:
 - the Android lane now has a real repo-local test lane: Flutter tests assert the Android shell keeps the route-mode and runtime-diagnostics affordances visible, and Gradle unit tests cover manifest guards, platform monitoring, runtime-state handling, DNS planning, and TUN route planning
 - the Android diagnostics story is now support/internal rather than first-layer UI: local smoke-profile staging and raw runtime controls stay out of the consumer shell while the physical-device gate remains separate
 - the Android full-tunnel guarantee in this lane is also stronger: the mobile path stays `tun`-first, desktop loopback listeners remain stripped, backend-managed mobile-safe `dns` and `route` semantics stay intact, Android route ownership flags plus the self-package bypass remain present, and only address families present in the staged profile receive default routes
-- the shared shell now treats Android `running` as cleanly healthy only when those post-establish uplink and DNS diagnostics are healthy; otherwise it stays in a warning state instead of reporting a flat `Connected`
-- the shared shell now refreshes Android runtime truth again on foreground resume, and the host bridge reconciles a live TUN back to `running` so a relaunch does not leave the button lane stuck on a stale staged snapshot as easily
+- the shared shell now treats Android `running` as cleanly healthy only when post-establish uplink/bootstrap-DNS prerequisites and the core URL test for the selected outbound are healthy; the core timeout sentinel (`65535`) is failure, not positive latency, and Android `NET_CAPABILITY_VALIDATED` remains supporting evidence because emulator/network stacks can retain it after selected-outbound egress fails
+- after Android reports `running`, the shared shell polls the host-owned egress result through a bounded 750 ms interval for the Core probe window; a terminal `core_egress_probe_failed` snapshot immediately replaces the protected UI with the normal disconnected/reconnect state, while a canceled or newer connect generation cannot be overwritten by an older poll
+- a terminal Android selected-outbound egress failure also invalidates the staged cached runtime profile and blocks that cache from offline fallback; the next connect must obtain and stage a fresh authorized manifest, while ordinary offline fallback remains bounded before any dataplane failure
+- the Android host performs that selected-outbound fail-close as one synchronous profile-reuse invalidation: it clears the persisted Quick Settings profile and drops the staged pointer while preserving the safe failure snapshot, so a backgrounded Flutter shell cannot let the tile restart the rejected configuration
+- Android Quick Settings may reuse only a freshly staged managed profile carrying Flutter's completed first-connect route-scope confirmation; legacy path-only or unconfirmed persisted records fail closed into the app
+- the shared shell now refreshes Android runtime truth again on foreground resume, and keeps polling a host-owned pending-connect signal through Android notification/VPN consent even when no lifecycle resume reaches Flutter; the host bridge reconciles a live TUN back to `running` so a relaunch does not leave the button lane stuck on a stale staged snapshot as easily
 - the shared shell now treats `Connect with sing-box` as a one-tap lane on supported hosts: it auto-initializes the runtime, syncs a live app-first managed profile from the platform API, stages that profile, and then requests live connect instead of forcing manual `initialize -> stage -> connect`
+- Smart Connect promotes the selected direct outbound inside that authorized profile by canonical `outbound_tag` (with bounded compatibility mapping for older manifests); a second exact managed-profile fetch is a six-second fallback only when local identity cannot be proven, not part of the normal connect path
+- a confirmed selected-outbound egress failure in automatic mode quarantines the exact node for 15 minutes with an eight-node cap and at most two failover attempts; manual mode and unavailable probe evidence remain fail-closed without silent route changes
 - Android reconnect now always resyncs and restages the live managed profile before start, which keeps the staged runtime config aligned with the currently selected route mode instead of trusting whatever was left from an older session
 - the shared shell now keeps Android connect/disconnect transitions busy until the host actually settles, which prevents repeated taps from queueing duplicate service start or stop requests while VPN permission or teardown is still underway
 - when the Android host tears down immediately after a failed start, runtime snapshot state now keeps the concrete startup failure instead of replacing it with a generic stop message
@@ -114,16 +121,16 @@ Current blocking dependency:
   behavior remains gated on exact-artifact physical-device and clean-VM proof
 - `iOS` source carries the POKROV Core packet-tunnel bridge: it stages one materialized profile in the shared app-group directory, persists a `NETunnelProviderManager`, boots `LibboxSetup`, starts or reloads `CommandServer`, and opens tun through `NEPacketTunnelFlow`; the framework build, signing, and device validation remain manual
 - `macOS` stays on the desktop ABI 2 lane and expects only `pokrov-core.dylib`; the universal dylib must be built and probed on macOS before that host is runnable
-- `Windows` copies the exact POKROV Core 1.0.1 `pokrov-core.dll` plus pinned `libcronet.dll` into the release bundle. Raw materialized config, WARP, `Full tunnel`, `All except RU`, and selected-process routing are owned by the shared adapter, while system proxy remains a disabled compatibility-only path
+- `Windows` copies the exact POKROV Core 1.0.2 `pokrov-core.dll` plus pinned `libcronet.dll` into the release bundle. Raw materialized config, WARP, `Full tunnel`, `All except RU`, and selected-process routing are owned by the shared adapter, while system proxy remains a disabled compatibility-only path
 - source-level runtime tests cover the Windows TUN options for all three route modes; exact-candidate clean-VM routing, DNS/leak, elevation, connect, and teardown proof remains `MANUAL_OWNER_TEST`
 - `build-windows-release.ps1` verifies the Windows bundle metadata and stages an unsigned setup EXE, portable ZIP, and manifest under `apps/windows_shell/build/release_bundle`
 - host `build/` outputs and staged local bundles remain disposable local verification artifacts; they are not release truth for any public lane
 - treat future live connect, service ownership, and traffic-carrying runtime work as one shared contract owned by the lane, not four host-local improvisations
 
-## POKROV Core 1.0.1
+## POKROV Core 1.0.2
 
 POKROV Core is an independent repository and release line. The client pins
-`v1.0.1` and commit `3c256e5560220f2b4233d72ed057d1b72e8d3ad5`.
+`v1.0.2` and commit `a469240dc3e1e1736ff73348b113f164c277492a`.
 
 - Android package namespace: `space.pokrov.core`.
 - Android artifact: `pokrov-core.aar`.
@@ -133,6 +140,10 @@ POKROV Core is an independent repository and release line. The client pins
   caller-owned strings through `freeString`, and raw materialized-config start.
 - Shared Dart materialization owns route modes and client-local WARP before the
   config crosses a host boundary.
+- `selectedApps` materialization requires a non-empty selection before any
+  route-policy sync or profile fetch. Android receives the staged route-mode
+  attestation separately and rejects an empty selected-app allow-list instead
+  of interpreting it as a device-wide tunnel.
 - There is no mutable latest-release download and no hidden legacy fallback.
 
 Exact artifacts and platform gates are owned by

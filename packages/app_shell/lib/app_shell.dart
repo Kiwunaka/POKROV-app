@@ -23,6 +23,7 @@ import 'app_first_runtime_bootstrap.dart';
 import 'client_routing_preferences.dart';
 import 'src/assistant/pokrov_ai_assistant.dart';
 import 'src/design_system/design_system.dart';
+import 'src/shell/cached_profile_fallback_gate.dart';
 import 'src/warp/pokrov_warp_lifecycle.dart';
 export 'app_first_runtime_bootstrap.dart';
 export 'client_routing_preferences.dart';
@@ -203,7 +204,6 @@ class PokrovFileConnectHintStore {
 
 const _pokrovBrandMarkAsset = PokrovBrandAssets.mark;
 const _selectedAppsEnforcementReady = true;
-const _pokrovAppVersion = '1.0.0-beta.4';
 const _seedRulesetVersion = '2026-04-13';
 const _seedPackageCatalogVersion = '2026-04-13';
 

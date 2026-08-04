@@ -109,7 +109,12 @@ class PokrovClientExperienceState {
     required this.locationsCachedAt,
     required this.cachedNotifications,
     required this.notificationsCachedAt,
+    this.preferredNodeCode = '',
+    this.automaticNodeQuarantineUntil = const <String, String>{},
+    this.selectedAppIds = const <String>[],
     this.routingPreferences = const PokrovRoutingPreferences.defaults(),
+    this.firstRouteScopeConfirmed = false,
+    this.firstRouteScopeMode,
   });
 
   const PokrovClientExperienceState.empty()
@@ -121,7 +126,12 @@ class PokrovClientExperienceState {
         locationsCachedAt = '',
         cachedNotifications = null,
         notificationsCachedAt = '',
-        routingPreferences = const PokrovRoutingPreferences.defaults();
+        preferredNodeCode = '',
+        automaticNodeQuarantineUntil = const <String, String>{},
+        selectedAppIds = const <String>[],
+        routingPreferences = const PokrovRoutingPreferences.defaults(),
+        firstRouteScopeConfirmed = false,
+        firstRouteScopeMode = null;
 
   final List<String> favoriteNodeCodes;
   final List<String> recentNodeCodes;
@@ -131,7 +141,16 @@ class PokrovClientExperienceState {
   final String locationsCachedAt;
   final ClientNotificationInbox? cachedNotifications;
   final String notificationsCachedAt;
+  final String preferredNodeCode;
+
+  /// Short-lived device-local exclusions after a confirmed outbound failure.
+  final Map<String, String> automaticNodeQuarantineUntil;
+
+  /// Device-local identifiers for the selected-apps routing mode.
+  final List<String> selectedAppIds;
   final PokrovRoutingPreferences routingPreferences;
+  final bool firstRouteScopeConfirmed;
+  final RouteMode? firstRouteScopeMode;
 
   PokrovClientExperienceState copyWith({
     List<String>? favoriteNodeCodes,
@@ -142,7 +161,12 @@ class PokrovClientExperienceState {
     String? locationsCachedAt,
     ClientNotificationInbox? cachedNotifications,
     String? notificationsCachedAt,
+    String? preferredNodeCode,
+    Map<String, String>? automaticNodeQuarantineUntil,
+    List<String>? selectedAppIds,
     PokrovRoutingPreferences? routingPreferences,
+    bool? firstRouteScopeConfirmed,
+    RouteMode? firstRouteScopeMode,
   }) {
     return PokrovClientExperienceState(
       favoriteNodeCodes: favoriteNodeCodes ?? this.favoriteNodeCodes,
@@ -154,7 +178,14 @@ class PokrovClientExperienceState {
       cachedNotifications: cachedNotifications ?? this.cachedNotifications,
       notificationsCachedAt:
           notificationsCachedAt ?? this.notificationsCachedAt,
+      preferredNodeCode: preferredNodeCode ?? this.preferredNodeCode,
+      automaticNodeQuarantineUntil:
+          automaticNodeQuarantineUntil ?? this.automaticNodeQuarantineUntil,
+      selectedAppIds: selectedAppIds ?? this.selectedAppIds,
       routingPreferences: routingPreferences ?? this.routingPreferences,
+      firstRouteScopeConfirmed:
+          firstRouteScopeConfirmed ?? this.firstRouteScopeConfirmed,
+      firstRouteScopeMode: firstRouteScopeMode ?? this.firstRouteScopeMode,
     );
   }
 
@@ -174,6 +205,14 @@ class PokrovClientExperienceState {
         .toList(growable: false);
     final locationsJson = _experienceMap(json['cachedLocations']);
     final notificationsJson = _experienceMap(json['cachedNotifications']);
+    final preferredCodes = _experienceNodeCodes(
+      <Object?>[json['preferredNodeCode']],
+      limit: 1,
+    );
+    final automaticNodeQuarantineUntil = _experienceNodeQuarantine(
+      json['automaticNodeQuarantineUntil'],
+    );
+    final selectedAppIds = _experienceSelectedAppIds(json['selectedAppIds']);
     return PokrovClientExperienceState(
       favoriteNodeCodes: favorites,
       recentNodeCodes: recents,
@@ -187,9 +226,14 @@ class PokrovClientExperienceState {
           ? null
           : ClientNotificationInbox.fromJson(notificationsJson),
       notificationsCachedAt: _validExperienceIso(json['notificationsCachedAt']),
+      preferredNodeCode: preferredCodes.isEmpty ? '' : preferredCodes.first,
+      automaticNodeQuarantineUntil: automaticNodeQuarantineUntil,
+      selectedAppIds: selectedAppIds,
       routingPreferences: PokrovRoutingPreferences.fromJson(
         _experienceMap(json['routingPreferences']),
       ),
+      firstRouteScopeConfirmed: json['firstRouteScopeConfirmed'] == true,
+      firstRouteScopeMode: _experienceRouteMode(json['firstRouteScopeMode']),
     );
   }
 
@@ -211,8 +255,63 @@ class PokrovClientExperienceState {
         if (cachedNotifications != null)
           'cachedNotifications': cachedNotifications!.toJson(),
         'notificationsCachedAt': notificationsCachedAt,
+        if (preferredNodeCode.isNotEmpty)
+          'preferredNodeCode': preferredNodeCode,
+        if (automaticNodeQuarantineUntil.isNotEmpty)
+          'automaticNodeQuarantineUntil': Map<String, String>.fromEntries(
+            automaticNodeQuarantineUntil.entries.take(8),
+          ),
+        'selectedAppIds': selectedAppIds.take(128).toList(growable: false),
         'routingPreferences': routingPreferences.toJson(),
+        'firstRouteScopeConfirmed': firstRouteScopeConfirmed,
+        if (firstRouteScopeMode != null)
+          'firstRouteScopeMode': firstRouteScopeMode!.name,
       };
+}
+
+/// Normalizes the bounded identifiers accepted by Rules and retained locally.
+/// Android receives application IDs; Windows receives bare executable names.
+/// A missing platform is used only for decoding old device-local state.
+String? normalizePokrovSelectedAppIdentifier(
+  String value, {
+  HostPlatform? hostPlatform,
+}) {
+  final normalized = value.trim().toLowerCase();
+  if (normalized.isEmpty || normalized.length > 96) {
+    return null;
+  }
+  final androidPackage = RegExp(
+    r'^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+$',
+  );
+  final windowsExecutable = RegExp(r'^[a-z0-9][a-z0-9_.-]{0,91}\.exe$');
+  final valid = switch (hostPlatform) {
+    HostPlatform.android => androidPackage.hasMatch(normalized),
+    HostPlatform.windows => windowsExecutable.hasMatch(normalized),
+    HostPlatform.ios || HostPlatform.macos => false,
+    null => androidPackage.hasMatch(normalized) ||
+        windowsExecutable.hasMatch(normalized),
+  };
+  return valid ? normalized : null;
+}
+
+List<String> _experienceSelectedAppIds(Object? value) {
+  if (value is! List) {
+    return const <String>[];
+  }
+  final result = <String>[];
+  for (final item in value) {
+    final identifier = normalizePokrovSelectedAppIdentifier(
+      _experienceText(item),
+    );
+    if (identifier == null || result.contains(identifier)) {
+      continue;
+    }
+    result.add(identifier);
+    if (result.length == 128) {
+      break;
+    }
+  }
+  return List<String>.unmodifiable(result);
 }
 
 abstract class PokrovClientExperienceStore {
@@ -292,6 +391,26 @@ List<String> _experienceNodeCodes(Object? value, {required int limit}) {
   return List<String>.unmodifiable(result);
 }
 
+Map<String, String> _experienceNodeQuarantine(Object? value) {
+  final input = _experienceMap(value);
+  if (input.isEmpty) {
+    return const <String, String>{};
+  }
+  final result = <String, String>{};
+  for (final entry in input.entries) {
+    final codes = _experienceNodeCodes(<Object?>[entry.key], limit: 1);
+    final expiresAt = _validExperienceIso(entry.value);
+    if (codes.isEmpty || expiresAt.isEmpty) {
+      continue;
+    }
+    result[codes.first] = expiresAt;
+    if (result.length == 8) {
+      break;
+    }
+  }
+  return Map<String, String>.unmodifiable(result);
+}
+
 String _experienceText(Object? value) {
   return value == null ? '' : value.toString().trim();
 }
@@ -311,4 +430,14 @@ List<Map<String, dynamic>> _experienceListOfMaps(Object? value) {
       .whereType<Map>()
       .map((item) => item.map((key, value) => MapEntry(key.toString(), value)))
       .toList(growable: false);
+}
+
+RouteMode? _experienceRouteMode(Object? value) {
+  final name = _experienceText(value);
+  for (final mode in RouteMode.values) {
+    if (mode.name == name) {
+      return mode;
+    }
+  }
+  return null;
 }

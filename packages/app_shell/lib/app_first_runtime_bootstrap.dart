@@ -8,21 +8,21 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
-InternetAddress? bootstrapDirectAddressForRequest({
-  required Uri requestUri,
-  required HostPlatform hostPlatform,
-}) {
-  if (hostPlatform != HostPlatform.android || requestUri.scheme != 'https') {
-    return null;
-  }
+/// Build identity shared by provisioning, update checks, and diagnostics.
+///
+/// Release builds pass `--dart-define=POKROV_APP_VERSION=<package-version>`.
+/// The fallback keeps ordinary local runs aligned with the current host
+/// package base version (without Android's build number).
+const pokrovClientVersion = String.fromEnvironment(
+  'POKROV_APP_VERSION',
+  defaultValue: '1.0.2-core-test.1',
+);
 
-  switch (requestUri.host.toLowerCase()) {
-    case 'api.pokrov.space':
-      return InternetAddress('82.21.114.104');
-    default:
-      return null;
-  }
-}
+const _platformErrorCodeHeader = 'X-POKROV-Auth-Error';
+const _androidCoreEgressProbeUrl =
+    'https://api.pokrov.space/api/public/authenticated-egress-probe';
+const _smartConnectProfileRefreshTimeout = Duration(seconds: 6);
+final _platformErrorCodePattern = RegExp(r'^[a-z0-9_]{1,64}$');
 
 abstract interface class ManagedProfileBootstrapper {
   Future<ManagedProfilePayload> resolveManagedProfile({
@@ -30,6 +30,7 @@ abstract interface class ManagedProfileBootstrapper {
     required RouteMode routeMode,
     List<String> selectedApps = const <String>[],
     String preferredNodeCode = '',
+    Set<String> excludedNodeCodes = const <String>{},
   });
 }
 
@@ -41,6 +42,34 @@ typedef AppFirstStateFileWriter = Future<void> Function(
   File file,
   String contents,
 );
+
+final Map<String, Future<void>> _appFirstStateFileWriteQueues =
+    <String, Future<void>>{};
+
+Future<T> _withAppFirstStateFileLock<T>(
+  File file,
+  Future<T> Function() operation,
+) async {
+  final target = file.absolute.path.toLowerCase();
+  final previous = _appFirstStateFileWriteQueues[target];
+  final completion = Completer<void>();
+  _appFirstStateFileWriteQueues[target] = completion.future;
+  if (previous != null) {
+    try {
+      await previous;
+    } catch (_) {
+      // A prior writer has already surfaced its failure to its caller.
+    }
+  }
+  try {
+    return await operation();
+  } finally {
+    completion.complete();
+    if (identical(_appFirstStateFileWriteQueues[target], completion.future)) {
+      _appFirstStateFileWriteQueues.remove(target);
+    }
+  }
+}
 
 Future<void> _writeAppFirstStateFileAtomically(
   File file,
@@ -96,6 +125,59 @@ abstract interface class AppFirstSessionSecretStore {
     required HostPlatform hostPlatform,
     required String installId,
   });
+
+  Future<AppFirstSessionCredentials?> readSessionPair({
+    required HostPlatform hostPlatform,
+    required String installId,
+  });
+
+  Future<void> writeSessionPair({
+    required HostPlatform hostPlatform,
+    required String installId,
+    required AppFirstSessionCredentials pair,
+  });
+}
+
+class AppFirstSessionCredentials {
+  const AppFirstSessionCredentials({
+    required this.accessToken,
+    required this.refreshToken,
+  });
+
+  final String accessToken;
+  final String refreshToken;
+
+  bool get hasAccessToken => accessToken.trim().isNotEmpty;
+
+  String _encode() => jsonEncode(<String, Object?>{
+        'version': 1,
+        'access_token': accessToken.trim(),
+        if (refreshToken.trim().isNotEmpty)
+          'refresh_token': refreshToken.trim(),
+      });
+
+  static AppFirstSessionCredentials? _decode(String value) {
+    final raw = value.trim();
+    if (raw.isEmpty) {
+      return null;
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        final accessToken = (decoded['access_token'] ?? '').toString().trim();
+        final refreshToken = (decoded['refresh_token'] ?? '').toString().trim();
+        return accessToken.isEmpty
+            ? null
+            : AppFirstSessionCredentials(
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+              );
+      }
+    } on FormatException {
+      // Legacy secure entries contain only the access token.
+    }
+    return AppFirstSessionCredentials(accessToken: raw, refreshToken: '');
+  }
 }
 
 class FlutterSecureAppFirstSessionSecretStore
@@ -118,7 +200,10 @@ class FlutterSecureAppFirstSessionSecretStore
     required String installId,
   }) async {
     final key = _key(hostPlatform: hostPlatform, installId: installId);
-    return _storage.read(key: key);
+    final pair = AppFirstSessionCredentials._decode(
+      await _storage.read(key: key) ?? '',
+    );
+    return pair?.accessToken;
   }
 
   @override
@@ -127,14 +212,17 @@ class FlutterSecureAppFirstSessionSecretStore
     required String installId,
     required String sessionToken,
   }) async {
-    final key = _key(hostPlatform: hostPlatform, installId: installId);
     final value = sessionToken.trim();
     if (value.isEmpty) {
       await deleteSessionToken(
           hostPlatform: hostPlatform, installId: installId);
       return;
     }
-    await _storage.write(key: key, value: value);
+    await writeSessionPair(
+      hostPlatform: hostPlatform,
+      installId: installId,
+      pair: AppFirstSessionCredentials(accessToken: value, refreshToken: ''),
+    );
   }
 
   @override
@@ -144,6 +232,31 @@ class FlutterSecureAppFirstSessionSecretStore
   }) async {
     final key = _key(hostPlatform: hostPlatform, installId: installId);
     await _storage.delete(key: key);
+  }
+
+  @override
+  Future<AppFirstSessionCredentials?> readSessionPair({
+    required HostPlatform hostPlatform,
+    required String installId,
+  }) async {
+    final key = _key(hostPlatform: hostPlatform, installId: installId);
+    return AppFirstSessionCredentials._decode(
+      await _storage.read(key: key) ?? '',
+    );
+  }
+
+  @override
+  Future<void> writeSessionPair({
+    required HostPlatform hostPlatform,
+    required String installId,
+    required AppFirstSessionCredentials pair,
+  }) async {
+    final key = _key(hostPlatform: hostPlatform, installId: installId);
+    if (!pair.hasAccessToken) {
+      await _storage.delete(key: key);
+      return;
+    }
+    await _storage.write(key: key, value: pair._encode());
   }
 }
 
@@ -158,7 +271,9 @@ class MemoryAppFirstSessionSecretStore implements AppFirstSessionSecretStore {
     required HostPlatform hostPlatform,
     required String installId,
   }) async =>
-      _values[_key(hostPlatform, installId)];
+      AppFirstSessionCredentials._decode(
+        _values[_key(hostPlatform, installId)] ?? '',
+      )?.accessToken;
 
   @override
   Future<void> writeSessionToken({
@@ -166,7 +281,14 @@ class MemoryAppFirstSessionSecretStore implements AppFirstSessionSecretStore {
     required String installId,
     required String sessionToken,
   }) async {
-    _values[_key(hostPlatform, installId)] = sessionToken.trim();
+    await writeSessionPair(
+      hostPlatform: hostPlatform,
+      installId: installId,
+      pair: AppFirstSessionCredentials(
+        accessToken: sessionToken,
+        refreshToken: '',
+      ),
+    );
   }
 
   @override
@@ -175,6 +297,28 @@ class MemoryAppFirstSessionSecretStore implements AppFirstSessionSecretStore {
     required String installId,
   }) async {
     _values.remove(_key(hostPlatform, installId));
+  }
+
+  @override
+  Future<AppFirstSessionCredentials?> readSessionPair({
+    required HostPlatform hostPlatform,
+    required String installId,
+  }) async =>
+      AppFirstSessionCredentials._decode(
+        _values[_key(hostPlatform, installId)] ?? '',
+      );
+
+  @override
+  Future<void> writeSessionPair({
+    required HostPlatform hostPlatform,
+    required String installId,
+    required AppFirstSessionCredentials pair,
+  }) async {
+    if (!pair.hasAccessToken) {
+      _values.remove(_key(hostPlatform, installId));
+      return;
+    }
+    _values[_key(hostPlatform, installId)] = pair._encode();
   }
 }
 
@@ -334,10 +478,14 @@ class BootstrapFailure implements Exception {
   const BootstrapFailure(
     this.message, {
     this.statusCode,
+    this.operation,
+    this.code = '',
   });
 
   final String message;
   final int? statusCode;
+  final String? operation;
+  final String code;
 
   @override
   String toString() => message;
@@ -405,19 +553,6 @@ int? _clientNullableInt(Object? value) {
     return null;
   }
   return _clientInt(value);
-}
-
-double _clientDouble(Object? value) {
-  if (value is double) {
-    return value;
-  }
-  if (value is int) {
-    return value.toDouble();
-  }
-  if (value is num) {
-    return value.toDouble();
-  }
-  return double.tryParse(value?.toString().trim() ?? '') ?? 0;
 }
 
 double? _clientNullableDouble(Object? value) {
@@ -544,7 +679,7 @@ class ClientLocationCity {
 
   final String code;
   final String city;
-  final double healthScore;
+  final double? healthScore;
   final int? latencyMs;
   final bool premium;
   final double? load;
@@ -554,7 +689,7 @@ class ClientLocationCity {
     return ClientLocationCity(
       code: _clientText(json['code']),
       city: _clientText(json['city']),
-      healthScore: _clientDouble(
+      healthScore: _clientNullableDouble(
         json['healthScore'] ?? json['health_score'],
       ),
       latencyMs: _clientNullableInt(json['latencyMs'] ?? json['latency_ms']),
@@ -567,7 +702,7 @@ class ClientLocationCity {
   Map<String, Object?> toJson() => <String, Object?>{
         'code': code,
         'city': city,
-        'healthScore': healthScore,
+        if (healthScore != null) 'healthScore': healthScore,
         if (latencyMs != null) 'latencyMs': latencyMs,
         'premium': premium,
         if (load != null) 'load': load,
@@ -766,18 +901,41 @@ class ClientPushRegistration {
   }
 }
 
+enum ClientSupportAssistantSource {
+  pokrovAssistant,
+  localFallback;
+
+  String get consumerLabel => switch (this) {
+        ClientSupportAssistantSource.pokrovAssistant => 'Помощник POKROV',
+        ClientSupportAssistantSource.localFallback => 'Локальная подсказка',
+      };
+
+  static ClientSupportAssistantSource fromJson(Object? value) {
+    switch (_clientText(value).toLowerCase()) {
+      case 'support_agent':
+      case 'support_ai':
+        return ClientSupportAssistantSource.pokrovAssistant;
+      case 'local_fallback':
+      default:
+        return ClientSupportAssistantSource.localFallback;
+    }
+  }
+}
+
 class ClientSupportAssistantReply {
   const ClientSupportAssistantReply({
     required this.reply,
     required this.shouldEscalate,
     required this.suggestedActions,
     this.assistantSessionId,
+    this.source = ClientSupportAssistantSource.localFallback,
   });
 
   final String reply;
   final bool shouldEscalate;
   final List<ClientSupportAssistantAction> suggestedActions;
   final String? assistantSessionId;
+  final ClientSupportAssistantSource source;
 
   factory ClientSupportAssistantReply.fromJson(Map<String, dynamic> json) {
     return ClientSupportAssistantReply(
@@ -785,6 +943,7 @@ class ClientSupportAssistantReply {
       assistantSessionId: _clientAssistantSessionId(
         json['assistantSessionId'] ?? json['assistant_session_id'],
       ),
+      source: ClientSupportAssistantSource.fromJson(json['source']),
       shouldEscalate:
           _clientBool(json['shouldEscalate'] ?? json['should_escalate']),
       suggestedActions: _clientListOfMaps(
@@ -1776,6 +1935,8 @@ class AppFirstRuntimeBootstrapper
     this.connectionTimeout = const Duration(seconds: 8),
     this.requestTimeout = const Duration(seconds: 15),
     this.smartConnectProbeTimeout = const Duration(milliseconds: 900),
+    this.smartConnectTelemetryDeadline = const Duration(seconds: 3),
+    this.smartConnectProbeConcurrency = 3,
     this.maxRequestAttempts = 3,
     Duration allExceptRuRuleSetCacheMaxAge = const Duration(hours: 6),
     List<String> Function(String tag)? allExceptRuRuleSetUrlsResolver,
@@ -1799,18 +1960,31 @@ class AppFirstRuntimeBootstrapper
   final Duration connectionTimeout;
   final Duration requestTimeout;
   final Duration smartConnectProbeTimeout;
+  final Duration smartConnectTelemetryDeadline;
+  final int smartConnectProbeConcurrency;
   final int maxRequestAttempts;
   final Duration _allExceptRuRuleSetCacheMaxAge;
   final List<String> Function(String tag)? _allExceptRuRuleSetUrlsResolver;
   final SmartConnectLatencyProbe? smartConnectLatencyProbe;
   final AppFirstSessionSecretStore _sessionSecretStore;
   final AppFirstStateFileWriter _stateFileWriter;
+  final Map<String, Future<_StoredBootstrapState>> _initialStateFlights =
+      <String, Future<_StoredBootstrapState>>{};
+  final Map<String, Future<_StoredBootstrapState>> _initialTrialFlights =
+      <String, Future<_StoredBootstrapState>>{};
+  final Map<String, Future<_StoredBootstrapState>> _refreshFlights =
+      <String, Future<_StoredBootstrapState>>{};
 
-  static const _appVersion = '1.0.0-beta.4';
   static const _defaultManagedManifestPath = '/api/client/profile/managed';
+  // Current managed manifests are compact JSON and the checked-in rule-set
+  // fixtures are well below these limits. Keep a bounded margin for releases
+  // while preventing an untrusted response from growing without limit.
+  static const _maxJsonResponseBytes = 8 * 1024 * 1024;
+  static const _maxRuleSetResponseBytes = 32 * 1024 * 1024;
   static const _androidShellPackageName = 'space.pokrov.pokrov_android_shell';
   static const _allExceptRuRuleSetCacheDirectoryName =
       'all-except-ru-rule-sets';
+  static const _smartConnectTelemetryMaxNodes = 8;
   static const _ruDomainWhitelistRuleSetTag = 'pokrov-ru-domain-whitelist';
   static const _ruDomainCategoryRuleSetTag = 'pokrov-ru-domain-category';
   static const _ruIpCountryRuleSetTag = 'pokrov-ru-ip-country';
@@ -1845,10 +2019,21 @@ class AppFirstRuntimeBootstrapper
     required RouteMode routeMode,
     List<String> selectedApps = const <String>[],
     String preferredNodeCode = '',
+    Set<String> excludedNodeCodes = const <String>{},
   }) async {
     final normalizedSelectedApps = _normalizeSelectedAppIdentifiers(
       selectedApps,
     );
+    final normalizedExcludedNodeCodes = excludedNodeCodes
+        .map((code) => code.trim().toLowerCase())
+        .where((code) => code.isNotEmpty)
+        .take(8)
+        .toSet();
+    if (routeMode == RouteMode.selectedApps && normalizedSelectedApps.isEmpty) {
+      throw const BootstrapFailure(
+        'Выберите хотя бы одно приложение в разделе «Правила».',
+      );
+    }
     var state = await _loadOrCreateState(hostPlatform);
     final client = _createHttpClient(hostPlatform);
 
@@ -1870,7 +2055,7 @@ class AppFirstRuntimeBootstrapper
             selectedApps: normalizedSelectedApps,
             client: client,
           );
-          final manifest = await _fetchManagedManifest(
+          var manifest = await _fetchManagedManifest(
             state: state,
             hostPlatform: hostPlatform,
             routeMode: routeMode,
@@ -1878,17 +2063,67 @@ class AppFirstRuntimeBootstrapper
             preferredNodeCode: preferredNodeCode,
             client: client,
           );
+          if (preferredNodeCode.trim().isEmpty) {
+            final deadline = DateTime.now().add(smartConnectTelemetryDeadline);
+            final smartConnect = manifest.payload.smartConnect;
+            final resolution = await _resolveSmartConnectNode(
+              smartConnect: manifest.payload.smartConnect,
+              state: state,
+              hostPlatform: hostPlatform,
+              deadline: deadline,
+              excludedNodeCodes: normalizedExcludedNodeCodes,
+            );
+            final selectedNodeCode = resolution.selectedNodeCode;
+            if (normalizedExcludedNodeCodes.isNotEmpty &&
+                selectedNodeCode.isEmpty) {
+              throw const BootstrapFailure(
+                'Не удалось найти доступную автоматическую локацию.',
+              );
+            }
+            if (selectedNodeCode.isNotEmpty) {
+              try {
+                manifest = _promoteSelectedSmartConnectNode(
+                  manifest: manifest,
+                  selectedNodeCode: selectedNodeCode,
+                );
+              } on Object {
+                try {
+                  manifest = await _fetchManagedManifest(
+                    state: state,
+                    hostPlatform: hostPlatform,
+                    routeMode: routeMode,
+                    selectedApps: normalizedSelectedApps,
+                    preferredNodeCode: selectedNodeCode,
+                    client: client,
+                  ).timeout(_smartConnectProfileRefreshTimeout);
+                } on Object {
+                  if (normalizedExcludedNodeCodes.isNotEmpty) {
+                    rethrow;
+                  }
+                  // The preliminary managed profile is already authorized and
+                  // usable. A bounded Smart Connect refresh must not turn a
+                  // transient selection/refetch failure into a dead-end.
+                }
+              }
+            }
+            if (smartConnect != null && resolution.samplePayload.isNotEmpty) {
+              unawaited(
+                _uploadSmartConnectLatencySamples(
+                  state: state,
+                  hostPlatform: hostPlatform,
+                  smartConnect: smartConnect,
+                  selectedNodeCode: selectedNodeCode,
+                  selection: resolution.selection,
+                  samplePayload: resolution.samplePayload,
+                ),
+              );
+            }
+          }
           state = state.copyWith(
             profileRevision: manifest.profileRevision,
             managedManifestPath: manifest.managedManifestPath,
           );
           await _saveState(hostPlatform, state);
-          await _maybeUploadSmartConnectLatency(
-            smartConnect: manifest.payload.smartConnect,
-            state: state,
-            hostPlatform: hostPlatform,
-            client: client,
-          );
           return manifest.payload;
         } on BootstrapFailure catch (error) {
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
@@ -2006,22 +2241,17 @@ class AppFirstRuntimeBootstrapper
           'device_name': _deviceName(hostPlatform),
           'platform': hostPlatform.name,
           'os_version': _trim(Platform.operatingSystemVersion, 64),
-          'app_version': _appVersion,
+          'app_version': pokrovClientVersion,
           'locale': _trim(Platform.localeName, 32),
           'time_zone': _trim(DateTime.now().timeZoneName, 64),
         },
       );
       final session = _readMap(response['session']);
-      final sessionToken = _readText(
-        response['access_token'] ??
-            response['session_token'] ??
-            response['token'] ??
-            session['session_token'],
-      );
+      final pair = _sessionPairFromResponse(response);
       final accountId = _readText(
         response['canonical_account_id'] ?? session['account_id'],
       );
-      if (sessionToken.isEmpty || accountId.isEmpty) {
+      if (pair == null || accountId.isEmpty) {
         throw const BootstrapFailure(
           'POKROV не получил подтверждённую сессию устройства.',
         );
@@ -2035,7 +2265,8 @@ class AppFirstRuntimeBootstrapper
       }
       final nextState = state.copyWith(
         installId: pairedInstallId,
-        sessionToken: sessionToken,
+        sessionToken: pair.accessToken,
+        refreshToken: pair.refreshToken,
         accountId: accountId,
         managedManifestPath: _defaultManagedManifestPath,
         profileRevision: '',
@@ -3374,74 +3605,72 @@ class AppFirstRuntimeBootstrapper
     }
   }
 
-  HttpClient _createHttpClient(HostPlatform hostPlatform) {
-    final client = _httpClientFactory()..connectionTimeout = connectionTimeout;
-    if (hostPlatform != HostPlatform.android) {
-      return client;
-    }
-
-    client.connectionFactory =
-        (Uri uri, String? proxyHost, int? proxyPort) async {
-      if (proxyHost != null && proxyPort != null) {
-        return Socket.startConnect(proxyHost, proxyPort);
-      }
-
-      final directAddress = bootstrapDirectAddressForRequest(
-        requestUri: uri,
-        hostPlatform: hostPlatform,
-      );
-      if (directAddress == null) {
-        if (uri.scheme == 'https') {
-          final secureTask = await SecureSocket.startConnect(
-            uri.host,
-            uri.port,
-          );
-          return ConnectionTask.fromSocket<Socket>(
-            secureTask.socket.then<Socket>((socket) => socket),
-            secureTask.cancel,
-          );
-        }
-        return Socket.startConnect(uri.host, uri.port);
-      }
-
-      final socketTask = await Socket.startConnect(
-        directAddress,
-        uri.port,
-      );
-      return ConnectionTask.fromSocket<Socket>(
-        socketTask.socket.then<Socket>(
-          (socket) => SecureSocket.secure(
-            socket,
-            host: uri.host,
-          ),
-        ),
-        socketTask.cancel,
-      );
-    };
-
-    return client;
-  }
+  HttpClient _createHttpClient(HostPlatform _) =>
+      _httpClientFactory()..connectionTimeout = connectionTimeout;
 
   Future<_StoredBootstrapState> _loadOrCreateState(
     HostPlatform hostPlatform,
-  ) async {
-    final existing = await _loadState(hostPlatform);
-    if (existing != null) {
-      return existing;
+  ) {
+    final key = hostPlatform.name;
+    final inFlight = _initialStateFlights[key];
+    if (inFlight != null) {
+      return inFlight;
     }
-    final created = _StoredBootstrapState(
-      installId: _generateInstallId(hostPlatform),
-      managedManifestPath: _defaultManagedManifestPath,
-      sessionToken: '',
-      accountId: '',
-      profileRevision: '',
+    final creation = _loadOrCreateStateWithFileLock(hostPlatform);
+    _initialStateFlights[key] = creation;
+    creation.then<void>(
+      (_) => _removeInitialStateFlight(key, creation),
+      onError: (_, __) => _removeInitialStateFlight(key, creation),
     );
-    await _saveState(hostPlatform, created);
-    return created;
+    return creation;
+  }
+
+  Future<_StoredBootstrapState> _loadOrCreateStateWithFileLock(
+    HostPlatform hostPlatform,
+  ) async {
+    final file = await _stateFile(hostPlatform);
+    return _withAppFirstStateFileLock(file, () async {
+      final existing = await _loadStateFromFile(hostPlatform, file);
+      if (existing != null) {
+        return existing;
+      }
+      final created = _StoredBootstrapState(
+        installId: _generateInstallId(hostPlatform),
+        managedManifestPath: _defaultManagedManifestPath,
+        sessionToken: '',
+        accountId: '',
+        profileRevision: '',
+      );
+      await _persistStateToFile(
+        hostPlatform: hostPlatform,
+        file: file,
+        state: created,
+      );
+      return created;
+    });
+  }
+
+  void _removeInitialStateFlight(
+    String key,
+    Future<_StoredBootstrapState> creation,
+  ) {
+    if (identical(_initialStateFlights[key], creation)) {
+      _initialStateFlights.remove(key);
+    }
   }
 
   Future<_StoredBootstrapState?> _loadState(HostPlatform hostPlatform) async {
     final file = await _stateFile(hostPlatform);
+    return _withAppFirstStateFileLock(
+      file,
+      () => _loadStateFromFile(hostPlatform, file),
+    );
+  }
+
+  Future<_StoredBootstrapState?> _loadStateFromFile(
+    HostPlatform hostPlatform,
+    File file,
+  ) async {
     final backupFile = File('${file.path}.bak');
     if (!await file.exists() && await backupFile.exists()) {
       await backupFile.rename(file.path);
@@ -3461,19 +3690,31 @@ class AppFirstRuntimeBootstrapper
         (key, value) => MapEntry(key.toString(), value),
       ),
     );
-    final secureToken = (await _sessionSecretStore.readSessionToken(
-              hostPlatform: hostPlatform,
-              installId: parsed.installId,
-            ) ??
-            '')
-        .trim();
-    if (secureToken.isNotEmpty) {
+    // A persisted path is untrusted input. Validate it before reading secrets
+    // or allowing any authenticated route-policy/profile request.
+    _validatedManagedManifestPath(parsed.managedManifestPath);
+    final securePair = await _sessionSecretStore.readSessionPair(
+      hostPlatform: hostPlatform,
+      installId: parsed.installId,
+    );
+    if (securePair != null && securePair.hasAccessToken) {
       if (parsed.sessionToken.isNotEmpty) {
-        await _saveState(
-            hostPlatform, parsed.copyWith(sessionToken: secureToken));
+        await _persistStateToFile(
+          hostPlatform: hostPlatform,
+          file: file,
+          state: parsed.copyWith(
+            sessionToken: securePair.accessToken,
+            refreshToken: securePair.refreshToken,
+            expectsSecureSessionToken: true,
+          ),
+        );
       }
       await _cleanupStateWriteArtifacts(file);
-      return parsed.copyWith(sessionToken: secureToken);
+      return parsed.copyWith(
+        sessionToken: securePair.accessToken,
+        refreshToken: securePair.refreshToken,
+        expectsSecureSessionToken: true,
+      );
     }
     if (parsed.sessionToken.isNotEmpty) {
       await _sessionSecretStore.writeSessionToken(
@@ -3481,9 +3722,17 @@ class AppFirstRuntimeBootstrapper
         installId: parsed.installId,
         sessionToken: parsed.sessionToken,
       );
-      await _saveState(hostPlatform, parsed);
+      final migrated = parsed.copyWith(
+        refreshToken: '',
+        expectsSecureSessionToken: true,
+      );
+      await _persistStateToFile(
+        hostPlatform: hostPlatform,
+        file: file,
+        state: migrated,
+      );
       await _cleanupStateWriteArtifacts(file);
-      return parsed;
+      return migrated;
     }
     if (parsed.expectsSecureSessionToken) {
       throw const BootstrapFailure(
@@ -3509,12 +3758,30 @@ class AppFirstRuntimeBootstrapper
     _StoredBootstrapState state,
   ) async {
     final file = await _stateFile(hostPlatform);
+    await _withAppFirstStateFileLock(
+      file,
+      () => _persistStateToFile(
+        hostPlatform: hostPlatform,
+        file: file,
+        state: state,
+      ),
+    );
+  }
+
+  Future<void> _persistStateToFile({
+    required HostPlatform hostPlatform,
+    required File file,
+    required _StoredBootstrapState state,
+  }) async {
     await file.parent.create(recursive: true);
     if (state.sessionToken.trim().isNotEmpty) {
-      await _sessionSecretStore.writeSessionToken(
+      await _sessionSecretStore.writeSessionPair(
         hostPlatform: hostPlatform,
         installId: state.installId,
-        sessionToken: state.sessionToken,
+        pair: AppFirstSessionCredentials(
+          accessToken: state.sessionToken,
+          refreshToken: state.refreshToken,
+        ),
       );
     } else {
       await _sessionSecretStore.deleteSessionToken(
@@ -3574,17 +3841,62 @@ class AppFirstRuntimeBootstrapper
     required _StoredBootstrapState state,
     required HostPlatform hostPlatform,
     required HttpClient client,
+  }) {
+    // An existing install must refresh its device session, never bootstrap a
+    // second trial identity. Callers clear only the expired access token, so
+    // the securely retained rotating credential is still available here.
+    if (state.refreshToken.trim().isNotEmpty) {
+      return _refreshSession(
+        state: state,
+        hostPlatform: hostPlatform,
+        client: client,
+      );
+    }
+    if (state.expectsSecureSessionToken) {
+      return Future<_StoredBootstrapState>.error(const BootstrapFailure(
+        'Сессия устройства истекла. Используйте почту или код, чтобы восстановить доступ.',
+        statusCode: HttpStatus.unauthorized,
+      ));
+    }
+    final key = '${hostPlatform.name}:${state.installId.trim()}';
+    final inFlight = _initialTrialFlights[key];
+    if (inFlight != null) {
+      return inFlight;
+    }
+    final provisioning = _provisionInitialTrial(
+      state: state,
+      hostPlatform: hostPlatform,
+      client: client,
+    );
+    _initialTrialFlights[key] = provisioning;
+    provisioning.then<void>(
+      (_) => _removeInitialTrialFlight(key, provisioning),
+      onError: (_, __) => _removeInitialTrialFlight(key, provisioning),
+    );
+    return provisioning;
+  }
+
+  Future<_StoredBootstrapState> _provisionInitialTrial({
+    required _StoredBootstrapState state,
+    required HostPlatform hostPlatform,
+    required HttpClient client,
   }) async {
+    final latest = await _loadState(hostPlatform);
+    if (latest != null && latest.hasSession) {
+      return latest;
+    }
+    final effectiveState =
+        latest != null && latest.installId == state.installId ? latest : state;
     final response = await _requestJson(
       method: 'POST',
       path: '/api/client/session/start-trial',
       client: client,
       body: <String, Object?>{
-        'install_id': state.installId,
+        'install_id': effectiveState.installId,
         'device_name': _deviceName(hostPlatform),
         'platform': hostPlatform.name,
         'os_version': _trim(Platform.operatingSystemVersion, 64),
-        'app_version': _appVersion,
+        'app_version': pokrovClientVersion,
         'locale': _trim(Platform.localeName, 32),
         'time_zone': _trim(DateTime.now().timeZoneName, 64),
       },
@@ -3594,33 +3906,184 @@ class AppFirstRuntimeBootstrapper
     final session = _readMap(response['session']);
     final provisioning = _readMap(response['provisioning']);
     final managedManifest = _readMap(provisioning['managed_manifest']);
-    final provisioningReady = _readBool(response['sync_ok']) ||
-        _readBool(provisioning['sync_ok']) ||
-        _readText(provisioning['status']) == 'ready';
-    if (!provisioningReady) {
-      throw const BootstrapFailure(
-        'POKROV еще завершает первый запуск. Попробуйте через минуту.',
-      );
-    }
-    final sessionToken = _readText(session['session_token']);
-    if (sessionToken.isEmpty) {
+    final pair = _sessionPairFromResponse(response);
+    if (pair == null) {
       throw const BootstrapFailure(
         'POKROV не смог завершить подготовку устройства.',
       );
     }
 
-    final accountId = _readText(session['account_id']);
+    final accountId = _readText(
+      session['account_id'] ??
+          response['account_id'] ??
+          response['canonical_account_id'],
+    );
     final managedManifestPath = _readText(managedManifest['url']);
 
-    final nextState = state.copyWith(
-      sessionToken: sessionToken,
+    final nextState = effectiveState.copyWith(
+      sessionToken: pair.accessToken,
+      refreshToken: pair.refreshToken,
       accountId: accountId,
-      managedManifestPath: managedManifestPath.isEmpty
-          ? _defaultManagedManifestPath
-          : managedManifestPath,
+      managedManifestPath: _validatedManagedManifestPath(managedManifestPath),
+      expectsSecureSessionToken: true,
     );
     await _saveState(hostPlatform, nextState);
-    return nextState;
+    return await _loadState(hostPlatform) ?? nextState;
+  }
+
+  void _removeInitialTrialFlight(
+    String key,
+    Future<_StoredBootstrapState> provisioning,
+  ) {
+    if (identical(_initialTrialFlights[key], provisioning)) {
+      _initialTrialFlights.remove(key);
+    }
+  }
+
+  AppFirstSessionCredentials? _sessionPairFromResponse(
+    Map<String, dynamic> response,
+  ) {
+    final session = _readMap(response['session']);
+    final accessToken = _readText(
+      session['access_token'] ??
+          session['session_token'] ??
+          response['access_token'] ??
+          response['session_token'],
+    );
+    if (accessToken.isEmpty) {
+      return null;
+    }
+    return AppFirstSessionCredentials(
+      accessToken: accessToken,
+      refreshToken: _readText(
+        session['refresh_token'] ?? response['refresh_token'],
+      ),
+    );
+  }
+
+  Future<_StoredBootstrapState> _refreshSession({
+    required _StoredBootstrapState state,
+    required HostPlatform hostPlatform,
+    required HttpClient client,
+  }) {
+    final key = '${hostPlatform.name}:${state.installId.trim()}';
+    final inFlight = _refreshFlights[key];
+    if (inFlight != null) {
+      return inFlight;
+    }
+    final refresh = _refreshSessionWithLatestCredentials(
+      state: state,
+      hostPlatform: hostPlatform,
+      client: client,
+    );
+    _refreshFlights[key] = refresh;
+    refresh.then<void>(
+      (_) => _removeRefreshFlight(key, refresh),
+      onError: (_, __) => _removeRefreshFlight(key, refresh),
+    );
+    return refresh;
+  }
+
+  void _removeRefreshFlight(
+    String key,
+    Future<_StoredBootstrapState> refresh,
+  ) {
+    if (identical(_refreshFlights[key], refresh)) {
+      _refreshFlights.remove(key);
+    }
+  }
+
+  Future<_StoredBootstrapState> _refreshSessionWithLatestCredentials({
+    required _StoredBootstrapState state,
+    required HostPlatform hostPlatform,
+    required HttpClient client,
+  }) async {
+    final refreshToken = state.refreshToken.trim();
+    if (refreshToken.isEmpty) {
+      throw const BootstrapFailure(
+        'Сессия устройства истекла. Используйте почту или код, чтобы восстановить доступ.',
+        statusCode: HttpStatus.unauthorized,
+      );
+    }
+    final latest = await _sessionSecretStore.readSessionPair(
+      hostPlatform: hostPlatform,
+      installId: state.installId,
+    );
+    if (_credentialsHaveAdvanced(latest, state)) {
+      return _stateWithCredentials(state, latest!);
+    }
+    try {
+      final response = await _requestJson(
+        method: 'POST',
+        path: '/api/client/session/refresh',
+        client: client,
+        hostPlatform: hostPlatform,
+        body: <String, Object?>{'refresh_token': refreshToken},
+      );
+      final pair = _sessionPairFromResponse(response);
+      if (pair == null || pair.refreshToken.trim().isEmpty) {
+        throw const BootstrapFailure(
+          'Сессия устройства истекла. Используйте почту или код, чтобы восстановить доступ.',
+          statusCode: HttpStatus.unauthorized,
+        );
+      }
+      final session = _readMap(response['session']);
+      final nextState = state.copyWith(
+        sessionToken: pair.accessToken,
+        refreshToken: pair.refreshToken,
+        accountId: _readText(
+          session['account_id'] ??
+              response['account_id'] ??
+              response['canonical_account_id'],
+          fallback: state.accountId,
+        ),
+        expectsSecureSessionToken: true,
+      );
+      await _saveState(hostPlatform, nextState);
+      return nextState;
+    } on BootstrapFailure catch (error) {
+      if (_isSessionFailure(error.statusCode)) {
+        final latest = await _sessionSecretStore.readSessionPair(
+          hostPlatform: hostPlatform,
+          installId: state.installId,
+        );
+        if (_credentialsHaveAdvanced(latest, state)) {
+          return _stateWithCredentials(state, latest!);
+        }
+        throw BootstrapFailure(
+          'Сессия устройства истекла. Используйте почту или код, чтобы восстановить доступ.',
+          statusCode: HttpStatus.unauthorized,
+          operation: error.operation,
+          code: error.code,
+        );
+      }
+      rethrow;
+    }
+  }
+
+  bool _credentialsHaveAdvanced(
+    AppFirstSessionCredentials? credentials,
+    _StoredBootstrapState state,
+  ) {
+    if (credentials == null || !credentials.hasAccessToken) {
+      return false;
+    }
+    if (credentials.refreshToken.trim() != state.refreshToken.trim()) {
+      return true;
+    }
+    return state.sessionToken.trim().isNotEmpty &&
+        credentials.accessToken.trim() != state.sessionToken.trim();
+  }
+
+  _StoredBootstrapState _stateWithCredentials(
+    _StoredBootstrapState state,
+    AppFirstSessionCredentials credentials,
+  ) {
+    return state.copyWith(
+      sessionToken: credentials.accessToken,
+      refreshToken: credentials.refreshToken,
+      expectsSecureSessionToken: true,
+    );
   }
 
   Future<void> _syncRoutePolicy({
@@ -3632,26 +4095,19 @@ class AppFirstRuntimeBootstrapper
   }) async {
     final policySelectedApps =
         routeMode == RouteMode.selectedApps ? selectedApps : const <String>[];
-    try {
-      await _requestJson(
-        method: 'POST',
-        path: '/api/client/route-policy',
-        client: client,
-        bearerToken: state.sessionToken,
-        hostPlatform: hostPlatform,
-        body: <String, Object?>{
-          'route_mode': _routeModeWireValue(routeMode),
-          'selected_apps': policySelectedApps,
-          'requires_elevated_privileges':
-              hostPlatform.supportsSelectedAppsMode &&
-                  routeMode == RouteMode.selectedApps,
-        },
-      );
-    } on BootstrapFailure catch (error) {
-      if (_isSessionFailure(error.statusCode)) {
-        rethrow;
-      }
-    }
+    await _requestJson(
+      method: 'POST',
+      path: '/api/client/route-policy',
+      client: client,
+      bearerToken: state.sessionToken,
+      hostPlatform: hostPlatform,
+      body: <String, Object?>{
+        'route_mode': _routeModeWireValue(routeMode),
+        'selected_apps': policySelectedApps,
+        'requires_elevated_privileges': hostPlatform.supportsSelectedAppsMode &&
+            routeMode == RouteMode.selectedApps,
+      },
+    );
   }
 
   Future<_ManagedManifestEnvelope> _fetchManagedManifest({
@@ -3662,9 +4118,7 @@ class AppFirstRuntimeBootstrapper
     required String preferredNodeCode,
     required HttpClient client,
   }) async {
-    final path = state.managedManifestPath.isEmpty
-        ? _defaultManagedManifestPath
-        : state.managedManifestPath;
+    final path = _validatedManagedManifestPath(state.managedManifestPath);
     final normalizedPreferredNode = preferredNodeCode.trim().toLowerCase();
     final requestPath = normalizedPreferredNode.isEmpty
         ? path
@@ -3723,13 +4177,20 @@ class AppFirstRuntimeBootstrapper
         hostPlatform: hostPlatform,
         routeMode: routeMode,
         selectedApps: selectedApps,
+        preferredNodeCode: normalizedPreferredNode,
+        smartConnect: smartConnect,
         supportContext: supportContext,
         clientRuleSetCatalog: clientRuleSetCatalog,
       ),
       materializedForRuntime: true,
       routeMode: routeMode,
       smartConnect: smartConnect,
+      resolvedNodeCode: normalizedPreferredNode,
       warpPolicy: warpPolicy,
+      freeProfileAccess: FreeProfileAccess.tryParse(
+        access: response['access'],
+        freeCaps: response['free_caps'],
+      ),
     );
 
     return _ManagedManifestEnvelope(
@@ -3739,14 +4200,51 @@ class AppFirstRuntimeBootstrapper
     );
   }
 
+  String _validatedManagedManifestPath(String value) {
+    final candidate = value.trim();
+    if (candidate.isEmpty) {
+      return _defaultManagedManifestPath;
+    }
+    final uri = Uri.tryParse(candidate);
+    final safeQueryValue = RegExp(r'^[a-zA-Z0-9._~-]{0,96}$');
+    final hasSafeQuery = uri != null &&
+        uri.queryParametersAll.length <= 8 &&
+        uri.queryParametersAll.entries.every(
+          (entry) =>
+              RegExp(r'^[a-zA-Z0-9_]{1,32}$').hasMatch(entry.key) &&
+              entry.value.length <= 4 &&
+              entry.value.every(safeQueryValue.hasMatch),
+        );
+    if (uri == null ||
+        uri.hasScheme ||
+        uri.hasAuthority ||
+        uri.host.isNotEmpty ||
+        uri.userInfo.isNotEmpty ||
+        uri.fragment.isNotEmpty ||
+        uri.path != _defaultManagedManifestPath ||
+        !hasSafeQuery) {
+      throw const BootstrapFailure(
+        'POKROV получил недопустимый путь профиля. Обновите настройки и попробуйте ещё раз.',
+      );
+    }
+    return uri.toString();
+  }
+
   Future<String> _materializeRuntimeConfig({
     required String rawConfigPayload,
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
     required List<String> selectedApps,
+    required String preferredNodeCode,
+    required SmartConnectProfile? smartConnect,
     required Map<String, dynamic> supportContext,
     required _ClientRuleSetCatalog clientRuleSetCatalog,
   }) async {
+    if (routeMode == RouteMode.selectedApps && selectedApps.isEmpty) {
+      throw const BootstrapFailure(
+        'Выберите хотя бы одно приложение в разделе «Правила».',
+      );
+    }
     final decoded = jsonDecode(rawConfigPayload);
     if (decoded is! Map) {
       throw const BootstrapFailure(
@@ -3761,6 +4259,10 @@ class AppFirstRuntimeBootstrapper
       baseConfig: baseConfig,
       supportContext: supportContext,
     );
+    final preferredNode = _verifiedPreferredSmartConnectNode(
+      preferredNodeCode: preferredNodeCode,
+      smartConnect: smartConnect,
+    );
     if (hostPlatform != HostPlatform.android &&
         _looksRuntimeReady(baseConfig)) {
       final sanitized = _sanitizeRuntimeReadyConfig(
@@ -3769,6 +4271,10 @@ class AppFirstRuntimeBootstrapper
         routeMode: routeMode,
         selectedApps: selectedApps,
         clientRuleSetCatalog: clientRuleSetCatalog,
+      );
+      _promotePreferredSmartConnectOutbound(
+        config: sanitized,
+        preferredNode: preferredNode,
       );
       return const JsonEncoder.withIndent('  ').convert(sanitized);
     }
@@ -3780,56 +4286,210 @@ class AppFirstRuntimeBootstrapper
       supportContext: supportContext,
       clientRuleSetCatalog: clientRuleSetCatalog,
     );
+    _promotePreferredSmartConnectOutbound(
+      config: runtimeConfig,
+      preferredNode: preferredNode,
+    );
     return const JsonEncoder.withIndent('  ').convert(runtimeConfig);
   }
 
-  Future<void> _maybeUploadSmartConnectLatency({
+  SmartConnectNode? _verifiedPreferredSmartConnectNode({
+    required String preferredNodeCode,
+    required SmartConnectProfile? smartConnect,
+  }) {
+    final code = preferredNodeCode.trim().toLowerCase();
+    if (code.isEmpty) {
+      return null;
+    }
+    if (smartConnect == null || !smartConnect.eligible) {
+      throw const BootstrapFailure('Выбранная локация недоступна.');
+    }
+    final matches = smartConnect.shortlist
+        .where((node) => node.code.trim().toLowerCase() == code)
+        .toList(growable: false);
+    if (matches.length != 1) {
+      throw const BootstrapFailure('Выбранная локация недоступна.');
+    }
+    return matches.single;
+  }
+
+  void _promotePreferredSmartConnectOutbound({
+    required Map<String, dynamic> config,
+    required SmartConnectNode? preferredNode,
+  }) {
+    if (preferredNode == null) {
+      return;
+    }
+    final outbounds = _readListOfMaps(config['outbounds'])
+        .map((outbound) => Map<String, dynamic>.from(outbound))
+        .toList(growable: true);
+    final expectedTags = <String>{
+      preferredNode.outboundTag.trim(),
+      preferredNode.code.trim(),
+      _legacySmartConnectOutboundTag(preferredNode),
+    }..removeWhere((tag) => tag.isEmpty);
+    final host = preferredNode.probeHost.trim().toLowerCase();
+    final port = preferredNode.probePort;
+    var matchingProxyOutbounds = outbounds.where((outbound) {
+      return _isProxyTransportOutbound(outbound) &&
+          _readText(outbound['detour']).isEmpty &&
+          expectedTags.contains(_readText(outbound['tag']).trim());
+    }).toList(growable: false);
+    if (matchingProxyOutbounds.isEmpty && host.isNotEmpty && port > 0) {
+      matchingProxyOutbounds = outbounds.where((outbound) {
+        return _isProxyTransportOutbound(outbound) &&
+            _readText(outbound['detour']).isEmpty &&
+            _readText(outbound['server']).trim().toLowerCase() == host &&
+            _readInt(outbound['server_port']) == port &&
+            _readText(outbound['tag']).isNotEmpty;
+      }).toList(growable: false);
+    }
+    if (matchingProxyOutbounds.length != 1) {
+      throw const BootstrapFailure('Выбранная локация недоступна.');
+    }
+    final route = _readMap(config['route']);
+    final finalTag = _readText(route['final']);
+    final finalOutbounds = outbounds
+        .where((outbound) => _readText(outbound['tag']) == finalTag)
+        .toList(growable: false);
+    if (finalTag.isEmpty ||
+        finalOutbounds.length != 1 ||
+        _readText(finalOutbounds.single['type']).toLowerCase() != 'selector') {
+      throw const BootstrapFailure('Выбранная локация недоступна.');
+    }
+    final selector = finalOutbounds.single;
+    final selectedTag = _readText(matchingProxyOutbounds.single['tag']);
+    final selectorTargets = _readTagList(selector['outbounds']);
+    if (!selectorTargets.contains(selectedTag)) {
+      throw const BootstrapFailure('Выбранная локация недоступна.');
+    }
+    selector['outbounds'] = <String>[
+      selectedTag,
+      ...selectorTargets.where((tag) => tag != selectedTag),
+    ];
+    selector['default'] = selectedTag;
+    config['outbounds'] = outbounds;
+  }
+
+  String _legacySmartConnectOutboundTag(SmartConnectNode node) {
+    final rawCode = node.code.trim().toLowerCase();
+    if (rawCode.contains('free')) {
+      return '🇳🇱 NL Free';
+    }
+    final base = rawCode.split(RegExp(r'[_.-]')).first;
+    const flags = <String, String>{
+      'pl': '🇵🇱',
+      'it': '🇮🇹',
+      'us': '🇺🇸',
+      'nl': '🇳🇱',
+      'brain': '🇩🇪',
+      'de': '🇩🇪',
+      'ru': '🇷🇺',
+    };
+    const names = <String, String>{
+      'pl': 'Польша',
+      'it': 'Италия',
+      'us': 'США',
+      'nl': 'Нидерланды',
+      'brain': 'Германия',
+      'de': 'Германия',
+      'ru': 'Россия',
+    };
+    final fallbackName = node.country.trim();
+    final name = names[base] ??
+        (fallbackName.isNotEmpty
+            ? fallbackName
+            : base.isNotEmpty
+                ? base.toUpperCase()
+                : rawCode);
+    var suffix = rawCode.startsWith(base)
+        ? rawCode.substring(base.length).replaceFirst(RegExp(r'^[._ -]+'), '')
+        : '';
+    suffix = suffix
+        .split(RegExp(r'[._-]+'))
+        .where((part) => part.isNotEmpty)
+        .map(
+          (part) => int.tryParse(part) != null
+              ? part
+              : '${part.substring(0, 1).toUpperCase()}${part.substring(1).toLowerCase()}',
+        )
+        .join(' ');
+    return <String>[
+      flags[base] ?? '🏳️',
+      name,
+      if (suffix.isNotEmpty) suffix,
+    ].join(' ');
+  }
+
+  _ManagedManifestEnvelope _promoteSelectedSmartConnectNode({
+    required _ManagedManifestEnvelope manifest,
+    required String selectedNodeCode,
+  }) {
+    final preferredNode = _verifiedPreferredSmartConnectNode(
+      preferredNodeCode: selectedNodeCode,
+      smartConnect: manifest.payload.smartConnect,
+    );
+    final decoded = jsonDecode(manifest.payload.configPayload);
+    if (decoded is! Map) {
+      throw const BootstrapFailure(
+        'The connection details for this device were incomplete.',
+      );
+    }
+    final config = decoded.map(
+      (key, value) => MapEntry(key.toString(), value),
+    );
+    _promotePreferredSmartConnectOutbound(
+      config: config,
+      preferredNode: preferredNode,
+    );
+    return _ManagedManifestEnvelope(
+      payload: manifest.payload.copyWith(
+        configPayload: const JsonEncoder.withIndent('  ').convert(config),
+        resolvedNodeCode: selectedNodeCode.trim().toLowerCase(),
+      ),
+      profileRevision: manifest.profileRevision,
+      managedManifestPath: manifest.managedManifestPath,
+    );
+  }
+
+  Future<_SmartConnectResolution> _resolveSmartConnectNode({
     required SmartConnectProfile? smartConnect,
     required _StoredBootstrapState state,
     required HostPlatform hostPlatform,
-    required HttpClient client,
+    required DateTime deadline,
+    required Set<String> excludedNodeCodes,
   }) async {
     final probe = smartConnectLatencyProbe ?? _probeSmartConnectNode;
     if (smartConnect == null ||
         !smartConnect.eligible ||
         smartConnect.shortlist.isEmpty ||
         !state.hasSession) {
-      return;
+      return const _SmartConnectResolution.empty();
     }
 
-    final samples = <_SmartConnectLatencySample>[];
-    for (final node in smartConnect.shortlist.take(10)) {
-      final nodeCode = node.code.trim().toLowerCase();
-      if (nodeCode.isEmpty) {
-        continue;
-      }
-      int? rttMs;
-      try {
-        rttMs = await probe(node);
-      } catch (_) {
-        continue;
-      }
-      if (rttMs == null || rttMs < 1 || rttMs > 60000) {
-        continue;
-      }
-      samples.add(
-        _SmartConnectLatencySample(
-          nodeCode: nodeCode,
-          rttMs: rttMs,
-          cpuPenalty: node.rankHint.cpuPenalty,
-          backendPenalty: node.rankHint.backendPenalty,
-          rank: node.rank,
-        ),
-      );
-    }
-    if (samples.isEmpty) {
-      return;
+    final allowedNodes = smartConnect.shortlist
+        .where(
+          (node) => !excludedNodeCodes.contains(
+            node.code.trim().toLowerCase(),
+          ),
+        )
+        .toList(growable: false);
+    if (allowedNodes.isEmpty) {
+      return const _SmartConnectResolution.empty();
     }
 
-    final selection = _selectSmartConnectNode(
+    final samples = await _collectSmartConnectLatencySamples(
       smartConnect: smartConnect,
-      samples: samples,
+      probe: probe,
+      deadline: deadline,
+      excludedNodeCodes: excludedNodeCodes,
     );
+    final selection = samples.isEmpty
+        ? null
+        : _selectSmartConnectNode(
+            smartConnect: smartConnect,
+            samples: samples,
+          );
     final samplePayload = samples
         .map(
           (sample) => <String, Object?>{
@@ -3838,27 +4498,78 @@ class AppFirstRuntimeBootstrapper
           },
         )
         .toList(growable: false);
-    try {
-      await _requestJson(
-        method: 'POST',
-        path: '/api/client/nodes/select',
-        client: client,
-        bearerToken: state.sessionToken,
-        hostPlatform: hostPlatform,
-        body: <String, Object?>{
-          'mode': 'auto',
-          'profile_revision': smartConnect.profileRevision,
-          'transport_profile': smartConnect.transportProfile,
-          'selected_node_code': selection.selectedNodeCode,
-          'previous_node_code': selection.previousNodeCode.isEmpty
-              ? null
-              : selection.previousNodeCode,
-          'samples': samplePayload,
-        },
-      );
-    } on BootstrapFailure {
-      // Selection is advisory. The existing managed profile remains usable.
+    var selectedNodeCode = '';
+    final selectionRequestBudget = _smartConnectRemaining(deadline);
+    if (selectionRequestBudget > Duration.zero) {
+      final selectionClient = _createHttpClient(hostPlatform);
+      try {
+        final response = await _requestJson(
+          method: 'POST',
+          path: '/api/client/nodes/select',
+          client: selectionClient,
+          bearerToken: state.sessionToken,
+          hostPlatform: hostPlatform,
+          body: <String, Object?>{
+            'mode': 'auto',
+            'profile_revision': smartConnect.profileRevision,
+            'transport_profile': smartConnect.transportProfile,
+            'selected_node_code': selection?.selectedNodeCode,
+            'previous_node_code': (selection?.previousNodeCode ?? '').isEmpty
+                ? null
+                : selection?.previousNodeCode,
+            'samples': samplePayload,
+            if (excludedNodeCodes.isNotEmpty)
+              'excluded_node_codes': excludedNodeCodes.toList(growable: false),
+          },
+        ).timeout(selectionRequestBudget);
+        final candidate =
+            _readText(response['selected_node_code']).toLowerCase();
+        final allowedCodes = <String>{
+          for (final node in allowedNodes) node.code.trim().toLowerCase(),
+        };
+        if (allowedCodes.contains(candidate)) {
+          selectedNodeCode = candidate;
+        }
+      } on Object {
+        // The exact profile refresh below can still apply the bounded local
+        // choice; a slow advisory selector must not discard that identity.
+      } finally {
+        selectionClient.close(force: true);
+      }
     }
+    final locallySelectedCode =
+        selection?.selectedNodeCode.trim().toLowerCase() ?? '';
+    if (selectedNodeCode.isEmpty &&
+        locallySelectedCode.isNotEmpty &&
+        !excludedNodeCodes.contains(locallySelectedCode)) {
+      selectedNodeCode = locallySelectedCode;
+    }
+    if (selectedNodeCode.isEmpty) {
+      selectedNodeCode = allowedNodes.first.code.trim().toLowerCase();
+    }
+    if (_smartConnectDeadlineExpired(deadline) || samples.isEmpty) {
+      return _SmartConnectResolution(
+        selectedNodeCode: selectedNodeCode,
+        selection: selection,
+        samplePayload: samplePayload,
+      );
+    }
+    return _SmartConnectResolution(
+      selectedNodeCode: selectedNodeCode,
+      selection: selection,
+      samplePayload: samplePayload,
+    );
+  }
+
+  Future<void> _uploadSmartConnectLatencySamples({
+    required _StoredBootstrapState state,
+    required HostPlatform hostPlatform,
+    required SmartConnectProfile smartConnect,
+    required String selectedNodeCode,
+    required _SmartConnectSelection? selection,
+    required List<Map<String, Object?>> samplePayload,
+  }) async {
+    final client = _createHttpClient(hostPlatform);
     try {
       await _requestJson(
         method: 'POST',
@@ -3869,18 +4580,95 @@ class AppFirstRuntimeBootstrapper
         body: <String, Object?>{
           'profile_revision': smartConnect.profileRevision,
           'transport_profile': smartConnect.transportProfile,
-          'selected_node_code': selection.selectedNodeCode,
-          'previous_node_code': selection.previousNodeCode.isEmpty
+          'selected_node_code': selectedNodeCode.isEmpty
+              ? selection?.selectedNodeCode
+              : selectedNodeCode,
+          'previous_node_code': (selection?.previousNodeCode ?? '').isEmpty
               ? null
-              : selection.previousNodeCode,
-          'stickiness_applied': selection.stickinessApplied,
+              : selection?.previousNodeCode,
+          'stickiness_applied': selection?.stickinessApplied ?? false,
           'samples': samplePayload,
         },
       );
-    } on BootstrapFailure {
-      // RTT upload is telemetry/stickiness input. It must not block connecting.
+    } on Object {
+      // RTT upload is telemetry only. The selected manifest is authoritative.
+    } finally {
+      client.close(force: true);
     }
   }
+
+  Future<List<_SmartConnectLatencySample>> _collectSmartConnectLatencySamples({
+    required SmartConnectProfile smartConnect,
+    required SmartConnectLatencyProbe probe,
+    required DateTime deadline,
+    Set<String> excludedNodeCodes = const <String>{},
+  }) async {
+    final nodes = smartConnect.shortlist
+        .take(_smartConnectTelemetryMaxNodes)
+        .where((node) => node.code.trim().isNotEmpty)
+        .where(
+          (node) => !excludedNodeCodes.contains(
+            node.code.trim().toLowerCase(),
+          ),
+        )
+        .toList(growable: false);
+    final samples = List<_SmartConnectLatencySample?>.filled(
+      nodes.length,
+      null,
+    );
+    var nextIndex = 0;
+    final workerCount = min(
+      max(1, smartConnectProbeConcurrency),
+      nodes.length,
+    );
+
+    Future<void> collectOne() async {
+      while (
+          nextIndex < nodes.length && !_smartConnectDeadlineExpired(deadline)) {
+        final index = nextIndex++;
+        final node = nodes[index];
+        final remaining = _smartConnectRemaining(deadline);
+        if (remaining <= Duration.zero) {
+          return;
+        }
+        try {
+          final rttMs = await probe(node).timeout(
+            _shorterDuration(smartConnectProbeTimeout, remaining),
+          );
+          if (rttMs == null || rttMs < 1 || rttMs > 60000) {
+            continue;
+          }
+          samples[index] = _SmartConnectLatencySample(
+            nodeCode: node.code.trim().toLowerCase(),
+            rttMs: rttMs,
+            cpuPenalty: node.rankHint.cpuPenalty,
+            backendPenalty: node.rankHint.backendPenalty,
+            rank: node.rank,
+          );
+        } on Object {
+          // One unavailable candidate must not hold up the profile.
+        }
+      }
+    }
+
+    await Future.wait<void>(
+      List<Future<void>>.generate(workerCount, (_) => collectOne()),
+    );
+    return samples.whereType<_SmartConnectLatencySample>().toList(
+          growable: false,
+        );
+  }
+
+  bool _smartConnectDeadlineExpired(DateTime deadline) =>
+      !DateTime.now().isBefore(deadline);
+
+  Duration _smartConnectRemaining(DateTime deadline) {
+    final remaining = deadline.difference(DateTime.now());
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
+  Duration _shorterDuration(Duration left, Duration right) =>
+      left <= right ? left : right;
 
   Future<int?> _probeSmartConnectNode(SmartConnectNode node) async {
     final host = node.probeHost.trim();
@@ -3984,22 +4772,30 @@ class AppFirstRuntimeBootstrapper
     final route = _readMap(sanitized['route']);
     if (route.isNotEmpty) {
       final routeCopy = Map<String, dynamic>.from(route)
-        ..remove('auto_detect_interface')
+        ..['auto_detect_interface'] = false
         ..remove('override_android_vpn');
       sanitized['route'] = routeCopy;
     }
-    if (routeMode == RouteMode.selectedApps) {
-      final inbounds = _readListOfMaps(sanitized['inbounds'])
-          .map((inbound) => Map<String, dynamic>.from(inbound))
-          .toList(growable: true);
-      for (final inbound in inbounds) {
-        if (_readText(inbound['type']) == 'tun') {
+    final inbounds = _readListOfMaps(sanitized['inbounds'])
+        .map((inbound) => Map<String, dynamic>.from(inbound))
+        .toList(growable: true);
+    for (final inbound in inbounds) {
+      if (_readText(inbound['type']) == 'tun') {
+        if (routeMode == RouteMode.selectedApps) {
           inbound['include_package'] = selectedApps;
+          inbound.remove('exclude_package');
+        } else {
+          inbound.remove('include_package');
+          inbound['exclude_package'] = <String>[
+            _androidShellPackageName,
+            ..._readTagList(inbound['exclude_package'])
+                .where((value) => value != _androidShellPackageName),
+          ];
         }
       }
-      if (inbounds.isNotEmpty) {
-        sanitized['inbounds'] = inbounds;
-      }
+    }
+    if (inbounds.isNotEmpty) {
+      sanitized['inbounds'] = inbounds;
     }
     return sanitized;
   }
@@ -4017,6 +4813,9 @@ class AppFirstRuntimeBootstrapper
       throw const BootstrapFailure(
         'The connection details for this device were incomplete.',
       );
+    }
+    if (hostPlatform == HostPlatform.android) {
+      _useOwnedAndroidEgressProbe(outbounds);
     }
 
     final existingTags = outbounds
@@ -4050,12 +4849,18 @@ class AppFirstRuntimeBootstrapper
       preferredTag: 'block',
       type: 'block',
     );
-    final dnsOutboundTag = _ensureAuxiliaryOutbound(
-      outbounds,
-      existingTags,
-      preferredTag: 'dns-out',
-      type: 'dns',
-    );
+    final androidLegacyDnsOutboundTags = hostPlatform == HostPlatform.android
+        ? _removeAndroidLegacyDnsOutbounds(outbounds)
+        : const <String>{};
+    existingTags.removeAll(androidLegacyDnsOutboundTags);
+    final dnsOutboundTag = hostPlatform == HostPlatform.android
+        ? null
+        : _ensureAuxiliaryOutbound(
+            outbounds,
+            existingTags,
+            preferredTag: 'dns-out',
+            type: 'dns',
+          );
 
     final baseRoute = _readMap(baseConfig['route']);
     var finalOutboundTag = _readText(baseRoute['final']);
@@ -4118,7 +4923,7 @@ class AppFirstRuntimeBootstrapper
         'route': _buildAndroidRouteBlock(
           baseRoute: baseConfig['route'],
           directTag: directTag,
-          dnsOutboundTag: dnsOutboundTag,
+          legacyDnsOutboundTags: androidLegacyDnsOutboundTags,
           finalOutboundTag: finalOutboundTag,
           routeMode: routeMode,
           clientRuleSetCatalog: clientRuleSetCatalog,
@@ -4153,7 +4958,7 @@ class AppFirstRuntimeBootstrapper
       'route': _buildRouteBlock(
         baseRoute: baseConfig['route'],
         directTag: directTag,
-        dnsOutboundTag: dnsOutboundTag,
+        dnsOutboundTag: dnsOutboundTag!,
         finalOutboundTag: finalOutboundTag,
         hostPlatform: hostPlatform,
         routeMode: routeMode,
@@ -4216,11 +5021,36 @@ class AppFirstRuntimeBootstrapper
       remoteServerTag = 'dns-remote-$suffix';
     }
 
-    final localBootstrapServerTag = _selectAndroidBootstrapDnsServerTag(
+    var localBootstrapServerTag = _selectAndroidBootstrapDnsServerTag(
       baseServers,
       directTag: directTag,
     );
+    if (baseServers.isNotEmpty && localBootstrapServerTag == null) {
+      baseServers.add(<String, dynamic>{
+        'tag': localServerTag,
+        'type': 'local',
+        'detour': directTag,
+      });
+      localBootstrapServerTag = localServerTag;
+    } else if (localBootstrapServerTag != null) {
+      for (final server in baseServers) {
+        if (_readText(server['tag']) == localBootstrapServerTag) {
+          // Legacy `address: local` does not use Android's platform DNS
+          // transport in the current core. Normalize it to the typed local
+          // server so endpoint hostnames resolve on the underlying network.
+          server['type'] = 'local';
+          server.remove('address');
+          server.remove('address_resolver');
+          server['detour'] = directTag;
+          break;
+        }
+      }
+    }
     if (baseServers.isNotEmpty && localBootstrapServerTag != null) {
+      _ensureAndroidOutboundDomainResolvers(
+        outbounds: outbounds,
+        serverTag: localBootstrapServerTag,
+      );
       _ensureDnsServerDomainRule(
         rules: existingRules,
         serverDomains: serverDomains,
@@ -4301,15 +5131,19 @@ class AppFirstRuntimeBootstrapper
       },
       <String, dynamic>{
         'tag': localServerTag,
-        'address': 'local',
+        'type': 'local',
         'detour': directTag,
       },
     ];
+    _ensureAndroidOutboundDomainResolvers(
+      outbounds: outbounds,
+      serverTag: localServerTag,
+    );
     dns['rules'] = <Map<String, dynamic>>[
       if (serverDomains.isNotEmpty)
         <String, dynamic>{
           'domain': serverDomains,
-          'server': directServerTag,
+          'server': localServerTag,
         },
       <String, dynamic>{
         'ip_is_private': true,
@@ -4345,7 +5179,7 @@ class AppFirstRuntimeBootstrapper
   Map<String, dynamic> _buildAndroidRouteBlock({
     required Object? baseRoute,
     required String directTag,
-    required String dnsOutboundTag,
+    required Set<String> legacyDnsOutboundTags,
     required String finalOutboundTag,
     required RouteMode routeMode,
     required _ClientRuleSetCatalog clientRuleSetCatalog,
@@ -4356,29 +5190,6 @@ class AppFirstRuntimeBootstrapper
     final existingRules = _readListOfMaps(route['rules'])
         .map((rule) => Map<String, dynamic>.from(rule))
         .toList(growable: true);
-
-    final hasDnsRule = existingRules.any(
-      (rule) =>
-          _readText(rule['protocol']).toLowerCase() == 'dns' &&
-          _readText(rule['outbound']) == dnsOutboundTag,
-    );
-    if (!hasDnsRule) {
-      existingRules.insert(0, <String, dynamic>{
-        'protocol': 'dns',
-        'outbound': dnsOutboundTag,
-      });
-    }
-
-    final hasDnsPortRule = existingRules.any(
-      (rule) =>
-          rule['port'] == 53 && _readText(rule['outbound']) == dnsOutboundTag,
-    );
-    if (!hasDnsPortRule) {
-      existingRules.insert(0, <String, dynamic>{
-        'port': 53,
-        'outbound': dnsOutboundTag,
-      });
-    }
 
     _normalizeAndroidRouteModeRules(
       rules: existingRules,
@@ -4405,9 +5216,20 @@ class AppFirstRuntimeBootstrapper
       _ensureDomainSuffixDirectRule(existingRules, '.su', directTag);
     }
 
+    // DNS must win before private-address and package bypass rules. Android's
+    // TUN resolver is the private address derived from the TUN subnet, so a
+    // preceding `ip_is_private -> direct` rule would black-hole every lookup.
+    _ensureAndroidDnsHijackRules(
+      rules: existingRules,
+      legacyDnsOutboundTags: legacyDnsOutboundTags,
+    );
+
+    // The Android VpnService excludes its own package from the TUN. Letting
+    // sing-box auto-detect the Android VPN interface loops or rejects outbound
+    // sessions on some runtimes, including the supported LDPlayer lane.
     route
-      ..['auto_detect_interface'] = true
-      ..['override_android_vpn'] = true
+      ..['auto_detect_interface'] = false
+      ..remove('override_android_vpn')
       ..remove('find_process')
       ..['rules'] = existingRules
       ..['final'] = finalOutboundTag;
@@ -4553,6 +5375,16 @@ class AppFirstRuntimeBootstrapper
     return type == 'selector' || type == 'urltest';
   }
 
+  void _useOwnedAndroidEgressProbe(
+    List<Map<String, dynamic>> outbounds,
+  ) {
+    for (final outbound in outbounds) {
+      if (_readText(outbound['type']).toLowerCase() == 'urltest') {
+        outbound['url'] = _androidCoreEgressProbeUrl;
+      }
+    }
+  }
+
   bool _normalizeSelectorDefault(
     Map<String, dynamic> outbound, {
     required List<String> allowedTargets,
@@ -4584,7 +5416,8 @@ class AppFirstRuntimeBootstrapper
     Map<String, dynamic> server, {
     required String directTag,
   }) {
-    return _readText(server['address']).toLowerCase() == 'local' ||
+    return _readText(server['type']).toLowerCase() == 'local' ||
+        _readText(server['address']).toLowerCase() == 'local' ||
         _readText(server['detour']) == directTag;
   }
 
@@ -4784,9 +5617,14 @@ class AppFirstRuntimeBootstrapper
       tunInbound['inet6_address'] = 'fdfe:dcba:9876::1/126';
       tunInbound['domain_strategy'] = 'prefer_ipv4';
     }
-    if (hostPlatform == HostPlatform.android &&
-        routeMode == RouteMode.selectedApps) {
-      tunInbound['include_package'] = selectedApps;
+    if (hostPlatform == HostPlatform.android) {
+      if (routeMode == RouteMode.selectedApps) {
+        tunInbound['include_package'] = selectedApps;
+      } else {
+        tunInbound['exclude_package'] = const <String>[
+          _androidShellPackageName,
+        ];
+      }
     }
 
     if (hostPlatform == HostPlatform.android) {
@@ -4891,6 +5729,10 @@ class AppFirstRuntimeBootstrapper
           selectedProcessNames.isNotEmpty ? directTag : finalOutboundTag;
     if (hostPlatform != HostPlatform.android) {
       route['auto_detect_interface'] = true;
+    } else {
+      route
+        ..['auto_detect_interface'] = false
+        ..remove('override_android_vpn');
     }
     if (hostPlatform == HostPlatform.windows) {
       route['find_process'] = true;
@@ -5186,13 +6028,35 @@ class AppFirstRuntimeBootstrapper
           _readText(rule['outbound']) == directTag,
     );
     if (!alreadyPresent) {
-      rules.insert(0, <String, dynamic>{
+      final insertAt = rules.takeWhile(_isAndroidDnsHijackRule).length;
+      rules.insert(insertAt, <String, dynamic>{
         'inbound': const <String>['tun-in'],
         'package_name': const <String>[_androidShellPackageName],
         'outbound': directTag,
       });
     }
   }
+
+  void _ensureAndroidDnsHijackRules({
+    required List<Map<String, dynamic>> rules,
+    required Set<String> legacyDnsOutboundTags,
+  }) {
+    rules.removeWhere(
+      (rule) =>
+          _isAndroidDnsHijackRule(rule) ||
+          (legacyDnsOutboundTags.contains(_readText(rule['outbound'])) &&
+              (_readText(rule['protocol']).toLowerCase() == 'dns' ||
+                  rule['port'] == 53)),
+    );
+    rules.insert(0, <String, dynamic>{
+      'protocol': 'dns',
+      'action': 'hijack-dns',
+    });
+  }
+
+  bool _isAndroidDnsHijackRule(Map<String, dynamic> rule) =>
+      _readText(rule['protocol']).toLowerCase() == 'dns' &&
+      _readText(rule['action']).toLowerCase() == 'hijack-dns';
 
   void _ensureDnsServerDomainRule({
     required List<Map<String, dynamic>> rules,
@@ -5382,16 +6246,9 @@ class AppFirstRuntimeBootstrapper
     required String directTag,
   }) {
     for (final server in servers) {
-      if (_readText(server['address']).toLowerCase() == 'local' &&
+      if ((_readText(server['type']).toLowerCase() == 'local' ||
+              _readText(server['address']).toLowerCase() == 'local') &&
           _readText(server['detour']) == directTag) {
-        final tag = _readText(server['tag']);
-        if (tag.isNotEmpty) {
-          return tag;
-        }
-      }
-    }
-    for (final server in servers) {
-      if (_readText(server['detour']) == directTag) {
         final tag = _readText(server['tag']);
         if (tag.isNotEmpty) {
           return tag;
@@ -5403,6 +6260,9 @@ class AppFirstRuntimeBootstrapper
 
   String _preferredAndroidRemoteDnsAddress(List<Map<String, dynamic>> servers) {
     for (final server in servers) {
+      if (_readText(server['type']).toLowerCase() == 'local') {
+        continue;
+      }
       final address = _readText(server['address']);
       final normalizedAddress = address.toLowerCase();
       if (normalizedAddress.isEmpty || normalizedAddress == 'local') {
@@ -5413,6 +6273,19 @@ class AppFirstRuntimeBootstrapper
       }
     }
     return 'https://1.1.1.1/dns-query';
+  }
+
+  void _ensureAndroidOutboundDomainResolvers({
+    required List<Map<String, dynamic>> outbounds,
+    required String serverTag,
+  }) {
+    for (final outbound in outbounds) {
+      final server = _readText(outbound['server']);
+      if (server.isEmpty || InternetAddress.tryParse(server) != null) {
+        continue;
+      }
+      outbound['domain_resolver'] = serverTag;
+    }
   }
 
   void _applyRealityTlsFragmentPolicy({
@@ -5478,6 +6351,24 @@ class AppFirstRuntimeBootstrapper
     final type = _readText(outbound['type']).toLowerCase();
     return !const {'direct', 'block', 'dns', 'selector', 'urltest'}
         .contains(type);
+  }
+
+  Set<String> _removeAndroidLegacyDnsOutbounds(
+    List<Map<String, dynamic>> outbounds,
+  ) {
+    final removedTags = <String>{'dns-out'};
+    for (final outbound in outbounds) {
+      if (_readText(outbound['type']).toLowerCase() == 'dns') {
+        final tag = _readText(outbound['tag']);
+        if (tag.isNotEmpty) {
+          removedTags.add(tag);
+        }
+      }
+    }
+    outbounds.removeWhere(
+      (outbound) => _readText(outbound['type']).toLowerCase() == 'dns',
+    );
+    return removedTags;
   }
 
   String _ensureAuxiliaryOutbound(
@@ -5685,10 +6576,10 @@ class AppFirstRuntimeBootstrapper
         );
 
         final response = await request.close().timeout(requestTimeout);
-        final bytes = <int>[];
-        await for (final chunk in response) {
-          bytes.addAll(chunk);
-        }
+        final bytes = await _readBoundedResponseBytes(
+          response,
+          maxBytes: _maxRuleSetResponseBytes,
+        );
         if (response.statusCode < 200 || response.statusCode >= 300) {
           final failure = BootstrapFailure(
             _errorMessageForResponse(
@@ -5711,25 +6602,33 @@ class AppFirstRuntimeBootstrapper
           );
         }
         return bytes;
-      } on SocketException catch (error) {
-        final failure = BootstrapFailure(
-          'Сеть не дала обновить правила с ${uri.host}: $error',
+      } on SocketException {
+        const failure = BootstrapFailure(
+          'Не удалось обновить правила. Проверьте интернет и попробуйте ещё раз.',
         );
         if (attempt >= maxRequestAttempts - 1) {
           throw failure;
         }
         lastFailure = failure;
-      } on HandshakeException catch (error) {
-        final failure = BootstrapFailure(
-          'Не удалось проверить TLS-соединение с ${uri.host}: $error',
+      } on HttpException {
+        const failure = BootstrapFailure(
+          'Не удалось обновить правила. Проверьте интернет и попробуйте ещё раз.',
+        );
+        if (attempt >= maxRequestAttempts - 1) {
+          throw failure;
+        }
+        lastFailure = failure;
+      } on HandshakeException {
+        const failure = BootstrapFailure(
+          'Не удалось безопасно обновить правила. Проверьте дату, время и интернет.',
         );
         if (attempt >= maxRequestAttempts - 1) {
           throw failure;
         }
         lastFailure = failure;
       } on TimeoutException {
-        final failure = BootstrapFailure(
-          'POKROV не дождался обновления правил от ${uri.host}.',
+        const failure = BootstrapFailure(
+          'Обновление правил заняло слишком много времени. Попробуйте ещё раз.',
           statusCode: HttpStatus.gatewayTimeout,
         );
         if (attempt >= maxRequestAttempts - 1) {
@@ -5742,8 +6641,8 @@ class AppFirstRuntimeBootstrapper
     }
 
     throw lastFailure ??
-        BootstrapFailure(
-          'POKROV не смог скачать обновление правил от ${uri.host}.',
+        const BootstrapFailure(
+          'Не удалось обновить правила. Проверьте интернет и попробуйте ещё раз.',
         );
   }
 
@@ -5757,7 +6656,10 @@ class AppFirstRuntimeBootstrapper
   }) async {
     BootstrapFailure? lastFailure;
     final requestUri = Uri.parse(apiBaseUrl).resolve(path);
-    for (var attempt = 0; attempt < maxRequestAttempts; attempt += 1) {
+    final operation = '$method $path';
+    final retryable = method.trim().toUpperCase() == 'GET';
+    final attemptLimit = retryable ? maxRequestAttempts : 1;
+    for (var attempt = 0; attempt < attemptLimit; attempt += 1) {
       try {
         final request = await client.openUrl(
           method,
@@ -5783,14 +6685,21 @@ class AppFirstRuntimeBootstrapper
         }
 
         final response = await request.close().timeout(requestTimeout);
-        final text = await utf8.decoder.bind(response).join();
+        final bytes = await _readBoundedResponseBytes(
+          response,
+          maxBytes: _maxJsonResponseBytes,
+        );
+        final text = utf8.decode(bytes, allowMalformed: true);
         if (response.statusCode < 200 || response.statusCode >= 300) {
           final failure = BootstrapFailure(
             _errorMessageForResponse(text, response.statusCode),
             statusCode: response.statusCode,
+            operation: operation,
+            code: _platformErrorCode(response),
           );
-          if (!_shouldRetryStatus(response.statusCode) ||
-              attempt >= maxRequestAttempts - 1) {
+          if (!retryable ||
+              !_shouldRetryStatus(response.statusCode) ||
+              attempt >= attemptLimit - 1) {
             throw failure;
           }
           lastFailure = failure;
@@ -5813,29 +6722,42 @@ class AppFirstRuntimeBootstrapper
         }
         throw BootstrapFailure(
           'POKROV получил неожиданный ответ во время подготовки устройства.',
+          operation: operation,
         );
-      } on SocketException catch (error) {
+      } on SocketException {
         final failure = BootstrapFailure(
-          'Сеть не дала подготовить устройство через ${requestUri.host}: $error',
+          'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
+          operation: operation,
         );
-        if (attempt >= maxRequestAttempts - 1) {
+        if (attempt >= attemptLimit - 1) {
           throw failure;
         }
         lastFailure = failure;
-      } on HandshakeException catch (error) {
+      } on HttpException {
         final failure = BootstrapFailure(
-          'Не удалось проверить соединение с ${requestUri.host}: $error',
+          'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
+          operation: operation,
         );
-        if (attempt >= maxRequestAttempts - 1) {
+        if (attempt >= attemptLimit - 1) {
+          throw failure;
+        }
+        lastFailure = failure;
+      } on HandshakeException {
+        final failure = BootstrapFailure(
+          'Не удалось безопасно подключиться к сервису. Проверьте дату, время и интернет.',
+          operation: operation,
+        );
+        if (attempt >= attemptLimit - 1) {
           throw failure;
         }
         lastFailure = failure;
       } on TimeoutException {
         final failure = BootstrapFailure(
-          'POKROV не дождался ответа от ${requestUri.host}.',
+          'Сервис не ответил вовремя. Попробуйте ещё раз.',
           statusCode: HttpStatus.gatewayTimeout,
+          operation: operation,
         );
-        if (attempt >= maxRequestAttempts - 1) {
+        if (attempt >= attemptLimit - 1) {
           throw failure;
         }
         lastFailure = failure;
@@ -5845,14 +6767,52 @@ class AppFirstRuntimeBootstrapper
     }
 
     throw lastFailure ??
-        const BootstrapFailure(
-            'POKROV не смог связаться с сервисом подготовки.');
+        BootstrapFailure(
+          'POKROV не смог связаться с сервисом подготовки.',
+          operation: operation,
+        );
+  }
+
+  Future<List<int>> _readBoundedResponseBytes(
+    HttpClientResponse response, {
+    required int maxBytes,
+  }) async {
+    final contentLength = response.contentLength;
+    if (contentLength > maxBytes) {
+      throw const BootstrapFailure(
+        'Ответ сервиса оказался слишком большим. Попробуйте ещё раз.',
+      );
+    }
+
+    final iterator = StreamIterator<List<int>>(response);
+    final bytes = <int>[];
+    final deadline = DateTime.now().add(requestTimeout);
+    try {
+      while (true) {
+        final remaining = deadline.difference(DateTime.now());
+        if (remaining <= Duration.zero) {
+          throw TimeoutException('response body deadline exceeded');
+        }
+        final hasNext = await iterator.moveNext().timeout(remaining);
+        if (!hasNext) {
+          return bytes;
+        }
+        final chunk = iterator.current;
+        if (chunk.length > maxBytes - bytes.length) {
+          throw const BootstrapFailure(
+            'Ответ сервиса оказался слишком большим. Попробуйте ещё раз.',
+          );
+        }
+        bytes.addAll(chunk);
+      }
+    } finally {
+      await iterator.cancel();
+    }
   }
 
   bool _isSessionFailure(int? statusCode) =>
       statusCode == HttpStatus.unauthorized ||
-      statusCode == HttpStatus.forbidden ||
-      statusCode == HttpStatus.notFound;
+      statusCode == HttpStatus.forbidden;
 
   bool _shouldRetryStatus(int statusCode) =>
       statusCode == HttpStatus.requestTimeout ||
@@ -5860,6 +6820,13 @@ class AppFirstRuntimeBootstrapper
       statusCode == HttpStatus.badGateway ||
       statusCode == HttpStatus.serviceUnavailable ||
       statusCode == HttpStatus.gatewayTimeout;
+
+  String _platformErrorCode(HttpClientResponse response) {
+    final normalized = (response.headers.value(_platformErrorCodeHeader) ?? '')
+        .trim()
+        .toLowerCase();
+    return _platformErrorCodePattern.hasMatch(normalized) ? normalized : '';
+  }
 
   Duration _retryDelayForAttempt(int attempt) {
     final baseMs = 350 * (attempt + 1) * (attempt + 1);
@@ -5978,7 +6945,7 @@ class AppFirstRuntimeBootstrapper
   }
 
   String _userAgent(HostPlatform hostPlatform) =>
-      'POKROV/${hostPlatform.name}/$_appVersion';
+      'POKROV/${hostPlatform.name}/$pokrovClientVersion';
 
   String _generateInstallId(HostPlatform hostPlatform) {
     final random = Random.secure();
@@ -5996,24 +6963,40 @@ class AppFirstRuntimeBootstrapper
   }
 
   String _errorMessageForResponse(String text, int statusCode) {
-    if (text.trim().isEmpty) {
-      return 'Сервис подготовки ответил с ошибкой $statusCode.';
+    if (statusCode >= HttpStatus.internalServerError && statusCode < 600) {
+      return 'Сервис подготовки временно недоступен. Попробуйте ещё раз.';
     }
-    try {
-      final decoded = jsonDecode(text);
-      if (decoded is Map<String, dynamic>) {
-        final detailValue = decoded['detail'];
-        final detail = detailValue is Map
-            ? _readText(detailValue['message'] ?? detailValue['detail'])
-            : _readText(detailValue);
-        if (detail.isNotEmpty) {
-          return detail;
+    if (statusCode >= HttpStatus.badRequest &&
+        statusCode < HttpStatus.internalServerError) {
+      try {
+        final decoded = jsonDecode(text);
+        if (decoded is Map<String, dynamic>) {
+          final detailValue = decoded['detail'];
+          final detail = detailValue is Map
+              ? _readText(detailValue['message'] ?? detailValue['detail'])
+              : _readText(detailValue);
+          final safeDetail = _safeUserCopy(detail);
+          if (safeDetail.isNotEmpty) {
+            return safeDetail;
+          }
         }
+      } catch (_) {
+        // Non-JSON error bodies are not consumer copy.
       }
-    } catch (_) {
-      // Keep the raw fallback below when the response is not JSON.
     }
-    return _trim(text.replaceAll(RegExp(r'\s+'), ' '), 280);
+    return 'Не удалось выполнить запрос. Попробуйте ещё раз.';
+  }
+
+  String _safeUserCopy(String value) {
+    final normalized = _trim(value.replaceAll(RegExp(r'\s+'), ' '), 180);
+    if (normalized.isEmpty) {
+      return '';
+    }
+    final unsafeMarker = RegExp(
+      r'(?:\b[a-z][a-z0-9+.-]*://|\b(?:\d{1,3}\.){3}\d{1,3}\b|:\d{1,5}\b|\b(?:port|порт)\s*[:=]?\s*\d+|\b(?:exception|stack(?:trace)?|traceback|platformexception|socketexception|handshake|protocol|vless|vmess|trojan|socks|(?:access|refresh)[ _-]?token|token|secret|password|authorization|bearer|cookie|session|api[ _-]?key|credential)\b)',
+      caseSensitive: false,
+    );
+    return unsafeMarker.hasMatch(normalized) ? '' : normalized;
   }
 
   Map<String, dynamic> _readMap(Object? value) {
@@ -6507,7 +7490,7 @@ class AppFirstSupportTicketService implements SupportTicketService {
     required Map<String, Object?> diagnostics,
   }) {
     final safe = <String, Object?>{
-      'app_version': AppFirstRuntimeBootstrapper._appVersion,
+      'app_version': pokrovClientVersion,
       'platform': hostPlatform.name,
       'route_mode': _routeModeDiagnosticValue(routeMode),
       'connection_status': _safeDiagnosticValue(statusLabel),
@@ -6631,6 +7614,23 @@ class _SmartConnectSelection {
   final bool stickinessApplied;
 }
 
+class _SmartConnectResolution {
+  const _SmartConnectResolution({
+    required this.selectedNodeCode,
+    required this.selection,
+    required this.samplePayload,
+  });
+
+  const _SmartConnectResolution.empty()
+      : selectedNodeCode = '',
+        selection = null,
+        samplePayload = const <Map<String, Object?>>[];
+
+  final String selectedNodeCode;
+  final _SmartConnectSelection? selection;
+  final List<Map<String, Object?>> samplePayload;
+}
+
 class _StoredBootstrapState {
   const _StoredBootstrapState({
     required this.installId,
@@ -6638,6 +7638,7 @@ class _StoredBootstrapState {
     required this.accountId,
     required this.managedManifestPath,
     required this.profileRevision,
+    this.refreshToken = '',
     this.expectsSecureSessionToken = false,
   });
 
@@ -6646,6 +7647,7 @@ class _StoredBootstrapState {
   final String accountId;
   final String managedManifestPath;
   final String profileRevision;
+  final String refreshToken;
   final bool expectsSecureSessionToken;
 
   bool get hasSession => sessionToken.trim().isNotEmpty;
@@ -6656,6 +7658,7 @@ class _StoredBootstrapState {
     String? accountId,
     String? managedManifestPath,
     String? profileRevision,
+    String? refreshToken,
     bool? expectsSecureSessionToken,
   }) {
     return _StoredBootstrapState(
@@ -6664,6 +7667,7 @@ class _StoredBootstrapState {
       accountId: accountId ?? this.accountId,
       managedManifestPath: managedManifestPath ?? this.managedManifestPath,
       profileRevision: profileRevision ?? this.profileRevision,
+      refreshToken: refreshToken ?? this.refreshToken,
       expectsSecureSessionToken:
           expectsSecureSessionToken ?? this.expectsSecureSessionToken,
     );

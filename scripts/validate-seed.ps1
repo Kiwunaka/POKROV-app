@@ -267,19 +267,19 @@ $runtimeArtifactsPath = Join-Path $root "config\\runtime-artifacts.seed.json"
 if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   $runtimeArtifacts = Get-Content -Raw -LiteralPath $runtimeArtifactsPath | ConvertFrom-Json
 
-  if ($runtimeArtifacts.core.release_tag -ne "v1.0.1") {
-    $manifestErrors.Add("config\\runtime-artifacts.seed.json must pin POKROV Core v1.0.1")
+  if ($runtimeArtifacts.core.release_tag -ne "v1.0.2") {
+    $manifestErrors.Add("config\\runtime-artifacts.seed.json must pin POKROV Core v1.0.2")
   }
 
   if ($runtimeArtifacts.core.activation_state -ne "active") {
-    $manifestErrors.Add("config\\runtime-artifacts.seed.json must label POKROV Core v1.0.1 as active")
+    $manifestErrors.Add("config\\runtime-artifacts.seed.json must label POKROV Core v1.0.2 as active")
   }
 
   if ($runtimeArtifacts.core.repository -ne "Kiwunaka/POKROV-core") {
     $manifestErrors.Add("config\\runtime-artifacts.seed.json must use Kiwunaka/POKROV-core")
   }
 
-  if ($runtimeArtifacts.core.source_commit -ne "3c256e5560220f2b4233d72ed057d1b72e8d3ad5") {
+  if ($runtimeArtifacts.core.source_commit -ne "a469240dc3e1e1736ff73348b113f164c277492a") {
     $manifestErrors.Add("config\\runtime-artifacts.seed.json must pin the exact POKROV Core source commit")
   }
   if ($runtimeArtifacts.core.sing_dependency -ne "v0.8.0-beta.12") {
@@ -295,14 +295,14 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   if ($artifactProvenance.status -ne "clean_reproducible_release" -or
       $artifactProvenance.vcs_stamp -ne "disabled_for_reproducible_release_artifacts" -or
       $artifactProvenance.source_identity -ne "annotated_release_tag_and_github_release_commit" -or
-      $artifactProvenance.release_url -ne "https://github.com/Kiwunaka/pokrov-core/releases/tag/v1.0.1" -or
-      [int64]$artifactProvenance.reproducible_build.android.size -ne 106831626 -or
-      $artifactProvenance.reproducible_build.android.sha256 -ne "25b96622f9ef6e648e1167847ef4205c63bad88c7c897e862bf36249830114e3" -or
-      [int64]$artifactProvenance.reproducible_build.windows.size -ne 55117824 -or
-      $artifactProvenance.reproducible_build.windows.sha256 -ne "8f4aa233054b78ac2e6dbcef7634b6f4829a9f27f4cd65674de80f6f3b299f9e" -or
+      $artifactProvenance.release_url -ne "https://github.com/Kiwunaka/pokrov-core/releases/tag/v1.0.2" -or
+      [int64]$artifactProvenance.reproducible_build.android.size -ne 106832036 -or
+      $artifactProvenance.reproducible_build.android.sha256 -ne "e98861ec0b658304515c04af6ab98a60f3664f8b5eb7660b57e6f0baa0df385f" -or
+      [int64]$artifactProvenance.reproducible_build.windows.size -ne 55122944 -or
+      $artifactProvenance.reproducible_build.windows.sha256 -ne "b6d4e28b5fb9d475acc623fed84d2009137a55972a841216a81ae6ac45f98305" -or
       $artifactProvenance.reproducible_build.libcronet_sha256 -ne "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7" -or
-      $artifactProvenance.promotion_rule -ne "accept_exact_v1.0.1_release_artifacts") {
-    $manifestErrors.Add("runtime artifact contract must pin the clean reproducible POKROV Core v1.0.1 release")
+      $artifactProvenance.promotion_rule -ne "accept_exact_v1.0.2_release_artifacts") {
+    $manifestErrors.Add("runtime artifact contract must pin the clean reproducible POKROV Core v1.0.2 release")
   }
   if ($runtimeArtifacts.core.desktop_abi.name -ne "pokrov-core" -or
       [int]$runtimeArtifacts.core.desktop_abi.version -ne 2 -or
@@ -325,20 +325,20 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   $androidRuntime = $runtimeArtifacts.core.assets.android
   if ($androidRuntime.entry -ne "pokrov-core.aar" -or
       $androidRuntime.sync_policy -ne "pokrov_release" -or
-      [int64]$androidRuntime.size -ne 106831626 -or
-      $androidRuntime.sha256 -ne "25b96622f9ef6e648e1167847ef4205c63bad88c7c897e862bf36249830114e3") {
-    $manifestErrors.Add("runtime artifact contract must pin the POKROV Core 1.0.1 Android AAR")
+      [int64]$androidRuntime.size -ne 106832036 -or
+      $androidRuntime.sha256 -ne "e98861ec0b658304515c04af6ab98a60f3664f8b5eb7660b57e6f0baa0df385f") {
+    $manifestErrors.Add("runtime artifact contract must pin the POKROV Core 1.0.2 Android AAR")
   }
 
   $windowsRuntime = $runtimeArtifacts.core.assets.windows
   if ($windowsRuntime.entry -ne "pokrov-core.dll" -or
       $windowsRuntime.sync_policy -ne "pokrov_release" -or
-      [int64]$windowsRuntime.size -ne 55117824 -or
-      $windowsRuntime.sha256 -ne "8f4aa233054b78ac2e6dbcef7634b6f4829a9f27f4cd65674de80f6f3b299f9e" -or
+      [int64]$windowsRuntime.size -ne 55122944 -or
+      $windowsRuntime.sha256 -ne "b6d4e28b5fb9d475acc623fed84d2009137a55972a841216a81ae6ac45f98305" -or
       @($windowsRuntime.runtime_dependencies) -notcontains "libcronet.dll" -or
       [int64]$windowsRuntime.runtime_dependency_size.'libcronet.dll' -ne 8596992 -or
       $windowsRuntime.runtime_dependency_sha256.'libcronet.dll' -ne "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7") {
-    $manifestErrors.Add("config\\runtime-artifacts.seed.json must pin the POKROV Core 1.0.1 Windows DLL and libcronet.dll")
+    $manifestErrors.Add("config\\runtime-artifacts.seed.json must pin the POKROV Core 1.0.2 Windows DLL and libcronet.dll")
   }
 
   foreach ($target in @("ios", "macos")) {
@@ -369,10 +369,10 @@ if (Test-Path -LiteralPath $windowsReleaseConfigPath -PathType Leaf) {
   }
 
   if ($windowsReleaseConfig.runtime.core_binary -ne "pokrov-core.dll" -or
-      $windowsReleaseConfig.runtime.release_tag -ne "v1.0.1" -or
+      $windowsReleaseConfig.runtime.release_tag -ne "v1.0.2" -or
       [int]$windowsReleaseConfig.runtime.desktop_abi -ne 2 -or
       @($windowsReleaseConfig.runtime.runtime_dependencies) -notcontains "libcronet.dll") {
-    $manifestErrors.Add("config\\windows-release.seed.json must keep the POKROV Core 1.0.1 ABI 2 runtime contract")
+    $manifestErrors.Add("config\\windows-release.seed.json must keep the POKROV Core 1.0.2 ABI 2 runtime contract")
   }
 
   foreach ($requiredPath in @("pokrov_windows_beta.exe", "pokrov-core.dll", "libcronet.dll", "data/app.so")) {

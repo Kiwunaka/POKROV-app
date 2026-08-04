@@ -3,7 +3,9 @@ part of pokrov_app_shell;
 class _QuickConnectSection extends StatelessWidget {
   const _QuickConnectSection({
     required this.appContext,
+    required this.freeProfileAccess,
     required this.selectedRouteMode,
+    required this.locationLabel,
     required this.runtimeSnapshot,
     required this.runtimeHeadline,
     required this.runtimeBusy,
@@ -27,7 +29,9 @@ class _QuickConnectSection extends StatelessWidget {
   });
 
   final SeedAppContext appContext;
+  final FreeProfileAccess? freeProfileAccess;
   final RouteMode selectedRouteMode;
+  final String locationLabel;
   final RuntimeSnapshot? runtimeSnapshot;
   final String? runtimeHeadline;
   final bool runtimeBusy;
@@ -56,7 +60,14 @@ class _QuickConnectSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
     final snapshot = runtimeSnapshot;
-    final isRunning = snapshot?.phase == RuntimePhase.running;
+    final tunnelRunning = snapshot?.phase == RuntimePhase.running;
+    final egressValidationPending =
+        appContext.hostPlatform == HostPlatform.android &&
+            tunnelRunning &&
+            snapshot?.coreEgressValidated != true;
+    // Android's TUN is only the transport. The consumer-facing connected state
+    // starts after Core proves egress through the selected outbound.
+    final isRunning = tunnelRunning && !egressValidationPending;
     final isHealthyRunning = snapshot?.isCleanlyHealthy ?? false;
     final statusLabel = _homeProtectionStatusLabel(
       snapshot,
@@ -70,7 +81,7 @@ class _QuickConnectSection extends StatelessWidget {
     };
     final statusColor = runtimeBusy
         ? p.muted
-        : isRunning
+        : tunnelRunning
             ? isHealthyRunning
                 ? p.success
                 : p.warning
@@ -81,18 +92,25 @@ class _QuickConnectSection extends StatelessWidget {
         ? runtimeDisconnecting
             ? 'Отключаем…'
             : 'Подключаемся…'
-        : isRunning
+        : tunnelRunning
             ? 'Отключить'
             : primaryActionEnabled
                 ? 'Включить VPN'
                 : 'Пока недоступно';
-    final recoveryNotice = _motionRecoveryNotice(
-      snapshot,
-      headline: runtimeHeadline,
-      busy: runtimeBusy,
-    );
-    final infoNotice = _homeInfoNotice(runtimeHeadline);
+    final freeProfileNotice = _freeProfileAccessNotice(freeProfileAccess);
+    final recoveryNotice = freeProfileAccess?.hasRecoverableError ?? false
+        ? freeProfileNotice
+        : _motionRecoveryNotice(
+            snapshot,
+            headline: runtimeHeadline,
+            busy: runtimeBusy,
+          );
+    final infoNotice = recoveryNotice == null
+        ? (freeProfileNotice ?? _homeInfoNotice(runtimeHeadline))
+        : null;
     final homePromoSlot = _homeAdminPromoSlot(bonusSummary);
+    final telegramBonusClaimed =
+        (bonusSummary?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
 
     return _SeedContentList(
       // Mobile tabs share the 16px top gutter; the desktop stage keeps its
@@ -111,20 +129,29 @@ class _QuickConnectSection extends StatelessWidget {
               actionLabel: actionLabel,
               actionEnabled: primaryActionEnabled,
               running: isRunning,
-              busy: runtimeBusy,
+              busy: runtimeBusy || egressValidationPending,
               degraded: isRunning && !isHealthyRunning,
               connectHintVisible: connectHintVisible,
               recoveryNotice: recoveryNotice,
               infoNotice: infoNotice,
-              accessLabel: _accessMainLabel(appContext, bonusSummary),
-              accessPoolLabel: _accessHomeSupportLabel(appContext.accessLane),
+              accessLabel: _accessMainLabel(
+                appContext,
+                bonusSummary,
+                freeProfileAccess,
+              ),
+              accessPoolLabel: _accessHomeSupportLabel(
+                appContext.accessLane,
+                freeProfileAccess,
+              ),
               telegramBonusLabel: telegramBonusBusy
                   ? 'Проверяем Telegram'
-                  : _telegramBonusHomeLabel(appContext, bonusSummary),
-              telegramBonusClaimed:
-                  (bonusSummary?.channelBonusClaimedAt ?? '').trim().isNotEmpty,
+                  : _telegramBonusHomeLabel(bonusSummary),
+              telegramBonusClaimed: telegramBonusClaimed,
+              telegramBonusClaimedDays: telegramBonusClaimed
+                  ? _claimedTelegramBonusDays(bonusSummary)
+                  : null,
               selectedRouteMode: selectedRouteMode,
-              locationLabel: 'Автоматически',
+              locationLabel: locationLabel,
               warpPolicy: warpPolicy,
               warpRuntimeConsent: warpRuntimeConsent,
               warpBusy: warpBusy,
@@ -163,6 +190,7 @@ class _HomeStage extends StatefulWidget {
     required this.accessPoolLabel,
     required this.telegramBonusLabel,
     required this.telegramBonusClaimed,
+    required this.telegramBonusClaimedDays,
     required this.selectedRouteMode,
     required this.locationLabel,
     required this.warpPolicy,
@@ -198,6 +226,7 @@ class _HomeStage extends StatefulWidget {
   final String accessPoolLabel;
   final String telegramBonusLabel;
   final bool telegramBonusClaimed;
+  final int? telegramBonusClaimedDays;
   final RouteMode selectedRouteMode;
   final String locationLabel;
   final WarpRuntimePolicy warpPolicy;
@@ -341,6 +370,15 @@ class _HomeStageState extends State<_HomeStage>
             onTap: widget.onOpenConnectionDetails,
           ),
         ),
+        if (widget.recoveryNotice != null) ...[
+          const SizedBox(height: 12),
+          _HomeRevealSlice(
+            controller: _revealController,
+            begin: 0.32,
+            end: 0.78,
+            child: _MotionRecoveryBanner(message: widget.recoveryNotice!),
+          ),
+        ],
         const SizedBox(height: 14),
         _HomeRevealSlice(
           controller: _revealController,
@@ -384,6 +422,7 @@ class _HomeStageState extends State<_HomeStage>
             accessLabel: widget.accessLabel,
             poolLabel: widget.accessPoolLabel,
             telegramBonusClaimed: widget.telegramBonusClaimed,
+            telegramBonusClaimedDays: widget.telegramBonusClaimedDays,
           ),
         ),
         if (!widget.telegramBonusClaimed) ...[
@@ -409,15 +448,6 @@ class _HomeStageState extends State<_HomeStage>
               slot: widget.homePromoSlot!,
               onOpenHandoff: widget.onOpenPromoHandoff,
             ),
-          ),
-        ],
-        if (widget.recoveryNotice != null) ...[
-          const SizedBox(height: 12),
-          _HomeRevealSlice(
-            controller: _revealController,
-            begin: 0.22,
-            end: 0.62,
-            child: _MotionRecoveryBanner(message: widget.recoveryNotice!),
           ),
         ],
       ],
@@ -540,6 +570,7 @@ class _HomeStageState extends State<_HomeStage>
                       accessLabel: widget.accessLabel,
                       poolLabel: widget.accessPoolLabel,
                       telegramBonusClaimed: widget.telegramBonusClaimed,
+                      telegramBonusClaimedDays: widget.telegramBonusClaimedDays,
                     ),
                   ),
                   if (!widget.telegramBonusClaimed) ...[
@@ -749,11 +780,13 @@ class _HomeAccessStrip extends StatelessWidget {
     required this.accessLabel,
     required this.poolLabel,
     required this.telegramBonusClaimed,
+    required this.telegramBonusClaimedDays,
   });
 
   final String accessLabel;
   final String poolLabel;
   final bool telegramBonusClaimed;
+  final int? telegramBonusClaimedDays;
 
   @override
   Widget build(BuildContext context) {
@@ -761,7 +794,9 @@ class _HomeAccessStrip extends StatelessWidget {
     final motion = _MotionScope.of(context);
     final p = PokrovPalette.of(context);
     final accessBadgeLabel = telegramBonusClaimed
-        ? '+10 дней'
+        ? telegramBonusClaimedDays == null
+            ? 'Telegram'
+            : '+${ruDays(telegramBonusClaimedDays!)}'
         : accessLabel.startsWith('5 ')
             ? '5 дней'
             : accessLabel.toLowerCase().contains('премиум')
@@ -919,7 +954,7 @@ class _HomeTelegramBonusTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  claimed ? 'Telegram-бонус активен' : '+10 дней за Telegram',
+                  claimed ? 'Telegram-бонус активен' : label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -1202,6 +1237,12 @@ String _homeProtectionStatusLabel(
     return disconnecting ? 'Отключаем…' : 'Подключаемся…';
   }
   if (snapshot?.phase == RuntimePhase.running) {
+    if (snapshot?.isCoreEgressValidationPending ?? false) {
+      return 'Проверяем…';
+    }
+    if (snapshot?.hostHealth == RuntimeHostHealth.unknown) {
+      return 'Проверяем…';
+    }
     return (snapshot?.isCleanlyHealthy ?? false)
         ? 'Подключено'
         : 'Нужно внимание';
@@ -1212,7 +1253,14 @@ String _homeProtectionStatusLabel(
   return 'Не защищено';
 }
 
-String _accessHomeSupportLabel(AccessLane lane) {
+String _accessHomeSupportLabel(
+  AccessLane lane, [
+  FreeProfileAccess? freeProfileAccess,
+]) {
+  final freeNotice = _freeProfileAccessNotice(freeProfileAccess);
+  if (freeNotice != null) {
+    return freeNotice;
+  }
   return switch (lane) {
     AccessLane.trialPremium => 'После пробного периода — продлите доступ',
     AccessLane.bonusPremium || AccessLane.paidUnlimited => 'Доступ активен',
@@ -1226,7 +1274,7 @@ String? _homeInfoNotice(String? headline) {
   if (text == null || text.isEmpty) {
     return null;
   }
-  if (text.startsWith('WARP ')) {
+  if (text.startsWith('WARP ') || text.startsWith('Локация сохранена.')) {
     return text;
   }
   return null;

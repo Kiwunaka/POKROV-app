@@ -37,6 +37,8 @@ import space.pokrov.core.libbox.WIFIState
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NetworkInterface as JavaNetworkInterface
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -45,7 +47,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     private var commandServer: CommandServer? = null
     private var activeConfigContent: String? = null
     private var activeTun: ParcelFileDescriptor? = null
+    private val dnsFailureTokenGate = AndroidDnsFailureTokenGate()
     private val runtimeExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    private val healthExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    private val healthGeneration = AtomicLong(0L)
+    private val lifecycleActive = AtomicBoolean(true)
+    private val runtimeLogLimiter = AndroidRuntimeLogLimiter()
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onBind(intent: Intent): IBinder? {
@@ -53,40 +60,70 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED &&
+            AndroidNotificationPermissionStore.wasAsked(this)
+        ) {
+            AndroidRuntimeState.markSystemNotificationWarning()
+        }
         when (intent?.action) {
             ACTION_STOP -> {
+                val tileGeneration = intent.getLongExtra(
+                    PokrovQuickSettingsTileService.EXTRA_TILE_TRANSITION_GENERATION,
+                    NO_TILE_TRANSITION_GENERATION,
+                ).takeIf { it != NO_TILE_TRANSITION_GENERATION }
                 Log.i(LOG_TAG, "Received STOP for Android runtime service.")
                 runtimeExecutor.execute {
                     stopRuntime(
                         message = "POKROV выключен на этом устройстве.",
                         stopReason = "user_requested",
+                        tileGeneration = tileGeneration,
                     )
                     mainHandler.post { stopSelf() }
                 }
             }
             ACTION_START -> {
                 val configPath = intent.getStringExtra(EXTRA_CONFIG_PATH)
+                val routeMode = intent.getStringExtra(EXTRA_ROUTE_MODE).orEmpty()
+                val tileGeneration = intent.getLongExtra(
+                    PokrovQuickSettingsTileService.EXTRA_TILE_TRANSITION_GENERATION,
+                    NO_TILE_TRANSITION_GENERATION,
+                ).takeIf { it != NO_TILE_TRANSITION_GENERATION }
                 if (configPath.isNullOrBlank()) {
                     AndroidRuntimeState.markFailure(
                         kind = "missing_staged_config",
                         message = "На этом устройстве не хватает настроек подключения POKROV.",
                     )
                     Log.e(LOG_TAG, "Android runtime start is missing a staged config path.")
+                    PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)
+                    stopSelf()
+                } else if (configPath != AndroidRuntimeState.stagedConfigPath()) {
+                    AndroidRuntimeState.markFailure(
+                        kind = "stale_staged_config",
+                        message = AndroidRuntimeSafety.publicFailureMessage("stale_staged_config"),
+                    )
+                    Log.e(LOG_TAG, "Android runtime start rejected a stale staged config.")
+                    PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)
                     stopSelf()
                 } else {
                     try {
-                        Log.i(LOG_TAG, "Received START for Android runtime service with configPath=$configPath")
+                        Log.i(LOG_TAG, "Received START for Android runtime service.")
                         markServiceStarting()
+                        AndroidRuntimeState.markConnectionPending()
                         beginForegroundRuntime()
                         runtimeExecutor.execute {
-                            startRuntime(configPath)
+                            startRuntime(configPath, tileGeneration, routeMode)
                         }
-                    } catch (error: Throwable) {
+                    } catch (_: Throwable) {
                         AndroidRuntimeState.markFailure(
                             kind = "foreground_start_failed",
-                            message = "POKROV не смог завершить подготовку устройства: ${error.message ?: error.javaClass.simpleName}",
+                            message = AndroidRuntimeSafety.publicFailureMessage(
+                                "foreground_start_failed",
+                            ),
                         )
-                        Log.e(LOG_TAG, "Android runtime foreground start failed:", error)
+                        Log.e(LOG_TAG, "Android runtime foreground start failed.")
+                        PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)
                         stopSelf()
                     }
                 }
@@ -97,6 +134,9 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     }
 
     override fun onDestroy() {
+        lifecycleActive.set(false)
+        healthGeneration.incrementAndGet()
+        releaseDnsFailureToken()
         if (commandServer != null || activeTun != null) {
             runtimeExecutor.execute {
                 stopRuntime(
@@ -106,6 +146,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             }
         }
         runtimeExecutor.shutdown()
+        healthExecutor.shutdownNow()
         super.onDestroy()
     }
 
@@ -120,10 +161,23 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         super.onRevoke()
     }
 
-    private fun startRuntime(configPath: String) {
+    private fun startRuntime(configPath: String, tileGeneration: Long?, routeMode: String) {
+        // A new runtime owns a new TUN/probe lifecycle before it asks Core to
+        // establish one, so an older probe can no longer fail-close it.
+        healthGeneration.incrementAndGet()
+        releaseDnsFailureToken()
+        runCatching { activeTun?.close() }
+        activeTun = null
+        runtimeLogLimiter.reset()
+        activeSelectedAppsMode = routeMode == ROUTE_MODE_SELECTED_APPS
         val initialized = AndroidRuntimeState.initialize(this)
         if (!initialized) {
+            AndroidRuntimeState.markFailure(
+                kind = "runtime_initialization_failed",
+                message = AndroidRuntimeSafety.publicFailureMessage("runtime_initialization_failed"),
+            )
             Log.e(LOG_TAG, "Android runtime initialize() failed before service start.")
+            PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)
             stopSelf()
             return
         }
@@ -136,29 +190,48 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             if (content.isNullOrBlank()) {
                 throw IllegalStateException("Staged runtime config is missing or empty.")
             }
-            Log.i(LOG_TAG, "Starting Android runtime using staged config $configPath")
+            Log.i(LOG_TAG, "Starting Android runtime using a staged config.")
             AndroidDefaultNetworkMonitor.ensureStarted(this)
-            commandServer?.closeService()
-            commandServer?.close()
+            runCatching { commandServer?.closeService() }
+            runCatching { commandServer?.close() }
+            commandServer = null
+            activeConfigContent = null
             val nextServer = Libbox.newCommandServer(this, this)
-            nextServer.start()
-            nextServer.startOrReloadService(content, OverrideOptions())
             commandServer = nextServer
+            nextServer.start()
             activeConfigContent = content
-            AndroidRuntimeState.markProfileStaged(configPath)
+            nextServer.startOrReloadService(content, OverrideOptions())
+            activeTileStartGeneration = tileGeneration
+            AndroidRuntimeState.markProfileStaged(
+                configPath,
+                preserveConnectionPending = true,
+            )
             Log.i(LOG_TAG, "Android runtime service start requested successfully; waiting for tun establishment.")
-        } catch (error: Throwable) {
+        } catch (_: Throwable) {
             AndroidRuntimeState.markFailure(
                 kind = "runtime_service_start_failed",
-                message = "POKROV не смог подключиться на этом устройстве: ${error.message ?: error.javaClass.simpleName}",
+                message = AndroidRuntimeSafety.publicFailureMessage(
+                    "runtime_service_start_failed",
+                ),
             )
-            Log.e(LOG_TAG, "Android runtime service failed to start.", error)
+            Log.e(LOG_TAG, "Android runtime service failed to start.")
+            cleanupFailedStartup()
+            activeTileStartGeneration = null
+            PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)
             stopSelf()
         }
     }
 
-    private fun stopRuntime(message: String, stopReason: String) {
-        Log.i(LOG_TAG, "Stopping Android runtime service: $message")
+    private fun stopRuntime(
+        message: String,
+        stopReason: String,
+        tileGeneration: Long? = null,
+        failureKind: String? = null,
+    ) {
+        Log.i(LOG_TAG, "Stopping Android runtime service.")
+        healthGeneration.incrementAndGet()
+        releaseDnsFailureToken()
+        AndroidRuntimeState.updateCoreEgressValidation(null)
         markServiceStopped()
         PokrovQuickSettingsTileService.requestRefresh(this)
         try {
@@ -174,7 +247,18 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         } catch (_: Throwable) {
         }
         activeTun = null
-        AndroidRuntimeState.markStopped(message = message, stopReason = stopReason)
+        if (failureKind == null) {
+            AndroidRuntimeState.markStopped(message = message, stopReason = stopReason)
+        } else {
+            AndroidRuntimeProfileStore.failClosedAfterCoreEgressFailure(
+                context = applicationContext,
+                failureKind = failureKind,
+                message = message,
+                stopReason = stopReason,
+            )
+        }
+        activeTileStartGeneration = null
+        PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } else {
@@ -254,6 +338,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     override fun autoDetectInterfaceControl(fd: Int) {
         if (!protect(fd)) {
             Log.w(LOG_TAG, "Failed to protect Android control socket fd=$fd from VPN capture.")
+        } else if (protectedSocketEvidence.compareAndSet(false, true)) {
+            Log.i(LOG_TAG, "Protected the Android runtime uplink from VPN capture.")
         }
     }
 
@@ -328,6 +414,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         if (prepare(this) != null) {
             error("android: missing vpn permission")
         }
+        // Release the prior DNS callback before replacing the TUN. It must not
+        // be able to fail-close the replacement while establish() is pending.
+        val tunGeneration = healthGeneration.incrementAndGet()
+        releaseDnsFailureToken()
+        runCatching { activeTun?.close() }
+        activeTun = null
 
         val builder = Builder()
             .setSession("sing-box")
@@ -437,18 +529,42 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 ipv6RouteCount += 1
             }
 
-            consumeStrings(options.getIncludePackage()) { packageName ->
-                runCatching { builder.addAllowedApplication(packageName) }
-                includePackageCount += 1
+            val requestedIncludes = mutableListOf<String>()
+            consumeStrings(options.getIncludePackage()) { requestedIncludes += it }
+            val requestedExcludes = mutableListOf<String>()
+            consumeStrings(options.getExcludePackage()) { requestedExcludes += it }
+            val packagePlan = AndroidTunPackagePlanner.plan(
+                appPackage = this@PokrovRuntimeVpnService.packageName,
+                includedPackages = requestedIncludes,
+                excludedPackages = requestedExcludes,
+                selectedAppsMode = activeSelectedAppsMode,
+            )
+            if (!packagePlan.isValid) {
+                throw IllegalStateException("Selected-apps routing requires a non-empty allow-list.")
             }
-            consumeStrings(options.getExcludePackage()) { packageName ->
-                runCatching { builder.addDisallowedApplication(packageName) }
-                excludePackageCount += 1
+            packagePlan.allowedPackages.forEach { allowedPackage ->
+                if (runCatching { builder.addAllowedApplication(allowedPackage) }.isSuccess) {
+                    includePackageCount += 1
+                }
+            }
+            if (!AndroidTunPackagePlanner.hasRequiredAppliedAllowList(
+                    selectedAppsMode = activeSelectedAppsMode,
+                    appliedAllowedPackageCount = includePackageCount,
+                )
+            ) {
+                throw IllegalStateException(
+                    "Selected-apps routing requires at least one available selected app.",
+                )
+            }
+            packagePlan.disallowedPackages.forEach { disallowedPackage ->
+                if (runCatching { builder.addDisallowedApplication(disallowedPackage) }.isSuccess) {
+                    excludePackageCount += 1
+                }
             }
 
             Log.i(
                 LOG_TAG,
-                "openTun autoRoute=${options.getAutoRoute()} dns=${dnsServerAddress ?: "<none>"} " +
+                "openTun autoRoute=${options.getAutoRoute()} " +
                     "ipv4Addr=$ipv4AddressCount ipv6Addr=$ipv6AddressCount " +
                     "ipv4Routes=$ipv4RouteCount ipv6Routes=$ipv6RouteCount " +
                     "ipv4Default=$hasIpv4DefaultRoute ipv6Default=$hasIpv6DefaultRoute " +
@@ -465,18 +581,23 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             excludePackageCount = excludePackageCount,
         )
 
-        activeTun?.close()
         val tun = builder.establish()
             ?: throw IllegalStateException("VpnService.Builder.establish() returned null.")
         activeTun = tun
-        val runtimeMessage =
-            "Android tun established. dns=${runCatching { options.getDNSServerAddress().getValue() }.getOrNull() ?: "<none>"} " +
-                "ipv4Routes=$ipv4RouteCount ipv6Routes=$ipv6RouteCount " +
-                "defaultIpv4=$hasIpv4DefaultRoute defaultIpv6=$hasIpv6DefaultRoute"
+        val dnsFailureToken = dnsFailureTokenGate.activate()
+        AndroidLocalResolver.activateRuntime(dnsFailureToken)
+        registerDnsFailureTarget(this, dnsFailureToken)
+        val runtimeMessage = "POKROV подключен на этом устройстве."
         markTunEstablished(runtimeMessage)
         PokrovQuickSettingsTileService.requestRefresh(this)
         AndroidRuntimeState.markRunning(runtimeMessage)
-        Log.i(LOG_TAG, runtimeMessage)
+        PokrovQuickSettingsTileService.completeRuntimeTransition(
+            this,
+            activeTileStartGeneration,
+        )
+        activeTileStartGeneration = null
+        scheduleCoreEgressProbe(tunGeneration)
+        Log.i(LOG_TAG, "Android tun established.")
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(
             NOTIFICATION_ID,
@@ -486,6 +607,149 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             ),
         )
         return tun.fd
+    }
+
+    private fun scheduleCoreEgressProbe(generation: Long) {
+        val content = activeConfigContent ?: return
+        val groupTag = AndroidCoreEgressProbe.finalGroupTag(content)
+        AndroidRuntimeState.updateCoreEgressValidation(null)
+        if (groupTag == null) {
+            handleCoreEgressProbeResult(
+                probeResult = AndroidCoreEgressProbeResult.UNAVAILABLE,
+                generation = generation,
+            )
+            return
+        }
+        runCatching {
+            healthExecutor.execute {
+                var result = AndroidCoreEgressProbe.probe(groupTag)
+                if (
+                    result == AndroidCoreEgressProbeResult.UNAVAILABLE &&
+                    lifecycleActive.get() &&
+                    healthGeneration.get() == generation
+                ) {
+                    Thread.sleep(CORE_EGRESS_RETRY_DELAY_MILLIS)
+                    if (lifecycleActive.get() && healthGeneration.get() == generation) {
+                        result = AndroidCoreEgressProbe.probe(groupTag)
+                    }
+                }
+                AndroidRuntimeDispatchPolicy.dispatch(
+                    executor = runtimeExecutor,
+                    shouldRun = {
+                        lifecycleActive.get() && healthGeneration.get() == generation
+                    },
+                ) {
+                    handleCoreEgressProbeResult(probeResult = result, generation = generation)
+                }
+            }
+        }.onFailure {
+            AndroidRuntimeDispatchPolicy.dispatch(
+                executor = runtimeExecutor,
+                shouldRun = {
+                    lifecycleActive.get() && healthGeneration.get() == generation
+                },
+            ) {
+                handleCoreEgressProbeResult(
+                    probeResult = AndroidCoreEgressProbeResult.UNAVAILABLE,
+                    generation = generation,
+                )
+            }
+        }
+    }
+
+    private fun cleanupFailedStartup() {
+        healthGeneration.incrementAndGet()
+        releaseDnsFailureToken()
+        runCatching { commandServer?.closeService() }
+        runCatching { commandServer?.close() }
+        commandServer = null
+        activeConfigContent = null
+        AndroidDefaultNetworkMonitor.stop(null)
+        runCatching { activeTun?.close() }
+        activeTun = null
+        markServiceStopped()
+    }
+
+    private fun releaseDnsFailureToken() {
+        val token = dnsFailureTokenGate.release() ?: return
+        AndroidLocalResolver.deactivateRuntime(token)
+        unregisterDnsFailureTarget(this, token)
+    }
+
+    private fun handleCoreEgressProbeResult(
+        probeResult: AndroidCoreEgressProbeResult,
+        generation: Long,
+    ) {
+        if (!lifecycleActive.get()) {
+            return
+        }
+        val activeGeneration = healthGeneration.get()
+        if (!AndroidCoreEgressFailClosedPolicy.shouldStopRuntime(
+                probeResult = probeResult,
+                probeGeneration = generation,
+                activeGeneration = activeGeneration,
+                hasActiveTun = activeTun != null,
+            )
+        ) {
+            if (generation == activeGeneration && activeTun != null) {
+                AndroidRuntimeState.updateCoreEgressValidation(
+                    probeResult == AndroidCoreEgressProbeResult.HEALTHY,
+                )
+                Log.i(
+                    LOG_TAG,
+                    "Android selected-outbound egress probe result=" +
+                        if (probeResult == AndroidCoreEgressProbeResult.HEALTHY) {
+                            "healthy"
+                        } else {
+                            "ignored"
+                        },
+                )
+            }
+            return
+        }
+
+        // Claim this generation before closing resources. A concurrent stop or
+        // newer start invalidates the compare-and-set and leaves its runtime
+        // untouched.
+        if (!healthGeneration.compareAndSet(generation, generation + 1L) ||
+            activeTun == null
+        ) {
+            return
+        }
+
+        val failureKind = if (probeResult == AndroidCoreEgressProbeResult.FAILED) {
+            "core_egress_probe_failed"
+        } else {
+            "core_egress_probe_unavailable"
+        }
+        val failureMessage = AndroidRuntimeSafety.publicFailureMessage(failureKind)
+        AndroidRuntimeState.updateCoreEgressValidation(false)
+        Log.w(LOG_TAG, "Android selected-outbound egress probe did not pass; stopping runtime.")
+        stopRuntime(
+            message = failureMessage,
+            stopReason = failureKind,
+            failureKind = failureKind,
+        )
+        mainHandler.post { stopSelf() }
+    }
+
+    private fun scheduleDnsTransportFailure(token: Any, failureKind: String) {
+        runCatching {
+            runtimeExecutor.execute {
+                if (!lifecycleActive.get() || !dnsFailureTokenGate.owns(token) || activeTun == null) {
+                    return@execute
+                }
+                val failureMessage = AndroidRuntimeSafety.publicFailureMessage(failureKind)
+                AndroidRuntimeState.markDnsTransportFailure(failureKind, failureMessage)
+                Log.w(LOG_TAG, "Android DNS transport failed; stopping runtime.")
+                stopRuntime(
+                    message = failureMessage,
+                    stopReason = failureKind,
+                    failureKind = failureKind,
+                )
+                mainHandler.post { stopSelf() }
+            }
+        }
     }
 
     override fun readWIFIState(): WIFIState? = null
@@ -507,15 +771,13 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     override fun systemCertificates(): StringIterator = LibboxStringIterator(emptyList())
 
     override fun sendNotification(notification: LibboxNotification) {
-        val title = notification.getTitle().ifBlank { "POKROV" }
-        val body = notification.getBody().ifBlank { notification.getSubtitle() }
         mainHandler.post {
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.notify(
                 NOTIFICATION_ID,
                 buildNotification(
-                    contentText = body.ifBlank { "POKROV работает на этом устройстве." },
-                    title = title,
+                    contentText = "POKROV работает на этом устройстве.",
+                    title = "POKROV",
                 ),
             )
         }
@@ -549,7 +811,20 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     }
 
     override fun writeDebugMessage(message: String) {
-        Log.d(LOG_TAG, message)
+        val category = AndroidRuntimeLogClassifier.classify(message) ?: return
+        if (AndroidRuntimeLogClassifier.affectsRuntimeHealth(category)) {
+            AndroidRuntimeState.markDegraded(
+                failureKind = category,
+                message = AndroidRuntimeSafety.publicFailureMessage(category),
+            )
+        }
+        val event = runtimeLogLimiter.record(category) ?: return
+        val suppressed = if (event.suppressedSinceLastEmission > 0L) {
+            " suppressed=${event.suppressedSinceLastEmission}"
+        } else {
+            ""
+        }
+        Log.w(LOG_TAG, "Android core runtime event category=${event.category}$suppressed")
     }
 
     private fun consumeStrings(iterator: StringIterator?, block: (String) -> Unit) {
@@ -615,17 +890,56 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         private const val LOG_TAG = "PokrovRuntimeVpn"
         private const val NOTIFICATION_CHANNEL_ID = "pokrov-runtime"
         private const val NOTIFICATION_ID = 1407
+        private const val CORE_EGRESS_RETRY_DELAY_MILLIS = 250L
+        private const val ROUTE_MODE_SELECTED_APPS = "selected_apps"
         const val ACTION_START = "space.pokrov.runtime.START"
         const val ACTION_STOP = "space.pokrov.runtime.STOP"
         const val EXTRA_CONFIG_PATH = "extra_config_path"
+        const val EXTRA_ROUTE_MODE = "extra_route_mode"
+        private const val NO_TILE_TRANSITION_GENERATION = Long.MIN_VALUE
         @Volatile
         private var tunEstablished: Boolean = false
+        private val protectedSocketEvidence = AtomicBoolean(false)
         @Volatile
         private var currentRuntimeMessage: String? = null
+        @Volatile
+        private var activeTileStartGeneration: Long? = null
+        @Volatile
+        private var activeSelectedAppsMode: Boolean = false
+        @Volatile
+        private var activeDnsFailureTarget: DnsFailureTarget? = null
+
+        private data class DnsFailureTarget(
+            val service: PokrovRuntimeVpnService,
+            val token: Any,
+        )
 
         fun isTunEstablished(): Boolean = tunEstablished
 
         fun latestRuntimeMessage(): String? = currentRuntimeMessage
+
+        internal fun reportDnsTransportFailure(token: Any, failureKind: String) {
+            val target = activeDnsFailureTarget
+            if (target?.token === token) {
+                target.service.scheduleDnsTransportFailure(token, failureKind)
+            }
+        }
+
+        private fun registerDnsFailureTarget(
+            service: PokrovRuntimeVpnService,
+            token: Any,
+        ) {
+            activeDnsFailureTarget = DnsFailureTarget(service, token)
+        }
+
+        private fun unregisterDnsFailureTarget(
+            service: PokrovRuntimeVpnService,
+            token: Any,
+        ) {
+            if (activeDnsFailureTarget?.let { it.service === service && it.token === token } == true) {
+                activeDnsFailureTarget = null
+            }
+        }
 
         private fun markServiceStarting() {
             tunEstablished = false
@@ -642,18 +956,31 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             currentRuntimeMessage = null
         }
 
-        fun start(context: Context, configPath: String) {
+        fun start(
+            context: Context,
+            configPath: String,
+            routeMode: String,
+            tileGeneration: Long? = null,
+        ) {
+            protectedSocketEvidence.set(false)
             val intent = Intent(context, PokrovRuntimeVpnService::class.java).apply {
                 action = ACTION_START
                 putExtra(EXTRA_CONFIG_PATH, configPath)
+                putExtra(EXTRA_ROUTE_MODE, routeMode)
+                tileGeneration?.let {
+                    putExtra(PokrovQuickSettingsTileService.EXTRA_TILE_TRANSITION_GENERATION, it)
+                }
             }
             ContextCompat.startForegroundService(context, intent)
             PokrovQuickSettingsTileService.requestRefresh(context)
         }
 
-        fun stop(context: Context) {
+        fun stop(context: Context, tileGeneration: Long? = null) {
             val intent = Intent(context, PokrovRuntimeVpnService::class.java).apply {
                 action = ACTION_STOP
+                tileGeneration?.let {
+                    putExtra(PokrovQuickSettingsTileService.EXTRA_TILE_TRANSITION_GENERATION, it)
+                }
             }
             context.startService(intent)
             PokrovQuickSettingsTileService.requestRefresh(context)

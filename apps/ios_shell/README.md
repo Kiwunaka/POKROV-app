@@ -28,7 +28,7 @@ Current packet-tunnel scaffold behavior:
 
 - the host bridge stages one already-materialized raw sing-box profile with private file protection and points `NETunnelProviderManager` at the real `space.pokrov.app.ios.networkextension` bundle ID placeholder
 - the checked-in provider target resolves the shared app-group container, runs the POKROV Core `LibboxSetup` contract, starts a `LibboxCommandServer`, opens `NEPacketTunnelFlow` through an extension-side platform interface, and calls `startOrReloadService` when the Apple app-group entitlement is actually available
-- `PokrovCore.xcframework` must be built from POKROV Core 1.0.1 on macOS before the host can compile or claim runtime proof
+- `PokrovCore.xcframework` must be built from POKROV Core 1.0.2 on macOS before the host can compile or claim runtime proof
 - the target removes the previous in-repo gap where the host only pointed at a hypothetical bundle ID
 
 Still blocked before real iOS publication:

@@ -13,7 +13,7 @@ Historical mapping note:
 ## Current Truth
 
 - the Windows shell is not a blank stub; it boots the shared app shell and drives the desktop FFI `runtime_engine` lane
-- the active runtime is POKROV Core `v1.0.1` desktop ABI 2; its exact release commit, DLL hash, and `libcronet.dll` hash are pinned in `config/runtime-artifacts.seed.json`
+- the active runtime is POKROV Core `v1.0.2` desktop ABI 2; its exact release commit, DLL hash, and `libcronet.dll` hash are pinned in `config/runtime-artifacts.seed.json`
 - `flutter build windows --release` copies `pokrov-core.dll` and `libcronet.dll` next to the Flutter runner
 - `scripts/sync-pokrov-core-runtime.ps1` accepts only the exact locally built core commit and artifacts before syncing them into the host
 - `scripts/build-windows-release.ps1` now runs the local Windows verification lane: seed validation, tests, `flutter analyze`, `flutter build windows --release`, bundle verification, unsigned portable ZIP staging, and unsigned beta setup EXE staging through Windows `iexpress.exe`
@@ -118,6 +118,23 @@ Latest local packaging note:
   recorded hash is dated evidence and was superseded by the `2026-06-08`
   refresh. Read `config/release-handoff.seed.json` for the current exact
   filename, hash, size, public repository, and download-smoke state.
+
+## Current 2026-08-04 Internal Build
+
+The unsigned `1.0.2-core-test.1` Windows client completed the canonical local
+release pipeline. The exact local QA artifacts are:
+
+- portable ZIP: `37506815` bytes, SHA-256
+  `4a37bc459c582c3ebd368dbc3875382893a7dd951a053fbaf9b39b7624bbbd94`.
+- setup EXE: `37392384` bytes, SHA-256
+  `27ac017896eeba18b7b5ad9077f731effefe425e556160ee6bfca41fbcbc9570`.
+- manifest: `2675` bytes, SHA-256
+  `903ebd2de8ae471479e1c133abaf618fe205d75d7109d69d09a1d24b61840d99`.
+- trusted signing and public publication: `NOT_REQUESTED`.
+
+The exact bundled DLL also passed the 100-cycle local runtime gate. Packaged
+TUN traffic, elevation, sleep/resume, and clean-machine installation remain
+manual exact-candidate checks.
 
 ## Safe Claims
 

@@ -133,6 +133,12 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
         _data = next;
         _error = null;
       });
+    } on _ProtectionRepairBusy {
+      if (mounted) {
+        setState(() {
+          _error = 'POKROV уже выполняет действие. Дождитесь завершения.';
+        });
+      }
     } on Object {
       if (mounted) {
         setState(() {
@@ -165,10 +171,18 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
       setState(() {
         _data = next;
       });
+    } on _ProtectionRepairFailed catch (failure) {
+      if (mounted) {
+        setState(() {
+          _data = failure.data;
+          _error =
+              'Восстановление не завершилось. Показано состояние после остановки туннеля.';
+        });
+      }
     } on Object {
       if (mounted) {
         setState(() {
-          _error = 'Восстановление не завершилось. Состояние обновлено ниже.';
+          _error = 'Восстановление не завершилось. Не удалось получить свежие проверки.';
         });
       }
     } finally {
@@ -292,6 +306,33 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
                     ),
               ),
               const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  key: const ValueKey('protection-repair-action'),
+                  onPressed: _refreshing || _repairing ? null : _repair,
+                  icon: _repairing
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CupertinoActivityIndicator(radius: 8),
+                        )
+                      : const Icon(Icons.build_circle_outlined),
+                  label: Text(
+                    _repairing
+                        ? 'Восстанавливаем…'
+                        : 'Восстановить подключение',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Один ограниченный цикл: отключение, свежий профиль, запуск и повторная проверка. Автоповторов нет.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: p.muted,
+                      height: 1.35,
+                    ),
+              ),
+              const SizedBox(height: 16),
               Container(
                 key: const ValueKey('protection-checks-group'),
                 decoration: BoxDecoration(
@@ -335,33 +376,6 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
                       ),
                 ),
               ],
-              const SizedBox(height: 18),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  key: const ValueKey('protection-repair-action'),
-                  onPressed: _refreshing || _repairing ? null : _repair,
-                  icon: _repairing
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CupertinoActivityIndicator(radius: 8),
-                        )
-                      : const Icon(Icons.build_circle_outlined),
-                  label: Text(
-                    _repairing
-                        ? 'Восстанавливаем…'
-                        : 'Восстановить подключение',
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Один ограниченный цикл: отключение, свежий профиль, запуск и повторная проверка. Автоповторов нет.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: p.muted,
-                      height: 1.35,
-                    ),
-              ),
             ],
           ),
         ),
@@ -377,9 +391,7 @@ List<_ProtectionCheck> _protectionChecks(_ProtectionCenterData data) {
       ? _ProtectionCheck(
           title: 'Туннель',
           value: snapshot == null ? 'Нет измерения' : 'Отключён',
-          detail: snapshot?.message.trim().isNotEmpty == true
-              ? snapshot!.message.trim()
-              : 'Runtime не подтвердил активное соединение.',
+          detail: _consumerTunnelDetail(snapshot),
           icon: Icons.shield_outlined,
           tone: _ProtectionCheckTone.unknown,
         )
@@ -394,9 +406,7 @@ List<_ProtectionCheck> _protectionChecks(_ProtectionCenterData data) {
           RuntimeHostHealth.degraded => _ProtectionCheck(
               title: 'Туннель',
               value: 'Требует внимания',
-              detail: snapshot.hostDiagnosticsSummary?.trim().isNotEmpty == true
-                  ? snapshot.hostDiagnosticsSummary!.trim()
-                  : 'Хост сообщил о деградации runtime.',
+              detail: _consumerTunnelDetail(snapshot),
               icon: Icons.warning_amber_rounded,
               tone: _ProtectionCheckTone.warning,
             ),
@@ -412,59 +422,70 @@ List<_ProtectionCheck> _protectionChecks(_ProtectionCenterData data) {
 
   final dns = !running
       ? const _ProtectionCheck(
-          title: 'DNS',
+          title: 'DNS для подключения',
           value: 'Не проверялся',
-          detail: 'Проверка DNS выполняется при активном туннеле.',
+          detail: 'Bootstrap DNS проверяется при активном соединении.',
           icon: Icons.dns_outlined,
           tone: _ProtectionCheckTone.unknown,
         )
       : switch (snapshot!.dnsState) {
           RuntimeDiagnosticState.healthy => const _ProtectionCheck(
-              title: 'DNS',
-              value: 'Работает',
-              detail: 'Хост подтвердил готовность DNS внутри соединения.',
+              title: 'DNS для подключения',
+              value: 'Готов',
+              detail:
+                  'Системный DNS готов для адресов нод. DNS приложений внутри VPN проверяется вместе с выходом через VPN.',
               icon: Icons.dns_rounded,
               tone: _ProtectionCheckTone.success,
             ),
           RuntimeDiagnosticState.degraded => const _ProtectionCheck(
-              title: 'DNS',
-              value: 'Ошибка',
-              detail: 'Хост не подтвердил рабочий DNS.',
+              title: 'DNS для подключения',
+              value: 'Недоступен',
+              detail: 'Хост не смог подготовить DNS для адресов подключения.',
               icon: Icons.dns_outlined,
               tone: _ProtectionCheckTone.danger,
             ),
           RuntimeDiagnosticState.unknown => const _ProtectionCheck(
-              title: 'DNS',
+              title: 'DNS для подключения',
               value: 'Нет измерения',
-              detail: 'Хост не отдал отдельный результат DNS-проверки.',
+              detail: 'Хост не отдал результат bootstrap DNS-проверки.',
               icon: Icons.dns_outlined,
               tone: _ProtectionCheckTone.unknown,
             ),
         };
 
-  final https = switch (data.httpsProbe.state) {
-    PokrovHttpsProbeState.healthy => _ProtectionCheck(
-        title: 'Интернет / HTTPS',
-        value: 'Доступен',
-        detail: data.httpsProbe.detail,
-        icon: Icons.public_rounded,
-        tone: _ProtectionCheckTone.success,
-      ),
-    PokrovHttpsProbeState.degraded => _ProtectionCheck(
-        title: 'Интернет / HTTPS',
-        value: 'Нет ответа',
-        detail: data.httpsProbe.detail,
-        icon: Icons.public_off_outlined,
-        tone: _ProtectionCheckTone.danger,
-      ),
-    PokrovHttpsProbeState.unknown => _ProtectionCheck(
-        title: 'Интернет / HTTPS',
-        value: 'Нет измерения',
-        detail: data.httpsProbe.detail,
-        icon: Icons.public_outlined,
-        tone: _ProtectionCheckTone.unknown,
-      ),
-  };
+  final https = !running
+      ? const _ProtectionCheck(
+          title: 'Выход через VPN',
+          value: 'Не проверяется',
+          detail: 'Проверка запускается после подключения.',
+          icon: Icons.public_outlined,
+          tone: _ProtectionCheckTone.unknown,
+        )
+      : snapshot!.coreEgressValidated == true
+          ? const _ProtectionCheck(
+              title: 'Выход через VPN',
+              value: 'Подтверждён',
+              detail:
+                  'POKROV Core открыл тестовый HTTPS-адрес через выбранную локацию.',
+              icon: Icons.public_rounded,
+              tone: _ProtectionCheckTone.success,
+            )
+          : snapshot.coreEgressValidated == false
+              ? const _ProtectionCheck(
+                  title: 'Выход через VPN',
+                  value: 'Не подтверждён',
+                  detail:
+                      'POKROV Core не смог открыть тестовый HTTPS-адрес через выбранную локацию.',
+                  icon: Icons.public_off_outlined,
+                  tone: _ProtectionCheckTone.danger,
+                )
+              : const _ProtectionCheck(
+                  title: 'Выход через VPN',
+                  value: 'Проверяется',
+                  detail: 'Ожидаем свежий результат POKROV Core.',
+                  icon: Icons.public_outlined,
+                  tone: _ProtectionCheckTone.unknown,
+                );
 
   final v4 = snapshot?.ipv4RouteCount;
   final v6 = snapshot?.ipv6RouteCount;
@@ -503,6 +524,32 @@ List<_ProtectionCheck> _protectionChecks(_ProtectionCenterData data) {
                   tone: _ProtectionCheckTone.warning,
                 );
   return <_ProtectionCheck>[tunnel, dns, https, routes];
+}
+
+String _consumerTunnelDetail(RuntimeSnapshot? snapshot) {
+  final failureKind = snapshot?.lastFailureKind?.trim() ?? '';
+  return switch (failureKind) {
+    'resolver_timeout' ||
+    'resolver_response_error' ||
+    'resolver_callback_error' =>
+      'Не удалось подтвердить DNS-подключение устройства. Попробуйте подключиться снова.',
+    'tls_handshake_failed' ||
+    'tunnel_handshake_failed' =>
+      'Защищённый канал до выбранной локации не отвечает. Попробуйте другую локацию или подключитесь снова.',
+    'core_egress_probe_failed' =>
+      'Не удалось подтвердить защищённое подключение. Попробуйте подключиться снова.',
+    'default_network_unavailable' ||
+    'default_network_interface_unresolved' ||
+    'default_network_index_unresolved' =>
+      'Устройство не подтвердило доступ к сети. Проверьте соединение и попробуйте снова.',
+    _ when failureKind.startsWith('dns_') =>
+      'Не удалось подготовить DNS для защищённого подключения. Попробуйте снова.',
+    _ when failureKind.isNotEmpty =>
+      'Подключение требует внимания. Попробуйте подключиться снова.',
+    _ => snapshot == null
+        ? 'Runtime не подтвердил активное соединение.'
+        : 'Подключение сейчас не активно. Попробуйте подключиться снова.',
+  };
 }
 
 class _ProtectionCheckRow extends StatelessWidget {

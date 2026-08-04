@@ -118,7 +118,7 @@ extension AccessLanePresentation on AccessLane {
       case AccessLane.trialPremium:
         return '5 дней полного доступа без карты на первом устройстве.';
       case AccessLane.bonusPremium:
-        return 'Привяжите Telegram, чтобы получить +10 дней к доступу.';
+        return 'Привяжите Telegram, чтобы получить +5 дней к доступу.';
       case AccessLane.paidUnlimited:
         return 'Платный доступ открывает полный пул доступных узлов без месячного лимита трафика.';
       case AccessLane.freeMonthly:
@@ -302,6 +302,7 @@ class SmartConnectNode {
     required this.rankHint,
     this.probeHost = '',
     this.probePort = 0,
+    this.outboundTag = '',
   });
 
   final String code;
@@ -310,6 +311,7 @@ class SmartConnectNode {
   final SmartConnectRankHint rankHint;
   final String probeHost;
   final int probePort;
+  final String outboundTag;
 
   factory SmartConnectNode.fromJson(Map<String, dynamic> json) {
     final probe = _readMap(json['probe']);
@@ -320,6 +322,7 @@ class SmartConnectNode {
       rankHint: SmartConnectRankHint.fromJson(_readMap(json['rank_hint'])),
       probeHost: _readText(probe['host'] ?? json['probe_host']),
       probePort: _readInt(probe['port'] ?? json['probe_port']),
+      outboundTag: _readText(json['outbound_tag'] ?? json['outboundTag']),
     );
   }
 }

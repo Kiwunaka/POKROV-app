@@ -13,21 +13,66 @@ String _smartConnectNodeCity(SmartConnectNode node) {
 }
 
 String _smartConnectQualityLabel(SmartConnectNode node) {
-  return _locationQualityLabel(node.rankHint.healthScore);
+  return _locationQualityLabel(
+        node.rankHint.healthScore,
+        latencyMs: node.rankHint.panelLatencyMs,
+      ) ??
+      'Нет свежих данных';
 }
 
-String _locationQualityLabel(double rawScore) {
-  final score = rawScore > 1 ? rawScore / 100 : rawScore;
+double? _normalizeLocationHealthScore(double? rawScore) {
+  if (rawScore == null || !rawScore.isFinite || rawScore < 0) {
+    return null;
+  }
+  if (rawScore <= 1) {
+    return rawScore;
+  }
+  if (rawScore <= 100) {
+    return rawScore / 100;
+  }
+  return null;
+}
+
+String? _locationQualityLabel(double? rawScore, {int? latencyMs}) {
+  final score = _normalizeLocationHealthScore(rawScore);
+  if (score == null) {
+    return null;
+  }
+  final healthRank = _locationHealthQualityRank(score);
+  final latencyRank = _locationLatencyQualityRank(latencyMs);
+  final rank = latencyRank != null && latencyRank > healthRank
+      ? latencyRank
+      : healthRank;
+  return const <String>['Отлично', 'Хорошо', 'Стабильно', 'Медленно'][rank];
+}
+
+int _locationHealthQualityRank(double score) {
   if (score >= 0.88) {
-    return 'Отлично';
+    return 0;
   }
   if (score >= 0.68) {
-    return 'Хорошо';
+    return 1;
   }
   if (score >= 0.42) {
-    return 'Стабильно';
+    return 2;
   }
-  return 'Медленно';
+  return 3;
+}
+
+int? _locationLatencyQualityRank(int? latencyMs) {
+  if (latencyMs == null || latencyMs < 0) {
+    return null;
+  }
+  if (latencyMs <= 150) {
+    return 0;
+  }
+  if (latencyMs <= 350) {
+    return 1;
+  }
+  if (latencyMs <= 800) {
+    return 2;
+  }
+  return 3;
 }
 
 String _locationLatencyLabel(int? latencyMs) {
@@ -45,6 +90,27 @@ String _locationLoadLabel(double? rawLoad) {
   return 'нагрузка ${percent.round()}%';
 }
 
+enum _LocationMetricFreshness { current, stale, unknown }
+
+_LocationMetricFreshness _locationMetricFreshness(
+  String rawIso, {
+  DateTime? now,
+}) {
+  final measuredAt = DateTime.tryParse(rawIso.trim())?.toUtc();
+  if (measuredAt == null) {
+    return _LocationMetricFreshness.unknown;
+  }
+  final clock = (now ?? DateTime.now()).toUtc();
+  final age = clock.difference(measuredAt);
+  if (age.isNegative) {
+    return _LocationMetricFreshness.unknown;
+  }
+  if (age <= const Duration(minutes: 15)) {
+    return _LocationMetricFreshness.current;
+  }
+  return _LocationMetricFreshness.stale;
+}
+
 String _locationFreshnessLabel(String rawIso, {DateTime? now}) {
   final measuredAt = DateTime.tryParse(rawIso.trim())?.toUtc();
   if (measuredAt == null) {
@@ -52,7 +118,7 @@ String _locationFreshnessLabel(String rawIso, {DateTime? now}) {
   }
   final clock = (now ?? DateTime.now()).toUtc();
   final age = clock.difference(measuredAt);
-  if (age.isNegative && age.abs() > const Duration(minutes: 5)) {
+  if (age.isNegative) {
     return 'время замера —';
   }
   if (age <= const Duration(minutes: 2)) {
@@ -64,11 +130,21 @@ String _locationFreshnessLabel(String rawIso, {DateTime? now}) {
   return 'замер устарел';
 }
 
-String _locationMetricsLabel(ClientLocationCity city) {
+String _locationMetricsLabel(
+  ClientLocationCity city, {
+  DateTime? now,
+  _LocationMetricFreshness? freshness,
+}) {
+  final resolvedFreshness =
+      freshness ?? _locationMetricFreshness(city.measuredAt, now: now);
+  final freshnessLabel = _locationFreshnessLabel(city.measuredAt, now: now);
+  if (resolvedFreshness != _LocationMetricFreshness.current) {
+    return freshnessLabel;
+  }
   return <String>[
     _locationLatencyLabel(city.latencyMs),
     _locationLoadLabel(city.load),
-    _locationFreshnessLabel(city.measuredAt),
+    freshnessLabel,
   ].join(' · ');
 }
 

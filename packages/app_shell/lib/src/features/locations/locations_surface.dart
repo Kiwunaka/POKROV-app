@@ -14,6 +14,7 @@ class _LocationsSection extends StatefulWidget {
     required this.onRefreshLocationsCatalog,
     required this.preferredNodeCode,
     required this.nodePreferenceBusy,
+    required this.onAutomaticLocationSelected,
     required this.onPreferredNodeSelected,
     required this.favoriteNodeCodes,
     required this.recentNodeCodes,
@@ -32,6 +33,7 @@ class _LocationsSection extends StatefulWidget {
   final VoidCallback onRefreshLocationsCatalog;
   final String preferredNodeCode;
   final bool nodePreferenceBusy;
+  final VoidCallback onAutomaticLocationSelected;
   final ValueChanged<String> onPreferredNodeSelected;
   final List<String> favoriteNodeCodes;
   final List<String> recentNodeCodes;
@@ -51,8 +53,15 @@ class _LocationsSectionState extends State<_LocationsSection> {
     super.dispose();
   }
 
-  bool get _canSelectLocation =>
-      widget.hasProvisionedAccess && widget.smartConnectProfile != null;
+  bool get _canSelectLocation {
+    if (widget.smartConnectProfile != null) {
+      return true;
+    }
+    return widget.locationsCatalog?.countries.any(
+          (country) => country.cities.isNotEmpty,
+        ) ??
+        false;
+  }
 
   bool _matches(SmartConnectNode node) {
     if (_query.isEmpty) {
@@ -174,6 +183,12 @@ class _LocationsSectionState extends State<_LocationsSection> {
         ? shortlist.where(_matches).toList(growable: false)
         : const <SmartConnectNode>[];
     final locationCount = hasCatalog ? catalogEntries.length : shortlist.length;
+    final hasManualPreference = widget.preferredNodeCode.trim().isNotEmpty;
+    final autoStatus = hasManualPreference
+        ? _AutoLocationStatus.manual
+        : !widget.hasProvisionedAccess
+            ? _AutoLocationStatus.unavailable
+            : _AutoLocationStatus.active;
 
     return _SeedContentList(
       children: [
@@ -194,31 +209,42 @@ class _LocationsSectionState extends State<_LocationsSection> {
         ],
         _AutoLocationCard(
           key: const ValueKey('locations-auto-section'),
-          enabled: widget.hasProvisionedAccess,
           title: 'Автоматически',
-          subtitle: widget.hasProvisionedAccess
-              ? 'POKROV выберет быстрый маршрут. $premiumPool · ${_routeModeShortLabel(widget.selectedRouteMode)}'
-              : 'Сначала включите POKROV VPN',
-          value: widget.preferredNodeCode.trim().isEmpty ? 'Авто' : 'Выбрано',
+          subtitle: switch (autoStatus) {
+            _AutoLocationStatus.active =>
+              'POKROV выберет быстрый маршрут. $premiumPool · ${_routeModeShortLabel(widget.selectedRouteMode)}',
+            _AutoLocationStatus.manual =>
+              'Выбрана локация вручную. Нажмите, чтобы вернуть автоматический выбор.',
+            _AutoLocationStatus.unavailable => 'Сначала включите POKROV VPN',
+          },
+          value: switch (autoStatus) {
+            _AutoLocationStatus.active => 'Авто',
+            _AutoLocationStatus.manual => 'Вручную',
+            _AutoLocationStatus.unavailable => 'Недоступно',
+          },
+          status: autoStatus,
           busy: widget.nodePreferenceBusy ||
               (widget.locationsCatalogBusy && hasList),
-          onTap: () => _showInfoSheet(
-            context,
-            title: 'Автоматически',
-            lines: [
-              'POKROV сам выбирает страну и старается держать быстрый маршрут.',
-              'Если выбрать страну ниже, она станет предпочтительной после переподключения.',
-            ],
-          ),
+          onTap: autoStatus == _AutoLocationStatus.manual &&
+                  !widget.nodePreferenceBusy
+              ? widget.onAutomaticLocationSelected
+              : () => _showInfoSheet(
+                    context,
+                    title: 'Автоматически',
+                    lines: [
+                      'POKROV сам выбирает страну и старается держать быстрый маршрут.',
+                      'Если выбрать страну ниже, она станет предпочтительной после переподключения.',
+                    ],
+                  ),
         ),
         if (hasList && !_canSelectLocation) ...[
           const SizedBox(height: 14),
           const _SectionCard(
             key: ValueKey('locations-selection-locked'),
-            title: 'Выбор откроется после первого подключения',
+            title: 'Выбор локации пока недоступен',
             tone: _SectionTone.muted,
             lines: [
-              'Сначала подготовьте доступ кнопкой «Подключить». Локации уже можно искать и добавлять в избранное.',
+              'Обновите список локаций или подготовьте доступ кнопкой «Подключить».',
             ],
           ),
         ],
@@ -358,34 +384,48 @@ class _LocationSearchField extends StatelessWidget {
   }
 }
 
+enum _AutoLocationStatus { active, manual, unavailable }
+
 class _AutoLocationCard extends StatelessWidget {
   const _AutoLocationCard({
     super.key,
-    required this.enabled,
     required this.title,
     required this.subtitle,
     required this.value,
+    required this.status,
     required this.busy,
     required this.onTap,
   });
 
-  final bool enabled;
   final String title;
   final String subtitle;
   final String value;
+  final _AutoLocationStatus status;
   final bool busy;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
+    final isActive = status == _AutoLocationStatus.active;
+    final isUnavailable = status == _AutoLocationStatus.unavailable;
+    final statusTone = switch (status) {
+      _AutoLocationStatus.active => _SectionTone.accent,
+      _AutoLocationStatus.manual => _SectionTone.neutral,
+      _AutoLocationStatus.unavailable => _SectionTone.muted,
+    };
+    final statusIcon = switch (status) {
+      _AutoLocationStatus.active => Icons.check_circle_outline_rounded,
+      _AutoLocationStatus.manual => Icons.location_on_outlined,
+      _AutoLocationStatus.unavailable => Icons.lock_outline_rounded,
+    };
     final content = Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: enabled ? p.accent.withValues(alpha: 0.06) : p.surfaceMuted,
+        color: isActive ? p.accent.withValues(alpha: 0.06) : p.surfaceMuted,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: enabled ? p.accent.withValues(alpha: 0.16) : p.line,
+          color: isActive ? p.accent.withValues(alpha: 0.16) : p.line,
         ),
       ),
       child: Column(
@@ -396,12 +436,15 @@ class _AutoLocationCard extends StatelessWidget {
                 width: 54,
                 height: 54,
                 decoration: BoxDecoration(
-                  color: p.accent.withValues(alpha: 0.12),
+                  color:
+                      isActive ? p.accent.withValues(alpha: 0.12) : p.surface,
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Icon(
-                  Icons.travel_explore_rounded,
-                  color: p.accent,
+                  isUnavailable
+                      ? Icons.lock_outline_rounded
+                      : Icons.travel_explore_rounded,
+                  color: isActive ? p.accent : p.muted,
                   size: 27,
                 ),
               ),
@@ -445,10 +488,8 @@ class _AutoLocationCard extends StatelessWidget {
               ],
               _StatusPill(
                 label: value,
-                icon: enabled
-                    ? Icons.check_circle_outline_rounded
-                    : Icons.hourglass_empty_rounded,
-                tone: enabled ? _SectionTone.accent : _SectionTone.muted,
+                icon: statusIcon,
+                tone: statusTone,
               ),
             ],
           ),
@@ -493,12 +534,23 @@ class _ClientLocationCityRow extends StatelessWidget {
     final p = PokrovPalette.of(context);
     final city = entry.city;
     final country = entry.country;
-    final quality = _locationQualityLabel(city.healthScore);
-    final metrics = _locationMetricsLabel(city);
+    final now = DateTime.now().toUtc();
+    final freshness = _locationMetricFreshness(city.measuredAt, now: now);
+    final quality = freshness == _LocationMetricFreshness.current
+        ? _locationQualityLabel(
+            city.healthScore,
+            latencyMs: city.latencyMs,
+          )
+        : null;
+    final metrics = _locationMetricsLabel(
+      city,
+      now: now,
+      freshness: freshness,
+    );
     final subtitle = <String>[
       country.country,
-      quality,
-      city.premium ? 'Premium' : 'Free',
+      if (quality != null) quality,
+      city.premium ? 'Премиум' : 'Базовый',
     ].where((item) => item.trim().isNotEmpty).join(' · ');
     final content = Padding(
       key: ValueKey('locations-catalog-city-${city.code}'),
@@ -548,14 +600,17 @@ class _ClientLocationCityRow extends StatelessWidget {
             key: ValueKey('locations-favorite-${city.code}'),
             tooltip: favorite ? 'Убрать из избранного' : 'Добавить в избранное',
             onPressed: disabled ? null : onFavoriteToggle,
-            visualDensity: VisualDensity.compact,
             icon: Icon(
               favorite ? Icons.star_rounded : Icons.star_border_rounded,
               color: favorite ? p.reward : p.muted,
               size: 22,
             ),
           ),
-          _SignalBars(score: city.healthScore),
+          _SignalBars(
+            key: ValueKey('locations-signal-${city.code}'),
+            score: city.healthScore,
+            verified: freshness == _LocationMetricFreshness.current,
+          ),
           const SizedBox(width: 14),
           if (selectionEnabled)
             AnimatedContainer(
@@ -580,7 +635,7 @@ class _ClientLocationCityRow extends StatelessWidget {
             )
           else
             Tooltip(
-              message: 'Сначала подключите POKROV',
+              message: 'Список локаций ещё не готов',
               child: SizedBox(
                 key: ValueKey('locations-selection-locked-${city.code}'),
                 width: 30,
@@ -595,20 +650,35 @@ class _ClientLocationCityRow extends StatelessWidget {
         ],
       ),
     );
+    final Widget row;
     if (disabled) {
       // Same "asleep" convention as PokrovListRow: dim, ignore taps, keep
       // the basic cursor while the preference write is in flight.
-      return IgnorePointer(
+      row = IgnorePointer(
         child: Opacity(
           opacity: PokrovListRow.disabledOpacity,
           child: MouseRegion(cursor: SystemMouseCursors.basic, child: content),
         ),
       );
+    } else if (!selectionEnabled) {
+      row = content;
+    } else {
+      row = PokrovSettingsRowPressSurface(onTap: onTap, child: content);
     }
-    if (!selectionEnabled) {
-      return content;
-    }
-    return PokrovSettingsRowPressSurface(onTap: onTap, child: content);
+    final locationTitle =
+        city.city.trim().isEmpty ? country.country : city.city;
+    return Semantics(
+      key: ValueKey('locations-semantics-${city.code}'),
+      container: true,
+      selected: selected,
+      label: 'Локация $locationTitle',
+      value: disabled
+          ? 'Сохраняется'
+          : selectionEnabled
+              ? (selected ? 'Выбрано' : 'Не выбрано')
+              : 'Выбор недоступен',
+      child: row,
+    );
   }
 }
 
@@ -686,14 +756,16 @@ class _SmartConnectNodeRow extends StatelessWidget {
             key: ValueKey('locations-favorite-${node.code}'),
             tooltip: favorite ? 'Убрать из избранного' : 'Добавить в избранное',
             onPressed: disabled ? null : onFavoriteToggle,
-            visualDensity: VisualDensity.compact,
             icon: Icon(
               favorite ? Icons.star_rounded : Icons.star_border_rounded,
               color: favorite ? p.reward : p.muted,
               size: 22,
             ),
           ),
-          _SignalBars(score: node.rankHint.healthScore),
+          _SignalBars(
+            key: ValueKey('locations-signal-${node.code}'),
+            score: node.rankHint.healthScore,
+          ),
           const SizedBox(width: 14),
           if (selectionEnabled)
             AnimatedContainer(
@@ -718,7 +790,7 @@ class _SmartConnectNodeRow extends StatelessWidget {
             )
           else
             Tooltip(
-              message: 'Сначала подключите POKROV',
+              message: 'Список локаций ещё не готов',
               child: SizedBox(
                 key: ValueKey('locations-selection-locked-${node.code}'),
                 width: 30,
@@ -733,19 +805,32 @@ class _SmartConnectNodeRow extends StatelessWidget {
         ],
       ),
     );
+    final Widget row;
     if (disabled) {
       // Same "asleep" convention as PokrovListRow: dim, ignore taps, keep
       // the basic cursor while the preference write is in flight.
-      return IgnorePointer(
+      row = IgnorePointer(
         child: Opacity(
           opacity: PokrovListRow.disabledOpacity,
           child: MouseRegion(cursor: SystemMouseCursors.basic, child: content),
         ),
       );
+    } else if (!selectionEnabled) {
+      row = content;
+    } else {
+      row = PokrovSettingsRowPressSurface(onTap: onTap, child: content);
     }
-    if (!selectionEnabled) {
-      return content;
-    }
-    return PokrovSettingsRowPressSurface(onTap: onTap, child: content);
+    return Semantics(
+      key: ValueKey('locations-semantics-${node.code}'),
+      container: true,
+      selected: selected,
+      label: 'Локация ${_smartConnectNodeTitle(node)}',
+      value: disabled
+          ? 'Сохраняется'
+          : selectionEnabled
+              ? (selected ? 'Выбрано' : 'Не выбрано')
+              : 'Выбор недоступен',
+      child: row,
+    );
   }
 }

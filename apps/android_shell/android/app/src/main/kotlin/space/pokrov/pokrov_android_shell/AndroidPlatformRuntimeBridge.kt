@@ -42,6 +42,12 @@ internal object AndroidPlatformRuntimeBridge {
         return null
     }
 
+    fun canPublishNetworkResolution(
+        requestGeneration: Long,
+        activeGeneration: Long,
+        isCurrentNetwork: Boolean,
+    ): Boolean = isCurrentNetwork && requestGeneration == activeGeneration
+
     fun <T> awaitValue(
         timeoutMillis: Long = DEFAULT_NETWORK_WAIT_TIMEOUT_MILLIS,
         waitStepMillis: Long = DEFAULT_NETWORK_WAIT_SLICE_MILLIS,

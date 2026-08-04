@@ -5,7 +5,17 @@ import java.io.File
 
 internal data class PersistedRuntimeProfile(
     val configPath: String,
+    /** Route mode attached by Flutter to this exact staged config. */
+    val routeMode: String = "",
+    /**
+     * Flutter has confirmed the first-connect route scope for this exact
+     * freshly staged profile. Missing legacy metadata is deliberately false.
+     */
+    val quickSettingsEligible: Boolean = false,
 )
+
+internal fun PersistedRuntimeProfile.canStartFromQuickSettings(): Boolean =
+    quickSettingsEligible && routeMode.isNotBlank()
 
 /**
  * Keeps only the private materialized runtime path so the Quick Settings tile
@@ -15,12 +25,16 @@ internal data class PersistedRuntimeProfile(
 internal object AndroidRuntimeProfileStore {
     private const val PREFERENCES_NAME = "pokrov_runtime_profile"
     private const val KEY_CONFIG_PATH = "config_path"
+    private const val KEY_QUICK_SETTINGS_ELIGIBLE = "quick_settings_eligible"
+    private const val KEY_ROUTE_MODE = "route_mode"
 
     fun save(context: Context, profile: PersistedRuntimeProfile) {
         context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
             .edit()
             .clear()
             .putString(KEY_CONFIG_PATH, profile.configPath)
+            .putString(KEY_ROUTE_MODE, profile.routeMode)
+            .putBoolean(KEY_QUICK_SETTINGS_ELIGIBLE, profile.quickSettingsEligible)
             .apply()
     }
 
@@ -39,6 +53,11 @@ internal object AndroidRuntimeProfileStore {
         }
         return PersistedRuntimeProfile(
             configPath = configPath,
+            routeMode = preferences.getString(KEY_ROUTE_MODE, "").orEmpty(),
+            quickSettingsEligible = preferences.getBoolean(
+                KEY_QUICK_SETTINGS_ELIGIBLE,
+                false,
+            ),
         )
     }
 
@@ -46,7 +65,28 @@ internal object AndroidRuntimeProfileStore {
         context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
             .edit()
             .clear()
-            .apply()
+            .commit()
+    }
+
+    /**
+     * The egress probe has rejected the selected outbound. Commit the profile
+     * deletion synchronously before dropping the in-memory staged pointer, so
+     * a Quick Settings click cannot revive this configuration while Flutter is
+     * absent.
+     */
+    @Synchronized
+    fun failClosedAfterCoreEgressFailure(
+        context: Context,
+        failureKind: String,
+        message: String,
+        stopReason: String,
+    ) {
+        clear(context)
+        AndroidRuntimeState.markStoppedAfterCoreEgressFailure(
+            failureKind = failureKind,
+            message = message,
+            stopReason = stopReason,
+        )
     }
 
     fun restoreIntoRuntimeState(context: Context): PersistedRuntimeProfile? {

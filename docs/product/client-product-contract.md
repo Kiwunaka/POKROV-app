@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-07-23
+Last updated: 2026-08-03
 
 ## Document Status
 
@@ -53,7 +53,9 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - default runtime core: `sing-box`
 - `xray` role: advanced compatibility fallback only
 - free trial: `5 days`
-- Telegram reward: `+10 days`
+- Telegram reward: `+5 days` for new account-owned grants; already-issued
+  `+10 days` grants remain grandfathered and must render with their
+  backend-returned value
 - public user-facing version line: current paid beta evidence uses `1.0.0-beta`; patch/build labels such as `1.0.0-beta.3` are still beta labels, not stable `1.0.0` claims
 - recommended public routing mode: `All except RU`
 - public routing mode set: `All except RU` and `Full tunnel`
@@ -139,6 +141,10 @@ Product rules for that choice:
 - `Full tunnel` stays available as the direct device-wide fallback
 - `Only selected apps` is the P3 split-tunneling path for user-selected app or
   process identifiers
+- `Only selected apps` requires at least one selected app. An empty selection
+  blocks connect and route-policy sync, keeps the device unprotected, and
+  directs the user to add an app in `Rules`; it must never fall back to a
+  device-wide tunnel.
 - Windows uses an executable/process picker for selected apps, backed by
   running-process, discovered `.exe`, and curated fallback candidates
 - Android uses an installed-package picker for selected apps, with curated
@@ -150,6 +156,8 @@ Product rules for that choice:
 - current implementation exposes `All except RU`, `Full tunnel`, and
   `Only selected apps`; adding a custom app identifier auto-selects the
   selected-apps route and sends `selected_apps` through app-first route policy
+- selected-app identifiers are device-local, survive app restart, normalized,
+  and capped at 128; an empty selected-apps list still blocks connection
 - Windows `Rules` uses consumer route copy (`Режим работы`,
   `Российские сервисы`, `Выбранные приложения`) instead of Android-only bank,
   Gosuslugi, and marketplace presets
@@ -161,6 +169,9 @@ Product rules for that choice:
 - selected-app picker, route-policy sync, persistence, and runtime
   materialization are beta-active on Android and Windows; public production
   behavior remains gated on exact-artifact physical-device and clean-VM proof
+- picker rows disambiguate duplicate consumer labels without exposing package
+  or executable identifiers, announce selected/available state to assistive
+  technology, and remain usable above the on-screen keyboard
 - raw selected-app rule editing remains hidden behind advanced/debug gates
 - if the chosen desktop route mode requires elevation, the app must explain that before connect and guide the user to relaunch as administrator
 - first-layer UX must not force users into raw system-proxy, service-mode, or low-level transport toggles
@@ -181,11 +192,45 @@ After activation:
 
 - `Locations` shows `Автоматически` when the backend has not returned a
   shortlist yet
+- cached location latency/load values render only while their measurement is
+  fresh; stale, future-dated, or invalid timestamps keep a neutral freshness
+  warning but suppress numeric and qualitative health values plus any
+  healthy-colored signal indicator; missing or out-of-range health scores also
+  stay neutral
 - when `smart_connect.shortlist` is present, `Locations` shows only those real
   eligible nodes and lets the user save a preferred node
 - saved node choice is sent through `POST /api/client/nodes/select` with
   `mode=manual`, and the next managed profile may be fetched with
   `selected_node_code` before the runtime config is materialized
+- an explicit saved node is fail-closed: its code must remain in the returned
+  eligible Smart Connect shortlist and map unambiguously to a direct proxy in
+  the returned profile. The canonical identity is the shortlist item's
+  `outbound_tag`; while older deployed servers omit that field, the client may
+  use the raw node code, the deterministic legacy localized tag, or a unique
+  probe host/port match in that order. The resolved tag must still be a member
+  of the final selector. A mismatch, ambiguity, or stale cached profile must
+  show that the selected location is unavailable instead of connecting
+  through a different displayed location
+- when a saved manual location becomes unavailable, `Locations` still lets the
+  user explicitly return to `Автоматически` before the first successful
+  connection; that action clears the device-local manual preference and the
+  next managed-profile request uses Smart Connect without a manual node code
+- server-reported Smart Connect stickiness is an automatic routing hint and
+  must not be persisted as a device-local manual location; only an explicit
+  user selection may add `selected_node_code` to later profile requests
+- the node resolved by an automatic connection is runtime evidence, not a
+  saved manual preference. After disconnect or cold restart the client must
+  still show and request `Автоматически`; while connected it may show the exact
+  verified city selected for that tunnel
+- while a tunnel is already running, a manual choice is pending for the next
+  reconnect: Home keeps the last verified active city and states that the
+  change applies after reconnect; it must not attest that the new city is
+  active before a fresh profile is staged and the runtime connects
+  successfully
+- after that successful reconnect, the home location chip shows the selected
+  city from the live or cached catalog; it must not keep claiming
+  `Автоматически` or expose a technical node code. Cached, stale, or unknown
+  runtime evidence must remain unverified rather than reusing the pending city
 - trial and Telegram-bonus access must read as premium-pool access, never as
   `free node` access
 
@@ -241,6 +286,14 @@ Quick-connect rules:
 - free-tier users stay on `NL-free` only
 - shortlist eligibility rejects disabled, draining, unhealthy, stale, dataplane-down, saturated, high-loss/retransmit, overloaded, and transport-incompatible nodes while capacity-aware selection is enabled
 - the client uses backend-provided internal probe targets and capacity hints, then posts `mode=auto` or `mode=manual` to `/api/client/nodes/select`; telemetry failure must not block connect
+- after automatic selection the client promotes the selected direct outbound
+  inside the already authorized managed profile. It may perform one bounded
+  exact-profile refetch only when local identity mapping cannot be proven; the
+  normal path must not depend on a duplicate full profile request
+- an exact selected-outbound egress failure in automatic mode quarantines that
+  node locally for 15 minutes and permits at most two bounded failover attempts;
+  the quarantine stores at most eight nodes. Manual selection, unavailable
+  egress evidence, and telemetry-only failure do not silently change location
 - the default stickiness threshold is `20%`
 - explicit user-node assignments are provisioning/history state and must not reduce the premium candidate pool
 
@@ -264,13 +317,21 @@ The Android and Windows client now treats protection as several independent,
 observable checks instead of one decorative connected badge:
 
 - tunnel lifecycle comes from the runtime snapshot;
-- DNS availability comes from runtime-owned diagnostics;
-- internet reachability is a bounded HTTPS probe to the configured POKROV API;
+- bootstrap DNS readiness comes from runtime-owned diagnostics and is labelled
+  separately; it must not claim that application DNS inside the VPN works;
+- selected-outbound egress health, including the user-facing VPN internet check,
+  comes from the core-owned bounded URL test; the timeout sentinel is failure;
+- the bounded HTTPS probe to the configured POKROV API is a separate
+  control-plane check and is not tunnel-egress proof when the app UID is
+  excluded from its own VPN;
 - route ownership is described from the active runtime profile and routing mode;
 - unknown or stale evidence stays unknown and cannot render as healthy;
 - one repair action runs at most one staged cycle: disconnect, resolve a fresh
   managed profile, stage, connect, then refresh the checks. It has no retry loop
   and cannot overlap another repair.
+- first-layer recovery copy must stay actionable and must not expose raw
+  exceptions, endpoint hostnames, IP addresses, ports, protocol details, or
+  engine internals; those details belong only in bounded support diagnostics.
 
 The client persists only bounded local experience state: favorites, recent
 locations, cached location/inbox responses with timestamps, the last 20 local
@@ -297,7 +358,14 @@ network never counts as a trusted match.
 Android exposes a Quick Settings tile backed by the same runtime service and
 permission handoff as the main connect action. Windows tray connect/disconnect
 delegates to the same shell controller. Neither host control owns a second VPN
-state machine.
+state machine. A user change to location, routing, selected apps, or WARP
+invalidates Android's reusable Quick Settings profile without stopping a live
+tunnel: the tile can still stop that tunnel, but after stop it opens the app
+until a fresh managed-profile stage saves the new reusable profile.
+Quick Settings may start only a freshly staged Android profile whose persisted
+metadata proves Flutter completed the first-connect route-scope choice; legacy
+path-only and unconfirmed records, as well as any profile rejected by the
+selected-outbound egress probe, open the app until a fresh stage completes.
 
 Device continuation uses a short-lived, one-time pairing code created by an
 already authenticated device or cabinet. The new device receives its own
@@ -333,6 +401,10 @@ Release continuity rules:
 - unsigned Windows bundles are non-public engineering smoke with a SmartScreen
   or unknown-publisher warning; public promotion requires trusted signing
 - signed release builds inject updater and source metadata through the documented `PORTAL_RELEASE_*` environment variables
+- the shared runtime identity is `pokrovClientVersion`; release builds pass
+  `--dart-define=POKROV_APP_VERSION=<host pubspec version without +build>` so
+  provisioning, update checks, diagnostics, and visible version text match the
+  package. Local builds use the current candidate fallback `1.0.2-core-test.1`.
 - local non-release builds keep updater and source-code surfaces disabled instead of falling back to a personal repository URL
 - an update prompt or tap may hand off only to `https://github.com/Kiwunaka/pokrov/releases/download/<tag>/<asset>` when metadata also carries a 64-hex SHA-256 and a positive byte size; alternate hosts, repositories, URL authority fields, query strings, and fragments fail closed
 - this is an external-browser handoff boundary, not downloaded-byte verification: the app does not receive or hash the browser's bytes, so checksum, install, signing, and exact-candidate runtime proof remain manual release gates
@@ -378,7 +450,8 @@ In scope:
 - device management
 - subscription and renewal continuation
 - in-app and cabinet-backed support continuation
-- Telegram reward `+10 days`
+- Telegram reward `+5 days` for new grants; historical backend-confirmed
+  `+10 days` grants remain visible as issued
 - advanced routing modes `All except RU` and `Full tunnel`
 - safe diagnostics and recovery actions
 

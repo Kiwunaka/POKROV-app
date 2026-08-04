@@ -50,6 +50,31 @@ class AndroidPlatformRuntimeBridgeTest {
     }
 
     @Test
+    fun networkResolution_publishIsFencedByGenerationAndCurrentNetwork() {
+        assertTrue(
+            AndroidPlatformRuntimeBridge.canPublishNetworkResolution(
+                requestGeneration = 8L,
+                activeGeneration = 8L,
+                isCurrentNetwork = true,
+            ),
+        )
+        assertFalse(
+            AndroidPlatformRuntimeBridge.canPublishNetworkResolution(
+                requestGeneration = 7L,
+                activeGeneration = 8L,
+                isCurrentNetwork = true,
+            ),
+        )
+        assertFalse(
+            AndroidPlatformRuntimeBridge.canPublishNetworkResolution(
+                requestGeneration = 8L,
+                activeGeneration = 8L,
+                isCurrentNetwork = false,
+            ),
+        )
+    }
+
+    @Test
     fun toLibboxPrefix_removesIpv6ScopeSuffixAndAddsPrefixLength() {
         val scopedAddress = Inet6Address.getByAddress(
             null,

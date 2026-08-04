@@ -134,7 +134,7 @@ class _RulesSection extends StatelessWidget {
             title: 'Только выбранные',
             lines: [
               selectedAppIds.isEmpty
-                  ? 'POKROV VPN будет работать только для выбранных приложений.'
+                  ? 'Выберите хотя бы одно приложение перед подключением.'
                   : 'Выбрано: ${selectedAppIds.length}',
             ],
             child: _SelectedAppsEditor(
@@ -348,7 +348,10 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
   }
 
   void _submit() {
-    final normalized = _normalizeSelectedAppIdentifier(_controller.text);
+    final normalized = normalizePokrovSelectedAppIdentifier(
+      _controller.text,
+      hostPlatform: widget.hostPlatform,
+    );
     if (normalized == null) {
       // Inline validation instead of a silent no-op.
       setState(() {
@@ -648,38 +651,52 @@ class _LocationFlagBadge extends StatelessWidget {
 
 class _SignalBars extends StatelessWidget {
   const _SignalBars({
+    super.key,
     required this.score,
+    this.verified = true,
   });
 
-  final double score;
+  final double? score;
+  final bool verified;
 
   @override
   Widget build(BuildContext context) {
-    final normalized = score <= 0 ? 0.78 : score.clamp(0.18, 1.0);
-    final activeCount = (normalized * 4).ceil().clamp(1, 4);
+    final normalizedScore = _normalizeLocationHealthScore(score);
+    final hasKnownScore = verified && normalizedScore != null;
+    final normalized = hasKnownScore ? normalizedScore.clamp(0.18, 1.0) : 0.0;
+    final activeCount = hasKnownScore ? (normalized * 4).ceil().clamp(1, 4) : 0;
     final p = PokrovPalette.of(context);
-    return SizedBox(
-      width: 28,
-      height: 22,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          for (var index = 0; index < 4; index += 1)
-            AnimatedContainer(
-              duration: _MotionScope.of(context).duration(_MotionTokens.short),
-              curve: _MotionTokens.ease,
-              width: 4,
-              height: 7.0 + index * 4,
-              margin: const EdgeInsets.symmetric(horizontal: 1.5),
-              decoration: BoxDecoration(
-                color: index < activeCount
-                    ? p.accent
-                    : p.ink.withValues(alpha: 0.13),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-        ],
+    return Semantics(
+      label: hasKnownScore
+          ? 'Качество локации: $activeCount из 4'
+          : 'Качество локации: нет свежих данных',
+      image: true,
+      child: ExcludeSemantics(
+        child: SizedBox(
+          width: 28,
+          height: 22,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var index = 0; index < 4; index += 1)
+                AnimatedContainer(
+                  duration:
+                      _MotionScope.of(context).duration(_MotionTokens.short),
+                  curve: _MotionTokens.ease,
+                  width: 4,
+                  height: 7.0 + index * 4,
+                  margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                  decoration: BoxDecoration(
+                    color: index < activeCount
+                        ? p.accent
+                        : p.ink.withValues(alpha: 0.13),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -771,173 +788,223 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
     final motion = _MotionScope.of(context);
     final p = PokrovPalette.of(context);
     final title = 'Выбор приложений';
-    return SizedBox(
-      key: const ValueKey('rules-selected-app-picker-sheet'),
-      height: MediaQuery.sizeOf(context).height * 0.82,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: p.accent.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Icon(
-                      widget.hostPlatform == HostPlatform.windows
-                          ? Icons.desktop_windows_outlined
-                          : Icons.apps_rounded,
-                      color: p.accent,
-                      size: 22,
-                    ),
+    final mediaQuery = MediaQuery.of(context);
+    final bottomInset = mediaQuery.viewInsets.bottom;
+    final availableHeight = math.max(0.0, mediaQuery.size.height - bottomInset);
+    final sheetHeight =
+        math.min(mediaQuery.size.height * 0.82, availableHeight);
+    final searchField = TextField(
+      key: const ValueKey('rules-selected-app-search'),
+      controller: _searchController,
+      textInputAction: TextInputAction.search,
+      decoration: InputDecoration(
+        prefixIcon: const Icon(Icons.search_rounded),
+        labelText: 'Поиск по названию',
+        filled: true,
+        fillColor: p.surfaceMuted.withValues(alpha: 0.70),
+        suffixIcon: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _searchController,
+          builder: (context, value, _) => value.text.isEmpty
+              ? const SizedBox.shrink()
+              : IconButton(
+                  key: const ValueKey(
+                    'rules-selected-app-search-clear',
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    color: p.ink,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                        ),
-                        Text(
-                          widget.hostPlatform == HostPlatform.windows
-                              ? 'Выберите приложение для режима «только выбранные».'
-                              : 'Выберите приложения для режима «только выбранные».',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: p.muted,
-                                  ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Закрыть',
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                key: const ValueKey('rules-selected-app-search'),
-                controller: _searchController,
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  labelText: 'Поиск',
-                  filled: true,
-                  fillColor: p.surfaceMuted.withValues(alpha: 0.70),
-                  suffixIcon: ValueListenableBuilder<TextEditingValue>(
-                    valueListenable: _searchController,
-                    builder: (context, value, _) => value.text.isEmpty
-                        ? const SizedBox.shrink()
-                        : IconButton(
-                            key: const ValueKey(
-                              'rules-selected-app-search-clear',
+                  tooltip: 'Очистить',
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => setState(() {
+                    _searchController.clear();
+                    _query = '';
+                  }),
+                ),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: p.line),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: p.line),
+        ),
+      ),
+      onChanged: (value) => setState(() {
+        _query = value.trim().toLowerCase();
+      }),
+    );
+    return AnimatedPadding(
+      key: const ValueKey('rules-selected-app-picker-inset'),
+      duration: motion.duration(_MotionTokens.short),
+      curve: _MotionTokens.ease,
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: SizedBox(
+        key: const ValueKey('rules-selected-app-picker-sheet'),
+        height: sheetHeight,
+        child: SafeArea(
+          top: false,
+          bottom: bottomInset == 0,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxHeight < 240;
+              return Padding(
+                padding: compact
+                    ? const EdgeInsets.fromLTRB(12, 0, 12, 8)
+                    : const EdgeInsets.fromLTRB(20, 2, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (!compact)
+                      Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: p.accent.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(15),
                             ),
-                            tooltip: 'Очистить',
+                            child: Icon(
+                              widget.hostPlatform == HostPlatform.windows
+                                  ? Icons.desktop_windows_outlined
+                                  : Icons.apps_rounded,
+                              color: p.accent,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(
+                                        color: p.ink,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                                Text(
+                                  widget.hostPlatform == HostPlatform.windows
+                                      ? 'Выберите приложение для режима «только выбранные».'
+                                      : 'Выберите приложения для режима «только выбранные».',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: p.muted,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Закрыть',
+                            onPressed: () => Navigator.of(context).pop(),
                             icon: const Icon(Icons.close_rounded),
-                            onPressed: () => setState(() {
-                              _searchController.clear();
-                              _query = '';
-                            }),
                           ),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: p.line),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: p.line),
-                  ),
-                ),
-                onChanged: (value) => setState(() {
-                  _query = value.trim().toLowerCase();
-                }),
-              ),
-              const SizedBox(height: 14),
-              Expanded(
-                child: FutureBuilder<List<_SelectedAppCandidate>>(
-                  future: widget.candidatesFuture,
-                  builder: (context, snapshot) {
-                    final fallbackCandidates = _suggestedSelectedAppCandidates(
-                      widget.hostPlatform,
-                    );
-                    if (snapshot.connectionState != ConnectionState.done &&
-                        fallbackCandidates.isEmpty) {
-                      return const _MotionSkeletonList(
-                        rows: 5,
-                      );
-                    }
-                    final rawCandidates =
-                        snapshot.connectionState == ConnectionState.done &&
-                                snapshot.data != null
-                            ? snapshot.data!
-                            : fallbackCandidates;
-                    final candidates = rawCandidates
-                        .where(
-                          (candidate) =>
-                              _query.isEmpty ||
-                              candidate.searchText.contains(_query),
-                        )
-                        .toList(growable: false);
-                    if (candidates.isEmpty) {
-                      return Center(
-                        child: Text(
-                          'Ничего не найдено. Добавьте приложение вручную ниже.',
-                          textAlign: TextAlign.center,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: p.muted,
+                        ],
+                      ),
+                    SizedBox(height: compact ? 0 : 16),
+                    if (compact)
+                      Row(
+                        children: [
+                          Expanded(child: searchField),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            tooltip: 'Закрыть',
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
+                      )
+                    else
+                      searchField,
+                    SizedBox(height: compact ? 8 : 14),
+                    Expanded(
+                      child: FutureBuilder<List<_SelectedAppCandidate>>(
+                        future: widget.candidatesFuture,
+                        builder: (context, snapshot) {
+                          final fallbackCandidates =
+                              _suggestedSelectedAppCandidates(
+                            widget.hostPlatform,
+                          );
+                          if (snapshot.connectionState !=
+                                  ConnectionState.done &&
+                              fallbackCandidates.isEmpty) {
+                            return const _MotionSkeletonList(
+                              rows: 5,
+                            );
+                          }
+                          final rawCandidates = snapshot.connectionState ==
+                                      ConnectionState.done &&
+                                  snapshot.data != null
+                              ? snapshot.data!
+                              : fallbackCandidates;
+                          final displayLabels =
+                              _selectedAppDisplayLabels(rawCandidates);
+                          final candidates = rawCandidates
+                              .where(
+                                (candidate) =>
+                                    _query.isEmpty ||
+                                    candidate.searchText.contains(_query),
+                              )
+                              .toList(growable: false);
+                          if (candidates.isEmpty) {
+                            return Center(
+                              child: Text(
+                                'Ничего не найдено. Добавьте приложение вручную ниже.',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: p.muted,
+                                    ),
+                              ),
+                            );
+                          }
+                          return ListView.separated(
+                            keyboardDismissBehavior:
+                                ScrollViewKeyboardDismissBehavior.onDrag,
+                            itemCount: candidates.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final candidate = candidates[index];
+                              final selected = widget.selectedAppIds
+                                  .contains(candidate.identifier);
+                              return AnimatedOpacity(
+                                duration: motion.duration(_MotionTokens.short),
+                                opacity: selected ? 0.62 : 1,
+                                child: _SelectedAppCandidateRow(
+                                  key: ValueKey(
+                                    'rules-selected-app-option-${candidate.identifier}',
                                   ),
-                        ),
-                      );
-                    }
-                    return ListView.separated(
-                      keyboardDismissBehavior:
-                          ScrollViewKeyboardDismissBehavior.onDrag,
-                      itemCount: candidates.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final candidate = candidates[index];
-                        final selected = widget.selectedAppIds
-                            .contains(candidate.identifier);
-                        return AnimatedOpacity(
-                          duration: motion.duration(_MotionTokens.short),
-                          opacity: selected ? 0.62 : 1,
-                          child: _SelectedAppCandidateRow(
-                            key: ValueKey(
-                              'rules-selected-app-option-${candidate.identifier}',
-                            ),
-                            candidate: candidate,
-                            selected: selected,
-                            onTap: selected
-                                ? null
-                                : () => Navigator.of(context).pop(candidate),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                                  candidate: candidate,
+                                  displayLabel:
+                                      displayLabels[candidate.identifier] ??
+                                          candidate.label,
+                                  compact: compact,
+                                  selected: selected,
+                                  onTap: selected
+                                      ? null
+                                      : () =>
+                                          Navigator.of(context).pop(candidate),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
@@ -949,11 +1016,15 @@ class _SelectedAppCandidateRow extends StatelessWidget {
   const _SelectedAppCandidateRow({
     super.key,
     required this.candidate,
+    required this.displayLabel,
+    required this.compact,
     required this.selected,
     required this.onTap,
   });
 
   final _SelectedAppCandidate candidate;
+  final String displayLabel;
+  final bool compact;
   final bool selected;
   final VoidCallback? onTap;
 
@@ -961,7 +1032,9 @@ class _SelectedAppCandidateRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
     final content = Container(
-      padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+      padding: compact
+          ? const EdgeInsets.symmetric(horizontal: 10, vertical: 4)
+          : const EdgeInsets.fromLTRB(12, 11, 12, 11),
       decoration: BoxDecoration(
         color: selected ? p.accent.withValues(alpha: 0.08) : p.surface,
         borderRadius: BorderRadius.circular(18),
@@ -972,8 +1045,8 @@ class _SelectedAppCandidateRow extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: compact ? 36 : 42,
+            height: compact ? 36 : 42,
             decoration: BoxDecoration(
               color: p.accent.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(15),
@@ -990,7 +1063,7 @@ class _SelectedAppCandidateRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  candidate.label,
+                  displayLabel,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -998,45 +1071,49 @@ class _SelectedAppCandidateRow extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                 ),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    Container(
-                      key: ValueKey(
-                        'rules-selected-app-source-${candidate.identifier}',
+                if (!compact) ...[
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Container(
+                        key: ValueKey(
+                          'rules-selected-app-source-${candidate.identifier}',
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: p.accent.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          candidate.sourceLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: p.accent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 3,
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text(
+                          _visibleSelectedAppSubtitle(candidate),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: p.muted,
+                                    height: 1.2,
+                                  ),
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: p.accent.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        candidate.sourceLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: p.accent,
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                    ),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: Text(
-                        _visibleSelectedAppSubtitle(candidate),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: p.muted,
-                              height: 1.2,
-                            ),
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -1050,10 +1127,19 @@ class _SelectedAppCandidateRow extends StatelessWidget {
         ],
       ),
     );
-    if (onTap == null) {
-      return content;
-    }
-    return PokrovSettingsRowPressSurface(onTap: onTap!, child: content);
+    final row = onTap == null
+        ? content
+        : PokrovSettingsRowPressSurface(onTap: onTap!, child: content);
+    return Semantics(
+      container: true,
+      button: true,
+      enabled: onTap != null,
+      selected: selected,
+      label: displayLabel,
+      value: selected ? 'Уже выбрано' : 'Не выбрано',
+      hint: selected ? null : 'Добавить приложение',
+      child: ExcludeSemantics(child: row),
+    );
   }
 }
 
@@ -1143,6 +1229,7 @@ Future<List<_SelectedAppCandidate>> _loadAndroidInstalledAppCandidates() async {
         .timeout(const Duration(seconds: 2));
     return _candidatesFromHostMaps(
       response,
+      hostPlatform: HostPlatform.android,
       source: _SelectedAppCandidateSource.installed,
       icon: Icons.android_rounded,
     );
@@ -1193,7 +1280,11 @@ Future<List<_SelectedAppCandidate>> _loadWindowsProcessCandidates() async {
           );
         })
         .where((candidate) =>
-            _normalizeSelectedAppIdentifier(candidate.identifier) != null)
+            normalizePokrovSelectedAppIdentifier(
+              candidate.identifier,
+              hostPlatform: HostPlatform.windows,
+            ) !=
+            null)
         .take(120)
         .toList(growable: false);
   } on Object {
@@ -1239,6 +1330,7 @@ Get-ChildItem -LiteralPath $roots -Filter *.exe -File -Recurse -Depth 3 -ErrorAc
         final Map<String, Object?> single => <Object?>[single],
         _ => const <Object?>[],
       },
+      hostPlatform: HostPlatform.windows,
       source: _SelectedAppCandidateSource.installedExecutable,
       icon: Icons.folder_open_rounded,
     ).take(160).toList(growable: false);
@@ -1249,6 +1341,7 @@ Get-ChildItem -LiteralPath $roots -Filter *.exe -File -Recurse -Depth 3 -ErrorAc
 
 List<_SelectedAppCandidate> _candidatesFromHostMaps(
   List<Object?>? response, {
+  required HostPlatform hostPlatform,
   required _SelectedAppCandidateSource source,
   required IconData icon,
 }) {
@@ -1260,8 +1353,9 @@ List<_SelectedAppCandidate> _candidatesFromHostMaps(
     if (item is! Map) {
       continue;
     }
-    final identifier = _normalizeSelectedAppIdentifier(
+    final identifier = normalizePokrovSelectedAppIdentifier(
       item['identifier']?.toString() ?? '',
+      hostPlatform: hostPlatform,
     );
     if (identifier == null) {
       continue;
@@ -1379,14 +1473,31 @@ List<_SelectedAppCandidate> _mergeSelectedAppCandidates(
   return merged;
 }
 
-String? _normalizeSelectedAppIdentifier(String value) {
-  final normalized = value.trim();
-  if (normalized.isEmpty || normalized.length > 96) {
-    return null;
+Map<String, String> _selectedAppDisplayLabels(
+  List<_SelectedAppCandidate> candidates,
+) {
+  final groups = <String, List<_SelectedAppCandidate>>{};
+  for (final candidate in candidates) {
+    groups
+        .putIfAbsent(candidate.label.trim().toLowerCase(), () => [])
+        .add(candidate);
   }
-  final safe = RegExp(r'^[a-zA-Z0-9._:-]+$');
-  if (!safe.hasMatch(normalized)) {
-    return null;
+
+  final labels = <String, String>{};
+  for (final group in groups.values) {
+    if (group.length == 1) {
+      labels[group.single.identifier] = group.single.label;
+      continue;
+    }
+    final ordered = [...group]..sort(
+        (left, right) => left.identifier
+            .toLowerCase()
+            .compareTo(right.identifier.toLowerCase()),
+      );
+    for (var index = 0; index < ordered.length; index += 1) {
+      final candidate = ordered[index];
+      labels[candidate.identifier] = '${candidate.label} · ${index + 1}';
+    }
   }
-  return normalized;
+  return labels;
 }

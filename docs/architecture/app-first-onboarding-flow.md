@@ -161,6 +161,18 @@ Managed-profile fields:
 - `support_context`
 - `smart_connect`
 - `warp_policy`
+- `access` and `free_caps` for the current free-tier lifecycle
+
+Free-tier lifecycle rendering:
+
+- `free_caps.transition_state` and the matching `access.free_profile_*` facts
+  are parsed together; a mismatch or unknown value is shown conservatively as
+  an access status that needs refresh
+- `soft_transition_pending` and `reset_pending` tell the user that the basic
+  access update is still in progress; `error` offers the fixed refresh/support
+  recovery message without exposing an internal error code
+- only confirmed `free_soft_mode` / `soft_active` renders as basic access
+  after the limit; it must never be described as premium access
 
 Internal staged `support_context` controls:
 

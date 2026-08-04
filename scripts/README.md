@@ -6,7 +6,7 @@ This folder contains non-destructive client helpers.
 - `bootstrap-workspace.ps1` restores only missing ignored Flutter/Gradle workstation files and resolves package dependencies.
 - `run-tests.ps1` runs the shared runtime, Android, Windows, and Android JVM checks.
 - `bootstrap-local.ps1` copies example local configuration without touching production paths unless explicitly forced.
-- `sync-pokrov-core-runtime.ps1` copies only the exact POKROV Core 1.0.1 Android and Windows release identities from the separate core checkout after verifying commit, version, sizes, and SHA-256 values.
+- `sync-pokrov-core-runtime.ps1` copies only the exact POKROV Core 1.0.2 Android and Windows release identities from the separate core checkout after verifying commit, version, sizes, and SHA-256 values.
 - `build-windows-release.ps1` can sync that pinned Windows runtime, validate the client, build the unsigned Flutter bundle, and stage the local installer/ZIP manifest.
 
 POKROV Core is built and released from the separate `POKROV-core` repository.

@@ -12,6 +12,8 @@ import android.os.Looper
 import android.util.Log
 import space.pokrov.core.libbox.InterfaceUpdateListener
 import java.net.NetworkInterface
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 internal object AndroidDefaultNetworkMonitor {
     private val request = NetworkRequest.Builder().apply {
@@ -32,6 +34,8 @@ internal object AndroidDefaultNetworkMonitor {
     private var appContext: Context? = null
     private var registered = false
     private val networkLock = Object()
+    private var currentNetworkGeneration = 0L
+    private var interfaceResolutionExecutor: ExecutorService? = null
 
     private val callback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
@@ -46,9 +50,8 @@ internal object AndroidDefaultNetworkMonitor {
         }
 
         override fun onLost(network: Network) {
-            if (currentNetwork == network) {
-                Log.w(LOG_TAG, "Lost default uplink network=${networkToken(network)}")
-                currentNetwork = null
+            if (clearCurrentNetworkIfMatches(network)) {
+                Log.w(LOG_TAG, "Lost default uplink network.")
                 publishInterfaceState(
                     interfaceName = null,
                     interfaceIndex = null,
@@ -82,8 +85,7 @@ internal object AndroidDefaultNetworkMonitor {
         ensureStarted(context)
         val network = currentNetwork ?: activeNetwork()
         if (network != null) {
-            currentNetwork = network
-            notifyCurrentInterface(network)
+            updateCurrentNetwork(network)
         } else {
             publishInterfaceState(
                 interfaceName = null,
@@ -141,7 +143,7 @@ internal object AndroidDefaultNetworkMonitor {
             waitForSignal = ::waitForNetworkUpdate,
         )
         if (network != null) {
-            Log.i(LOG_TAG, "Using default uplink network=${networkToken(network)} for DNS resolution.")
+            Log.i(LOG_TAG, "Using the default uplink for DNS resolution.")
             return network
         }
         publishInterfaceState(
@@ -156,54 +158,34 @@ internal object AndroidDefaultNetworkMonitor {
         throw IllegalStateException("Android default network is unavailable for DNS resolution.")
     }
 
-    private fun notifyCurrentInterface(network: Network) {
+    private fun notifyCurrentInterface(network: Network, generation: Long) {
         val context = appContext ?: return
         val connectivityManager = connectivity(context)
         val interfaceName = connectivityManager.getLinkProperties(network)?.interfaceName
         if (interfaceName.isNullOrBlank()) {
             Log.w(
                 LOG_TAG,
-                "Resolved default uplink network=${networkToken(network)}, but interfaceName is unavailable.",
+                "Resolved default uplink, but its interface name is unavailable.",
             )
-            publishInterfaceState(
+            publishInterfaceStateIfCurrent(
+                network = network,
+                generation = generation,
                 interfaceName = null,
                 interfaceIndex = null,
                 dnsReady = false,
             )
-            AndroidRuntimeState.markDegraded(
-                failureKind = "default_network_interface_unresolved",
-                message = "Android tun is established, but the default uplink interface is unresolved.",
-            )
             return
         }
-        val interfaceIndex = AndroidPlatformRuntimeBridge.resolveInterfaceIndex(interfaceName) {
-            NetworkInterface.getByName(it)?.index
-        }
-        if (interfaceIndex == null) {
-            Log.w(
-                LOG_TAG,
-                "Resolved default uplink network=${networkToken(network)} interface=$interfaceName, but index lookup did not settle.",
-            )
-            publishInterfaceState(
-                interfaceName = interfaceName,
-                interfaceIndex = null,
-                dnsReady = false,
-            )
-            AndroidRuntimeState.markDegraded(
-                failureKind = "default_network_index_unresolved",
-                message = "Android tun is established, but the default uplink interface index is unresolved.",
-            )
-            return
-        }
-        Log.i(
-            LOG_TAG,
-            "Selected default uplink network=${networkToken(network)} interface=$interfaceName index=$interfaceIndex",
-        )
-        publishInterfaceState(
+        publishInterfaceStateIfCurrent(
+            network = network,
+            generation = generation,
             interfaceName = interfaceName,
-            interfaceIndex = interfaceIndex,
-            dnsReady = true,
+            interfaceIndex = null,
+            dnsReady = false,
         )
+        submitInterfaceResolution {
+            resolveAndPublishInterface(network, generation, interfaceName)
+        }
     }
 
     private fun updateCurrentNetwork(
@@ -217,11 +199,10 @@ internal object AndroidDefaultNetworkMonitor {
             if (resolvedCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true) {
                 Log.i(
                     LOG_TAG,
-                    "Пропускаем сеть POKROV network=${networkToken(network)} при выборе обычной сети устройства.",
+                    "Пропускаем VPN-сеть при выборе обычной сети устройства.",
                 )
             }
-            if (currentNetwork == network) {
-                currentNetwork = null
+            if (clearCurrentNetworkIfMatches(network)) {
                 publishInterfaceState(
                     interfaceName = null,
                     interfaceIndex = null,
@@ -235,8 +216,8 @@ internal object AndroidDefaultNetworkMonitor {
             }
             return
         }
-        currentNetwork = network
-        notifyCurrentInterface(network)
+        val generation = selectCurrentNetwork(network)
+        notifyCurrentInterface(network, generation)
         signalNetworkUpdate()
     }
 
@@ -280,17 +261,110 @@ internal object AndroidDefaultNetworkMonitor {
     }
 
     private fun unregister() {
-        val context = appContext ?: return
-        runCatching {
-            connectivity(context).unregisterNetworkCallback(callback)
+        appContext?.let { context ->
+            runCatching {
+                connectivity(context).unregisterNetworkCallback(callback)
+            }
         }
-        currentNetwork = null
+        invalidateCurrentNetwork()
         publishInterfaceState(
             interfaceName = null,
             interfaceIndex = null,
             dnsReady = false,
         )
+        shutdownInterfaceResolution()
         signalNetworkUpdate()
+    }
+
+    private fun selectCurrentNetwork(network: Network): Long = synchronized(networkLock) {
+        currentNetwork = network
+        ++currentNetworkGeneration
+    }
+
+    private fun clearCurrentNetworkIfMatches(network: Network): Boolean = synchronized(networkLock) {
+        if (currentNetwork != network) {
+            false
+        } else {
+            currentNetwork = null
+            ++currentNetworkGeneration
+            true
+        }
+    }
+
+    private fun invalidateCurrentNetwork() {
+        synchronized(networkLock) {
+            currentNetwork = null
+            ++currentNetworkGeneration
+        }
+    }
+
+    private fun publishInterfaceStateIfCurrent(
+        network: Network,
+        generation: Long,
+        interfaceName: String?,
+        interfaceIndex: Int?,
+        dnsReady: Boolean,
+    ) {
+        val activeGeneration: Long
+        val isCurrentNetwork: Boolean
+        synchronized(networkLock) {
+            activeGeneration = currentNetworkGeneration
+            isCurrentNetwork = currentNetwork == network
+        }
+        if (
+            AndroidPlatformRuntimeBridge.canPublishNetworkResolution(
+                requestGeneration = generation,
+                activeGeneration = activeGeneration,
+                isCurrentNetwork = isCurrentNetwork,
+            )
+        ) {
+            publishInterfaceState(interfaceName, interfaceIndex, dnsReady)
+        }
+    }
+
+    private fun resolveAndPublishInterface(
+        network: Network,
+        generation: Long,
+        interfaceName: String,
+    ) {
+        val interfaceIndex = AndroidPlatformRuntimeBridge.resolveInterfaceIndex(interfaceName) {
+            NetworkInterface.getByName(it)?.index
+        }
+        if (interfaceIndex == null) {
+            Log.w(LOG_TAG, "Resolved default uplink, but interface index lookup did not settle.")
+            publishInterfaceStateIfCurrent(
+                network = network,
+                generation = generation,
+                interfaceName = interfaceName,
+                interfaceIndex = null,
+                dnsReady = false,
+            )
+            return
+        }
+        Log.i(LOG_TAG, "Selected default uplink interface.")
+        publishInterfaceStateIfCurrent(
+            network = network,
+            generation = generation,
+            interfaceName = interfaceName,
+            interfaceIndex = interfaceIndex,
+            dnsReady = true,
+        )
+    }
+
+    private fun submitInterfaceResolution(task: () -> Unit) {
+        val executor = synchronized(networkLock) {
+            interfaceResolutionExecutor ?: Executors.newSingleThreadExecutor().also {
+                interfaceResolutionExecutor = it
+            }
+        }
+        runCatching { executor.execute(task) }
+    }
+
+    private fun shutdownInterfaceResolution() {
+        val executor = synchronized(networkLock) {
+            interfaceResolutionExecutor.also { interfaceResolutionExecutor = null }
+        }
+        executor?.shutdownNow()
     }
 
     private fun publishInterfaceState(
@@ -332,10 +406,6 @@ internal object AndroidDefaultNetworkMonitor {
         synchronized(networkLock) {
             networkLock.notifyAll()
         }
-    }
-
-    private fun networkToken(network: Network): String {
-        return network.toString()
     }
 
     private const val LOG_TAG = "PokrovDefaultNet"

@@ -15,7 +15,7 @@
   "default_runtime_core": "sing-box",
   "advanced_fallback_core": "xray",
   "trial_days": 5,
-  "telegram_bonus_days": 10,
+  "telegram_bonus_days": 5,
   "client_version_line": "1.0.0-beta",
   "free_tier": {
     "node_pool": "NL-free",

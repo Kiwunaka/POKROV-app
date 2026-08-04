@@ -639,7 +639,7 @@ void main() {
                       'POKROV покажет важную новость только когда она есть.',
                 ),
                 const PokrovPromoCard(
-                  title: '+10 дней за Telegram',
+                  title: '+5 дней за Telegram',
                   detail: 'Подпишитесь на канал и заберите бонус.',
                   actionLabel: 'Получить',
                 ),

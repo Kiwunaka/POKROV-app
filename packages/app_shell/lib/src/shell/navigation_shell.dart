@@ -669,7 +669,7 @@ class PokrovLegacyDesktopSidebar extends StatelessWidget {
               const _BrandLockup(markSize: 34),
               const SizedBox(height: 4),
               Text(
-                _pokrovAppVersion,
+                pokrovClientVersion,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       color: p.muted,
                     ),

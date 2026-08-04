@@ -19,15 +19,15 @@ class _SectionCard extends StatelessWidget {
     final p = PokrovPalette.of(context);
     final colors = switch (tone) {
       _SectionTone.accent => (
-        background: p.accent.withValues(alpha: 0.06),
-        border: p.accent.withValues(alpha: 0.16),
-      ),
+          background: p.accent.withValues(alpha: 0.06),
+          border: p.accent.withValues(alpha: 0.16),
+        ),
       _SectionTone.muted => (background: p.surfaceMuted, border: p.line),
       _SectionTone.neutral => (background: p.surface, border: p.line),
       _SectionTone.reward => (
-        background: p.reward.withValues(alpha: 0.12),
-        border: p.reward.withValues(alpha: 0.22),
-      ),
+          background: p.reward.withValues(alpha: 0.12),
+          border: p.reward.withValues(alpha: 0.22),
+        ),
     };
 
     return Container(
@@ -47,9 +47,9 @@ class _SectionCard extends StatelessWidget {
               // titleMedium/w600 keeps card titles a clear tier below the
               // headlineSmall page headers instead of 1px apart.
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: p.ink,
-                fontWeight: FontWeight.w600,
-              ),
+                    color: p.ink,
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
             if (lines.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -59,9 +59,9 @@ class _SectionCard extends StatelessWidget {
                   child: Text(
                     line,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: p.muted,
-                      height: 1.32,
-                    ),
+                          color: p.muted,
+                          height: 1.32,
+                        ),
                   ),
                 ),
               ),
@@ -144,7 +144,7 @@ class _ConnectOrbButton extends StatefulWidget {
   final bool degraded;
   final bool error;
   final bool busy;
-  final VoidCallback? onPressed;
+  final Future<void> Function()? onPressed;
   final bool desktopSize;
 
   @override
@@ -155,6 +155,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     with TickerProviderStateMixin {
   late final AnimationController _breathController;
   late final AnimationController _sweepController;
+  late final FocusNode _focusNode;
 
   /// Arc Handoff: 0 = busy sweep geometry, 1 = connected arc geometry.
   /// Runs forward on landing, in reverse on release; finite either way.
@@ -162,11 +163,16 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
   double _settleFromAngle = PokrovConnectDiscMotion.connectedArcStartAngle;
   bool _pressed = false;
   bool _discHovered = false;
+  bool _discFocused = false;
   bool _optimisticBusy = false;
 
   @override
   void initState() {
     super.initState();
+    _focusNode = FocusNode(
+      debugLabel: 'primary connect action',
+      onKeyEvent: _handleKeyEvent,
+    );
     _breathController = AnimationController(
       vsync: this,
       duration: PokrovConnectDiscMotion.breathDuration,
@@ -228,12 +234,8 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     if (newPhase == oldPhase) {
       return;
     }
-    final disableAnimations =
-        MediaQuery.maybeOf(context)?.disableAnimations ??
-        WidgetsBinding
-            .instance
-            .platformDispatcher
-            .accessibilityFeatures
+    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ??
+        WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
             .disableAnimations;
     if (newPhase == PokrovConnectDiscPhase.connected) {
       _settleFromAngle = PokrovConnectDiscMotion.sweepStartAngle(
@@ -274,26 +276,53 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     _breathController.dispose();
     _sweepController.dispose();
     _settleController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
   PokrovConnectDiscState get _discState => PokrovConnectDiscState.resolve(
-    enabled: widget.enabled,
-    running: widget.running,
-    degraded: widget.degraded,
-    error: widget.error,
-    busy: _effectiveBusy,
-  );
+        enabled: widget.enabled,
+        running: widget.running,
+        degraded: widget.degraded,
+        error: widget.error,
+        busy: _effectiveBusy,
+      );
 
   bool get _effectiveBusy => widget.busy || _optimisticBusy;
 
+  Future<void> _activate() async {
+    if (widget.onPressed == null || _optimisticBusy) {
+      return;
+    }
+    Feedback.forTap(context);
+    PokrovHaptics.tap();
+    setState(() {
+      _optimisticBusy = true;
+    });
+    try {
+      await widget.onPressed?.call();
+    } finally {
+      if (mounted && _optimisticBusy) {
+        setState(() {
+          _optimisticBusy = false;
+        });
+      }
+    }
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent ||
+        (event.logicalKey != LogicalKeyboardKey.enter &&
+            event.logicalKey != LogicalKeyboardKey.space)) {
+      return KeyEventResult.ignored;
+    }
+    unawaited(_activate());
+    return KeyEventResult.handled;
+  }
+
   void _syncControllers() {
-    final disableAnimations =
-        MediaQuery.maybeOf(context)?.disableAnimations ??
-        WidgetsBinding
-            .instance
-            .platformDispatcher
-            .accessibilityFeatures
+    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ??
+        WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
             .disableAnimations;
     final state = _discState;
     final canAnimate = state.enabled && !disableAnimations;
@@ -355,14 +384,10 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     final accent = (widget.degraded || widget.error)
         ? p.warning
         : widget.running
-        ? p.connectedGreen
-        : p.accent;
-    final disableAnimations =
-        MediaQuery.maybeOf(context)?.disableAnimations ??
-        WidgetsBinding
-            .instance
-            .platformDispatcher
-            .accessibilityFeatures
+            ? p.connectedGreen
+            : p.accent;
+    final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ??
+        WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
             .disableAnimations;
     final diameter = widget.desktopSize
         ? 208.0
@@ -375,248 +400,264 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     final markOpacity = !widget.enabled
         ? 0.34
         : (widget.degraded || widget.error)
-        ? 0.62
-        : _effectiveBusy
-        ? 0.72
-        : 1.0;
+            ? 0.62
+            : _effectiveBusy
+                ? 0.72
+                : 1.0;
 
     return Semantics(
       key: const ValueKey('primary-connect-action'),
       button: true,
       enabled: widget.enabled,
       label: widget.actionLabel,
-      child: MouseRegion(
-        cursor: widget.onPressed == null
-            ? SystemMouseCursors.basic
-            : SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _discHovered = true),
-        onExit: (_) => setState(() => _discHovered = false),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onPressed == null
-              ? null
-              : () {
-                  Feedback.forTap(context);
-                  PokrovHaptics.tap();
-                  setState(() {
-                    _optimisticBusy = true;
-                  });
-                  widget.onPressed?.call();
+      child: FocusableActionDetector(
+        key: const ValueKey('primary-connect-focusable'),
+        enabled: widget.enabled && widget.onPressed != null,
+        focusNode: _focusNode,
+        shortcuts: const <ShortcutActivator, Intent>{
+          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+          SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+        },
+        actions: <Type, Action<Intent>>{
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              unawaited(_activate());
+              return null;
+            },
+          ),
+        },
+        onShowFocusHighlight: (focused) {
+          if (_discFocused != focused) {
+            setState(() => _discFocused = focused);
+          }
+        },
+        child: MouseRegion(
+          cursor: widget.onPressed == null
+              ? SystemMouseCursors.basic
+              : SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _discHovered = true),
+          onExit: (_) => setState(() => _discHovered = false),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.onPressed == null ? null : _activate,
+            onTapDown: widget.onPressed == null
+                ? null
+                : (_) => setState(() => _pressed = true),
+            onTapCancel: () => setState(() => _pressed = false),
+            onTapUp: widget.onPressed == null
+                ? null
+                : (_) => setState(() => _pressed = false),
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                key: const ValueKey('connect-disc-motion'),
+                animation: Listenable.merge([
+                  _breathController,
+                  _sweepController,
+                ]),
+                builder: (context, child) {
+                  final breath = disableAnimations
+                      ? 0.0
+                      : Curves.easeInOut.transform(_breathController.value);
+                  return Transform.scale(
+                    scale: PokrovConnectDiscMotion.scale(
+                      pressed: false,
+                      runsSweep: state.runsSweep,
+                      breathValue: breath,
+                      disableAnimations: disableAnimations,
+                    ),
+                    child: child,
+                  );
                 },
-          onTapDown: widget.onPressed == null
-              ? null
-              : (_) => setState(() => _pressed = true),
-          onTapCancel: () => setState(() => _pressed = false),
-          onTapUp: widget.onPressed == null
-              ? null
-              : (_) => setState(() => _pressed = false),
-          child: RepaintBoundary(
-            child: AnimatedBuilder(
-              key: const ValueKey('connect-disc-motion'),
-              animation: Listenable.merge([
-                _breathController,
-                _sweepController,
-              ]),
-              builder: (context, child) {
-                final breath = disableAnimations
-                    ? 0.0
-                    : Curves.easeInOut.transform(_breathController.value);
-                return Transform.scale(
-                  scale: PokrovConnectDiscMotion.scale(
-                    pressed: false,
-                    runsSweep: state.runsSweep,
-                    breathValue: breath,
-                    disableAnimations: disableAnimations,
+                // Physical press: compress eases in fast, release springs back.
+                // Kept outside the breath/sweep transform so the press reads
+                // instantly even mid-loop (HIG: the primary control feels real).
+                child: TweenAnimationBuilder<double>(
+                  // Soft Release: leaving the busy compression springs back to
+                  // rest instead of stepping — one finite pass per sweep exit.
+                  key: ValueKey('connect-disc-scale-settle-${state.runsSweep}'),
+                  tween: Tween(
+                    begin: state.runsSweep || disableAnimations
+                        ? 1.0
+                        : PokrovConnectDiscMotion.busyScale,
+                    end: 1.0,
                   ),
-                  child: child,
-                );
-              },
-              // Physical press: compress eases in fast, release springs back.
-              // Kept outside the breath/sweep transform so the press reads
-              // instantly even mid-loop (HIG: the primary control feels real).
-              child: TweenAnimationBuilder<double>(
-                // Soft Release: leaving the busy compression springs back to
-                // rest instead of stepping — one finite pass per sweep exit.
-                key: ValueKey('connect-disc-scale-settle-${state.runsSweep}'),
-                tween: Tween(
-                  begin: state.runsSweep || disableAnimations
-                      ? 1.0
-                      : PokrovConnectDiscMotion.busyScale,
-                  end: 1.0,
-                ),
-                duration: motion.duration(_MotionTokens.standard),
-                curve: PokrovMotionTokens.spring,
-                builder: (context, settleScale, child) =>
-                    Transform.scale(scale: settleScale, child: child),
-                child: AnimatedScale(
-                  scale: _pressed && !disableAnimations
-                      ? PokrovConnectDiscMotion.pressScale
-                      : 1.0,
-                  duration: motion.duration(PokrovMotionTokens.quick),
-                  curve: _pressed ? Curves.easeIn : PokrovMotionTokens.spring,
-                  // Border eases between rest and connected weights so the
-                  // release reads as a deliberate exhale, not a flag flip.
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: widget.running ? 1.0 : 0.0),
-                    duration: motion.duration(_MotionTokens.standard),
-                    curve: _MotionTokens.ease,
-                    builder: (context, runningT, child) {
-                      final borderAccent = (widget.degraded || widget.error)
-                          ? p.warning
-                          : Color.lerp(p.accent, p.connectedGreen, runningT)!;
-                      return Container(
-                        width: diameter,
-                        height: diameter,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: p.surface,
-                          border: Border.all(
-                            color: borderAccent.withValues(
-                              alpha: 0.34 + (0.54 - 0.34) * runningT,
-                            ),
-                            width: 2.1 + (2.6 - 2.1) * runningT,
-                          ),
-                          // Soft accent-tinted lift: the hero control floats
-                          // above the canvas instead of sitting flat on it.
-                          boxShadow: [
-                            BoxShadow(
-                              color: (widget.running ? accent : p.ink)
-                                  .withValues(
-                                    alpha:
-                                        Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? 0.35
-                                        : widget.running
-                                        ? 0.18
-                                        : 0.08,
-                                  ),
-                              blurRadius: 30,
-                              offset: const Offset(0, 12),
-                            ),
-                          ],
-                        ),
-                        child: child,
-                      );
-                    },
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        AnimatedBuilder(
-                          animation: Listenable.merge([
-                            _breathController,
-                            _sweepController,
-                            _settleController,
-                          ]),
-                          builder: (context, _) {
-                            // Pointer grammar: hover lifts the rim and shows a
-                            // hairline focus ring — material, not geometry.
-                            return TweenAnimationBuilder<double>(
-                              tween: Tween(
-                                begin: 0,
-                                end: _discHovered && widget.enabled ? 1.0 : 0.0,
-                              ),
-                              duration: motion.duration(
-                                PokrovMotionTokens.quick,
-                              ),
-                              curve: _MotionTokens.ease,
-                              builder: (context, hoverT, _) => CustomPaint(
-                                size: Size.square(diameter),
-                                painter: _ConnectDiscRimPainter(
-                                  accent: accent,
-                                  brandAccent: p.accent,
-                                  connectedAccent: p.connectedGreen,
-                                  warning: p.warning,
-                                  enabled: widget.enabled,
-                                  running: widget.running,
-                                  degraded: widget.degraded || widget.error,
-                                  busy: state.runsSweep,
-                                  disableAnimations: disableAnimations,
-                                  breathValue: _breathController.value,
-                                  sweepValue: _sweepController.value,
-                                  settleT: PokrovMotionTokens.emphasized
-                                      .transform(_settleController.value),
-                                  settleFromAngle: _settleFromAngle,
-                                  hoverT: hoverT,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        _ConnectSettleLayer(
-                          diameter: diameter,
-                          accent: accent,
-                          enabled: widget.enabled,
-                          running: widget.running,
-                          degraded: widget.degraded,
-                          error: widget.error,
-                          busy: _effectiveBusy,
-                          disableAnimations: disableAnimations,
-                        ),
-                        // Connected morph: the inner plate takes a faint green
-                        // wash so the state is glanceable, not forensic. The disc
-                        // is the one sanctioned connectedGreen surface.
-                        AnimatedContainer(
-                          duration: motion.duration(_MotionTokens.standard),
-                          curve: _MotionTokens.ease,
+                  duration: motion.duration(_MotionTokens.standard),
+                  curve: PokrovMotionTokens.spring,
+                  builder: (context, settleScale, child) =>
+                      Transform.scale(scale: settleScale, child: child),
+                  child: AnimatedScale(
+                    scale: _pressed && !disableAnimations
+                        ? PokrovConnectDiscMotion.pressScale
+                        : 1.0,
+                    duration: motion.duration(PokrovMotionTokens.quick),
+                    curve: _pressed ? Curves.easeIn : PokrovMotionTokens.spring,
+                    // Border eases between rest and connected weights so the
+                    // release reads as a deliberate exhale, not a flag flip.
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: widget.running ? 1.0 : 0.0),
+                      duration: motion.duration(_MotionTokens.standard),
+                      curve: _MotionTokens.ease,
+                      builder: (context, runningT, child) {
+                        final borderAccent = (widget.degraded || widget.error)
+                            ? p.warning
+                            : Color.lerp(p.accent, p.connectedGreen, runningT)!;
+                        return Container(
+                          width: diameter,
+                          height: diameter,
                           decoration: BoxDecoration(
-                            color: widget.running
-                                ? Color.alphaBlend(
-                                    accent.withValues(alpha: 0.10),
-                                    p.canvas,
-                                  )
-                                : p.canvas,
                             shape: BoxShape.circle,
+                            color: p.surface,
                             border: Border.all(
-                              color: p.line.withValues(alpha: 0.72),
+                              color: borderAccent.withValues(
+                                alpha: 0.34 + (0.54 - 0.34) * runningT,
+                              ),
+                              width: 2.1 + (2.6 - 2.1) * runningT,
                             ),
+                            // Soft accent-tinted lift: the hero control floats
+                            // above the canvas instead of sitting flat on it.
+                            boxShadow: [
+                              BoxShadow(
+                                color: (widget.running ? accent : p.ink)
+                                    .withValues(
+                                  alpha: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? 0.35
+                                      : widget.running
+                                          ? 0.18
+                                          : 0.08,
+                                ),
+                                blurRadius: 30,
+                                offset: const Offset(0, 12),
+                              ),
+                            ],
                           ),
-                          child: SizedBox.square(
-                            dimension: diameter * 0.70,
-                            child: Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _BrandMark(
-                                    size: diameter * 0.23,
-                                    opacity: markOpacity,
+                          child: child,
+                        );
+                      },
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          AnimatedBuilder(
+                            animation: Listenable.merge([
+                              _breathController,
+                              _sweepController,
+                              _settleController,
+                            ]),
+                            builder: (context, _) {
+                              // Pointer grammar: hover lifts the rim and shows a
+                              // hairline focus ring — material, not geometry.
+                              return TweenAnimationBuilder<double>(
+                                tween: Tween(
+                                  begin: 0,
+                                  end: (_discHovered || _discFocused) &&
+                                          widget.enabled
+                                      ? 1.0
+                                      : 0.0,
+                                ),
+                                duration: motion.duration(
+                                  PokrovMotionTokens.quick,
+                                ),
+                                curve: _MotionTokens.ease,
+                                builder: (context, hoverT, _) => CustomPaint(
+                                  size: Size.square(diameter),
+                                  painter: _ConnectDiscRimPainter(
+                                    accent: accent,
+                                    brandAccent: p.accent,
+                                    connectedAccent: p.connectedGreen,
+                                    warning: p.warning,
+                                    enabled: widget.enabled,
+                                    running: widget.running,
+                                    degraded: widget.degraded || widget.error,
+                                    busy: state.runsSweep,
+                                    disableAnimations: disableAnimations,
+                                    breathValue: _breathController.value,
+                                    sweepValue: _sweepController.value,
+                                    settleT: PokrovMotionTokens.emphasized
+                                        .transform(_settleController.value),
+                                    settleFromAngle: _settleFromAngle,
+                                    hoverT: hoverT,
                                   ),
-                                  SizedBox(height: diameter < 180 ? 7 : 9),
-                                  SizedBox(
-                                    width: diameter * 0.66,
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: AnimatedSwitcher(
-                                        key: const ValueKey(
-                                          'connect-disc-label',
-                                        ),
-                                        duration: motion.duration(
-                                          _MotionTokens.short,
-                                        ),
-                                        transitionBuilder: _fadeSlideTransition,
-                                        child: Text(
-                                          widget.actionLabel,
-                                          key: ValueKey(widget.actionLabel),
-                                          textAlign: TextAlign.center,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.visible,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium
-                                              ?.copyWith(
-                                                color: labelColor,
-                                                fontWeight: FontWeight.w700,
-                                                letterSpacing: 0,
-                                              ),
+                                ),
+                              );
+                            },
+                          ),
+                          _ConnectSettleLayer(
+                            diameter: diameter,
+                            accent: accent,
+                            enabled: widget.enabled,
+                            running: widget.running,
+                            degraded: widget.degraded,
+                            error: widget.error,
+                            busy: _effectiveBusy,
+                            disableAnimations: disableAnimations,
+                          ),
+                          // Connected morph: the inner plate takes a faint green
+                          // wash so the state is glanceable, not forensic. The disc
+                          // is the one sanctioned connectedGreen surface.
+                          AnimatedContainer(
+                            duration: motion.duration(_MotionTokens.standard),
+                            curve: _MotionTokens.ease,
+                            decoration: BoxDecoration(
+                              color: widget.running
+                                  ? Color.alphaBlend(
+                                      accent.withValues(alpha: 0.10),
+                                      p.canvas,
+                                    )
+                                  : p.canvas,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: p.line.withValues(alpha: 0.72),
+                              ),
+                            ),
+                            child: SizedBox.square(
+                              dimension: diameter * 0.70,
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _BrandMark(
+                                      size: diameter * 0.23,
+                                      opacity: markOpacity,
+                                    ),
+                                    SizedBox(height: diameter < 180 ? 7 : 9),
+                                    SizedBox(
+                                      width: diameter * 0.66,
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: AnimatedSwitcher(
+                                          key: const ValueKey(
+                                            'connect-disc-label',
+                                          ),
+                                          duration: motion.duration(
+                                            _MotionTokens.short,
+                                          ),
+                                          transitionBuilder:
+                                              _fadeSlideTransition,
+                                          child: Text(
+                                            widget.actionLabel,
+                                            key: ValueKey(widget.actionLabel),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.visible,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.copyWith(
+                                                  color: labelColor,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 0,
+                                                ),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -765,21 +806,19 @@ class _ConnectDiscRimPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2 - 5;
-    final breath = disableAnimations
-        ? 0.0
-        : Curves.easeInOut.transform(breathValue);
+    final breath =
+        disableAnimations ? 0.0 : Curves.easeInOut.transform(breathValue);
     // The landing morph tints brand emerald toward the connected green in
     // step with the geometry, so color and shape arrive together.
     final morphActive = !degraded && (running || (busy && settleT > 0));
     final morphT = morphActive ? settleT : 0.0;
     final landAccent = Color.lerp(brandAccent, connectedAccent, morphT)!;
     final rimAccent = morphActive ? landAccent : accent;
-    final baseOpacity =
-        (enabled
-                ? _lerp(0.18 + breath * 0.04, 0.40, running ? morphT : 0.0) +
-                      0.06 * hoverT
-                : 0.08)
-            .clamp(0.0, 1.0);
+    final baseOpacity = (enabled
+            ? _lerp(0.18 + breath * 0.04, 0.40, running ? morphT : 0.0) +
+                0.06 * hoverT
+            : 0.08)
+        .clamp(0.0, 1.0);
     final basePaint = Paint()
       ..isAntiAlias = true
       ..style = PaintingStyle.stroke
@@ -810,8 +849,7 @@ class _ConnectDiscRimPainter extends CustomPainter {
           ..color = landAccent.withValues(alpha: _lerp(0.74, 0.56, settleT));
         final sweep =
             PokrovConnectDiscMotion.connectedArcSweepRadians * settleT;
-        final start =
-            PokrovConnectDiscMotion.connectedArcStartAngle +
+        final start = PokrovConnectDiscMotion.connectedArcStartAngle +
             PokrovConnectDiscMotion.connectedArcSweepRadians * (1 - settleT);
         canvas.drawArc(rect, start, sweep, false, remnantPaint);
       } else {

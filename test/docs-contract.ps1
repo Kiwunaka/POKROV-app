@@ -258,7 +258,7 @@ function New-ExpectedRegistryManifest {
     'CANONICAL|REVIEWED_NO_CHANGE|Repository structure|docs/architecture/folder-structure.md',
     'CANONICAL|RECONCILED|Package boundaries|docs/architecture/package-boundaries.md',
     'CANONICAL|RECONCILED|Runtime bootstrap|docs/architecture/bootstrap-workflow.md',
-    'CANONICAL|RECONCILED|Active POKROV Core 1.0.1 runtime decision|docs/decisions/2026-07-25-pokrov-core-1.0.1-release.md',
+    'CANONICAL|RECONCILED|Active POKROV Core 1.0.2 runtime decision|docs/decisions/2026-08-04-pokrov-core-1.0.2-release.md',
     'CANONICAL|RECONCILED|In-app assistant|docs/architecture/in-app-ai-assistant-contract.md',
     'CANONICAL|RECONCILED|Current product/UI direction|docs/design/2026-06-13-pokrov-product-ui-direction.md',
     'EVIDENCE|RECONCILED|Completed motion/HIG implementation record|docs/design/2026-07-13-agent-uiux-backlog.md',

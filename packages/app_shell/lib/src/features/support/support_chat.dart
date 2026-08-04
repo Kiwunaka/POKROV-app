@@ -166,13 +166,11 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
   void _applyThread(SupportTicketThread thread) {
     _ticketId = thread.id;
     _threadClosed = thread.isClosed;
-    _threadStatus = thread.statusTitle.isEmpty
-        ? thread.status
-        : thread.statusTitle;
+    _threadStatus =
+        thread.statusTitle.isEmpty ? thread.status : thread.statusTitle;
     final nextMessages = _messagesFromThread(thread);
-    _messages = nextMessages.isEmpty
-        ? _supportGreetingMessages()
-        : nextMessages;
+    _messages =
+        nextMessages.isEmpty ? _supportGreetingMessages() : nextMessages;
     _hasOperatorReply = nextMessages.any(
       (message) => message.role == _SupportChatRole.operator,
     );
@@ -265,15 +263,6 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
     unawaited(_refreshActiveThread());
   }
 
-  void _applyAssistantSuggestion(PokrovAssistantSuggestion suggestion) {
-    setState(() {
-      _composer.text = suggestion.prompt;
-      _composer.selection = TextSelection.collapsed(
-        offset: _composer.text.length,
-      );
-    });
-  }
-
   void _applyIssueChip(String prompt) {
     setState(() {
       _composer.text = prompt;
@@ -288,9 +277,8 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
       return;
     }
     final attachDiagnostics = _attachDiagnosticsToNextMessage;
-    final diagnostics = attachDiagnostics
-        ? _supportDiagnostics()
-        : const <String, Object?>{};
+    final diagnostics =
+        attachDiagnostics ? _supportDiagnostics() : const <String, Object?>{};
     setState(() {
       _messages.add(
         _SupportChatMessage(role: _SupportChatRole.user, body: text),
@@ -411,7 +399,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
 
   Map<String, Object?> _supportDiagnostics() {
     return <String, Object?>{
-      'app_version': _pokrovAppVersion,
+      'app_version': pokrovClientVersion,
       'platform': widget.appContext.hostPlatform.name,
       'route_mode': widget.selectedRouteMode.name,
       'connection_status': widget.statusLabel,
@@ -509,70 +497,120 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
   void _showDiagnosticsPreview() {
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       showDragHandle: true,
       sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
       builder: (context) {
         final p = PokrovPalette.of(context);
         return SafeArea(
           top: false,
-          child: Padding(
-            key: const ValueKey('support-diagnostics-preview'),
-            padding: const EdgeInsets.fromLTRB(22, 4, 22, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Что отправим',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: p.ink,
-                    fontWeight: FontWeight.w600,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: constraints.maxHeight),
+                child: Padding(
+                  key: const ValueKey('support-diagnostics-preview'),
+                  padding: EdgeInsets.fromLTRB(
+                    22,
+                    4,
+                    22,
+                    24 + MediaQuery.viewInsetsOf(context).bottom,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Flexible(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Что отправим',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color: p.ink,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                              const SizedBox(height: 12),
+                              _KeyValueLine(
+                                label: 'Устройство',
+                                value: widget.appContext.hostPlatform.label,
+                              ),
+                              _KeyValueLine(
+                                label: 'Режим',
+                                value: _routeModeShortLabel(
+                                  widget.selectedRouteMode,
+                                ),
+                              ),
+                              _KeyValueLine(
+                                label: 'Статус VPN',
+                                value: widget.statusLabel,
+                              ),
+                              _KeyValueLine(
+                                label: 'Версия',
+                                value: pokrovClientVersion,
+                              ),
+                              _KeyValueLine(
+                                label: 'WARP',
+                                value: _safeWarpSummary(),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                'Прикрепим только краткую безопасную сводку: устройство, версию приложения, статус VPN, режим и WARP.',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: p.muted, height: 1.3),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        alignment: WrapAlignment.end,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          TextButton(
+                            key: const ValueKey('support-diagnostics-close'),
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(0, 48),
+                            ),
+                            onPressed: () => Navigator.of(context).maybePop(),
+                            child: const Text('Отмена'),
+                          ),
+                          FilledButton.icon(
+                            key: const ValueKey(
+                              'support-diagnostics-attach-next',
+                            ),
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size(0, 48),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _attachDiagnosticsToNextMessage = true;
+                              });
+                              Navigator.of(context).maybePop();
+                            },
+                            icon: const Icon(
+                              Icons.attach_file_rounded,
+                              size: 18,
+                            ),
+                            label: const Text('Прикрепить к сообщению'),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 12),
-                _KeyValueLine(
-                  label: 'Устройство',
-                  value: widget.appContext.hostPlatform.label,
-                ),
-                _KeyValueLine(
-                  label: 'Режим',
-                  value: widget.selectedRouteMode.label,
-                ),
-                _KeyValueLine(label: 'Статус VPN', value: widget.statusLabel),
-                _KeyValueLine(label: 'Версия', value: _pokrovAppVersion),
-                _KeyValueLine(label: 'WARP', value: _safeWarpSummary()),
-                const SizedBox(height: 10),
-                Text(
-                  'Прикрепим только краткую безопасную сводку: устройство, версию приложения, статус VPN, режим и WARP.',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: p.muted, height: 1.3),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      key: const ValueKey('support-diagnostics-close'),
-                      onPressed: () => Navigator.of(context).maybePop(),
-                      child: const Text('Отмена'),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton.icon(
-                      key: const ValueKey('support-diagnostics-attach-next'),
-                      onPressed: () {
-                        setState(() {
-                          _attachDiagnosticsToNextMessage = true;
-                        });
-                        Navigator.of(context).maybePop();
-                      },
-                      icon: const Icon(Icons.attach_file_rounded, size: 18),
-                      label: const Text('Прикрепить к сообщению'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              );
+            },
           ),
         );
       },
@@ -594,11 +632,11 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
         actions: <Type, Action<Intent>>{
           _FocusSupportComposerIntent:
               CallbackAction<_FocusSupportComposerIntent>(
-                onInvoke: (_) {
-                  _composerFocusNode.requestFocus();
-                  return null;
-                },
-              ),
+            onInvoke: (_) {
+              _composerFocusNode.requestFocus();
+              return null;
+            },
+          ),
           _SendSupportMessageIntent: CallbackAction<_SendSupportMessageIntent>(
             onInvoke: (_) {
               if (!_sending && !_loadingThread) {
@@ -636,100 +674,101 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                   constraints: const BoxConstraints(maxWidth: 760),
                   child: Column(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
-                        child: _SupportChatHeader(
-                          status: _loadingThread
-                              ? 'Загружаем'
-                              : _sending
-                              ? 'Отправляем'
-                              : _refreshingThread
-                              ? 'Обновляем чат'
-                              : _threadStatus,
-                          details:
-                              'Выберите тему или напишите, что не получается.',
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-                        child: _SupportLifecycleHint(
-                          state: _supportLifecycleState,
-                          onRetry: _retrySupportLifecycle,
-                        ),
-                      ),
-                      if (!_loadingThread && widget.askAssistant != null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-                          child: _SupportAssistantEntry(
-                            onTap: () => unawaited(_openAssistantSheet()),
-                          ),
-                        ),
-                      if (!_loadingThread)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-                          child: _SupportIssueChips(
-                            onSelected: _applyIssueChip,
-                          ),
-                        ),
-                      if (!_loadingThread)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: OutlinedButton.icon(
-                              key: const ValueKey('support-diagnostics-action'),
-                              onPressed: _showDiagnosticsPreview,
-                              icon: const Icon(
-                                Icons.health_and_safety_outlined,
-                              ),
-                              label: const Text('Диагностика'),
-                            ),
-                          ),
-                        ),
-                      if (_threadError != null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-                          child: _SupportChatNotice(
-                            body: _threadError!,
-                            onRetry: () => unawaited(_loadInitialThread()),
-                          ),
-                        ),
                       Expanded(
-                        child: _loadingThread
-                            ? const _SupportChatSkeleton()
-                            : ListView.builder(
-                                key: const ValueKey(
-                                  'support-chat-message-list',
-                                ),
-                                controller: _messageListController,
-                                padding: const EdgeInsets.fromLTRB(
-                                  18,
-                                  0,
-                                  18,
-                                  12,
-                                ),
-                                itemCount: _messages.length,
-                                itemBuilder: (context, index) {
-                                  return _SupportChatBubble(
-                                    message: _messages[index],
-                                  );
-                                },
+                        child: ListView(
+                          key: const ValueKey('support-chat-message-list'),
+                          controller: _messageListController,
+                          padding: EdgeInsets.zero,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
+                              child: _SupportChatHeader(
+                                status: _loadingThread
+                                    ? 'Загружаем'
+                                    : _sending
+                                        ? 'Отправляем'
+                                        : _refreshingThread
+                                            ? 'Обновляем чат'
+                                            : _threadStatus,
+                                details:
+                                    'Выберите тему или напишите, что не получается.',
                               ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+                              child: _SupportLifecycleHint(
+                                state: _supportLifecycleState,
+                                onRetry: _retrySupportLifecycle,
+                              ),
+                            ),
+                            if (!_loadingThread && widget.askAssistant != null)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(18, 0, 18, 10),
+                                child: _SupportAssistantEntry(
+                                  onTap: () => unawaited(_openAssistantSheet()),
+                                ),
+                              ),
+                            if (!_loadingThread)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(18, 0, 18, 10),
+                                child: _SupportIssueChips(
+                                  onSelected: _applyIssueChip,
+                                ),
+                              ),
+                            if (!_loadingThread)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(18, 0, 18, 10),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: OutlinedButton.icon(
+                                    key: const ValueKey(
+                                      'support-diagnostics-action',
+                                    ),
+                                    onPressed: _showDiagnosticsPreview,
+                                    icon: const Icon(
+                                      Icons.health_and_safety_outlined,
+                                    ),
+                                    label: const Text('Диагностика'),
+                                  ),
+                                ),
+                              ),
+                            if (_threadError != null)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(18, 0, 18, 10),
+                                child: _SupportChatNotice(
+                                  body: _threadError!,
+                                  onRetry: () =>
+                                      unawaited(_loadInitialThread()),
+                                ),
+                              ),
+                            if (_loadingThread)
+                              const SizedBox(
+                                height: 230,
+                                child: _SupportChatSkeleton(),
+                              )
+                            else
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(18, 0, 18, 12),
+                                child: Column(
+                                  children: [
+                                    for (final message in _messages)
+                                      _SupportChatBubble(message: message),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (!_loadingThread)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: _SupportAssistantSuggestions(
-                                  suggestions: PokrovAssistantContract
-                                      .defaultSupportSuggestions,
-                                  onSelected: _applyAssistantSuggestion,
-                                ),
-                              ),
                             if (_attachDiagnosticsToNextMessage)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
@@ -872,9 +911,9 @@ class _SupportDiagnosticsQueuedPill extends StatelessWidget {
             Text(
               'Диагностика будет приложена',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: p.ink,
-                fontWeight: FontWeight.w700,
-              ),
+                    color: p.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
             ),
             const SizedBox(width: 4),
             IconButton(
@@ -955,44 +994,6 @@ class _SupportIssueChips extends StatelessWidget {
   }
 }
 
-class _SupportAssistantSuggestions extends StatelessWidget {
-  const _SupportAssistantSuggestions({
-    required this.suggestions,
-    required this.onSelected,
-  });
-
-  final List<PokrovAssistantSuggestion> suggestions;
-  final ValueChanged<PokrovAssistantSuggestion> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = PokrovPalette.of(context);
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: SingleChildScrollView(
-        key: const ValueKey('support-assistant-suggestions'),
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            for (final suggestion in suggestions) ...[
-              ActionChip(
-                key: ValueKey(suggestion.key),
-                avatar: const Icon(Icons.auto_awesome_rounded, size: 16),
-                label: Text(suggestion.title),
-                visualDensity: VisualDensity.compact,
-                side: BorderSide(color: p.line),
-                backgroundColor: p.surface,
-                onPressed: () => onSelected(suggestion),
-              ),
-              const SizedBox(width: 8),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 enum _SupportChatRole { user, assistant, operator }
 
 class _SupportChatMessage {
@@ -1039,61 +1040,62 @@ class _SupportLifecycleHint extends StatelessWidget {
     final p = PokrovPalette.of(context);
     final data = switch (state) {
       _SupportLifecycleState.loading => (
-        key: 'loading',
-        icon: Icons.sync_rounded,
-        label: 'Загружаем чат',
-        detail: 'История обращений появится здесь.',
-        accent: p.muted,
-        retry: false,
-      ),
+          key: 'loading',
+          icon: Icons.sync_rounded,
+          label: 'Загружаем чат',
+          detail: 'История обращений появится здесь.',
+          accent: p.muted,
+          retry: false,
+        ),
       _SupportLifecycleState.ready => (
-        key: 'ready',
-        icon: Icons.smart_toy_outlined,
-        label: 'Помощник POKROV на связи',
-        detail: 'Если вопрос не решится, к диалогу подключится оператор.',
-        accent: p.muted,
-        retry: false,
-      ),
+          key: 'ready',
+          icon: Icons.smart_toy_outlined,
+          label: 'Помощник POKROV на связи',
+          detail: 'Если вопрос не решится, к диалогу подключится оператор.',
+          accent: p.muted,
+          retry: false,
+        ),
       _SupportLifecycleState.tracking => (
-        key: 'tracking',
-        icon: Icons.mark_chat_unread_outlined,
-        label: 'Ответ появится здесь',
-        detail: 'POKROV проверяет обращение. Telegram остается запасным.',
-        accent: p.accent,
-        retry: false,
-      ),
+          key: 'tracking',
+          icon: Icons.mark_chat_unread_outlined,
+          label: 'Ответ появится здесь',
+          detail: 'POKROV проверяет обращение. Telegram остается запасным.',
+          accent: p.accent,
+          retry: false,
+        ),
       _SupportLifecycleState.refreshing => (
-        key: 'refreshing',
-        icon: Icons.sync_rounded,
-        label: 'Обновляем чат',
-        detail: 'Проверяем ответы, не открывая Telegram.',
-        accent: p.accent,
-        retry: false,
-      ),
+          key: 'refreshing',
+          icon: Icons.sync_rounded,
+          label: 'Обновляем чат',
+          detail: 'Проверяем ответы, не открывая Telegram.',
+          accent: p.accent,
+          retry: false,
+        ),
       _SupportLifecycleState.operator => (
-        key: 'operator',
-        icon: Icons.support_agent_rounded,
-        label: 'Поддержка ответила',
-        detail: 'Продолжайте диалог здесь или через Telegram.',
-        accent: p.accent,
-        retry: false,
-      ),
+          key: 'operator',
+          icon: Icons.support_agent_rounded,
+          label: 'Поддержка ответила',
+          detail: 'Продолжайте диалог здесь или через Telegram.',
+          accent: p.accent,
+          retry: false,
+        ),
       _SupportLifecycleState.closed => (
-        key: 'closed',
-        icon: Icons.check_circle_outline_rounded,
-        label: 'Обращение закрыто',
-        detail: 'Можно написать новое сообщение, если вопрос вернулся.',
-        accent: p.success,
-        retry: false,
-      ),
+          key: 'closed',
+          icon: Icons.check_circle_outline_rounded,
+          label: 'Обращение закрыто',
+          detail: 'Можно написать новое сообщение, если вопрос вернулся.',
+          accent: p.success,
+          retry: false,
+        ),
       _SupportLifecycleState.offline => (
-        key: 'offline',
-        icon: Icons.cloud_off_outlined,
-        label: 'Чат временно не обновился',
-        detail: 'Сообщения не потеряны. Можно повторить или открыть Telegram.',
-        accent: p.warning,
-        retry: true,
-      ),
+          key: 'offline',
+          icon: Icons.cloud_off_outlined,
+          label: 'Чат временно не обновился',
+          detail:
+              'Сообщения не потеряны. Можно повторить или открыть Telegram.',
+          accent: p.warning,
+          retry: true,
+        ),
     };
 
     return Container(
@@ -1115,9 +1117,9 @@ class _SupportLifecycleHint extends StatelessWidget {
                 Text(
                   data.label,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: p.ink,
-                    fontWeight: FontWeight.w600,
-                  ),
+                        color: p.ink,
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -1180,9 +1182,9 @@ class _SupportChatHeader extends StatelessWidget {
                 Text(
                   status,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: p.ink,
-                    fontWeight: FontWeight.w600,
-                  ),
+                        color: p.ink,
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -1251,8 +1253,7 @@ class _SupportChatBubble extends StatelessWidget {
     // Automation bubbles share one visual language with the AI sheet: the
     // mint tone plus the small sparkle badge keep it honest that no human
     // wrote this text. Operator replies stay on the neutral surface.
-    final isAutomation =
-        message.role == _SupportChatRole.assistant &&
+    final isAutomation = message.role == _SupportChatRole.assistant &&
         message.label == 'Помощник POKROV';
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -1264,21 +1265,19 @@ class _SupportChatBubble extends StatelessWidget {
           color: isUser
               ? p.accent
               : isAutomation
-              ? p.accentSoft
-              : p.surface,
+                  ? p.accentSoft
+                  : p.surface,
           borderRadius: BorderRadius.circular(16),
           border: isUser
               ? null
               : Border.all(
-                  color: isAutomation
-                      ? p.accent.withValues(alpha: 0.14)
-                      : p.line,
+                  color:
+                      isAutomation ? p.accent.withValues(alpha: 0.14) : p.line,
                 ),
         ),
         child: Column(
-          crossAxisAlignment: isUser
-              ? CrossAxisAlignment.end
-              : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             if (!isUser && message.label.isNotEmpty) ...[
               Row(
@@ -1291,9 +1290,9 @@ class _SupportChatBubble extends StatelessWidget {
                   Text(
                     message.label,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: p.muted,
-                      fontWeight: FontWeight.w600,
-                    ),
+                          color: p.muted,
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
                 ],
               ),
@@ -1302,9 +1301,11 @@ class _SupportChatBubble extends StatelessWidget {
             Text(
               message.body,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: isUser ? Theme.of(context).colorScheme.onPrimary : p.ink,
-                height: 1.3,
-              ),
+                    color: isUser
+                        ? Theme.of(context).colorScheme.onPrimary
+                        : p.ink,
+                    height: 1.3,
+                  ),
             ),
           ],
         ),
@@ -1335,10 +1336,10 @@ class _PokrovAiBadge extends StatelessWidget {
           Text(
             'ИИ',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: p.accent,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.3,
-            ),
+                  color: p.accent,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                ),
           ),
         ],
       ),
@@ -1391,9 +1392,9 @@ class _SupportAssistantEntry extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: p.ink,
-                      fontWeight: FontWeight.w700,
-                    ),
+                          color: p.ink,
+                          fontWeight: FontWeight.w700,
+                        ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -1401,9 +1402,9 @@ class _SupportAssistantEntry extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: p.muted,
-                      height: 1.25,
-                    ),
+                          color: p.muted,
+                          height: 1.25,
+                        ),
                   ),
                 ],
               ),
@@ -1446,8 +1447,7 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
   final List<PokrovAssistantMessage> _messages = <PokrovAssistantMessage>[
     PokrovAssistantMessage.assistant(
       id: 'assistant-greeting',
-      body:
-          'Задайте вопрос про подключение, доступ или бонусы — '
+      body: 'Задайте вопрос про подключение, доступ или бонусы — '
           'отвечу по базе знаний POKROV.',
     ),
   ];
@@ -1513,6 +1513,7 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
     _scrollToLatest();
 
     var answer = _noAnswerFallback;
+    var answerLabel = ClientSupportAssistantSource.localFallback.consumerLabel;
     final attemptedAssistantSessionId = _assistantSessionId;
     String? returnedAssistantSessionId;
     var continuationFailed = false;
@@ -1522,6 +1523,7 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
         attemptedAssistantSessionId,
       );
       returnedAssistantSessionId = reply.assistantSessionId;
+      answerLabel = reply.source.consumerLabel;
       final body = reply.reply.trim();
       if (body.isNotEmpty) {
         answer = body;
@@ -1545,6 +1547,7 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
         PokrovAssistantMessage.assistant(
           id: 'assistant-$_messageSeq',
           body: answer,
+          sourceLabel: answerLabel,
         ),
       );
     });
@@ -1592,7 +1595,9 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
                         children: [
                           Text(
                             'ИИ-помощник',
-                            style: Theme.of(context).textTheme.titleLarge
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
                                 ?.copyWith(
                                   color: p.ink,
                                   fontWeight: FontWeight.w700,
@@ -1603,7 +1608,9 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
                             'Отвечает автоматика по базе знаний POKROV',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
                                 ?.copyWith(color: p.muted, height: 1.25),
                           ),
                         ],
@@ -1620,7 +1627,7 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
                     children: [
                       for (final message in _messages)
                         _AssistantSheetBubble(message: message),
-                      if (_thinking) const _AssistantTypingBubble(),
+                      if (_thinking) const _AssistantThinkingStatus(),
                     ],
                   ),
                 ),
@@ -1631,9 +1638,8 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        for (final suggestion
-                            in PokrovAssistantContract
-                                .defaultSupportSuggestions) ...[
+                        for (final suggestion in PokrovAssistantContract
+                            .defaultSupportSuggestions) ...[
                           ActionChip(
                             key: ValueKey('assistant-sheet-${suggestion.key}'),
                             avatar: const Icon(
@@ -1683,9 +1689,8 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
                         IconButton(
                           key: const ValueKey('assistant-sheet-send'),
                           tooltip: 'Отправить',
-                          onPressed: _thinking
-                              ? null
-                              : () => unawaited(_send()),
+                          onPressed:
+                              _thinking ? null : () => unawaited(_send()),
                           icon: const Icon(Icons.send_rounded),
                         ),
                       ],
@@ -1737,17 +1742,32 @@ class _AssistantSheetBubble extends StatelessWidget {
               : Border.all(color: p.accent.withValues(alpha: 0.14)),
         ),
         child: Column(
-          crossAxisAlignment: isUser
-              ? CrossAxisAlignment.end
-              : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            if (!isUser) ...[const _PokrovAiBadge(), const SizedBox(height: 6)],
+            if (!isUser) ...[
+              const _PokrovAiBadge(),
+              const SizedBox(height: 6),
+              if (message.sourceLabel case final sourceLabel?) ...[
+                Text(
+                  sourceLabel,
+                  key: const ValueKey('assistant-response-source-label'),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: p.muted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 4),
+              ],
+            ],
             Text(
               message.safeBody,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: isUser ? Theme.of(context).colorScheme.onPrimary : p.ink,
-                height: 1.3,
-              ),
+                    color: isUser
+                        ? Theme.of(context).colorScheme.onPrimary
+                        : p.ink,
+                    height: 1.3,
+                  ),
             ),
           ],
         ),
@@ -1756,92 +1776,35 @@ class _AssistantSheetBubble extends StatelessWidget {
   }
 }
 
-/// Quiet "typing" indicator: three low-alpha accent dots animated with
-/// opacity only. The loop runs through [PokrovLoopingMotion] (finite pass in
-/// tests) and collapses to static dots under reduced motion.
-class _AssistantTypingBubble extends StatefulWidget {
-  const _AssistantTypingBubble();
-
-  @override
-  State<_AssistantTypingBubble> createState() => _AssistantTypingBubbleState();
-}
-
-class _AssistantTypingBubbleState extends State<_AssistantTypingBubble>
-    with SingleTickerProviderStateMixin {
-  static const _period = Duration(milliseconds: 1200);
-
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: _period);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final disableAnimations = _MotionScope.of(context).disableAnimations;
-    if (disableAnimations || !PokrovLoopingMotion.enabled) {
-      _controller.stop();
-      _controller.value = 0;
-    } else if (!_controller.isAnimating) {
-      _controller.repeat();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  double _dotOpacity(int index) {
-    if (!_controller.isAnimating) {
-      return 0.4;
-    }
-    final phase = (_controller.value - index * 0.18) % 1.0;
-    final wave = (math.sin(phase * math.pi * 2) + 1) / 2;
-    return 0.25 + wave * 0.55;
-  }
+/// States the real automated operation without impersonating a person typing.
+class _AssistantThinkingStatus extends StatelessWidget {
+  const _AssistantThinkingStatus();
 
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        key: const ValueKey('assistant-typing-indicator'),
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: p.accentSoft,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: p.accent.withValues(alpha: 0.14)),
-        ),
-        child: RepaintBoundary(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) {
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (var i = 0; i < 3; i += 1) ...[
-                    if (i > 0) const SizedBox(width: 5),
-                    Opacity(
-                      opacity: _dotOpacity(i),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: p.accent,
-                        ),
-                        child: const SizedBox.square(dimension: 6),
-                      ),
-                    ),
-                  ],
-                ],
-              );
-            },
+    return Semantics(
+      liveRegion: true,
+      label: 'ИИ-помощник готовит ответ',
+      child: ExcludeSemantics(
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            key: const ValueKey('assistant-thinking-status'),
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: p.accentSoft,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: p.accent.withValues(alpha: 0.14)),
+            ),
+            child: Text(
+              'ИИ-помощник готовит ответ…',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: p.ink,
+                    height: 1.3,
+                  ),
+            ),
           ),
         ),
       ),
@@ -1888,8 +1851,7 @@ String? _motionRecoveryNotice(
     return null;
   }
   final normalized = text.toLowerCase();
-  final looksRecoverable =
-      normalized.contains('не смог') ||
+  final looksRecoverable = normalized.contains('не смог') ||
       normalized.contains('не удалось') ||
       normalized.contains('ошиб') ||
       normalized.contains('отказ') ||

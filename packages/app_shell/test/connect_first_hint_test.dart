@@ -41,6 +41,7 @@ class _StubBootstrapper
     required RouteMode routeMode,
     List<String> selectedApps = const <String>[],
     String preferredNodeCode = '',
+    Set<String> excludedNodeCodes = const <String>{},
   }) async {
     return const ManagedProfilePayload(
       profileName: 'test-profile',
@@ -113,6 +114,7 @@ void _installReadyRuntimeBridgeMock({bool connectSucceeds = true}) {
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': true,
+          if (connectSucceeds) 'core_egress_validated': true,
           'message': connectSucceeds
               ? 'Runtime service is running.'
               : 'Connection failed.',
@@ -153,6 +155,15 @@ Future<void> _pumpReadyHome(
   );
   await tester.pumpAndSettle();
   await _flushRealIo(tester);
+}
+
+Future<void> _confirmFirstRouteScope(WidgetTester tester) async {
+  final choice = find.byKey(const ValueKey('first-connect-scope-whole-device'));
+  expect(choice, findsOneWidget);
+  await tester.ensureVisible(choice);
+  await tester.pumpAndSettle();
+  await tester.tap(choice);
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -213,6 +224,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
     await tester.pumpAndSettle();
+    await _confirmFirstRouteScope(tester);
     await _flushRealIo(tester);
 
     expect(find.byKey(const ValueKey('home-connect-hint-pill')), findsNothing);
@@ -238,12 +250,152 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
     await tester.pumpAndSettle();
+    await _confirmFirstRouteScope(tester);
     await _flushRealIo(tester);
 
-    expect(find.textContaining('Connection failed.'), findsWidgets);
+    // Native runtime details are intentionally redacted. The milestone stays
+    // pending until a confirmed running snapshot, not until a failed attempt.
+    expect(find.textContaining('Connection failed.'), findsNothing);
     expect(hintStateFile().existsSync(), isFalse);
     expect(reports, isEmpty);
     expect(onboardingCompleted, 0);
+  });
+
+  testWidgets(
+      'Android permission callback refreshes a later running host snapshot without another tap',
+      (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    var phase = 'artifactReady';
+    var connectCalls = 0;
+
+    Map<String, Object?> snapshot() => <String, Object?>{
+          'phase': phase,
+          'artifactDirectory': '/host/runtime',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+          'stagedConfigPath':
+              phase == 'artifactReady' ? null : '/host/runtime/pokrov.json',
+          'supportsLiveConnect': true,
+          'canInitialize': phase == 'artifactReady',
+          'canConnect': phase == 'configStaged',
+          if (phase == 'running') 'core_egress_validated': true,
+          'message': phase == 'running'
+              ? 'Android runtime service is running.'
+              : connectCalls > 0
+                  ? 'Android permission required.'
+                  : 'Host bridge ready.',
+        };
+
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      switch (call.method) {
+        case 'runtimeEngine.snapshot':
+          return snapshot();
+        case 'runtimeEngine.initialize':
+          phase = 'initialized';
+          return snapshot();
+        case 'runtimeEngine.stageManagedProfile':
+          phase = 'configStaged';
+          return snapshot();
+        case 'runtimeEngine.connect':
+          connectCalls += 1;
+          return snapshot();
+      }
+      return null;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: const _StubBootstrapper(),
+        firstLaunchStore: _CompletedFirstLaunchStore(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _flushRealIo(tester);
+
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
+    await _confirmFirstRouteScope(tester);
+    await tester.pumpAndSettle();
+    expect(connectCalls, 1);
+
+    // This represents the Android VPN permission callback starting the
+    // service after the original method call already returned its snapshot.
+    phase = 'running';
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('connect-disc-connected-settle')),
+        findsOneWidget);
+    expect(connectCalls, 1);
+  });
+
+  testWidgets('Android VPN permission denial remains disconnected',
+      (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    var phase = 'artifactReady';
+
+    Map<String, Object?> snapshot() => <String, Object?>{
+          'phase': phase,
+          'artifactDirectory': '/host/runtime',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+          'stagedConfigPath':
+              phase == 'artifactReady' ? null : '/host/runtime/pokrov.json',
+          'supportsLiveConnect': true,
+          'canInitialize': phase == 'artifactReady',
+          'canConnect': phase == 'configStaged',
+          'message': phase == 'configStaged'
+              ? 'Permission denied.'
+              : 'Host bridge ready.',
+        };
+
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      switch (call.method) {
+        case 'runtimeEngine.snapshot':
+          return snapshot();
+        case 'runtimeEngine.initialize':
+          phase = 'initialized';
+          return snapshot();
+        case 'runtimeEngine.stageManagedProfile':
+          phase = 'configStaged';
+          return snapshot();
+        case 'runtimeEngine.connect':
+          return snapshot();
+      }
+      return null;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: const _StubBootstrapper(),
+        firstLaunchStore: _CompletedFirstLaunchStore(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _flushRealIo(tester);
+
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
+    await _confirmFirstRouteScope(tester);
+    await tester.pumpAndSettle();
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('connect-disc-connected-settle')),
+        findsNothing);
+    expect(
+        find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
   });
 
   testWidgets('completed store never renders the hint on an idle ready disc',

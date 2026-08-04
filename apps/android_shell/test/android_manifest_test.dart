@@ -17,6 +17,7 @@ void main() {
       content,
       contains('android:foregroundServiceType="specialUse"'),
     );
+    expect(content, contains('android.permission.POST_NOTIFICATIONS'));
   });
 
   test('android backup rules exclude secure session material', () async {
@@ -61,7 +62,7 @@ void main() {
     }
   });
 
-  test('android runtime service source hardens foreground start failures',
+  test('android runtime service source keeps foreground failures sanitized',
       () async {
     final serviceSource = File(
       'android/app/src/main/kotlin/space/pokrov/pokrov_android_shell/PokrovRuntimeVpnService.kt',
@@ -70,6 +71,45 @@ void main() {
 
     final content = await serviceSource.readAsString();
     expect(content, contains('FOREGROUND_SERVICE_TYPE_SPECIAL_USE'));
-    expect(content, contains('Android runtime foreground start failed:'));
+    expect(content, contains('AndroidRuntimeSafety.publicFailureMessage('));
+    expect(
+      content,
+      isNot(contains('Android runtime foreground start failed:", error')),
+    );
+  });
+
+  test('quick settings tile uses a monochrome vector icon', () async {
+    final manifest = File('android/app/src/main/AndroidManifest.xml');
+    final tileIcon = File(
+      'android/app/src/main/res/drawable/ic_qs_pokrov.xml',
+    );
+
+    final manifestContent = await manifest.readAsString();
+    final iconContent = await tileIcon.readAsString();
+
+    expect(
+      manifestContent,
+      contains('android:icon="@drawable/ic_qs_pokrov"'),
+    );
+    expect(
+      manifestContent,
+      contains('android:name="android.service.quicksettings.ACTIVE_TILE"'),
+    );
+    expect(manifestContent, contains('android:value="true"'));
+    expect(iconContent, contains('<vector'));
+    expect(iconContent, contains('android:width="24dp"'));
+    expect(iconContent, contains('android:height="24dp"'));
+    expect(iconContent, contains('android:fillColor="#FFFFFFFF"'));
+  });
+
+  test('quick settings tile refreshes when first added', () async {
+    final serviceSource = File(
+      'android/app/src/main/kotlin/space/pokrov/pokrov_android_shell/PokrovQuickSettingsTileService.kt',
+    );
+
+    final content = await serviceSource.readAsString();
+    expect(content, contains('override fun onTileAdded()'));
+    expect(content, contains('super.onTileAdded()'));
+    expect(content, contains('transitionHandler.post(::refreshTile)'));
   });
 }
