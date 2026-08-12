@@ -12,20 +12,20 @@ Historical mapping note:
 
 ## Current Status
 
-- cutover state: `2026-08-12 Android direct-APK candidate production-signing and release-critical physical journey PASS; publication still waits for recovery, distribution handoff, and owner gates`
+- cutover state: `2026-08-12 Android direct APK 1.0.2+9 published; production signing, physical journey, public asset digest, and anonymous full-download smoke PASS`
 - lane path: `C:/Users/kiwun/Documents/ai/POKROV-app`
 - lane ownership: `canonical client development repo for POKROV-app/main`
 - public scope in this document: `Android + Windows`
 - Apple scope in this wave: `readiness only`
 - base decision: `Karing-based candidate reopened for gated spike; clean-room lane remains current until candidate gates pass`
 - Apple release state: `checked-in unsigned service lane`
-- Android release state: `2026-08-12 direct APK 1.0.2+9 is release-built, non-debuggable, self-managed production-signed, independently verified, exact-hash installed, and tunnel/routing verified on physical Android 12 hardware; it is not yet distribution-approved`
+- Android release state: `2026-08-12 direct APK 1.0.2+9 is public at Kiwunaka/pokrov v1.0.2-beta.1, release-built, non-debuggable, self-managed production-signed, independently verified, exact-hash installed, and tunnel/routing verified on physical Android 12 hardware`
 - Windows release state: `unsigned outside-store beta setup EXE refreshed for 1.0.0-beta; live install/app-session smoke remains manual`
 - Android and Windows engineering verification: `2026-08-12 exact Android 1.0.2+9 installed and cold-launched on physical hardware, traversed onboarding/Home/route scope, resolved packaged Core with native extraction disabled, connected to Germany, and passed smart plus both per-app routing directions; Windows remains a separate unsigned lane`
 - public store readiness: `not approved`
-- public cutover approval: `blocked for a new candidate`
-- public Android release approval: `production signing and release-critical physical journey passed; blocked pending offline recovery, direct-download/live-smoke handoff, and owner approval gates`
-- public Android release blockers: `signing-key offline recovery, direct-download publication/handoff, uploaded-artifact hash smoke, and owner approval; Play is not part of the first channel`
+- public cutover approval: `Android direct-APK first approved and published; Windows remains a separate blocked lane`
+- public Android release approval: `PASS_DIRECT_APK_FIRST for exact 1.0.2+9 candidate`
+- public Android release blockers: `none for the accepted direct-APK beta claim; encrypted offline signing-key recovery and long-cycle endurance remain explicit operational follow-ups; Play is not requested`
 - public Windows release approval: `blocked pending trusted-signing PASS for the exact candidate`
 - public Windows release blockers: `trusted signing, exact-artifact install smoke, and store/trusted distribution proof`
 - long-term repo truth: `yes`
@@ -243,9 +243,12 @@ Status: `READY_GUARDRAILS_RECORDED_OPERATOR_MONITORING_AFTER_ANNOUNCEMENT`.
   last cleanup removed seven panel mappings and 24 database rows; final
   postcheck returned zero users, access keys, and user-node mappings for it
 - Google Play is `NOT_REQUESTED_DIRECT_APK_FIRST`
-- direct release still requires the encrypted offline signing recovery copy,
-  direct-download publication/handoff, live uploaded-APK hash smoke, and owner
-  promotion approval. Google Play remains outside this direct-APK release.
+- public direct release: `PASS`. The universal APK is published at
+  `Kiwunaka/pokrov` prerelease `v1.0.2-beta.1`; a full anonymous download
+  matched the exact `287207515`-byte artifact and SHA-256 above. The production
+  runtime handoff is tracked separately from this uploaded-asset proof.
+- encrypted offline signing recovery remains an owner operational follow-up;
+  Google Play remains outside this direct-APK release.
 - detailed evidence owner:
   `docs/operations/android-release-audit.md`
 
@@ -412,7 +415,7 @@ rotation proof, or production WARP readiness.
 - [x] Exact direct APK `1.0.2+9` passes the release-critical physical-device
       journey: install, launch, route scope, packaged Core, tunnel, smart split,
       both per-app directions, system surfaces, support, and checkout
-- [ ] Public download handoff is re-approved for the exact signed Android `APK`; `Play` is `NOT_REQUESTED_DIRECT_APK_FIRST`
+- [x] Public download handoff is approved for exact signed Android `1.0.2+9`; anonymous full-download size and SHA-256 match; `Play` is `NOT_REQUESTED_DIRECT_APK_FIRST`
 - [x] Release handoff includes runtime URL verification and origin evidence for the `2026-05-15` beta evidence pack
 - [x] Any APK shown to testers is official, beta-labeled, outside-store, and not described as Play/store-ready
 
@@ -478,13 +481,12 @@ Safe to claim now:
   explicitly non-public engineering smoke
 - the `2026-05-15` launch decision and published `1.0.0-beta` handoff remain
   exact-candidate evidence, not current rebuild or republish authority
-- current Android + Windows `1.0.0-beta` assets are uploaded to the GitHub
-  prerelease and authenticated download/checksum proof passes for every listed
-  asset
+- Android `1.0.2+9` is published as the production-signed universal APK in
+  public prerelease `v1.0.2-beta.1`; anonymous full-download size and SHA-256
+  match the installed physical-device candidate
 - Android physical-device audit is accepted as `OPERATOR_ATTESTED` for this beta wave, not as raw repository evidence
-- current Android direct-APK candidate has exact-candidate production-signing
-  `PASS`; public promotion remains blocked on recovery, device, distribution,
-  live-smoke, and owner gates
+- current Android direct APK has exact-candidate production-signing, physical
+  routing, public distribution, and anonymous full-download `PASS`
 
 Not safe to claim now:
 
@@ -507,10 +509,11 @@ Blocked-by note:
 - the local repo bootstrap step is complete; the `2026-05-15` approval is
   retained evidence and does not authorize a new candidate
 - Android is operator-attested for this beta wave; do not upgrade that to raw audit evidence unless a retained audit artifact is attached
-- Android production signing and the release-critical physical journey are
-  complete for the local `1.0.2+9` direct APK. Encrypted offline recovery,
-  direct-download handoff, uploaded-artifact smoke, and owner approval remain
-  blockers. Windows trusted signing is a separate blocker for Windows promotion
+- Android production signing, the release-critical physical journey, public
+  upload, and anonymous exact-hash download are complete for `1.0.2+9`.
+  Encrypted offline recovery and endurance remain follow-ups, not claims made by
+  this release. Windows trusted signing is a separate blocker for Windows
+  promotion
 - real-user Telegram/WebApp checks, raw Android device audit replacement
   evidence, store access, and RU-origin probes remain separate manual gates
 - `POKROV-app/artifacts/releases/pokrov-app/` may retain repo-backed alpha and beta bundles built directly from this lane for engineering and tester handoff

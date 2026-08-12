@@ -1369,8 +1369,10 @@ if ($release.release_truth.public_cutover_allowed -ne $cutover.public_cutover_al
   $errors += 'Cutover and release-handoff public approval disagree'
 }
 if (($release.latest_repo_backed_release.runtime_sync_allowed -eq $true) -and
-    ($release.release_truth.public_cutover_allowed -ne $true)) {
-  $errors += 'Release handoff allows runtime sync while public cutover is blocked'
+    ($release.release_truth.public_cutover_allowed -ne $true) -and
+    ($cutover.android_release.public_approved -ne $true) -and
+    ($cutover.windows_release.public_approved -ne $true)) {
+  $errors += 'Release handoff allows runtime sync without a public-approved platform artifact'
 }
 if (($cutover.public_cutover_allowed -eq $true) -and
     (($cutover.android_release.public_approved -ne $true) -or

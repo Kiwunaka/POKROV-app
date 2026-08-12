@@ -1,6 +1,6 @@
 # Android Release Audit
 
-Status: direct-APK candidate production-signing PASS; release-critical physical-device journey PASS; long-cycle, uplink-handoff, and WARP endurance remain manual owner tests
+Status: direct APK 1.0.2+9 public-release PASS; production signing, physical-device journey, public digest, and anonymous full-download PASS; long-cycle, uplink-handoff, and WARP endurance remain manual owner tests
 Last updated: 2026-08-12
 
 ## Required Dependency
@@ -86,7 +86,7 @@ be promoted, synced, or described as public, trusted, store-ready, or stable.
 
 ## Current 2026-08-12 Production-Signed Direct APK
 
-The current direct-distribution candidate is `1.0.2+8` and uses the production
+The current direct-distribution release is `1.0.2+9` and uses the production
 API base `https://api.pokrov.space`:
 
 - APK: `287207515` bytes, SHA-256
@@ -153,6 +153,10 @@ API base `https://api.pokrov.space`:
   retained before public upload.
 - Google Play: `NOT_REQUESTED_DIRECT_APK_FIRST`. This candidate is prepared for
   direct APK distribution and does not claim Play readiness.
+- public distribution: `PASS`. Public prerelease
+  `https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.2-beta.1` contains only
+  `pokrov-android-universal.apk`; GitHub reports the exact digest above, and a
+  fresh anonymous full download matched both `287207515` bytes and SHA-256.
 
 Every future direct APK update for existing installs must use this same signing
 identity and a higher `versionCode`. Losing or replacing the key forces users to
