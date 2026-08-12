@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.VpnService
+import android.net.Uri
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
@@ -80,6 +81,11 @@ class RuntimeHostBridge(
             METHOD_REQUEST_WIFI_PERMISSION ->
                 result.success(requestWifiPermission())
             METHOD_OPEN_VPN_SETTINGS -> result.success(openVpnSettings())
+            METHOD_SYSTEM_SURFACE_PREFERENCES ->
+                result.success(AndroidSystemSurfacePreferencesStore.load(activity).toMap())
+            METHOD_UPDATE_SYSTEM_SURFACE_PREFERENCES ->
+                result.success(updateSystemSurfacePreferences(call))
+            METHOD_OPEN_NOTIFICATION_SETTINGS -> result.success(openNotificationSettings())
             else -> result.notImplemented()
         }
     }
@@ -237,7 +243,7 @@ class RuntimeHostBridge(
         val materializedForRuntime = call.argument<Boolean>("materializedForRuntime") ?: false
         val routeMode = call.argument<String>("routeMode")
             ?.trim()
-            ?.takeIf { it in setOf("allExceptRu", "fullTunnel", "selectedApps") }
+            ?.takeIf { it in setOf("allExceptRu", "fullTunnel", "selectedApps", "excludedApps") }
             ?: run {
                 AndroidRuntimeState.markFailure(
                     kind = "missing_route_mode",
@@ -249,6 +255,18 @@ class RuntimeHostBridge(
         // routing scope choice for this new managed manifest. Omitted/legacy
         // MethodChannel calls remain ineligible for Quick Settings reuse.
         val quickSettingsEligible = call.argument<Boolean>("quickSettingsEligible") == true
+        val displayCountry = call.argument<String>("displayCountry")
+            ?.trim()
+            ?.take(64)
+            .orEmpty()
+        val displayNodeCode = call.argument<String>("displayNodeCode")
+            ?.trim()
+            ?.take(64)
+            .orEmpty()
+        val displayRouteMode = call.argument<String>("displayRouteMode")
+            ?.trim()
+            ?.takeIf { it in setOf("allExceptRu", "fullTunnel", "selectedApps", "excludedApps") }
+            .orEmpty()
         val finalPath = File(runtimeEnvironment.configDirectory, "managed-profile.json")
 
         return try {
@@ -265,9 +283,13 @@ class RuntimeHostBridge(
                     configPath = finalPath.absolutePath,
                     routeMode = when (routeMode) {
                         "selectedApps" -> "selected_apps"
+                        "excludedApps" -> "excluded_apps"
                         else -> "device"
                     },
                     quickSettingsEligible = quickSettingsEligible,
+                    displayCountry = displayCountry,
+                    displayNodeCode = displayNodeCode,
+                    displayRouteMode = displayRouteMode,
                 ),
             )
             AndroidRuntimeState.snapshot()
@@ -401,11 +423,11 @@ class RuntimeHostBridge(
         }
         return try {
             writePrivateConfig(File(stagedConfigPath), configPayload)
+            val existingProfile = AndroidRuntimeProfileStore.load(activity)
             AndroidRuntimeProfileStore.save(
                 activity,
-                PersistedRuntimeProfile(
-                    configPath = stagedConfigPath,
-                ),
+                existingProfile?.copy(configPath = stagedConfigPath)
+                    ?: PersistedRuntimeProfile(configPath = stagedConfigPath),
             )
             mapOf(
                 "applied" to true,
@@ -658,6 +680,40 @@ class RuntimeHostBridge(
         }
     }
 
+    private fun updateSystemSurfacePreferences(call: MethodCall): Map<String, Boolean> {
+        val current = AndroidSystemSurfacePreferencesStore.load(activity)
+        val updated = current.copy(
+            showCountry = call.argument<Boolean>("showCountry") ?: current.showCountry,
+            showSpeed = call.argument<Boolean>("showSpeed") ?: current.showSpeed,
+            showRouteMode = call.argument<Boolean>("showRouteMode") ?: current.showRouteMode,
+        )
+        AndroidSystemSurfacePreferencesStore.save(activity, updated)
+        PokrovRuntimeVpnService.refreshNotification(activity)
+        PokrovQuickSettingsTileService.requestRefresh(activity)
+        return updated.toMap()
+    }
+
+    private fun openNotificationSettings(): Boolean = runCatching {
+        activity.runOnUiThread {
+            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName)
+            }
+            activity.startActivity(intent)
+        }
+        true
+    }.getOrElse {
+        runCatching {
+            activity.runOnUiThread {
+                activity.startActivity(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.parse("package:${activity.packageName}")
+                    },
+                )
+            }
+            true
+        }.getOrDefault(false)
+    }
+
     @Suppress("DEPRECATION")
     private fun listInstalledApps(): List<Map<String, String>> {
         val packageManager = activity.packageManager
@@ -702,6 +758,12 @@ class RuntimeHostBridge(
         private const val METHOD_REQUEST_WIFI_PERMISSION =
             "runtimeEngine.requestWifiPermission"
         private const val METHOD_OPEN_VPN_SETTINGS = "runtimeEngine.openVpnSettings"
+        private const val METHOD_SYSTEM_SURFACE_PREFERENCES =
+            "runtimeEngine.systemSurfacePreferences"
+        private const val METHOD_UPDATE_SYSTEM_SURFACE_PREFERENCES =
+            "runtimeEngine.updateSystemSurfacePreferences"
+        private const val METHOD_OPEN_NOTIFICATION_SETTINGS =
+            "runtimeEngine.openNotificationSettings"
         private const val REQUEST_WIFI_PERMISSION = 14073
         private const val REQUEST_NOTIFICATION_PERMISSION = 14074
     }

@@ -1924,6 +1924,20 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       payload.warpPolicy,
     );
     _stagedPayload = payload;
+    final resolvedCode = payload.resolvedNodeCode.trim().toLowerCase();
+    SmartConnectNode? displayNode;
+    for (final node
+        in payload.smartConnect?.shortlist ?? const <SmartConnectNode>[]) {
+      if (displayNode == null ||
+          (resolvedCode.isNotEmpty &&
+              node.code.trim().toLowerCase() == resolvedCode)) {
+        displayNode = node;
+      }
+      if (resolvedCode.isNotEmpty &&
+          node.code.trim().toLowerCase() == resolvedCode) {
+        break;
+      }
+    }
     final hostSnapshot = await _invokeHostSnapshot(
       'runtimeEngine.stageManagedProfile',
       arguments: <String, Object?>{
@@ -1933,6 +1947,9 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         'materializedForRuntime': true,
         'quickSettingsEligible': payload.quickSettingsEligible,
         'routeMode': payload.routeMode.name,
+        'displayCountry': displayNode?.country.trim() ?? '',
+        'displayNodeCode': payload.resolvedNodeCode.trim(),
+        'displayRouteMode': payload.routeMode.name,
       },
     );
     return hostSnapshot ?? await snapshot();

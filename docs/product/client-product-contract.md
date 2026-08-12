@@ -145,6 +145,11 @@ Product rules for that choice:
   blocks connect and route-policy sync, keeps the device unprotected, and
   directs the user to add an app in `Rules`; it must never fall back to a
   device-wide tunnel.
+- Android also exposes `Except selected apps`: selected packages bypass
+  `VpnService`, while every other package uses POKROV. It requires a non-empty
+  selection and is materialized locally; backend route policy remains the
+  device-wide contract and must not reinterpret the excluded list as an
+  allow-list.
 - Windows uses an executable/process picker for selected apps, backed by
   running-process, discovered `.exe`, and curated fallback candidates
 - Android uses an installed-package picker for selected apps, with curated
@@ -154,8 +159,9 @@ Product rules for that choice:
 - the chosen route mode must persist per device and remain editable later from a dedicated route-mode screen
 - the live state must round-trip through backend-owned `route_mode`, `selected_apps`, `requires_elevated_privileges`, and mirrored `route_policy.*` fields
 - current implementation exposes `All except RU`, `Full tunnel`, and
-  `Only selected apps`; adding a custom app identifier auto-selects the
-  selected-apps route and sends `selected_apps` through app-first route policy
+  `Only selected apps` on both clients, plus Android-only `Except selected
+  apps`; adding a custom app identifier auto-selects the selected-apps route
+  and sends `selected_apps` through app-first route policy
 - selected-app identifiers are device-local, survive app restart, normalized,
   and capped at 128; an empty selected-apps list still blocks connection
 - Windows `Rules` uses consumer route copy (`Режим работы`,
@@ -283,7 +289,7 @@ Quick-connect rules:
 
 - the backend builds the shortlist before the client starts latency checks
 - premium users can probe up to `SMART_CONNECT_SHORTLIST_LIMIT` eligible non-free nodes, default `8`
-- free-tier users stay on `NL-free` only
+- expired users receive no node shortlist; legacy free states remain parse-only compatibility and never fall back to premium nodes
 - shortlist eligibility rejects disabled, draining, unhealthy, stale, dataplane-down, saturated, high-loss/retransmit, overloaded, and transport-incompatible nodes while capacity-aware selection is enabled
 - the client uses backend-provided internal probe targets and capacity hints, then posts `mode=auto` or `mode=manual` to `/api/client/nodes/select`; telemetry failure must not block connect
 - after automatic selection the client promotes the selected direct outbound
@@ -404,7 +410,8 @@ Release continuity rules:
 - the shared runtime identity is `pokrovClientVersion`; release builds pass
   `--dart-define=POKROV_APP_VERSION=<host pubspec version without +build>` so
   provisioning, update checks, diagnostics, and visible version text match the
-  package. Local builds use the current candidate fallback `1.0.2-core-test.1`.
+  package. Local builds use the current Android package base-version fallback `1.0.2`;
+  production packaging passes that value explicitly through `POKROV_APP_VERSION`.
 - local non-release builds keep updater and source-code surfaces disabled instead of falling back to a personal repository URL
 - an update prompt or tap may hand off only to `https://github.com/Kiwunaka/pokrov/releases/download/<tag>/<asset>` when metadata also carries a 64-hex SHA-256 and a positive byte size; alternate hosts, repositories, URL authority fields, query strings, and fragments fail closed
 - this is an external-browser handoff boundary, not downloaded-byte verification: the app does not receive or hash the browser's bytes, so checksum, install, signing, and exact-candidate runtime proof remain manual release gates

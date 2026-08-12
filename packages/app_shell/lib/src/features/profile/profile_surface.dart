@@ -31,6 +31,9 @@ class _ProfileSection extends StatelessWidget {
     required this.themeMode,
     required this.onThemeModeChanged,
     required this.subscriptionInfo,
+    required this.systemSurfacePreferences,
+    required this.onSystemSurfacePreferencesChanged,
+    required this.onOpenNotificationSettings,
     required this.notifications,
     required this.notificationsUnread,
     required this.notificationsBusy,
@@ -76,6 +79,10 @@ class _ProfileSection extends StatelessWidget {
   final ThemeMode themeMode;
   final ValueChanged<ThemeMode> onThemeModeChanged;
   final ClientSubscriptionInfo? subscriptionInfo;
+  final PokrovSystemSurfacePreferences systemSurfacePreferences;
+  final Future<bool> Function(PokrovSystemSurfacePreferences preferences)
+      onSystemSurfacePreferencesChanged;
+  final Future<bool> Function() onOpenNotificationSettings;
   final List<ClientNotificationItem> notifications;
   final int notificationsUnread;
   final bool notificationsBusy;
@@ -171,19 +178,22 @@ class _ProfileSection extends StatelessWidget {
                     appContext,
                     currentBonusSummary,
                     freeProfileAccess,
+                    subscriptionInfo,
                   ),
                   accessValue: _accessShortValue(
                     appContext,
                     currentBonusSummary,
                     freeProfileAccess,
+                    subscriptionInfo,
                   ),
                   accessDays: _accessShortDays(
                     appContext,
                     currentBonusSummary,
                     freeProfileAccess,
+                    subscriptionInfo,
                   ),
                   poolLabel: _accessPoolLabelFor(
-                    appContext.accessLane,
+                    _effectiveAccessLane(appContext, subscriptionInfo),
                     freeProfileAccess,
                   ),
                   accessNotice: _freeProfileAccessNotice(freeProfileAccess),
@@ -374,6 +384,24 @@ class _ProfileSection extends StatelessWidget {
                       },
                     ),
                     const _SettingsRowDivider(),
+                    if (appContext.hostPlatform == HostPlatform.android) ...[
+                      _SettingsRow(
+                        key: const ValueKey(
+                          'profile-system-surfaces-action',
+                        ),
+                        icon: Icons.notifications_active_outlined,
+                        title: 'Шторка и VPN-уведомление',
+                        value: systemSurfacePreferences.summary,
+                        onTap: () => _showSystemSurfacePreferencesSheet(
+                          context,
+                          preferences: systemSurfacePreferences,
+                          onChanged: onSystemSurfacePreferencesChanged,
+                          onOpenNotificationSettings:
+                              onOpenNotificationSettings,
+                        ),
+                      ),
+                      const _SettingsRowDivider(),
+                    ],
                     _SettingsRow(
                       key: const ValueKey('profile-notifications-action'),
                       icon: notificationsUnread > 0
@@ -509,73 +537,107 @@ class _ProfileAccessOverview extends StatelessWidget {
           builder: (context, constraints) {
             final p = PokrovPalette.of(context);
             final compact = constraints.maxWidth < 430;
-            final header = Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            final isProtected = statusLabel == 'Подключено';
+            final brand = Container(
+              width: compact ? 54 : 62,
+              height: compact ? 54 : 62,
+              decoration: BoxDecoration(
+                color: p.surface.withValues(alpha: 0.86),
+                shape: BoxShape.circle,
+                border: Border.all(color: p.line),
+              ),
+              child: Center(child: _BrandMark(size: compact ? 34 : 40)),
+            );
+            final headline = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: compact ? 54 : 62,
-                  height: compact ? 54 : 62,
-                  decoration: BoxDecoration(
-                    color: p.surface.withValues(alpha: 0.86),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: p.line),
+                Text(
+                  accessLabel,
+                  maxLines: compact ? 2 : 1,
+                  overflow: compact ? TextOverflow.clip : TextOverflow.ellipsis,
+                  style: (compact
+                          ? Theme.of(context).textTheme.titleMedium
+                          : Theme.of(context).textTheme.titleLarge)
+                      ?.copyWith(
+                    color: p.ink,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0,
                   ),
-                  child: Center(child: _BrandMark(size: compact ? 34 : 40)),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        accessLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: p.ink,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0,
-                            ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        poolLabel,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(color: p.muted),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          if (accessDays != null)
-                            _LivingDaysCount(
-                              days: accessDays!,
-                              builder: (context, days) => _StatusPill(
-                                label: ruDays(days),
-                                icon: Icons.calendar_today_outlined,
-                                tone: _SectionTone.reward,
-                              ),
-                            )
-                          else
-                            _StatusPill(
-                              label: accessValue,
-                              icon: Icons.calendar_today_outlined,
-                              tone: _SectionTone.reward,
-                            ),
-                          _StatusPill(
-                            label: statusLabel,
-                            icon: Icons.check_circle_outline_rounded,
-                            tone: _SectionTone.accent,
-                          ),
-                        ],
-                      ),
-                    ],
+                const SizedBox(height: 5),
+                Text(
+                  poolLabel,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: p.muted),
+                ),
+              ],
+            );
+            final badges = Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (accessDays != null)
+                  _LivingDaysCount(
+                    days: accessDays!,
+                    builder: (context, days) => _StatusPill(
+                      label: ruDays(days),
+                      icon: Icons.calendar_today_outlined,
+                      tone: _SectionTone.reward,
+                    ),
+                  )
+                else
+                  _StatusPill(
+                    label: accessValue,
+                    icon: Icons.calendar_today_outlined,
+                    tone: _SectionTone.reward,
+                  ),
+                KeyedSubtree(
+                  key: const ValueKey('profile-connection-status-pill'),
+                  child: _StatusPill(
+                    label: statusLabel,
+                    icon: isProtected
+                        ? Icons.verified_user_outlined
+                        : Icons.shield_outlined,
+                    tone:
+                        isProtected ? _SectionTone.accent : _SectionTone.muted,
                   ),
                 ),
               ],
             );
+            final header = compact
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          brand,
+                          const SizedBox(width: 14),
+                          Expanded(child: headline),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      badges,
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      brand,
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            headline,
+                            const SizedBox(height: 8),
+                            badges,
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -617,8 +679,8 @@ class _ProfileAccessOverview extends StatelessWidget {
             _SettingsRow(
               key: const ValueKey('profile-checkout-action'),
               icon: Icons.shopping_bag_outlined,
-              title: 'Продлить доступ',
-              value: 'Продлить',
+              title: 'Продлить',
+              value: 'Выбрать срок',
               valueIsAction: true,
               onTap: onCheckoutTap,
             ),
@@ -773,6 +835,185 @@ void _showThemeModeSheet(
   );
 }
 
+void _showSystemSurfacePreferencesSheet(
+  BuildContext context, {
+  required PokrovSystemSurfacePreferences preferences,
+  required Future<bool> Function(PokrovSystemSurfacePreferences preferences)
+      onChanged,
+  required Future<bool> Function() onOpenNotificationSettings,
+}) {
+  var current = preferences;
+  var busy = false;
+
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
+    builder: (sheetContext) => StatefulBuilder(
+      builder: (sheetContext, setSheetState) {
+        Future<void> save(PokrovSystemSurfacePreferences next) async {
+          if (busy) {
+            return;
+          }
+          setSheetState(() => busy = true);
+          final saved = await onChanged(next);
+          if (!sheetContext.mounted) {
+            return;
+          }
+          setSheetState(() {
+            if (saved) {
+              current = next;
+            }
+            busy = false;
+          });
+          if (!saved) {
+            showPokrovSnack(
+              sheetContext,
+              'Не удалось сохранить настройки шторки.',
+              tone: PokrovSnackTone.danger,
+            );
+          }
+        }
+
+        Widget toggleRow({
+          required Key key,
+          required String title,
+          required String description,
+          required bool value,
+          required PokrovSystemSurfacePreferences Function(bool value) next,
+        }) {
+          return Padding(
+            key: key,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(sheetContext).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        description,
+                        style: Theme.of(sheetContext)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(
+                              color: PokrovPalette.of(sheetContext).muted,
+                              height: 1.3,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                PokrovSwitch(
+                  value: value,
+                  onChanged: busy
+                      ? null
+                      : (value) {
+                          unawaited(save(next(value)));
+                        },
+                ),
+              ],
+            ),
+          );
+        }
+
+        return SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              22,
+              4,
+              22,
+              24 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+            ),
+            child: Column(
+              key: const ValueKey('profile-system-surfaces-sheet'),
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Шторка и VPN-уведомление',
+                  style: Theme.of(sheetContext).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Статус подключения остаётся всегда. Остальные данные можно скрыть.',
+                  style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
+                        color: PokrovPalette.of(sheetContext).muted,
+                        height: 1.35,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                toggleRow(
+                  key: const ValueKey('system-surface-country-toggle'),
+                  title: 'Страна',
+                  description:
+                      'Показывать страну в VPN-уведомлении. В плитке — только если это поддерживает оболочка Android.',
+                  value: current.showCountry,
+                  next: (value) => current.copyWith(showCountry: value),
+                ),
+                const Divider(height: 1),
+                toggleRow(
+                  key: const ValueKey('system-surface-speed-toggle'),
+                  title: 'Скорость',
+                  description:
+                      'Показывать текущие входящую и исходящую скорости.',
+                  value: current.showSpeed,
+                  next: (value) => current.copyWith(showSpeed: value),
+                ),
+                const Divider(height: 1),
+                toggleRow(
+                  key: const ValueKey('system-surface-route-toggle'),
+                  title: 'Режим маршрутизации',
+                  description:
+                      'Например: «РФ напрямую» или «Весь трафик через VPN».',
+                  value: current.showRouteMode,
+                  next: (value) => current.copyWith(showRouteMode: value),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Быстрая кнопка',
+                  style: Theme.of(sheetContext).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Если плитки POKROV нет: раскройте шторку, нажмите «Изменить» и перетащите POKROV в активные кнопки.',
+                  style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
+                        color: PokrovPalette.of(sheetContext).muted,
+                        height: 1.35,
+                      ),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    key: const ValueKey(
+                      'system-surface-notification-settings-action',
+                    ),
+                    onPressed: () {
+                      Navigator.of(sheetContext).pop();
+                      unawaited(onOpenNotificationSettings());
+                    },
+                    icon: const Icon(Icons.settings_outlined),
+                    label: const Text('Настройки уведомлений Android'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    ),
+  );
+}
+
 String _formatClientDate(String iso) {
   final parsed = DateTime.tryParse(iso.trim());
   if (parsed == null) {
@@ -834,7 +1075,7 @@ void _showSubscriptionSheet(
               order: 2,
               child: _KeyValueLine(
                 label: 'Текущий доступ',
-                value: appContext.accessLane.label,
+                value: _effectiveAccessLane(appContext, info).label,
               ),
             ),
             if (info != null && info.daysLeft > 0)

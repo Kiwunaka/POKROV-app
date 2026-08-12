@@ -15,7 +15,7 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 /// package base version (without Android's build number).
 const pokrovClientVersion = String.fromEnvironment(
   'POKROV_APP_VERSION',
-  defaultValue: '1.0.2-core-test.1',
+  defaultValue: '1.0.2',
 );
 
 const _platformErrorCodeHeader = 'X-POKROV-Auth-Error';
@@ -2029,7 +2029,9 @@ class AppFirstRuntimeBootstrapper
         .where((code) => code.isNotEmpty)
         .take(8)
         .toSet();
-    if (routeMode == RouteMode.selectedApps && normalizedSelectedApps.isEmpty) {
+    if ((routeMode == RouteMode.selectedApps ||
+            routeMode == RouteMode.excludedApps) &&
+        normalizedSelectedApps.isEmpty) {
       throw const BootstrapFailure(
         'Выберите хотя бы одно приложение в разделе «Правила».',
       );
@@ -4240,7 +4242,9 @@ class AppFirstRuntimeBootstrapper
     required Map<String, dynamic> supportContext,
     required _ClientRuleSetCatalog clientRuleSetCatalog,
   }) async {
-    if (routeMode == RouteMode.selectedApps && selectedApps.isEmpty) {
+    if ((routeMode == RouteMode.selectedApps ||
+            routeMode == RouteMode.excludedApps) &&
+        selectedApps.isEmpty) {
       throw const BootstrapFailure(
         'Выберите хотя бы одно приложение в разделе «Правила».',
       );
@@ -4788,6 +4792,7 @@ class AppFirstRuntimeBootstrapper
           inbound.remove('include_package');
           inbound['exclude_package'] = <String>[
             _androidShellPackageName,
+            if (routeMode == RouteMode.excludedApps) ...selectedApps,
             ..._readTagList(inbound['exclude_package'])
                 .where((value) => value != _androidShellPackageName),
           ];
@@ -5076,7 +5081,8 @@ class AppFirstRuntimeBootstrapper
       dns['servers'] = baseServers;
       dns['rules'] = existingRules;
       final existingFinal = _readText(dns['final']);
-      if (routeMode == RouteMode.fullTunnel) {
+      if (routeMode == RouteMode.fullTunnel ||
+          routeMode == RouteMode.excludedApps) {
         var resolvedFinal = existingFinal;
         Map<String, dynamic>? existingFinalServer;
         for (final server in baseServers) {
@@ -5264,7 +5270,8 @@ class AppFirstRuntimeBootstrapper
     required RouteMode routeMode,
     required String directTag,
   }) {
-    if (routeMode != RouteMode.fullTunnel) {
+    if (routeMode != RouteMode.fullTunnel &&
+        routeMode != RouteMode.excludedApps) {
       return;
     }
 
@@ -5316,7 +5323,8 @@ class AppFirstRuntimeBootstrapper
     required String directTag,
     required String currentFinalOutboundTag,
   }) {
-    if (routeMode != RouteMode.fullTunnel) {
+    if (routeMode != RouteMode.fullTunnel &&
+        routeMode != RouteMode.excludedApps) {
       return currentFinalOutboundTag;
     }
 
@@ -5621,8 +5629,9 @@ class AppFirstRuntimeBootstrapper
       if (routeMode == RouteMode.selectedApps) {
         tunInbound['include_package'] = selectedApps;
       } else {
-        tunInbound['exclude_package'] = const <String>[
+        tunInbound['exclude_package'] = <String>[
           _androidShellPackageName,
+          if (routeMode == RouteMode.excludedApps) ...selectedApps,
         ];
       }
     }
@@ -6837,6 +6846,7 @@ class AppFirstRuntimeBootstrapper
     switch (routeMode) {
       case RouteMode.selectedApps:
         return 'selected_apps';
+      case RouteMode.excludedApps:
       case RouteMode.fullTunnel:
       case RouteMode.allExceptRu:
         return 'all_traffic';
@@ -7553,6 +7563,7 @@ class AppFirstSupportTicketService implements SupportTicketService {
       RouteMode.allExceptRu => 'all_except_ru',
       RouteMode.fullTunnel => 'full_tunnel',
       RouteMode.selectedApps => 'selected_apps',
+      RouteMode.excludedApps => 'excluded_apps',
     };
   }
 

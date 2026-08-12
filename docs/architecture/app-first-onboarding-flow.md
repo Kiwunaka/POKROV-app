@@ -161,9 +161,11 @@ Managed-profile fields:
 - `support_context`
 - `smart_connect`
 - `warp_policy`
-- `access` and `free_caps` for the current free-tier lifecycle
+- `access` plus legacy `free_caps` compatibility facts
 
-Free-tier lifecycle rendering:
+Legacy free-tier rendering (delivery retired):
+
+- current production projects post-trial and expired accounts to `expired_or_blocked`; no free node or basic-access promise is shown
 
 - `free_caps.transition_state` and the matching `access.free_profile_*` facts
   are parsed together; a mismatch or unknown value is shown conservatively as
@@ -229,7 +231,7 @@ Smart-connect fields:
 Shortlist rules:
 
 - premium users probe up to `SMART_CONNECT_SHORTLIST_LIMIT` eligible non-free nodes, default `8`
-- free-tier users stay on `NL-free`
+- expired users receive no node shortlist; legacy free states never fall back to premium nodes
 - shortlist eligibility rejects disabled, draining, unhealthy, stale, dataplane-down, saturated, high-loss/retransmit, overloaded, and transport-incompatible nodes while capacity-aware selection is enabled
 - the client performs best-effort TCP RTT probes for shortlist items with an internal probe endpoint, then calls `POST /api/client/nodes/select` with `mode=auto` for automatic choice or `mode=manual` for saved location choice
 - after a selected node is accepted, the client may refetch `GET /api/client/profile/managed?selected_node_code=...` before materializing the runtime config

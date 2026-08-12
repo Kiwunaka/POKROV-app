@@ -299,15 +299,20 @@ SeedAppContext buildSeedAppContext({
         if (bootstrapContract.supportsSelectedAppsMode &&
             _selectedAppsEnforcementReady)
           RouteMode.selectedApps,
+        if (hostPlatform == HostPlatform.android &&
+            bootstrapContract.supportsSelectedAppsMode &&
+            _selectedAppsEnforcementReady)
+          RouteMode.excludedApps,
       ],
       trialDays: 5,
       telegramBonusDays: 5,
       freeTier: const FreeTierPolicy(
-        trafficGb: 5,
-        periodDays: 30,
-        speedMbps: 50,
-        deviceLimit: 1,
-        nodePool: 'NL-free',
+        enabled: false,
+        trafficGb: 0,
+        periodDays: 0,
+        speedMbps: 0,
+        deviceLimit: 0,
+        nodePool: '',
       ),
       allowsExternalCheckoutOnly: true,
       firstPartyPromosOnly: true,

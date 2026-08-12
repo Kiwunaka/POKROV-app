@@ -2,11 +2,62 @@ package space.pokrov.pokrov_android_shell
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
+import android.os.Build
 import space.pokrov.core.libbox.Libbox
 import space.pokrov.core.libbox.SetupOptions
 import go.Seq
 import java.io.File
 import java.time.Instant
+import java.util.zip.ZipFile
+
+internal data class AndroidPackagedCoreLocation(
+    val artifactDirectory: String,
+    val coreBinaryPath: String,
+)
+
+internal object AndroidPackagedRuntimeLocator {
+    private const val CORE_LIBRARY_NAME = "libpokrov-core.so"
+
+    fun resolve(
+        nativeLibraryDir: String?,
+        apkPaths: List<String>,
+        supportedAbis: List<String>,
+    ): AndroidPackagedCoreLocation? {
+        if (!nativeLibraryDir.isNullOrBlank()) {
+            val extractedCore = File(nativeLibraryDir, CORE_LIBRARY_NAME)
+            if (extractedCore.isFile) {
+                return AndroidPackagedCoreLocation(
+                    artifactDirectory = nativeLibraryDir,
+                    coreBinaryPath = extractedCore.absolutePath,
+                )
+            }
+        }
+
+        for (apkPath in apkPaths.filter(String::isNotBlank).distinct()) {
+            val apk = File(apkPath)
+            if (!apk.isFile) {
+                continue
+            }
+            val packagedEntry = runCatching {
+                ZipFile(apk).use { zip ->
+                    supportedAbis
+                        .asSequence()
+                        .map(String::trim)
+                        .filter(String::isNotEmpty)
+                        .map { abi -> "lib/$abi/$CORE_LIBRARY_NAME" }
+                        .firstOrNull { entry -> zip.getEntry(entry) != null }
+                }
+            }.getOrNull()
+            if (packagedEntry != null) {
+                return AndroidPackagedCoreLocation(
+                    artifactDirectory = apk.absolutePath,
+                    coreBinaryPath = "${apk.absolutePath}!/$packagedEntry",
+                )
+            }
+        }
+        return null
+    }
+}
 
 internal data class AndroidRuntimeEnvironment(
     val artifactDirectory: String,
@@ -48,9 +99,15 @@ internal object AndroidRuntimeState {
 
     @Synchronized
     fun resolveEnvironment(context: Context): AndroidRuntimeEnvironment? {
-        val nativeLibraryDir = context.applicationInfo.nativeLibraryDir ?: return null
-        val libbox = File(nativeLibraryDir, "libpokrov-core.so")
-        if (!libbox.exists()) {
+        val applicationInfo = context.applicationInfo
+        val apkPaths = mutableListOf(applicationInfo.sourceDir)
+        applicationInfo.splitSourceDirs?.let(apkPaths::addAll)
+        val packagedCore = AndroidPackagedRuntimeLocator.resolve(
+            nativeLibraryDir = applicationInfo.nativeLibraryDir,
+            apkPaths = apkPaths,
+            supportedAbis = Build.SUPPORTED_ABIS.toList(),
+        )
+        if (packagedCore == null) {
             environment = null
             phase = AndroidRuntimePhase.ARTIFACT_MISSING
             stagedConfigPath = null
@@ -73,8 +130,8 @@ internal object AndroidRuntimeState {
         }
 
         val resolved = AndroidRuntimeEnvironment(
-            artifactDirectory = nativeLibraryDir,
-            coreBinaryPath = libbox.absolutePath,
+            artifactDirectory = packagedCore.artifactDirectory,
+            coreBinaryPath = packagedCore.coreBinaryPath,
             baseDirectory = baseDirectory,
             workingDirectory = workingDirectory,
             tempDirectory = tempDirectory,

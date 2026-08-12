@@ -7,11 +7,9 @@
   "trial_days": 5,
   "telegram_bonus_days": 5,
   "free_tier": {
-    "node_pool": "NL-free",
-    "traffic_gb": 5,
-    "period_days": 30,
-    "speed_mbps": 50,
-    "device_limit": 1
+    "enabled": false,
+    "status": "retired_pending_replacement",
+    "node_pool": null
   },
   "monetization": {
     "in_app_purchases": false,

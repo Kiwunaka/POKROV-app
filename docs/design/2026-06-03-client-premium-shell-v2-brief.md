@@ -4,6 +4,11 @@ Date: 2026-06-03
 Status: owner-feedback override / implementation direction
 Decision owner: owner/operator
 
+> Owner override (`2026-08-11`): the large logo-led connect disc described below
+> is retained as historical design context but is no longer the implementation
+> direction. The active control is the compact wide CTA defined in `DESIGN.md`
+> and `2026-06-03-client-screen-component-rules.md`.
+
 ## Purpose
 
 Record the post-MVP design correction after the owner rejected the first
@@ -278,6 +283,9 @@ Primary connect control:
   `Отключить`, `Готовим`, or `Пока недоступно`.
 - Use `RepaintBoundary` around the control and keep animations finite enough for
   tests, battery, and low-end Android devices.
+
+The rules in this subsection were superseded by the `2026-08-11` owner override
+at the top of this document.
 
 ## Motion Richness Layer
 

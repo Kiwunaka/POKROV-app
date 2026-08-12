@@ -50,9 +50,13 @@ app invokes it and what the UI may expose.
 
 ## Current Client Surface
 
-- Support exposes a compact assistant sheet and prompt suggestions.
-- Suggestions prefill or submit support questions; they do not run app
-  mutations.
+- Support keeps the primary screen focused on the conversation, one compact
+  lifecycle status, and the composer. Diagnostic attachment stays behind the
+  composer paperclip; Telegram and the optional AI sheet stay as compact app
+  bar actions instead of repeating as full-width cards.
+- The assistant sheet opens directly on one composer. It does not repeat a
+  greeting bubble or expose auto-fill prompt chips; human escalation stays a
+  compact secondary action.
 - Diagnostics require the existing explicit attach/confirmation flow.
 - The user can leave the assistant for ticket-backed human support.
 

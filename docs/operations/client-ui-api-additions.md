@@ -13,7 +13,7 @@ Backend:
 
 - `GET /api/client/locations?platform=<android|windows>&q=<query>`
 - Uses the app-first bearer session.
-- Builds a real node catalog from enabled nodes, preserving the free pool rule (`NL-free`) and premium node pool separation.
+- Builds a real catalog from enabled premium nodes. Expired users receive no delivery node; legacy free roles remain cleanup/rollback-only and never fall back to premium nodes.
 - Returns `auto`, `countries[].cities[]`, `freePoolCode`, `profileRevision`, `transportProfile`, and query metadata.
 
 Client:

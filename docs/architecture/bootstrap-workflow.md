@@ -80,6 +80,7 @@ Current blocking dependency:
 
 - the active runtime is the clean reproducible POKROV Core `v1.0.2` release at source commit `a469240dc3e1e1736ff73348b113f164c277492a`; clients accept only the published AAR/DLL identities pinned in `config/runtime-artifacts.seed.json`
 - `Android` host now reaches a real service-backed connect lane: it can initialize POKROV Core, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
+- Android runtime discovery accepts either an extracted `nativeLibraryDir/libpokrov-core.so` or the ABI-matched `lib/<abi>/libpokrov-core.so` entry in the base/split APK. This is required on physical devices that install the release APK with native-library extraction disabled; Java still loads the packaged Core through the generated bindings
 - Android runtime materialization is intentionally `tun`-only in this lane; desktop loopback listener inbounds such as `mixed-in` and `dns-in` stay disabled for the mobile `VpnService` path
 - Android runtime materialization now keeps backend-managed `dns` servers, selector choice, and route-rule semantics whenever they are already mobile-safe, instead of swapping the whole profile into a custom universal DNS lane
 - the Android bootstrap client uses the canonical `api.pokrov.space` hostname through the platform DNS/TLS transport; provider IPs are not baked into the client
@@ -144,6 +145,10 @@ POKROV Core is an independent repository and release line. The client pins
   route-policy sync or profile fetch. Android receives the staged route-mode
   attestation separately and rejects an empty selected-app allow-list instead
   of interpreting it as a device-wide tunnel.
+- Android `excludedApps` also requires a non-empty selection. Materialization
+  keeps the app itself and every selected package outside `VpnService`, then
+  routes all remaining packages through the managed profile; the server still
+  receives the device-wide route-policy contract.
 - There is no mutable latest-release download and no hidden legacy fallback.
 
 Exact artifacts and platform gates are owned by

@@ -14,6 +14,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.connectHintVisible,
     required this.revealHold,
     required this.bonusSummary,
+    required this.subscriptionInfo,
     required this.telegramBonusBusy,
     required this.warpPolicy,
     required this.warpRuntimeConsent,
@@ -43,6 +44,7 @@ class _QuickConnectSection extends StatelessWidget {
   /// so the staged reveal waits for the handover instead of burning at boot.
   final bool revealHold;
   final AppFirstBonusSummary? bonusSummary;
+  final ClientSubscriptionInfo? subscriptionInfo;
   final bool telegramBonusBusy;
   final WarpRuntimePolicy warpPolicy;
   final bool warpRuntimeConsent;
@@ -138,9 +140,10 @@ class _QuickConnectSection extends StatelessWidget {
                 appContext,
                 bonusSummary,
                 freeProfileAccess,
+                subscriptionInfo,
               ),
               accessPoolLabel: _accessHomeSupportLabel(
-                appContext.accessLane,
+                _effectiveAccessLane(appContext, subscriptionInfo),
                 freeProfileAccess,
               ),
               telegramBonusLabel: telegramBonusBusy
@@ -812,71 +815,84 @@ class _HomeAccessStrip extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: p.line),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: p.accent.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(
-              Icons.workspace_premium_outlined,
-              color: p.accent,
-              size: 25,
-            ),
-          ),
-          const SizedBox(width: 13),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  accessLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: p.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // On narrow phones the badge repeats the access headline and steals
+          // enough width to ellipsize both useful lines. Keep it for wider
+          // layouts where it remains a quick status cue.
+          final showBadge = constraints.maxWidth >= 360;
+          return Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: p.accent.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(18),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  poolLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: p.muted,
-                    height: 1.25,
+                child: Icon(
+                  Icons.workspace_premium_outlined,
+                  color: p.accent,
+                  size: 25,
+                ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      accessLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: p.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      poolLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: p.muted,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (showBadge) ...[
+                const SizedBox(width: 10),
+                // Claim settle bloom: the badge does one spring overshoot when
+                // the bonus lands — keyed on the data flip, not on rebuilds.
+                TweenAnimationBuilder<double>(
+                  key: ValueKey(
+                    'home-access-badge-bloom-$telegramBonusClaimed',
+                  ),
+                  tween: Tween(
+                    begin: telegramBonusClaimed && !motion.disableAnimations
+                        ? 0.9
+                        : 1.0,
+                    end: 1,
+                  ),
+                  duration: motion.duration(_MotionTokens.standard),
+                  curve: PokrovMotionTokens.spring,
+                  builder: (context, scale, child) =>
+                      Transform.scale(scale: scale, child: child),
+                  child: _StatusPill(
+                    label: accessBadgeLabel,
+                    icon: telegramBonusClaimed
+                        ? Icons.check_circle_outline_rounded
+                        : Icons.calendar_today_outlined,
+                    tone: _SectionTone.accent,
                   ),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Claim settle bloom: the badge does one spring overshoot when the
-          // bonus lands — keyed on the data flip, not on rebuilds.
-          TweenAnimationBuilder<double>(
-            key: ValueKey('home-access-badge-bloom-$telegramBonusClaimed'),
-            tween: Tween(
-              begin:
-                  telegramBonusClaimed && !motion.disableAnimations ? 0.9 : 1.0,
-              end: 1,
-            ),
-            duration: motion.duration(_MotionTokens.standard),
-            curve: PokrovMotionTokens.spring,
-            builder: (context, scale, child) =>
-                Transform.scale(scale: scale, child: child),
-            child: _StatusPill(
-              label: accessBadgeLabel,
-              icon: telegramBonusClaimed
-                  ? Icons.check_circle_outline_rounded
-                  : Icons.calendar_today_outlined,
-              tone: _SectionTone.accent,
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
     return content;
@@ -1262,7 +1278,7 @@ String _accessHomeSupportLabel(
     return freeNotice;
   }
   return switch (lane) {
-    AccessLane.trialPremium => 'После пробного периода — продлите доступ',
+    AccessLane.trialPremium => 'Затем — продлите доступ',
     AccessLane.bonusPremium || AccessLane.paidUnlimited => 'Доступ активен',
     AccessLane.freeMonthly => 'Можно продлить до премиум-доступа',
     AccessLane.freeSoftMode => 'Продлите доступ, чтобы подключиться',
@@ -1476,8 +1492,8 @@ class _HomeInfoNotice extends StatelessWidget {
   }
 }
 
-/// One-time "first connection" hint around the idle connect disc: a soft
-/// expanding pulse ring behind the disc plus a small "tap to connect" pill
+/// One-time "first connection" hint around the primary connect control: a
+/// soft expanding outline behind the control plus a small "tap to connect" pill
 /// below it. Motion is transform/opacity-only; under reduced motion the ring
 /// is statically off and only the calm pill remains. Visibility is decided
 /// by the caller and the dismissal is persisted by the shell through
@@ -1549,7 +1565,7 @@ class _ConnectHintHalo extends StatelessWidget {
   }
 }
 
-/// Soft expanding ring behind the idle disc: scale 1.0 -> 1.14 with the
+/// Soft expanding outline behind the idle control: scale 1.0 -> 1.04 with the
 /// low-alpha accent stroke fading out over ~2.4s. Loops continuously in
 /// release builds and collapses to one finite pass under `flutter test`
 /// (see [PokrovLoopingMotion]); it is not built at all under reduced motion.
@@ -1593,14 +1609,14 @@ class _ConnectHintPulseRingState extends State<_ConnectHintPulseRing>
         builder: (context, _) {
           final progress = Curves.easeOutCubic.transform(_controller.value);
           return Transform.scale(
-            scale: 1.0 + progress * 0.14,
+            scale: 1.0 + progress * 0.04,
             child: Opacity(
               // Sine envelope: the attention ring fades in and out without
               // the hard restart pop a linear (1 - t) loop produces.
               opacity: math.sin(math.pi * progress) * 0.35,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(28),
                   border: Border.all(
                     color: widget.accent.withValues(alpha: 0.55),
                     width: 2,

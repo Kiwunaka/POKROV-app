@@ -572,6 +572,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   bool _locationsCatalogBusy = false;
   String? _locationsCatalogError;
   ClientSubscriptionInfo? _subscriptionInfo;
+  PokrovSystemSurfacePreferences _systemSurfacePreferences =
+      const PokrovSystemSurfacePreferences();
   ClientNotificationInbox? _notificationsInbox;
   bool _notificationsBusy = false;
   int _notificationsUnread = 0;
@@ -634,6 +636,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_checkForClientUpdate());
       unawaited(_loadBonusSummary());
+      unawaited(_refreshSubscriptionInfo());
+      unawaited(_loadSystemSurfacePreferences());
     });
   }
 
@@ -990,9 +994,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     setState(() {
       _selectedAppIds.add(normalized);
-      if (widget.appContext.runtimeProfile.supportedRouteModes.contains(
-        RouteMode.selectedApps,
-      )) {
+      if (_selectedRouteMode != RouteMode.excludedApps &&
+          widget.appContext.runtimeProfile.supportedRouteModes.contains(
+            RouteMode.selectedApps,
+          )) {
         _selectedRouteMode = RouteMode.selectedApps;
       }
       _managedProfileDirty = true;
@@ -1048,7 +1053,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   bool get _selectedAppsRouteNeedsSelection =>
-      _selectedRouteMode == RouteMode.selectedApps && _selectedAppIds.isEmpty;
+      (_selectedRouteMode == RouteMode.selectedApps ||
+          _selectedRouteMode == RouteMode.excludedApps) &&
+      _selectedAppIds.isEmpty;
 
   void _openRulesForSelectedApps() {
     setState(() {
@@ -1385,6 +1392,34 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return launcher();
     }
     return openPokrovVpnSettings(widget.appContext.hostPlatform);
+  }
+
+  Future<void> _loadSystemSurfacePreferences() async {
+    final preferences = await readPokrovSystemSurfacePreferences(
+      widget.appContext.hostPlatform,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _systemSurfacePreferences = preferences;
+    });
+  }
+
+  Future<bool> _updateSystemSurfacePreferences(
+    PokrovSystemSurfacePreferences preferences,
+  ) async {
+    final saved = await updatePokrovSystemSurfacePreferences(
+      widget.appContext.hostPlatform,
+      preferences,
+    );
+    if (saved == null || !mounted) {
+      return false;
+    }
+    setState(() {
+      _systemSurfacePreferences = saved;
+    });
+    return true;
   }
 
   Future<PokrovWifiNetworkStatus?> _activeTrustedWifi() async {
@@ -2701,7 +2736,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final resolveFuture = _bootstrapper.resolveManagedProfile(
       hostPlatform: widget.appContext.hostPlatform,
       routeMode: _selectedRouteMode,
-      selectedApps: _selectedRouteMode == RouteMode.selectedApps
+      selectedApps: _selectedRouteMode == RouteMode.selectedApps ||
+              _selectedRouteMode == RouteMode.excludedApps
           ? _selectedAppIds
           : const <String>[],
       preferredNodeCode: _preferredNodeCode,
@@ -3939,6 +3975,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             connectHintVisible: !_connectHintDismissed,
             revealHold: _firstLaunchStep != _FirstLaunchStep.ready,
             bonusSummary: _bonusSummary,
+            subscriptionInfo: _subscriptionInfo,
             telegramBonusBusy: _telegramBonusBusy,
             warpPolicy: _managedWarpPolicy,
             warpRuntimeConsent: _warpRuntimeConsent,
@@ -4027,6 +4064,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             themeMode: widget.themeMode,
             onThemeModeChanged: widget.onThemeModeChanged,
             subscriptionInfo: _subscriptionInfo,
+            systemSurfacePreferences: _systemSurfacePreferences,
+            onSystemSurfacePreferencesChanged: _updateSystemSurfacePreferences,
+            onOpenNotificationSettings: () => openPokrovNotificationSettings(
+              widget.appContext.hostPlatform,
+            ),
             notifications:
                 _notificationsInbox?.items ?? const <ClientNotificationItem>[],
             notificationsUnread: _notificationsUnread,
@@ -4209,7 +4251,7 @@ Future<RouteMode?> _showFirstConnectRouteScopeSheet(
                 const SizedBox(height: 18),
                 Semantics(
                   button: true,
-                  label: 'Оптимизировать всё устройство, рекомендуемый режим',
+                  label: 'Всё устройство, рекомендуемый режим',
                   child: FilledButton.icon(
                     key: const ValueKey('first-connect-scope-whole-device'),
                     onPressed: () => Navigator.of(sheetContext).pop(
@@ -4218,7 +4260,7 @@ Future<RouteMode?> _showFirstConnectRouteScopeSheet(
                     icon: const Icon(Icons.public_rounded),
                     label: const Align(
                       alignment: Alignment.centerLeft,
-                      child: Text('Оптимизировать всё устройство'),
+                      child: Text('Всё устройство'),
                     ),
                   ),
                 ),
@@ -4234,7 +4276,7 @@ Future<RouteMode?> _showFirstConnectRouteScopeSheet(
                   const SizedBox(height: 16),
                   Semantics(
                     button: true,
-                    label: 'Только выбранные приложения',
+                    label: 'Выбранные приложения',
                     child: OutlinedButton.icon(
                       key: const ValueKey('first-connect-scope-selected-apps'),
                       onPressed: () => Navigator.of(sheetContext).pop(
@@ -4243,7 +4285,7 @@ Future<RouteMode?> _showFirstConnectRouteScopeSheet(
                       icon: const Icon(Icons.apps_rounded),
                       label: const Align(
                         alignment: Alignment.centerLeft,
-                        child: Text('Только выбранные приложения'),
+                        child: Text('Выбранные приложения'),
                       ),
                     ),
                   ),

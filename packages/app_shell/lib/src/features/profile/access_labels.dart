@@ -14,6 +14,7 @@ String _accessMainLabel(
   SeedAppContext appContext,
   AppFirstBonusSummary? bonus, [
   FreeProfileAccess? freeProfileAccess,
+  ClientSubscriptionInfo? subscriptionInfo,
 ]) {
   final freeLabel = _freeProfileAccessLabel(freeProfileAccess);
   if (freeLabel != null) {
@@ -23,11 +24,14 @@ String _accessMainLabel(
   final bonusDays = bonus?.channelBonusPremiumDays ?? 0;
   final claimed = (bonus?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
   final totalDays = baseDays + (claimed ? bonusDays : 0);
-  return switch (appContext.accessLane) {
+  final lane = _effectiveAccessLane(appContext, subscriptionInfo);
+  final liveDays = subscriptionInfo?.daysLeft ?? 0;
+  return switch (lane) {
     AccessLane.trialPremium => claimed
-        ? '${ruDays(totalDays)} доступа'
-        : '${ruDays(baseDays)} пробного доступа',
-    AccessLane.bonusPremium => '${ruDays(totalDays)} доступа',
+        ? '${ruDays(liveDays > 0 ? liveDays : totalDays)} доступа'
+        : '${ruDays(liveDays > 0 ? liveDays : baseDays)} пробного доступа',
+    AccessLane.bonusPremium =>
+      '${ruDays(liveDays > 0 ? liveDays : totalDays)} доступа',
     AccessLane.paidUnlimited => 'Премиум активен',
     AccessLane.freeMonthly => 'Базовый режим',
     AccessLane.freeSoftMode => 'Лимит закончился',
@@ -38,8 +42,8 @@ String _accessShortValue(
   SeedAppContext appContext,
   AppFirstBonusSummary? bonus, [
   FreeProfileAccess? freeProfileAccess,
-]
-) {
+  ClientSubscriptionInfo? subscriptionInfo,
+]) {
   final freeValue = _freeProfileAccessShortValue(freeProfileAccess);
   if (freeValue != null) {
     return freeValue;
@@ -48,10 +52,13 @@ String _accessShortValue(
   final bonusDays = bonus?.channelBonusPremiumDays ?? 0;
   final claimed = (bonus?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
   final totalDays = baseDays + (claimed ? bonusDays : 0);
-  return switch (appContext.accessLane) {
-    AccessLane.trialPremium => claimed ? ruDays(totalDays) : ruDays(baseDays),
-    AccessLane.bonusPremium => ruDays(totalDays),
-    AccessLane.paidUnlimited => 'Премиум',
+  final lane = _effectiveAccessLane(appContext, subscriptionInfo);
+  final liveDays = subscriptionInfo?.daysLeft ?? 0;
+  return switch (lane) {
+    AccessLane.trialPremium =>
+      ruDays(liveDays > 0 ? liveDays : (claimed ? totalDays : baseDays)),
+    AccessLane.bonusPremium => ruDays(liveDays > 0 ? liveDays : totalDays),
+    AccessLane.paidUnlimited => liveDays > 0 ? ruDays(liveDays) : 'Премиум',
     AccessLane.freeMonthly => 'Базовый',
     AccessLane.freeSoftMode => 'Лимит',
   };
@@ -63,8 +70,8 @@ int? _accessShortDays(
   SeedAppContext appContext,
   AppFirstBonusSummary? bonus, [
   FreeProfileAccess? freeProfileAccess,
-]
-) {
+  ClientSubscriptionInfo? subscriptionInfo,
+]) {
   if (_freeProfileAccessLabel(freeProfileAccess) != null) {
     return null;
   }
@@ -72,13 +79,28 @@ int? _accessShortDays(
   final bonusDays = bonus?.channelBonusPremiumDays ?? 0;
   final claimed = (bonus?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
   final totalDays = baseDays + (claimed ? bonusDays : 0);
-  return switch (appContext.accessLane) {
-    AccessLane.trialPremium => claimed ? totalDays : baseDays,
-    AccessLane.bonusPremium => totalDays,
-    AccessLane.paidUnlimited ||
-    AccessLane.freeMonthly ||
-    AccessLane.freeSoftMode =>
-      null,
+  final lane = _effectiveAccessLane(appContext, subscriptionInfo);
+  final liveDays = subscriptionInfo?.daysLeft ?? 0;
+  return switch (lane) {
+    AccessLane.trialPremium =>
+      liveDays > 0 ? liveDays : (claimed ? totalDays : baseDays),
+    AccessLane.bonusPremium => liveDays > 0 ? liveDays : totalDays,
+    AccessLane.paidUnlimited => liveDays > 0 ? liveDays : null,
+    AccessLane.freeMonthly || AccessLane.freeSoftMode => null,
+  };
+}
+
+AccessLane _effectiveAccessLane(
+  SeedAppContext appContext,
+  ClientSubscriptionInfo? subscriptionInfo,
+) {
+  return switch (subscriptionInfo?.lane.trim()) {
+    'trialPremium' => AccessLane.trialPremium,
+    'bonusPremium' => AccessLane.bonusPremium,
+    'paidUnlimited' => AccessLane.paidUnlimited,
+    'freeMonthly' => AccessLane.freeMonthly,
+    'freeSoftMode' => AccessLane.freeSoftMode,
+    _ => appContext.accessLane,
   };
 }
 

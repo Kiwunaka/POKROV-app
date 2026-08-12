@@ -259,9 +259,9 @@ class _FirstLaunchChoiceScreen extends StatelessWidget {
               _FirstLaunchChoiceCard(
                 key: const ValueKey('first-launch-new-user'),
                 icon: Icons.flash_on_rounded,
-                title: 'Я новый пользователь',
+                title: 'Начать бесплатно',
                 subtitle:
-                    '${ruDays(appContext.runtimeProfile.trialDays)} премиум бесплатно',
+                    '${ruDays(appContext.runtimeProfile.trialDays)} премиум-доступа',
                 primary: true,
                 compact: compact,
                 onTap: onNewUser,
@@ -269,8 +269,8 @@ class _FirstLaunchChoiceScreen extends StatelessWidget {
               _FirstLaunchChoiceCard(
                 key: const ValueKey('first-launch-returning-user'),
                 icon: Icons.key_rounded,
-                title: 'У меня уже есть доступ',
-                subtitle: 'Восстановить по коду',
+                title: 'У меня есть код',
+                subtitle: 'Восстановить доступ',
                 primary: false,
                 compact: compact,
                 onTap: onReturningUser,

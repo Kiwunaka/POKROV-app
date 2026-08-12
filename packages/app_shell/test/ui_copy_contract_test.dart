@@ -139,8 +139,6 @@ void main() {
     ].join('\n');
 
     for (final forbidden in const <String>[
-      'Скоро',
-      'скоро',
       'Здесь будут',
       'Когда он будет',
       'будут доступны здесь',
@@ -175,6 +173,15 @@ void main() {
     ]) {
       expect(combined, isNot(contains(forbidden)), reason: forbidden);
     }
+    expect(
+      combined,
+      isNot(
+        contains(
+          RegExp(r'(?<![А-Яа-яЁё])(?:Скоро|скоро)(?![А-Яа-яЁё])'),
+        ),
+      ),
+      reason: 'Скоро',
+    );
 
     expect(
       seedShell.readAsStringSync(),

@@ -8,13 +8,16 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.ConnectivityManager
+import android.net.TrafficStats
 import android.net.VpnService
+import android.graphics.Color
 import android.os.Handler
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.os.Process
+import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -54,6 +57,19 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     private val lifecycleActive = AtomicBoolean(true)
     private val runtimeLogLimiter = AndroidRuntimeLogLimiter()
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var currentRouteMode: String = ""
+    private var previousTrafficRxBytes: Long = TrafficStats.UNSUPPORTED.toLong()
+    private var previousTrafficTxBytes: Long = TrafficStats.UNSUPPORTED.toLong()
+    private var previousTrafficSampleAt: Long = 0L
+    private val notificationUpdater = object : Runnable {
+        override fun run() {
+            if (!lifecycleActive.get() || !isTunEstablished()) {
+                return
+            }
+            updateRuntimeNotification()
+            mainHandler.postDelayed(this, NOTIFICATION_REFRESH_MILLIS)
+        }
+    }
 
     override fun onBind(intent: Intent): IBinder? {
         return super.onBind(intent)
@@ -86,6 +102,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             ACTION_START -> {
                 val configPath = intent.getStringExtra(EXTRA_CONFIG_PATH)
                 val routeMode = intent.getStringExtra(EXTRA_ROUTE_MODE).orEmpty()
+                currentRouteMode = routeMode
                 val tileGeneration = intent.getLongExtra(
                     PokrovQuickSettingsTileService.EXTRA_TILE_TRANSITION_GENERATION,
                     NO_TILE_TRANSITION_GENERATION,
@@ -128,6 +145,13 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     }
                 }
             }
+            ACTION_REFRESH_NOTIFICATION -> {
+                if (isTunEstablished()) {
+                    updateRuntimeNotification()
+                } else {
+                    stopSelf()
+                }
+            }
             else -> Unit
         }
         return START_NOT_STICKY
@@ -135,6 +159,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
 
     override fun onDestroy() {
         lifecycleActive.set(false)
+        mainHandler.removeCallbacks(notificationUpdater)
         healthGeneration.incrementAndGet()
         releaseDnsFailureToken()
         if (commandServer != null || activeTun != null) {
@@ -233,6 +258,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         releaseDnsFailureToken()
         AndroidRuntimeState.updateCoreEgressValidation(null)
         markServiceStopped()
+        mainHandler.removeCallbacks(notificationUpdater)
+        resetTrafficSample()
         PokrovQuickSettingsTileService.requestRefresh(this)
         try {
             commandServer?.closeService()
@@ -300,9 +327,26 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(contentText)
-            .setSmallIcon(android.R.drawable.stat_notify_sync)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
+            .setSmallIcon(R.drawable.ic_pokrov_system)
+            .setColor(Color.rgb(28, 145, 94))
             .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOnlyAlertOnce(true)
             .setOngoing(true)
+            .apply {
+                if (pendingIntent != null) {
+                    setContentIntent(pendingIntent)
+                    addAction(
+                        NotificationCompat.Action.Builder(
+                            android.R.drawable.ic_menu_view,
+                            "Открыть",
+                            pendingIntent,
+                        ).build(),
+                    )
+                }
+            }
             .addAction(
                 NotificationCompat.Action.Builder(
                     android.R.drawable.ic_menu_close_clear_cancel,
@@ -310,12 +354,70 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     stopIntent,
                 ).build(),
             )
-            .apply {
-                if (pendingIntent != null) {
-                    setContentIntent(pendingIntent)
-                }
-            }
             .build()
+    }
+
+    private fun updateRuntimeNotification() {
+        val profile = AndroidRuntimeProfileStore.load(this)
+        val preferences = AndroidSystemSurfacePreferencesStore.load(this)
+        val country = profile?.displayCountry
+            ?.takeIf { preferences.showCountry }
+            ?.trim()
+            .orEmpty()
+        val routeMode = profile?.displayRouteMode.orEmpty().ifBlank { currentRouteMode }
+        val details = mutableListOf("Защита включена")
+        if (preferences.showRouteMode) {
+            details += notificationRouteLabel(routeMode)
+        }
+        if (preferences.showSpeed) {
+            details += sampleTrafficSpeed()
+        } else {
+            resetTrafficSample()
+        }
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(
+            NOTIFICATION_ID,
+            buildNotification(
+                contentText = details.joinToString(" · "),
+                title = if (country.isEmpty()) "POKROV включен" else "POKROV · $country",
+            ),
+        )
+    }
+
+    private fun sampleTrafficSpeed(): String {
+        val now = SystemClock.elapsedRealtime()
+        val rx = TrafficStats.getUidRxBytes(Process.myUid())
+        val tx = TrafficStats.getUidTxBytes(Process.myUid())
+        val elapsed = now - previousTrafficSampleAt
+        val hasPrevious = previousTrafficSampleAt > 0L &&
+            previousTrafficRxBytes >= 0L &&
+            previousTrafficTxBytes >= 0L &&
+            elapsed > 0L
+        val text = if (hasPrevious) {
+            val down = ((rx - previousTrafficRxBytes).coerceAtLeast(0L) * 1000L) / elapsed
+            val up = ((tx - previousTrafficTxBytes).coerceAtLeast(0L) * 1000L) / elapsed
+            "↓ ${formatTrafficRate(down)}  ↑ ${formatTrafficRate(up)}"
+        } else {
+            "Скорость: измеряем…"
+        }
+        previousTrafficRxBytes = rx
+        previousTrafficTxBytes = tx
+        previousTrafficSampleAt = now
+        return text
+    }
+
+    private fun resetTrafficSample() {
+        previousTrafficRxBytes = TrafficStats.UNSUPPORTED.toLong()
+        previousTrafficTxBytes = TrafficStats.UNSUPPORTED.toLong()
+        previousTrafficSampleAt = 0L
+    }
+
+    private fun notificationRouteLabel(routeMode: String): String = when (routeMode) {
+        "allExceptRu" -> "РФ напрямую"
+        "selectedApps", ROUTE_MODE_SELECTED_APPS -> "Выбранные приложения"
+        "excludedApps", ROUTE_MODE_EXCLUDED_APPS -> "Выбранные напрямую"
+        "fullTunnel" -> "Весь трафик через VPN"
+        else -> "VPN для устройства"
     }
 
     private fun beginForegroundRuntime() {
@@ -601,11 +703,11 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(
             NOTIFICATION_ID,
-            buildNotification(
-                contentText = "POKROV работает на этом устройстве.",
-                title = "POKROV включен",
-            ),
+            buildNotification(contentText = "Защита включена"),
         )
+        resetTrafficSample()
+        mainHandler.removeCallbacks(notificationUpdater)
+        notificationUpdater.run()
         return tun.fd
     }
 
@@ -772,14 +874,9 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
 
     override fun sendNotification(notification: LibboxNotification) {
         mainHandler.post {
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.notify(
-                NOTIFICATION_ID,
-                buildNotification(
-                    contentText = "POKROV работает на этом устройстве.",
-                    title = "POKROV",
-                ),
-            )
+            if (isTunEstablished()) {
+                updateRuntimeNotification()
+            }
         }
     }
 
@@ -891,9 +988,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         private const val NOTIFICATION_CHANNEL_ID = "pokrov-runtime"
         private const val NOTIFICATION_ID = 1407
         private const val CORE_EGRESS_RETRY_DELAY_MILLIS = 250L
+        private const val NOTIFICATION_REFRESH_MILLIS = 3_000L
         private const val ROUTE_MODE_SELECTED_APPS = "selected_apps"
+        private const val ROUTE_MODE_EXCLUDED_APPS = "excluded_apps"
         const val ACTION_START = "space.pokrov.runtime.START"
         const val ACTION_STOP = "space.pokrov.runtime.STOP"
+        const val ACTION_REFRESH_NOTIFICATION = "space.pokrov.runtime.REFRESH_NOTIFICATION"
         const val EXTRA_CONFIG_PATH = "extra_config_path"
         const val EXTRA_ROUTE_MODE = "extra_route_mode"
         private const val NO_TILE_TRANSITION_GENERATION = Long.MIN_VALUE
@@ -984,6 +1084,29 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             }
             context.startService(intent)
             PokrovQuickSettingsTileService.requestRefresh(context)
+        }
+
+        fun refreshNotification(context: Context) {
+            if (!isTunEstablished()) {
+                return
+            }
+            context.startService(
+                Intent(context, PokrovRuntimeVpnService::class.java).apply {
+                    action = ACTION_REFRESH_NOTIFICATION
+                },
+            )
+        }
+    }
+}
+
+internal fun formatTrafficRate(bytesPerSecond: Long): String {
+    val safe = bytesPerSecond.coerceAtLeast(0L)
+    return when {
+        safe < 1024L -> "$safe Б/с"
+        safe < 1024L * 1024L -> "${safe / 1024L} КБ/с"
+        else -> {
+            val tenths = (safe * 10L) / (1024L * 1024L)
+            "${tenths / 10L}.${tenths % 10L} МБ/с"
         }
     }
 }

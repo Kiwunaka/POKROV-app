@@ -1,8 +1,8 @@
 {
   "lane": "POKROV-app/main",
-  "status": "outside_store_beta_retained_new_public_cutover_blocked_pending_exact_candidate_signing",
+  "status": "android_direct_apk_signed_device_journey_pass_public_cutover_blocked_pending_distribution_recovery_and_windows_gates",
   "public_cutover_allowed": false,
-  "last_updated": "2026-08-04",
+  "last_updated": "2026-08-12",
   "latest_repo_backed_release": {
     "version": "1.0.0-beta",
     "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.0-beta",
@@ -13,14 +13,34 @@
     "live_app_session_download_smoke": "PASS_BRAIN_SIGNED_SYNTHETIC_INITDATA_REAL_USER_MANUAL_PENDING_REFRESHED"
   },
   "android_release": {
-    "beta_distribution": "outside_store_apk_staged",
+    "beta_distribution": "direct_apk_production_signed_local_candidate",
     "public_approved": false,
+    "current_internal_candidate": {
+      "version_name": "1.0.2",
+      "version_code": 9,
+      "apk_size_bytes": 287207515,
+      "apk_sha256": "9820CDA01DEA74CDBD34A9D1FA76B7CFC1DD24D0D452D8521239DFF9DA6BEACA",
+      "build_mode": "release",
+      "debuggable": false,
+      "signing_state": "PASS_PRODUCTION_SELF_MANAGED_DIRECT_APK",
+      "certificate_sha256": "0A0602A7DF5D96A0B427909D004F3DDF26DEF86587634BF16694DA8D654B2500",
+      "signature_scheme": "APK_SIGNATURE_SCHEME_V2",
+      "emulator_install_identity": "SUPPORTING_PREDECESSOR_1_0_2_7_ONLY",
+      "emulator_launch_localhost_preflight": "SUPPORTING_PREDECESSOR_1_0_2_7_ONLY",
+      "physical_device_install_identity": "PASS_EXACT_HASH_SAME_SIGNER_UPDATE",
+      "physical_device_pre_tunnel": "PASS_FIRST_LAUNCH_ROUTE_SCOPE_PACKAGED_CORE_ZERO_CRASH_LOG",
+      "quick_settings_tile": "PASS_BRANDED_START_STOP_AND_NOTIFICATION_CONTROLS",
+      "chrome_egress_check": "PASS_SMART_AND_PER_APP_COUNTRY_SPLIT_NO_RAW_IP_RETAINED",
+      "physical_device_audit": "PASS_RELEASE_CRITICAL_JOURNEY_ENDURANCE_MATRIX_MANUAL_OWNER_TEST",
+      "offline_signing_recovery_backup": "MANUAL_OWNER_TEST",
+      "play_store_channel": "NOT_REQUESTED_DIRECT_APK_FIRST",
+      "public_approved": false
+    },
     "blocked_on": [
-      "production Android signing PASS for the exact next public candidate",
-      "raw physical-device audit proof if replacing operator attestation",
+      "secure offline recovery copy of the direct-APK signing key and password",
+      "public direct-download upload, checksum publication, and clean-install smoke",
       "real-user app-session /api/client/apps download smoke",
-      "live install/connect/dashboard smoke from exact uploaded APK",
-      "Play/store readiness claims"
+      "live install/connect/dashboard smoke from exact uploaded APK"
     ],
     "accepted_evidence": [
       "operator-attested physical-device localhost/control-surface audit for this beta wave"
@@ -41,14 +61,14 @@
     ]
   },
   "blocking_dependencies": [
-    "new public artifact promotion and runtime sync remain blocked until exact-candidate signing gates pass",
+    "new public artifact promotion and runtime sync remain blocked until exact-candidate distribution, recovery, and owner gates pass",
     "real-user app-session runtime handoff smoke still requires owner access",
     "iOS production connectivity still requires on-device packet-tunnel proof plus reviewed entitlements",
     "the universal POKROV Core 1.0.2 macOS dylib still requires a macOS build and ABI probe",
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
-    "Android production signing and Windows trusted signing remain operator-owned exact-candidate gates"
+    "Android production signing is complete for the local direct-APK candidate; Windows trusted signing remains an operator-owned exact-candidate gate"
   ],
   "repo_side_closed": [
     "P0-P6 beta implementation scope",
@@ -56,6 +76,7 @@
     "SHA256SUMS and release handoff metadata aligned",
     "authenticated GitHub download proof for all current release assets",
     "Android build-tool future-support warning closed with Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0",
+    "Android 1.0.2+9 direct APK is release-built, non-debuggable, self-managed production-signed, independently verified, exact-hash installed on physical hardware, and release-critical tunnel/routing verified",
     "release-note guardrails recorded; post-announcement monitoring remains operator work"
   ],
   "ios_release_gates": [

@@ -12,6 +12,10 @@ internal data class PersistedRuntimeProfile(
      * freshly staged profile. Missing legacy metadata is deliberately false.
      */
     val quickSettingsEligible: Boolean = false,
+    /** Safe display-only metadata; never contains provider hosts or credentials. */
+    val displayCountry: String = "",
+    val displayNodeCode: String = "",
+    val displayRouteMode: String = "",
 )
 
 internal fun PersistedRuntimeProfile.canStartFromQuickSettings(): Boolean =
@@ -27,6 +31,9 @@ internal object AndroidRuntimeProfileStore {
     private const val KEY_CONFIG_PATH = "config_path"
     private const val KEY_QUICK_SETTINGS_ELIGIBLE = "quick_settings_eligible"
     private const val KEY_ROUTE_MODE = "route_mode"
+    private const val KEY_DISPLAY_COUNTRY = "display_country"
+    private const val KEY_DISPLAY_NODE_CODE = "display_node_code"
+    private const val KEY_DISPLAY_ROUTE_MODE = "display_route_mode"
 
     fun save(context: Context, profile: PersistedRuntimeProfile) {
         context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
@@ -35,6 +42,9 @@ internal object AndroidRuntimeProfileStore {
             .putString(KEY_CONFIG_PATH, profile.configPath)
             .putString(KEY_ROUTE_MODE, profile.routeMode)
             .putBoolean(KEY_QUICK_SETTINGS_ELIGIBLE, profile.quickSettingsEligible)
+            .putString(KEY_DISPLAY_COUNTRY, profile.displayCountry)
+            .putString(KEY_DISPLAY_NODE_CODE, profile.displayNodeCode)
+            .putString(KEY_DISPLAY_ROUTE_MODE, profile.displayRouteMode)
             .apply()
     }
 
@@ -58,6 +68,9 @@ internal object AndroidRuntimeProfileStore {
                 KEY_QUICK_SETTINGS_ELIGIBLE,
                 false,
             ),
+            displayCountry = preferences.getString(KEY_DISPLAY_COUNTRY, "").orEmpty(),
+            displayNodeCode = preferences.getString(KEY_DISPLAY_NODE_CODE, "").orEmpty(),
+            displayRouteMode = preferences.getString(KEY_DISPLAY_ROUTE_MODE, "").orEmpty(),
         )
     }
 

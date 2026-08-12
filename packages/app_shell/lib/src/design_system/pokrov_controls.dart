@@ -814,22 +814,26 @@ class _PokrovHomeChipState extends State<PokrovHomeChip> {
               children: [
                 Icon(widget.icon, size: 16, color: tokens.muted),
                 const SizedBox(width: 8),
-                ConstrainedBox(
-                  key: PokrovHomeChip.labelMotionKey,
-                  constraints: BoxConstraints(
-                    minWidth: widget.minLabelWidth,
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: motion.duration(PokrovMotionTokens.short),
-                    transitionBuilder: pokrovFadeSlideTransition,
-                    child: Text(
-                      widget.label,
-                      key: ValueKey(widget.label),
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: tokens.ink,
-                            fontWeight: FontWeight.w700,
-                          ),
+                Flexible(
+                  child: ConstrainedBox(
+                    key: PokrovHomeChip.labelMotionKey,
+                    constraints: BoxConstraints(
+                      minWidth: widget.minLabelWidth,
+                    ),
+                    child: AnimatedSwitcher(
+                      duration: motion.duration(PokrovMotionTokens.short),
+                      transitionBuilder: pokrovFadeSlideTransition,
+                      child: Text(
+                        widget.label,
+                        key: ValueKey(widget.label),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: tokens.ink,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
                     ),
                   ),
                 ),

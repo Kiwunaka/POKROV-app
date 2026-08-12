@@ -1,6 +1,9 @@
 package space.pokrov.pokrov_android_shell
 
 import java.io.File
+import java.nio.file.Files
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -18,6 +21,52 @@ class AndroidRuntimeStateTest {
     @After
     fun tearDown() {
         resetState()
+    }
+
+    @Test
+    fun packagedRuntimeLocator_findsCoreInsideApk_whenNativeLibsAreNotExtracted() {
+        val apk = File.createTempFile("pokrov-runtime", ".apk")
+        try {
+            ZipOutputStream(apk.outputStream()).use { zip ->
+                zip.putNextEntry(ZipEntry("lib/arm64-v8a/libpokrov-core.so"))
+                zip.write(byteArrayOf(1))
+                zip.closeEntry()
+            }
+
+            val resolved = AndroidPackagedRuntimeLocator.resolve(
+                nativeLibraryDir = File(apk.parentFile, "empty-native-libs").absolutePath,
+                apkPaths = listOf(apk.absolutePath),
+                supportedAbis = listOf("arm64-v8a"),
+            )
+
+            assertEquals(apk.absolutePath, resolved?.artifactDirectory)
+            assertEquals(
+                "${apk.absolutePath}!/lib/arm64-v8a/libpokrov-core.so",
+                resolved?.coreBinaryPath,
+            )
+        } finally {
+            apk.delete()
+        }
+    }
+
+    @Test
+    fun packagedRuntimeLocator_prefersExtractedCore_whenAvailable() {
+        val nativeDirectory = Files.createTempDirectory("pokrov-native-").toFile()
+        try {
+            val extractedCore = File(nativeDirectory, "libpokrov-core.so")
+                .apply { writeBytes(byteArrayOf(1)) }
+
+            val resolved = AndroidPackagedRuntimeLocator.resolve(
+                nativeLibraryDir = nativeDirectory.absolutePath,
+                apkPaths = listOf(File(nativeDirectory, "missing.apk").absolutePath),
+                supportedAbis = listOf("arm64-v8a"),
+            )
+
+            assertEquals(nativeDirectory.absolutePath, resolved?.artifactDirectory)
+            assertEquals(extractedCore.absolutePath, resolved?.coreBinaryPath)
+        } finally {
+            nativeDirectory.deleteRecursively()
+        }
     }
 
     @Test

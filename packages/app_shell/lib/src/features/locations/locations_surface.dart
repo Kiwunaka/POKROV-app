@@ -153,7 +153,6 @@ class _LocationsSectionState extends State<_LocationsSection> {
     final smartConnect = widget.smartConnectProfile;
     final shortlist = smartConnect?.shortlist ?? const <SmartConnectNode>[];
     final catalogEntries = _catalogEntries(widget.locationsCatalog);
-    final premiumPool = _accessPoolLabel(widget.appContext.accessLane);
     final hasCatalog = catalogEntries.isNotEmpty;
     final hasShortlist = widget.hasProvisionedAccess && shortlist.isNotEmpty;
     final hasList = hasCatalog || hasShortlist;
@@ -212,7 +211,7 @@ class _LocationsSectionState extends State<_LocationsSection> {
           title: 'Автоматически',
           subtitle: switch (autoStatus) {
             _AutoLocationStatus.active =>
-              'POKROV выберет быстрый маршрут. $premiumPool · ${_routeModeShortLabel(widget.selectedRouteMode)}',
+              'POKROV выберет быстрый маршрут · ${_routeModeShortLabel(widget.selectedRouteMode)}',
             _AutoLocationStatus.manual =>
               'Выбрана локация вручную. Нажмите, чтобы вернуть автоматический выбор.',
             _AutoLocationStatus.unavailable => 'Сначала включите POKROV VPN',
@@ -428,27 +427,33 @@ class _AutoLocationCard extends StatelessWidget {
           color: isActive ? p.accent.withValues(alpha: 0.16) : p.line,
         ),
       ),
-      child: Column(
-        children: [
-          Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 330;
+          final statusPill = _StatusPill(
+            label: value,
+            icon: statusIcon,
+            tone: statusTone,
+          );
+          final header = Row(
             children: [
               Container(
-                width: 54,
-                height: 54,
+                width: compact ? 48 : 54,
+                height: compact ? 48 : 54,
                 decoration: BoxDecoration(
                   color:
                       isActive ? p.accent.withValues(alpha: 0.12) : p.surface,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(compact ? 16 : 18),
                 ),
                 child: Icon(
                   isUnavailable
                       ? Icons.lock_outline_rounded
                       : Icons.travel_explore_rounded,
                   color: isActive ? p.accent : p.muted,
-                  size: 27,
+                  size: compact ? 24 : 27,
                 ),
               ),
-              const SizedBox(width: 14),
+              SizedBox(width: compact ? 12 : 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -475,25 +480,47 @@ class _AutoLocationCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              if (busy) ...[
-                // Quiet refresh signal beside the status pill — indeterminate
-                // Material bars read as foreign in this shell.
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CupertinoActivityIndicator(radius: 8),
-                ),
-                const SizedBox(width: 10),
+              if (!compact) ...[
+                const SizedBox(width: 12),
+                if (busy) ...[
+                  // Quiet refresh signal beside the status pill — indeterminate
+                  // Material bars read as foreign in this shell.
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CupertinoActivityIndicator(radius: 8),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                statusPill,
               ],
-              _StatusPill(
-                label: value,
-                icon: statusIcon,
-                tone: statusTone,
+            ],
+          );
+          if (!compact) {
+            return header;
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              header,
+              const SizedBox(height: 12),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (busy) ...[
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CupertinoActivityIndicator(radius: 8),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                  statusPill,
+                ],
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
     return KeyedSubtree(
@@ -555,99 +582,111 @@ class _ClientLocationCityRow extends StatelessWidget {
     final content = Padding(
       key: ValueKey('locations-catalog-city-${city.code}'),
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          _LocationFlagBadge(code: country.code, country: country.country),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  city.city.trim().isEmpty ? country.country : city.city,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: p.ink,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: p.muted, height: 1.25),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  metrics,
-                  key: ValueKey('locations-catalog-metrics-${city.code}'),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: p.muted,
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          IconButton(
-            key: ValueKey('locations-favorite-${city.code}'),
-            tooltip: favorite ? 'Убрать из избранного' : 'Добавить в избранное',
-            onPressed: disabled ? null : onFavoriteToggle,
-            icon: Icon(
-              favorite ? Icons.star_rounded : Icons.star_border_rounded,
-              color: favorite ? p.reward : p.muted,
-              size: 22,
-            ),
-          ),
-          _SignalBars(
-            key: ValueKey('locations-signal-${city.code}'),
-            score: city.healthScore,
-            verified: freshness == _LocationMetricFreshness.current,
-          ),
-          const SizedBox(width: 14),
-          if (selectionEnabled)
-            AnimatedContainer(
-              duration: _MotionScope.of(context).duration(_MotionTokens.short),
-              curve: _MotionTokens.ease,
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: selected ? p.accent : Colors.transparent,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: selected ? p.accent : p.ink.withValues(alpha: 0.22),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 330;
+          return Row(
+            children: [
+              _LocationFlagBadge(code: country.code, country: country.country),
+              SizedBox(width: compact ? 10 : 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      city.city.trim().isEmpty ? country.country : city.city,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: p.ink,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: p.muted,
+                            height: 1.25,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      metrics,
+                      key: ValueKey('locations-catalog-metrics-${city.code}'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: p.muted,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ],
                 ),
               ),
-              child: selected
-                  ? Icon(
-                      Icons.check_rounded,
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      size: 18,
-                    )
-                  : null,
-            )
-          else
-            Tooltip(
-              message: 'Список локаций ещё не готов',
-              child: SizedBox(
-                key: ValueKey('locations-selection-locked-${city.code}'),
-                width: 30,
-                height: 30,
-                child: Icon(
-                  Icons.lock_outline_rounded,
-                  color: p.muted,
-                  size: 19,
+              SizedBox(width: compact ? 4 : 12),
+              IconButton(
+                key: ValueKey('locations-favorite-${city.code}'),
+                tooltip:
+                    favorite ? 'Убрать из избранного' : 'Добавить в избранное',
+                onPressed: disabled ? null : onFavoriteToggle,
+                icon: Icon(
+                  favorite ? Icons.star_rounded : Icons.star_border_rounded,
+                  color: favorite ? p.reward : p.muted,
+                  size: 22,
                 ),
               ),
-            ),
-        ],
+              if (!compact) ...[
+                _SignalBars(
+                  key: ValueKey('locations-signal-${city.code}'),
+                  score: city.healthScore,
+                  verified: freshness == _LocationMetricFreshness.current,
+                ),
+                const SizedBox(width: 14),
+              ] else
+                const SizedBox(width: 4),
+              if (selectionEnabled)
+                AnimatedContainer(
+                  duration:
+                      _MotionScope.of(context).duration(_MotionTokens.short),
+                  curve: _MotionTokens.ease,
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: selected ? p.accent : Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color:
+                          selected ? p.accent : p.ink.withValues(alpha: 0.22),
+                    ),
+                  ),
+                  child: selected
+                      ? Icon(
+                          Icons.check_rounded,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          size: 18,
+                        )
+                      : null,
+                )
+              else
+                Tooltip(
+                  message: 'Список локаций ещё не готов',
+                  child: SizedBox(
+                    key: ValueKey('locations-selection-locked-${city.code}'),
+                    width: 30,
+                    height: 30,
+                    child: Icon(
+                      Icons.lock_outline_rounded,
+                      color: p.muted,
+                      size: 19,
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
     final Widget row;
@@ -710,99 +749,111 @@ class _SmartConnectNodeRow extends StatelessWidget {
     final content = Padding(
       key: ValueKey('locations-smart-node-${node.code}'),
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          _LocationFlagBadge(code: node.country, country: node.country),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  node.country.trim().isEmpty
-                      ? _smartConnectNodeTitle(node)
-                      : node.country,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: p.ink,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  city,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: p.muted, height: 1.25),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '$quality · $latency',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: selected ? p.accent : p.muted,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          IconButton(
-            key: ValueKey('locations-favorite-${node.code}'),
-            tooltip: favorite ? 'Убрать из избранного' : 'Добавить в избранное',
-            onPressed: disabled ? null : onFavoriteToggle,
-            icon: Icon(
-              favorite ? Icons.star_rounded : Icons.star_border_rounded,
-              color: favorite ? p.reward : p.muted,
-              size: 22,
-            ),
-          ),
-          _SignalBars(
-            key: ValueKey('locations-signal-${node.code}'),
-            score: node.rankHint.healthScore,
-          ),
-          const SizedBox(width: 14),
-          if (selectionEnabled)
-            AnimatedContainer(
-              duration: _MotionScope.of(context).duration(_MotionTokens.short),
-              curve: _MotionTokens.ease,
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: selected ? p.accent : Colors.transparent,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: selected ? p.accent : p.ink.withValues(alpha: 0.22),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 330;
+          return Row(
+            children: [
+              _LocationFlagBadge(code: node.country, country: node.country),
+              SizedBox(width: compact ? 10 : 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      node.country.trim().isEmpty
+                          ? _smartConnectNodeTitle(node)
+                          : node.country,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: p.ink,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      city,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: p.muted,
+                            height: 1.25,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$quality · $latency',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: selected ? p.accent : p.muted,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ],
                 ),
               ),
-              child: selected
-                  ? Icon(
-                      Icons.check_rounded,
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      size: 18,
-                    )
-                  : null,
-            )
-          else
-            Tooltip(
-              message: 'Список локаций ещё не готов',
-              child: SizedBox(
-                key: ValueKey('locations-selection-locked-${node.code}'),
-                width: 30,
-                height: 30,
-                child: Icon(
-                  Icons.lock_outline_rounded,
-                  color: p.muted,
-                  size: 19,
+              SizedBox(width: compact ? 4 : 12),
+              IconButton(
+                key: ValueKey('locations-favorite-${node.code}'),
+                tooltip:
+                    favorite ? 'Убрать из избранного' : 'Добавить в избранное',
+                onPressed: disabled ? null : onFavoriteToggle,
+                icon: Icon(
+                  favorite ? Icons.star_rounded : Icons.star_border_rounded,
+                  color: favorite ? p.reward : p.muted,
+                  size: 22,
                 ),
               ),
-            ),
-        ],
+              if (!compact) ...[
+                _SignalBars(
+                  key: ValueKey('locations-signal-${node.code}'),
+                  score: node.rankHint.healthScore,
+                ),
+                const SizedBox(width: 14),
+              ] else
+                const SizedBox(width: 4),
+              if (selectionEnabled)
+                AnimatedContainer(
+                  duration:
+                      _MotionScope.of(context).duration(_MotionTokens.short),
+                  curve: _MotionTokens.ease,
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: selected ? p.accent : Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color:
+                          selected ? p.accent : p.ink.withValues(alpha: 0.22),
+                    ),
+                  ),
+                  child: selected
+                      ? Icon(
+                          Icons.check_rounded,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          size: 18,
+                        )
+                      : null,
+                )
+              else
+                Tooltip(
+                  message: 'Список локаций ещё не готов',
+                  child: SizedBox(
+                    key: ValueKey('locations-selection-locked-${node.code}'),
+                    width: 30,
+                    height: 30,
+                    child: Icon(
+                      Icons.lock_outline_rounded,
+                      color: p.muted,
+                      size: 19,
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
     final Widget row;

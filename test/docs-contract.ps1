@@ -1389,7 +1389,7 @@ foreach ($requiredPublicTarget in @('android', 'windows')) {
   }
 }
 
-$blockedAndroidReadiness = 'outside_store_beta_retained_new_public_promotion_blocked_pending_production_signing'
+$blockedAndroidReadiness = 'direct_apk_production_signed_device_journey_pass_public_promotion_blocked_pending_distribution_and_recovery_gates'
 $blockedWindowsReadiness = 'outside_store_unsigned_beta_retained_new_public_promotion_blocked_pending_trusted_signing'
 if ($cutover.android_release.public_approved -ne $true -and
     $platform.release_readiness.android -ne $blockedAndroidReadiness) {

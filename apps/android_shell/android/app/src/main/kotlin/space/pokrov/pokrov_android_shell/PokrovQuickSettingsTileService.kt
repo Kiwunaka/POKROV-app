@@ -10,6 +10,7 @@ import android.os.Handler
 import android.os.Looper
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
+import android.graphics.drawable.Icon
 import java.io.File
 
 internal enum class QuickTileAction {
@@ -167,26 +168,43 @@ class PokrovQuickSettingsTileService : TileService() {
 
     private fun refreshTile() {
         val tile = qsTile ?: return
-        AndroidRuntimeProfileStore.restoreIntoRuntimeState(this)
+        val profile = AndroidRuntimeProfileStore.restoreIntoRuntimeState(this)
+        val preferences = AndroidSystemSurfacePreferencesStore.load(this)
         val snapshot = authoritativeRuntimeSnapshot()
+        val country = profile?.displayCountry
+            ?.takeIf { preferences.showCountry }
+            ?.trim()
+            .orEmpty()
+        tile.icon = Icon.createWithResource(this, R.drawable.ic_pokrov_system)
+        tile.label = "POKROV"
         when (resolveQuickTileVisualState(snapshot.isRunning, snapshot.connectionPending)) {
             QuickTileVisualState.ACTIVE -> {
                 tile.state = Tile.STATE_ACTIVE
-                tile.label = "POKROV включен"
-                tile.contentDescription = "POKROV подключен. Нажмите, чтобы отключить."
+                tile.contentDescription = if (country.isEmpty()) {
+                    "POKROV подключен. Нажмите, чтобы отключить."
+                } else {
+                    "POKROV подключен через $country. Нажмите, чтобы отключить."
+                }
+                setTileSubtitle(tile, country.ifEmpty { "Включено" })
             }
             QuickTileVisualState.PENDING -> {
                 tile.state = Tile.STATE_ACTIVE
-                tile.label = "POKROV подключается"
                 tile.contentDescription = "POKROV готовит подключение. Нажмите, чтобы отменить."
+                setTileSubtitle(tile, "Подключение…")
             }
             QuickTileVisualState.INACTIVE -> {
                 tile.state = Tile.STATE_INACTIVE
-                tile.label = "POKROV"
                 tile.contentDescription = "POKROV отключен. Нажмите, чтобы подключить."
+                setTileSubtitle(tile, "Выключено")
             }
         }
         tile.updateTile()
+    }
+
+    private fun setTileSubtitle(tile: Tile, value: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            tile.subtitle = value
+        }
     }
 
     private fun authoritativeRuntimeSnapshot(): QuickTileRuntimeSnapshot {

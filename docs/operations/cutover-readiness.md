@@ -1,6 +1,6 @@
 # Cutover Readiness
 
-Last updated: 2026-07-22
+Last updated: 2026-08-12
 
 This document tracks what must be true before `POKROV-app/main` is approved as the public `Android + Windows` release lane.
 
@@ -12,20 +12,20 @@ Historical mapping note:
 
 ## Current Status
 
-- cutover state: `retained 1.0.0-beta evidence; new public promotion and runtime sync BLOCKED pending exact-candidate signing`
+- cutover state: `2026-08-12 Android direct-APK candidate production-signing and release-critical physical journey PASS; publication still waits for recovery, distribution handoff, and owner gates`
 - lane path: `C:/Users/kiwun/Documents/ai/POKROV-app`
 - lane ownership: `canonical client development repo for POKROV-app/main`
 - public scope in this document: `Android + Windows`
 - Apple scope in this wave: `readiness only`
 - base decision: `Karing-based candidate reopened for gated spike; clean-room lane remains current until candidate gates pass`
 - Apple release state: `checked-in unsigned service lane`
-- Android release state: `operator-attested outside-store beta APK refreshed for 1.0.0-beta; live install/app-session smoke remains manual`
+- Android release state: `2026-08-12 direct APK 1.0.2+9 is release-built, non-debuggable, self-managed production-signed, independently verified, exact-hash installed, and tunnel/routing verified on physical Android 12 hardware; it is not yet distribution-approved`
 - Windows release state: `unsigned outside-store beta setup EXE refreshed for 1.0.0-beta; live install/app-session smoke remains manual`
-- Android and Windows engineering verification: `2026-05-15 beta evidence retained; 2026-06-03 local Task 8 verification passed for app-first backend tests, Flutter analyze/test, Android debug APK smoke, and Windows release build; 2026-06-04 local RC built Android release-smoke APK/AAB and unsigned Windows setup/zip/manifest; 2026-06-05 local 1.0.0-beta P6 refreshed focused Flutter tests/analyze, root preflight, Android release APK, Windows unsigned setup/zip/manifest, and GitHub prerelease assets; 2026-06-05 Android toolchain refresh moved the host lane to Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0 with Android analyze/test/APK/AAB green; final closure pass verified authenticated GitHub download hashes for all current release assets`
+- Android and Windows engineering verification: `2026-08-12 exact Android 1.0.2+9 installed and cold-launched on physical hardware, traversed onboarding/Home/route scope, resolved packaged Core with native extraction disabled, connected to Germany, and passed smart plus both per-app routing directions; Windows remains a separate unsigned lane`
 - public store readiness: `not approved`
 - public cutover approval: `blocked for a new candidate`
-- public Android release approval: `blocked pending production-signing PASS for the exact candidate`
-- public Android release blockers: `production signing, applicable exact-artifact device gates, store readiness, and stronger Android safety claims`
+- public Android release approval: `production signing and release-critical physical journey passed; blocked pending offline recovery, direct-download/live-smoke handoff, and owner approval gates`
+- public Android release blockers: `signing-key offline recovery, direct-download publication/handoff, uploaded-artifact hash smoke, and owner approval; Play is not part of the first channel`
 - public Windows release approval: `blocked pending trusted-signing PASS for the exact candidate`
 - public Windows release blockers: `trusted signing, exact-artifact install smoke, and store/trusted distribution proof`
 - long-term repo truth: `yes`
@@ -73,11 +73,14 @@ Status: `MANUAL_OWNER_TEST`.
 ### Stage 2: Android public-beta gate
 
 Recorded status for the 2026 beta: `UNSIGNED_RELEASE_APPROVED_BY_OWNER_MANUAL_TEST_PENDING`.
-Current reuse status: `BLOCKED_PENDING_EXACT_CANDIDATE_PRODUCTION_SIGNING`.
+Current candidate status: `PRODUCTION_SIGNING_AND_DEVICE_JOURNEY_PASS_DISTRIBUTION_PENDING`.
 
-- The dated signing skip explains the retained beta evidence only. A new public
-  APK requires production signing; debug signing is an explicit non-public
-  smoke path and never promotion authority.
+- The dated signing skip explains the retained beta evidence only. The current
+  `1.0.2+9` direct APK passes production signing; debug signing remains an
+  explicit non-public smoke path and never promotion authority.
+- Retain an encrypted offline recovery copy of the production keystore and its
+  password before public upload. Every direct update must use the same identity
+  and a higher `versionCode`.
 - Run the physical-device release-build localhost/control-surface audit.
 - Attach raw evidence if replacing the existing operator attestation.
 - Confirm release state JSON does not contain `session_token`; session material
@@ -189,6 +192,62 @@ Status: `READY_GUARDRAILS_RECORDED_OPERATOR_MONITORING_AFTER_ANNOUNCEMENT`.
 6. Keep release handoff evidence explicit for `current-origin`, `brain-origin`, and `RU-origin` checks where reachability matters.
 
 ## Latest Local Engineering Verification
+
+`2026-08-12` exact production-signed direct Android candidate verification:
+
+- artifact:
+  `apps/android_shell/build/app/outputs/flutter-apk/app-release.apk`
+- version: `1.0.2+9`; package `space.pokrov.pokrov_android_shell`
+- size: `287207515` bytes
+- SHA-256:
+  `9820CDA01DEA74CDBD34A9D1FA76B7CFC1DD24D0D452D8521239DFF9DA6BEACA`
+- build mode: Flutter release with
+  `POKROV_API_BASE_URL=https://api.pokrov.space`; `debuggable=false`
+- signing evidence: `PASS_PRODUCTION_SELF_MANAGED_DIRECT_APK`; one RSA-4096
+  signer, APK Signature Scheme v2, certificate SHA-256
+  `0A0602A7DF5D96A0B427909D004F3DDF26DEF86587634BF16694DA8D654B2500`
+- continuity and install evidence: the signer stayed unchanged; physical-device
+  same-signer update passed; installed APK hash matched the local artifact; the
+  session survived the update and package metadata reported `versionCode=9`
+- exact-candidate UI evidence: physical cold start, app-first onboarding, Home,
+  enabled `Включить VPN`, and the first-connect route-scope sheet passed through
+  UI-tree-derived coordinates
+- packaged-Core evidence: Android 12 installed the APK with native extraction
+  disabled; candidate `+8` resolved the ABI-matched Core from the APK and removed
+  the false `Core missing` state found in candidate `+7`
+- log evidence: Android crash-buffer line count remained zero during the exact
+  production-candidate physical pre-tunnel path
+- system-surface evidence: the POKROV Quick Settings tile was added to the
+  authorized phone, rendered first with a readable inactive label and
+  accessibility state, and safely opened the app when no eligible staged
+  profile existed; the tile and foreground-notification security-contract tests
+  pass
+- production egress: Germany connected on the physical phone. Smart split
+  returned `RU` for its direct Russian lane and `DE` for the tunneled browser
+  request; no raw address was retained
+- per-app routing: Android `Except selected apps` returned `RU` in Yandex and
+  `DE` in Chrome; `Only selected apps` reversed the same exact checks to `DE`
+  in Yandex and `RU` in Chrome
+- system surfaces: the branded Quick Settings tile starts the staged profile;
+  the foreground notification exposes country, route summary, optional speed,
+  open, and disconnect actions; the speed setting was disabled and restored
+- support/checkout: a real phone support question received a live bounded AI
+  answer, and checkout exposed the deployed `99 / 239 / 669 / 1199 / 1699 /
+  1999 ₽` catalog
+- supporting prior-build journey: the immediately preceding internal build
+  traversed disposable trial, Home, Locations, Rules, Profile, first-connect
+  scope, Android notification grant, and truthful tunnel failure. That journey
+  does not replace exact production-candidate physical-device proof
+- cleanup evidence: the two earlier disposable QA accounts and the final
+  physical-device QA account were deleted after full PostgreSQL backups. The
+  last cleanup removed seven panel mappings and 24 database rows; final
+  postcheck returned zero users, access keys, and user-node mappings for it
+- Google Play is `NOT_REQUESTED_DIRECT_APK_FIRST`
+- direct release still requires the encrypted offline signing recovery copy,
+  direct-download publication/handoff, live uploaded-APK hash smoke, and owner
+  promotion approval. Google Play remains outside this direct-APK release.
+- detailed evidence owner:
+  `docs/operations/android-release-audit.md`
 
 `2026-06-04` staged local release-candidate verification:
 
@@ -348,8 +407,12 @@ rotation proof, or production WARP readiness.
 - [x] `flutter build appbundle --release` succeeds when store/operator artifacts are requested
 - [x] Physical-device localhost/control-surface audit is operator-attested for this beta wave
 - [ ] Raw audit evidence is attached if replacing the operator attestation
-- [ ] Production Android signing is `PASS` for the exact next public candidate
-- [ ] Public download handoff is re-approved for the exact signed Android `APK`; `Play` remains empty until store readiness passes
+- [x] Production Android signing is `PASS` for exact direct APK `1.0.2+9`
+- [ ] An encrypted offline recovery copy of the Android signing keystore and password is retained
+- [x] Exact direct APK `1.0.2+9` passes the release-critical physical-device
+      journey: install, launch, route scope, packaged Core, tunnel, smart split,
+      both per-app directions, system surfaces, support, and checkout
+- [ ] Public download handoff is re-approved for the exact signed Android `APK`; `Play` is `NOT_REQUESTED_DIRECT_APK_FIRST`
 - [x] Release handoff includes runtime URL verification and origin evidence for the `2026-05-15` beta evidence pack
 - [x] Any APK shown to testers is official, beta-labeled, outside-store, and not described as Play/store-ready
 
@@ -406,7 +469,8 @@ Safe to claim now:
 - Apple work in this repo is readiness and packaging preparation only for this wave
 - iOS and macOS shell metadata is materially closer to a real release lane
 - iOS now carries checked-in packet-tunnel service code instead of a deliberate scaffold stop
-- operator work needed for signing, notarization, and store prep is now explicit
+- Android direct-APK production signing is configured locally; remaining
+  platform signing, notarization, and store work is explicit
 - Windows now has a real local runtime build-and-bundle lane with unsigned package staging
 - the `2026-06-04` local RC pack exists for engineering/operator inspection
   under `artifacts/releases/pokrov-app/0.2.0-beta.1+20260604-rc-local/`
@@ -418,7 +482,9 @@ Safe to claim now:
   prerelease and authenticated download/checksum proof passes for every listed
   asset
 - Android physical-device audit is accepted as `OPERATOR_ATTESTED` for this beta wave, not as raw repository evidence
-- current public promotion is blocked until exact-candidate signing gates pass
+- current Android direct-APK candidate has exact-candidate production-signing
+  `PASS`; public promotion remains blocked on recovery, device, distribution,
+  live-smoke, and owner gates
 
 Not safe to claim now:
 
@@ -441,8 +507,10 @@ Blocked-by note:
 - the local repo bootstrap step is complete; the `2026-05-15` approval is
   retained evidence and does not authorize a new candidate
 - Android is operator-attested for this beta wave; do not upgrade that to raw audit evidence unless a retained audit artifact is attached
-- Android production signing and Windows trusted signing are operator-owned
-  blockers for the next public promotion and runtime sync
+- Android production signing and the release-critical physical journey are
+  complete for the local `1.0.2+9` direct APK. Encrypted offline recovery,
+  direct-download handoff, uploaded-artifact smoke, and owner approval remain
+  blockers. Windows trusted signing is a separate blocker for Windows promotion
 - real-user Telegram/WebApp checks, raw Android device audit replacement
   evidence, store access, and RU-origin probes remain separate manual gates
 - `POKROV-app/artifacts/releases/pokrov-app/` may retain repo-backed alpha and beta bundles built directly from this lane for engineering and tester handoff

@@ -6079,6 +6079,124 @@ void main() {
     expect(config['route'], containsPair('final', 'proxy'));
   });
 
+  test(
+      'android excluded-apps route keeps selected packages direct and the rest on VPN',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-android-excluded-apps-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'session-token-android-excluded-apps',
+                    'account_id': '342',
+                  },
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/route-policy') {
+          final decoded = jsonDecode(body) as Map<String, dynamic>;
+          expect(decoded['route_mode'], 'all_traffic');
+          expect(decoded['selected_apps'], isEmpty);
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+          await request.response.close();
+          continue;
+        }
+
+        if (request.uri.path == '/api/client/profile/managed') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
+                  'profile_revision': 'rev-android-excluded-apps',
+                  'config_format': 'singbox-json',
+                  'config_payload': <String, Object?>{
+                    'outbounds': <Object?>[
+                      <String, Object?>{
+                        'type': 'selector',
+                        'tag': 'proxy',
+                        'outbounds': <Object?>['node-1'],
+                      },
+                      <String, Object?>{
+                        'type': 'vless',
+                        'tag': 'node-1',
+                        'server': 'nl.kiwunaka.space',
+                        'server_port': 443,
+                        'uuid': 'test-uuid',
+                      },
+                    ],
+                    'route': <String, Object?>{'final': 'proxy'},
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+    );
+    final payload = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.excludedApps,
+      selectedApps: const <String>['com.yandex.browser'],
+    );
+    final config = jsonDecode(payload.configPayload) as Map<String, dynamic>;
+    final tunInbound = (config['inbounds'] as List)
+        .cast<Map<String, dynamic>>()
+        .singleWhere((inbound) => inbound['type'] == 'tun');
+
+    expect(tunInbound.containsKey('include_package'), isFalse);
+    expect(
+      tunInbound['exclude_package'],
+      containsAll(<String>[
+        'space.pokrov.pokrov_android_shell',
+        'com.yandex.browser',
+      ]),
+    );
+    expect(config['route'], containsPair('final', 'proxy'));
+  });
+
   test('selected-apps mode rejects an empty selection before bootstrap sync',
       () async {
     final bootstrapper = AppFirstRuntimeBootstrapper(

@@ -1,7 +1,7 @@
 # Android Release Audit
 
-Status: owner-attested for outside-store beta; raw audit remains manual owner test
-Last updated: 2026-08-02
+Status: direct-APK candidate production-signing PASS; release-critical physical-device journey PASS; long-cycle, uplink-handoff, and WARP endurance remain manual owner tests
+Last updated: 2026-08-12
 
 ## Required Dependency
 
@@ -27,6 +27,9 @@ Set `ANDROID_AUDIT_PACKAGE` to `space.pokrov.pokrov_android_shell` unless a rele
   resolve and carry traffic without a silent plaintext DNS downgrade.
 - `All except RU` route-mode smoke.
 - `Full tunnel` route-mode smoke.
+- `Only selected apps` route-mode smoke with one selected installed package.
+- `Except selected apps` route-mode smoke with the same package and reverse
+  country result versus a non-selected browser.
 - DNS split and leak checks for both public routing modes.
 - Enable client-local WARP, reconnect, verify traffic and fallback behavior,
   then disable it and verify the original managed profile is restored.
@@ -61,12 +64,13 @@ Set `ANDROID_AUDIT_PACKAGE` to `space.pokrov.pokrov_android_shell` unless a rele
 ## Commands
 
 ```powershell
-# Public-candidate builds require all four operator-owned signing inputs.
-$env:ANDROID_SIGNING_KEY="<absolute-keystore-path>"
-$env:ANDROID_SIGNING_STORE_PASSWORD="<operator-secret>"
-$env:ANDROID_SIGNING_KEY_PASSWORD="<operator-secret>"
-$env:ANDROID_SIGNING_KEY_ALIAS="<operator-key-alias>"
-flutter build apk --release --dart-define=POKROV_API_BASE_URL=https://api.pokrov.space
+# Run once from the repository root. Existing signing state is never overwritten.
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-android-production-signing.ps1
+
+# Canonical direct-APK build loads the DPAPI secret only into the build process,
+# verifies the signer, and writes ignored evidence beside the APK.
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-android-production.ps1
+
 adb devices
 $env:ANDROID_AUDIT_PACKAGE="space.pokrov.pokrov_android_shell"
 $env:ANDROID_AUDIT_RELEASE_EVIDENCE="<artifact/version/checksum>"
@@ -79,6 +83,157 @@ For an explicitly non-public local rehearsal only, set
 afterwards. That artifact may exercise the audit flow, but its signing result is
 `NOT_REQUESTED`: production signing was not part of that internal smoke. It cannot
 be promoted, synced, or described as public, trusted, store-ready, or stable.
+
+## Current 2026-08-12 Production-Signed Direct APK
+
+The current direct-distribution candidate is `1.0.2+8` and uses the production
+API base `https://api.pokrov.space`:
+
+- APK: `287207515` bytes, SHA-256
+  `9820cda01dea74cdbd34a9d1fa76b7cfc1dd24d0d452d8521239dff9da6beaca`.
+- package: `space.pokrov.pokrov_android_shell`; minimum SDK `24`; target SDK
+  `36`; `debuggable=false`.
+- signing: `PASS_PRODUCTION_SELF_MANAGED_DIRECT_APK`. Independent `apksigner`
+  verification reports one RSA-4096 signer, APK Signature Scheme v2, subject
+  `CN=POKROV, O=POKROV, C=RU`, and certificate SHA-256
+  `0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500`.
+- signer continuity: the one-time configure script was rerun idempotently and
+  the keystore SHA-256 remained unchanged. The same production signer updated
+  the previously installed candidate on physical hardware without clearing the
+  app session.
+- exact-artifact install identity: `PASS`. The installed base APK on the
+  authorized Android 12 Huawei device matched the local APK SHA-256 byte for
+  byte; package metadata reported `versionCode=9`, `versionName=1.0.2`, target
+  SDK `36`, and no `DEBUGGABLE` flag.
+- exact-artifact UI preflight: `PASS`. Cold launch, app-first onboarding, Home,
+  the primary `Включить VPN` control, and the first-connect route-scope sheet
+  were traversed from UI-tree coordinates; the crash-buffer line count remained
+  zero.
+- physical runtime discovery: `PASS`. The phone installs the APK with native
+  extraction disabled, so `nativeLibraryDir` is empty. Candidate `+8` resolves
+  the ABI-matched packaged `libpokrov-core.so` directly from the APK and enables
+  the connect lane instead of reporting missing Core.
+- Quick Settings pre-tunnel behavior: `PASS`. The POKROV tile was added to the
+  authorized phone, appeared first in the expanded grid with the readable
+  inactive label `POKROV` and accessibility state `Выключено`, and a physical
+  click without an eligible staged profile opened the app instead of starting a
+  stale or unverified tunnel. The exact tile service and foreground-notification
+  security-contract tests also pass.
+- Chrome egress preflight: `PASS_PRECONDITION_ONLY`. Chrome opened the HTTPS IP
+  check endpoint and reported a secure connection. The page content is not
+  exposed through Android's accessibility tree, so no raw mobile address was
+  retained; changed egress plus selected paid-node country/ASN remain part of
+  the online tunnel retest.
+- production tunnel and routing: `PASS`. Germany connected on the authorized
+  Android 12 Huawei phone. Smart split returned `RU` for the direct Russian
+  lane and `DE` for a non-Russian browser request; no raw address was retained.
+- per-app routing: `PASS`. With `Яндекс Браузер` excluded, Yandex returned `RU`
+  while Chrome returned `DE`. With `Only selected apps`, the results reversed:
+  Yandex returned `DE` and Chrome returned `RU`.
+- system controls: `PASS`. The branded Quick Settings tile starts the staged
+  profile, and the foreground notification shows country, route summary,
+  optional speed, open, and disconnect actions. Notification speed visibility
+  was disabled and restored from in-app settings.
+- support and commercial journey: `PASS`. A real in-app support question
+  received a live bounded answer from the deployed support agent; checkout
+  opened the production card and exposed the current `99 / 239 / 669 / 1199 /
+  1699 / 1999 ₽` catalog for welcome, 1, 3, 6, 9, and 12 months.
+- destructive QA cleanup: `PASS`. The final transient app user was removed
+  from all seven panels and 24 related database rows after a fresh full
+  PostgreSQL backup; postcheck returned zero users, keys, and node mappings.
+- remaining endurance evidence: `MANUAL_OWNER_TEST`. The 100-cycle,
+  Wi-Fi/mobile handoff, blocked-UDP/53, WARP, battery, sleep/resume, and MTU
+  matrix remain separate endurance gates and are not claimed by this journey.
+- retained local evidence: ignored directory
+  `apps/android_shell/build/qa/device-release-20260812/` contains screenshots,
+  UI trees, route-country results, and final installed-artifact evidence.
+- signing recovery: `MANUAL_OWNER_TEST`. The private key and DPAPI-protected
+  password are outside Git under `%LOCALAPPDATA%\POKROV\android-signing`; a
+  separate encrypted offline copy of both the keystore and its password must be
+  retained before public upload.
+- Google Play: `NOT_REQUESTED_DIRECT_APK_FIRST`. This candidate is prepared for
+  direct APK distribution and does not claim Play readiness.
+
+Every future direct APK update for existing installs must use this same signing
+identity and a higher `versionCode`. Losing or replacing the key forces users to
+uninstall before installing a differently signed build.
+
+## Prior 2026-08-11 Internal Build
+
+The `1.0.2-core-test.1+6` client was built from the current workspace with the
+explicit internal debug-signing override and API base
+`https://api.pokrov.space`. This is local emulator evidence only:
+
+- APK: `287255467` bytes, SHA-256
+  `761fc44d969f8324137f060d7cdfb2f04bb75e2bec1b8dd7bc402e125a0f79e2`.
+- installed base APK identity: `PASS`; the LDPlayer package hash matched the
+  local APK byte for byte.
+- signing state: `BLOCKED_BY_ACCESS`; all four canonical `ANDROID_SIGNING_*`
+  inputs are absent and no production keystore was found in the inspected
+  client paths. `apksigner` reports `C=US, O=Android, CN=Android Debug` with
+  certificate SHA-256
+  `55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74`.
+- store publication: `NOT_REQUESTED`.
+- physical-device audit: `MANUAL_OWNER_TEST`.
+
+The exact APK was installed in LDPlayer 14 instance 0 and its installed base APK
+matched the same SHA-256. A clean cold-start sample completed in `1200 ms`. A
+fresh disposable production app session traversed Home, Locations, Rules,
+Profile, the first-connect route-scope sheet, and Android notification
+permission from UI-tree coordinates. The compact Home CTA, neutral disconnected
+state, full auto-location heading, readable narrow-phone location rows, and
+short route-scope actions rendered without observed clipping.
+
+The exact installed package also passed a launch-only rehearsal of
+`android_localhost_audit.py`: `versionName=1.0.2-core-test.1`, `versionCode=6`,
+`debuggable=no`, zero baseline listeners, zero listeners after launch, and zero
+failures. The report is machine-local at
+`%LOCALAPPDATA%/Temp/pokrov-android-localhost-audit-20260811-ldplayer-launch.json`.
+During Connect, logcat proved that the Android VPN service started and established
+`tun0`. The selected-outbound egress probe then failed in LDPlayer, so the service
+stopped the VPN and the UI returned to `Не защищено` with bounded recovery copy.
+This is `PASS` for truthful fail-closed behavior and `BLOCKED_BY_ACCESS` for a
+working emulator tunnel. Logcat contained no fatal exception, ANR, process death,
+or Flutter error. The two disposable QA accounts and all 14 of their panel
+mappings were deleted after a production database backup; postcheck returned
+zero app-origin users. A later retirement audit found two active orphan
+`access_keys` created for those deleted accounts by the legacy capacity-domain
+backfill. The backend now classifies bounded trial snapshots as `premium_pool`,
+fails closed for non-trial `FREE` snapshots while free delivery is disabled,
+and user purge deletes matching access keys. The two exact QA-window orphan
+rows were deleted after a second production backup; final postcheck returned
+zero active free keys and zero orphan active keys. This emulator preflight does
+not replace the mandatory physical-device audit.
+
+The immediately preceding current-workspace APK (`287239083` bytes, SHA-256
+`a31e8e5c8b3dd5e57a7f3e1d118bf3972b69ae406381de7746e59d4b17839b3a`)
+had the same connect control but predated the narrow-phone access-summary fix.
+While its session was still valid, Home, Locations, Rules, Profile, subscription
+extension, theme switching, route-mode selection, location selection, and WARP
+toggling were traversed from UI-tree coordinates:
+
+- `PASS`: predecessor install, launch, navigation, state persistence, and bounded
+  failure presentation.
+- `PASS`: Connect entered a truthful busy state and returned to `Не защищено`
+  after the LDPlayer runtime failed to establish the tunnel; it never reported a
+  protected state.
+- `PASS`: logcat contained no fatal exception, ANR, or process death during the
+  retained journey.
+- `PASS`: the exposed `gfxinfo` sample contained no modern janky frames; the
+  sample was only six frames and is not performance-release proof.
+- `PASS`: measured total PSS was `93579 KB`; this is an emulator spot check, not
+  a physical-device battery or memory gate.
+- `BLOCKED_BY_ACCESS`: the working tunnel, reconnect, notification disconnect,
+  uplink handoff, DNS, WARP traffic, and long-cycle checks remain unavailable in
+  this LDPlayer environment. The predecessor journey is supporting evidence, not
+  a substitute for those gates on the latest exact APK.
+
+The live subscription-extension journey opened
+`https://pay.pokrov.space/checkout/?plan=1_month` and showed the one-time `99 ₽`
+welcome offer as intended. A separate mobile-header wrapping issue found there
+was fixed and included in the verified production static deployment. The live
+plan catalog returned `239 / 669 / 1199 / 1699 / 1999 ₽` for
+`1 / 3 / 6 / 9 / 12` months.
 
 ## Current 2026-08-04 Internal Build
 

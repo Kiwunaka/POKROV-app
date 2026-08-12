@@ -35,6 +35,7 @@ class _RulesSection extends StatelessWidget {
     final p = PokrovPalette.of(context);
     final routeChoices = appContext.runtimeProfile.supportedRouteModes;
     final selectedAppsActive = routeChoices.contains(RouteMode.selectedApps);
+    final excludedAppsActive = routeChoices.contains(RouteMode.excludedApps);
     final selectedAppsStaged =
         appContext.bootstrapContract.supportsSelectedAppsMode &&
             !selectedAppsActive;
@@ -101,13 +102,16 @@ class _RulesSection extends StatelessWidget {
                         : selectedAppsStaged
                             ? '${_routeModeShortLabel(RouteMode.selectedApps)}: недоступно на этом устройстве.'
                             : '${_routeModeShortLabel(RouteMode.selectedApps)}: недоступно на ${appContext.hostPlatform.label}.',
+                    if (excludedAppsActive)
+                      '${_routeModeShortLabel(RouteMode.excludedApps)}: ${_routeModeRowSummary(RouteMode.excludedApps)}',
                   ],
                 ),
               ),
             ],
           ),
         ),
-        if (directPresets.isNotEmpty)
+        if (selectedRouteMode == RouteMode.allExceptRu &&
+            directPresets.isNotEmpty)
           _SectionCard(
             title: 'Напрямую без POKROV',
             lines: const [
@@ -128,17 +132,22 @@ class _RulesSection extends StatelessWidget {
               ],
             ),
           ),
-        if (selectedAppsActive || selectedAppsStaged)
+        if (selectedAppsActive || excludedAppsActive || selectedAppsStaged)
           _SectionCard(
             key: const ValueKey('rules-section-selected-apps'),
-            title: 'Только выбранные',
+            title: selectedRouteMode == RouteMode.excludedApps
+                ? 'Напрямую без POKROV'
+                : 'Только выбранные',
             lines: [
               selectedAppIds.isEmpty
                   ? 'Выберите хотя бы одно приложение перед подключением.'
-                  : 'Выбрано: ${selectedAppIds.length}',
+                  : selectedRouteMode == RouteMode.excludedApps
+                      ? 'Напрямую: ${selectedAppIds.length} · остальное через VPN'
+                      : 'Через VPN: ${selectedAppIds.length}',
             ],
             child: _SelectedAppsEditor(
               hostPlatform: appContext.hostPlatform,
+              routeMode: selectedRouteMode,
               selectedAppIds: selectedAppIds,
               onAdd: onSelectedAppAdded,
               onRemove: onSelectedAppRemoved,
@@ -223,6 +232,7 @@ class _RouteModeSegment extends StatelessWidget {
       RouteMode.allExceptRu => Icons.public_rounded,
       RouteMode.fullTunnel => Icons.shield_outlined,
       RouteMode.selectedApps => Icons.apps_rounded,
+      RouteMode.excludedApps => Icons.mobile_off_rounded,
     };
     final label = _routeModeShortLabel(mode);
     return Semantics(
@@ -307,12 +317,14 @@ class _RouteModeSegment extends StatelessWidget {
 class _SelectedAppsEditor extends StatefulWidget {
   const _SelectedAppsEditor({
     required this.hostPlatform,
+    required this.routeMode,
     required this.selectedAppIds,
     required this.onAdd,
     required this.onRemove,
   });
 
   final HostPlatform hostPlatform;
+  final RouteMode routeMode;
   final List<String> selectedAppIds;
   final ValueChanged<String> onAdd;
   final ValueChanged<String> onRemove;
@@ -381,6 +393,7 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
       ),
       builder: (context) => _SelectedAppsPickerSheet(
         hostPlatform: widget.hostPlatform,
+        routeMode: widget.routeMode,
         candidatesFuture: candidateFuture,
         selectedAppIds: widget.selectedAppIds,
       ),
@@ -760,11 +773,13 @@ class _SelectedAppCandidate {
 class _SelectedAppsPickerSheet extends StatefulWidget {
   const _SelectedAppsPickerSheet({
     required this.hostPlatform,
+    required this.routeMode,
     required this.candidatesFuture,
     required this.selectedAppIds,
   });
 
   final HostPlatform hostPlatform;
+  final RouteMode routeMode;
   final Future<List<_SelectedAppCandidate>> candidatesFuture;
   final List<String> selectedAppIds;
 
@@ -886,9 +901,12 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                                       ),
                                 ),
                                 Text(
-                                  widget.hostPlatform == HostPlatform.windows
-                                      ? 'Выберите приложение для режима «только выбранные».'
-                                      : 'Выберите приложения для режима «только выбранные».',
+                                  widget.routeMode == RouteMode.excludedApps
+                                      ? 'Выбранные приложения будут работать напрямую.'
+                                      : widget.hostPlatform ==
+                                              HostPlatform.windows
+                                          ? 'Выберите приложение, которое пойдёт через VPN.'
+                                          : 'Выберите приложения, которые пойдут через VPN.',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: Theme.of(context)
@@ -1167,6 +1185,7 @@ String _friendlySelectedAppName(String identifier) {
     'telegram.exe': 'Telegram',
     'com.android.chrome': 'Chrome',
     'chrome.exe': 'Chrome',
+    'com.yandex.browser': 'Яндекс Браузер',
     'com.google.android.youtube': 'YouTube',
     'youtube.exe': 'YouTube',
     'com.discord': 'Discord',

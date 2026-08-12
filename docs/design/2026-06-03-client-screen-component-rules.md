@@ -216,7 +216,7 @@ Goal: one-tap protection control and clear everyday status.
 First-layer structure:
 
 1. top status area with POKROV identity and notification/support entry.
-2. circular connect control.
+2. compact full-width primary connect action with a small state indicator.
 3. one status line.
 4. location and route-mode chips.
 5. service notification when needed.
@@ -231,6 +231,11 @@ Connect control states:
 - error
 - expired
 - restoring/provisioning
+
+Owner override (`2026-08-11`): the earlier large circular logo-led control is
+retired. Home uses one wide filled action with an explicit verb, short supporting
+line, and compact state indicator. It must remain reachable without pushing the
+location, route mode, and subscription summary below a normal phone viewport.
 
 Status copy examples:
 
@@ -281,6 +286,10 @@ Location row:
 - title: country/city.
 - subtitle: optional city/provider-friendly label.
 - trailing: selected check, lock, or quality label.
+- on narrow phones, keep the full city title and useful subtitle width; collapse
+  redundant stale signal bars before truncating the location identity.
+- move the auto-location status below its title block when a trailing pill would
+  force the title into an ellipsis.
 
 Rules:
 

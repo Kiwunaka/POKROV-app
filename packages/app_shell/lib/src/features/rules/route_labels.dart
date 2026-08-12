@@ -5,6 +5,7 @@ String _routeModeShortLabel(RouteMode mode) {
     RouteMode.allExceptRu => 'Умный режим',
     RouteMode.fullTunnel => 'Всё устройство',
     RouteMode.selectedApps => 'Только выбранные',
+    RouteMode.excludedApps => 'Кроме выбранных',
   };
 }
 
@@ -13,6 +14,7 @@ String _routeModeRowTitle(RouteMode mode) {
     RouteMode.allExceptRu => 'Умный режим',
     RouteMode.fullTunnel => 'Всё устройство',
     RouteMode.selectedApps => 'Только выбранные',
+    RouteMode.excludedApps => 'Кроме выбранных',
   };
 }
 
@@ -23,5 +25,7 @@ String _routeModeRowSummary(RouteMode mode) {
     RouteMode.fullTunnel => 'Весь трафик идет через POKROV VPN.',
     RouteMode.selectedApps =>
       'POKROV VPN работает только для выбранных приложений.',
+    RouteMode.excludedApps =>
+      'Выбранные приложения работают напрямую, остальные — через POKROV VPN.',
   };
 }

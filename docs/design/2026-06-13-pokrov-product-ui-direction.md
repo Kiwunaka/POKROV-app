@@ -42,8 +42,10 @@ preserving the selected visual references from
     bottom sheet from support or relevant error states.
 11. Beta status belongs in diagnostics only, not in the first-layer sidebar,
     footer, profile header, or Home UI.
-12. First launch starts with the new/returning choice:
-    `Я новый пользователь` and `У меня уже есть доступ`.
+12. First launch starts with two explicit, phone-width-safe actions:
+    `Начать бесплатно` and `У меня есть код`. Supporting copy explains the
+    current trial length and code-based access restore without truncating the
+    primary action labels.
 
 ## Design-System Foundation
 

@@ -267,6 +267,11 @@ PokrovRouteDecision explainPokrovRouteDecision({
         reason: 'Решение зависит от выбранного приложения.',
         matchedValue: 'selectedApps',
       ),
+    RouteMode.excludedApps => const PokrovRouteDecision(
+        action: PokrovRouteAction.vpn,
+        reason: 'Прямое подключение задаётся списком исключений.',
+        matchedValue: 'excludedApps',
+      ),
   };
 }
 

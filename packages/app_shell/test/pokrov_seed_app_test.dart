@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' show PointerDeviceKind;
 
+import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -125,6 +126,7 @@ class _FakeBootstrapper
     WarpControlStatus? warpStatus,
     ClientAppsMetadata? clientAppsMetadata,
     ClientLocationsCatalog? locationsCatalog,
+    ClientSubscriptionInfo? subscriptionInfo,
     ClientSupportAssistantReply? assistantReply,
     this.assistantGate,
     this.assistantFailureCalls = const <int>{},
@@ -219,6 +221,22 @@ class _FakeBootstrapper
               profileRevision: '',
               transportProfile: '',
               query: '',
+            ),
+        subscriptionInfo = subscriptionInfo ??
+            ClientSubscriptionInfo(
+              lane: 'trialPremium',
+              expiresAt: '2026-06-27T00:00:00Z',
+              daysLeft: 5,
+              autoRenew: false,
+              renewUrl: Uri.parse('https://pay.pokrov.space/checkout/test'),
+              plans: const <ClientSubscriptionPlan>[
+                ClientSubscriptionPlan(
+                  id: '1m',
+                  title: '1 month',
+                  price: '299 RUB',
+                ),
+              ],
+              trafficPolicy: const <String, Object?>{},
             );
 
   final ManagedProfilePayload payload;
@@ -234,6 +252,7 @@ class _FakeBootstrapper
   final AppFirstBonusSummary bonusSummary;
   final ClientAppsMetadata clientAppsMetadata;
   final ClientLocationsCatalog locationsCatalog;
+  final ClientSubscriptionInfo subscriptionInfo;
   final ClientSupportAssistantReply assistantReply;
   final Future<void>? assistantGate;
   final Set<int> assistantFailureCalls;
@@ -434,17 +453,7 @@ class _FakeBootstrapper
   Future<ClientSubscriptionInfo> fetchClientSubscription({
     required HostPlatform hostPlatform,
   }) async {
-    return ClientSubscriptionInfo(
-      lane: 'trialPremium',
-      expiresAt: '2026-06-27T00:00:00Z',
-      daysLeft: 5,
-      autoRenew: false,
-      renewUrl: Uri.parse('https://pay.pokrov.space/checkout/test'),
-      plans: const <ClientSubscriptionPlan>[
-        ClientSubscriptionPlan(id: '1m', title: '1 month', price: '299 RUB'),
-      ],
-      trafficPolicy: const <String, Object?>{},
-    );
+    return subscriptionInfo;
   }
 
   @override
@@ -1230,6 +1239,11 @@ void main() {
           RouteMode.selectedApps,
         ]),
       );
+      expect(
+        context.runtimeProfile.supportedRouteModes
+            .contains(RouteMode.excludedApps),
+        hostPlatform == HostPlatform.android,
+      );
     }
   });
 
@@ -1299,10 +1313,10 @@ void main() {
 
     expect(find.text('POKROV VPN'), findsWidgets);
     expect(find.text('Добро пожаловать'), findsOneWidget);
-    expect(find.text('Я новый пользователь'), findsOneWidget);
-    expect(find.text('5 дней премиум бесплатно'), findsOneWidget);
-    expect(find.text('У меня уже есть доступ'), findsOneWidget);
-    expect(find.text('Восстановить по коду'), findsOneWidget);
+    expect(find.text('Начать бесплатно'), findsOneWidget);
+    expect(find.text('5 дней премиум-доступа'), findsOneWidget);
+    expect(find.text('У меня есть код'), findsOneWidget);
+    expect(find.text('Восстановить доступ'), findsOneWidget);
     expect(find.textContaining('логин'), findsNothing);
     expect(find.textContaining('регистра'), findsNothing);
     expect(find.textContaining('raw'), findsNothing);
@@ -2285,6 +2299,8 @@ void main() {
 
   testWidgets('profile uses grouped MVP account sections', (tester) async {
     _expectInfoSheetHelpersCovered(const ['_SettingsRow']);
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
       PokrovSeedApp(
@@ -2298,6 +2314,20 @@ void main() {
 
     expect(find.byKey(const ValueKey('profile-section-plan-access')),
         findsOneWidget);
+    final accessHeadline = tester.widget<Text>(
+      find.text('5 дней пробного доступа'),
+    );
+    expect(accessHeadline.maxLines, 2);
+    expect(accessHeadline.overflow, TextOverflow.clip);
+    expect(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey('profile-connection-status-pill'),
+        ),
+        matching: find.byIcon(Icons.shield_outlined),
+      ),
+      findsOneWidget,
+    );
     expect(find.byKey(const ValueKey('profile-section-sync')), findsOneWidget);
     final appSection = find.byKey(const ValueKey('profile-section-app'));
     await tester.dragUntilVisible(
@@ -2328,6 +2358,110 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(diagnostics, findsOneWidget);
+  });
+
+  testWidgets(
+      'live paid subscription replaces trial copy across home and profile',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'paid-ui',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      subscriptionInfo: const ClientSubscriptionInfo(
+        lane: 'paidUnlimited',
+        expiresAt: '2026-07-22T00:00:00Z',
+        daysLeft: 30,
+        autoRenew: false,
+        renewUrl: null,
+        plans: <ClientSubscriptionPlan>[],
+        trafficPolicy: <String, Object?>{},
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    expect(find.text('Премиум активен'), findsOneWidget);
+    expect(find.text('Доступ активен'), findsOneWidget);
+    expect(find.textContaining('пробного доступа'), findsNothing);
+
+    await _tapNav(tester, 'nav-profile');
+    await tester.pumpAndSettle();
+    expect(find.text('Премиум активен'), findsOneWidget);
+    expect(find.text('30 дней'), findsWidgets);
+    expect(find.textContaining('пробного доступа'), findsNothing);
+  });
+
+  testWidgets('Android system surface settings persist notification choices',
+      (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    Map<Object?, Object?>? savedArguments;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      switch (call.method) {
+        case 'runtimeEngine.systemSurfacePreferences':
+          return <String, Object?>{
+            'showCountry': true,
+            'showSpeed': true,
+            'showRouteMode': true,
+          };
+        case 'runtimeEngine.updateSystemSurfacePreferences':
+          savedArguments = call.arguments as Map<Object?, Object?>?;
+          return call.arguments;
+        case 'runtimeEngine.openNotificationSettings':
+          return true;
+        default:
+          return null;
+      }
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: _FakeBootstrapper(
+          const ManagedProfilePayload(
+            profileName: 'system-surfaces',
+            configPayload: _materializedRuntimeConfig,
+            materializedForRuntime: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-profile');
+    final action = find.byKey(
+      const ValueKey('profile-system-surfaces-action'),
+    );
+    await tester.ensureVisible(action);
+    await tester.pumpAndSettle();
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('profile-system-surfaces-sheet')),
+      findsOneWidget,
+    );
+    final speedToggle = find.descendant(
+      of: find.byKey(const ValueKey('system-surface-speed-toggle')),
+      matching: find.byType(CupertinoSwitch),
+    );
+    await tester.tap(speedToggle);
+    await tester.pumpAndSettle();
+
+    expect(savedArguments?['showSpeed'], isFalse);
+    expect(savedArguments?['showCountry'], isTrue);
+    expect(savedArguments?['showRouteMode'], isTrue);
   });
 
   testWidgets(
@@ -3608,6 +3742,17 @@ void main() {
       expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
       if (item.platform == HostPlatform.android) {
         expect(find.byType(NavigationBar), findsOneWidget);
+        if (item.width == 360) {
+          expect(
+            find.byKey(const ValueKey('home-access-badge-bloom-false')),
+            findsNothing,
+          );
+          expect(find.text('5 дней пробного доступа'), findsOneWidget);
+          expect(
+            find.text('Затем — продлите доступ'),
+            findsOneWidget,
+          );
+        }
       } else {
         expect(find.byType(NavigationBar), findsNothing);
       }
@@ -3662,9 +3807,10 @@ void main() {
     expect(find.byType(NavigationBar), findsNothing);
     expect(
         find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
-    final desktopDiscSize =
+    final desktopControlSize =
         tester.getSize(find.byKey(const ValueKey('connect-disc-motion')));
-    expect(desktopDiscSize.width, inInclusiveRange(180, 220));
+    expect(desktopControlSize.width, inInclusiveRange(340, 380));
+    expect(desktopControlSize.height, inInclusiveRange(88, 104));
     expect(find.byKey(const ValueKey('home-location-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-route-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-news-card')), findsNothing);
@@ -3984,8 +4130,7 @@ void main() {
         find.byKey(const ValueKey('desktop-sidebar-drawer')), findsOneWidget);
   });
 
-  testWidgets('home uses raster brand mark and one animated connect disc',
-      (tester) async {
+  testWidgets('home uses one compact animated connect control', (tester) async {
     _expectSharedShellWidgetHelpersCovered(const [
       '_ConnectOrbButton',
       '_ConnectOrbButtonState',
@@ -4008,9 +4153,10 @@ void main() {
 
     expect(find.byKey(const ValueKey('pokrov-brand-mark')), findsWidgets);
     expect(find.byKey(const ValueKey('connect-disc-motion')), findsOneWidget);
-    final discSize =
+    final controlSize =
         tester.getSize(find.byKey(const ValueKey('connect-disc-motion')));
-    expect(discSize.width, inInclusiveRange(140, 172));
+    expect(controlSize.width, inInclusiveRange(280, 520));
+    expect(controlSize.height, inInclusiveRange(80, 92));
     expect(
       find.ancestor(
         of: find.byKey(const ValueKey('connect-disc-motion')),
@@ -4507,7 +4653,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('support chat keeps AI helper scoped to support suggestions',
+  testWidgets('support chat keeps optional actions out of the conversation',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(760, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -4544,18 +4690,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('support-chat-screen')), findsOneWidget);
-    expect(find.byKey(const ValueKey('support-issue-chips')), findsOneWidget);
+    expect(find.byKey(const ValueKey('support-issue-chips')), findsNothing);
+    expect(
+      find.byKey(const ValueKey('support-diagnostics-action')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('support-attach-diagnostics')),
+      findsOneWidget,
+    );
     expect(find.byKey(const ValueKey('nav-ai-assistant')), findsNothing);
-
-    await tester.tap(find.byKey(
-      const ValueKey('support-issue-Не подключается'),
-    ));
-    await tester.pumpAndSettle();
 
     final composer = tester.widget<TextField>(
       find.byKey(const ValueKey('support-chat-composer')),
     );
-    expect(composer.controller?.text, contains('Не подключается'));
+    expect(composer.controller?.text, isEmpty);
   });
 
   testWidgets(
@@ -4601,10 +4750,8 @@ void main() {
     // sparkle badge, matching the AI sheet styling.
     expect(find.text('ИИ'), findsOneWidget);
 
-    final entry = find.byKey(const ValueKey('support-ai-entry'));
+    final entry = find.byKey(const ValueKey('support-chat-ai-assistant'));
     expect(entry, findsOneWidget);
-    expect(find.text('Спросить ИИ-помощника'), findsOneWidget);
-    expect(find.text('Мгновенные ответы по базе знаний'), findsOneWidget);
 
     await tester.tap(entry);
     await tester.pumpAndSettle();
@@ -4615,9 +4762,16 @@ void main() {
     );
     expect(find.text('ИИ-помощник'), findsOneWidget);
     expect(
-      find.text('Отвечает автоматика по базе знаний POKROV'),
+      find.text('Ответы по подключению, доступу и бонусам'),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('assistant-sheet-suggestions')),
+      findsNothing,
+    );
+    expect(find.text('Не подключается'), findsNothing);
+    expect(find.text('Медленно'), findsNothing);
+    expect(find.text('Бонусы'), findsNothing);
     expect(
       find.byKey(const ValueKey('assistant-sheet-escalate')),
       findsOneWidget,
@@ -4725,7 +4879,9 @@ void main() {
     await _completeFirstLaunchIfPresent(tester);
     await _openSupportChatFromProfile(tester);
 
-    await tester.tap(find.byKey(const ValueKey('support-ai-entry')));
+    await tester.tap(find.byKey(
+      const ValueKey('support-chat-ai-assistant'),
+    ));
     await tester.pumpAndSettle();
 
     await tester.enterText(
@@ -4773,7 +4929,9 @@ void main() {
       findsNothing,
     );
 
-    await tester.tap(find.byKey(const ValueKey('support-ai-entry')));
+    await tester.tap(find.byKey(
+      const ValueKey('support-chat-ai-assistant'),
+    ));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const ValueKey('assistant-sheet-composer')),
@@ -4824,7 +4982,9 @@ void main() {
     await _completeFirstLaunchIfPresent(tester);
     await _openSupportChatFromProfile(tester);
 
-    await tester.tap(find.byKey(const ValueKey('support-ai-entry')));
+    await tester.tap(find.byKey(
+      const ValueKey('support-chat-ai-assistant'),
+    ));
     await tester.pumpAndSettle();
 
     await tester.enterText(
@@ -4927,7 +5087,7 @@ void main() {
     expect(find.text('Operator is checking the route now.'), findsOneWidget);
     expect(find.byKey(const ValueKey('support-thread-lifecycle-operator')),
         findsOneWidget);
-    expect(find.text('В работе'), findsOneWidget);
+    expect(find.text('Поддержка ответила'), findsOneWidget);
   });
 
   testWidgets('support chat shows offline lifecycle hint after poll failure',
@@ -5029,6 +5189,8 @@ void main() {
     expect(find.byKey(const ValueKey('rules-mode-row-allExceptRu')),
         findsOneWidget);
     expect(find.byKey(const ValueKey('rules-mode-row-fullTunnel')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('rules-mode-row-excludedApps')),
         findsOneWidget);
     expect(
       find.descendant(
@@ -5527,6 +5689,69 @@ void main() {
     );
   });
 
+  testWidgets('Android can keep selected apps direct and route the rest by VPN',
+      (tester) async {
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-rules');
+
+    final excludedMode =
+        find.byKey(const ValueKey('rules-mode-row-excludedApps'));
+    await tester.dragUntilVisible(
+      excludedMode,
+      find.byType(Scrollable).first,
+      const Offset(0, -120),
+    );
+    await tester.tap(excludedMode);
+    await tester.pumpAndSettle();
+
+    final appsSection =
+        find.byKey(const ValueKey('rules-section-selected-apps'));
+    await tester.dragUntilVisible(
+      appsSection,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    final picker = find.byKey(const ValueKey('rules-selected-app-pick'));
+    await tester.ensureVisible(picker);
+    await tester.pumpAndSettle();
+    await tester.tap(picker);
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Выбранные приложения будут работать напрямую.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+          'Российские и локальные сервисы остаются на обычном подключении.'),
+      findsNothing,
+    );
+    await tester.tap(
+      find.byKey(
+        const ValueKey(
+          'rules-selected-app-option-org.telegram.messenger',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Напрямую без POKROV'), findsOneWidget);
+    expect(find.textContaining('Напрямую: 1'), findsOneWidget);
+    expect(
+      find.byKey(
+        const ValueKey('rules-selected-app-org.telegram.messenger'),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('rules app picker adds a known Android application',
       (tester) async {
     await tester.pumpWidget(
@@ -5699,10 +5924,15 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('rules-selected-app-pick')),
+    final reopenPicker = find.byKey(const ValueKey('rules-selected-app-pick'));
+    await tester.dragUntilVisible(
+      reopenPicker,
+      find.byType(Scrollable).first,
+      const Offset(0, -180),
     );
-    await tester.tap(find.byKey(const ValueKey('rules-selected-app-pick')));
+    await tester.ensureVisible(reopenPicker);
+    await tester.pumpAndSettle();
+    await tester.tap(reopenPicker);
     await tester.pumpAndSettle();
     final selectedOption = find.byKey(
       const ValueKey(
@@ -6851,6 +7081,83 @@ void main() {
     expect(find.text('Premium'), findsNothing);
     expect(find.text('Free'), findsNothing);
     semantics.dispose();
+  });
+
+  testWidgets('locations stay readable on a narrow Android viewport',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(360, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    _installReadyRuntimeBridgeMock();
+
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'narrow-locations',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      locationsCatalog: const ClientLocationsCatalog(
+        auto: ClientLocationAuto(enabled: true, currentCode: 'de-fra-01'),
+        countries: <ClientLocationCountry>[
+          ClientLocationCountry(
+            code: 'de',
+            country: 'Germany',
+            cities: <ClientLocationCity>[
+              ClientLocationCity(
+                code: 'de-fra-01',
+                city: 'Frankfurt',
+                healthScore: 0.95,
+                latencyMs: 31,
+                premium: true,
+                load: 0.24,
+                measuredAt: '2026-08-11T12:00:00Z',
+              ),
+            ],
+          ),
+        ],
+        freePoolCode: '',
+        profileRevision: 'rev-narrow-locations',
+        transportProfile: 'reality',
+        query: '',
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull, reason: 'initial home layout');
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull, reason: 'route scope sheet layout');
+    await _confirmFirstRouteScopeIfPresent(tester);
+    expect(tester.takeException(), isNull, reason: 'connected home layout');
+    await _tapNav(tester, 'nav-locations');
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull, reason: 'locations layout');
+
+    final automaticTitle = find.text('Автоматически');
+    expect(automaticTitle, findsOneWidget);
+    expect(tester.getSize(automaticTitle).width, greaterThan(120));
+
+    final city = find.byKey(
+      const ValueKey('locations-catalog-city-de-fra-01'),
+    );
+    await tester.ensureVisible(city);
+    await tester.pumpAndSettle();
+    expect(city, findsOneWidget);
+    expect(
+      tester
+          .getSize(
+            find.descendant(of: city, matching: find.text('Frankfurt')),
+          )
+          .width,
+      greaterThan(100),
+    );
+    expect(tester.takeException(), isNull, reason: 'scrolled locations layout');
   });
 
   testWidgets(
@@ -8605,7 +8912,8 @@ void main() {
           ClientPlatform.macos,
         ]),
       );
-      expect(appContext.runtimeProfile.freeTier.speedMbps, 50);
+      expect(appContext.runtimeProfile.freeTier.enabled, isFalse);
+      expect(appContext.runtimeProfile.freeTier.speedMbps, 0);
       expect(appContext.redeemHint, isEmpty);
       expect(appContext.locations, hasLength(1));
     }

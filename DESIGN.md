@@ -1,7 +1,7 @@
 ---
 name: POKROV Client Design System
 status: active
-updated: 2026-07-18
+updated: 2026-08-11
 ---
 
 # POKROV Client Design System
@@ -39,13 +39,15 @@ Client tokens mirror the platform `shared/design-tokens.json` (`pokrov-clear`, `
 
 - Mobile tab selection emits one light selection tick; desktop pointer
   navigation stays silent.
-- The connect disc owns the connection ritual: one success confirmation at
-  landing and a quiet release at rest. Error haptics stay with the error
+- The compact primary connect action owns the connection ritual: one success
+  confirmation at landing and a quiet release at rest. Its small state indicator
+  may use the shared connect-arc language, but the action itself stays a wide,
+  immediately readable CTA rather than a logo-led disc. Error haptics stay with the error
   surface instead of firing twice.
 - First launch hands over to Home through the shared reduced-motion-aware
   reveal; sheets and refresh indicators use the same motion scope.
-- Motion is finite or token-bound, and the connect arc is the signature
-  progress language for connection and pull-to-refresh rather than a generic
+- Motion is finite or token-bound, and the connect arc is the signature progress
+  language inside the primary action and pull-to-refresh rather than a generic
   spinner vocabulary.
 - Disabled rows dim, ignore input, and keep a non-click cursor so unavailable
   actions never look live.

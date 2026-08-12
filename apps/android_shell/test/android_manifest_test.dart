@@ -81,7 +81,7 @@ void main() {
   test('quick settings tile uses a monochrome vector icon', () async {
     final manifest = File('android/app/src/main/AndroidManifest.xml');
     final tileIcon = File(
-      'android/app/src/main/res/drawable/ic_qs_pokrov.xml',
+      'android/app/src/main/res/drawable/ic_pokrov_system.xml',
     );
 
     final manifestContent = await manifest.readAsString();
@@ -89,7 +89,7 @@ void main() {
 
     expect(
       manifestContent,
-      contains('android:icon="@drawable/ic_qs_pokrov"'),
+      contains('android:icon="@drawable/ic_pokrov_system"'),
     );
     expect(
       manifestContent,

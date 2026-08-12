@@ -30,6 +30,7 @@ enum AccessLane {
 enum RouteMode {
   fullTunnel,
   selectedApps,
+  excludedApps,
   allExceptRu,
 }
 
@@ -136,6 +137,8 @@ extension RouteModePresentation on RouteMode {
         return 'Всё устройство';
       case RouteMode.selectedApps:
         return 'Выбранные приложения';
+      case RouteMode.excludedApps:
+        return 'Кроме выбранных';
       case RouteMode.allExceptRu:
         return 'Всё, кроме РФ';
     }
@@ -147,6 +150,8 @@ extension RouteModePresentation on RouteMode {
         return 'Весь трафик этого устройства идет через POKROV.';
       case RouteMode.selectedApps:
         return 'POKROV используют только выбранные приложения. Остальное идет напрямую.';
+      case RouteMode.excludedApps:
+        return 'Выбранные приложения идут напрямую. Остальное — через POKROV.';
       case RouteMode.allExceptRu:
         return 'Российские и локальные сервисы идут напрямую, остальное — через POKROV.';
     }
@@ -197,6 +202,7 @@ class ProgramScope {
 
 class FreeTierPolicy {
   const FreeTierPolicy({
+    required this.enabled,
     required this.trafficGb,
     required this.periodDays,
     required this.speedMbps,
@@ -204,18 +210,24 @@ class FreeTierPolicy {
     required this.nodePool,
   });
 
+  final bool enabled;
   final int trafficGb;
   final int periodDays;
   final int speedMbps;
   final int deviceLimit;
   final String nodePool;
 
-  String get quotaSummary => '$trafficGb ГБ на $periodDays дней';
-  String get speedSummary => 'до $speedMbps Мбит/с на IP';
+  String get quotaSummary =>
+      enabled ? '$trafficGb ГБ на $periodDays дней' : 'Отключено';
+  String get speedSummary =>
+      enabled ? 'до $speedMbps Мбит/с на IP' : 'Отключено';
   String get deviceSummary =>
       deviceLimit == 1 ? '1 устройство' : 'до $deviceLimit устройств';
-  String get nodePoolLabel =>
-      nodePool.trim().toLowerCase() == 'nl-free' ? 'Бесплатный узел' : nodePool;
+  String get nodePoolLabel => enabled
+      ? (nodePool.trim().toLowerCase() == 'nl-free'
+          ? 'Бесплатный узел'
+          : nodePool)
+      : 'Отключено';
 }
 
 class RuntimeProfile {

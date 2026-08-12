@@ -95,6 +95,8 @@ $requiredFiles = @(
   "scripts\\README.md",
   "scripts\\bootstrap-workspace.ps1",
   "scripts\\bootstrap-local.ps1",
+  "scripts\\configure-android-production-signing.ps1",
+  "scripts\\build-android-production.ps1",
   "scripts\\build-windows-release.ps1",
   "scripts\\sync-pokrov-core-runtime.ps1",
   "scripts\\run-tests.ps1",
@@ -204,16 +206,16 @@ if (Test-Path -LiteralPath $productContractPath -PathType Leaf) {
     $manifestErrors.Add("config\\product-contract.seed.json must expose selected_apps in public_routing_modes")
   }
 
-  if ($productContract.free_tier.node_pool -ne "NL-free") {
-    $manifestErrors.Add("config\\product-contract.seed.json must keep free_tier.node_pool as NL-free")
+  if ($productContract.free_tier.enabled -ne $false) {
+    $manifestErrors.Add("config\\product-contract.seed.json must keep free_tier.enabled false")
   }
 
-  if ([int]$productContract.free_tier.traffic_gb -ne 5) {
-    $manifestErrors.Add("config\\product-contract.seed.json must keep free_tier.traffic_gb at 5")
+  if ($productContract.free_tier.status -ne "retired_pending_replacement") {
+    $manifestErrors.Add("config\\product-contract.seed.json must mark free_tier retired_pending_replacement")
   }
 
-  if ([int]$productContract.free_tier.speed_mbps -ne 50) {
-    $manifestErrors.Add("config\\product-contract.seed.json must keep free_tier.speed_mbps at 50")
+  if ($null -ne $productContract.free_tier.node_pool) {
+    $manifestErrors.Add("config\\product-contract.seed.json must not publish a free_tier.node_pool")
   }
 
   if ($productContract.monetization.in_app_purchases -ne $false) {
@@ -242,12 +244,16 @@ if (Test-Path -LiteralPath $runtimeProfilePath -PathType Leaf) {
     $manifestErrors.Add("config\\runtime-profile.seed.json must expose selected_apps in public_routing_modes")
   }
 
-  if ($runtimeProfile.free_tier.node_pool -ne "NL-free") {
-    $manifestErrors.Add("config\\runtime-profile.seed.json must keep free_tier.node_pool as NL-free")
+  if ($runtimeProfile.free_tier.enabled -ne $false) {
+    $manifestErrors.Add("config\\runtime-profile.seed.json must keep free_tier.enabled false")
   }
 
-  if ([int]$runtimeProfile.free_tier.speed_mbps -ne 50) {
-    $manifestErrors.Add("config\\runtime-profile.seed.json must keep free_tier.speed_mbps at 50")
+  if ($runtimeProfile.free_tier.status -ne "retired_pending_replacement") {
+    $manifestErrors.Add("config\\runtime-profile.seed.json must mark free_tier retired_pending_replacement")
+  }
+
+  if ($null -ne $runtimeProfile.free_tier.node_pool) {
+    $manifestErrors.Add("config\\runtime-profile.seed.json must not publish a free_tier.node_pool")
   }
 
   if ($runtimeProfile.monetization.in_app_purchases -ne $false) {

@@ -34,6 +34,53 @@ typedef PokrovWifiProbe = Future<PokrovWifiNetworkStatus> Function();
 typedef PokrovWifiPermissionRequester = Future<bool> Function();
 typedef PokrovVpnSettingsLauncher = Future<bool> Function();
 
+class PokrovSystemSurfacePreferences {
+  const PokrovSystemSurfacePreferences({
+    this.showCountry = true,
+    this.showSpeed = true,
+    this.showRouteMode = true,
+  });
+
+  final bool showCountry;
+  final bool showSpeed;
+  final bool showRouteMode;
+
+  PokrovSystemSurfacePreferences copyWith({
+    bool? showCountry,
+    bool? showSpeed,
+    bool? showRouteMode,
+  }) {
+    return PokrovSystemSurfacePreferences(
+      showCountry: showCountry ?? this.showCountry,
+      showSpeed: showSpeed ?? this.showSpeed,
+      showRouteMode: showRouteMode ?? this.showRouteMode,
+    );
+  }
+
+  factory PokrovSystemSurfacePreferences.fromMap(Map<String, Object?>? value) {
+    return PokrovSystemSurfacePreferences(
+      showCountry: value?['showCountry'] != false,
+      showSpeed: value?['showSpeed'] != false,
+      showRouteMode: value?['showRouteMode'] != false,
+    );
+  }
+
+  Map<String, Object?> toMap() => <String, Object?>{
+        'showCountry': showCountry,
+        'showSpeed': showSpeed,
+        'showRouteMode': showRouteMode,
+      };
+
+  String get summary {
+    final enabled = <String>[
+      if (showCountry) 'страна',
+      if (showSpeed) 'скорость',
+      if (showRouteMode) 'режим',
+    ];
+    return enabled.isEmpty ? 'Только статус' : enabled.join(' · ');
+  }
+}
+
 /// Host-facing control used by desktop tray integrations. It deliberately
 /// delegates to the same shell action as the main button, so staging,
 /// permission checks, trusted Wi-Fi and error handling cannot diverge.
@@ -176,6 +223,62 @@ Future<bool> openPokrovVpnSettings(HostPlatform hostPlatform) async {
   try {
     return await _pokrovRuntimeSystemChannel.invokeMethod<bool>(
           'runtimeEngine.openVpnSettings',
+        ) ??
+        false;
+  } on PlatformException {
+    return false;
+  } on MissingPluginException {
+    return false;
+  }
+}
+
+Future<PokrovSystemSurfacePreferences> readPokrovSystemSurfacePreferences(
+  HostPlatform hostPlatform,
+) async {
+  if (hostPlatform != HostPlatform.android) {
+    return const PokrovSystemSurfacePreferences();
+  }
+  try {
+    final value =
+        await _pokrovRuntimeSystemChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.systemSurfacePreferences',
+    );
+    return PokrovSystemSurfacePreferences.fromMap(value);
+  } on PlatformException {
+    return const PokrovSystemSurfacePreferences();
+  } on MissingPluginException {
+    return const PokrovSystemSurfacePreferences();
+  }
+}
+
+Future<PokrovSystemSurfacePreferences?> updatePokrovSystemSurfacePreferences(
+  HostPlatform hostPlatform,
+  PokrovSystemSurfacePreferences preferences,
+) async {
+  if (hostPlatform != HostPlatform.android) {
+    return null;
+  }
+  try {
+    final value =
+        await _pokrovRuntimeSystemChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.updateSystemSurfacePreferences',
+      preferences.toMap(),
+    );
+    return PokrovSystemSurfacePreferences.fromMap(value);
+  } on PlatformException {
+    return null;
+  } on MissingPluginException {
+    return null;
+  }
+}
+
+Future<bool> openPokrovNotificationSettings(HostPlatform hostPlatform) async {
+  if (hostPlatform != HostPlatform.android) {
+    return false;
+  }
+  try {
+    return await _pokrovRuntimeSystemChannel.invokeMethod<bool>(
+          'runtimeEngine.openNotificationSettings',
         ) ??
         false;
   } on PlatformException {
