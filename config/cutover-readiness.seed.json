@@ -10,7 +10,7 @@
     "github_repo_visibility": "public",
     "anonymous_download_smoke": "PASS_FULL_DOWNLOAD_EXACT_SIZE_AND_SHA256",
     "authenticated_github_release_smoke": "PASS_EXACT_GITHUB_ASSET_DIGEST",
-    "live_app_session_download_smoke": "PENDING_RUNTIME_SYNC"
+    "live_app_session_download_smoke": "PASS_BRAIN_SYNTHETIC_SIGNED_SESSION_EXACT_LINKS"
   },
   "android_release": {
     "beta_distribution": "public_production_signed_direct_apk",

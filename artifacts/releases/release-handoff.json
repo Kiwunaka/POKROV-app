@@ -7,8 +7,8 @@
   "version": "1.0.3",
   "artifact_dir": "artifacts/releases/pokrov-app/1.0.3-beta.2+20260813",
   "generated_at": "2026-08-13T15:11:14+03:00",
-  "updated_at": "2026-08-13T15:30:30+03:00",
-  "release_state": "public_prerelease_published_pending_runtime_sync_and_huawei_manual_gates",
+  "updated_at": "2026-08-13T15:36:31+03:00",
+  "release_state": "public_prerelease_published_runtime_synced_huawei_manual_gates_pending",
   "built_from_client_commit": "78ab9f394a7581cf0f1a0c22fe448bbe1e94b089",
   "github_release": {
     "tag": "v1.0.3-beta.2",
@@ -115,7 +115,7 @@
   "cutover": {
     "runtime_sync_allowed": true,
     "runtime_sync_required": true,
-    "runtime_sync_result": "PENDING_RUNTIME_SYNC",
+    "runtime_sync_result": "PASS_BRAIN_HANDOFF_BACKEND_STATIC_DEPLOY_AND_POST_DEPLOY_VERIFY",
     "anonymous_download_smoke": "PASS_FULL_DOWNLOAD_EXACT_SIZE_AND_SHA256",
     "authenticated_github_release_smoke": "PASS_EXACT_GITHUB_ASSET_DIGEST",
     "public_publication_allowed": true,
