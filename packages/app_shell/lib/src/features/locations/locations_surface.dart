@@ -646,6 +646,7 @@ class _ClientLocationCityRow extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 330;
+          final largeText = MediaQuery.textScalerOf(context).scale(1) >= 1.2;
           return Row(
             children: [
               _LocationFlagBadge(code: country.code, country: country.country),
@@ -666,7 +667,10 @@ class _ClientLocationCityRow extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      maxLines: 1,
+                      key: ValueKey(
+                        'locations-catalog-subtitle-${city.code}',
+                      ),
+                      maxLines: largeText ? 2 : 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: p.muted,
@@ -677,7 +681,7 @@ class _ClientLocationCityRow extends StatelessWidget {
                     Text(
                       metrics,
                       key: ValueKey('locations-catalog-metrics-${city.code}'),
-                      maxLines: 1,
+                      maxLines: largeText ? 2 : 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: p.muted,
@@ -804,6 +808,7 @@ class _SmartConnectNodeRow extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 330;
+          final largeText = MediaQuery.textScalerOf(context).scale(1) >= 1.2;
           return Row(
             children: [
               _LocationFlagBadge(
@@ -829,7 +834,7 @@ class _SmartConnectNodeRow extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       city,
-                      maxLines: 1,
+                      maxLines: largeText ? 2 : 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: p.muted,
@@ -839,7 +844,7 @@ class _SmartConnectNodeRow extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '$quality · $latency',
-                      maxLines: 1,
+                      maxLines: largeText ? 2 : 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: selected ? p.accent : p.muted,

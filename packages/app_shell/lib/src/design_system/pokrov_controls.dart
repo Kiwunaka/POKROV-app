@@ -1097,6 +1097,7 @@ class PokrovStatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = PokrovPalette.of(context);
+    final largeText = MediaQuery.textScalerOf(context).scale(1) >= 1.2;
     final background = switch (tone) {
       PokrovStatusTone.accent => palette.accent.withValues(alpha: 0.12),
       PokrovStatusTone.muted => palette.surfaceMuted.withValues(alpha: 0.92),
@@ -1127,12 +1128,16 @@ class PokrovStatusPill extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: foreground),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: palette.ink,
-                  fontWeight: FontWeight.w700,
-                ),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: largeText ? 2 : 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: palette.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
           ),
         ],
       ),

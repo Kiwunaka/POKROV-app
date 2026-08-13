@@ -44,6 +44,13 @@ void main() {
     expect(PokrovPalette.dark.accent, const Color(0xFF8AC4AB));
     expect(PokrovPalette.dark.connectedGreen, const Color(0xFF30D158));
     expect(PokrovPalette.dark.reward, const Color(0xFFE2B35B));
+    expect(PokrovPalette.dark.muted, const Color(0xFF83908A));
+    expect(
+      PokrovPalette.dark.muted.computeLuminance() + 0.05,
+      greaterThanOrEqualTo(
+        4.5 * (PokrovPalette.dark.surface.computeLuminance() + 0.05),
+      ),
+    );
 
     for (final tokens in [PokrovPalette.light, PokrovPalette.dark]) {
       expect(tokens.canvas, isNot(const Color(0xFF000000)));
@@ -448,7 +455,28 @@ void main() {
     expect(asset.assetName, PokrovBrandAssets.mark);
     expect(image.width, 32);
     expect(image.height, 32);
+    expect(image.color, isNull);
     expect(find.byType(Opacity), findsOneWidget);
+  });
+
+  testWidgets('brand mark uses the readable dark accent tint', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.light(),
+        darkTheme: ThemeData.dark().copyWith(
+          extensions: const [PokrovPalette.dark],
+        ),
+        themeMode: ThemeMode.dark,
+        home: const PokrovBrandMark(size: 32),
+      ),
+    );
+
+    final image = tester.widget<Image>(
+      find.byKey(PokrovBrandMark.imageKey),
+    );
+
+    expect(image.color, PokrovPalette.dark.accent);
+    expect(image.colorBlendMode, BlendMode.srcIn);
   });
 
   testWidgets('skeleton primitives preserve geometry and stable keys',

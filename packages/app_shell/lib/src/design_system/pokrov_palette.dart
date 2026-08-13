@@ -165,7 +165,7 @@ abstract final class PokrovPalette {
     surfaceMuted: Color(0xFF17221D),
     surfaceElevated: Color(0xFF182019),
     line: Color(0x1FEFF3F1),
-    muted: Color(0xFF78857E),
+    muted: Color(0xFF83908A),
   );
 
   static PokrovPaletteTokens of(BuildContext context) {

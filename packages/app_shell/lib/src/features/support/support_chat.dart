@@ -822,6 +822,7 @@ class _SupportAiFirstCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
+    final largeText = MediaQuery.textScalerOf(context).scale(1) >= 1.2;
     return Semantics(
       button: true,
       label: 'Сначала спросить ИИ-помощника',
@@ -865,7 +866,9 @@ class _SupportAiFirstCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       'Проверит WARP, локацию и настройки. Если не поможет — человек.',
-                      maxLines: 2,
+                      key: const ValueKey('support-ai-first-description'),
+                      maxLines: largeText ? 3 : 2,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: p.muted,
                             height: 1.25,
@@ -1069,14 +1072,16 @@ class _SupportLifecycleHint extends StatelessWidget {
           children: [
             Icon(data.icon, size: 16, color: data.accent),
             const SizedBox(width: 8),
-            Text(
-              data.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: p.ink,
-                    fontWeight: FontWeight.w600,
-                  ),
+            Flexible(
+              child: Text(
+                data.label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: p.ink,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
             ),
             if (data.retry) ...[
               const SizedBox(width: 6),

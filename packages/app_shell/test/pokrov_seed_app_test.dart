@@ -5010,6 +5010,31 @@ void main() {
     expect(composer.controller?.text, isEmpty);
   });
 
+  testWidgets('support AI entry preserves its purpose at large text',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(360, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(
+      tester.platformDispatcher.clearTextScaleFactorTestValue,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _openSupportChatFromProfile(tester);
+
+    final description = tester.widget<Text>(
+      find.byKey(const ValueKey('support-ai-first-description')),
+    );
+    expect(description.maxLines, 3);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
       'support AI assistant opens an honest mini chat and answers from the '
       'knowledge base', (tester) async {
@@ -7416,6 +7441,10 @@ void main() {
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(
+      tester.platformDispatcher.clearTextScaleFactorTestValue,
+    );
     _installReadyRuntimeBridgeMock();
 
     final bootstrapper = _FakeBootstrapper(
@@ -7490,6 +7519,18 @@ void main() {
           .width,
       greaterThan(100),
     );
+    final subtitle = tester.widget<Text>(
+      find.byKey(
+        const ValueKey('locations-catalog-subtitle-de-fra-01'),
+      ),
+    );
+    final metrics = tester.widget<Text>(
+      find.byKey(
+        const ValueKey('locations-catalog-metrics-de-fra-01'),
+      ),
+    );
+    expect(subtitle.maxLines, 2);
+    expect(metrics.maxLines, 2);
     expect(tester.takeException(), isNull, reason: 'scrolled locations layout');
   });
 

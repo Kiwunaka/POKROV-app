@@ -22,6 +22,10 @@ class PokrovBrandMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final tokens = PokrovPalette.of(context);
+    final darkTint = theme.brightness == Brightness.dark ? tokens.accent : null;
+
     return Opacity(
       opacity: opacity,
       child: Image.asset(
@@ -30,9 +34,10 @@ class PokrovBrandMark extends StatelessWidget {
         width: size,
         height: size,
         cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).round(),
+        color: darkTint,
+        colorBlendMode: darkTint == null ? null : BlendMode.srcIn,
         filterQuality: FilterQuality.medium,
         errorBuilder: (context, error, stackTrace) {
-          final tokens = PokrovPalette.of(context);
           return SizedBox(
             width: size,
             height: size,
