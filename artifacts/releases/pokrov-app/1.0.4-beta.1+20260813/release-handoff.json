@@ -7,8 +7,8 @@
   "version": "1.0.4",
   "artifact_dir": "artifacts/releases/pokrov-app/1.0.4-beta.1+20260813",
   "generated_at": "2026-08-13T23:55:57+03:00",
-  "updated_at": "2026-08-13T23:55:57+03:00",
-  "release_state": "candidate_built_source_committed_huawei_exact_smoke_pass_publication_pending",
+  "updated_at": "2026-08-14T00:08:02+03:00",
+  "release_state": "public_prerelease_published_anonymous_verified_runtime_sync_pending",
   "built_from_client_commit": "636d8f563c82281983d887063811999789a77755",
   "github_release": {
     "tag": "v1.0.4-beta.1",
@@ -17,7 +17,7 @@
     "is_prerelease": true,
     "is_draft": false,
     "visibility": "public",
-    "asset_refresh_utc": null
+    "asset_refresh_utc": "2026-08-13T21:08:02Z"
   },
   "downloads": {
     "android": {
@@ -101,7 +101,7 @@
     "APP_ANDROID_UNIVERSAL_SIZE_BYTES": "289838426",
     "APP_ANDROID_RELEASE_NOTES": "Новая главная, честные локации и варианты, надёжнее плитка и сеть, нативная AI-поддержка с диагностикой.",
     "APP_ANDROID_RELEASE_NOTES_URL": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.4-beta.1",
-    "APP_ANDROID_PUBLISHED_AT": "",
+    "APP_ANDROID_PUBLISHED_AT": "2026-08-13T21:08:02Z",
     "APP_WINDOWS_EXE_URL": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-windows-setup-x64.exe",
     "APP_WINDOWS_MIRROR_URL": "",
     "APP_WINDOWS_VERSION": "1.0.4-beta.1",
@@ -109,15 +109,15 @@
     "APP_WINDOWS_SIZE_BYTES": "38739968",
     "APP_WINDOWS_RELEASE_NOTES": "Общий обновлённый UI с Android и Core 1.0.3. Бета без доверенной Windows-подписи.",
     "APP_WINDOWS_RELEASE_NOTES_URL": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.4-beta.1",
-    "APP_WINDOWS_PUBLISHED_AT": "",
+    "APP_WINDOWS_PUBLISHED_AT": "2026-08-13T21:08:02Z",
     "APP_DOCS_URL": "https://pokrov.space/install/"
   },
   "cutover": {
     "runtime_sync_allowed": true,
     "runtime_sync_required": true,
-    "runtime_sync_result": "PENDING_PUBLICATION",
-    "anonymous_download_smoke": "PENDING_PUBLICATION",
-    "authenticated_github_release_smoke": "PENDING_PUBLICATION",
+    "runtime_sync_result": "PENDING_RUNTIME_SYNC",
+    "anonymous_download_smoke": "PASS_FULL_DOWNLOAD_EXACT_SIZE_AND_SHA256",
+    "authenticated_github_release_smoke": "PASS_EXACT_GITHUB_ASSET_DIGEST",
     "public_publication_allowed": true,
     "public_publication_marker": "GO_PUBLIC_PRERELEASE_DIRECT_SPLIT_APKS_AND_WINDOWS_BETA_OWNER_AUTHORIZED",
     "public_announcement_allowed": false,
