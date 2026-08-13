@@ -1,8 +1,8 @@
 {
   "core": {
     "repository": "Kiwunaka/POKROV-core",
-    "release_tag": "v1.0.2",
-    "source_commit": "a469240dc3e1e1736ff73348b113f164c277492a",
+    "release_tag": "v1.0.3",
+    "source_commit": "69a74545101708e56183c92e31f2b4c7b2509884",
     "sing_box_version": "1.13.0",
     "sing_dependency": "v0.8.0-beta.12",
     "go_toolchain": "go1.25.12",
@@ -10,19 +10,19 @@
       "status": "clean_reproducible_release",
       "vcs_stamp": "disabled_for_reproducible_release_artifacts",
       "source_identity": "annotated_release_tag_and_github_release_commit",
-      "release_url": "https://github.com/Kiwunaka/pokrov-core/releases/tag/v1.0.2",
+      "release_url": "https://github.com/Kiwunaka/pokrov-core/releases/tag/v1.0.3",
       "reproducible_build": {
         "android": {
-          "size": 106832036,
-          "sha256": "e98861ec0b658304515c04af6ab98a60f3664f8b5eb7660b57e6f0baa0df385f"
+          "size": 106861671,
+          "sha256": "6e6f3b688fe415c9392e19aa4f8660885316897cfc369cf8c3ff3d01100ee14f"
         },
         "windows": {
-          "size": 55122944,
-          "sha256": "b6d4e28b5fb9d475acc623fed84d2009137a55972a841216a81ae6ac45f98305"
+          "size": 55134208,
+          "sha256": "7cc83854fc4022b759e9de3d0942b90a24c859cfd51e3231d04e7c7a6b7d5054"
         },
         "libcronet_sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
       },
-      "promotion_rule": "accept_exact_v1.0.2_release_artifacts"
+      "promotion_rule": "accept_exact_v1.0.3_release_artifacts"
     },
     "activation_state": "active",
     "desktop_abi": {
@@ -34,8 +34,8 @@
     "assets": {
       "android": {
         "entry": "pokrov-core.aar",
-        "size": 106832036,
-        "sha256": "e98861ec0b658304515c04af6ab98a60f3664f8b5eb7660b57e6f0baa0df385f",
+        "size": 106861671,
+        "sha256": "6e6f3b688fe415c9392e19aa4f8660885316897cfc369cf8c3ff3d01100ee14f",
         "sync_policy": "pokrov_release",
         "sync_destination": "apps/android_shell/android/app/libs",
         "platform_state": "active_local_build_pending_device_proof"
@@ -58,8 +58,8 @@
       },
       "windows": {
         "entry": "pokrov-core.dll",
-        "size": 55122944,
-        "sha256": "b6d4e28b5fb9d475acc623fed84d2009137a55972a841216a81ae6ac45f98305",
+        "size": 55134208,
+        "sha256": "7cc83854fc4022b759e9de3d0942b90a24c859cfd51e3231d04e7c7a6b7d5054",
         "runtime_dependencies": [
           "libcronet.dll"
         ],

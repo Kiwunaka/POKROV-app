@@ -1,5 +1,99 @@
 part of pokrov_app_shell;
 
+String _locationCountryDisplayName(String code, String fallback) {
+  const names = <String, String>{
+    'DE': 'Германия',
+    'FI': 'Финляндия',
+    'FR': 'Франция',
+    'GB': 'Великобритания',
+    'IT': 'Италия',
+    'NL': 'Нидерланды',
+    'PL': 'Польша',
+    'RU': 'Россия',
+    'US': 'США',
+  };
+  return names[code.trim().toUpperCase()] ?? fallback.trim();
+}
+
+String _locationCityDisplayName(
+  ClientLocationCity city,
+  ClientLocationCountry country,
+) {
+  final raw = city.city.trim();
+  if (RegExp('[А-Яа-яЁё]').hasMatch(raw)) {
+    return raw;
+  }
+  final parts = city.code
+      .trim()
+      .toLowerCase()
+      .split(RegExp(r'[-_.]+'))
+      .where((part) => part.isNotEmpty)
+      .toSet();
+  const cityNames = <String, String>{
+    'ams': 'Амстердам',
+    'fra': 'Франкфурт',
+    'hel': 'Хельсинки',
+    'lon': 'Лондон',
+    'mil': 'Милан',
+    'msk': 'Москва',
+    'nyc': 'Нью-Йорк',
+    'par': 'Париж',
+    'spb': 'Санкт-Петербург',
+    'waw': 'Варшава',
+  };
+  for (final entry in cityNames.entries) {
+    if (parts.contains(entry.key)) {
+      return entry.value;
+    }
+  }
+  const rawNames = <String, String>{
+    'amsterdam': 'Амстердам',
+    'frankfurt': 'Франкфурт',
+    'helsinki': 'Хельсинки',
+    'london': 'Лондон',
+    'milan': 'Милан',
+    'moscow': 'Москва',
+    'new york': 'Нью-Йорк',
+    'paris': 'Париж',
+    'saint petersburg': 'Санкт-Петербург',
+    'st petersburg': 'Санкт-Петербург',
+    'warsaw': 'Варшава',
+  };
+  if (rawNames.containsKey(raw.toLowerCase())) {
+    return rawNames[raw.toLowerCase()]!;
+  }
+  if (raw.isNotEmpty) {
+    return raw;
+  }
+  return _locationCountryDisplayName(country.code, country.country);
+}
+
+String _locationCountryCodeFromNode(String nodeCode, String country) {
+  final parts = nodeCode
+      .trim()
+      .toUpperCase()
+      .split(RegExp(r'[-_.]+'))
+      .where((part) => part.isNotEmpty)
+      .toList(growable: false);
+  final base = parts.isEmpty ? '' : parts.first;
+  if (RegExp(r'^[A-Z]{2}$').hasMatch(base)) {
+    return base;
+  }
+  const countryCodes = <String, String>{
+    'finland': 'FI',
+    'france': 'FR',
+    'germany': 'DE',
+    'italy': 'IT',
+    'netherlands': 'NL',
+    'poland': 'PL',
+    'russia': 'RU',
+    'usa': 'US',
+    'united kingdom': 'GB',
+    'united states': 'US',
+  };
+  return countryCodes[country.trim().toLowerCase()] ?? '';
+}
+
 String _smartConnectNodeTitle(SmartConnectNode node) {
   final country = node.country.trim();
   if (country.isNotEmpty) {
@@ -130,16 +224,42 @@ String _locationFreshnessLabel(String rawIso, {DateTime? now}) {
   return 'замер устарел';
 }
 
+String _locationCompactFreshnessLabel(String rawIso, {DateTime? now}) {
+  final measuredAt = DateTime.tryParse(rawIso.trim())?.toUtc();
+  if (measuredAt == null) {
+    return 'нет замера';
+  }
+  final clock = (now ?? DateTime.now()).toUtc();
+  final age = clock.difference(measuredAt);
+  if (age.isNegative) {
+    return 'нет замера';
+  }
+  if (age <= const Duration(minutes: 2)) {
+    return 'сейчас';
+  }
+  if (age <= const Duration(minutes: 15)) {
+    return '${age.inMinutes} мин';
+  }
+  return 'устарел';
+}
+
 String _locationMetricsLabel(
   ClientLocationCity city, {
   DateTime? now,
-  _LocationMetricFreshness? freshness,
+  bool compact = false,
 }) {
-  final resolvedFreshness =
-      freshness ?? _locationMetricFreshness(city.measuredAt, now: now);
-  final freshnessLabel = _locationFreshnessLabel(city.measuredAt, now: now);
-  if (resolvedFreshness != _LocationMetricFreshness.current) {
-    return freshnessLabel;
+  final freshnessLabel = compact
+      ? _locationCompactFreshnessLabel(city.measuredAt, now: now)
+      : _locationFreshnessLabel(city.measuredAt, now: now);
+  if (compact) {
+    final latency = city.latencyMs == null || city.latencyMs! < 0
+        ? '— мс'
+        : '${city.latencyMs} мс';
+    final rawLoad = city.load;
+    final load = rawLoad == null || !rawLoad.isFinite || rawLoad < 0
+        ? '—%'
+        : '${(rawLoad <= 1 ? rawLoad * 100 : rawLoad).clamp(0, 100).round()}%';
+    return <String>[latency, load, freshnessLabel].join(' · ');
   }
   return <String>[
     _locationLatencyLabel(city.latencyMs),

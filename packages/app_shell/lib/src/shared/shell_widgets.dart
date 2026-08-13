@@ -135,6 +135,7 @@ class _ConnectOrbButton extends StatefulWidget {
     required this.error,
     required this.busy,
     required this.onPressed,
+    this.status,
     this.desktopSize = false,
   });
 
@@ -145,6 +146,7 @@ class _ConnectOrbButton extends StatefulWidget {
   final bool error;
   final bool busy;
   final Future<void> Function()? onPressed;
+  final Widget? status;
   final bool desktopSize;
 
   @override
@@ -408,6 +410,15 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                 : (widget.degraded || widget.error)
                     ? 'Откройте детали и повторите'
                     : 'Одно нажатие — и готово';
+
+    if (!widget.desktopSize) {
+      return _buildMobileDisc(
+        context,
+        state: state,
+        accent: accent,
+        disableAnimations: disableAnimations,
+      );
+    }
 
     return Semantics(
       key: const ValueKey('primary-connect-action'),
@@ -692,6 +703,208 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                           ),
                         ],
                       ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileDisc(
+    BuildContext context, {
+    required PokrovConnectDiscState state,
+    required Color accent,
+    required bool disableAnimations,
+  }) {
+    final motion = _MotionScope.of(context);
+    final p = PokrovPalette.of(context);
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+    final diameter = (viewportWidth * 0.56).clamp(196.0, 228.0).toDouble();
+    final borderColor = (widget.degraded || widget.error)
+        ? p.warning.withValues(alpha: 0.72)
+        : widget.running
+            ? p.connectedGreen.withValues(alpha: 0.72)
+            : _discFocused
+                ? p.accent.withValues(alpha: 0.66)
+                : p.line;
+    final surfaceColor = widget.running
+        ? Color.lerp(
+            p.surface,
+            p.connectedGreen.withValues(alpha: 0.10),
+            0.55,
+          )!
+        : p.surface;
+
+    return Semantics(
+      key: const ValueKey('primary-connect-action'),
+      button: true,
+      enabled: widget.enabled,
+      label: widget.actionLabel,
+      child: FocusableActionDetector(
+        key: const ValueKey('primary-connect-focusable'),
+        enabled: widget.enabled && widget.onPressed != null,
+        focusNode: _focusNode,
+        shortcuts: const <ShortcutActivator, Intent>{
+          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+          SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+        },
+        actions: <Type, Action<Intent>>{
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              unawaited(_activate());
+              return null;
+            },
+          ),
+        },
+        onShowFocusHighlight: (focused) {
+          if (_discFocused != focused) {
+            setState(() => _discFocused = focused);
+          }
+        },
+        child: MouseRegion(
+          cursor: widget.onPressed == null
+              ? SystemMouseCursors.basic
+              : SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _discHovered = true),
+          onExit: (_) => setState(() => _discHovered = false),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.onPressed == null ? null : _activate,
+            onTapDown: widget.onPressed == null
+                ? null
+                : (_) => setState(() => _pressed = true),
+            onTapCancel: () => setState(() => _pressed = false),
+            onTapUp: widget.onPressed == null
+                ? null
+                : (_) => setState(() => _pressed = false),
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                key: const ValueKey('connect-disc-motion'),
+                animation: _breathController,
+                builder: (context, child) {
+                  final breath = disableAnimations
+                      ? 0.0
+                      : Curves.easeInOut.transform(_breathController.value);
+                  return Transform.scale(
+                    scale: PokrovConnectDiscMotion.scale(
+                      pressed: false,
+                      runsSweep: state.runsSweep,
+                      breathValue: breath,
+                      disableAnimations: disableAnimations,
+                    ),
+                    child: child,
+                  );
+                },
+                child: AnimatedScale(
+                  scale: _pressed && !disableAnimations
+                      ? PokrovConnectDiscMotion.pressScale
+                      : 1,
+                  duration: motion.duration(PokrovMotionTokens.quick),
+                  curve: _pressed ? Curves.easeIn : PokrovMotionTokens.spring,
+                  child: AnimatedContainer(
+                    width: diameter,
+                    height: diameter,
+                    duration: motion.duration(_MotionTokens.standard),
+                    curve: _MotionTokens.ease,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: surfaceColor,
+                      border: Border.all(
+                        color: borderColor,
+                        width: _discFocused ? 2 : 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? 0.18
+                                    : 0.055,
+                          ),
+                          blurRadius: 22,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox.square(
+                          dimension: 68,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              _ConnectSettleLayer(
+                                diameter: 68,
+                                accent: accent,
+                                enabled: widget.enabled,
+                                running: widget.running,
+                                degraded: widget.degraded,
+                                error: widget.error,
+                                busy: _effectiveBusy,
+                                disableAnimations: disableAnimations,
+                              ),
+                              AnimatedSwitcher(
+                                duration: motion.duration(_MotionTokens.short),
+                                switchInCurve: PokrovMotionTokens.spring,
+                                switchOutCurve: _MotionTokens.ease,
+                                child: _effectiveBusy
+                                    ? RotationTransition(
+                                        key: const ValueKey(
+                                          'connect-action-progress',
+                                        ),
+                                        turns: Tween<double>(begin: 0, end: 0.5)
+                                            .animate(_sweepController),
+                                        child: Icon(
+                                          Icons.hourglass_top_rounded,
+                                          color: accent,
+                                          size: 42,
+                                        ),
+                                      )
+                                    : KeyedSubtree(
+                                        key: ValueKey(
+                                          'connect-action-brand-${widget.running}',
+                                        ),
+                                        child: const _BrandMark(size: 60),
+                                      ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        AnimatedSwitcher(
+                          key: const ValueKey('connect-disc-label'),
+                          duration: motion.duration(_MotionTokens.short),
+                          transitionBuilder: _fadeSlideTransition,
+                          child: FittedBox(
+                            key: ValueKey(widget.actionLabel),
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              widget.actionLabel,
+                              maxLines: 1,
+                              softWrap: false,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(
+                                    color: p.ink,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.35,
+                                  ),
+                            ),
+                          ),
+                        ),
+                        if (widget.status != null) ...[
+                          const SizedBox(height: 3),
+                          widget.status!,
+                        ],
+                      ],
                     ),
                   ),
                 ),

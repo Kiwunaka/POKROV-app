@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.TrafficStats
 import android.net.VpnService
 import android.graphics.Color
@@ -21,6 +22,8 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import org.json.JSONArray
+import org.json.JSONObject
 import space.pokrov.core.libbox.CommandServer
 import space.pokrov.core.libbox.CommandServerHandler
 import space.pokrov.core.libbox.ConnectionOwner
@@ -39,7 +42,12 @@ import space.pokrov.core.libbox.TunOptions
 import space.pokrov.core.libbox.WIFIState
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.net.ConnectException
 import java.net.NetworkInterface as JavaNetworkInterface
+import java.net.Socket
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.io.File
@@ -207,43 +215,272 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             return
         }
 
+        var startupPhase = "read_staged_config"
         try {
-            val content = File(configPath)
+            val rawContent = File(configPath)
                 .takeIf { it.exists() }
                 ?.readText()
                 ?.removePrefix("\uFEFF")
-            if (content.isNullOrBlank()) {
+            if (rawContent.isNullOrBlank()) {
                 throw IllegalStateException("Staged runtime config is missing or empty.")
             }
+            val runtimeConfig = JSONObject(rawContent).apply { remove("_meta") }
+            // This app package is excluded from its own VpnService TUN below.
+            // Keep Core interface auto-detection off: on Android it can select
+            // the VPN interface and loop the uplink back into the TUN.
+            val route = runtimeConfig.optJSONObject("route") ?: JSONObject().also {
+                runtimeConfig.put("route", it)
+            }
+            route.put("auto_detect_interface", false)
+            val inbounds = runtimeConfig.optJSONArray("inbounds") ?: JSONArray().also {
+                runtimeConfig.put("inbounds", it)
+            }
+            val hasTunInbound = (0 until inbounds.length()).any { index ->
+                inbounds.optJSONObject(index)?.optString("type") == "tun"
+            }
+            if (!hasTunInbound) {
+                if (routeMode != ROUTE_MODE_DEVICE) {
+                    throw IllegalStateException(
+                        "A scoped app route requires a freshly materialized TUN profile.",
+                    )
+                }
+                inbounds.put(
+                    JSONObject()
+                        .put("type", "tun")
+                        .put("tag", "tun-in")
+                        .put("mtu", 9000)
+                        .put("auto_route", true)
+                        .put("strict_route", true)
+                        .put("endpoint_independent_nat", true)
+                        .put("stack", "mixed")
+                        .put("sniff", true)
+                        .put("inet4_address", "172.19.0.1/28")
+                        .put("inet6_address", "fdfe:dcba:9876::1/126")
+                        .put("domain_strategy", "prefer_ipv4")
+                        .put("exclude_package", JSONArray().put(packageName)),
+                )
+            }
+            val endpoints = runtimeConfig.optJSONArray("endpoints")
+            val hasWarpEndpoint = endpoints != null && (0 until endpoints.length()).any { index ->
+                endpoints.optJSONObject(index)?.optString("type") == "warp"
+            }
+            runtimeConfig.optJSONObject("experimental")
+                ?.optJSONObject("cache_file")
+                ?.let { cacheFile ->
+                    if (hasWarpEndpoint) {
+                        cacheFile.put("path", "pokrov-cache.db")
+                    } else {
+                        runtimeConfig.optJSONObject("experimental")?.remove("cache_file")
+                    }
+                }
+            val outbounds = runtimeConfig.optJSONArray("outbounds")
+            fun outboundByTag(tag: String): JSONObject? {
+                if (tag.isBlank() || outbounds == null) {
+                    return null
+                }
+                for (index in 0 until outbounds.length()) {
+                    val outbound = outbounds.optJSONObject(index) ?: continue
+                    if (outbound.optString("tag") == tag) {
+                        return outbound
+                    }
+                }
+                return null
+            }
+            fun endpointByTag(tag: String): JSONObject? {
+                if (tag.isBlank() || endpoints == null) {
+                    return null
+                }
+                for (index in 0 until endpoints.length()) {
+                    val endpoint = endpoints.optJSONObject(index) ?: continue
+                    if (endpoint.optString("tag") == tag) {
+                        return endpoint
+                    }
+                }
+                return null
+            }
+            fun outboundType(tag: String): String =
+                outboundByTag(tag)?.optString("type").orEmpty().ifBlank { "missing" }
+            fun finalTargetType(tag: String): String {
+                val type = outboundType(tag)
+                if (type != "missing") {
+                    return type
+                }
+                return endpointByTag(tag)?.optString("type").orEmpty().ifBlank { "missing" }
+            }
+            fun selectedConcreteOutbound(initialTag: String): JSONObject? {
+                var tag = initialTag
+                repeat(6) {
+                    val outbound = outboundByTag(tag) ?: return null
+                    val type = outbound.optString("type")
+                    if (type != "selector" && type != "urltest") {
+                        return outbound
+                    }
+                    tag = outbound.optString("default").ifBlank {
+                        outbound.optJSONArray("outbounds")?.optString(0).orEmpty()
+                    }
+                    if (tag.isBlank()) {
+                        return null
+                    }
+                }
+                return null
+            }
+            val finalTag = runtimeConfig.optJSONObject("route")?.optString("final").orEmpty()
+            val finalType = finalTargetType(finalTag)
+            val selectedOutbound = selectedConcreteOutbound(finalTag)
+            val selectedEndpoint = endpointByTag(finalTag)
+            val selectedType = selectedOutbound?.optString("type").orEmpty().ifBlank { finalType }
+            val dnsServers = runtimeConfig.optJSONObject("dns")?.optJSONArray("servers")
+            val hasLocalBootstrap = (0 until (dnsServers?.length() ?: 0)).any { index ->
+                val server = dnsServers?.optJSONObject(index) ?: return@any false
+                server.optString("type") == "local" || server.optString("address") == "local"
+            }
+            val hasDefaultDomainResolver = route
+                .optJSONObject("default_domain_resolver")
+                ?.optString("server")
+                .orEmpty()
+                .isNotBlank()
+            Log.e(
+                LOG_TAG,
+                "Android runtime topology tun=$hasTunInbound fallbackTun=${!hasTunInbound} " +
+                    "finalType=$finalType selectedType=$selectedType " +
+                    "selectedDetour=${(selectedOutbound ?: selectedEndpoint)?.optString("detour").orEmpty().isNotBlank()} " +
+                    "localBootstrap=$hasLocalBootstrap " +
+                    "defaultDomainResolver=$hasDefaultDomainResolver " +
+                    "outboundCount=${outbounds?.length() ?: 0}",
+            )
+            val endpointHops = mutableListOf<Pair<String, JSONObject>>()
+            selectedOutbound?.let { endpointHops += "selected" to it }
+            var detourTag = selectedOutbound?.optString("detour").orEmpty()
+            if (detourTag.isNotBlank()) {
+                val detourEndpoint = endpointByTag(detourTag)
+                Log.e(
+                    LOG_TAG,
+                    "Android selected detour target outbound=${outboundByTag(detourTag) != null} " +
+                        "endpoint=${detourEndpoint != null} " +
+                        "endpointType=${detourEndpoint?.optString("type").orEmpty().ifBlank { "missing" }} " +
+                        "jsonNull=${selectedOutbound?.isNull("detour") == true}",
+                )
+            }
+            repeat(4) { index ->
+                if (detourTag.isBlank()) {
+                    return@repeat
+                }
+                val detourOutbound = outboundByTag(detourTag) ?: return@repeat
+                endpointHops += "detour${index + 1}" to detourOutbound
+                detourTag = detourOutbound.optString("detour")
+            }
+            endpointHops.forEach { (role, endpoint) ->
+                val endpointServer = endpoint.optString("server").trim()
+                val endpointPort = endpoint.optInt("server_port")
+                val endpointShape = if (endpointServer.isBlank()) {
+                    "missing"
+                } else if (isNumericServerAddress(endpointServer)) {
+                    "ip"
+                } else {
+                    "domain"
+                }
+                Log.e(LOG_TAG, "Android $role endpoint shape=$endpointShape")
+                if (endpointServer.isBlank() || endpointPort !in 1..65535) {
+                    return@forEach
+                }
+                startupPhase = "${role}_endpoint_preflight"
+                val preflight = preflightSelectedEndpoint(endpointServer, endpointPort)
+                Log.e(
+                    LOG_TAG,
+                    "Android $role endpoint TCP preflight result=${preflight.category}",
+                )
+            }
+            val content = runtimeConfig.toString()
             Log.i(LOG_TAG, "Starting Android runtime using a staged config.")
+            startupPhase = "prepare_network_monitor"
             AndroidDefaultNetworkMonitor.ensureStarted(this)
+            startupPhase = "close_previous_runtime"
             runCatching { commandServer?.closeService() }
             runCatching { commandServer?.close() }
             commandServer = null
             activeConfigContent = null
+            startupPhase = "create_command_server"
             val nextServer = Libbox.newCommandServer(this, this)
             commandServer = nextServer
+            startupPhase = "start_command_server"
             nextServer.start()
             activeConfigContent = content
+            startupPhase = "start_runtime_service"
             nextServer.startOrReloadService(content, OverrideOptions())
+            startupPhase = "record_runtime_state"
             activeTileStartGeneration = tileGeneration
             AndroidRuntimeState.markProfileStaged(
                 configPath,
                 preserveConnectionPending = true,
             )
             Log.i(LOG_TAG, "Android runtime service start requested successfully; waiting for tun establishment.")
-        } catch (_: Throwable) {
+        } catch (error: Throwable) {
             AndroidRuntimeState.markFailure(
                 kind = "runtime_service_start_failed",
                 message = AndroidRuntimeSafety.publicFailureMessage(
                     "runtime_service_start_failed",
                 ),
             )
-            Log.e(LOG_TAG, "Android runtime service failed to start.")
+            Log.e(
+                LOG_TAG,
+                "Android runtime service failed to start. " +
+                    "phase=$startupPhase " +
+                    "category=${AndroidRuntimeSafety.safeFailureCategory(error)} " +
+                    "types=${AndroidRuntimeSafety.safeFailureTypes(error)} " +
+                    "hints=${AndroidRuntimeSafety.safeCoreFailureHints(error)}",
+            )
             cleanupFailedStartup()
             activeTileStartGeneration = null
             PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)
             stopSelf()
+        }
+    }
+
+    private fun preflightSelectedEndpoint(server: String, port: Int): EndpointPreflightResult {
+        val connectivityManager =
+            getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork
+            ?: return EndpointPreflightResult("network_unavailable")
+        val capabilities = connectivityManager.getNetworkCapabilities(network)
+            ?: return EndpointPreflightResult("capabilities_unavailable")
+        if (!capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)) {
+            return EndpointPreflightResult("active_network_is_vpn")
+        }
+        return try {
+            val address = network.getAllByName(server).firstOrNull()
+                ?: return EndpointPreflightResult("dns_unresolved")
+            Socket().use { socket ->
+                network.bindSocket(socket)
+                socket.connect(
+                    InetSocketAddress(address, port),
+                    ENDPOINT_PREFLIGHT_TIMEOUT_MILLIS,
+                )
+            }
+            EndpointPreflightResult("reachable")
+        } catch (_: UnknownHostException) {
+            EndpointPreflightResult("dns_unresolved")
+        } catch (_: SocketTimeoutException) {
+            EndpointPreflightResult("timeout")
+        } catch (_: ConnectException) {
+            EndpointPreflightResult("connect_error")
+        } catch (_: SecurityException) {
+            EndpointPreflightResult("security_error")
+        } catch (_: IOException) {
+            EndpointPreflightResult("io_error")
+        } catch (_: Throwable) {
+            EndpointPreflightResult("runtime_error")
+        }
+    }
+
+    private fun isNumericServerAddress(value: String): Boolean {
+        if (value.contains(':')) {
+            return value.matches(Regex("[0-9A-Fa-f:.%]+"))
+        }
+        val parts = value.split('.')
+        return parts.size == 4 && parts.all { part ->
+            part.isNotEmpty() &&
+                part.length <= 3 &&
+                part.toIntOrNull()?.let { it in 0..255 } == true
         }
     }
 
@@ -294,7 +531,11 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
     }
 
-    private fun buildNotification(contentText: String, title: String = "POKROV на этом устройстве"): Notification {
+    private fun buildNotification(
+        contentText: String,
+        title: String = "POKROV на этом устройстве",
+        expandedLines: List<String> = emptyList(),
+    ): Notification {
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -327,7 +568,6 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(contentText)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
             .setSmallIcon(R.drawable.ic_pokrov_system)
             .setColor(Color.rgb(28, 145, 94))
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -336,6 +576,14 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             .setOnlyAlertOnce(true)
             .setOngoing(true)
             .apply {
+                if (expandedLines.isEmpty()) {
+                    setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
+                } else {
+                    val inboxStyle = NotificationCompat.InboxStyle()
+                        .setBigContentTitle(title)
+                    expandedLines.forEach(inboxStyle::addLine)
+                    setStyle(inboxStyle)
+                }
                 if (pendingIntent != null) {
                     setContentIntent(pendingIntent)
                     addAction(
@@ -365,21 +613,33 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             ?.trim()
             .orEmpty()
         val routeMode = profile?.displayRouteMode.orEmpty().ifBlank { currentRouteMode }
-        val details = mutableListOf("Защита включена")
-        if (preferences.showRouteMode) {
-            details += notificationRouteLabel(routeMode)
+        val routeLabel = if (preferences.showRouteMode) {
+            notificationRouteLabel(routeMode)
+        } else {
+            ""
         }
-        if (preferences.showSpeed) {
-            details += sampleTrafficSpeed()
+        val speedLabel = if (preferences.showSpeed) {
+            sampleTrafficSpeed()
         } else {
             resetTrafficSample()
+            ""
         }
+        val content = androidRuntimeNotificationContent(
+            country = country,
+            routeLabel = routeLabel,
+            speedLabel = speedLabel,
+            enhancedProtectionActive = activeConfigContent?.let {
+                AndroidCoreEgressProbe.finalTarget(it)?.kind ==
+                    AndroidCoreEgressProbeTargetKind.ENDPOINT
+            } == true,
+        )
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(
             NOTIFICATION_ID,
             buildNotification(
-                contentText = details.joinToString(" · "),
-                title = if (country.isEmpty()) "POKROV включен" else "POKROV · $country",
+                contentText = content.compactText,
+                title = content.title,
+                expandedLines = content.expandedLines,
             ),
         )
     }
@@ -439,9 +699,9 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
 
     override fun autoDetectInterfaceControl(fd: Int) {
         if (!protect(fd)) {
-            Log.w(LOG_TAG, "Failed to protect Android control socket fd=$fd from VPN capture.")
+            Log.e(LOG_TAG, "Android runtime uplink protect result=failed")
         } else if (protectedSocketEvidence.compareAndSet(false, true)) {
-            Log.i(LOG_TAG, "Protected the Android runtime uplink from VPN capture.")
+            Log.e(LOG_TAG, "Android runtime uplink protect result=success")
         }
     }
 
@@ -664,7 +924,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 }
             }
 
-            Log.i(
+            Log.e(
                 LOG_TAG,
                 "openTun autoRoute=${options.getAutoRoute()} " +
                     "ipv4Addr=$ipv4AddressCount ipv6Addr=$ipv6AddressCount " +
@@ -713,28 +973,73 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
 
     private fun scheduleCoreEgressProbe(generation: Long) {
         val content = activeConfigContent ?: return
-        val groupTag = AndroidCoreEgressProbe.finalGroupTag(content)
+        val target = AndroidCoreEgressProbe.finalTarget(content)
         AndroidRuntimeState.updateCoreEgressValidation(null)
-        if (groupTag == null) {
+        if (target == null) {
             handleCoreEgressProbeResult(
                 probeResult = AndroidCoreEgressProbeResult.UNAVAILABLE,
                 generation = generation,
             )
             return
         }
+        Log.e(
+            LOG_TAG,
+            "Android selected-outbound egress probe scheduled kind=${target.kind.name.lowercase()}",
+        )
+        val watchdog = Runnable {
+            AndroidRuntimeDispatchPolicy.dispatch(
+                executor = runtimeExecutor,
+                shouldRun = {
+                    lifecycleActive.get() &&
+                        healthGeneration.get() == generation &&
+                        activeTun != null
+                },
+            ) {
+                Log.e(LOG_TAG, "Android selected-outbound egress probe hard timeout.")
+                handleCoreEgressProbeResult(
+                    probeResult = AndroidCoreEgressProbeResult.TIMED_OUT,
+                    generation = generation,
+                )
+            }
+        }
+        mainHandler.postDelayed(watchdog, CORE_EGRESS_HARD_TIMEOUT_MILLIS)
         runCatching {
             healthExecutor.execute {
-                var result = AndroidCoreEgressProbe.probe(groupTag)
-                if (
-                    result == AndroidCoreEgressProbeResult.UNAVAILABLE &&
+                Log.e(LOG_TAG, "Android selected-outbound egress probe started.")
+                var result = AndroidCoreEgressProbe.probe(target)
+                var completedAttempts = 1
+                while (
+                    AndroidCoreEgressRetryPolicy.shouldRetry(
+                        target,
+                        result,
+                        completedAttempts,
+                    ) &&
                     lifecycleActive.get() &&
                     healthGeneration.get() == generation
                 ) {
-                    Thread.sleep(CORE_EGRESS_RETRY_DELAY_MILLIS)
+                    Log.e(
+                        LOG_TAG,
+                        "Android selected-outbound egress probe transient " +
+                            "result=${result.name.lowercase()} attempt=$completedAttempts; " +
+                            "retrying.",
+                    )
+                    Thread.sleep(
+                        if (target.kind == AndroidCoreEgressProbeTargetKind.ENDPOINT) {
+                            CORE_ENDPOINT_EGRESS_RETRY_DELAY_MILLIS
+                        } else {
+                            CORE_EGRESS_RETRY_DELAY_MILLIS
+                        },
+                    )
                     if (lifecycleActive.get() && healthGeneration.get() == generation) {
-                        result = AndroidCoreEgressProbe.probe(groupTag)
+                        result = AndroidCoreEgressProbe.probe(target)
+                        completedAttempts += 1
                     }
                 }
+                mainHandler.removeCallbacks(watchdog)
+                Log.e(
+                    LOG_TAG,
+                    "Android selected-outbound egress probe completed result=${result.name.lowercase()}.",
+                )
                 AndroidRuntimeDispatchPolicy.dispatch(
                     executor = runtimeExecutor,
                     shouldRun = {
@@ -745,6 +1050,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 }
             }
         }.onFailure {
+            mainHandler.removeCallbacks(watchdog)
             AndroidRuntimeDispatchPolicy.dispatch(
                 executor = runtimeExecutor,
                 shouldRun = {
@@ -826,7 +1132,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
         val failureMessage = AndroidRuntimeSafety.publicFailureMessage(failureKind)
         AndroidRuntimeState.updateCoreEgressValidation(false)
-        Log.w(LOG_TAG, "Android selected-outbound egress probe did not pass; stopping runtime.")
+        Log.e(
+            LOG_TAG,
+            "Android selected-outbound egress probe result=" +
+                probeResult.name.lowercase() +
+                "; stopping runtime.",
+        )
         stopRuntime(
             message = failureMessage,
             stopReason = failureKind,
@@ -862,9 +1173,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
 
     override fun underNetworkExtension(): Boolean = false
 
-    override fun usePlatformAutoDetectInterfaceControl(): Boolean =
-        AndroidPlatformRuntimeBridge.supportFlags(Build.VERSION.SDK_INT)
+    override fun usePlatformAutoDetectInterfaceControl(): Boolean {
+        val enabled = AndroidPlatformRuntimeBridge.supportFlags(Build.VERSION.SDK_INT)
             .usePlatformAutoDetectInterfaceControl
+        Log.e(LOG_TAG, "Android runtime uplink protect capability=$enabled")
+        return enabled
+    }
 
     override fun useProcFS(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
 
@@ -908,6 +1222,31 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     }
 
     override fun writeDebugMessage(message: String) {
+        if (message == CORE_PLATFORM_PROTECT_INVOKED) {
+            Log.e(LOG_TAG, "Android Core invoked platform uplink protection")
+            return
+        }
+        if (message.startsWith(CORE_SELECTED_OUTBOUND_FAILURE_PREFIX)) {
+            val category = message
+                .removePrefix(CORE_SELECTED_OUTBOUND_FAILURE_PREFIX)
+                .takeIf { it.matches(SAFE_CORE_CATEGORY) }
+                ?: "unclassified"
+            Log.e(LOG_TAG, "Android selected outbound failure category=$category")
+            return
+        }
+        if (message.startsWith(CORE_SELECTED_ENDPOINT_RESULT_PREFIX)) {
+            AndroidCoreEgressProbe.writeCoreDebugMessage(message)
+            val category = message
+                .removePrefix(CORE_SELECTED_ENDPOINT_RESULT_PREFIX)
+                .takeIf { it.matches(SAFE_CORE_CATEGORY) }
+                ?: "unclassified"
+            if (category == "healthy") {
+                Log.i(LOG_TAG, "Android selected endpoint probe healthy")
+            } else {
+                Log.e(LOG_TAG, "Android selected endpoint failure category=$category")
+            }
+            return
+        }
         val category = AndroidRuntimeLogClassifier.classify(message) ?: return
         if (AndroidRuntimeLogClassifier.affectsRuntimeHealth(category)) {
             AndroidRuntimeState.markDegraded(
@@ -985,10 +1324,18 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
 
     companion object {
         private const val LOG_TAG = "PokrovRuntimeVpn"
+        private const val CORE_SELECTED_OUTBOUND_FAILURE_PREFIX = "selected_outbound_url_test:"
+        private const val CORE_SELECTED_ENDPOINT_RESULT_PREFIX = "selected_endpoint_url_test:"
+        private const val CORE_PLATFORM_PROTECT_INVOKED = "platform_protect_invoked"
+        private val SAFE_CORE_CATEGORY = Regex("[a-z_]{1,48}")
         private const val NOTIFICATION_CHANNEL_ID = "pokrov-runtime"
         private const val NOTIFICATION_ID = 1407
         private const val CORE_EGRESS_RETRY_DELAY_MILLIS = 250L
+        private const val CORE_ENDPOINT_EGRESS_RETRY_DELAY_MILLIS = 750L
+        private const val CORE_EGRESS_HARD_TIMEOUT_MILLIS = 55_000L
+        private const val ENDPOINT_PREFLIGHT_TIMEOUT_MILLIS = 5_000
         private const val NOTIFICATION_REFRESH_MILLIS = 3_000L
+        private const val ROUTE_MODE_DEVICE = "device"
         private const val ROUTE_MODE_SELECTED_APPS = "selected_apps"
         private const val ROUTE_MODE_EXCLUDED_APPS = "excluded_apps"
         const val ACTION_START = "space.pokrov.runtime.START"
@@ -1097,6 +1444,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             )
         }
     }
+
+    private data class EndpointPreflightResult(val category: String)
 }
 
 internal fun formatTrafficRate(bytesPerSecond: Long): String {

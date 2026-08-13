@@ -13,8 +13,12 @@ import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
+import android.util.Base64
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
+import java.io.ByteArrayOutputStream
 import java.io.File
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -76,8 +80,9 @@ class RuntimeHostBridge(
             METHOD_APPLY_WARP -> result.success(applyWarp(call))
             METHOD_LIVE_STATS -> result.success(AndroidRuntimeState.liveStats())
             METHOD_PUSH_TOKEN -> result.success(pushToken())
-            METHOD_LIST_INSTALLED_APPS -> result.success(listInstalledApps())
+            METHOD_LIST_INSTALLED_APPS -> listInstalledApps(result)
             METHOD_CURRENT_WIFI -> result.success(currentWifi())
+            METHOD_MEASURE_NODE_LATENCIES -> measureNodeLatencies(call, result)
             METHOD_REQUEST_WIFI_PERMISSION ->
                 result.success(requestWifiPermission())
             METHOD_OPEN_VPN_SETTINGS -> result.success(openVpnSettings())
@@ -275,6 +280,12 @@ class RuntimeHostBridge(
                     "POKROV Core requires a materialized sing-box profile.",
                 )
             }
+            val finalTarget = AndroidCoreEgressProbe.finalTarget(configPayload)
+            Log.i(
+                LOG_TAG,
+                "Android managed profile stage finalTargetKind=" +
+                    (finalTarget?.kind?.name?.lowercase() ?: "none"),
+            )
             writePrivateConfig(finalPath, configPayload)
             AndroidRuntimeState.markProfileStaged(finalPath.absolutePath)
             AndroidRuntimeProfileStore.save(
@@ -711,35 +722,85 @@ class RuntimeHostBridge(
                 )
             }
             true
-        }.getOrDefault(false)
+    }.getOrDefault(false)
+    }
+
+    private fun measureNodeLatencies(call: MethodCall, result: MethodChannel.Result) {
+        val targets = AndroidNodeLatencyProbe.parseTargets(call.argument<Any?>("targets"))
+        if (targets.isEmpty()) {
+            result.success(emptyMap<String, Int>())
+            return
+        }
+        Thread {
+            val measurements = runCatching {
+                AndroidNodeLatencyProbe.measure(activity, targets)
+            }.getOrDefault(emptyMap())
+            activity.runOnUiThread {
+                result.success(measurements)
+            }
+        }.apply {
+            name = "pokrov-node-latency"
+            isDaemon = true
+            start()
+        }
+    }
+
+    private fun listInstalledApps(result: MethodChannel.Result) {
+        Thread {
+            val apps = runCatching { installedLauncherApps() }.getOrDefault(emptyList())
+            activity.runOnUiThread { result.success(apps) }
+        }.apply {
+            name = "pokrov-installed-apps"
+            isDaemon = true
+            start()
+        }
     }
 
     @Suppress("DEPRECATION")
-    private fun listInstalledApps(): List<Map<String, String>> {
+    private fun installedLauncherApps(): List<Map<String, String>> {
         val packageManager = activity.packageManager
         val launcherIntent = Intent(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_LAUNCHER)
         }
-        val activities = packageManager.queryIntentActivities(launcherIntent, 0)
-        return activities
+        return packageManager.queryIntentActivities(launcherIntent, 0)
+            .asSequence()
             .mapNotNull { resolveInfo ->
                 val packageName = resolveInfo.activityInfo?.packageName
                     ?: return@mapNotNull null
+                if (packageName == activity.packageName) {
+                    return@mapNotNull null
+                }
                 val label = resolveInfo.loadLabel(packageManager)
                     ?.toString()
                     ?.trim()
                     .orEmpty()
-                mapOf(
-                    "label" to if (label.isBlank()) packageName else label,
-                    "identifier" to packageName,
-                    "subtitle" to packageName,
-                )
+                buildMap<String, String> {
+                    put("label", if (label.isBlank()) packageName else label)
+                    put("identifier", packageName)
+                    put("subtitle", packageName)
+                    encodeLauncherIcon(resolveInfo.loadIcon(packageManager))?.let {
+                        put("iconPngBase64", it)
+                    }
+                }
             }
             .distinctBy { app -> app["identifier"] }
             .sortedBy { app -> app["label"]?.lowercase() }
+            .take(160)
+            .toList()
     }
 
+    private fun encodeLauncherIcon(drawable: android.graphics.drawable.Drawable): String? =
+        runCatching {
+            val bitmap = drawable.toBitmap(width = 72, height = 72)
+            val stream = ByteArrayOutputStream()
+            if (!bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)) {
+                return@runCatching null
+            }
+            Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
+        }.getOrNull()
+
     companion object {
+        private const val LOG_TAG = "PokrovRuntimeBridge"
         const val CHANNEL_NAME = "space.pokrov/runtime_engine"
         const val REQUEST_VPN_PERMISSION = 14071
         const val EXTRA_DEBUG_RUNTIME_PATH = "space.pokrov.debug.RUNTIME_PATH"
@@ -755,6 +816,8 @@ class RuntimeHostBridge(
         private const val METHOD_PUSH_TOKEN = "runtimeEngine.pushToken"
         private const val METHOD_LIST_INSTALLED_APPS = "runtimeEngine.listInstalledApps"
         private const val METHOD_CURRENT_WIFI = "runtimeEngine.currentWifi"
+        private const val METHOD_MEASURE_NODE_LATENCIES =
+            "runtimeEngine.measureNodeLatencies"
         private const val METHOD_REQUEST_WIFI_PERMISSION =
             "runtimeEngine.requestWifiPermission"
         private const val METHOD_OPEN_VPN_SETTINGS = "runtimeEngine.openVpnSettings"

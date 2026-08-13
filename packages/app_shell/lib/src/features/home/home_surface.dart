@@ -18,6 +18,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.telegramBonusBusy,
     required this.warpPolicy,
     required this.warpRuntimeConsent,
+    required this.warpRuntimeActive,
     required this.warpBusy,
     required this.onToggleRuntime,
     required this.onOpenConnectionDetails,
@@ -26,6 +27,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.onOpenRules,
     required this.onOpenWarp,
     required this.onWarpConsentChanged,
+    required this.onOpenCheckout,
     required this.onOpenPromoHandoff,
   });
 
@@ -48,6 +50,7 @@ class _QuickConnectSection extends StatelessWidget {
   final bool telegramBonusBusy;
   final WarpRuntimePolicy warpPolicy;
   final bool warpRuntimeConsent;
+  final bool warpRuntimeActive;
   final bool warpBusy;
   final Future<void> Function() onToggleRuntime;
   final VoidCallback onOpenConnectionDetails;
@@ -56,6 +59,7 @@ class _QuickConnectSection extends StatelessWidget {
   final VoidCallback onOpenRules;
   final Future<void> Function() onOpenWarp;
   final Future<void> Function(bool value) onWarpConsentChanged;
+  final VoidCallback onOpenCheckout;
   final void Function(String label, String value) onOpenPromoHandoff;
 
   @override
@@ -97,7 +101,7 @@ class _QuickConnectSection extends StatelessWidget {
         : tunnelRunning
             ? 'Отключить'
             : primaryActionEnabled
-                ? 'Включить VPN'
+                ? 'Подключить'
                 : 'Пока недоступно';
     final freeProfileNotice = _freeProfileAccessNotice(freeProfileAccess);
     final recoveryNotice = freeProfileAccess?.hasRecoverableError ?? false
@@ -122,7 +126,7 @@ class _QuickConnectSection extends StatelessWidget {
       children: [
         Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: isDesktop ? 1220 : 460),
+            constraints: BoxConstraints(maxWidth: isDesktop ? 1220 : 500),
             child: _HomeStage(
               preferDesktopLayout: isDesktop,
               revealHold: revealHold,
@@ -157,6 +161,7 @@ class _QuickConnectSection extends StatelessWidget {
               locationLabel: locationLabel,
               warpPolicy: warpPolicy,
               warpRuntimeConsent: warpRuntimeConsent,
+              warpRuntimeActive: warpRuntimeActive,
               warpBusy: warpBusy,
               homePromoSlot: homePromoSlot,
               onToggleRuntime: onToggleRuntime,
@@ -166,6 +171,7 @@ class _QuickConnectSection extends StatelessWidget {
               onOpenRules: onOpenRules,
               onOpenWarp: onOpenWarp,
               onWarpConsentChanged: onWarpConsentChanged,
+              onOpenCheckout: onOpenCheckout,
               onOpenPromoHandoff: onOpenPromoHandoff,
             ),
           ),
@@ -198,6 +204,7 @@ class _HomeStage extends StatefulWidget {
     required this.locationLabel,
     required this.warpPolicy,
     required this.warpRuntimeConsent,
+    required this.warpRuntimeActive,
     required this.warpBusy,
     required this.homePromoSlot,
     required this.onToggleRuntime,
@@ -207,6 +214,7 @@ class _HomeStage extends StatefulWidget {
     required this.onOpenRules,
     required this.onOpenWarp,
     required this.onWarpConsentChanged,
+    required this.onOpenCheckout,
     required this.onOpenPromoHandoff,
   });
 
@@ -234,6 +242,7 @@ class _HomeStage extends StatefulWidget {
   final String locationLabel;
   final WarpRuntimePolicy warpPolicy;
   final bool warpRuntimeConsent;
+  final bool warpRuntimeActive;
   final bool warpBusy;
   final AppFirstPromoSlot? homePromoSlot;
   final Future<void> Function() onToggleRuntime;
@@ -243,6 +252,7 @@ class _HomeStage extends StatefulWidget {
   final VoidCallback onOpenRules;
   final Future<void> Function() onOpenWarp;
   final Future<void> Function(bool value) onWarpConsentChanged;
+  final VoidCallback onOpenCheckout;
   final void Function(String label, String value) onOpenPromoHandoff;
 
   @override
@@ -340,11 +350,13 @@ class _HomeStageState extends State<_HomeStage>
           controller: _revealController,
           begin: 0,
           end: 0.42,
-          // Access is stated once per screen: _HomeAccessStrip below owns
-          // the label, so the brand header is a pure lockup.
-          child: _HomeBrandHeader(center: true),
+          child: _HomeTopBar(
+            accessLabel: widget.accessLabel,
+            poolLabel: widget.accessPoolLabel,
+            onOpenCheckout: widget.onOpenCheckout,
+          ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
         _HomeRevealSlice(
           controller: _revealController,
           begin: 0.14,
@@ -358,23 +370,18 @@ class _HomeStageState extends State<_HomeStage>
               degraded: widget.degraded,
               error: widget.recoveryNotice != null,
               busy: widget.busy,
+              status: _HomeStatusAction(
+                statusLabel: widget.statusLabel,
+                statusColor: widget.statusColor,
+                onTap: widget.onOpenConnectionDetails,
+                compact: true,
+              ),
               onPressed: widget.actionEnabled ? widget.onToggleRuntime : null,
             ),
           ),
         ),
-        const SizedBox(height: 14),
-        _HomeRevealSlice(
-          controller: _revealController,
-          begin: 0.26,
-          end: 0.78,
-          child: _HomeStatusAction(
-            statusLabel: widget.statusLabel,
-            statusColor: widget.statusColor,
-            onTap: widget.onOpenConnectionDetails,
-          ),
-        ),
         if (widget.recoveryNotice != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           _HomeRevealSlice(
             controller: _revealController,
             begin: 0.32,
@@ -382,7 +389,7 @@ class _HomeStageState extends State<_HomeStage>
             child: _MotionRecoveryBanner(message: widget.recoveryNotice!),
           ),
         ],
-        const SizedBox(height: 14),
+        const SizedBox(height: 20),
         _HomeRevealSlice(
           controller: _revealController,
           begin: 0.38,
@@ -402,7 +409,9 @@ class _HomeStageState extends State<_HomeStage>
           child: _HomeWarpTile(
             policy: widget.warpPolicy,
             runtimeConsent: widget.warpRuntimeConsent,
+            runtimeActive: widget.warpRuntimeActive,
             busy: widget.warpBusy,
+            compact: true,
             onOpen: widget.onOpenWarp,
             onChanged: widget.onWarpConsentChanged,
           ),
@@ -416,33 +425,8 @@ class _HomeStageState extends State<_HomeStage>
             child: _HomeInfoNotice(message: widget.infoNotice!),
           ),
         ],
-        const SizedBox(height: 10),
-        _HomeRevealSlice(
-          controller: _revealController,
-          begin: 0.58,
-          end: 1,
-          child: _HomeAccessStrip(
-            accessLabel: widget.accessLabel,
-            poolLabel: widget.accessPoolLabel,
-            telegramBonusClaimed: widget.telegramBonusClaimed,
-            telegramBonusClaimedDays: widget.telegramBonusClaimedDays,
-          ),
-        ),
-        if (!widget.telegramBonusClaimed) ...[
-          const SizedBox(height: 10),
-          _HomeRevealSlice(
-            controller: _revealController,
-            begin: 0.66,
-            end: 1,
-            child: _HomeTelegramBonusTile(
-              label: widget.telegramBonusLabel,
-              claimed: widget.telegramBonusClaimed,
-              onTap: widget.onTelegramBonus,
-            ),
-          ),
-        ],
         if (widget.homePromoSlot != null) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           _HomeRevealSlice(
             controller: _revealController,
             begin: 0.72,
@@ -550,7 +534,9 @@ class _HomeStageState extends State<_HomeStage>
                     child: _HomeWarpTile(
                       policy: widget.warpPolicy,
                       runtimeConsent: widget.warpRuntimeConsent,
+                      runtimeActive: widget.warpRuntimeActive,
                       busy: widget.warpBusy,
+                      compact: false,
                       onOpen: widget.onOpenWarp,
                       onChanged: widget.onWarpConsentChanged,
                     ),
@@ -574,6 +560,7 @@ class _HomeStageState extends State<_HomeStage>
                       poolLabel: widget.accessPoolLabel,
                       telegramBonusClaimed: widget.telegramBonusClaimed,
                       telegramBonusClaimedDays: widget.telegramBonusClaimedDays,
+                      onTap: widget.onOpenCheckout,
                     ),
                   ),
                   if (!widget.telegramBonusClaimed) ...[
@@ -703,15 +690,44 @@ class _HomeStatusAction extends StatelessWidget {
     required this.statusLabel,
     required this.statusColor,
     required this.onTap,
+    this.compact = false,
   });
 
   final String statusLabel;
   final Color statusColor;
   final VoidCallback onTap;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
+    if (compact) {
+      return KeyedSubtree(
+        key: const ValueKey('home-connection-details-action'),
+        child: PokrovSettingsRowPressSurface(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            child: AnimatedSwitcher(
+              key: const ValueKey('home-status-switcher'),
+              duration: _MotionScope.of(context).duration(_MotionTokens.short),
+              transitionBuilder: _fadeSlideTransition,
+              child: Text(
+                statusLabel,
+                key: ValueKey(statusLabel),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: p.muted,
+                      fontWeight: FontWeight.w500,
+                    ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     // Keep the design branch's disclosure affordance while using the shared
     // press-scale grammar instead of a one-off InkWell.
     return KeyedSubtree(
@@ -755,23 +771,24 @@ class _HomeModeChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 10,
-      runSpacing: 10,
+    return Row(
       children: [
-        _HomeChip(
-          key: const ValueKey('home-location-chip'),
-          icon: Icons.public_rounded,
-          label: locationLabel,
-          onTap: onOpenLocations,
+        Expanded(
+          child: _HomeChip(
+            key: const ValueKey('home-location-chip'),
+            icon: Icons.public_rounded,
+            label: locationLabel,
+            onTap: onOpenLocations,
+          ),
         ),
-        _HomeChip(
-          key: const ValueKey('home-route-chip'),
-          icon: Icons.alt_route_rounded,
-          label: _routeModeShortLabel(routeMode),
-          minLabelWidth: 142,
-          onTap: onOpenRules,
+        const SizedBox(width: 8),
+        Expanded(
+          child: _HomeChip(
+            key: const ValueKey('home-route-chip'),
+            icon: Icons.alt_route_rounded,
+            label: _routeModeShortLabel(routeMode),
+            onTap: onOpenRules,
+          ),
         ),
       ],
     );
@@ -784,12 +801,14 @@ class _HomeAccessStrip extends StatelessWidget {
     required this.poolLabel,
     required this.telegramBonusClaimed,
     required this.telegramBonusClaimedDays,
+    required this.onTap,
   });
 
   final String accessLabel;
   final String poolLabel;
   final bool telegramBonusClaimed;
   final int? telegramBonusClaimedDays;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -890,12 +909,21 @@ class _HomeAccessStrip extends StatelessWidget {
                   ),
                 ),
               ],
+              const SizedBox(width: 6),
+              Icon(Icons.chevron_right_rounded, color: p.muted, size: 22),
             ],
           );
         },
       ),
     );
-    return content;
+    return Semantics(
+      button: true,
+      label: '$accessLabel. $poolLabel. Открыть оплату',
+      onTap: onTap,
+      child: ExcludeSemantics(
+        child: PokrovSettingsRowPressSurface(onTap: onTap, child: content),
+      ),
+    );
   }
 }
 
@@ -1004,28 +1032,257 @@ class _HomeTelegramBonusTile extends StatelessWidget {
   }
 }
 
-class _HomeAdminPromoCard extends StatelessWidget {
+class _HomeAdminPromoCard extends StatefulWidget {
   const _HomeAdminPromoCard({required this.slot, required this.onOpenHandoff});
 
   final AppFirstPromoSlot slot;
   final void Function(String label, String value) onOpenHandoff;
 
   @override
+  State<_HomeAdminPromoCard> createState() => _HomeAdminPromoCardState();
+}
+
+class _HomeAdminPromoCardState extends State<_HomeAdminPromoCard> {
+  final PokrovFilePromoDismissStore _dismissStore =
+      const PokrovFilePromoDismissStore();
+  bool _dismissed = true;
+  bool _dismissStateLoaded = false;
+
+  String get _campaignKey {
+    final slot = widget.slot;
+    return <String>[
+      slot.slotId.trim(),
+      slot.contentId.trim(),
+      slot.startsAt.trim(),
+      slot.endsAt.trim(),
+    ].join('|');
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_restoreDismissState());
+  }
+
+  @override
+  void didUpdateWidget(covariant _HomeAdminPromoCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldKey = <String>[
+      oldWidget.slot.slotId.trim(),
+      oldWidget.slot.contentId.trim(),
+      oldWidget.slot.startsAt.trim(),
+      oldWidget.slot.endsAt.trim(),
+    ].join('|');
+    if (oldKey != _campaignKey) {
+      _dismissed = true;
+      _dismissStateLoaded = false;
+      unawaited(_restoreDismissState());
+    }
+  }
+
+  Future<void> _restoreDismissState() async {
+    final key = _campaignKey;
+    final dismissed = await _dismissStore.isDismissed(key).timeout(
+          const Duration(milliseconds: 400),
+          onTimeout: () => false,
+        );
+    if (!mounted || key != _campaignKey) {
+      return;
+    }
+    setState(() {
+      _dismissed = dismissed;
+      _dismissStateLoaded = true;
+    });
+  }
+
+  void _dismiss() {
+    final key = _campaignKey;
+    setState(() => _dismissed = true);
+    unawaited(_dismissStore.dismiss(key));
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!_dismissStateLoaded || _dismissed) {
+      return const SizedBox.shrink(key: ValueKey('home-admin-promo-dismissed'));
+    }
+    final slot = widget.slot;
     final safeHref = _safeHomePromoSlotHref(slot.ctaHref);
+    final safeImage = _safeHomePromoImageUri(slot.imageUrl);
     final ctaLabel = slot.ctaLabel.trim().isEmpty ? 'Открыть' : slot.ctaLabel;
     final title = slot.title.trim();
     final body = slot.body.trim();
-    return PokrovPromoCard(
+    final badge = slot.badgeLabel.trim();
+    final p = PokrovPalette.of(context);
+    final accent = _promoHexColor(slot.accentColor) ?? p.accent;
+    final background = _promoHexColor(slot.backgroundColor) ?? p.surface;
+    final textColor = _promoHexColor(slot.textColor) ?? p.ink;
+    final buttonColor = _promoHexColor(slot.buttonColor) ?? accent;
+    final buttonTextColor = _promoHexColor(slot.buttonTextColor) ??
+        (ThemeData.estimateBrightnessForColor(buttonColor) == Brightness.dark
+            ? Colors.white
+            : Colors.black);
+    final imageOnly = safeImage != null && title.isEmpty && body.isEmpty;
+    final bannerImage = slot.imageLayout.trim().toLowerCase() == 'banner';
+    final open = safeHref == null
+        ? null
+        : () => widget.onOpenHandoff('promo', safeHref.toString());
+
+    Widget remoteImage({required double height, required BoxFit fit}) {
+      if (safeImage == null) {
+        return const _BrandMark(size: 46);
+      }
+      return Image.network(
+        safeImage.toString(),
+        height: height,
+        width: double.infinity,
+        fit: fit,
+        filterQuality: FilterQuality.medium,
+        errorBuilder: (_, __, ___) => const Center(child: _BrandMark(size: 46)),
+      );
+    }
+
+    final card = Container(
       key: const ValueKey('home-admin-promo-card'),
-      icon: Icons.campaign_outlined,
-      title: title.isEmpty ? 'POKROV' : title,
-      detail: body.isEmpty ? title : body,
-      tone: PokrovSurfaceTone.muted,
-      actionLabel: safeHref == null ? null : ctaLabel,
-      onTap: safeHref == null
-          ? null
-          : () => onOpenHandoff('download', safeHref.toString()),
+      width: double.infinity,
+      constraints: const BoxConstraints(maxWidth: 520),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: accent.withValues(alpha: 0.64)),
+      ),
+      child: Stack(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (bannerImage && safeImage != null)
+                remoteImage(height: imageOnly ? 148 : 108, fit: BoxFit.cover),
+              if (!imageOnly)
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    bannerImage && safeImage != null ? 13 : 16,
+                    16,
+                    16,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (!bannerImage) ...[
+                        SizedBox(
+                          width: 54,
+                          height: 54,
+                          child: remoteImage(height: 54, fit: BoxFit.contain),
+                        ),
+                        const SizedBox(width: 13),
+                      ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (badge.isNotEmpty)
+                              Container(
+                                margin: const EdgeInsets.only(bottom: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: accent.withValues(alpha: 0.10),
+                                  borderRadius: BorderRadius.circular(7),
+                                ),
+                                child: Text(
+                                  badge.toUpperCase(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelSmall
+                                      ?.copyWith(
+                                        color: accent,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.25,
+                                      ),
+                                ),
+                              ),
+                            if (title.isNotEmpty)
+                              Text(
+                                title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      color: textColor,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                            if (body.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                body,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: textColor.withValues(alpha: 0.72),
+                                      height: 1.25,
+                                    ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (open != null) ...[
+                        const SizedBox(width: 12),
+                        FilledButton(
+                          key: const ValueKey('home-admin-promo-action'),
+                          onPressed: open,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: buttonColor,
+                            foregroundColor: buttonTextColor,
+                            minimumSize: const Size(86, 46),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                          child: Text(
+                            ctaLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          if (slot.dismissible)
+            Positioned(
+              top: 5,
+              right: 5,
+              child: IconButton.filledTonal(
+                key: const ValueKey('home-admin-promo-dismiss'),
+                tooltip: 'Скрыть предложение',
+                onPressed: _dismiss,
+                icon: const Icon(Icons.close_rounded, size: 20),
+              ),
+            ),
+        ],
+      ),
+    );
+    if (open == null || !slot.wholeCardClickable) {
+      return card;
+    }
+    return Semantics(
+      button: true,
+      label: '${title.isEmpty ? 'Предложение' : title}. $ctaLabel',
+      onTap: open,
+      child: PokrovSettingsRowPressSurface(onTap: open, child: card),
     );
   }
 }
@@ -1034,14 +1291,18 @@ class _HomeWarpTile extends StatelessWidget {
   const _HomeWarpTile({
     required this.policy,
     required this.runtimeConsent,
+    required this.runtimeActive,
     required this.busy,
+    required this.compact,
     required this.onOpen,
     required this.onChanged,
   });
 
   final WarpRuntimePolicy policy;
   final bool runtimeConsent;
+  final bool runtimeActive;
   final bool busy;
+  final bool compact;
   final Future<void> Function() onOpen;
   final Future<void> Function(bool value) onChanged;
 
@@ -1054,21 +1315,33 @@ class _HomeWarpTile extends StatelessWidget {
       policy: displayPolicy,
       consented: runtimeConsent,
       busy: busy,
+      runtimeActive: runtimeActive,
     );
     final canOffer = lifecycle.canOffer;
-    final enabled = lifecycle.highlightsEnabled;
+    final enabled = lifecycle.consented;
+    final highlighted = lifecycle.highlightsEnabled;
     const title = 'WARP';
     final subtitle = busy
         ? 'Применяем настройку'
-        : enabled
-            ? 'Включится при следующем подключении'
-            : canOffer
-                ? 'Дополнительная защита'
-                : 'Недоступно на этом устройстве';
-    final iconColor = enabled ? p.accent : p.muted.withValues(alpha: 0.8);
-    final iconBackground = enabled
-        ? p.accent.withValues(alpha: 0.12)
-        : p.surfaceMuted.withValues(alpha: 0.86);
+        : switch (lifecycle.phase) {
+            PokrovWarpPhase.active => 'Активна',
+            PokrovWarpPhase.consented => 'Включится при следующем подключении',
+            PokrovWarpPhase.fallback => 'На паузе · обычный режим',
+            PokrovWarpPhase.degraded => 'Работает нестабильно',
+            PokrovWarpPhase.error => 'Не удалось включить',
+            _ when canOffer => 'Дополнительная защита',
+            _ => 'Недоступно на этом устройстве',
+          };
+    final iconColor = lifecycle.isProblem
+        ? p.warning
+        : highlighted
+            ? p.accent
+            : p.muted.withValues(alpha: 0.8);
+    final iconBackground = lifecycle.isProblem
+        ? p.warning.withValues(alpha: 0.12)
+        : highlighted
+            ? p.accent.withValues(alpha: 0.12)
+            : p.surfaceMuted.withValues(alpha: 0.86);
 
     void handleTap() {
       if (busy) {
@@ -1106,11 +1379,17 @@ class _HomeWarpTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: enabled
-                  ? p.accent.withValues(alpha: 0.09)
+                  ? lifecycle.isProblem
+                      ? p.warning.withValues(alpha: 0.07)
+                      : p.accent.withValues(alpha: 0.09)
                   : p.surface.withValues(alpha: 0.96),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: enabled ? p.accent.withValues(alpha: 0.28) : p.line,
+                color: lifecycle.isProblem
+                    ? p.warning.withValues(alpha: 0.24)
+                    : enabled
+                        ? p.accent.withValues(alpha: 0.28)
+                        : p.line,
               ),
             ),
             child: Row(
@@ -1163,38 +1442,68 @@ class _HomeWarpTile extends StatelessWidget {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: p.ink,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                        ),
-                        const SizedBox(height: 2),
-                        AnimatedSwitcher(
-                          key: const ValueKey('home-warp-status-label'),
-                          duration: motion.duration(_MotionTokens.short),
-                          transitionBuilder: _fadeSlideTransition,
-                          child: Text(
-                            subtitle,
-                            key: ValueKey(subtitle),
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium
-                                ?.copyWith(
+                    child: compact
+                        ? Row(
+                            children: [
+                              Text(
+                                title,
+                                maxLines: 1,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      color: p.ink,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                              const SizedBox(width: 4),
+                              IconButton(
+                                key: const ValueKey('home-warp-info-action'),
+                                tooltip: 'Как работает WARP',
+                                visualDensity: VisualDensity.compact,
+                                onPressed: () => unawaited(onOpen()),
+                                icon: Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 19,
                                   color: p.muted,
-                                  fontWeight: FontWeight.w500,
                                 ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      color: p.ink,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                              const SizedBox(height: 2),
+                              AnimatedSwitcher(
+                                key: const ValueKey('home-warp-status-label'),
+                                duration: motion.duration(_MotionTokens.short),
+                                transitionBuilder: _fadeSlideTransition,
+                                child: Text(
+                                  subtitle,
+                                  key: ValueKey(subtitle),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelMedium
+                                      ?.copyWith(
+                                        color: p.muted,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1216,30 +1525,119 @@ class _HomeWarpTile extends StatelessWidget {
   }
 }
 
-class _HomeBrandHeader extends StatelessWidget {
-  const _HomeBrandHeader({this.center = false});
+class _HomeTopBar extends StatelessWidget {
+  const _HomeTopBar({
+    required this.accessLabel,
+    required this.poolLabel,
+    required this.onOpenCheckout,
+  });
 
-  final bool center;
+  final String accessLabel;
+  final String poolLabel;
+  final VoidCallback onOpenCheckout;
 
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
     return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment:
-          center ? MainAxisAlignment.center : MainAxisAlignment.start,
       children: [
-        const _BrandMark(size: 38),
-        const SizedBox(width: 10),
-        Text(
-          'POKROV VPN',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: p.ink,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0,
-              ),
+        const _BrandMark(size: 30),
+        const SizedBox(width: 7),
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'POKROV VPN',
+              maxLines: 1,
+              softWrap: false,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: p.ink,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.15,
+                  ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        _HomeAccessPill(
+          accessLabel: accessLabel,
+          poolLabel: poolLabel,
+          onTap: onOpenCheckout,
         ),
       ],
+    );
+  }
+}
+
+class _HomeAccessPill extends StatelessWidget {
+  const _HomeAccessPill({
+    required this.accessLabel,
+    required this.poolLabel,
+    required this.onTap,
+  });
+
+  final String accessLabel;
+  final String poolLabel;
+  final VoidCallback onTap;
+
+  String get _label {
+    final days = RegExp(r'\d+\s+(?:день|дня|дней)').firstMatch(accessLabel);
+    if (days != null) {
+      final normalized = accessLabel.toLowerCase();
+      if (normalized.contains('пробн') || normalized.contains('триал')) {
+        return 'Пробный · ${days.group(0)}';
+      }
+      return 'Премиум · ${days.group(0)}';
+    }
+    if (accessLabel.toLowerCase().contains('премиум')) {
+      return 'Премиум';
+    }
+    return 'Продлить';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final content = Container(
+      key: const ValueKey('home-access-strip'),
+      constraints: const BoxConstraints(minHeight: 38, maxWidth: 158),
+      padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: p.accent.withValues(alpha: 0.56)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                _label,
+                maxLines: 1,
+                softWrap: false,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: p.accent,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 3),
+          Icon(Icons.chevron_right_rounded, color: p.accent, size: 18),
+        ],
+      ),
+    );
+    return Semantics(
+      button: true,
+      label: '$_label. $poolLabel. Открыть тарифы',
+      onTap: onTap,
+      child: ExcludeSemantics(
+        child: PokrovSettingsRowPressSurface(onTap: onTap, child: content),
+      ),
     );
   }
 }
@@ -1250,7 +1648,7 @@ String _homeProtectionStatusLabel(
   bool disconnecting = false,
 }) {
   if (busy) {
-    return disconnecting ? 'Отключаем…' : 'Подключаемся…';
+    return disconnecting ? 'Завершаем соединение' : 'Подбираем локацию';
   }
   if (snapshot?.phase == RuntimePhase.running) {
     if (snapshot?.isCoreEgressValidationPending ?? false) {
@@ -1322,11 +1720,28 @@ AppFirstPromoSlot? _homeAdminPromoSlot(AppFirstBonusSummary? bonusSummary) {
 bool _isRenderableHomePromoSlot(AppFirstPromoSlot slot) {
   final title = slot.title.trim();
   final body = slot.body.trim();
+  final safeImage = _safeHomePromoImageUri(slot.imageUrl);
   final safeHref = _safeHomePromoSlotHref(slot.ctaHref);
-  if (body.isNotEmpty) {
+  if (body.isNotEmpty || safeImage != null) {
     return true;
   }
   return title.isNotEmpty && safeHref != null;
+}
+
+Color? _promoHexColor(String value) {
+  final normalized = value.trim().replaceFirst('#', '');
+  if (!RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(normalized)) {
+    return null;
+  }
+  return Color(int.parse('FF$normalized', radix: 16));
+}
+
+Uri? _safeHomePromoImageUri(String value) {
+  final uri = Uri.tryParse(value.trim());
+  if (uri == null || uri.scheme.toLowerCase() != 'https' || uri.host.isEmpty) {
+    return null;
+  }
+  return uri;
 }
 
 Uri? _safeHomePromoSlotHref(String value) {
@@ -1339,16 +1754,7 @@ Uri? _safeHomePromoSlotHref(String value) {
   if (scheme == 'tg' && (host == 'resolve' || host == 'join')) {
     return uri;
   }
-  if (scheme != 'https') {
-    return null;
-  }
-  if (host == 't.me' ||
-      host == 'telegram.me' ||
-      host == 'pokrov.space' ||
-      host.endsWith('.pokrov.space')) {
-    return uri;
-  }
-  if (host == 'github.com' && uri.path.contains('/releases/')) {
+  if (scheme == 'https' && host.isNotEmpty) {
     return uri;
   }
   return null;
@@ -1492,12 +1898,8 @@ class _HomeInfoNotice extends StatelessWidget {
   }
 }
 
-/// One-time "first connection" hint around the primary connect control: a
-/// soft expanding outline behind the control plus a small "tap to connect" pill
-/// below it. Motion is transform/opacity-only; under reduced motion the ring
-/// is statically off and only the calm pill remains. Visibility is decided
-/// by the caller and the dismissal is persisted by the shell through
-/// [PokrovFileConnectHintStore].
+/// Keeps the persisted first-use hint available to accessibility services
+/// without adding a second pill or a decorative glow around the main action.
 class _ConnectHintHalo extends StatelessWidget {
   const _ConnectHintHalo({required this.visible, required this.child});
 
@@ -1506,127 +1908,12 @@ class _ConnectHintHalo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final motion = _MotionScope.of(context);
-    final p = PokrovPalette.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            if (visible && !motion.disableAnimations)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: _ConnectHintPulseRing(
-                    key: const ValueKey('home-connect-hint-pulse'),
-                    accent: p.accent,
-                  ),
-                ),
-              ),
-            child,
-          ],
-        ),
-        AnimatedSwitcher(
-          key: const ValueKey('home-connect-hint-pill-motion'),
-          duration: motion.duration(_MotionTokens.standard),
-          switchInCurve: _MotionTokens.ease,
-          switchOutCurve: _MotionTokens.ease,
-          transitionBuilder: (child, animation) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          child: !visible
-              ? const SizedBox.shrink(key: ValueKey('home-connect-hint-empty'))
-              : Padding(
-                  key: const ValueKey('home-connect-hint-pill'),
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: p.surface,
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: p.line),
-                    ),
-                    child: Text(
-                      'Нажмите, чтобы подключиться',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: p.muted,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ),
-                ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Soft expanding outline behind the idle control: scale 1.0 -> 1.04 with the
-/// low-alpha accent stroke fading out over ~2.4s. Loops continuously in
-/// release builds and collapses to one finite pass under `flutter test`
-/// (see [PokrovLoopingMotion]); it is not built at all under reduced motion.
-class _ConnectHintPulseRing extends StatefulWidget {
-  const _ConnectHintPulseRing({super.key, required this.accent});
-
-  final Color accent;
-
-  @override
-  State<_ConnectHintPulseRing> createState() => _ConnectHintPulseRingState();
-}
-
-class _ConnectHintPulseRingState extends State<_ConnectHintPulseRing>
-    with SingleTickerProviderStateMixin {
-  static const _period = Duration(milliseconds: 2400);
-
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: _period);
-    if (PokrovLoopingMotion.enabled) {
-      _controller.repeat();
-    } else {
-      _controller.forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          final progress = Curves.easeOutCubic.transform(_controller.value);
-          return Transform.scale(
-            scale: 1.0 + progress * 0.04,
-            child: Opacity(
-              // Sine envelope: the attention ring fades in and out without
-              // the hard restart pop a linear (1 - t) loop produces.
-              opacity: math.sin(math.pi * progress) * 0.35,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(
-                    color: widget.accent.withValues(alpha: 0.55),
-                    width: 2,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
+    // The selected Home direction makes the central action self-evident. Keep
+    // the persisted first-use flag for compatibility, but do not draw a glowing
+    // halo or a second instructional pill around the primary action.
+    return Semantics(
+      hint: visible ? 'Главная кнопка подключения' : null,
+      child: child,
     );
   }
 }
@@ -1640,7 +1927,6 @@ class _HomeChip extends PokrovHomeChip {
     super.key,
     required super.icon,
     required super.label,
-    super.minLabelWidth,
     super.onTap,
   });
 }

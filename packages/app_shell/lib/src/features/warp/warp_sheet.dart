@@ -141,7 +141,9 @@ class _WarpConsentSheet extends StatelessWidget {
                 const SizedBox(height: 6),
                 _WarpInfoRow(
                   icon: Icons.bolt_rounded,
-                  title: 'WARP включится при следующем подключении.',
+                  title: lifecycle.phase == PokrovWarpPhase.active
+                      ? 'WARP активен в текущем подключении.'
+                      : 'WARP включится при следующем подключении.',
                   value: '',
                   foreground: foreground,
                   muted: secondary,

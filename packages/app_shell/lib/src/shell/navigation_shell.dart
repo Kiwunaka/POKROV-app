@@ -367,7 +367,7 @@ class _MobileShell extends StatelessWidget {
         SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
             child: RepaintBoundary(
               child: DecoratedBox(
                 decoration: BoxDecoration(

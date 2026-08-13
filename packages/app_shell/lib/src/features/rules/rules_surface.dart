@@ -153,30 +153,109 @@ class _RulesSection extends StatelessWidget {
               onRemove: onSelectedAppRemoved,
             ),
           ),
-        _PurposeRoutingCard(
-          preferences: routingPreferences,
-          onChanged: onRoutingPreferencesChanged,
-        ),
-        _CustomRoutingCard(
-          preferences: routingPreferences,
-          fallbackMode: selectedRouteMode,
-          onChanged: onRoutingPreferencesChanged,
-          onRoutingLessonCompleted: onRoutingLessonCompleted,
-        ),
         _DnsAndLanCard(
           preferences: routingPreferences,
           onChanged: onRoutingPreferencesChanged,
         ),
-        _TrustedWifiCard(
+        _RulesAdvancedSection(
           hostPlatform: appContext.hostPlatform,
           preferences: routingPreferences,
+          fallbackMode: selectedRouteMode,
           onChanged: onRoutingPreferencesChanged,
           onReadCurrentWifi: onReadCurrentWifi,
           onRequestWifiPermission: onRequestWifiPermission,
-        ),
-        _AlwaysOnGuideCard(
-          hostPlatform: appContext.hostPlatform,
           onOpenVpnSettings: onOpenVpnSettings,
+          onRoutingLessonCompleted: onRoutingLessonCompleted,
+        ),
+      ],
+    );
+  }
+}
+
+class _RulesAdvancedSection extends StatefulWidget {
+  const _RulesAdvancedSection({
+    required this.hostPlatform,
+    required this.preferences,
+    required this.fallbackMode,
+    required this.onChanged,
+    required this.onReadCurrentWifi,
+    required this.onRequestWifiPermission,
+    required this.onOpenVpnSettings,
+    required this.onRoutingLessonCompleted,
+  });
+
+  final HostPlatform hostPlatform;
+  final PokrovRoutingPreferences preferences;
+  final RouteMode fallbackMode;
+  final ValueChanged<PokrovRoutingPreferences> onChanged;
+  final PokrovWifiProbe onReadCurrentWifi;
+  final PokrovWifiPermissionRequester onRequestWifiPermission;
+  final PokrovVpnSettingsLauncher onOpenVpnSettings;
+  final VoidCallback onRoutingLessonCompleted;
+
+  @override
+  State<_RulesAdvancedSection> createState() => _RulesAdvancedSectionState();
+}
+
+class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final configuredCount = widget.preferences.purposeRoutes.length +
+        widget.preferences.overrides.length +
+        widget.preferences.trustedWifiNames.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionCard(
+          key: const ValueKey('rules-advanced-disclosure'),
+          title: 'Дополнительно',
+          lines: const ['Свои маршруты, Wi-Fi и системная защита.'],
+          child: _SettingsRow(
+            key: const ValueKey('rules-advanced-toggle'),
+            icon: Icons.tune_rounded,
+            title: 'Редкие настройки',
+            value: _expanded
+                ? 'Скрыть'
+                : configuredCount > 0
+                    ? 'Настроено: $configuredCount'
+                    : 'Открыть',
+            valueIsAction: true,
+            onTap: () => setState(() => _expanded = !_expanded),
+          ),
+        ),
+        AnimatedSwitcher(
+          duration: _MotionScope.of(context).duration(_MotionTokens.short),
+          transitionBuilder: _fadeSlideTransition,
+          child: !_expanded
+              ? const SizedBox.shrink(key: ValueKey('rules-advanced-closed'))
+              : Column(
+                  key: const ValueKey('rules-advanced-open'),
+                  children: [
+                    _PurposeRoutingCard(
+                      preferences: widget.preferences,
+                      onChanged: widget.onChanged,
+                    ),
+                    _CustomRoutingCard(
+                      preferences: widget.preferences,
+                      fallbackMode: widget.fallbackMode,
+                      onChanged: widget.onChanged,
+                      onRoutingLessonCompleted: widget.onRoutingLessonCompleted,
+                    ),
+                    _TrustedWifiCard(
+                      hostPlatform: widget.hostPlatform,
+                      preferences: widget.preferences,
+                      onChanged: widget.onChanged,
+                      onReadCurrentWifi: widget.onReadCurrentWifi,
+                      onRequestWifiPermission: widget.onRequestWifiPermission,
+                    ),
+                    _AlwaysOnGuideCard(
+                      hostPlatform: widget.hostPlatform,
+                      onOpenVpnSettings: widget.onOpenVpnSettings,
+                    ),
+                  ],
+                ),
         ),
       ],
     );
@@ -343,6 +422,7 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
   void initState() {
     super.initState();
     _controller = TextEditingController();
+    _candidateFuture = _loadSelectedAppCandidates(widget.hostPlatform);
   }
 
   @override
@@ -355,7 +435,7 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
   void didUpdateWidget(covariant _SelectedAppsEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.hostPlatform != widget.hostPlatform) {
-      _candidateFuture = null;
+      _candidateFuture = _loadSelectedAppCandidates(widget.hostPlatform);
     }
   }
 
@@ -487,16 +567,8 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
                     ],
                   ),
                 )
-              : Align(
-                  key: const ValueKey('rules-selected-app-manual-hint'),
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Если приложения нет в списке, добавьте его по просьбе поддержки.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: p.muted,
-                          height: 1.35,
-                        ),
-                  ),
+              : const SizedBox.shrink(
+                  key: ValueKey('rules-selected-app-manual-hint'),
                 ),
         ),
         const SizedBox(height: 10),
@@ -527,33 +599,45 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
                 ),
           ),
           const SizedBox(height: 8),
-          Container(
-            key: const ValueKey('rules-selected-app-list'),
-            decoration: BoxDecoration(
-              color: p.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: p.line),
-            ),
-            // Row inserts and removals settle smoothly instead of jumping.
-            child: AnimatedSize(
-              duration: _MotionScope.of(context).duration(_MotionTokens.short),
-              curve: _MotionTokens.ease,
-              alignment: Alignment.topCenter,
-              child: Column(
-                children: widget.selectedAppIds
-                    .map(
-                      (appId) => _SelectedAppIdRow(
-                        key: ValueKey('rules-selected-app-$appId'),
-                        appId: appId,
-                        onRemove: () {
-                          PokrovHaptics.tap();
-                          widget.onRemove(appId);
-                        },
-                      ),
-                    )
-                    .toList(growable: false),
-              ),
-            ),
+          FutureBuilder<List<_SelectedAppCandidate>>(
+            future: _candidateFuture,
+            builder: (context, snapshot) {
+              final candidatesById = <String, _SelectedAppCandidate>{
+                for (final candidate
+                    in snapshot.data ?? const <_SelectedAppCandidate>[])
+                  candidate.identifier: candidate,
+              };
+              return Container(
+                key: const ValueKey('rules-selected-app-list'),
+                decoration: BoxDecoration(
+                  color: p.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: p.line),
+                ),
+                // Row inserts and removals settle smoothly instead of jumping.
+                child: AnimatedSize(
+                  duration:
+                      _MotionScope.of(context).duration(_MotionTokens.short),
+                  curve: _MotionTokens.ease,
+                  alignment: Alignment.topCenter,
+                  child: Column(
+                    children: widget.selectedAppIds
+                        .map(
+                          (appId) => _SelectedAppIdRow(
+                            key: ValueKey('rules-selected-app-$appId'),
+                            appId: appId,
+                            candidate: candidatesById[appId],
+                            onRemove: () {
+                              PokrovHaptics.tap();
+                              widget.onRemove(appId);
+                            },
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ],
@@ -565,10 +649,12 @@ class _SelectedAppIdRow extends StatelessWidget {
   const _SelectedAppIdRow({
     super.key,
     required this.appId,
+    required this.candidate,
     required this.onRemove,
   });
 
   final String appId;
+  final _SelectedAppCandidate? candidate;
   final VoidCallback onRemove;
 
   @override
@@ -585,11 +671,25 @@ class _SelectedAppIdRow extends StatelessWidget {
               color: p.accent.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              Icons.apps_rounded,
-              color: p.accent,
-              size: 18,
-            ),
+            child: candidate?.iconBytes == null
+                ? Icon(
+                    candidate?.icon ?? Icons.apps_rounded,
+                    color: p.accent,
+                    size: 18,
+                  )
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.memory(
+                      candidate!.iconBytes!,
+                      fit: BoxFit.cover,
+                      filterQuality: FilterQuality.medium,
+                      errorBuilder: (_, __, ___) => Icon(
+                        candidate?.icon ?? Icons.apps_rounded,
+                        color: p.accent,
+                        size: 18,
+                      ),
+                    ),
+                  ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -602,18 +702,6 @@ class _SelectedAppIdRow extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
             ),
-          ),
-          IconButton(
-            tooltip: 'Подробности для поддержки',
-            onPressed: () => _showInfoSheet(
-              context,
-              title: _friendlySelectedAppName(appId),
-              lines: [
-                'Служебное имя передается только поддержке.',
-                'Обычным пользователям это не нужно.',
-              ],
-            ),
-            icon: const Icon(Icons.info_outline_rounded),
           ),
           IconButton(
             tooltip: 'Убрать',
@@ -637,79 +725,43 @@ class _LocationFlagBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = _shortLocationCode(code, country);
+    final normalizedCode = code.trim().toUpperCase();
+    final hasIsoCountryCode = RegExp(r'^[A-Z]{2}$').hasMatch(normalizedCode);
     final p = PokrovPalette.of(context);
-    return Container(
-      width: 46,
-      height: 46,
-      decoration: BoxDecoration(
-        color: p.surfaceMuted,
-        shape: BoxShape.circle,
-        border: Border.all(color: p.line),
-      ),
-      child: Center(
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: p.accent,
-                fontWeight: FontWeight.w700,
-              ),
-        ),
+    final fallback = Center(
+      child: Text(
+        _shortLocationCode(code, country),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: p.accent,
+              fontWeight: FontWeight.w700,
+            ),
       ),
     );
-  }
-}
-
-class _SignalBars extends StatelessWidget {
-  const _SignalBars({
-    super.key,
-    required this.score,
-    this.verified = true,
-  });
-
-  final double? score;
-  final bool verified;
-
-  @override
-  Widget build(BuildContext context) {
-    final normalizedScore = _normalizeLocationHealthScore(score);
-    final hasKnownScore = verified && normalizedScore != null;
-    final normalized = hasKnownScore ? normalizedScore.clamp(0.18, 1.0) : 0.0;
-    final activeCount = hasKnownScore ? (normalized * 4).ceil().clamp(1, 4) : 0;
-    final p = PokrovPalette.of(context);
     return Semantics(
-      label: hasKnownScore
-          ? 'Качество локации: $activeCount из 4'
-          : 'Качество локации: нет свежих данных',
+      label: country.trim().isEmpty ? normalizedCode : 'Флаг: $country',
       image: true,
-      child: ExcludeSemantics(
-        child: SizedBox(
-          width: 28,
-          height: 22,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (var index = 0; index < 4; index += 1)
-                AnimatedContainer(
-                  duration:
-                      _MotionScope.of(context).duration(_MotionTokens.short),
-                  curve: _MotionTokens.ease,
-                  width: 4,
-                  height: 7.0 + index * 4,
-                  margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                  decoration: BoxDecoration(
-                    color: index < activeCount
-                        ? p.accent
-                        : p.ink.withValues(alpha: 0.13),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-            ],
-          ),
+      child: Container(
+        width: 46,
+        height: 46,
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: p.surfaceMuted,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: p.line),
         ),
+        child: hasIsoCountryCode
+            ? CountryFlag.fromCountryCode(
+                normalizedCode,
+                key: ValueKey('location-flag-$normalizedCode'),
+                theme: const ImageTheme(
+                  width: 36,
+                  height: 26,
+                  shape: RoundedRectangle(7),
+                ),
+              )
+            : fallback,
       ),
     );
   }
@@ -746,6 +798,7 @@ class _SelectedAppCandidate {
     required this.subtitle,
     required this.source,
     required this.icon,
+    this.iconBytes,
   });
 
   final String label;
@@ -753,21 +806,9 @@ class _SelectedAppCandidate {
   final String subtitle;
   final _SelectedAppCandidateSource source;
   final IconData icon;
+  final Uint8List? iconBytes;
 
   String get searchText => '$label $identifier $subtitle'.toLowerCase().trim();
-
-  String get sourceLabel {
-    switch (source) {
-      case _SelectedAppCandidateSource.installed:
-        return 'Приложение';
-      case _SelectedAppCandidateSource.installedExecutable:
-        return 'Приложение';
-      case _SelectedAppCandidateSource.runningProcess:
-        return 'Открыто';
-      case _SelectedAppCandidateSource.suggested:
-        return 'Рекомендуем';
-    }
-  }
 }
 
 class _SelectedAppsPickerSheet extends StatefulWidget {
@@ -907,8 +948,7 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                                               HostPlatform.windows
                                           ? 'Выберите приложение, которое пойдёт через VPN.'
                                           : 'Выберите приложения, которые пойдут через VPN.',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodySmall
@@ -974,7 +1014,7 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                           if (candidates.isEmpty) {
                             return Center(
                               child: Text(
-                                'Ничего не найдено. Добавьте приложение вручную ниже.',
+                                'Ничего не найдено. Проверьте название или добавьте приложение вручную.',
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context)
                                     .textTheme
@@ -1069,11 +1109,21 @@ class _SelectedAppCandidateRow extends StatelessWidget {
               color: p.accent.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(15),
             ),
-            child: Icon(
-              candidate.icon,
-              color: p.accent,
-              size: 21,
-            ),
+            child: candidate.iconBytes == null
+                ? Icon(candidate.icon, color: p.accent, size: 21)
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(
+                      candidate.iconBytes!,
+                      fit: BoxFit.cover,
+                      filterQuality: FilterQuality.medium,
+                      errorBuilder: (_, __, ___) => Icon(
+                        candidate.icon,
+                        color: p.accent,
+                        size: 21,
+                      ),
+                    ),
+                  ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1091,45 +1141,14 @@ class _SelectedAppCandidateRow extends StatelessWidget {
                 ),
                 if (!compact) ...[
                   const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      Container(
-                        key: ValueKey(
-                          'rules-selected-app-source-${candidate.identifier}',
+                  Text(
+                    _visibleSelectedAppSubtitle(candidate),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: p.muted,
+                          height: 1.2,
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: p.accent.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          candidate.sourceLabel,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: p.accent,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                      ),
-                      const SizedBox(width: 7),
-                      Expanded(
-                        child: Text(
-                          _visibleSelectedAppSubtitle(candidate),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: p.muted,
-                                    height: 1.2,
-                                  ),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ],
@@ -1169,7 +1188,7 @@ String _visibleSelectedAppSubtitle(_SelectedAppCandidate candidate) {
     return subtitle;
   }
   return switch (candidate.source) {
-    _SelectedAppCandidateSource.installed => 'Установленное приложение',
+    _SelectedAppCandidateSource.installed => 'Установлено на устройстве',
     _SelectedAppCandidateSource.installedExecutable =>
       'Можно выбрать для POKROV',
     _SelectedAppCandidateSource.runningProcess => 'Открыто сейчас',
@@ -1245,7 +1264,7 @@ Future<List<_SelectedAppCandidate>> _loadAndroidInstalledAppCandidates() async {
   try {
     final response = await _selectedAppsRuntimeChannel
         .invokeListMethod<Object?>('runtimeEngine.listInstalledApps')
-        .timeout(const Duration(seconds: 2));
+        .timeout(const Duration(seconds: 4));
     return _candidatesFromHostMaps(
       response,
       hostPlatform: HostPlatform.android,
@@ -1381,6 +1400,7 @@ List<_SelectedAppCandidate> _candidatesFromHostMaps(
     }
     final label = item['label']?.toString().trim();
     final subtitle = item['subtitle']?.toString().trim();
+    final iconBytes = _decodeSelectedAppIcon(item['iconPngBase64']);
     final safeLabel =
         label == null || label.isEmpty || _looksLikeSelectedAppIdentifier(label)
             ? _friendlySelectedAppName(identifier)
@@ -1392,10 +1412,24 @@ List<_SelectedAppCandidate> _candidatesFromHostMaps(
         subtitle: subtitle == null || subtitle.isEmpty ? identifier : subtitle,
         source: source,
         icon: icon,
+        iconBytes: iconBytes,
       ),
     );
   }
   return candidates;
+}
+
+Uint8List? _decodeSelectedAppIcon(Object? value) {
+  final encoded = value?.toString().trim() ?? '';
+  if (encoded.isEmpty || encoded.length > 196000) {
+    return null;
+  }
+  try {
+    final bytes = base64Decode(encoded);
+    return bytes.isEmpty || bytes.length > 128000 ? null : bytes;
+  } on FormatException {
+    return null;
+  }
 }
 
 List<_SelectedAppCandidate> _suggestedSelectedAppCandidates(

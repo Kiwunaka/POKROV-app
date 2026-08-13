@@ -449,7 +449,7 @@ They do not expand the public `Android + Windows` release scope tracked by this 
 
 ## Windows Gate Checklist
 
-- [x] POKROV Core 1.0.2 `pokrov-core.dll` and pinned `libcronet.dll` are synced into `apps/windows_shell/windows/runner/resources/runtime`
+- [x] POKROV Core 1.0.3 `pokrov-core.dll` and pinned `libcronet.dll` are synced into `apps/windows_shell/windows/runner/resources/runtime`
 - [x] `flutter analyze` passes in `apps/windows_shell`
 - [x] Shared runtime and widget tests pass
 - [x] `flutter build windows --release` succeeds

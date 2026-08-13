@@ -81,6 +81,19 @@ void main() {
     );
   });
 
+  test('proven running runtime exposes WARP as active', () {
+    final lifecycle = PokrovWarpLifecycle.resolve(
+      policy: WarpRuntimePolicy.clientLocalDefault.withUserConsent(true),
+      consented: true,
+      busy: false,
+      runtimeActive: true,
+    );
+
+    expect(lifecycle.phase, PokrovWarpPhase.active);
+    expect(lifecycle.publicStatus, 'Активна');
+    expect(lifecycle.stateKey, 'home-warp-state-active');
+  });
+
   test('warp lifecycle keeps WARP copy product-first', () {
     final lifecycle = PokrovWarpLifecycle.resolve(
       policy: const WarpRuntimePolicy(

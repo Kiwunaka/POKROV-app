@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:country_flags/country_flags.dart';
 import 'package:flutter/cupertino.dart'
     show
         CupertinoActivityIndicator,
@@ -196,6 +197,69 @@ class PokrovFileConnectHintStore {
     try {
       final file = await _stateFile();
       await file.writeAsString(_doneMarker, flush: true);
+    } catch (_) {
+      // Best-effort persistence only.
+    }
+  }
+}
+
+/// Remembers dismissed remote campaigns by slot, content and schedule. A new
+/// content ID or schedule is a new campaign and may appear again. Persistence
+/// is best-effort and never blocks the shell.
+class PokrovFilePromoDismissStore {
+  const PokrovFilePromoDismissStore();
+
+  static const _fileName = 'pokrov-dismissed-promos.json';
+
+  Future<File> _stateFile() async {
+    final directory = await getApplicationSupportDirectory();
+    await directory.create(recursive: true);
+    return File('${directory.path}${Platform.pathSeparator}$_fileName');
+  }
+
+  Future<Set<String>> _read() async {
+    try {
+      final file = await _stateFile();
+      if (!await file.exists()) {
+        return <String>{};
+      }
+      final decoded = jsonDecode(await file.readAsString());
+      if (decoded is! List) {
+        return <String>{};
+      }
+      return decoded
+          .whereType<String>()
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty && value.length <= 512)
+          .take(64)
+          .toSet();
+    } catch (_) {
+      return <String>{};
+    }
+  }
+
+  Future<bool> isDismissed(String campaignKey) async {
+    final key = campaignKey.trim();
+    return key.isNotEmpty && (await _read()).contains(key);
+  }
+
+  Future<void> dismiss(String campaignKey) async {
+    final key = campaignKey.trim();
+    if (key.isEmpty || key.length > 512) {
+      return;
+    }
+    try {
+      final values = await _read();
+      values.add(key);
+      final retained = values.toList(growable: false)
+        ..sort((left, right) => left.compareTo(right));
+      final file = await _stateFile();
+      await file.writeAsString(
+        jsonEncode(retained.length <= 64
+            ? retained
+            : retained.sublist(retained.length - 64)),
+        flush: true,
+      );
     } catch (_) {
       // Best-effort persistence only.
     }

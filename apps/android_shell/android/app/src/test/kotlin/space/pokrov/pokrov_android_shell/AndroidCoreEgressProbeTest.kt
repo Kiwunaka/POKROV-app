@@ -8,6 +8,61 @@ import org.junit.Test
 
 class AndroidCoreEgressProbeTest {
     @Test
+    fun endpointFailureGetsBoundedRetriesWhileGroupFailureRemainsTerminal() {
+        val endpoint = AndroidCoreEgressProbeTarget(
+            tag = "pokrov-warp",
+            kind = AndroidCoreEgressProbeTargetKind.ENDPOINT,
+        )
+        val group = AndroidCoreEgressProbeTarget(
+            tag = "proxy",
+            kind = AndroidCoreEgressProbeTargetKind.GROUP,
+        )
+
+        assertTrue(
+            AndroidCoreEgressRetryPolicy.shouldRetry(
+                endpoint,
+                AndroidCoreEgressProbeResult.FAILED,
+                completedAttempts = 1,
+            ),
+        )
+        assertFalse(
+            AndroidCoreEgressRetryPolicy.shouldRetry(
+                group,
+                AndroidCoreEgressProbeResult.FAILED,
+                completedAttempts = 1,
+            ),
+        )
+        assertTrue(
+            AndroidCoreEgressRetryPolicy.shouldRetry(
+                group,
+                AndroidCoreEgressProbeResult.UNAVAILABLE,
+                completedAttempts = 1,
+            ),
+        )
+        assertFalse(
+            AndroidCoreEgressRetryPolicy.shouldRetry(
+                endpoint,
+                AndroidCoreEgressProbeResult.TIMED_OUT,
+                completedAttempts = 1,
+            ),
+        )
+        assertTrue(
+            AndroidCoreEgressRetryPolicy.shouldRetry(
+                endpoint,
+                AndroidCoreEgressProbeResult.FAILED,
+                completedAttempts = 2,
+            ),
+        )
+        assertFalse(
+            AndroidCoreEgressRetryPolicy.shouldRetry(
+                endpoint,
+                AndroidCoreEgressProbeResult.FAILED,
+                completedAttempts = 3,
+            ),
+        )
+    }
+
+    @Test
     fun rejectsUnsafeOrUnboundedTags() {
         assertTrue(AndroidCoreEgressProbe.isSafeTag("auto-selector"))
         assertFalse(AndroidCoreEgressProbe.isSafeTag(""))
@@ -22,10 +77,49 @@ class AndroidCoreEgressProbeTest {
     }
 
     @Test
+    fun resolvesSelectableFinalAsGroupProbeTarget() {
+        assertEquals(
+            AndroidCoreEgressProbeTarget(
+                tag = "select",
+                kind = AndroidCoreEgressProbeTargetKind.GROUP,
+            ),
+            AndroidCoreEgressProbe.resolveFinalTarget(
+                finalTag = "select",
+                outboundTypes = mapOf("select" to "selector"),
+                endpointTypes = emptyMap(),
+            ),
+        )
+    }
+
+    @Test
+    fun resolvesWarpFinalAsEndpointProbeTarget() {
+        assertEquals(
+            AndroidCoreEgressProbeTarget(
+                tag = "pokrov-warp",
+                kind = AndroidCoreEgressProbeTargetKind.ENDPOINT,
+            ),
+            AndroidCoreEgressProbe.resolveFinalTarget(
+                finalTag = "pokrov-warp",
+                outboundTypes = mapOf("direct" to "direct"),
+                endpointTypes = mapOf("pokrov-warp" to "warp"),
+            ),
+        )
+        assertNull(
+            AndroidCoreEgressProbe.resolveFinalTarget(
+                finalTag = "mesh",
+                outboundTypes = emptyMap(),
+                endpointTypes = mapOf("mesh" to "tailscale"),
+            ),
+        )
+    }
+
+    @Test
     fun acceptsOnlySelectableGroupTypes() {
         assertTrue(AndroidCoreEgressProbe.isSelectableGroupType("selector"))
         assertTrue(AndroidCoreEgressProbe.isSelectableGroupType(" URLTEST "))
         assertFalse(AndroidCoreEgressProbe.isSelectableGroupType("vless"))
+        assertTrue(AndroidCoreEgressProbe.isProbeableEndpointType(" WARP "))
+        assertFalse(AndroidCoreEgressProbe.isProbeableEndpointType("wireguard"))
     }
 
     @Test
@@ -34,6 +128,29 @@ class AndroidCoreEgressProbeTest {
         assertFalse(AndroidCoreEgressProbe.isHealthySample(time = 0L, delay = 84))
         assertFalse(AndroidCoreEgressProbe.isHealthySample(time = 1L, delay = 0))
         assertFalse(AndroidCoreEgressProbe.isHealthySample(time = 1L, delay = 65_535))
+    }
+
+    @Test
+    fun recognizesEndpointResultsFromCommandLogAndPlatformDebugChannel() {
+        assertEquals(
+            AndroidCoreEgressProbeResult.HEALTHY,
+            AndroidCoreEgressProbe.endpointResultFromMessage(
+                "selected endpoint URL test succeeded",
+            ),
+        )
+        assertEquals(
+            AndroidCoreEgressProbeResult.HEALTHY,
+            AndroidCoreEgressProbe.endpointResultFromMessage(
+                "selected_endpoint_url_test:healthy",
+            ),
+        )
+        assertEquals(
+            AndroidCoreEgressProbeResult.FAILED,
+            AndroidCoreEgressProbe.endpointResultFromMessage(
+                "selected_endpoint_url_test:endpoint_initialization_http_rejected",
+            ),
+        )
+        assertNull(AndroidCoreEgressProbe.endpointResultFromMessage("unrelated"))
     }
 
     @Test

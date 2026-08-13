@@ -89,16 +89,30 @@ try {
 
   Push-Location $androidRoot
   try {
-    $buildArguments = @(
+    $universalBuildArguments = @(
       "build",
       "apk",
       "--release",
       "--dart-define=POKROV_API_BASE_URL=$ApiBaseUrl",
       "--dart-define=POKROV_APP_VERSION=$declaredVersionName"
     )
-    & flutter @buildArguments
+    & flutter @universalBuildArguments
     if ($LASTEXITCODE -ne 0) {
-      throw "Flutter production APK build failed with exit code $LASTEXITCODE."
+      throw "Flutter production universal APK build failed with exit code $LASTEXITCODE."
+    }
+
+    $splitBuildArguments = @(
+      "build",
+      "apk",
+      "--release",
+      "--split-per-abi",
+      "--target-platform", "android-arm,android-arm64,android-x64",
+      "--dart-define=POKROV_API_BASE_URL=$ApiBaseUrl",
+      "--dart-define=POKROV_APP_VERSION=$declaredVersionName"
+    )
+    & flutter @splitBuildArguments
+    if ($LASTEXITCODE -ne 0) {
+      throw "Flutter production split APK build failed with exit code $LASTEXITCODE."
     }
   } finally {
     Pop-Location
@@ -111,87 +125,111 @@ try {
   $securePassword = $null
 }
 
-$apkPath = Join-Path $androidRoot "build\app\outputs\flutter-apk\app-release.apk"
-if (-not (Test-Path -LiteralPath $apkPath -PathType Leaf)) {
-  throw "The expected production APK was not produced."
-}
-
 $apksigner = Resolve-AndroidBuildTool -FileName "apksigner.bat"
-$verificationOutput = @(& $apksigner verify --verbose --print-certs $apkPath 2>&1 | ForEach-Object { [string]$_ })
-if ($LASTEXITCODE -ne 0) {
-  throw "apksigner rejected the production APK."
-}
-$verificationText = $verificationOutput -join "`n"
-if ($verificationText -match "Android Debug") {
-  throw "The production APK is still signed with the Android Debug certificate."
-}
-$fingerprintMatch = [regex]::Match(
-  $verificationText,
-  "certificate SHA-256 digest:\s*([0-9a-fA-F]{64})"
-)
-if (-not $fingerprintMatch.Success) {
-  throw "Could not read the production signer fingerprint from apksigner output."
-}
-$artifactFingerprint = $fingerprintMatch.Groups[1].Value.ToUpperInvariant()
 $expectedFingerprint = ([string]$metadata.certificate_sha256).Replace(":", "").ToUpperInvariant()
-if ($artifactFingerprint -ne $expectedFingerprint) {
-  throw "The production APK signer does not match the configured POKROV production certificate."
-}
-
 $aapt = Resolve-AndroidBuildTool -FileName "aapt.exe"
-$badgingOutput = @(& $aapt dump badging $apkPath 2>&1 | ForEach-Object { [string]$_ })
-if ($LASTEXITCODE -ne 0) {
-  throw "aapt could not inspect the production APK manifest."
-}
-$badgingText = $badgingOutput -join "`n"
-if ($badgingText -match "(?m)^application-debuggable") {
-  throw "The production APK manifest is debuggable."
-}
-$packageMatch = [regex]::Match(
-  $badgingText,
-  "(?m)^package:\s+name='([^']+)'\s+versionCode='([^']+)'\s+versionName='([^']+)'"
-)
-if (-not $packageMatch.Success) {
-  throw "Could not read the production APK package and version from aapt."
-}
-$artifactPackage = $packageMatch.Groups[1].Value
-$versionCode = $packageMatch.Groups[2].Value
-$versionName = $packageMatch.Groups[3].Value
-if ($artifactPackage -ne [string]$metadata.package_name) {
-  throw "The production APK package does not match the configured signing identity."
-}
-if ($versionName -ne $declaredVersionName) {
-  throw "The production APK version does not match apps/android_shell/pubspec.yaml."
-}
-
-$apk = Get-Item -LiteralPath $apkPath
-$artifactHash = (Get-FileHash -LiteralPath $apkPath -Algorithm SHA256).Hash
-$evidence = [ordered]@{
-  schema_version = 1
-  artifact = $apk.Name
-  package_name = $artifactPackage
-  version_name = $versionName
-  version_code = $versionCode
-  distribution = "direct_apk"
-  build_mode = "release"
-  debuggable = $false
-  signing_state = "production_self_managed"
-  certificate_sha256 = $artifactFingerprint
-  apk_sha256 = $artifactHash
-  size_bytes = [int64]$apk.Length
-  api_base_url = $ApiBaseUrl
-  verified_at_utc = [DateTime]::UtcNow.ToString("o")
-}
-$evidencePath = "$apkPath.signing.json"
-[System.IO.File]::WriteAllText(
-  $evidencePath,
-  ($evidence | ConvertTo-Json -Depth 4),
-  [System.Text.UTF8Encoding]::new($false)
+$outputDirectory = Join-Path $androidRoot "build\app\outputs\flutter-apk"
+$artifacts = @(
+  [ordered]@{
+    path = Join-Path $outputDirectory "app-release.apk"
+    abi = "universal"
+  },
+  [ordered]@{
+    path = Join-Path $outputDirectory "app-arm64-v8a-release.apk"
+    abi = "arm64-v8a"
+  },
+  [ordered]@{
+    path = Join-Path $outputDirectory "app-armeabi-v7a-release.apk"
+    abi = "armeabi-v7a"
+  },
+  [ordered]@{
+    path = Join-Path $outputDirectory "app-x86_64-release.apk"
+    abi = "x86_64"
+  }
 )
 
-Write-Host "Android production APK built and verified." -ForegroundColor Green
-Write-Host "APK: $apkPath"
-Write-Host "Size: $($apk.Length) bytes"
-Write-Host "APK SHA-256: $artifactHash"
-Write-Host "Certificate SHA-256: $artifactFingerprint"
-Write-Host "Evidence: $evidencePath"
+foreach ($artifact in $artifacts) {
+  $apkPath = [string]$artifact.path
+  if (-not (Test-Path -LiteralPath $apkPath -PathType Leaf)) {
+    throw "An expected production APK was not produced."
+  }
+
+  $verificationOutput = @(& $apksigner verify --verbose --print-certs $apkPath 2>&1 | ForEach-Object { [string]$_ })
+  if ($LASTEXITCODE -ne 0) {
+    throw "apksigner rejected a production APK."
+  }
+  $verificationText = $verificationOutput -join "`n"
+  if ($verificationText -match "Android Debug") {
+    throw "A production APK is still signed with the Android Debug certificate."
+  }
+  $fingerprintMatch = [regex]::Match(
+    $verificationText,
+    "certificate SHA-256 digest:\s*([0-9a-fA-F]{64})"
+  )
+  if (-not $fingerprintMatch.Success) {
+    throw "Could not read a production signer fingerprint from apksigner output."
+  }
+  $artifactFingerprint = $fingerprintMatch.Groups[1].Value.ToUpperInvariant()
+  if ($artifactFingerprint -ne $expectedFingerprint) {
+    throw "A production APK signer does not match the configured POKROV production certificate."
+  }
+
+  $badgingOutput = @(& $aapt dump badging $apkPath 2>&1 | ForEach-Object { [string]$_ })
+  if ($LASTEXITCODE -ne 0) {
+    throw "aapt could not inspect a production APK manifest."
+  }
+  $badgingText = $badgingOutput -join "`n"
+  if ($badgingText -match "(?m)^application-debuggable") {
+    throw "A production APK manifest is debuggable."
+  }
+  $packageMatch = [regex]::Match(
+    $badgingText,
+    "(?m)^package:\s+name='([^']+)'\s+versionCode='([^']+)'\s+versionName='([^']+)'"
+  )
+  if (-not $packageMatch.Success) {
+    throw "Could not read a production APK package and version from aapt."
+  }
+  $artifactPackage = $packageMatch.Groups[1].Value
+  $versionCode = $packageMatch.Groups[2].Value
+  $versionName = $packageMatch.Groups[3].Value
+  if ($artifactPackage -ne [string]$metadata.package_name) {
+    throw "A production APK package does not match the configured signing identity."
+  }
+  if ($versionName -ne $declaredVersionName) {
+    throw "A production APK version does not match apps/android_shell/pubspec.yaml."
+  }
+
+  $apk = Get-Item -LiteralPath $apkPath
+  $artifactHash = (Get-FileHash -LiteralPath $apkPath -Algorithm SHA256).Hash
+  $evidence = [ordered]@{
+    schema_version = 1
+    artifact = $apk.Name
+    abi = [string]$artifact.abi
+    package_name = $artifactPackage
+    version_name = $versionName
+    version_code = $versionCode
+    distribution = "direct_apk"
+    build_mode = "release"
+    debuggable = $false
+    signing_state = "production_self_managed"
+    certificate_sha256 = $artifactFingerprint
+    apk_sha256 = $artifactHash
+    size_bytes = [int64]$apk.Length
+    api_base_url = $ApiBaseUrl
+    verified_at_utc = [DateTime]::UtcNow.ToString("o")
+  }
+  $evidencePath = "$apkPath.signing.json"
+  [System.IO.File]::WriteAllText(
+    $evidencePath,
+    ($evidence | ConvertTo-Json -Depth 4),
+    [System.Text.UTF8Encoding]::new($false)
+  )
+
+  Write-Host "Android production APK built and verified." -ForegroundColor Green
+  Write-Host "ABI: $($artifact.abi)"
+  Write-Host "APK: $apkPath"
+  Write-Host "Size: $($apk.Length) bytes"
+  Write-Host "APK SHA-256: $artifactHash"
+  Write-Host "Certificate SHA-256: $artifactFingerprint"
+  Write-Host "Evidence: $evidencePath"
+}

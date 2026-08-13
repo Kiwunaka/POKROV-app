@@ -82,7 +82,7 @@ Implementation update on 2026-07-22:
   server material: implemented.
 - Safe consent cache: implemented.
 - Support diagnostics redaction: implemented.
-- POKROV Core 1.0.2 release commit, sizes, and SHA-256 values: pinned.
+- POKROV Core 1.0.3 release commit, sizes, and SHA-256 values: pinned.
 - POKROV desktop ABI 2, private staged-file contract, and fail-closed
   adapter boundary: implemented.
 - POKROV Core client-local WARP materialization and enable/disable parity: implemented
@@ -94,8 +94,10 @@ Implementation update on 2026-07-22:
 - POKROV Core Android host bridge and JVM contract tests: implemented.
 - POKROV Core iOS host bridge: implemented in source; Xcode build and signed
   physical-device tunnel proof remain `MANUAL_OWNER_TEST`.
-- Windows POKROV DLL export check, ABI probe, private ACL probe, and repeated
-  byte-identical release build: implemented locally for `v1.0.2`.
+- Windows POKROV DLL repeated byte-identical release build and exact-client
+  100-cycle raw start/stop test: `PASS` for `v1.0.3`. Private ACL, packaged
+  route capture, real WARP, sleep/resume, and clean-machine proof remain
+  candidate gates.
 - macOS POKROV universal dylib build and ABI probe: `MANUAL_OWNER_TEST` on a
   Mac with Xcode.
 - Android physical release-build proof: `MANUAL_OWNER_TEST`.

@@ -68,7 +68,7 @@ class _ProfileSection extends StatelessWidget {
   final String? bonusSummaryError;
   final bool Function() bonusRewardBusy;
   final Future<void> Function() onRefreshBonusSummary;
-  final VoidCallback onSpinWheel;
+  final Future<AppFirstBonusRewardResult?> Function() onSpinWheel;
   final VoidCallback onCheckInCalendar;
   final WarpRuntimePolicy warpPolicy;
   final bool warpRuntimeConsent;
@@ -101,7 +101,19 @@ class _ProfileSection extends StatelessWidget {
       return const ['Обновляем Telegram, рефералы и промокоды.'];
     }
     if (summary == null) {
-      return const ['Telegram +5 дней · рефералы · промокоды'];
+      if (_bonusPaidRequired(null)) {
+        return const [
+          'В пробном периоде бонусов нет. Они откроются после первой оплаты.'
+        ];
+      }
+      return const ['Рулетка · Telegram · приглашения'];
+    }
+    if (_bonusPaidRequired(summary)) {
+      return [
+        summary.rewardAccess.message.trim().isEmpty
+            ? 'В пробном периоде бонусов нет. Они откроются после первой оплаты.'
+            : summary.rewardAccess.message.trim(),
+      ];
     }
     final referralCode =
         summary.referralCode.isEmpty ? '' : ' · ${summary.referralCode}';
@@ -122,7 +134,10 @@ class _ProfileSection extends StatelessWidget {
       return 'Обновляем';
     }
     if (summary == null) {
-      return 'Открыть';
+      return _bonusPaidRequired(null) ? 'После оплаты' : 'Открыть';
+    }
+    if (_bonusPaidRequired(summary)) {
+      return 'После оплаты';
     }
     final claimed = summary.channelBonusClaimed;
     final bonusDays = claimed
@@ -135,10 +150,18 @@ class _ProfileSection extends StatelessWidget {
     return parts.isEmpty ? 'Открыть' : parts.join(' · ');
   }
 
+  bool _bonusPaidRequired(AppFirstBonusSummary? summary) {
+    if (summary?.rewardAccess.paidRequired ?? false) {
+      return true;
+    }
+    return (subscriptionInfo?.lane.toLowerCase().contains('trial') ?? false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currentBonusSummary = bonusSummary();
+    final bonusPaidRequired = _bonusPaidRequired(currentBonusSummary);
     final statusLabel = _consumerProtectionStatusLabel(runtimeSnapshot);
     final statusSummary = _consumerProtectionStatusSummary(
       runtimeSnapshot,
@@ -212,6 +235,34 @@ class _ProfileSection extends StatelessWidget {
                   ),
                   onCheckoutTap: () =>
                       onOpenHandoff('checkout', appContext.checkoutUrl),
+                ),
+              ),
+              _SectionCard(
+                key: const ValueKey('profile-section-statistics'),
+                title: 'Статистика',
+                lines: const ['Только подтверждённые данные этого аккаунта.'],
+                child: Column(
+                  children: [
+                    _SettingsRow(
+                      key: const ValueKey('profile-statistics-traffic'),
+                      icon: Icons.data_usage_rounded,
+                      title: 'Трафик через POKROV',
+                      value: subscriptionInfo?.usageSource == 'panel_runtime'
+                          ? _formatTrafficVolume(
+                              subscriptionInfo?.trafficUsedBytes ?? 0,
+                            )
+                          : 'Нет свежих данных',
+                    ),
+                    const _SettingsRowDivider(),
+                    _SettingsRow(
+                      key: const ValueKey('profile-statistics-connections'),
+                      icon: Icons.link_rounded,
+                      title: 'Активные подключения',
+                      value: subscriptionInfo?.usageSource == 'panel_runtime'
+                          ? '${subscriptionInfo?.activeConnections ?? 0}'
+                          : '—',
+                    ),
+                  ],
                 ),
               ),
               _SectionCard(
@@ -458,12 +509,18 @@ class _ProfileSection extends StatelessWidget {
                       key: const ValueKey('profile-telegram-claim-action'),
                       icon: Icons.send_outlined,
                       title: 'Telegram-бонус',
-                      value: telegramBonusCanClaim ? 'Получить' : 'Проверить',
-                      valueIsAction: !telegramBonusBusy,
-                      enabled: !telegramBonusBusy,
-                      onTap: telegramBonusCanClaim
-                          ? onClaimTelegramBonus
-                          : onCheckTelegramBonus,
+                      value: bonusPaidRequired
+                          ? 'После оплаты'
+                          : telegramBonusCanClaim
+                              ? 'Получить'
+                              : 'Проверить',
+                      valueIsAction: !bonusPaidRequired && !telegramBonusBusy,
+                      enabled: !bonusPaidRequired && !telegramBonusBusy,
+                      onTap: bonusPaidRequired
+                          ? null
+                          : telegramBonusCanClaim
+                              ? onClaimTelegramBonus
+                              : onCheckTelegramBonus,
                     ),
                     const _SettingsRowDivider(),
                     _SettingsRow(
@@ -475,13 +532,15 @@ class _ProfileSection extends StatelessWidget {
                         context,
                         summary: bonusSummary,
                         rewardBusy: bonusRewardBusy,
+                        paidRequired: bonusPaidRequired,
                         onRefreshBonusSummary: onRefreshBonusSummary,
                         onSpinWheel: onSpinWheel,
                         onCheckInCalendar: onCheckInCalendar,
                         onOpenHandoff: onOpenHandoff,
                       ),
                     ),
-                    if ((bonusSummaryError ?? '').isNotEmpty)
+                    if (!bonusPaidRequired &&
+                        (bonusSummaryError ?? '').isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
@@ -501,6 +560,22 @@ class _ProfileSection extends StatelessWidget {
       ],
     );
   }
+}
+
+String _formatTrafficVolume(int bytes) {
+  final safeBytes = bytes < 0 ? 0 : bytes;
+  const kib = 1024.0;
+  const mib = 1024.0 * kib;
+  const gib = 1024.0 * mib;
+  if (safeBytes >= gib) {
+    final value = safeBytes / gib;
+    return '${value.toStringAsFixed(value >= 100 ? 0 : 1)} ГБ';
+  }
+  if (safeBytes >= mib) {
+    final value = safeBytes / mib;
+    return '${value.toStringAsFixed(value >= 100 ? 0 : 1)} МБ';
+  }
+  return '${(safeBytes / kib).toStringAsFixed(0)} КБ';
 }
 
 class _ProfileAccessOverview extends StatelessWidget {

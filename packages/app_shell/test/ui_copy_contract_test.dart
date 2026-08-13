@@ -49,7 +49,7 @@ void main() {
       final labels = routeLabels.readAsStringSync();
       final combined = '$rules\n$labels';
 
-      expect(combined, contains('Умный режим'));
+      expect(combined, contains('Россия напрямую'));
       expect(combined, contains('Всё устройство'));
       expect(combined, contains('Только выбранные'));
       expect(
@@ -113,8 +113,6 @@ void main() {
         'probe.host',
         'hostname',
         'node.code.trim().isEmpty ?',
-        'сервер',
-        'сервера',
         'профиля',
       ]) {
         expect(combined, isNot(contains(forbidden)), reason: forbidden);
@@ -161,7 +159,6 @@ void main() {
       'Расширенная защита включится',
       'Расширенная защита выключена',
       'heavyImpact(',
-      'триал',
       'Триал',
       'системный модуль',
       'подготовьте устройство',

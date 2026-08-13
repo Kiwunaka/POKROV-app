@@ -13,6 +13,16 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 const _materializedRuntimeConfig =
     '{"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}';
 
+const _paidSubscriptionInfo = ClientSubscriptionInfo(
+  lane: 'paidUnlimited',
+  expiresAt: '2026-07-22T00:00:00Z',
+  daysLeft: 30,
+  autoRenew: false,
+  renewUrl: null,
+  plans: <ClientSubscriptionPlan>[],
+  trafficPolicy: <String, Object?>{},
+);
+
 const _featureLabelPrivateHelperCoverage = <String>[
   '_smartConnectNodeTitle',
   '_smartConnectNodeCity',
@@ -877,16 +887,47 @@ void _installReadyRuntimeBridgeMock({
   List<String>? calls,
   List<String>? stagedPayloads,
   bool reportDegradedAfterConnect = false,
+  bool failFirstConnect = false,
+  bool failAfterConnect = false,
+  bool failApplyWarp = false,
 }) {
   const channel = MethodChannel('space.pokrov/runtime_engine');
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   var connected = false;
+  var connectCalls = 0;
 
   messenger.setMockMethodCallHandler(channel, (call) async {
     calls?.add(call.method);
     switch (call.method) {
       case 'runtimeEngine.snapshot':
+        if (failAfterConnect && connected && connectCalls == 1) {
+          connected = false;
+          return <String, Object?>{
+            'phase': 'configStaged',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+            'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': true,
+            'last_failure_kind': 'core_egress_probe_failed',
+            'message': 'Выход через выбранную локацию не подтверждён.',
+          };
+        }
+        if (failAfterConnect && connected && connectCalls > 1) {
+          return <String, Object?>{
+            'phase': 'running',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+            'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': true,
+            'core_egress_validated': true,
+            'message': 'Android runtime service is running.',
+          };
+        }
         if (reportDegradedAfterConnect && connected) {
           return <String, Object?>{
             'phase': 'running',
@@ -939,6 +980,20 @@ void _installReadyRuntimeBridgeMock({
           'message': 'Managed profile staged on the host bridge.',
         };
       case 'runtimeEngine.connect':
+        connectCalls += 1;
+        if (failFirstConnect && connectCalls == 1) {
+          return <String, Object?>{
+            'phase': 'configStaged',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+            'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': true,
+            'last_failure_kind': 'core_egress_failed',
+            'message': 'Выход через выбранную локацию не подтверждён.',
+          };
+        }
         connected = true;
         return <String, Object?>{
           'phase': 'running',
@@ -948,7 +1003,7 @@ void _installReadyRuntimeBridgeMock({
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': true,
-          'core_egress_validated': true,
+          'core_egress_validated': !failAfterConnect,
           'message': 'Runtime service is running.',
         };
       case 'runtimeEngine.disconnect':
@@ -964,9 +1019,10 @@ void _installReadyRuntimeBridgeMock({
         };
       case 'runtimeEngine.applyWarp':
         return <String, Object?>{
-          'applied': true,
-          'effectiveAt': 'now',
+          'applied': !failApplyWarp,
+          'effectiveAt': failApplyWarp ? 'none' : 'now',
           'fallbackUsed': false,
+          if (failApplyWarp) 'reason': 'missing_staged_profile',
         };
     }
     return null;
@@ -1013,6 +1069,20 @@ Future<void> _tapNav(WidgetTester tester, String key) async {
   expect(target, findsOneWidget);
   await tester.tap(target);
   await tester.pumpAndSettle();
+}
+
+Future<void> _openAdvancedRules(WidgetTester tester) async {
+  final toggle = find.byKey(const ValueKey('rules-advanced-toggle'));
+  await tester.dragUntilVisible(
+    toggle,
+    find.byType(Scrollable).first,
+    const Offset(0, -320),
+    maxIteration: 12,
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(toggle);
+  await tester.pumpAndSettle();
+  expect(find.byKey(const ValueKey('rules-advanced-open')), findsOneWidget);
 }
 
 Future<void> _openEnhancedProtectionFromProfile(WidgetTester tester) async {
@@ -1643,13 +1713,22 @@ void main() {
     expect(find.text('POKROV VPN'), findsOneWidget);
     expect(find.byKey(const ValueKey('home-location-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-route-chip')), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.byKey(const ValueKey('home-location-chip'))).dy,
+      closeTo(
+        tester.getTopLeft(find.byKey(const ValueKey('home-route-chip'))).dy,
+        1,
+      ),
+    );
     final homeWarpTile = find.byKey(const ValueKey('home-warp-tile'));
     expect(homeWarpTile, findsOneWidget);
-    expect(find.textContaining('Дополнительная защита'), findsOneWidget);
+    expect(find.textContaining('Дополнительная защита'), findsNothing);
+    expect(find.byKey(const ValueKey('home-warp-info-action')), findsOneWidget);
     expect(find.descendant(of: homeWarpTile, matching: find.text('WARP')),
         findsOneWidget);
+    expect(find.byKey(const ValueKey('home-access-strip')), findsOneWidget);
     expect(
-        find.byKey(const ValueKey('home-telegram-bonus-pill')), findsOneWidget);
+        find.byKey(const ValueKey('home-telegram-bonus-pill')), findsNothing);
     expect(find.byKey(const ValueKey('home-news-card')), findsNothing);
     expect(
       find.descendant(
@@ -1736,7 +1815,7 @@ void main() {
             ctaLabel: 'Открыть',
             ctaHref: 'https://t.me/pokrov_vpn',
             placement: 'home_banner',
-            dismissible: false,
+            dismissible: true,
             kind: 'promo',
             goal: 'telegram_bonus',
           ),
@@ -1776,8 +1855,16 @@ void main() {
 
     expect(find.byKey(const ValueKey('home-news-card')), findsNothing);
     expect(find.byKey(const ValueKey('home-admin-promo-card')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('home-admin-promo-dismiss')), findsOneWidget);
     expect(find.text('Подарок за Telegram'), findsOneWidget);
     expect(find.text('Только в бонусах'), findsNothing);
+    final dismissPromo = find.byKey(const ValueKey('home-admin-promo-dismiss'));
+    await tester.ensureVisible(dismissPromo);
+    await tester.pumpAndSettle();
+    await tester.tap(dismissPromo);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('home-admin-promo-card')), findsNothing);
   });
 
   testWidgets('home admin promotion ignores unsafe CTA schemes',
@@ -1814,7 +1901,7 @@ void main() {
             ctaLabel: 'Открыть',
             ctaHref: 'javascript://pokrov.space/steal',
             placement: 'home_banner',
-            dismissible: false,
+            dismissible: true, // user-dismissable remote Home campaign
             kind: 'promo',
             goal: 'safety',
           ),
@@ -2389,13 +2476,12 @@ void main() {
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
 
-    expect(find.text('Премиум активен'), findsOneWidget);
-    expect(find.text('Доступ активен'), findsOneWidget);
+    expect(find.text('Премиум · 30 дней'), findsOneWidget);
     expect(find.textContaining('пробного доступа'), findsNothing);
 
     await _tapNav(tester, 'nav-profile');
     await tester.pumpAndSettle();
-    expect(find.text('Премиум активен'), findsOneWidget);
+    expect(find.text('30 дней доступа'), findsOneWidget);
     expect(find.text('30 дней'), findsWidgets);
     expect(find.textContaining('пробного доступа'), findsNothing);
   });
@@ -2850,6 +2936,7 @@ void main() {
         configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
+      subscriptionInfo: _paidSubscriptionInfo,
     );
     final launched = <Uri>[];
 
@@ -3025,7 +3112,7 @@ void main() {
 
     expect(
         find.byKey(const ValueKey('home-telegram-bonus-pill')), findsNothing);
-    expect(find.text('+10 дней'), findsOneWidget);
+    expect(find.text('+10 дней'), findsNothing);
 
     await _tapNav(tester, 'nav-profile');
     await tester.pumpAndSettle();
@@ -3062,23 +3149,32 @@ void main() {
         find.byKey(const ValueKey('rewards-history-item-1')), findsOneWidget);
     expect(find.text('Промокод активирован'), findsOneWidget);
     expect(find.text('Telegram-бонус получен'), findsOneWidget);
-    expect(find.textContaining('POKROV2'), findsWidgets);
+    expect(find.textContaining('POKROV3'), findsWidgets);
     expect(find.textContaining('+10'), findsWidgets);
     expect(find.text('Конверсия'), findsOneWidget);
+    expect(find.text('Активировано'), findsNothing);
     expect(find.text('Последние приглашения'), findsOneWidget);
     expect(find.text('Бонус начислен'), findsOneWidget);
     expect(find.text('Имена и аккаунты приглашённых не показываются.'),
         findsOneWidget);
-    expect(find.text('Полезные задачи'), findsOneWidget);
+    expect(find.text('Полезные задачи'), findsNothing);
     expect(find.byKey(const ValueKey('rewards-quest-second_device')),
-        findsOneWidget);
+        findsNothing);
   });
 
   testWidgets('bonus preview keeps wheel and activity calendar non-mutating',
       (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'trial-rewards-fallback',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+    );
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
       ),
     );
     await tester.pumpAndSettle();
@@ -3095,6 +3191,12 @@ void main() {
 
     await _openRewardsHubFromProfile(tester);
 
+    expect(find.byKey(const ValueKey('rewards-paid-required-notice')),
+        findsOneWidget);
+    expect(find.text('Telegram +5 дней'), findsOneWidget);
+    expect(find.text('Подписка на канал.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('rewards-telegram-refresh-action')),
+        findsNothing);
     expect(find.byKey(const ValueKey('rewards-wheel-card')), findsNothing);
     expect(find.byKey(const ValueKey('rewards-calendar-card')), findsNothing);
   });
@@ -3144,6 +3246,7 @@ void main() {
           streakMonths: 2,
         ),
       ),
+      subscriptionInfo: _paidSubscriptionInfo,
     );
 
     await tester.pumpWidget(
@@ -3178,7 +3281,6 @@ void main() {
         findsOneWidget);
     expect(find.byKey(const ValueKey('rewards-calendar-checkin-action')),
         findsOneWidget);
-    expect(find.byKey(const ValueKey('rewards-calendar-grid')), findsOneWidget);
     expect(find.byKey(const ValueKey('rewards-achievements-section')),
         findsOneWidget);
     expect(find.byKey(const ValueKey('rewards-referral-card')), findsOneWidget);
@@ -3236,6 +3338,7 @@ void main() {
         materializedForRuntime: true,
       ),
       bonusSummary: summary,
+      subscriptionInfo: _paidSubscriptionInfo,
     );
 
     await tester.pumpWidget(
@@ -3273,7 +3376,14 @@ void main() {
 
     expect(bootstrapper.wheelSpinCalls, 1);
     expect(bootstrapper.lastWheelSpinHostPlatform, HostPlatform.android);
+    expect(find.byKey(const ValueKey('rewards-wheel-result-reveal')),
+        findsOneWidget);
+    expect(find.text('+1 день'), findsOneWidget);
 
+    Navigator.of(
+      tester.element(find.byKey(const ValueKey('rewards-hub-sheet'))),
+    ).pop();
+    await tester.pumpAndSettle();
     await _openRewardsHubFromProfile(tester);
     final calendarAction =
         find.byKey(const ValueKey('rewards-calendar-checkin-action'));
@@ -3747,11 +3857,11 @@ void main() {
             find.byKey(const ValueKey('home-access-badge-bloom-false')),
             findsNothing,
           );
-          expect(find.text('5 дней пробного доступа'), findsOneWidget);
-          expect(
-            find.text('Затем — продлите доступ'),
-            findsOneWidget,
-          );
+          expect(find.text('Пробный · 5 дней'), findsOneWidget);
+          expect(find.text('Затем — продлите доступ'), findsNothing);
+          expect(find.byKey(const ValueKey('home-warp-info-action')),
+              findsOneWidget);
+          expect(find.text('Дополнительная защита'), findsNothing);
         }
       } else {
         expect(find.byType(NavigationBar), findsNothing);
@@ -3891,6 +4001,11 @@ void main() {
     expect(bootstrapper.warpConsentCalls, 1);
     expect(bootstrapper.lastWarpConsentEnabled, isTrue);
     expect(runtimeCalls, contains('runtimeEngine.invalidateManagedProfile'));
+    expect(runtimeCalls, contains('runtimeEngine.disconnect'));
+    expect(
+      runtimeCalls.where((call) => call == 'runtimeEngine.connect'),
+      hasLength(2),
+    );
     expect(find.byKey(const ValueKey('home-warp-sheet')), findsNothing);
     await _tapNav(tester, 'nav-protection');
     expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
@@ -3937,7 +4052,12 @@ void main() {
     expect(bootstrapper.warpConsentCalls, 1);
     expect(bootstrapper.lastWarpConsentEnabled, isTrue);
     expect(find.byKey(const ValueKey('home-warp-sheet')), findsNothing);
-    expect(find.text('Включится при следующем подключении'), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('home-warp-state-enabled')), findsOneWidget);
+    expect(
+      tester.getSemantics(find.byKey(const ValueKey('home-warp-tile'))).value,
+      'Включится при следующем подключении',
+    );
     semantics.dispose();
   });
 
@@ -3970,14 +4090,128 @@ void main() {
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
 
-    // Tap the tile body (subtitle text), not the inline switch.
-    await tester.tap(find.text('Дополнительная защита'));
+    // Tap the tile body, not the inline switch.
+    await tester.tap(find.byKey(const ValueKey('home-warp-tile')));
     await tester.pumpAndSettle();
 
     expect(bootstrapper.warpConsentCalls, 1);
     expect(bootstrapper.lastWarpConsentEnabled, isTrue);
     expect(find.byKey(const ValueKey('home-warp-sheet')), findsNothing);
-    expect(find.text('Включится при следующем подключении'), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('home-warp-state-enabled')), findsOneWidget);
+  });
+
+  testWidgets(
+      'failed WARP connect falls back to ordinary VPN and stays visibly enabled',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final runtimeCalls = <String>[];
+    _installReadyRuntimeBridgeMock(
+      calls: runtimeCalls,
+      failAfterConnect: true,
+      failApplyWarp: true,
+    );
+    const warpPolicy = WarpRuntimePolicy(
+      enabled: true,
+      runtimeReady: true,
+      state: 'consented',
+      userConsented: true,
+      wireguardConfigJson:
+          '{"private-key":"test-private-key","local-address-ipv4":"172.16.0.2"}',
+    );
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+        warpPolicy: warpPolicy,
+      ),
+      warpStatus: WarpControlStatus.fromPolicy(warpPolicy),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+
+    expect(
+      runtimeCalls.where((call) => call == 'runtimeEngine.connect'),
+      hasLength(2),
+    );
+    expect(runtimeCalls, contains('runtimeEngine.applyWarp'));
+    expect(
+      runtimeCalls.where((call) => call == 'runtimeEngine.stageManagedProfile'),
+      hasLength(2),
+    );
+    expect(find.text('Отключить'), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('home-warp-state-fallback')), findsOneWidget);
+    expect(
+      tester.getSemantics(find.byKey(const ValueKey('home-warp-tile'))).value,
+      'На паузе · обычный режим',
+    );
+    expect(bootstrapper.warpRuntimeEventCalls, 1);
+
+    await tester.tap(find.byKey(const ValueKey('home-warp-inline-switch')));
+    await tester.pumpAndSettle();
+    expect(bootstrapper.lastWarpConsentEnabled, isFalse);
+  });
+
+  testWidgets('explicit WARP retry overrides one stale fallback status',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final stagedPayloads = <String>[];
+    _installReadyRuntimeBridgeMock(stagedPayloads: stagedPayloads);
+    const localPolicy = WarpRuntimePolicy.clientLocalDefault;
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+        warpPolicy: localPolicy,
+      ),
+      warpStatus: WarpControlStatus.fromPolicy(localPolicy).copyWith(
+        state: 'fallback',
+        consented: false,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await tester.tap(find.byKey(const ValueKey('home-warp-inline-switch')));
+    await tester.pumpAndSettle();
+    bootstrapper.warpStatus = bootstrapper.warpStatus.copyWith(
+      state: 'fallback',
+      consented: true,
+    );
+
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+
+    final staged = jsonDecode(stagedPayloads.last) as Map<String, dynamic>;
+    final endpoints = staged['endpoints'] as List<dynamic>;
+    expect(
+      endpoints.cast<Map<String, dynamic>>().singleWhere(
+            (endpoint) => endpoint['tag'] == 'pokrov-warp',
+          )['type'],
+      'warp',
+    );
+    expect((staged['route'] as Map<String, dynamic>)['final'], 'pokrov-warp');
   });
 
   testWidgets('home WARP uses client-local defaults without server material',
@@ -4007,13 +4241,8 @@ void main() {
     expect(warpTile, findsOneWidget);
     expect(find.descendant(of: warpTile, matching: find.text('WARP')),
         findsOneWidget);
-    expect(
-      find.descendant(
-        of: warpTile,
-        matching: find.text('Дополнительная защита'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('home-warp-state-ready')), findsOneWidget);
+    expect(tester.getSemantics(warpTile).value, 'Дополнительная защита');
 
     await tester.tap(find.byKey(const ValueKey('home-warp-inline-switch')));
     await tester.pumpAndSettle();
@@ -4155,8 +4384,8 @@ void main() {
     expect(find.byKey(const ValueKey('connect-disc-motion')), findsOneWidget);
     final controlSize =
         tester.getSize(find.byKey(const ValueKey('connect-disc-motion')));
-    expect(controlSize.width, inInclusiveRange(280, 520));
-    expect(controlSize.height, inInclusiveRange(80, 92));
+    expect(controlSize.width, inInclusiveRange(196, 228));
+    expect(controlSize.height, controlSize.width);
     expect(
       find.ancestor(
         of: find.byKey(const ValueKey('connect-disc-motion')),
@@ -4168,8 +4397,7 @@ void main() {
         findsOneWidget);
     expect(find.byKey(const ValueKey('connect-disc-label')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-status-switcher')), findsOneWidget);
-    expect(
-        find.byKey(const ValueKey('home-status-dot-motion')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-status-dot-motion')), findsNothing);
     expect(find.byKey(const ValueKey('home-chip-motion')), findsWidgets);
     expect(find.byKey(const ValueKey('home-chip-label-motion')), findsWidgets);
     expect(
@@ -4463,7 +4691,7 @@ void main() {
         findsOneWidget);
     expect(find.textContaining(appContext.hostPlatform.label), findsWidgets);
     expect(find.text('Что отправим'), findsOneWidget);
-    expect(find.text('Умный режим'), findsWidgets);
+    expect(find.text('Россия напрямую'), findsWidgets);
     expect(find.textContaining('статус VPN'), findsOneWidget);
     expect(find.textContaining('Сырые'), findsNothing);
     expect(find.textContaining('config'), findsNothing);
@@ -4479,6 +4707,37 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(opened.last.toString(), 'tg://resolve?domain=pokrov_supportbot');
+  });
+
+  testWidgets('home trial access strip opens the checkout', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final opened = <Uri>[];
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        handoffLauncher: (uri) async {
+          opened.add(uri);
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    final access = find.byKey(const ValueKey('home-access-strip'));
+    await tester.dragUntilVisible(
+      access,
+      find.byType(Scrollable).first,
+      const Offset(0, -180),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(access);
+    await tester.pumpAndSettle();
+
+    expect(opened.single.toString(),
+        'https://pay.pokrov.space/checkout/?plan=1_month');
   });
 
   testWidgets(
@@ -4802,7 +5061,15 @@ void main() {
     expect(bootstrapper.lastAssistantMessage, 'Не получается подключиться');
     expect(
       bootstrapper.lastAssistantDiagnostics?.keys.toSet(),
-      <String>{'app_version', 'platform', 'route_mode', 'connection_status'},
+      <String>{
+        'app_version',
+        'platform',
+        'route_mode',
+        'connection_status',
+        'enhanced_protection_state',
+        'enhanced_protection_consent',
+        'enhanced_protection_available',
+      },
     );
     expect(
       find.byKey(const ValueKey('assistant-thinking-status')),
@@ -4918,6 +5185,9 @@ void main() {
           'platform',
           'route_mode',
           'connection_status',
+          'enhanced_protection_state',
+          'enhanced_protection_consent',
+          'enhanced_protection_available',
         },
       ),
     );
@@ -5348,6 +5618,22 @@ void main() {
     await _completeFirstLaunchIfPresent(tester);
     await _tapNav(tester, 'nav-rules');
 
+    final dnsCard = find.byKey(const ValueKey('rules-dns-lan'));
+    await tester.dragUntilVisible(
+      dnsCard,
+      find.byType(Scrollable).first,
+      const Offset(0, -240),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('rules-ad-block-toggle')));
+    await tester.pumpAndSettle();
+    expect(store.state.routingPreferences.dnsPreset, PokrovDnsPreset.adguard);
+    await tester.tap(find.byKey(const ValueKey('rules-lan-toggle')));
+    await tester.pumpAndSettle();
+    expect(store.state.routingPreferences.allowLan, isFalse);
+
+    await _openAdvancedRules(tester);
+
     final purposeCard = find.byKey(const ValueKey('rules-purpose-routes'));
     await tester.dragUntilVisible(
       purposeCard,
@@ -5400,26 +5686,6 @@ void main() {
     );
     expect(find.text('Через POKROV VPN'), findsOneWidget);
 
-    final dnsCard = find.byKey(const ValueKey('rules-dns-lan'));
-    await tester.dragUntilVisible(
-      dnsCard,
-      find.byType(Scrollable).first,
-      const Offset(0, -360),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('rules-dns-picker')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('rules-dns-cloudflare')));
-    await tester.pumpAndSettle();
-    expect(
-      store.state.routingPreferences.dnsPreset,
-      PokrovDnsPreset.cloudflare,
-    );
-
-    expect(find.bySemanticsLabel('Локальная сеть'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('rules-lan-toggle')));
-    await tester.pumpAndSettle();
-    expect(store.state.routingPreferences.allowLan, isFalse);
     expect(store.writeCalls, greaterThanOrEqualTo(4));
     semantics.dispose();
   });
@@ -5445,6 +5711,7 @@ void main() {
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
     await _tapNav(tester, 'nav-rules');
+    await _openAdvancedRules(tester);
 
     final card = find.byKey(const ValueKey('rules-trusted-wifi'));
     await tester.dragUntilVisible(
@@ -5483,6 +5750,7 @@ void main() {
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
     await _tapNav(tester, 'nav-rules');
+    await _openAdvancedRules(tester);
 
     final card = find.byKey(const ValueKey('rules-trusted-wifi'));
     await tester.dragUntilVisible(
@@ -5574,6 +5842,7 @@ void main() {
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
     await _tapNav(tester, 'nav-rules');
+    await _openAdvancedRules(tester);
 
     final action = find.byKey(const ValueKey('rules-open-vpn-settings'));
     await tester.dragUntilVisible(
@@ -5773,6 +6042,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('rules-selected-app-pick')));
+    await tester.pump(const Duration(seconds: 4));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('rules-selected-app-picker-sheet')),
@@ -5824,6 +6094,8 @@ void main() {
             'label': 'Signal',
             'identifier': 'org.thoughtcrime.securesms',
             'subtitle': 'org.thoughtcrime.securesms',
+            'iconPngBase64':
+                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
           },
           <String, Object?>{
             'label': 'Signal',
@@ -5863,6 +6135,10 @@ void main() {
       ),
     );
     expect(nativeOption, findsOneWidget);
+    expect(
+      find.descendant(of: nativeOption, matching: find.byType(Image)),
+      findsOneWidget,
+    );
     tester.view.viewInsets = FakeViewPadding(
       bottom: 220 * tester.view.devicePixelRatio,
     );
@@ -5920,6 +6196,15 @@ void main() {
     expect(
       find.byKey(
         const ValueKey('rules-selected-app-org.thoughtcrime.securesms'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey('rules-selected-app-org.thoughtcrime.securesms'),
+        ),
+        matching: find.byType(Image),
       ),
       findsOneWidget,
     );
@@ -6471,7 +6756,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('home-location-chip')),
-        matching: find.text('Russia'),
+        matching: find.text('Россия'),
       ),
       findsOneWidget,
     );
@@ -6694,7 +6979,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.textContaining('вернуть автоматический выбор'),
+      find.textContaining('вернуть авто'),
       findsOneWidget,
     );
 
@@ -6821,7 +7106,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('home-location-chip')),
-        matching: find.text('Russia'),
+        matching: find.text('Россия'),
       ),
       findsOneWidget,
     );
@@ -6948,6 +7233,10 @@ void main() {
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
+        nodeLatencyProbe: (_, __) async => const <String, int>{
+          'nl-ams-01': 38,
+          'nl-ams-slow': 1700,
+        },
       ),
     );
     await tester.pumpAndSettle();
@@ -6959,6 +7248,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(bootstrapper.locationsCatalogCalls, greaterThanOrEqualTo(1));
+    final callsBeforeRefresh = bootstrapper.locationsCatalogCalls;
+    expect(
+      find.byKey(const ValueKey('locations-refresh-measurements')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('locations-refresh-measurements')),
+    );
+    await tester.pumpAndSettle();
+    expect(bootstrapper.locationsCatalogCalls, greaterThan(callsBeforeRefresh));
     expect(
       find.byKey(const ValueKey('locations-catalog-city-nl-ams-01')),
       findsOneWidget,
@@ -6968,26 +7267,26 @@ void main() {
     );
     expect(favoriteTarget.width, greaterThanOrEqualTo(48));
     expect(favoriteTarget.height, greaterThanOrEqualTo(48));
-    expect(find.text('Amsterdam'), findsOneWidget);
+    expect(find.text('Амстердам'), findsWidgets);
     expect(find.textContaining('38 мс'), findsOneWidget);
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('locations-catalog-city-nl-ams-01')),
-        matching: find.textContaining('нагрузка 31%'),
+        matching: find.textContaining('31%'),
       ),
       findsOneWidget,
     );
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('locations-catalog-city-nl-ams-01')),
-        matching: find.text('Netherlands · Отлично · Премиум'),
+        matching: find.text('Нидерланды · Отлично'),
       ),
       findsOneWidget,
     );
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('locations-catalog-city-nl-ams-slow')),
-        matching: find.text('Netherlands · Медленно · Премиум'),
+        matching: find.text('Нидерланды · Медленно'),
       ),
       findsOneWidget,
     );
@@ -6998,38 +7297,32 @@ void main() {
     expect(
       find.descendant(
         of: staleRow,
-        matching: find.text('замер устарел'),
+        matching: find.textContaining('устарел'),
       ),
       findsOneWidget,
     );
     expect(
-      find.descendant(of: staleRow, matching: find.textContaining('12 мс')),
-      findsNothing,
+      find.descendant(of: staleRow, matching: find.textContaining('— мс')),
+      findsOneWidget,
     );
     expect(
       find.descendant(
         of: staleRow,
-        matching: find.textContaining('нагрузка 10%'),
+        matching: find.textContaining('10%'),
       ),
-      findsNothing,
+      findsOneWidget,
     );
     expect(
       find.descendant(of: staleRow, matching: find.textContaining('Отлично')),
       findsNothing,
     );
-    final staleSignalSemantics = tester.widget<Semantics>(
-      find
-          .descendant(
-            of: find.byKey(
-              const ValueKey('locations-signal-nl-ams-stale'),
-            ),
-            matching: find.byType(Semantics),
-          )
-          .first,
+    expect(
+      find.byKey(const ValueKey('locations-signal-nl-ams-stale')),
+      findsNothing,
     );
     expect(
-      staleSignalSemantics.properties.label,
-      'Качество локации: нет свежих данных',
+      find.byKey(const ValueKey('location-flag-NL')),
+      findsWidgets,
     );
 
     for (final code in const ['nl-ams-invalid-time', 'nl-ams-future']) {
@@ -7041,12 +7334,12 @@ void main() {
         findsNothing,
       );
       expect(
-        find.descendant(of: row, matching: find.textContaining('мс')),
-        findsNothing,
+        find.descendant(of: row, matching: find.textContaining('— мс')),
+        findsOneWidget,
       );
       expect(
-        find.descendant(of: row, matching: find.textContaining('нагрузка')),
-        findsNothing,
+        find.descendant(of: row, matching: find.textContaining('%')),
+        findsOneWidget,
       );
     }
 
@@ -7061,21 +7354,13 @@ void main() {
       expect(
         find.descendant(
           of: invalidScoreRow,
-          matching: find.text('Netherlands · Базовый'),
+          matching: find.text('Нидерланды · Базовый'),
         ),
         findsOneWidget,
       );
-      final invalidScoreSignal = tester.widget<Semantics>(
-        find
-            .descendant(
-              of: find.byKey(ValueKey('locations-signal-$code')),
-              matching: find.byType(Semantics),
-            )
-            .first,
-      );
       expect(
-        invalidScoreSignal.properties.label,
-        'Качество локации: нет свежих данных',
+        find.byKey(ValueKey('locations-signal-$code')),
+        findsNothing,
       );
     }
     expect(find.text('Premium'), findsNothing);
@@ -7142,6 +7427,10 @@ void main() {
     final automaticTitle = find.text('Автоматически');
     expect(automaticTitle, findsOneWidget);
     expect(tester.getSize(automaticTitle).width, greaterThan(120));
+    expect(
+      find.byKey(const ValueKey('locations-refresh-measurements')),
+      findsOneWidget,
+    );
 
     final city = find.byKey(
       const ValueKey('locations-catalog-city-de-fra-01'),
@@ -7152,7 +7441,7 @@ void main() {
     expect(
       tester
           .getSize(
-            find.descendant(of: city, matching: find.text('Frankfurt')),
+            find.descendant(of: city, matching: find.text('Франкфурт')),
           )
           .width,
       greaterThan(100),
@@ -7270,7 +7559,7 @@ void main() {
     expect(store.state.recentNodeCodes, <String>['nl-ams-01']);
 
     await _tapNav(tester, 'nav-protection');
-    expect(find.text('Amsterdam'), findsOneWidget);
+    expect(find.text('Амстердам'), findsOneWidget);
     expect(
       find.text('Локация сохранена. Подключите POKROV, чтобы применить.'),
       findsOneWidget,
@@ -7280,11 +7569,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(bootstrapper.lastPreferredNodeCode, 'nl-ams-01');
     expect(store.state.preferredNodeCode, 'nl-ams-01');
-    expect(find.text('Amsterdam'), findsOneWidget);
+    expect(find.text('Амстердам'), findsOneWidget);
   });
 
   testWidgets(
-      'home keeps the verified location until a fresh preferred profile reconnects',
+      'manual location restarts the active tunnel and promotes the fresh profile',
       (tester) async {
     final semantics = tester.ensureSemantics();
     const channel = MethodChannel('space.pokrov/runtime_engine');
@@ -7292,7 +7581,6 @@ void main() {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     final runtimeCalls = <String>[];
     var phase = 'artifactReady';
-    var connectSucceeds = true;
     var reusableProfile = false;
 
     Map<String, Object?> snapshot({String message = 'Runtime ready.'}) {
@@ -7332,12 +7620,8 @@ void main() {
           phase = 'initialized';
           return snapshot(message: 'Runtime service stopped.');
         case 'runtimeEngine.connect':
-          phase = connectSucceeds ? 'running' : 'configStaged';
-          return snapshot(
-            message: connectSucceeds
-                ? 'Runtime service is running.'
-                : 'Connection failed.',
-          );
+          phase = 'running';
+          return snapshot(message: 'Runtime service is running.');
       }
       return null;
     });
@@ -7470,73 +7754,31 @@ void main() {
     final frankfurt =
         find.byKey(const ValueKey('locations-catalog-city-de-fra'));
     await tester.ensureVisible(frankfurt);
-    await tester.tap(frankfurt);
+    await tester.tap(frankfurt, warnIfMissed: false);
     await tester.pump();
     nodePreferenceGate.complete();
     await tester.pumpAndSettle();
-    expect(runtimeCalls, contains('runtimeEngine.invalidateManagedProfile'));
-    expect(runtimeCalls, isNot(contains('runtimeEngine.disconnect')));
-    expect(runtimeCalls, isNot(contains('runtimeEngine.connect')));
+    expect(
+      runtimeCalls,
+      containsAllInOrder(const <String>[
+        'runtimeEngine.invalidateManagedProfile',
+        'runtimeEngine.disconnect',
+        'runtimeEngine.stageManagedProfile',
+        'runtimeEngine.connect',
+      ]),
+    );
 
     await _tapNav(tester, 'nav-protection');
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('home-location-chip')),
-        matching: find.text('Санкт-Петербург'),
+        matching: find.text('Франкфурт'),
       ),
       findsOneWidget,
     );
-    expect(
-      find.text('Локация сохранена. Переподключите POKROV, чтобы применить.'),
-      findsOneWidget,
-    );
-
-    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
-    await tester.pumpAndSettle();
-    connectSucceeds = false;
-    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
-    await tester.pumpAndSettle();
-    // The Android adapter redacts raw host errors; let its short terminal
-    // snapshot settle before asserting the retry state.
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pumpAndSettle();
-
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('home-location-chip')),
-        matching: find.text('Санкт-Петербург'),
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('Подключено'), findsNothing);
-    expect(
-      tester
-          .widget<Semantics>(
-            find.byKey(const ValueKey('primary-connect-action')),
-          )
-          .properties
-          .enabled,
-      isTrue,
-    );
-
-    connectSucceeds = true;
-    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
-    await tester.pumpAndSettle();
-
     expect(find.text('Подключено'), findsOneWidget);
-
     expect(
-      runtimeCalls,
-      containsAllInOrder(const <String>[
-        'runtimeEngine.invalidateManagedProfile',
-        'runtimeEngine.stageManagedProfile',
-      ]),
-    );
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('home-location-chip')),
-        matching: find.text('Frankfurt'),
-      ),
+      find.text('Локация применена.'),
       findsOneWidget,
     );
 
@@ -7581,7 +7823,7 @@ void main() {
     final saintPetersburg =
         find.byKey(const ValueKey('locations-catalog-city-ru-spb'));
     await tester.ensureVisible(saintPetersburg);
-    await tester.tap(saintPetersburg);
+    await tester.tap(saintPetersburg, warnIfMissed: false);
     await tester.pump();
     failedPreferenceGate.complete();
     await tester.pumpAndSettle();
@@ -7590,7 +7832,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('home-location-chip')),
-        matching: find.text('Frankfurt'),
+        matching: find.text('Франкфурт'),
       ),
       findsOneWidget,
     );
@@ -7679,7 +7921,7 @@ void main() {
     await tester.pumpAndSettle();
     await _tapNav(tester, 'nav-locations');
 
-    expect(find.text('Amsterdam'), findsOneWidget);
+    expect(find.text('Амстердам'), findsOneWidget);
     expect(find.text('Избранное'), findsOneWidget);
     expect(find.text('Нет свежих данных'), findsOneWidget);
     expect(
@@ -8157,7 +8399,7 @@ void main() {
 
     final label = find.descendant(
       of: find.byKey(const ValueKey('connect-disc-label')),
-      matching: find.text('Включить VPN'),
+      matching: find.text('Подключить'),
     );
     final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
     await mouse.addPointer(location: tester.getCenter(label));

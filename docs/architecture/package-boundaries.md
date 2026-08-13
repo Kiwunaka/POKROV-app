@@ -31,7 +31,7 @@ Rules:
 ## Native-Core Artifact Rule
 
 - The four host shells should share one documented native-core dependency story.
-- The active contract pins POKROV Core 1.0.2 at one exact source and release commit. Android and Windows consume only the exact published artifacts built by that repository; Apple artifacts remain manual until built and proven on macOS.
+- The active contract pins POKROV Core 1.0.3 at one exact source and release commit. Android and Windows consume only the exact published artifacts built by that repository; Apple artifacts remain manual until built and proven on macOS.
 - `platform_contracts` is the only shared package that should grow the POKROV Core artifact source, version, checksum, and load-policy contract.
 - Host shells should consume that contract later instead of baking host-specific runtime provenance into `Android`, `iOS`, `macOS`, or `Windows` independently.
 
@@ -42,7 +42,7 @@ Rules:
 - `Android` owns the host-side `VpnService`: the bridge requests VPN permission, starts a foreground `PokrovRuntimeVpnService`, validates staged config through POKROV Core `Libbox`, and opens the app-owned tun device through `PlatformInterface` and `CommandServer`.
 - `iOS` owns the packet-tunnel lane through `NETunnelProviderManager`: the bridge stages one protected materialized profile in the shared app group and the provider uses POKROV Core `LibboxSetup` plus `CommandServer.startOrReloadService`; the framework build, entitlement review, Xcode archive, and signed-device proof are still operator work.
 - `macOS` stays on the desktop FFI lane and copies only `pokrov-core.dylib` under `Contents/Frameworks/Runtime`.
-- `Windows` stays on desktop ABI 2 and copies the exact POKROV Core 1.0.2 `pokrov-core.dll` plus pinned `libcronet.dll` into the release bundle, where the build helper verifies metadata, exact files, and package staging. The 1.0.2 artifacts are reproducible from the tagged source with incidental VCS stamping disabled.
+- `Windows` stays on desktop ABI 2 and copies the exact POKROV Core 1.0.3 `pokrov-core.dll` plus pinned `libcronet.dll` into the release bundle, where the build helper verifies metadata, exact files, and package staging. The 1.0.3 artifacts are reproducible from the tagged source with incidental VCS stamping disabled.
 - Host shells should still stay thin. Native code should implement only the host-specific bridge and packaging steps required by the shared runtime contract.
 
 ## Four-Platform Shape

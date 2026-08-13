@@ -25,11 +25,14 @@ class PokrovWarpLifecycle {
     required WarpRuntimePolicy policy,
     required bool consented,
     required bool busy,
+    bool runtimeActive = false,
     String lastError = '',
   }) {
     final state = policy.state.trim().toLowerCase();
     final canOffer = policy.canOfferRuntime;
-    final phase = switch (state) {
+    final phase = runtimeActive && canOffer && consented
+        ? PokrovWarpPhase.active
+        : switch (state) {
       'active' || 'running' => PokrovWarpPhase.active,
       'degraded' => PokrovWarpPhase.degraded,
       'fallback' || 'baseline_fallback' => PokrovWarpPhase.fallback,
@@ -38,7 +41,7 @@ class PokrovWarpLifecycle {
       _ when canOffer && consented => PokrovWarpPhase.consented,
       _ when canOffer => PokrovWarpPhase.readyToConsent,
       _ => PokrovWarpPhase.notReady,
-    };
+          };
     return PokrovWarpLifecycle._(
       phase: phase,
       canOffer: canOffer,

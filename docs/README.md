@@ -16,7 +16,7 @@ Use this index to load only the context required for the current client task. `P
 | --- | --- | --- | --- | --- |
 | Shell, UI, or copy | `product/client-product-contract.md`; `design/2026-06-13-pokrov-product-ui-direction.md`; root `DESIGN.md` | `packages/app_shell/`; affected `apps/*_shell/`; assets and copy tests | Focused Flutter widget/copy/design tests; `scripts/validate-seed.ps1`; `git diff --check` | Product contract, current design direction, and affected host docs |
 | App-first, account, or API | `architecture/app-first-onboarding-flow.md`; platform app-first contract | `packages/app_shell/`; API/session/support clients; secure storage | Focused bootstrap, assistant, auth, logout, migration, and corrupt-state tests | Client onboarding/assistant docs and the platform API owner when the contract changes |
-| Runtime, core, or WARP | `architecture/bootstrap-workflow.md`; `decisions/2026-08-04-pokrov-core-1.0.2-release.md`; `operations/warp-runtime-proof-checklist.md`; `config/runtime-profile.seed.json` | `packages/runtime_engine/`; host bridges; runtime artifact contract | Focused runtime/WARP tests and only the affected host checks; no docs-only release build | Bootstrap/runtime architecture, active core decision, and WARP proof checklist |
+| Runtime, core, or WARP | `architecture/bootstrap-workflow.md`; `decisions/2026-08-13-pokrov-core-1.0.3-release.md`; `operations/warp-runtime-proof-checklist.md`; `config/runtime-profile.seed.json` | `packages/runtime_engine/`; host bridges; runtime artifact contract | Focused runtime/WARP tests and only the affected host checks; no docs-only release build | Bootstrap/runtime architecture, active core decision, and WARP proof checklist |
 | Android | `operations/android-release-audit.md`; `config/platform-matrix.seed.json` | `apps/android_shell/`; Android bridge, service, manifest, Gradle tests | Focused Android Flutter/JVM tests through `scripts/run-tests.ps1`; manual device gates stay explicit | Android audit plus shared runtime/onboarding docs when behavior changes |
 | Windows | `operations/windows-release-readiness.md`; `config/windows-release.seed.json` | `apps/windows_shell/`; Windows FFI and packaging scripts | Focused Flutter/runtime tests; package smoke only for an authorized packaging task | Windows readiness, runtime docs, and release metadata owner |
 | Apple readiness | `operations/apple-release-readiness.md`; `config/apple-release.seed.json` | `apps/ios_shell/`; `apps/macos_shell/`; entitlements and runtime bridges | Analyze/tests that do not require credentials; keep signing, archive, notarization, device, and store checks manual | Apple readiness only; never broaden public scope from inventory |
@@ -47,7 +47,7 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | CANONICAL | REVIEWED_NO_CHANGE | Repository structure | `docs/architecture/folder-structure.md` |
 | CANONICAL | RECONCILED | Package boundaries | `docs/architecture/package-boundaries.md` |
 | CANONICAL | RECONCILED | Runtime bootstrap | `docs/architecture/bootstrap-workflow.md` |
-| CANONICAL | RECONCILED | Active POKROV Core 1.0.2 runtime decision | `docs/decisions/2026-08-04-pokrov-core-1.0.2-release.md` |
+| CANONICAL | RECONCILED | Active POKROV Core 1.0.3 runtime decision | `docs/decisions/2026-08-13-pokrov-core-1.0.3-release.md` |
 | CANONICAL | RECONCILED | In-app assistant | `docs/architecture/in-app-ai-assistant-contract.md` |
 | CANONICAL | RECONCILED | Current product/UI direction | `docs/design/2026-06-13-pokrov-product-ui-direction.md` |
 | EVIDENCE | RECONCILED | Completed motion/HIG implementation record | `docs/design/2026-07-13-agent-uiux-backlog.md` |
@@ -70,6 +70,7 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | EVIDENCE | REVIEWED_NO_CHANGE | Retained beta work order | `docs/developer/work-orders/2026-04-open-beta-v4/INDEX.md` |
 | EVIDENCE | REVIEWED_NO_CHANGE | Completed implementation maps | `docs/implementation/2026-06-03-client-build-readiness-and-api-plan.md`; `docs/implementation/2026-06-03-client-mvp-shell-implementation.md`; `docs/implementation/2026-06-04-decisions-implementation-map.md`; `docs/implementation/2026-06-05-p6-overload-correction-plan.md` |
 | HISTORICAL_REFERENCE | RECONCILED | Superseded POKROV Core 1.0.0 runtime decision | `docs/decisions/2026-07-23-pokrov-core-1.0.0-activation.md` |
+| HISTORICAL_REFERENCE | RECONCILED | Superseded POKROV Core 1.0.2 runtime decision | `docs/decisions/2026-08-04-pokrov-core-1.0.2-release.md` |
 | HISTORICAL_REFERENCE | RECONCILED | Superseded local design entry | `docs/design/DESIGN.md` |
 | HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Earlier scaffold spec | `docs/specs/2026-04-18-wave-7-new-base-client-scaffold.md` |
 | HISTORICAL_REFERENCE | REVIEWED_NO_CHANGE | Completed WARP design spec | `docs/specs/2026-06-05-p5-warp-approved-design.md` |

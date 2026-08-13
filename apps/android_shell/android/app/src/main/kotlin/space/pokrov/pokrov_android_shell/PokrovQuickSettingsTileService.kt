@@ -171,10 +171,10 @@ class PokrovQuickSettingsTileService : TileService() {
         val profile = AndroidRuntimeProfileStore.restoreIntoRuntimeState(this)
         val preferences = AndroidSystemSurfacePreferencesStore.load(this)
         val snapshot = authoritativeRuntimeSnapshot()
-        val country = profile?.displayCountry
+        val country = androidRuntimeCountryLabel(profile?.displayCountry
             ?.takeIf { preferences.showCountry }
             ?.trim()
-            .orEmpty()
+            .orEmpty())
         tile.icon = Icon.createWithResource(this, R.drawable.ic_pokrov_system)
         tile.label = "POKROV"
         when (resolveQuickTileVisualState(snapshot.isRunning, snapshot.connectionPending)) {

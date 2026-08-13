@@ -33,6 +33,97 @@ class PokrovWifiNetworkStatus {
 typedef PokrovWifiProbe = Future<PokrovWifiNetworkStatus> Function();
 typedef PokrovWifiPermissionRequester = Future<bool> Function();
 typedef PokrovVpnSettingsLauncher = Future<bool> Function();
+typedef PokrovNodeLatencyProbe = Future<Map<String, int>> Function(
+  HostPlatform hostPlatform,
+  List<PokrovNodeLatencyTarget> targets,
+);
+
+class PokrovNodeLatencyTarget {
+  const PokrovNodeLatencyTarget({
+    required this.code,
+    required this.host,
+    required this.port,
+  });
+
+  final String code;
+  final String host;
+  final int port;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'code': code,
+        'host': host,
+        'port': port,
+      };
+}
+
+List<PokrovNodeLatencyTarget> pokrovLocationLatencyTargets(
+  ClientLocationsCatalog catalog,
+) {
+  return <PokrovNodeLatencyTarget>[
+    for (final country in catalog.countries)
+      for (final city in country.cities)
+        if (city.code.trim().isNotEmpty &&
+            city.probeHost.trim().isNotEmpty &&
+            city.probePort > 0 &&
+            city.probePort <= 65535)
+          PokrovNodeLatencyTarget(
+            code: city.code.trim().toLowerCase(),
+            host: city.probeHost.trim(),
+            port: city.probePort,
+          ),
+  ];
+}
+
+ClientLocationsCatalog applyPokrovDeviceLatencies(
+  ClientLocationsCatalog catalog,
+  Map<String, int> measurements, {
+  DateTime? measuredAt,
+}) {
+  final normalized = <String, int>{
+    for (final entry in measurements.entries)
+      if (entry.key.trim().isNotEmpty &&
+          entry.value > 0 &&
+          entry.value <= 60000)
+        entry.key.trim().toLowerCase(): entry.value,
+  };
+  final timestamp = (measuredAt ?? DateTime.now()).toUtc().toIso8601String();
+  return ClientLocationsCatalog(
+    auto: catalog.auto,
+    countries: <ClientLocationCountry>[
+      for (final country in catalog.countries)
+        ClientLocationCountry(
+          code: country.code,
+          country: country.country,
+          cities: <ClientLocationCity>[
+            for (final city in country.cities)
+              ClientLocationCity(
+                code: city.code,
+                city: city.city,
+                healthScore: city.healthScore,
+                latencyMs: normalized[city.code.trim().toLowerCase()],
+                premium: city.premium,
+                load: city.load,
+                measuredAt:
+                    normalized.containsKey(city.code.trim().toLowerCase())
+                        ? timestamp
+                        : city.measuredAt,
+                latencySource: normalized.containsKey(
+                  city.code.trim().toLowerCase(),
+                )
+                    ? 'device'
+                    : 'unavailable',
+                probeHost: city.probeHost,
+                probePort: city.probePort,
+              ),
+          ],
+        ),
+    ],
+    freePoolCode: catalog.freePoolCode,
+    profileRevision: catalog.profileRevision,
+    transportProfile: catalog.transportProfile,
+    query: catalog.query,
+  );
+}
 
 class PokrovSystemSurfacePreferences {
   const PokrovSystemSurfacePreferences({
@@ -139,6 +230,70 @@ class PokrovShellController extends ChangeNotifier {
 
 const MethodChannel _pokrovRuntimeSystemChannel =
     MethodChannel('space.pokrov/runtime_engine');
+
+Future<Map<String, int>> measurePokrovNodeLatencies(
+  HostPlatform hostPlatform,
+  List<PokrovNodeLatencyTarget> targets,
+) async {
+  final boundedTargets = targets.take(16).toList(growable: false);
+  if (boundedTargets.isEmpty) {
+    return const <String, int>{};
+  }
+  if (hostPlatform == HostPlatform.android) {
+    try {
+      final value =
+          await _pokrovRuntimeSystemChannel.invokeMapMethod<String, Object?>(
+        'runtimeEngine.measureNodeLatencies',
+        <String, Object?>{
+          'targets': boundedTargets
+              .map((target) => target.toJson())
+              .toList(growable: false),
+        },
+      );
+      return <String, int>{
+        for (final entry in (value ?? const <String, Object?>{}).entries)
+          if (entry.value is int &&
+              (entry.value! as int) > 0 &&
+              (entry.value! as int) <= 60000)
+            entry.key.trim().toLowerCase(): entry.value! as int,
+      };
+    } on PlatformException {
+      return const <String, int>{};
+    } on MissingPluginException {
+      return const <String, int>{};
+    }
+  }
+  if (hostPlatform != HostPlatform.windows) {
+    return const <String, int>{};
+  }
+  final results = await Future.wait<MapEntry<String, int>?>(
+    boundedTargets.map((target) async {
+      Socket? socket;
+      final stopwatch = Stopwatch()..start();
+      try {
+        socket = await Socket.connect(
+          target.host,
+          target.port,
+          timeout: const Duration(milliseconds: 1500),
+        );
+        stopwatch.stop();
+        return MapEntry<String, int>(
+          target.code.trim().toLowerCase(),
+          stopwatch.elapsedMilliseconds.clamp(1, 60000),
+        );
+      } on Object {
+        return null;
+      } finally {
+        stopwatch.stop();
+        socket?.destroy();
+      }
+    }),
+  );
+  return <String, int>{
+    for (final entry in results.whereType<MapEntry<String, int>>())
+      entry.key: entry.value,
+  };
+}
 
 Future<PokrovWifiNetworkStatus> probePokrovCurrentWifi(
   HostPlatform hostPlatform,

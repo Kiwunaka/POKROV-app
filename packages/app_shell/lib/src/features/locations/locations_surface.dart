@@ -156,6 +156,7 @@ class _LocationsSectionState extends State<_LocationsSection> {
     final hasCatalog = catalogEntries.isNotEmpty;
     final hasShortlist = widget.hasProvisionedAccess && shortlist.isNotEmpty;
     final hasList = hasCatalog || hasShortlist;
+    final showRefreshSpinner = widget.locationsCatalogBusy && hasList;
     final filteredCatalog = hasCatalog
         ? catalogEntries.where(_matchesCatalog).toList(growable: false)
         : const <_ClientLocationEntry>[];
@@ -191,7 +192,63 @@ class _LocationsSectionState extends State<_LocationsSection> {
 
     return _SeedContentList(
       children: [
-        Text('Локации', style: theme.textTheme.headlineSmall),
+        Row(
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      'Локации',
+                      style: theme.textTheme.headlineSmall,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  IconButton(
+                    key: const ValueKey('locations-metrics-help'),
+                    tooltip: 'Как считаются замеры',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => _showInfoSheet(
+                      context,
+                      title: 'Ping и нагрузка',
+                      lines: const [
+                        'Ping измеряется с этого устройства до каждой локации. Это не ping выбранного сервера.',
+                        'Процент рядом — текущая нагрузка сервера. «Обновить» проверяет список заново.',
+                        'Эмулятор может показывать нереально низкий ping. Для решения о локации ориентируйтесь на замер телефона.',
+                      ],
+                    ),
+                    icon: const Icon(Icons.info_outline_rounded, size: 20),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Tooltip(
+              message:
+                  'Измерить ping с этого устройства и обновить нагрузку серверов',
+              child: OutlinedButton.icon(
+                key: const ValueKey('locations-refresh-measurements'),
+                onPressed: widget.locationsCatalogBusy
+                    ? null
+                    : widget.onRefreshLocationsCatalog,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+                icon: showRefreshSpinner
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CupertinoActivityIndicator(radius: 9),
+                      )
+                    : const Icon(Icons.refresh_rounded, size: 20),
+                label: Text(
+                  widget.locationsCatalogBusy ? 'Обновляем' : 'Обновить',
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 14),
         if (hasList && locationCount > 4) ...[
           _LocationSearchField(
@@ -211,9 +268,8 @@ class _LocationsSectionState extends State<_LocationsSection> {
           title: 'Автоматически',
           subtitle: switch (autoStatus) {
             _AutoLocationStatus.active =>
-              'POKROV выберет быстрый маршрут · ${_routeModeShortLabel(widget.selectedRouteMode)}',
-            _AutoLocationStatus.manual =>
-              'Выбрана локация вручную. Нажмите, чтобы вернуть автоматический выбор.',
+              'Быстрый маршрут · ${_routeModeShortLabel(widget.selectedRouteMode)}',
+            _AutoLocationStatus.manual => 'Нажмите, чтобы вернуть авто',
             _AutoLocationStatus.unavailable => 'Сначала включите POKROV VPN',
           },
           value: switch (autoStatus) {
@@ -572,12 +628,17 @@ class _ClientLocationCityRow extends StatelessWidget {
     final metrics = _locationMetricsLabel(
       city,
       now: now,
-      freshness: freshness,
+      compact: true,
     );
-    final subtitle = <String>[
+    final countryTitle = _locationCountryDisplayName(
+      country.code,
       country.country,
+    );
+    final cityTitle = _locationCityDisplayName(city, country);
+    final subtitle = <String>[
+      countryTitle,
       if (quality != null) quality,
-      city.premium ? 'Премиум' : 'Базовый',
+      if (!city.premium) 'Базовый',
     ].where((item) => item.trim().isNotEmpty).join(' · ');
     final content = Padding(
       key: ValueKey('locations-catalog-city-${city.code}'),
@@ -594,7 +655,7 @@ class _ClientLocationCityRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      city.city.trim().isEmpty ? country.country : city.city,
+                      cityTitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -638,15 +699,7 @@ class _ClientLocationCityRow extends StatelessWidget {
                   size: 22,
                 ),
               ),
-              if (!compact) ...[
-                _SignalBars(
-                  key: ValueKey('locations-signal-${city.code}'),
-                  score: city.healthScore,
-                  verified: freshness == _LocationMetricFreshness.current,
-                ),
-                const SizedBox(width: 14),
-              ] else
-                const SizedBox(width: 4),
+              SizedBox(width: compact ? 4 : 8),
               if (selectionEnabled)
                 AnimatedContainer(
                   duration:
@@ -704,8 +757,7 @@ class _ClientLocationCityRow extends StatelessWidget {
     } else {
       row = PokrovSettingsRowPressSurface(onTap: onTap, child: content);
     }
-    final locationTitle =
-        city.city.trim().isEmpty ? country.country : city.city;
+    final locationTitle = cityTitle;
     return Semantics(
       key: ValueKey('locations-semantics-${city.code}'),
       container: true,
@@ -754,7 +806,10 @@ class _SmartConnectNodeRow extends StatelessWidget {
           final compact = constraints.maxWidth < 330;
           return Row(
             children: [
-              _LocationFlagBadge(code: node.country, country: node.country),
+              _LocationFlagBadge(
+                code: _locationCountryCodeFromNode(node.code, node.country),
+                country: node.country,
+              ),
               SizedBox(width: compact ? 10 : 14),
               Expanded(
                 child: Column(
@@ -806,14 +861,7 @@ class _SmartConnectNodeRow extends StatelessWidget {
                   size: 22,
                 ),
               ),
-              if (!compact) ...[
-                _SignalBars(
-                  key: ValueKey('locations-signal-${node.code}'),
-                  score: node.rankHint.healthScore,
-                ),
-                const SizedBox(width: 14),
-              ] else
-                const SizedBox(width: 4),
+              SizedBox(width: compact ? 4 : 8),
               if (selectionEnabled)
                 AnimatedContainer(
                   duration:

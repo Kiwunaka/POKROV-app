@@ -53,7 +53,8 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - default runtime core: `sing-box`
 - `xray` role: advanced compatibility fallback only
 - free trial: `5 days`
-- Telegram reward: `+5 days` for new account-owned grants; already-issued
+- paid Telegram reward: `+5 days` for new account-owned grants after the first
+  payment; trial receives no rewards. Already-issued
   `+10 days` grants remain grandfathered and must render with their
   backend-returned value
 - public user-facing version line: current paid beta evidence uses `1.0.0-beta`; patch/build labels such as `1.0.0-beta.3` are still beta labels, not stable `1.0.0` claims
@@ -115,6 +116,12 @@ Daily shell state language is shared across Home and support diagnostics:
 `Подключаемся…`, `Подключено`, `Отключаем…`, and `Не защищено`. A disconnect
 must never be described as a connection attempt. First-layer refresh copy says
 that settings were updated without exposing the API hostname.
+
+Home uses the owner-selected `2026-08-13` composition: a compact brand/access
+top row, one centered circular connect action with a thin non-glowing border,
+in-control status and a finite hourglass busy state, then two quick controls,
+WARP and an optional remote campaign above navigation. The premium-day pill
+opens checkout. Telegram reward does not occupy Home's first layer.
 
 Nested under `Profile`:
 
@@ -256,15 +263,20 @@ After activation:
   state, and copy/share actions from `GET /api/bonuses/referral/summary`
 - bonus history must stay compact and app-safe: no raw subscription links,
   full promo codes, tokens, hostnames, or backend event metadata
-- Rewards Hub may show enabled first-party promo slots from
-  `GET /api/client/promo-slots?surface=app`; disabled, third-party, or unsafe
-  links must stay hidden or inactive
-- wheel, roulette, activity calendar, achievements, and rich loyalty UI may be
-  shown only as safe Rewards Hub previews while backend reward state is
-  disabled
-- wheel spin and calendar check-in buttons must remain disabled until reward
-  logic, feature flags, rollout evidence, and copy are approved and backend
-  state marks the mechanics enabled
+- trial receives no reward mutation and must see explicit after-payment copy,
+  not a generic connection error
+- new Telegram `+5 days` requires current canonical paid eligibility;
+  grandfathered historical claims remain readable
+- referral grants `+10 days` only to the referrer after the friend's first
+  successful payment and hold; install, trial and connection grant nothing
+- Rewards Hub may show enabled operator-authored promo slots from
+  `GET /api/client/promo-slots?surface=app`; unsafe schemes stay inactive and
+  third-party ad SDKs remain forbidden
+- the paid roulette is visible from backend state, runs at most once per `336`
+  hours and may execute only when `eligible && can_spin`; calendar remains an
+  independent backend-controlled feature
+- achievements use real icons and restrained unlock motion; reduced-motion
+  users receive the final state without the animation
 
 ## Support Direction
 
@@ -381,7 +393,8 @@ shares an Apple Account or a reusable raw subscription secret for pairing.
 The rewards surface may show backend-confirmed referral conversion/history,
 achievements, and useful quests. Product quests do not grant money or days
 automatically. Wheel discounts are server-owned, one-use, non-stackable, and
-the maximum jackpot remains 30 days.
+the maximum day result remains 30 days. The approved wheel preset is
+fortnightly and deliberately conservative.
 
 ## Download And Release Continuity
 

@@ -15,7 +15,7 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 /// package base version (without Android's build number).
 const pokrovClientVersion = String.fromEnvironment(
   'POKROV_APP_VERSION',
-  defaultValue: '1.0.2',
+  defaultValue: '1.0.3',
 );
 
 const _platformErrorCodeHeader = 'X-POKROV-Auth-Error';
@@ -675,6 +675,9 @@ class ClientLocationCity {
     required this.premium,
     required this.load,
     this.measuredAt = '',
+    this.latencySource = '',
+    this.probeHost = '',
+    this.probePort = 0,
   });
 
   final String code;
@@ -684,8 +687,12 @@ class ClientLocationCity {
   final bool premium;
   final double? load;
   final String measuredAt;
+  final String latencySource;
+  final String probeHost;
+  final int probePort;
 
   factory ClientLocationCity.fromJson(Map<String, dynamic> json) {
+    final probe = _clientMap(json['probe']);
     return ClientLocationCity(
       code: _clientText(json['code']),
       city: _clientText(json['city']),
@@ -696,6 +703,11 @@ class ClientLocationCity {
       premium: _clientBool(json['premium']),
       load: _clientNullableDouble(json['load']),
       measuredAt: _clientText(json['measuredAt'] ?? json['measured_at']),
+      latencySource: _clientText(
+        json['latencySource'] ?? json['latency_source'],
+      ),
+      probeHost: _clientText(probe['host']),
+      probePort: _clientInt(probe['port']),
     );
   }
 
@@ -707,6 +719,12 @@ class ClientLocationCity {
         'premium': premium,
         if (load != null) 'load': load,
         if (measuredAt.isNotEmpty) 'measuredAt': measuredAt,
+        if (latencySource.isNotEmpty) 'latencySource': latencySource,
+        if (probeHost.isNotEmpty && probePort > 0)
+          'probe': <String, Object?>{
+            'host': probeHost,
+            'port': probePort,
+          },
       };
 }
 
@@ -719,6 +737,10 @@ class ClientSubscriptionInfo {
     required this.renewUrl,
     required this.plans,
     required this.trafficPolicy,
+    this.trafficUsedBytes = 0,
+    this.activeConnections = 0,
+    this.lastOnlineAt = '',
+    this.usageSource = '',
   });
 
   final String lane;
@@ -728,8 +750,13 @@ class ClientSubscriptionInfo {
   final Uri? renewUrl;
   final List<ClientSubscriptionPlan> plans;
   final Map<String, Object?> trafficPolicy;
+  final int trafficUsedBytes;
+  final int activeConnections;
+  final String lastOnlineAt;
+  final String usageSource;
 
   factory ClientSubscriptionInfo.fromJson(Map<String, dynamic> json) {
+    final usage = _clientObjectMap(json['usage']);
     return ClientSubscriptionInfo(
       lane: _clientText(json['lane']),
       expiresAt: _clientText(json['expiresAt'] ?? json['expires_at']),
@@ -742,6 +769,16 @@ class ClientSubscriptionInfo {
       trafficPolicy: _clientObjectMap(
         json['trafficPolicy'] ?? json['traffic_policy'],
       ),
+      trafficUsedBytes: _clientInt(
+        usage['trafficUsedBytes'] ?? usage['traffic_used_bytes'],
+      ),
+      activeConnections: _clientInt(
+        usage['activeConnections'] ?? usage['active_connections'],
+      ),
+      lastOnlineAt: _clientText(
+        usage['lastOnlineAt'] ?? usage['last_online_at'],
+      ),
+      usageSource: _clientText(usage['source']),
     );
   }
 }
@@ -1120,7 +1157,9 @@ class WarpControlStatus {
       enabled: nextEnabled,
       runtimeReady: nextRuntimeReady,
       state: nextState,
-      mode: mode.isEmpty ? localPolicy.mode : mode,
+      mode: keepLocalRuntime
+          ? localPolicy.mode
+          : (mode.isEmpty ? localPolicy.mode : mode),
       source: nextSource,
       userConsented: consented && nextEnabled && nextRuntimeReady,
       id: localPolicy.id,
@@ -1369,6 +1408,7 @@ class AppFirstBonusSummary {
     required this.paidReferrals,
     required this.nextTierKey,
     required this.nextTierAt,
+    this.rewardAccess = AppFirstRewardAccess.unknown,
     this.wheelState = AppFirstBonusFeatureState.wheelDisabled,
     this.calendarState = AppFirstBonusFeatureState.calendarDisabled,
     this.referralSummary = AppFirstReferralSummary.empty,
@@ -1393,6 +1433,7 @@ class AppFirstBonusSummary {
   final int paidReferrals;
   final String nextTierKey;
   final int? nextTierAt;
+  final AppFirstRewardAccess rewardAccess;
   final AppFirstBonusFeatureState wheelState;
   final AppFirstBonusFeatureState calendarState;
   final AppFirstReferralSummary referralSummary;
@@ -1402,6 +1443,39 @@ class AppFirstBonusSummary {
   final List<AppFirstQuestItem> questItems;
 
   bool get channelBonusClaimed => channelBonusClaimedAt.trim().isNotEmpty;
+}
+
+String _clientShortDateTime(String value) {
+  final parsed = DateTime.tryParse(value.trim())?.toLocal();
+  if (parsed == null) {
+    return value.trim();
+  }
+  String two(int part) => part.toString().padLeft(2, '0');
+  return '${two(parsed.day)}.${two(parsed.month)} в '
+      '${two(parsed.hour)}:${two(parsed.minute)}';
+}
+
+class AppFirstRewardAccess {
+  const AppFirstRewardAccess({
+    required this.eligible,
+    required this.state,
+    required this.reason,
+    required this.message,
+  });
+
+  static const unknown = AppFirstRewardAccess(
+    eligible: false,
+    state: 'unknown',
+    reason: '',
+    message: '',
+  );
+
+  final bool eligible;
+  final String state;
+  final String reason;
+  final String message;
+
+  bool get paidRequired => !eligible && state == 'paid_required';
 }
 
 abstract interface class AppFirstQuestEventService {
@@ -1582,6 +1656,11 @@ class AppFirstBonusFeatureState {
     required this.actionEndpoint,
     required this.lastActionAt,
     required this.streakMonths,
+    this.eligible = true,
+    this.actionAllowed = true,
+    this.reason = '',
+    this.nextActionAt = '',
+    this.cooldownHours = 0,
   });
 
   static const wheelDisabled = AppFirstBonusFeatureState(
@@ -1593,6 +1672,9 @@ class AppFirstBonusFeatureState {
     actionEndpoint: '/api/bonuses/wheel/spin',
     lastActionAt: '',
     streakMonths: 0,
+    eligible: false,
+    actionAllowed: false,
+    reason: 'bonus_feature_disabled',
   );
 
   static const calendarDisabled = AppFirstBonusFeatureState(
@@ -1604,6 +1686,9 @@ class AppFirstBonusFeatureState {
     actionEndpoint: '/api/bonuses/calendar/checkin',
     lastActionAt: '',
     streakMonths: 0,
+    eligible: false,
+    actionAllowed: false,
+    reason: 'bonus_feature_disabled',
   );
 
   final bool ok;
@@ -1614,13 +1699,26 @@ class AppFirstBonusFeatureState {
   final String actionEndpoint;
   final String lastActionAt;
   final int streakMonths;
+  final bool eligible;
+  final bool actionAllowed;
+  final String reason;
+  final String nextActionAt;
+  final int cooldownHours;
 
-  bool get canRun =>
+  bool get isVisible =>
       ok && enabled && featureFlagEnabled && actionEndpoint.trim().isNotEmpty;
+
+  bool get canRun => isVisible && eligible && actionAllowed;
 
   String get statusLabel {
     if (canRun) {
       return 'Готово';
+    }
+    if (!eligible && reason == 'active_paid_required') {
+      return 'После оплаты';
+    }
+    if (isVisible && state == 'cooldown') {
+      return 'Уже получено';
     }
     if (featureFlagEnabled) {
       return 'На проверке';
@@ -1631,6 +1729,14 @@ class AppFirstBonusFeatureState {
   String get availabilityText {
     if (canRun) {
       return 'Можно использовать';
+    }
+    if (!eligible && reason == 'active_paid_required') {
+      return 'В пробном периоде бонусов нет';
+    }
+    if (isVisible && state == 'cooldown') {
+      return nextActionAt.trim().isEmpty
+          ? 'Следующая попытка откроется позже'
+          : 'Следующая попытка: ${_clientShortDateTime(nextActionAt)}';
     }
     if (featureFlagEnabled) {
       return 'Пока недоступно';
@@ -1669,7 +1775,9 @@ class AppFirstPromoSlots {
       .where(
         (slot) =>
             slot.enabled &&
-            (slot.title.trim().isNotEmpty || slot.body.trim().isNotEmpty),
+            (slot.title.trim().isNotEmpty ||
+                slot.body.trim().isNotEmpty ||
+                slot.imageUrl.trim().isNotEmpty),
       )
       .toList(growable: false);
 
@@ -1687,11 +1795,19 @@ class AppFirstPromoSlot {
     required this.enabled,
     required this.title,
     required this.body,
+    this.badgeLabel = '',
     this.imageUrl = '',
+    this.imageLayout = 'logo',
     required this.ctaLabel,
     required this.ctaHref,
+    this.accentColor = '',
+    this.backgroundColor = '',
+    this.textColor = '',
+    this.buttonColor = '',
+    this.buttonTextColor = '',
     this.placement = '',
     this.dismissible = true,
+    this.wholeCardClickable = true,
     this.startsAt = '',
     this.endsAt = '',
     required this.kind,
@@ -1703,11 +1819,19 @@ class AppFirstPromoSlot {
   final bool enabled;
   final String title;
   final String body;
+  final String badgeLabel;
   final String imageUrl;
+  final String imageLayout;
   final String ctaLabel;
   final String ctaHref;
+  final String accentColor;
+  final String backgroundColor;
+  final String textColor;
+  final String buttonColor;
+  final String buttonTextColor;
   final String placement;
   final bool dismissible;
+  final bool wholeCardClickable;
   final String startsAt;
   final String endsAt;
   final String kind;
@@ -1934,6 +2058,7 @@ class AppFirstRuntimeBootstrapper
     Future<void> Function(Duration delay)? delayScheduler,
     this.connectionTimeout = const Duration(seconds: 8),
     this.requestTimeout = const Duration(seconds: 15),
+    this.supportAssistantRequestTimeout = const Duration(seconds: 65),
     this.smartConnectProbeTimeout = const Duration(milliseconds: 900),
     this.smartConnectTelemetryDeadline = const Duration(seconds: 3),
     this.smartConnectProbeConcurrency = 3,
@@ -1959,6 +2084,7 @@ class AppFirstRuntimeBootstrapper
   final Future<void> Function(Duration delay) _delayScheduler;
   final Duration connectionTimeout;
   final Duration requestTimeout;
+  final Duration supportAssistantRequestTimeout;
   final Duration smartConnectProbeTimeout;
   final Duration smartConnectTelemetryDeadline;
   final int smartConnectProbeConcurrency;
@@ -2724,6 +2850,7 @@ class AppFirstRuntimeBootstrapper
       hostPlatform: hostPlatform,
       method: 'POST',
       path: '/api/client/support/assistant',
+      requestTimeoutOverride: supportAssistantRequestTimeout,
       body: <String, Object?>{
         'message': text,
         'scope': 'support',
@@ -2740,6 +2867,7 @@ class AppFirstRuntimeBootstrapper
     required String method,
     required String path,
     Map<String, Object?>? body,
+    Duration? requestTimeoutOverride,
   }) async {
     var state = await _loadOrCreateState(hostPlatform);
     final client = _createHttpClient(hostPlatform);
@@ -2761,6 +2889,7 @@ class AppFirstRuntimeBootstrapper
             bearerToken: state.sessionToken,
             hostPlatform: hostPlatform,
             body: body,
+            requestTimeoutOverride: requestTimeoutOverride,
           );
         } on BootstrapFailure catch (error) {
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
@@ -3182,6 +3311,7 @@ class AppFirstRuntimeBootstrapper
           final wheel = _readMap(response['wheel']);
           final calendar = _readMap(response['calendar']);
           final achievements = _readMap(response['achievements']);
+          final rewardAccess = _readMap(response['reward_access']);
           final referralCount = _readInt(response['referral_count']);
           final referralCode = _readText(response['referral_code']);
           final referralBonusDays = _readInt(response['referral_bonus_days']);
@@ -3228,16 +3358,25 @@ class AppFirstRuntimeBootstrapper
             paidReferrals: _readInt(tier['paid_referrals']),
             nextTierKey: _readText(tier['next_tier_key']),
             nextTierAt: _readNullableInt(tier['next_tier_at']),
+            rewardAccess: AppFirstRewardAccess(
+              eligible: rewardAccess['eligible'] == true,
+              state: _readText(rewardAccess['state']),
+              reason: _readText(rewardAccess['reason']),
+              message: _readText(rewardAccess['message']),
+            ),
             wheelState: _readBonusFeatureState(
               wheel,
               fallback: AppFirstBonusFeatureState.wheelDisabled,
               actionEndpointKey: 'spin_endpoint',
+              actionAllowedKey: 'can_spin',
+              nextActionAtKey: 'next_spin_at',
               lastActionAtKeys: const <String>['last_spin_at'],
             ),
             calendarState: _readBonusFeatureState(
               calendar,
               fallback: AppFirstBonusFeatureState.calendarDisabled,
               actionEndpointKey: 'checkin_endpoint',
+              actionAllowedKey: 'can_checkin',
               lastActionAtKeys: const <String>[
                 'last_checkin_at',
                 'last_wheel_spin',
@@ -3417,11 +3556,21 @@ class AppFirstRuntimeBootstrapper
                 enabled: slot['enabled'] != false,
                 title: _readText(slot['title']),
                 body: _readText(slot['body']),
+                badgeLabel: _readText(slot['badge_label']),
                 imageUrl: _readText(slot['image_url']),
+                imageLayout: _readText(slot['image_layout']).isEmpty
+                    ? 'logo'
+                    : _readText(slot['image_layout']),
                 ctaLabel: _readText(slot['cta_label']),
                 ctaHref: _readText(slot['cta_href']),
+                accentColor: _readText(slot['accent_color']),
+                backgroundColor: _readText(slot['background_color']),
+                textColor: _readText(slot['text_color']),
+                buttonColor: _readText(slot['button_color']),
+                buttonTextColor: _readText(slot['button_text_color']),
                 placement: _readText(slot['placement']),
                 dismissible: slot['dismissible'] != false,
+                wholeCardClickable: slot['whole_card_clickable'] != false,
                 startsAt: _readText(slot['starts_at']),
                 endsAt: _readText(slot['ends_at']),
                 kind: _readText(slot['kind']),
@@ -3534,6 +3683,8 @@ class AppFirstRuntimeBootstrapper
     Map<String, dynamic> data, {
     required AppFirstBonusFeatureState fallback,
     required String actionEndpointKey,
+    required String actionAllowedKey,
+    String nextActionAtKey = '',
     required List<String> lastActionAtKeys,
   }) {
     if (data.isEmpty) {
@@ -3561,6 +3712,16 @@ class AppFirstRuntimeBootstrapper
           : _readText(data[actionEndpointKey]),
       lastActionAt: lastActionAt,
       streakMonths: _readInt(data['streak_months']),
+      eligible: data.containsKey('eligible')
+          ? data['eligible'] == true
+          : fallback.eligible,
+      actionAllowed: data.containsKey(actionAllowedKey)
+          ? data[actionAllowedKey] == true
+          : fallback.actionAllowed,
+      reason: _readText(data['reason']),
+      nextActionAt:
+          nextActionAtKey.isEmpty ? '' : _readText(data[nextActionAtKey]),
+      cooldownHours: _readInt(data['cooldown_hours']),
     );
   }
 
@@ -4362,11 +4523,13 @@ class AppFirstRuntimeBootstrapper
       throw const BootstrapFailure('Выбранная локация недоступна.');
     }
     final selector = finalOutbounds.single;
-    final selectedTag = _readText(matchingProxyOutbounds.single['tag']);
+    final baseSelectedTag = _readText(matchingProxyOutbounds.single['tag']);
     final selectorTargets = _readTagList(selector['outbounds']);
-    if (!selectorTargets.contains(selectedTag)) {
-      throw const BootstrapFailure('Выбранная локация недоступна.');
-    }
+    // An automatic selector may omit the ordinary outbound while retaining
+    // bridge/whitelist variants for the same country. A manual location
+    // choice is authoritative: promote the exact base proxy verified above
+    // instead of silently switching the user to a different route variant.
+    final selectedTag = baseSelectedTag;
     selector['outbounds'] = <String>[
       selectedTag,
       ...selectorTargets.where((tag) => tag != selectedTag),
@@ -6662,6 +6825,7 @@ class AppFirstRuntimeBootstrapper
     required HttpClient client,
     String bearerToken = '',
     Map<String, Object?>? body,
+    Duration? requestTimeoutOverride,
   }) async {
     BootstrapFailure? lastFailure;
     final requestUri = Uri.parse(apiBaseUrl).resolve(path);
@@ -6693,10 +6857,13 @@ class AppFirstRuntimeBootstrapper
           request.write(jsonEncode(body));
         }
 
-        final response = await request.close().timeout(requestTimeout);
+        final effectiveRequestTimeout =
+            requestTimeoutOverride ?? requestTimeout;
+        final response = await request.close().timeout(effectiveRequestTimeout);
         final bytes = await _readBoundedResponseBytes(
           response,
           maxBytes: _maxJsonResponseBytes,
+          timeout: effectiveRequestTimeout,
         );
         final text = utf8.decode(bytes, allowMalformed: true);
         if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -6785,6 +6952,7 @@ class AppFirstRuntimeBootstrapper
   Future<List<int>> _readBoundedResponseBytes(
     HttpClientResponse response, {
     required int maxBytes,
+    Duration? timeout,
   }) async {
     final contentLength = response.contentLength;
     if (contentLength > maxBytes) {
@@ -6795,7 +6963,7 @@ class AppFirstRuntimeBootstrapper
 
     final iterator = StreamIterator<List<int>>(response);
     final bytes = <int>[];
-    final deadline = DateTime.now().add(requestTimeout);
+    final deadline = DateTime.now().add(timeout ?? requestTimeout);
     try {
       while (true) {
         final remaining = deadline.difference(DateTime.now());

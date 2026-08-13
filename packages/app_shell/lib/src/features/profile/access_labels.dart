@@ -32,7 +32,8 @@ String _accessMainLabel(
         : '${ruDays(liveDays > 0 ? liveDays : baseDays)} пробного доступа',
     AccessLane.bonusPremium =>
       '${ruDays(liveDays > 0 ? liveDays : totalDays)} доступа',
-    AccessLane.paidUnlimited => 'Премиум активен',
+    AccessLane.paidUnlimited =>
+      liveDays > 0 ? '${ruDays(liveDays)} доступа' : 'Премиум активен',
     AccessLane.freeMonthly => 'Базовый режим',
     AccessLane.freeSoftMode => 'Лимит закончился',
   };

@@ -552,6 +552,7 @@ class WarpRuntimePolicy {
     enabled: true,
     runtimeReady: true,
     state: 'ready_to_consent',
+    mode: 'warp_over_proxy',
     source: 'client_local',
     id: 'p1',
     cleanIp: 'auto',
@@ -607,6 +608,7 @@ class WarpRuntimePolicy {
       enabled: true,
       runtimeReady: true,
       state: nextState,
+      mode: hasServerManagedMaterial ? mode : fallback.mode,
       source: hasServerManagedMaterial ? source : fallback.source,
       id: id.trim().isNotEmpty ? id : fallback.id,
       cleanIp: cleanIp.trim().isNotEmpty ? cleanIp : fallback.cleanIp,
@@ -1060,7 +1062,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   DateTime? _runningSince;
   RuntimePhase _phase = RuntimePhase.artifactMissing;
   String _message = _missingArtifactMessage;
-  static const defaultCoreTag = 'v1.0.2';
+  static const defaultCoreTag = 'v1.0.3';
   static const _missingArtifactMessage =
       'Модуль подключения не найден в этой сборке. Обновите приложение или проверьте сборку.';
 
@@ -1589,8 +1591,20 @@ String _materializePokrovCoreConfig(
   final config = decoded.map<String, Object?>(
     (key, value) => MapEntry(key.toString(), value),
   );
+  // Older managed manifests carried POKROV display metadata in a private
+  // top-level field. POKROV Core deliberately rejects unknown sing-box fields,
+  // so never forward that transport-only metadata into the runtime config.
+  config.remove('_meta');
   _pinDnsHijackBeforeBypasses(config);
   if (!policy.canEnableRuntime) {
+    final experimental =
+        Map<String, Object?>.from(_runtimeObjectMap(config['experimental']));
+    experimental.remove('cache_file');
+    if (experimental.isEmpty) {
+      config.remove('experimental');
+    } else {
+      config['experimental'] = experimental;
+    }
     return const JsonEncoder.withIndent('  ').convert(config);
   }
 
@@ -1604,7 +1618,8 @@ String _materializePokrovCoreConfig(
 
   final directTag = _firstOutboundTagByType(outbounds, const {'direct'});
   final proxyTag = _primaryProxyTag(outbounds, route);
-  final warpOverProxy = policy.mode == 'warp_over_proxy';
+  final warpOverProxy =
+      policy.mode == 'warp_over_proxy' || policy.isClientLocal;
   if (warpOverProxy && proxyTag == null) {
     throw const FormatException('WARP-over-proxy requires a proxy outbound');
   }
@@ -1700,9 +1715,7 @@ String _materializePokrovCoreConfig(
   cacheFile
     ..['enabled'] = true
     ..['store_warp_config'] = true;
-  if (_runtimeText(cacheFile['path']).isEmpty) {
-    cacheFile['path'] = 'data/clash.db';
-  }
+  cacheFile['path'] = 'pokrov-cache.db';
   experimental['cache_file'] = cacheFile;
   config['experimental'] = experimental;
 
@@ -1813,7 +1826,9 @@ void _replaceOutboundReference(
 ) {
   if (value is Map) {
     for (final key in value.keys.toList(growable: false)) {
-      if (key.toString() == 'outbound' && value[key] == from) {
+      final referenceKey = key.toString();
+      if ((referenceKey == 'outbound' || referenceKey == 'final') &&
+          value[key] == from) {
         value[key] = to;
       } else {
         _replaceOutboundReference(value[key], from, to);

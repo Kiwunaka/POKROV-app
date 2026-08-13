@@ -56,15 +56,21 @@ void main() {
     expect(attachment.safeDiagnostics.containsKey('host'), isFalse);
 
     final redacted = PokrovAssistantRedactor.redactText(
-      'vless://secret token=abc wireguard server=10.0.0.1 обычный текст',
+      'vless://secret token=abc WARP WireGuard server=10.0.0.1 обычный текст',
     );
 
     expect(redacted, contains('[redacted]'));
     expect(redacted, isNot(contains('vless://')));
     expect(redacted, isNot(contains('token=abc')));
-    expect(redacted, isNot(contains('wireguard')));
+    expect(redacted, contains('WARP WireGuard'));
     expect(redacted, isNot(contains('server=10.0.0.1')));
     expect(redacted, contains('обычный текст'));
+  });
+
+  test('assistant keeps public WARP terminology in user questions', () {
+    const question = 'Почему WARP и WireGuard не работают на телефоне?';
+
+    expect(PokrovAssistantRedactor.redactText(question), question);
   });
 
   test('assistant diagnostics allow safe enhanced protection state only', () {
@@ -87,7 +93,7 @@ void main() {
     expect(attachment.safeDiagnostics['enhanced_protection_available'], isTrue);
     expect(
       attachment.safeDiagnostics['enhanced_protection_error'],
-      '[redacted] failed',
+      'wireguard [redacted] failed',
     );
     expect(attachment.safeDiagnostics.containsKey('warp_private_key'), isFalse);
   });

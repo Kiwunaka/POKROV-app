@@ -3142,11 +3142,19 @@ void main() {
                       'enabled': true,
                       'title': 'Telegram +5 days',
                       'body': 'Connect Telegram and claim the reward.',
+                      'badge_label': 'Offer',
                       'image_url': 'https://cdn.example.com/promo.png',
+                      'image_layout': 'banner',
                       'cta_label': 'Open',
                       'cta_href': 'https://t.me/pokrov_vpnbot',
+                      'accent_color': '#0B6B53',
+                      'background_color': '#F4FAF7',
+                      'text_color': '#10221C',
+                      'button_color': '#0B6B53',
+                      'button_text_color': '#FFFFFF',
                       'placement': 'home_banner',
                       'dismissible': false,
+                      'whole_card_clickable': true,
                       'starts_at': '2026-06-01T00:00:00Z',
                       'ends_at': '2026-06-30T00:00:00Z',
                       'kind': 'bonus',
@@ -3220,8 +3228,13 @@ void main() {
     expect(summary.promoSlots.visibleSlots.single.title, 'Telegram +5 days');
     expect(summary.promoSlots.visibleSlots.single.imageUrl,
         'https://cdn.example.com/promo.png');
+    expect(summary.promoSlots.visibleSlots.single.badgeLabel, 'Offer');
+    expect(summary.promoSlots.visibleSlots.single.imageLayout, 'banner');
+    expect(summary.promoSlots.visibleSlots.single.accentColor, '#0B6B53');
+    expect(summary.promoSlots.visibleSlots.single.buttonTextColor, '#FFFFFF');
     expect(summary.promoSlots.visibleSlots.single.placement, 'home_banner');
     expect(summary.promoSlots.visibleSlots.single.dismissible, isFalse);
+    expect(summary.promoSlots.visibleSlots.single.wholeCardClickable, isTrue);
     expect(summary.promoSlots.visibleForPlacement('home_banner'), hasLength(1));
     expect(
       summary.promoSlots.visibleSlots.single.ctaHref,
@@ -4426,6 +4439,7 @@ void main() {
     Map<String, Object?> managedResponse({
       required bool duplicateRuProxy,
       required bool ambiguousFinalSelector,
+      required bool preferredRouteVariant,
     }) =>
         <String, Object?>{
           'provisioning': <String, Object?>{'status': 'ready', 'sync_ok': true},
@@ -4475,7 +4489,10 @@ void main() {
                 'tag': 'proxy',
                 'outbounds': <String>[
                   'de-ber',
-                  '🇷🇺 Россия Spb',
+                  if (preferredRouteVariant)
+                    '🇷🇺 Россия Spb · Белые списки'
+                  else
+                    '🇷🇺 Россия Spb',
                   'bridge-ru-spb',
                 ],
                 'default': 'de-ber',
@@ -4498,6 +4515,14 @@ void main() {
                 'server': 'ru-spb.example.test',
                 'server_port': 443,
               },
+              if (preferredRouteVariant)
+                <String, Object?>{
+                  'type': 'vless',
+                  'tag': '🇷🇺 Россия Spb · Белые списки',
+                  'server': 'ru-spb.example.test',
+                  'server_port': 443,
+                  'detour': 'bridge-ru-spb',
+                },
               <String, Object?>{
                 'type': 'vless',
                 'tag': 'bridge-ru-spb',
@@ -4560,6 +4585,7 @@ void main() {
                 managedResponse(
                   duplicateRuProxy: code == 'ru-duplicate',
                   ambiguousFinalSelector: code == 'selector-ambiguous',
+                  preferredRouteVariant: code == 'ru-spb',
                 ),
               ),
             );
@@ -4636,7 +4662,10 @@ void main() {
           (outbound) => outbound['tag'] == 'proxy',
         );
     expect(preferredSelector['default'], '🇷🇺 Россия Spb');
-    expect((preferredSelector['outbounds'] as List).first, '🇷🇺 Россия Spb');
+    expect(
+      (preferredSelector['outbounds'] as List).first,
+      '🇷🇺 Россия Spb',
+    );
 
     await expectLater(
       () => bootstrapper.resolveManagedProfile(
@@ -7164,6 +7193,83 @@ void main() {
       assistantBodies.map((body) => body['safeDiagnostics']),
       everyElement(isA<Map<String, dynamic>>()),
     );
+  });
+
+  test('client support assistant gets one longer request window', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-client-assistant-timeout-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    var assistantRequestCount = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'assistant-timeout-session',
+                    'account_id': 'assistant-timeout-account',
+                  },
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+        if (request.uri.path == '/api/client/support/assistant') {
+          assistantRequestCount += 1;
+          await utf8.decoder.bind(request).join();
+          await Future<void>.delayed(const Duration(milliseconds: 80));
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(
+              jsonEncode(
+                <String, Object?>{
+                  'reply': 'Проверка закончена.',
+                  'shouldEscalate': false,
+                },
+              ),
+            );
+          await request.response.close();
+          continue;
+        }
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      requestTimeout: const Duration(milliseconds: 30),
+      supportAssistantRequestTimeout: const Duration(milliseconds: 250),
+      maxRequestAttempts: 3,
+    );
+
+    final reply = await bootstrapper.askSupportAssistant(
+      hostPlatform: HostPlatform.android,
+      message: 'Почему не работает WARP?',
+    );
+
+    expect(reply.reply, 'Проверка закончена.');
+    expect(assistantRequestCount, 1);
   });
 
   test(

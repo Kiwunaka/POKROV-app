@@ -2,7 +2,7 @@ part of pokrov_app_shell;
 
 String _routeModeShortLabel(RouteMode mode) {
   return switch (mode) {
-    RouteMode.allExceptRu => 'Умный режим',
+    RouteMode.allExceptRu => 'Россия напрямую',
     RouteMode.fullTunnel => 'Всё устройство',
     RouteMode.selectedApps => 'Только выбранные',
     RouteMode.excludedApps => 'Кроме выбранных',
@@ -11,7 +11,7 @@ String _routeModeShortLabel(RouteMode mode) {
 
 String _routeModeRowTitle(RouteMode mode) {
   return switch (mode) {
-    RouteMode.allExceptRu => 'Умный режим',
+    RouteMode.allExceptRu => 'Россия напрямую',
     RouteMode.fullTunnel => 'Всё устройство',
     RouteMode.selectedApps => 'Только выбранные',
     RouteMode.excludedApps => 'Кроме выбранных',

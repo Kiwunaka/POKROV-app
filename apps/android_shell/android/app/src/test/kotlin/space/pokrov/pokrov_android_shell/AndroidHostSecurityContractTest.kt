@@ -1,11 +1,37 @@
 package space.pokrov.pokrov_android_shell
 
 import java.io.File
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AndroidHostSecurityContractTest {
+    @Test
+    fun runtimeFailureCategoriesNeverExposeExceptionMessages() {
+        val hostile = IllegalStateException(
+            "token=secret server=10.0.0.1",
+            IllegalArgumentException("vless://private"),
+        )
+
+        assertEquals("invalid_runtime_state", AndroidRuntimeSafety.safeFailureCategory(hostile))
+        assertFalse(AndroidRuntimeSafety.safeFailureCategory(hostile).contains("secret"))
+        assertEquals(
+            "IllegalStateException>IllegalArgumentException",
+            AndroidRuntimeSafety.safeFailureTypes(hostile),
+        )
+        assertFalse(AndroidRuntimeSafety.safeFailureTypes(hostile).contains("vless"))
+        assertEquals(
+            "unknown,invalid,field,config,json,server,outbounds",
+            AndroidRuntimeSafety.safeCoreFailureHints(
+                IllegalStateException(
+                    "invalid config json: unknown field outbounds token=secret server=10.0.0.1",
+                ),
+            ),
+        )
+        assertFalse(AndroidRuntimeSafety.safeCoreFailureHints(hostile).contains("secret"))
+    }
+
     @Test
     fun managedProfileInvalidation_clearsQuickSettingsReuseWithoutStoppingRuntime() {
         val bridgeSource = source("RuntimeHostBridge.kt")
@@ -131,6 +157,27 @@ class AndroidHostSecurityContractTest {
     }
 
     @Test
+    fun androidRuntimeProtectsCoreUplinkSocketsFromVpnRecapture() {
+        val serviceSource = source("PokrovRuntimeVpnService.kt")
+
+        assertTrue(serviceSource.contains("route.put(\"auto_detect_interface\", false)"))
+        assertTrue(serviceSource.contains("override fun autoDetectInterfaceControl(fd: Int)"))
+        assertTrue(serviceSource.contains("protect(fd)"))
+    }
+
+    @Test
+    fun nodeLatencyProbeBindsToAValidatedNonVpnNetwork() {
+        val probeSource = source("AndroidNodeLatencyProbe.kt")
+        val bridgeSource = source("RuntimeHostBridge.kt")
+
+        assertTrue(bridgeSource.contains("METHOD_MEASURE_NODE_LATENCIES"))
+        assertTrue(probeSource.contains("NET_CAPABILITY_NOT_VPN"))
+        assertTrue(probeSource.contains("NET_CAPABILITY_VALIDATED"))
+        assertTrue(probeSource.contains("network.bindSocket(socket)"))
+        assertTrue(probeSource.contains("firstOrNull(::isPublicAddress)"))
+    }
+
+    @Test
     fun pendingQuickSettingsTileStaysClickableToCancelConnection() {
         val tileSource = source("PokrovQuickSettingsTileService.kt")
 
@@ -156,7 +203,7 @@ class AndroidHostSecurityContractTest {
         val stateSource = source("AndroidRuntimeState.kt")
 
         assertTrue(bridgeSource.contains("clearPendingConnect(pending)\n        return AndroidRuntimeState.snapshot()"))
-        assertTrue(serviceSource.contains("commandServer = nextServer\n            nextServer.start()"))
+        assertTrue(serviceSource.contains("commandServer = nextServer\n            startupPhase = \"start_command_server\"\n            nextServer.start()"))
         assertTrue(serviceSource.contains("cleanupFailedStartup()"))
         assertTrue(serviceSource.contains("runCatching { commandServer?.closeService() }"))
         assertTrue(serviceSource.contains("runCatching { commandServer?.close() }"))

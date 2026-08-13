@@ -13,7 +13,7 @@ Historical mapping note:
 ## Current Truth
 
 - the Windows shell is not a blank stub; it boots the shared app shell and drives the desktop FFI `runtime_engine` lane
-- the active runtime is POKROV Core `v1.0.2` desktop ABI 2; its exact release commit, DLL hash, and `libcronet.dll` hash are pinned in `config/runtime-artifacts.seed.json`
+- the active runtime is POKROV Core `v1.0.3` desktop ABI 2; its exact release commit, DLL hash, and `libcronet.dll` hash are pinned in `config/runtime-artifacts.seed.json`
 - `flutter build windows --release` copies `pokrov-core.dll` and `libcronet.dll` next to the Flutter runner
 - `scripts/sync-pokrov-core-runtime.ps1` accepts only the exact locally built core commit and artifacts before syncing them into the host
 - `scripts/build-windows-release.ps1` now runs the local Windows verification lane: seed validation, tests, `flutter analyze`, `flutter build windows --release`, bundle verification, unsigned portable ZIP staging, and unsigned beta setup EXE staging through Windows `iexpress.exe`
@@ -119,7 +119,16 @@ Latest local packaging note:
   refresh. Read `config/release-handoff.seed.json` for the current exact
   filename, hash, size, public repository, and download-smoke state.
 
-## Current 2026-08-04 Internal Build
+## Current 2026-08-13 Core Gate
+
+The exact POKROV Core `v1.0.3` DLL pinned in
+`config/runtime-artifacts.seed.json` completed 100 serial raw start/stop cycles
+through the real desktop bindings. This is `PASS` for DLL loading and lifecycle
+shutdown only. A new packaged Windows client candidate, private ACL, TUN
+traffic, route modes, DNS/leak, real WARP, sleep/resume, and clean-machine
+checks remain required.
+
+## Retained 2026-08-04 Internal Build
 
 The unsigned `1.0.2-core-test.1` Windows client completed the canonical local
 release pipeline. The exact local QA artifacts are:

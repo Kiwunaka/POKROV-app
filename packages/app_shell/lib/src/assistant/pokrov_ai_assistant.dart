@@ -278,7 +278,7 @@ class PokrovAssistantRedactor {
       r'\b(?:token|secret|access_key|uuid|server|subscription)[=:]\S+',
       caseSensitive: false,
     ),
-    RegExp(r'\b(?:wireguard|warp|private-key|private_key|vless|vmess|trojan)\b',
+    RegExp(r'\b(?:private-key|private_key|vless|vmess|trojan)\b',
         caseSensitive: false),
   ];
 

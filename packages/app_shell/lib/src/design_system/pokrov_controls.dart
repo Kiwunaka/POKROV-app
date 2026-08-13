@@ -797,7 +797,7 @@ class _PokrovHomeChipState extends State<PokrovHomeChip> {
             duration: motion.duration(PokrovMotionTokens.short),
             curve: PokrovMotionTokens.ease,
             height: 44,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 11),
             decoration: BoxDecoration(
               color: _hovered && interactive
                   ? tokens.accent.withValues(alpha: 0.07)
@@ -813,7 +813,7 @@ class _PokrovHomeChipState extends State<PokrovHomeChip> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(widget.icon, size: 16, color: tokens.muted),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Flexible(
                   child: ConstrainedBox(
                     key: PokrovHomeChip.labelMotionKey,
@@ -823,16 +823,19 @@ class _PokrovHomeChipState extends State<PokrovHomeChip> {
                     child: AnimatedSwitcher(
                       duration: motion.duration(PokrovMotionTokens.short),
                       transitionBuilder: pokrovFadeSlideTransition,
-                      child: Text(
-                        widget.label,
+                      child: FittedBox(
                         key: ValueKey(widget.label),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: tokens.ink,
-                              fontWeight: FontWeight.w700,
-                            ),
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          widget.label,
+                          maxLines: 1,
+                          textAlign: TextAlign.center,
+                          style:
+                              Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: tokens.ink,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                        ),
                       ),
                     ),
                   ),

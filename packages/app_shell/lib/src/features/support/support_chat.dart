@@ -682,6 +682,14 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                                 onRetry: _retrySupportLifecycle,
                               ),
                             ),
+                            if (widget.askAssistant != null)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(18, 0, 18, 12),
+                                child: _SupportAiFirstCard(
+                                  onTap: () => unawaited(_openAssistantSheet()),
+                                ),
+                              ),
                             if (_threadError != null)
                               Padding(
                                 padding:
@@ -764,7 +772,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                                         minLines: 1,
                                         maxLines: 3,
                                         decoration: const InputDecoration(
-                                          hintText: 'Напишите сообщение',
+                                          hintText: 'Сообщение человеку',
                                           border: InputBorder.none,
                                           isDense: true,
                                         ),
@@ -799,6 +807,76 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                 ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SupportAiFirstCard extends StatelessWidget {
+  const _SupportAiFirstCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    return Semantics(
+      button: true,
+      label: 'Сначала спросить ИИ-помощника',
+      child: PokrovSettingsRowPressSurface(
+        key: const ValueKey('support-ai-first-card'),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
+          decoration: BoxDecoration(
+            color: p.accentSoft,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: p.accent.withValues(alpha: 0.18)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: p.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  Icons.auto_awesome_rounded,
+                  color: p.accent,
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Сначала спросить ИИ',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: p.ink,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Проверит WARP, локацию и настройки. Если не поможет — человек.',
+                      maxLines: 2,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: p.muted,
+                            height: 1.25,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right_rounded, color: p.accent),
+            ],
           ),
         ),
       ),
@@ -935,14 +1013,14 @@ class _SupportLifecycleHint extends StatelessWidget {
       _SupportLifecycleState.ready => (
           key: 'ready',
           icon: Icons.smart_toy_outlined,
-          label: 'Можно писать — ответим здесь',
+          label: 'Чат с человеком · ответим здесь',
           accent: p.muted,
           retry: false,
         ),
       _SupportLifecycleState.tracking => (
           key: 'tracking',
           icon: Icons.mark_chat_unread_outlined,
-          label: 'Открыто · ответ появится здесь',
+          label: 'Открыто · человек ответит здесь',
           accent: p.accent,
           retry: false,
         ),

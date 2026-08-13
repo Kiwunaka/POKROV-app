@@ -212,14 +212,12 @@ void main() {
       ),
     );
 
-    expect(
-      find.byKey(const ValueKey('home-connect-hint-pill')),
-      findsOneWidget,
-    );
-    expect(find.text('Нажмите, чтобы подключиться'), findsOneWidget);
+    expect(find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-connect-hint-pill')), findsNothing);
+    expect(find.text('Нажмите, чтобы подключиться'), findsNothing);
     expect(
       find.byKey(const ValueKey('home-connect-hint-pulse')),
-      findsOneWidget,
+      findsNothing,
     );
 
     await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
@@ -406,12 +404,12 @@ void main() {
 
     // The disc really is idle and connectable, so the only reason the hint
     // is absent is the persisted dismissal.
-    expect(find.text('Включить VPN'), findsOneWidget);
+    expect(find.text('Подключить'), findsOneWidget);
     expect(find.byKey(const ValueKey('home-connect-hint-pill')), findsNothing);
     expect(find.byKey(const ValueKey('home-connect-hint-pulse')), findsNothing);
   });
 
-  testWidgets('reduced motion keeps the hint pill but disables the pulse ring',
+  testWidgets('reduced motion keeps the clean button without a pulse ring',
       (tester) async {
     tester.platformDispatcher.accessibilityFeaturesTestValue =
         const FakeAccessibilityFeatures(disableAnimations: true);
@@ -419,10 +417,8 @@ void main() {
 
     await _pumpReadyHome(tester);
 
-    expect(
-      find.byKey(const ValueKey('home-connect-hint-pill')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-connect-hint-pill')), findsNothing);
     expect(find.byKey(const ValueKey('home-connect-hint-pulse')), findsNothing);
   });
 }

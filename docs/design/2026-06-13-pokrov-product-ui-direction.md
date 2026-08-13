@@ -17,22 +17,30 @@ preserving the selected visual references from
    foundation.
 2. POKROV is presented as a VPN. Public app UI may use `VPN` plainly when it
    helps the user understand the action.
-3. Home sells one primary action: enable POKROV VPN. WARP, access/trial status,
-   and Telegram bonus support that action instead of competing with it.
+3. Home sells one primary action: enable POKROV VPN. The owner-selected
+   2026-08-13 mobile composition uses a large centered circular action with a
+   thin neutral border, brand mark, in-control status and finite hourglass wait
+   motion. It has no glowing perimeter or duplicate instructional button.
+   Remaining premium days sit in a compact top pill that opens checkout; two
+   quick controls, WARP and an optional remote campaign follow below.
 4. WARP is called `WARP` in the product UI. It is explained as additional
    protection, not as a second confusing VPN.
    The default user path is client-local: the app may offer WARP from the
    bundled runtime defaults even when the backend has not returned managed WARP
    material yet. Backend endpoints remain useful for consent, lifecycle events,
    and optional managed material.
-5. Telegram bonus remains a promotion mechanic. The tone is soft reward/gold,
+5. Telegram bonus remains a paid loyalty mechanic, not a Home competitor.
+   Trial copy says rewards open after payment. The tone is soft reward/gold,
    not casino, urgency, neon, or pressure.
 6. News and admin promotions exist as backend-owned surfaces, but render only
-   when explicitly visible. No empty news placeholder belongs on the normal
-   Home surface.
-7. Rewards remain important. Roulette and calendar stay in the product plan,
-   but the visual system must make them calm loyalty features rather than
-   gambling-like UI.
+   when explicitly visible. Home may show one operator-authored remote campaign
+   above navigation with image/logo or full-width banner, badge, copy, CTA,
+   colors, audience, schedule, whole-card link and optional close action. A
+   dismissed campaign is remembered by its slot/content/schedule; a disabled or
+   absent campaign leaves no empty placeholder. Third-party ad SDKs remain out.
+7. Rewards remain important. The paid roulette is a calm fortnightly loyalty
+   feature; calendar remains separately controlled. Neither may look like a
+   casino or promise outsized free access.
 8. Dark mode is mandatory. Dark tokens must use off-black surfaces and never
    pure black.
 9. The visual style is flat, iOS-like, quiet, and consumer-first: grouped
@@ -75,15 +83,17 @@ WARP, Support, Locations, Rules, and the shared shell.
 
 Expected first-layer behavior:
 
-- Home explains `POKROV VPN`, WARP, trial/access status, and Telegram bonus
+- Home presents `POKROV VPN`, remaining premium days, one centered connection
+  action, location/routing shortcuts, WARP and at most one remote campaign
   without a pile of competing cards.
 - Home keeps WARP visible as a compact control and shows a short confirmation
   after the user enables or disables it.
 - Support opens as a separate screen; diagnostics is a safe bottom sheet.
 - Profile is grouped like Settings: access, recovery, support, settings,
   bonuses, and diagnostics.
-- Rewards keeps Telegram, referral, promo, history, roulette, and calendar as
-  calm loyalty mechanics; disabled backend features do not render dead cards.
+- Rewards keeps paid Telegram reward, referral, promo, history, roulette and
+  achievements as calm loyalty mechanics; trial sees an explicit paid gate and
+  disabled backend features do not render dead cards.
 - Rules uses consumer labels and hides raw app/process identifiers by default.
 - Locations starts with automatic selection and uses human quality labels.
 - The shell keeps four top-level sections and lazy-builds non-Home tabs.

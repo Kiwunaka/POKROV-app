@@ -309,9 +309,11 @@ void main() {
     final warp = endpoints.single as Map<String, dynamic>;
     expect(warp['type'], 'warp');
     expect(warp['unique_identifier'], 'android-warp');
+    expect(warp['detour'], 'proxy');
     final node =
         (config['outbounds'] as List<dynamic>).first as Map<String, dynamic>;
-    expect(node['detour'], 'pokrov-warp');
+    expect(node['detour'], isNull);
+    expect((config['route'] as Map<String, dynamic>)['final'], 'pokrov-warp');
   });
 
   test('mobile lane forwards materialized runtime configs without re-parsing',
@@ -348,7 +350,7 @@ void main() {
       const ManagedProfilePayload(
         profileName: 'materialized',
         configPayload:
-            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"direct","tag":"direct"}],"route":{"rules":[{"ip_is_private":true,"outbound":"direct"},{"protocol":"dns","action":"hijack-dns"}],"final":"direct"}}',
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"direct","tag":"direct"}],"route":{"rules":[{"ip_is_private":true,"outbound":"direct"},{"protocol":"dns","action":"hijack-dns"}],"final":"direct"},"experimental":{"cache_file":{"enabled":true}},"_meta":{"title":"display only"}}',
         materializedForRuntime: true,
       ),
     );
@@ -360,6 +362,8 @@ void main() {
     final stagedConfig =
         jsonDecode(stagedArguments?['configPayload']! as String)
             as Map<String, dynamic>;
+    expect(stagedConfig, isNot(contains('_meta')));
+    expect(stagedConfig, isNot(contains('experimental')));
     final route = stagedConfig['route'] as Map<String, dynamic>;
     final rules = (route['rules'] as List).cast<Map<String, dynamic>>();
     expect(rules.first, <String, dynamic>{
@@ -683,7 +687,7 @@ void main() {
   });
 
   test(
-    'real Windows POKROV Core 1.0.2 survives 100 start-stop cycles',
+    'real Windows POKROV Core 1.0.3 survives 100 start-stop cycles',
     () async {
       final artifactRoot =
           Platform.environment['POKROV_REAL_CORE_ROOT']!.trim();
@@ -772,7 +776,7 @@ void main() {
     });
 
     final platformDirectory = Directory(
-      '${root.path}\\artifacts\\pokrov-core\\v1.0.2\\windows',
+      '${root.path}\\artifacts\\pokrov-core\\v1.0.3\\windows',
     )..createSync(recursive: true);
     File('${platformDirectory.path}\\pokrov-core.dll')
         .writeAsStringSync('stub');
@@ -1044,6 +1048,10 @@ void main() {
     expect(
       ((stagedConfig['outbounds'] as List<dynamic>).first
           as Map<String, dynamic>)['detour'],
+      isNull,
+    );
+    expect(
+      (stagedConfig['route'] as Map<String, dynamic>)['final'],
       'pokrov-warp',
     );
     expect(bindings.secureFileCalls, 1);
@@ -1152,8 +1160,9 @@ void main() {
     expect(
       ((config['outbounds'] as List<dynamic>).first
           as Map<String, dynamic>)['detour'],
-      'pokrov-warp',
+      isNull,
     );
+    expect((config['route'] as Map<String, dynamic>)['final'], 'pokrov-warp');
 
     expect((await engine.applyWarp(enabled: false)).applied, isTrue);
     config = jsonDecode(

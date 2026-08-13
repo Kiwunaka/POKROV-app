@@ -159,14 +159,29 @@ class _DnsAndLanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final adBlockEnabled = preferences.dnsPreset == PokrovDnsPreset.adguard;
     return _SectionCard(
       key: const ValueKey('rules-dns-lan'),
-      title: 'DNS и локальная сеть',
+      title: 'Блокировка и DNS',
       lines: const [
-        'Выбранный DNS идёт внутри туннеля. Доступ к локальным устройствам задаётся отдельным правилом.',
+        'Защитный DNS блокирует известные рекламные и трекинговые домены внутри VPN.',
       ],
       child: Column(
         children: [
+          _RoutingToggleRow(
+            key: const ValueKey('rules-ad-block-toggle'),
+            title: 'Блокировать рекламу',
+            subtitle:
+                'AdGuard DNS. Некоторые объявления внутри приложений могут остаться.',
+            value: adBlockEnabled,
+            onChanged: (value) => onChanged(
+              preferences.copyWith(
+                dnsPreset:
+                    value ? PokrovDnsPreset.adguard : PokrovDnsPreset.automatic,
+              ),
+            ),
+          ),
+          const _SettingsRowDivider(),
           _SettingsRow(
             key: const ValueKey('rules-dns-picker'),
             icon: Icons.dns_outlined,
