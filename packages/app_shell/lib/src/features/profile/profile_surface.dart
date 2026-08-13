@@ -115,8 +115,6 @@ class _ProfileSection extends StatelessWidget {
             : summary.rewardAccess.message.trim(),
       ];
     }
-    final referralCode =
-        summary.referralCode.isEmpty ? '' : ' · ${summary.referralCode}';
     final claimed = summary.channelBonusClaimed;
     final bonusDays = claimed
         ? summary.channelBonusPremiumDays
@@ -124,7 +122,7 @@ class _ProfileSection extends StatelessWidget {
     final telegramLabel =
         bonusDays > 0 ? 'Telegram +${ruDays(bonusDays)}' : 'Telegram';
     return [
-      '$telegramLabel · рефералы ${summary.referralCount}$referralCode',
+      '$telegramLabel · рефералы ${summary.referralCount}',
     ];
   }
 

@@ -3145,6 +3145,7 @@ void main() {
     expect(find.byKey(const ValueKey('profile-activity-calendar-action')),
         findsNothing);
     expect(find.byKey(const ValueKey('rewards-history-section')), findsNothing);
+    expect(find.textContaining('POKROV3'), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('profile-bonus-wheel-action')));
     await tester.pumpAndSettle();
@@ -3158,7 +3159,15 @@ void main() {
         find.byKey(const ValueKey('rewards-history-item-1')), findsOneWidget);
     expect(find.text('Промокод активирован'), findsOneWidget);
     expect(find.text('Telegram-бонус получен'), findsOneWidget);
-    expect(find.textContaining('POKROV3'), findsWidgets);
+    expect(
+      find.byKey(const ValueKey('rewards-referral-share-action')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('rewards-referral-copy-action')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('POKROV3'), findsNothing);
     expect(find.textContaining('+10'), findsWidgets);
     expect(find.text('Конверсия'), findsOneWidget);
     expect(find.text('Активировано'), findsNothing);
@@ -3605,7 +3614,7 @@ void main() {
     expect(copyAction, findsOneWidget);
     expect(
       find.descendant(
-          of: copyAction, matching: find.byIcon(Icons.copy_rounded)),
+          of: copyAction, matching: find.byIcon(Icons.link_rounded)),
       findsOneWidget,
     );
 
@@ -3623,17 +3632,78 @@ void main() {
       findsOneWidget,
     );
 
+    expect(find.text('Скопировать ссылку'), findsOneWidget);
+
     await tester.pump(const Duration(milliseconds: 1700));
     await tester.pumpAndSettle();
     expect(
       find.descendant(
-          of: copyAction, matching: find.byIcon(Icons.copy_rounded)),
+          of: copyAction, matching: find.byIcon(Icons.link_rounded)),
       findsOneWidget,
     );
     expect(
       find.byKey(const ValueKey('rewards-hub-sheet')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('rewards referral hides dead actions without a server link',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      bonusSummary: const AppFirstBonusSummary(
+        referralCount: 0,
+        referralCode: '',
+        referralBonusDays: 10,
+        streakMonths: 0,
+        lastWheelSpin: '',
+        channelBonusPremiumDays: 5,
+        channelBonusClaimedAt: '',
+        openingBonusPremiumDays: 5,
+        openingBonusClaimed: false,
+        channelUsername: 'pokrov_vpn',
+        tierKey: 'starter',
+        tierPercent: 5,
+        paidReferrals: 0,
+        nextTierKey: 'pro',
+        nextTierAt: 5,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-profile');
+    await _openRewardsHubFromProfile(tester);
+
+    final unavailable =
+        find.byKey(const ValueKey('rewards-referral-unavailable'));
+    await tester.dragUntilVisible(
+      unavailable,
+      find.byKey(const ValueKey('rewards-hub-sheet')),
+      const Offset(0, -160),
+    );
+    await tester.pumpAndSettle();
+
+    expect(unavailable, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('rewards-referral-share-action')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('rewards-referral-copy-action')),
+      findsNothing,
+    );
+    expect(find.text('POKROV'), findsNothing);
   });
 
   testWidgets('profile opens subscription and email recovery sheets',
@@ -4746,8 +4816,11 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('support-diagnostics-close')));
     await tester.pumpAndSettle();
 
-    await tester
-        .tap(find.byKey(const ValueKey('support-chat-telegram-fallback')));
+    await tester.tap(find.byKey(const ValueKey('support-chat-more')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('support-chat-telegram-fallback')),
+    );
     await tester.pumpAndSettle();
 
     expect(opened.last.toString(), 'tg://resolve?domain=pokrov_supportbot');
@@ -5031,7 +5104,7 @@ void main() {
     final description = tester.widget<Text>(
       find.byKey(const ValueKey('support-ai-first-description')),
     );
-    expect(description.maxLines, 3);
+    expect(description.maxLines, isNull);
     expect(tester.takeException(), isNull);
   });
 
@@ -5048,7 +5121,9 @@ void main() {
         materializedForRuntime: true,
       ),
       assistantReply: const ClientSupportAssistantReply(
-        reply: 'Проверьте доступ и попробуйте переподключиться.',
+        reply: '**Коротко:** Проверьте доступ. Подключение могло устареть.\n\n'
+            '**Что сделать:** Переподключитесь. Затем проверьте выбранную страну.\n\n'
+            '**Если не поможет:** Напишите в поддержку.',
         shouldEscalate: false,
         suggestedActions: <ClientSupportAssistantAction>[],
         source: ClientSupportAssistantSource.pokrovAssistant,
@@ -5078,7 +5153,7 @@ void main() {
     // sparkle badge, matching the AI sheet styling.
     expect(find.text('ИИ'), findsOneWidget);
 
-    final entry = find.byKey(const ValueKey('support-chat-ai-assistant'));
+    final entry = find.byKey(const ValueKey('support-ai-first-card'));
     expect(entry, findsOneWidget);
 
     await tester.tap(entry);
@@ -5145,10 +5220,25 @@ void main() {
       findsNothing,
     );
     expect(find.text('Не получается подключиться'), findsOneWidget);
+    expect(find.text('Проверьте доступ.'), findsOneWidget);
+    expect(find.text('Переподключитесь.'), findsOneWidget);
     expect(
-      find.text('Проверьте доступ и попробуйте переподключиться.'),
+      find.byKey(const ValueKey('assistant-answer-summary')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('assistant-answer-action')),
+      findsOneWidget,
+    );
+    expect(find.text('Подключение могло устареть.'), findsNothing);
+    expect(find.text('Затем проверьте выбранную страну.'), findsNothing);
+    await tester.tap(
+      find.byKey(const ValueKey('assistant-answer-details-toggle')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Подключение могло устареть.'), findsOneWidget);
+    expect(find.text('Затем проверьте выбранную страну.'), findsOneWidget);
+    expect(find.text('Напишите в поддержку.'), findsNothing);
     expect(
       find.byKey(const ValueKey('assistant-response-source-label')),
       findsOneWidget,
@@ -5216,7 +5306,7 @@ void main() {
     await _openSupportChatFromProfile(tester);
 
     await tester.tap(find.byKey(
-      const ValueKey('support-chat-ai-assistant'),
+      const ValueKey('support-ai-first-card'),
     ));
     await tester.pumpAndSettle();
 
@@ -5269,7 +5359,7 @@ void main() {
     );
 
     await tester.tap(find.byKey(
-      const ValueKey('support-chat-ai-assistant'),
+      const ValueKey('support-ai-first-card'),
     ));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -5322,7 +5412,7 @@ void main() {
     await _openSupportChatFromProfile(tester);
 
     await tester.tap(find.byKey(
-      const ValueKey('support-chat-ai-assistant'),
+      const ValueKey('support-ai-first-card'),
     ));
     await tester.pumpAndSettle();
 

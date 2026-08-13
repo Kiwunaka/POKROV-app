@@ -643,21 +643,35 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
             appBar: AppBar(
               title: const Text('Поддержка'),
               actions: [
-                if (widget.askAssistant != null)
-                  IconButton(
-                    key: const ValueKey('support-chat-ai-assistant'),
-                    tooltip: 'ИИ-помощник',
-                    onPressed: () => unawaited(_openAssistantSheet()),
-                    icon: const Icon(Icons.auto_awesome_outlined),
-                  ),
-                IconButton(
-                  key: const ValueKey('support-chat-telegram-fallback'),
-                  tooltip: widget.appContext.supportSnapshot.supportBot,
-                  onPressed: () => widget.onOpenHandoff(
-                    'support',
-                    widget.appContext.supportSnapshot.supportBot,
-                  ),
-                  icon: const Icon(Icons.send_outlined),
+                PopupMenuButton<String>(
+                  key: const ValueKey('support-chat-more'),
+                  tooltip: 'Ещё варианты поддержки',
+                  onSelected: (value) {
+                    if (value == 'telegram') {
+                      widget.onOpenHandoff(
+                        'support',
+                        widget.appContext.supportSnapshot.supportBot,
+                      );
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem<String>(
+                      key: const ValueKey('support-chat-telegram-fallback'),
+                      value: 'telegram',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.send_outlined, size: 20),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              widget.appContext.supportSnapshot.supportBot,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(width: 8),
               ],
@@ -822,7 +836,6 @@ class _SupportAiFirstCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    final largeText = MediaQuery.textScalerOf(context).scale(1) >= 1.2;
     return Semantics(
       button: true,
       label: 'Сначала спросить ИИ-помощника',
@@ -867,8 +880,6 @@ class _SupportAiFirstCard extends StatelessWidget {
                     Text(
                       'Проверит WARP, локацию и настройки. Если не поможет — человек.',
                       key: const ValueKey('support-ai-first-description'),
-                      maxLines: largeText ? 3 : 2,
-                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: p.muted,
                             height: 1.25,
@@ -1544,20 +1555,250 @@ class _AssistantSheetBubble extends StatelessWidget {
                 const SizedBox(height: 4),
               ],
             ],
-            Text(
-              message.safeBody,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isUser
-                        ? Theme.of(context).colorScheme.onPrimary
-                        : p.ink,
-                    height: 1.3,
-                  ),
-            ),
+            if (isUser)
+              Text(
+                message.safeBody,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      height: 1.3,
+                    ),
+              )
+            else
+              _AssistantAnswerBody(
+                key: ValueKey('assistant-answer-${message.id}'),
+                body: message.safeBody,
+              ),
           ],
         ),
       ),
     );
   }
+}
+
+class _AssistantAnswerBody extends StatefulWidget {
+  const _AssistantAnswerBody({super.key, required this.body});
+
+  final String body;
+
+  @override
+  State<_AssistantAnswerBody> createState() => _AssistantAnswerBodyState();
+}
+
+class _AssistantAnswerBodyState extends State<_AssistantAnswerBody> {
+  bool _detailsExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final sections = _assistantAnswerSections(widget.body);
+    if (!sections.isStructured) {
+      return Text(
+        widget.body,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: p.ink,
+              height: 1.3,
+            ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (sections.summary case final summary?) ...[
+          Text(
+            'Коротко',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: p.accent,
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            summary.primary,
+            key: const ValueKey('assistant-answer-summary'),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: p.ink,
+                  height: 1.3,
+                ),
+          ),
+        ],
+        if (sections.action case final action?) ...[
+          if (sections.summary != null) const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.check_circle_outline_rounded,
+                  size: 18, color: p.accent),
+              const SizedBox(width: 7),
+              Text(
+                'Что сделать',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: p.ink,
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            action.primary,
+            key: const ValueKey('assistant-answer-action'),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: p.ink,
+                  height: 1.3,
+                ),
+          ),
+        ],
+        if (sections.hasDetails) ...[
+          const SizedBox(height: 6),
+          TextButton.icon(
+            key: const ValueKey('assistant-answer-details-toggle'),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              visualDensity: VisualDensity.compact,
+            ),
+            onPressed: () {
+              setState(() => _detailsExpanded = !_detailsExpanded);
+            },
+            icon: Icon(
+              _detailsExpanded
+                  ? Icons.expand_less_rounded
+                  : Icons.expand_more_rounded,
+            ),
+            label: Text(
+              _detailsExpanded ? 'Скрыть подробности' : 'Подробности',
+            ),
+          ),
+          if (_detailsExpanded) ...[
+            if (sections.summary?.details case final details?) ...[
+              Text(
+                details,
+                key: const ValueKey('assistant-answer-summary-details'),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: p.ink,
+                      height: 1.3,
+                    ),
+              ),
+            ],
+            if (sections.action?.details case final details?) ...[
+              if (sections.summary?.details != null) const SizedBox(height: 8),
+              Text(
+                details,
+                key: const ValueKey('assistant-answer-action-details'),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: p.ink,
+                      height: 1.3,
+                    ),
+              ),
+            ],
+          ],
+        ],
+        for (final extra in sections.extra) ...[
+          const SizedBox(height: 10),
+          Text(
+            extra,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: p.ink,
+                  height: 1.3,
+                ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _AssistantAnswerSections {
+  const _AssistantAnswerSections({
+    required this.summary,
+    required this.action,
+    required this.extra,
+  });
+
+  final _AssistantSentencePair? summary;
+  final _AssistantSentencePair? action;
+  final List<String> extra;
+
+  bool get isStructured => summary != null || action != null;
+  bool get hasDetails => summary?.details != null || action?.details != null;
+}
+
+class _AssistantSentencePair {
+  const _AssistantSentencePair({required this.primary, this.details});
+
+  final String primary;
+  final String? details;
+}
+
+_AssistantAnswerSections _assistantAnswerSections(String body) {
+  String? summary;
+  String? action;
+  final extra = <String>[];
+  var sawEscalation = false;
+  final paragraphs = body
+      .trim()
+      .split(RegExp(r'\n\s*\n+'))
+      .map((paragraph) => paragraph.trim())
+      .where((paragraph) => paragraph.isNotEmpty);
+
+  for (final paragraph in paragraphs) {
+    final short = _assistantSectionBody(paragraph, 'Коротко');
+    if (short != null) {
+      summary = short;
+      continue;
+    }
+    final next = _assistantSectionBody(paragraph, 'Что сделать');
+    if (next != null) {
+      action = next;
+      continue;
+    }
+    if (_assistantSectionBody(paragraph, 'Если не поможет') != null) {
+      sawEscalation = true;
+      continue;
+    }
+    extra.add(paragraph);
+  }
+
+  if (summary == null && action == null && sawEscalation) {
+    return _AssistantAnswerSections(
+      summary: null,
+      action: null,
+      extra: <String>[body],
+    );
+  }
+  return _AssistantAnswerSections(
+    summary: summary == null ? null : _assistantSentencePair(summary),
+    action: action == null ? null : _assistantSentencePair(action),
+    extra: List<String>.unmodifiable(extra),
+  );
+}
+
+_AssistantSentencePair _assistantSentencePair(String value) {
+  final trimmed = value.trim();
+  if (RegExp(r'^\d+\.\s').hasMatch(trimmed)) {
+    return _AssistantSentencePair(primary: trimmed);
+  }
+  final match =
+      RegExp(r'^(.+?[.!?])(?:\s+|$)(.+)$', dotAll: true).firstMatch(trimmed);
+  if (match == null) {
+    return _AssistantSentencePair(primary: trimmed);
+  }
+  final details = match.group(2)?.trim();
+  return _AssistantSentencePair(
+    primary: match.group(1)!.trim(),
+    details: details == null || details.isEmpty ? null : details,
+  );
+}
+
+String? _assistantSectionBody(String paragraph, String label) {
+  final plain = paragraph.replaceAll('**', '').trim();
+  if (!plain.toLowerCase().startsWith(label.toLowerCase())) {
+    return null;
+  }
+  var value = plain.substring(label.length).trimLeft();
+  if (value.startsWith(':')) {
+    value = value.substring(1).trimLeft();
+  }
+  return value.trim();
 }
 
 /// States the real automated operation without impersonating a person typing.

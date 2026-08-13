@@ -1065,48 +1065,28 @@ class _RewardsReferralCard extends StatefulWidget {
 class _RewardsReferralCardState extends State<_RewardsReferralCard> {
   static const _copiedHold = Duration(milliseconds: 1600);
 
-  bool _codeCopied = false;
   bool _linkCopied = false;
-  Timer? _codeCopiedTimer;
   Timer? _linkCopiedTimer;
 
   @override
   void dispose() {
-    _codeCopiedTimer?.cancel();
     _linkCopiedTimer?.cancel();
     super.dispose();
   }
 
   /// Confirms the copy inside the open sheet: the copy icon morphs into a
   /// check for a moment instead of a snack hidden under the sheet.
-  void _flashCopied({required bool link}) {
+  void _flashCopied() {
     PokrovHaptics.tap();
-    setState(() {
-      if (link) {
-        _linkCopied = true;
-      } else {
-        _codeCopied = true;
-      }
-    });
+    setState(() => _linkCopied = true);
     final timer = Timer(_copiedHold, () {
       if (!mounted) {
         return;
       }
-      setState(() {
-        if (link) {
-          _linkCopied = false;
-        } else {
-          _codeCopied = false;
-        }
-      });
+      setState(() => _linkCopied = false);
     });
-    if (link) {
-      _linkCopiedTimer?.cancel();
-      _linkCopiedTimer = timer;
-    } else {
-      _codeCopiedTimer?.cancel();
-      _codeCopiedTimer = timer;
-    }
+    _linkCopiedTimer?.cancel();
+    _linkCopiedTimer = timer;
   }
 
   Widget _copyMorphIcon({required bool copied, required IconData idleIcon}) {
@@ -1129,14 +1109,13 @@ class _RewardsReferralCardState extends State<_RewardsReferralCard> {
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    final code = widget.referralSummary.code.trim().isNotEmpty
+    final rawCode = widget.referralSummary.code.trim().isNotEmpty
         ? widget.referralSummary.code.trim()
-        : widget.referralCode.isEmpty
-            ? 'POKROV'
-            : widget.referralCode;
+        : widget.referralCode.trim();
+    final code = rawCode == 'POKROV' ? '' : rawCode;
     final referralShareLink = widget.referralSummary.shareLink.trim().isNotEmpty
         ? widget.referralSummary.shareLink
-        : code == 'POKROV'
+        : code.isEmpty
             ? ''
             : 'https://t.me/pokrov_vpnbot?start=ref_$code';
     final shareLink = _safeReferralShareHref(referralShareLink);
@@ -1162,7 +1141,7 @@ class _RewardsReferralCardState extends State<_RewardsReferralCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      code,
+                      'Пригласить друга',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             color: p.ink,
                             fontWeight: FontWeight.w700,
@@ -1264,53 +1243,63 @@ class _RewardsReferralCardState extends State<_RewardsReferralCard> {
                   ),
             ),
           ],
-          const SizedBox(height: 12),
-          // Actions live on their own wrapping row so the card survives
-          // 320pt widths instead of overflowing a single crowded line.
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              OutlinedButton.icon(
-                key: const ValueKey('rewards-referral-copy-action'),
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: code));
-                  _flashCopied(link: false);
-                },
-                icon: _copyMorphIcon(
-                  copied: _codeCopied,
-                  idleIcon: Icons.copy_rounded,
+          if (shareLink == null) ...[
+            const SizedBox(height: 12),
+            Container(
+              key: const ValueKey('rewards-referral-unavailable'),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: p.surface.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: p.line),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.sync_rounded, color: p.muted, size: 19),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Ссылка пока не готова. Потяните экран вниз, чтобы обновить.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: p.muted,
+                            height: 1.3,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (shareLink != null) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  key: const ValueKey('rewards-referral-share-action'),
+                  onPressed: () =>
+                      widget.onOpenHandoff('download', shareLink.toString()),
+                  icon: const Icon(Icons.ios_share_rounded),
+                  label: const Text('Пригласить'),
                 ),
-                label: const Text('Скопировать'),
-              ),
-              IconButton.outlined(
-                key: const ValueKey('rewards-referral-copy-link-action'),
-                tooltip: 'Скопировать ссылку',
-                onPressed: shareLink == null
-                    ? null
-                    : () {
-                        Clipboard.setData(
-                          ClipboardData(text: shareLink.toString()),
-                        );
-                        _flashCopied(link: true);
-                      },
-                icon: _copyMorphIcon(
-                  copied: _linkCopied,
-                  idleIcon: Icons.link_rounded,
+                OutlinedButton.icon(
+                  key: const ValueKey('rewards-referral-copy-action'),
+                  onPressed: () {
+                    Clipboard.setData(
+                      ClipboardData(text: shareLink.toString()),
+                    );
+                    _flashCopied();
+                  },
+                  icon: _copyMorphIcon(
+                    copied: _linkCopied,
+                    idleIcon: Icons.link_rounded,
+                  ),
+                  label: const Text('Скопировать ссылку'),
                 ),
-              ),
-              IconButton.filled(
-                key: const ValueKey('rewards-referral-share-action'),
-                tooltip: 'Открыть ссылку',
-                onPressed: shareLink == null
-                    ? null
-                    : () =>
-                        widget.onOpenHandoff('download', shareLink.toString()),
-                icon: const Icon(Icons.ios_share_rounded),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
       ),
     );

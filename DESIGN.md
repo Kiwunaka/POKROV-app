@@ -57,9 +57,22 @@ Client tokens mirror the platform `shared/design-tokens.json` (`pokrov-clear`, `
 - Location metadata keeps its honest country, quality, ping, load and freshness
   fields on narrow large-text screens by wrapping secondary rows instead of
   collapsing them into unreadable ellipses.
-- The support AI entry preserves the complete AI-first promise at large text;
-  it may grow to a third description line instead of clipping the escalation
-  condition.
+- The support AI entry always preserves the complete AI-first promise and grows
+  with text scale instead of clipping the escalation condition.
+- Support exposes one prominent AI-first entry. The AppBar keeps external
+  Telegram fallback inside a labelled overflow menu instead of repeating AI
+  and handoff actions as unexplained icons.
+- Structured assistant replies render `Коротко` and `Что сделать` as native
+  visual sections. The response omits a duplicate escalation paragraph because
+  the pinned `Написать человеку` action already owns that escape path.
+- Each structured section leads with its first actionable sentence. Supporting
+  sentences remain available behind `Подробности`, keeping the chat compact
+  without deleting information.
+- Referral rewards expose one clear `Пригласить` action and one labelled copy
+  fallback. Missing server links show an honest refresh state instead of a
+  generic `POKROV` pseudo-code and disabled icon cluster.
+- The compact Profile bonus summary never exposes the account referral code;
+  the code remains an implementation detail of the server-owned invite link.
 - Shared status pills and support lifecycle hints flex and wrap bounded labels
   at large text instead of overflowing or silently clipping status truth.
 
