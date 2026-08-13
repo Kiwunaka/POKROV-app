@@ -178,13 +178,63 @@ class AndroidHostSecurityContractTest {
     }
 
     @Test
-    fun pendingQuickSettingsTileStaysClickableToCancelConnection() {
+    fun quickSettingsTileIsAnHonestStateNeutralAction() {
         val tileSource = source("PokrovQuickSettingsTileService.kt")
 
-        assertTrue(tileSource.contains("QuickTileVisualState.PENDING -> {"))
         assertTrue(tileSource.contains("tile.state = Tile.STATE_ACTIVE"))
-        assertTrue(tileSource.contains("Нажмите, чтобы отменить."))
+        assertTrue(tileSource.contains("setTileSubtitle(tile, \"Быстрый доступ\")"))
+        assertTrue(tileSource.contains("onClick still resolves the authoritative"))
+        assertFalse(tileSource.contains("Tile.STATE_INACTIVE"))
         assertFalse(tileSource.contains("Tile.STATE_UNAVAILABLE"))
+    }
+
+    @Test
+    fun standardTileRefreshesItsStaticBrandWhenSystemUiListens() {
+        val tileSource = source("PokrovQuickSettingsTileService.kt")
+
+        assertTrue(tileSource.contains("override fun onStartListening()"))
+        assertTrue(tileSource.contains("refreshTile()"))
+        assertFalse(tileSource.contains("requestListeningState("))
+    }
+
+    @Test
+    fun quickSettingsRefreshFollowsCommittedRuntimeState() {
+        val runtimeSource = source("PokrovRuntimeVpnService.kt")
+        val startState = runtimeSource.indexOf("AndroidRuntimeState.markRunning(runtimeMessage)")
+        val startRefresh = runtimeSource.indexOf(
+            "PokrovQuickSettingsTileService.completeRuntimeTransition(\n            this,",
+            startState,
+        )
+        val stopState = runtimeSource.indexOf("AndroidRuntimeState.markStopped(message = message")
+        val stopRefresh = runtimeSource.indexOf(
+            "PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)",
+            stopState,
+        )
+
+        assertTrue(startState >= 0 && startRefresh > startState)
+        assertTrue(stopState >= 0 && stopRefresh > stopState)
+
+        val dispatchSource = runtimeSource.substring(
+            runtimeSource.indexOf("fun start(\n            context: Context"),
+        )
+        assertFalse(
+            dispatchSource.substringBefore("fun stop(").contains(
+                "PokrovQuickSettingsTileService.requestRefresh(context)",
+            ),
+        )
+        assertFalse(
+            dispatchSource.substringAfter("fun stop(").substringBefore("fun refreshNotification(").contains(
+                "PokrovQuickSettingsTileService.requestRefresh(context)",
+            ),
+        )
+    }
+
+    @Test
+    fun completedTileTransitionReleasesTheClickGate() {
+        val tileSource = source("PokrovQuickSettingsTileService.kt")
+
+        assertTrue(tileSource.contains("QuickTileTransitionGate.complete(generation)"))
+        assertFalse(tileSource.contains("requestRefresh("))
     }
 
     @Test
@@ -226,11 +276,14 @@ class AndroidHostSecurityContractTest {
     }
 
     @Test
-    fun defaultNetworkInterfaceResolutionRunsOffCallbackThreadAndFencesStaleResults() {
+    fun defaultNetworkInterfaceResolutionAndNativePublishRunOffCallbackThread() {
         val monitorSource = source("AndroidDefaultNetworkMonitor.kt")
 
         assertTrue(monitorSource.contains("Executors.newSingleThreadExecutor()"))
         assertTrue(monitorSource.contains("submitInterfaceResolution"))
+        assertTrue(monitorSource.contains("interfaceListenerExecutor"))
+        assertTrue(monitorSource.contains("submitInterfaceListenerUpdate {"))
+        assertTrue(monitorSource.contains("targetListener.updateDefaultInterface("))
         assertTrue(monitorSource.contains("shutdownNow()"))
         assertTrue(monitorSource.contains("canPublishNetworkResolution("))
     }

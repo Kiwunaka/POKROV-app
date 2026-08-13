@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-08-03
+Last updated: 2026-08-13
 
 ## Document Status
 
@@ -215,6 +215,16 @@ After activation:
 - saved node choice is sent through `POST /api/client/nodes/select` with
   `mode=manual`, and the next managed profile may be fetched with
   `selected_node_code` before the runtime config is materialized
+- a catalog city may carry a safe additive `variants` list. One available
+  variant keeps the one-tap location path; multiple available variants open a
+  compact `Обычный` / `Белые списки` choice. The selected stable variant id is
+  device-local and persists alongside the explicit preferred node; it is
+  cleared when the person returns to `Автоматически`
+- a manual `Обычный` choice resolves only to the canonical base outbound for
+  that node. A `Белые списки` choice resolves only through a unique safe
+  `_meta.ru_bridge.endpoints[{id,label}]` entry and the exact corresponding
+  member of the final selector. Missing, ambiguous, stale, or non-member
+  mappings fail closed without exposing or guessing raw topology
 - an explicit saved node is fail-closed: its code must remain in the returned
   eligible Smart Connect shortlist and map unambiguously to a direct proxy in
   the returned profile. The canonical identity is the shortlist item's
@@ -240,6 +250,13 @@ After activation:
   change applies after reconnect; it must not attest that the new city is
   active before a fresh profile is staged and the runtime connects
   successfully
+- the active location label may include the verified non-direct variant, but a
+  pending node or variant must not replace the last proven live combination
+- automatic selection keeps its existing semantics and never persists a
+  server-selected bridge/direct variant as a manual preference
+- WARP plus a manual `Белые списки` variant is blocked before runtime staging
+  until that composition has focused runtime proof; the app tells the person
+  to disable WARP or choose `Обычный` and never silently changes either choice
 - after that successful reconnect, the home location chip shows the selected
   city from the live or cached catalog; it must not keep claiming
   `Автоматически` or expose a technical node code. Cached, stale, or unknown
@@ -294,6 +311,15 @@ Support contract rules:
 - authenticated browser support should continue through `/api/tickets`, `/api/tickets/{ticket_id}`, `/api/tickets/{ticket_id}/messages`, and `/api/tickets/uploads`
 - app support may attach redacted diagnostics on ticket creation and on one explicitly confirmed follow-up reply
 - diagnostics should expose route mode, DNS policy, transport profile, ruleset/package-catalog version, app version, and linked Telegram state without leaking raw config, keys, or share links
+- ticket history restores into the existing conversation; loading and offline
+  states keep one lifecycle hint and one retry instead of duplicate notices
+- a failed ticket send keeps the draft and removes its unconfirmed optimistic
+  bubble, so retry produces one user message after backend acceptance
+- the AI helper handles WARP, location, route-mode, and system-permission
+  recovery before human escalation. A transport failure is shown as a retryable
+  request failure, not as a fabricated or missing-answer response
+- AI continuity remains sheet-local; retry reuses the one visible question,
+  while closing and reopening the sheet begins a fresh assistant conversation
 
 ## Smart Connect And Privacy Rules
 
@@ -376,7 +402,13 @@ network never counts as a trusted match.
 Android exposes a Quick Settings tile backed by the same runtime service and
 permission handoff as the main connect action. Windows tray connect/disconnect
 delegates to the same shell controller. Neither host control owns a second VPN
-state machine. A user change to location, routing, selected apps, or WARP
+state machine. The Android tile is a state-neutral branded quick action rather
+than an OEM-cached status switch: it always resolves the authoritative TUN
+state on tap before choosing start or stop. The foreground notification owns
+the live status, country, route mode and speed. This avoids a false
+enabled/disabled tile on EMUI, which does not reliably repaint third-party
+tiles after app-owned transitions. A user change to location, routing,
+selected apps, or WARP
 invalidates Android's reusable Quick Settings profile without stopping a live
 tunnel: the tile can still stop that tunnel, but after stop it opens the app
 until a fresh managed-profile stage saves the new reusable profile.

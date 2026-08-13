@@ -80,7 +80,7 @@ class PokrovQuickSettingsTileServiceTest {
     }
 
     @Test
-    fun pendingConnectionClickResolvesToStopAndVisualStaysClickable() {
+    fun pendingConnectionClickResolvesToStop() {
         assertEquals(
             QuickTileAction.STOP,
             resolveQuickTileAction(
@@ -89,10 +89,6 @@ class PokrovQuickSettingsTileServiceTest {
                 hasStagedProfile = true,
                 vpnPermissionRequired = false,
             ),
-        )
-        assertEquals(
-            QuickTileVisualState.PENDING,
-            resolveQuickTileVisualState(isRunning = false, connectionPending = true),
         )
     }
 
@@ -107,18 +103,6 @@ class PokrovQuickSettingsTileServiceTest {
 
         QuickTileTransitionGate.complete(stopGeneration)
         assertNotNull(QuickTileTransitionGate.begin(QuickTileAction.START))
-    }
-
-    @Test
-    fun visualStateTracksAuthoritativeRunningState() {
-        assertEquals(
-            QuickTileVisualState.ACTIVE,
-            resolveQuickTileVisualState(isRunning = true, connectionPending = false),
-        )
-        assertEquals(
-            QuickTileVisualState.INACTIVE,
-            resolveQuickTileVisualState(isRunning = false, connectionPending = false),
-        )
     }
 
     @Test

@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' show PointerDeviceKind;
 
-import 'package:flutter/cupertino.dart' show CupertinoSwitch;
+import 'package:flutter/cupertino.dart'
+    show CupertinoActivityIndicator, CupertinoSwitch;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -142,6 +143,7 @@ class _FakeBootstrapper
     this.assistantFailureCalls = const <int>{},
     this.bonusSummaryGate,
     this.subscriptionGate,
+    this.locationsCatalogGate,
     this.locationsCatalogFailure,
     this.notificationsFailure,
     this.managedProfileFailure,
@@ -269,6 +271,7 @@ class _FakeBootstrapper
   final Set<int> assistantFailureCalls;
   final Future<void>? bonusSummaryGate;
   final Future<void>? subscriptionGate;
+  final Future<void>? locationsCatalogGate;
   final String? locationsCatalogFailure;
   final String? notificationsFailure;
   final BootstrapFailure? managedProfileFailure;
@@ -323,6 +326,7 @@ class _FakeBootstrapper
   HostPlatform? lastLocationsCatalogHostPlatform;
   String? lastLocationsCatalogQuery;
   String? lastPreferredNodeCode;
+  String? lastPreferredVariantId;
   Set<String> lastExcludedNodeCodes = const <String>{};
   final List<Set<String>> excludedNodeCodeRequests = <Set<String>>[];
 
@@ -348,6 +352,7 @@ class _FakeBootstrapper
     required RouteMode routeMode,
     List<String> selectedApps = const <String>[],
     String preferredNodeCode = '',
+    String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
   }) async {
     calls += 1;
@@ -357,6 +362,7 @@ class _FakeBootstrapper
     lastRouteMode = routeMode;
     lastHostPlatform = hostPlatform;
     lastPreferredNodeCode = preferredNodeCode;
+    lastPreferredVariantId = preferredVariantId;
     lastExcludedNodeCodes = Set<String>.unmodifiable(excludedNodeCodes);
     excludedNodeCodeRequests.add(lastExcludedNodeCodes);
     return managedProfileResolver?.call(calls, lastExcludedNodeCodes) ??
@@ -461,6 +467,7 @@ class _FakeBootstrapper
     if (locationsCatalogFailure != null) {
       throw BootstrapFailure(locationsCatalogFailure!);
     }
+    await locationsCatalogGate;
     return locationsCatalog;
   }
 
@@ -665,6 +672,8 @@ class _FakeSupportTicketService implements SupportTicketService {
     SupportTicketThread? sentThread,
     this.listGate,
     this.failGetAfter = 0,
+    this.failListCalls = const <int>{},
+    this.failCreateCalls = const <int>{},
   })  : tickets = List<SupportTicketThread>.from(tickets),
         loadedThread = loadedThread ?? (tickets.isEmpty ? null : tickets.first),
         loadedThreads = List<SupportTicketThread>.from(loadedThreads),
@@ -681,6 +690,8 @@ class _FakeSupportTicketService implements SupportTicketService {
   final SupportTicketThread sentThread;
   final Future<void>? listGate;
   final int failGetAfter;
+  final Set<int> failListCalls;
+  final Set<int> failCreateCalls;
   int calls = 0;
   int listCalls = 0;
   int getCalls = 0;
@@ -705,6 +716,9 @@ class _FakeSupportTicketService implements SupportTicketService {
     await listGate;
     listCalls += 1;
     lastHostPlatform = hostPlatform;
+    if (failListCalls.contains(listCalls)) {
+      throw const SupportTicketFailure('history unavailable');
+    }
     return tickets.take(limit).toList(growable: false);
   }
 
@@ -736,6 +750,9 @@ class _FakeSupportTicketService implements SupportTicketService {
     Map<String, Object?> diagnostics = const <String, Object?>{},
   }) async {
     calls += 1;
+    if (failCreateCalls.contains(calls)) {
+      throw const SupportTicketFailure('send unavailable');
+    }
     lastHostPlatform = hostPlatform;
     lastRouteMode = routeMode;
     lastStatusLabel = statusLabel;
@@ -885,6 +902,7 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
     required RouteMode routeMode,
     List<String> selectedApps = const <String>[],
     String preferredNodeCode = '',
+    String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
   }) async {
     calls += 1;
@@ -5104,6 +5122,113 @@ void main() {
     expect(composer.controller?.text, isEmpty);
   });
 
+  testWidgets('support history failure exposes one compact retry',
+      (tester) async {
+    final supportTicketService = _FakeSupportTicketService(
+      const SupportTicketReceipt(
+        ticketId: 902,
+        statusTitle: 'Open',
+        messageCount: 1,
+      ),
+      failListCalls: const <int>{1},
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        supportTicketService: supportTicketService,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _openSupportChatFromProfile(tester);
+
+    expect(
+      find.byKey(const ValueKey('support-thread-lifecycle-offline')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('support-thread-refresh-action')),
+      findsOneWidget,
+    );
+    expect(find.text('Повторить'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey('support-thread-refresh-action')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(supportTicketService.listCalls, 2);
+    expect(
+      find.byKey(const ValueKey('support-thread-lifecycle-ready')),
+      findsOneWidget,
+    );
+    expect(find.text('Повторить'), findsNothing);
+  });
+
+  testWidgets(
+      'support send retry preserves the draft without duplicate bubbles',
+      (tester) async {
+    final supportTicketService = _FakeSupportTicketService(
+      const SupportTicketReceipt(
+        ticketId: 903,
+        statusTitle: 'Open',
+        messageCount: 1,
+      ),
+      failCreateCalls: const <int>{1},
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        supportTicketService: supportTicketService,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _openSupportChatFromProfile(tester);
+
+    const draft = 'Не открываются сайты';
+    final composer = find.byKey(const ValueKey('support-chat-composer'));
+    await tester.enterText(composer, draft);
+    await tester.tap(find.byKey(const ValueKey('support-chat-send')));
+    await tester.pumpAndSettle();
+
+    expect(supportTicketService.calls, 1);
+    expect(
+      find.byKey(const ValueKey('support-send-failure-notice')),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget<TextField>(composer).controller?.text,
+      draft,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('support-chat-message-list')),
+        matching: find.text(draft),
+      ),
+      findsNothing,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('support-send-retry')));
+    await tester.pumpAndSettle();
+
+    expect(supportTicketService.calls, 2);
+    expect(
+      find.byKey(const ValueKey('support-send-failure-notice')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('support-chat-message-list')),
+        matching: find.text(draft),
+      ),
+      findsOneWidget,
+    );
+    expect(tester.widget<TextField>(composer).controller?.text, isEmpty);
+  });
+
   testWidgets('support AI entry preserves its purpose at large text',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 640));
@@ -5146,7 +5271,24 @@ void main() {
             '**Что сделать:** Переподключитесь. Затем проверьте выбранную страну.\n\n'
             '**Если не поможет:** Напишите в поддержку.',
         shouldEscalate: false,
-        suggestedActions: <ClientSupportAssistantAction>[],
+        suggestedActions: <ClientSupportAssistantAction>[
+          ClientSupportAssistantAction(
+            key: 'retry_connect',
+            label: 'Reconnect',
+          ),
+          ClientSupportAssistantAction(
+            key: 'send_diagnostics',
+            label: 'Attach diagnostics',
+          ),
+          ClientSupportAssistantAction(
+            key: 'create_ticket',
+            label: 'Write to support',
+          ),
+          ClientSupportAssistantAction(
+            key: 'untrusted_action',
+            label: 'Run hidden command',
+          ),
+        ],
         source: ClientSupportAssistantSource.pokrovAssistant,
       ),
       assistantGate: assistantGate.future,
@@ -5186,7 +5328,7 @@ void main() {
     );
     expect(find.text('ИИ-помощник'), findsOneWidget);
     expect(
-      find.text('Ответы по подключению, доступу и бонусам'),
+      find.text('WARP, локации, маршруты и системные разрешения'),
       findsOneWidget,
     );
     expect(
@@ -5273,6 +5415,39 @@ void main() {
       'Помощник POKROV',
     );
     expect(find.text('ИИ'), findsWidgets);
+    expect(
+      find.byKey(const ValueKey('assistant-response-actions')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('assistant-action-retry_connect')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('assistant-action-send_diagnostics')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('assistant-action-create_ticket')),
+      findsNothing,
+    );
+    expect(find.text('Reconnect'), findsNothing);
+    expect(find.text('Run hidden command'), findsNothing);
+    expect(find.text('Нужен человек'), findsOneWidget);
+    expect(
+      tester.widget(find.byKey(const ValueKey('assistant-sheet-escalate'))),
+      isA<TextButton>(),
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey('assistant-action-retry_connect')),
+    );
+    await tester.pumpAndSettle();
+    expect(bootstrapper.assistantCalls, 2);
+    expect(
+      bootstrapper.lastAssistantMessage,
+      'Как безопасно переподключить POKROV?',
+    );
 
     await tester.tap(find.byKey(const ValueKey('assistant-sheet-escalate')));
     await tester.pumpAndSettle();
@@ -5286,6 +5461,191 @@ void main() {
       find.byKey(const ValueKey('support-chat-composer')),
     );
     expect(ticketComposer.focusNode?.hasFocus, isTrue);
+  });
+
+  testWidgets(
+      'support AI diagnostics action reuses the explicit attachment preview',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      assistantReply: const ClientSupportAssistantReply(
+        reply: 'Приложите безопасную диагностику.',
+        shouldEscalate: false,
+        suggestedActions: <ClientSupportAssistantAction>[
+          ClientSupportAssistantAction(
+            key: 'send_diagnostics',
+            label: 'Attach diagnostics',
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _openSupportChatFromProfile(tester);
+    await tester.tap(find.byKey(const ValueKey('support-ai-first-card')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('assistant-sheet-composer')),
+      'Подключение не работает',
+    );
+    await tester.tap(find.byKey(const ValueKey('assistant-sheet-send')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey('assistant-action-send_diagnostics')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('support-assistant-sheet')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('support-diagnostics-preview')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('support-diagnostics-attach-next')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey('support-diagnostics-attach-next')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('support-diagnostics-queued')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+      'support AI retry keeps one question bubble and returns concrete guidance',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      assistantReply: const ClientSupportAssistantReply(
+        reply: '**Коротко:** Сначала проверьте обычное подключение.\n\n'
+            '**Что сделать:** Выключите WARP, смените локацию, проверьте маршрут и системное разрешение VPN.',
+        shouldEscalate: false,
+        suggestedActions: <ClientSupportAssistantAction>[],
+        source: ClientSupportAssistantSource.pokrovAssistant,
+      ),
+      assistantFailureCalls: const <int>{1},
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _openSupportChatFromProfile(tester);
+    await tester.tap(find.byKey(const ValueKey('support-ai-first-card')));
+    await tester.pumpAndSettle();
+
+    const question = 'Почему WARP не открывает сайты?';
+    await tester.enterText(
+      find.byKey(const ValueKey('assistant-sheet-composer')),
+      question,
+    );
+    await tester.tap(find.byKey(const ValueKey('assistant-sheet-send')));
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.assistantCalls, 1);
+    expect(
+      find.byKey(const ValueKey('assistant-request-failure-notice')),
+      findsOneWidget,
+    );
+    expect(find.text(question), findsOneWidget);
+    expect(
+      find.text('Не нашёл ответа. Напишите в поддержку — ответит человек.'),
+      findsNothing,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('assistant-request-retry')));
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.assistantCalls, 2);
+    expect(bootstrapper.lastAssistantMessage, question);
+    expect(find.text(question), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('assistant-request-failure-notice')),
+      findsNothing,
+    );
+    expect(
+      find.text('Сначала проверьте обычное подключение.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Выключите WARP, смените локацию, проверьте маршрут и системное разрешение VPN.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Нужен человек'), findsOneWidget);
+    expect(find.text('Передать в поддержку'), findsNothing);
+    expect(
+      tester.widget(find.byKey(const ValueKey('assistant-sheet-escalate'))),
+      isA<TextButton>(),
+    );
+  });
+
+  testWidgets('support AI composer stays above the Android keyboard',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(360, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    addTearDown(tester.view.resetViewInsets);
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _openSupportChatFromProfile(tester);
+    await tester.tap(find.byKey(const ValueKey('support-ai-first-card')));
+    await tester.pumpAndSettle();
+
+    tester.view.viewInsets = FakeViewPadding(
+      bottom: 260 * tester.view.devicePixelRatio,
+    );
+    await tester.pumpAndSettle();
+
+    const visibleBottom = 380.0;
+    expect(
+      tester
+          .getRect(find.byKey(const ValueKey('support-assistant-sheet')))
+          .bottom,
+      lessThanOrEqualTo(visibleBottom + 0.1),
+    );
+    expect(
+      find.byKey(const ValueKey('assistant-sheet-composer')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('assistant-sheet-escalate')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets(
@@ -5453,6 +5813,11 @@ void main() {
     expect(
       find.byKey(const ValueKey('assistant-sheet-escalate')),
       findsOneWidget,
+    );
+    expect(find.text('Передать в поддержку'), findsOneWidget);
+    expect(
+      tester.widget(find.byKey(const ValueKey('assistant-sheet-escalate'))),
+      isA<FilledButton>(),
     );
     expect(supportTicketService.calls, 0);
   });
@@ -7548,6 +7913,258 @@ void main() {
     semantics.dispose();
   });
 
+  testWidgets('manual city scrolls every variant into the safe sheet viewport',
+      (tester) async {
+    // Reproduces the 408 logical-pixel Huawei width and the compact sheet body
+    // left above EMUI's bottom system area.
+    await tester.binding.setSurfaceSize(const Size(408, 350));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    _installReadyRuntimeBridgeMock();
+    const catalog = ClientLocationsCatalog(
+      auto: ClientLocationAuto(enabled: true, currentCode: 'de-fra'),
+      countries: <ClientLocationCountry>[
+        ClientLocationCountry(
+          code: 'de',
+          country: 'Germany',
+          cities: <ClientLocationCity>[
+            ClientLocationCity(
+              code: 'de-fra',
+              city: 'Frankfurt',
+              healthScore: 0.95,
+              latencyMs: 31,
+              premium: true,
+              load: 0.24,
+              variants: <ClientLocationVariant>[
+                ClientLocationVariant(
+                  id: 'direct',
+                  label: 'Обычный',
+                  description: 'Прямое подключение',
+                  available: true,
+                ),
+                ClientLocationVariant(
+                  id: 'mini',
+                  label: 'Белые списки',
+                  description: 'Для ограниченных сетей',
+                  available: true,
+                ),
+                ClientLocationVariant(
+                  id: 'mini-2',
+                  label: 'Белые списки тип 2',
+                  description: 'Для ограниченных сетей',
+                  available: true,
+                ),
+                ClientLocationVariant(
+                  id: 'mini-3',
+                  label: 'Белые списки тип 3',
+                  description: 'Для ограниченных сетей',
+                  available: true,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+      freePoolCode: '',
+      profileRevision: 'variant-rev',
+      transportProfile: 'ru_bridge_relay',
+      query: '',
+    );
+    final store = _FakeClientExperienceStore();
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'variant-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      locationsCatalog: catalog,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        clientExperienceStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-locations');
+    await tester.pumpAndSettle();
+
+    final cityRow = find.byKey(const ValueKey('locations-catalog-city-de-fra'));
+    await tester.ensureVisible(cityRow);
+    await tester.pumpAndSettle();
+    final cityPressSurface = find.ancestor(
+      of: cityRow,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget.runtimeType.toString() == 'PokrovSettingsRowPressSurface',
+      ),
+    );
+    expect(cityPressSurface, findsOneWidget);
+    final dynamic cityPressSurfaceWidget = tester.widget(cityPressSurface);
+    cityPressSurfaceWidget.onTap();
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('location-variant-sheet-title')),
+      findsOneWidget,
+    );
+    expect(find.text('Обычный'), findsOneWidget);
+    expect(find.text('Белые списки'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('location-variant-sheet-scroll')),
+      findsOneWidget,
+    );
+
+    final finalVariant = find.byKey(const ValueKey('location-variant-mini-3'));
+    await tester.ensureVisible(finalVariant);
+    await tester.pumpAndSettle();
+    expect(tester.getBottomRight(finalVariant).dy, lessThanOrEqualTo(350));
+
+    await tester.tap(finalVariant);
+    await tester.pumpAndSettle();
+    expect(bootstrapper.lastPreferredNodeCode, 'de-fra');
+    expect(bootstrapper.lastPreferredVariantId, 'mini-3');
+    expect(store.state.preferredVariantId, 'mini-3');
+  });
+
+  testWidgets('location refresh spinner stays out of the Auto card',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(360, 720));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final refreshGate = Completer<void>();
+    addTearDown(() {
+      if (!refreshGate.isCompleted) {
+        refreshGate.complete();
+      }
+    });
+    const catalog = ClientLocationsCatalog(
+      auto: ClientLocationAuto(enabled: true, currentCode: 'de-fra'),
+      countries: <ClientLocationCountry>[
+        ClientLocationCountry(
+          code: 'de',
+          country: 'Germany',
+          cities: <ClientLocationCity>[
+            ClientLocationCity(
+              code: 'de-fra',
+              city: 'Frankfurt',
+              healthScore: 0.95,
+              latencyMs: 31,
+              premium: true,
+              load: 0.24,
+            ),
+          ],
+        ),
+      ],
+      freePoolCode: '',
+      profileRevision: 'cached-rev',
+      transportProfile: 'reality',
+      query: '',
+    );
+    final store = _FakeClientExperienceStore(
+      PokrovClientExperienceState.fromJson(<String, dynamic>{
+        'cachedLocations': catalog.toJson(),
+        'locationsCachedAt': DateTime.now().toUtc().toIso8601String(),
+      }),
+    );
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'refresh-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      locationsCatalog: catalog,
+      locationsCatalogGate: refreshGate.future,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        clientExperienceStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('nav-locations')));
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final autoCard = find.byKey(const ValueKey('locations-auto-section'));
+    final refreshButton =
+        find.byKey(const ValueKey('locations-refresh-measurements'));
+    expect(
+      find.descendant(
+        of: autoCard,
+        matching: find.byType(CupertinoActivityIndicator),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: refreshButton,
+        matching: find.byType(CupertinoActivityIndicator),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Автоматически'), findsOneWidget);
+    refreshGate.complete();
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('WARP with a white-list variant fails before runtime staging',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final runtimeCalls = <String>[];
+    _installReadyRuntimeBridgeMock(calls: runtimeCalls);
+    final store = _FakeClientExperienceStore(
+      PokrovClientExperienceState.fromJson(<String, dynamic>{
+        'preferredNodeCode': 'de-fra',
+        'preferredVariantId': 'mini',
+        'firstRouteScopeConfirmed': true,
+        'firstRouteScopeMode': 'fullTunnel',
+      }),
+    );
+    const warpPolicy = WarpRuntimePolicy(
+      enabled: true,
+      runtimeReady: true,
+      state: 'active',
+      mode: 'warp_over_proxy',
+      source: 'client_local',
+      userConsented: true,
+      id: 'p1',
+    );
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'blocked-warp-variant',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+        warpPolicy: warpPolicy,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        clientExperienceStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('WARP пока нельзя использовать'),
+      findsWidgets,
+    );
+    expect(runtimeCalls, isNot(contains('runtimeEngine.stageManagedProfile')));
+    expect(runtimeCalls, isNot(contains('runtimeEngine.connect')));
+  });
+
   testWidgets('locations stay readable on a narrow Android viewport',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 640));
@@ -8129,8 +8746,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(store.state.favoriteNodeCodes, isEmpty);
 
+    final cachedCity = find.byKey(
+      const ValueKey('locations-catalog-city-nl-ams-01'),
+      skipOffstage: false,
+    );
+    await tester.ensureVisible(cachedCity);
+    await tester.pumpAndSettle();
     await tester.tap(
-      find.byKey(const ValueKey('locations-catalog-city-nl-ams-01')),
+      find.byKey(const ValueKey('locations-semantics-nl-ams-01')),
     );
     await tester.pumpAndSettle();
     expect(store.state.recentNodeCodes, <String>['nl-ams-01']);

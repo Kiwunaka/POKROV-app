@@ -104,9 +104,23 @@ Current blocking dependency:
 - a terminal Android selected-outbound egress failure also invalidates the staged cached runtime profile and blocks that cache from offline fallback; the next connect must obtain and stage a fresh authorized manifest, while ordinary offline fallback remains bounded before any dataplane failure
 - the Android host performs that selected-outbound fail-close as one synchronous profile-reuse invalidation: it clears the persisted Quick Settings profile and drops the staged pointer while preserving the safe failure snapshot, so a backgrounded Flutter shell cannot let the tile restart the rejected configuration
 - Android Quick Settings may reuse only a freshly staged managed profile carrying Flutter's completed first-connect route-scope confirmation; legacy path-only or unconfirmed persisted records fail closed into the app
+- the Android Quick Settings tile is a standard, state-neutral branded action rather than a toggle: every tap reconciles the live TUN before choosing start or stop, while the notification owns dynamic status/country/route/speed; this avoids false EMUI state because both `ACTIVE_TILE` and standard dynamic repaint were proven OEM-stale after app-owned transitions
 - the shared shell now refreshes Android runtime truth again on foreground resume, and keeps polling a host-owned pending-connect signal through Android notification/VPN consent even when no lifecycle resume reaches Flutter; the host bridge reconciles a live TUN back to `running` so a relaunch does not leave the button lane stuck on a stale staged snapshot as easily
 - the shared shell now treats `Connect with sing-box` as a one-tap lane on supported hosts: it auto-initializes the runtime, syncs a live app-first managed profile from the platform API, stages that profile, and then requests live connect instead of forcing manual `initialize -> stage -> connect`
 - Smart Connect promotes the selected direct outbound inside that authorized profile by canonical `outbound_tag` (with bounded compatibility mapping for older manifests); a second exact managed-profile fetch is a six-second fallback only when local identity cannot be proven, not part of the normal connect path
+- an explicit manual location variant is materialized from the exact managed
+  profile only: `direct` requires the verified canonical base outbound to be a
+  member of the final selector, while a bridge id requires one unique safe
+  `_meta.ru_bridge.endpoints` id/label mapping and its exact selector member.
+  The client never derives a bridge target from a host, key, detour, or fuzzy
+  label and fails closed when any proof is missing
+- device-local catalog cache and latency refresh preserve the safe variant
+  projection; the selected variant id persists beside the manual node code.
+  Automatic Smart Connect remains direct-selection-compatible and does not
+  inherit that manual preference
+- WARP with a manual bridge/`Белые списки` variant is gated before staging
+  until focused composition proof exists. There is no implicit fallback to
+  direct or to WARP-off for this user-selected combination
 - a confirmed selected-outbound egress failure in automatic mode quarantines the exact node for 15 minutes with an eight-node cap and at most two failover attempts; manual mode and unavailable probe evidence remain fail-closed without silent route changes
 - Android reconnect now always resyncs and restages the live managed profile before start, which keeps the staged runtime config aligned with the currently selected route mode instead of trusting whatever was left from an older session
 - the shared shell now keeps Android connect/disconnect transitions busy until the host actually settles, which prevents repeated taps from queueing duplicate service start or stop requests while VPN permission or teardown is still underway

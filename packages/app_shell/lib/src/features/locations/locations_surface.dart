@@ -13,6 +13,7 @@ class _LocationsSection extends StatefulWidget {
     required this.locationsCachedAt,
     required this.onRefreshLocationsCatalog,
     required this.preferredNodeCode,
+    required this.preferredVariantId,
     required this.nodePreferenceBusy,
     required this.onAutomaticLocationSelected,
     required this.onPreferredNodeSelected,
@@ -32,9 +33,11 @@ class _LocationsSection extends StatefulWidget {
   final String locationsCachedAt;
   final VoidCallback onRefreshLocationsCatalog;
   final String preferredNodeCode;
+  final String preferredVariantId;
   final bool nodePreferenceBusy;
   final VoidCallback onAutomaticLocationSelected;
-  final ValueChanged<String> onPreferredNodeSelected;
+  final void Function(String nodeCode, String variantId)
+      onPreferredNodeSelected;
   final List<String> favoriteNodeCodes;
   final List<String> recentNodeCodes;
   final ValueChanged<String> onFavoriteNodeToggle;
@@ -99,6 +102,44 @@ class _LocationsSectionState extends State<_LocationsSection> {
     return entries;
   }
 
+  Future<void> _selectCatalogEntry(_ClientLocationEntry entry) async {
+    final variants = entry.city.variants;
+    final available =
+        variants.where((variant) => variant.available).toList(growable: false);
+    if (variants.isEmpty) {
+      widget.onPreferredNodeSelected(entry.city.code, 'direct');
+      return;
+    }
+    if (available.length == 1 && available.single.id == 'direct') {
+      widget.onPreferredNodeSelected(entry.city.code, available.single.id);
+      return;
+    }
+    if (available.isEmpty) {
+      showPokrovSnack(
+        context,
+        'Для этой локации сейчас нет доступного варианта.',
+        tone: PokrovSnackTone.danger,
+      );
+      return;
+    }
+    final selected = await showModalBottomSheet<ClientLocationVariant>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => _LocationVariantSheet(
+        cityName: _locationCityDisplayName(entry.city, entry.country),
+        variants: variants,
+        selectedVariantId: entry.city.code.trim().toLowerCase() ==
+                widget.preferredNodeCode.trim().toLowerCase()
+            ? widget.preferredVariantId
+            : '',
+      ),
+    );
+    if (selected != null && mounted) {
+      widget.onPreferredNodeSelected(entry.city.code, selected.id);
+    }
+  }
+
   Widget _catalogSection({
     required String title,
     required List<_ClientLocationEntry> entries,
@@ -129,14 +170,14 @@ class _LocationsSectionState extends State<_LocationsSection> {
                       entry: entry,
                       selected: entry.city.code.trim().toLowerCase() ==
                           widget.preferredNodeCode.trim().toLowerCase(),
+                      selectedVariantId: widget.preferredVariantId,
                       favorite: widget.favoriteNodeCodes.contains(
                         entry.city.code.trim().toLowerCase(),
                       ),
                       disabled: widget.nodePreferenceBusy,
                       selectionEnabled:
                           _canSelectLocation && !widget.nodePreferenceBusy,
-                      onTap: () =>
-                          widget.onPreferredNodeSelected(entry.city.code),
+                      onTap: () => unawaited(_selectCatalogEntry(entry)),
                       onFavoriteToggle: () =>
                           widget.onFavoriteNodeToggle(entry.city.code),
                     ),
@@ -278,8 +319,6 @@ class _LocationsSectionState extends State<_LocationsSection> {
             _AutoLocationStatus.unavailable => 'Недоступно',
           },
           status: autoStatus,
-          busy: widget.nodePreferenceBusy ||
-              (widget.locationsCatalogBusy && hasList),
           onTap: autoStatus == _AutoLocationStatus.manual &&
                   !widget.nodePreferenceBusy
               ? widget.onAutomaticLocationSelected
@@ -363,8 +402,10 @@ class _LocationsSectionState extends State<_LocationsSection> {
                             disabled: widget.nodePreferenceBusy,
                             selectionEnabled: _canSelectLocation &&
                                 !widget.nodePreferenceBusy,
-                            onTap: () =>
-                                widget.onPreferredNodeSelected(node.code),
+                            onTap: () => widget.onPreferredNodeSelected(
+                              node.code,
+                              'direct',
+                            ),
                             onFavoriteToggle: () =>
                                 widget.onFavoriteNodeToggle(node.code),
                           ),
@@ -448,7 +489,6 @@ class _AutoLocationCard extends StatelessWidget {
     required this.subtitle,
     required this.value,
     required this.status,
-    required this.busy,
     required this.onTap,
   });
 
@@ -456,7 +496,6 @@ class _AutoLocationCard extends StatelessWidget {
   final String subtitle;
   final String value;
   final _AutoLocationStatus status;
-  final bool busy;
   final VoidCallback onTap;
 
   @override
@@ -538,16 +577,6 @@ class _AutoLocationCard extends StatelessWidget {
               ),
               if (!compact) ...[
                 const SizedBox(width: 12),
-                if (busy) ...[
-                  // Quiet refresh signal beside the status pill — indeterminate
-                  // Material bars read as foreign in this shell.
-                  const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CupertinoActivityIndicator(radius: 8),
-                  ),
-                  const SizedBox(width: 10),
-                ],
                 statusPill,
               ],
             ],
@@ -562,17 +591,7 @@ class _AutoLocationCard extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (busy) ...[
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CupertinoActivityIndicator(radius: 8),
-                    ),
-                    const SizedBox(width: 10),
-                  ],
-                  statusPill,
-                ],
+                children: [statusPill],
               ),
             ],
           );
@@ -582,6 +601,120 @@ class _AutoLocationCard extends StatelessWidget {
     return KeyedSubtree(
       key: const ValueKey('locations-auto-help-action'),
       child: PokrovSettingsRowPressSurface(onTap: onTap, child: content),
+    );
+  }
+}
+
+class _LocationVariantSheet extends StatelessWidget {
+  const _LocationVariantSheet({
+    required this.cityName,
+    required this.variants,
+    required this.selectedVariantId,
+  });
+
+  final String cityName;
+  final List<ClientLocationVariant> variants;
+  final String selectedVariantId;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    return SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        key: const ValueKey('location-variant-sheet-scroll'),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          0,
+          20,
+          20 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              cityName,
+              key: const ValueKey('location-variant-sheet-title'),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: p.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Как подключаться к этой локации',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: p.muted,
+                  ),
+            ),
+            const SizedBox(height: 14),
+            ...variants.map((variant) {
+              final selected = variant.id == selectedVariantId;
+              final row = Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            variant.label,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  color: p.ink,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          if (variant.description.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              variant.description,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(color: p.muted),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Icon(
+                      selected
+                          ? Icons.check_circle_rounded
+                          : variant.available
+                              ? Icons.circle_outlined
+                              : Icons.lock_outline_rounded,
+                      color: selected ? p.accent : p.muted,
+                    ),
+                  ],
+                ),
+              );
+              return Semantics(
+                key: ValueKey('location-variant-${variant.id}'),
+                button: true,
+                enabled: variant.available,
+                selected: selected,
+                label: variant.label,
+                value: variant.available ? 'Доступно' : 'Недоступно',
+                child: variant.available
+                    ? PokrovSettingsRowPressSurface(
+                        onTap: () => Navigator.of(context).pop(variant),
+                        child: row,
+                      )
+                    : Opacity(
+                        opacity: PokrovListRow.disabledOpacity,
+                        child: row,
+                      ),
+              );
+            }),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -597,6 +730,7 @@ class _ClientLocationCityRow extends StatelessWidget {
   const _ClientLocationCityRow({
     required this.entry,
     required this.selected,
+    required this.selectedVariantId,
     required this.favorite,
     required this.disabled,
     required this.selectionEnabled,
@@ -606,6 +740,7 @@ class _ClientLocationCityRow extends StatelessWidget {
 
   final _ClientLocationEntry entry;
   final bool selected;
+  final String selectedVariantId;
   final bool favorite;
   final bool disabled;
   final bool selectionEnabled;
@@ -639,6 +774,13 @@ class _ClientLocationCityRow extends StatelessWidget {
       countryTitle,
       if (quality != null) quality,
       if (!city.premium) 'Базовый',
+      if (selected)
+        ...city.variants
+            .where((variant) => variant.id == selectedVariantId)
+            .map((variant) => variant.label)
+            .take(1)
+      else if (city.variants.where((variant) => variant.available).length > 1)
+        '${city.variants.where((variant) => variant.available).length} варианта',
     ].where((item) => item.trim().isNotEmpty).join(' · ');
     final content = Padding(
       key: ValueKey('locations-catalog-city-${city.code}'),

@@ -39,6 +39,20 @@ void main() {
               premium: true,
               load: 0.31,
               measuredAt: '2026-07-23T10:15:00Z',
+              variants: <ClientLocationVariant>[
+                ClientLocationVariant(
+                  id: 'direct',
+                  label: 'Обычный',
+                  description: 'Прямое подключение',
+                  available: true,
+                ),
+                ClientLocationVariant(
+                  id: 'mini',
+                  label: 'Белые списки',
+                  description: 'Для ограниченных сетей',
+                  available: true,
+                ),
+              ],
             ),
           ],
         ),
@@ -83,6 +97,7 @@ void main() {
       cachedNotifications: inbox,
       notificationsCachedAt: '2026-07-23T10:20:01Z',
       preferredNodeCode: 'nl-ams-01',
+      preferredVariantId: 'mini',
       automaticNodeQuarantineUntil: const <String, String>{
         'de-fra-01': '2026-07-23T10:35:00Z',
       },
@@ -109,6 +124,7 @@ void main() {
     expect(restored.favoriteNodeCodes, <String>['nl-ams-01']);
     expect(restored.recentNodeCodes, <String>['nl-ams-01']);
     expect(restored.preferredNodeCode, 'nl-ams-01');
+    expect(restored.preferredVariantId, 'mini');
     expect(
       restored.automaticNodeQuarantineUntil,
       <String, String>{'de-fra-01': '2026-07-23T10:35:00Z'},
@@ -122,6 +138,11 @@ void main() {
     expect(
       restored.cachedLocations!.countries.single.cities.single.measuredAt,
       '2026-07-23T10:15:00Z',
+    );
+    expect(
+      restored.cachedLocations!.countries.single.cities.single.variants
+          .map((variant) => variant.id),
+      <String>['direct', 'mini'],
     );
     expect(restored.cachedNotifications!.unreadCount, 1);
     expect(
@@ -235,5 +256,53 @@ void main() {
     ]) {
       expect(normalizePokrovSelectedAppIdentifier(invalid), isNull);
     }
+  });
+
+  test('location variants parse tolerantly and keep only safe stable ids', () {
+    final catalog = ClientLocationsCatalog.fromJson(<String, dynamic>{
+      'countries': <Object?>[
+        <String, Object?>{
+          'code': 'de',
+          'country': 'Germany',
+          'cities': <Object?>[
+            <String, Object?>{
+              'code': 'de-ber',
+              'city': 'Berlin',
+              'variants': <Object?>[
+                <String, Object?>{
+                  'id': 'DIRECT',
+                  'label': 'Обычный',
+                  'description': 'Прямое подключение',
+                },
+                <String, Object?>{
+                  'id': 'ru_spb',
+                  'label': 'Белые списки',
+                  'description': 'Для ограниченных сетей',
+                  'available': false,
+                },
+                <String, Object?>{'id': '../raw', 'label': 'Сырой'},
+                <String, Object?>{'id': 'duplicate', 'label': ''},
+                'not-an-object',
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    final variants = catalog.countries.single.cities.single.variants;
+    expect(variants.map((variant) => variant.id), <String>['direct', 'ru_spb']);
+    expect(variants.first.available, isTrue);
+    expect(variants.last.available, isFalse);
+    expect(
+      ClientLocationsCatalog.fromJson(catalog.toJson())
+          .countries
+          .single
+          .cities
+          .single
+          .variants
+          .map((variant) => variant.label),
+      <String>['Обычный', 'Белые списки'],
+    );
   });
 }

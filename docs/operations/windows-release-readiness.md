@@ -38,21 +38,29 @@ Historical mapping note:
   its portable ZIP SHA-256 is
   `66D2081D1674C96F3E9F24EDE4CB3F0909397C49C3CD167FE00241141A97B7A8`.
   These hashes describe the published candidate only.
-- Current source is newer than that public candidate. A fresh local
-  `1.0.3-beta.2+11` build hides paid-only Telegram/reward actions on trial,
-  labels the trial reward gate explicitly, and keeps paid referral share/copy
-  actions available. Shared-shell widget tests pass and the rebuilt EXE was
-  visually checked at `1600x900`.
-- The source-newer local setup SHA-256 is
-  `800DD66313A2972609BA0572C0AF05EB991BF01A9B52FA2813492B119114BBC1`;
+- Current source is newer than that public candidate. The exact local
+  `1.0.4-beta.1+13` candidate was rebuilt from the current tree with pinned
+  POKROV Core `v1.0.3`, passed Windows analyze and the full workspace
+  Flutter/Android test lane, and was visually checked from the exact EXE at
+  `1600x900`. The DPI-aware retained capture shows the complete window; close
+  correctly hides the window while the tray process remains responsive.
+- The local `1.0.4-beta.1+13` setup SHA-256 is
+  `AD93F7F307552210BE4A8E6263382D4D221E993D8D743CEB6809D774DA007095`;
   its portable ZIP SHA-256 is
-  `717FD7AEDE508C1FA7F3FCD3F34816EABC1EC17173020A874A8A7567E822A74D`.
-  It deliberately shares the old build version while QA is still active and
-  must not overwrite the public `beta.2`; publication requires a new version.
+  `E25A3E7CAF900D8B8DFE14A4AE58DCDB40B3EBC61B2C631916E7F3BD42B28ADD`;
+  and its manifest SHA-256 is
+  `C08AECB5D88DA0F54D63F1F518AB3BBC6E77A134E3FD910AD517A5AD447FBC55`.
+  These hashes describe the local release candidate only until publication
+  and anonymous download verification complete.
+- The final shared-UI rebuild launched the exact EXE, remained responsive, and
+  handled the normal window-close request by hiding the window while keeping
+  the tray process alive and responsive. The test process was terminated after
+  the smoke; connected tray-exit/TUN teardown remains a separate manual gate.
 - The rebuilt setup remains `NotSigned`. The accepted outside-store beta risk
   does not turn that result into trusted signing or SmartScreen reputation.
 - Retained visual evidence is under
-  `E:/POKROV-ops-evidence/2026-08-13-goal-continuation/windows-app-audit/`.
+  `E:/POKROV-ops-evidence/2026-08-13-goal-continuation/windows-app-audit/`,
+  including `1.0.4-final-home.png`.
 
 ## Local Verification Commands
 

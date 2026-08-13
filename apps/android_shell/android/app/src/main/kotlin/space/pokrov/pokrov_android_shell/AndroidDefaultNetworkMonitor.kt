@@ -15,6 +15,24 @@ import java.net.NetworkInterface
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+internal enum class DefaultNetworkRefreshAction {
+    RESOLVE_INTERFACE,
+    REPUBLISH_CAPABILITIES,
+    NONE,
+}
+
+internal fun resolveDefaultNetworkRefreshAction(
+    networkChanged: Boolean,
+    capabilitiesChanged: Boolean,
+    interfaceReady: Boolean,
+    resolutionPending: Boolean,
+): DefaultNetworkRefreshAction = when {
+    networkChanged -> DefaultNetworkRefreshAction.RESOLVE_INTERFACE
+    !interfaceReady && !resolutionPending -> DefaultNetworkRefreshAction.RESOLVE_INTERFACE
+    capabilitiesChanged && interfaceReady -> DefaultNetworkRefreshAction.REPUBLISH_CAPABILITIES
+    else -> DefaultNetworkRefreshAction.NONE
+}
+
 internal object AndroidDefaultNetworkMonitor {
     private val request = NetworkRequest.Builder().apply {
         addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
@@ -36,6 +54,12 @@ internal object AndroidDefaultNetworkMonitor {
     private val networkLock = Object()
     private var currentNetworkGeneration = 0L
     private var interfaceResolutionExecutor: ExecutorService? = null
+    private var interfaceListenerExecutor: ExecutorService? = null
+    private var currentNetworkIsExpensive: Boolean? = null
+    private var currentNetworkIsConstrained: Boolean? = null
+    private var resolvedInterfaceName: String? = null
+    private var resolvedInterfaceIndex: Int? = null
+    private var interfaceResolutionGeneration: Long? = null
 
     private val callback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
@@ -85,7 +109,22 @@ internal object AndroidDefaultNetworkMonitor {
         ensureStarted(context)
         val network = currentNetwork ?: activeNetwork()
         if (network != null) {
-            updateCurrentNetwork(network)
+            val cachedInterface = synchronized(networkLock) {
+                if (currentNetwork == network && resolvedInterfaceName != null && resolvedInterfaceIndex != null) {
+                    resolvedInterfaceName to resolvedInterfaceIndex
+                } else {
+                    null
+                }
+            }
+            if (cachedInterface != null) {
+                publishInterfaceState(
+                    interfaceName = cachedInterface.first,
+                    interfaceIndex = cachedInterface.second,
+                    dnsReady = true,
+                )
+            } else {
+                updateCurrentNetwork(network)
+            }
         } else {
             publishInterfaceState(
                 interfaceName = null,
@@ -176,12 +215,15 @@ internal object AndroidDefaultNetworkMonitor {
             )
             return
         }
-        publishInterfaceStateIfCurrent(
+        synchronized(networkLock) {
+            if (currentNetwork == network && currentNetworkGeneration == generation) {
+                interfaceResolutionGeneration = generation
+            }
+        }
+        markInterfaceResolvingIfCurrent(
             network = network,
             generation = generation,
             interfaceName = interfaceName,
-            interfaceIndex = null,
-            dnsReady = false,
         )
         submitInterfaceResolution {
             resolveAndPublishInterface(network, generation, interfaceName)
@@ -216,8 +258,50 @@ internal object AndroidDefaultNetworkMonitor {
             }
             return
         }
-        val generation = selectCurrentNetwork(network)
-        notifyCurrentInterface(network, generation)
+        val isExpensive =
+            resolvedCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) == false
+        val isConstrained =
+            resolvedCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED) == false
+        val update = synchronized(networkLock) {
+            val networkChanged = currentNetwork != network
+            val capabilitiesChanged =
+                currentNetworkIsExpensive != isExpensive ||
+                    currentNetworkIsConstrained != isConstrained
+            if (networkChanged) {
+                currentNetwork = network
+                currentNetworkGeneration += 1
+                resolvedInterfaceName = null
+                resolvedInterfaceIndex = null
+                interfaceResolutionGeneration = null
+            }
+            currentNetworkIsExpensive = isExpensive
+            currentNetworkIsConstrained = isConstrained
+            DefaultNetworkUpdate(
+                generation = currentNetworkGeneration,
+                networkChanged = networkChanged,
+                capabilitiesChanged = capabilitiesChanged,
+                interfaceName = resolvedInterfaceName,
+                interfaceIndex = resolvedInterfaceIndex,
+                resolutionPending = interfaceResolutionGeneration == currentNetworkGeneration,
+            )
+        }
+        when (
+            resolveDefaultNetworkRefreshAction(
+                networkChanged = update.networkChanged,
+                capabilitiesChanged = update.capabilitiesChanged,
+                interfaceReady = update.interfaceName != null && update.interfaceIndex != null,
+                resolutionPending = update.resolutionPending,
+            )
+        ) {
+            DefaultNetworkRefreshAction.RESOLVE_INTERFACE ->
+                notifyCurrentInterface(network, update.generation)
+            DefaultNetworkRefreshAction.REPUBLISH_CAPABILITIES -> publishInterfaceState(
+                interfaceName = update.interfaceName,
+                interfaceIndex = update.interfaceIndex,
+                dnsReady = true,
+            )
+            DefaultNetworkRefreshAction.NONE -> Unit
+        }
         signalNetworkUpdate()
     }
 
@@ -272,13 +356,8 @@ internal object AndroidDefaultNetworkMonitor {
             interfaceIndex = null,
             dnsReady = false,
         )
-        shutdownInterfaceResolution()
+        shutdownNetworkExecutors()
         signalNetworkUpdate()
-    }
-
-    private fun selectCurrentNetwork(network: Network): Long = synchronized(networkLock) {
-        currentNetwork = network
-        ++currentNetworkGeneration
     }
 
     private fun clearCurrentNetworkIfMatches(network: Network): Boolean = synchronized(networkLock) {
@@ -287,6 +366,11 @@ internal object AndroidDefaultNetworkMonitor {
         } else {
             currentNetwork = null
             ++currentNetworkGeneration
+            currentNetworkIsExpensive = null
+            currentNetworkIsConstrained = null
+            resolvedInterfaceName = null
+            resolvedInterfaceIndex = null
+            interfaceResolutionGeneration = null
             true
         }
     }
@@ -295,6 +379,11 @@ internal object AndroidDefaultNetworkMonitor {
         synchronized(networkLock) {
             currentNetwork = null
             ++currentNetworkGeneration
+            currentNetworkIsExpensive = null
+            currentNetworkIsConstrained = null
+            resolvedInterfaceName = null
+            resolvedInterfaceIndex = null
+            interfaceResolutionGeneration = null
         }
     }
 
@@ -310,6 +399,17 @@ internal object AndroidDefaultNetworkMonitor {
         synchronized(networkLock) {
             activeGeneration = currentNetworkGeneration
             isCurrentNetwork = currentNetwork == network
+            if (
+                isCurrentNetwork &&
+                generation == activeGeneration &&
+                dnsReady &&
+                interfaceName != null &&
+                interfaceIndex != null
+            ) {
+                resolvedInterfaceName = interfaceName
+                resolvedInterfaceIndex = interfaceIndex
+                interfaceResolutionGeneration = null
+            }
         }
         if (
             AndroidPlatformRuntimeBridge.canPublishNetworkResolution(
@@ -319,6 +419,23 @@ internal object AndroidDefaultNetworkMonitor {
             )
         ) {
             publishInterfaceState(interfaceName, interfaceIndex, dnsReady)
+        }
+    }
+
+    private fun markInterfaceResolvingIfCurrent(
+        network: Network,
+        generation: Long,
+        interfaceName: String,
+    ) {
+        val isCurrent = synchronized(networkLock) {
+            currentNetwork == network && currentNetworkGeneration == generation
+        }
+        if (isCurrent) {
+            AndroidRuntimeState.updateDefaultNetwork(
+                interfaceName = interfaceName,
+                interfaceIndex = null,
+                dnsReady = false,
+            )
         }
     }
 
@@ -332,6 +449,11 @@ internal object AndroidDefaultNetworkMonitor {
         }
         if (interfaceIndex == null) {
             Log.w(LOG_TAG, "Resolved default uplink, but interface index lookup did not settle.")
+            synchronized(networkLock) {
+                if (currentNetwork == network && currentNetworkGeneration == generation) {
+                    interfaceResolutionGeneration = null
+                }
+            }
             publishInterfaceStateIfCurrent(
                 network = network,
                 generation = generation,
@@ -360,11 +482,23 @@ internal object AndroidDefaultNetworkMonitor {
         runCatching { executor.execute(task) }
     }
 
-    private fun shutdownInterfaceResolution() {
+    private fun submitInterfaceListenerUpdate(task: () -> Unit) {
         val executor = synchronized(networkLock) {
-            interfaceResolutionExecutor.also { interfaceResolutionExecutor = null }
+            interfaceListenerExecutor ?: Executors.newSingleThreadExecutor().also {
+                interfaceListenerExecutor = it
+            }
         }
-        executor?.shutdownNow()
+        runCatching { executor.execute(task) }
+    }
+
+    private fun shutdownNetworkExecutors() {
+        val executors = synchronized(networkLock) {
+            listOfNotNull(interfaceResolutionExecutor, interfaceListenerExecutor).also {
+                interfaceResolutionExecutor = null
+                interfaceListenerExecutor = null
+            }
+        }
+        executors.forEach { it.shutdownNow() }
     }
 
     private fun publishInterfaceState(
@@ -372,20 +506,35 @@ internal object AndroidDefaultNetworkMonitor {
         interfaceIndex: Int?,
         dnsReady: Boolean,
     ) {
-        val capabilities = currentNetwork?.let { network ->
-            appContext?.let(::connectivity)?.getNetworkCapabilities(network)
+        val targetListener: InterfaceUpdateListener?
+        val isExpensive: Boolean
+        val isConstrained: Boolean
+        synchronized(networkLock) {
+            targetListener = listener
+            isExpensive = currentNetworkIsExpensive ?: false
+            isConstrained = currentNetworkIsConstrained ?: false
         }
-        listener?.updateDefaultInterface(
-            interfaceName.orEmpty(),
-            interfaceIndex ?: -1,
-            capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) == false,
-            capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED) == false,
-        )
         AndroidRuntimeState.updateDefaultNetwork(
             interfaceName = interfaceName,
             interfaceIndex = interfaceIndex,
             dnsReady = dnsReady,
         )
+        if (targetListener != null) {
+            submitInterfaceListenerUpdate {
+                if (listener === targetListener) {
+                    runCatching {
+                        targetListener.updateDefaultInterface(
+                            interfaceName.orEmpty(),
+                            interfaceIndex ?: -1,
+                            isExpensive,
+                            isConstrained,
+                        )
+                    }.onFailure { error ->
+                        Log.e(LOG_TAG, "Failed to publish the default uplink interface.", error)
+                    }
+                }
+            }
+        }
     }
 
     private fun waitForNetworkUpdate(waitMillis: Long) {
@@ -407,6 +556,15 @@ internal object AndroidDefaultNetworkMonitor {
             networkLock.notifyAll()
         }
     }
+
+    private data class DefaultNetworkUpdate(
+        val generation: Long,
+        val networkChanged: Boolean,
+        val capabilitiesChanged: Boolean,
+        val interfaceName: String?,
+        val interfaceIndex: Int?,
+        val resolutionPending: Boolean,
+    )
 
     private const val LOG_TAG = "PokrovDefaultNet"
 }

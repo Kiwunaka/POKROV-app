@@ -4440,6 +4440,8 @@ void main() {
       required bool duplicateRuProxy,
       required bool ambiguousFinalSelector,
       required bool preferredRouteVariant,
+      required bool directUnlisted,
+      required bool nestedRouteVariant,
     }) =>
         <String, Object?>{
           'provisioning': <String, Object?>{'status': 'ready', 'sync_ok': true},
@@ -4450,6 +4452,13 @@ void main() {
             'shortlist': <Object?>[
               <String, Object?>{
                 'code': 'ru-spb',
+              },
+              <String, Object?>{
+                'code': 'ru-nested',
+                'probe': <String, Object?>{
+                  'host': 'ru-nested.example.test',
+                  'port': 443,
+                },
               },
               <String, Object?>{
                 'code': 'de-ber',
@@ -4479,24 +4488,53 @@ void main() {
                   'port': 443,
                 },
               },
+              <String, Object?>{'code': 'ru-unlisted'},
             ],
           },
           'config_payload': <String, Object?>{
+            if (preferredRouteVariant)
+              '_meta': <String, Object?>{
+                'ru_bridge': <String, Object?>{
+                  'enabled': true,
+                  'endpoints': <Object?>[
+                    <String, Object?>{
+                      'id': 'mini',
+                      'label': 'Белые списки',
+                    },
+                    <String, Object?>{
+                      'id': 'orphan',
+                      'label': 'Белые списки тип 2',
+                    },
+                  ],
+                },
+              },
             'route': <String, Object?>{'final': 'proxy'},
             'outbounds': <Object?>[
               <String, Object?>{
                 'type': 'selector',
                 'tag': 'proxy',
-                'outbounds': <String>[
-                  'de-ber',
-                  if (preferredRouteVariant)
-                    '🇷🇺 Россия Spb · Белые списки'
-                  else
-                    '🇷🇺 Россия Spb',
-                  'bridge-ru-spb',
-                ],
-                'default': 'de-ber',
+                'outbounds': nestedRouteVariant
+                    ? <String>['🇷🇺 Россия Nested']
+                    : <String>[
+                        'de-ber',
+                        '🇷🇺 Россия Spb',
+                        if (!directUnlisted) 'ru-unlisted',
+                        if (preferredRouteVariant)
+                          '🇷🇺 Россия Spb · Белые списки',
+                        'bridge-ru-spb',
+                      ],
+                'default': nestedRouteVariant ? '🇷🇺 Россия Nested' : 'de-ber',
               },
+              if (nestedRouteVariant)
+                <String, Object?>{
+                  'type': 'selector',
+                  'tag': '🇷🇺 Россия Nested',
+                  'outbounds': <String>[
+                    '🇷🇺 Россия Nested · Обычный',
+                    '🇷🇺 Россия Nested · Белые списки',
+                  ],
+                  'default': '🇷🇺 Россия Nested · Обычный',
+                },
               if (ambiguousFinalSelector)
                 <String, Object?>{
                   'type': 'urltest',
@@ -4515,10 +4553,39 @@ void main() {
                 'server': 'ru-spb.example.test',
                 'server_port': 443,
               },
+              <String, Object?>{
+                'type': 'vless',
+                'tag': 'ru-unlisted',
+                'server': 'ru-unlisted.example.test',
+                'server_port': 443,
+              },
               if (preferredRouteVariant)
                 <String, Object?>{
                   'type': 'vless',
                   'tag': '🇷🇺 Россия Spb · Белые списки',
+                  'server': 'ru-spb.example.test',
+                  'server_port': 443,
+                  'detour': 'bridge-ru-spb',
+                },
+              if (nestedRouteVariant)
+                <String, Object?>{
+                  'type': 'vless',
+                  'tag': '🇷🇺 Россия Nested · Обычный',
+                  'server': 'ru-nested.example.test',
+                  'server_port': 443,
+                },
+              if (nestedRouteVariant)
+                <String, Object?>{
+                  'type': 'vless',
+                  'tag': '🇷🇺 Россия Nested · Белые списки',
+                  'server': 'ru-nested.example.test',
+                  'server_port': 443,
+                  'detour': 'bridge-ru-spb',
+                },
+              if (preferredRouteVariant)
+                <String, Object?>{
+                  'type': 'vless',
+                  'tag': '🇷🇺 Россия Spb · Белые списки тип 2',
                   'server': 'ru-spb.example.test',
                   'server_port': 443,
                   'detour': 'bridge-ru-spb',
@@ -4585,7 +4652,10 @@ void main() {
                 managedResponse(
                   duplicateRuProxy: code == 'ru-duplicate',
                   ambiguousFinalSelector: code == 'selector-ambiguous',
-                  preferredRouteVariant: code == 'ru-spb',
+                  preferredRouteVariant:
+                      code == 'ru-spb' || code == 'ru-nested',
+                  directUnlisted: code == 'ru-unlisted',
+                  nestedRouteVariant: code == 'ru-nested',
                 ),
               ),
             );
@@ -4665,6 +4735,100 @@ void main() {
     expect(
       (preferredSelector['outbounds'] as List).first,
       '🇷🇺 Россия Spb',
+    );
+
+    final bridgePreferred = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.fullTunnel,
+      preferredNodeCode: 'ru-spb',
+      preferredVariantId: 'mini',
+    );
+    final bridgeSelector = ((jsonDecode(bridgePreferred.configPayload)
+            as Map<String, dynamic>)['outbounds'] as List)
+        .cast<Map>()
+        .singleWhere((outbound) => outbound['tag'] == 'proxy');
+    expect(bridgeSelector['default'], '🇷🇺 Россия Spb · Белые списки');
+    expect(
+      (bridgeSelector['outbounds'] as List).first,
+      '🇷🇺 Россия Spb · Белые списки',
+    );
+
+    await expectLater(
+      () => bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.android,
+        routeMode: RouteMode.fullTunnel,
+        preferredNodeCode: 'ru-spb',
+        preferredVariantId: 'unknown-bridge',
+      ),
+      throwsA(
+        isA<BootstrapFailure>().having(
+          (error) => error.message,
+          'message',
+          'Выбранный вариант подключения недоступен.',
+        ),
+      ),
+    );
+    await expectLater(
+      () => bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.android,
+        routeMode: RouteMode.fullTunnel,
+        preferredNodeCode: 'ru-spb',
+        preferredVariantId: 'orphan',
+      ),
+      throwsA(isA<BootstrapFailure>()),
+    );
+    final insertedDirect = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.fullTunnel,
+      preferredNodeCode: 'ru-unlisted',
+      preferredVariantId: 'direct',
+    );
+    final insertedDirectSelector = ((jsonDecode(insertedDirect.configPayload)
+            as Map<String, dynamic>)['outbounds'] as List)
+        .cast<Map>()
+        .singleWhere((outbound) => outbound['tag'] == 'proxy');
+    expect(insertedDirectSelector['default'], 'ru-unlisted');
+    expect((insertedDirectSelector['outbounds'] as List).first, 'ru-unlisted');
+
+    final nestedDirect = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.fullTunnel,
+      preferredNodeCode: 'ru-nested',
+      preferredVariantId: 'direct',
+    );
+    final nestedDirectOutbounds = (jsonDecode(nestedDirect.configPayload)
+        as Map<String, dynamic>)['outbounds'] as List;
+    final nestedDirectFinal = nestedDirectOutbounds
+        .cast<Map>()
+        .singleWhere((outbound) => outbound['tag'] == 'proxy');
+    final nestedDirectCountry = nestedDirectOutbounds
+        .cast<Map>()
+        .singleWhere((outbound) => outbound['tag'] == '🇷🇺 Россия Nested');
+    expect(nestedDirectFinal['default'], '🇷🇺 Россия Nested');
+    expect(nestedDirectCountry['default'], '🇷🇺 Россия Nested · Обычный');
+
+    final nestedBridge = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.fullTunnel,
+      preferredNodeCode: 'ru-nested',
+      preferredVariantId: 'mini',
+    );
+    final nestedBridgeOutbounds = (jsonDecode(nestedBridge.configPayload)
+        as Map<String, dynamic>)['outbounds'] as List;
+    final nestedBridgeFinal = nestedBridgeOutbounds
+        .cast<Map>()
+        .singleWhere((outbound) => outbound['tag'] == 'proxy');
+    final nestedBridgeCountry = nestedBridgeOutbounds
+        .cast<Map>()
+        .singleWhere((outbound) => outbound['tag'] == '🇷🇺 Россия Nested');
+    expect(nestedBridgeFinal['default'], '🇷🇺 Россия Nested');
+    expect(
+      nestedBridgeCountry['default'],
+      '🇷🇺 Россия Nested · Белые списки',
+    );
+    expect(
+      (nestedBridgeCountry['outbounds'] as List).first,
+      '🇷🇺 Россия Nested · Белые списки',
     );
 
     await expectLater(

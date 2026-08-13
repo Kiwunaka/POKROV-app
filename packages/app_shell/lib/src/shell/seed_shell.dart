@@ -569,9 +569,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   SmartConnectProfile? _smartConnectProfile;
   ClientLocationsCatalog? _locationsCatalog;
   String _preferredNodeCode = '';
+  String _preferredVariantId = 'direct';
   String _resolvedProfileNodeCode = '';
+  String _resolvedProfileVariantId = 'direct';
   String _stagedNodeCode = '';
+  String _stagedVariantId = 'direct';
   String _activeNodeCode = '';
+  String _activeVariantId = 'direct';
   final Map<String, DateTime> _automaticNodeQuarantineUntil =
       <String, DateTime>{};
   int _automaticFailoverAttempts = 0;
@@ -664,6 +668,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return;
     }
     final preferredCode = restored.preferredNodeCode.trim().toLowerCase();
+    final preferredVariantId = preferredCode.isEmpty
+        ? 'direct'
+        : normalizeClientLocationVariantId(restored.preferredVariantId) ??
+            'direct';
     final now = DateTime.now().toUtc();
     final maximumTrustedExpiry = now.add(const Duration(hours: 1));
     final restoredQuarantine = <String, DateTime>{};
@@ -695,6 +703,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         .toList(growable: false);
     final effectiveState = restored.copyWith(
       preferredNodeCode: preferredCode,
+      preferredVariantId: preferredVariantId,
       automaticNodeQuarantineUntil: <String, String>{
         for (final entry in restoredQuarantine.entries)
           entry.key: entry.value.toIso8601String(),
@@ -707,6 +716,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         ..clear()
         ..addAll(restoredSelectedAppIds);
       _preferredNodeCode = preferredCode;
+      _preferredVariantId = preferredVariantId;
       _automaticNodeQuarantineUntil
         ..clear()
         ..addAll(restoredQuarantine);
@@ -866,18 +876,51 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  Future<void> _setPreferredLocation(String nodeCode) async {
+  Future<void> _setPreferredLocation(
+    String nodeCode,
+    String variantId,
+  ) async {
     final smartConnect = _smartConnectProfile;
     final normalized = nodeCode.trim().toLowerCase();
-    final knownCatalogCode = _locationsCatalog?.countries.any(
-          (country) => country.cities.any(
-            (city) => city.code.trim().toLowerCase() == normalized,
-          ),
-        ) ??
-        false;
+    final normalizedVariant = normalizeClientLocationVariantId(variantId);
+    ClientLocationCity? catalogCity;
+    for (final country
+        in _locationsCatalog?.countries ?? const <ClientLocationCountry>[]) {
+      for (final city in country.cities) {
+        if (city.code.trim().toLowerCase() == normalized) {
+          catalogCity = city;
+          break;
+        }
+      }
+      if (catalogCity != null) {
+        break;
+      }
+    }
+    final knownCatalogCode = catalogCity != null;
+    final catalogConfirmsVariant = catalogCity == null
+        ? normalizedVariant == 'direct'
+        : catalogCity.variants.isEmpty
+            ? normalizedVariant == 'direct'
+            : catalogCity.variants.any(
+                (variant) =>
+                    variant.id == normalizedVariant && variant.available,
+              );
     if (normalized.isEmpty ||
+        normalizedVariant == null ||
+        !catalogConfirmsVariant ||
         _nodePreferenceBusy ||
         (smartConnect == null && !knownCatalogCode)) {
+      return;
+    }
+    if (normalizedVariant != 'direct' &&
+        _warpRuntimeConsent &&
+        _managedWarpPolicy.canOfferRuntime) {
+      const message =
+          'WARP пока нельзя использовать с вариантом «Белые списки». Выключите WARP или выберите «Обычный».';
+      setState(() {
+        _runtimeHeadline = message;
+      });
+      showPokrovSnack(context, message, tone: PokrovSnackTone.danger);
       return;
     }
 
@@ -885,7 +928,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _cancelAutomaticFailover();
     final wasConnected = _runtimeSnapshot?.phase == RuntimePhase.running;
     final previousPreferredNodeCode = _preferredNodeCode;
+    final previousPreferredVariantId = _preferredVariantId;
     final previousStagedNodeCode = _stagedNodeCode;
+    final previousStagedVariantId = _stagedVariantId;
     final previousManagedProfileDirty = _managedProfileDirty;
     final previousHeadline = _runtimeHeadline;
     final experienceAtRequest = _clientExperience;
@@ -912,13 +957,17 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!mounted) {
         return;
       }
+      final confirmedVariant =
+          confirmed == normalized ? normalizedVariant : 'direct';
       final recentCodes = <String>[
         confirmed,
         ..._clientExperience.recentNodeCodes.where((item) => item != confirmed),
       ].take(12).toList(growable: false);
       setState(() {
         _preferredNodeCode = confirmed;
+        _preferredVariantId = confirmedVariant;
         _stagedNodeCode = '';
+        _stagedVariantId = 'direct';
         _managedProfileDirty = true;
         _cachedProfileFallbackGate.markUserChange();
         _runtimeHeadline = wasConnected
@@ -927,6 +976,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _clientExperience = _clientExperience.copyWith(
           recentNodeCodes: recentCodes,
           preferredNodeCode: confirmed,
+          preferredVariantId: confirmedVariant,
         );
       });
       _invalidateQuickSettingsProfile();
@@ -951,7 +1001,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _preferredNodeCode = identical(_clientExperience, experienceAtRequest)
             ? previousPreferredNodeCode
             : _clientExperience.preferredNodeCode;
+        _preferredVariantId = identical(_clientExperience, experienceAtRequest)
+            ? previousPreferredVariantId
+            : _clientExperience.preferredVariantId;
         _stagedNodeCode = previousStagedNodeCode;
+        _stagedVariantId = previousStagedVariantId;
         _managedProfileDirty = previousManagedProfileDirty;
         _runtimeHeadline = previousHeadline;
       });
@@ -964,7 +1018,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _preferredNodeCode = identical(_clientExperience, experienceAtRequest)
             ? previousPreferredNodeCode
             : _clientExperience.preferredNodeCode;
+        _preferredVariantId = identical(_clientExperience, experienceAtRequest)
+            ? previousPreferredVariantId
+            : _clientExperience.preferredVariantId;
         _stagedNodeCode = previousStagedNodeCode;
+        _stagedVariantId = previousStagedVariantId;
         _managedProfileDirty = previousManagedProfileDirty;
         _runtimeHeadline = previousHeadline;
       });
@@ -1059,13 +1117,18 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final wasConnected = _runtimeSnapshot?.phase == RuntimePhase.running;
     setState(() {
       _preferredNodeCode = '';
+      _preferredVariantId = 'direct';
       _stagedNodeCode = '';
+      _stagedVariantId = 'direct';
       _managedProfileDirty = true;
       _cachedProfileFallbackGate.markUserChange();
       _runtimeHeadline = wasConnected
           ? 'Автоматический выбор включен. Переподключите POKROV, чтобы применить.'
           : 'Автоматический выбор включен. Подключите POKROV, чтобы применить.';
-      _clientExperience = _clientExperience.copyWith(preferredNodeCode: '');
+      _clientExperience = _clientExperience.copyWith(
+        preferredNodeCode: '',
+        preferredVariantId: 'direct',
+      );
     });
     _invalidateQuickSettingsProfile();
     _queueClientExperienceWrite();
@@ -2546,6 +2609,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _managedProfileDirty = false;
       _stagedProfileUsesWarp = managedProfile.warpPolicy.canEnableRuntime;
       _stagedNodeCode = _resolvedProfileNodeCode;
+      _stagedVariantId = _resolvedProfileVariantId;
       _cachedProfileFallbackGate.markFreshProfileStaged();
       current = await _withRuntimeActionTimeout(
         'repairConnect',
@@ -2866,6 +2930,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           ? _selectedAppIds
           : const <String>[],
       preferredNodeCode: _preferredNodeCode,
+      preferredVariantId:
+          _preferredNodeCode.trim().isEmpty ? 'direct' : _preferredVariantId,
       excludedNodeCodes: _preferredNodeCode.trim().isEmpty
           ? _activeAutomaticNodeExclusions()
           : const <String>{},
@@ -2895,6 +2961,17 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         warpConsentStillValid &&
         (explicitRetryRequested ||
             _warpRuntimeAttemptAllowed(displayWarpPolicy));
+    final requestedPreferred = _preferredNodeCode.trim().toLowerCase();
+    final requestedVariant = requestedPreferred.isEmpty
+        ? 'direct'
+        : normalizeClientLocationVariantId(_preferredVariantId) ?? 'direct';
+    if (requestedPreferred.isNotEmpty &&
+        requestedVariant != 'direct' &&
+        warpRuntimeAttemptEnabled) {
+      throw const BootstrapFailure(
+        'WARP пока нельзя использовать с вариантом «Белые списки». Выключите WARP или выберите «Обычный».',
+      );
+    }
     final runtimePayload = payload.copyWith(
       // A server-reported fallback/error is a circuit breaker, not a cosmetic
       // status. Keep the person's consent visible, but stage the ordinary VPN
@@ -2910,7 +2987,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _clientExperience.routingPreferences,
     );
     if (mounted) {
-      final requestedPreferred = _preferredNodeCode.trim().toLowerCase();
       final resolvedAutomatic = payload.resolvedNodeCode.trim().toLowerCase();
       // Server stickiness is an automatic routing hint, not proof of a manual
       // choice or of the profile actually staged on this device. Only the
@@ -2927,6 +3003,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _resolvedProfileNodeCode = requestedPreferred.isNotEmpty
             ? requestedPreferred
             : resolvedAutomatic;
+        _resolvedProfileVariantId =
+            requestedPreferred.isNotEmpty ? requestedVariant : 'direct';
         // Consumer copy: no infra hostnames on the first layer.
         _runtimeHeadline = 'Настройки обновлены.';
       });
@@ -3516,6 +3594,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             _managedProfileDirty = false;
             _stagedProfileUsesWarp = managedProfile.warpPolicy.canEnableRuntime;
             _stagedNodeCode = _resolvedProfileNodeCode;
+            _stagedVariantId = _resolvedProfileVariantId;
             _cachedProfileFallbackGate.markFreshProfileStaged();
           });
         } on TimeoutException {
@@ -3817,6 +3896,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           if (mustRefreshProfile) {
             _managedProfileDirty = true;
             _stagedNodeCode = '';
+            _stagedVariantId = 'direct';
           }
           _runtimeHeadline = shouldRetryAutomatically
               ? 'Локация не ответила. Пробуем другую…'
@@ -3923,6 +4003,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _managedProfileDirty = !baselineReady;
           _stagedProfileUsesWarp = false;
           _stagedNodeCode = baselineReady ? _resolvedProfileNodeCode : '';
+          _stagedVariantId =
+              baselineReady ? _resolvedProfileVariantId : 'direct';
           _managedWarpPolicy = _managedWarpPolicy.copyWith(
             state: 'fallback',
             userConsented: true,
@@ -3975,6 +4057,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       } else if (_mustRefreshProfileAfterRuntimeFailure(current)) {
         _managedProfileDirty = true;
         _stagedNodeCode = '';
+        _stagedVariantId = 'direct';
         _cachedProfileFallbackGate.markRuntimeProfileInvalid();
         _invalidateQuickSettingsProfile();
       }
@@ -4248,13 +4331,17 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   void _promoteStagedLocationAfterFreshConnect() {
     final staged = _stagedNodeCode.trim().toLowerCase();
+    final stagedVariant =
+        normalizeClientLocationVariantId(_stagedVariantId) ?? 'direct';
     // A profile staged for a preceding failed connect is still fresh. Promote
     // it only once its later reconnect is confirmed running.
-    if (staged.isEmpty || staged == _activeNodeCode) {
+    if (staged.isEmpty ||
+        (staged == _activeNodeCode && stagedVariant == _activeVariantId)) {
       return;
     }
     setState(() {
       _activeNodeCode = staged;
+      _activeVariantId = stagedVariant;
     });
   }
 
@@ -4265,6 +4352,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         .trim()
         .toLowerCase();
     final activeCode = _activeNodeCode.trim().toLowerCase();
+    final preferredVariant =
+        normalizeClientLocationVariantId(_preferredVariantId) ?? 'direct';
+    final activeVariant =
+        normalizeClientLocationVariantId(_activeVariantId) ?? 'direct';
     if (_runtimeSnapshot?.phase == RuntimePhase.running) {
       if (widget.appContext.hostPlatform == HostPlatform.android &&
           _runtimeSnapshot?.coreEgressValidated != true) {
@@ -4273,29 +4364,51 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (activeCode.isEmpty) {
         return 'Локация проверяется';
       }
-      final activeLabel = _locationLabelForNodeCode(activeCode);
+      final activeLabel = _locationLabelForNodeCode(
+        activeCode,
+        variantId: activeVariant,
+      );
       return activeLabel;
     }
     // A confirmed running tunnel is the only event that promotes a pending
     // manual choice. If that reconnect fails, keep the last verified city
     // rather than implying that the newly staged location was ever active.
-    if (activeCode.isNotEmpty && activeCode != preferredCode) {
-      return _locationLabelForNodeCode(activeCode);
+    if (activeCode.isNotEmpty &&
+        (activeCode != preferredCode || activeVariant != preferredVariant)) {
+      return _locationLabelForNodeCode(
+        activeCode,
+        variantId: activeVariant,
+      );
     }
     if (preferredCode.isEmpty) {
       return 'Автоматически';
     }
-    return _locationLabelForNodeCode(preferredCode);
+    return _locationLabelForNodeCode(
+      preferredCode,
+      variantId: preferredVariant,
+    );
   }
 
-  String _locationLabelForNodeCode(String code) {
+  String _locationLabelForNodeCode(
+    String code, {
+    String variantId = 'direct',
+  }) {
     for (final country
         in _locationsCatalog?.countries ?? const <ClientLocationCountry>[]) {
       for (final city in country.cities) {
         if (city.code.trim().toLowerCase() != code) {
           continue;
         }
-        return _locationCityDisplayName(city, country);
+        final cityLabel = _locationCityDisplayName(city, country);
+        if (variantId == 'direct') {
+          return cityLabel;
+        }
+        final variantMatches = city.variants
+            .where((variant) => variant.id == variantId)
+            .toList(growable: false);
+        return variantMatches.length == 1
+            ? '$cityLabel · ${variantMatches.single.label}'
+            : cityLabel;
       }
     }
 
@@ -4377,6 +4490,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
               unawaited(_refreshLocationsCatalog(measureDevice: true));
             },
             preferredNodeCode: _preferredNodeCode,
+            preferredVariantId: _preferredVariantId,
             nodePreferenceBusy: _nodePreferenceBusy,
             onAutomaticLocationSelected: _setAutomaticLocation,
             onPreferredNodeSelected: _setPreferredLocation,

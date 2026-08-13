@@ -1,7 +1,7 @@
 ---
 name: POKROV Client Design System
 status: active
-updated: 2026-08-11
+updated: 2026-08-13
 ---
 
 # POKROV Client Design System
@@ -68,6 +68,13 @@ Client tokens mirror the platform `shared/design-tokens.json` (`pokrov-clear`, `
 - Each structured section leads with its first actionable sentence. Supporting
   sentences remain available behind `Подробности`, keeping the chat compact
   without deleting information.
+- Support history and send failures expose one compact retry each. A failed
+  ticket send keeps the draft without leaving an optimistic duplicate bubble;
+  a failed AI request keeps one visible question and retries it in place rather
+  than presenting a network failure as a knowledge-base answer.
+- The assistant composer and human escape action stay above the mobile keyboard.
+  Its compact scope names WARP, locations, routes, and system permissions
+  before ticket escalation without adding prompt-chip or action-button walls.
 - Referral rewards expose one clear `Пригласить` action and one labelled copy
   fallback. Missing server links show an honest refresh state instead of a
   generic `POKROV` pseudo-code and disabled icon cluster.

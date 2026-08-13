@@ -41,6 +41,7 @@ class _StubBootstrapper
     required RouteMode routeMode,
     List<String> selectedApps = const <String>[],
     String preferredNodeCode = '',
+    String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
   }) async {
     return const ManagedProfilePayload(
@@ -212,7 +213,8 @@ void main() {
       ),
     );
 
-    expect(find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-connect-hint-pill')), findsNothing);
     expect(find.text('Нажмите, чтобы подключиться'), findsNothing);
     expect(
@@ -417,7 +419,8 @@ void main() {
 
     await _pumpReadyHome(tester);
 
-    expect(find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-connect-hint-pill')), findsNothing);
     expect(find.byKey(const ValueKey('home-connect-hint-pulse')), findsNothing);
   });

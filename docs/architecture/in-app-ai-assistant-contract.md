@@ -1,6 +1,6 @@
 # In-App AI Assistant Contract
 
-Last updated: 2026-07-11
+Last updated: 2026-08-13
 
 This document defines the support-scoped POKROV assistant for the
 `1.0.0-beta` client line.
@@ -55,8 +55,28 @@ app invokes it and what the UI may expose.
   composer paperclip; Telegram and the optional AI sheet stay as compact app
   bar actions instead of repeating as full-width cards.
 - The assistant sheet opens directly on one composer. It does not repeat a
-  greeting bubble or expose auto-fill prompt chips; human escalation stays a
-  compact secondary action.
+  greeting bubble or expose auto-fill prompt chips. Safe actions returned with
+  a reply render as compact, allowlisted controls: recovery/access actions ask
+  a focused follow-up, diagnostics opens the existing explicit attachment
+  preview, and unknown action keys stay hidden.
+- Human support remains a compact manual escape while the assistant is still
+  proposing recovery. It becomes the emphasized full-width action only when
+  the server reply sets `shouldEscalate=true`; it is never opened
+  automatically.
+- The entry and sheet scope name the supported first recovery areas: WARP,
+  locations, route mode, and system permissions. Detailed steps still come
+  from the bounded assistant reply and remain proposals rather than automatic
+  device changes.
+- Ticket history uses one compact lifecycle state. Initial-load and polling
+  failures expose one retry, not a second notice with a duplicate action.
+- A failed ticket send keeps the draft, removes the unconfirmed optimistic
+  bubble, and retries without duplicating the user's message.
+- A transport failure in the assistant sheet exposes one inline retry while
+  retaining the single visible user question. It does not emit the
+  knowledge-base no-answer fallback unless a valid assistant response is
+  actually empty or asks for escalation.
+- The ticket and assistant composers, retry state, and human escape action stay
+  reachable above the on-screen keyboard.
 - Diagnostics require the existing explicit attach/confirmation flow.
 - The user can leave the assistant for ticket-backed human support.
 

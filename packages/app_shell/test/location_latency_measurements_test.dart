@@ -20,6 +20,20 @@ void main() {
             latencySource: 'brain',
             probeHost: 'de.example.test',
             probePort: 443,
+            variants: <ClientLocationVariant>[
+              ClientLocationVariant(
+                id: 'direct',
+                label: 'Обычный',
+                description: 'Прямое подключение',
+                available: true,
+              ),
+              ClientLocationVariant(
+                id: 'mini',
+                label: 'Белые списки',
+                description: 'Для ограниченных сетей',
+                available: true,
+              ),
+            ],
           ),
         ],
       ),
@@ -38,6 +52,8 @@ void main() {
     expect(city.latencySource, 'unavailable');
     expect(city.measuredAt, '2026-08-13T08:00:00Z');
     expect(city.load, 0.07);
+    expect(
+        city.variants.map((variant) => variant.id), <String>['direct', 'mini']);
   });
 
   test('device RTT replaces the brain measurement with a local timestamp', () {

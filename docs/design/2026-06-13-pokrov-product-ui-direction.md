@@ -89,6 +89,10 @@ Expected first-layer behavior:
 - Home keeps WARP visible as a compact control and shows a short confirmation
   after the user enables or disables it.
 - Support opens as a separate screen; diagnostics is a safe bottom sheet.
+  Ticket history, ticket-send failure, and AI request failure each use one
+  compact status/retry surface. Retry must not duplicate a user bubble or turn
+  a network error into an assistant answer. The pinned composers and human
+  escape action remain reachable above the mobile keyboard.
 - Profile is grouped like Settings: access, recovery, support, settings,
   bonuses, and diagnostics.
 - Rewards keeps paid Telegram reward, referral, promo, history, roulette and
@@ -96,6 +100,13 @@ Expected first-layer behavior:
   disabled backend features do not render dead cards.
 - Rules uses consumer labels and hides raw app/process identifiers by default.
 - Locations starts with automatic selection and uses human quality labels.
+- A city with one available server variant remains one tap. A city with
+  multiple variants opens a compact bottom sheet with `Обычный` and safe
+  backend labels such as `Белые списки`; unavailable choices are visibly
+  disabled and raw hosts, keys, tags, and configuration never enter the sheet.
+- Locations refresh owns one progress indicator in the `Обновить` action. The
+  Auto card does not duplicate that spinner, preserving the full
+  `Автоматически` title on narrow Huawei-class layouts.
 - The shell keeps four top-level sections and lazy-builds non-Home tabs.
 
 The first contract coverage lives in
@@ -151,8 +162,10 @@ visual language:
 - guides are one clear external action under Support/Profile and open the
   canonical searchable guide registry rather than duplicating long articles in
   the app;
-- Quick Settings and tray actions mirror the main connection state and never
-  invent their own success state.
+- tray actions mirror the main connection state and never invent their own
+  success state. On Android OEMs that cache third-party tiles, Quick Settings
+  stays a state-neutral branded action and resolves the live TUN on tap;
+  dynamic status belongs to the notification rather than a stale tile color.
 
 The same mobile composition must remain usable in the Windows compact lane;
 desktop may widen content but must not replace the grouped hierarchy with an

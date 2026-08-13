@@ -1,6 +1,6 @@
 # WARP Runtime Proof Checklist
 
-Last updated: 2026-07-22
+Last updated: 2026-08-13
 
 This checklist is the client evidence gate for the WARP lane. Current client UI
 may use the owner-approved labels `WARP`, `Расширенная защита`, or
@@ -87,11 +87,29 @@ Implementation update on 2026-07-22:
   adapter boundary: implemented.
 - POKROV Core client-local WARP materialization and enable/disable parity: implemented
   in shared runtime tests.
+- Manual `Белые списки` location variants currently gate WARP before runtime
+  staging with actionable consumer copy. WARP-over-bridge composition remains
+  `MANUAL_OWNER_TEST`; the client does not silently substitute `Обычный` or
+  disable WARP.
 - The pinned sing-box fork includes the reviewed WireGuard shutdown ordering:
   unregister callback, `Down`, then `Close`. The exact Windows DLL completed
   100 serial start/stop cycles; real WARP teardown on Android and Windows
   release candidates remains `MANUAL_OWNER_TEST`.
 - POKROV Core Android host bridge and JVM contract tests: implemented.
+- A 2026-08-13 Huawei run of the superseded local `1.0.3+11` build reproduced
+  an Android ANR while the Quick Settings service was publishing a default
+  network interface to the native listener on the main callback thread. The
+  client now resolves and publishes that interface on dedicated serialized
+  workers, ignores duplicate capability callbacks while resolution is pending,
+  caches the last resolved interface, and fences stale network generations.
+  Android JVM regression tests pass. The immediately following
+  production-signed `1.0.4+13` Huawei run proved tile start/stop, WARP traffic,
+  reconnect, Wi-Fi/LTE/Wi-Fi continuity, background screen-off operation, and
+  notification disconnect without a new ANR. Later final-candidate changes
+  were limited to the location variant sheet and support AI UI, but they
+  changed the APK hash; the supporting run therefore remains
+  `PASS_SUPPORTING_NOT_EXACT_FINAL` for WARP/uplink rather than being promoted
+  to exact-final evidence.
 - POKROV Core iOS host bridge: implemented in source; Xcode build and signed
   physical-device tunnel proof remain `MANUAL_OWNER_TEST`.
 - Windows POKROV DLL repeated byte-identical release build and exact-client
@@ -100,5 +118,7 @@ Implementation update on 2026-07-22:
   candidate gates.
 - macOS POKROV universal dylib build and ABI probe: `MANUAL_OWNER_TEST` on a
   Mac with Xcode.
-- Android physical release-build proof: `MANUAL_OWNER_TEST`.
+- Android physical ordinary-tunnel/system-UX proof for the final `1.0.4+13`
+  ARM64 hash: `PASS_EXACT_CANDIDATE`. Exact-final WARP/uplink repetition and
+  long-duration endurance remain `MANUAL_OWNER_TEST`.
 - Windows end-user release-build proof: `MANUAL_OWNER_TEST`.

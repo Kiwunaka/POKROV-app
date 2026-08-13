@@ -114,6 +114,7 @@ ClientLocationsCatalog applyPokrovDeviceLatencies(
                     : 'unavailable',
                 probeHost: city.probeHost,
                 probePort: city.probePort,
+                variants: city.variants,
               ),
           ],
         ),

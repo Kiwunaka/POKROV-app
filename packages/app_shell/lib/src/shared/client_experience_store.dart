@@ -110,6 +110,7 @@ class PokrovClientExperienceState {
     required this.cachedNotifications,
     required this.notificationsCachedAt,
     this.preferredNodeCode = '',
+    this.preferredVariantId = 'direct',
     this.automaticNodeQuarantineUntil = const <String, String>{},
     this.selectedAppIds = const <String>[],
     this.routingPreferences = const PokrovRoutingPreferences.defaults(),
@@ -127,6 +128,7 @@ class PokrovClientExperienceState {
         cachedNotifications = null,
         notificationsCachedAt = '',
         preferredNodeCode = '',
+        preferredVariantId = 'direct',
         automaticNodeQuarantineUntil = const <String, String>{},
         selectedAppIds = const <String>[],
         routingPreferences = const PokrovRoutingPreferences.defaults(),
@@ -142,6 +144,7 @@ class PokrovClientExperienceState {
   final ClientNotificationInbox? cachedNotifications;
   final String notificationsCachedAt;
   final String preferredNodeCode;
+  final String preferredVariantId;
 
   /// Short-lived device-local exclusions after a confirmed outbound failure.
   final Map<String, String> automaticNodeQuarantineUntil;
@@ -162,6 +165,7 @@ class PokrovClientExperienceState {
     ClientNotificationInbox? cachedNotifications,
     String? notificationsCachedAt,
     String? preferredNodeCode,
+    String? preferredVariantId,
     Map<String, String>? automaticNodeQuarantineUntil,
     List<String>? selectedAppIds,
     PokrovRoutingPreferences? routingPreferences,
@@ -179,6 +183,7 @@ class PokrovClientExperienceState {
       notificationsCachedAt:
           notificationsCachedAt ?? this.notificationsCachedAt,
       preferredNodeCode: preferredNodeCode ?? this.preferredNodeCode,
+      preferredVariantId: preferredVariantId ?? this.preferredVariantId,
       automaticNodeQuarantineUntil:
           automaticNodeQuarantineUntil ?? this.automaticNodeQuarantineUntil,
       selectedAppIds: selectedAppIds ?? this.selectedAppIds,
@@ -213,6 +218,10 @@ class PokrovClientExperienceState {
       json['automaticNodeQuarantineUntil'],
     );
     final selectedAppIds = _experienceSelectedAppIds(json['selectedAppIds']);
+    final preferredVariantId = normalizeClientLocationVariantId(
+          _experienceText(json['preferredVariantId']),
+        ) ??
+        'direct';
     return PokrovClientExperienceState(
       favoriteNodeCodes: favorites,
       recentNodeCodes: recents,
@@ -227,6 +236,8 @@ class PokrovClientExperienceState {
           : ClientNotificationInbox.fromJson(notificationsJson),
       notificationsCachedAt: _validExperienceIso(json['notificationsCachedAt']),
       preferredNodeCode: preferredCodes.isEmpty ? '' : preferredCodes.first,
+      preferredVariantId:
+          preferredCodes.isEmpty ? 'direct' : preferredVariantId,
       automaticNodeQuarantineUntil: automaticNodeQuarantineUntil,
       selectedAppIds: selectedAppIds,
       routingPreferences: PokrovRoutingPreferences.fromJson(
@@ -257,6 +268,8 @@ class PokrovClientExperienceState {
         'notificationsCachedAt': notificationsCachedAt,
         if (preferredNodeCode.isNotEmpty)
           'preferredNodeCode': preferredNodeCode,
+        if (preferredNodeCode.isNotEmpty)
+          'preferredVariantId': preferredVariantId,
         if (automaticNodeQuarantineUntil.isNotEmpty)
           'automaticNodeQuarantineUntil': Map<String, String>.fromEntries(
             automaticNodeQuarantineUntil.entries.take(8),

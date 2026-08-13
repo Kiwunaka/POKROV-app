@@ -1,7 +1,7 @@
 # Android Release Audit
 
-Status: direct APK 1.0.2+9 public-release PASS; production signing, physical-device journey, public digest, and anonymous full-download PASS; long-cycle, uplink-handoff, and WARP endurance remain manual owner tests
-Last updated: 2026-08-12
+Status: direct APK 1.0.4+13 release candidate PASS for production signing, exact Huawei install, ordinary tunnel, native system UX, and live support AI; publication and exact-final WARP/per-app/uplink repetition are pending
+Last updated: 2026-08-13
 
 ## Required Dependency
 
@@ -84,7 +84,62 @@ afterwards. That artifact may exercise the audit flow, but its signing result is
 `NOT_REQUESTED`: production signing was not part of that internal smoke. It cannot
 be promoted, synced, or described as public, trusted, store-ready, or stable.
 
-## Current 2026-08-12 Production-Signed Direct APK
+## Current 2026-08-13 Production-Signed Candidate
+
+The current direct-distribution candidate is `1.0.4+13` against
+`https://api.pokrov.space`. The canonical split artifacts are:
+
+| ABI | Size, bytes | SHA-256 | Version code |
+| --- | ---: | --- | ---: |
+| ARM64 | `99117667` | `48EAC0BE655D4D85D31134908E7A8CAEC881ED91AAE049FB7CF72206EFD99E6C` | `2013` |
+| ARMv7 | `88427581` | `598916EFCFAA6E32465627EB984390E10A2C2C97DB9936A34E9030F1179E75E5` | `1013` |
+| x86_64 | `107631522` | `6B8F38B3498FFF693E8C1A0C20200A37C570CC3E3B233F331B14003D3B05B2B7` | `4013` |
+| universal | `289838426` | `7B7688185D03ED3E54A7D1EE0B15D774F97AD66C25C221135B895421146068B9` | `13` |
+
+- production signing: `PASS`. Every APK is non-debuggable, has package
+  `space.pokrov.pokrov_android_shell`, target SDK `36`, and certificate
+  SHA-256
+  `0A0602A7DF5D96A0B427909D004F3DDF26DEF86587634BF16694DA8D654B2500`.
+- exact Huawei identity: `PASS`. The installed base APK on the authorized
+  Android 12 Huawei matched the ARM64 SHA-256 byte for byte; package metadata
+  reported `versionName=1.0.4`, `versionCode=2013`.
+- exact final UI: `PASS`. Home, premium-to-checkout affordance, locations,
+  the four-choice Milan variant sheet, and the support AI sheet were exercised
+  on the installed artifact. The last variant is fully visible, tappable, and
+  persists. The live AI answered a WARP failure with concrete recovery first,
+  exposed bounded follow-up/diagnostics actions, and kept human escalation as
+  a secondary escape instead of immediately creating a ticket.
+- exact final ordinary runtime: `PASS`. The production-signed ARM64 candidate
+  established the Android VPN service and selected outbound. After one
+  fail-closed transient immediately following a variant change, the explicit
+  retry succeeded and three further stop/start cycles each stopped cleanly,
+  restored the foreground service, and completed the outbound probe as
+  `healthy`.
+- exact final system UX: `PASS`. The foreground notification fits the Huawei
+  shade with status, route summary, fresh down/up speed, Open, and Disconnect;
+  the Disconnect action stops the service. No new device ANR was recorded
+  after the `23:36:40` candidate install.
+- immediately preceding same-version supporting run: `PASS_SUPPORTING_NOT_EXACT_FINAL`.
+  The production-signed `1.0.4+13` build immediately before the final
+  location-sheet and AI-only Flutter changes proved WARP traffic, manual
+  locations, excluded-app routing (`Яндекс` direct while Chrome used the
+  foreign exit), Wi-Fi to LTE to Wi-Fi continuity, Quick Settings start/stop,
+  notification actions, screen-off background operation, and fresh-process
+  browser egress. No raw address is retained here.
+- exact-final WARP, per-app egress, and uplink repetition:
+  `MANUAL_OWNER_TEST`. The final APK differs in hash even though the subsequent
+  changes were limited to locations/support UI. The supporting run is not
+  relabelled as exact-candidate evidence.
+- retained ignored evidence:
+  `E:/POKROV-ops-evidence/2026-08-13-goal-continuation/huawei-exact-final/`.
+- signing recovery: `MANUAL_OWNER_TEST`. The production keystore and
+  DPAPI-protected password remain outside Git. An encrypted offline copy on
+  owner-controlled external media is still required.
+- publication: `PENDING`. GitHub release URL, public asset digests, anonymous
+  full downloads, and runtime download cutover must be recorded after upload.
+- Google Play: `NOT_REQUESTED_DIRECT_APK_FIRST`.
+
+## Prior 2026-08-12 Production-Signed Direct APK
 
 The current direct-distribution release is `1.0.2+9` and uses the production
 API base `https://api.pokrov.space`:

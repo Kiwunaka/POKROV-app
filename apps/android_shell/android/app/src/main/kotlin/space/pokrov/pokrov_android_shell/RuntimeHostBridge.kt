@@ -700,7 +700,6 @@ class RuntimeHostBridge(
         )
         AndroidSystemSurfacePreferencesStore.save(activity, updated)
         PokrovRuntimeVpnService.refreshNotification(activity)
-        PokrovQuickSettingsTileService.requestRefresh(activity)
         return updated.toMap()
     }
 

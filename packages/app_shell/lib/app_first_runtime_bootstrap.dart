@@ -15,7 +15,7 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 /// package base version (without Android's build number).
 const pokrovClientVersion = String.fromEnvironment(
   'POKROV_APP_VERSION',
-  defaultValue: '1.0.3',
+  defaultValue: '1.0.4',
 );
 
 const _platformErrorCodeHeader = 'X-POKROV-Auth-Error';
@@ -30,6 +30,7 @@ abstract interface class ManagedProfileBootstrapper {
     required RouteMode routeMode,
     List<String> selectedApps = const <String>[],
     String preferredNodeCode = '',
+    String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
   });
 }
@@ -678,6 +679,7 @@ class ClientLocationCity {
     this.latencySource = '',
     this.probeHost = '',
     this.probePort = 0,
+    this.variants = const <ClientLocationVariant>[],
   });
 
   final String code;
@@ -690,6 +692,7 @@ class ClientLocationCity {
   final String latencySource;
   final String probeHost;
   final int probePort;
+  final List<ClientLocationVariant> variants;
 
   factory ClientLocationCity.fromJson(Map<String, dynamic> json) {
     final probe = _clientMap(json['probe']);
@@ -708,6 +711,7 @@ class ClientLocationCity {
       ),
       probeHost: _clientText(probe['host']),
       probePort: _clientInt(probe['port']),
+      variants: ClientLocationVariant.parseList(json['variants']),
     );
   }
 
@@ -725,6 +729,82 @@ class ClientLocationCity {
             'host': probeHost,
             'port': probePort,
           },
+        if (variants.isNotEmpty)
+          'variants': variants.map((item) => item.toJson()).toList(
+                growable: false,
+              ),
+      };
+}
+
+final _clientLocationVariantIdPattern = RegExp(
+  r'^[a-z0-9][a-z0-9._-]{0,63}$',
+);
+
+String? normalizeClientLocationVariantId(String value) {
+  final normalized = value.trim().toLowerCase();
+  return _clientLocationVariantIdPattern.hasMatch(normalized)
+      ? normalized
+      : null;
+}
+
+String _clientLocationVariantText(Object? value, {required int maxLength}) {
+  final raw = _clientText(value);
+  if (raw.runes.any((codePoint) => codePoint < 32 || codePoint == 127)) {
+    return '';
+  }
+  final normalized = raw.split(RegExp(r'\s+')).join(' ').trim();
+  return normalized.length <= maxLength ? normalized : '';
+}
+
+class ClientLocationVariant {
+  const ClientLocationVariant({
+    required this.id,
+    required this.label,
+    required this.description,
+    required this.available,
+  });
+
+  final String id;
+  final String label;
+  final String description;
+  final bool available;
+
+  static List<ClientLocationVariant> parseList(Object? value) {
+    final variants = <ClientLocationVariant>[];
+    final seenIds = <String>{};
+    for (final json in _clientListOfMaps(value)) {
+      final id = normalizeClientLocationVariantId(_clientText(json['id']));
+      final label = _clientLocationVariantText(
+        json['label'],
+        maxLength: 48,
+      );
+      if (id == null || label.isEmpty || !seenIds.add(id)) {
+        continue;
+      }
+      variants.add(
+        ClientLocationVariant(
+          id: id,
+          label: label,
+          description: _clientLocationVariantText(
+            json['description'],
+            maxLength: 120,
+          ),
+          available:
+              !json.containsKey('available') || _clientBool(json['available']),
+        ),
+      );
+      if (variants.length == 8) {
+        break;
+      }
+    }
+    return List<ClientLocationVariant>.unmodifiable(variants);
+  }
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'id': id,
+        'label': label,
+        'description': description,
+        'available': available,
       };
 }
 
@@ -2145,6 +2225,7 @@ class AppFirstRuntimeBootstrapper
     required RouteMode routeMode,
     List<String> selectedApps = const <String>[],
     String preferredNodeCode = '',
+    String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
   }) async {
     final normalizedSelectedApps = _normalizeSelectedAppIdentifiers(
@@ -2189,6 +2270,7 @@ class AppFirstRuntimeBootstrapper
             routeMode: routeMode,
             selectedApps: normalizedSelectedApps,
             preferredNodeCode: preferredNodeCode,
+            preferredVariantId: preferredVariantId,
             client: client,
           );
           if (preferredNodeCode.trim().isEmpty) {
@@ -2222,6 +2304,7 @@ class AppFirstRuntimeBootstrapper
                     routeMode: routeMode,
                     selectedApps: normalizedSelectedApps,
                     preferredNodeCode: selectedNodeCode,
+                    preferredVariantId: 'direct',
                     client: client,
                   ).timeout(_smartConnectProfileRefreshTimeout);
                 } on Object {
@@ -4279,6 +4362,7 @@ class AppFirstRuntimeBootstrapper
     required RouteMode routeMode,
     required List<String> selectedApps,
     required String preferredNodeCode,
+    required String preferredVariantId,
     required HttpClient client,
   }) async {
     final path = _validatedManagedManifestPath(state.managedManifestPath);
@@ -4341,6 +4425,8 @@ class AppFirstRuntimeBootstrapper
         routeMode: routeMode,
         selectedApps: selectedApps,
         preferredNodeCode: normalizedPreferredNode,
+        preferredVariantId:
+            normalizedPreferredNode.isEmpty ? 'direct' : preferredVariantId,
         smartConnect: smartConnect,
         supportContext: supportContext,
         clientRuleSetCatalog: clientRuleSetCatalog,
@@ -4399,6 +4485,7 @@ class AppFirstRuntimeBootstrapper
     required RouteMode routeMode,
     required List<String> selectedApps,
     required String preferredNodeCode,
+    required String preferredVariantId,
     required SmartConnectProfile? smartConnect,
     required Map<String, dynamic> supportContext,
     required _ClientRuleSetCatalog clientRuleSetCatalog,
@@ -4428,6 +4515,13 @@ class AppFirstRuntimeBootstrapper
       preferredNodeCode: preferredNodeCode,
       smartConnect: smartConnect,
     );
+    final normalizedPreferredVariant = preferredNode == null
+        ? 'direct'
+        : normalizeClientLocationVariantId(preferredVariantId);
+    if (normalizedPreferredVariant == null) {
+      throw const BootstrapFailure('Выбранный вариант подключения недоступен.');
+    }
+    final ruBridgeEndpoints = _readSafeRuBridgeEndpoints(baseConfig);
     if (hostPlatform != HostPlatform.android &&
         _looksRuntimeReady(baseConfig)) {
       final sanitized = _sanitizeRuntimeReadyConfig(
@@ -4440,6 +4534,9 @@ class AppFirstRuntimeBootstrapper
       _promotePreferredSmartConnectOutbound(
         config: sanitized,
         preferredNode: preferredNode,
+        preferredVariantId: normalizedPreferredVariant,
+        ruBridgeEndpoints: ruBridgeEndpoints,
+        allowDirectInsertion: true,
       );
       return const JsonEncoder.withIndent('  ').convert(sanitized);
     }
@@ -4454,6 +4551,9 @@ class AppFirstRuntimeBootstrapper
     _promotePreferredSmartConnectOutbound(
       config: runtimeConfig,
       preferredNode: preferredNode,
+      preferredVariantId: normalizedPreferredVariant,
+      ruBridgeEndpoints: ruBridgeEndpoints,
+      allowDirectInsertion: true,
     );
     return const JsonEncoder.withIndent('  ').convert(runtimeConfig);
   }
@@ -4481,6 +4581,10 @@ class AppFirstRuntimeBootstrapper
   void _promotePreferredSmartConnectOutbound({
     required Map<String, dynamic> config,
     required SmartConnectNode? preferredNode,
+    String preferredVariantId = 'direct',
+    List<_SafeRuBridgeEndpoint> ruBridgeEndpoints =
+        const <_SafeRuBridgeEndpoint>[],
+    bool allowDirectInsertion = false,
   }) {
     if (preferredNode == null) {
       return;
@@ -4524,18 +4628,117 @@ class AppFirstRuntimeBootstrapper
     }
     final selector = finalOutbounds.single;
     final baseSelectedTag = _readText(matchingProxyOutbounds.single['tag']);
-    final selectorTargets = _readTagList(selector['outbounds']);
-    // An automatic selector may omit the ordinary outbound while retaining
-    // bridge/whitelist variants for the same country. A manual location
-    // choice is authoritative: promote the exact base proxy verified above
-    // instead of silently switching the user to a different route variant.
-    final selectedTag = baseSelectedTag;
-    selector['outbounds'] = <String>[
+    final finalSelectorTargets = _readTagList(selector['outbounds']);
+    final nestedSelectors = outbounds.where((outbound) {
+      return _readText(outbound['tag']) != finalTag &&
+          _readText(outbound['type']).toLowerCase() == 'selector' &&
+          _readTagList(outbound['outbounds']).contains(baseSelectedTag);
+    }).toList(growable: false);
+    if (nestedSelectors.length > 1) {
+      throw const BootstrapFailure('Выбранная локация недоступна.');
+    }
+    final targetSelector =
+        nestedSelectors.isEmpty ? selector : nestedSelectors.single;
+    final targetSelectorTag = _readText(targetSelector['tag']);
+    final targetSelectorTargets = _readTagList(targetSelector['outbounds']);
+    if (nestedSelectors.isNotEmpty &&
+        (targetSelectorTag.isEmpty ||
+            !finalSelectorTargets.contains(targetSelectorTag))) {
+      throw const BootstrapFailure('Выбранная локация недоступна.');
+    }
+    final normalizedVariant =
+        normalizeClientLocationVariantId(preferredVariantId);
+    if (normalizedVariant == null) {
+      throw const BootstrapFailure('Выбранный вариант подключения недоступен.');
+    }
+    var selectedTag = baseSelectedTag;
+    if (normalizedVariant != 'direct') {
+      final endpointMatches = ruBridgeEndpoints
+          .where((endpoint) => endpoint.id == normalizedVariant)
+          .toList(growable: false);
+      if (endpointMatches.length != 1) {
+        throw const BootstrapFailure(
+          'Выбранный вариант подключения недоступен.',
+        );
+      }
+      final baseLocationTag = baseSelectedTag.endsWith(' · Обычный')
+          ? baseSelectedTag.substring(
+              0,
+              baseSelectedTag.length - ' · Обычный'.length,
+            )
+          : baseSelectedTag;
+      final expectedBridgeTags = <String>{
+        '$baseLocationTag · ${endpointMatches.single.label}',
+        '$baseSelectedTag · ${endpointMatches.single.label}',
+      };
+      final bridgeMatches = outbounds.where((outbound) {
+        return _isProxyTransportOutbound(outbound) &&
+            expectedBridgeTags.contains(_readText(outbound['tag'])) &&
+            targetSelectorTargets.contains(_readText(outbound['tag'])) &&
+            _readText(outbound['detour']).isNotEmpty;
+      }).toList(growable: false);
+      if (bridgeMatches.length != 1) {
+        throw const BootstrapFailure(
+          'Выбранный вариант подключения недоступен.',
+        );
+      }
+      final bridgeDetour = _readText(bridgeMatches.single['detour']);
+      final detourMatches = outbounds.where((outbound) {
+        return _isProxyTransportOutbound(outbound) &&
+            _readText(outbound['tag']) == bridgeDetour;
+      }).toList(growable: false);
+      if (detourMatches.length != 1) {
+        throw const BootstrapFailure(
+          'Выбранный вариант подключения недоступен.',
+        );
+      }
+      selectedTag = _readText(bridgeMatches.single['tag']);
+    }
+    if (!targetSelectorTargets.contains(selectedTag) &&
+        !(allowDirectInsertion && normalizedVariant == 'direct')) {
+      throw const BootstrapFailure('Выбранный вариант подключения недоступен.');
+    }
+    targetSelector['outbounds'] = <String>[
       selectedTag,
-      ...selectorTargets.where((tag) => tag != selectedTag),
+      ...targetSelectorTargets.where((tag) => tag != selectedTag),
     ];
-    selector['default'] = selectedTag;
+    targetSelector['default'] = selectedTag;
+    final finalSelectedTag =
+        nestedSelectors.isEmpty ? selectedTag : targetSelectorTag;
+    if (!finalSelectorTargets.contains(finalSelectedTag) &&
+        !(nestedSelectors.isEmpty &&
+            allowDirectInsertion &&
+            normalizedVariant == 'direct')) {
+      throw const BootstrapFailure('Выбранный вариант подключения недоступен.');
+    }
+    selector['outbounds'] = <String>[
+      finalSelectedTag,
+      ...finalSelectorTargets.where((tag) => tag != finalSelectedTag),
+    ];
+    selector['default'] = finalSelectedTag;
     config['outbounds'] = outbounds;
+  }
+
+  List<_SafeRuBridgeEndpoint> _readSafeRuBridgeEndpoints(
+    Map<String, dynamic> config,
+  ) {
+    final ruBridge = _readMap(_readMap(config['_meta'])['ru_bridge']);
+    if (!_readBool(ruBridge['enabled'])) {
+      return const <_SafeRuBridgeEndpoint>[];
+    }
+    final endpoints = <_SafeRuBridgeEndpoint>[];
+    for (final item in _readListOfMaps(ruBridge['endpoints'])) {
+      final id = normalizeClientLocationVariantId(_readText(item['id']));
+      final label = _clientLocationVariantText(
+        item['label'],
+        maxLength: 48,
+      );
+      if (id == null || id == 'direct' || label.isEmpty) {
+        continue;
+      }
+      endpoints.add(_SafeRuBridgeEndpoint(id: id, label: label));
+    }
+    return List<_SafeRuBridgeEndpoint>.unmodifiable(endpoints);
   }
 
   String _legacySmartConnectOutboundTag(SmartConnectNode node) {
@@ -4608,6 +4811,7 @@ class AppFirstRuntimeBootstrapper
     _promotePreferredSmartConnectOutbound(
       config: config,
       preferredNode: preferredNode,
+      allowDirectInsertion: true,
     );
     return _ManagedManifestEnvelope(
       payload: manifest.payload.copyWith(
@@ -7779,6 +7983,13 @@ class _SmartConnectLatencySample {
   final int rank;
 
   int get effectiveScore => rttMs + cpuPenalty + backendPenalty;
+}
+
+class _SafeRuBridgeEndpoint {
+  const _SafeRuBridgeEndpoint({required this.id, required this.label});
+
+  final String id;
+  final String label;
 }
 
 class _SmartConnectSelection {

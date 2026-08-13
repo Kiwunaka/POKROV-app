@@ -44,6 +44,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
   bool _hasOperatorReply = false;
   int? _ticketId;
   String? _threadError;
+  String? _sendError;
   List<_SupportChatMessage> _messages = _supportGreetingMessages();
   bool _attachDiagnosticsToNextMessage = false;
 
@@ -264,13 +265,16 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
     if (text.isEmpty || _sending || _loadingThread) {
       return;
     }
+    final pendingMessage = _SupportChatMessage(
+      role: _SupportChatRole.user,
+      body: text,
+    );
     final attachDiagnostics = _attachDiagnosticsToNextMessage;
     final diagnostics =
         attachDiagnostics ? _supportDiagnostics() : const <String, Object?>{};
     setState(() {
-      _messages.add(
-        _SupportChatMessage(role: _SupportChatRole.user, body: text),
-      );
+      _sendError = null;
+      _messages.add(pendingMessage);
       _sending = true;
     });
     _scrollToLatestMessage();
@@ -292,6 +296,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
         _clearComposerAfterSend(text);
         setState(() {
           _sending = false;
+          _threadError = null;
           _attachDiagnosticsToNextMessage = false;
           _applyThread(thread);
         });
@@ -315,6 +320,8 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
       _clearComposerAfterSend(text);
       setState(() {
         _sending = false;
+        _threadError = null;
+        _threadRefreshFailed = false;
         _attachDiagnosticsToNextMessage = false;
         _messages.add(
           _SupportChatMessage(
@@ -343,36 +350,15 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
       } catch (_) {
         // Keep the local confirmation when the immediate refresh is unavailable.
       }
-    } on SupportTicketFailure catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _sending = false;
-        _messages.add(
-          _SupportChatMessage(
-            role: _SupportChatRole.assistant,
-            body:
-                'Не удалось отправить обращение: ${error.message}. Откройте Telegram сверху или попробуйте еще раз.',
-          ),
-        );
-      });
-      _scrollToLatestMessage();
     } catch (_) {
       if (!mounted) {
         return;
       }
       setState(() {
         _sending = false;
-        _messages.add(
-          const _SupportChatMessage(
-            role: _SupportChatRole.assistant,
-            body:
-                'Не удалось отправить обращение. Откройте Telegram сверху или попробуйте еще раз.',
-          ),
-        );
+        _messages.remove(pendingMessage);
+        _sendError = 'Сообщение не отправлено. Проверьте интернет и повторите.';
       });
-      _scrollToLatestMessage();
     }
   }
 
@@ -461,6 +447,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
     }
     PokrovHaptics.tap();
     var escalated = false;
+    var diagnosticsRequested = false;
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -473,13 +460,21 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
             escalated = true;
             Navigator.of(sheetContext).maybePop();
           },
+          onAttachDiagnostics: () {
+            diagnosticsRequested = true;
+            Navigator.of(sheetContext).maybePop();
+          },
         );
       },
     );
-    if (!mounted || !escalated) {
+    if (!mounted) {
       return;
     }
-    _composerFocusNode.requestFocus();
+    if (diagnosticsRequested) {
+      _showDiagnosticsPreview();
+    } else if (escalated) {
+      _composerFocusNode.requestFocus();
+    }
   }
 
   void _showDiagnosticsPreview() {
@@ -704,16 +699,6 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                                   onTap: () => unawaited(_openAssistantSheet()),
                                 ),
                               ),
-                            if (_threadError != null)
-                              Padding(
-                                padding:
-                                    const EdgeInsets.fromLTRB(18, 0, 18, 10),
-                                child: _SupportChatNotice(
-                                  body: _threadError!,
-                                  onRetry: () =>
-                                      unawaited(_loadInitialThread()),
-                                ),
-                              ),
                             if (_loadingThread)
                               const SizedBox(
                                 height: 230,
@@ -738,6 +723,22 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            if (_sendError case final sendError?)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: _SupportRetryNotice(
+                                  key: const ValueKey(
+                                    'support-send-failure-notice',
+                                  ),
+                                  message: sendError,
+                                  retryKey: const ValueKey(
+                                    'support-send-retry',
+                                  ),
+                                  onRetry: _sending
+                                      ? null
+                                      : () => unawaited(_sendMessage()),
+                                ),
+                              ),
                             if (_attachDiagnosticsToNextMessage)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
@@ -878,7 +879,7 @@ class _SupportAiFirstCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Проверит WARP, локацию и настройки. Если не поможет — человек.',
+                      'Проверит WARP, локацию, маршруты и системные разрешения. Если не поможет — человек.',
                       key: const ValueKey('support-ai-first-description'),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: p.muted,
@@ -1114,37 +1115,54 @@ class _SupportLifecycleHint extends StatelessWidget {
   }
 }
 
-class _SupportChatNotice extends StatelessWidget {
-  const _SupportChatNotice({required this.body, required this.onRetry});
+class _SupportRetryNotice extends StatelessWidget {
+  const _SupportRetryNotice({
+    super.key,
+    required this.message,
+    required this.retryKey,
+    required this.onRetry,
+  });
 
-  final String body;
-  final VoidCallback onRetry;
+  final String message;
+  final Key retryKey;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: p.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: p.line),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-        child: Row(
-          children: [
-            Icon(Icons.info_outline_rounded, color: p.muted, size: 18),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                body,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: p.muted, height: 1.25),
+    return Semantics(
+      liveRegion: true,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: p.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: p.line),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline_rounded, color: p.warning, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  message,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: p.muted, height: 1.25),
+                ),
               ),
-            ),
-            TextButton(onPressed: onRetry, child: const Text('Повторить')),
-          ],
+              TextButton(
+                key: retryKey,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(0, 44),
+                ),
+                onPressed: onRetry,
+                child: const Text('Повторить'),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1264,6 +1282,7 @@ class _AssistantChatSheet extends StatefulWidget {
   const _AssistantChatSheet({
     required this.askAssistant,
     required this.onEscalate,
+    required this.onAttachDiagnostics,
   });
 
   final Future<ClientSupportAssistantReply> Function(
@@ -1271,6 +1290,7 @@ class _AssistantChatSheet extends StatefulWidget {
     String? assistantSessionId,
   ) askAssistant;
   final VoidCallback onEscalate;
+  final VoidCallback onAttachDiagnostics;
 
   @override
   State<_AssistantChatSheet> createState() => _AssistantChatSheetState();
@@ -1285,7 +1305,9 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
   late final ScrollController _listController;
   final List<PokrovAssistantMessage> _messages = <PokrovAssistantMessage>[];
   String? _assistantSessionId;
+  String? _failedQuestion;
   bool _thinking = false;
+  bool _shouldEscalate = false;
   int _messageSeq = 0;
 
   @override
@@ -1315,31 +1337,38 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
     });
   }
 
-  Future<void> _send() async {
-    final text = _composer.text.trim();
+  Future<void> _send({String? retryQuestion}) async {
+    final isRetry = retryQuestion != null;
+    final text = (retryQuestion ?? _composer.text).trim();
     if (text.isEmpty || _thinking) {
       return;
     }
     PokrovHaptics.tap();
-    _messageSeq += 1;
     setState(() {
-      _messages.add(
-        PokrovAssistantMessage(
-          id: 'user-$_messageSeq',
-          role: PokrovAssistantRole.user,
-          body: text,
-        ),
-      );
+      _failedQuestion = null;
+      if (!isRetry) {
+        _messageSeq += 1;
+        _messages.add(
+          PokrovAssistantMessage(
+            id: 'user-$_messageSeq',
+            role: PokrovAssistantRole.user,
+            body: text,
+          ),
+        );
+      }
       _thinking = true;
     });
-    _composer.clear();
+    if (!isRetry) {
+      _composer.clear();
+    }
     _scrollToLatest();
 
     var answer = _noAnswerFallback;
     var answerLabel = ClientSupportAssistantSource.localFallback.consumerLabel;
     final attemptedAssistantSessionId = _assistantSessionId;
     String? returnedAssistantSessionId;
-    var continuationFailed = false;
+    var shouldEscalate = false;
+    var actions = const <PokrovAssistantSafeAction>[];
     try {
       final reply = await widget.askAssistant(
         text,
@@ -1347,30 +1376,42 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
       );
       returnedAssistantSessionId = reply.assistantSessionId;
       answerLabel = reply.source.consumerLabel;
+      shouldEscalate = reply.shouldEscalate;
+      actions = _supportAssistantActions(reply.suggestedActions);
       final body = reply.reply.trim();
       if (body.isNotEmpty) {
         answer = body;
       }
     } catch (_) {
-      continuationFailed = attemptedAssistantSessionId != null;
-      // Keep the honest no-answer fallback; the human escape row stays below.
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        if (attemptedAssistantSessionId != null) {
+          _assistantSessionId = null;
+        }
+        _thinking = false;
+        _failedQuestion = text;
+      });
+      _scrollToLatest();
+      return;
     }
     if (!mounted) {
       return;
     }
     _messageSeq += 1;
     setState(() {
-      if (continuationFailed) {
-        _assistantSessionId = null;
-      } else if (returnedAssistantSessionId != null) {
+      if (returnedAssistantSessionId != null) {
         _assistantSessionId = returnedAssistantSessionId;
       }
       _thinking = false;
+      _shouldEscalate = shouldEscalate;
       _messages.add(
         PokrovAssistantMessage.assistant(
           id: 'assistant-$_messageSeq',
           body: answer,
           sourceLabel: answerLabel,
+          actions: actions,
         ),
       );
     });
@@ -1380,8 +1421,10 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.85;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final availableHeight = MediaQuery.sizeOf(context).height - bottomInset;
+    final maxHeight =
+        availableHeight > 320 ? availableHeight * 0.85 : availableHeight;
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
       child: SafeArea(
@@ -1427,9 +1470,8 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Ответы по подключению, доступу и бонусам',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            'WARP, локации, маршруты и системные разрешения',
+                            maxLines: 2,
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
@@ -1448,12 +1490,31 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
                     shrinkWrap: true,
                     children: [
                       for (final message in _messages)
-                        _AssistantSheetBubble(message: message),
+                        _AssistantSheetBubble(
+                          message: message,
+                          onAction: _activateAction,
+                        ),
                       if (_thinking) const _AssistantThinkingStatus(),
                     ],
                   ),
                 ),
                 const SizedBox(height: 10),
+                if (_failedQuestion case final failedQuestion?) ...[
+                  _SupportRetryNotice(
+                    key: const ValueKey(
+                      'assistant-request-failure-notice',
+                    ),
+                    message:
+                        'Ответ не загрузился. Проверьте интернет и повторите.',
+                    retryKey: const ValueKey('assistant-request-retry'),
+                    onRetry: _thinking
+                        ? null
+                        : () => unawaited(
+                              _send(retryQuestion: failedQuestion),
+                            ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 DecoratedBox(
                   decoration: BoxDecoration(
                     color: p.surface,
@@ -1493,18 +1554,30 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton.icon(
-                    key: const ValueKey('assistant-sheet-escalate'),
-                    onPressed: () {
-                      PokrovHaptics.tap();
-                      widget.onEscalate();
-                    },
-                    icon: const Icon(Icons.support_agent_rounded, size: 18),
-                    label: const Text('Написать человеку'),
+                if (_shouldEscalate)
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.tonalIcon(
+                      key: const ValueKey('assistant-sheet-escalate'),
+                      onPressed: _openHumanSupport,
+                      icon: const Icon(Icons.support_agent_rounded, size: 18),
+                      label: const Text('Передать в поддержку'),
+                    ),
+                  )
+                else
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      key: const ValueKey('assistant-sheet-escalate'),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        foregroundColor: p.muted,
+                      ),
+                      onPressed: _openHumanSupport,
+                      icon: const Icon(Icons.support_agent_outlined, size: 18),
+                      label: const Text('Нужен человек'),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -1512,12 +1585,45 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
       ),
     );
   }
+
+  void _openHumanSupport() {
+    PokrovHaptics.tap();
+    widget.onEscalate();
+  }
+
+  void _activateAction(PokrovAssistantSafeAction action) {
+    PokrovHaptics.tap();
+    switch (action.effect) {
+      case PokrovAssistantSafeActionEffect.attachDiagnostics:
+        widget.onAttachDiagnostics();
+        return;
+      case PokrovAssistantSafeActionEffect.openHandoff:
+        widget.onEscalate();
+        return;
+      case PokrovAssistantSafeActionEffect.none:
+      case PokrovAssistantSafeActionEffect.navigate:
+        final prompt = switch (action.key) {
+          'retry_connect' => 'Как безопасно переподключить POKROV?',
+          'open_subscription' => 'Как проверить доступ и подписку?',
+          _ => '',
+        };
+        if (prompt.isNotEmpty && !_thinking) {
+          _composer.text = prompt;
+          unawaited(_send());
+        }
+        return;
+    }
+  }
 }
 
 class _AssistantSheetBubble extends StatelessWidget {
-  const _AssistantSheetBubble({required this.message});
+  const _AssistantSheetBubble({
+    required this.message,
+    required this.onAction,
+  });
 
   final PokrovAssistantMessage message;
+  final ValueChanged<PokrovAssistantSafeAction> onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -1568,11 +1674,105 @@ class _AssistantSheetBubble extends StatelessWidget {
                 key: ValueKey('assistant-answer-${message.id}'),
                 body: message.safeBody,
               ),
+            if (!isUser && message.actions.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _AssistantActionChips(
+                actions: message.actions,
+                onAction: onAction,
+              ),
+            ],
           ],
         ),
       ),
     );
   }
+}
+
+class _AssistantActionChips extends StatelessWidget {
+  const _AssistantActionChips({
+    required this.actions,
+    required this.onAction,
+  });
+
+  final List<PokrovAssistantSafeAction> actions;
+  final ValueChanged<PokrovAssistantSafeAction> onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleActions = actions
+        .where(
+          (action) =>
+              action.effect != PokrovAssistantSafeActionEffect.openHandoff,
+        )
+        .toList(growable: false);
+    if (visibleActions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final p = PokrovPalette.of(context);
+    return Wrap(
+      key: const ValueKey('assistant-response-actions'),
+      spacing: 7,
+      runSpacing: 7,
+      children: [
+        for (final action in visibleActions)
+          ActionChip(
+            key: ValueKey('assistant-action-${action.key}'),
+            visualDensity: VisualDensity.compact,
+            side: BorderSide(color: p.accent.withValues(alpha: 0.18)),
+            backgroundColor: p.surface,
+            avatar: Icon(
+              action.effect == PokrovAssistantSafeActionEffect.attachDiagnostics
+                  ? Icons.attach_file_rounded
+                  : Icons.arrow_forward_rounded,
+              size: 16,
+              color: p.accent,
+            ),
+            label: Text(action.label),
+            onPressed: () => onAction(action),
+          ),
+      ],
+    );
+  }
+}
+
+List<PokrovAssistantSafeAction> _supportAssistantActions(
+  List<ClientSupportAssistantAction> suggestedActions,
+) {
+  final actions = <PokrovAssistantSafeAction>[];
+  final seen = <String>{};
+  for (final suggestedAction in suggestedActions) {
+    final key = suggestedAction.key.trim().toLowerCase();
+    if (!seen.add(key)) {
+      continue;
+    }
+    final action = switch (key) {
+      'retry_connect' => const PokrovAssistantSafeAction(
+          key: 'retry_connect',
+          label: 'Как переподключить',
+          effect: PokrovAssistantSafeActionEffect.none,
+        ),
+      'send_diagnostics' => const PokrovAssistantSafeAction(
+          key: 'send_diagnostics',
+          label: 'Приложить диагностику',
+          effect: PokrovAssistantSafeActionEffect.attachDiagnostics,
+        ),
+      'open_subscription' => const PokrovAssistantSafeAction(
+          key: 'open_subscription',
+          label: 'Проверить доступ',
+          effect: PokrovAssistantSafeActionEffect.none,
+        ),
+      'create_ticket' => const PokrovAssistantSafeAction(
+          key: 'create_ticket',
+          label: 'Написать человеку',
+          effect: PokrovAssistantSafeActionEffect.openHandoff,
+        ),
+      _ => null,
+    };
+    if (action != null) {
+      actions.add(action);
+    }
+  }
+  return List<PokrovAssistantSafeAction>.unmodifiable(actions);
 }
 
 class _AssistantAnswerBody extends StatefulWidget {

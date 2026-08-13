@@ -497,7 +497,6 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         markServiceStopped()
         mainHandler.removeCallbacks(notificationUpdater)
         resetTrafficSample()
-        PokrovQuickSettingsTileService.requestRefresh(this)
         try {
             commandServer?.closeService()
         } catch (_: Throwable) {
@@ -951,7 +950,6 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         registerDnsFailureTarget(this, dnsFailureToken)
         val runtimeMessage = "POKROV подключен на этом устройстве."
         markTunEstablished(runtimeMessage)
-        PokrovQuickSettingsTileService.requestRefresh(this)
         AndroidRuntimeState.markRunning(runtimeMessage)
         PokrovQuickSettingsTileService.completeRuntimeTransition(
             this,
@@ -1419,7 +1417,6 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 }
             }
             ContextCompat.startForegroundService(context, intent)
-            PokrovQuickSettingsTileService.requestRefresh(context)
         }
 
         fun stop(context: Context, tileGeneration: Long? = null) {
@@ -1430,7 +1427,6 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 }
             }
             context.startService(intent)
-            PokrovQuickSettingsTileService.requestRefresh(context)
         }
 
         fun refreshNotification(context: Context) {

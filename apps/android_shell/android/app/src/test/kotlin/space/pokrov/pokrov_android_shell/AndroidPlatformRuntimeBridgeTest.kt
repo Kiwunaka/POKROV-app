@@ -75,6 +75,50 @@ class AndroidPlatformRuntimeBridgeTest {
     }
 
     @Test
+    fun defaultNetworkRefresh_ignoresNoisyCapabilityCallbacksForResolvedInterface() {
+        assertEquals(
+            DefaultNetworkRefreshAction.NONE,
+            resolveDefaultNetworkRefreshAction(
+                networkChanged = false,
+                capabilitiesChanged = false,
+                interfaceReady = true,
+                resolutionPending = false,
+            ),
+        )
+        assertEquals(
+            DefaultNetworkRefreshAction.REPUBLISH_CAPABILITIES,
+            resolveDefaultNetworkRefreshAction(
+                networkChanged = false,
+                capabilitiesChanged = true,
+                interfaceReady = true,
+                resolutionPending = false,
+            ),
+        )
+    }
+
+    @Test
+    fun defaultNetworkRefresh_resolvesOnlyOnceWhileLookupIsPending() {
+        assertEquals(
+            DefaultNetworkRefreshAction.RESOLVE_INTERFACE,
+            resolveDefaultNetworkRefreshAction(
+                networkChanged = true,
+                capabilitiesChanged = true,
+                interfaceReady = false,
+                resolutionPending = false,
+            ),
+        )
+        assertEquals(
+            DefaultNetworkRefreshAction.NONE,
+            resolveDefaultNetworkRefreshAction(
+                networkChanged = false,
+                capabilitiesChanged = false,
+                interfaceReady = false,
+                resolutionPending = true,
+            ),
+        )
+    }
+
+    @Test
     fun toLibboxPrefix_removesIpv6ScopeSuffixAndAddsPrefixLength() {
         val scopedAddress = Inet6Address.getByAddress(
             null,

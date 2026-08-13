@@ -93,9 +93,14 @@ void main() {
     );
     expect(
       manifestContent,
-      contains('android:name="android.service.quicksettings.ACTIVE_TILE"'),
+      isNot(contains('android:name="android.service.quicksettings.ACTIVE_TILE"')),
     );
-    expect(manifestContent, contains('android:value="true"'));
+    expect(
+      manifestContent,
+      isNot(
+        contains('android:name="android.service.quicksettings.TOGGLEABLE_TILE"'),
+      ),
+    );
     expect(iconContent, contains('<vector'));
     expect(iconContent, contains('android:width="24dp"'));
     expect(iconContent, contains('android:height="24dp"'));

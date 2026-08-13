@@ -1,7 +1,6 @@
 package space.pokrov.pokrov_android_shell
 
 import android.app.PendingIntent
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.VpnService
@@ -31,21 +30,6 @@ internal fun resolveQuickTileAction(
     !hasStagedProfile || !quickSettingsEligible || vpnPermissionRequired ||
         notificationPermissionRequestRequired -> QuickTileAction.OPEN_APP
     else -> QuickTileAction.START
-}
-
-internal enum class QuickTileVisualState {
-    ACTIVE,
-    PENDING,
-    INACTIVE,
-}
-
-internal fun resolveQuickTileVisualState(
-    isRunning: Boolean,
-    connectionPending: Boolean,
-): QuickTileVisualState = when {
-    isRunning -> QuickTileVisualState.ACTIVE
-    connectionPending -> QuickTileVisualState.PENDING
-    else -> QuickTileVisualState.INACTIVE
 }
 
 /** Serializes a tile transition and lets a pending START be superseded by STOP. */
@@ -168,36 +152,16 @@ class PokrovQuickSettingsTileService : TileService() {
 
     private fun refreshTile() {
         val tile = qsTile ?: return
-        val profile = AndroidRuntimeProfileStore.restoreIntoRuntimeState(this)
-        val preferences = AndroidSystemSurfacePreferencesStore.load(this)
-        val snapshot = authoritativeRuntimeSnapshot()
-        val country = androidRuntimeCountryLabel(profile?.displayCountry
-            ?.takeIf { preferences.showCountry }
-            ?.trim()
-            .orEmpty())
         tile.icon = Icon.createWithResource(this, R.drawable.ic_pokrov_system)
         tile.label = "POKROV"
-        when (resolveQuickTileVisualState(snapshot.isRunning, snapshot.connectionPending)) {
-            QuickTileVisualState.ACTIVE -> {
-                tile.state = Tile.STATE_ACTIVE
-                tile.contentDescription = if (country.isEmpty()) {
-                    "POKROV подключен. Нажмите, чтобы отключить."
-                } else {
-                    "POKROV подключен через $country. Нажмите, чтобы отключить."
-                }
-                setTileSubtitle(tile, country.ifEmpty { "Включено" })
-            }
-            QuickTileVisualState.PENDING -> {
-                tile.state = Tile.STATE_ACTIVE
-                tile.contentDescription = "POKROV готовит подключение. Нажмите, чтобы отменить."
-                setTileSubtitle(tile, "Подключение…")
-            }
-            QuickTileVisualState.INACTIVE -> {
-                tile.state = Tile.STATE_INACTIVE
-                tile.contentDescription = "POKROV отключен. Нажмите, чтобы подключить."
-                setTileSubtitle(tile, "Выключено")
-            }
-        }
+        // EMUI caches third-party tile state across app-owned transitions in
+        // both active and standard listening modes. Keep the tile an honest,
+        // state-neutral branded action; the live notification owns status,
+        // country, route and speed. onClick still resolves the authoritative
+        // TUN state before choosing START or STOP.
+        tile.state = Tile.STATE_ACTIVE
+        tile.contentDescription = "POKROV. Быстро включить или отключить VPN."
+        setTileSubtitle(tile, "Быстрый доступ")
         tile.updateTile()
     }
 
@@ -241,16 +205,11 @@ class PokrovQuickSettingsTileService : TileService() {
         private const val TRANSITION_TIMEOUT_MILLIS = 5_000L
         const val EXTRA_TILE_TRANSITION_GENERATION = "space.pokrov.runtime.TILE_GENERATION"
 
-        fun requestRefresh(context: Context) {
-            requestListeningState(
-                context,
-                ComponentName(context, PokrovQuickSettingsTileService::class.java),
-            )
-        }
-
-        fun completeRuntimeTransition(context: Context, generation: Long?) {
+        fun completeRuntimeTransition(
+            @Suppress("UNUSED_PARAMETER") context: Context,
+            generation: Long?,
+        ) {
             QuickTileTransitionGate.complete(generation)
-            requestRefresh(context)
         }
     }
 }
