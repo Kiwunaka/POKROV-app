@@ -422,7 +422,6 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
   void initState() {
     super.initState();
     _controller = TextEditingController();
-    _candidateFuture = _loadSelectedAppCandidates(widget.hostPlatform);
   }
 
   @override
@@ -435,7 +434,7 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
   void didUpdateWidget(covariant _SelectedAppsEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.hostPlatform != widget.hostPlatform) {
-      _candidateFuture = _loadSelectedAppCandidates(widget.hostPlatform);
+      _candidateFuture = null;
     }
   }
 
@@ -461,8 +460,14 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
   }
 
   Future<void> _openPicker() async {
-    final candidateFuture =
-        _candidateFuture ??= _loadSelectedAppCandidates(widget.hostPlatform);
+    final existingFuture = _candidateFuture;
+    final candidateFuture = existingFuture ??
+        _loadSelectedAppCandidates(widget.hostPlatform);
+    if (existingFuture == null) {
+      setState(() {
+        _candidateFuture = candidateFuture;
+      });
+    }
     final candidate = await showModalBottomSheet<_SelectedAppCandidate>(
       context: context,
       isScrollControlled: true,

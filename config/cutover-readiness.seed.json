@@ -1,37 +1,37 @@
 {
   "lane": "POKROV-app/main",
-  "status": "android_direct_apk_1_0_2_public_pass_global_cutover_blocked_on_windows_and_apple_gates",
+  "status": "android_direct_apk_1_0_3_public_prerelease_pass_runtime_sync_pending_global_cutover_blocked_on_windows_trust_and_apple_gates",
   "public_cutover_allowed": false,
-  "last_updated": "2026-08-12",
+  "last_updated": "2026-08-13",
   "latest_repo_backed_release": {
-    "version": "1.0.2",
-    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.2-beta.1",
-    "asset_refresh_utc": "2026-08-12T01:13:00Z",
+    "version": "1.0.3",
+    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.3-beta.1",
+    "asset_refresh_utc": "2026-08-13T09:04:51Z",
     "github_repo_visibility": "public",
     "anonymous_download_smoke": "PASS_FULL_DOWNLOAD_EXACT_SIZE_AND_SHA256",
-    "authenticated_github_release_smoke": "PASS_EXACT_SHA256",
-    "live_app_session_download_smoke": "PASS_BRAIN_RUNTIME_CLIENT_APPS_SYNTHETIC_SIGNED_INITDATA"
+    "authenticated_github_release_smoke": "PASS_EXACT_GITHUB_ASSET_DIGEST",
+    "live_app_session_download_smoke": "PENDING_RUNTIME_SYNC"
   },
   "android_release": {
     "beta_distribution": "public_production_signed_direct_apk",
     "public_approved": true,
     "current_internal_candidate": {
-      "version_name": "1.0.2",
-      "version_code": 9,
-      "apk_size_bytes": 287207515,
-      "apk_sha256": "9820CDA01DEA74CDBD34A9D1FA76B7CFC1DD24D0D452D8521239DFF9DA6BEACA",
+      "version_name": "1.0.3",
+      "version_code": 2010,
+      "apk_size_bytes": 98986483,
+      "apk_sha256": "FDB6A27E18FB69ACB44D2FA6B84E1E65431C329D239ED6C6A2C1EF152CB944AA",
       "build_mode": "release",
       "debuggable": false,
       "signing_state": "PASS_PRODUCTION_SELF_MANAGED_DIRECT_APK",
       "certificate_sha256": "0A0602A7DF5D96A0B427909D004F3DDF26DEF86587634BF16694DA8D654B2500",
       "signature_scheme": "APK_SIGNATURE_SCHEME_V2",
-      "emulator_install_identity": "SUPPORTING_PREDECESSOR_1_0_2_7_ONLY",
-      "emulator_launch_localhost_preflight": "SUPPORTING_PREDECESSOR_1_0_2_7_ONLY",
-      "physical_device_install_identity": "PASS_EXACT_HASH_SAME_SIGNER_UPDATE",
-      "physical_device_pre_tunnel": "PASS_FIRST_LAUNCH_ROUTE_SCOPE_PACKAGED_CORE_ZERO_CRASH_LOG",
-      "quick_settings_tile": "PASS_BRANDED_START_STOP_AND_NOTIFICATION_CONTROLS",
-      "chrome_egress_check": "PASS_SMART_AND_PER_APP_COUNTRY_SPLIT_NO_RAW_IP_RETAINED",
-      "physical_device_audit": "PASS_RELEASE_CRITICAL_JOURNEY_ENDURANCE_MATRIX_MANUAL_OWNER_TEST",
+      "emulator_install_identity": "PASS_EXACT_X86_64_1_0_3_4010",
+      "emulator_launch_localhost_preflight": "PASS_UI_API_ONLY_NOT_TUNNEL_PROOF",
+      "physical_device_install_identity": "MANUAL_OWNER_TEST",
+      "physical_device_pre_tunnel": "MANUAL_OWNER_TEST",
+      "quick_settings_tile": "MANUAL_OWNER_TEST_HUAWEI_EXACT_CANDIDATE",
+      "chrome_egress_check": "MANUAL_OWNER_TEST_HUAWEI_EXACT_CANDIDATE",
+      "physical_device_audit": "MANUAL_OWNER_TEST",
       "offline_signing_recovery_backup": "MANUAL_OWNER_TEST",
       "play_store_channel": "NOT_REQUESTED_DIRECT_APK_FIRST",
       "public_approved": true
@@ -66,7 +66,7 @@
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
-    "Android 1.0.2 direct APK is public and runtime-synced; Windows trusted signing remains an operator-owned exact-candidate gate"
+      "Android 1.0.3 split APKs and Windows 1.0.3 beta artifacts are public; runtime sync remains pending and Windows trusted signing remains an owner gate"
   ],
   "repo_side_closed": [
     "P0-P6 beta implementation scope",
@@ -74,7 +74,7 @@
     "SHA256SUMS and release handoff metadata aligned",
     "authenticated GitHub download proof for all current release assets",
     "Android build-tool future-support warning closed with Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0",
-    "Android 1.0.2+9 direct APK is publicly published, runtime-synced, anonymously downloaded with exact hash, production-signed, and release-critical tunnel/routing verified on physical hardware",
+      "Android 1.0.3 split APKs are publicly published, anonymously downloaded with exact hashes, and production-signed; tunnel/routing proof on Huawei remains MANUAL_OWNER_TEST",
     "release-note guardrails recorded; post-announcement monitoring remains operator work"
   ],
   "ios_release_gates": [
