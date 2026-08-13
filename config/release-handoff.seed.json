@@ -26,7 +26,7 @@
     "runtime_sync_allowed": true,
     "public_announcement_allowed": false,
     "paid_checkout_allowed": true,
-    "recorded_publication_state": "PUBLIC_PRERELEASE_PUBLISHED_ANONYMOUS_VERIFIED_RUNTIME_SYNC_PENDING",
+    "recorded_publication_state": "PUBLIC_PRERELEASE_PUBLISHED_ANONYMOUS_VERIFIED_RUNTIME_SYNCED",
     "reuse_for_new_promotion": false,
     "signing_evidence": {
       "android": "PASS",
@@ -120,7 +120,7 @@
     "github_repo_visibility": "public",
     "anonymous_download_smoke": "PASS_FULL_DOWNLOAD_EXACT_SIZE_AND_SHA256",
     "authenticated_github_release_smoke": "PASS_EXACT_GITHUB_ASSET_DIGEST",
-    "live_app_session_download_smoke": "PENDING_RUNTIME_SYNC",
+    "live_app_session_download_smoke": "PASS_BRAIN_SYNTHETIC_SIGNED_SESSION_EXACT_LINKS",
     "built_from_client_commit": "636d8f563c82281983d887063811999789a77755",
     "verification": {
       "app_shell_tests": "PASS",
@@ -134,7 +134,7 @@
       "windows_launch_ui_smoke": "PASS_EXACT_UNSIGNED_BETA_CLOSE_TO_TRAY",
       "github_asset_digest": "PASS_EXACT_SHA256_AND_ANONYMOUS_DOWNLOAD"
     },
-    "runtime_sync_result": "PENDING_RUNTIME_SYNC"
+    "runtime_sync_result": "PASS_BRAIN_HANDOFF_BACKEND_STATIC_DEPLOY_AND_POST_DEPLOY_VERIFY"
   },
   "manual_gates_before_stronger_claims": [
     "EXACT_FINAL_WARP_PER_APP_UPLINK_REPETITION",

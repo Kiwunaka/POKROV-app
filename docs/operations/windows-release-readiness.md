@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-08-13
+Last updated: 2026-08-14
 
 This document is the concrete Windows readiness note for the `POKROV-app` lane.
 
@@ -32,13 +32,7 @@ Historical mapping note:
 
 ## Current 2026-08-13 Candidate State
 
-- The current public outside-store Windows beta is `v1.0.3-beta.2`. Its
-  unsigned setup SHA-256 is
-  `7EE28D1FF058E3E09FEF05EDB496E6C44B2783235FFB1A4C25A3925E523CF70A`;
-  its portable ZIP SHA-256 is
-  `66D2081D1674C96F3E9F24EDE4CB3F0909397C49C3CD167FE00241141A97B7A8`.
-  These hashes describe the published candidate only.
-- Current source is newer than that public candidate. The exact local
+- The current public outside-store Windows beta is `v1.0.4-beta.1`. The exact
   `1.0.4-beta.1+13` candidate was rebuilt from the current tree with pinned
   POKROV Core `v1.0.3`, passed Windows analyze and the full workspace
   Flutter/Android test lane, and was visually checked from the exact EXE at
@@ -50,8 +44,10 @@ Historical mapping note:
   `E25A3E7CAF900D8B8DFE14A4AE58DCDB40B3EBC61B2C631916E7F3BD42B28ADD`;
   and its manifest SHA-256 is
   `C08AECB5D88DA0F54D63F1F518AB3BBC6E77A134E3FD910AD517A5AD447FBC55`.
-  These hashes describe the local release candidate only until publication
-  and anonymous download verification complete.
+  These hashes describe the public prerelease assets. Setup, portable ZIP,
+  and manifest completed anonymous full-size SHA-256 verification, and the
+  production synthetic signed `/api/client/apps` response returns the exact
+  setup URL, hash, and size.
 - The final shared-UI rebuild launched the exact EXE, remained responsive, and
   handled the normal window-close request by hiding the window while keeping
   the tray process alive and responsive. The test process was terminated after

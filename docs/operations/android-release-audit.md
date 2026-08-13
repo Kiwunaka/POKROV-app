@@ -1,7 +1,7 @@
 # Android Release Audit
 
-Status: direct APK 1.0.4+13 release candidate PASS for production signing, exact Huawei install, ordinary tunnel, native system UX, and live support AI; publication and exact-final WARP/per-app/uplink repetition are pending
-Last updated: 2026-08-13
+Status: direct APK 1.0.4+13 public prerelease PASS for signing, exact Huawei install, ordinary tunnel, native system UX, live support AI, anonymous downloads, and production runtime handoff; exact-final WARP/per-app/uplink repetition remains manual
+Last updated: 2026-08-14
 
 ## Required Dependency
 
@@ -135,8 +135,12 @@ The current direct-distribution candidate is `1.0.4+13` against
 - signing recovery: `MANUAL_OWNER_TEST`. The production keystore and
   DPAPI-protected password remain outside Git. An encrypted offline copy on
   owner-controlled external media is still required.
-- publication: `PENDING`. GitHub release URL, public asset digests, anonymous
-  full downloads, and runtime download cutover must be recorded after upload.
+- publication and runtime handoff: `PASS`. Public prerelease
+  `v1.0.4-beta.1` exposes all four APKs; every asset completed an anonymous
+  full-size SHA-256 match. Production backend/static deploy and post-deploy
+  verification passed, and a brain-origin synthetic signed app session
+  returned the exact ARM64/ARMv7/x86_64/universal URLs and hashes. This does
+  not replace a real Telegram-user WebApp session.
 - Google Play: `NOT_REQUESTED_DIRECT_APK_FIRST`.
 
 ## Prior 2026-08-12 Production-Signed Direct APK

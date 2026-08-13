@@ -1,8 +1,8 @@
 {
   "lane": "POKROV-app/main",
-  "status": "android_direct_apk_1_0_4_public_prerelease_anonymous_verified_runtime_sync_pending_global_cutover_blocked_on_windows_trust_and_apple_gates",
+  "status": "android_direct_apk_1_0_4_public_prerelease_anonymous_verified_runtime_synced_global_cutover_blocked_on_windows_trust_and_apple_gates",
   "public_cutover_allowed": false,
-  "last_updated": "2026-08-13",
+  "last_updated": "2026-08-14",
   "latest_repo_backed_release": {
     "version": "1.0.4",
     "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.4-beta.1",
@@ -10,7 +10,7 @@
     "github_repo_visibility": "public",
     "anonymous_download_smoke": "PASS_FULL_DOWNLOAD_EXACT_SIZE_AND_SHA256",
     "authenticated_github_release_smoke": "PASS_EXACT_GITHUB_ASSET_DIGEST",
-    "live_app_session_download_smoke": "PENDING_RUNTIME_SYNC"
+    "live_app_session_download_smoke": "PASS_BRAIN_SYNTHETIC_SIGNED_SESSION_EXACT_LINKS"
   },
   "android_release": {
     "beta_distribution": "public_production_signed_direct_apk",
@@ -51,7 +51,6 @@
     "required_user_warning": "Microsoft Defender SmartScreen or unknown-publisher warning is expected until trusted signing is complete.",
     "blocked_on": [
       "trusted Windows signing PASS for the exact next public candidate",
-      "post-sync app-session /api/client/apps download smoke",
       "live install/connect/dashboard smoke from exact uploaded unsigned setup EXE",
       "trusted signing and SmartScreen reputation for later broad distribution"
     ],
@@ -66,14 +65,14 @@
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
-      "Android 1.0.4 split APKs and Windows 1.0.4 beta artifacts are public and anonymously verified; runtime sync remains pending while Windows trusted signing remains an owner gate"
+      "Android 1.0.4 split APKs and Windows 1.0.4 beta artifacts are public, anonymously verified, and live in runtime metadata; Windows trusted signing remains an owner gate"
   ],
   "repo_side_closed": [
     "P0-P6 beta implementation scope",
     "Android APK and Windows unsigned beta artifacts uploaded to GitHub prerelease",
     "SHA256SUMS and release handoff metadata aligned",
     "authenticated GitHub download proof for all current release assets",
-    "prior brain release handoff, backend/static deploy, and current-origin verification; 1.0.4 sync is pending",
+    "1.0.4 brain release handoff, backend/static deploy, current-origin verification, and synthetic signed /api/client/apps smoke pass",
     "Android build-tool future-support warning closed with Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0",
       "Android 1.0.4 split APKs are publicly published, anonymously downloaded with exact hashes, and production-signed; exact-final ordinary tunnel/AI/system UX pass while WARP/per-app/uplink evidence is supporting pre-final-hash evidence",
     "release-note guardrails recorded; post-announcement monitoring remains operator work"
