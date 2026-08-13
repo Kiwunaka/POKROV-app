@@ -117,6 +117,10 @@ class _QuickConnectSection extends StatelessWidget {
     final homePromoSlot = _homeAdminPromoSlot(bonusSummary);
     final telegramBonusClaimed =
         (bonusSummary?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
+    final rewardsPaidRequired =
+        (bonusSummary?.rewardAccess.paidRequired ?? false) ||
+            _effectiveAccessLane(appContext, subscriptionInfo) ==
+                AccessLane.trialPremium;
 
     return _SeedContentList(
       // Mobile tabs share the 16px top gutter; the desktop stage keeps its
@@ -165,7 +169,7 @@ class _QuickConnectSection extends StatelessWidget {
               warpBusy: warpBusy,
               homePromoSlot: homePromoSlot,
               onToggleRuntime: onToggleRuntime,
-              onTelegramBonus: onTelegramBonus,
+              onTelegramBonus: rewardsPaidRequired ? null : onTelegramBonus,
               onOpenConnectionDetails: onOpenConnectionDetails,
               onOpenLocations: onOpenLocations,
               onOpenRules: onOpenRules,
@@ -563,7 +567,8 @@ class _HomeStageState extends State<_HomeStage>
                       onTap: widget.onOpenCheckout,
                     ),
                   ),
-                  if (!widget.telegramBonusClaimed) ...[
+                  if (!widget.telegramBonusClaimed &&
+                      widget.onTelegramBonus != null) ...[
                     const SizedBox(height: 14),
                     _HomeRevealSlice(
                       controller: _revealController,

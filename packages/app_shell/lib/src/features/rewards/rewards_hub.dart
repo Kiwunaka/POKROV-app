@@ -199,6 +199,7 @@ class _RewardsHubSheetState extends State<_RewardsHubSheet> {
                   _RewardsReferralCard(
                     referralCode: referralCode,
                     referralSummary: referralSummary,
+                    paidRequired: paidRequired,
                     onOpenHandoff: widget.onOpenHandoff,
                   ),
                   const SizedBox(height: 12),
@@ -426,11 +427,16 @@ class _RewardsTelegramCard extends StatelessWidget {
         : channel.startsWith('@')
             ? channel
             : '@$channel';
+    final showActions = !paidRequired || claimed;
     final copy = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          claimed ? 'Telegram-бонус активен' : 'Telegram +${ruDays(bonusDays)}',
+          claimed
+              ? 'Telegram-бонус активен'
+              : paidRequired
+                  ? 'Telegram-бонус'
+                  : 'Telegram +${ruDays(bonusDays)}',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: p.ink,
                 fontWeight: FontWeight.w700,
@@ -441,7 +447,7 @@ class _RewardsTelegramCard extends StatelessWidget {
           claimed
               ? 'Бонус уже учтен в вашем доступе.'
               : paidRequired
-                  ? 'Подписка на канал.'
+                  ? 'Откроется после первой оплаты.'
                   : 'Подпишитесь на канал и проверьте бонус.',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: p.muted,
@@ -513,8 +519,10 @@ class _RewardsTelegramCard extends StatelessWidget {
               Expanded(child: copy),
             ],
           ),
-          const SizedBox(height: 12),
-          actions,
+          if (showActions) ...[
+            const SizedBox(height: 12),
+            actions,
+          ],
         ],
       ),
     );
@@ -1051,11 +1059,13 @@ class _RewardsReferralCard extends StatefulWidget {
   const _RewardsReferralCard({
     required this.referralCode,
     required this.referralSummary,
+    required this.paidRequired,
     required this.onOpenHandoff,
   });
 
   final String referralCode;
   final AppFirstReferralSummary referralSummary;
+  final bool paidRequired;
   final void Function(String label, String value) onOpenHandoff;
 
   @override
@@ -1148,9 +1158,11 @@ class _RewardsReferralCardState extends State<_RewardsReferralCard> {
                           ),
                     ),
                     Text(
-                      widget.referralSummary.bonusDays > 0
-                          ? '+${ruDays(widget.referralSummary.bonusDays)} после первой оплаты друга · приглашений: ${widget.referralSummary.count}'
-                          : 'Приглашений: ${widget.referralSummary.count}',
+                      widget.paidRequired
+                          ? 'Откроется после первой оплаты.'
+                          : widget.referralSummary.bonusDays > 0
+                              ? '+${ruDays(widget.referralSummary.bonusDays)} после первой оплаты друга · приглашений: ${widget.referralSummary.count}'
+                              : 'Приглашений: ${widget.referralSummary.count}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: p.muted,
                           ),
@@ -1243,7 +1255,7 @@ class _RewardsReferralCardState extends State<_RewardsReferralCard> {
                   ),
             ),
           ],
-          if (shareLink == null) ...[
+          if (widget.paidRequired || shareLink == null) ...[
             const SizedBox(height: 12),
             Container(
               key: const ValueKey('rewards-referral-unavailable'),
@@ -1255,11 +1267,19 @@ class _RewardsReferralCardState extends State<_RewardsReferralCard> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.sync_rounded, color: p.muted, size: 19),
+                  Icon(
+                    widget.paidRequired
+                        ? Icons.lock_outline_rounded
+                        : Icons.sync_rounded,
+                    color: p.muted,
+                    size: 19,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Ссылка пока не готова. Потяните экран вниз, чтобы обновить.',
+                      widget.paidRequired
+                          ? 'Ссылка появится автоматически после первой оплаты.'
+                          : 'Ссылка пока не готова. Нажмите «Обновить сводку».',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: p.muted,
                             height: 1.3,
@@ -1270,7 +1290,7 @@ class _RewardsReferralCardState extends State<_RewardsReferralCard> {
               ),
             ),
           ],
-          if (shareLink != null) ...[
+          if (!widget.paidRequired && shareLink != null) ...[
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,

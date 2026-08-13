@@ -3020,6 +3020,7 @@ void main() {
         configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
+      subscriptionInfo: _paidSubscriptionInfo,
       bonusSummary: const AppFirstBonusSummary(
         referralCount: 2,
         referralCode: 'POKROV2',
@@ -3246,10 +3247,24 @@ void main() {
 
     expect(find.byKey(const ValueKey('rewards-paid-required-notice')),
         findsOneWidget);
-    expect(find.text('Telegram +5 дней'), findsOneWidget);
-    expect(find.text('Подписка на канал.'), findsOneWidget);
+    expect(find.text('Telegram-бонус'), findsWidgets);
+    expect(find.text('Откроется после первой оплаты.'), findsWidgets);
     expect(find.byKey(const ValueKey('rewards-telegram-refresh-action')),
         findsNothing);
+    expect(find.byKey(const ValueKey('rewards-telegram-open-channel')),
+        findsNothing);
+    expect(
+      find.text('Ссылка появится автоматически после первой оплаты.'),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('rewards-referral-share-action')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('rewards-referral-copy-action')),
+      findsNothing,
+    );
     expect(find.byKey(const ValueKey('rewards-wheel-card')), findsNothing);
     expect(find.byKey(const ValueKey('rewards-calendar-card')), findsNothing);
   });
@@ -3541,6 +3556,7 @@ void main() {
         configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
+      subscriptionInfo: _paidSubscriptionInfo,
     );
     final launched = <Uri>[];
 
@@ -3595,6 +3611,7 @@ void main() {
         configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
+      subscriptionInfo: _paidSubscriptionInfo,
     );
 
     await tester.pumpWidget(
@@ -4038,6 +4055,10 @@ void main() {
     expect(find.byKey(const ValueKey('home-location-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-route-chip')), findsOneWidget);
     expect(find.byKey(const ValueKey('home-news-card')), findsNothing);
+    expect(
+      find.byKey(const ValueKey('home-telegram-bonus-pill')),
+      findsNothing,
+    );
 
     // Desktop header affordances stay honest: tooltips and icons describe
     // the actual targets (connection details sheet, rules tab).

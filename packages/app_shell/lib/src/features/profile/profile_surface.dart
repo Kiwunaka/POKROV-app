@@ -152,7 +152,8 @@ class _ProfileSection extends StatelessWidget {
     if (summary?.rewardAccess.paidRequired ?? false) {
       return true;
     }
-    return (subscriptionInfo?.lane.toLowerCase().contains('trial') ?? false);
+    return _effectiveAccessLane(appContext, subscriptionInfo) ==
+        AccessLane.trialPremium;
   }
 
   @override

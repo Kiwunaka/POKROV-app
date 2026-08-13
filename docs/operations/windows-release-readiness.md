@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-07-22
+Last updated: 2026-08-13
 
 This document is the concrete Windows readiness note for the `POKROV-app` lane.
 
@@ -29,6 +29,30 @@ Historical mapping note:
 - source and widget tests prove lifecycle ordering, but connected exact-artifact
   tray exit still requires runtime/TUN teardown and any compatibility
   system-proxy restoration proof
+
+## Current 2026-08-13 Candidate State
+
+- The current public outside-store Windows beta is `v1.0.3-beta.2`. Its
+  unsigned setup SHA-256 is
+  `7EE28D1FF058E3E09FEF05EDB496E6C44B2783235FFB1A4C25A3925E523CF70A`;
+  its portable ZIP SHA-256 is
+  `66D2081D1674C96F3E9F24EDE4CB3F0909397C49C3CD167FE00241141A97B7A8`.
+  These hashes describe the published candidate only.
+- Current source is newer than that public candidate. A fresh local
+  `1.0.3-beta.2+11` build hides paid-only Telegram/reward actions on trial,
+  labels the trial reward gate explicitly, and keeps paid referral share/copy
+  actions available. Shared-shell widget tests pass and the rebuilt EXE was
+  visually checked at `1600x900`.
+- The source-newer local setup SHA-256 is
+  `800DD66313A2972609BA0572C0AF05EB991BF01A9B52FA2813492B119114BBC1`;
+  its portable ZIP SHA-256 is
+  `717FD7AEDE508C1FA7F3FCD3F34816EABC1EC17173020A874A8A7567E822A74D`.
+  It deliberately shares the old build version while QA is still active and
+  must not overwrite the public `beta.2`; publication requires a new version.
+- The rebuilt setup remains `NotSigned`. The accepted outside-store beta risk
+  does not turn that result into trusted signing or SmartScreen reputation.
+- Retained visual evidence is under
+  `E:/POKROV-ops-evidence/2026-08-13-goal-continuation/windows-app-audit/`.
 
 ## Local Verification Commands
 
@@ -92,7 +116,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 -Sy
 
 These outputs are regenerated local verification artifacts. They are useful for operator inspection and local validation, but they are not production release truth.
 
-Latest local packaging note:
+Historical local packaging notes:
 
 - `2026-06-03`: `scripts/build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze`
   succeeded after the full Task 8 verification run.
@@ -153,8 +177,8 @@ Safe to claim now:
 - the Windows connect path fetches a live managed profile, materializes route mode and optional WARP in Dart, secures the staged file, and starts POKROV Core through desktop ABI 2
 - the local release build bundles the pinned POKROV DLL and `libcronet.dll` into the Windows runner output
 - the Windows seed lane has a reproducible unsigned package step with a manifest, portable ZIP, and first-layer setup EXE for gated beta inspection
-- the current `1.0.0-beta` unsigned setup EXE is uploaded to the public
-  GitHub prerelease for outside-store beta access
+- the current `v1.0.3-beta.2` unsigned setup EXE and portable ZIP are uploaded
+  to the public GitHub prerelease for outside-store beta access
 - the current Windows source materializes `Full tunnel`, `All except RU`,
   selected-process routing, and client-local WARP into raw config before the
   POKROV Core start call; system proxy remains a disabled compatibility-only path
@@ -218,8 +242,9 @@ trusted/stable claims, attach:
 
 ## Release Rule
 
-Windows outside-store beta upload is complete for `1.0.0-beta` with approved
-unsigned-warning posture. Stronger trusted/stable/store claims remain blocked
-until exact-artifact live install/restart/secure-storage smoke, trusted
+Windows outside-store beta upload is complete for `v1.0.3-beta.2` with approved
+unsigned-warning posture. Current source is newer and cannot reuse that release
+identity. Stronger trusted/stable/store claims remain blocked until the next
+exact artifact passes live install/restart/secure-storage smoke, trusted
 signing/SmartScreen reputation, support-copy evidence, and the target channel's
 publishing requirements are approved.
