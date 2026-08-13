@@ -179,7 +179,7 @@ class _RewardsHubSheetState extends State<_RewardsHubSheet> {
                               ? ''
                               : wheel.canRun
                                   ? 'Крутить рулетку'
-                                  : wheel.statusLabel,
+                                  : '',
                       actionEnabled: wheel.canRun && !rewardBusy,
                       onAction: () => unawaited(_spinWheel()),
                     ),

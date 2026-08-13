@@ -141,6 +141,7 @@ class _FakeBootstrapper
     this.assistantGate,
     this.assistantFailureCalls = const <int>{},
     this.bonusSummaryGate,
+    this.subscriptionGate,
     this.locationsCatalogFailure,
     this.notificationsFailure,
     this.managedProfileFailure,
@@ -267,6 +268,7 @@ class _FakeBootstrapper
   final Future<void>? assistantGate;
   final Set<int> assistantFailureCalls;
   final Future<void>? bonusSummaryGate;
+  final Future<void>? subscriptionGate;
   final String? locationsCatalogFailure;
   final String? notificationsFailure;
   final BootstrapFailure? managedProfileFailure;
@@ -286,6 +288,8 @@ class _FakeBootstrapper
   int channelBonusCheckCalls = 0;
   int channelBonusClaimCalls = 0;
   int bonusSummaryCalls = 0;
+  int subscriptionCalls = 0;
+  final List<String> accountSummaryCallOrder = <String>[];
   int wheelSpinCalls = 0;
   int calendarCheckInCalls = 0;
   int warpStatusCalls = 0;
@@ -429,6 +433,7 @@ class _FakeBootstrapper
   }) async {
     await bonusSummaryGate;
     bonusSummaryCalls += 1;
+    accountSummaryCallOrder.add('bonus');
     lastBonusSummaryHostPlatform = hostPlatform;
     return bonusSummary;
   }
@@ -463,6 +468,10 @@ class _FakeBootstrapper
   Future<ClientSubscriptionInfo> fetchClientSubscription({
     required HostPlatform hostPlatform,
   }) async {
+    subscriptionCalls += 1;
+    accountSummaryCallOrder.add('subscription:start');
+    await subscriptionGate;
+    accountSummaryCallOrder.add('subscription:end');
     return subscriptionInfo;
   }
 
@@ -3160,6 +3169,41 @@ void main() {
     expect(find.text('Полезные задачи'), findsNothing);
     expect(find.byKey(const ValueKey('rewards-quest-second_device')),
         findsNothing);
+  });
+
+  testWidgets('startup orders subscription before bonus summary',
+      (tester) async {
+    final subscriptionGate = Completer<void>();
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      subscriptionGate: subscriptionGate.future,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pump();
+
+    expect(bootstrapper.subscriptionCalls, 1);
+    expect(bootstrapper.bonusSummaryCalls, 0);
+    expect(
+        bootstrapper.accountSummaryCallOrder, <String>['subscription:start']);
+
+    subscriptionGate.complete();
+    await tester.pumpAndSettle();
+
+    expect(
+      bootstrapper.accountSummaryCallOrder,
+      <String>['subscription:start', 'subscription:end', 'bonus'],
+    );
+    expect(bootstrapper.bonusSummaryCalls, 1);
   });
 
   testWidgets('bonus preview keeps wheel and activity calendar non-mutating',

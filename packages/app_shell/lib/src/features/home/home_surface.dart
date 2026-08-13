@@ -1648,7 +1648,7 @@ String _homeProtectionStatusLabel(
   bool disconnecting = false,
 }) {
   if (busy) {
-    return disconnecting ? 'Завершаем соединение' : 'Подбираем локацию';
+    return disconnecting ? 'Завершаем соединение' : 'Настраиваем';
   }
   if (snapshot?.phase == RuntimePhase.running) {
     if (snapshot?.isCoreEgressValidationPending ?? false) {

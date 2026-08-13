@@ -644,10 +644,17 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _refreshRuntimeSnapshot();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_checkForClientUpdate());
-      unawaited(_loadBonusSummary());
-      unawaited(_refreshSubscriptionInfo());
+      unawaited(_refreshAccountSummary());
       unawaited(_loadSystemSurfacePreferences());
     });
+  }
+
+  Future<void> _refreshAccountSummary() async {
+    // Both calls may refresh the same expired app session and reconcile the
+    // same account projection. Keep them ordered so first launch cannot make
+    // two competing account transactions and leave bonuses in an error state.
+    await _refreshSubscriptionInfo();
+    await _loadBonusSummary();
   }
 
   Future<void> _restoreClientExperience() async {
@@ -1165,8 +1172,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       unawaited(_refreshLocationsCatalog());
     }
     if (tab == SeedTab.profile && widget.bootstrapper != null) {
-      unawaited(_loadBonusSummary());
-      unawaited(_refreshSubscriptionInfo());
+      unawaited(_refreshAccountSummary());
       unawaited(_refreshNotifications());
     }
   }
