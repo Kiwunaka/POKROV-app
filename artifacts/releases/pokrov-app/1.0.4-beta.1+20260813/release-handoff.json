@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "product": "POKROV",
+  "client_lane": "pokrov-app",
+  "release_id": "1.0.4-beta.1+20260813",
+  "release_version": "1.0.4-beta.1",
+  "version": "1.0.4",
+  "artifact_dir": "artifacts/releases/pokrov-app/1.0.4-beta.1+20260813",
+  "generated_at": "2026-08-13T23:55:57+03:00",
+  "updated_at": "2026-08-13T23:55:57+03:00",
+  "release_state": "candidate_built_source_committed_huawei_exact_smoke_pass_publication_pending",
+  "built_from_client_commit": "636d8f563c82281983d887063811999789a77755",
+  "github_release": {
+    "tag": "v1.0.4-beta.1",
+    "url": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.4-beta.1",
+    "repository": "Kiwunaka/pokrov",
+    "is_prerelease": true,
+    "is_draft": false,
+    "visibility": "public",
+    "asset_refresh_utc": null
+  },
+  "downloads": {
+    "android": {
+      "play_url": "",
+      "apk_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-android-arm64-v8a.apk",
+      "apk_arm64_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-android-arm64-v8a.apk",
+      "apk_armeabi_v7a_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-android-armeabi-v7a.apk",
+      "apk_x86_64_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-android-x86_64.apk",
+      "apk_universal_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-android-universal.apk",
+      "mirror_url": "",
+      "sha256": "48EAC0BE655D4D85D31134908E7A8CAEC881ED91AAE049FB7CF72206EFD99E6C",
+      "size_bytes": 99117667,
+      "universal": false,
+      "min_android": 7,
+      "target_sdk": 36,
+      "apk_variants": [
+        {
+          "abi": "arm64-v8a",
+          "file_name": "pokrov-android-arm64-v8a.apk",
+          "url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-android-arm64-v8a.apk",
+          "sha256": "48EAC0BE655D4D85D31134908E7A8CAEC881ED91AAE049FB7CF72206EFD99E6C",
+          "size_bytes": 99117667
+        },
+        {
+          "abi": "armeabi-v7a",
+          "file_name": "pokrov-android-armeabi-v7a.apk",
+          "url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-android-armeabi-v7a.apk",
+          "sha256": "598916EFCFAA6E32465627EB984390E10A2C2C97DB9936A34E9030F1179E75E5",
+          "size_bytes": 88427581
+        },
+        {
+          "abi": "x86_64",
+          "file_name": "pokrov-android-x86_64.apk",
+          "url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-android-x86_64.apk",
+          "sha256": "6B8F38B3498FFF693E8C1A0C20200A37C570CC3E3B233F331B14003D3B05B2B7",
+          "size_bytes": 107631522
+        },
+        {
+          "abi": "universal",
+          "file_name": "pokrov-android-universal.apk",
+          "url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-android-universal.apk",
+          "sha256": "7B7688185D03ED3E54A7D1EE0B15D774F97AD66C25C221135B895421146068B9",
+          "size_bytes": 289838426
+        }
+      ]
+    },
+    "windows": {
+      "exe_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-windows-setup-x64.exe",
+      "zip_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-windows-portable-x64.zip",
+      "manifest_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-windows-1.0.4-beta.1.manifest.json",
+      "mirror_url": "",
+      "version": "1.0.4-beta.1+13",
+      "exe_sha256": "AD93F7F307552210BE4A8E6263382D4D221E993D8D743CEB6809D774DA007095",
+      "exe_size_bytes": 38739968,
+      "zip_sha256": "E25A3E7CAF900D8B8DFE14A4AE58DCDB40B3EBC61B2C631916E7F3BD42B28ADD",
+      "zip_size_bytes": 38967675,
+      "manifest_sha256": "C08AECB5D88DA0F54D63F1F518AB3BBC6E77A134E3FD910AD517A5AD447FBC55",
+      "manifest_size_bytes": 2665,
+      "signing_state": "unsigned_beta_smartscreen_warning_required"
+    },
+    "docs_url": "https://pokrov.space/install/"
+  },
+  "runtime_env": {
+    "APP_ANDROID_PLAY_URL": "",
+    "APP_ANDROID_APK_URL": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-android-arm64-v8a.apk",
+    "APP_ANDROID_APK_ARM64_URL": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-android-arm64-v8a.apk",
+    "APP_ANDROID_APK_ARMEABI_V7A_URL": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-android-armeabi-v7a.apk",
+    "APP_ANDROID_APK_X86_64_URL": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-android-x86_64.apk",
+    "APP_ANDROID_APK_UNIVERSAL_URL": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-android-universal.apk",
+    "APP_ANDROID_MIRROR_URL": "",
+    "APP_ANDROID_VERSION": "1.0.4",
+    "APP_ANDROID_SHA256": "48EAC0BE655D4D85D31134908E7A8CAEC881ED91AAE049FB7CF72206EFD99E6C",
+    "APP_ANDROID_SIZE_BYTES": "99117667",
+    "APP_ANDROID_ARM64_SHA256": "48EAC0BE655D4D85D31134908E7A8CAEC881ED91AAE049FB7CF72206EFD99E6C",
+    "APP_ANDROID_ARM64_SIZE_BYTES": "99117667",
+    "APP_ANDROID_ARMEABI_V7A_SHA256": "598916EFCFAA6E32465627EB984390E10A2C2C97DB9936A34E9030F1179E75E5",
+    "APP_ANDROID_ARMEABI_V7A_SIZE_BYTES": "88427581",
+    "APP_ANDROID_X86_64_SHA256": "6B8F38B3498FFF693E8C1A0C20200A37C570CC3E3B233F331B14003D3B05B2B7",
+    "APP_ANDROID_X86_64_SIZE_BYTES": "107631522",
+    "APP_ANDROID_UNIVERSAL_SHA256": "7B7688185D03ED3E54A7D1EE0B15D774F97AD66C25C221135B895421146068B9",
+    "APP_ANDROID_UNIVERSAL_SIZE_BYTES": "289838426",
+    "APP_ANDROID_RELEASE_NOTES": "Новая главная, честные локации и варианты, надёжнее плитка и сеть, нативная AI-поддержка с диагностикой.",
+    "APP_ANDROID_RELEASE_NOTES_URL": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.4-beta.1",
+    "APP_ANDROID_PUBLISHED_AT": "",
+    "APP_WINDOWS_EXE_URL": "https://github.com/Kiwunaka/pokrov/releases/download/v1.0.4-beta.1/pokrov-windows-setup-x64.exe",
+    "APP_WINDOWS_MIRROR_URL": "",
+    "APP_WINDOWS_VERSION": "1.0.4-beta.1",
+    "APP_WINDOWS_SHA256": "AD93F7F307552210BE4A8E6263382D4D221E993D8D743CEB6809D774DA007095",
+    "APP_WINDOWS_SIZE_BYTES": "38739968",
+    "APP_WINDOWS_RELEASE_NOTES": "Общий обновлённый UI с Android и Core 1.0.3. Бета без доверенной Windows-подписи.",
+    "APP_WINDOWS_RELEASE_NOTES_URL": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.4-beta.1",
+    "APP_WINDOWS_PUBLISHED_AT": "",
+    "APP_DOCS_URL": "https://pokrov.space/install/"
+  },
+  "cutover": {
+    "runtime_sync_allowed": true,
+    "runtime_sync_required": true,
+    "runtime_sync_result": "PENDING_PUBLICATION",
+    "anonymous_download_smoke": "PENDING_PUBLICATION",
+    "authenticated_github_release_smoke": "PENDING_PUBLICATION",
+    "public_publication_allowed": true,
+    "public_publication_marker": "GO_PUBLIC_PRERELEASE_DIRECT_SPLIT_APKS_AND_WINDOWS_BETA_OWNER_AUTHORIZED",
+    "public_announcement_allowed": false,
+    "paid_checkout_allowed": true,
+    "google_play_state": "NOT_REQUESTED_DIRECT_APK_FIRST"
+  },
+  "fresh_verification": [
+    {
+      "command": "scripts/run-tests.ps1; scripts/validate-seed.ps1; test/docs-contract.ps1",
+      "cwd": "POKROV-app",
+      "status": "PASS_FLUTTER_ANDROID_GRADLE_SEED_DOCS"
+    },
+    {
+      "command": "scripts/build-android-production.ps1",
+      "cwd": "POKROV-app",
+      "status": "PASS_SIGNED_SPLITS_PACKAGE_VERSION_CERTIFICATE_ABI"
+    },
+    {
+      "command": "exact ARM64 install/hash/UI/tunnel/notification smoke",
+      "cwd": "Huawei Android 12",
+      "status": "PASS_EXACT_FINAL_ORDINARY_TUNNEL_3_CYCLES_AI_VARIANTS_SYSTEM_UX"
+    },
+    {
+      "command": "scripts/build-windows-release.ps1 -SkipTests -SkipAnalyze -SkipValidateSeed",
+      "cwd": "POKROV-app",
+      "status": "PASS_UNSIGNED_SETUP_PORTABLE_MANIFEST"
+    },
+    {
+      "command": "launch exact staged Windows executable and CloseMainWindow",
+      "cwd": "Windows 11",
+      "status": "PASS_LAUNCH_RESPONSIVE_CLOSE_TO_TRAY"
+    }
+  ],
+  "manual_gates_before_stronger_claims": [
+    "EXACT_FINAL_WARP_PER_APP_UPLINK_REPETITION",
+    "ENCRYPTED_OFFLINE_ANDROID_KEYSTORE_RECOVERY_COPY_TO_OWNER_MEDIA",
+    "ANDROID_LONG_DURATION_ENDURANCE",
+    "WINDOWS_TRUSTED_SIGNING",
+    "WINDOWS_CONNECTED_TUN_ROUTE_DNS_TEARDOWN",
+    "RU_ORIGIN_PROBE_IF_CLAIMED"
+  ],
+  "accepted_skips_for_current_outside_store_beta": [
+    "GOOGLE_PLAY_DISTRIBUTION",
+    "APPLE_NATIVE_CLIENT",
+    "WINDOWS_TRUSTED_SIGNING"
+  ]
+}
