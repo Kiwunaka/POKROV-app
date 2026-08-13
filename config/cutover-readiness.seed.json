@@ -1,6 +1,6 @@
 {
   "lane": "POKROV-app/main",
-  "status": "android_direct_apk_1_0_3_public_prerelease_pass_runtime_sync_pending_global_cutover_blocked_on_windows_trust_and_apple_gates",
+  "status": "android_direct_apk_1_0_3_public_prerelease_runtime_synced_global_cutover_blocked_on_windows_trust_and_apple_gates",
   "public_cutover_allowed": false,
   "last_updated": "2026-08-13",
   "latest_repo_backed_release": {
@@ -66,13 +66,14 @@
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
-      "Android 1.0.3 split APKs and Windows 1.0.3 beta artifacts are public; runtime sync remains pending and Windows trusted signing remains an owner gate"
+      "Android 1.0.3 split APKs and Windows 1.0.3 beta artifacts are public; runtime sync and current-origin verification pass while Windows trusted signing remains an owner gate"
   ],
   "repo_side_closed": [
     "P0-P6 beta implementation scope",
     "Android APK and Windows unsigned beta artifacts uploaded to GitHub prerelease",
     "SHA256SUMS and release handoff metadata aligned",
     "authenticated GitHub download proof for all current release assets",
+    "brain release handoff, backend/static deploy, and current-origin verification",
     "Android build-tool future-support warning closed with Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0",
       "Android 1.0.3 split APKs are publicly published, anonymously downloaded with exact hashes, and production-signed; tunnel/routing proof on Huawei remains MANUAL_OWNER_TEST",
     "release-note guardrails recorded; post-announcement monitoring remains operator work"

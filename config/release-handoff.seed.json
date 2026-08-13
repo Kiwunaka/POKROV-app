@@ -26,7 +26,7 @@
     "runtime_sync_allowed": true,
     "public_announcement_allowed": false,
     "paid_checkout_allowed": true,
-    "recorded_publication_state": "PUBLIC_PRERELEASE_PUBLISHED_PENDING_RUNTIME_SYNC_AND_HUAWEI_MANUAL_GATES",
+    "recorded_publication_state": "PUBLIC_PRERELEASE_PUBLISHED_RUNTIME_SYNCED_HUAWEI_MANUAL_GATES_PENDING",
     "reuse_for_new_promotion": false,
     "signing_evidence": {
       "android": "PASS",
@@ -134,7 +134,7 @@
       "windows_launch_ui_smoke": "PASS_UNSIGNED_BETA",
       "github_asset_digest": "PASS_EXACT_SHA256"
     },
-    "runtime_sync_result": "PENDING_RUNTIME_SYNC"
+    "runtime_sync_result": "PASS_BRAIN_HANDOFF_BACKEND_STATIC_DEPLOY_AND_POST_DEPLOY_VERIFY"
   },
   "manual_gates_before_stronger_claims": [
     "HUAWEI_EXACT_CANDIDATE_TUNNEL_WARP_PER_APP_QS_NOTIFICATION",
