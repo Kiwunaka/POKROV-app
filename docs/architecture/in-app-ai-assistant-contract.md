@@ -13,7 +13,8 @@ This document defines the support-scoped POKROV assistant for the
 - It cannot change settings, navigate, attach diagnostics, or open a handoff
   without explicit user confirmation.
 - Ticket-backed operator escalation remains the human-support path.
-- Telegram support remains a fallback, not the primary in-app flow.
+- Telegram support remains a quiet fallback only when the embedded support
+  path is unavailable; it is not promoted beside the working in-app chat.
 
 ## Implemented API
 
@@ -52,9 +53,9 @@ app invokes it and what the UI may expose.
 
 - Support keeps the primary screen focused on the conversation, one compact
   lifecycle status, and the composer. Diagnostic attachment stays behind the
-  composer paperclip. The AI entry stays first; a single visible compact
-  `Feedback-бот в Telegram` button provides the manual external fallback
-  without hiding it in an overflow menu or repeating it inside every answer.
+  composer paperclip. The AI entry stays first. A quiet `Оставить отзыв`
+  action opens a native in-app form for an idea, problem, or other feedback;
+  it creates a ticket-backed message and never opens Telegram.
 - The assistant sheet opens directly on one composer. It does not repeat a
   greeting bubble or expose auto-fill prompt chips. Safe actions returned with
   a reply render as compact, allowlisted controls: recovery/access actions ask
@@ -133,7 +134,8 @@ platform endpoint. A safe UI label such as `WARP` does not relax this boundary.
 ## Response And Action Rules
 
 - Prefer recovery steps users can understand: reconnect, refresh profile,
-  change location, attach diagnostics, open a ticket, or use Telegram fallback.
+  change location, attach diagnostics, or open a ticket. Mention the Telegram
+  fallback only when the embedded ticket path is unavailable.
 - Do not suggest raw-config editing to normal users.
 - Do not suggest Xray outside an explicit Advanced/recovery context.
 - Suggested actions are proposals, never automatic commands.

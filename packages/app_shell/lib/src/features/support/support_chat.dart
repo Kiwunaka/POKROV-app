@@ -332,7 +332,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
             role: _SupportChatRole.assistant,
             label: 'Поддержка',
             body:
-                'Обращение #${receipt.ticketId} создано. Ответ появится здесь; Telegram остается запасным каналом.',
+                'Обращение #${receipt.ticketId} создано. Ответ появится прямо в этом чате.',
           ),
         );
       });
@@ -478,6 +478,60 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
       _showDiagnosticsPreview();
     } else if (escalated) {
       _composerFocusNode.requestFocus();
+    }
+  }
+
+  Future<void> _openFeedbackForm() async {
+    PokrovHaptics.tap();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
+      builder: (context) => _SupportFeedbackSheet(
+        onSubmit: _submitFeedback,
+      ),
+    );
+  }
+
+  Future<String?> _submitFeedback(_SupportFeedbackDraft draft) async {
+    if (_sending) {
+      return 'Дождитесь отправки текущего сообщения.';
+    }
+    try {
+      final diagnostics = draft.attachDiagnostics
+          ? _supportDiagnostics()
+          : const <String, Object?>{};
+      final receipt = await widget.supportTicketService.createTicket(
+        hostPlatform: widget.appContext.hostPlatform,
+        routeMode: widget.selectedRouteMode,
+        statusLabel: draft.attachDiagnostics ? widget.statusLabel : '',
+        subject: 'Обратная связь POKROV — ${draft.category.subject}',
+        body: draft.message,
+        diagnostics: diagnostics,
+      );
+      if (!mounted) {
+        return null;
+      }
+      setState(() {
+        _ticketId = receipt.ticketId;
+        _threadClosed = false;
+        _threadRefreshFailed = false;
+        _threadError = null;
+        _messages.add(
+          _SupportChatMessage(
+            role: _SupportChatRole.assistant,
+            label: 'Поддержка',
+            body:
+                'Спасибо — отзыв #${receipt.ticketId} отправлен. Ответ, если он понадобится, появится в этом чате.',
+          ),
+        );
+      });
+      _scrollToLatestMessage();
+      _syncThreadPolling();
+      return null;
+    } catch (_) {
+      return 'Не удалось отправить отзыв. Проверьте интернет и повторите.';
     }
   }
 
@@ -680,27 +734,24 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                                 ),
                               ),
                             Padding(
-                              padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
+                              padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: TextButton.icon(
                                   key: const ValueKey(
-                                    'support-feedback-bot-action',
+                                    'support-feedback-form-action',
                                   ),
-                                  style: OutlinedButton.styleFrom(
-                                    minimumSize: const Size.fromHeight(48),
-                                    alignment: Alignment.centerLeft,
+                                  style: TextButton.styleFrom(
+                                    minimumSize: const Size(0, 48),
+                                    visualDensity: VisualDensity.compact,
+                                    foregroundColor: p.muted,
                                   ),
-                                  onPressed: () => widget.onOpenHandoff(
-                                    'support',
-                                    widget
-                                        .appContext.supportSnapshot.supportBot,
+                                  onPressed: _openFeedbackForm,
+                                  icon: const Icon(
+                                    Icons.rate_review_outlined,
+                                    size: 19,
                                   ),
-                                  icon:
-                                      const Icon(Icons.send_rounded, size: 19),
-                                  label: const Text(
-                                    'Feedback-бот в Telegram',
-                                  ),
+                                  label: const Text('Оставить отзыв'),
                                 ),
                               ),
                             ),
@@ -1275,6 +1326,244 @@ class _PokrovAiBadge extends StatelessWidget {
                 ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SupportFeedbackCategory {
+  const _SupportFeedbackCategory({
+    required this.id,
+    required this.label,
+    required this.subject,
+  });
+
+  final String id;
+  final String label;
+  final String subject;
+}
+
+const _supportFeedbackCategories = <_SupportFeedbackCategory>[
+  _SupportFeedbackCategory(id: 'idea', label: 'Идея', subject: 'идея'),
+  _SupportFeedbackCategory(id: 'bug', label: 'Ошибка', subject: 'ошибка'),
+  _SupportFeedbackCategory(id: 'other', label: 'Другое', subject: 'другое'),
+];
+
+class _SupportFeedbackDraft {
+  const _SupportFeedbackDraft({
+    required this.category,
+    required this.message,
+    required this.attachDiagnostics,
+  });
+
+  final _SupportFeedbackCategory category;
+  final String message;
+  final bool attachDiagnostics;
+}
+
+class _SupportFeedbackSheet extends StatefulWidget {
+  const _SupportFeedbackSheet({required this.onSubmit});
+
+  final Future<String?> Function(_SupportFeedbackDraft draft) onSubmit;
+
+  @override
+  State<_SupportFeedbackSheet> createState() => _SupportFeedbackSheetState();
+}
+
+class _SupportFeedbackSheetState extends State<_SupportFeedbackSheet> {
+  late final TextEditingController _messageController;
+  _SupportFeedbackCategory _category = _supportFeedbackCategories.first;
+  bool _attachDiagnostics = false;
+  bool _submitting = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _messageController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final message = _messageController.text.trim();
+    if (_submitting || message.length < 3) {
+      setState(() {
+        _error = 'Напишите хотя бы несколько слов.';
+      });
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    final error = await widget.onSubmit(
+      _SupportFeedbackDraft(
+        category: _category,
+        message: message,
+        attachDiagnostics: _attachDiagnostics,
+      ),
+    );
+    if (!mounted) {
+      return;
+    }
+    if (error == null) {
+      Navigator.of(context).maybePop();
+      return;
+    }
+    setState(() {
+      _submitting = false;
+      _error = error;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final viewInsets = MediaQuery.viewInsetsOf(context);
+    return SafeArea(
+      top: false,
+      child: AnimatedPadding(
+        duration: _MotionTokens.short,
+        curve: _MotionTokens.ease,
+        padding: EdgeInsets.only(bottom: viewInsets.bottom),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: constraints.maxHeight),
+              child: SingleChildScrollView(
+                key: const ValueKey('support-feedback-form'),
+                padding: const EdgeInsets.fromLTRB(22, 4, 22, 24),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 620),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Обратная связь',
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: p.ink,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Идеи и замечания попадут команде POKROV прямо из приложения.',
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: p.muted,
+                                    height: 1.35,
+                                  ),
+                        ),
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final category in _supportFeedbackCategories)
+                              ChoiceChip(
+                                key: ValueKey(
+                                  'support-feedback-category-${category.id}',
+                                ),
+                                label: Text(category.label),
+                                selected: category.id == _category.id,
+                                onSelected: _submitting
+                                    ? null
+                                    : (_) => setState(() {
+                                          _category = category;
+                                          _error = null;
+                                        }),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        TextField(
+                          key: const ValueKey('support-feedback-message'),
+                          controller: _messageController,
+                          autofocus: true,
+                          enabled: !_submitting,
+                          minLines: 4,
+                          maxLines: 7,
+                          maxLength: 1500,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: const InputDecoration(
+                            labelText: 'Что улучшить?',
+                            hintText: 'Опишите идею или проблему',
+                            alignLabelWithHint: true,
+                            border: OutlineInputBorder(),
+                          ),
+                          onChanged: (_) {
+                            if (_error != null) {
+                              setState(() => _error = null);
+                            }
+                          },
+                        ),
+                        CheckboxListTile(
+                          key: const ValueKey(
+                            'support-feedback-attach-diagnostics',
+                          ),
+                          value: _attachDiagnostics,
+                          enabled: !_submitting,
+                          contentPadding: EdgeInsets.zero,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          title: const Text('Приложить безопасную диагностику'),
+                          subtitle: const Text(
+                            'Версия, устройство, режим, статус VPN и WARP — без ключей и адресов серверов.',
+                          ),
+                          onChanged: (value) => setState(() {
+                            _attachDiagnostics = value ?? false;
+                          }),
+                        ),
+                        if (_error case final error?) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            error,
+                            key: const ValueKey('support-feedback-error'),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                          ),
+                        ],
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            key: const ValueKey('support-feedback-submit'),
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                            ),
+                            onPressed: _submitting ? null : _submit,
+                            icon: _submitting
+                                ? const SizedBox.square(
+                                    dimension: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.send_rounded, size: 19),
+                            label: Text(
+                              _submitting ? 'Отправляем…' : 'Отправить',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

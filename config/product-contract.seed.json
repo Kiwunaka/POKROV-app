@@ -16,7 +16,7 @@
   "advanced_fallback_core": "xray",
   "trial_days": 5,
   "telegram_bonus_days": 5,
-  "client_version_line": "1.0.6",
+  "client_version_line": "1.0.8",
   "free_tier": {
     "enabled": false,
     "status": "retired_pending_replacement",

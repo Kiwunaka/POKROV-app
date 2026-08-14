@@ -15,7 +15,7 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 /// package base version (without Android's build number).
 const pokrovClientVersion = String.fromEnvironment(
   'POKROV_APP_VERSION',
-  defaultValue: '1.0.7',
+  defaultValue: '1.0.8',
 );
 
 const _platformErrorCodeHeader = 'X-POKROV-Auth-Error';

@@ -5104,14 +5104,40 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('support-diagnostics-close')));
     await tester.pumpAndSettle();
 
-    final feedbackBot = find.byKey(
-      const ValueKey('support-feedback-bot-action'),
+    expect(
+      find.byKey(const ValueKey('support-feedback-bot-action')),
+      findsNothing,
     );
-    await tester.ensureVisible(feedbackBot);
-    await tester.tap(feedbackBot);
+    final feedbackForm = find.byKey(
+      const ValueKey('support-feedback-form-action'),
+    );
+    await tester.ensureVisible(feedbackForm);
+    await tester.tap(feedbackForm);
     await tester.pumpAndSettle();
 
-    expect(opened.last.toString(), 'tg://resolve?domain=pokrov_supportbot');
+    expect(find.byKey(const ValueKey('support-feedback-form')), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey('support-feedback-category-bug')),
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('support-feedback-message')),
+      'Плитка иногда показывает неверный статус.',
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('support-feedback-attach-diagnostics')),
+    );
+    await tester.tap(find.byKey(const ValueKey('support-feedback-submit')));
+    await tester.pumpAndSettle();
+
+    expect(supportTicketService.calls, 2);
+    expect(supportTicketService.lastSubject, contains('ошибка'));
+    expect(
+      supportTicketService.lastBody,
+      'Плитка иногда показывает неверный статус.',
+    );
+    expect(supportTicketService.lastDiagnostics, isNotEmpty);
+    expect(opened, hasLength(1));
+    expect(find.textContaining('отзыв #777 отправлен'), findsOneWidget);
   });
 
   testWidgets('home trial access strip opens the profile', (tester) async {

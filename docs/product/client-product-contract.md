@@ -351,10 +351,12 @@ Support contract rules:
 - the AI helper handles WARP, location, route-mode, and system-permission
   recovery before human escalation. A transport failure is shown as a retryable
   request failure, not as a fabricated or missing-answer response
-- the ticket screen exposes `Feedback-бот в Telegram` as one visible compact
-  action rather than hiding the fallback in an overflow menu. The assistant
-  remains first, diagnostics require confirmation, and neither the AI nor a
-  FAQ answer opens the bot or creates a ticket automatically
+- the ticket screen keeps the embedded operator chat primary and exposes a
+  quiet native `Оставить отзыв` form for ideas and problems. Telegram is a
+  fallback only when embedded support is unavailable, not a permanent button
+  beside the chat. The assistant remains first, diagnostics require
+  confirmation, and neither the AI nor a FAQ answer opens an external bot or
+  creates a ticket automatically
 - AI continuity remains sheet-local; retry reuses the one visible question,
   while closing and reopening the sheet begins a fresh assistant conversation
 
@@ -494,8 +496,8 @@ Release continuity rules:
   opt-in lane and must never be returned as the stable candidate
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
-- the first stable candidate after installed `1.0.5` beta builds must have a
-  strictly newer semantic version (`1.0.6` or later) so beta users are prompted
+- stable candidates after installed `1.0.5` beta builds use a strictly newer
+  semantic version (`1.0.8` is current) so beta users are prompted
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates
