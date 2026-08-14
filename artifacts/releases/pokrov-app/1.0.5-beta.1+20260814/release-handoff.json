@@ -7,8 +7,8 @@
   "version": "1.0.5",
   "artifact_dir": "artifacts/releases/pokrov-app/1.0.5-beta.1+20260814",
   "generated_at": "2026-08-14T08:44:16+03:00",
-  "updated_at": "2026-08-14T08:56:25+03:00",
-  "release_state": "public_prerelease_published_anonymous_verified_runtime_sync_pending",
+  "updated_at": "2026-08-14T09:25:07+03:00",
+  "release_state": "public_prerelease_published_anonymous_verified_runtime_synced",
   "built_from_client_commit": "48d52b913917bdbeb67d9b700208c6578b3c78da",
   "platform_source_commit": "bf2c997f83cf4896e68d199f0d4fefb382727517",
   "github_release": {
@@ -108,11 +108,11 @@
   "cutover": {
     "runtime_sync_allowed": true,
     "runtime_sync_required": true,
-    "runtime_sync_result": "pending_apply",
+    "runtime_sync_result": "PASS: production authenticated and anonymous catalogs expose exact 1.0.5 URLs, sizes, hashes and release notes",
     "anonymous_download_smoke": "PASS: all eight public assets matched exact size and SHA-256",
     "public_publication_allowed": true,
-    "public_publication_marker": "ARTIFACT STAGING GO FOR RUNTIME SMOKE",
-    "public_announcement_allowed": false,
+    "public_publication_marker": "GO for public beta publication",
+    "public_announcement_allowed": true,
     "paid_checkout_allowed": true,
     "google_play_state": "NOT_REQUESTED"
   },
@@ -121,7 +121,10 @@
     "full Flutter and Gradle client checks PASS",
     "production Android signing and non-debuggable checks PASS",
     "Windows setup and portable build PASS",
-    "marketing, webapp and admin build/E2E checks PASS"
+    "marketing, webapp and admin build/E2E checks PASS",
+    "brain-origin verify repeated five times after final deploy PASS",
+    "production authenticated and anonymous app catalogs plus provider policy PASS",
+    "production Telegram guided Android/Windows and active-access Browser journey PASS"
   ],
   "manual_gates_before_stronger_claims": [
     "Huawei exact-final endurance, WARP, per-app and Wi-Fi/LTE proof",
