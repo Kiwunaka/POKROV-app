@@ -362,8 +362,8 @@ $windowsReleaseConfigPath = Join-Path $root "config\\windows-release.seed.json"
 if (Test-Path -LiteralPath $windowsReleaseConfigPath -PathType Leaf) {
   $windowsReleaseConfig = Get-Content -Raw -LiteralPath $windowsReleaseConfigPath | ConvertFrom-Json
 
-  if ($windowsReleaseConfig.binary_name -ne "pokrov_windows_beta.exe") {
-    $manifestErrors.Add("config\\windows-release.seed.json must keep binary_name as pokrov_windows_beta.exe")
+  if ($windowsReleaseConfig.binary_name -ne "pokrov_windows.exe") {
+    $manifestErrors.Add("config\\windows-release.seed.json must keep binary_name as pokrov_windows.exe")
   }
 
   if ($windowsReleaseConfig.runtime.platform -ne "windows") {
@@ -381,7 +381,7 @@ if (Test-Path -LiteralPath $windowsReleaseConfigPath -PathType Leaf) {
     $manifestErrors.Add("config\\windows-release.seed.json must keep the POKROV Core 1.0.3 ABI 2 runtime contract")
   }
 
-  foreach ($requiredPath in @("pokrov_windows_beta.exe", "pokrov-core.dll", "libcronet.dll", "data/app.so")) {
+  foreach ($requiredPath in @("pokrov_windows.exe", "pokrov-core.dll", "libcronet.dll", "data/app.so")) {
     if (@($windowsReleaseConfig.required_files) -notcontains $requiredPath) {
       $manifestErrors.Add("config\\windows-release.seed.json must list required build file '$requiredPath'")
     }

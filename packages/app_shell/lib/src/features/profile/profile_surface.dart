@@ -103,17 +103,18 @@ class _ProfileSection extends StatelessWidget {
     if (summary == null) {
       if (_bonusPaidRequired(null)) {
         return const [
-          'В пробном периоде бонусов нет. Они откроются после первой оплаты.'
+          'Telegram +5 дней доступен сейчас · остальное после оплаты'
         ];
       }
       return const ['Рулетка · Telegram · приглашения'];
     }
     if (_bonusPaidRequired(summary)) {
-      return [
-        summary.rewardAccess.message.trim().isEmpty
-            ? 'В пробном периоде бонусов нет. Они откроются после первой оплаты.'
-            : summary.rewardAccess.message.trim(),
-      ];
+      final telegramLabel = summary.channelBonusClaimed
+          ? 'Telegram-бонус получен'
+          : summary.channelBonusEligible
+              ? 'Telegram +${ruDays(_availableTelegramBonusDays(summary))}'
+              : 'Telegram-бонус недоступен';
+      return ['$telegramLabel · остальное после оплаты'];
     }
     final claimed = summary.channelBonusClaimed;
     final bonusDays = claimed
@@ -161,12 +162,12 @@ class _ProfileSection extends StatelessWidget {
     final theme = Theme.of(context);
     final currentBonusSummary = bonusSummary();
     final bonusPaidRequired = _bonusPaidRequired(currentBonusSummary);
+    final telegramBonusClaimed =
+        currentBonusSummary?.channelBonusClaimed ?? false;
+    final telegramBonusBlocked = currentBonusSummary != null &&
+        !telegramBonusClaimed &&
+        !currentBonusSummary.channelBonusEligible;
     final statusLabel = _consumerProtectionStatusLabel(runtimeSnapshot);
-    final statusSummary = _consumerProtectionStatusSummary(
-      runtimeSnapshot,
-      headline: runtimeHeadline,
-      hostPlatform: appContext.hostPlatform,
-    );
     final warpLifecycle = PokrovWarpLifecycle.resolve(
       policy: warpPolicy,
       consented: warpRuntimeConsent,
@@ -220,11 +221,6 @@ class _ProfileSection extends StatelessWidget {
                   ),
                   accessNotice: _freeProfileAccessNotice(freeProfileAccess),
                   statusLabel: statusLabel,
-                  onStatusTap: () => _showInfoSheet(
-                    context,
-                    title: 'Статус',
-                    lines: [statusSummary],
-                  ),
                   onPlanTap: () => _showSubscriptionSheet(
                     context,
                     appContext: appContext,
@@ -300,6 +296,7 @@ class _ProfileSection extends StatelessWidget {
                       icon: Icons.web_outlined,
                       title: 'Кабинет',
                       value: 'Аккаунт',
+                      external: true,
                       onTap: () =>
                           onOpenHandoff('cabinet', appContext.cabinetUrl),
                     ),
@@ -376,6 +373,7 @@ class _ProfileSection extends StatelessWidget {
                         icon: Icons.menu_book_outlined,
                         title: 'Пошаговые инструкции',
                         value: 'Открыть',
+                        external: true,
                         onTap: () => onOpenHandoff(
                           'download',
                           'https://pokrov.space/guides/',
@@ -489,6 +487,23 @@ class _ProfileSection extends StatelessWidget {
                         onChanged: onThemeModeChanged,
                       ),
                     ),
+                    const _SettingsRowDivider(),
+                    _SettingsRow(
+                      key: const ValueKey('profile-about-action'),
+                      icon: Icons.info_outline_rounded,
+                      title: 'О приложении',
+                      value: pokrovClientVersion,
+                      onTap: () => _showInfoSheet(
+                        context,
+                        title: 'О приложении',
+                        lines: [
+                          'POKROV $pokrovClientVersion',
+                          'Канал обновлений: стабильный',
+                          'Платформа: ${appContext.hostPlatform.label}',
+                          'Обновления проверяются автоматически и доступны в уведомлениях.',
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -508,14 +523,20 @@ class _ProfileSection extends StatelessWidget {
                       key: const ValueKey('profile-telegram-claim-action'),
                       icon: Icons.send_outlined,
                       title: 'Telegram-бонус',
-                      value: bonusPaidRequired
-                          ? 'После оплаты'
-                          : telegramBonusCanClaim
-                              ? 'Получить'
-                              : 'Проверить',
-                      valueIsAction: !bonusPaidRequired && !telegramBonusBusy,
-                      enabled: !bonusPaidRequired && !telegramBonusBusy,
-                      onTap: bonusPaidRequired
+                      value: telegramBonusClaimed
+                          ? 'Получен'
+                          : telegramBonusBlocked
+                              ? 'Недоступно'
+                              : telegramBonusCanClaim
+                                  ? 'Получить'
+                                  : 'Проверить',
+                      valueIsAction: !telegramBonusClaimed &&
+                          !telegramBonusBlocked &&
+                          !telegramBonusBusy,
+                      enabled: !telegramBonusClaimed &&
+                          !telegramBonusBlocked &&
+                          !telegramBonusBusy,
+                      onTap: telegramBonusClaimed || telegramBonusBlocked
                           ? null
                           : telegramBonusCanClaim
                               ? onClaimTelegramBonus
@@ -538,8 +559,7 @@ class _ProfileSection extends StatelessWidget {
                         onOpenHandoff: onOpenHandoff,
                       ),
                     ),
-                    if (!bonusPaidRequired &&
-                        (bonusSummaryError ?? '').isNotEmpty)
+                    if ((bonusSummaryError ?? '').isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
@@ -585,7 +605,6 @@ class _ProfileAccessOverview extends StatelessWidget {
     required this.poolLabel,
     required this.accessNotice,
     required this.statusLabel,
-    required this.onStatusTap,
     required this.onPlanTap,
     required this.onCheckoutTap,
   });
@@ -599,7 +618,6 @@ class _ProfileAccessOverview extends StatelessWidget {
   final String poolLabel;
   final String? accessNotice;
   final String statusLabel;
-  final VoidCallback onStatusTap;
   final VoidCallback onPlanTap;
   final VoidCallback onCheckoutTap;
 
@@ -735,14 +753,6 @@ class _ProfileAccessOverview extends StatelessWidget {
         Column(
           children: [
             _SettingsRow(
-              key: const ValueKey('profile-status-action'),
-              icon: Icons.info_outline_rounded,
-              title: 'Статус',
-              value: statusLabel,
-              onTap: onStatusTap,
-            ),
-            const _SettingsRowDivider(),
-            _SettingsRow(
               key: const ValueKey('profile-plan-details-action'),
               icon: Icons.workspace_premium_outlined,
               title: 'Подписка',
@@ -756,6 +766,7 @@ class _ProfileAccessOverview extends StatelessWidget {
               title: 'Продлить',
               value: 'Выбрать срок',
               valueIsAction: true,
+              external: true,
               onTap: onCheckoutTap,
             ),
           ],

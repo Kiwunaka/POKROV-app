@@ -236,7 +236,7 @@ if (-not $SkipInstaller) {
   }
   $iexpress = Get-Command "iexpress.exe" -ErrorAction SilentlyContinue
   if (-not $iexpress) {
-    throw "iexpress.exe is required to build the unsigned Windows beta installer EXE"
+    throw "iexpress.exe is required to build the unsigned Windows direct-download installer EXE"
   }
 
   $installerPayloadDirectory = Join-Path $artifactRoot ("installer_payload_" + ($version -replace '[^A-Za-z0-9_.-]', '_'))
@@ -314,7 +314,7 @@ InstallPrompt=
 DisplayLicense=
 FinishMessage=POKROV installed.
 TargetName=$installerPath
-FriendlyName=POKROV Windows beta installer
+FriendlyName=POKROV Windows installer
 AppLaunched=install-pokrov.cmd
 PostInstallCmd=<None>
 AdminQuietInstCmd=install-pokrov.cmd

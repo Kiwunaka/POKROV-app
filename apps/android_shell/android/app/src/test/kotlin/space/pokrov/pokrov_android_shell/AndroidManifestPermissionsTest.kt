@@ -21,15 +21,15 @@ class AndroidManifestPermissionsTest {
     }
 
     @Test
-    fun quickSettingsTileIsAStandardStateNeutralAction() {
+    fun quickSettingsTileUsesActiveRefreshWithoutToggleableMetadata() {
         val manifest = File("src/main/AndroidManifest.xml").readText()
 
         assertFalse(
-            "The state-neutral action must not expose stale switch semantics.",
+            "Runtime-owned state must not depend on OEM toggleable metadata.",
             manifest.contains("android.service.quicksettings.TOGGLEABLE_TILE"),
         )
-        assertFalse(
-            "Standard mode lets every OEM refresh the tile whenever the shade opens.",
+        assertTrue(
+            "Active mode is required for requestListeningState to refresh OEM-cached tiles.",
             manifest.contains("android.service.quicksettings.ACTIVE_TILE"),
         )
     }

@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-08-13
+Last updated: 2026-08-14
 
 ## Document Status
 
@@ -53,8 +53,8 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - default runtime core: `sing-box`
 - `xray` role: advanced compatibility fallback only
 - free trial: `5 days`
-- paid Telegram reward: `+5 days` for new account-owned grants after the first
-  payment; trial receives no rewards. Already-issued
+- Telegram acquisition reward: `+5 days` once per account before or after the
+  first payment. Wheel, calendar, and referral rewards remain paid-only. Already-issued
   `+10 days` grants remain grandfathered and must render with their
   backend-returned value
 - public user-facing version line: current paid beta evidence uses `1.0.0-beta`; patch/build labels such as `1.0.0-beta.3` are still beta labels, not stable `1.0.0` claims
@@ -121,7 +121,9 @@ Home uses the owner-selected `2026-08-13` composition: a compact brand/access
 top row, one centered circular connect action with a thin non-glowing border,
 in-control status and a finite hourglass busy state, then two quick controls,
 WARP and an optional remote campaign above navigation. The premium-day pill
-opens checkout. Telegram reward does not occupy Home's first layer.
+opens Profile, where subscription details and renewal remain explicit. A visible
+notification bell opens the cached/refreshed in-app inbox from Home. Telegram
+reward does not occupy Home's first layer.
 
 Nested under `Profile`:
 
@@ -159,8 +161,11 @@ Product rules for that choice:
   allow-list.
 - Windows uses an executable/process picker for selected apps, backed by
   running-process, discovered `.exe`, and curated fallback candidates
-- Android uses an installed-package picker for selected apps, with curated
-  fallback candidates when the native catalog is unavailable
+- Android uses a searchable installed-package picker for selected apps and
+  keeps every launcher package discoverable; native icon encoding is bounded
+  independently so large Huawei catalogs do not disappear behind slow bitmap
+  work. Curated fallback candidates remain available when the native catalog
+  is unavailable
 - manual process/package identifiers remain available only behind an explicit
   manual fallback row
 - the chosen route mode must persist per device and remain editable later from a dedicated route-mode screen
@@ -284,10 +289,10 @@ After activation:
   state, and copy/share actions from `GET /api/bonuses/referral/summary`
 - bonus history must stay compact and app-safe: no raw subscription links,
   full promo codes, tokens, hostnames, or backend event metadata
-- trial receives no reward mutation and must see explicit after-payment copy,
-  not a generic connection error
-- new Telegram `+5 days` requires current canonical paid eligibility;
-  grandfathered historical claims remain readable
+- trial may claim the one-time Telegram `+5 days` acquisition reward; the UI
+  must keep that action enabled while explaining that wheel, calendar, and
+  referral rewards open after payment
+- grandfathered historical Telegram claims remain readable
 - referral grants `+10 days` only to the referrer after the friend's first
   successful payment and hold; install, trial and connection grant nothing
 - Rewards Hub may show enabled operator-authored promo slots from
@@ -392,7 +397,11 @@ staged. They include:
 
 - purpose groups for Video, AI, Social, Games, and RU-direct;
 - explicit domain, IP, and subnet overrides to VPN or direct;
-- Automatic, Cloudflare, Google, AdGuard, and validated custom DoH;
+- Automatic, Cloudflare, Google, AdGuard, and validated custom DoH. The
+  `Блокировать рекламу` toggle selects AdGuard's filtering DoH endpoint as the
+  final resolver through the active VPN outbound. This blocks requests to
+  domains present in that DNS service's filtering policy; it does not promise
+  removal of first-party, baked-in, or otherwise non-DNS in-app advertising;
 - LAN direct access;
 - trusted Wi-Fi names with optional disconnect on an exact current-SSID match.
 
@@ -406,12 +415,13 @@ network never counts as a trusted match.
 Android exposes a Quick Settings tile backed by the same runtime service and
 permission handoff as the main connect action. Windows tray connect/disconnect
 delegates to the same shell controller. Neither host control owns a second VPN
-state machine. The Android tile is a state-neutral branded quick action rather
-than an OEM-cached status switch: it always resolves the authoritative TUN
-state on tap before choosing start or stop. The foreground notification owns
-the live status, country, route mode and speed. This avoids a false
-enabled/disabled tile on EMUI, which does not reliably repaint third-party
-tiles after app-owned transitions. A user change to location, routing,
+state machine. The Android tile resolves the authoritative TUN plus the
+app-owned VPN-service presence on every tap before choosing start or stop. It
+publishes only an honest on/off state. The service uses Android's active-tile
+mode and asks SystemUI to listen again after each committed runtime transition,
+so an OEM-cached highlight cannot remain
+the sole source of truth. The foreground notification owns the detailed live
+status, country, route mode and speed. A user change to location, routing,
 selected apps, or WARP
 invalidates Android's reusable Quick Settings profile without stopping a live
 tunnel: the tile can still stop that tunnel, but after stop it opens the app
@@ -425,6 +435,10 @@ Device continuation uses a short-lived, one-time pairing code created by an
 already authenticated device or cabinet. The new device receives its own
 revocable session and still obeys the account device limit. The app never
 shares an Apple Account or a reusable raw subscription secret for pairing.
+Account device labels use a human-safe platform identity: Android contributes
+manufacturer and model, while serial numbers, hardware IDs and install IDs
+remain hidden. Generic runtime hostnames such as `localhost` are never shown as
+a user-facing device name.
 
 The rewards surface may show backend-confirmed referral conversion/history,
 achievements, and useful quests. Product quests do not grant money or days
@@ -448,8 +462,12 @@ Store/operator artifacts remain separate:
 
 Release continuity rules:
 
-- public-facing build surfaces must present the beta line `1.0.0-beta` or an
-  explicit beta patch label such as `1.0.0-beta.3`
+- the default updater lane is `stable`; beta/prerelease metadata is an explicit
+  opt-in lane and must never be returned as the stable candidate
+- update discovery uses anonymous `GET /api/public/client-apps` and must not
+  create, refresh, or repair an account session merely to discover an update
+- the first stable candidate after installed `1.0.5` beta builds must have a
+  strictly newer semantic version (`1.0.6` or later) so beta users are prompted
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates

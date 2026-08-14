@@ -304,6 +304,7 @@ class _FakeBootstrapper
   int locationsCatalogCalls = 0;
   int pairingIssueCalls = 0;
   int pairingCancelCalls = 0;
+  final List<String> markedNotificationIds = <String>[];
   bool? lastWarpConsentEnabled;
   String? lastWarpRuntimeEventName;
   String? lastWarpRuntimeEventState;
@@ -324,6 +325,7 @@ class _FakeBootstrapper
   HostPlatform? lastCalendarCheckInHostPlatform;
   HostPlatform? lastClientAppsHostPlatform;
   String? lastClientAppsCurrentVersion;
+  String? lastClientAppsChannel;
   HostPlatform? lastLocationsCatalogHostPlatform;
   String? lastLocationsCatalogQuery;
   String? lastPreferredNodeCode;
@@ -459,11 +461,12 @@ class _FakeBootstrapper
   Future<ClientAppsMetadata> fetchClientApps({
     required HostPlatform hostPlatform,
     required String currentVersion,
-    String channel = 'beta',
+    String channel = 'stable',
   }) async {
     clientAppsCalls += 1;
     lastClientAppsHostPlatform = hostPlatform;
     lastClientAppsCurrentVersion = currentVersion;
+    lastClientAppsChannel = channel;
     return clientAppsMetadata;
   }
 
@@ -551,6 +554,7 @@ class _FakeBootstrapper
     required HostPlatform hostPlatform,
     required List<String> ids,
   }) async {
+    markedNotificationIds.addAll(ids);
     return true;
   }
 
@@ -2084,6 +2088,7 @@ void main() {
 
     expect(bootstrapper.clientAppsCalls, 1);
     expect(bootstrapper.lastClientAppsCurrentVersion, pokrovClientVersion);
+    expect(bootstrapper.lastClientAppsChannel, 'stable');
     expect(find.byKey(const ValueKey('client-update-prompt')), findsOneWidget);
     expect(find.text('Небольшие исправления бета-версии.'), findsOneWidget);
 
@@ -3010,15 +3015,13 @@ void main() {
     );
   });
 
-  testWidgets('profile Telegram bonus uses app-first link check and claim',
-      (tester) async {
+  testWidgets('profile Telegram bonus works before payment', (tester) async {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
         configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
-      subscriptionInfo: _paidSubscriptionInfo,
     );
     final launched = <Uri>[];
 
@@ -4130,15 +4133,15 @@ void main() {
     expect(find.byKey(const ValueKey('home-news-card')), findsNothing);
     expect(
       find.byKey(const ValueKey('home-telegram-bonus-pill')),
-      findsNothing,
+      findsOneWidget,
     );
 
     // Desktop header affordances stay honest: tooltips and icons describe
-    // the actual targets (connection details sheet, rules tab).
+    // the actual targets (notifications inbox, rules tab).
     final detailsAction = tester.widget<IconButton>(
       find.byKey(const ValueKey('home-desktop-notifications-action')),
     );
-    expect(detailsAction.tooltip, 'Детали подключения');
+    expect(detailsAction.tooltip, 'Уведомления');
     final rulesAction = tester.widget<IconButton>(
       find.byKey(const ValueKey('home-desktop-settings-action')),
     );
@@ -4920,7 +4923,7 @@ void main() {
     expect(opened.last.toString(), 'tg://resolve?domain=pokrov_supportbot');
   });
 
-  testWidgets('home trial access strip opens the checkout', (tester) async {
+  testWidgets('home trial access strip opens the profile', (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final opened = <Uri>[];
@@ -4947,8 +4950,11 @@ void main() {
     await tester.tap(access);
     await tester.pumpAndSettle();
 
-    expect(opened.single.toString(),
-        'https://pay.pokrov.space/checkout/?plan=1_month');
+    expect(opened, isEmpty);
+    expect(
+      find.byKey(const ValueKey('profile-section-plan-access')),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
@@ -8822,7 +8828,7 @@ void main() {
     expect(store.writeCalls, greaterThanOrEqualTo(2));
   });
 
-  testWidgets('profile keeps cached notifications when refresh is offline',
+  testWidgets('home bell opens cached notifications when refresh is offline',
       (tester) async {
     final store = _FakeClientExperienceStore(
       const PokrovClientExperienceState(
@@ -8869,10 +8875,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
-    await _tapNav(tester, 'nav-profile');
-    await tester.pumpAndSettle();
 
-    final action = find.byKey(const ValueKey('profile-notifications-action'));
+    final action = find.byKey(const ValueKey('home-notifications-action'));
     await tester.ensureVisible(action);
     await tester.pumpAndSettle();
     await tester.tap(action);
@@ -8883,6 +8887,7 @@ void main() {
       find.textContaining('Показываем сохранённые уведомления'),
       findsOneWidget,
     );
+    expect(bootstrapper.markedNotificationIds, <String>['incident.cached']);
   });
 
   testWidgets('primary connect action auto-prepares and starts host runtime',

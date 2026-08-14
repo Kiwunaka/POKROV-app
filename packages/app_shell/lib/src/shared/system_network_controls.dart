@@ -232,6 +232,23 @@ class PokrovShellController extends ChangeNotifier {
 const MethodChannel _pokrovRuntimeSystemChannel =
     MethodChannel('space.pokrov/runtime_engine');
 
+Future<String?> resolvePokrovDeviceName(HostPlatform hostPlatform) async {
+  if (hostPlatform != HostPlatform.android) {
+    return null;
+  }
+  try {
+    final value = await _pokrovRuntimeSystemChannel.invokeMethod<String>(
+      'runtimeEngine.deviceName',
+    );
+    final normalized = value?.trim() ?? '';
+    return normalized.isEmpty ? null : normalized;
+  } on PlatformException {
+    return null;
+  } on MissingPluginException {
+    return null;
+  }
+}
+
 Future<Map<String, int>> measurePokrovNodeLatencies(
   HostPlatform hostPlatform,
   List<PokrovNodeLatencyTarget> targets,

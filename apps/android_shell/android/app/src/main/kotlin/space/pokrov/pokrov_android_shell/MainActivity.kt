@@ -37,6 +37,8 @@ class MainActivity : FlutterActivity() {
 
     override fun onResume() {
         super.onResume()
+        PokrovQuickSettingsTileService.ensureActiveModeRegistration(this)
+        PokrovQuickSettingsTileService.requestRefresh(this)
         runtimeHostBridge?.handleDebugIntent(intent)
     }
 

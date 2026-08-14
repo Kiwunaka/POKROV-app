@@ -99,7 +99,8 @@ void main() {
     );
   });
 
-  test('quick settings tile uses a monochrome vector icon', () async {
+  test('quick settings tile uses active mode and a monochrome vector icon',
+      () async {
     final manifest = File('android/app/src/main/AndroidManifest.xml');
     final tileIcon = File(
       'android/app/src/main/res/drawable/ic_pokrov_system.xml',
@@ -114,8 +115,7 @@ void main() {
     );
     expect(
       manifestContent,
-      isNot(
-          contains('android:name="android.service.quicksettings.ACTIVE_TILE"')),
+      contains('android:name="android.service.quicksettings.ACTIVE_TILE"'),
     );
     expect(
       manifestContent,

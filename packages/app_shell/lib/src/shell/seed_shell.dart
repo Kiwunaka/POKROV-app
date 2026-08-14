@@ -624,7 +624,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _canPrimaryConnect(_runtimeSnapshot),
     );
     final bootstrapper = widget.bootstrapper ??
-        AppFirstRuntimeBootstrapper(apiBaseUrl: widget.appContext.apiBaseUrl);
+        AppFirstRuntimeBootstrapper(
+          apiBaseUrl: widget.appContext.apiBaseUrl,
+          deviceNameResolver: resolvePokrovDeviceName,
+        );
     _bootstrapper = bootstrapper;
     _accountActionService = bootstrapper is AppFirstAccountActionService
         ? bootstrapper as AppFirstAccountActionService
@@ -1418,8 +1421,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   void _markNotificationsRead() {
+    final inbox = _notificationsInbox;
+    final unreadIds = inbox?.items
+            .where((item) => !item.read)
+            .map((item) => item.id)
+            .where((id) => id.trim().isNotEmpty)
+            .toList(growable: false) ??
+        const <String>[];
     if (_notificationsUnread > 0) {
-      final inbox = _notificationsInbox;
       setState(() {
         _notificationsUnread = 0;
         if (inbox != null) {
@@ -1450,16 +1459,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _queueClientExperienceWrite();
     }
     final service = _clientDataService;
-    final inbox = _notificationsInbox;
-    if (service == null || inbox == null) {
-      return;
-    }
-    final unreadIds = inbox.items
-        .where((item) => !item.read)
-        .map((item) => item.id)
-        .where((id) => id.trim().isNotEmpty)
-        .toList(growable: false);
-    if (unreadIds.isEmpty) {
+    if (service == null || unreadIds.isEmpty) {
       return;
     }
     unawaited(
@@ -1469,6 +1469,19 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             ids: unreadIds,
           )
           .catchError((Object _) => false),
+    );
+  }
+
+  void _openNotificationsInbox() {
+    _markNotificationsRead();
+    _showNotificationsSheet(
+      context,
+      notifications:
+          _notificationsInbox?.items ?? const <ClientNotificationItem>[],
+      usingCache: _notificationsUsingCache,
+      cachedAt: _clientExperience.notificationsCachedAt,
+      onRefresh: _refreshNotifications,
+      onOpenHandoff: _showSeedHandoff,
     );
   }
 
@@ -1745,6 +1758,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       final metadata = await releaseActions.fetchClientApps(
         hostPlatform: widget.appContext.hostPlatform,
         currentVersion: pokrovClientVersion,
+        channel: 'stable',
       );
       if (!mounted || metadata.silentUpdate) {
         return;
@@ -4521,11 +4535,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             onOpenRules: () => _selectTab(SeedTab.rules),
             onOpenWarp: _openWarpControl,
             onWarpConsentChanged: _setWarpRuntimeConsent,
-            onOpenCheckout: () => _showSeedHandoff(
-              'checkout',
-              _subscriptionInfo?.renewUrl?.toString() ??
-                  widget.appContext.checkoutUrl,
-            ),
+            notificationsUnread: _notificationsUnread,
+            onOpenNotifications: _openNotificationsInbox,
+            onOpenProfile: () => _selectTab(SeedTab.profile),
             onOpenPromoHandoff: _showSeedHandoff,
           ),
       (context) => _LocationsSection(

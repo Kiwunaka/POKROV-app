@@ -15,7 +15,7 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 /// package base version (without Android's build number).
 const pokrovClientVersion = String.fromEnvironment(
   'POKROV_APP_VERSION',
-  defaultValue: '1.0.5',
+  defaultValue: '1.0.6',
 );
 
 const _platformErrorCodeHeader = 'X-POKROV-Auth-Error';
@@ -37,6 +37,10 @@ abstract interface class ManagedProfileBootstrapper {
 
 typedef SmartConnectLatencyProbe = Future<int?> Function(
   SmartConnectNode node,
+);
+
+typedef AppFirstDeviceNameResolver = Future<String?> Function(
+  HostPlatform hostPlatform,
 );
 
 typedef AppFirstStateFileWriter = Future<void> Function(
@@ -396,7 +400,7 @@ abstract interface class AppFirstReleaseActionService {
   Future<ClientAppsMetadata> fetchClientApps({
     required HostPlatform hostPlatform,
     required String currentVersion,
-    String channel = 'beta',
+    String channel = 'stable',
   });
 }
 
@@ -1539,6 +1543,9 @@ class AppFirstBonusSummary {
     required this.nextTierKey,
     required this.nextTierAt,
     this.rewardAccess = AppFirstRewardAccess.unknown,
+    this.channelBonusEligible = true,
+    this.channelBonusCanClaim = true,
+    this.channelBonusReason = '',
     this.wheelState = AppFirstBonusFeatureState.wheelDisabled,
     this.calendarState = AppFirstBonusFeatureState.calendarDisabled,
     this.referralSummary = AppFirstReferralSummary.empty,
@@ -1564,6 +1571,9 @@ class AppFirstBonusSummary {
   final String nextTierKey;
   final int? nextTierAt;
   final AppFirstRewardAccess rewardAccess;
+  final bool channelBonusEligible;
+  final bool channelBonusCanClaim;
+  final String channelBonusReason;
   final AppFirstBonusFeatureState wheelState;
   final AppFirstBonusFeatureState calendarState;
   final AppFirstReferralSummary referralSummary;
@@ -2072,7 +2082,7 @@ class ClientAppUpdateInfo {
 
   static const none = ClientAppUpdateInfo(
     platform: '',
-    channel: 'beta',
+    channel: 'stable',
     latestVersion: '',
     minSupportedVersion: '',
     updatePolicy: 'none',
@@ -2197,6 +2207,7 @@ class AppFirstRuntimeBootstrapper
     Duration allExceptRuRuleSetCacheMaxAge = const Duration(hours: 6),
     List<String> Function(String tag)? allExceptRuRuleSetUrlsResolver,
     this.smartConnectLatencyProbe,
+    this.deviceNameResolver,
     AppFirstSessionSecretStore? sessionSecretStore,
     AppFirstStateFileWriter? stateFileWriter,
   })  : _supportDirectoryResolver =
@@ -2223,6 +2234,7 @@ class AppFirstRuntimeBootstrapper
   final Duration _allExceptRuRuleSetCacheMaxAge;
   final List<String> Function(String tag)? _allExceptRuRuleSetUrlsResolver;
   final SmartConnectLatencyProbe? smartConnectLatencyProbe;
+  final AppFirstDeviceNameResolver? deviceNameResolver;
   final AppFirstSessionSecretStore _sessionSecretStore;
   final AppFirstStateFileWriter _stateFileWriter;
   final Map<String, Future<_StoredBootstrapState>> _initialStateFlights =
@@ -2500,7 +2512,7 @@ class AppFirstRuntimeBootstrapper
         body: <String, Object?>{
           'code': normalized,
           'install_id': pairedInstallId,
-          'device_name': _deviceName(hostPlatform),
+          'device_name': await _deviceName(hostPlatform),
           'platform': hostPlatform.name,
           'os_version': _trim(Platform.operatingSystemVersion, 64),
           'app_version': pokrovClientVersion,
@@ -2862,6 +2874,26 @@ class AppFirstRuntimeBootstrapper
   Future<ClientDeviceList> fetchClientDevices({
     required HostPlatform hostPlatform,
   }) async {
+    try {
+      await _requestClientJsonWithSession(
+        hostPlatform: hostPlatform,
+        method: 'PATCH',
+        path: '/api/client/devices/current',
+        body: <String, Object?>{
+          'device_name': await _deviceName(hostPlatform),
+          'platform': hostPlatform.name,
+          'os_version': _trim(Platform.operatingSystemVersion, 64),
+          'app_version': pokrovClientVersion,
+        },
+      );
+    } on BootstrapFailure catch (error) {
+      if (error.statusCode != HttpStatus.notFound &&
+          error.statusCode != HttpStatus.methodNotAllowed) {
+        rethrow;
+      }
+      // Keeps an updated client compatible with the brief deployment window
+      // before the metadata endpoint reaches every production instance.
+    }
     final response = await _requestClientJsonWithSession(
       hostPlatform: hostPlatform,
       method: 'GET',
@@ -3270,7 +3302,7 @@ class AppFirstRuntimeBootstrapper
       publishedAt: _readText(response['published_at']),
       update: ClientAppUpdateInfo(
         platform: _readText(update['platform'], fallback: platform),
-        channel: _readText(update['channel'], fallback: 'beta'),
+        channel: _readText(update['channel'], fallback: 'stable'),
         latestVersion: _readText(update['latest_version']),
         minSupportedVersion: _readText(update['min_supported_version']),
         updatePolicy: _readText(update['update_policy'], fallback: 'none'),
@@ -3288,77 +3320,49 @@ class AppFirstRuntimeBootstrapper
   Future<ClientAppsMetadata> fetchClientApps({
     required HostPlatform hostPlatform,
     required String currentVersion,
-    String channel = 'beta',
+    String channel = 'stable',
   }) async {
-    var state = await _loadOrCreateState(hostPlatform);
     final client = _createHttpClient(hostPlatform);
     try {
-      for (var attempt = 0; attempt < 2; attempt += 1) {
-        if (!state.hasSession) {
-          state = await _startTrial(
-            state: state,
-            hostPlatform: hostPlatform,
-            client: client,
-          );
-        }
-
-        try {
-          final platformLabel = switch (hostPlatform) {
-            HostPlatform.android => 'android',
-            HostPlatform.windows => 'windows',
-            HostPlatform.ios => 'ios',
-            HostPlatform.macos => 'macos',
-          };
-          final query = Uri(
-            queryParameters: <String, String>{
-              'platform': platformLabel,
-              'current_version': currentVersion.trim(),
-              'channel': channel.trim().isEmpty ? 'beta' : channel.trim(),
-            },
-          ).query;
-          final response = await _requestJson(
-            method: 'GET',
-            path: '/api/client/apps?$query',
-            client: client,
-            bearerToken: state.sessionToken,
-            hostPlatform: hostPlatform,
-          );
-          final updateCheck = _readMap(response['update_check']);
-          return ClientAppsMetadata(
-            android: _readClientAppPlatformMetadata(
-              platform: 'android',
-              response: _readMap(response['android']),
-            ),
-            windows: _readClientAppPlatformMetadata(
-              platform: 'windows',
-              response: _readMap(response['windows']),
-            ),
-            docsUrl: _readText(response['docs_url']),
-            updatedAt: _readText(response['updated_at']),
-            updateCheckMode: _readText(
-              updateCheck['mode'],
-              fallback: 'prompt',
-            ),
-            silentUpdate: updateCheck['silent_update'] == true,
-          );
-        } on BootstrapFailure catch (error) {
-          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
-            state = await _startTrial(
-              state: state.copyWith(
-                sessionToken: '',
-                accountId: '',
-              ),
-              hostPlatform: hostPlatform,
-              client: client,
-            );
-            continue;
-          }
-          rethrow;
-        }
-      }
-
-      throw const BootstrapFailure(
-        'POKROV could not check app updates.',
+      final platformLabel = switch (hostPlatform) {
+        HostPlatform.android => 'android',
+        HostPlatform.windows => 'windows',
+        HostPlatform.ios => 'ios',
+        HostPlatform.macos => 'macos',
+      };
+      final query = Uri(
+        queryParameters: <String, String>{
+          'platform': platformLabel,
+          'current_version': currentVersion.trim(),
+          'channel': channel.trim().isEmpty ? 'stable' : channel.trim(),
+        },
+      ).query;
+      // Update discovery must work before sign-in, during an expired session,
+      // and while the account API is degraded. It is public release metadata;
+      // never create or repair a trial merely to check for a new APK/EXE.
+      final response = await _requestJson(
+        method: 'GET',
+        path: '/api/public/client-apps?$query',
+        client: client,
+        hostPlatform: hostPlatform,
+      );
+      final updateCheck = _readMap(response['update_check']);
+      return ClientAppsMetadata(
+        android: _readClientAppPlatformMetadata(
+          platform: 'android',
+          response: _readMap(response['android']),
+        ),
+        windows: _readClientAppPlatformMetadata(
+          platform: 'windows',
+          response: _readMap(response['windows']),
+        ),
+        docsUrl: _readText(response['docs_url']),
+        updatedAt: _readText(response['updated_at']),
+        updateCheckMode: _readText(
+          updateCheck['mode'],
+          fallback: 'prompt',
+        ),
+        silentUpdate: updateCheck['silent_update'] == true,
       );
     } finally {
       client.close(force: true);
@@ -3469,6 +3473,7 @@ class AppFirstRuntimeBootstrapper
           final calendar = _readMap(response['calendar']);
           final achievements = _readMap(response['achievements']);
           final rewardAccess = _readMap(response['reward_access']);
+          final channelBonus = _readMap(response['channel_bonus']);
           final referralCount = _readInt(response['referral_count']);
           final referralCode = _readText(response['referral_code']);
           final referralBonusDays = _readInt(response['referral_bonus_days']);
@@ -3521,6 +3526,9 @@ class AppFirstRuntimeBootstrapper
               reason: _readText(rewardAccess['reason']),
               message: _readText(rewardAccess['message']),
             ),
+            channelBonusEligible: channelBonus['eligible'] == true,
+            channelBonusCanClaim: channelBonus['can_claim'] == true,
+            channelBonusReason: _readText(channelBonus['reason']),
             wheelState: _readBonusFeatureState(
               wheel,
               fallback: AppFirstBonusFeatureState.wheelDisabled,
@@ -4213,7 +4221,7 @@ class AppFirstRuntimeBootstrapper
       client: client,
       body: <String, Object?>{
         'install_id': effectiveState.installId,
-        'device_name': _deviceName(hostPlatform),
+        'device_name': await _deviceName(hostPlatform),
         'platform': hostPlatform.name,
         'os_version': _trim(Platform.operatingSystemVersion, 64),
         'app_version': pokrovClientVersion,
@@ -7395,9 +7403,33 @@ class AppFirstRuntimeBootstrapper
     return 'pokrov-${hostPlatform.name}-$normalized';
   }
 
-  String _deviceName(HostPlatform hostPlatform) {
-    final host = _safeLocalHostName();
-    return _trim('POKROV ${hostPlatform.label} $host', 120);
+  Future<String> _deviceName(HostPlatform hostPlatform) async {
+    var host = '';
+    try {
+      host = _trim(
+        (await deviceNameResolver?.call(hostPlatform)) ?? '',
+        80,
+      );
+    } catch (_) {
+      // A platform identity is helpful presentation data, never a bootstrap
+      // dependency. Fall back without exposing a native channel failure.
+    }
+    if (host.isEmpty) {
+      host = _safeLocalHostName();
+    }
+    final normalized = host.trim().toLowerCase();
+    final usefulHost = normalized.isEmpty ||
+            normalized == 'localhost' ||
+            normalized == 'localhost.localdomain' ||
+            normalized == 'device'
+        ? ''
+        : host.trim();
+    return _trim(
+      usefulHost.isEmpty
+          ? 'POKROV ${hostPlatform.label}'
+          : 'POKROV ${hostPlatform.label} $usefulHost',
+      120,
+    );
   }
 
   String _userAgent(HostPlatform hostPlatform) =>

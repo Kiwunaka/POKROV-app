@@ -27,7 +27,9 @@ class _QuickConnectSection extends StatelessWidget {
     required this.onOpenRules,
     required this.onOpenWarp,
     required this.onWarpConsentChanged,
-    required this.onOpenCheckout,
+    required this.notificationsUnread,
+    required this.onOpenNotifications,
+    required this.onOpenProfile,
     required this.onOpenPromoHandoff,
   });
 
@@ -59,7 +61,9 @@ class _QuickConnectSection extends StatelessWidget {
   final VoidCallback onOpenRules;
   final Future<void> Function() onOpenWarp;
   final Future<void> Function(bool value) onWarpConsentChanged;
-  final VoidCallback onOpenCheckout;
+  final int notificationsUnread;
+  final VoidCallback onOpenNotifications;
+  final VoidCallback onOpenProfile;
   final void Function(String label, String value) onOpenPromoHandoff;
 
   @override
@@ -117,11 +121,6 @@ class _QuickConnectSection extends StatelessWidget {
     final homePromoSlot = _homeAdminPromoSlot(bonusSummary);
     final telegramBonusClaimed =
         (bonusSummary?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
-    final rewardsPaidRequired =
-        (bonusSummary?.rewardAccess.paidRequired ?? false) ||
-            _effectiveAccessLane(appContext, subscriptionInfo) ==
-                AccessLane.trialPremium;
-
     return _SeedContentList(
       // Mobile tabs share the 16px top gutter; the desktop stage keeps its
       // larger hero offset because it has no headline row above the disc.
@@ -169,13 +168,15 @@ class _QuickConnectSection extends StatelessWidget {
               warpBusy: warpBusy,
               homePromoSlot: homePromoSlot,
               onToggleRuntime: onToggleRuntime,
-              onTelegramBonus: rewardsPaidRequired ? null : onTelegramBonus,
+              onTelegramBonus: onTelegramBonus,
               onOpenConnectionDetails: onOpenConnectionDetails,
               onOpenLocations: onOpenLocations,
               onOpenRules: onOpenRules,
               onOpenWarp: onOpenWarp,
               onWarpConsentChanged: onWarpConsentChanged,
-              onOpenCheckout: onOpenCheckout,
+              notificationsUnread: notificationsUnread,
+              onOpenNotifications: onOpenNotifications,
+              onOpenProfile: onOpenProfile,
               onOpenPromoHandoff: onOpenPromoHandoff,
             ),
           ),
@@ -218,7 +219,9 @@ class _HomeStage extends StatefulWidget {
     required this.onOpenRules,
     required this.onOpenWarp,
     required this.onWarpConsentChanged,
-    required this.onOpenCheckout,
+    required this.notificationsUnread,
+    required this.onOpenNotifications,
+    required this.onOpenProfile,
     required this.onOpenPromoHandoff,
   });
 
@@ -256,7 +259,9 @@ class _HomeStage extends StatefulWidget {
   final VoidCallback onOpenRules;
   final Future<void> Function() onOpenWarp;
   final Future<void> Function(bool value) onWarpConsentChanged;
-  final VoidCallback onOpenCheckout;
+  final int notificationsUnread;
+  final VoidCallback onOpenNotifications;
+  final VoidCallback onOpenProfile;
   final void Function(String label, String value) onOpenPromoHandoff;
 
   @override
@@ -357,7 +362,9 @@ class _HomeStageState extends State<_HomeStage>
           child: _HomeTopBar(
             accessLabel: widget.accessLabel,
             poolLabel: widget.accessPoolLabel,
-            onOpenCheckout: widget.onOpenCheckout,
+            notificationsUnread: widget.notificationsUnread,
+            onOpenNotifications: widget.onOpenNotifications,
+            onOpenProfile: widget.onOpenProfile,
           ),
         ),
         const SizedBox(height: 22),
@@ -480,13 +487,16 @@ class _HomeStageState extends State<_HomeStage>
                   ],
                 ),
               ),
-              // Honest affordances: the icons and tooltips describe the real
-              // targets (connection details sheet and the Rules tab).
               IconButton(
-                key: const ValueKey('home-desktop-notifications-action'),
+                key: const ValueKey('home-desktop-connection-details-action'),
                 tooltip: 'Детали подключения',
                 onPressed: widget.onOpenConnectionDetails,
                 icon: const Icon(Icons.info_outline_rounded),
+              ),
+              _HomeNotificationsButton(
+                unread: widget.notificationsUnread,
+                onTap: widget.onOpenNotifications,
+                compact: false,
               ),
               IconButton(
                 key: const ValueKey('home-desktop-settings-action'),
@@ -564,7 +574,7 @@ class _HomeStageState extends State<_HomeStage>
                       poolLabel: widget.accessPoolLabel,
                       telegramBonusClaimed: widget.telegramBonusClaimed,
                       telegramBonusClaimedDays: widget.telegramBonusClaimedDays,
-                      onTap: widget.onOpenCheckout,
+                      onTap: widget.onOpenProfile,
                     ),
                   ),
                   if (!widget.telegramBonusClaimed &&
@@ -711,23 +721,44 @@ class _HomeStatusAction extends StatelessWidget {
         key: const ValueKey('home-connection-details-action'),
         child: PokrovSettingsRowPressSurface(
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            child: AnimatedSwitcher(
-              key: const ValueKey('home-status-switcher'),
-              duration: _MotionScope.of(context).duration(_MotionTokens.short),
-              transitionBuilder: _fadeSlideTransition,
-              child: Text(
-                statusLabel,
-                key: ValueKey(statusLabel),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: p.muted,
-                      fontWeight: FontWeight.w500,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: p.surfaceMuted.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: p.line),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.info_outline_rounded, size: 14, color: p.muted),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: AnimatedSwitcher(
+                    key: const ValueKey('home-status-switcher'),
+                    duration:
+                        _MotionScope.of(context).duration(_MotionTokens.short),
+                    transitionBuilder: _fadeSlideTransition,
+                    child: Text(
+                      statusLabel,
+                      key: ValueKey(statusLabel),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: p.muted,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
-              ),
+                  ),
+                ),
+                const SizedBox(width: 1),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 15,
+                  color: p.muted.withValues(alpha: 0.72),
+                ),
+              ],
             ),
           ),
         ),
@@ -1534,12 +1565,16 @@ class _HomeTopBar extends StatelessWidget {
   const _HomeTopBar({
     required this.accessLabel,
     required this.poolLabel,
-    required this.onOpenCheckout,
+    required this.notificationsUnread,
+    required this.onOpenNotifications,
+    required this.onOpenProfile,
   });
 
   final String accessLabel;
   final String poolLabel;
-  final VoidCallback onOpenCheckout;
+  final int notificationsUnread;
+  final VoidCallback onOpenNotifications;
+  final VoidCallback onOpenProfile;
 
   @override
   Widget build(BuildContext context) {
@@ -1565,10 +1600,16 @@ class _HomeTopBar extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
+        _HomeNotificationsButton(
+          unread: notificationsUnread,
+          onTap: onOpenNotifications,
+          compact: true,
+        ),
+        const SizedBox(width: 2),
         _HomeAccessPill(
           accessLabel: accessLabel,
           poolLabel: poolLabel,
-          onTap: onOpenCheckout,
+          onTap: onOpenProfile,
         ),
       ],
     );
@@ -1638,10 +1679,60 @@ class _HomeAccessPill extends StatelessWidget {
     );
     return Semantics(
       button: true,
-      label: '$_label. $poolLabel. Открыть тарифы',
+      label: '$_label. $poolLabel. Открыть профиль',
       onTap: onTap,
       child: ExcludeSemantics(
         child: PokrovSettingsRowPressSurface(onTap: onTap, child: content),
+      ),
+    );
+  }
+}
+
+class _HomeNotificationsButton extends StatelessWidget {
+  const _HomeNotificationsButton({
+    required this.unread,
+    required this.onTap,
+    required this.compact,
+  });
+
+  final int unread;
+  final VoidCallback onTap;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final count = unread.clamp(0, 99);
+    final icon = Icon(
+      unread > 0
+          ? Icons.notifications_rounded
+          : Icons.notifications_none_rounded,
+      color: unread > 0 ? p.accent : p.muted,
+      size: compact ? 21 : 23,
+    );
+    return Semantics(
+      button: true,
+      label: unread > 0 ? 'Уведомления. Непрочитанных: $unread' : 'Уведомления',
+      child: IconButton(
+        key: ValueKey(
+          compact
+              ? 'home-notifications-action'
+              : 'home-desktop-notifications-action',
+        ),
+        tooltip: unread > 0 ? 'Уведомления · $unread' : 'Уведомления',
+        onPressed: onTap,
+        constraints: BoxConstraints.tightFor(
+          width: compact ? 40 : 48,
+          height: compact ? 40 : 48,
+        ),
+        padding: EdgeInsets.zero,
+        icon: unread > 0
+            ? Badge(
+                label: Text('$count'),
+                backgroundColor: p.accent,
+                child: icon,
+              )
+            : icon,
       ),
     );
   }

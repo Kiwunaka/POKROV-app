@@ -2097,28 +2097,3 @@ String? _motionRecoveryNotice(
   }
   return null;
 }
-
-String _consumerProtectionStatusSummary(
-  RuntimeSnapshot? snapshot, {
-  required String? headline,
-  required HostPlatform hostPlatform,
-}) {
-  if ((headline ?? '').trim().isNotEmpty) {
-    return headline!.trim();
-  }
-  if (snapshot == null) {
-    return 'Проверяем, готово ли устройство ${hostPlatform.label}.';
-  }
-  if (snapshot.phase == RuntimePhase.running) {
-    return snapshot.isCleanlyHealthy
-        ? 'POKROV работает на этом устройстве.'
-        : 'POKROV подключен, но заметил состояние, которое стоит проверить.';
-  }
-  if (snapshot.phase == RuntimePhase.artifactMissing) {
-    return 'Устройство еще завершает подготовку перед подключением.';
-  }
-  if ((snapshot.stagedConfigPath ?? '').isNotEmpty) {
-    return 'Все готово. Нажмите главную кнопку, чтобы подключиться.';
-  }
-  return 'POKROV готовит подключение в фоне, чтобы на первом экране осталась одна понятная кнопка.';
-}

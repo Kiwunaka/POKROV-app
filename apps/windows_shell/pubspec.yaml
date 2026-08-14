@@ -1,7 +1,7 @@
 name: pokrov_windows_shell
-description: Windows gated beta host for the POKROV client program.
+description: Windows host for the POKROV client program.
 publish_to: none
-version: 1.0.5-beta.1+14
+version: 1.0.6+15
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

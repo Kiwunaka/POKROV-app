@@ -1,8 +1,11 @@
 package space.pokrov.pokrov_android_shell
 
+import android.app.ActivityManager
 import android.app.PendingIntent
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
 import android.os.Handler
@@ -92,6 +95,7 @@ class PokrovQuickSettingsTileService : TileService() {
         super.onClick()
         val profile = AndroidRuntimeProfileStore.restoreIntoRuntimeState(this)
         val snapshot = authoritativeRuntimeSnapshot()
+        val runtimeServiceRunning = isRuntimeServiceRunning()
         val validProfile = profile?.takeIf {
             it.configPath == snapshot.stagedConfigPath &&
                 File(it.configPath).isFile &&
@@ -105,7 +109,7 @@ class PokrovQuickSettingsTileService : TileService() {
                 !AndroidNotificationPermissionStore.wasAsked(this)
         when (
             resolveQuickTileAction(
-                isRunning = snapshot.isRunning,
+                isRunning = snapshot.isRunning || runtimeServiceRunning,
                 connectionPending = snapshot.connectionPending,
                 hasStagedProfile = validProfile != null,
                 quickSettingsEligible = validProfile?.canStartFromQuickSettings() == true,
@@ -152,17 +156,25 @@ class PokrovQuickSettingsTileService : TileService() {
 
     private fun refreshTile() {
         val tile = qsTile ?: return
+        val running = authoritativeRuntimeSnapshot().isRunning || isRuntimeServiceRunning()
         tile.icon = Icon.createWithResource(this, R.drawable.ic_pokrov_system)
         tile.label = "POKROV"
-        // EMUI caches third-party tile state across app-owned transitions in
-        // both active and standard listening modes. Keep the tile an honest,
-        // state-neutral branded action; the live notification owns status,
-        // country, route and speed. onClick still resolves the authoritative
-        // TUN state before choosing START or STOP.
-        tile.state = Tile.STATE_ACTIVE
-        tile.contentDescription = "POKROV. Быстро включить или отключить VPN."
-        setTileSubtitle(tile, "Быстрый доступ")
+        tile.state = if (running) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+        tile.contentDescription = if (running) {
+            "POKROV включен. Нажмите, чтобы отключить VPN."
+        } else {
+            "POKROV выключен. Нажмите, чтобы включить VPN."
+        }
+        setTileSubtitle(tile, if (running) "Включен" else "Выключен")
         tile.updateTile()
+    }
+
+    @Suppress("DEPRECATION")
+    private fun isRuntimeServiceRunning(): Boolean {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        return activityManager.getRunningServices(Int.MAX_VALUE).any {
+            it.service.className == PokrovRuntimeVpnService::class.java.name
+        }
     }
 
     private fun setTileSubtitle(tile: Tile, value: String) {
@@ -202,14 +214,55 @@ class PokrovQuickSettingsTileService : TileService() {
     }
 
     companion object {
-        private const val TRANSITION_TIMEOUT_MILLIS = 5_000L
+        private const val TRANSITION_TIMEOUT_MILLIS = 3_000L
+        private const val REGISTRATION_PREFERENCES = "pokrov_quick_tile_registration"
+        private const val ACTIVE_MODE_REGISTRATION_VERSION = 1
+        private const val ACTIVE_MODE_REGISTRATION_KEY = "active_mode_version"
         const val EXTRA_TILE_TRANSITION_GENERATION = "space.pokrov.runtime.TILE_GENERATION"
 
-        fun completeRuntimeTransition(
-            @Suppress("UNUSED_PARAMETER") context: Context,
-            generation: Long?,
-        ) {
+        fun completeRuntimeTransition(context: Context, generation: Long?) {
             QuickTileTransitionGate.complete(generation)
+            requestRefresh(context)
+        }
+
+        fun requestRefresh(context: Context) {
+            TileService.requestListeningState(
+                context,
+                ComponentName(context, PokrovQuickSettingsTileService::class.java),
+            )
+        }
+
+        fun ensureActiveModeRegistration(context: Context) {
+            val preferences = context.getSharedPreferences(
+                REGISTRATION_PREFERENCES,
+                Context.MODE_PRIVATE,
+            )
+            if (preferences.getInt(ACTIVE_MODE_REGISTRATION_KEY, 0) >=
+                ACTIVE_MODE_REGISTRATION_VERSION
+            ) {
+                return
+            }
+            val packageManager = context.packageManager
+            val packageInfo = packageManager.getPackageInfo(context.packageName, 0)
+            if (packageInfo.firstInstallTime != packageInfo.lastUpdateTime) {
+                val component = ComponentName(
+                    context,
+                    PokrovQuickSettingsTileService::class.java,
+                )
+                packageManager.setComponentEnabledSetting(
+                    component,
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP,
+                )
+                packageManager.setComponentEnabledSetting(
+                    component,
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                    PackageManager.DONT_KILL_APP,
+                )
+            }
+            preferences.edit()
+                .putInt(ACTIVE_MODE_REGISTRATION_KEY, ACTIVE_MODE_REGISTRATION_VERSION)
+                .commit()
         }
     }
 }

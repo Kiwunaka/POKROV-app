@@ -163,9 +163,9 @@ visual language:
   canonical searchable guide registry rather than duplicating long articles in
   the app;
 - tray actions mirror the main connection state and never invent their own
-  success state. On Android OEMs that cache third-party tiles, Quick Settings
-  stays a state-neutral branded action and resolves the live TUN on tap;
-  dynamic status belongs to the notification rather than a stale tile color.
+  success state. Quick Settings resolves the live TUN and the app-owned VPN
+  service on tap, refreshes its simple on/off state after committed transitions,
+  and leaves country, route and speed detail to the notification.
 
 The same mobile composition must remain usable in the Windows compact lane;
 desktop may widen content but must not replace the grouped hierarchy with an

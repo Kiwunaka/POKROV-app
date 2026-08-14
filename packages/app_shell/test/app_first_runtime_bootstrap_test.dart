@@ -773,6 +773,7 @@ void main() {
         if (request.uri.path == '/api/client/session/start-trial') {
           final decoded = jsonDecode(body) as Map<String, dynamic>;
           expect(decoded['install_id'], isNotEmpty);
+          expect(decoded['device_name'], 'POKROV Windows Surface Laptop');
           expect(decoded['app_version'], pokrovClientVersion);
           expect(decoded.containsKey('trial_days'), isFalse);
           request.response
@@ -917,6 +918,7 @@ void main() {
       apiBaseUrl: 'http://127.0.0.1:${server.port}/',
       supportDirectoryResolver: () async => tempDirectory,
       sessionSecretStore: sessionSecretStore,
+      deviceNameResolver: (_) async => 'Surface Laptop',
     );
 
     final payload = await bootstrapper.resolveManagedProfile(
@@ -3022,6 +3024,11 @@ void main() {
                   'last_wheel_spin': null,
                   'channel_bonus_premium_days': 10,
                   'channel_bonus_claimed_at': '2026-06-03T12:00:00Z',
+                  'channel_bonus': <String, Object?>{
+                    'eligible': true,
+                    'can_claim': false,
+                    'reason': 'already_claimed',
+                  },
                   'opening_bonus_premium_days': 5,
                   'opening_bonus_claimed': true,
                   'channel_username': 'pokrov_vpn',
@@ -3242,6 +3249,9 @@ void main() {
     expect(summary.streakMonths, 3);
     expect(summary.channelBonusClaimed, isTrue);
     expect(summary.channelBonusPremiumDays, 10);
+    expect(summary.channelBonusEligible, isTrue);
+    expect(summary.channelBonusCanClaim, isFalse);
+    expect(summary.channelBonusReason, 'already_claimed');
     expect(summary.openingBonusClaimed, isTrue);
     expect(summary.tierKey, 'starter');
     expect(summary.nextTierAt, 5);
@@ -3937,10 +3947,10 @@ void main() {
             bothOldAccessRequests.complete();
           }
           request.response.statusCode = HttpStatus.unauthorized;
-        } else if (path == '/api/client/apps') {
+        } else if (path == '/api/client/devices') {
           request.response
             ..headers.contentType = ContentType.json
-            ..write('{"android":{},"windows":{},"update_check":{}}');
+            ..write('{"devices":[]}');
         } else if (path == '/api/client/cabinet-token') {
           request.response
             ..headers.contentType = ContentType.json
@@ -3966,9 +3976,8 @@ void main() {
       delayScheduler: (_) async {},
       maxRequestAttempts: 1,
     );
-    final apps = bootstrapper.fetchClientApps(
+    final devices = bootstrapper.fetchClientDevices(
       hostPlatform: HostPlatform.windows,
-      currentVersion: '1.0.1',
     );
     final handoff = bootstrapper.createCabinetHandoff(
       hostPlatform: HostPlatform.windows,
@@ -3979,7 +3988,7 @@ void main() {
     expect(refreshes, 1);
     releaseRefresh.complete();
     final results = await Future.wait<dynamic>(<Future<dynamic>>[
-      apps,
+      devices,
       handoff,
     ]);
 
@@ -4073,9 +4082,8 @@ void main() {
       delayScheduler: (_) async {},
       maxRequestAttempts: 1,
     );
-    final apps = bootstrapper.fetchClientApps(
+    final devices = bootstrapper.fetchClientDevices(
       hostPlatform: HostPlatform.windows,
-      currentVersion: '1.0.1',
     );
     final handoff = bootstrapper.createCabinetHandoff(
       hostPlatform: HostPlatform.windows,
@@ -4087,7 +4095,7 @@ void main() {
     releaseRefresh.complete();
     await Future.wait<void>(<Future<void>>[
       expectLater(
-        apps,
+        devices,
         throwsA(isA<BootstrapFailure>().having(
           (error) => error.statusCode,
           'statusCode',
@@ -7008,6 +7016,7 @@ void main() {
     final requests = <String>[];
     Map<String, dynamic>? pushBody;
     Map<String, dynamic>? readBody;
+    Map<String, dynamic>? deviceMetadataBody;
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
     unawaited(() async {
@@ -7119,6 +7128,15 @@ void main() {
           continue;
         }
 
+        if (request.uri.path == '/api/client/devices/current') {
+          deviceMetadataBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+          await request.response.close();
+          continue;
+        }
+
         if (request.uri.path == '/api/client/devices') {
           request.response
             ..headers.contentType = ContentType.json
@@ -7202,6 +7220,7 @@ void main() {
     final bootstrapper = AppFirstRuntimeBootstrapper(
       apiBaseUrl: 'http://127.0.0.1:${server.port}/',
       supportDirectoryResolver: () async => tempDirectory,
+      deviceNameResolver: (_) async => 'Surface Laptop',
     );
 
     final catalog = await bootstrapper.fetchLocationsCatalog(
@@ -7233,6 +7252,10 @@ void main() {
       hostPlatform: HostPlatform.windows,
     );
     expect(devices.items.single.current, isTrue);
+    expect(
+      deviceMetadataBody,
+      containsPair('device_name', 'POKROV Windows Surface Laptop'),
+    );
 
     final inbox = await bootstrapper.fetchClientNotifications(
       hostPlatform: HostPlatform.windows,
@@ -7553,6 +7576,77 @@ void main() {
     expect(sourceFor(null), ClientSupportAssistantSource.localFallback);
   });
 
+  test('client update discovery is anonymous and defaults to stable', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-public-update-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    var starts = 0;
+    String? authorization;
+    Uri? requestUri;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    unawaited(() async {
+      await for (final request in server) {
+        if (request.uri.path == '/api/client/session/start-trial') {
+          starts += 1;
+          request.response.statusCode = HttpStatus.internalServerError;
+        } else if (request.uri.path == '/api/public/client-apps') {
+          requestUri = request.uri;
+          authorization =
+              request.headers.value(HttpHeaders.authorizationHeader);
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{
+              'android': <String, Object?>{
+                'version': '1.0.6',
+                'update': <String, Object?>{
+                  'platform': 'android',
+                  'channel': 'stable',
+                  'latest_version': '1.0.6',
+                  'update_policy': 'recommended',
+                  'url':
+                      'https://github.com/Kiwunaka/pokrov/releases/download/v1.0.6/pokrov-android-arm64-v8a.apk',
+                },
+              },
+              'windows': <String, Object?>{},
+              'update_check': <String, Object?>{'mode': 'prompt'},
+            }));
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      maxRequestAttempts: 1,
+    );
+
+    final metadata = await bootstrapper.fetchClientApps(
+      hostPlatform: HostPlatform.android,
+      currentVersion: '1.0.5',
+    );
+
+    expect(metadata.android.update.latestVersion, '1.0.6');
+    expect(metadata.android.update.channel, 'stable');
+    expect(requestUri?.queryParameters['channel'], 'stable');
+    expect(requestUri?.queryParameters['current_version'], '1.0.5');
+    expect(authorization, isNull);
+    expect(starts, 0);
+    expect(
+      File('${tempDirectory.path}${Platform.pathSeparator}'
+              'app-first-session-android.json')
+          .existsSync(),
+      isFalse,
+    );
+  });
+
   test('shares initial state and start-trial across concurrent client services',
       () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
@@ -7587,7 +7681,7 @@ void main() {
                   'sync_ok': true,
                 },
               }));
-          case '/api/client/apps':
+          case '/api/public/client-apps':
             request.response
               ..headers.contentType = ContentType.json
               ..write('{"android":{},"windows":{},"update_check":{}}');

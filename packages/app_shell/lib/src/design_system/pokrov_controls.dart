@@ -858,6 +858,7 @@ class PokrovSettingsRow extends StatelessWidget {
     this.onTap,
     this.enabled = true,
     this.valueIsAction = false,
+    this.external = false,
   });
 
   final IconData icon;
@@ -873,6 +874,10 @@ class PokrovSettingsRow extends StatelessWidget {
   /// accent + w600 like iOS Settings, instead of muted text whose visual
   /// grammar reads as inert state.
   final bool valueIsAction;
+
+  /// Shows that activation leaves the app instead of drilling into an in-app
+  /// surface. Keep this explicit for links such as the cabinet and guides.
+  final bool external;
 
   @override
   Widget build(BuildContext context) {
@@ -912,8 +917,10 @@ class PokrovSettingsRow extends StatelessWidget {
         final chevron = onTap == null
             ? null
             : Icon(
-                Icons.chevron_right_rounded,
-                size: 22,
+                external
+                    ? Icons.open_in_new_rounded
+                    : Icons.chevron_right_rounded,
+                size: external ? 18 : 22,
                 color: tokens.ink.withValues(alpha: 0.38),
               );
 

@@ -193,7 +193,7 @@ class _AdvancedSettingsCard extends StatelessWidget {
             key: const ValueKey('advanced-channel'),
             icon: Icons.science_outlined,
             title: 'Канал',
-            value: 'Beta',
+            value: 'Stable',
           ),
           const _SettingsRowDivider(),
           _SettingsRow(

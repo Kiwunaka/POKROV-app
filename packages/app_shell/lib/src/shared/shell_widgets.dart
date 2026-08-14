@@ -866,11 +866,13 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                                           size: 42,
                                         ),
                                       )
-                                    : KeyedSubtree(
+                                    : Icon(
+                                        Icons.power_settings_new_rounded,
                                         key: ValueKey(
-                                          'connect-action-brand-${widget.running}',
+                                          'connect-action-power-${widget.running}',
                                         ),
-                                        child: const _BrandMark(size: 60),
+                                        color: accent,
+                                        size: 48,
                                       ),
                               ),
                             ],

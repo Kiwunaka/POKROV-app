@@ -93,9 +93,12 @@ app invokes it and what the UI may expose.
 - If a continued request or its reply parsing fails, the sheet discards its
   local token before the next request so an unseen server reply cannot rejoin
   later visible context.
-- The four request diagnostics (`app_version`, `platform`, `route_mode`, and
-  `connection_status`) remain request context only and do not enter model
-  memory.
+- Client request diagnostics remain request context only and do not enter model
+  memory. The authenticated platform endpoint may add an identifier-free,
+  same-account scalar snapshot for access state, days left, plan, active-device
+  count, Telegram link/bonus state, and panel runtime. Server-owned facts
+  override colliding client keys; the model receives no arbitrary API or DB
+  access.
 
 The shared client contract lives in:
 
@@ -111,6 +114,8 @@ Allowed input is limited to support-safe values such as:
 - route mode and user-visible connection state;
 - selected public region/country label;
 - support-safe health and enhanced-protection state;
+- same-account access, device-count, Telegram-bonus, and panel-runtime scalar
+  facts prepared by the server without identifiers;
 - optional ticket ID.
 
 The assistant must not receive or emit:
@@ -118,6 +123,7 @@ The assistant must not receive or emit:
 - raw sing-box config or subscription/protocol links;
 - keys, tokens, UUIDs, access keys, bearer material, or raw profiles;
 - private hostnames, IP topology, hidden node metadata, or control surfaces;
+- account, Telegram, or device IDs, usernames, email, and raw panel payloads;
 - WireGuard keys, raw WARP material, or hidden routing internals.
 
 Redaction is required in both client-side diagnostic construction and the

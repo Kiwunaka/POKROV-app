@@ -115,6 +115,25 @@ void main() {
     expect(dnsServers.first['detour'], 'proxy');
   });
 
+  test('AdGuard toggle stages the filtering DoH resolver through VPN', () {
+    final transformed = applyPokrovRoutingPreferences(
+      _profile(),
+      const PokrovRoutingPreferences.defaults().copyWith(
+        dnsPreset: PokrovDnsPreset.adguard,
+      ),
+    );
+    final dns = _map(_jsonMap(transformed.configPayload)['dns']);
+    final dnsServers = _maps(dns['servers']);
+
+    expect(dns['final'], 'pokrov-user-dns');
+    expect(dns['independent_cache'], isTrue);
+    expect(dnsServers.first, <String, Object?>{
+      'tag': 'pokrov-user-dns',
+      'address': 'https://dns.adguard-dns.com/dns-query',
+      'detour': 'proxy',
+    });
+  });
+
   test('same preferences are idempotent and malformed config is untouched', () {
     final rule = PokrovRouteOverride.tryCreate(
       value: 'example.com',

@@ -18,17 +18,17 @@ void main() {
 
     final requiredFiles =
         (releaseJson['required_files'] as List<dynamic>).cast<String>();
-    expect(releaseJson['channel'], 'gated_beta');
-    expect(releaseJson['binary_name'], 'pokrov_windows_beta.exe');
-    expect(releaseJson['public_approved'], isFalse);
-    expect(releaseJson['artifact_status'], 'unsigned_beta');
+    expect(releaseJson['channel'], 'outside_store_stable');
+    expect(releaseJson['binary_name'], 'pokrov_windows.exe');
+    expect(releaseJson['public_approved'], isTrue);
+    expect(releaseJson['artifact_status'], 'unsigned_direct');
     expect(requiredFiles, contains('pokrov-core.dll'));
     expect(requiredFiles, contains('libcronet.dll'));
-    expect(requiredFiles, contains('pokrov_windows_beta.exe'));
+    expect(requiredFiles, contains('pokrov_windows.exe'));
     expect(requiredFiles, isNot(contains('pokrov_windows_seed.exe')));
 
     final signing = releaseJson['signing'] as Map<String, dynamic>;
-    expect(signing['status'], 'unsigned_beta_blocker');
+    expect(signing['status'], 'unsigned_direct_warning');
     expect(
       (signing['user_warning'] as String).toLowerCase(),
       contains('smartscreen'),

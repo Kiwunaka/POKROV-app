@@ -178,23 +178,29 @@ class AndroidHostSecurityContractTest {
     }
 
     @Test
-    fun quickSettingsTileIsAnHonestStateNeutralAction() {
+    fun quickSettingsTilePublishesTheObservedRuntimeState() {
         val tileSource = source("PokrovQuickSettingsTileService.kt")
 
-        assertTrue(tileSource.contains("tile.state = Tile.STATE_ACTIVE"))
-        assertTrue(tileSource.contains("setTileSubtitle(tile, \"Быстрый доступ\")"))
-        assertTrue(tileSource.contains("onClick still resolves the authoritative"))
-        assertFalse(tileSource.contains("Tile.STATE_INACTIVE"))
+        assertTrue(tileSource.contains("Tile.STATE_ACTIVE else Tile.STATE_INACTIVE"))
+        assertTrue(tileSource.contains("if (running) \"Включен\" else \"Выключен\""))
+        assertTrue(tileSource.contains("snapshot.isRunning || runtimeServiceRunning"))
+        assertTrue(tileSource.contains("authoritativeRuntimeSnapshot().isRunning || isRuntimeServiceRunning()"))
+        assertTrue(tileSource.contains("getRunningServices(Int.MAX_VALUE)"))
         assertFalse(tileSource.contains("Tile.STATE_UNAVAILABLE"))
     }
 
     @Test
-    fun standardTileRefreshesItsStaticBrandWhenSystemUiListens() {
+    fun standardTileRefreshesWhenSystemUiListensAndRuntimeCommits() {
         val tileSource = source("PokrovQuickSettingsTileService.kt")
+        val activitySource = source("MainActivity.kt")
 
         assertTrue(tileSource.contains("override fun onStartListening()"))
         assertTrue(tileSource.contains("refreshTile()"))
-        assertFalse(tileSource.contains("requestListeningState("))
+        assertTrue(tileSource.contains("requestListeningState("))
+        assertTrue(tileSource.contains("firstInstallTime != packageInfo.lastUpdateTime"))
+        assertTrue(tileSource.contains("PackageManager.DONT_KILL_APP"))
+        assertTrue(activitySource.contains("ensureActiveModeRegistration(this)"))
+        assertTrue(activitySource.contains("PokrovQuickSettingsTileService.requestRefresh(this)"))
     }
 
     @Test
@@ -234,7 +240,7 @@ class AndroidHostSecurityContractTest {
         val tileSource = source("PokrovQuickSettingsTileService.kt")
 
         assertTrue(tileSource.contains("QuickTileTransitionGate.complete(generation)"))
-        assertFalse(tileSource.contains("requestRefresh("))
+        assertTrue(tileSource.contains("requestRefresh(context)"))
     }
 
     @Test
@@ -304,6 +310,25 @@ class AndroidHostSecurityContractTest {
         assertTrue(serviceSource.contains("lifecycleActive.set(false)"))
         assertTrue(serviceSource.contains("AndroidRuntimeDispatchPolicy.dispatch("))
         assertTrue(serviceSource.contains("lifecycleActive.get() && healthGeneration.get() == generation"))
+    }
+
+    @Test
+    fun installedAppCatalogKeepsEveryLauncherSearchableAndBoundsIconWork() {
+        val bridgeSource = source("RuntimeHostBridge.kt")
+
+        assertTrue(bridgeSource.contains(".mapIndexed { index, (packageName, label, resolveInfo) ->"))
+        assertTrue(bridgeSource.contains("if (index < MAX_INSTALLED_APP_ICONS)"))
+        assertFalse(bridgeSource.contains(".take(160)"))
+    }
+
+    @Test
+    fun accountDeviceNameUsesSafeManufacturerAndModelInsteadOfLocalhost() {
+        val bridgeSource = source("RuntimeHostBridge.kt")
+
+        assertTrue(bridgeSource.contains("METHOD_DEVICE_NAME -> result.success(deviceName())"))
+        assertTrue(bridgeSource.contains("Build.MANUFACTURER.trim()"))
+        assertTrue(bridgeSource.contains("Build.MODEL.trim()"))
+        assertTrue(bridgeSource.contains(".take(80)"))
     }
 
     private fun source(fileName: String): String {

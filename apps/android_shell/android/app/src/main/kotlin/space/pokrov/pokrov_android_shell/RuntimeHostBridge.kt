@@ -80,6 +80,7 @@ class RuntimeHostBridge(
             METHOD_APPLY_WARP -> result.success(applyWarp(call))
             METHOD_LIVE_STATS -> result.success(AndroidRuntimeState.liveStats())
             METHOD_PUSH_TOKEN -> result.success(pushToken())
+            METHOD_DEVICE_NAME -> result.success(deviceName())
             METHOD_LIST_INSTALLED_APPS -> listInstalledApps(result)
             METHOD_CURRENT_WIFI -> result.success(currentWifi())
             METHOD_MEASURE_NODE_LATENCIES -> measureNodeLatencies(call, result)
@@ -755,6 +756,22 @@ class RuntimeHostBridge(
         }
     }
 
+    private fun deviceName(): String {
+        val manufacturer = Build.MANUFACTURER.trim()
+        val model = Build.MODEL.trim()
+        val identity = when {
+            model.isBlank() -> manufacturer
+            manufacturer.isBlank() || model.startsWith(manufacturer, ignoreCase = true) -> model
+            else -> "$manufacturer $model"
+        }
+        return identity
+            .replace(Regex("[\\p{Cc}\\p{Cf}]"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+            .take(80)
+            .ifBlank { "Android" }
+    }
+
     @Suppress("DEPRECATION")
     private fun installedLauncherApps(): List<Map<String, String>> {
         val packageManager = activity.packageManager
@@ -773,18 +790,30 @@ class RuntimeHostBridge(
                     ?.toString()
                     ?.trim()
                     .orEmpty()
+                Triple(
+                    packageName,
+                    if (label.isBlank()) packageName else label,
+                    resolveInfo,
+                )
+            }
+            // Resolve duplicate launcher activities before bitmap work. Keep
+            // every app searchable, but only encode the first icons: some
+            // Huawei builds expose hundreds of activities and encoding every
+            // bitmap used to make the picker look empty while it was loading.
+            .distinctBy { (packageName, _, _) -> packageName }
+            .sortedBy { (_, label, _) -> label.lowercase() }
+            .mapIndexed { index, (packageName, label, resolveInfo) ->
                 buildMap<String, String> {
-                    put("label", if (label.isBlank()) packageName else label)
+                    put("label", label)
                     put("identifier", packageName)
                     put("subtitle", packageName)
-                    encodeLauncherIcon(resolveInfo.loadIcon(packageManager))?.let {
-                        put("iconPngBase64", it)
+                    if (index < MAX_INSTALLED_APP_ICONS) {
+                        encodeLauncherIcon(resolveInfo.loadIcon(packageManager))?.let {
+                            put("iconPngBase64", it)
+                        }
                     }
                 }
             }
-            .distinctBy { app -> app["identifier"] }
-            .sortedBy { app -> app["label"]?.lowercase() }
-            .take(160)
             .toList()
     }
 
@@ -800,6 +829,7 @@ class RuntimeHostBridge(
 
     companion object {
         private const val LOG_TAG = "PokrovRuntimeBridge"
+        private const val MAX_INSTALLED_APP_ICONS = 80
         const val CHANNEL_NAME = "space.pokrov/runtime_engine"
         const val REQUEST_VPN_PERMISSION = 14071
         const val EXTRA_DEBUG_RUNTIME_PATH = "space.pokrov.debug.RUNTIME_PATH"
@@ -813,6 +843,7 @@ class RuntimeHostBridge(
         private const val METHOD_APPLY_WARP = "runtimeEngine.applyWarp"
         private const val METHOD_LIVE_STATS = "runtimeEngine.liveStats"
         private const val METHOD_PUSH_TOKEN = "runtimeEngine.pushToken"
+        private const val METHOD_DEVICE_NAME = "runtimeEngine.deviceName"
         private const val METHOD_LIST_INSTALLED_APPS = "runtimeEngine.listInstalledApps"
         private const val METHOD_CURRENT_WIFI = "runtimeEngine.currentWifi"
         private const val METHOD_MEASURE_NODE_LATENCIES =

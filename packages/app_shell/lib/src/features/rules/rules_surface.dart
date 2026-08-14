@@ -430,14 +430,6 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
     super.dispose();
   }
 
-  @override
-  void didUpdateWidget(covariant _SelectedAppsEditor oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.hostPlatform != widget.hostPlatform) {
-      _candidateFuture = null;
-    }
-  }
-
   void _submit() {
     final normalized = normalizePokrovSelectedAppIdentifier(
       _controller.text,
@@ -460,14 +452,10 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
   }
 
   Future<void> _openPicker() async {
-    final existingFuture = _candidateFuture;
-    final candidateFuture = existingFuture ??
-        _loadSelectedAppCandidates(widget.hostPlatform);
-    if (existingFuture == null) {
-      setState(() {
-        _candidateFuture = candidateFuture;
-      });
-    }
+    final candidateFuture = _loadSelectedAppCandidates(widget.hostPlatform);
+    setState(() {
+      _candidateFuture = candidateFuture;
+    });
     final candidate = await showModalBottomSheet<_SelectedAppCandidate>(
       context: context,
       isScrollControlled: true,
@@ -836,7 +824,20 @@ class _SelectedAppsPickerSheet extends StatefulWidget {
 
 class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
   final TextEditingController _searchController = TextEditingController();
+  late Future<List<_SelectedAppCandidate>> _candidatesFuture;
   String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _candidatesFuture = widget.candidatesFuture;
+  }
+
+  void _refreshCandidates() {
+    setState(() {
+      _candidatesFuture = _loadSelectedAppCandidates(widget.hostPlatform);
+    });
+  }
 
   @override
   void dispose() {
@@ -965,6 +966,14 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                             ),
                           ),
                           IconButton(
+                            key: const ValueKey(
+                              'rules-selected-app-refresh',
+                            ),
+                            tooltip: 'Обновить список',
+                            onPressed: _refreshCandidates,
+                            icon: const Icon(Icons.refresh_rounded),
+                          ),
+                          IconButton(
                             tooltip: 'Закрыть',
                             onPressed: () => Navigator.of(context).pop(),
                             icon: const Icon(Icons.close_rounded),
@@ -978,6 +987,14 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                           Expanded(child: searchField),
                           const SizedBox(width: 8),
                           IconButton(
+                            key: const ValueKey(
+                              'rules-selected-app-refresh-compact',
+                            ),
+                            tooltip: 'Обновить список',
+                            onPressed: _refreshCandidates,
+                            icon: const Icon(Icons.refresh_rounded),
+                          ),
+                          IconButton(
                             tooltip: 'Закрыть',
                             onPressed: () => Navigator.of(context).pop(),
                             icon: const Icon(Icons.close_rounded),
@@ -989,7 +1006,7 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                     SizedBox(height: compact ? 8 : 14),
                     Expanded(
                       child: FutureBuilder<List<_SelectedAppCandidate>>(
-                        future: widget.candidatesFuture,
+                        future: _candidatesFuture,
                         builder: (context, snapshot) {
                           final fallbackCandidates =
                               _suggestedSelectedAppCandidates(
@@ -1268,16 +1285,13 @@ Future<List<_SelectedAppCandidate>> _loadSelectedAppCandidates(
 Future<List<_SelectedAppCandidate>> _loadAndroidInstalledAppCandidates() async {
   try {
     final response = await _selectedAppsRuntimeChannel
-        .invokeListMethod<Object?>('runtimeEngine.listInstalledApps')
-        .timeout(const Duration(seconds: 4));
+        .invokeListMethod<Object?>('runtimeEngine.listInstalledApps');
     return _candidatesFromHostMaps(
       response,
       hostPlatform: HostPlatform.android,
       source: _SelectedAppCandidateSource.installed,
       icon: Icons.android_rounded,
     );
-  } on TimeoutException {
-    return const <_SelectedAppCandidate>[];
   } on MissingPluginException {
     return const <_SelectedAppCandidate>[];
   } on PlatformException {

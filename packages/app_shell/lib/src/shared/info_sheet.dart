@@ -9,6 +9,7 @@ class _SettingsRow extends PokrovSettingsRow {
     super.onTap,
     super.enabled,
     super.valueIsAction,
+    super.external,
   });
 }
 

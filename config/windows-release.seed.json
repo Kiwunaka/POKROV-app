@@ -1,17 +1,17 @@
 {
   "display_name": "POKROV",
-  "channel": "gated_beta",
-  "artifact_status": "unsigned_beta",
-  "public_approved": false,
-  "binary_name": "pokrov_windows_beta.exe",
+  "channel": "outside_store_stable",
+  "artifact_status": "unsigned_direct",
+  "public_approved": true,
+  "binary_name": "pokrov_windows.exe",
   "bundle_root": "apps/windows_shell/build/windows/x64/runner/Release",
   "artifact_root": "apps/windows_shell/build/release_bundle",
-  "bundle_folder_template": "pokrov-windows-beta-x64-{version}",
-  "zip_name_template": "pokrov-windows-beta-x64-{version}.zip",
-  "installer_name_template": "pokrov-windows-beta-x64-{version}-setup.exe",
-  "manifest_name_template": "pokrov-windows-beta-x64-{version}.manifest.json",
+  "bundle_folder_template": "pokrov-windows-x64-{version}",
+  "zip_name_template": "pokrov-windows-x64-{version}.zip",
+  "installer_name_template": "pokrov-windows-x64-{version}-setup.exe",
+  "manifest_name_template": "pokrov-windows-x64-{version}.manifest.json",
   "required_files": [
-    "pokrov_windows_beta.exe",
+    "pokrov_windows.exe",
     "flutter_windows.dll",
     "pokrov-core.dll",
     "libcronet.dll",
@@ -34,8 +34,8 @@
     "desktop_abi": 2
   },
   "signing": {
-    "status": "unsigned_beta_blocker",
-    "user_warning": "Windows may show a Microsoft Defender SmartScreen or unknown-publisher warning because this beta bundle is not trusted-signed yet. Distribute only through the gated beta cabinet.",
+    "status": "unsigned_direct_warning",
+    "user_warning": "Windows may show a Microsoft Defender SmartScreen or unknown-publisher warning because this direct-download build is not trusted-signed yet.",
     "expected_inputs": [
       "trusted Windows code-signing certificate",
       "timestamping service URL",
@@ -43,13 +43,9 @@
     ]
   },
   "safe_claims": [
-    "The Windows beta shell uses the desktop FFI runtime lane.",
+    "The Windows shell uses the desktop FFI runtime lane.",
     "The local release build bundles POKROV Core 1.0.3 and its pinned libcronet.dll dependency next to the Flutter runner.",
-    "Local packaging produces an unsigned beta installer EXE and portable ZIP; share only through gated beta access with the SmartScreen warning above."
+    "Local packaging produces an unsigned direct-download installer EXE and portable ZIP with the SmartScreen warning above."
   ],
-  "blocked_on": [
-    "trusted Windows signing material is not wired into this lane",
-    "trusted installer signing is not implemented",
-    "public download hosting and product cutover remain external"
-  ]
+  "blocked_on": []
 }

@@ -10,7 +10,7 @@ Current responsibility:
 
 Current local truth:
 
-- `flutter build windows --release` bundles `pokrov_windows_beta.exe`, POKROV Core 1.0.2 `pokrov-core.dll`, and pinned `libcronet.dll`
+- `flutter build windows --release` bundles `pokrov_windows.exe`, POKROV Core `pokrov-core.dll`, and pinned `libcronet.dll`
 - the shared shell keeps local runtime controls out of the first layer and uses one-tap connect from `Protection` on Windows
 - the packaged output stays inside the next-client seed lane under `build/release_bundle` and is not a public release artifact
 
