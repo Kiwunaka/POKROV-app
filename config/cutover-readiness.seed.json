@@ -1,12 +1,12 @@
 {
   "lane": "POKROV-app/main",
-  "status": "android_direct_apk_1_0_4_public_prerelease_anonymous_verified_runtime_synced_global_cutover_blocked_on_windows_trust_and_apple_gates",
+  "status": "android_direct_apk_1_0_6_public_stable_published_runtime_sync_pending_global_cutover_blocked_on_windows_trust_and_apple_gates",
   "public_cutover_allowed": false,
   "last_updated": "2026-08-14",
   "latest_repo_backed_release": {
-    "version": "1.0.4",
-    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.4-beta.1",
-    "asset_refresh_utc": "2026-08-13T21:08:02Z",
+    "version": "1.0.6",
+    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.6",
+    "asset_refresh_utc": "2026-08-14T14:33:37Z",
     "github_repo_visibility": "public",
     "anonymous_download_smoke": "PASS_FULL_DOWNLOAD_EXACT_SIZE_AND_SHA256",
     "authenticated_github_release_smoke": "PASS_EXACT_GITHUB_ASSET_DIGEST",
@@ -16,22 +16,22 @@
     "beta_distribution": "public_production_signed_direct_apk",
     "public_approved": true,
     "current_internal_candidate": {
-      "version_name": "1.0.4",
-      "version_code": 2013,
-      "apk_size_bytes": 99117667,
-      "apk_sha256": "48EAC0BE655D4D85D31134908E7A8CAEC881ED91AAE049FB7CF72206EFD99E6C",
+      "version_name": "1.0.6",
+      "version_code": 2015,
+      "apk_size_bytes": 99117915,
+      "apk_sha256": "8F38437519041E0359E7DAE067CA8833E66F375B17CD57009EAA07CB78FC52F7",
       "build_mode": "release",
       "debuggable": false,
       "signing_state": "PASS_PRODUCTION_SELF_MANAGED_DIRECT_APK",
       "certificate_sha256": "0A0602A7DF5D96A0B427909D004F3DDF26DEF86587634BF16694DA8D654B2500",
       "signature_scheme": "APK_SIGNATURE_SCHEME_V2",
-      "emulator_install_identity": "PASS_BUILD_SIGNATURE_X86_64_1_0_4_4013",
-      "emulator_launch_localhost_preflight": "PASS_UI_API_ONLY_NOT_TUNNEL_PROOF",
-      "physical_device_install_identity": "PASS_EXACT_ARM64_HUAWEI_1_0_4_2013",
-      "physical_device_pre_tunnel": "PASS_HOME_LOCATIONS_SUPPORT_SYSTEM_UX",
-      "quick_settings_tile": "PASS_SUPPORTING_SAME_VERSION_PRE_FINAL_UI_HASH",
-      "chrome_egress_check": "PASS_SUPPORTING_FRESH_PROCESS_PRE_FINAL_UI_HASH",
-      "physical_device_audit": "PASS_EXACT_FINAL_ORDINARY_TUNNEL_AI_VARIANTS_NOTIFICATION; WARP_PER_APP_UPLINK_SUPPORTING_NOT_EXACT_FINAL",
+      "emulator_install_identity": "PASS_EXACT_X86_64_LDPLAYER_1_0_6_4015",
+      "emulator_launch_localhost_preflight": "PASS_FINAL_UI_ACCOUNT_PROMO_AND_DISMISSAL; NOT_TUNNEL_PROOF",
+      "physical_device_install_identity": "PASS_EXACT_ARM64_HUAWEI_1_0_6_2015",
+      "physical_device_pre_tunnel": "PASS_HOME_INBOX_PROFILE_ABOUT_RULES_APP_SEARCH_TV_PAIRING",
+      "quick_settings_tile": "PASS_FINAL_SOURCE_CONTRACT; PHYSICAL_ENDURANCE_DEFERRED",
+      "chrome_egress_check": "PASS_FRESH_PROCESS_FULL_TUNNEL_AND_EXCLUDED_APPS_BEFORE_FINAL_UI_ONLY",
+      "physical_device_audit": "PASS_EXACT_FINAL_UI_AND_IDENTITY; WARP_PER_APP_UPLINK_ENDURANCE_MANUAL_FOLLOWUP",
       "offline_signing_recovery_backup": "MANUAL_OWNER_TEST",
       "play_store_channel": "NOT_REQUESTED_DIRECT_APK_FIRST",
       "public_approved": true
@@ -46,7 +46,7 @@
     ]
   },
   "windows_release": {
-    "beta_distribution": "outside_store_unsigned_exe_public_prerelease",
+    "beta_distribution": "outside_store_unsigned_stable_direct",
     "public_approved": false,
     "required_user_warning": "Microsoft Defender SmartScreen or unknown-publisher warning is expected until trusted signing is complete.",
     "blocked_on": [
@@ -65,16 +65,16 @@
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
-      "Android 1.0.4 split APKs and Windows 1.0.4 beta artifacts are public, anonymously verified, and live in runtime metadata; Windows trusted signing remains an owner gate"
+      "Android 1.0.6 split APKs and Windows 1.0.6 stable-direct artifacts are public and GitHub-digest verified; production runtime metadata sync is pending; Windows trusted signing remains an owner gate"
   ],
   "repo_side_closed": [
     "P0-P6 beta implementation scope",
     "Android APK and Windows unsigned beta artifacts uploaded to GitHub prerelease",
     "SHA256SUMS and release handoff metadata aligned",
     "authenticated GitHub download proof for all current release assets",
-    "1.0.4 brain release handoff, backend/static deploy, current-origin verification, and synthetic signed /api/client/apps smoke pass",
+    "1.0.6 GitHub stable release publication and exact eight-asset digest verification pass; brain release handoff is pending",
     "Android build-tool future-support warning closed with Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0",
-      "Android 1.0.4 split APKs are publicly published, anonymously downloaded with exact hashes, and production-signed; exact-final ordinary tunnel/AI/system UX pass while WARP/per-app/uplink evidence is supporting pre-final-hash evidence",
+      "Android 1.0.6 split APKs are publicly published, GitHub-digest verified, production-signed, and exact-final Home/inbox/profile/rules/app-search/TV flows passed on Huawei; WARP/per-app/uplink endurance remains a manual follow-up",
     "release-note guardrails recorded; post-announcement monitoring remains operator work"
   ],
   "ios_release_gates": [
