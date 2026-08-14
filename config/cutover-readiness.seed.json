@@ -1,6 +1,6 @@
 {
   "lane": "POKROV-app/main",
-  "status": "android_direct_apk_1_0_6_public_stable_published_runtime_sync_pending_global_cutover_blocked_on_windows_trust_and_apple_gates",
+  "status": "android_direct_apk_1_0_6_public_stable_published_runtime_synced_global_cutover_blocked_on_windows_trust_and_apple_gates",
   "public_cutover_allowed": false,
   "last_updated": "2026-08-14",
   "latest_repo_backed_release": {
@@ -10,7 +10,7 @@
     "github_repo_visibility": "public",
     "anonymous_download_smoke": "PASS_FULL_DOWNLOAD_EXACT_SIZE_AND_SHA256",
     "authenticated_github_release_smoke": "PASS_EXACT_GITHUB_ASSET_DIGEST",
-    "live_app_session_download_smoke": "PASS_BRAIN_SYNTHETIC_SIGNED_SESSION_EXACT_LINKS"
+    "live_app_session_download_smoke": "PASS_BRAIN_STABLE_1_0_6_EXACT_LINKS_HASHES_AND_SIZES"
   },
   "android_release": {
     "beta_distribution": "public_production_signed_direct_apk",

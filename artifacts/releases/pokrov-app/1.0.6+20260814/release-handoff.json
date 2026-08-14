@@ -6,8 +6,8 @@
   "tag": "v1.0.6",
   "release_url": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.6",
   "built_from_client_commit": "c915aafb9a0aa1abf8f7cac9876e535695914796",
-  "platform_source_commit": "860225d008ad7f1e7020a89121d8dfb91659988f",
+  "platform_source_commit": "411a32e5084b283a73b07eca8b3c12d5282fdc6d",
   "android_certificate_sha256": "0A0602A7DF5D96A0B427909D004F3DDF26DEF86587634BF16694DA8D654B2500",
   "artifact_storage": "GitHub release assets; local heavy staging retained outside the repository",
-  "release_state": "public_stable_published_github_digest_verified_runtime_sync_pending"
+  "release_state": "public_stable_published_github_digest_verified_runtime_synced"
 }

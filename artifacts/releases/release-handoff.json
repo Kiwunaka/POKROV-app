@@ -7,10 +7,10 @@
   "version": "1.0.6",
   "artifact_dir": "artifacts/releases/pokrov-app/1.0.6+20260814",
   "generated_at": "2026-08-14T17:37:31+03:00",
-  "updated_at": "2026-08-14T17:37:31+03:00",
-  "release_state": "public_stable_published_github_digest_verified_runtime_sync_pending",
+  "updated_at": "2026-08-14T17:59:36+03:00",
+  "release_state": "public_stable_published_github_digest_verified_runtime_synced",
   "built_from_client_commit": "c915aafb9a0aa1abf8f7cac9876e535695914796",
-  "platform_source_commit": "860225d008ad7f1e7020a89121d8dfb91659988f",
+  "platform_source_commit": "411a32e5084b283a73b07eca8b3c12d5282fdc6d",
   "github_release": {
     "tag": "v1.0.6",
     "url": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.6",
@@ -108,7 +108,7 @@
   "cutover": {
     "runtime_sync_allowed": true,
     "runtime_sync_required": true,
-    "runtime_sync_result": "PENDING: platform deploy and production readback",
+    "runtime_sync_result": "PASS: stable metadata, backend and static deploy plus five-pass brain-origin readback",
     "anonymous_download_smoke": "PASS: all eight public URLs return HTTP 200 and SHA256SUMS.txt matches exact digest",
     "public_publication_allowed": true,
     "public_publication_marker": "GO for stable direct publication",
