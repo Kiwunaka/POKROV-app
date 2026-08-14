@@ -7,8 +7,8 @@
   "version": "1.0.5",
   "artifact_dir": "artifacts/releases/pokrov-app/1.0.5-beta.1+20260814",
   "generated_at": "2026-08-14T08:44:16+03:00",
-  "updated_at": "2026-08-14T08:44:16+03:00",
-  "release_state": "artifact_staged_publication_pending_runtime_sync",
+  "updated_at": "2026-08-14T08:56:25+03:00",
+  "release_state": "public_prerelease_published_anonymous_verified_runtime_sync_pending",
   "built_from_client_commit": "48d52b913917bdbeb67d9b700208c6578b3c78da",
   "platform_source_commit": "bf2c997f83cf4896e68d199f0d4fefb382727517",
   "github_release": {
@@ -18,7 +18,7 @@
     "is_prerelease": true,
     "is_draft": false,
     "visibility": "public",
-    "asset_refresh_utc": ""
+    "asset_refresh_utc": "2026-08-14T05:56:25Z"
   },
   "downloads": {
     "android": {
@@ -104,10 +104,10 @@
     "APP_DOCS_URL": "https://pokrov.space/install/"
   },
   "cutover": {
-    "runtime_sync_allowed": false,
+    "runtime_sync_allowed": true,
     "runtime_sync_required": true,
-    "runtime_sync_result": "pending_public_asset_smoke",
-    "anonymous_download_smoke": "pending",
+    "runtime_sync_result": "pending_apply",
+    "anonymous_download_smoke": "PASS: all eight public assets matched exact size and SHA-256",
     "public_publication_allowed": true,
     "public_publication_marker": "ARTIFACT STAGING GO FOR RUNTIME SMOKE",
     "public_announcement_allowed": false,
