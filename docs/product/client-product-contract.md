@@ -220,6 +220,10 @@ After activation:
   compact `Обычный` / `Белые списки` choice. The selected stable variant id is
   device-local and persists alongside the explicit preferred node; it is
   cleared when the person returns to `Автоматически`
+- when multiple variants exist, the city row itself names `Обычный / Белые
+  списки` (or an equally explicit short list) before the person taps it. A bare
+  numeric variant count is not sufficient discovery and must not make the live
+  capability look absent
 - a manual `Обычный` choice resolves only to the canonical base outbound for
   that node. A `Белые списки` choice resolves only through a unique safe
   `_meta.ru_bridge.endpoints[{id,label}]` entry and the exact corresponding

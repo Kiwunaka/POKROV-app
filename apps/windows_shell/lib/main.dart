@@ -7,6 +7,8 @@ import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'acquisition_links.dart';
+
 /// Tray-first desktop sizing: the 700 px minimum keeps the canonical compact
 /// drawer lane reachable; the window opens centered because geometry is not
 /// persisted yet.
@@ -17,6 +19,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
   final shellController = PokrovShellController();
+  final acquisitionLinks = PokrovWindowsAcquisitionLinks();
+  final initialAcquisitionUri = await acquisitionLinks.start();
   await _PokrovWindowsTray.install(shellController);
   if (Platform.isWindows) {
     // Tray-first lifecycle: the ✕ button hides to tray, the VPN keeps
@@ -38,6 +42,8 @@ Future<void> main() async {
     PokrovSeedApp(
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
       shellController: shellController,
+      initialAcquisitionUri: initialAcquisitionUri,
+      acquisitionUriStream: acquisitionLinks.stream,
     ),
   );
 }

@@ -329,6 +329,20 @@ Support rules:
   beta patch/build label; none of those labels authorizes stable `1.0.0`
 - app handoffs for checkout, cabinet downloads, support, community, feedback, and key redemption open safe external destinations instead of exposing raw profiles or local control surfaces
 
+### Acquisition continuation
+
+Official Android and Windows links may carry an opaque `acq` continuation
+handle issued by the POKROV backend. The client accepts it only from the
+allowlisted POKROV deep-link/command-line surface and posts it once to
+`/api/acquisition/handoffs/consume` with its exact platform purpose. The handle
+contains no identity or product access, expires server-side after `72 hours`,
+and failure or absence never blocks app startup, trial, sign-in, or connect.
+
+The client does not fingerprint the device or infer attribution from IP, user
+agent, or timestamps. Only a successfully consumed server handoff may connect a
+browser campaign to an install/account. A missing, expired, replayed, or wrong
+purpose handle remains `unknown`.
+
 ## Release And Audit Expectations
 
 - release verification must start from a clean POKROV Core checkout pinned to the exact client contract SHA

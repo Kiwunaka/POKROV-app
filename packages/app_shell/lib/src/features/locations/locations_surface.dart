@@ -770,6 +770,16 @@ class _ClientLocationCityRow extends StatelessWidget {
       country.country,
     );
     final cityTitle = _locationCityDisplayName(city, country);
+    final availableVariantLabels = city.variants
+        .where((variant) => variant.available && variant.label.trim().isNotEmpty)
+        .map((variant) => variant.label.trim())
+        .toList(growable: false);
+    final hasVariantChoice = availableVariantLabels.length > 1;
+    final variantSummary = !hasVariantChoice
+        ? ''
+        : availableVariantLabels.length == 2
+            ? availableVariantLabels.join(' / ')
+            : '${availableVariantLabels.take(2).join(' / ')} +${availableVariantLabels.length - 2}';
     final subtitle = <String>[
       countryTitle,
       if (quality != null) quality,
@@ -779,8 +789,8 @@ class _ClientLocationCityRow extends StatelessWidget {
             .where((variant) => variant.id == selectedVariantId)
             .map((variant) => variant.label)
             .take(1)
-      else if (city.variants.where((variant) => variant.available).length > 1)
-        '${city.variants.where((variant) => variant.available).length} варианта',
+      else if (hasVariantChoice)
+        variantSummary,
     ].where((item) => item.trim().isNotEmpty).join(' · ');
     final content = Padding(
       key: ValueKey('locations-catalog-city-${city.code}'),
@@ -812,7 +822,7 @@ class _ClientLocationCityRow extends StatelessWidget {
                       key: ValueKey(
                         'locations-catalog-subtitle-${city.code}',
                       ),
-                      maxLines: largeText ? 2 : 1,
+                      maxLines: largeText || hasVariantChoice ? 2 : 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: p.muted,

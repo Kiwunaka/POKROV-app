@@ -16,8 +16,8 @@ void main() {
     final runtimeJson =
         jsonDecode(await runtimeConfig.readAsString()) as Map<String, dynamic>;
 
-    final requiredFiles = (releaseJson['required_files'] as List<dynamic>)
-        .cast<String>();
+    final requiredFiles =
+        (releaseJson['required_files'] as List<dynamic>).cast<String>();
     expect(releaseJson['channel'], 'gated_beta');
     expect(releaseJson['binary_name'], 'pokrov_windows_beta.exe');
     expect(releaseJson['public_approved'], isFalse);
@@ -55,6 +55,27 @@ void main() {
     expect(
       (windows['runtime_dependencies'] as List<dynamic>).cast<String>(),
       contains('libcronet.dll'),
+    );
+  });
+
+  test('windows setup registers bounded POKROV continuation protocol',
+      () async {
+    final buildScript = File('../../scripts/build-windows-release.ps1');
+    final runner = File('windows/runner/main.cpp');
+    final window = File('windows/runner/flutter_window.cpp');
+    final scriptContent = await buildScript.readAsString();
+    final runnerContent = await runner.readAsString();
+    final windowContent = await window.readAsString();
+
+    expect(scriptContent, contains('HKCU:\\Software\\Classes\\pokrov'));
+    expect(scriptContent, contains('"URL Protocol"'));
+    expect(scriptContent, contains('shell\\open\\command'));
+    expect(runnerContent, contains('pokrov://acquisition/continue?'));
+    expect(runnerContent, contains('SendMessageTimeoutW'));
+    expect(windowContent, contains('case WM_COPYDATA'));
+    expect(
+      windowContent,
+      contains('space.pokrov/acquisition-links'),
     );
   });
 }

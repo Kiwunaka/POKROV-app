@@ -7,6 +7,7 @@ import io.flutter.plugin.common.StandardMethodCodec
 
 class MainActivity : FlutterActivity() {
     private var runtimeChannel: MethodChannel? = null
+    private var acquisitionLinksChannel: MethodChannel? = null
     private var runtimeHostBridge: RuntimeHostBridge? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -21,6 +22,17 @@ class MainActivity : FlutterActivity() {
         ).also { channel ->
             channel.setMethodCallHandler(runtimeHostBridge)
         }
+        acquisitionLinksChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            ACQUISITION_LINKS_CHANNEL_NAME,
+        ).also { channel ->
+            channel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "getInitialUri" -> result.success(acquisitionUri(intent))
+                    else -> result.notImplemented()
+                }
+            }
+        }
     }
 
     override fun onResume() {
@@ -32,6 +44,9 @@ class MainActivity : FlutterActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         runtimeHostBridge?.handleDebugIntent(intent)
+        acquisitionUri(intent)?.let { uri ->
+            acquisitionLinksChannel?.invokeMethod("uriChanged", uri)
+        }
     }
 
     @Deprecated("Uses the platform VPN permission callback for the seed runtime lane.")
@@ -52,7 +67,25 @@ class MainActivity : FlutterActivity() {
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         runtimeChannel?.setMethodCallHandler(null)
         runtimeChannel = null
+        acquisitionLinksChannel?.setMethodCallHandler(null)
+        acquisitionLinksChannel = null
         runtimeHostBridge = null
         super.cleanUpFlutterEngine(flutterEngine)
+    }
+
+    private fun acquisitionUri(intent: android.content.Intent?): String? {
+        val uri = intent?.data ?: return null
+        if (intent.action != android.content.Intent.ACTION_VIEW ||
+            !uri.scheme.equals("pokrov", ignoreCase = true) ||
+            !uri.host.equals("acquisition", ignoreCase = true) ||
+            uri.path != "/continue"
+        ) {
+            return null
+        }
+        return uri.toString().takeIf { it.length <= 512 }
+    }
+
+    private companion object {
+        const val ACQUISITION_LINKS_CHANNEL_NAME = "space.pokrov/acquisition-links"
     }
 }

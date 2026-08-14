@@ -121,6 +121,16 @@ Current blocking dependency:
 - WARP with a manual bridge/`Белые списки` variant is gated before staging
   until focused composition proof exists. There is no implicit fallback to
   direct or to WARP-off for this user-selected combination
+- production `variants` are additive safe labels projected by
+  `/api/client/locations`: `direct` is rendered as `Обычный`, while each
+  currently available relay is rendered as a `Белые списки` choice without
+  host, port, key, tag, or raw config. Device cache keeps the last non-empty
+  safe catalog across transient refresh failure; removed rollout ids are
+  cleared or explained instead of pretending a stale selection still applies
+- the `2026-08-14` production redacted readback proved `direct` plus `mini`,
+  `ru`, and `ru_spb` for eligible non-US nodes and direct-only for `us`.
+  Exact public-app visibility, selection, reconnect, and materialized runtime
+  proof remain `MANUAL_OWNER_TEST` until the owner's phone is ADB-visible
 - a confirmed selected-outbound egress failure in automatic mode quarantines the exact node for 15 minutes with an eight-node cap and at most two failover attempts; manual mode and unavailable probe evidence remain fail-closed without silent route changes
 - Android reconnect now always resyncs and restages the live managed profile before start, which keeps the staged runtime config aligned with the currently selected route mode instead of trusting whatever was left from an older session
 - the shared shell now keeps Android connect/disconnect transitions busy until the host actually settles, which prevents repeated taps from queueing duplicate service start or stop requests while VPN permission or teardown is still underway

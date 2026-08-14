@@ -15,7 +15,7 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 /// package base version (without Android's build number).
 const pokrovClientVersion = String.fromEnvironment(
   'POKROV_APP_VERSION',
-  defaultValue: '1.0.4',
+  defaultValue: '1.0.5',
 );
 
 const _platformErrorCodeHeader = 'X-POKROV-Auth-Error';
@@ -412,6 +412,56 @@ abstract interface class AppFirstExperienceService {
   Future<void> completeAccountOnboarding({
     required HostPlatform hostPlatform,
   });
+}
+
+/// Consumes an opaque, short-lived acquisition handoff after a person opens
+/// the installed app from a POKROV-owned continuation link. The handle is not
+/// an identity token and must never be logged or persisted by the client.
+abstract interface class AppFirstAcquisitionService {
+  Future<void> consumeAcquisitionHandoff({
+    required HostPlatform hostPlatform,
+    required String handle,
+    required String purpose,
+  });
+}
+
+String? pokrovAcquisitionPurposeForHost(HostPlatform hostPlatform) {
+  return switch (hostPlatform) {
+    HostPlatform.android => 'android_install',
+    HostPlatform.windows => 'windows_install',
+    _ => null,
+  };
+}
+
+final class PokrovAcquisitionHandoff {
+  const PokrovAcquisitionHandoff({
+    required this.handle,
+    required this.purpose,
+  });
+
+  final String handle;
+  final String purpose;
+
+  static PokrovAcquisitionHandoff? tryParse(
+    Uri uri, {
+    required HostPlatform hostPlatform,
+  }) {
+    final expectedPurpose = pokrovAcquisitionPurposeForHost(hostPlatform);
+    final keys = uri.queryParametersAll.keys.toSet();
+    final handle = uri.queryParameters['handle']?.trim() ?? '';
+    final purpose = uri.queryParameters['purpose']?.trim().toLowerCase() ?? '';
+    if (expectedPurpose == null ||
+        uri.scheme.toLowerCase() != 'pokrov' ||
+        uri.host.toLowerCase() != 'acquisition' ||
+        uri.path != '/continue' ||
+        keys.length != 2 ||
+        !keys.containsAll(const <String>{'handle', 'purpose'}) ||
+        !RegExp(r'^[A-Za-z0-9_-]{32,160}$').hasMatch(handle) ||
+        purpose != expectedPurpose) {
+      return null;
+    }
+    return PokrovAcquisitionHandoff(handle: handle, purpose: purpose);
+  }
 }
 
 abstract interface class AppFirstNodePreferenceService {
@@ -2128,6 +2178,7 @@ class AppFirstRuntimeBootstrapper
         AppFirstWarpActionService,
         AppFirstReleaseActionService,
         AppFirstExperienceService,
+        AppFirstAcquisitionService,
         AppFirstQuestEventService,
         AppFirstNodePreferenceService,
         AppFirstClientDataService {
@@ -2668,6 +2719,29 @@ class AppFirstRuntimeBootstrapper
       body: <String, Object?>{
         'runtime_phase': phase.length <= 32 ? phase : phase.substring(0, 32),
         'connected': connected,
+      },
+    );
+  }
+
+  @override
+  Future<void> consumeAcquisitionHandoff({
+    required HostPlatform hostPlatform,
+    required String handle,
+    required String purpose,
+  }) async {
+    final safeHandle = handle.trim();
+    final safePurpose = purpose.trim().toLowerCase();
+    if (!RegExp(r'^[A-Za-z0-9_-]{32,160}$').hasMatch(safeHandle) ||
+        safePurpose != pokrovAcquisitionPurposeForHost(hostPlatform)) {
+      throw const BootstrapFailure('POKROV continuation link is invalid.');
+    }
+    await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: '/api/acquisition/handoffs/consume',
+      body: <String, Object?>{
+        'handle': safeHandle,
+        'purpose': safePurpose,
       },
     );
   }

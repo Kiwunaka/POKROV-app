@@ -18,6 +18,8 @@ class PokrovSeedApp extends StatefulWidget {
     this.wifiPermissionRequester,
     this.vpnSettingsLauncher,
     this.nodeLatencyProbe,
+    this.initialAcquisitionUri,
+    this.acquisitionUriStream,
   });
 
   final SeedAppContext appContext;
@@ -35,6 +37,8 @@ class PokrovSeedApp extends StatefulWidget {
   final PokrovWifiPermissionRequester? wifiPermissionRequester;
   final PokrovVpnSettingsLauncher? vpnSettingsLauncher;
   final PokrovNodeLatencyProbe? nodeLatencyProbe;
+  final Uri? initialAcquisitionUri;
+  final Stream<Uri>? acquisitionUriStream;
 
   @override
   State<PokrovSeedApp> createState() => _PokrovSeedAppState();
@@ -100,6 +104,8 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
         wifiPermissionRequester: widget.wifiPermissionRequester,
         vpnSettingsLauncher: widget.vpnSettingsLauncher,
         nodeLatencyProbe: widget.nodeLatencyProbe,
+        initialAcquisitionUri: widget.initialAcquisitionUri,
+        acquisitionUriStream: widget.acquisitionUriStream,
         themeMode: _themeMode,
         onThemeModeChanged: _setThemeMode,
       ),
@@ -450,6 +456,8 @@ class PokrovSeedShell extends StatefulWidget {
     this.wifiPermissionRequester,
     this.vpnSettingsLauncher,
     this.nodeLatencyProbe,
+    this.initialAcquisitionUri,
+    this.acquisitionUriStream,
   });
 
   final SeedAppContext appContext;
@@ -468,6 +476,8 @@ class PokrovSeedShell extends StatefulWidget {
   final PokrovWifiPermissionRequester? wifiPermissionRequester;
   final PokrovVpnSettingsLauncher? vpnSettingsLauncher;
   final PokrovNodeLatencyProbe? nodeLatencyProbe;
+  final Uri? initialAcquisitionUri;
+  final Stream<Uri>? acquisitionUriStream;
 
   @override
   State<PokrovSeedShell> createState() => _PokrovSeedShellState();
@@ -498,6 +508,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   late final AppFirstWarpActionService? _warpActionService;
   late final AppFirstReleaseActionService? _releaseActionService;
   late final AppFirstExperienceService? _experienceService;
+  late final AppFirstAcquisitionService? _acquisitionService;
   late final AppFirstQuestEventService? _questEventService;
   late final AppFirstNodePreferenceService? _nodePreferenceService;
   late final AppFirstClientDataService? _clientDataService;
@@ -593,6 +604,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   bool _clientUpdateCheckBusy = false;
   bool _clientUpdatePromptVisible = false;
   String _lastPromptedUpdateKey = '';
+  StreamSubscription<Uri>? _acquisitionUriSubscription;
+  final Set<String> _processedAcquisitionHandles = <String>{};
 
   @override
   void initState() {
@@ -628,6 +641,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _experienceService = bootstrapper is AppFirstExperienceService
         ? bootstrapper as AppFirstExperienceService
         : null;
+    _acquisitionService = bootstrapper is AppFirstAcquisitionService
+        ? bootstrapper as AppFirstAcquisitionService
+        : null;
     _questEventService = bootstrapper is AppFirstQuestEventService
         ? bootstrapper as AppFirstQuestEventService
         : null;
@@ -642,15 +658,49 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _firstLaunchStore =
         widget.firstLaunchStore ?? const PokrovFileFirstLaunchStore();
     _clientExperienceStore = widget.clientExperienceStore;
+    final acquisitionUriStream = widget.acquisitionUriStream;
+    if (acquisitionUriStream != null) {
+      _acquisitionUriSubscription = acquisitionUriStream.listen(
+        (uri) => unawaited(_consumeAcquisitionUri(uri)),
+        onError: (_) {},
+      );
+    }
     unawaited(_loadFirstLaunchState());
     unawaited(_loadConnectHintState());
     unawaited(_restoreClientExperience());
     _refreshRuntimeSnapshot();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final initialAcquisitionUri = widget.initialAcquisitionUri;
+      if (initialAcquisitionUri != null) {
+        unawaited(_consumeAcquisitionUri(initialAcquisitionUri));
+      }
       unawaited(_checkForClientUpdate());
       unawaited(_refreshAccountSummary());
       unawaited(_loadSystemSurfacePreferences());
     });
+  }
+
+  Future<void> _consumeAcquisitionUri(Uri uri) async {
+    final service = _acquisitionService;
+    final handoff = PokrovAcquisitionHandoff.tryParse(
+      uri,
+      hostPlatform: widget.appContext.hostPlatform,
+    );
+    if (service == null ||
+        handoff == null ||
+        !_processedAcquisitionHandles.add(handoff.handle)) {
+      return;
+    }
+    try {
+      await service.consumeAcquisitionHandoff(
+        hostPlatform: widget.appContext.hostPlatform,
+        handle: handoff.handle,
+        purpose: handoff.purpose,
+      );
+    } catch (_) {
+      // Attribution is best-effort and must never block onboarding, access,
+      // or normal app use. The server validates expiry, purpose and replay.
+    }
   }
 
   Future<void> _refreshAccountSummary() async {
@@ -1477,6 +1527,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       pendingInvalidation.complete(false);
     }
     _managedProfileInvalidationCompletion = null;
+    unawaited(_acquisitionUriSubscription?.cancel());
+    _acquisitionUriSubscription = null;
     WidgetsBinding.instance.removeObserver(this);
     _cancelPostConnectHostHealthPolling();
     widget.shellController?._detach();

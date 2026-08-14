@@ -62,6 +62,27 @@ void main() {
     }
   });
 
+  test('android acquisition continuation is an exact browsable deep link',
+      () async {
+    final manifest = File('android/app/src/main/AndroidManifest.xml');
+    final activity = File(
+      'android/app/src/main/kotlin/space/pokrov/pokrov_android_shell/MainActivity.kt',
+    );
+    final manifestContent = await manifest.readAsString();
+    final activityContent = await activity.readAsString();
+
+    expect(manifestContent, contains('android:scheme="pokrov"'));
+    expect(manifestContent, contains('android:host="acquisition"'));
+    expect(manifestContent, contains('android:path="/continue"'));
+    expect(manifestContent, contains('android.intent.category.BROWSABLE'));
+    expect(
+      activityContent,
+      contains('const val ACQUISITION_LINKS_CHANNEL_NAME'),
+    );
+    expect(activityContent, contains('uri.path != "/continue"'));
+    expect(activityContent, isNot(contains('Log.')));
+  });
+
   test('android runtime service source keeps foreground failures sanitized',
       () async {
     final serviceSource = File(
@@ -93,12 +114,14 @@ void main() {
     );
     expect(
       manifestContent,
-      isNot(contains('android:name="android.service.quicksettings.ACTIVE_TILE"')),
+      isNot(
+          contains('android:name="android.service.quicksettings.ACTIVE_TILE"')),
     );
     expect(
       manifestContent,
       isNot(
-        contains('android:name="android.service.quicksettings.TOGGLEABLE_TILE"'),
+        contains(
+            'android:name="android.service.quicksettings.TOGGLEABLE_TILE"'),
       ),
     );
     expect(iconContent, contains('<vector'));

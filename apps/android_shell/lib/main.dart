@@ -4,6 +4,8 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 
+import 'acquisition_links.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Modern Android canvas: draw behind the status and gesture bars. The
@@ -17,9 +19,13 @@ Future<void> main() async {
   } catch (_) {
     // Unsupported device or emulator - the default mode is fine.
   }
+  final acquisitionLinks = PokrovAndroidAcquisitionLinks();
+  final initialAcquisitionUri = await acquisitionLinks.start();
   runApp(
     PokrovSeedApp(
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      initialAcquisitionUri: initialAcquisitionUri,
+      acquisitionUriStream: acquisitionLinks.stream,
     ),
   );
 }

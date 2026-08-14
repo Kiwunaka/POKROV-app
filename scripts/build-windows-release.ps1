@@ -271,6 +271,16 @@ try {
   `$shortcut.TargetPath = `$exe
   `$shortcut.WorkingDirectory = `$target
   `$shortcut.Save()
+  `$protocolRoot = "HKCU:\Software\Classes\pokrov"
+  New-Item -Path `$protocolRoot -Force | Out-Null
+  Set-Item -LiteralPath `$protocolRoot -Value "URL:POKROV acquisition continuation"
+  New-ItemProperty -LiteralPath `$protocolRoot -Name "URL Protocol" -Value "" -PropertyType String -Force | Out-Null
+  `$iconKey = Join-Path `$protocolRoot "DefaultIcon"
+  New-Item -Path `$iconKey -Force | Out-Null
+  Set-Item -LiteralPath `$iconKey -Value ('"' + `$exe + '",0')
+  `$commandKey = Join-Path `$protocolRoot "shell\open\command"
+  New-Item -Path `$commandKey -Force | Out-Null
+  Set-Item -LiteralPath `$commandKey -Value ('"' + `$exe + '" "%1"')
   Start-Process -FilePath `$exe -WorkingDirectory `$target
 } finally {
   if (Test-Path -LiteralPath `$temp) {

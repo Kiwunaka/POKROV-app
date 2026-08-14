@@ -990,6 +990,7 @@ void main() {
     Map<String, dynamic>? statsBody;
     Map<String, dynamic>? onboardingBody;
     Map<String, dynamic>? questBody;
+    Map<String, dynamic>? acquisitionBody;
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
     unawaited(() async {
@@ -1055,6 +1056,18 @@ void main() {
           await request.response.close();
           continue;
         }
+        if (request.uri.path == '/api/acquisition/handoffs/consume') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer runtime-stats-session',
+          );
+          acquisitionBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+          await request.response.close();
+          continue;
+        }
         request.response.statusCode = HttpStatus.notFound;
         await request.response.close();
       }
@@ -1078,12 +1091,18 @@ void main() {
     await bootstrapper.completeRoutingLesson(
       hostPlatform: HostPlatform.android,
     );
+    await bootstrapper.consumeAcquisitionHandoff(
+      hostPlatform: HostPlatform.android,
+      handle: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      purpose: 'android_install',
+    );
 
     expect(requests, <String>[
       'POST /api/client/session/start-trial',
       'POST /api/client/runtime/stats',
       'POST /api/account/experience/onboarding',
       'POST /api/events',
+      'POST /api/acquisition/handoffs/consume',
     ]);
     expect(statsBody, <String, Object?>{
       'runtime_phase': 'running',
@@ -1095,6 +1114,41 @@ void main() {
       'source': 'app',
       'meta': <String, Object?>{'surface': 'route_explainer'},
     });
+    expect(acquisitionBody, <String, Object?>{
+      'handle': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      'purpose': 'android_install',
+    });
+  });
+
+  test('acquisition continuation parser is host-bound and rejects extras', () {
+    const handle = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+    final android = PokrovAcquisitionHandoff.tryParse(
+      Uri.parse(
+        'pokrov://acquisition/continue?handle=$handle&purpose=android_install',
+      ),
+      hostPlatform: HostPlatform.android,
+    );
+    expect(android?.handle, handle);
+    expect(android?.purpose, 'android_install');
+
+    expect(
+      PokrovAcquisitionHandoff.tryParse(
+        Uri.parse(
+          'pokrov://acquisition/continue?handle=$handle&purpose=windows_install',
+        ),
+        hostPlatform: HostPlatform.android,
+      ),
+      isNull,
+    );
+    expect(
+      PokrovAcquisitionHandoff.tryParse(
+        Uri.parse(
+          'pokrov://acquisition/continue?handle=$handle&purpose=android_install&email=a%40b.example',
+        ),
+        hostPlatform: HostPlatform.android,
+      ),
+      isNull,
+    );
   });
 
   test('warp lifecycle actions use app session and sanitize runtime metadata',

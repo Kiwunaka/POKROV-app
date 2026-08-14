@@ -124,6 +124,7 @@ class _FakeBootstrapper
         AppFirstBonusActionService,
         AppFirstWarpActionService,
         AppFirstReleaseActionService,
+        AppFirstAcquisitionService,
         AppFirstNodePreferenceService,
         AppFirstClientDataService {
   _FakeBootstrapper(
@@ -329,6 +330,16 @@ class _FakeBootstrapper
   String? lastPreferredVariantId;
   Set<String> lastExcludedNodeCodes = const <String>{};
   final List<Set<String>> excludedNodeCodeRequests = <Set<String>>[];
+  final List<String> acquisitionHandoffs = <String>[];
+
+  @override
+  Future<void> consumeAcquisitionHandoff({
+    required HostPlatform hostPlatform,
+    required String handle,
+    required String purpose,
+  }) async {
+    acquisitionHandoffs.add('${hostPlatform.name}:$purpose:$handle');
+  }
 
   @override
   Future<SmartConnectPreferenceResult> setPreferredSmartConnectNode({
@@ -1177,6 +1188,50 @@ Future<void> _openSupportChatFromProfile(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('consumes only valid host-bound acquisition continuation once',
+      (tester) async {
+    const handle = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+    const otherHandle = 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB';
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'acquisition-test',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+    );
+    final links = StreamController<Uri>();
+    addTearDown(links.close);
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        initialAcquisitionUri: Uri.parse(
+          'pokrov://acquisition/continue?handle=$handle&purpose=android_install',
+        ),
+        acquisitionUriStream: links.stream,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 20));
+    links.add(
+      Uri.parse(
+        'pokrov://acquisition/continue?handle=$handle&purpose=android_install',
+      ),
+    );
+    links.add(
+      Uri.parse(
+        'pokrov://acquisition/continue?handle=$otherHandle&purpose=windows_install',
+      ),
+    );
+    await tester.pump();
+
+    expect(bootstrapper.acquisitionHandoffs, <String>[
+      'android:android_install:$handle',
+    ]);
+  });
+
   testWidgets(
       'disposing after a hanging Quick Settings invalidation cancels its timeout',
       (tester) async {
@@ -7996,6 +8051,13 @@ void main() {
     final cityRow = find.byKey(const ValueKey('locations-catalog-city-de-fra'));
     await tester.ensureVisible(cityRow);
     await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: cityRow,
+        matching: find.textContaining('Обычный / Белые списки +2'),
+      ),
+      findsOneWidget,
+    );
     final cityPressSurface = find.ancestor(
       of: cityRow,
       matching: find.byWidgetPredicate(

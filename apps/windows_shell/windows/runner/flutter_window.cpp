@@ -2,10 +2,20 @@
 
 #include <optional>
 
-#include "flutter/generated_plugin_registrant.h"
+#include <flutter/standard_method_codec.h>
 
-FlutterWindow::FlutterWindow(const flutter::DartProject& project)
-    : project_(project) {}
+#include "flutter/generated_plugin_registrant.h"
+#include "utils.h"
+
+namespace {
+constexpr ULONG_PTR kPokrovAcquisitionCopyData = 0x504F4B52;
+constexpr char kAcquisitionLinksChannel[] = "space.pokrov/acquisition-links";
+}
+
+FlutterWindow::FlutterWindow(const flutter::DartProject& project,
+                             std::string initial_acquisition_uri)
+    : project_(project),
+      pending_acquisition_uri_(std::move(initial_acquisition_uri)) {}
 
 FlutterWindow::~FlutterWindow() {}
 
@@ -25,6 +35,26 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+  acquisition_links_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(), kAcquisitionLinksChannel,
+          &flutter::StandardMethodCodec::GetInstance());
+  acquisition_links_channel_->SetMethodCallHandler(
+      [this](const flutter::MethodCall<flutter::EncodableValue>& call,
+             std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
+                 result) {
+        if (call.method_name() != "getInitialUri") {
+          result->NotImplemented();
+          return;
+        }
+        if (pending_acquisition_uri_.empty()) {
+          result->Success();
+          return;
+        }
+        const auto uri = pending_acquisition_uri_;
+        pending_acquisition_uri_.clear();
+        result->Success(flutter::EncodableValue(uri));
+      });
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -40,6 +70,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  acquisition_links_channel_.reset();
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }
@@ -62,6 +93,30 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   }
 
   switch (message) {
+    case WM_COPYDATA: {
+      const auto* payload = reinterpret_cast<const COPYDATASTRUCT*>(lparam);
+      if (payload == nullptr ||
+          payload->dwData != kPokrovAcquisitionCopyData ||
+          payload->lpData == nullptr || payload->cbData < sizeof(wchar_t) ||
+          payload->cbData > 513 * sizeof(wchar_t) ||
+          payload->cbData % sizeof(wchar_t) != 0) {
+        break;
+      }
+      const auto* text = static_cast<const wchar_t*>(payload->lpData);
+      const size_t count = payload->cbData / sizeof(wchar_t);
+      if (text[count - 1] != L'\0') {
+        break;
+      }
+      const std::wstring wide_uri(text, count - 1);
+      pending_acquisition_uri_ = Utf8FromUtf16(wide_uri.c_str());
+      if (acquisition_links_channel_) {
+        acquisition_links_channel_->InvokeMethod(
+            "uriChanged",
+            std::make_unique<flutter::EncodableValue>(
+                pending_acquisition_uri_));
+      }
+      return TRUE;
+    }
     case WM_FONTCHANGE:
       flutter_controller_->engine()->ReloadSystemFonts();
       break;
