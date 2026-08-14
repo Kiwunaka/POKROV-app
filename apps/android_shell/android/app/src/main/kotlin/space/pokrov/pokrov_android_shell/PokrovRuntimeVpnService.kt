@@ -57,6 +57,7 @@ import java.util.concurrent.Executors
 class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHandler {
     private var commandServer: CommandServer? = null
     private var activeConfigContent: String? = null
+    private var activeVariantConfigContent: String? = null
     private var activeTun: ParcelFileDescriptor? = null
     private val dnsFailureTokenGate = AndroidDnsFailureTokenGate()
     private val runtimeExecutor: ExecutorService = Executors.newSingleThreadExecutor()
@@ -399,12 +400,14 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             runCatching { commandServer?.close() }
             commandServer = null
             activeConfigContent = null
+            activeVariantConfigContent = null
             startupPhase = "create_command_server"
             val nextServer = Libbox.newCommandServer(this, this)
             commandServer = nextServer
             startupPhase = "start_command_server"
             nextServer.start()
             activeConfigContent = content
+            activeVariantConfigContent = rawContent
             startupPhase = "start_runtime_service"
             nextServer.startOrReloadService(content, OverrideOptions())
             startupPhase = "record_runtime_state"
@@ -504,6 +507,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         runCatching { commandServer?.close() }
         commandServer = null
         activeConfigContent = null
+        activeVariantConfigContent = null
         AndroidDefaultNetworkMonitor.stop(null)
         try {
             activeTun?.close()
@@ -971,6 +975,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
 
     private fun scheduleCoreEgressProbe(generation: Long) {
         val content = activeConfigContent ?: return
+        val variantConfigContent = activeVariantConfigContent
         val target = AndroidCoreEgressProbe.finalTarget(content)
         AndroidRuntimeState.updateCoreEgressValidation(null)
         if (target == null) {
@@ -1033,6 +1038,18 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                         completedAttempts += 1
                     }
                 }
+                if (
+                    result == AndroidCoreEgressProbeResult.FAILED &&
+                    lifecycleActive.get() &&
+                    healthGeneration.get() == generation
+                ) {
+                    val captured = AndroidVariantAvailabilityProbe
+                        .captureBeforeFailClosed(variantConfigContent.orEmpty())
+                    Log.i(
+                        LOG_TAG,
+                        "Android variant status captured before fail-closed stop=$captured.",
+                    )
+                }
                 mainHandler.removeCallbacks(watchdog)
                 Log.e(
                     LOG_TAG,
@@ -1070,6 +1087,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         runCatching { commandServer?.close() }
         commandServer = null
         activeConfigContent = null
+        activeVariantConfigContent = null
         AndroidDefaultNetworkMonitor.stop(null)
         runCatching { activeTun?.close() }
         activeTun = null

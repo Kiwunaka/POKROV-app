@@ -1582,8 +1582,9 @@ const _pokrovWarpEndpointTag = 'pokrov-warp';
 
 String _materializePokrovCoreConfig(
   String configPayload,
-  WarpRuntimePolicy policy,
-) {
+  WarpRuntimePolicy policy, {
+  bool preserveAndroidHostMetadata = false,
+}) {
   final decoded = jsonDecode(configPayload);
   if (decoded is! Map) {
     throw const FormatException('sing-box config must be a JSON object');
@@ -1591,10 +1592,22 @@ String _materializePokrovCoreConfig(
   final config = decoded.map<String, Object?>(
     (key, value) => MapEntry(key.toString(), value),
   );
-  // Older managed manifests carried POKROV display metadata in a private
-  // top-level field. POKROV Core deliberately rejects unknown sing-box fields,
-  // so never forward that transport-only metadata into the runtime config.
+  final runtimeVariantProbe = preserveAndroidHostMetadata
+      ? Map<String, Object?>.from(
+          _runtimeObjectMap(
+            _runtimeObjectMap(config['_meta'])['runtime_variant_probe'],
+          ),
+        )
+      : const <String, Object?>{};
+  // POKROV Core deliberately rejects unknown sing-box fields. Desktop passes
+  // this JSON straight to Core, while Android stages one private host-only
+  // mapping that VpnService removes before startOrReloadService().
   config.remove('_meta');
+  if (runtimeVariantProbe.isNotEmpty) {
+    config['_meta'] = <String, Object?>{
+      'runtime_variant_probe': runtimeVariantProbe,
+    };
+  }
   _pinDnsHijackBeforeBypasses(config);
   if (!policy.canEnableRuntime) {
     final experimental =
@@ -1937,6 +1950,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     final configPayload = _materializePokrovCoreConfig(
       payload.configPayload,
       payload.warpPolicy,
+      preserveAndroidHostMetadata: true,
     );
     _stagedPayload = payload;
     final resolvedCode = payload.resolvedNodeCode.trim().toLowerCase();
@@ -2008,6 +2022,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     final configPayload = _materializePokrovCoreConfig(
       staged.configPayload,
       nextPolicy,
+      preserveAndroidHostMetadata: true,
     );
     final response = await _invokeHostMap(
       'runtimeEngine.applyWarp',

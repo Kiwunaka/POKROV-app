@@ -7,6 +7,7 @@ class _ProfileSection extends StatelessWidget {
     required this.selectedRouteMode,
     required this.hasProvisionedAccess,
     required this.onOpenHandoff,
+    required this.onPromoEvent,
     required this.onOpenSupportHub,
     required this.onCreateTelegramLink,
     required this.onCheckTelegramBonus,
@@ -52,6 +53,7 @@ class _ProfileSection extends StatelessWidget {
   final RouteMode selectedRouteMode;
   final bool hasProvisionedAccess;
   final void Function(String label, String value) onOpenHandoff;
+  final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
   final VoidCallback onOpenSupportHub;
   final VoidCallback onCreateTelegramLink;
   final VoidCallback onCheckTelegramBonus;
@@ -161,6 +163,15 @@ class _ProfileSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currentBonusSummary = bonusSummary();
+    AppFirstPromoSlot? accountPromo;
+    for (final slot
+        in currentBonusSummary?.promoSlots.visibleForPlacement('account') ??
+            const <AppFirstPromoSlot>[]) {
+      if (_isRenderableHomePromoSlot(slot)) {
+        accountPromo = slot;
+        break;
+      }
+    }
     final bonusPaidRequired = _bonusPaidRequired(currentBonusSummary);
     final telegramBonusClaimed =
         currentBonusSummary?.channelBonusClaimed ?? false;
@@ -186,6 +197,15 @@ class _ProfileSection extends StatelessWidget {
       refreshIndicatorKey: const ValueKey('profile-refresh-indicator'),
       children: [
         Text('Профиль', style: theme.textTheme.headlineSmall),
+        if (accountPromo != null) ...[
+          const SizedBox(height: 12),
+          _HomeAdminPromoCard(
+            slot: accountPromo,
+            keyPrefix: 'profile-promo',
+            onOpenHandoff: onOpenHandoff,
+            onPromoEvent: onPromoEvent,
+          ),
+        ],
         const SizedBox(height: 12),
         KeyedSubtree(
           key: const ValueKey('profile-compact-account-layer'),
@@ -557,6 +577,7 @@ class _ProfileSection extends StatelessWidget {
                         onSpinWheel: onSpinWheel,
                         onCheckInCalendar: onCheckInCalendar,
                         onOpenHandoff: onOpenHandoff,
+                        onPromoEvent: onPromoEvent,
                       ),
                     ),
                     if ((bonusSummaryError ?? '').isNotEmpty)

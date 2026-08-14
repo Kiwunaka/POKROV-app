@@ -31,6 +31,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.onOpenNotifications,
     required this.onOpenProfile,
     required this.onOpenPromoHandoff,
+    required this.onPromoEvent,
   });
 
   final SeedAppContext appContext;
@@ -65,6 +66,7 @@ class _QuickConnectSection extends StatelessWidget {
   final VoidCallback onOpenNotifications;
   final VoidCallback onOpenProfile;
   final void Function(String label, String value) onOpenPromoHandoff;
+  final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +120,7 @@ class _QuickConnectSection extends StatelessWidget {
     final infoNotice = recoveryNotice == null
         ? (freeProfileNotice ?? _homeInfoNotice(runtimeHeadline))
         : null;
-    final homePromoSlot = _homeAdminPromoSlot(bonusSummary);
+    final homePromoSlots = _homeAdminPromoSlots(bonusSummary);
     final telegramBonusClaimed =
         (bonusSummary?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
     return _SeedContentList(
@@ -166,7 +168,7 @@ class _QuickConnectSection extends StatelessWidget {
               warpRuntimeConsent: warpRuntimeConsent,
               warpRuntimeActive: warpRuntimeActive,
               warpBusy: warpBusy,
-              homePromoSlot: homePromoSlot,
+              homePromoSlots: homePromoSlots,
               onToggleRuntime: onToggleRuntime,
               onTelegramBonus: onTelegramBonus,
               onOpenConnectionDetails: onOpenConnectionDetails,
@@ -178,6 +180,7 @@ class _QuickConnectSection extends StatelessWidget {
               onOpenNotifications: onOpenNotifications,
               onOpenProfile: onOpenProfile,
               onOpenPromoHandoff: onOpenPromoHandoff,
+              onPromoEvent: onPromoEvent,
             ),
           ),
         ),
@@ -211,7 +214,7 @@ class _HomeStage extends StatefulWidget {
     required this.warpRuntimeConsent,
     required this.warpRuntimeActive,
     required this.warpBusy,
-    required this.homePromoSlot,
+    required this.homePromoSlots,
     required this.onToggleRuntime,
     required this.onTelegramBonus,
     required this.onOpenConnectionDetails,
@@ -223,6 +226,7 @@ class _HomeStage extends StatefulWidget {
     required this.onOpenNotifications,
     required this.onOpenProfile,
     required this.onOpenPromoHandoff,
+    required this.onPromoEvent,
   });
 
   final bool preferDesktopLayout;
@@ -251,7 +255,7 @@ class _HomeStage extends StatefulWidget {
   final bool warpRuntimeConsent;
   final bool warpRuntimeActive;
   final bool warpBusy;
-  final AppFirstPromoSlot? homePromoSlot;
+  final List<AppFirstPromoSlot> homePromoSlots;
   final Future<void> Function() onToggleRuntime;
   final VoidCallback? onTelegramBonus;
   final VoidCallback onOpenConnectionDetails;
@@ -263,6 +267,7 @@ class _HomeStage extends StatefulWidget {
   final VoidCallback onOpenNotifications;
   final VoidCallback onOpenProfile;
   final void Function(String label, String value) onOpenPromoHandoff;
+  final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
 
   @override
   State<_HomeStage> createState() => _HomeStageState();
@@ -436,15 +441,24 @@ class _HomeStageState extends State<_HomeStage>
             child: _HomeInfoNotice(message: widget.infoNotice!),
           ),
         ],
-        if (widget.homePromoSlot != null) ...[
+        if (widget.homePromoSlots.isNotEmpty) ...[
           const SizedBox(height: 14),
-          _HomeRevealSlice(
-            controller: _revealController,
-            begin: 0.72,
-            end: 1,
-            child: _HomeAdminPromoCard(
-              slot: widget.homePromoSlot!,
-              onOpenHandoff: widget.onOpenPromoHandoff,
+          ...widget.homePromoSlots.indexed.map(
+            (entry) => Padding(
+              padding: EdgeInsets.only(top: entry.$1 == 0 ? 0 : 10),
+              child: _HomeRevealSlice(
+                controller: _revealController,
+                begin: 0.72,
+                end: 1,
+                child: _HomeAdminPromoCard(
+                  slot: entry.$2,
+                  keyPrefix: entry.$1 == 0
+                      ? 'home-admin-promo'
+                      : 'home-admin-promo-${entry.$2.slotId}',
+                  onOpenHandoff: widget.onOpenPromoHandoff,
+                  onPromoEvent: widget.onPromoEvent,
+                ),
+              ),
             ),
           ),
         ],
@@ -591,15 +605,24 @@ class _HomeStageState extends State<_HomeStage>
                       ),
                     ),
                   ],
-                  if (widget.homePromoSlot != null) ...[
+                  if (widget.homePromoSlots.isNotEmpty) ...[
                     const SizedBox(height: 14),
-                    _HomeRevealSlice(
-                      controller: _revealController,
-                      begin: 0.5,
-                      end: 1,
-                      child: _HomeAdminPromoCard(
-                        slot: widget.homePromoSlot!,
-                        onOpenHandoff: widget.onOpenPromoHandoff,
+                    ...widget.homePromoSlots.indexed.map(
+                      (entry) => Padding(
+                        padding: EdgeInsets.only(top: entry.$1 == 0 ? 0 : 10),
+                        child: _HomeRevealSlice(
+                          controller: _revealController,
+                          begin: 0.5,
+                          end: 1,
+                          child: _HomeAdminPromoCard(
+                            slot: entry.$2,
+                            keyPrefix: entry.$1 == 0
+                                ? 'home-admin-promo'
+                                : 'home-admin-promo-${entry.$2.slotId}',
+                            onOpenHandoff: widget.onOpenPromoHandoff,
+                            onPromoEvent: widget.onPromoEvent,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -1069,10 +1092,17 @@ class _HomeTelegramBonusTile extends StatelessWidget {
 }
 
 class _HomeAdminPromoCard extends StatefulWidget {
-  const _HomeAdminPromoCard({required this.slot, required this.onOpenHandoff});
+  const _HomeAdminPromoCard({
+    required this.slot,
+    required this.onOpenHandoff,
+    required this.onPromoEvent,
+    this.keyPrefix = 'home-admin-promo',
+  });
 
   final AppFirstPromoSlot slot;
   final void Function(String label, String value) onOpenHandoff;
+  final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
+  final String keyPrefix;
 
   @override
   State<_HomeAdminPromoCard> createState() => _HomeAdminPromoCardState();
@@ -1083,6 +1113,9 @@ class _HomeAdminPromoCardState extends State<_HomeAdminPromoCard> {
       const PokrovFilePromoDismissStore();
   bool _dismissed = true;
   bool _dismissStateLoaded = false;
+  bool _reportedImpression = false;
+  bool _reportedExpiry = false;
+  Timer? _countdownTimer;
 
   String get _campaignKey {
     final slot = widget.slot;
@@ -1110,18 +1143,85 @@ class _HomeAdminPromoCardState extends State<_HomeAdminPromoCard> {
       oldWidget.slot.endsAt.trim(),
     ].join('|');
     if (oldKey != _campaignKey) {
+      _countdownTimer?.cancel();
       _dismissed = true;
       _dismissStateLoaded = false;
+      _reportedImpression = false;
+      _reportedExpiry = false;
       unawaited(_restoreDismissState());
     }
   }
 
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  DateTime get _serverNow => DateTime.now().toUtc().add(
+        Duration(milliseconds: widget.slot.serverTimeOffsetMs),
+      );
+
+  Duration? get _countdownRemaining {
+    if (widget.slot.countdownMode.trim().toLowerCase() != 'ends_at') {
+      return null;
+    }
+    final end = DateTime.tryParse(widget.slot.endsAt.trim())?.toUtc();
+    if (end == null) {
+      return null;
+    }
+    final remaining = end.difference(_serverNow);
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
+  bool get _expired => _countdownRemaining == Duration.zero;
+
+  void _startCountdown() {
+    _countdownTimer?.cancel();
+    final remaining = _countdownRemaining;
+    if (remaining == null) {
+      return;
+    }
+    if (remaining == Duration.zero) {
+      _reportExpiry();
+      return;
+    }
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) {
+        return;
+      }
+      if (_expired) {
+        _countdownTimer?.cancel();
+        _reportExpiry();
+      }
+      setState(() {});
+    });
+  }
+
+  void _reportExpiry() {
+    if (_reportedExpiry) {
+      return;
+    }
+    _reportedExpiry = true;
+    widget.onPromoEvent(widget.slot, 'expired');
+  }
+
+  void _reportImpression() {
+    if (_reportedImpression || _dismissed || _expired) {
+      return;
+    }
+    _reportedImpression = true;
+    widget.onPromoEvent(widget.slot, 'impression');
+  }
+
   Future<void> _restoreDismissState() async {
     final key = _campaignKey;
-    final dismissed = await _dismissStore.isDismissed(key).timeout(
-          const Duration(milliseconds: 400),
-          onTimeout: () => false,
-        );
+    final dismissed = widget.slot.dismissible
+        ? await _dismissStore.isDismissed(key).timeout(
+              const Duration(milliseconds: 400),
+              onTimeout: () => false,
+            )
+        : false;
     if (!mounted || key != _campaignKey) {
       return;
     }
@@ -1129,22 +1229,40 @@ class _HomeAdminPromoCardState extends State<_HomeAdminPromoCard> {
       _dismissed = dismissed;
       _dismissStateLoaded = true;
     });
+    _startCountdown();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _reportImpression();
+      }
+    });
   }
 
   void _dismiss() {
     final key = _campaignKey;
     setState(() => _dismissed = true);
+    widget.onPromoEvent(widget.slot, 'dismiss');
     unawaited(_dismissStore.dismiss(key));
+  }
+
+  void _open(Uri href) {
+    widget.onPromoEvent(widget.slot, 'click');
+    widget.onOpenHandoff('promo', href.toString());
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_dismissStateLoaded || _dismissed) {
-      return const SizedBox.shrink(key: ValueKey('home-admin-promo-dismissed'));
+    if (!_dismissStateLoaded || _dismissed || _expired) {
+      return SizedBox.shrink(
+        key: ValueKey('${widget.keyPrefix}-dismissed'),
+      );
     }
     final slot = widget.slot;
     final safeHref = _safeHomePromoSlotHref(slot.ctaHref);
-    final safeImage = _safeHomePromoImageUri(slot.imageUrl);
+    final safeMedia = _safeHomePromoImageUri(
+      slot.mediaUrl.trim().isEmpty ? slot.imageUrl : slot.mediaUrl,
+    );
+    final safePoster = _safeHomePromoImageUri(slot.posterUrl);
+    final safeFallback = _safeHomePromoImageUri(slot.fallbackImageUrl);
     final ctaLabel = slot.ctaLabel.trim().isEmpty ? 'Открыть' : slot.ctaLabel;
     final title = slot.title.trim();
     final body = slot.body.trim();
@@ -1158,28 +1276,85 @@ class _HomeAdminPromoCardState extends State<_HomeAdminPromoCard> {
         (ThemeData.estimateBrightnessForColor(buttonColor) == Brightness.dark
             ? Colors.white
             : Colors.black);
-    final imageOnly = safeImage != null && title.isEmpty && body.isEmpty;
+    final mediaOnly = safeMedia != null &&
+        (slot.imageLayout.trim().toLowerCase() == 'media_only' ||
+            (title.isEmpty && body.isEmpty && badge.isEmpty));
     final bannerImage = slot.imageLayout.trim().toLowerCase() == 'banner';
-    final open = safeHref == null
-        ? null
-        : () => widget.onOpenHandoff('promo', safeHref.toString());
+    final open = safeHref == null ? null : () => _open(safeHref);
+    final remaining = _countdownRemaining;
+    final countdown = remaining == null ? '' : _formatPromoCountdown(remaining);
+    final countdownLabel = slot.countdownLabel.trim().isEmpty
+        ? 'Осталось'
+        : slot.countdownLabel.trim();
+    final aspectRatio = slot.mediaWidth != null &&
+            slot.mediaHeight != null &&
+            slot.mediaWidth! > 0 &&
+            slot.mediaHeight! > 0
+        ? (slot.mediaWidth! / slot.mediaHeight!).clamp(0.6, 2.4).toDouble()
+        : 16 / 9;
+    final dismissButton = IconButton(
+      key: ValueKey('${widget.keyPrefix}-dismiss'),
+      tooltip: 'Скрыть предложение',
+      onPressed: _dismiss,
+      style: IconButton.styleFrom(
+        minimumSize: const Size(48, 48),
+        backgroundColor: Colors.transparent,
+        foregroundColor: textColor,
+        elevation: 0,
+      ),
+      icon: DecoratedBox(
+        decoration: BoxDecoration(
+          color: background.withValues(alpha: 0.90),
+          shape: BoxShape.circle,
+          boxShadow: const <BoxShadow>[
+            BoxShadow(color: Color(0x18000000), blurRadius: 6),
+          ],
+        ),
+        child: const Padding(
+          padding: EdgeInsets.all(4),
+          child: Icon(Icons.close_rounded, size: 16),
+        ),
+      ),
+    );
 
-    Widget remoteImage({required double height, required BoxFit fit}) {
-      if (safeImage == null) {
+    Widget remoteMedia({required double? height, required BoxFit fit}) {
+      if (safeMedia == null) {
         return const _BrandMark(size: 46);
       }
+      final reduceMotion =
+          MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+      if (slot.mediaType.trim().toLowerCase() == 'video') {
+        return SizedBox(
+          height: height,
+          width: double.infinity,
+          child: _PromoVideo(
+            url: safeMedia,
+            poster: safePoster ?? safeFallback,
+            autoplay: slot.autoplay && !reduceMotion,
+            loop: slot.loop,
+            fit: fit,
+          ),
+        );
+      }
+      final imageUri = reduceMotion &&
+              slot.mediaType.trim().toLowerCase() == 'animated_image'
+          ? safeFallback ?? safePoster ?? safeMedia
+          : safeMedia;
       return Image.network(
-        safeImage.toString(),
+        imageUri.toString(),
         height: height,
         width: double.infinity,
         fit: fit,
         filterQuality: FilterQuality.medium,
-        errorBuilder: (_, __, ___) => const Center(child: _BrandMark(size: 46)),
+        errorBuilder: (_, __, ___) =>
+            safeFallback != null && safeFallback != imageUri
+                ? Image.network(safeFallback.toString(), fit: fit)
+                : const Center(child: _BrandMark(size: 46)),
       );
     }
 
     final card = Container(
-      key: const ValueKey('home-admin-promo-card'),
+      key: ValueKey('${widget.keyPrefix}-card'),
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 520),
       clipBehavior: Clip.antiAlias,
@@ -1193,132 +1368,401 @@ class _HomeAdminPromoCardState extends State<_HomeAdminPromoCard> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (bannerImage && safeImage != null)
-                remoteImage(height: imageOnly ? 148 : 108, fit: BoxFit.cover),
-              if (!imageOnly)
+              if (slot.dismissible && mediaOnly)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: dismissButton,
+                ),
+              if ((bannerImage || mediaOnly) && safeMedia != null)
+                AspectRatio(
+                  key: ValueKey('${widget.keyPrefix}-media'),
+                  aspectRatio: aspectRatio,
+                  child: remoteMedia(height: null, fit: BoxFit.cover),
+                ),
+              if (!mediaOnly)
                 Padding(
                   padding: EdgeInsets.fromLTRB(
                     16,
-                    bannerImage && safeImage != null ? 13 : 16,
+                    bannerImage && safeMedia != null ? 13 : 16,
                     16,
                     16,
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (!bannerImage) ...[
-                        SizedBox(
-                          width: 54,
-                          height: 54,
-                          child: remoteImage(height: 54, fit: BoxFit.contain),
-                        ),
-                        const SizedBox(width: 13),
-                      ],
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (badge.isNotEmpty)
-                              Container(
-                                margin: const EdgeInsets.only(bottom: 4),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: accent.withValues(alpha: 0.10),
-                                  borderRadius: BorderRadius.circular(7),
-                                ),
-                                child: Text(
-                                  badge.toUpperCase(),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelSmall
-                                      ?.copyWith(
-                                        color: accent,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.25,
-                                      ),
-                                ),
-                              ),
-                            if (title.isNotEmpty)
-                              Text(
-                                title,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(
-                                      color: textColor,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                              ),
-                            if (body.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                body,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: textColor.withValues(alpha: 0.72),
-                                      height: 1.25,
-                                    ),
-                              ),
-                            ],
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 390;
+                      final copy = Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (!bannerImage) ...[
+                            SizedBox(
+                              width: 54,
+                              height: 54,
+                              child:
+                                  remoteMedia(height: 54, fit: BoxFit.contain),
+                            ),
+                            const SizedBox(width: 13),
                           ],
-                        ),
-                      ),
-                      if (open != null) ...[
-                        const SizedBox(width: 12),
-                        FilledButton(
-                          key: const ValueKey('home-admin-promo-action'),
-                          onPressed: open,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: buttonColor,
-                            foregroundColor: buttonTextColor,
-                            minimumSize: const Size(86, 46),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                right: slot.dismissible ? 48 : 0,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (badge.isNotEmpty)
+                                    Container(
+                                      margin: const EdgeInsets.only(bottom: 5),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 7, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: accent.withValues(alpha: 0.10),
+                                        borderRadius: BorderRadius.circular(7),
+                                      ),
+                                      child: Text(
+                                        badge.toUpperCase(),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              color: accent,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 0.25,
+                                            ),
+                                      ),
+                                    ),
+                                  if (title.isNotEmpty)
+                                    Text(
+                                      title,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            color: textColor,
+                                            fontWeight: FontWeight.w800,
+                                            height: 1.16,
+                                          ),
+                                    ),
+                                  if (body.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      body,
+                                      maxLines: compact ? 3 : 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: textColor.withValues(
+                                                alpha: 0.72),
+                                            height: 1.28,
+                                          ),
+                                    ),
+                                  ],
+                                  if (countdown.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      '$countdownLabel $countdown',
+                                      key: ValueKey(
+                                        '${widget.keyPrefix}-countdown',
+                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge
+                                          ?.copyWith(
+                                            color: accent,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
                           ),
-                          child: Text(
-                            ctaLabel,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ],
+                        ],
+                      );
+                      final copyWithDismiss = slot.dismissible &&
+                              bannerImage &&
+                              safeMedia != null
+                          ? Stack(
+                              children: [
+                                copy,
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: dismissButton,
+                                ),
+                              ],
+                            )
+                          : copy;
+                      final action = open == null
+                          ? null
+                          : FilledButton(
+                              key: ValueKey('${widget.keyPrefix}-action'),
+                              onPressed: open,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: buttonColor,
+                                foregroundColor: buttonTextColor,
+                                minimumSize:
+                                    Size(compact ? double.infinity : 96, 46),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                              ),
+                              child: Text(ctaLabel,
+                                  maxLines: 1, overflow: TextOverflow.ellipsis),
+                            );
+                      if (compact) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            copyWithDismiss,
+                            if (action != null) ...[
+                              const SizedBox(height: 12),
+                              action
+                            ]
+                          ],
+                        );
+                      }
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(child: copyWithDismiss),
+                          if (action != null) ...[
+                            const SizedBox(width: 12),
+                            action
+                          ]
+                        ],
+                      );
+                    },
                   ),
                 ),
             ],
           ),
-          if (slot.dismissible)
+          if (mediaOnly && countdown.isNotEmpty)
             Positioned(
-              top: 5,
-              right: 5,
-              child: IconButton.filledTonal(
-                key: const ValueKey('home-admin-promo-dismiss'),
-                tooltip: 'Скрыть предложение',
-                onPressed: _dismiss,
-                icon: const Icon(Icons.close_rounded, size: 20),
+              left: 10,
+              bottom: 10,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.68),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  child: Text(
+                    '$countdownLabel $countdown',
+                    key: ValueKey('${widget.keyPrefix}-countdown'),
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                ),
               ),
+            ),
+          if (slot.dismissible &&
+              !mediaOnly &&
+              !(bannerImage && safeMedia != null))
+            Positioned(
+              top: 4,
+              right: 4,
+              child: dismissButton,
             ),
         ],
       ),
     );
+    final presentedCard = card;
     if (open == null || !slot.wholeCardClickable) {
-      return card;
+      return presentedCard;
     }
     return Semantics(
       button: true,
       label: '${title.isEmpty ? 'Предложение' : title}. $ctaLabel',
       onTap: open,
-      child: PokrovSettingsRowPressSurface(onTap: open, child: card),
+      child: PokrovSettingsRowPressSurface(onTap: open, child: presentedCard),
+    );
+  }
+}
+
+String _formatPromoCountdown(Duration remaining) {
+  final totalSeconds = math.max(0, remaining.inSeconds);
+  final hours = totalSeconds ~/ 3600;
+  final minutes = (totalSeconds % 3600) ~/ 60;
+  final seconds = totalSeconds % 60;
+  String two(int value) => value.toString().padLeft(2, '0');
+  return '${two(hours)}:${two(minutes)}:${two(seconds)}';
+}
+
+class _PromoVideo extends StatefulWidget {
+  const _PromoVideo({
+    required this.url,
+    required this.poster,
+    required this.autoplay,
+    required this.loop,
+    required this.fit,
+  });
+
+  final Uri url;
+  final Uri? poster;
+  final bool autoplay;
+  final bool loop;
+  final BoxFit fit;
+
+  @override
+  State<_PromoVideo> createState() => _PromoVideoState();
+}
+
+class _PromoVideoState extends State<_PromoVideo> {
+  VideoPlayerController? _controller;
+  bool _failed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_initialize());
+  }
+
+  @override
+  void didUpdateWidget(covariant _PromoVideo oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url) {
+      unawaited(_initialize());
+    } else if (oldWidget.loop != widget.loop) {
+      unawaited(_controller?.setLooping(widget.loop));
+    }
+  }
+
+  Future<void> _initialize() async {
+    final previous = _controller;
+    _controller = null;
+    await previous?.dispose();
+    if (Platform.isWindows) {
+      if (mounted) {
+        setState(() => _failed = true);
+      }
+      return;
+    }
+    final controller = VideoPlayerController.networkUrl(widget.url);
+    try {
+      await controller.initialize();
+      await controller.setVolume(0);
+      await controller.setLooping(widget.loop);
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+      _controller = controller;
+      _failed = false;
+      if (widget.autoplay) {
+        await controller.play();
+      }
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (_) {
+      await controller.dispose();
+      if (mounted) {
+        setState(() => _failed = true);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    unawaited(_controller?.dispose());
+    super.dispose();
+  }
+
+  void _toggle() {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) {
+      return;
+    }
+    if (controller.value.isPlaying) {
+      unawaited(controller.pause());
+    } else {
+      unawaited(controller.play());
+    }
+    setState(() {});
+  }
+
+  Widget _poster() {
+    final poster = widget.poster;
+    if (poster == null) {
+      return const ColoredBox(
+        color: Color(0x11000000),
+        child: Center(child: _BrandMark(size: 46)),
+      );
+    }
+    return Image.network(
+      poster.toString(),
+      fit: widget.fit,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (_, __, ___) => const Center(child: _BrandMark(size: 46)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
+    if (_failed || controller == null || !controller.value.isInitialized) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          _poster(),
+          if (!_failed)
+            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ],
+      );
+    }
+    return Semantics(
+      button: true,
+      label: controller.value.isPlaying
+          ? 'Поставить видео на паузу'
+          : 'Воспроизвести видео',
+      onTap: _toggle,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _toggle,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            FittedBox(
+              fit: widget.fit,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width: controller.value.size.width,
+                height: controller.value.size.height,
+                child: VideoPlayer(controller),
+              ),
+            ),
+            Center(
+              child: AnimatedOpacity(
+                opacity: controller.value.isPlaying ? 0 : 1,
+                duration: const Duration(milliseconds: 160),
+                child: DecoratedBox(
+                  decoration: const BoxDecoration(
+                      color: Color(0x99000000), shape: BoxShape.circle),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Icon(
+                      controller.value.isPlaying
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1790,33 +2234,39 @@ String? _homeInfoNotice(String? headline) {
   return null;
 }
 
-AppFirstPromoSlot? _homeAdminPromoSlot(AppFirstBonusSummary? bonusSummary) {
+List<AppFirstPromoSlot> _homeAdminPromoSlots(
+  AppFirstBonusSummary? bonusSummary,
+) {
   final promoSlots = bonusSummary?.promoSlots;
   if (promoSlots == null) {
-    return null;
+    return const <AppFirstPromoSlot>[];
   }
-  const placements = <String>{
+  const placements = <String>[
     'home_banner',
+    'home_corner',
+    'protection_contextual',
+    'global_banner',
     'home',
     'home_primary',
     'protection',
     'protection_home',
-  };
-  for (final placement in placements) {
-    final slots = promoSlots.visibleForPlacement(placement);
-    for (final slot in slots) {
-      if (_isRenderableHomePromoSlot(slot)) {
-        return slot;
-      }
-    }
-  }
-  return null;
+  ];
+  return List<AppFirstPromoSlot>.unmodifiable(
+    <AppFirstPromoSlot>[
+      for (final placement in placements)
+        ...promoSlots
+            .visibleForPlacement(placement)
+            .where(_isRenderableHomePromoSlot),
+    ],
+  );
 }
 
 bool _isRenderableHomePromoSlot(AppFirstPromoSlot slot) {
   final title = slot.title.trim();
   final body = slot.body.trim();
-  final safeImage = _safeHomePromoImageUri(slot.imageUrl);
+  final safeImage = _safeHomePromoImageUri(
+    slot.mediaUrl.trim().isEmpty ? slot.imageUrl : slot.mediaUrl,
+  );
   final safeHref = _safeHomePromoSlotHref(slot.ctaHref);
   if (body.isNotEmpty || safeImage != null) {
     return true;
@@ -1835,6 +2285,10 @@ Color? _promoHexColor(String value) {
 Uri? _safeHomePromoImageUri(String value) {
   final uri = Uri.tryParse(value.trim());
   if (uri == null || uri.scheme.toLowerCase() != 'https' || uri.host.isEmpty) {
+    return null;
+  }
+  final host = uri.host.toLowerCase();
+  if (host != 'pokrov.space' && !host.endsWith('.pokrov.space')) {
     return null;
   }
   return uri;

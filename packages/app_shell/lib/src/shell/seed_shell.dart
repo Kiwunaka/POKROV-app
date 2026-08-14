@@ -510,6 +510,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   late final AppFirstExperienceService? _experienceService;
   late final AppFirstAcquisitionService? _acquisitionService;
   late final AppFirstQuestEventService? _questEventService;
+  late final AppFirstPromoEventService? _promoEventService;
   late final AppFirstNodePreferenceService? _nodePreferenceService;
   late final AppFirstClientDataService? _clientDataService;
   late final SupportTicketService _supportTicketService;
@@ -649,6 +650,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         : null;
     _questEventService = bootstrapper is AppFirstQuestEventService
         ? bootstrapper as AppFirstQuestEventService
+        : null;
+    _promoEventService = bootstrapper is AppFirstPromoEventService
+        ? bootstrapper as AppFirstPromoEventService
         : null;
     _nodePreferenceService = bootstrapper is AppFirstNodePreferenceService
         ? bootstrapper as AppFirstNodePreferenceService
@@ -1156,6 +1160,69 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           progressMessage: 'Применяем список приложений…',
           successMessage: 'Список приложений применён.',
         ),
+      );
+    }
+  }
+
+  void _applyRuAppPreset(RouteMode mode, List<String> appIds) {
+    if (mode != RouteMode.selectedApps && mode != RouteMode.excludedApps) {
+      return;
+    }
+    if (!widget.appContext.runtimeProfile.supportedRouteModes.contains(mode)) {
+      return;
+    }
+    final normalized = appIds
+        .map(
+          (value) => normalizePokrovSelectedAppIdentifier(
+            value,
+            hostPlatform: widget.appContext.hostPlatform,
+          ),
+        )
+        .whereType<String>()
+        .where((value) => pokrovRuAppCatalogEntry(value) != null)
+        .toSet()
+        .take(128)
+        .toList(growable: false);
+    if (normalized.isEmpty) {
+      showPokrovSnack(
+        context,
+        'На устройстве не найдено приложений из RU-каталога.',
+        tone: PokrovSnackTone.danger,
+      );
+      return;
+    }
+    final wasConnected = _runtimeSnapshot?.phase == RuntimePhase.running;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selectedRouteMode = mode;
+      _selectedAppIds
+        ..clear()
+        ..addAll(normalized);
+      _managedProfileDirty = true;
+      _cachedProfileFallbackGate.markUserChange();
+      _clientExperience = _clientExperience.copyWith(
+        selectedAppIds: List<String>.unmodifiable(_selectedAppIds),
+        firstRouteScopeConfirmed: true,
+        firstRouteScopeMode: mode,
+      );
+      _runtimeHeadline = mode == RouteMode.excludedApps
+          ? 'RU-приложения пойдут напрямую, остальные — через VPN.'
+          : 'Только выбранные RU-приложения пойдут через VPN.';
+    });
+    _invalidateQuickSettingsProfile();
+    _queueClientExperienceWrite();
+    if (wasConnected) {
+      unawaited(
+        _reconnectAfterManagedProfileChange(
+          progressMessage: 'Применяем RU-пресет…',
+          successMessage: 'RU-пресет применён.',
+        ),
+      );
+    } else {
+      showPokrovSnack(
+        context,
+        'RU-пресет сохранён. Подключите POKROV.',
+        tone: PokrovSnackTone.success,
       );
     }
   }
@@ -2813,6 +2880,15 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     return Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (routeContext) {
+          AppFirstPromoSlot? supportPromo;
+          for (final slot
+              in _bonusSummary?.promoSlots.visibleForPlacement('support') ??
+                  const <AppFirstPromoSlot>[]) {
+            if (_isRenderableHomePromoSlot(slot)) {
+              supportPromo = slot;
+              break;
+            }
+          }
           return _SupportChatScreen(
             appContext: widget.appContext,
             selectedRouteMode: _selectedRouteMode,
@@ -2826,6 +2902,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             askAssistant:
                 _clientDataService == null ? null : _askSupportAssistant,
             onOpenHandoff: _showSeedHandoff,
+            promoSlot: supportPromo,
+            onPromoEvent: _reportPromoEvent,
           );
         },
       ),
@@ -4231,6 +4309,22 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
+  void _reportPromoEvent(AppFirstPromoSlot slot, String eventName) {
+    final service = _promoEventService;
+    if (service == null) {
+      return;
+    }
+    unawaited(
+      service
+          .reportPromoEvent(
+            hostPlatform: widget.appContext.hostPlatform,
+            eventName: eventName,
+            slot: slot,
+          )
+          .catchError((_) {}),
+    );
+  }
+
   String _runtimeUnexpectedErrorMessage(Object error) {
     return switch (error) {
       TimeoutException() =>
@@ -4539,6 +4633,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             onOpenNotifications: _openNotificationsInbox,
             onOpenProfile: () => _selectTab(SeedTab.profile),
             onOpenPromoHandoff: _showSeedHandoff,
+            onPromoEvent: _reportPromoEvent,
           ),
       (context) => _LocationsSection(
             appContext: widget.appContext,
@@ -4572,6 +4667,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             },
             onSelectedAppAdded: _addSelectedAppId,
             onSelectedAppRemoved: _removeSelectedAppId,
+            onRuAppPresetApplied: _applyRuAppPreset,
             onRoutingPreferencesChanged: _setRoutingPreferences,
             onReadCurrentWifi: _readCurrentWifi,
             onRequestWifiPermission: _requestCurrentWifiPermission,
@@ -4586,6 +4682,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             selectedRouteMode: _selectedRouteMode,
             hasProvisionedAccess: hasProvisionedAccess,
             onOpenHandoff: _showSeedHandoff,
+            onPromoEvent: _reportPromoEvent,
             onOpenSupportHub: _showSupportHub,
             onCreateTelegramLink: _createTelegramLinkInApp,
             onCheckTelegramBonus: _checkTelegramBonusInApp,

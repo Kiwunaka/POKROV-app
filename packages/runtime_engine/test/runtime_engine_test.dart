@@ -350,7 +350,7 @@ void main() {
       const ManagedProfilePayload(
         profileName: 'materialized',
         configPayload:
-            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"direct","tag":"direct"}],"route":{"rules":[{"ip_is_private":true,"outbound":"direct"},{"protocol":"dns","action":"hijack-dns"}],"final":"direct"},"experimental":{"cache_file":{"enabled":true}},"_meta":{"title":"display only"}}',
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"direct","tag":"direct"}],"route":{"rules":[{"ip_is_private":true,"outbound":"direct"},{"protocol":"dns","action":"hijack-dns"}],"final":"direct"},"experimental":{"cache_file":{"enabled":true}},"_meta":{"title":"display only","runtime_variant_probe":{"group_tag":"probe","mappings":[{"id":"direct","outbound_tag":"direct"}]}}}',
         materializedForRuntime: true,
       ),
     );
@@ -362,7 +362,14 @@ void main() {
     final stagedConfig =
         jsonDecode(stagedArguments?['configPayload']! as String)
             as Map<String, dynamic>;
-    expect(stagedConfig, isNot(contains('_meta')));
+    expect(stagedConfig['_meta'], <String, dynamic>{
+      'runtime_variant_probe': <String, dynamic>{
+        'group_tag': 'probe',
+        'mappings': <Map<String, String>>[
+          <String, String>{'id': 'direct', 'outbound_tag': 'direct'},
+        ],
+      },
+    });
     expect(stagedConfig, isNot(contains('experimental')));
     final route = stagedConfig['route'] as Map<String, dynamic>;
     final rules = (route['rules'] as List).cast<Map<String, dynamic>>();

@@ -9,6 +9,8 @@ class _SupportChatScreen extends StatefulWidget {
     required this.supportTicketService,
     required this.askAssistant,
     required this.onOpenHandoff,
+    required this.promoSlot,
+    required this.onPromoEvent,
   });
 
   final SeedAppContext appContext;
@@ -24,6 +26,8 @@ class _SupportChatScreen extends StatefulWidget {
     String? assistantSessionId,
   )? askAssistant;
   final void Function(String label, String value) onOpenHandoff;
+  final AppFirstPromoSlot? promoSlot;
+  final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
 
   @override
   State<_SupportChatScreen> createState() => _SupportChatScreenState();
@@ -635,42 +639,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
           child: Scaffold(
             key: const ValueKey('support-chat-screen'),
             backgroundColor: p.canvas,
-            appBar: AppBar(
-              title: const Text('Поддержка'),
-              actions: [
-                PopupMenuButton<String>(
-                  key: const ValueKey('support-chat-more'),
-                  tooltip: 'Ещё варианты поддержки',
-                  onSelected: (value) {
-                    if (value == 'telegram') {
-                      widget.onOpenHandoff(
-                        'support',
-                        widget.appContext.supportSnapshot.supportBot,
-                      );
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem<String>(
-                      key: const ValueKey('support-chat-telegram-fallback'),
-                      value: 'telegram',
-                      child: Row(
-                        children: [
-                          const Icon(Icons.send_outlined, size: 20),
-                          const SizedBox(width: 10),
-                          Flexible(
-                            child: Text(
-                              widget.appContext.supportSnapshot.supportBot,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
+            appBar: AppBar(title: const Text('Поддержка')),
             body: SafeArea(
               top: false,
               child: Center(
@@ -684,6 +653,17 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                           controller: _messageListController,
                           padding: EdgeInsets.zero,
                           children: [
+                            if (widget.promoSlot != null)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(18, 8, 18, 12),
+                                child: _HomeAdminPromoCard(
+                                  slot: widget.promoSlot!,
+                                  keyPrefix: 'support-promo',
+                                  onOpenHandoff: widget.onOpenHandoff,
+                                  onPromoEvent: widget.onPromoEvent,
+                                ),
+                              ),
                             Padding(
                               padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
                               child: _SupportLifecycleHint(
@@ -699,6 +679,31 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                                   onTap: () => unawaited(_openAssistantSheet()),
                                 ),
                               ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  key: const ValueKey(
+                                    'support-feedback-bot-action',
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(48),
+                                    alignment: Alignment.centerLeft,
+                                  ),
+                                  onPressed: () => widget.onOpenHandoff(
+                                    'support',
+                                    widget
+                                        .appContext.supportSnapshot.supportBot,
+                                  ),
+                                  icon:
+                                      const Icon(Icons.send_rounded, size: 19),
+                                  label: const Text(
+                                    'Feedback-бот в Telegram',
+                                  ),
+                                ),
+                              ),
+                            ),
                             if (_loadingThread)
                               const SizedBox(
                                 height: 230,

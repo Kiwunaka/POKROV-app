@@ -1,6 +1,6 @@
 # In-App AI Assistant Contract
 
-Last updated: 2026-08-13
+Last updated: 2026-08-14
 
 This document defines the support-scoped POKROV assistant for the
 `1.0.0-beta` client line.
@@ -52,8 +52,9 @@ app invokes it and what the UI may expose.
 
 - Support keeps the primary screen focused on the conversation, one compact
   lifecycle status, and the composer. Diagnostic attachment stays behind the
-  composer paperclip; Telegram and the optional AI sheet stay as compact app
-  bar actions instead of repeating as full-width cards.
+  composer paperclip. The AI entry stays first; a single visible compact
+  `Feedback-бот в Telegram` button provides the manual external fallback
+  without hiding it in an overflow menu or repeating it inside every answer.
 - The assistant sheet opens directly on one composer. It does not repeat a
   greeting bubble or expose auto-fill prompt chips. Safe actions returned with
   a reply render as compact, allowlisted controls: recovery/access actions ask

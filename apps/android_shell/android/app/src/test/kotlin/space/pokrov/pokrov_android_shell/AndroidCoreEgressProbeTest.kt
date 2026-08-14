@@ -131,6 +131,16 @@ class AndroidCoreEgressProbeTest {
     }
 
     @Test
+    fun convertsCoreUnixSecondsToPublicMilliseconds() {
+        assertEquals(
+            1_786_716_000_000L,
+            AndroidCoreEgressProbe.urlTestTimeMillis(1_786_716_000L),
+        )
+        assertEquals(0L, AndroidCoreEgressProbe.urlTestTimeMillis(0L))
+        assertEquals(0L, AndroidCoreEgressProbe.urlTestTimeMillis(Long.MAX_VALUE))
+    }
+
+    @Test
     fun recognizesEndpointResultsFromCommandLogAndPlatformDebugChannel() {
         assertEquals(
             AndroidCoreEgressProbeResult.HEALTHY,

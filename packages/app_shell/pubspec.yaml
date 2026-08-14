@@ -21,6 +21,7 @@ dependencies:
   pokrov_support_context:
     path: ../support_context
   url_launcher: ^6.3.1
+  video_player: 2.11.1
 
 dev_dependencies:
   flutter_test:

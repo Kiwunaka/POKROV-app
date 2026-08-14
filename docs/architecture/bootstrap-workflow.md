@@ -127,6 +127,20 @@ Current blocking dependency:
   host, port, key, tag, or raw config. Device cache keeps the last non-empty
   safe catalog across transient refresh failure; removed rollout ids are
   cleared or explained instead of pretending a stale selection still applies
+- materialization creates one private `pokrov-variant-probe` URL-test group
+  containing the canonical selected outbound plus every exact, uniquely
+  resolvable white-list variant. `_meta.runtime_variant_probe` owns the
+  safe-ID-to-tag mapping inside the staged profile only. The Android host reads
+  only the canonical managed-profile path, validates that mapping against the
+  group, runs full or one-row refresh, and returns safe ID/status/latency/time/
+  active ID. Raw tags and transport material never cross MethodChannel; missing
+  or ambiguous mappings fail closed and render unavailable
+- if the selected outbound fails its core-owned egress proof, the Android TUN
+  remains fail-closed while one bounded full variant URL-test completes before
+  teardown. Only the exact-catalog safe status/latency snapshot is retained in
+  process memory for up to two minutes; it cannot reactivate a route, survives
+  neither process death nor a different catalog, and reports no active variant
+  after the runtime has stopped
 - the `2026-08-14` production redacted readback proved `direct` plus `mini`,
   `ru`, and `ru_spb` for eligible non-US nodes and direct-only for `us`.
   Exact public-app visibility, selection, reconnect, and materialized runtime

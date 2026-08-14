@@ -9,6 +9,7 @@ class _RulesSection extends StatelessWidget {
     required this.onRouteModeSelected,
     required this.onSelectedAppAdded,
     required this.onSelectedAppRemoved,
+    required this.onRuAppPresetApplied,
     required this.onRoutingPreferencesChanged,
     required this.onReadCurrentWifi,
     required this.onRequestWifiPermission,
@@ -23,6 +24,7 @@ class _RulesSection extends StatelessWidget {
   final ValueChanged<RouteMode> onRouteModeSelected;
   final ValueChanged<String> onSelectedAppAdded;
   final ValueChanged<String> onSelectedAppRemoved;
+  final void Function(RouteMode mode, List<String> appIds) onRuAppPresetApplied;
   final ValueChanged<PokrovRoutingPreferences> onRoutingPreferencesChanged;
   final PokrovWifiProbe onReadCurrentWifi;
   final PokrovWifiPermissionRequester onRequestWifiPermission;
@@ -131,6 +133,14 @@ class _RulesSection extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        if (appContext.hostPlatform == HostPlatform.android &&
+            selectedAppsActive &&
+            excludedAppsActive)
+          _RuAppsPresetCard(
+            selectedRouteMode: selectedRouteMode,
+            selectedAppIds: selectedAppIds,
+            onApply: onRuAppPresetApplied,
           ),
         if (selectedAppsActive || excludedAppsActive || selectedAppsStaged)
           _SectionCard(
@@ -388,6 +398,212 @@ class _RouteModeSegment extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _RuAppsPresetCard extends StatefulWidget {
+  const _RuAppsPresetCard({
+    required this.selectedRouteMode,
+    required this.selectedAppIds,
+    required this.onApply,
+  });
+
+  final RouteMode selectedRouteMode;
+  final List<String> selectedAppIds;
+  final void Function(RouteMode mode, List<String> appIds) onApply;
+
+  @override
+  State<_RuAppsPresetCard> createState() => _RuAppsPresetCardState();
+}
+
+class _RuAppsPresetCardState extends State<_RuAppsPresetCard> {
+  late Future<List<_SelectedAppCandidate>> _installedFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _installedFuture = _loadAndroidInstalledAppCandidates();
+  }
+
+  void _refresh() {
+    setState(() {
+      _installedFuture = _loadAndroidInstalledAppCandidates();
+    });
+  }
+
+  Future<void> _previewAndApply(
+    RouteMode mode,
+    List<_SelectedAppCandidate> candidates,
+  ) async {
+    final appIds = pokrovInstalledRuAppIds(
+      candidates.map((candidate) => candidate.identifier),
+    );
+    if (appIds.isEmpty) {
+      showPokrovSnack(
+        context,
+        'RU-приложения не найдены. Обновите список или настройте вручную.',
+        tone: PokrovSnackTone.danger,
+      );
+      return;
+    }
+    final direct = mode == RouteMode.excludedApps;
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        final p = PokrovPalette.of(sheetContext);
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              0,
+              20,
+              20 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  direct
+                      ? 'RU-приложения напрямую'
+                      : 'Только RU-приложения через VPN',
+                  style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                        color: p.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  direct
+                      ? '${appIds.length} найдено · остальные приложения останутся через VPN.'
+                      : '${appIds.length} найдено · остальные приложения пойдут напрямую.',
+                  style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
+                        color: p.muted,
+                      ),
+                ),
+                const SizedBox(height: 14),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 280),
+                  child: ListView.separated(
+                    key: const ValueKey('rules-ru-preset-preview-list'),
+                    shrinkWrap: true,
+                    itemCount: appIds.length,
+                    separatorBuilder: (_, __) => Divider(color: p.line),
+                    itemBuilder: (context, index) {
+                      final id = appIds[index];
+                      final entry = pokrovRuAppCatalogEntry(id)!;
+                      return ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.apps_rounded),
+                        title: Text(entry.label),
+                        subtitle: Text(
+                          pokrovRuAppCategoryLabel(entry.category),
+                        ),
+                        trailing: Icon(
+                          direct
+                              ? Icons.public_off_outlined
+                              : Icons.shield_outlined,
+                          color: p.accent,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(sheetContext).pop(false),
+                        child: const Text('Отмена'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton(
+                        key: const ValueKey('rules-ru-preset-confirm'),
+                        onPressed: () => Navigator.of(sheetContext).pop(true),
+                        child: const Text('Применить'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (confirmed == true && mounted) {
+      widget.onApply(mode, appIds);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      key: const ValueKey('rules-ru-app-presets'),
+      title: 'RU-приложения',
+      lines: const [
+        'POKROV найдёт известные приложения на устройстве. Список остаётся локально.'
+      ],
+      child: FutureBuilder<List<_SelectedAppCandidate>>(
+        future: _installedFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const _MotionSkeletonList(rows: 2);
+          }
+          final candidates = (snapshot.data ?? const <_SelectedAppCandidate>[])
+              .where((candidate) => candidate.ruCatalogEntry != null)
+              .toList(growable: false);
+          if (candidates.isEmpty) {
+            return _SettingsRow(
+              key: const ValueKey('rules-ru-app-presets-empty'),
+              icon: Icons.refresh_rounded,
+              title: 'Не нашли RU-приложения',
+              value: 'Обновить',
+              onTap: _refresh,
+            );
+          }
+          final directSelected =
+              widget.selectedRouteMode == RouteMode.excludedApps &&
+                  widget.selectedAppIds.toSet().containsAll(
+                        candidates.map((candidate) => candidate.identifier),
+                      );
+          final vpnSelected =
+              widget.selectedRouteMode == RouteMode.selectedApps &&
+                  widget.selectedAppIds.toSet().containsAll(
+                        candidates.map((candidate) => candidate.identifier),
+                      );
+          return Column(
+            children: [
+              _SettingsRow(
+                key: const ValueKey('rules-ru-apps-direct-preset'),
+                icon: Icons.public_off_outlined,
+                title: 'RU напрямую',
+                value: directSelected ? 'Включено' : '${candidates.length}',
+                onTap: () => unawaited(
+                  _previewAndApply(RouteMode.excludedApps, candidates),
+                ),
+              ),
+              _SettingsRow(
+                key: const ValueKey('rules-ru-apps-vpn-preset'),
+                icon: Icons.shield_outlined,
+                title: 'Только RU через VPN',
+                value: vpnSelected ? 'Включено' : '${candidates.length}',
+                onTap: () => unawaited(
+                  _previewAndApply(RouteMode.selectedApps, candidates),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -792,6 +1008,7 @@ class _SelectedAppCandidate {
     required this.source,
     required this.icon,
     this.iconBytes,
+    this.ruCatalogEntry,
   });
 
   final String label;
@@ -800,6 +1017,7 @@ class _SelectedAppCandidate {
   final _SelectedAppCandidateSource source;
   final IconData icon;
   final Uint8List? iconBytes;
+  final PokrovRuAppCatalogEntry? ruCatalogEntry;
 
   String get searchText => '$label $identifier $subtitle'.toLowerCase().trim();
 }
@@ -826,6 +1044,7 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
   final TextEditingController _searchController = TextEditingController();
   late Future<List<_SelectedAppCandidate>> _candidatesFuture;
   String _query = '';
+  bool _ruOnly = false;
 
   @override
   void initState() {
@@ -1004,6 +1223,19 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                     else
                       searchField,
                     SizedBox(height: compact ? 8 : 14),
+                    if (!compact &&
+                        widget.hostPlatform == HostPlatform.android) ...[
+                      FilterChip(
+                        key: const ValueKey('rules-selected-app-filter-ru'),
+                        selected: _ruOnly,
+                        avatar: const Icon(Icons.flag_outlined, size: 17),
+                        label: const Text('Российские'),
+                        onSelected: (selected) => setState(() {
+                          _ruOnly = selected;
+                        }),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
                     Expanded(
                       child: FutureBuilder<List<_SelectedAppCandidate>>(
                         future: _candidatesFuture,
@@ -1029,8 +1261,10 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                           final candidates = rawCandidates
                               .where(
                                 (candidate) =>
-                                    _query.isEmpty ||
-                                    candidate.searchText.contains(_query),
+                                    (!_ruOnly ||
+                                        candidate.ruCatalogEntry != null) &&
+                                    (_query.isEmpty ||
+                                        candidate.searchText.contains(_query)),
                               )
                               .toList(growable: false);
                           if (candidates.isEmpty) {
@@ -1204,6 +1438,10 @@ class _SelectedAppCandidateRow extends StatelessWidget {
 
 String _visibleSelectedAppSubtitle(_SelectedAppCandidate candidate) {
   final subtitle = candidate.subtitle.trim();
+  final ruEntry = candidate.ruCatalogEntry;
+  if (ruEntry != null) {
+    return 'Российское · ${pokrovRuAppCategoryLabel(ruEntry.category)}';
+  }
   if (candidate.source == _SelectedAppCandidateSource.suggested &&
       subtitle.isNotEmpty &&
       !_looksLikeSelectedAppIdentifier(subtitle)) {
@@ -1420,6 +1658,9 @@ List<_SelectedAppCandidate> _candidatesFromHostMaps(
     final label = item['label']?.toString().trim();
     final subtitle = item['subtitle']?.toString().trim();
     final iconBytes = _decodeSelectedAppIcon(item['iconPngBase64']);
+    final ruCatalogEntry = hostPlatform == HostPlatform.android
+        ? pokrovRuAppCatalogEntry(identifier)
+        : null;
     final safeLabel =
         label == null || label.isEmpty || _looksLikeSelectedAppIdentifier(label)
             ? _friendlySelectedAppName(identifier)
@@ -1432,6 +1673,7 @@ List<_SelectedAppCandidate> _candidatesFromHostMaps(
         source: source,
         icon: icon,
         iconBytes: iconBytes,
+        ruCatalogEntry: ruCatalogEntry,
       ),
     );
   }
@@ -1542,6 +1784,18 @@ List<_SelectedAppCandidate> _mergeSelectedAppCandidates(
     }
     merged.add(candidate);
   }
+  merged.sort((left, right) {
+    final ruRank = (right.ruCatalogEntry != null ? 1 : 0)
+        .compareTo(left.ruCatalogEntry != null ? 1 : 0);
+    if (ruRank != 0) {
+      return ruRank;
+    }
+    final installedRank = left.source.index.compareTo(right.source.index);
+    if (installedRank != 0) {
+      return installedRank;
+    }
+    return left.label.toLowerCase().compareTo(right.label.toLowerCase());
+  });
   return merged;
 }
 

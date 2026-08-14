@@ -991,7 +991,7 @@ void main() {
     final requests = <String>[];
     Map<String, dynamic>? statsBody;
     Map<String, dynamic>? onboardingBody;
-    Map<String, dynamic>? questBody;
+    final eventBodies = <Map<String, dynamic>>[];
     Map<String, dynamic>? acquisitionBody;
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
@@ -1051,7 +1051,7 @@ void main() {
             request.headers.value(HttpHeaders.authorizationHeader),
             'Bearer runtime-stats-session',
           );
-          questBody = jsonDecode(body) as Map<String, dynamic>;
+          eventBodies.add(jsonDecode(body) as Map<String, dynamic>);
           request.response
             ..headers.contentType = ContentType.json
             ..write(jsonEncode(<String, Object?>{'ok': true}));
@@ -1093,6 +1093,22 @@ void main() {
     await bootstrapper.completeRoutingLesson(
       hostPlatform: HostPlatform.android,
     );
+    await bootstrapper.reportPromoEvent(
+      hostPlatform: HostPlatform.android,
+      eventName: 'click',
+      slot: const AppFirstPromoSlot(
+        slotId: 'home_banner',
+        contentId: 'sale_70',
+        enabled: true,
+        title: 'Sale',
+        body: 'Visible copy must not be uploaded in telemetry.',
+        placement: 'home_banner',
+        ctaLabel: 'Open',
+        ctaHref: 'https://pokrov.space/pricing/',
+        kind: 'sale',
+        goal: 'checkout',
+      ),
+    );
     await bootstrapper.consumeAcquisitionHandoff(
       hostPlatform: HostPlatform.android,
       handle: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
@@ -1104,6 +1120,7 @@ void main() {
       'POST /api/client/runtime/stats',
       'POST /api/account/experience/onboarding',
       'POST /api/events',
+      'POST /api/events',
       'POST /api/acquisition/handoffs/consume',
     ]);
     expect(statsBody, <String, Object?>{
@@ -1111,11 +1128,22 @@ void main() {
       'connected': true,
     });
     expect(onboardingBody, <String, Object?>{'status': 'completed'});
-    expect(questBody, <String, Object?>{
-      'event_name': 'routing_lesson_completed',
-      'source': 'app',
-      'meta': <String, Object?>{'surface': 'route_explainer'},
-    });
+    expect(eventBodies, <Map<String, dynamic>>[
+      <String, Object?>{
+        'event_name': 'routing_lesson_completed',
+        'source': 'app',
+        'meta': <String, Object?>{'surface': 'route_explainer'},
+      },
+      <String, Object?>{
+        'event_name': 'promo_click',
+        'source': 'app',
+        'meta': <String, Object?>{
+          'slot_id': 'home_banner',
+          'content_id': 'sale_70',
+          'placement': 'home_banner',
+        },
+      },
+    ]);
     expect(acquisitionBody, <String, Object?>{
       'handle': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
       'purpose': 'android_install',
@@ -3196,6 +3224,7 @@ void main() {
                   'fallback_behavior':
                       'contextual_only_when_remote_unavailable',
                   'mode': 'whitelist_slots',
+                  'server_time': DateTime.now().toUtc().toIso8601String(),
                   'slots': <Object?>[
                     <String, Object?>{
                       'slot_id': 'rewards_top',
@@ -3205,7 +3234,19 @@ void main() {
                       'body': 'Connect Telegram and claim the reward.',
                       'badge_label': 'Offer',
                       'image_url': 'https://cdn.example.com/promo.png',
-                      'image_layout': 'banner',
+                      'image_layout': 'media_only',
+                      'media_type': 'video',
+                      'media_url': 'https://cdn.example.com/promo.mp4',
+                      'poster_url': 'https://cdn.example.com/poster.webp',
+                      'fallback_image_url':
+                          'https://cdn.example.com/fallback.webp',
+                      'media_mime': 'video/mp4',
+                      'media_width': 1080,
+                      'media_height': 1080,
+                      'media_bytes': 654321,
+                      'media_duration_seconds': 12,
+                      'autoplay': true,
+                      'loop': false,
                       'cta_label': 'Open',
                       'cta_href': 'https://t.me/pokrov_vpnbot',
                       'accent_color': '#0B6B53',
@@ -3218,9 +3259,24 @@ void main() {
                       'whole_card_clickable': true,
                       'starts_at': '2026-06-01T00:00:00Z',
                       'ends_at': '2026-06-30T00:00:00Z',
+                      'countdown_mode': 'ends_at',
+                      'countdown_label': '−70% · осталось',
                       'kind': 'bonus',
                       'goal': 'bonus_claim',
                     },
+                    ...List<Object?>.generate(
+                      5,
+                      (index) => <String, Object?>{
+                        'slot_id': 'extra-$index',
+                        'content_id': 'partner_promo',
+                        'enabled': true,
+                        'title': 'Extra $index',
+                        'body': '',
+                        'placement': 'extra-$index',
+                        'kind': 'promo',
+                        'goal': 'open',
+                      },
+                    ),
                   ],
                 },
               ),
@@ -3288,20 +3344,35 @@ void main() {
     expect(summary.referralSummary.history.single.status, 'rewarded');
     expect(summary.referralSummary.privacy, contains('не показываются'));
     expect(summary.promoSlots.remoteAvailable, isTrue);
-    expect(summary.promoSlots.visibleSlots, hasLength(1));
-    expect(summary.promoSlots.visibleSlots.single.title, 'Telegram +5 days');
-    expect(summary.promoSlots.visibleSlots.single.imageUrl,
-        'https://cdn.example.com/promo.png');
-    expect(summary.promoSlots.visibleSlots.single.badgeLabel, 'Offer');
-    expect(summary.promoSlots.visibleSlots.single.imageLayout, 'banner');
-    expect(summary.promoSlots.visibleSlots.single.accentColor, '#0B6B53');
-    expect(summary.promoSlots.visibleSlots.single.buttonTextColor, '#FFFFFF');
-    expect(summary.promoSlots.visibleSlots.single.placement, 'home_banner');
-    expect(summary.promoSlots.visibleSlots.single.dismissible, isFalse);
-    expect(summary.promoSlots.visibleSlots.single.wholeCardClickable, isTrue);
+    expect(summary.promoSlots.visibleSlots, hasLength(6));
+    final primaryPromo = summary.promoSlots.visibleSlots.first;
+    expect(summary.promoSlots.serverTime, isNotEmpty);
+    expect(primaryPromo.title, 'Telegram +5 days');
+    expect(primaryPromo.imageUrl, 'https://cdn.example.com/promo.png');
+    expect(primaryPromo.badgeLabel, 'Offer');
+    expect(primaryPromo.imageLayout, 'media_only');
+    expect(primaryPromo.mediaType, 'video');
+    expect(primaryPromo.mediaUrl, 'https://cdn.example.com/promo.mp4');
+    expect(primaryPromo.posterUrl, 'https://cdn.example.com/poster.webp');
+    expect(
+        primaryPromo.fallbackImageUrl, 'https://cdn.example.com/fallback.webp');
+    expect(primaryPromo.mediaMime, 'video/mp4');
+    expect(primaryPromo.mediaWidth, 1080);
+    expect(primaryPromo.mediaHeight, 1080);
+    expect(primaryPromo.mediaBytes, 654321);
+    expect(primaryPromo.mediaDurationSeconds, 12);
+    expect(primaryPromo.autoplay, isTrue);
+    expect(primaryPromo.loop, isFalse);
+    expect(primaryPromo.countdownMode, 'ends_at');
+    expect(primaryPromo.countdownLabel, '−70% · осталось');
+    expect(primaryPromo.accentColor, '#0B6B53');
+    expect(primaryPromo.buttonTextColor, '#FFFFFF');
+    expect(primaryPromo.placement, 'home_banner');
+    expect(primaryPromo.dismissible, isFalse);
+    expect(primaryPromo.wholeCardClickable, isTrue);
     expect(summary.promoSlots.visibleForPlacement('home_banner'), hasLength(1));
     expect(
-      summary.promoSlots.visibleSlots.single.ctaHref,
+      primaryPromo.ctaHref,
       'https://t.me/pokrov_vpnbot',
     );
     expect(summary.historyItems.last.title, 'Telegram-бонус получен');
@@ -4813,6 +4884,35 @@ void main() {
     expect(
       (bridgeSelector['outbounds'] as List).first,
       '🇷🇺 Россия Spb · Белые списки',
+    );
+    final bridgeConfig =
+        jsonDecode(bridgePreferred.configPayload) as Map<String, dynamic>;
+    final runtimeVariantProbe =
+        ((bridgeConfig['_meta'] as Map)['runtime_variant_probe'] as Map);
+    expect(runtimeVariantProbe['group_tag'], 'pokrov-variant-probe');
+    expect(
+      runtimeVariantProbe['mappings'],
+      <Map<String, String>>[
+        <String, String>{
+          'id': 'direct',
+          'outbound_tag': '🇷🇺 Россия Spb',
+        },
+        <String, String>{
+          'id': 'mini',
+          'outbound_tag': '🇷🇺 Россия Spb · Белые списки',
+        },
+      ],
+    );
+    final variantProbeGroup = (bridgeConfig['outbounds'] as List)
+        .cast<Map>()
+        .singleWhere((outbound) => outbound['tag'] == 'pokrov-variant-probe');
+    expect(variantProbeGroup['type'], 'urltest');
+    expect(
+      variantProbeGroup['outbounds'],
+      <String>[
+        '🇷🇺 Россия Spb',
+        '🇷🇺 Россия Spb · Белые списки',
+      ],
     );
 
     await expectLater(

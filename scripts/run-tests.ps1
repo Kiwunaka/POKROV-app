@@ -43,7 +43,11 @@ function Invoke-AndroidGradleUnitTests {
   Write-Host "Running Android Gradle unit tests in apps\android_shell" -ForegroundColor Cyan
   Push-Location $androidProjectPath
   try {
-    & $gradleWrapper testDebugUnitTest
+    # Scope the workspace gate to POKROV's app module. The unqualified task
+    # also runs unit tests shipped by Flutter plugins (for example
+    # video_player_android) and can fail inside their own Jetifier/test
+    # classpath without compiling or exercising any POKROV source.
+    & $gradleWrapper :app:testDebugUnitTest
     if ($LASTEXITCODE -ne 0) {
       exit $LASTEXITCODE
     }

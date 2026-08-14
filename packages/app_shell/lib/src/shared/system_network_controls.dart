@@ -38,6 +38,49 @@ typedef PokrovNodeLatencyProbe = Future<Map<String, int>> Function(
   List<PokrovNodeLatencyTarget> targets,
 );
 
+enum PokrovLocationVariantProbeStatus {
+  unknown,
+  available,
+  unavailable,
+  stale,
+}
+
+class PokrovLocationVariantProbeResult {
+  const PokrovLocationVariantProbeResult({
+    required this.id,
+    required this.status,
+    required this.latencyMs,
+    required this.measuredAt,
+    required this.errorCategory,
+  });
+
+  final String id;
+  final PokrovLocationVariantProbeStatus status;
+  final int? latencyMs;
+  final DateTime? measuredAt;
+  final String errorCategory;
+}
+
+class PokrovLocationVariantProbeSnapshot {
+  const PokrovLocationVariantProbeSnapshot({
+    required this.results,
+    required this.activeVariantId,
+    required this.observedAt,
+    required this.errorCategory,
+  });
+
+  const PokrovLocationVariantProbeSnapshot.unavailable({
+    this.errorCategory = 'host_method_unavailable',
+  })  : results = const <String, PokrovLocationVariantProbeResult>{},
+        activeVariantId = '',
+        observedAt = null;
+
+  final Map<String, PokrovLocationVariantProbeResult> results;
+  final String activeVariantId;
+  final DateTime? observedAt;
+  final String errorCategory;
+}
+
 class PokrovNodeLatencyTarget {
   const PokrovNodeLatencyTarget({
     required this.code,
@@ -311,6 +354,96 @@ Future<Map<String, int>> measurePokrovNodeLatencies(
     for (final entry in results.whereType<MapEntry<String, int>>())
       entry.key: entry.value,
   };
+}
+
+Future<PokrovLocationVariantProbeSnapshot> measurePokrovLocationVariants(
+  HostPlatform hostPlatform, {
+  String variantId = '',
+}) async {
+  if (hostPlatform != HostPlatform.android) {
+    return const PokrovLocationVariantProbeSnapshot.unavailable(
+      errorCategory: 'unsupported_platform',
+    );
+  }
+  try {
+    final value =
+        await _pokrovRuntimeSystemChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.measureLocationVariants',
+      <String, Object?>{
+        if (normalizeClientLocationVariantId(variantId) == variantId &&
+            variantId.isNotEmpty)
+          'variantId': variantId,
+      },
+    );
+    final observedAtMs = value?['observedAtMs'];
+    final observedAt = observedAtMs is int && observedAtMs > 0
+        ? DateTime.fromMillisecondsSinceEpoch(observedAtMs, isUtc: true)
+        : null;
+    final now = DateTime.now().toUtc();
+    final stale = observedAt != null &&
+        now.difference(observedAt).abs() > const Duration(minutes: 2);
+    final parsed = <String, PokrovLocationVariantProbeResult>{};
+    final rawResults = value?['results'];
+    if (rawResults is List) {
+      for (final raw in rawResults) {
+        if (raw is! Map) {
+          continue;
+        }
+        final id = (raw['id'] as String?)?.trim().toLowerCase() ?? '';
+        if (normalizeClientLocationVariantId(id) != id) {
+          continue;
+        }
+        final latencyValue = raw['latencyMs'];
+        final latency =
+            latencyValue is int && latencyValue > 0 && latencyValue < 65535
+                ? latencyValue
+                : null;
+        final measuredAtValue = raw['measuredAtMs'];
+        final measuredAt = measuredAtValue is int && measuredAtValue > 0
+            ? DateTime.fromMillisecondsSinceEpoch(
+                measuredAtValue,
+                isUtc: true,
+              )
+            : observedAt;
+        final rawStatus = (raw['status'] as String?)?.trim().toLowerCase();
+        final status = stale
+            ? PokrovLocationVariantProbeStatus.stale
+            : switch (rawStatus) {
+                'available' => PokrovLocationVariantProbeStatus.available,
+                'unavailable' => PokrovLocationVariantProbeStatus.unavailable,
+                _ => PokrovLocationVariantProbeStatus.unknown,
+              };
+        parsed[id] = PokrovLocationVariantProbeResult(
+          id: id,
+          status: status,
+          latencyMs: latency,
+          measuredAt: measuredAt,
+          errorCategory:
+              (raw['errorCategory'] as String?)?.trim().toLowerCase() ?? '',
+        );
+      }
+    }
+    final activeVariantId =
+        (value?['activeVariantId'] as String?)?.trim().toLowerCase() ?? '';
+    return PokrovLocationVariantProbeSnapshot(
+      results: Map<String, PokrovLocationVariantProbeResult>.unmodifiable(
+        parsed,
+      ),
+      activeVariantId:
+          normalizeClientLocationVariantId(activeVariantId) == activeVariantId
+              ? activeVariantId
+              : '',
+      observedAt: observedAt,
+      errorCategory:
+          (value?['errorCategory'] as String?)?.trim().toLowerCase() ?? '',
+    );
+  } on PlatformException catch (error) {
+    return PokrovLocationVariantProbeSnapshot.unavailable(
+      errorCategory: error.code,
+    );
+  } on MissingPluginException {
+    return const PokrovLocationVariantProbeSnapshot.unavailable();
+  }
 }
 
 Future<PokrovWifiNetworkStatus> probePokrovCurrentWifi(

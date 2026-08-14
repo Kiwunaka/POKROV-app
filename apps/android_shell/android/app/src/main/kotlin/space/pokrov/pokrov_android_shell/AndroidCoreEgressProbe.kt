@@ -309,7 +309,10 @@ internal object AndroidCoreEgressProbe {
                 while (items.hasNext()) {
                     val item = items.next()
                     itemSamples[item.tag] = if (item.urlTestTime > 0L) {
-                        AndroidCoreEgressProbeSample(item.urlTestTime, item.urlTestDelay)
+                        AndroidCoreEgressProbeSample(
+                            urlTestTimeMillis(item.urlTestTime),
+                            item.urlTestDelay,
+                        )
                     } else {
                         null
                     }
@@ -402,6 +405,9 @@ internal object AndroidCoreEgressProbe {
 
     internal fun isHealthySample(time: Long, delay: Int): Boolean =
         time > 0L && delay in 1 until URL_TEST_TIMEOUT_DELAY
+
+    internal fun urlTestTimeMillis(unixSeconds: Long): Long =
+        if (unixSeconds in 1..Long.MAX_VALUE / 1_000L) unixSeconds * 1_000L else 0L
 
     private const val MAX_TAG_LENGTH = 128
     // POKROV Core stores failed URL tests with sing-box's uint16 max sentinel.

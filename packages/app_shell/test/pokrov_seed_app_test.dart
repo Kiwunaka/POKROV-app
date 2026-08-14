@@ -928,6 +928,7 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
 void _installReadyRuntimeBridgeMock({
   List<String>? calls,
   List<String>? stagedPayloads,
+  Map<String, Object?>? variantProbeSnapshot,
   bool reportDegradedAfterConnect = false,
   bool failFirstConnect = false,
   bool failAfterConnect = false,
@@ -1066,6 +1067,14 @@ void _installReadyRuntimeBridgeMock({
           'fallbackUsed': false,
           if (failApplyWarp) 'reason': 'missing_staged_profile',
         };
+      case 'runtimeEngine.measureLocationVariants':
+        return variantProbeSnapshot ??
+            <String, Object?>{
+              'observedAtMs': DateTime.now().millisecondsSinceEpoch,
+              'activeVariantId': '',
+              'results': const <Object?>[],
+              'errorCategory': 'profile_unavailable',
+            };
     }
     return null;
   });
@@ -2026,6 +2035,186 @@ void main() {
     await tester.tap(promo);
     await tester.pumpAndSettle();
     expect(opened, isEmpty);
+  });
+
+  testWidgets(
+      'home promo stays usable at 320px with countdown and mandatory policy',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 760);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final summary = AppFirstBonusSummary(
+      referralCount: 0,
+      referralCode: 'POKROV',
+      referralBonusDays: 10,
+      streakMonths: 0,
+      lastWheelSpin: '',
+      channelBonusPremiumDays: 5,
+      channelBonusClaimedAt: '',
+      openingBonusPremiumDays: 5,
+      openingBonusClaimed: true,
+      channelUsername: 'pokrov_vpn',
+      tierKey: 'starter',
+      tierPercent: 0,
+      paidReferrals: 0,
+      nextTierKey: '',
+      nextTierAt: 0,
+      promoSlots: AppFirstPromoSlots(
+        surface: 'app',
+        accessState: 'paid_unlimited',
+        remoteAvailable: true,
+        fallbackBehavior: 'contextual_only_when_remote_unavailable',
+        mode: 'whitelist_slots',
+        serverTime: DateTime.now().toUtc().toIso8601String(),
+        slots: <AppFirstPromoSlot>[
+          AppFirstPromoSlot(
+            slotId: 'mandatory-sale',
+            contentId: 'partner_promo',
+            enabled: true,
+            title: 'Скидка −70% только сегодня',
+            body:
+                'Готовая акция не должна выталкивать кнопку или обрезать важный текст на узком экране.',
+            badgeLabel: '24 часа',
+            ctaLabel: 'Посмотреть предложение',
+            ctaHref: 'https://pokrov.space/pricing/',
+            placement: 'home_banner',
+            dismissible: false,
+            countdownMode: 'ends_at',
+            countdownLabel: 'Осталось',
+            endsAt: DateTime.now()
+                .toUtc()
+                .add(const Duration(hours: 24))
+                .toIso8601String(),
+            kind: 'promo',
+            goal: 'renewal',
+          ),
+          const AppFirstPromoSlot(
+            slotId: 'global-info',
+            contentId: 'incident_notice',
+            enabled: true,
+            title: '',
+            body: '',
+            ctaLabel: '',
+            ctaHref: '',
+            mediaType: 'image',
+            mediaUrl:
+                'https://api.pokrov.space/api/public/promo-media/demo.png',
+            imageLayout: 'media_only',
+            mediaWidth: 1600,
+            mediaHeight: 900,
+            placement: 'global_banner',
+            dismissible: true,
+            kind: 'notice',
+            goal: 'status',
+          ),
+          const AppFirstPromoSlot(
+            slotId: 'banner-info',
+            contentId: 'partner_promo',
+            enabled: true,
+            title: 'Демо −70%',
+            body: 'Короткое описание акции.',
+            ctaLabel: 'Подробнее',
+            ctaHref: 'https://pokrov.space/pricing/',
+            mediaType: 'animated_image',
+            mediaUrl:
+                'https://api.pokrov.space/api/public/promo-media/demo.gif',
+            imageLayout: 'banner',
+            mediaWidth: 1600,
+            mediaHeight: 900,
+            placement: 'home_corner',
+            dismissible: true,
+            kind: 'promo',
+            goal: 'renewal',
+          ),
+        ],
+      ),
+    );
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      bonusSummary: summary,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull, reason: 'before promo scroll');
+    final card = find.byKey(const ValueKey('home-admin-promo-card'));
+    await tester.ensureVisible(card);
+    await tester.pump();
+
+    expect(card, findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('home-admin-promo-dismiss')), findsNothing);
+    expect(find.byKey(const ValueKey('home-admin-promo-countdown')),
+        findsOneWidget);
+    expect(find.text('Посмотреть предложение'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    final globalCard = find.byKey(
+      const ValueKey('home-admin-promo-global-info-card'),
+    );
+    expect(globalCard, findsOneWidget);
+    await tester.ensureVisible(globalCard);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    final globalDismiss = find.byKey(
+      const ValueKey('home-admin-promo-global-info-dismiss'),
+    );
+    final globalMedia = find.byKey(
+      const ValueKey('home-admin-promo-global-info-media'),
+    );
+    expect(globalDismiss, findsOneWidget);
+    expect(globalMedia, findsOneWidget);
+    expect(
+      tester.getRect(globalDismiss).bottom,
+      lessThanOrEqualTo(tester.getRect(globalMedia).top),
+      reason: 'media-only close hit target must not cover the artwork',
+    );
+    expect(
+      tester.getRect(globalDismiss).right,
+      lessThanOrEqualTo(tester.getRect(globalCard).right),
+      reason: 'media-only close must stay inside the promo frame',
+    );
+    final bannerCard = find.byKey(
+      const ValueKey('home-admin-promo-banner-info-card'),
+    );
+    expect(bannerCard, findsOneWidget);
+    await tester.ensureVisible(bannerCard);
+    await tester.pump();
+    final bannerDismiss = find.byKey(
+      const ValueKey('home-admin-promo-banner-info-dismiss'),
+    );
+    final bannerMedia = find.byKey(
+      const ValueKey('home-admin-promo-banner-info-media'),
+    );
+    expect(bannerDismiss, findsOneWidget);
+    expect(bannerMedia, findsOneWidget);
+    expect(
+      tester.getRect(bannerMedia).top,
+      lessThanOrEqualTo(tester.getRect(bannerCard).top + 2),
+      reason: 'banner artwork must not gain an empty close-button header',
+    );
+    expect(
+      tester.getRect(bannerDismiss).top,
+      greaterThanOrEqualTo(tester.getRect(bannerMedia).bottom),
+      reason: 'banner close target must sit with copy, not over artwork',
+    );
+    final cardRect = tester.getRect(card);
+    final actionRect = tester.getRect(
+      find.byKey(const ValueKey('home-admin-promo-action')),
+    );
+    expect(actionRect.left, greaterThanOrEqualTo(cardRect.left));
+    expect(actionRect.right, lessThanOrEqualTo(cardRect.right));
+    expect(actionRect.bottom, lessThanOrEqualTo(cardRect.bottom));
   });
 
   testWidgets('startup update check shows prompt and opens download',
@@ -3581,6 +3770,7 @@ void main() {
               enabled: true,
               title: 'Telegram +5 days',
               body: 'Connect Telegram and claim the reward.',
+              placement: 'rewards',
               ctaLabel: 'Open',
               ctaHref: 'https://t.me/pokrov_vpnbot',
               kind: 'bonus',
@@ -3620,7 +3810,8 @@ void main() {
     expect(find.byKey(const ValueKey('rewards-promo-slot-telegram_bonus_app')),
         findsOneWidget);
     expect(
-        find.byKey(const ValueKey('rewards-promo-slot-cta-telegram_bonus_app')),
+        find.byKey(
+            const ValueKey('rewards-promo-slot-telegram_bonus_app-action')),
         findsOneWidget);
     expect(find.text('Telegram +5 days'), findsOneWidget);
   });
@@ -4913,11 +5104,11 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('support-diagnostics-close')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('support-chat-more')));
-    await tester.pumpAndSettle();
-    await tester.tap(
-      find.byKey(const ValueKey('support-chat-telegram-fallback')),
+    final feedbackBot = find.byKey(
+      const ValueKey('support-feedback-bot-action'),
     );
+    await tester.ensureVisible(feedbackBot);
+    await tester.tap(feedbackBot);
     await tester.pumpAndSettle();
 
     expect(opened.last.toString(), 'tg://resolve?domain=pokrov_supportbot');
@@ -6627,6 +6818,107 @@ void main() {
     );
   });
 
+  testWidgets(
+      'RU app presets classify installed packages and confirm both modes',
+      (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.listInstalledApps') {
+        return <Map<String, Object?>>[
+          <String, Object?>{
+            'label': 'Chrome',
+            'identifier': 'com.android.chrome',
+            'subtitle': 'com.android.chrome',
+          },
+          <String, Object?>{
+            'label': 'Яндекс Браузер',
+            'identifier': 'com.yandex.browser',
+            'subtitle': 'com.yandex.browser',
+          },
+        ];
+      }
+      return null;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-rules');
+    final ruPresets = find.byKey(const ValueKey('rules-ru-app-presets'));
+    await tester.dragUntilVisible(
+      ruPresets,
+      find.byType(Scrollable).first,
+      const Offset(0, -220),
+    );
+    await tester.pumpAndSettle();
+    expect(ruPresets, findsOneWidget);
+
+    final directPreset =
+        find.byKey(const ValueKey('rules-ru-apps-direct-preset'));
+    await tester.tap(directPreset);
+    await tester.pumpAndSettle();
+    expect(find.text('RU-приложения напрямую'), findsOneWidget);
+    expect(find.text('Яндекс Браузер'), findsOneWidget);
+    expect(find.text('Chrome'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('rules-ru-preset-confirm')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Напрямую: 1'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('rules-selected-app-com.yandex.browser')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('rules-selected-app-com.android.chrome')),
+      findsNothing,
+    );
+
+    await tester.dragUntilVisible(
+      ruPresets,
+      find.byType(Scrollable).first,
+      const Offset(0, 180),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('rules-ru-apps-vpn-preset')));
+    await tester.pumpAndSettle();
+    expect(find.text('Только RU-приложения через VPN'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('rules-ru-preset-confirm')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Через VPN: 1'), findsOneWidget);
+
+    final picker = find.byKey(const ValueKey('rules-selected-app-pick'));
+    await tester.dragUntilVisible(
+      picker,
+      find.byType(Scrollable).first,
+      const Offset(0, -180),
+    );
+    await tester.tap(picker);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('rules-selected-app-filter-ru')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(
+        const ValueKey('rules-selected-app-option-com.yandex.browser'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const ValueKey('rules-selected-app-option-com.android.chrome'),
+      ),
+      findsNothing,
+    );
+  });
+
   testWidgets('rules app picker adds a known Android application',
       (tester) async {
     await tester.pumpWidget(
@@ -6647,19 +6939,43 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('rules-selected-app-pick')));
+    final openPicker = find.byKey(const ValueKey('rules-selected-app-pick'));
+    await tester.dragUntilVisible(
+      openPicker,
+      find.byType(Scrollable).first,
+      const Offset(0, -180),
+    );
+    await tester.ensureVisible(openPicker);
+    await tester.pumpAndSettle();
+    await tester.tap(openPicker);
     await tester.pump(const Duration(seconds: 4));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('rules-selected-app-picker-sheet')),
         findsOneWidget);
 
+    final telegramOption = find.byKey(
+      const ValueKey(
+        'rules-selected-app-option-org.telegram.messenger',
+      ),
+    );
     await tester.tap(
-      find.byKey(
-        const ValueKey(
-          'rules-selected-app-option-org.telegram.messenger',
+      find.descendant(of: telegramOption, matching: find.byType(InkWell)),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('rules-selected-app-picker-sheet')),
+      findsNothing,
+    );
+    await Scrollable.ensureVisible(
+      tester.element(
+        find.byKey(
+          const ValueKey('rules-section-selected-apps'),
+          skipOffstage: false,
         ),
       ),
+      alignment: 0.5,
+      duration: Duration.zero,
     );
     await tester.pumpAndSettle();
 
@@ -6732,7 +7048,20 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('rules-selected-app-pick')));
+    final nativePicker = find.byKey(
+      const ValueKey('rules-selected-app-pick'),
+    );
+    final rulesScrollable = find
+        .ancestor(of: nativePicker, matching: find.byType(Scrollable))
+        .first;
+    await tester.dragUntilVisible(
+      nativePicker,
+      rulesScrollable,
+      const Offset(0, -180),
+    );
+    await tester.ensureVisible(nativePicker);
+    await tester.pumpAndSettle();
+    await tester.tap(nativePicker);
     await tester.pumpAndSettle();
 
     final nativeOption = find.byKey(
@@ -6816,12 +7145,11 @@ void main() {
     );
 
     final reopenPicker = find.byKey(const ValueKey('rules-selected-app-pick'));
-    await tester.dragUntilVisible(
-      reopenPicker,
-      find.byType(Scrollable).first,
-      const Offset(0, -180),
+    await Scrollable.ensureVisible(
+      tester.element(reopenPicker),
+      alignment: 0.5,
+      duration: Duration.zero,
     );
-    await tester.ensureVisible(reopenPicker);
     await tester.pumpAndSettle();
     await tester.tap(reopenPicker);
     await tester.pumpAndSettle();
@@ -8096,6 +8424,155 @@ void main() {
     expect(bootstrapper.lastPreferredNodeCode, 'de-fra');
     expect(bootstrapper.lastPreferredVariantId, 'mini-3');
     expect(store.state.preferredVariantId, 'mini-3');
+  });
+
+  testWidgets(
+      'selected city shows active, available and unavailable variant status',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(408, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final observedAt = DateTime.now().millisecondsSinceEpoch;
+    final runtimeCalls = <String>[];
+    _installReadyRuntimeBridgeMock(
+      calls: runtimeCalls,
+      variantProbeSnapshot: <String, Object?>{
+        'observedAtMs': observedAt,
+        'activeVariantId': 'mini',
+        'results': <Object?>[
+          <String, Object?>{
+            'id': 'direct',
+            'status': 'unavailable',
+            'errorCategory': 'url_test_failed',
+          },
+          <String, Object?>{
+            'id': 'mini',
+            'status': 'available',
+            'latencyMs': 74,
+            'measuredAtMs': observedAt,
+            'errorCategory': '',
+          },
+        ],
+        'errorCategory': '',
+      },
+    );
+    const catalog = ClientLocationsCatalog(
+      auto: ClientLocationAuto(enabled: true, currentCode: 'de-fra'),
+      countries: <ClientLocationCountry>[
+        ClientLocationCountry(
+          code: 'de',
+          country: 'Germany',
+          cities: <ClientLocationCity>[
+            ClientLocationCity(
+              code: 'de-fra',
+              city: 'Frankfurt',
+              healthScore: 0.95,
+              latencyMs: 31,
+              premium: true,
+              load: 0.24,
+              variants: <ClientLocationVariant>[
+                ClientLocationVariant(
+                  id: 'direct',
+                  label: 'Обычный',
+                  description: 'Прямое подключение',
+                  available: true,
+                ),
+                ClientLocationVariant(
+                  id: 'mini',
+                  label: 'Белые списки',
+                  description: 'Для ограниченных сетей',
+                  available: true,
+                ),
+                ClientLocationVariant(
+                  id: 'mini-2',
+                  label: 'Белые списки тип 2',
+                  description: 'Для ограниченных сетей',
+                  available: true,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+      freePoolCode: '',
+      profileRevision: 'variant-status-rev',
+      transportProfile: 'ru_bridge_relay',
+      query: '',
+    );
+    final store = _FakeClientExperienceStore(
+      PokrovClientExperienceState.fromJson(<String, dynamic>{
+        'preferredNodeCode': 'de-fra',
+        'preferredVariantId': 'mini',
+      }),
+    );
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'variant-status-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      locationsCatalog: catalog,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        clientExperienceStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-locations');
+    await tester.pumpAndSettle();
+    final cityRow = find.byKey(
+      const ValueKey('locations-catalog-city-de-fra'),
+    );
+    await tester.ensureVisible(cityRow);
+    final cityPressSurface = find.ancestor(
+      of: cityRow,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget.runtimeType.toString() == 'PokrovSettingsRowPressSurface',
+      ),
+    );
+    final dynamic cityPressSurfaceWidget = tester.widget(cityPressSurface);
+    cityPressSurfaceWidget.onTap();
+    await tester.pumpAndSettle();
+
+    expect(
+        find.byKey(const ValueKey('location-variant-refresh')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('location-variant-status-mini')),
+      findsOneWidget,
+    );
+    expect(find.text('74 мс'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('location-variant-active-mini')),
+      findsOneWidget,
+    );
+    expect(find.text('Сейчас работает'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('location-variant-freshness-mini')),
+      findsOneWidget,
+    );
+    expect(find.text('сейчас'), findsWidgets);
+    expect(
+      find.byKey(const ValueKey('location-variant-status-direct')),
+      findsOneWidget,
+    );
+    expect(find.text('Недоступно'), findsNWidgets(2));
+
+    final retryMini = find.byKey(
+      const ValueKey('location-variant-refresh-mini'),
+    );
+    await tester.ensureVisible(retryMini);
+    await tester.tap(retryMini);
+    await tester.pumpAndSettle();
+    expect(
+      runtimeCalls
+          .where((call) => call == 'runtimeEngine.measureLocationVariants'),
+      hasLength(2),
+    );
   });
 
   testWidgets('location refresh spinner stays out of the Auto card',

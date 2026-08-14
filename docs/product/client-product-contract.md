@@ -166,6 +166,14 @@ Product rules for that choice:
   independently so large Huawei catalogs do not disappear behind slow bitmap
   work. Curated fallback candidates remain available when the native catalog
   is unavailable
+- Android locally matches installed launcher packages against the reviewed,
+  versioned exact-ID RU catalog. Known RU apps sort first and can be filtered;
+  an unknown app remains searchable and is never classified from its display
+  name alone. Neither the installed list nor the matches leave the device
+- two explicit confirmed presets are available: `RU-приложения напрямую,
+  остальные через VPN` materializes Android `Except selected apps`; `Только
+  выбранные RU-приложения через VPN` materializes `Only selected apps`. The
+  preview names every matched app and an empty match cannot be applied silently
 - manual process/package identifiers remain available only behind an explicit
   manual fallback row
 - the chosen route mode must persist per device and remain editable later from a dedicated route-mode screen
@@ -225,6 +233,18 @@ After activation:
   compact `Обычный` / `Белые списки` choice. The selected stable variant id is
   device-local and persists alongside the explicit preferred node; it is
   cleared when the person returns to `Автоматически`
+- for the selected city, Android probes the exact already-staged private
+  URL-test group and projects only safe variant ID, availability, measured
+  latency/freshness and active variant ID. Endpoint/tag/key/profile material
+  never crosses the host bridge. The sheet distinguishes `Выбрано` from
+  `Сейчас работает`, shows red unavailable state, fresh/stale age, supports
+  refresh-all and per-row retry, and sorts available/fast before unknown,
+  stale and unavailable. A URL-test is reachability evidence for that outbound,
+  not proof of Chrome or another app's egress
+- when the selected variant itself fails, Android keeps the TUN fail-closed for
+  one bounded all-variant URL-test before stopping. The sheet may then reuse
+  only the exact-catalog in-memory safe snapshot for two minutes, with no
+  `Сейчас работает` claim after teardown; raw topology is never persisted
 - when multiple variants exist, the city row itself names `Обычный / Белые
   списки` (or an equally explicit short list) before the person taps it. A bare
   numeric variant count is not sufficient discovery and must not make the live
@@ -296,7 +316,11 @@ After activation:
 - referral grants `+10 days` only to the referrer after the friend's first
   successful payment and hold; install, trial and connection grant nothing
 - Rewards Hub may show enabled operator-authored promo slots from
-  `GET /api/client/promo-slots?surface=app`; unsafe schemes stay inactive and
+  `GET /api/client/promo-slots?surface=app`; every eligible server-prioritized
+  slot remains visible rather than being silently truncated. The shared
+  renderer accepts first-party static/animated/video media, poster/fallback,
+  `logo|banner|media_only`, optional copy/CTA, server-aligned countdown and
+  dismissible or mandatory policy. External media hosts, unsafe schemes and
   third-party ad SDKs remain forbidden
 - the paid roulette is visible from backend state, runs at most once per `336`
   hours and may execute only when `eligible && can_spin`; calendar remains an
@@ -327,6 +351,10 @@ Support contract rules:
 - the AI helper handles WARP, location, route-mode, and system-permission
   recovery before human escalation. A transport failure is shown as a retryable
   request failure, not as a fabricated or missing-answer response
+- the ticket screen exposes `Feedback-бот в Telegram` as one visible compact
+  action rather than hiding the fallback in an overflow menu. The assistant
+  remains first, diagnostics require confirmation, and neither the AI nor a
+  FAQ answer opens the bot or creates a ticket automatically
 - AI continuity remains sheet-local; retry reuses the one visible question,
   while closing and reopening the sheet begins a fresh assistant conversation
 

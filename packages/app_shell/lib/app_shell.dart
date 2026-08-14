@@ -19,6 +19,7 @@ import 'package:pokrov_platform_contracts/platform_contracts.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_context/support_context.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:video_player/video_player.dart';
 
 import 'app_first_runtime_bootstrap.dart';
 import 'client_routing_preferences.dart';
@@ -52,6 +53,7 @@ part 'src/features/profile/profile_sheets.dart';
 part 'src/features/profile/access_labels.dart';
 part 'src/features/rewards/rewards_hub.dart';
 part 'src/features/rules/rules_surface.dart';
+part 'src/features/rules/ru_app_catalog.dart';
 part 'src/features/rules/routing_controls.dart';
 part 'src/features/rules/rules_helpers.dart';
 part 'src/features/rules/route_labels.dart';

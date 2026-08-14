@@ -19,6 +19,7 @@ void _showRewardsHubSheet(
   required Future<AppFirstBonusRewardResult?> Function() onSpinWheel,
   required VoidCallback onCheckInCalendar,
   required void Function(String label, String value) onOpenHandoff,
+  required void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent,
 }) {
   showModalBottomSheet<void>(
     context: context,
@@ -33,6 +34,7 @@ void _showRewardsHubSheet(
       onSpinWheel: onSpinWheel,
       onCheckInCalendar: onCheckInCalendar,
       onOpenHandoff: onOpenHandoff,
+      onPromoEvent: onPromoEvent,
     ),
   );
 }
@@ -46,6 +48,7 @@ class _RewardsHubSheet extends StatefulWidget {
     required this.onSpinWheel,
     required this.onCheckInCalendar,
     required this.onOpenHandoff,
+    required this.onPromoEvent,
   });
 
   final AppFirstBonusSummary? Function() summaryGetter;
@@ -55,6 +58,7 @@ class _RewardsHubSheet extends StatefulWidget {
   final Future<AppFirstBonusRewardResult?> Function() onSpinWheel;
   final VoidCallback onCheckInCalendar;
   final void Function(String label, String value) onOpenHandoff;
+  final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
 
   @override
   State<_RewardsHubSheet> createState() => _RewardsHubSheetState();
@@ -115,7 +119,7 @@ class _RewardsHubSheetState extends State<_RewardsHubSheet> {
         ? 'В пробном периоде бонусов нет. Они откроются после первой оплаты.'
         : rewardAccess.message.trim();
     final promoSlots = summary?.promoSlots ?? AppFirstPromoSlots.empty;
-    final showPromoSlots = promoSlots.visibleSlots.isNotEmpty;
+    final showPromoSlots = promoSlots.visibleForPlacement('rewards').isNotEmpty;
     return SafeArea(
       top: false,
       // Signature-arc pull-to-refresh: same arc language as the profile list.
@@ -207,6 +211,7 @@ class _RewardsHubSheetState extends State<_RewardsHubSheet> {
                     _RewardsPromoSlotsSection(
                       promoSlots: promoSlots,
                       onOpenHandoff: widget.onOpenHandoff,
+                      onPromoEvent: widget.onPromoEvent,
                     ),
                     const SizedBox(height: 12),
                   ],
@@ -907,14 +912,16 @@ class _RewardsPromoSlotsSection extends StatelessWidget {
   const _RewardsPromoSlotsSection({
     required this.promoSlots,
     required this.onOpenHandoff,
+    required this.onPromoEvent,
   });
 
   final AppFirstPromoSlots promoSlots;
   final void Function(String label, String value) onOpenHandoff;
+  final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
 
   @override
   Widget build(BuildContext context) {
-    final slots = promoSlots.visibleSlots;
+    final slots = promoSlots.visibleForPlacement('rewards');
     final p = PokrovPalette.of(context);
     return Container(
       key: const ValueKey('rewards-promo-slots-section'),
@@ -956,103 +963,24 @@ class _RewardsPromoSlotsSection extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           ...slots.map(
-            (slot) => _RewardsPromoSlotRow(
+            (slot) => Padding(
               key: ValueKey('rewards-promo-slot-${slot.slotId}'),
-              slot: slot,
-              onOpenHandoff: onOpenHandoff,
+              padding: const EdgeInsets.only(top: 10),
+              child: _HomeAdminPromoCard(
+                slot: slot,
+                keyPrefix: 'rewards-promo-slot-${slot.slotId}',
+                onOpenHandoff: (label, value) {
+                  Navigator.of(context).maybePop();
+                  onOpenHandoff(label, value);
+                },
+                onPromoEvent: onPromoEvent,
+              ),
             ),
           ),
         ],
       ),
     );
   }
-}
-
-class _RewardsPromoSlotRow extends StatelessWidget {
-  const _RewardsPromoSlotRow({
-    super.key,
-    required this.slot,
-    required this.onOpenHandoff,
-  });
-
-  final AppFirstPromoSlot slot;
-  final void Function(String label, String value) onOpenHandoff;
-
-  @override
-  Widget build(BuildContext context) {
-    final safeHref = _safePromoSlotHref(slot.ctaHref);
-    final ctaLabel = slot.ctaLabel.trim().isEmpty ? 'Открыть' : slot.ctaLabel;
-    final p = PokrovPalette.of(context);
-    return Container(
-      margin: const EdgeInsets.only(top: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: p.surfaceMuted,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: p.line),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  slot.title.trim().isEmpty ? 'POKROV' : slot.title,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: p.ink,
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-                if (slot.body.trim().isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    slot.body,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: p.muted,
-                          height: 1.3,
-                        ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          OutlinedButton(
-            key: ValueKey('rewards-promo-slot-cta-${slot.slotId}'),
-            onPressed: safeHref == null
-                ? null
-                : () {
-                    Navigator.of(context).maybePop();
-                    onOpenHandoff('download', safeHref.toString());
-                  },
-            child: Text(ctaLabel),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-Uri? _safePromoSlotHref(String value) {
-  final uri = Uri.tryParse(value.trim());
-  if (uri == null || !uri.hasScheme) {
-    return null;
-  }
-  final scheme = uri.scheme.toLowerCase();
-  if (scheme != 'https' && scheme != 'tg') {
-    return null;
-  }
-  if (scheme == 'tg') {
-    return uri;
-  }
-  final host = uri.host.toLowerCase();
-  if (host == 't.me' ||
-      host == 'pokrov.space' ||
-      host.endsWith('.pokrov.space')) {
-    return uri;
-  }
-  return null;
 }
 
 class _RewardsReferralCard extends StatefulWidget {

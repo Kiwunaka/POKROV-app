@@ -84,6 +84,7 @@ class RuntimeHostBridge(
             METHOD_LIST_INSTALLED_APPS -> listInstalledApps(result)
             METHOD_CURRENT_WIFI -> result.success(currentWifi())
             METHOD_MEASURE_NODE_LATENCIES -> measureNodeLatencies(call, result)
+            METHOD_MEASURE_LOCATION_VARIANTS -> measureLocationVariants(call, result)
             METHOD_REQUEST_WIFI_PERMISSION ->
                 result.success(requestWifiPermission())
             METHOD_OPEN_VPN_SETTINGS -> result.success(openVpnSettings())
@@ -745,6 +746,47 @@ class RuntimeHostBridge(
         }
     }
 
+    private fun measureLocationVariants(call: MethodCall, result: MethodChannel.Result) {
+        val requestedVariantId = call.argument<String>("variantId")
+            ?.trim()
+            ?.lowercase()
+            .orEmpty()
+        val environment = AndroidRuntimeState.resolveEnvironment(activity)
+            ?: run {
+                result.success(AndroidVariantAvailabilityProbe.probe("", requestedVariantId))
+                return
+            }
+        val expectedFile = File(environment.configDirectory, "managed-profile.json")
+        val stagedPath = AndroidRuntimeState.stagedConfigPath().orEmpty()
+        Thread {
+            val snapshot = runCatching {
+                // A terminal egress failure deliberately clears the reusable
+                // staged path. The canonical private file may still be read to
+                // match a short-lived exact-catalog status cache; probe() cannot
+                // stage or reactivate it and returns unavailable on a mismatch.
+                val stagedFile = if (stagedPath.isBlank()) expectedFile else File(stagedPath)
+                if (
+                    !stagedFile.isFile ||
+                    stagedFile.canonicalPath != expectedFile.canonicalPath ||
+                    stagedFile.length() !in 1..MAX_VARIANT_PROBE_CONFIG_BYTES
+                ) {
+                    return@runCatching AndroidVariantAvailabilityProbe.probe("", requestedVariantId)
+                }
+                AndroidVariantAvailabilityProbe.probe(
+                    stagedFile.readText(Charsets.UTF_8),
+                    requestedVariantId,
+                )
+            }.getOrElse {
+                AndroidVariantAvailabilityProbe.probe("", requestedVariantId)
+            }
+            activity.runOnUiThread { result.success(snapshot) }
+        }.apply {
+            name = "pokrov-location-variant-probe"
+            isDaemon = true
+            start()
+        }
+    }
+
     private fun listInstalledApps(result: MethodChannel.Result) {
         Thread {
             val apps = runCatching { installedLauncherApps() }.getOrDefault(emptyList())
@@ -830,6 +872,7 @@ class RuntimeHostBridge(
     companion object {
         private const val LOG_TAG = "PokrovRuntimeBridge"
         private const val MAX_INSTALLED_APP_ICONS = 80
+        private const val MAX_VARIANT_PROBE_CONFIG_BYTES = 4L * 1024L * 1024L
         const val CHANNEL_NAME = "space.pokrov/runtime_engine"
         const val REQUEST_VPN_PERMISSION = 14071
         const val EXTRA_DEBUG_RUNTIME_PATH = "space.pokrov.debug.RUNTIME_PATH"
@@ -848,6 +891,8 @@ class RuntimeHostBridge(
         private const val METHOD_CURRENT_WIFI = "runtimeEngine.currentWifi"
         private const val METHOD_MEASURE_NODE_LATENCIES =
             "runtimeEngine.measureNodeLatencies"
+        private const val METHOD_MEASURE_LOCATION_VARIANTS =
+            "runtimeEngine.measureLocationVariants"
         private const val METHOD_REQUEST_WIFI_PERMISSION =
             "runtimeEngine.requestWifiPermission"
         private const val METHOD_OPEN_VPN_SETTINGS = "runtimeEngine.openVpnSettings"

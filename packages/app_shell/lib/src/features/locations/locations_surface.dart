@@ -133,6 +133,10 @@ class _LocationsSectionState extends State<_LocationsSection> {
                 widget.preferredNodeCode.trim().toLowerCase()
             ? widget.preferredVariantId
             : '',
+        runtimeProbeEnabled:
+            widget.appContext.hostPlatform == HostPlatform.android &&
+                entry.city.code.trim().toLowerCase() ==
+                    widget.preferredNodeCode.trim().toLowerCase(),
       ),
     );
     if (selected != null && mounted) {
@@ -605,16 +609,195 @@ class _AutoLocationCard extends StatelessWidget {
   }
 }
 
-class _LocationVariantSheet extends StatelessWidget {
+class _LocationVariantSheet extends StatefulWidget {
   const _LocationVariantSheet({
     required this.cityName,
     required this.variants,
     required this.selectedVariantId,
+    this.runtimeProbeEnabled = false,
   });
 
   final String cityName;
   final List<ClientLocationVariant> variants;
   final String selectedVariantId;
+  final bool runtimeProbeEnabled;
+
+  @override
+  State<_LocationVariantSheet> createState() => _LocationVariantSheetState();
+}
+
+class _LocationVariantSheetState extends State<_LocationVariantSheet> {
+  PokrovLocationVariantProbeSnapshot? _snapshot;
+  String? _checkingVariantId;
+  bool _hasSuccessfulFullProbe = false;
+
+  bool get _checking => _checkingVariantId != null;
+
+  bool _checkingFor(ClientLocationVariant variant) =>
+      _checkingVariantId == '' || _checkingVariantId == variant.id;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.runtimeProbeEnabled) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          unawaited(_refresh());
+        }
+      });
+    }
+  }
+
+  Future<void> _refresh({String variantId = ''}) async {
+    if (_checking || !widget.runtimeProbeEnabled) {
+      return;
+    }
+    setState(() => _checkingVariantId = variantId);
+    final snapshot = await measurePokrovLocationVariants(
+      HostPlatform.android,
+      variantId: variantId,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      if (variantId.isEmpty || _snapshot == null) {
+        _snapshot = snapshot;
+      } else {
+        final previous = _snapshot!;
+        _snapshot = PokrovLocationVariantProbeSnapshot(
+          results: <String, PokrovLocationVariantProbeResult>{
+            ...previous.results,
+            ...snapshot.results,
+          },
+          activeVariantId: snapshot.activeVariantId.isEmpty
+              ? previous.activeVariantId
+              : snapshot.activeVariantId,
+          observedAt: snapshot.observedAt ?? previous.observedAt,
+          errorCategory: snapshot.errorCategory,
+        );
+      }
+      if (variantId.isEmpty &&
+          snapshot.errorCategory.isEmpty &&
+          snapshot.results.isNotEmpty) {
+        _hasSuccessfulFullProbe = true;
+      }
+      _checkingVariantId = null;
+    });
+  }
+
+  PokrovLocationVariantProbeResult? _resultFor(ClientLocationVariant variant) =>
+      _snapshot?.results[variant.id];
+
+  bool _missingFromSuccessfulProbe(ClientLocationVariant variant) =>
+      _hasSuccessfulFullProbe &&
+      _snapshot != null &&
+      _snapshot!.errorCategory.isEmpty &&
+      _snapshot!.results.isNotEmpty &&
+      !_snapshot!.results.containsKey(variant.id);
+
+  int _sortRank(ClientLocationVariant variant) {
+    if (!variant.available || _missingFromSuccessfulProbe(variant)) {
+      return 4;
+    }
+    final status = _resultFor(variant)?.status;
+    return switch (status) {
+      PokrovLocationVariantProbeStatus.available => 0,
+      PokrovLocationVariantProbeStatus.stale => 2,
+      PokrovLocationVariantProbeStatus.unavailable => 4,
+      _ => 1,
+    };
+  }
+
+  List<ClientLocationVariant> get _sortedVariants {
+    final indexed = widget.variants.indexed.toList(growable: false);
+    indexed.sort((left, right) {
+      final rank = _sortRank(left.$2).compareTo(_sortRank(right.$2));
+      if (rank != 0) {
+        return rank;
+      }
+      final leftLatency = _resultFor(left.$2)?.latencyMs ?? 1 << 30;
+      final rightLatency = _resultFor(right.$2)?.latencyMs ?? 1 << 30;
+      final latency = leftLatency.compareTo(rightLatency);
+      return latency != 0 ? latency : left.$1.compareTo(right.$1);
+    });
+    return indexed.map((item) => item.$2).toList(growable: false);
+  }
+
+  String _statusText(ClientLocationVariant variant) {
+    if (!variant.available || _missingFromSuccessfulProbe(variant)) {
+      return 'Недоступно';
+    }
+    if (_checkingFor(variant)) {
+      return 'Проверяем…';
+    }
+    final result = _resultFor(variant);
+    return switch (result?.status) {
+      PokrovLocationVariantProbeStatus.available =>
+        '${result?.latencyMs ?? '—'} мс',
+      PokrovLocationVariantProbeStatus.unavailable => 'Недоступно',
+      PokrovLocationVariantProbeStatus.stale => 'Нужна проверка',
+      _ => widget.runtimeProbeEnabled ? 'Не проверено' : 'После выбора',
+    };
+  }
+
+  IconData _statusIcon(ClientLocationVariant variant) {
+    if (_checkingFor(variant)) {
+      return Icons.sync_rounded;
+    }
+    if (!variant.available ||
+        _missingFromSuccessfulProbe(variant) ||
+        _resultFor(variant)?.status ==
+            PokrovLocationVariantProbeStatus.unavailable) {
+      return Icons.cancel_rounded;
+    }
+    return switch (_resultFor(variant)?.status) {
+      PokrovLocationVariantProbeStatus.available => Icons.check_circle_rounded,
+      PokrovLocationVariantProbeStatus.stale => Icons.schedule_rounded,
+      _ => Icons.help_outline_rounded,
+    };
+  }
+
+  Color _statusColor(
+    ClientLocationVariant variant,
+    PokrovPaletteTokens p,
+  ) {
+    if (!variant.available ||
+        _missingFromSuccessfulProbe(variant) ||
+        _resultFor(variant)?.status ==
+            PokrovLocationVariantProbeStatus.unavailable) {
+      return p.danger;
+    }
+    return switch (_resultFor(variant)?.status) {
+      PokrovLocationVariantProbeStatus.available => p.accent,
+      PokrovLocationVariantProbeStatus.stale => p.warning,
+      _ => p.muted,
+    };
+  }
+
+  bool _selectable(ClientLocationVariant variant) =>
+      variant.available &&
+      !_missingFromSuccessfulProbe(variant) &&
+      _resultFor(variant)?.status !=
+          PokrovLocationVariantProbeStatus.unavailable;
+
+  String _freshnessText(ClientLocationVariant variant) {
+    final measuredAt = _resultFor(variant)?.measuredAt;
+    if (measuredAt == null) {
+      return '';
+    }
+    final age = DateTime.now().toUtc().difference(measuredAt.toUtc()).abs();
+    if (age < const Duration(minutes: 1)) {
+      return 'сейчас';
+    }
+    if (age < const Duration(hours: 1)) {
+      return '${age.inMinutes} мин назад';
+    }
+    if (age < const Duration(days: 1)) {
+      return '${age.inHours} ч назад';
+    }
+    return '${age.inDays} дн назад';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -633,13 +816,34 @@ class _LocationVariantSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              cityName,
-              key: const ValueKey('location-variant-sheet-title'),
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: p.ink,
-                    fontWeight: FontWeight.w800,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.cityName,
+                    key: const ValueKey('location-variant-sheet-title'),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: p.ink,
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
+                ),
+                IconButton(
+                  key: const ValueKey('location-variant-refresh'),
+                  tooltip: widget.runtimeProbeEnabled
+                      ? 'Проверить все варианты'
+                      : 'Сначала выберите эту локацию',
+                  onPressed: widget.runtimeProbeEnabled && !_checking
+                      ? () => unawaited(_refresh())
+                      : null,
+                  icon: _checking
+                      ? const SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh_rounded),
+                ),
+              ],
             ),
             const SizedBox(height: 4),
             Text(
@@ -649,8 +853,31 @@ class _LocationVariantSheet extends StatelessWidget {
                   ),
             ),
             const SizedBox(height: 14),
-            ...variants.map((variant) {
-              final selected = variant.id == selectedVariantId;
+            if (!widget.runtimeProbeEnabled) ...[
+              Text(
+                'Точный статус появится после выбора этой локации.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: p.muted,
+                    ),
+              ),
+              const SizedBox(height: 4),
+            ] else if ((_snapshot?.errorCategory ?? '').isNotEmpty) ...[
+              Text(
+                'Не удалось проверить через активный туннель. Подключите POKROV и повторите.',
+                key: const ValueKey('location-variant-probe-error'),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: p.muted,
+                    ),
+              ),
+              const SizedBox(height: 4),
+            ],
+            ..._sortedVariants.map((variant) {
+              final selected = variant.id == widget.selectedVariantId;
+              final active = variant.id == _snapshot?.activeVariantId;
+              final selectable = _selectable(variant);
+              final statusText = _statusText(variant);
+              final freshnessText = _freshnessText(variant);
+              final statusColor = _statusColor(variant, p);
               final row = Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Row(
@@ -679,17 +906,111 @@ class _LocationVariantSheet extends StatelessWidget {
                                   ?.copyWith(color: p.muted),
                             ),
                           ],
+                          const SizedBox(height: 5),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _statusIcon(variant),
+                                    size: 16,
+                                    color: statusColor,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    statusText,
+                                    key: ValueKey(
+                                      'location-variant-status-${variant.id}',
+                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelMedium
+                                        ?.copyWith(
+                                          color: statusColor,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                              if (active)
+                                Text(
+                                  'Сейчас работает',
+                                  key: ValueKey(
+                                    'location-variant-active-${variant.id}',
+                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelMedium
+                                      ?.copyWith(
+                                        color: p.accent,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                              if (selected && !active)
+                                Text(
+                                  'Выбрано',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelMedium
+                                      ?.copyWith(color: p.muted),
+                                ),
+                              if (freshnessText.isNotEmpty)
+                                Text(
+                                  freshnessText,
+                                  key: ValueKey(
+                                    'location-variant-freshness-${variant.id}',
+                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelMedium
+                                      ?.copyWith(color: p.muted),
+                                ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Icon(
-                      selected
-                          ? Icons.check_circle_rounded
-                          : variant.available
-                              ? Icons.circle_outlined
-                              : Icons.lock_outline_rounded,
-                      color: selected ? p.accent : p.muted,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (widget.runtimeProbeEnabled)
+                          IconButton(
+                            key: ValueKey(
+                              'location-variant-refresh-${variant.id}',
+                            ),
+                            tooltip: 'Повторить замер: ${variant.label}',
+                            constraints: const BoxConstraints.tightFor(
+                              width: 44,
+                              height: 44,
+                            ),
+                            onPressed: _checking
+                                ? null
+                                : () => unawaited(
+                                      _refresh(variantId: variant.id),
+                                    ),
+                            icon: _checkingFor(variant)
+                                ? const SizedBox.square(
+                                    dimension: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.refresh_rounded, size: 19),
+                          ),
+                        Icon(
+                          selected
+                              ? Icons.check_circle_rounded
+                              : selectable
+                                  ? Icons.circle_outlined
+                                  : Icons.cancel_outlined,
+                          color: selected ? p.accent : statusColor,
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -697,11 +1018,16 @@ class _LocationVariantSheet extends StatelessWidget {
               return Semantics(
                 key: ValueKey('location-variant-${variant.id}'),
                 button: true,
-                enabled: variant.available,
+                enabled: selectable,
                 selected: selected,
                 label: variant.label,
-                value: variant.available ? 'Доступно' : 'Недоступно',
-                child: variant.available
+                value: [
+                  statusText,
+                  if (freshnessText.isNotEmpty) freshnessText,
+                  if (selected) 'выбрано',
+                  if (active) 'сейчас работает',
+                ].join(', '),
+                child: selectable
                     ? PokrovSettingsRowPressSurface(
                         onTap: () => Navigator.of(context).pop(variant),
                         child: row,
@@ -771,7 +1097,8 @@ class _ClientLocationCityRow extends StatelessWidget {
     );
     final cityTitle = _locationCityDisplayName(city, country);
     final availableVariantLabels = city.variants
-        .where((variant) => variant.available && variant.label.trim().isNotEmpty)
+        .where(
+            (variant) => variant.available && variant.label.trim().isNotEmpty)
         .map((variant) => variant.label.trim())
         .toList(growable: false);
     final hasVariantChoice = availableVariantLabels.length > 1;

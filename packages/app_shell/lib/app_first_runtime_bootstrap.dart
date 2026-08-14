@@ -15,7 +15,7 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 /// package base version (without Android's build number).
 const pokrovClientVersion = String.fromEnvironment(
   'POKROV_APP_VERSION',
-  defaultValue: '1.0.6',
+  defaultValue: '1.0.7',
 );
 
 const _platformErrorCodeHeader = 'X-POKROV-Auth-Error';
@@ -1624,6 +1624,14 @@ abstract interface class AppFirstQuestEventService {
   });
 }
 
+abstract interface class AppFirstPromoEventService {
+  Future<void> reportPromoEvent({
+    required HostPlatform hostPlatform,
+    required String eventName,
+    required AppFirstPromoSlot slot,
+  });
+}
+
 class AppFirstAchievementItem {
   const AppFirstAchievementItem({
     required this.id,
@@ -1892,6 +1900,7 @@ class AppFirstPromoSlots {
     required this.remoteAvailable,
     required this.fallbackBehavior,
     required this.mode,
+    this.serverTime = '',
     required this.slots,
   });
 
@@ -1901,6 +1910,7 @@ class AppFirstPromoSlots {
     remoteAvailable: false,
     fallbackBehavior: 'contextual_only_when_remote_unavailable',
     mode: 'whitelist_slots',
+    serverTime: '',
     slots: <AppFirstPromoSlot>[],
   );
 
@@ -1909,6 +1919,7 @@ class AppFirstPromoSlots {
   final bool remoteAvailable;
   final String fallbackBehavior;
   final String mode;
+  final String serverTime;
   final List<AppFirstPromoSlot> slots;
 
   List<AppFirstPromoSlot> get visibleSlots => slots
@@ -1917,6 +1928,7 @@ class AppFirstPromoSlots {
             slot.enabled &&
             (slot.title.trim().isNotEmpty ||
                 slot.body.trim().isNotEmpty ||
+                slot.mediaUrl.trim().isNotEmpty ||
                 slot.imageUrl.trim().isNotEmpty),
       )
       .toList(growable: false);
@@ -1938,6 +1950,17 @@ class AppFirstPromoSlot {
     this.badgeLabel = '',
     this.imageUrl = '',
     this.imageLayout = 'logo',
+    this.mediaType = '',
+    this.mediaUrl = '',
+    this.posterUrl = '',
+    this.fallbackImageUrl = '',
+    this.mediaMime = '',
+    this.mediaWidth,
+    this.mediaHeight,
+    this.mediaBytes,
+    this.mediaDurationSeconds,
+    this.autoplay = false,
+    this.loop = true,
     required this.ctaLabel,
     required this.ctaHref,
     this.accentColor = '',
@@ -1950,6 +1973,9 @@ class AppFirstPromoSlot {
     this.wholeCardClickable = true,
     this.startsAt = '',
     this.endsAt = '',
+    this.countdownMode = 'none',
+    this.countdownLabel = '',
+    this.serverTimeOffsetMs = 0,
     required this.kind,
     required this.goal,
   });
@@ -1962,6 +1988,17 @@ class AppFirstPromoSlot {
   final String badgeLabel;
   final String imageUrl;
   final String imageLayout;
+  final String mediaType;
+  final String mediaUrl;
+  final String posterUrl;
+  final String fallbackImageUrl;
+  final String mediaMime;
+  final int? mediaWidth;
+  final int? mediaHeight;
+  final int? mediaBytes;
+  final int? mediaDurationSeconds;
+  final bool autoplay;
+  final bool loop;
   final String ctaLabel;
   final String ctaHref;
   final String accentColor;
@@ -1974,6 +2011,9 @@ class AppFirstPromoSlot {
   final bool wholeCardClickable;
   final String startsAt;
   final String endsAt;
+  final String countdownMode;
+  final String countdownLabel;
+  final int serverTimeOffsetMs;
   final String kind;
   final String goal;
 }
@@ -2190,6 +2230,7 @@ class AppFirstRuntimeBootstrapper
         AppFirstExperienceService,
         AppFirstAcquisitionService,
         AppFirstQuestEventService,
+        AppFirstPromoEventService,
         AppFirstNodePreferenceService,
         AppFirstClientDataService {
   AppFirstRuntimeBootstrapper({
@@ -2731,6 +2772,42 @@ class AppFirstRuntimeBootstrapper
       body: <String, Object?>{
         'runtime_phase': phase.length <= 32 ? phase : phase.substring(0, 32),
         'connected': connected,
+      },
+    );
+  }
+
+  @override
+  Future<void> reportPromoEvent({
+    required HostPlatform hostPlatform,
+    required String eventName,
+    required AppFirstPromoSlot slot,
+  }) async {
+    const allowed = <String>{'impression', 'click', 'dismiss', 'expired'};
+    final normalized = eventName.trim().toLowerCase();
+    if (!allowed.contains(normalized) || slot.slotId.trim().isEmpty) {
+      return;
+    }
+    await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: '/api/events',
+      body: <String, Object?>{
+        'event_name': 'promo_$normalized',
+        'source': 'app',
+        'meta': <String, Object?>{
+          'slot_id': slot.slotId.trim().substring(
+                0,
+                min(120, slot.slotId.trim().length),
+              ),
+          'content_id': slot.contentId.trim().substring(
+                0,
+                min(120, slot.contentId.trim().length),
+              ),
+          'placement': slot.placement.trim().substring(
+                0,
+                min(64, slot.placement.trim().length),
+              ),
+        },
       },
     );
   }
@@ -3705,6 +3782,11 @@ class AppFirstRuntimeBootstrapper
         bearerToken: bearerToken,
         hostPlatform: hostPlatform,
       );
+      final serverTime = _readText(response['server_time']);
+      final parsedServerTime = DateTime.tryParse(serverTime)?.toUtc();
+      final serverTimeOffsetMs = parsedServerTime == null
+          ? 0
+          : parsedServerTime.difference(DateTime.now().toUtc()).inMilliseconds;
       return AppFirstPromoSlots(
         surface: _readText(response['surface']).isEmpty
             ? 'app'
@@ -3713,6 +3795,7 @@ class AppFirstRuntimeBootstrapper
         remoteAvailable: response['remote_available'] == true,
         fallbackBehavior: _readText(response['fallback_behavior']),
         mode: _readText(response['mode']),
+        serverTime: serverTime,
         slots: _readListOfMaps(response['slots'])
             .map(
               (slot) => AppFirstPromoSlot(
@@ -3726,6 +3809,18 @@ class AppFirstRuntimeBootstrapper
                 imageLayout: _readText(slot['image_layout']).isEmpty
                     ? 'logo'
                     : _readText(slot['image_layout']),
+                mediaType: _readText(slot['media_type']),
+                mediaUrl: _readText(slot['media_url']),
+                posterUrl: _readText(slot['poster_url']),
+                fallbackImageUrl: _readText(slot['fallback_image_url']),
+                mediaMime: _readText(slot['media_mime']),
+                mediaWidth: _readNullableInt(slot['media_width']),
+                mediaHeight: _readNullableInt(slot['media_height']),
+                mediaBytes: _readNullableInt(slot['media_bytes']),
+                mediaDurationSeconds:
+                    _readNullableInt(slot['media_duration_seconds']),
+                autoplay: slot['autoplay'] == true,
+                loop: slot['loop'] != false,
                 ctaLabel: _readText(slot['cta_label']),
                 ctaHref: _readText(slot['cta_href']),
                 accentColor: _readText(slot['accent_color']),
@@ -3738,12 +3833,16 @@ class AppFirstRuntimeBootstrapper
                 wholeCardClickable: slot['whole_card_clickable'] != false,
                 startsAt: _readText(slot['starts_at']),
                 endsAt: _readText(slot['ends_at']),
+                countdownMode: _readText(slot['countdown_mode']).isEmpty
+                    ? 'none'
+                    : _readText(slot['countdown_mode']),
+                countdownLabel: _readText(slot['countdown_label']),
+                serverTimeOffsetMs: serverTimeOffsetMs,
                 kind: _readText(slot['kind']),
                 goal: _readText(slot['goal']),
               ),
             )
             .where((slot) => slot.slotId.isNotEmpty)
-            .take(4)
             .toList(growable: false),
       );
     } on BootstrapFailure {
@@ -4733,6 +4832,12 @@ class AppFirstRuntimeBootstrapper
     if (normalizedVariant == null) {
       throw const BootstrapFailure('Выбранный вариант подключения недоступен.');
     }
+    final baseLocationTag = baseSelectedTag.endsWith(' · Обычный')
+        ? baseSelectedTag.substring(
+            0,
+            baseSelectedTag.length - ' · Обычный'.length,
+          )
+        : baseSelectedTag;
     var selectedTag = baseSelectedTag;
     if (normalizedVariant != 'direct') {
       final endpointMatches = ruBridgeEndpoints
@@ -4743,12 +4848,6 @@ class AppFirstRuntimeBootstrapper
           'Выбранный вариант подключения недоступен.',
         );
       }
-      final baseLocationTag = baseSelectedTag.endsWith(' · Обычный')
-          ? baseSelectedTag.substring(
-              0,
-              baseSelectedTag.length - ' · Обычный'.length,
-            )
-          : baseSelectedTag;
       final expectedBridgeTags = <String>{
         '$baseLocationTag · ${endpointMatches.single.label}',
         '$baseSelectedTag · ${endpointMatches.single.label}',
@@ -4798,7 +4897,79 @@ class AppFirstRuntimeBootstrapper
       ...finalSelectorTargets.where((tag) => tag != finalSelectedTag),
     ];
     selector['default'] = finalSelectedTag;
+    _installRuntimeVariantProbe(
+      config: config,
+      outbounds: outbounds,
+      baseSelectedTag: baseSelectedTag,
+      baseLocationTag: baseLocationTag,
+      ruBridgeEndpoints: ruBridgeEndpoints,
+      targetSelectorTargets: targetSelectorTargets,
+    );
     config['outbounds'] = outbounds;
+  }
+
+  void _installRuntimeVariantProbe({
+    required Map<String, dynamic> config,
+    required List<Map<String, dynamic>> outbounds,
+    required String baseSelectedTag,
+    required String baseLocationTag,
+    required List<_SafeRuBridgeEndpoint> ruBridgeEndpoints,
+    required List<String> targetSelectorTargets,
+  }) {
+    final mappings = <Map<String, String>>[
+      <String, String>{'id': 'direct', 'outbound_tag': baseSelectedTag},
+    ];
+    for (final endpoint in ruBridgeEndpoints) {
+      final expectedTags = <String>{
+        '$baseLocationTag · ${endpoint.label}',
+        '$baseSelectedTag · ${endpoint.label}',
+      };
+      final matches = outbounds.where((outbound) {
+        final tag = _readText(outbound['tag']);
+        return _isProxyTransportOutbound(outbound) &&
+            expectedTags.contains(tag) &&
+            targetSelectorTargets.contains(tag) &&
+            _readText(outbound['detour']).isNotEmpty;
+      }).toList(growable: false);
+      if (matches.length == 1) {
+        mappings.add(<String, String>{
+          'id': endpoint.id,
+          'outbound_tag': _readText(matches.single['tag']),
+        });
+      }
+    }
+    final uniqueTags = mappings
+        .map((mapping) => mapping['outbound_tag'] ?? '')
+        .where((tag) => tag.isNotEmpty)
+        .toSet();
+    if (uniqueTags.length != mappings.length || uniqueTags.isEmpty) {
+      return;
+    }
+    final existingTags = outbounds
+        .map((outbound) => _readText(outbound['tag']))
+        .where((tag) => tag.isNotEmpty)
+        .toSet();
+    var groupTag = 'pokrov-variant-probe';
+    var suffix = 2;
+    while (existingTags.contains(groupTag)) {
+      groupTag = 'pokrov-variant-probe-$suffix';
+      suffix += 1;
+    }
+    outbounds.add(<String, dynamic>{
+      'type': 'urltest',
+      'tag': groupTag,
+      'outbounds': uniqueTags.toList(growable: false),
+      'url': 'http://cp.cloudflare.com',
+      'interval': '10m0s',
+      'tolerance': 1,
+      'interrupt_exist_connections': false,
+    });
+    final meta = Map<String, dynamic>.from(_readMap(config['_meta']));
+    meta['runtime_variant_probe'] = <String, dynamic>{
+      'group_tag': groupTag,
+      'mappings': mappings,
+    };
+    config['_meta'] = meta;
   }
 
   List<_SafeRuBridgeEndpoint> _readSafeRuBridgeEndpoints(
