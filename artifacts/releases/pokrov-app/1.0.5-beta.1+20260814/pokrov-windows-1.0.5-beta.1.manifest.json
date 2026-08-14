@@ -1,0 +1,60 @@
+{
+  "generated_at_utc": "2026-08-14T04:56:04.5351777Z",
+  "display_name": "POKROV",
+  "version": "1.0.5-beta.1+14",
+  "runtime_release_tag": "v1.0.3",
+  "release_output_directory": "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\apps\\windows_shell\\build\\windows\\x64\\runner\\Release",
+  "staged_bundle_directory": "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-beta-x64-1.0.5-beta.1+14",
+  "zip_path": "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-beta-x64-1.0.5-beta.1+14.zip",
+  "installer_path": "C:\\Users\\kiwun\\Documents\\ai\\POKROV-app\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-beta-x64-1.0.5-beta.1+14-setup.exe",
+  "installer_sha256": "02EA8AED7D63B8D1BB42EB3A09A22BD67C215EB80C86E3B8975FB10236D2E8F1",
+  "executable": {
+    "file_name": "pokrov_windows_beta.exe",
+    "file_description": "POKROV",
+    "product_name": "POKROV",
+    "product_version": "1.0.5-beta.1+14",
+    "is_prerelease": true
+  },
+  "required_files": [
+    {
+      "path": "pokrov_windows_beta.exe",
+      "size_bytes": 125440,
+      "sha256": "32366566CBD0FD8FE83A719A3ABF6F0165C13CAD1589F84181E7948852689C61"
+    },
+    {
+      "path": "flutter_windows.dll",
+      "size_bytes": 18511872,
+      "sha256": "1F4215E1072DD9E34F4565B74310E6771364E1470C7E92214BCA64947BD012A1"
+    },
+    {
+      "path": "pokrov-core.dll",
+      "size_bytes": 55134208,
+      "sha256": "7CC83854FC4022B759E9DE3D0942B90A24C859CFD51E3231D04E7C7A6B7D5054"
+    },
+    {
+      "path": "libcronet.dll",
+      "size_bytes": 8596992,
+      "sha256": "8EF1F8BBDE77F954AF1AE47BEE1819AC8DC2354BB0E1D4BABA3DAD9E58D7A6F7"
+    },
+    {
+      "path": "data/app.so",
+      "size_bytes": 7766960,
+      "sha256": "B4D0AC7F89BFE9F53343A933525F80304143D847057A85A25079C5F9FC46C92B"
+    },
+    {
+      "path": "data/icudtl.dat",
+      "size_bytes": 778864,
+      "sha256": "C12537022EF818991A7BFED41A76D8D6AE962FFBC0E6511AC762A5D0845E7F7C"
+    }
+  ],
+  "safe_claims": [
+    "The Windows beta shell uses the desktop FFI runtime lane.",
+    "The local release build bundles POKROV Core 1.0.3 and its pinned libcronet.dll dependency next to the Flutter runner.",
+    "Local packaging produces an unsigned beta installer EXE and portable ZIP; share only through gated beta access with the SmartScreen warning above."
+  ],
+  "blocked_on": [
+    "trusted Windows signing material is not wired into this lane",
+    "trusted installer signing is not implemented",
+    "public download hosting and product cutover remain external"
+  ]
+}
