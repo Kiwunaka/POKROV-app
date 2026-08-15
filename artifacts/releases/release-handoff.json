@@ -7,8 +7,8 @@
   "version": "1.0.10",
   "artifact_dir": "E:/POKROV-release-staging/1.0.10",
   "generated_at": "2026-08-15T13:49:40.8794107+03:00",
-  "updated_at": "2026-08-15T13:49:40.8794107+03:00",
-  "release_state": "public_stable_published_github_digest_verified_runtime_sync_pending",
+  "updated_at": "2026-08-15T13:56:59.3697670+03:00",
+  "release_state": "public_stable_published_github_digest_verified_runtime_synced",
   "built_from_client_commit": "43af4a68768569ff36f3b334339801c0d9e35de4",
   "platform_source_commit": "c56778715b7c7bddbee438d4adb204b45a6865bc",
   "github_release": {
@@ -108,8 +108,8 @@
   "cutover": {
     "runtime_sync_allowed": true,
     "runtime_sync_required": true,
-    "runtime_sync_result": "PENDING: exact v1.0.10 handoff not yet applied to production",
-    "anonymous_download_smoke": "PASS: public GitHub release exposes exact eight assets; runtime smoke pending",
+    "runtime_sync_result": "PASS: exact v1.0.10 handoff applied; portal API/bot restart, static deploy and five-repeat post-deploy verification passed",
+    "anonymous_download_smoke": "PASS: all eight anonymous GitHub asset URLs return HTTP 200 with exact size; authenticated GitHub digest matches local SHA-256",
     "public_publication_allowed": true,
     "public_publication_marker": "GO for stable direct publication",
     "public_announcement_allowed": true,
@@ -123,7 +123,7 @@
     "Android emergency fast route reaches healthy selected-outbound proof; two/three-hop topology and fail-closed behavior verified; LDPlayer Reality data-plane is BLOCKED_BY_ACCESS and matches normal-profile control",
     "Windows setup and portable build plus manifest/hash checks PASS with unsigned warning",
     "GitHub stable/latest release reports exact eight-asset size and SHA-256",
-    "brain release handoff and post-deploy runtime smoke pending"
+    "brain release handoff, backend restart, static deploy, five-repeat readiness and authenticated/anonymous runtime catalog smoke PASS"
   ],
   "manual_gates_before_stronger_claims": [
     "Huawei exact-final endurance, WARP, per-app and Wi-Fi/LTE proof",
