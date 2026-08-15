@@ -244,6 +244,8 @@ class PokrovAssistantRedactor {
     'os_version',
     'route_mode',
     'connection_status',
+    'connection_active',
+    'current_location_label',
     'entitlement_state',
     'recent_error_category',
     'selected_region',

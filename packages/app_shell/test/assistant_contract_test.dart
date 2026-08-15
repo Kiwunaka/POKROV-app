@@ -38,6 +38,8 @@ void main() {
         'platform': 'windows',
         'route_mode': 'all_except_ru',
         'connection_status': 'ready',
+        'connection_active': true,
+        'current_location_label': 'Франкфурт · Белые списки',
         'raw_config': '{"outbounds":[{"server":"10.0.0.1"}]}',
         'subscription_url': 'vless://secret@example',
         'token': 'token=abc',
@@ -47,6 +49,11 @@ void main() {
 
     expect(attachment.safeDiagnostics['platform'], 'windows');
     expect(attachment.safeDiagnostics['route_mode'], 'all_except_ru');
+    expect(attachment.safeDiagnostics['connection_active'], isTrue);
+    expect(
+      attachment.safeDiagnostics['current_location_label'],
+      'Франкфурт · Белые списки',
+    );
     expect(attachment.safeDiagnostics.containsKey('raw_config'), isFalse);
     expect(
       attachment.safeDiagnostics.containsKey('subscription_url'),

@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-08-14
+Last updated: 2026-08-15
 
 ## Document Status
 
@@ -297,7 +297,10 @@ After activation:
 
 - purchase and renewal stay available from the app
 - the client continues payment through the canonical hosted checkout on `https://pay.pokrov.space/checkout/`
-- checkout opens in the external browser or external application rather than native store billing in this wave
+- Android/iOS checkout, cabinet, and documentation continue in an OS-backed
+  in-app browser view with a visible origin and app-level back path; Telegram
+  and other native schemes still open their owning app. Desktop keeps the
+  external browser. This is hosted checkout, not native store billing.
 - Telegram purchase continuation may remain as a fallback path, not the default CTA
 - public acquisition outside the app is checkout-first on `marketing`, while the cabinet stays a continuation surface rather than a second acquisition page
 
@@ -497,7 +500,7 @@ Release continuity rules:
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
 - stable candidates after installed `1.0.5` beta builds use a strictly newer
-  semantic version (`1.0.8` is current) so beta users are prompted
+  semantic version (`1.0.9` is current) so existing users are prompted
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates
@@ -510,8 +513,19 @@ Release continuity rules:
   package. Local builds use the current Android package base-version fallback `1.0.2`;
   production packaging passes that value explicitly through `POKROV_APP_VERSION`.
 - local non-release builds keep updater and source-code surfaces disabled instead of falling back to a personal repository URL
-- an update prompt or tap may hand off only to `https://github.com/Kiwunaka/pokrov/releases/download/<tag>/<asset>` when metadata also carries a 64-hex SHA-256 and a positive byte size; alternate hosts, repositories, URL authority fields, query strings, and fragments fail closed
-- this is an external-browser handoff boundary, not downloaded-byte verification: the app does not receive or hash the browser's bytes, so checksum, install, signing, and exact-candidate runtime proof remain manual release gates
+- an update prompt or tap may use only
+  `https://github.com/Kiwunaka/pokrov/releases/download/<tag>/<asset>.apk`
+  when metadata also carries a 64-hex SHA-256 and a positive bounded byte size;
+  alternate initial hosts, repositories, URL authority fields, query strings,
+  fragments, and non-APK assets fail closed
+- Android downloads into app-private cache, permits only bounded HTTPS
+  redirects to GitHub-owned asset hosts, and verifies exact byte size plus
+  SHA-256 before exposing the file through a non-exported `FileProvider`; only
+  then does it open Android's required package-installer confirmation. Android
+  8+ may first require the owner to grant POKROV install-source permission.
+  Windows continues through the trusted browser download lane.
+- downloaded-byte verification does not replace production-signing, install,
+  runtime, or exact-candidate release proof
 - release handoff must keep app, bot, and authenticated web surfaces aligned with the same runtime `APP_*` URLs
 
 ## Branding Requirements

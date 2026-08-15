@@ -15,7 +15,7 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 /// package base version (without Android's build number).
 const pokrovClientVersion = String.fromEnvironment(
   'POKROV_APP_VERSION',
-  defaultValue: '1.0.8',
+  defaultValue: '1.0.9',
 );
 
 const _platformErrorCodeHeader = 'X-POKROV-Auth-Error';
@@ -1879,7 +1879,7 @@ class AppFirstBonusFeatureState {
       return 'Можно использовать';
     }
     if (!eligible && reason == 'active_paid_required') {
-      return 'В пробном периоде бонусов нет';
+      return 'Откроется после первой оплаты';
     }
     if (isVisible && state == 'cooldown') {
       return nextActionAt.trim().isEmpty
@@ -2151,8 +2151,9 @@ class ClientAppUpdateInfo {
   static const _canonicalReleaseOwner = 'kiwunaka';
   static const _canonicalReleaseRepository = 'pokrov';
 
-  /// Validates metadata for an external browser handoff. This does not verify
-  /// the bytes that the browser eventually downloads.
+  /// Validates server metadata before any download starts. The Android host
+  /// separately verifies the exact size and SHA-256 before opening the system
+  /// package installer.
   Uri? get trustedHandoffUri {
     if (!_sha256Pattern.hasMatch(sha256.trim()) || size <= 0) {
       return null;
@@ -2174,7 +2175,9 @@ class ClientAppUpdateInfo {
         segments[2].toLowerCase() != 'releases' ||
         segments[3].toLowerCase() != 'download' ||
         segments[4].trim().isEmpty ||
-        segments[5].trim().isEmpty) {
+        segments[5].trim().isEmpty ||
+        (platform.trim().toLowerCase() == 'android' &&
+            !segments[5].toLowerCase().endsWith('.apk'))) {
       return null;
     }
     return uri;

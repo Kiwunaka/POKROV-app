@@ -21,6 +21,11 @@ String _normalizeSeedUrl(String value, String fallback) {
   return candidate.endsWith('/') ? candidate : '$candidate/';
 }
 
+const _seedMainBotUsername = String.fromEnvironment(
+  'POKROV_MAIN_BOT_USERNAME',
+  defaultValue: 'pokrov_vpnbot',
+);
+
 class SeedAppContext {
   const SeedAppContext({
     required this.hostPlatform,
@@ -36,6 +41,7 @@ class SeedAppContext {
     required this.cabinetUrl,
     required this.redeemHint,
     required this.managedProfileSeed,
+    this.mainBotUsername = _seedMainBotUsername,
   });
 
   final HostPlatform hostPlatform;
@@ -51,6 +57,7 @@ class SeedAppContext {
   final String cabinetUrl;
   final String redeemHint;
   final ManagedProfilePayload managedProfileSeed;
+  final String mainBotUsername;
 
   List<SeedTab> get defaultTabs => const [
         SeedTab.protection,

@@ -29,9 +29,11 @@ preserving the selected visual references from
    bundled runtime defaults even when the backend has not returned managed WARP
    material yet. Backend endpoints remain useful for consent, lifecycle events,
    and optional managed material.
-5. Telegram bonus remains a paid loyalty mechanic, not a Home competitor.
-   Trial copy says rewards open after payment. The tone is soft reward/gold,
-   not casino, urgency, neon, or pressure.
+5. The one-time Telegram `+5 days` acquisition reward is available before or
+   after payment, but it is not a Home competitor. Trial copy keeps that action
+   available and gates only roulette, calendar, and referral rewards behind the
+   first payment. The tone is soft reward/gold, not casino, urgency, neon, or
+   pressure.
 6. News and admin promotions exist as backend-owned surfaces, but render only
    when explicitly visible. Home may show one operator-authored remote campaign
    above navigation with image/logo or full-width banner, badge, copy, CTA,
@@ -95,9 +97,10 @@ Expected first-layer behavior:
   escape action remain reachable above the mobile keyboard.
 - Profile is grouped like Settings: access, recovery, support, settings,
   bonuses, and diagnostics.
-- Rewards keeps paid Telegram reward, referral, promo, history, roulette and
-  achievements as calm loyalty mechanics; trial sees an explicit paid gate and
-  disabled backend features do not render dead cards.
+- Rewards keeps Telegram reward, referral, promo, history, roulette and
+  achievements as calm loyalty mechanics; trial can claim Telegram `+5 days`,
+  sees an explicit paid gate on the remaining mechanics, and disabled backend
+  features do not render dead cards.
 - Rules uses consumer labels and hides raw app/process identifiers by default.
 - Locations starts with automatic selection and uses human quality labels.
 - A city with one available server variant remains one tap. A city with

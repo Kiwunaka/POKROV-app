@@ -68,6 +68,10 @@ class RuntimeHostBridge(
     private val pendingConnectGate = PendingRuntimeConnectGate()
     private var notificationPermissionRequest: PendingRuntimeConnect? = null
     private var vpnPermissionRequest: PendingRuntimeConnect? = null
+    @Volatile
+    private var updateDownloadInProgress = false
+    @Volatile
+    private var pendingVerifiedUpdate: File? = null
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
@@ -93,7 +97,63 @@ class RuntimeHostBridge(
             METHOD_UPDATE_SYSTEM_SURFACE_PREFERENCES ->
                 result.success(updateSystemSurfacePreferences(call))
             METHOD_OPEN_NOTIFICATION_SETTINGS -> result.success(openNotificationSettings())
+            METHOD_INSTALL_CLIENT_UPDATE -> installClientUpdate(call, result)
             else -> result.notImplemented()
+        }
+    }
+
+    fun resumePendingUpdateInstall() {
+        val apk = pendingVerifiedUpdate ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !activity.packageManager.canRequestPackageInstalls()
+        ) {
+            return
+        }
+        val status = AndroidClientUpdateInstaller.openInstaller(activity, apk)
+        if (status == AndroidClientUpdateInstaller.STATUS_INSTALLER_OPENED ||
+            status == AndroidClientUpdateInstaller.STATUS_FAILED
+        ) {
+            pendingVerifiedUpdate = null
+        }
+    }
+
+    private fun installClientUpdate(call: MethodCall, result: MethodChannel.Result) {
+        val request = AndroidClientUpdateInstaller.validateRequest(
+            url = call.argument<String>("url"),
+            sha256 = call.argument<String>("sha256"),
+            size = call.argument<Number>("size"),
+        )
+        if (request == null) {
+            result.success(mapOf("status" to AndroidClientUpdateInstaller.STATUS_FAILED))
+            return
+        }
+        synchronized(this) {
+            if (updateDownloadInProgress) {
+                result.success(mapOf("status" to AndroidClientUpdateInstaller.STATUS_FAILED))
+                return
+            }
+            updateDownloadInProgress = true
+        }
+        Thread {
+            val apk = runCatching {
+                AndroidClientUpdateInstaller.downloadVerified(activity, request)
+            }.getOrNull()
+            activity.runOnUiThread {
+                val status = if (apk == null) {
+                    AndroidClientUpdateInstaller.STATUS_FAILED
+                } else {
+                    AndroidClientUpdateInstaller.openInstaller(activity, apk)
+                }
+                pendingVerifiedUpdate = if (
+                    status == AndroidClientUpdateInstaller.STATUS_PERMISSION_REQUIRED
+                ) apk else null
+                updateDownloadInProgress = false
+                result.success(mapOf("status" to status))
+            }
+        }.apply {
+            name = "pokrov-client-update"
+            isDaemon = true
+            start()
         }
     }
 
@@ -902,6 +962,8 @@ class RuntimeHostBridge(
             "runtimeEngine.updateSystemSurfacePreferences"
         private const val METHOD_OPEN_NOTIFICATION_SETTINGS =
             "runtimeEngine.openNotificationSettings"
+        private const val METHOD_INSTALL_CLIENT_UPDATE =
+            "runtimeEngine.installClientUpdate"
         private const val REQUEST_WIFI_PERMISSION = 14073
         private const val REQUEST_NOTIFICATION_PERMISSION = 14074
     }

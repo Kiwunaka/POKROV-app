@@ -7,6 +7,7 @@ class PokrovSeedApp extends StatefulWidget {
     this.bootstrapper,
     this.supportTicketService,
     this.handoffLauncher,
+    this.clientUpdateInstaller,
     this.firstLaunchStore,
     this.themeModeStore = const PokrovFileThemeModeStore(),
     this.connectHintStore = const PokrovFileConnectHintStore(),
@@ -26,6 +27,7 @@ class PokrovSeedApp extends StatefulWidget {
   final ManagedProfileBootstrapper? bootstrapper;
   final SupportTicketService? supportTicketService;
   final ExternalHandoffLauncher? handoffLauncher;
+  final PokrovClientUpdateInstaller? clientUpdateInstaller;
   final PokrovFirstLaunchStore? firstLaunchStore;
   final PokrovFileThemeModeStore themeModeStore;
   final PokrovFileConnectHintStore connectHintStore;
@@ -94,6 +96,7 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
         bootstrapper: widget.bootstrapper,
         supportTicketService: widget.supportTicketService,
         handoffLauncher: widget.handoffLauncher,
+        clientUpdateInstaller: widget.clientUpdateInstaller,
         firstLaunchStore: widget.firstLaunchStore,
         connectHintStore: widget.connectHintStore,
         runtimeActionTimeout: widget.runtimeActionTimeout,
@@ -444,6 +447,7 @@ class PokrovSeedShell extends StatefulWidget {
     this.bootstrapper,
     this.supportTicketService,
     this.handoffLauncher,
+    this.clientUpdateInstaller,
     this.firstLaunchStore,
     this.connectHintStore = const PokrovFileConnectHintStore(),
     this.runtimeActionTimeout = const Duration(seconds: 18),
@@ -464,6 +468,7 @@ class PokrovSeedShell extends StatefulWidget {
   final ManagedProfileBootstrapper? bootstrapper;
   final SupportTicketService? supportTicketService;
   final ExternalHandoffLauncher? handoffLauncher;
+  final PokrovClientUpdateInstaller? clientUpdateInstaller;
   final PokrovFirstLaunchStore? firstLaunchStore;
   final PokrovFileConnectHintStore connectHintStore;
   final Duration runtimeActionTimeout;
@@ -1813,6 +1818,55 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     return launcher(uri);
   }
 
+  Future<bool> _launchWebHandoff(Uri uri) {
+    final injected = widget.handoffLauncher;
+    if (injected != null) {
+      return injected(uri);
+    }
+    final isWeb = uri.scheme.toLowerCase() == 'https' ||
+        uri.scheme.toLowerCase() == 'http';
+    final mode = isWeb &&
+            (widget.appContext.hostPlatform == HostPlatform.android ||
+                widget.appContext.hostPlatform == HostPlatform.ios)
+        ? LaunchMode.inAppBrowserView
+        : LaunchMode.externalApplication;
+    return launchUrl(uri, mode: mode);
+  }
+
+  Future<void> _openDevicePairingBot() async {
+    final configured = widget.appContext.mainBotUsername
+        .trim()
+        .replaceFirst(RegExp(r'^@+'), '');
+    final username = RegExp(r'^[A-Za-z0-9_]{5,64}$').hasMatch(configured)
+        ? configured
+        : 'pokrov_vpnbot';
+    final nativeUri = Uri(
+      scheme: 'tg',
+      host: 'resolve',
+      queryParameters: <String, String>{
+        'domain': username,
+        'start': 'pair_device',
+      },
+    );
+    if (await _launchExternalHandoff(nativeUri)) {
+      return;
+    }
+    final webUri = Uri.https(
+      't.me',
+      '/$username',
+      const <String, String>{'start': 'pair_device'},
+    );
+    final opened = await _launchExternalHandoff(webUri);
+    if (!mounted || opened) {
+      return;
+    }
+    showPokrovSnack(
+      context,
+      'Не удалось открыть бота. Найдите @$username в Telegram.',
+      tone: PokrovSnackTone.danger,
+    );
+  }
+
   Future<void> _checkForClientUpdate() async {
     final releaseActions = _releaseActionService;
     if (releaseActions == null ||
@@ -1945,8 +1999,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                       child: PokrovPressable(
                         child: FilledButton.icon(
                           key: const ValueKey('client-update-download'),
-                          icon: const Icon(Icons.download_rounded),
-                          label: const Text('Скачать'),
+                          icon: const Icon(Icons.system_update_alt_rounded),
+                          label: const Text('Обновить'),
                           onPressed: () {
                             Navigator.of(sheetContext).pop();
                             unawaited(_openClientUpdateDownload(update));
@@ -1988,13 +2042,80 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       return;
     }
+    if (widget.appContext.hostPlatform == HostPlatform.android) {
+      final installer = widget.clientUpdateInstaller ??
+          (ClientAppUpdateInfo value) => installPokrovClientUpdate(
+                widget.appContext.hostPlatform,
+                value,
+              );
+      BuildContext? progressContext;
+      final progressClosed = showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          progressContext = dialogContext;
+          return const AlertDialog(
+            key: ValueKey('client-update-download-progress'),
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2.4),
+                ),
+                SizedBox(width: 14),
+                Expanded(child: Text('Скачиваем и проверяем обновление…')),
+              ],
+            ),
+          );
+        },
+      );
+      await Future<void>.delayed(Duration.zero);
+      PokrovClientUpdateInstallStatus status;
+      try {
+        status = await installer(update);
+      } on Object {
+        status = PokrovClientUpdateInstallStatus.failed;
+      }
+      if (!mounted) {
+        return;
+      }
+      final dialogContext = progressContext;
+      if (dialogContext != null && dialogContext.mounted) {
+        Navigator.of(dialogContext).pop();
+      } else {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+      unawaited(progressClosed);
+      switch (status) {
+        case PokrovClientUpdateInstallStatus.installerOpened:
+          showPokrovSnack(
+            context,
+            'Обновление проверено. Подтвердите установку в системном окне.',
+            tone: PokrovSnackTone.success,
+          );
+        case PokrovClientUpdateInstallStatus.permissionRequired:
+          showPokrovSnack(
+            context,
+            'Разрешите POKROV устанавливать обновления. Скачанный APK уже проверен.',
+          );
+        case PokrovClientUpdateInstallStatus.unsupported:
+        case PokrovClientUpdateInstallStatus.failed:
+          showPokrovSnack(
+            context,
+            'Не удалось скачать или проверить обновление. Попробуйте еще раз.',
+            tone: PokrovSnackTone.danger,
+          );
+      }
+      return;
+    }
     final opened = await _launchExternalHandoff(uri);
     if (!mounted || opened) {
       return;
     }
     showPokrovSnack(
       context,
-      'Не удалось открыть страницу обновления. Попробуйте еще раз.',
+      'Не удалось открыть загрузку обновления. Попробуйте еще раз.',
       tone: PokrovSnackTone.danger,
     );
   }
@@ -2010,7 +2131,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return;
     }
 
-    final opened = await _launchExternalHandoff(uri);
+    final opened = uri.scheme == 'http' || uri.scheme == 'https'
+        ? await _launchWebHandoff(uri)
+        : await _launchExternalHandoff(uri);
     if (!mounted) {
       return;
     }
@@ -2177,7 +2300,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         hostPlatform: widget.appContext.hostPlatform,
         targetPath: _cabinetTargetPathFromValue(value),
       );
-      final opened = await _launchExternalHandoff(handoff.handoffUrl);
+      final opened = await _launchWebHandoff(handoff.handoffUrl);
       if (!mounted || opened) {
         return;
       }
@@ -2484,7 +2607,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return 'Сначала привяжите Telegram';
     }
     if (status.reason == 'active_paid_required') {
-      return 'В пробном периоде бонусов нет';
+      return 'Telegram +5 дней доступен без оплаты';
     }
     if (!status.subscriber) {
       return 'Подпишитесь и проверьте';
@@ -2934,6 +3057,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           busy: _runtimeBusy,
           disconnecting: _runtimeDisconnecting,
         ),
+        'connection_active': _runtimeSnapshot?.phase == RuntimePhase.running,
+        'current_location_label': _homeLocationLabel,
         ..._extendedProtectionDiagnostics(),
       },
     );
@@ -4826,7 +4951,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                                     onReturningUser: _openFirstLaunchRestore,
                                     onBack: _backToFirstLaunchChoice,
                                     onRedeemCode: _redeemFirstLaunchRestoreCode,
-                                    onOpenTelegram: _createTelegramLinkInApp,
+                                    onOpenTelegram: _openDevicePairingBot,
                                     onOpenCabinet: () =>
                                         _openCabinetWithHandoff(
                                       widget.appContext.cabinetUrl,

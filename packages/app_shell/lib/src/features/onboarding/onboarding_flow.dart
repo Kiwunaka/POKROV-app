@@ -593,7 +593,7 @@ class _FirstLaunchRestoreScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Введите одноразовый код устройства из кабинета или код активации из Telegram, сайта или письма.',
+                'Введите одноразовый код устройства из бота или кабинета. Код активации из Telegram, сайта или письма тоже подойдет.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: p.muted,
                   height: 1.35,
@@ -676,7 +676,7 @@ class _FirstLaunchRestoreScreen extends StatelessWidget {
                     key: const ValueKey('first-launch-open-telegram-code'),
                     onPressed: busy ? null : onOpenTelegram,
                     icon: const Icon(Icons.send_outlined),
-                    label: const Text('Получить код в Telegram'),
+                    label: const Text('Получить код в боте'),
                   );
                   final cabinetButton = OutlinedButton.icon(
                     key: const ValueKey('first-launch-open-cabinet'),

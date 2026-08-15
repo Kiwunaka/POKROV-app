@@ -1492,12 +1492,12 @@ void main() {
     expect(find.text('Восстановить доступ'), findsOneWidget);
     expect(
       find.text(
-        'Введите одноразовый код устройства из кабинета или код активации из Telegram, сайта или письма.',
+        'Введите одноразовый код устройства из бота или кабинета. Код активации из Telegram, сайта или письма тоже подойдет.',
       ),
       findsOneWidget,
     );
     expect(find.text('Продолжить'), findsOneWidget);
-    expect(find.text('Получить код в Telegram'), findsOneWidget);
+    expect(find.text('Получить код в боте'), findsOneWidget);
     expect(find.text('Открыть кабинет'), findsOneWidget);
   });
 
@@ -1692,6 +1692,32 @@ void main() {
       find.byKey(const ValueKey('primary-connect-action')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('returning first launch opens main bot pairing code',
+      (tester) async {
+    final launched = <Uri>[];
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        handoffLauncher: (uri) async {
+          launched.add(uri);
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('first-launch-returning-user')));
+    await tester.pumpAndSettle();
+    await tester
+        .tap(find.byKey(const ValueKey('first-launch-open-telegram-code')));
+    await tester.pumpAndSettle();
+
+    expect(launched, hasLength(1));
+    expect(launched.single.scheme, 'tg');
+    expect(launched.single.queryParameters['domain'], 'pokrov_vpnbot');
+    expect(launched.single.queryParameters['start'], 'pair_device');
   });
 
   testWidgets('returning first launch claims a one-time device code',
@@ -2217,9 +2243,10 @@ void main() {
     expect(actionRect.bottom, lessThanOrEqualTo(cardRect.bottom));
   });
 
-  testWidgets('startup update check shows prompt and opens download',
+  testWidgets('startup update downloads through verified Android installer',
       (tester) async {
     final launched = <Uri>[];
+    final installed = <ClientAppUpdateInfo>[];
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
@@ -2271,6 +2298,10 @@ void main() {
           launched.add(uri);
           return true;
         },
+        clientUpdateInstaller: (update) async {
+          installed.add(update);
+          return PokrovClientUpdateInstallStatus.installerOpened;
+        },
       ),
     );
     await tester.pumpAndSettle();
@@ -2284,8 +2315,11 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('client-update-download')));
     await tester.pumpAndSettle();
 
-    expect(launched, hasLength(1));
-    expect(launched.single.host, 'github.com');
+    expect(installed, hasLength(1));
+    expect(installed.single.url, contains('/Kiwunaka/pokrov/releases/'));
+    expect(launched, isEmpty);
+    expect(find.byKey(const ValueKey('client-update-download-progress')),
+        findsNothing);
   });
 
   testWidgets('startup update check ignores untrusted download metadata',
@@ -3512,12 +3546,17 @@ void main() {
 
     expect(find.byKey(const ValueKey('rewards-paid-required-notice')),
         findsOneWidget);
-    expect(find.text('Telegram-бонус'), findsWidgets);
-    expect(find.text('Откроется после первой оплаты.'), findsWidgets);
+    expect(find.text('Telegram +5 дней'), findsOneWidget);
+    expect(
+      find.text(
+        'Telegram +5 дней доступен сейчас. Рулетка, календарь и приглашения откроются после первой оплаты.',
+      ),
+      findsOneWidget,
+    );
     expect(find.byKey(const ValueKey('rewards-telegram-refresh-action')),
-        findsNothing);
+        findsOneWidget);
     expect(find.byKey(const ValueKey('rewards-telegram-open-channel')),
-        findsNothing);
+        findsOneWidget);
     expect(
       find.text('Ссылка появится автоматически после первой оплаты.'),
       findsOneWidget,
@@ -5651,6 +5690,8 @@ void main() {
         'platform',
         'route_mode',
         'connection_status',
+        'connection_active',
+        'current_location_label',
         'enhanced_protection_state',
         'enhanced_protection_consent',
         'enhanced_protection_available',
@@ -6003,6 +6044,8 @@ void main() {
           'platform',
           'route_mode',
           'connection_status',
+          'connection_active',
+          'current_location_label',
           'enhanced_protection_state',
           'enhanced_protection_consent',
           'enhanced_protection_available',

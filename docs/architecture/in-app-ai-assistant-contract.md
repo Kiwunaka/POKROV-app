@@ -1,6 +1,6 @@
 # In-App AI Assistant Contract
 
-Last updated: 2026-08-14
+Last updated: 2026-08-15
 
 This document defines the support-scoped POKROV assistant for the
 `1.0.0-beta` client line.
@@ -32,6 +32,10 @@ Request fields:
 - `ticketId`: optional active ticket ID;
 - `assistantSessionId`: optional opaque server-issued continuity token;
 - `safeDiagnostics`: redacted support-safe values only.
+
+For current-connection questions, the client includes only whether its runtime
+is active and the same public location label already shown in the UI. It never
+sends the node address, provider record, UUID, or connection material.
 
 The current client reads the assistant reply, escalation flag, and safe
 suggested actions. App-session renewal follows the same client API behavior as
@@ -98,9 +102,11 @@ app invokes it and what the UI may expose.
 - Client request diagnostics remain request context only and do not enter model
   memory. The authenticated platform endpoint may add an identifier-free,
   same-account scalar snapshot for access state, days left, plan, active-device
-  count, Telegram link/bonus state, and panel runtime. Server-owned facts
-  override colliding client keys; the model receives no arbitrary API or DB
-  access.
+  count, Telegram link/bonus state, panel runtime, and currently applicable
+  public promo codes. Server-owned facts override colliding client keys; the
+  model receives no arbitrary API or DB access. Current-node and promo-code
+  questions are answered by code from these bounded facts without a provider
+  call.
 
 The shared client contract lives in:
 
@@ -114,7 +120,7 @@ Allowed input is limited to support-safe values such as:
 
 - platform and app version;
 - route mode and user-visible connection state;
-- selected public region/country label;
+- selected or confirmed-active public region/country label and active flag;
 - support-safe health and enhanced-protection state;
 - same-account access, device-count, Telegram-bonus, and panel-runtime scalar
   facts prepared by the server without identifiers;
@@ -136,6 +142,10 @@ platform endpoint. A safe UI label such as `WARP` does not relax this boundary.
 - Prefer recovery steps users can understand: reconnect, refresh profile,
   change location, attach diagnostics, or open a ticket. Mention the Telegram
   fallback only when the embedded ticket path is unavailable.
+- Answer a current-node question only with the confirmed public location label,
+  and distinguish it from a merely selected location while disconnected.
+- Show only server-owned public promo codes eligible for the authenticated
+  account. Never invent a code or expose campaign internals.
 - Do not suggest raw-config editing to normal users.
 - Do not suggest Xray outside an explicit Advanced/recovery context.
 - Suggested actions are proposals, never automatic commands.
@@ -154,3 +164,6 @@ Escalate to ticket-backed operator support when:
 - the user attempts to paste secrets, keys, or raw configuration.
 
 Escalation may include only the already-redacted safe diagnostic payload.
+A model-requested transfer is local to that reply; it must not lock unrelated
+future questions out of the assistant. An explicit human request or repeated
+failed recovery may keep the session on the operator path.

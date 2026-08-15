@@ -39,6 +39,7 @@ class MainActivity : FlutterActivity() {
         super.onResume()
         PokrovQuickSettingsTileService.ensureActiveModeRegistration(this)
         PokrovQuickSettingsTileService.requestRefresh(this)
+        runtimeHostBridge?.resumePendingUpdateInstall()
         runtimeHostBridge?.handleDebugIntent(intent)
     }
 

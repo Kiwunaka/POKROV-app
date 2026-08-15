@@ -95,6 +95,18 @@ enum _FirstLaunchStep {
 
 typedef ExternalHandoffLauncher = Future<bool> Function(Uri uri);
 
+enum PokrovClientUpdateInstallStatus {
+  installerOpened,
+  permissionRequired,
+  unsupported,
+  failed,
+}
+
+typedef PokrovClientUpdateInstaller = Future<PokrovClientUpdateInstallStatus>
+    Function(
+  ClientAppUpdateInfo update,
+);
+
 abstract class PokrovFirstLaunchStore {
   Future<bool> isCompleted();
   Future<void> markCompleted();

@@ -274,8 +274,13 @@ campaigns stay out of the app.
 
 ### Returning-user recovery
 
-- returning users restore from the first-launch screen with a one-time code
-  from Telegram, the cabinet, email, or an activation key
+- returning users restore from the first-launch screen with a one-time device
+  code issued by the canonical main bot or cabinet, or with an activation code
+  received through Telegram, site, email, or an operator
+- the first-launch `Получить код в боте` action opens
+  `@pokrov_vpnbot` with `start=pair_device`; the bot exposes the same explicit
+  action in its device picker and issues an eight-character single-use code
+  with a ten-minute TTL
 - raw connection/subscription/proxy links are not account proof and must not be
   sent through unified redeem as recovery codes
 - the app shows this warning on the restore screen and locally rejects raw
@@ -315,7 +320,8 @@ Support rules:
 ### Checkout continuation
 
 - renewal and upgrade begin from the client UI
-- the app opens the canonical hosted checkout in the external browser
+- mobile opens the canonical hosted checkout in an OS-backed in-app browser
+  view; desktop opens it in the external browser
 - the same hosted checkout contract is shared across app, site, and bot flows
 - public marketing entry into that flow is checkout-first; cabinet continuation starts after the user is known
 

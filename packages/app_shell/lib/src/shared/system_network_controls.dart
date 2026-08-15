@@ -275,6 +275,35 @@ class PokrovShellController extends ChangeNotifier {
 const MethodChannel _pokrovRuntimeSystemChannel =
     MethodChannel('space.pokrov/runtime_engine');
 
+Future<PokrovClientUpdateInstallStatus> installPokrovClientUpdate(
+  HostPlatform hostPlatform,
+  ClientAppUpdateInfo update,
+) async {
+  if (hostPlatform != HostPlatform.android ||
+      update.trustedHandoffUri == null) {
+    return PokrovClientUpdateInstallStatus.unsupported;
+  }
+  try {
+    final value = await _pokrovRuntimeSystemChannel
+        .invokeMapMethod<String, Object?>('runtimeEngine.installClientUpdate', {
+      'url': update.url,
+      'sha256': update.sha256.trim().toLowerCase(),
+      'size': update.size,
+    });
+    return switch ((value?['status'] as String? ?? '').trim()) {
+      'installer_opened' => PokrovClientUpdateInstallStatus.installerOpened,
+      'permission_required' =>
+        PokrovClientUpdateInstallStatus.permissionRequired,
+      'unsupported' => PokrovClientUpdateInstallStatus.unsupported,
+      _ => PokrovClientUpdateInstallStatus.failed,
+    };
+  } on PlatformException {
+    return PokrovClientUpdateInstallStatus.failed;
+  } on MissingPluginException {
+    return PokrovClientUpdateInstallStatus.unsupported;
+  }
+}
+
 Future<String?> resolvePokrovDeviceName(HostPlatform hostPlatform) async {
   if (hostPlatform != HostPlatform.android) {
     return null;

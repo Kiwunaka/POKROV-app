@@ -196,14 +196,19 @@ Exact artifacts and platform gates are owned by
 ## Update Handoff Boundary
 
 The shared shell may present and open an update only when the metadata carries a
-positive byte size, a 64-hex SHA-256, and the exact canonical browser target
-`https://github.com/Kiwunaka/pokrov/releases/download/<tag>/<asset>`. Alternate
-hosts or repositories, URL authority fields, explicit ports, query strings, and
-fragments fail closed, and the same validation runs again at tap time.
+positive bounded byte size, a 64-hex SHA-256, and the exact canonical target
+`https://github.com/Kiwunaka/pokrov/releases/download/<tag>/<asset>.apk`.
+Alternate initial hosts or repositories, URL authority fields, explicit ports,
+query strings, fragments, and non-APK assets fail closed, and the same
+validation runs again at tap time.
 
-This is an external-browser handoff, not downloaded-byte verification. The app
-does not receive or hash the bytes downloaded by the browser; checksum, signing,
-install, runtime, and exact-candidate proof remain separate manual release gates.
+On Android the native host downloads into app-private cache, follows at most
+five HTTPS redirects to GitHub-owned asset hosts, verifies exact byte size and
+SHA-256, and shares only the verified file through a non-exported
+`FileProvider`. It then opens Android's system package installer; Android 8+
+may require the user to grant install-source permission first. The app never
+silently installs an APK. Windows retains the trusted browser handoff. Signing,
+install, runtime, and exact-candidate proof remain separate release gates.
 
 ## Apple Boundary
 

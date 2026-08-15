@@ -59,7 +59,7 @@ void _showRedeemSheet(
               ),
               const SizedBox(height: 8),
               Text(
-                'Введите одноразовый код устройства из кабинета или код активации из Telegram или письма.',
+                'Введите одноразовый код устройства из основного бота или кабинета. Код активации из Telegram или письма тоже подойдет.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: PokrovPalette.of(context).muted,
                       height: 1.35,

@@ -105,7 +105,7 @@ class _ProfileSection extends StatelessWidget {
     if (summary == null) {
       if (_bonusPaidRequired(null)) {
         return const [
-          'Telegram +5 дней доступен сейчас · остальное после оплаты'
+          'Telegram +5 дней доступен сейчас · рулетка и приглашения после оплаты'
         ];
       }
       return const ['Рулетка · Telegram · приглашения'];
@@ -116,7 +116,7 @@ class _ProfileSection extends StatelessWidget {
           : summary.channelBonusEligible
               ? 'Telegram +${ruDays(_availableTelegramBonusDays(summary))}'
               : 'Telegram-бонус недоступен';
-      return ['$telegramLabel · остальное после оплаты'];
+      return ['$telegramLabel · рулетка и приглашения после оплаты'];
     }
     final claimed = summary.channelBonusClaimed;
     final bonusDays = claimed
@@ -135,10 +135,14 @@ class _ProfileSection extends StatelessWidget {
       return 'Обновляем';
     }
     if (summary == null) {
-      return _bonusPaidRequired(null) ? 'После оплаты' : 'Открыть';
+      return _bonusPaidRequired(null) ? 'Telegram +5 дней' : 'Открыть';
     }
     if (_bonusPaidRequired(summary)) {
-      return 'После оплаты';
+      if (summary.channelBonusClaimed) {
+        return 'Telegram получен';
+      }
+      final bonusDays = _availableTelegramBonusDays(summary);
+      return bonusDays > 0 ? '+${ruDays(bonusDays)}' : 'Telegram';
     }
     final claimed = summary.channelBonusClaimed;
     final bonusDays = claimed
@@ -316,7 +320,6 @@ class _ProfileSection extends StatelessWidget {
                       icon: Icons.web_outlined,
                       title: 'Кабинет',
                       value: 'Аккаунт',
-                      external: true,
                       onTap: () =>
                           onOpenHandoff('cabinet', appContext.cabinetUrl),
                     ),
@@ -393,7 +396,6 @@ class _ProfileSection extends StatelessWidget {
                         icon: Icons.menu_book_outlined,
                         title: 'Пошаговые инструкции',
                         value: 'Открыть',
-                        external: true,
                         onTap: () => onOpenHandoff(
                           'download',
                           'https://pokrov.space/guides/',
@@ -787,7 +789,6 @@ class _ProfileAccessOverview extends StatelessWidget {
               title: 'Продлить',
               value: 'Выбрать срок',
               valueIsAction: true,
-              external: true,
               onTap: onCheckoutTap,
             ),
           ],

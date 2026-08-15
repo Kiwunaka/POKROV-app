@@ -115,9 +115,8 @@ class _RewardsHubSheetState extends State<_RewardsHubSheet> {
     final showCalendar = calendar.isVisible;
     final rewardAccess = summary?.rewardAccess ?? AppFirstRewardAccess.unknown;
     final paidRequired = widget.paidRequired || rewardAccess.paidRequired;
-    final paidRequiredMessage = rewardAccess.message.trim().isEmpty
-        ? 'В пробном периоде бонусов нет. Они откроются после первой оплаты.'
-        : rewardAccess.message.trim();
+    const paidRequiredMessage =
+        'Telegram +5 дней доступен сейчас. Рулетка, календарь и приглашения откроются после первой оплаты.';
     final promoSlots = summary?.promoSlots ?? AppFirstPromoSlots.empty;
     final showPromoSlots = promoSlots.visibleForPlacement('rewards').isNotEmpty;
     return SafeArea(
@@ -195,7 +194,6 @@ class _RewardsHubSheetState extends State<_RewardsHubSheet> {
                   ],
                   _RewardsTelegramCard(
                     summary: summary,
-                    paidRequired: paidRequired,
                     onRefreshBonusSummary: widget.onRefreshBonusSummary,
                     onOpenHandoff: widget.onOpenHandoff,
                   ),
@@ -391,7 +389,7 @@ class _RewardsAccessNotice extends StatelessWidget {
           Expanded(
             child: Text(
               message.trim().isEmpty
-                  ? 'В пробном периоде бонусов нет. Они откроются после первой оплаты.'
+                  ? 'Telegram +5 дней доступен сейчас. Остальные бонусы откроются после первой оплаты.'
                   : message.trim(),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: p.ink,
@@ -409,13 +407,11 @@ class _RewardsAccessNotice extends StatelessWidget {
 class _RewardsTelegramCard extends StatelessWidget {
   const _RewardsTelegramCard({
     required this.summary,
-    required this.paidRequired,
     required this.onRefreshBonusSummary,
     required this.onOpenHandoff,
   });
 
   final AppFirstBonusSummary? summary;
-  final bool paidRequired;
   final Future<void> Function() onRefreshBonusSummary;
   final void Function(String label, String value) onOpenHandoff;
 
@@ -432,16 +428,11 @@ class _RewardsTelegramCard extends StatelessWidget {
         : channel.startsWith('@')
             ? channel
             : '@$channel';
-    final showActions = !paidRequired || claimed;
     final copy = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          claimed
-              ? 'Telegram-бонус активен'
-              : paidRequired
-                  ? 'Telegram-бонус'
-                  : 'Telegram +${ruDays(bonusDays)}',
+          claimed ? 'Telegram-бонус активен' : 'Telegram +${ruDays(bonusDays)}',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: p.ink,
                 fontWeight: FontWeight.w700,
@@ -451,9 +442,7 @@ class _RewardsTelegramCard extends StatelessWidget {
         Text(
           claimed
               ? 'Бонус уже учтен в вашем доступе.'
-              : paidRequired
-                  ? 'Откроется после первой оплаты.'
-                  : 'Подпишитесь на канал и проверьте бонус.',
+              : 'Доступен без оплаты: подпишитесь на канал и проверьте бонус.',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: p.muted,
                 height: 1.3,
@@ -475,16 +464,15 @@ class _RewardsTelegramCard extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: [
-        if (!paidRequired || claimed)
-          OutlinedButton.icon(
-            key: const ValueKey('rewards-telegram-refresh-action'),
-            onPressed: () {
-              Navigator.of(context).maybePop();
-              unawaited(onRefreshBonusSummary());
-            },
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Проверить'),
-          ),
+        OutlinedButton.icon(
+          key: const ValueKey('rewards-telegram-refresh-action'),
+          onPressed: () {
+            Navigator.of(context).maybePop();
+            unawaited(onRefreshBonusSummary());
+          },
+          icon: const Icon(Icons.refresh_rounded),
+          label: const Text('Проверить'),
+        ),
         FilledButton.tonalIcon(
           key: const ValueKey('rewards-telegram-open-channel'),
           onPressed: () {
@@ -524,10 +512,8 @@ class _RewardsTelegramCard extends StatelessWidget {
               Expanded(child: copy),
             ],
           ),
-          if (showActions) ...[
-            const SizedBox(height: 12),
-            actions,
-          ],
+          const SizedBox(height: 12),
+          actions,
         ],
       ),
     );
