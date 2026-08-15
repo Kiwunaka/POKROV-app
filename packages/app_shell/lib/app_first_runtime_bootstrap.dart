@@ -3269,7 +3269,11 @@ class AppFirstRuntimeBootstrapper
         client: client,
       );
       final materialized = await _materializeRuntimeConfig(
-        rawConfigPayload: jsonEncode(profile.configPayload),
+        rawConfigPayload: jsonEncode(
+          hostPlatform == HostPlatform.android
+              ? wrapAndroidEmergencyFinalForCoreProbe(profile.configPayload)
+              : profile.configPayload,
+        ),
         hostPlatform: hostPlatform,
         routeMode: RouteMode.allExceptRu,
         selectedApps: const <String>[],
@@ -3290,6 +3294,82 @@ class AppFirstRuntimeBootstrapper
     } finally {
       client.close(force: true);
     }
+  }
+
+  /// Keeps Android's fail-closed selected-outbound proof usable when an
+  /// emergency profile ends directly at a proxy instead of a selector group.
+  ///
+  /// The signed profile is verified before this local-only wrapper is added.
+  /// The selector remains pinned to the exact signed terminal outbound, so
+  /// detour order and the selected reserve cannot change here.
+  static Map<String, dynamic> wrapAndroidEmergencyFinalForCoreProbe(
+    Map<String, dynamic> configPayload,
+  ) {
+    final decoded = jsonDecode(jsonEncode(configPayload));
+    if (decoded is! Map) {
+      throw const BootstrapFailure(
+        'Не удалось подготовить экстренный маршрут.',
+      );
+    }
+    final config = Map<String, dynamic>.from(decoded);
+    final routeValue = config['route'];
+    final outboundValue = config['outbounds'];
+    if (routeValue is! Map || outboundValue is! List) {
+      throw const BootstrapFailure(
+        'Не удалось подготовить экстренный маршрут.',
+      );
+    }
+    final route = Map<String, dynamic>.from(routeValue);
+    final outbounds = outboundValue
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList(growable: true);
+    if (outbounds.length != outboundValue.length) {
+      throw const BootstrapFailure(
+        'Не удалось подготовить экстренный маршрут.',
+      );
+    }
+    final finalTag = route['final']?.toString().trim() ?? '';
+    final existingTags = outbounds
+        .map((outbound) => outbound['tag']?.toString().trim() ?? '')
+        .where((tag) => tag.isNotEmpty)
+        .toSet();
+    if (finalTag.isEmpty || !existingTags.contains(finalTag)) {
+      throw const BootstrapFailure(
+        'Не удалось подготовить экстренный маршрут.',
+      );
+    }
+
+    var probeTag = 'pokrov-emergency-egress';
+    var suffix = 2;
+    while (existingTags.contains(probeTag)) {
+      probeTag = 'pokrov-emergency-egress-$suffix';
+      suffix += 1;
+    }
+    var probeBlockTag = 'pokrov-emergency-probe-block';
+    var blockSuffix = 2;
+    while (existingTags.contains(probeBlockTag)) {
+      probeBlockTag = 'pokrov-emergency-probe-block-$blockSuffix';
+      blockSuffix += 1;
+    }
+    outbounds.add(<String, dynamic>{
+      'type': 'block',
+      'tag': probeBlockTag,
+    });
+    outbounds.add(<String, dynamic>{
+      'type': 'selector',
+      'tag': probeTag,
+      // Core omits groups with fewer than two members from its command
+      // channel. A permanently failing block member makes the group visible
+      // without introducing a second viable egress or changing selection.
+      'outbounds': <String>[finalTag, probeBlockTag],
+      'default': finalTag,
+      'interrupt_exist_connections': false,
+    });
+    route['final'] = probeTag;
+    config['outbounds'] = outbounds;
+    config['route'] = route;
+    return config;
   }
 
   bool _isTransientEmergencyFailure(BootstrapFailure error) {

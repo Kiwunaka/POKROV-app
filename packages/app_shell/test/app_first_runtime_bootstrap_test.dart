@@ -203,6 +203,66 @@ class _FailingFlutterSecureStorage extends FlutterSecureStorage {
 }
 
 void main() {
+  test('Android emergency final stays exact behind a probeable selector group',
+      () {
+    final signedConfig = <String, dynamic>{
+      'outbounds': <Object?>[
+        <String, Object?>{
+          'type': 'vless',
+          'tag': 'reserve-root',
+          'server': '198.51.100.10',
+        },
+        <String, Object?>{
+          'type': 'vless',
+          'tag': 'owned-ru',
+          'server': '198.51.100.20',
+          'detour': 'reserve-root',
+        },
+        <String, Object?>{
+          'type': 'vless',
+          'tag': 'owned-foreign',
+          'server': '198.51.100.30',
+          'detour': 'owned-ru',
+        },
+      ],
+      'route': <String, Object?>{'final': 'owned-foreign'},
+    };
+
+    final wrapped =
+        AppFirstRuntimeBootstrapper.wrapAndroidEmergencyFinalForCoreProbe(
+      signedConfig,
+    );
+    final outbounds = (wrapped['outbounds'] as List).cast<Map>();
+    final route = (wrapped['route'] as Map).cast<String, dynamic>();
+    final probe = outbounds.singleWhere(
+      (outbound) => outbound['tag'] == 'pokrov-emergency-egress',
+    );
+
+    expect(route['final'], 'pokrov-emergency-egress');
+    expect(probe['type'], 'selector');
+    expect(
+      probe['outbounds'],
+      <String>['owned-foreign', 'pokrov-emergency-probe-block'],
+    );
+    expect(probe['default'], 'owned-foreign');
+    expect(
+      outbounds.singleWhere((item) => item['tag'] == 'owned-ru')['detour'],
+      'reserve-root',
+    );
+    expect(
+      outbounds.singleWhere((item) => item['tag'] == 'owned-foreign')['detour'],
+      'owned-ru',
+    );
+    expect(
+      outbounds.singleWhere(
+        (item) => item['tag'] == 'pokrov-emergency-probe-block',
+      )['type'],
+      'block',
+    );
+    expect((signedConfig['route'] as Map)['final'], 'owned-foreign');
+    expect((signedConfig['outbounds'] as List).length, 3);
+  });
+
   final defaultSecureStoragePlatform = FlutterSecureStoragePlatform.instance;
   setUp(() {
     FlutterSecureStoragePlatform.instance =

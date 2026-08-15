@@ -103,7 +103,7 @@ Map<String, Object?> _config() => <String, Object?>{
           <String, Object?>{'tag': 'bootstrap', 'address': 'local'},
           <String, Object?>{
             'tag': 'emergency-dns',
-            'address': '8.8.8.8',
+            'address': 'https://1.1.1.1/dns-query',
             'detour': 'POKROV owned foreign',
           },
         ],
