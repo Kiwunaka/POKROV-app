@@ -968,6 +968,7 @@ class _FakeEmergencyBootstrapper extends _FakeBootstrapper
     implements AppFirstEmergencyNetworkService {
   _FakeEmergencyBootstrapper({
     required this.catalogResult,
+    this.catalogFailure,
   }) : super(
           const ManagedProfilePayload(
             profileName: 'normal-widget-profile',
@@ -978,6 +979,7 @@ class _FakeEmergencyBootstrapper extends _FakeBootstrapper
         );
 
   final AppFirstEmergencyCatalogResult catalogResult;
+  final BootstrapFailure? catalogFailure;
   final List<bool> manualLimitedNetworkCalls = <bool>[];
   int emergencyProfileCalls = 0;
   String lastEmergencyReserveId = '';
@@ -989,6 +991,10 @@ class _FakeEmergencyBootstrapper extends _FakeBootstrapper
     required bool manualLimitedNetwork,
   }) async {
     manualLimitedNetworkCalls.add(manualLimitedNetwork);
+    final failure = catalogFailure;
+    if (failure != null) {
+      throw failure;
+    }
     return catalogResult;
   }
 
@@ -10769,6 +10775,45 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('emergency-connect')), findsNothing);
+  });
+
+  testWidgets('emergency page never exposes raw transport failures',
+      (tester) async {
+    _installReadyRuntimeBridgeMock();
+    final bootstrapper = _FakeEmergencyBootstrapper(
+      catalogResult: const AppFirstEmergencyCatalogResult(
+        catalog: null,
+        reason: '',
+        eligibilitySource: '',
+        usingCache: false,
+      ),
+      catalogFailure: const BootstrapFailure(
+        'Not Found: upstream raw body',
+        statusCode: 404,
+        operation: 'fetchEmergencyCatalog',
+      ),
+    );
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _tapNav(tester, 'nav-locations');
+    final launcher = find.byKey(
+      const ValueKey('emergency-network-launcher'),
+    );
+    await tester.ensureVisible(launcher);
+    await tester.tap(launcher);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Экстренная сеть ещё не включена на сервере.'),
+        findsOneWidget);
+    expect(find.textContaining('upstream raw body'), findsNothing);
+    expect(find.text('Not Found'), findsNothing);
   });
 
   testWidgets('trial and paid emergency catalogs fit 4 or 12 narrow rows',

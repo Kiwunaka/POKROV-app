@@ -116,6 +116,27 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
   bool _connecting = false;
   String _error = '';
 
+  String _safeRefreshFailure(BootstrapFailure error) {
+    return switch (error.statusCode) {
+      401 ||
+      403 =>
+        'Сессия не подтверждена. Откройте Профиль и повторите проверку.',
+      404 => 'Экстренная сеть ещё не включена на сервере.',
+      409 => 'Каталог обновился. Повторите проверку.',
+      _ => 'Не удалось проверить экстренную сеть. Попробуйте ещё раз.',
+    };
+  }
+
+  String _safeConnectFailure(BootstrapFailure error) {
+    return switch (error.statusCode) {
+      401 ||
+      403 =>
+        'Экстренный маршрут недоступен для этого аккаунта или сети.',
+      409 => 'Список резервов изменился. Обновите его и повторите.',
+      _ => 'Не удалось подключить экстренный маршрут.',
+    };
+  }
+
   @override
   void initState() {
     super.initState();
@@ -171,7 +192,7 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
         return;
       }
       setState(() {
-        _error = error.message;
+        _error = _safeRefreshFailure(error);
       });
     } on Object {
       if (!mounted) {
@@ -290,7 +311,7 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
     } on BootstrapFailure catch (error) {
       if (mounted) {
         setState(() {
-          _error = error.message;
+          _error = _safeConnectFailure(error);
         });
       }
     } on Object {
