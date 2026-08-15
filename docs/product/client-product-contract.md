@@ -293,6 +293,38 @@ After activation:
 - trial and Telegram-bonus access must read as premium-pool access, never as
   `free node` access
 
+### Emergency network
+
+- `Экстренная сеть` is a separate nested surface under Locations for trial and
+  paid accounts in Russia. It is not a fifth main tab and it does not replace
+  normal Smart Connect.
+- Eligibility uses a bounded server-cached country observation. A person may
+  explicitly enable `Ограниченная сеть` when that observation cannot refresh;
+  turning the manual mode off immediately invalidates a cache issued only from
+  that override.
+- The app accepts only an Ed25519-signed server-owned catalog with 4–12 unique,
+  recently authenticated non-RU reserve exits. The signing key id and public
+  key are release-time constants; missing or malformed constants fail closed.
+- Raw reserve addresses, credentials and third-party source material never
+  appear in the list, diagnostics, telemetry or support context. The first
+  connection for a catalog revision calmly explains that the direct emergency
+  path uses independently supplied reserve infrastructure and requires explicit
+  consent.
+- The three supported routes are exactly reserve → internet, reserve → POKROV
+  foreign node, and reserve → POKROV RU hop → POKROV foreign node. Emergency
+  profiles cannot contain WARP, direct foreign bypasses, an unexpected ruleset,
+  extra auxiliary outbounds or a different DNS detour.
+- A verified catalog/profile may be retained in device-bound encrypted storage
+  until its signed expiry. Server unavailability may use that last-known-good
+  copy; invalid signatures, expired material, a changed account/manual-mode
+  decision or an exact profile mismatch must clear it and fail closed.
+- Reserve rows distinguish current availability from proof level: ordinary,
+  synthetic blocked-network lab, and real restricted-network proof. The client
+  must not relabel ordinary reachability as a real mobile-network pass.
+- An operator distribution stop prevents new catalog delivery and automatic
+  worker promotion. A previously issued signed offline copy cannot be recalled
+  and may remain usable only until its existing expiry.
+
 ### Renewal and purchase
 
 - purchase and renewal stay available from the app
@@ -500,7 +532,7 @@ Release continuity rules:
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
 - stable candidates after installed `1.0.5` beta builds use a strictly newer
-  semantic version (`1.0.9` is current) so existing users are prompted
+  semantic version (`1.0.10` is current) so existing users are prompted
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates

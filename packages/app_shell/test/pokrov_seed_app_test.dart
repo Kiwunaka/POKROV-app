@@ -925,6 +925,116 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
   }
 }
 
+EmergencyCatalog _emergencyCatalog({
+  int itemCount = 4,
+  String accessState = 'trial_premium',
+  String eligibilitySource = 'server_cached_ru',
+}) {
+  final now = DateTime.now().toUtc();
+  return EmergencyCatalog(
+    revision: 'emergency-widget-rev-$itemCount',
+    issuedAt: now.subtract(const Duration(minutes: 1)),
+    refreshAfter: now.add(const Duration(minutes: 5)),
+    validUntil: now.add(const Duration(hours: 2)),
+    offlineValidUntil: now.add(const Duration(hours: 1)),
+    deviceBinding: 'widget-device-binding',
+    accessState: accessState,
+    accessExpiresAt: now.add(const Duration(days: 5)),
+    eligibilitySource: eligibilitySource,
+    eligibilityCountryCode: 'RU',
+    eligibilityValidUntil: now.add(const Duration(hours: 2)),
+    disclosureRevision: 'emergency-disclosure-widget-v1',
+    items: List<EmergencyReserve>.generate(
+      itemCount,
+      (index) => EmergencyReserve(
+        id: 'emg_${(index + 1).toRadixString(16).padLeft(24, '0')}',
+        ordinal: index + 1,
+        countryCode: index.isEven ? 'FR' : 'NL',
+        transport: index.isEven ? 'tcp' : 'grpc',
+        status: EmergencyReserveStatus.working,
+        latencyMs: 70 + index,
+        checkedAt: now.subtract(const Duration(minutes: 2)),
+        verification: EmergencyVerificationLevel.syntheticBs,
+        verificationAt: now.subtract(const Duration(minutes: 3)),
+        modes: EmergencyChainMode.values,
+      ),
+      growable: false,
+    ),
+    envelope: const <String, dynamic>{'fixture': 'widget'},
+  );
+}
+
+class _FakeEmergencyBootstrapper extends _FakeBootstrapper
+    implements AppFirstEmergencyNetworkService {
+  _FakeEmergencyBootstrapper({
+    required this.catalogResult,
+  }) : super(
+          const ManagedProfilePayload(
+            profileName: 'normal-widget-profile',
+            configPayload: _materializedRuntimeConfig,
+            materializedForRuntime: true,
+            warpPolicy: WarpRuntimePolicy.disabled,
+          ),
+        );
+
+  final AppFirstEmergencyCatalogResult catalogResult;
+  final List<bool> manualLimitedNetworkCalls = <bool>[];
+  int emergencyProfileCalls = 0;
+  String lastEmergencyReserveId = '';
+  EmergencyChainMode? lastEmergencyChainMode;
+
+  @override
+  Future<AppFirstEmergencyCatalogResult> fetchEmergencyCatalog({
+    required HostPlatform hostPlatform,
+    required bool manualLimitedNetwork,
+  }) async {
+    manualLimitedNetworkCalls.add(manualLimitedNetwork);
+    return catalogResult;
+  }
+
+  @override
+  Future<AppFirstEmergencyProfileResult> resolveEmergencyProfile({
+    required HostPlatform hostPlatform,
+    required String catalogRevision,
+    required String reserveId,
+    required EmergencyChainMode chainMode,
+    required bool manualLimitedNetwork,
+  }) async {
+    emergencyProfileCalls += 1;
+    lastEmergencyReserveId = reserveId;
+    lastEmergencyChainMode = chainMode;
+    final now = DateTime.now().toUtc();
+    return AppFirstEmergencyProfileResult(
+      profile: EmergencyProfile(
+        catalogRevision: catalogRevision,
+        profileRevision: 'emergency-widget-profile-v1',
+        issuedAt: now,
+        offlineValidUntil: now.add(const Duration(hours: 1)),
+        deviceBinding: 'widget-device-binding',
+        reserveId: reserveId,
+        chainMode: chainMode,
+        accessState: 'trial_premium',
+        configPayload: const <String, dynamic>{
+          'outbounds': <Object?>[
+            <String, Object?>{'type': 'direct', 'tag': 'direct'},
+          ],
+          'route': <String, Object?>{'final': 'direct'},
+        },
+        envelope: const <String, dynamic>{'fixture': 'widget-profile'},
+      ),
+      managedProfile: const ManagedProfilePayload(
+        profileName: 'emergency-widget-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+        quickSettingsEligible: false,
+        routeMode: RouteMode.allExceptRu,
+        warpPolicy: WarpRuntimePolicy.disabled,
+      ),
+      usingCache: false,
+    );
+  }
+}
+
 void _installReadyRuntimeBridgeMock({
   List<String>? calls,
   List<String>? stagedPayloads,
@@ -8452,7 +8562,16 @@ void main() {
     await tester.pumpAndSettle();
 
     final cityRow = find.byKey(const ValueKey('locations-catalog-city-de-fra'));
-    await tester.ensureVisible(cityRow);
+    final locationsList = find.descendant(
+      of: find.byType(ListView),
+      matching: find.byType(Scrollable),
+    );
+    expect(locationsList, findsOneWidget);
+    await tester.scrollUntilVisible(
+      cityRow,
+      120,
+      scrollable: locationsList,
+    );
     await tester.pumpAndSettle();
     expect(
       find.descendant(
@@ -10564,6 +10683,197 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets(
+      'emergency launcher opens the page and manual limited mode persists',
+      (tester) async {
+    _installReadyRuntimeBridgeMock();
+    final experienceStore = _FakeClientExperienceStore();
+    final bootstrapper = _FakeEmergencyBootstrapper(
+      catalogResult: AppFirstEmergencyCatalogResult(
+        catalog: _emergencyCatalog(),
+        reason: '',
+        eligibilitySource: 'server_cached_ru',
+        usingCache: false,
+      ),
+    );
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        clientExperienceStore: experienceStore,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _tapNav(tester, 'nav-locations');
+    final launcher = find.byKey(
+      const ValueKey('emergency-network-launcher'),
+    );
+    await tester.ensureVisible(launcher);
+    expect(launcher, findsOneWidget);
+    await tester.tap(launcher);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Экстренная сеть'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('emergency-manual-limited-network')),
+      findsOneWidget,
+    );
+    expect(bootstrapper.manualLimitedNetworkCalls, <bool>[false]);
+
+    await tester.tap(
+      find.byKey(const ValueKey('emergency-manual-limited-network')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.manualLimitedNetworkCalls, <bool>[false, true]);
+    expect(experienceStore.state.emergencyManualLimitedNetwork, isTrue);
+  });
+
+  testWidgets('emergency page explains trial or paid access denial',
+      (tester) async {
+    _installReadyRuntimeBridgeMock();
+    final bootstrapper = _FakeEmergencyBootstrapper(
+      catalogResult: const AppFirstEmergencyCatalogResult(
+        catalog: null,
+        reason: 'access_denied',
+        eligibilitySource: 'access_denied',
+        usingCache: false,
+      ),
+    );
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _tapNav(tester, 'nav-locations');
+    final launcher = find.byKey(
+      const ValueKey('emergency-network-launcher'),
+    );
+    await tester.ensureVisible(launcher);
+    await tester.tap(launcher);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Пока недоступно'), findsOneWidget);
+    expect(
+      find.text(
+        'Экстренная сеть доступна во время пробного периода и с активной подпиской.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('emergency-connect')), findsNothing);
+  });
+
+  testWidgets('trial and paid emergency catalogs fit 4 or 12 narrow rows',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 760));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    for (final fixture in const <(String, int)>[
+      ('trial_premium', 4),
+      ('paid_unlimited', 12),
+    ]) {
+      _installReadyRuntimeBridgeMock();
+      final bootstrapper = _FakeEmergencyBootstrapper(
+        catalogResult: AppFirstEmergencyCatalogResult(
+          catalog: _emergencyCatalog(
+            itemCount: fixture.$2,
+            accessState: fixture.$1,
+          ),
+          reason: '',
+          eligibilitySource: 'server_cached_ru',
+          usingCache: false,
+        ),
+      );
+      await tester.pumpWidget(
+        PokrovSeedApp(
+          appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+          bootstrapper: bootstrapper,
+          firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await _tapNav(tester, 'nav-locations');
+      final launcher = find.byKey(
+        const ValueKey('emergency-network-launcher'),
+      );
+      await tester.ensureVisible(launcher);
+      await tester.tap(launcher);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Резерв 1'), findsOneWidget);
+      final lastReserve = find.text('Резерв ${fixture.$2}');
+      await tester.scrollUntilVisible(
+        lastReserve,
+        260,
+        scrollable: find.byType(Scrollable).last,
+      );
+      expect(lastReserve, findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    }
+  });
+
+  testWidgets('emergency disclosure gates profile resolution and connect',
+      (tester) async {
+    final runtimeCalls = <String>[];
+    _installReadyRuntimeBridgeMock(calls: runtimeCalls);
+    final bootstrapper = _FakeEmergencyBootstrapper(
+      catalogResult: AppFirstEmergencyCatalogResult(
+        catalog: _emergencyCatalog(),
+        reason: '',
+        eligibilitySource: 'server_cached_ru',
+        usingCache: false,
+      ),
+    );
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _tapNav(tester, 'nav-locations');
+    final launcher = find.byKey(
+      const ValueKey('emergency-network-launcher'),
+    );
+    await tester.ensureVisible(launcher);
+    await tester.tap(launcher);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('emergency-connect')));
+    await tester.pumpAndSettle();
+    expect(find.text('Как работает экстренная сеть'), findsOneWidget);
+    expect(bootstrapper.emergencyProfileCalls, 0);
+
+    await tester.tap(
+      find.byKey(const ValueKey('emergency-disclosure-accept')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.emergencyProfileCalls, 1);
+    expect(
+      bootstrapper.lastEmergencyReserveId,
+      'emg_000000000000000000000001',
+    );
+    expect(
+      bootstrapper.lastEmergencyChainMode,
+      EmergencyChainMode.reserveDirect,
+    );
+    expect(runtimeCalls, contains('runtimeEngine.stageManagedProfile'));
+    expect(runtimeCalls, contains('runtimeEngine.connect'));
   });
 
   test('builds seed app context for public and readiness-only host lanes', () {

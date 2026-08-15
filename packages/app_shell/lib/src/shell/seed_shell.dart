@@ -518,6 +518,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   late final AppFirstPromoEventService? _promoEventService;
   late final AppFirstNodePreferenceService? _nodePreferenceService;
   late final AppFirstClientDataService? _clientDataService;
+  late final AppFirstEmergencyNetworkService? _emergencyNetworkService;
   late final SupportTicketService _supportTicketService;
   late final PokrovFirstLaunchStore _firstLaunchStore;
   late final PokrovClientExperienceStore _clientExperienceStore;
@@ -664,6 +665,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         : null;
     _clientDataService = bootstrapper is AppFirstClientDataService
         ? bootstrapper as AppFirstClientDataService
+        : null;
+    _emergencyNetworkService = bootstrapper is AppFirstEmergencyNetworkService
+        ? bootstrapper as AppFirstEmergencyNetworkService
         : null;
     _supportTicketService = widget.supportTicketService ??
         AppFirstSupportTicketService(apiBaseUrl: widget.appContext.apiBaseUrl);
@@ -1120,6 +1124,146 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       );
     });
     _queueClientExperienceWrite();
+  }
+
+  void _saveEmergencyPreferences({
+    required bool manualLimitedNetwork,
+    required String disclosureRevision,
+    required String reserveId,
+    required EmergencyChainMode chainMode,
+  }) {
+    setState(() {
+      _clientExperience = _clientExperience.copyWith(
+        emergencyManualLimitedNetwork: manualLimitedNetwork,
+        emergencyDisclosureRevision: disclosureRevision,
+        emergencyReserveId: reserveId,
+        emergencyChainMode: chainMode.wireValue,
+      );
+    });
+    _queueClientExperienceWrite();
+  }
+
+  Future<void> _openEmergencyNetwork() async {
+    final service = _emergencyNetworkService;
+    if (service == null) {
+      showPokrovSnack(
+        context,
+        'Экстренная сеть недоступна в этой версии приложения.',
+        tone: PokrovSnackTone.danger,
+      );
+      return;
+    }
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (context) => _EmergencyNetworkSurface(
+          appContext: widget.appContext,
+          service: service,
+          initialManualLimitedNetwork:
+              _clientExperience.emergencyManualLimitedNetwork,
+          acceptedDisclosureRevision:
+              _clientExperience.emergencyDisclosureRevision,
+          initialReserveId: _clientExperience.emergencyReserveId,
+          initialChainMode: EmergencyChainMode.tryParse(
+                _clientExperience.emergencyChainMode,
+              ) ??
+              EmergencyChainMode.reserveDirect,
+          onPreferencesChanged: _saveEmergencyPreferences,
+          onConnect: _connectEmergencyProfile,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _connectEmergencyProfile({
+    required EmergencyCatalog catalog,
+    required EmergencyReserve reserve,
+    required EmergencyChainMode chainMode,
+    required bool manualLimitedNetwork,
+  }) async {
+    final service = _emergencyNetworkService;
+    if (service == null) {
+      throw const BootstrapFailure('Экстренная сеть недоступна.');
+    }
+    if (_runtimeBusy) {
+      throw const BootstrapFailure(
+          'POKROV уже меняет подключение. Подождите немного.');
+    }
+    setState(() {
+      _runtimeBusy = true;
+      _runtimeDisconnecting = _runtimeSnapshot?.phase == RuntimePhase.running;
+      _runtimeHeadline = 'Готовим экстренный маршрут…';
+    });
+    try {
+      RuntimeSnapshot current = _runtimeSnapshot ??
+          await _withRuntimeActionTimeout('snapshot', _runtimeEngine.snapshot);
+      if (current.phase == RuntimePhase.running) {
+        current = await _withRuntimeActionTimeout(
+          'disconnectEmergencyPrevious',
+          _runtimeEngine.disconnect,
+        );
+        current = await _settleRuntimeDisconnectTransition(current);
+      }
+      if (current.canInitialize &&
+          current.phase == RuntimePhase.artifactReady) {
+        current = await _withRuntimeActionTimeout(
+          'initializeEmergency',
+          _runtimeEngine.initialize,
+        );
+      }
+      final result = await service.resolveEmergencyProfile(
+        hostPlatform: widget.appContext.hostPlatform,
+        catalogRevision: catalog.revision,
+        reserveId: reserve.id,
+        chainMode: chainMode,
+        manualLimitedNetwork: manualLimitedNetwork,
+      );
+      current = await _withRuntimeActionTimeout(
+        'stageEmergencyProfile',
+        () => _runtimeEngine.stageManagedProfile(result.managedProfile),
+      );
+      current = await _withRuntimeActionTimeout(
+        'connectEmergency',
+        _runtimeEngine.connect,
+      );
+      current = await _settleRuntimeTransition(current);
+      if (current.phase != RuntimePhase.running) {
+        throw BootstrapFailure(
+          current.message.trim().isEmpty
+              ? 'Экстренный маршрут не подключился.'
+              : current.message,
+        );
+      }
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _runtimeSnapshot = current;
+        _runtimeHeadline = result.usingCache
+            ? 'Экстренная сеть подключена по подписанной офлайн-копии.'
+            : 'Экстренная сеть подключена.';
+        _managedProfileDirty = true;
+        _stagedProfileUsesWarp = false;
+        _activeConnectUsedWarp = false;
+        _stagedNodeCode = '';
+        _stagedVariantId = 'direct';
+        _activeNodeCode = '';
+        _activeVariantId = 'direct';
+      });
+      _cachedProfileFallbackGate.markUserChange();
+      _recordProtectionEvent(
+        kind: 'emergency_connected',
+        title: 'Экстренная сеть подключена',
+        detail: '${chainMode.label} · резерв ${reserve.ordinal}',
+        tone: PokrovProtectionEventTone.warning,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _runtimeBusy = false;
+          _runtimeDisconnecting = false;
+        });
+      }
+    }
   }
 
   void _addSelectedAppId(String value) {
@@ -4781,6 +4925,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             favoriteNodeCodes: _clientExperience.favoriteNodeCodes,
             recentNodeCodes: _clientExperience.recentNodeCodes,
             onFavoriteNodeToggle: _toggleFavoriteLocation,
+            onOpenEmergencyNetwork: () {
+              unawaited(_openEmergencyNetwork());
+            },
           ),
       (context) => _RulesSection(
             appContext: widget.appContext,

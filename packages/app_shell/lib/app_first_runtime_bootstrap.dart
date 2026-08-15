@@ -8,6 +8,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
+import 'emergency_network_contract.dart';
+import 'src/emergency/emergency_network_store.dart';
+
 /// Build identity shared by provisioning, update checks, and diagnostics.
 ///
 /// Release builds pass `--dart-define=POKROV_APP_VERSION=<package-version>`.
@@ -526,6 +529,49 @@ abstract interface class AppFirstClientDataService {
     int? ticketId,
     String? assistantSessionId,
     Map<String, Object?> safeDiagnostics = const <String, Object?>{},
+  });
+}
+
+class AppFirstEmergencyCatalogResult {
+  const AppFirstEmergencyCatalogResult({
+    required this.catalog,
+    required this.reason,
+    required this.eligibilitySource,
+    required this.usingCache,
+  });
+
+  final EmergencyCatalog? catalog;
+  final String reason;
+  final String eligibilitySource;
+  final bool usingCache;
+
+  bool get available => catalog != null;
+}
+
+class AppFirstEmergencyProfileResult {
+  const AppFirstEmergencyProfileResult({
+    required this.profile,
+    required this.managedProfile,
+    required this.usingCache,
+  });
+
+  final EmergencyProfile profile;
+  final ManagedProfilePayload managedProfile;
+  final bool usingCache;
+}
+
+abstract interface class AppFirstEmergencyNetworkService {
+  Future<AppFirstEmergencyCatalogResult> fetchEmergencyCatalog({
+    required HostPlatform hostPlatform,
+    required bool manualLimitedNetwork,
+  });
+
+  Future<AppFirstEmergencyProfileResult> resolveEmergencyProfile({
+    required HostPlatform hostPlatform,
+    required String catalogRevision,
+    required String reserveId,
+    required EmergencyChainMode chainMode,
+    required bool manualLimitedNetwork,
   });
 }
 
@@ -2235,7 +2281,8 @@ class AppFirstRuntimeBootstrapper
         AppFirstQuestEventService,
         AppFirstPromoEventService,
         AppFirstNodePreferenceService,
-        AppFirstClientDataService {
+        AppFirstClientDataService,
+        AppFirstEmergencyNetworkService {
   AppFirstRuntimeBootstrapper({
     this.apiBaseUrl = 'https://api.pokrov.space',
     Future<Directory> Function()? supportDirectoryResolver,
@@ -2254,6 +2301,8 @@ class AppFirstRuntimeBootstrapper
     this.deviceNameResolver,
     AppFirstSessionSecretStore? sessionSecretStore,
     AppFirstStateFileWriter? stateFileWriter,
+    EmergencyEnvelopeVerifier? emergencyEnvelopeVerifier,
+    EmergencyNetworkStore? emergencyNetworkStore,
   })  : _supportDirectoryResolver =
             supportDirectoryResolver ?? getApplicationSupportDirectory,
         _httpClientFactory = httpClientFactory ?? HttpClient.new,
@@ -2262,7 +2311,11 @@ class AppFirstRuntimeBootstrapper
         _allExceptRuRuleSetUrlsResolver = allExceptRuRuleSetUrlsResolver,
         _sessionSecretStore =
             sessionSecretStore ?? FlutterSecureAppFirstSessionSecretStore(),
-        _stateFileWriter = stateFileWriter ?? _writeAppFirstStateFileAtomically;
+        _stateFileWriter = stateFileWriter ?? _writeAppFirstStateFileAtomically,
+        _emergencyEnvelopeVerifier =
+            emergencyEnvelopeVerifier ?? EmergencyEnvelopeVerifier.pinned(),
+        _emergencyNetworkStore =
+            emergencyNetworkStore ?? EncryptedEmergencyNetworkStore();
 
   final String apiBaseUrl;
   final Future<Directory> Function() _supportDirectoryResolver;
@@ -2281,6 +2334,8 @@ class AppFirstRuntimeBootstrapper
   final AppFirstDeviceNameResolver? deviceNameResolver;
   final AppFirstSessionSecretStore _sessionSecretStore;
   final AppFirstStateFileWriter _stateFileWriter;
+  final EmergencyEnvelopeVerifier _emergencyEnvelopeVerifier;
+  final EmergencyNetworkStore _emergencyNetworkStore;
   final Map<String, Future<_StoredBootstrapState>> _initialStateFlights =
       <String, Future<_StoredBootstrapState>>{};
   final Map<String, Future<_StoredBootstrapState>> _initialTrialFlights =
@@ -2936,6 +2991,315 @@ class AppFirstRuntimeBootstrapper
       ).toString(),
     );
     return ClientLocationsCatalog.fromJson(response);
+  }
+
+  @override
+  Future<AppFirstEmergencyCatalogResult> fetchEmergencyCatalog({
+    required HostPlatform hostPlatform,
+    required bool manualLimitedNetwork,
+  }) async {
+    final initialState = await _loadOrCreateState(hostPlatform);
+    final binding = await _emergencyEnvelopeVerifier.deviceBinding(
+      initialState.installId,
+    );
+    try {
+      final response = await _requestClientJsonWithSession(
+        hostPlatform: hostPlatform,
+        method: 'GET',
+        path: Uri(
+          path: '/api/client/emergency-network/catalog',
+          queryParameters: <String, String>{
+            'manual_limited_network': manualLimitedNetwork ? 'true' : 'false',
+          },
+        ).toString(),
+      );
+      final available = response['available'] == true;
+      final reason = _readText(response['reason']);
+      final eligibility = _readMap(response['eligibility']);
+      if (!available) {
+        if (reason == 'catalog_unavailable') {
+          final cached = await _readCachedEmergencyCatalog(
+            hostPlatform: hostPlatform,
+            installId: initialState.installId,
+            deviceBinding: binding,
+            manualLimitedNetwork: manualLimitedNetwork,
+          );
+          if (cached != null) {
+            return AppFirstEmergencyCatalogResult(
+              catalog: cached,
+              reason: 'cached',
+              eligibilitySource: cached.eligibilitySource,
+              usingCache: true,
+            );
+          }
+        } else {
+          await _emergencyNetworkStore.clear(
+            hostPlatform: hostPlatform,
+            deviceBinding: binding,
+          );
+        }
+        return AppFirstEmergencyCatalogResult(
+          catalog: null,
+          reason: reason.isEmpty ? 'not_available' : reason,
+          eligibilitySource: _readText(eligibility['source']),
+          usingCache: false,
+        );
+      }
+      final envelope = _readMap(response['envelope']);
+      final state = await _loadOrCreateState(hostPlatform);
+      final catalog = await _emergencyEnvelopeVerifier.parseCatalog(
+        envelope,
+        installId: state.installId,
+      );
+      await _emergencyNetworkStore.writeEnvelope(
+        hostPlatform: hostPlatform,
+        deviceBinding: catalog.deviceBinding,
+        kind: EmergencyCacheKind.catalog,
+        envelope: envelope,
+      );
+      return AppFirstEmergencyCatalogResult(
+        catalog: catalog,
+        reason: 'ready',
+        eligibilitySource: catalog.eligibilitySource,
+        usingCache: false,
+      );
+    } on EmergencyContractFailure catch (error) {
+      await _emergencyNetworkStore.clear(
+        hostPlatform: hostPlatform,
+        deviceBinding: binding,
+      );
+      throw BootstrapFailure(
+        'Экстренная сеть получила неподтверждённые данные. Обновите приложение или попробуйте позже.',
+        operation: 'GET /api/client/emergency-network/catalog',
+        code: error.code,
+      );
+    } on BootstrapFailure catch (error) {
+      if (error.statusCode == HttpStatus.unauthorized ||
+          error.statusCode == HttpStatus.forbidden) {
+        await _emergencyNetworkStore.clear(
+          hostPlatform: hostPlatform,
+          deviceBinding: binding,
+        );
+        rethrow;
+      }
+      if (_isTransientEmergencyFailure(error)) {
+        final cached = await _readCachedEmergencyCatalog(
+          hostPlatform: hostPlatform,
+          installId: initialState.installId,
+          deviceBinding: binding,
+          manualLimitedNetwork: manualLimitedNetwork,
+        );
+        if (cached != null) {
+          return AppFirstEmergencyCatalogResult(
+            catalog: cached,
+            reason: 'cached',
+            eligibilitySource: cached.eligibilitySource,
+            usingCache: true,
+          );
+        }
+      }
+      rethrow;
+    }
+  }
+
+  Future<EmergencyCatalog?> _readCachedEmergencyCatalog({
+    required HostPlatform hostPlatform,
+    required String installId,
+    required String deviceBinding,
+    required bool manualLimitedNetwork,
+  }) async {
+    final envelope = await _emergencyNetworkStore.readEnvelope(
+      hostPlatform: hostPlatform,
+      deviceBinding: deviceBinding,
+      kind: EmergencyCacheKind.catalog,
+    );
+    if (envelope == null) {
+      return null;
+    }
+    try {
+      final catalog = await _emergencyEnvelopeVerifier.parseCatalog(
+        envelope,
+        installId: installId,
+      );
+      if (!manualLimitedNetwork &&
+          catalog.eligibilitySource == 'manual_limited_network') {
+        await _emergencyNetworkStore.clear(
+          hostPlatform: hostPlatform,
+          deviceBinding: deviceBinding,
+        );
+        return null;
+      }
+      return catalog;
+    } on Object {
+      await _emergencyNetworkStore.clear(
+        hostPlatform: hostPlatform,
+        deviceBinding: deviceBinding,
+      );
+      return null;
+    }
+  }
+
+  @override
+  Future<AppFirstEmergencyProfileResult> resolveEmergencyProfile({
+    required HostPlatform hostPlatform,
+    required String catalogRevision,
+    required String reserveId,
+    required EmergencyChainMode chainMode,
+    required bool manualLimitedNetwork,
+  }) async {
+    final state = await _loadOrCreateState(hostPlatform);
+    final binding =
+        await _emergencyEnvelopeVerifier.deviceBinding(state.installId);
+    EmergencyProfile? profile;
+    var usingCache = false;
+    try {
+      final response = await _requestClientJsonWithSession(
+        hostPlatform: hostPlatform,
+        method: 'POST',
+        path: '/api/client/emergency-network/profile',
+        body: <String, Object?>{
+          'catalog_revision': catalogRevision,
+          'reserve_id': reserveId,
+          'chain_mode': chainMode.wireValue,
+          'manual_limited_network': manualLimitedNetwork,
+        },
+      );
+      final envelope = _readMap(response['envelope']);
+      final refreshedState = await _loadOrCreateState(hostPlatform);
+      profile = await _emergencyEnvelopeVerifier.parseProfile(
+        envelope,
+        installId: refreshedState.installId,
+        catalogRevision: catalogRevision,
+        reserveId: reserveId,
+        chainMode: chainMode,
+      );
+      await _emergencyNetworkStore.writeEnvelope(
+        hostPlatform: hostPlatform,
+        deviceBinding: profile.deviceBinding,
+        kind: EmergencyCacheKind.profile,
+        envelope: envelope,
+      );
+    } on EmergencyContractFailure catch (error) {
+      await _emergencyNetworkStore.clear(
+        hostPlatform: hostPlatform,
+        deviceBinding: binding,
+      );
+      throw BootstrapFailure(
+        'Экстренный профиль не прошёл проверку подписи и не будет запущен.',
+        operation: 'POST /api/client/emergency-network/profile',
+        code: error.code,
+      );
+    } on BootstrapFailure catch (error) {
+      if (error.statusCode == HttpStatus.unauthorized ||
+          error.statusCode == HttpStatus.forbidden ||
+          !_isTransientEmergencyFailure(error)) {
+        await _emergencyNetworkStore.clear(
+          hostPlatform: hostPlatform,
+          deviceBinding: binding,
+        );
+        rethrow;
+      }
+      profile = await _readCachedEmergencyProfile(
+        hostPlatform: hostPlatform,
+        installId: state.installId,
+        deviceBinding: binding,
+        catalogRevision: catalogRevision,
+        reserveId: reserveId,
+        chainMode: chainMode,
+      );
+      if (profile == null) {
+        rethrow;
+      }
+      usingCache = true;
+    }
+    final resolved = profile;
+    final managed = await _materializeEmergencyManagedProfile(
+      hostPlatform: hostPlatform,
+      profile: resolved,
+    );
+    return AppFirstEmergencyProfileResult(
+      profile: resolved,
+      managedProfile: managed,
+      usingCache: usingCache,
+    );
+  }
+
+  Future<EmergencyProfile?> _readCachedEmergencyProfile({
+    required HostPlatform hostPlatform,
+    required String installId,
+    required String deviceBinding,
+    required String catalogRevision,
+    required String reserveId,
+    required EmergencyChainMode chainMode,
+  }) async {
+    final envelope = await _emergencyNetworkStore.readEnvelope(
+      hostPlatform: hostPlatform,
+      deviceBinding: deviceBinding,
+      kind: EmergencyCacheKind.profile,
+    );
+    if (envelope == null) {
+      return null;
+    }
+    try {
+      return await _emergencyEnvelopeVerifier.parseProfile(
+        envelope,
+        installId: installId,
+        catalogRevision: catalogRevision,
+        reserveId: reserveId,
+        chainMode: chainMode,
+      );
+    } on Object {
+      await _emergencyNetworkStore.clear(
+        hostPlatform: hostPlatform,
+        deviceBinding: deviceBinding,
+      );
+      return null;
+    }
+  }
+
+  Future<ManagedProfilePayload> _materializeEmergencyManagedProfile({
+    required HostPlatform hostPlatform,
+    required EmergencyProfile profile,
+  }) async {
+    final client = _createHttpClient(hostPlatform);
+    try {
+      final ruleSets = await _ensureAllExceptRuRuleSetCatalog(
+        hostPlatform: hostPlatform,
+        routeMode: RouteMode.allExceptRu,
+        client: client,
+      );
+      final materialized = await _materializeRuntimeConfig(
+        rawConfigPayload: jsonEncode(profile.configPayload),
+        hostPlatform: hostPlatform,
+        routeMode: RouteMode.allExceptRu,
+        selectedApps: const <String>[],
+        preferredNodeCode: '',
+        preferredVariantId: 'direct',
+        smartConnect: null,
+        supportContext: const <String, dynamic>{},
+        clientRuleSetCatalog: ruleSets,
+      );
+      return ManagedProfilePayload(
+        profileName: 'pokrov-emergency-${profile.profileRevision}',
+        configPayload: materialized,
+        materializedForRuntime: true,
+        quickSettingsEligible: false,
+        routeMode: RouteMode.allExceptRu,
+        warpPolicy: WarpRuntimePolicy.disabled,
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  bool _isTransientEmergencyFailure(BootstrapFailure error) {
+    final statusCode = error.statusCode;
+    return statusCode == null ||
+        statusCode == HttpStatus.requestTimeout ||
+        statusCode == HttpStatus.tooManyRequests ||
+        statusCode == HttpStatus.badGateway ||
+        statusCode == HttpStatus.serviceUnavailable ||
+        statusCode == HttpStatus.gatewayTimeout;
   }
 
   @override
@@ -6913,6 +7277,13 @@ class AppFirstRuntimeBootstrapper
   }) {
     for (final outbound in outbounds) {
       final server = _readText(outbound['server']);
+      // A detoured hop must pass its FQDN through the preceding proxy. Local
+      // resolution here leaks/breaks reserve -> RU -> foreign emergency
+      // chains and is contrary to sing-box detour semantics.
+      if (_readText(outbound['detour']).isNotEmpty) {
+        outbound.remove('domain_resolver');
+        continue;
+      }
       if (server.isEmpty || InternetAddress.tryParse(server) != null) {
         continue;
       }

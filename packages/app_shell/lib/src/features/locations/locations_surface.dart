@@ -20,6 +20,7 @@ class _LocationsSection extends StatefulWidget {
     required this.favoriteNodeCodes,
     required this.recentNodeCodes,
     required this.onFavoriteNodeToggle,
+    required this.onOpenEmergencyNetwork,
   });
 
   final SeedAppContext appContext;
@@ -41,6 +42,7 @@ class _LocationsSection extends StatefulWidget {
   final List<String> favoriteNodeCodes;
   final List<String> recentNodeCodes;
   final ValueChanged<String> onFavoriteNodeToggle;
+  final VoidCallback onOpenEmergencyNetwork;
 
   @override
   State<_LocationsSection> createState() => _LocationsSectionState();
@@ -334,6 +336,10 @@ class _LocationsSectionState extends State<_LocationsSection> {
                       'Если выбрать страну ниже, она станет предпочтительной после переподключения.',
                     ],
                   ),
+        ),
+        const SizedBox(height: 14),
+        _EmergencyNetworkLauncherCard(
+          onTap: widget.onOpenEmergencyNetwork,
         ),
         if (hasList && !_canSelectLocation) ...[
           const SizedBox(height: 14),

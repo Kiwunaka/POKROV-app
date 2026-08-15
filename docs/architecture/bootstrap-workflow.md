@@ -95,6 +95,15 @@ Current blocking dependency:
 - the Android DNS block also keeps resolver caches independent so direct bootstrap lookups do not poison the remote resolver lane used for blocked-service traffic
 - the Android host route planner now adds IPv4 and IPv6 default routes only for address families that are actually present in the staged profile, and `ipv4_only` sessions no longer keep an unnecessary IPv6 tunnel lane for blocked-service traffic
 - the Android default-network monitor now filters out VPN networks before exposing the current uplink to `DnsResolver` or libbox, and it retries interface-index lookup before publishing interface updates
+- emergency profiles use the same host/runtime ABI but a separate signed
+  materialization path. Only the undetoured reserve root may receive the local
+  Android bootstrap resolver; detoured RU and foreign hops must resolve through
+  their preceding hop, otherwise the emergency chain leaks or fails under the
+  exact blocked-network condition it is intended to recover from
+- the emergency materializer accepts only the three documented acyclic chains,
+  exact owned-hop placement, exact DNS/ruleset shape, no WARP and no foreign
+  direct bypass. A signed catalog is necessary but not sufficient: the final
+  managed profile is validated again before staging on Android or Windows
 - the Android host runtime snapshot now carries structured health fields for the shared shell, including default uplink interface and index, DNS readiness, route counts, package-filter counts, last failure kind, and last stop reason
 - the Android lane now has a real repo-local test lane: Flutter tests assert the Android shell keeps the route-mode and runtime-diagnostics affordances visible, and Gradle unit tests cover manifest guards, platform monitoring, runtime-state handling, DNS planning, and TUN route planning
 - the Android diagnostics story is now support/internal rather than first-layer UI: local smoke-profile staging and raw runtime controls stay out of the consumer shell while the physical-device gate remains separate

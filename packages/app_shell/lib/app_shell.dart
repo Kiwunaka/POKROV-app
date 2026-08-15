@@ -23,12 +23,14 @@ import 'package:video_player/video_player.dart';
 
 import 'app_first_runtime_bootstrap.dart';
 import 'client_routing_preferences.dart';
+import 'emergency_network_contract.dart';
 import 'src/assistant/pokrov_ai_assistant.dart';
 import 'src/design_system/design_system.dart';
 import 'src/shell/cached_profile_fallback_gate.dart';
 import 'src/warp/pokrov_warp_lifecycle.dart';
 export 'app_first_runtime_bootstrap.dart';
 export 'client_routing_preferences.dart';
+export 'emergency_network_contract.dart';
 part 'app_shell_ui_helpers.dart';
 
 part 'src/seed/seed_context.dart';
@@ -48,6 +50,7 @@ part 'src/features/home/home_surface.dart';
 part 'src/features/home/protection_center.dart';
 part 'src/features/locations/locations_surface.dart';
 part 'src/features/locations/location_labels.dart';
+part 'src/features/emergency/emergency_network_surface.dart';
 part 'src/features/profile/profile_surface.dart';
 part 'src/features/profile/profile_sheets.dart';
 part 'src/features/profile/access_labels.dart';

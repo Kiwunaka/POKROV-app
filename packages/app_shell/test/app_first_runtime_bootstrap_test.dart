@@ -4993,6 +4993,20 @@ void main() {
       (nestedBridgeCountry['outbounds'] as List).first,
       '🇷🇺 Россия Nested · Белые списки',
     );
+    final nestedBridgeRoot = nestedBridgeOutbounds
+        .cast<Map>()
+        .singleWhere((outbound) => outbound['tag'] == '🇷🇺 Россия Spb');
+    final nestedBridgeMiddle = nestedBridgeOutbounds
+        .cast<Map>()
+        .singleWhere((outbound) => outbound['tag'] == 'bridge-ru-spb');
+    final nestedBridgeTerminal = nestedBridgeOutbounds.cast<Map>().singleWhere(
+          (outbound) => outbound['tag'] == '🇷🇺 Россия Nested · Белые списки',
+        );
+    expect(nestedBridgeRoot['domain_resolver'], 'dns-local');
+    expect(nestedBridgeMiddle['detour'], 'ru-spb');
+    expect(nestedBridgeMiddle.containsKey('domain_resolver'), isFalse);
+    expect(nestedBridgeTerminal['detour'], 'bridge-ru-spb');
+    expect(nestedBridgeTerminal.containsKey('domain_resolver'), isFalse);
 
     await expectLater(
       () => bootstrapper.resolveManagedProfile(

@@ -1,11 +1,27 @@
 [CmdletBinding()]
 param(
   [string]$SigningDirectory = (Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "POKROV\android-signing"),
-  [string]$ApiBaseUrl = "https://api.pokrov.space"
+  [string]$ApiBaseUrl = "https://api.pokrov.space",
+  [string]$EmergencySigningKeyId = $env:POKROV_EMERGENCY_SIGNING_KEY_ID,
+  [string]$EmergencySigningPublicKey = $env:POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64
 )
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+
+$EmergencySigningKeyId = [string]$EmergencySigningKeyId
+$EmergencySigningPublicKey = [string]$EmergencySigningPublicKey
+if ($EmergencySigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$') {
+  throw "A canonical POKROV emergency signing key id is required for a production build."
+}
+if ($EmergencySigningPublicKey -notmatch '^[A-Za-z0-9_-]{43}$') {
+  throw "A 32-byte base64url POKROV emergency signing public key is required for a production build."
+}
+$emergencyPublicKeySha256 = [Convert]::ToHexString(
+  [Security.Cryptography.SHA256]::HashData(
+    [Text.Encoding]::UTF8.GetBytes($EmergencySigningPublicKey)
+  )
+)
 
 function Resolve-AndroidBuildTool {
   param([Parameter(Mandatory = $true)][string]$FileName)
@@ -94,7 +110,9 @@ try {
       "apk",
       "--release",
       "--dart-define=POKROV_API_BASE_URL=$ApiBaseUrl",
-      "--dart-define=POKROV_APP_VERSION=$declaredVersionName"
+      "--dart-define=POKROV_APP_VERSION=$declaredVersionName",
+      "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
+      "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey"
     )
     & flutter @universalBuildArguments
     if ($LASTEXITCODE -ne 0) {
@@ -108,7 +126,9 @@ try {
       "--split-per-abi",
       "--target-platform", "android-arm,android-arm64,android-x64",
       "--dart-define=POKROV_API_BASE_URL=$ApiBaseUrl",
-      "--dart-define=POKROV_APP_VERSION=$declaredVersionName"
+      "--dart-define=POKROV_APP_VERSION=$declaredVersionName",
+      "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
+      "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey"
     )
     & flutter @splitBuildArguments
     if ($LASTEXITCODE -ne 0) {
@@ -216,6 +236,8 @@ foreach ($artifact in $artifacts) {
     apk_sha256 = $artifactHash
     size_bytes = [int64]$apk.Length
     api_base_url = $ApiBaseUrl
+    emergency_signing_key_id = $EmergencySigningKeyId
+    emergency_public_key_sha256 = $emergencyPublicKeySha256
     verified_at_utc = [DateTime]::UtcNow.ToString("o")
   }
   $evidencePath = "$apkPath.signing.json"

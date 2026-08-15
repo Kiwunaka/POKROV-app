@@ -7,10 +7,21 @@ param(
   [switch]$SkipZip,
   [switch]$SkipInstaller,
   [switch]$OfflinePubGet,
-  [string]$CoreRoot
+  [string]$CoreRoot,
+  [string]$EmergencySigningKeyId = $env:POKROV_EMERGENCY_SIGNING_KEY_ID,
+  [string]$EmergencySigningPublicKey = $env:POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64
 )
 
 $ErrorActionPreference = "Stop"
+
+$EmergencySigningKeyId = [string]$EmergencySigningKeyId
+$EmergencySigningPublicKey = [string]$EmergencySigningPublicKey
+if ($EmergencySigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$') {
+  throw "A canonical POKROV emergency signing key id is required for a production build."
+}
+if ($EmergencySigningPublicKey -notmatch '^[A-Za-z0-9_-]{43}$') {
+  throw "A 32-byte base64url POKROV emergency signing public key is required for a production build."
+}
 
 function Invoke-External {
   param(
@@ -173,7 +184,9 @@ if (-not $SkipBuild) {
     "build",
     "windows",
     "--release",
-    "--dart-define=POKROV_APP_VERSION=$version"
+    "--dart-define=POKROV_APP_VERSION=$version",
+    "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
+    "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey"
   ) -WorkingDirectory $appDirectory
 }
 
