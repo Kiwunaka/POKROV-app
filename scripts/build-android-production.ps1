@@ -17,11 +17,15 @@ if ($EmergencySigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$') {
 if ($EmergencySigningPublicKey -notmatch '^[A-Za-z0-9_-]{43}$') {
   throw "A 32-byte base64url POKROV emergency signing public key is required for a production build."
 }
-$emergencyPublicKeySha256 = [Convert]::ToHexString(
-  [Security.Cryptography.SHA256]::HashData(
-    [Text.Encoding]::UTF8.GetBytes($EmergencySigningPublicKey)
+$sha256 = [Security.Cryptography.SHA256]::Create()
+try {
+  $emergencyPublicKeySha256 = -join (
+    $sha256.ComputeHash([Text.Encoding]::UTF8.GetBytes($EmergencySigningPublicKey)) |
+      ForEach-Object { $_.ToString("x2") }
   )
-)
+} finally {
+  $sha256.Dispose()
+}
 
 function Resolve-AndroidBuildTool {
   param([Parameter(Mandatory = $true)][string]$FileName)
