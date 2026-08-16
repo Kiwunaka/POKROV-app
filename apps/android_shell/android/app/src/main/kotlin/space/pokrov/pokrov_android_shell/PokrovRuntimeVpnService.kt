@@ -63,10 +63,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     private val runtimeExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val healthExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val healthGeneration = AtomicLong(0L)
+    private val serviceCommandGeneration = AtomicLong(0L)
     private val lifecycleActive = AtomicBoolean(true)
     private val runtimeLogLimiter = AndroidRuntimeLogLimiter()
     private val mainHandler = Handler(Looper.getMainLooper())
     private var currentRouteMode: String = ""
+    private var activeCoreEgressProbeRequired: Boolean = true
     private var previousTrafficRxBytes: Long = TrafficStats.UNSUPPORTED.toLong()
     private var previousTrafficTxBytes: Long = TrafficStats.UNSUPPORTED.toLong()
     private var previousTrafficSampleAt: Long = 0L
@@ -94,6 +96,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
         when (intent?.action) {
             ACTION_STOP -> {
+                val commandGeneration = serviceCommandGeneration.incrementAndGet()
                 val tileGeneration = intent.getLongExtra(
                     PokrovQuickSettingsTileService.EXTRA_TILE_TRANSITION_GENERATION,
                     NO_TILE_TRANSITION_GENERATION,
@@ -104,11 +107,17 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                         message = "POKROV выключен на этом устройстве.",
                         stopReason = "user_requested",
                         tileGeneration = tileGeneration,
+                        commandGeneration = commandGeneration,
                     )
-                    mainHandler.post { stopSelf() }
+                    mainHandler.post {
+                        if (serviceCommandGeneration.get() == commandGeneration) {
+                            stopSelf()
+                        }
+                    }
                 }
             }
             ACTION_START -> {
+                serviceCommandGeneration.incrementAndGet()
                 val configPath = intent.getStringExtra(EXTRA_CONFIG_PATH)
                 val routeMode = intent.getStringExtra(EXTRA_ROUTE_MODE).orEmpty()
                 currentRouteMode = routeMode
@@ -203,6 +212,11 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         runCatching { activeTun?.close() }
         activeTun = null
         runtimeLogLimiter.reset()
+        activeCoreEgressProbeRequired = coreEgressProbeRequiredForRuntime(
+            AndroidRuntimeProfileStore.load(this),
+            configPath,
+        )
+        AndroidRuntimeState.updateCoreEgressRequirement(activeCoreEgressProbeRequired)
         activeSelectedAppsMode = routeMode == ROUTE_MODE_SELECTED_APPS
         val initialized = AndroidRuntimeState.initialize(this)
         if (!initialized) {
@@ -492,6 +506,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         stopReason: String,
         tileGeneration: Long? = null,
         failureKind: String? = null,
+        commandGeneration: Long? = null,
     ) {
         Log.i(LOG_TAG, "Stopping Android runtime service.")
         healthGeneration.incrementAndGet()
@@ -526,11 +541,13 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
         activeTileStartGeneration = null
         PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            @Suppress("DEPRECATION")
-            stopForeground(true)
+        if (ownsLatestRuntimeServiceCommand(commandGeneration, serviceCommandGeneration.get())) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } else {
+                @Suppress("DEPRECATION")
+                stopForeground(true)
+            }
         }
     }
 
@@ -976,8 +993,15 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     private fun scheduleCoreEgressProbe(generation: Long) {
         val content = activeConfigContent ?: return
         val variantConfigContent = activeVariantConfigContent
-        val target = AndroidCoreEgressProbe.finalTarget(content)
         AndroidRuntimeState.updateCoreEgressValidation(null)
+        if (!activeCoreEgressProbeRequired) {
+            Log.i(
+                LOG_TAG,
+                "Android live egress probe skipped for a locally verified offline emergency profile.",
+            )
+            return
+        }
+        val target = AndroidCoreEgressProbe.finalTarget(content)
         if (target == null) {
             handleCoreEgressProbeResult(
                 probeResult = AndroidCoreEgressProbeResult.UNAVAILABLE,

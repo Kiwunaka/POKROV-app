@@ -88,7 +88,9 @@ class EmergencyReserve {
   final DateTime? verificationAt;
   final List<EmergencyChainMode> modes;
 
-  bool get available => status == EmergencyReserveStatus.working;
+  bool get available =>
+      status == EmergencyReserveStatus.working ||
+      status == EmergencyReserveStatus.stale;
 }
 
 class EmergencyCatalog {

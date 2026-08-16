@@ -57,6 +57,7 @@ class RuntimeSnapshot {
     this.defaultNetworkIndex,
     this.dnsReady,
     this.coreEgressValidated,
+    this.coreEgressValidationRequired,
     this.lastFailureKind,
     this.lastStopReason,
     this.ipv4RouteCount,
@@ -85,6 +86,7 @@ class RuntimeSnapshot {
   final int? defaultNetworkIndex;
   final bool? dnsReady;
   final bool? coreEgressValidated;
+  final bool? coreEgressValidationRequired;
   final String? lastFailureKind;
   final String? lastStopReason;
   final int? ipv4RouteCount;
@@ -96,7 +98,8 @@ class RuntimeSnapshot {
   /// Android owns a selected-outbound Core probe after its TUN is established.
   /// A running service alone is not proof that user traffic can leave through
   /// the selected location.
-  bool get requiresCoreEgressValidation => hostPlatform == HostPlatform.android;
+  bool get requiresCoreEgressValidation =>
+      coreEgressValidationRequired ?? hostPlatform == HostPlatform.android;
 
   bool get isCoreEgressValidationPending =>
       requiresCoreEgressValidation && coreEgressValidated == null;
@@ -943,6 +946,7 @@ class ManagedProfilePayload {
     this.disableMemoryLimit = false,
     this.materializedForRuntime = false,
     this.quickSettingsEligible = false,
+    this.coreEgressProbeRequired = true,
     this.routeMode = RouteMode.fullTunnel,
     this.smartConnect,
     this.resolvedNodeCode = '',
@@ -958,6 +962,11 @@ class ManagedProfilePayload {
   /// Android only: set after Flutter confirms first-connect route scope for
   /// this newly resolved manifest. Hosts fail closed when it is omitted.
   final bool quickSettingsEligible;
+
+  /// Ordinary Android profiles prove their selected outbound after TUN start.
+  /// A locally verified emergency offline profile disables only that live
+  /// control-plane-dependent probe while retaining fail-closed routing.
+  final bool coreEgressProbeRequired;
   final RouteMode routeMode;
   final SmartConnectProfile? smartConnect;
 
@@ -972,6 +981,7 @@ class ManagedProfilePayload {
     bool? disableMemoryLimit,
     bool? materializedForRuntime,
     bool? quickSettingsEligible,
+    bool? coreEgressProbeRequired,
     RouteMode? routeMode,
     SmartConnectProfile? smartConnect,
     String? resolvedNodeCode,
@@ -986,6 +996,8 @@ class ManagedProfilePayload {
           materializedForRuntime ?? this.materializedForRuntime,
       quickSettingsEligible:
           quickSettingsEligible ?? this.quickSettingsEligible,
+      coreEgressProbeRequired:
+          coreEgressProbeRequired ?? this.coreEgressProbeRequired,
       routeMode: routeMode ?? this.routeMode,
       smartConnect: smartConnect ?? this.smartConnect,
       resolvedNodeCode: resolvedNodeCode ?? this.resolvedNodeCode,
@@ -1975,6 +1987,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         'disableMemoryLimit': payload.disableMemoryLimit,
         'materializedForRuntime': true,
         'quickSettingsEligible': payload.quickSettingsEligible,
+        'coreEgressProbeRequired': payload.coreEgressProbeRequired,
         'routeMode': payload.routeMode.name,
         'displayCountry': displayNode?.country.trim() ?? '',
         'displayNodeCode': payload.resolvedNodeCode.trim(),
@@ -2177,6 +2190,14 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         'core_egress_validated',
       ],
     );
+    final coreEgressValidationRequired = _firstBoolValue(
+      response,
+      hostDiagnostics,
+      const [
+        'coreEgressValidationRequired',
+        'core_egress_validation_required',
+      ],
+    );
     final lastFailureKind = _publicRuntimeFailureKind(
       _firstNonEmptyString(
         response,
@@ -2325,6 +2346,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       defaultNetworkIndex: null,
       dnsReady: dnsReady,
       coreEgressValidated: coreEgressValidated,
+      coreEgressValidationRequired: coreEgressValidationRequired,
       lastFailureKind: lastFailureKind,
       lastStopReason: lastStopReason,
       ipv4RouteCount: ipv4RouteCount,

@@ -88,6 +88,7 @@ internal object AndroidRuntimeState {
     private var dnsReady: Boolean = false
     private var vpnValidated: Boolean? = null
     private var coreEgressValidated: Boolean? = null
+    private var coreEgressValidationRequired: Boolean = true
     private var lastFailureKind: String? = null
     private var lastStopReason: String? = null
     private var ipv4RouteCount: Int = 0
@@ -454,6 +455,14 @@ internal object AndroidRuntimeState {
     }
 
     @Synchronized
+    fun updateCoreEgressRequirement(required: Boolean) {
+        coreEgressValidationRequired = required
+        if (!required) {
+            coreEgressValidated = null
+        }
+    }
+
+    @Synchronized
     fun recordTunConfiguration(
         ipv4RouteCount: Int,
         ipv6RouteCount: Int,
@@ -506,6 +515,7 @@ internal object AndroidRuntimeState {
             "dns_ready" to dnsReady,
             "vpn_validated" to vpnValidated,
             "core_egress_validated" to coreEgressValidated,
+            "core_egress_validation_required" to coreEgressValidationRequired,
             "last_failure_kind" to lastFailureKind,
             "last_stop_reason" to lastStopReason,
             "ipv4_route_count" to ipv4RouteCount,
@@ -596,8 +606,9 @@ internal object AndroidRuntimeState {
             dnsState == "degraded" -> "degraded"
             uplinkState == "degraded" -> "degraded"
             !lastFailureKind.isNullOrBlank() -> "degraded"
-            coreEgressValidated == false -> "degraded"
-            coreEgressValidated == true && dnsState == "healthy" && uplinkState == "healthy" ->
+            coreEgressValidationRequired && coreEgressValidated == false -> "degraded"
+            (!coreEgressValidationRequired || coreEgressValidated == true) &&
+                dnsState == "healthy" && uplinkState == "healthy" ->
                 "healthy"
             vpnValidated == false -> "degraded"
             else -> "unknown"
@@ -653,7 +664,7 @@ internal object AndroidRuntimeState {
             false -> "Интернет не подтвержден"
             null -> "Интернет проверяется"
         }
-        if (coreEgressValidated == false) {
+        if (coreEgressValidationRequired && coreEgressValidated == false) {
             details += "Выход в интернет не подтвержден"
         }
         details += "Правила v4=$ipv4RouteCount v6=$ipv6RouteCount"

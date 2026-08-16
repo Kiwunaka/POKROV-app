@@ -18,7 +18,7 @@ import 'src/emergency/emergency_network_store.dart';
 /// package base version (without Android's build number).
 const pokrovClientVersion = String.fromEnvironment(
   'POKROV_APP_VERSION',
-  defaultValue: '1.0.9',
+  defaultValue: '1.0.11',
 );
 
 const _platformErrorCodeHeader = 'X-POKROV-Auth-Error';
@@ -564,6 +564,12 @@ abstract interface class AppFirstEmergencyNetworkService {
   Future<AppFirstEmergencyCatalogResult> fetchEmergencyCatalog({
     required HostPlatform hostPlatform,
     required bool manualLimitedNetwork,
+    bool forceRefresh = false,
+  });
+
+  Future<void> prepareEmergencyOfflineCache({
+    required HostPlatform hostPlatform,
+    bool manualLimitedNetwork = false,
   });
 
   Future<AppFirstEmergencyProfileResult> resolveEmergencyProfile({
@@ -2342,6 +2348,8 @@ class AppFirstRuntimeBootstrapper
       <String, Future<_StoredBootstrapState>>{};
   final Map<String, Future<_StoredBootstrapState>> _refreshFlights =
       <String, Future<_StoredBootstrapState>>{};
+  final Map<String, Future<void>> _emergencyOfflineCacheFlights =
+      <String, Future<void>>{};
 
   static const _defaultManagedManifestPath = '/api/client/profile/managed';
   // Current managed manifests are compact JSON and the checked-in rule-set
@@ -2997,6 +3005,90 @@ class AppFirstRuntimeBootstrapper
   Future<AppFirstEmergencyCatalogResult> fetchEmergencyCatalog({
     required HostPlatform hostPlatform,
     required bool manualLimitedNetwork,
+    bool forceRefresh = false,
+  }) async {
+    final initialState = await _loadOrCreateState(hostPlatform);
+    final binding = await _emergencyEnvelopeVerifier.deviceBinding(
+      initialState.installId,
+    );
+    if (!forceRefresh) {
+      final cached = await _readCachedEmergencyCatalog(
+        hostPlatform: hostPlatform,
+        installId: initialState.installId,
+        deviceBinding: binding,
+        manualLimitedNetwork: manualLimitedNetwork,
+      );
+      if (cached != null) {
+        return AppFirstEmergencyCatalogResult(
+          catalog: cached,
+          reason: 'cached',
+          eligibilitySource: cached.eligibilitySource,
+          usingCache: true,
+        );
+      }
+    }
+    return _refreshEmergencyOfflineBundle(
+      hostPlatform: hostPlatform,
+      manualLimitedNetwork: manualLimitedNetwork,
+    );
+  }
+
+  @override
+  Future<void> prepareEmergencyOfflineCache({
+    required HostPlatform hostPlatform,
+    bool manualLimitedNetwork = false,
+  }) {
+    final key = '${hostPlatform.name}:${manualLimitedNetwork ? 1 : 0}';
+    final existing = _emergencyOfflineCacheFlights[key];
+    if (existing != null) {
+      return existing;
+    }
+    late final Future<void> flight;
+    flight = _prepareEmergencyOfflineCache(
+      hostPlatform: hostPlatform,
+      manualLimitedNetwork: manualLimitedNetwork,
+    ).whenComplete(() {
+      if (identical(_emergencyOfflineCacheFlights[key], flight)) {
+        _emergencyOfflineCacheFlights.remove(key);
+      }
+    });
+    _emergencyOfflineCacheFlights[key] = flight;
+    return flight;
+  }
+
+  Future<void> _prepareEmergencyOfflineCache({
+    required HostPlatform hostPlatform,
+    required bool manualLimitedNetwork,
+  }) async {
+    final state = await _loadOrCreateState(hostPlatform);
+    final binding =
+        await _emergencyEnvelopeVerifier.deviceBinding(state.installId);
+    final cached = await _readCachedEmergencyCatalog(
+      hostPlatform: hostPlatform,
+      installId: state.installId,
+      deviceBinding: binding,
+      manualLimitedNetwork: manualLimitedNetwork,
+    );
+    if (cached != null && cached.refreshAfter.isAfter(DateTime.now().toUtc())) {
+      final complete = await _hasCompleteCachedEmergencyBundle(
+        hostPlatform: hostPlatform,
+        installId: state.installId,
+        deviceBinding: binding,
+        catalog: cached,
+      );
+      if (complete) {
+        return;
+      }
+    }
+    await _refreshEmergencyOfflineBundle(
+      hostPlatform: hostPlatform,
+      manualLimitedNetwork: manualLimitedNetwork,
+    );
+  }
+
+  Future<AppFirstEmergencyCatalogResult> _refreshEmergencyOfflineBundle({
+    required HostPlatform hostPlatform,
+    required bool manualLimitedNetwork,
   }) async {
     final initialState = await _loadOrCreateState(hostPlatform);
     final binding = await _emergencyEnvelopeVerifier.deviceBinding(
@@ -3005,51 +3097,75 @@ class AppFirstRuntimeBootstrapper
     try {
       final response = await _requestClientJsonWithSession(
         hostPlatform: hostPlatform,
-        method: 'GET',
-        path: Uri(
-          path: '/api/client/emergency-network/catalog',
-          queryParameters: <String, String>{
-            'manual_limited_network': manualLimitedNetwork ? 'true' : 'false',
-          },
-        ).toString(),
+        method: 'POST',
+        path: '/api/client/emergency-network/offline-bundle',
+        body: <String, Object?>{
+          'manual_limited_network': manualLimitedNetwork,
+        },
       );
-      final available = response['available'] == true;
-      final reason = _readText(response['reason']);
-      final eligibility = _readMap(response['eligibility']);
-      if (!available) {
-        if (reason == 'catalog_unavailable') {
-          final cached = await _readCachedEmergencyCatalog(
-            hostPlatform: hostPlatform,
-            installId: initialState.installId,
-            deviceBinding: binding,
-            manualLimitedNetwork: manualLimitedNetwork,
-          );
-          if (cached != null) {
-            return AppFirstEmergencyCatalogResult(
-              catalog: cached,
-              reason: 'cached',
-              eligibilitySource: cached.eligibilitySource,
-              usingCache: true,
-            );
-          }
-        } else {
-          await _emergencyNetworkStore.clear(
-            hostPlatform: hostPlatform,
-            deviceBinding: binding,
-          );
-        }
-        return AppFirstEmergencyCatalogResult(
-          catalog: null,
-          reason: reason.isEmpty ? 'not_available' : reason,
-          eligibilitySource: _readText(eligibility['source']),
-          usingCache: false,
-        );
+      if (_readText(response['schemaVersion']) !=
+          'pokrov-emergency-offline-bundle-v1') {
+        throw const EmergencyContractFailure('bundle_version_invalid');
       }
-      final envelope = _readMap(response['envelope']);
+      final envelope = _readMap(response['catalogEnvelope']);
       final state = await _loadOrCreateState(hostPlatform);
       final catalog = await _emergencyEnvelopeVerifier.parseCatalog(
         envelope,
         installId: state.installId,
+      );
+      final expected = <String>{
+        for (final item in catalog.items.where((item) => item.available))
+          for (final mode in item.modes) '${item.id}\u0000${mode.wireValue}',
+      };
+      final rawProfiles = response['profileEnvelopes'];
+      if (expected.length < 4 ||
+          expected.length > 36 ||
+          rawProfiles is! List ||
+          rawProfiles.length != expected.length) {
+        throw const EmergencyContractFailure('bundle_profiles_invalid');
+      }
+      final seen = <String>{};
+      final cachedProfiles = <Map<String, Object?>>[];
+      for (final rawEntry in rawProfiles) {
+        final entry = _readMap(rawEntry);
+        if (entry.length != 3 ||
+            !entry.containsKey('reserveId') ||
+            !entry.containsKey('chainMode') ||
+            !entry.containsKey('envelope')) {
+          throw const EmergencyContractFailure('bundle_profiles_invalid');
+        }
+        final reserveId = _readText(entry['reserveId']);
+        final chainMode = EmergencyChainMode.tryParse(entry['chainMode']);
+        final key = '$reserveId\u0000${chainMode?.wireValue ?? ''}';
+        if (chainMode == null || !expected.contains(key) || !seen.add(key)) {
+          throw const EmergencyContractFailure('bundle_profiles_invalid');
+        }
+        final profileEnvelope = _readMap(entry['envelope']);
+        await _emergencyEnvelopeVerifier.parseProfile(
+          profileEnvelope,
+          installId: state.installId,
+          catalogRevision: catalog.revision,
+          reserveId: reserveId,
+          chainMode: chainMode,
+        );
+        cachedProfiles.add(<String, Object?>{
+          'reserve_id': reserveId,
+          'chain_mode': chainMode.wireValue,
+          'envelope': profileEnvelope,
+        });
+      }
+      if (seen.length != expected.length) {
+        throw const EmergencyContractFailure('bundle_profiles_invalid');
+      }
+      await _emergencyNetworkStore.writeEnvelope(
+        hostPlatform: hostPlatform,
+        deviceBinding: catalog.deviceBinding,
+        kind: EmergencyCacheKind.profileBundle,
+        envelope: <String, dynamic>{
+          'schema_version': 1,
+          'catalog_revision': catalog.revision,
+          'profiles': cachedProfiles,
+        },
       );
       await _emergencyNetworkStore.writeEnvelope(
         hostPlatform: hostPlatform,
@@ -3064,13 +3180,9 @@ class AppFirstRuntimeBootstrapper
         usingCache: false,
       );
     } on EmergencyContractFailure catch (error) {
-      await _emergencyNetworkStore.clear(
-        hostPlatform: hostPlatform,
-        deviceBinding: binding,
-      );
       throw BootstrapFailure(
         'Экстренная сеть получила неподтверждённые данные. Обновите приложение или попробуйте позже.',
-        operation: 'GET /api/client/emergency-network/catalog',
+        operation: 'POST /api/client/emergency-network/offline-bundle',
         code: error.code,
       );
     } on BootstrapFailure catch (error) {
@@ -3123,10 +3235,6 @@ class AppFirstRuntimeBootstrapper
       );
       if (!manualLimitedNetwork &&
           catalog.eligibilitySource == 'manual_limited_network') {
-        await _emergencyNetworkStore.clear(
-          hostPlatform: hostPlatform,
-          deviceBinding: deviceBinding,
-        );
         return null;
       }
       return catalog;
@@ -3137,6 +3245,57 @@ class AppFirstRuntimeBootstrapper
       );
       return null;
     }
+  }
+
+  Future<bool> _hasCompleteCachedEmergencyBundle({
+    required HostPlatform hostPlatform,
+    required String installId,
+    required String deviceBinding,
+    required EmergencyCatalog catalog,
+  }) async {
+    final bundle = await _emergencyNetworkStore.readEnvelope(
+      hostPlatform: hostPlatform,
+      deviceBinding: deviceBinding,
+      kind: EmergencyCacheKind.profileBundle,
+    );
+    if (bundle == null ||
+        bundle['schema_version'] != 1 ||
+        _readText(bundle['catalog_revision']) != catalog.revision) {
+      return false;
+    }
+    final rawProfiles = bundle['profiles'];
+    if (rawProfiles is! List || rawProfiles.length > 36) {
+      return false;
+    }
+    final expected = <String>{
+      for (final item in catalog.items.where((item) => item.available))
+        for (final mode in item.modes) '${item.id}\u0000${mode.wireValue}',
+    };
+    final seen = <String>{};
+    for (final rawEntry in rawProfiles) {
+      try {
+        final entry = _readMap(rawEntry);
+        final reserveId = _readText(entry['reserve_id']);
+        final chainMode = EmergencyChainMode.tryParse(entry['chain_mode']);
+        if (chainMode == null) {
+          return false;
+        }
+        final key = '$reserveId\u0000${chainMode.wireValue}';
+        if (!expected.contains(key) || !seen.add(key)) {
+          return false;
+        }
+        await _emergencyEnvelopeVerifier.parseProfile(
+          _readMap(entry['envelope']),
+          installId: installId,
+          catalogRevision: catalog.revision,
+          reserveId: reserveId,
+          chainMode: chainMode,
+        );
+      } on Object {
+        return false;
+      }
+    }
+    return seen.length == expected.length;
   }
 
   @override
@@ -3150,67 +3309,65 @@ class AppFirstRuntimeBootstrapper
     final state = await _loadOrCreateState(hostPlatform);
     final binding =
         await _emergencyEnvelopeVerifier.deviceBinding(state.installId);
-    EmergencyProfile? profile;
-    var usingCache = false;
-    try {
-      final response = await _requestClientJsonWithSession(
-        hostPlatform: hostPlatform,
-        method: 'POST',
-        path: '/api/client/emergency-network/profile',
-        body: <String, Object?>{
-          'catalog_revision': catalogRevision,
-          'reserve_id': reserveId,
-          'chain_mode': chainMode.wireValue,
-          'manual_limited_network': manualLimitedNetwork,
-        },
-      );
-      final envelope = _readMap(response['envelope']);
-      final refreshedState = await _loadOrCreateState(hostPlatform);
-      profile = await _emergencyEnvelopeVerifier.parseProfile(
-        envelope,
-        installId: refreshedState.installId,
-        catalogRevision: catalogRevision,
-        reserveId: reserveId,
-        chainMode: chainMode,
-      );
-      await _emergencyNetworkStore.writeEnvelope(
-        hostPlatform: hostPlatform,
-        deviceBinding: profile.deviceBinding,
-        kind: EmergencyCacheKind.profile,
-        envelope: envelope,
-      );
-    } on EmergencyContractFailure catch (error) {
-      await _emergencyNetworkStore.clear(
-        hostPlatform: hostPlatform,
-        deviceBinding: binding,
-      );
-      throw BootstrapFailure(
-        'Экстренный профиль не прошёл проверку подписи и не будет запущен.',
-        operation: 'POST /api/client/emergency-network/profile',
-        code: error.code,
-      );
-    } on BootstrapFailure catch (error) {
-      if (error.statusCode == HttpStatus.unauthorized ||
-          error.statusCode == HttpStatus.forbidden ||
-          !_isTransientEmergencyFailure(error)) {
+    EmergencyProfile? profile = await _readCachedEmergencyProfile(
+      hostPlatform: hostPlatform,
+      installId: state.installId,
+      deviceBinding: binding,
+      catalogRevision: catalogRevision,
+      reserveId: reserveId,
+      chainMode: chainMode,
+    );
+    var usingCache = profile != null;
+    if (profile == null) {
+      try {
+        final response = await _requestClientJsonWithSession(
+          hostPlatform: hostPlatform,
+          method: 'POST',
+          path: '/api/client/emergency-network/profile',
+          body: <String, Object?>{
+            'catalog_revision': catalogRevision,
+            'reserve_id': reserveId,
+            'chain_mode': chainMode.wireValue,
+            'manual_limited_network': manualLimitedNetwork,
+          },
+        );
+        final envelope = _readMap(response['envelope']);
+        final refreshedState = await _loadOrCreateState(hostPlatform);
+        profile = await _emergencyEnvelopeVerifier.parseProfile(
+          envelope,
+          installId: refreshedState.installId,
+          catalogRevision: catalogRevision,
+          reserveId: reserveId,
+          chainMode: chainMode,
+        );
+        await _emergencyNetworkStore.writeEnvelope(
+          hostPlatform: hostPlatform,
+          deviceBinding: profile.deviceBinding,
+          kind: EmergencyCacheKind.profile,
+          envelope: envelope,
+        );
+        usingCache = false;
+      } on EmergencyContractFailure catch (error) {
         await _emergencyNetworkStore.clear(
           hostPlatform: hostPlatform,
           deviceBinding: binding,
         );
+        throw BootstrapFailure(
+          'Экстренный профиль не прошёл проверку подписи и не будет запущен.',
+          operation: 'POST /api/client/emergency-network/profile',
+          code: error.code,
+        );
+      } on BootstrapFailure catch (error) {
+        if (error.statusCode == HttpStatus.unauthorized ||
+            error.statusCode == HttpStatus.forbidden ||
+            !_isTransientEmergencyFailure(error)) {
+          await _emergencyNetworkStore.clear(
+            hostPlatform: hostPlatform,
+            deviceBinding: binding,
+          );
+        }
         rethrow;
       }
-      profile = await _readCachedEmergencyProfile(
-        hostPlatform: hostPlatform,
-        installId: state.installId,
-        deviceBinding: binding,
-        catalogRevision: catalogRevision,
-        reserveId: reserveId,
-        chainMode: chainMode,
-      );
-      if (profile == null) {
-        rethrow;
-      }
-      usingCache = true;
     }
     final resolved = profile;
     final managed = await _materializeEmergencyManagedProfile(
@@ -3232,6 +3389,43 @@ class AppFirstRuntimeBootstrapper
     required String reserveId,
     required EmergencyChainMode chainMode,
   }) async {
+    final bundle = await _emergencyNetworkStore.readEnvelope(
+      hostPlatform: hostPlatform,
+      deviceBinding: deviceBinding,
+      kind: EmergencyCacheKind.profileBundle,
+    );
+    if (bundle != null) {
+      try {
+        if (bundle['schema_version'] != 1 ||
+            _readText(bundle['catalog_revision']) != catalogRevision) {
+          throw const FormatException('Emergency bundle revision is invalid.');
+        }
+        final rawProfiles = bundle['profiles'];
+        if (rawProfiles is! List || rawProfiles.length > 36) {
+          throw const FormatException('Emergency bundle is invalid.');
+        }
+        for (final rawEntry in rawProfiles) {
+          final entry = _readMap(rawEntry);
+          if (_readText(entry['reserve_id']) != reserveId ||
+              EmergencyChainMode.tryParse(entry['chain_mode']) != chainMode) {
+            continue;
+          }
+          return await _emergencyEnvelopeVerifier.parseProfile(
+            _readMap(entry['envelope']),
+            installId: installId,
+            catalogRevision: catalogRevision,
+            reserveId: reserveId,
+            chainMode: chainMode,
+          );
+        }
+      } on Object {
+        await _emergencyNetworkStore.clear(
+          hostPlatform: hostPlatform,
+          deviceBinding: deviceBinding,
+        );
+        return null;
+      }
+    }
     final envelope = await _emergencyNetworkStore.readEnvelope(
       hostPlatform: hostPlatform,
       deviceBinding: deviceBinding,
@@ -3261,115 +3455,26 @@ class AppFirstRuntimeBootstrapper
     required HostPlatform hostPlatform,
     required EmergencyProfile profile,
   }) async {
-    final client = _createHttpClient(hostPlatform);
-    try {
-      final ruleSets = await _ensureAllExceptRuRuleSetCatalog(
-        hostPlatform: hostPlatform,
-        routeMode: RouteMode.allExceptRu,
-        client: client,
-      );
-      final materialized = await _materializeRuntimeConfig(
-        rawConfigPayload: jsonEncode(
-          hostPlatform == HostPlatform.android
-              ? wrapAndroidEmergencyFinalForCoreProbe(profile.configPayload)
-              : profile.configPayload,
-        ),
-        hostPlatform: hostPlatform,
-        routeMode: RouteMode.allExceptRu,
-        selectedApps: const <String>[],
-        preferredNodeCode: '',
-        preferredVariantId: 'direct',
-        smartConnect: null,
-        supportContext: const <String, dynamic>{},
-        clientRuleSetCatalog: ruleSets,
-      );
-      return ManagedProfilePayload(
-        profileName: 'pokrov-emergency-${profile.profileRevision}',
-        configPayload: materialized,
-        materializedForRuntime: true,
-        quickSettingsEligible: false,
-        routeMode: RouteMode.allExceptRu,
-        warpPolicy: WarpRuntimePolicy.disabled,
-      );
-    } finally {
-      client.close(force: true);
-    }
-  }
-
-  /// Keeps Android's fail-closed selected-outbound proof usable when an
-  /// emergency profile ends directly at a proxy instead of a selector group.
-  ///
-  /// The signed profile is verified before this local-only wrapper is added.
-  /// The selector remains pinned to the exact signed terminal outbound, so
-  /// detour order and the selected reserve cannot change here.
-  static Map<String, dynamic> wrapAndroidEmergencyFinalForCoreProbe(
-    Map<String, dynamic> configPayload,
-  ) {
-    final decoded = jsonDecode(jsonEncode(configPayload));
-    if (decoded is! Map) {
-      throw const BootstrapFailure(
-        'Не удалось подготовить экстренный маршрут.',
-      );
-    }
-    final config = Map<String, dynamic>.from(decoded);
-    final routeValue = config['route'];
-    final outboundValue = config['outbounds'];
-    if (routeValue is! Map || outboundValue is! List) {
-      throw const BootstrapFailure(
-        'Не удалось подготовить экстренный маршрут.',
-      );
-    }
-    final route = Map<String, dynamic>.from(routeValue);
-    final outbounds = outboundValue
-        .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
-        .toList(growable: true);
-    if (outbounds.length != outboundValue.length) {
-      throw const BootstrapFailure(
-        'Не удалось подготовить экстренный маршрут.',
-      );
-    }
-    final finalTag = route['final']?.toString().trim() ?? '';
-    final existingTags = outbounds
-        .map((outbound) => outbound['tag']?.toString().trim() ?? '')
-        .where((tag) => tag.isNotEmpty)
-        .toSet();
-    if (finalTag.isEmpty || !existingTags.contains(finalTag)) {
-      throw const BootstrapFailure(
-        'Не удалось подготовить экстренный маршрут.',
-      );
-    }
-
-    var probeTag = 'pokrov-emergency-egress';
-    var suffix = 2;
-    while (existingTags.contains(probeTag)) {
-      probeTag = 'pokrov-emergency-egress-$suffix';
-      suffix += 1;
-    }
-    var probeBlockTag = 'pokrov-emergency-probe-block';
-    var blockSuffix = 2;
-    while (existingTags.contains(probeBlockTag)) {
-      probeBlockTag = 'pokrov-emergency-probe-block-$blockSuffix';
-      blockSuffix += 1;
-    }
-    outbounds.add(<String, dynamic>{
-      'type': 'block',
-      'tag': probeBlockTag,
-    });
-    outbounds.add(<String, dynamic>{
-      'type': 'selector',
-      'tag': probeTag,
-      // Core omits groups with fewer than two members from its command
-      // channel. A permanently failing block member makes the group visible
-      // without introducing a second viable egress or changing selection.
-      'outbounds': <String>[finalTag, probeBlockTag],
-      'default': finalTag,
-      'interrupt_exist_connections': false,
-    });
-    route['final'] = probeTag;
-    config['outbounds'] = outbounds;
-    config['route'] = route;
-    return config;
+    final materialized = await _materializeRuntimeConfig(
+      rawConfigPayload: jsonEncode(profile.configPayload),
+      hostPlatform: hostPlatform,
+      routeMode: RouteMode.allExceptRu,
+      selectedApps: const <String>[],
+      preferredNodeCode: '',
+      preferredVariantId: 'direct',
+      smartConnect: null,
+      supportContext: const <String, dynamic>{},
+      clientRuleSetCatalog: _ClientRuleSetCatalog.empty,
+    );
+    return ManagedProfilePayload(
+      profileName: 'pokrov-emergency-${profile.profileRevision}',
+      configPayload: materialized,
+      materializedForRuntime: true,
+      quickSettingsEligible: false,
+      coreEgressProbeRequired: false,
+      routeMode: RouteMode.allExceptRu,
+      warpPolicy: WarpRuntimePolicy.disabled,
+    );
   }
 
   bool _isTransientEmergencyFailure(BootstrapFailure error) {

@@ -989,6 +989,7 @@ class _FakeEmergencyBootstrapper extends _FakeBootstrapper
   Future<AppFirstEmergencyCatalogResult> fetchEmergencyCatalog({
     required HostPlatform hostPlatform,
     required bool manualLimitedNetwork,
+    bool forceRefresh = false,
   }) async {
     manualLimitedNetworkCalls.add(manualLimitedNetwork);
     final failure = catalogFailure;
@@ -997,6 +998,12 @@ class _FakeEmergencyBootstrapper extends _FakeBootstrapper
     }
     return catalogResult;
   }
+
+  @override
+  Future<void> prepareEmergencyOfflineCache({
+    required HostPlatform hostPlatform,
+    bool manualLimitedNetwork = false,
+  }) async {}
 
   @override
   Future<AppFirstEmergencyProfileResult> resolveEmergencyProfile({

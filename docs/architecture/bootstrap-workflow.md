@@ -104,6 +104,23 @@ Current blocking dependency:
   exact owned-hop placement, exact DNS/ruleset shape, no WARP and no foreign
   direct bypass. A signed catalog is necessary but not sufficient: the final
   managed profile is validated again before staging on Android or Windows
+- after an online trial/paid check, the client prewarms one signed bundle for
+  every fresh or still-valid signed last-known-good reserve and supported
+  chain, encrypts it with a device-local key, and keeps it for at most seven
+  days and never beyond account, catalog, or RU/manual-eligibility expiry
+- emergency catalog and profile selection are cache-first. Starting a valid
+  offline copy performs no control-plane request and does not download the
+  normal client rule-set catalog before TUN start; the signed emergency
+  ruleset is fetched through the selected reserve-first path after Core starts
+- online refresh is best-effort and deduplicated. It replaces catalog and
+  profile bundle only after every expected envelope passes signature, device,
+  entitlement, revision, reserve, chain, topology, DNS, and expiry checks
+- Android keeps an emergency profile's signed terminal proxy as `route.final`
+  instead of wrapping it in the normal mandatory selected-outbound probe. A
+  blocked control-plane probe therefore cannot tear down an otherwise usable
+  emergency TUN. The profile still has no direct foreign fallback: if its
+  reserve cannot carry traffic, packets remain closed inside the VPN while
+  online catalog verification resumes when the control plane is reachable
 - the Android host runtime snapshot now carries structured health fields for the shared shell, including default uplink interface and index, DNS readiness, route counts, package-filter counts, last failure kind, and last stop reason
 - the Android lane now has a real repo-local test lane: Flutter tests assert the Android shell keeps the route-mode and runtime-diagnostics affordances visible, and Gradle unit tests cover manifest guards, platform monitoring, runtime-state handling, DNS planning, and TUN route planning
 - the Android diagnostics story is now support/internal rather than first-layer UI: local smoke-profile staging and raw runtime controls stay out of the consumer shell while the physical-device gate remains separate
@@ -113,6 +130,10 @@ Current blocking dependency:
 - a terminal Android selected-outbound egress failure also invalidates the staged cached runtime profile and blocks that cache from offline fallback; the next connect must obtain and stage a fresh authorized manifest, while ordinary offline fallback remains bounded before any dataplane failure
 - the Android host performs that selected-outbound fail-close as one synchronous profile-reuse invalidation: it clears the persisted Quick Settings profile and drops the staged pointer while preserving the safe failure snapshot, so a backgrounded Flutter shell cannot let the tile restart the rejected configuration
 - Android Quick Settings may reuse only a freshly staged managed profile carrying Flutter's completed first-connect route-scope confirmation; legacy path-only or unconfirmed persisted records fail closed into the app
+- Android service stop/start commands carry a monotonic ownership generation;
+  a completed stop may release foreground state or call `stopSelf()` only when
+  no newer start owns the service, so changing an emergency reserve cannot be
+  torn down by the previous connection's delayed cleanup
 - the Android Quick Settings tile uses Android active-tile mode, reconciles both the live TUN and the app-owned VPN-service presence before choosing start or stop, publishes only the resulting on/off state, and explicitly requests a new SystemUI listen after committed runtime transitions; the notification remains the owner of country, route and speed details
 - the shared shell now refreshes Android runtime truth again on foreground resume, and keeps polling a host-owned pending-connect signal through Android notification/VPN consent even when no lifecycle resume reaches Flutter; the host bridge reconciles a live TUN back to `running` so a relaunch does not leave the button lane stuck on a stale staged snapshot as easily
 - the shared shell now treats `Connect with sing-box` as a one-tap lane on supported hosts: it auto-initializes the runtime, syncs a live app-first managed profile from the platform API, stages that profile, and then requests live connect instead of forcing manual `initialize -> stage -> connect`

@@ -322,6 +322,8 @@ class RuntimeHostBridge(
         // routing scope choice for this new managed manifest. Omitted/legacy
         // MethodChannel calls remain ineligible for Quick Settings reuse.
         val quickSettingsEligible = call.argument<Boolean>("quickSettingsEligible") == true
+        val coreEgressProbeRequired =
+            call.argument<Boolean>("coreEgressProbeRequired") != false
         val displayCountry = call.argument<String>("displayCountry")
             ?.trim()
             ?.take(64)
@@ -360,6 +362,7 @@ class RuntimeHostBridge(
                         else -> "device"
                     },
                     quickSettingsEligible = quickSettingsEligible,
+                    coreEgressProbeRequired = coreEgressProbeRequired,
                     displayCountry = displayCountry,
                     displayNodeCode = displayNodeCode,
                     displayRouteMode = displayRouteMode,

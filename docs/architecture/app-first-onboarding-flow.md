@@ -349,6 +349,20 @@ agent, or timestamps. Only a successfully consumed server handoff may connect a
 browser campaign to an install/account. A missing, expired, replayed, or wrong
 purpose handle remains `unknown`.
 
+### Emergency offline readiness
+
+- once `/api/client/subscription` confirms `trialPremium` or `paidUnlimited`,
+  the app refreshes the authenticated signed emergency bundle in the
+  background without blocking the home screen
+- a valid encrypted bundle is reused immediately on cold start when POKROV
+  control-plane domains are unavailable; server refresh resumes whenever the
+  normal network is reachable
+- a reserve whose probe age is marked `stale` remains a selectable signed
+  last-known-good path until the bounded catalog lease expires
+- the bundle contains no authorization for a different install and expires no
+  later than the confirmed trial/subscription. A new or reset device still
+  needs one successful online activation before it can work offline
+
 ## Release And Audit Expectations
 
 - release verification must start from a clean POKROV Core checkout pinned to the exact client contract SHA

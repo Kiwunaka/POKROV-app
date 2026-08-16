@@ -300,8 +300,8 @@ After activation:
   normal Smart Connect.
 - Eligibility uses a bounded server-cached country observation. A person may
   explicitly enable `Ограниченная сеть` when that observation cannot refresh;
-  turning the manual mode off immediately invalidates a cache issued only from
-  that override.
+  a cache issued only from that override is ignored while the switch is off
+  but retained so the person can recover when the control plane is blocked.
 - The app accepts only an Ed25519-signed server-owned catalog with 4–12 unique,
   recently authenticated non-RU reserve exits. The signing key id and public
   key are release-time constants; missing or malformed constants fail closed.
@@ -314,13 +314,26 @@ After activation:
   foreign node, and reserve → POKROV RU hop → POKROV foreign node. Emergency
   profiles cannot contain WARP, direct foreign bypasses, an unexpected ruleset,
   extra auxiliary outbounds or a different DNS detour.
-- A verified catalog/profile may be retained in device-bound encrypted storage
-  until its signed expiry. Server unavailability may use that last-known-good
-  copy; invalid signatures, expired material, a changed account/manual-mode
-  decision or an exact profile mismatch must clear it and fail closed.
+- After an eligible online session, the app proactively stores one complete,
+  device-bound encrypted bundle covering every fresh or still-valid signed
+  last-known-good reserve and advertised chain mode. Catalog and exact profile
+  selection are cache-first, so connect does not wait for or require
+  `api.pokrov.space` when the signed copy is valid. A `stale` row remains
+  selectable until the signed lease expires; its label stays honest.
+- The offline lease is at most seven days and is always capped by the active
+  trial/subscription, catalog, and RU/manual eligibility expiry. A fresh device
+  that has never confirmed an eligible session cannot be authorized offline.
+  Invalid signatures, expired material, or an exact profile mismatch clear the
+  affected emergency cache and fail closed.
 - Reserve rows distinguish current availability from proof level: ordinary,
   synthetic blocked-network lab, and real restricted-network proof. The client
   must not relabel ordinary reachability as a real mobile-network pass.
+- Emergency connect never requires a live POKROV API probe after the signed
+  offline bundle has passed local validation. Android keeps the exact signed
+  terminal proxy as the runtime final and does not stop that TUN merely because
+  a control-plane health URL is blocked. There is no direct foreign fallback;
+  failed reserve traffic remains fail-closed until the person retries another
+  reserve, while online catalog checks resume opportunistically.
 - An operator distribution stop prevents new catalog delivery and automatic
   worker promotion. A previously issued signed offline copy cannot be recalled
   and may remain usable only until its existing expiry.

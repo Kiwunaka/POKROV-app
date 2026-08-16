@@ -139,6 +139,26 @@ Map<String, Object?> _config() => <String, Object?>{
     };
 
 void main() {
+  test('keeps a signed stale reserve selectable as last-known-good', () {
+    EmergencyReserve reserve(EmergencyReserveStatus status) => EmergencyReserve(
+          id: 'emg_${'a' * 24}',
+          ordinal: 1,
+          countryCode: 'DE',
+          transport: 'tcp',
+          status: status,
+          latencyMs: 42,
+          checkedAt: _now,
+          verification: EmergencyVerificationLevel.syntheticBs,
+          verificationAt: _now,
+          modes: EmergencyChainMode.values,
+        );
+
+    expect(reserve(EmergencyReserveStatus.working).available, isTrue);
+    expect(reserve(EmergencyReserveStatus.stale).available, isTrue);
+    expect(reserve(EmergencyReserveStatus.checking).available, isFalse);
+    expect(reserve(EmergencyReserveStatus.unavailable).available, isFalse);
+  });
+
   test('verifies a strict signed catalog and keeps only safe metadata',
       () async {
     final algorithm = Ed25519();

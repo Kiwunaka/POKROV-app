@@ -2,12 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cryptography/cryptography.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
+import 'package:pokrov_app_shell/emergency_network_contract.dart';
+import 'package:pokrov_app_shell/src/emergency/emergency_network_store.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 
 const _ruDomainWhitelistRuleSetTag = 'pokrov-ru-domain-whitelist';
@@ -16,6 +19,83 @@ const _ruIpCountryRuleSetTag = 'pokrov-ru-ip-country';
 const _ruIpWhitelistRuleSetTag = 'pokrov-ru-ip-whitelist';
 const _validClientUpdateSha256 =
     'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
+String _emergencyB64(List<int> value) =>
+    base64UrlEncode(value).replaceAll('=', '');
+
+Future<Map<String, Object?>> _signedEmergencyEnvelope(
+  Map<String, Object?> payload, {
+  required Ed25519 algorithm,
+  required SimpleKeyPair keyPair,
+}) async {
+  final bytes = utf8.encode(jsonEncode(payload));
+  final signature = await algorithm.sign(bytes, keyPair: keyPair);
+  return <String, Object?>{
+    'schema_version': 1,
+    'algorithm': 'Ed25519',
+    'key_id': 'offline-test-key',
+    'payload_b64': _emergencyB64(bytes),
+    'signature_b64': _emergencyB64(signature.bytes),
+  };
+}
+
+Map<String, Object?> _offlineEmergencyConfig(String reserveId) =>
+    <String, Object?>{
+      'outbounds': <Object?>[
+        <String, Object?>{
+          'type': 'vless',
+          'tag': 'POKROV emergency reserve',
+          'server': '$reserveId.example',
+          'server_port': 443,
+          'uuid': '11111111-1111-4111-8111-111111111111',
+          'tls': <String, Object?>{
+            'enabled': true,
+            'reality': <String, Object?>{'enabled': true},
+          },
+        },
+        <String, Object?>{'type': 'direct', 'tag': 'direct'},
+        <String, Object?>{'type': 'block', 'tag': 'block'},
+        <String, Object?>{'type': 'dns', 'tag': 'dns-out'},
+      ],
+      'dns': <String, Object?>{
+        'servers': <Object?>[
+          <String, Object?>{'tag': 'bootstrap', 'address': 'local'},
+          <String, Object?>{
+            'tag': 'emergency-dns',
+            'address': 'https://1.1.1.1/dns-query',
+            'detour': 'POKROV emergency reserve',
+          },
+        ],
+        'final': 'emergency-dns',
+      },
+      'route': <String, Object?>{
+        'final': 'POKROV emergency reserve',
+        'rule_set': <Object?>[
+          <String, Object?>{
+            'type': 'remote',
+            'tag': 'geoip-ru',
+            'format': 'binary',
+            'url': 'https://connect.pokrov.space/rules/geoip-ru.srs',
+            'download_detour': 'POKROV emergency reserve',
+          },
+        ],
+        'rules': <Object?>[
+          <String, Object?>{
+            'rule_set': <String>['geoip-ru'],
+            'outbound': 'direct',
+          },
+          <String, Object?>{'protocol': 'dns', 'outbound': 'dns-out'},
+          <String, Object?>{'ip_is_private': true, 'outbound': 'direct'},
+        ],
+      },
+      '_meta': <String, Object?>{
+        'emergency': true,
+        'chain_mode': 'reserve_direct',
+        'route_scope': 'all_except_ru',
+        'quick_settings_eligible': false,
+        'warp': false,
+      },
+    };
 
 Map<String, Object?> _readyManagedProfile(String revision,
     {bool pending = false}) {
@@ -203,66 +283,6 @@ class _FailingFlutterSecureStorage extends FlutterSecureStorage {
 }
 
 void main() {
-  test('Android emergency final stays exact behind a probeable selector group',
-      () {
-    final signedConfig = <String, dynamic>{
-      'outbounds': <Object?>[
-        <String, Object?>{
-          'type': 'vless',
-          'tag': 'reserve-root',
-          'server': '198.51.100.10',
-        },
-        <String, Object?>{
-          'type': 'vless',
-          'tag': 'owned-ru',
-          'server': '198.51.100.20',
-          'detour': 'reserve-root',
-        },
-        <String, Object?>{
-          'type': 'vless',
-          'tag': 'owned-foreign',
-          'server': '198.51.100.30',
-          'detour': 'owned-ru',
-        },
-      ],
-      'route': <String, Object?>{'final': 'owned-foreign'},
-    };
-
-    final wrapped =
-        AppFirstRuntimeBootstrapper.wrapAndroidEmergencyFinalForCoreProbe(
-      signedConfig,
-    );
-    final outbounds = (wrapped['outbounds'] as List).cast<Map>();
-    final route = (wrapped['route'] as Map).cast<String, dynamic>();
-    final probe = outbounds.singleWhere(
-      (outbound) => outbound['tag'] == 'pokrov-emergency-egress',
-    );
-
-    expect(route['final'], 'pokrov-emergency-egress');
-    expect(probe['type'], 'selector');
-    expect(
-      probe['outbounds'],
-      <String>['owned-foreign', 'pokrov-emergency-probe-block'],
-    );
-    expect(probe['default'], 'owned-foreign');
-    expect(
-      outbounds.singleWhere((item) => item['tag'] == 'owned-ru')['detour'],
-      'reserve-root',
-    );
-    expect(
-      outbounds.singleWhere((item) => item['tag'] == 'owned-foreign')['detour'],
-      'owned-ru',
-    );
-    expect(
-      outbounds.singleWhere(
-        (item) => item['tag'] == 'pokrov-emergency-probe-block',
-      )['type'],
-      'block',
-    );
-    expect((signedConfig['route'] as Map)['final'], 'owned-foreign');
-    expect((signedConfig['outbounds'] as List).length, 3);
-  });
-
   final defaultSecureStoragePlatform = FlutterSecureStoragePlatform.instance;
   setUp(() {
     FlutterSecureStoragePlatform.instance =
@@ -270,6 +290,207 @@ void main() {
   });
   tearDown(() {
     FlutterSecureStoragePlatform.instance = defaultSecureStoragePlatform;
+  });
+
+  test('prewarmed emergency bundle connects without any control-plane request',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-emergency-offline-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    const installId = 'install-emergency-offline-123';
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}app-first-session-android.json',
+    );
+    await stateFile.writeAsString(
+      jsonEncode(<String, Object?>{
+        'install_id': installId,
+        'session_token': 'offline-session-token',
+        'account_id': 'offline-account',
+        'managed_manifest_path': '/api/client/profile/managed',
+        'profile_revision': '',
+      }),
+    );
+
+    final algorithm = Ed25519();
+    final keyPair = await algorithm.newKeyPair();
+    final publicKey = await keyPair.extractPublicKey();
+    final verifier = EmergencyEnvelopeVerifier(
+      publicKeysById: <String, String>{
+        'offline-test-key': _emergencyB64(publicKey.bytes),
+      },
+    );
+    final binding = await verifier.deviceBinding(installId);
+    final now = DateTime.now().toUtc();
+    const catalogRevision = 'emg-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+    final reserveIds = List<String>.generate(
+      4,
+      (index) => 'emg_${(index + 1).toRadixString(16).padLeft(24, '0')}',
+    );
+    final catalogEnvelope = await _signedEmergencyEnvelope(
+      <String, Object?>{
+        'type': 'pokrov.emergency.catalog',
+        'schema_version': 1,
+        'catalog_revision': catalogRevision,
+        'issued_at': now.subtract(const Duration(minutes: 1)).toIso8601String(),
+        'refresh_after': now.add(const Duration(hours: 6)).toIso8601String(),
+        'valid_until': now.add(const Duration(days: 4)).toIso8601String(),
+        'offline_valid_until':
+            now.add(const Duration(days: 4)).toIso8601String(),
+        'device_binding': binding,
+        'access': <String, Object?>{
+          'state': 'trial_premium',
+          'expires_at': now.add(const Duration(days: 5)).toIso8601String(),
+        },
+        'eligibility': <String, Object?>{
+          'eligible': true,
+          'source': 'cached_server_country',
+          'country_code': 'RU',
+          'valid_until': now.add(const Duration(days: 7)).toIso8601String(),
+        },
+        'disclosure_revision': '2026-08-15.1',
+        'items': <Object?>[
+          for (var index = 0; index < reserveIds.length; index += 1)
+            <String, Object?>{
+              'id': reserveIds[index],
+              'ordinal': index + 1,
+              'country_code': 'DE',
+              'transport': 'tcp',
+              'status': 'working',
+              'latency_ms': 40 + index,
+              'latency_source': 'server_probe',
+              'checked_at': now.toIso8601String(),
+              'verification': 'synthetic_bs',
+              'verification_at': now.toIso8601String(),
+              'modes': <String>['reserve_direct'],
+            },
+        ],
+      },
+      algorithm: algorithm,
+      keyPair: keyPair,
+    );
+    final profileEnvelopes = <Map<String, Object?>>[];
+    for (final reserveId in reserveIds) {
+      final profileEnvelope = await _signedEmergencyEnvelope(
+        <String, Object?>{
+          'type': 'pokrov.emergency.profile',
+          'schema_version': 1,
+          'catalog_revision': catalogRevision,
+          'profile_revision': 'emgp-${reserveId.substring(4)}',
+          'issued_at':
+              now.subtract(const Duration(minutes: 1)).toIso8601String(),
+          'offline_valid_until':
+              now.add(const Duration(days: 4)).toIso8601String(),
+          'device_binding': binding,
+          'reserve_id': reserveId,
+          'chain_mode': 'reserve_direct',
+          'route_scope': 'all_except_ru',
+          'access_state': 'trial_premium',
+          'access_expires_at':
+              now.add(const Duration(days: 5)).toIso8601String(),
+          'eligibility_valid_until':
+              now.add(const Duration(days: 7)).toIso8601String(),
+          'warp': false,
+          'quick_settings_eligible': false,
+          'config_format': 'singbox-json',
+          'config_payload': _offlineEmergencyConfig(reserveId),
+        },
+        algorithm: algorithm,
+        keyPair: keyPair,
+      );
+      profileEnvelopes.add(<String, Object?>{
+        'reserveId': reserveId,
+        'chainMode': 'reserve_direct',
+        'envelope': profileEnvelope,
+      });
+    }
+
+    var requestCount = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final serverPort = server.port;
+    unawaited(() async {
+      await for (final request in server) {
+        requestCount += 1;
+        expect(
+            request.uri.path, '/api/client/emergency-network/offline-bundle');
+        expect(request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer offline-session-token');
+        request.response
+          ..headers.contentType = ContentType.json
+          ..write(jsonEncode(<String, Object?>{
+            'schemaVersion': 'pokrov-emergency-offline-bundle-v1',
+            'catalogEnvelope': catalogEnvelope,
+            'profileEnvelopes': profileEnvelopes,
+          }));
+        await request.response.close();
+      }
+    }());
+    final sessionStore = MemoryAppFirstSessionSecretStore();
+    final emergencyStore = EncryptedEmergencyNetworkStore(
+      directoryResolver: () async => tempDirectory,
+    );
+    final online = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:$serverPort',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: sessionStore,
+      emergencyEnvelopeVerifier: verifier,
+      emergencyNetworkStore: emergencyStore,
+    );
+    await online.prepareEmergencyOfflineCache(
+      hostPlatform: HostPlatform.android,
+    );
+    expect(requestCount, 1);
+    await server.close(force: true);
+
+    final offline = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:$serverPort',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: sessionStore,
+      emergencyEnvelopeVerifier: verifier,
+      emergencyNetworkStore: emergencyStore,
+      connectionTimeout: const Duration(milliseconds: 50),
+      requestTimeout: const Duration(milliseconds: 50),
+      maxRequestAttempts: 1,
+    );
+    final catalog = await offline.fetchEmergencyCatalog(
+      hostPlatform: HostPlatform.android,
+      manualLimitedNetwork: false,
+    );
+    final resolved = await offline.resolveEmergencyProfile(
+      hostPlatform: HostPlatform.android,
+      catalogRevision: catalog.catalog!.revision,
+      reserveId: reserveIds.last,
+      chainMode: EmergencyChainMode.reserveDirect,
+      manualLimitedNetwork: false,
+    );
+
+    expect(catalog.usingCache, isTrue);
+    expect(resolved.usingCache, isTrue);
+    expect(resolved.profile.reserveId, reserveIds.last);
+    expect(resolved.managedProfile.materializedForRuntime, isTrue);
+    expect(resolved.managedProfile.coreEgressProbeRequired, isFalse);
+    final runtimeConfig =
+        jsonDecode(resolved.managedProfile.configPayload) as Map;
+    final runtimeRoute = runtimeConfig['route'] as Map;
+    final runtimeOutbounds = (runtimeConfig['outbounds'] as List).cast<Map>();
+    expect(runtimeRoute['final'], 'POKROV emergency reserve');
+    expect(
+      runtimeOutbounds.where((outbound) => outbound['type'] == 'selector'),
+      isEmpty,
+    );
+    expect(
+      runtimeOutbounds.where((outbound) => outbound['type'] == 'urltest'),
+      isEmpty,
+    );
+    expect(
+      resolved.managedProfile.configPayload,
+      isNot(contains('api.my-ip.io')),
+    );
+    expect(requestCount, 1);
   });
 
   group('ClientAppUpdateInfo download trust', () {

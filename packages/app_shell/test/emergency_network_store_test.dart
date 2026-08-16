@@ -35,6 +35,12 @@ void main() {
       'kind': 'profile',
       'payload_b64': 'secret'
     };
+    final profileBundle = <String, dynamic>{
+      'schema_version': 1,
+      'profiles': <Object?>[
+        <String, Object?>{'reserve_id': 'reserve-1', 'envelope': profile},
+      ],
+    };
 
     await store.writeEnvelope(
       hostPlatform: HostPlatform.android,
@@ -47,6 +53,12 @@ void main() {
       deviceBinding: binding,
       kind: EmergencyCacheKind.profile,
       envelope: profile,
+    );
+    await store.writeEnvelope(
+      hostPlatform: HostPlatform.android,
+      deviceBinding: binding,
+      kind: EmergencyCacheKind.profileBundle,
+      envelope: profileBundle,
     );
 
     expect(
@@ -64,6 +76,14 @@ void main() {
         kind: EmergencyCacheKind.profile,
       ),
       profile,
+    );
+    expect(
+      await store.readEnvelope(
+        hostPlatform: HostPlatform.android,
+        deviceBinding: binding,
+        kind: EmergencyCacheKind.profileBundle,
+      ),
+      profileBundle,
     );
     final rawFiles = directory
         .listSync(recursive: true)

@@ -7,7 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 
-enum EmergencyCacheKind { catalog, profile }
+enum EmergencyCacheKind { catalog, profile, profileBundle }
 
 abstract interface class EmergencyStoreSecretBackend {
   Future<String?> read(String key);

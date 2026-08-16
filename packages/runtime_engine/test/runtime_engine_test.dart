@@ -303,6 +303,7 @@ void main() {
     expect(staged.message, 'Настройки POKROV готовы.');
     expect(stagedArguments?['runtimeOptionsJson'], isNull);
     expect(stagedArguments?['quickSettingsEligible'], isTrue);
+    expect(stagedArguments?['coreEgressProbeRequired'], isTrue);
     final config = jsonDecode(stagedArguments?['configPayload']! as String)
         as Map<String, dynamic>;
     final endpoints = config['endpoints'] as List<dynamic>;
@@ -352,11 +353,13 @@ void main() {
         configPayload:
             '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"direct","tag":"direct"}],"route":{"rules":[{"ip_is_private":true,"outbound":"direct"},{"protocol":"dns","action":"hijack-dns"}],"final":"direct"},"experimental":{"cache_file":{"enabled":true}},"_meta":{"title":"display only","runtime_variant_probe":{"group_tag":"probe","mappings":[{"id":"direct","outbound_tag":"direct"}]}}}',
         materializedForRuntime: true,
+        coreEgressProbeRequired: false,
       ),
     );
 
     expect(stagedArguments?['materializedForRuntime'], isTrue);
     expect(stagedArguments?['quickSettingsEligible'], isFalse);
+    expect(stagedArguments?['coreEgressProbeRequired'], isFalse);
     expect(stagedArguments?['runtimeOptionsJson'], isNull);
     expect(stagedArguments?['configPayload'], isA<String>());
     final stagedConfig =

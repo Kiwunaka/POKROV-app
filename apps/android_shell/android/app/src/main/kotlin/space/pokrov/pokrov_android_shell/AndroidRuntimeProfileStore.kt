@@ -12,6 +12,8 @@ internal data class PersistedRuntimeProfile(
      * freshly staged profile. Missing legacy metadata is deliberately false.
      */
     val quickSettingsEligible: Boolean = false,
+    /** Mandatory for ordinary profiles; false only for signed offline emergency profiles. */
+    val coreEgressProbeRequired: Boolean = true,
     /** Safe display-only metadata; never contains provider hosts or credentials. */
     val displayCountry: String = "",
     val displayNodeCode: String = "",
@@ -20,6 +22,19 @@ internal data class PersistedRuntimeProfile(
 
 internal fun PersistedRuntimeProfile.canStartFromQuickSettings(): Boolean =
     quickSettingsEligible && routeMode.isNotBlank()
+
+internal fun coreEgressProbeRequiredForRuntime(
+    profile: PersistedRuntimeProfile?,
+    configPath: String,
+): Boolean = profile
+    ?.takeIf { it.configPath == configPath }
+    ?.coreEgressProbeRequired
+    ?: true
+
+internal fun ownsLatestRuntimeServiceCommand(
+    completedGeneration: Long?,
+    currentGeneration: Long,
+): Boolean = completedGeneration == null || completedGeneration == currentGeneration
 
 /**
  * Keeps only the private materialized runtime path so the Quick Settings tile
@@ -30,6 +45,7 @@ internal object AndroidRuntimeProfileStore {
     private const val PREFERENCES_NAME = "pokrov_runtime_profile"
     private const val KEY_CONFIG_PATH = "config_path"
     private const val KEY_QUICK_SETTINGS_ELIGIBLE = "quick_settings_eligible"
+    private const val KEY_CORE_EGRESS_PROBE_REQUIRED = "core_egress_probe_required"
     private const val KEY_ROUTE_MODE = "route_mode"
     private const val KEY_DISPLAY_COUNTRY = "display_country"
     private const val KEY_DISPLAY_NODE_CODE = "display_node_code"
@@ -42,6 +58,7 @@ internal object AndroidRuntimeProfileStore {
             .putString(KEY_CONFIG_PATH, profile.configPath)
             .putString(KEY_ROUTE_MODE, profile.routeMode)
             .putBoolean(KEY_QUICK_SETTINGS_ELIGIBLE, profile.quickSettingsEligible)
+            .putBoolean(KEY_CORE_EGRESS_PROBE_REQUIRED, profile.coreEgressProbeRequired)
             .putString(KEY_DISPLAY_COUNTRY, profile.displayCountry)
             .putString(KEY_DISPLAY_NODE_CODE, profile.displayNodeCode)
             .putString(KEY_DISPLAY_ROUTE_MODE, profile.displayRouteMode)
@@ -67,6 +84,10 @@ internal object AndroidRuntimeProfileStore {
             quickSettingsEligible = preferences.getBoolean(
                 KEY_QUICK_SETTINGS_ELIGIBLE,
                 false,
+            ),
+            coreEgressProbeRequired = preferences.getBoolean(
+                KEY_CORE_EGRESS_PROBE_REQUIRED,
+                true,
             ),
             displayCountry = preferences.getString(KEY_DISPLAY_COUNTRY, "").orEmpty(),
             displayNodeCode = preferences.getString(KEY_DISPLAY_NODE_CODE, "").orEmpty(),

@@ -7,6 +7,27 @@ import org.junit.Before
 import org.junit.Test
 
 class PokrovQuickSettingsTileServiceTest {
+    @Test
+    fun coreEgressProbeDefaultsClosedAndSkipsOnlyMatchingEmergencyProfile() {
+        val ordinary = PersistedRuntimeProfile(configPath = "/private/ordinary.json")
+        val emergency = PersistedRuntimeProfile(
+            configPath = "/private/emergency.json",
+            coreEgressProbeRequired = false,
+        )
+
+        assertEquals(true, coreEgressProbeRequiredForRuntime(null, ordinary.configPath))
+        assertEquals(true, coreEgressProbeRequiredForRuntime(ordinary, ordinary.configPath))
+        assertEquals(true, coreEgressProbeRequiredForRuntime(emergency, ordinary.configPath))
+        assertEquals(false, coreEgressProbeRequiredForRuntime(emergency, emergency.configPath))
+    }
+
+    @Test
+    fun staleStopCommandCannotDropForegroundOwnedByNewStart() {
+        assertEquals(true, ownsLatestRuntimeServiceCommand(null, 3L))
+        assertEquals(true, ownsLatestRuntimeServiceCommand(3L, 3L))
+        assertEquals(false, ownsLatestRuntimeServiceCommand(2L, 3L))
+    }
+
     @Before
     fun resetTransitionGate() {
         QuickTileTransitionGate.resetForTest()

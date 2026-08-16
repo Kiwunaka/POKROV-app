@@ -123,7 +123,8 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
         'Сессия не подтверждена. Откройте Профиль и повторите проверку.',
       404 => 'Экстренная сеть ещё не включена на сервере.',
       409 => 'Каталог обновился. Повторите проверку.',
-      _ => 'Не удалось проверить экстренную сеть. Попробуйте ещё раз.',
+      _ =>
+        'Автономная копия ещё не подготовлена. Один раз откройте POKROV при обычном интернете — после этого экстренная сеть сможет запуститься без наших серверов.',
     };
   }
 
@@ -147,7 +148,7 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
     unawaited(_refresh());
   }
 
-  Future<void> _refresh() async {
+  Future<void> _refresh({bool forceRefresh = false}) async {
     if (_busy && _result != null) {
       return;
     }
@@ -159,6 +160,7 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
       final result = await widget.service.fetchEmergencyCatalog(
         hostPlatform: widget.appContext.hostPlatform,
         manualLimitedNetwork: _manualLimitedNetwork,
+        forceRefresh: forceRefresh,
       );
       final catalog = result.catalog;
       if (!mounted) {
@@ -359,7 +361,8 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
           IconButton(
             key: const ValueKey('emergency-refresh'),
             tooltip: 'Обновить резервы',
-            onPressed: _busy ? null : _refresh,
+            onPressed:
+                _busy ? null : () => unawaited(_refresh(forceRefresh: true)),
             icon: const Icon(Icons.refresh_rounded),
           ),
         ],
@@ -372,7 +375,7 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
               title: 'Если обычное подключение недоступно',
               tone: _SectionTone.reward,
               lines: const [
-                'POKROV проверит резервный вход и соберёт безопасную цепочку без WARP.',
+                'POKROV заранее сохраняет подписанные резервы на устройстве и может запустить их без доступа к нашим серверам.',
               ],
               child: SwitchListTile.adaptive(
                 key: const ValueKey('emergency-manual-limited-network'),
@@ -388,7 +391,7 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
                           _manualLimitedNetwork = value;
                         });
                         _persistPreferences();
-                        unawaited(_refresh());
+                        unawaited(_refresh(forceRefresh: true));
                       },
               ),
             ),
@@ -397,13 +400,13 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
                 key: ValueKey('emergency-loading'),
                 rows: 4,
               )
-            else if (_error.isNotEmpty)
+            else if (_error.isNotEmpty && catalog == null)
               _SectionCard(
                 title: 'Не удалось обновить',
                 tone: _SectionTone.muted,
                 lines: [_error],
                 child: OutlinedButton.icon(
-                  onPressed: _refresh,
+                  onPressed: () => unawaited(_refresh(forceRefresh: true)),
                   icon: const Icon(Icons.refresh_rounded),
                   label: const Text('Повторить'),
                 ),
@@ -415,6 +418,16 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
                 lines: [_unavailableMessage(_result!)],
               )
             else if (catalog != null) ...[
+              if (_error.isNotEmpty) ...[
+                _SectionCard(
+                  title: 'Работаем по офлайн-копии',
+                  tone: _SectionTone.muted,
+                  lines: const [
+                    'Обновить резервы сейчас не удалось. Сохранённый подписанный набор остаётся доступен.',
+                  ],
+                ),
+                const SizedBox(height: 10),
+              ],
               Row(
                 children: [
                   Expanded(

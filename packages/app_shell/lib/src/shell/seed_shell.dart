@@ -1588,6 +1588,20 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       setState(() {
         _subscriptionInfo = info;
       });
+      if (const {'trialPremium', 'paidUnlimited'}.contains(info.lane)) {
+        final emergencyService = _emergencyNetworkService;
+        if (emergencyService != null) {
+          unawaited(
+            emergencyService
+                .prepareEmergencyOfflineCache(
+                  hostPlatform: widget.appContext.hostPlatform,
+                  manualLimitedNetwork:
+                      _clientExperience.emergencyManualLimitedNetwork,
+                )
+                .catchError((Object _) {}),
+          );
+        }
+      }
     } on Object {
       // Subscription detail is optional; the sheet falls back to access lane.
     }
