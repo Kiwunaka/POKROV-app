@@ -7,8 +7,8 @@
   "version": "1.0.11",
   "artifact_dir": "E:/POKROV-release-staging/v1.0.11",
   "generated_at": "2026-08-16T15:51:24.8113349+03:00",
-  "updated_at": "2026-08-16T15:51:24.8113349+03:00",
-  "release_state": "public_stable_published_github_digest_verified_runtime_sync_pending",
+  "updated_at": "2026-08-16T15:56:39.9486563+03:00",
+  "release_state": "public_stable_published_github_digest_verified_runtime_synced",
   "built_from_client_commit": "65a236ed61fa03e5a98e6e08ccab300c02f1edb7",
   "platform_source_commit": "e5edf12d4e75ba8029916c87c392d0c78ff3ead8",
   "github_release": {
@@ -108,7 +108,7 @@
   "cutover": {
     "runtime_sync_allowed": true,
     "runtime_sync_required": true,
-    "runtime_sync_result": "PENDING: exact v1.0.11 handoff has not yet been applied to production",
+    "runtime_sync_result": "PASS: exact v1.0.11 handoff applied; portal services restarted, static surfaces deployed and five-repeat post-deploy verification passed",
     "anonymous_download_smoke": "PASS: all eight anonymous GitHub asset URLs return HTTP 200 with exact size; authenticated GitHub digest matches local SHA-256",
     "public_publication_allowed": true,
     "public_publication_marker": "GO for stable direct publication",
@@ -123,7 +123,7 @@
     "real restricted-RU emergency data-plane remains MANUAL_OWNER_TEST because LDPlayer runs behind a foreign Hiddify uplink",
     "Windows setup and portable build plus stable metadata, manifest and hash checks PASS with unsigned warning",
     "GitHub stable/latest release reports exact eight-asset size and SHA-256",
-    "brain release handoff deploy and runtime catalog smoke are pending"
+    "brain release handoff, backend restart, static deploy, five-repeat readiness and authenticated/anonymous exact v1.0.11 runtime catalog smoke PASS"
   ],
   "manual_gates_before_stronger_claims": [
     "Huawei exact-final endurance, WARP, per-app and Wi-Fi/LTE proof",
