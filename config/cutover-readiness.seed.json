@@ -1,37 +1,37 @@
 {
   "lane": "POKROV-app/main",
-  "status": "android_direct_apk_1_0_11_public_stable_published_runtime_synced_global_cutover_blocked_on_windows_trust_and_apple_gates",
+  "status": "android_direct_apk_1_0_12_public_stable_published_runtime_sync_pending_global_cutover_blocked_on_windows_trust_and_apple_gates",
   "public_cutover_allowed": false,
   "last_updated": "2026-08-16",
   "latest_repo_backed_release": {
-    "version": "1.0.11",
-    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.11",
-    "asset_refresh_utc": "2026-08-16T12:49:50Z",
+    "version": "1.0.12",
+    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.0.12",
+    "asset_refresh_utc": "2026-08-16T16:15:13Z",
     "github_repo_visibility": "public",
-    "anonymous_download_smoke": "PASS_ALL_EIGHT_PUBLIC_ASSETS_HTTP_200_EXACT_SIZE_AND_GITHUB_DIGEST",
+    "anonymous_download_smoke": "PASS_ALL_EIGHT_PUBLIC_ASSETS_RANGE_206_AND_EXACT_GITHUB_SIZE_DIGEST",
     "authenticated_github_release_smoke": "PASS_EXACT_GITHUB_ASSET_DIGEST",
-    "live_app_session_download_smoke": "PASS_BRAIN_SIGNED_AND_ANONYMOUS_EXACT_V1_0_11_RUNTIME_CATALOG"
+    "live_app_session_download_smoke": "PENDING_EXACT_V1_0_12_RUNTIME_SYNC"
   },
   "android_release": {
     "beta_distribution": "public_production_signed_direct_apk",
     "public_approved": true,
     "current_internal_candidate": {
-      "version_name": "1.0.11",
-      "version_code": 2020,
-      "apk_size_bytes": 100318410,
-      "apk_sha256": "071EF57FFD79D858F33F8232158A5BE714B0C0D956A882C64BA9DC3694D20882",
+      "version_name": "1.0.12",
+      "version_code": 2021,
+      "apk_size_bytes": 100384138,
+      "apk_sha256": "6BA394C05D504B31C23D6CF56A0C6B22B6333AB0A74B12466C9DAD6F8C6A51C5",
       "build_mode": "release",
       "debuggable": false,
       "signing_state": "PASS_PRODUCTION_SELF_MANAGED_DIRECT_APK",
       "certificate_sha256": "0A0602A7DF5D96A0B427909D004F3DDF26DEF86587634BF16694DA8D654B2500",
       "signature_scheme": "APK_SIGNATURE_SCHEME_V2",
-      "emulator_install_identity": "PASS_EXACT_SIGNED_X86_64_INSTALL_OFFLINE_EMERGENCY_UI_AND_TUN",
-      "emulator_launch_localhost_preflight": "PASS_API_BLOCKED_OFFLINE_CACHE_TUN_PERSISTENCE_AND_RESERVE_SWITCH; RESTRICTED_RU_DATAPLANE_MANUAL_OWNER_TEST",
-      "physical_device_install_identity": "MANUAL_OWNER_TEST_EXACT_ARM64_HUAWEI_1_0_11_2020",
-      "physical_device_pre_tunnel": "MANUAL_OWNER_TEST_EXACT_FINAL_1_0_11",
+      "emulator_install_identity": "PASS_EXACT_SIGNED_X86_64_INSTALL_AND_IN_APP_CABINET",
+      "emulator_launch_localhost_preflight": "PASS_IN_APP_CABINET_WEBVIEW_AND_NO_ANDROID_CRASH; UPDATE_PROGRESS_WIDGET_AND_NATIVE_CONTRACT_PASS",
+      "physical_device_install_identity": "MANUAL_OWNER_TEST_EXACT_ARM64_HUAWEI_1_0_12_2021",
+      "physical_device_pre_tunnel": "MANUAL_OWNER_TEST_EXACT_FINAL_1_0_12",
       "quick_settings_tile": "PASS_FINAL_SOURCE_CONTRACT; PHYSICAL_ENDURANCE_DEFERRED",
       "chrome_egress_check": "PASS_FRESH_PROCESS_FULL_TUNNEL_AND_EXCLUDED_APPS_BEFORE_FINAL_UI_ONLY",
-      "physical_device_audit": "MANUAL_OWNER_TEST_EXACT_FINAL_1_0_11; WARP_PER_APP_UPLINK_ENDURANCE_MANUAL_FOLLOWUP",
+      "physical_device_audit": "MANUAL_OWNER_TEST_EXACT_FINAL_1_0_12; WARP_PER_APP_UPLINK_ENDURANCE_MANUAL_FOLLOWUP",
       "offline_signing_recovery_backup": "MANUAL_OWNER_TEST",
       "play_store_channel": "NOT_REQUESTED_DIRECT_APK_FIRST",
       "public_approved": true
@@ -65,7 +65,7 @@
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
-    "Android 1.0.11 split APKs and Windows 1.0.11 stable-direct artifacts are public, GitHub-digest verified and production runtime metadata is synchronized; Windows trusted signing remains an owner gate"
+    "Android 1.0.12 split APKs and Windows 1.0.12 stable-direct artifacts are public and GitHub-digest verified; production runtime metadata synchronization is pending; Windows trusted signing remains an owner gate"
   ],
   "repo_side_closed": [
     "P0-P6 beta implementation scope",
@@ -74,8 +74,8 @@
     "authenticated GitHub download proof for all current release assets",
     "Android build-tool future-support warning closed with Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0",
     "release-note guardrails recorded; post-announcement monitoring remains operator work",
-    "1.0.11 GitHub stable release, exact eight-asset digest verification, production handoff, static deploy and post-deploy runtime smoke PASS",
-    "Android 1.0.11 split APKs are production-signed; signed encrypted offline emergency cache, API-blocked launch, TUN persistence and reserve switching PASS; Huawei/RU-LTE exact-final data-plane remains manual"
+    "1.0.12 GitHub stable release and exact eight-asset digest verification PASS; production handoff, static deploy and post-deploy runtime smoke pending",
+    "Android 1.0.12 split APKs are production-signed; LDPlayer in-app cabinet and updater progress contracts PASS; Huawei exact-final data-plane remains manual"
   ],
   "ios_release_gates": [
     "Apple team selected",
