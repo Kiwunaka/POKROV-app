@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
@@ -5,6 +7,15 @@ import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_windows_shell/main.dart' as windows_shell;
 
 void main() {
+  test('windows release metadata is stable rather than prerelease', () async {
+    final runnerResource = File('windows/runner/Runner.rc');
+    expect(await runnerResource.exists(), isTrue);
+
+    final content = await runnerResource.readAsString();
+    expect(content, contains('#else\n FILEFLAGS 0x0L'));
+    expect(content, isNot(contains('VS_FF_PRERELEASE')));
+  });
+
   test('windows minimum size keeps the compact drawer lane reachable', () {
     expect(windows_shell.pokrovWindowsMinimumSize, const Size(700, 640));
   });
