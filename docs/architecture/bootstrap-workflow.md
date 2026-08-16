@@ -235,10 +235,13 @@ validation runs again at tap time.
 On Android the native host downloads into app-private cache, follows at most
 five HTTPS redirects to GitHub-owned asset hosts, verifies exact byte size and
 SHA-256, and shares only the verified file through a non-exported
-`FileProvider`. It then opens Android's system package installer; Android 8+
-may require the user to grant install-source permission first. The app never
-silently installs an APK. Windows retains the trusted browser handoff. Signing,
-install, runtime, and exact-candidate proof remain separate release gates.
+`FileProvider`. During the transfer it exposes only phase and byte counters to
+the Flutter sheet so the user sees determinate download progress followed by
+verification and installer handoff. It then opens Android's system package
+installer; Android 8+ may require the user to grant install-source permission
+first. The app never silently installs an APK. Windows retains the trusted
+browser handoff. Signing, install, runtime, and exact-candidate proof remain
+separate release gates.
 
 ## Apple Boundary
 

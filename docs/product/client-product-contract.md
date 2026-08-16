@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-08-15
+Last updated: 2026-08-16
 
 ## Document Status
 
@@ -342,10 +342,12 @@ After activation:
 
 - purchase and renewal stay available from the app
 - the client continues payment through the canonical hosted checkout on `https://pay.pokrov.space/checkout/`
-- Android/iOS checkout, cabinet, and documentation continue in an OS-backed
-  in-app browser view with a visible origin and app-level back path; Telegram
-  and other native schemes still open their owning app. Desktop keeps the
-  external browser. This is hosted checkout, not native store billing.
+- Android cabinet and owned POKROV documentation continue inside an
+  app-owned WebView surface with a visible `pokrov.space` origin, back and
+  close controls, strict owned-origin navigation, and external handoff for
+  payment, Telegram, and mail destinations. iOS keeps the OS-backed in-app
+  browser view and desktop keeps the external browser. This is hosted
+  checkout, not native store billing.
 - Telegram purchase continuation may remain as a fallback path, not the default CTA
 - public acquisition outside the app is checkout-first on `marketing`, while the cabinet stays a continuation surface rather than a second acquisition page
 
@@ -545,7 +547,7 @@ Release continuity rules:
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
 - stable candidates after installed `1.0.5` beta builds use a strictly newer
-  semantic version (`1.0.10` is current) so existing users are prompted
+  semantic version (`1.0.12` is current) so existing users are prompted
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates
@@ -565,9 +567,11 @@ Release continuity rules:
   fragments, and non-APK assets fail closed
 - Android downloads into app-private cache, permits only bounded HTTPS
   redirects to GitHub-owned asset hosts, and verifies exact byte size plus
-  SHA-256 before exposing the file through a non-exported `FileProvider`; only
-  then does it open Android's required package-installer confirmation. Android
-  8+ may first require the owner to grant POKROV install-source permission.
+  SHA-256 before exposing the file through a non-exported `FileProvider`. The
+  update sheet polls the native downloader and shows downloaded-byte progress,
+  then an explicit verification/installing phase; only after verification does
+  it open Android's required package-installer confirmation. Android 8+ may
+  first require the owner to grant POKROV install-source permission.
   Windows continues through the trusted browser download lane.
 - downloaded-byte verification does not replace production-signing, install,
   runtime, or exact-candidate release proof

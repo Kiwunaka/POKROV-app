@@ -2370,6 +2370,7 @@ void main() {
       (tester) async {
     final launched = <Uri>[];
     final installed = <ClientAppUpdateInfo>[];
+    final installCompleter = Completer<PokrovClientUpdateInstallStatus>();
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'test-profile',
@@ -2421,10 +2422,16 @@ void main() {
           launched.add(uri);
           return true;
         },
-        clientUpdateInstaller: (update) async {
+        clientUpdateInstaller: (update) {
           installed.add(update);
-          return PokrovClientUpdateInstallStatus.installerOpened;
+          return installCompleter.future;
         },
+        clientUpdateProgressReader: () async =>
+            const PokrovClientUpdateProgress(
+          phase: PokrovClientUpdateProgressPhase.downloading,
+          downloadedBytes: 61728,
+          totalBytes: 123456,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -2436,6 +2443,20 @@ void main() {
     expect(find.text('Небольшие исправления бета-версии.'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('client-update-download')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byKey(const ValueKey('client-update-download-progress')),
+        findsOneWidget);
+    expect(find.text('Скачано 50%'), findsOneWidget);
+    final progress = tester.widget<LinearProgressIndicator>(
+      find.byKey(const ValueKey('client-update-progress-bar')),
+    );
+    expect(progress.value, 0.5);
+
+    installCompleter.complete(
+      PokrovClientUpdateInstallStatus.installerOpened,
+    );
     await tester.pumpAndSettle();
 
     expect(installed, hasLength(1));

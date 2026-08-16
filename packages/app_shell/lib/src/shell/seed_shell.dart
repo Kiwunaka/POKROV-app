@@ -8,6 +8,7 @@ class PokrovSeedApp extends StatefulWidget {
     this.supportTicketService,
     this.handoffLauncher,
     this.clientUpdateInstaller,
+    this.clientUpdateProgressReader,
     this.firstLaunchStore,
     this.themeModeStore = const PokrovFileThemeModeStore(),
     this.connectHintStore = const PokrovFileConnectHintStore(),
@@ -28,6 +29,7 @@ class PokrovSeedApp extends StatefulWidget {
   final SupportTicketService? supportTicketService;
   final ExternalHandoffLauncher? handoffLauncher;
   final PokrovClientUpdateInstaller? clientUpdateInstaller;
+  final PokrovClientUpdateProgressReader? clientUpdateProgressReader;
   final PokrovFirstLaunchStore? firstLaunchStore;
   final PokrovFileThemeModeStore themeModeStore;
   final PokrovFileConnectHintStore connectHintStore;
@@ -97,6 +99,7 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
         supportTicketService: widget.supportTicketService,
         handoffLauncher: widget.handoffLauncher,
         clientUpdateInstaller: widget.clientUpdateInstaller,
+        clientUpdateProgressReader: widget.clientUpdateProgressReader,
         firstLaunchStore: widget.firstLaunchStore,
         connectHintStore: widget.connectHintStore,
         runtimeActionTimeout: widget.runtimeActionTimeout,
@@ -448,6 +451,7 @@ class PokrovSeedShell extends StatefulWidget {
     this.supportTicketService,
     this.handoffLauncher,
     this.clientUpdateInstaller,
+    this.clientUpdateProgressReader,
     this.firstLaunchStore,
     this.connectHintStore = const PokrovFileConnectHintStore(),
     this.runtimeActionTimeout = const Duration(seconds: 18),
@@ -469,6 +473,7 @@ class PokrovSeedShell extends StatefulWidget {
   final SupportTicketService? supportTicketService;
   final ExternalHandoffLauncher? handoffLauncher;
   final PokrovClientUpdateInstaller? clientUpdateInstaller;
+  final PokrovClientUpdateProgressReader? clientUpdateProgressReader;
   final PokrovFirstLaunchStore? firstLaunchStore;
   final PokrovFileConnectHintStore connectHintStore;
   final Duration runtimeActionTimeout;
@@ -1976,13 +1981,22 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     return launcher(uri);
   }
 
-  Future<bool> _launchWebHandoff(Uri uri) {
+  Future<bool> _launchWebHandoff(Uri uri, {String title = 'POKROV'}) async {
     final injected = widget.handoffLauncher;
     if (injected != null) {
       return injected(uri);
     }
     final isWeb = uri.scheme.toLowerCase() == 'https' ||
         uri.scheme.toLowerCase() == 'http';
+    if (isWeb &&
+        widget.appContext.hostPlatform == HostPlatform.android &&
+        await openPokrovInAppWebSurface(
+          widget.appContext.hostPlatform,
+          uri,
+          title: title,
+        )) {
+      return true;
+    }
     final mode = isWeb &&
             (widget.appContext.hostPlatform == HostPlatform.android ||
                 widget.appContext.hostPlatform == HostPlatform.ios)
@@ -2206,36 +2220,119 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                 widget.appContext.hostPlatform,
                 value,
               );
+      final progressReader = widget.clientUpdateProgressReader ??
+          (widget.clientUpdateInstaller == null
+              ? () => readPokrovClientUpdateProgress(
+                    widget.appContext.hostPlatform,
+                  )
+              : null);
+      final progress = ValueNotifier<PokrovClientUpdateProgress>(
+        PokrovClientUpdateProgress(
+          phase: PokrovClientUpdateProgressPhase.preparing,
+          downloadedBytes: 0,
+          totalBytes: update.size,
+        ),
+      );
+      var progressReadInFlight = false;
+      var progressDisposed = false;
+      Future<void> refreshProgress() async {
+        if (progressReader == null ||
+            progressReadInFlight ||
+            progressDisposed) {
+          return;
+        }
+        progressReadInFlight = true;
+        try {
+          final next = await progressReader();
+          if (!progressDisposed) {
+            progress.value = next;
+          }
+        } on Object {
+          // Download completion still owns the final success or failure.
+        } finally {
+          progressReadInFlight = false;
+        }
+      }
+
       BuildContext? progressContext;
       final progressClosed = showDialog<void>(
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) {
           progressContext = dialogContext;
-          return const AlertDialog(
-            key: ValueKey('client-update-download-progress'),
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2.4),
-                ),
-                SizedBox(width: 14),
-                Expanded(child: Text('Скачиваем и проверяем обновление…')),
-              ],
+          return AlertDialog(
+            key: const ValueKey('client-update-download-progress'),
+            title: const Text('Обновление POKROV'),
+            content: SizedBox(
+              width: 320,
+              child: ValueListenableBuilder<PokrovClientUpdateProgress>(
+                valueListenable: progress,
+                builder: (context, value, _) {
+                  final percent = value.percent;
+                  final label = switch (value.phase) {
+                    PokrovClientUpdateProgressPhase.downloading =>
+                      percent == null
+                          ? 'Скачиваем обновление…'
+                          : 'Скачано $percent%',
+                    PokrovClientUpdateProgressPhase.verifying =>
+                      'Проверяем размер и целостность файла…',
+                    PokrovClientUpdateProgressPhase.installing =>
+                      'Открываем установку…',
+                    PokrovClientUpdateProgressPhase.failed =>
+                      'Не удалось завершить загрузку.',
+                    PokrovClientUpdateProgressPhase.idle ||
+                    PokrovClientUpdateProgressPhase.preparing =>
+                      'Подготавливаем защищённую загрузку…',
+                  };
+                  final barValue =
+                      value.phase == PokrovClientUpdateProgressPhase.downloading
+                          ? value.fraction
+                          : value.phase ==
+                                  PokrovClientUpdateProgressPhase.installing
+                              ? 1.0
+                              : null;
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      LinearProgressIndicator(
+                        key: const ValueKey('client-update-progress-bar'),
+                        value: barValue,
+                        minHeight: 7,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        label,
+                        key: const ValueKey('client-update-progress-label'),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           );
         },
       );
       await Future<void>.delayed(Duration.zero);
+      unawaited(refreshProgress());
+      final progressTimer = progressReader == null
+          ? null
+          : Timer.periodic(
+              const Duration(milliseconds: 250),
+              (_) => unawaited(refreshProgress()),
+            );
       PokrovClientUpdateInstallStatus status;
       try {
         status = await installer(update);
       } on Object {
         status = PokrovClientUpdateInstallStatus.failed;
       }
+      progressTimer?.cancel();
+      await refreshProgress();
       if (!mounted) {
+        progressDisposed = true;
+        progress.dispose();
         return;
       }
       final dialogContext = progressContext;
@@ -2244,7 +2341,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       } else {
         Navigator.of(context, rootNavigator: true).pop();
       }
-      unawaited(progressClosed);
+      await progressClosed;
+      progressDisposed = true;
+      progress.dispose();
       switch (status) {
         case PokrovClientUpdateInstallStatus.installerOpened:
           showPokrovSnack(
@@ -2458,7 +2557,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         hostPlatform: widget.appContext.hostPlatform,
         targetPath: _cabinetTargetPathFromValue(value),
       );
-      final opened = await _launchWebHandoff(handoff.handoffUrl);
+      final opened = await _launchWebHandoff(
+        handoff.handoffUrl,
+        title: 'Кабинет POKROV',
+      );
       if (!mounted || opened) {
         return;
       }

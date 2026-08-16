@@ -72,6 +72,8 @@ class RuntimeHostBridge(
     private var updateDownloadInProgress = false
     @Volatile
     private var pendingVerifiedUpdate: File? = null
+    @Volatile
+    private var updateDownloadProgress = AndroidClientUpdateProgress.idle()
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
@@ -97,6 +99,8 @@ class RuntimeHostBridge(
             METHOD_UPDATE_SYSTEM_SURFACE_PREFERENCES ->
                 result.success(updateSystemSurfacePreferences(call))
             METHOD_OPEN_NOTIFICATION_SETTINGS -> result.success(openNotificationSettings())
+            METHOD_OPEN_IN_APP_WEB_SURFACE -> result.success(openInAppWebSurface(call))
+            METHOD_CLIENT_UPDATE_PROGRESS -> result.success(updateDownloadProgress.toMap())
             METHOD_INSTALL_CLIENT_UPDATE -> installClientUpdate(call, result)
             else -> result.notImplemented()
         }
@@ -133,21 +137,40 @@ class RuntimeHostBridge(
                 return
             }
             updateDownloadInProgress = true
+            updateDownloadProgress = AndroidClientUpdateProgress(
+                phase = "preparing",
+                downloadedBytes = 0L,
+                totalBytes = request.size,
+            )
         }
         Thread {
             val apk = runCatching {
-                AndroidClientUpdateInstaller.downloadVerified(activity, request)
+                AndroidClientUpdateInstaller.downloadVerified(activity, request) { progress ->
+                    updateDownloadProgress = progress
+                }
             }.getOrNull()
             activity.runOnUiThread {
                 val status = if (apk == null) {
                     AndroidClientUpdateInstaller.STATUS_FAILED
                 } else {
+                    updateDownloadProgress = AndroidClientUpdateProgress(
+                        phase = "installing",
+                        downloadedBytes = request.size,
+                        totalBytes = request.size,
+                    )
                     AndroidClientUpdateInstaller.openInstaller(activity, apk)
                 }
                 pendingVerifiedUpdate = if (
                     status == AndroidClientUpdateInstaller.STATUS_PERMISSION_REQUIRED
                 ) apk else null
                 updateDownloadInProgress = false
+                if (status == AndroidClientUpdateInstaller.STATUS_FAILED) {
+                    updateDownloadProgress = AndroidClientUpdateProgress(
+                        phase = "failed",
+                        downloadedBytes = updateDownloadProgress.downloadedBytes,
+                        totalBytes = request.size,
+                    )
+                }
                 result.success(mapOf("status" to status))
             }
         }.apply {
@@ -156,6 +179,13 @@ class RuntimeHostBridge(
             start()
         }
     }
+
+    private fun openInAppWebSurface(call: MethodCall): Boolean =
+        PokrovInAppWebSurface.open(
+            activity = activity,
+            url = call.argument<String>("url"),
+            title = call.argument<String>("title"),
+        )
 
     fun onActivityResult(requestCode: Int, resultCode: Int) {
         if (requestCode != REQUEST_VPN_PERMISSION) {
@@ -965,6 +995,10 @@ class RuntimeHostBridge(
             "runtimeEngine.updateSystemSurfacePreferences"
         private const val METHOD_OPEN_NOTIFICATION_SETTINGS =
             "runtimeEngine.openNotificationSettings"
+        private const val METHOD_OPEN_IN_APP_WEB_SURFACE =
+            "runtimeEngine.openInAppWebSurface"
+        private const val METHOD_CLIENT_UPDATE_PROGRESS =
+            "runtimeEngine.clientUpdateProgress"
         private const val METHOD_INSTALL_CLIENT_UPDATE =
             "runtimeEngine.installClientUpdate"
         private const val REQUEST_WIFI_PERMISSION = 14073

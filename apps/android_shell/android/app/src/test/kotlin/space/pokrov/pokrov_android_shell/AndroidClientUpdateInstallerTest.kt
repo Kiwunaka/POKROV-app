@@ -8,6 +8,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class AndroidClientUpdateInstallerTest {
@@ -99,5 +100,20 @@ class AndroidClientUpdateInstallerTest {
         } finally {
             directory.deleteRecursively()
         }
+    }
+
+    @Test
+    fun exposesBoundedDownloadProgressWithoutReleaseMaterial() {
+        val payload = AndroidClientUpdateProgress(
+            phase = "downloading",
+            downloadedBytes = 512L,
+            totalBytes = 1_024L,
+        ).toMap()
+
+        assertEquals("downloading", payload["phase"])
+        assertEquals(512L, payload["downloaded_bytes"])
+        assertEquals(1_024L, payload["total_bytes"])
+        assertFalse(payload.containsKey("url"))
+        assertFalse(payload.containsKey("sha256"))
     }
 }

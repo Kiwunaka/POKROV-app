@@ -1,6 +1,6 @@
 # App-First Onboarding Flow
 
-Last updated: 2026-07-22
+Last updated: 2026-08-16
 
 ## Document Status
 
@@ -333,7 +333,11 @@ Support rules:
 - `AAB`, `MSIX`, and portable `ZIP` remain store/operator artifacts rather than first-layer client download targets
 - public-facing build surfaces should present `1.0.0-beta` or an explicit
   beta patch/build label; none of those labels authorizes stable `1.0.0`
-- app handoffs for checkout, cabinet downloads, support, community, feedback, and key redemption open safe external destinations instead of exposing raw profiles or local control surfaces
+- Android keeps owned cabinet and documentation handoffs in the app-owned,
+  origin-visible web surface; payment providers, Telegram, mail, downloads,
+  and other non-owned destinations leave the app explicitly. Desktop retains
+  safe external handoffs. No path exposes raw profiles or local control
+  surfaces.
 
 ### Acquisition continuation
 

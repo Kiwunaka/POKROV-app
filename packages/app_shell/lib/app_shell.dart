@@ -110,6 +110,47 @@ typedef PokrovClientUpdateInstaller = Future<PokrovClientUpdateInstallStatus>
   ClientAppUpdateInfo update,
 );
 
+enum PokrovClientUpdateProgressPhase {
+  idle,
+  preparing,
+  downloading,
+  verifying,
+  installing,
+  failed,
+}
+
+class PokrovClientUpdateProgress {
+  const PokrovClientUpdateProgress({
+    required this.phase,
+    required this.downloadedBytes,
+    required this.totalBytes,
+  });
+
+  const PokrovClientUpdateProgress.idle()
+      : phase = PokrovClientUpdateProgressPhase.idle,
+        downloadedBytes = 0,
+        totalBytes = 0;
+
+  final PokrovClientUpdateProgressPhase phase;
+  final int downloadedBytes;
+  final int totalBytes;
+
+  double? get fraction {
+    if (totalBytes <= 0) {
+      return null;
+    }
+    return (downloadedBytes / totalBytes).clamp(0.0, 1.0);
+  }
+
+  int? get percent {
+    final value = fraction;
+    return value == null ? null : (value * 100).round().clamp(0, 100);
+  }
+}
+
+typedef PokrovClientUpdateProgressReader = Future<PokrovClientUpdateProgress>
+    Function();
+
 abstract class PokrovFirstLaunchStore {
   Future<bool> isCompleted();
   Future<void> markCompleted();

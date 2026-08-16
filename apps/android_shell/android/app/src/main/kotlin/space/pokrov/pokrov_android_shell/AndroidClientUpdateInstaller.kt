@@ -20,6 +20,26 @@ internal data class AndroidClientUpdateRequest(
     val size: Long,
 )
 
+internal data class AndroidClientUpdateProgress(
+    val phase: String,
+    val downloadedBytes: Long,
+    val totalBytes: Long,
+) {
+    fun toMap(): Map<String, Any> = mapOf(
+        "phase" to phase,
+        "downloaded_bytes" to downloadedBytes.coerceAtLeast(0L),
+        "total_bytes" to totalBytes.coerceAtLeast(0L),
+    )
+
+    companion object {
+        fun idle(): AndroidClientUpdateProgress = AndroidClientUpdateProgress(
+            phase = "idle",
+            downloadedBytes = 0L,
+            totalBytes = 0L,
+        )
+    }
+}
+
 internal object AndroidClientUpdateInstaller {
     const val STATUS_INSTALLER_OPENED = "installer_opened"
     const val STATUS_PERMISSION_REQUIRED = "permission_required"
@@ -75,7 +95,11 @@ internal object AndroidClientUpdateInstaller {
             uri.rawFragment == null
     }
 
-    fun downloadVerified(activity: Activity, request: AndroidClientUpdateRequest): File {
+    fun downloadVerified(
+        activity: Activity,
+        request: AndroidClientUpdateRequest,
+        onProgress: (AndroidClientUpdateProgress) -> Unit = {},
+    ): File {
         val updateDirectory = File(activity.cacheDir, "updates")
         check(updateDirectory.exists() || updateDirectory.mkdirs()) {
             "update_cache_unavailable"
@@ -84,8 +108,17 @@ internal object AndroidClientUpdateInstaller {
             updateDirectory,
             "pokrov-update-${request.sha256.take(16)}.apk",
         )
-        if (destination.isFile && verifyFile(destination, request)) {
-            return destination
+        if (destination.isFile) {
+            onProgress(
+                AndroidClientUpdateProgress(
+                    phase = "verifying",
+                    downloadedBytes = request.size,
+                    totalBytes = request.size,
+                ),
+            )
+            if (verifyFile(destination, request)) {
+                return destination
+            }
         }
         destination.delete()
         val partial = File(updateDirectory, "${destination.name}.part")
@@ -122,6 +155,13 @@ internal object AndroidClientUpdateInstaller {
                 if (contentLength > 0L && contentLength != request.size) {
                     error("update_size_mismatch")
                 }
+                onProgress(
+                    AndroidClientUpdateProgress(
+                        phase = "downloading",
+                        downloadedBytes = 0L,
+                        totalBytes = request.size,
+                    ),
+                )
                 val digest = MessageDigest.getInstance("SHA-256")
                 var written = 0L
                 connection.inputStream.buffered().use { input ->
@@ -138,10 +178,24 @@ internal object AndroidClientUpdateInstaller {
                             }
                             digest.update(buffer, 0, count)
                             output.write(buffer, 0, count)
+                            onProgress(
+                                AndroidClientUpdateProgress(
+                                    phase = "downloading",
+                                    downloadedBytes = written,
+                                    totalBytes = request.size,
+                                ),
+                            )
                         }
                         output.fd.sync()
                     }
                 }
+                onProgress(
+                    AndroidClientUpdateProgress(
+                        phase = "verifying",
+                        downloadedBytes = written,
+                        totalBytes = request.size,
+                    ),
+                )
                 val actualSha = digest.digest().joinToString("") {
                     "%02x".format(it.toInt() and 0xff)
                 }

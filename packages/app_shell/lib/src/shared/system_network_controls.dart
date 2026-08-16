@@ -304,6 +304,60 @@ Future<PokrovClientUpdateInstallStatus> installPokrovClientUpdate(
   }
 }
 
+Future<PokrovClientUpdateProgress> readPokrovClientUpdateProgress(
+  HostPlatform hostPlatform,
+) async {
+  if (hostPlatform != HostPlatform.android) {
+    return const PokrovClientUpdateProgress.idle();
+  }
+  try {
+    final value =
+        await _pokrovRuntimeSystemChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.clientUpdateProgress',
+    );
+    final rawPhase = (value?['phase'] as String? ?? '').trim();
+    final phase = PokrovClientUpdateProgressPhase.values.firstWhere(
+      (candidate) => candidate.name == rawPhase,
+      orElse: () => PokrovClientUpdateProgressPhase.idle,
+    );
+    final downloaded = (value?['downloaded_bytes'] as num?)?.toInt() ?? 0;
+    final total = (value?['total_bytes'] as num?)?.toInt() ?? 0;
+    return PokrovClientUpdateProgress(
+      phase: phase,
+      downloadedBytes: math.max(0, downloaded),
+      totalBytes: math.max(0, total),
+    );
+  } on PlatformException {
+    return const PokrovClientUpdateProgress.idle();
+  } on MissingPluginException {
+    return const PokrovClientUpdateProgress.idle();
+  }
+}
+
+Future<bool> openPokrovInAppWebSurface(
+  HostPlatform hostPlatform,
+  Uri uri, {
+  String title = 'POKROV',
+}) async {
+  if (hostPlatform != HostPlatform.android || uri.scheme != 'https') {
+    return false;
+  }
+  try {
+    return await _pokrovRuntimeSystemChannel.invokeMethod<bool>(
+          'runtimeEngine.openInAppWebSurface',
+          <String, Object?>{
+            'url': uri.toString(),
+            'title': title.trim(),
+          },
+        ) ??
+        false;
+  } on PlatformException {
+    return false;
+  } on MissingPluginException {
+    return false;
+  }
+}
+
 Future<String?> resolvePokrovDeviceName(HostPlatform hostPlatform) async {
   if (hostPlatform != HostPlatform.android) {
     return null;

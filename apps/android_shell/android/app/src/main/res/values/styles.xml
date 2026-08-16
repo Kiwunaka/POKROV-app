@@ -15,4 +15,12 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
+    <style name="PokrovWebSurfaceTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:colorAccent">#079A72</item>
+        <item name="android:navigationBarColor">#F7F6F0</item>
+        <item name="android:statusBarColor">#F7F6F0</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
 </resources>
