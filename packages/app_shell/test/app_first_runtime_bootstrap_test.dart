@@ -348,7 +348,7 @@ void main() {
         },
         'eligibility': <String, Object?>{
           'eligible': true,
-          'source': 'cached_server_country',
+          'source': 'entitlement_precache',
           'country_code': 'RU',
           'valid_until': now.add(const Duration(days: 7)).toIso8601String(),
         },
@@ -419,6 +419,9 @@ void main() {
             request.uri.path, '/api/client/emergency-network/offline-bundle');
         expect(request.headers.value(HttpHeaders.authorizationHeader),
             'Bearer offline-session-token');
+        final body = jsonDecode(await utf8.decoder.bind(request).join()) as Map;
+        expect(body['manual_limited_network'], isFalse);
+        expect(body['precache_only'], isTrue);
         request.response
           ..headers.contentType = ContentType.json
           ..write(jsonEncode(<String, Object?>{
@@ -458,14 +461,14 @@ void main() {
     );
     final catalog = await offline.fetchEmergencyCatalog(
       hostPlatform: HostPlatform.android,
-      manualLimitedNetwork: false,
+      manualLimitedNetwork: true,
     );
     final resolved = await offline.resolveEmergencyProfile(
       hostPlatform: HostPlatform.android,
       catalogRevision: catalog.catalog!.revision,
       reserveId: reserveIds.last,
       chainMode: EmergencyChainMode.reserveDirect,
-      manualLimitedNetwork: false,
+      manualLimitedNetwork: true,
     );
 
     expect(catalog.usingCache, isTrue);
@@ -491,6 +494,32 @@ void main() {
       isNot(contains('api.my-ip.io')),
     );
     expect(requestCount, 1);
+
+    final authFailureServer =
+        await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => authFailureServer.close(force: true));
+    unawaited(() async {
+      await for (final request in authFailureServer) {
+        request.response.statusCode = HttpStatus.unauthorized;
+        await request.response.close();
+      }
+    }());
+    final unauthorizedOnlineRefresh = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${authFailureServer.port}',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: sessionStore,
+      emergencyEnvelopeVerifier: verifier,
+      emergencyNetworkStore: emergencyStore,
+      maxRequestAttempts: 1,
+    );
+    final afterUnauthorized =
+        await unauthorizedOnlineRefresh.fetchEmergencyCatalog(
+      hostPlatform: HostPlatform.android,
+      manualLimitedNetwork: true,
+      forceRefresh: true,
+    );
+    expect(afterUnauthorized.usingCache, isTrue);
+    expect(afterUnauthorized.catalog?.revision, catalogRevision);
   });
 
   group('ClientAppUpdateInfo download trust', () {
@@ -7510,6 +7539,17 @@ void main() {
                     'freePoolCode': 'nl-free',
                     'premiumAccess': true,
                   },
+                  'identities': <String, Object?>{
+                    'telegram': <String, Object?>{
+                      'linked': true,
+                      'username': 'pokrov_owner',
+                    },
+                    'email': <String, Object?>{
+                      'linked': true,
+                      'address': 'owner@pokrov.test',
+                      'verified': true,
+                    },
+                  },
                   'plans': <Object?>[
                     <String, Object?>{
                       'id': '1m',
@@ -7643,6 +7683,10 @@ void main() {
     expect(subscription.lane, 'trialPremium');
     expect(subscription.daysLeft, 5);
     expect(subscription.plans.single.id, '1m');
+    expect(subscription.telegramLinked, isTrue);
+    expect(subscription.telegramUsername, 'pokrov_owner');
+    expect(subscription.emailAddress, 'owner@pokrov.test');
+    expect(subscription.emailVerified, isTrue);
 
     final devices = await bootstrapper.fetchClientDevices(
       hostPlatform: HostPlatform.windows,

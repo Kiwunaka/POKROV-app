@@ -384,7 +384,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 endpointHops += "detour${index + 1}" to detourOutbound
                 detourTag = detourOutbound.optString("detour")
             }
-            endpointHops.forEach { (role, endpoint) ->
+            var rootEndpointPreflightCategory: String? = null
+            endpointHops.forEachIndexed { index, (role, endpoint) ->
                 val endpointServer = endpoint.optString("server").trim()
                 val endpointPort = endpoint.optInt("server_port")
                 val endpointShape = if (endpointServer.isBlank()) {
@@ -396,14 +397,42 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 }
                 Log.e(LOG_TAG, "Android $role endpoint shape=$endpointShape")
                 if (endpointServer.isBlank() || endpointPort !in 1..65535) {
-                    return@forEach
+                    if (index == endpointHops.lastIndex) {
+                        rootEndpointPreflightCategory = "endpoint_invalid"
+                    }
+                    return@forEachIndexed
                 }
                 startupPhase = "${role}_endpoint_preflight"
                 val preflight = preflightSelectedEndpoint(endpointServer, endpointPort)
+                if (index == endpointHops.lastIndex) {
+                    rootEndpointPreflightCategory = preflight.category
+                }
                 Log.e(
                     LOG_TAG,
                     "Android $role endpoint TCP preflight result=${preflight.category}",
                 )
+            }
+            if (!offlineEmergencyRootPreflightAccepted(
+                    coreEgressProbeRequired = activeCoreEgressProbeRequired,
+                    rootCategory = rootEndpointPreflightCategory,
+                )
+            ) {
+                val failureKind = "emergency_endpoint_unreachable"
+                val failureMessage = AndroidRuntimeSafety.publicFailureMessage(failureKind)
+                AndroidRuntimeState.markFailure(
+                    kind = failureKind,
+                    message = failureMessage,
+                )
+                Log.w(
+                    LOG_TAG,
+                    "Android offline emergency root endpoint is unavailable; " +
+                        "result=${rootEndpointPreflightCategory ?: "missing"}.",
+                )
+                cleanupFailedStartup()
+                activeTileStartGeneration = null
+                PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)
+                stopSelf()
+                return
             }
             val content = runtimeConfig.toString()
             Log.i(LOG_TAG, "Starting Android runtime using a staged config.")
@@ -1497,3 +1526,8 @@ internal fun formatTrafficRate(bytesPerSecond: Long): String {
         }
     }
 }
+
+internal fun offlineEmergencyRootPreflightAccepted(
+    coreEgressProbeRequired: Boolean,
+    rootCategory: String?,
+): Boolean = coreEgressProbeRequired || rootCategory == "reachable"

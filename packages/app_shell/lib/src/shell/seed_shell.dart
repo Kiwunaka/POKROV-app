@@ -1215,27 +1215,64 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _runtimeEngine.initialize,
         );
       }
-      final result = await service.resolveEmergencyProfile(
-        hostPlatform: widget.appContext.hostPlatform,
-        catalogRevision: catalog.revision,
-        reserveId: reserve.id,
-        chainMode: chainMode,
-        manualLimitedNetwork: manualLimitedNetwork,
-      );
-      current = await _withRuntimeActionTimeout(
-        'stageEmergencyProfile',
-        () => _runtimeEngine.stageManagedProfile(result.managedProfile),
-      );
-      current = await _withRuntimeActionTimeout(
-        'connectEmergency',
-        _runtimeEngine.connect,
-      );
-      current = await _settleRuntimeTransition(current);
-      if (current.phase != RuntimePhase.running) {
-        throw BootstrapFailure(
-          current.message.trim().isEmpty
-              ? 'Экстренный маршрут не подключился.'
-              : current.message,
+      final candidates = <EmergencyReserve>[
+        reserve,
+        ...catalog.items.where(
+          (item) =>
+              item.id != reserve.id &&
+              item.available &&
+              item.modes.contains(chainMode),
+        ),
+      ];
+      AppFirstEmergencyProfileResult? connectedResult;
+      EmergencyReserve? connectedReserve;
+      for (var index = 0; index < candidates.length; index += 1) {
+        final candidate = candidates[index];
+        final result = await service.resolveEmergencyProfile(
+          hostPlatform: widget.appContext.hostPlatform,
+          catalogRevision: catalog.revision,
+          reserveId: candidate.id,
+          chainMode: chainMode,
+          manualLimitedNetwork: manualLimitedNetwork,
+        );
+        current = await _withRuntimeActionTimeout(
+          'stageEmergencyProfile',
+          () => _runtimeEngine.stageManagedProfile(result.managedProfile),
+        );
+        current = await _withRuntimeActionTimeout(
+          'connectEmergency',
+          _runtimeEngine.connect,
+        );
+        current = await _settleRuntimeTransition(current);
+        if (current.phase == RuntimePhase.running) {
+          connectedResult = result;
+          connectedReserve = candidate;
+          break;
+        }
+        final emergencyEndpointUnavailable =
+            widget.appContext.hostPlatform == HostPlatform.android &&
+                current.lastFailureKind?.trim() ==
+                    'emergency_endpoint_unreachable';
+        if (!emergencyEndpointUnavailable) {
+          throw BootstrapFailure(
+            current.message.trim().isEmpty
+                ? 'Экстренный маршрут не подключился.'
+                : current.message,
+          );
+        }
+        if (index + 1 >= candidates.length) {
+          break;
+        }
+        current = await _withRuntimeActionTimeout(
+          'disconnectUnavailableEmergencyReserve',
+          _runtimeEngine.disconnect,
+        );
+        current = await _settleRuntimeDisconnectTransition(current);
+      }
+      if (connectedResult == null || connectedReserve == null) {
+        throw const BootstrapFailure(
+          'Ни один сохранённый резерв не доступен в текущей сети.',
+          code: 'emergency_reserves_unreachable',
         );
       }
       if (!mounted) {
@@ -1243,7 +1280,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _runtimeSnapshot = current;
-        _runtimeHeadline = result.usingCache
+        _runtimeHeadline = connectedResult!.usingCache
             ? 'Экстренная сеть подключена по подписанной офлайн-копии.'
             : 'Экстренная сеть подключена.';
         _managedProfileDirty = true;
@@ -1254,11 +1291,19 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _activeNodeCode = '';
         _activeVariantId = 'direct';
       });
+      if (connectedReserve.id != reserve.id) {
+        _saveEmergencyPreferences(
+          manualLimitedNetwork: manualLimitedNetwork,
+          disclosureRevision: catalog.disclosureRevision,
+          reserveId: connectedReserve.id,
+          chainMode: chainMode,
+        );
+      }
       _cachedProfileFallbackGate.markUserChange();
       _recordProtectionEvent(
         kind: 'emergency_connected',
         title: 'Экстренная сеть подключена',
-        detail: '${chainMode.label} · резерв ${reserve.ordinal}',
+        detail: '${chainMode.label} · резерв ${connectedReserve.ordinal}',
         tone: PokrovProtectionEventTone.warning,
       );
     } finally {
@@ -2608,7 +2653,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       final result = await bonusActions.createTelegramLink(
         hostPlatform: widget.appContext.hostPlatform,
       );
-      final opened = await _launchExternalHandoff(result.botUrl);
+      final opened =
+          result.linked ? true : await _launchExternalHandoff(result.botUrl);
       if (!mounted) {
         return;
       }
@@ -2620,6 +2666,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _telegramBonusError = 'Не удалось открыть Telegram автоматически.';
         }
       });
+      if (result.linked) {
+        unawaited(_refreshSubscriptionInfo());
+      }
     } catch (error) {
       debugPrint('POKROV telegram link failed (${error.runtimeType})');
       if (!mounted) {

@@ -115,20 +115,26 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
   bool _busy = true;
   bool _connecting = false;
   String _error = '';
+  String _connectError = '';
 
   String _safeRefreshFailure(BootstrapFailure error) {
     return switch (error.statusCode) {
-      401 ||
+      401 =>
+        'Сессия истекла. Восстановите доступ в Профиле и повторите проверку.',
       403 =>
-        'Сессия не подтверждена. Откройте Профиль и повторите проверку.',
+        'Резерв доступен с пробным или платным доступом. Если сеть РФ не определилась, включите «Ограниченная сеть».',
       404 => 'Экстренная сеть ещё не включена на сервере.',
-      409 => 'Каталог обновился. Повторите проверку.',
+      409 =>
+        'Сервер пока не подготовил полный набор резервов. Попробуйте позже.',
       _ =>
         'Автономная копия ещё не подготовлена. Один раз откройте POKROV при обычном интернете — после этого экстренная сеть сможет запуститься без наших серверов.',
     };
   }
 
   String _safeConnectFailure(BootstrapFailure error) {
+    if (error.code == 'emergency_reserves_unreachable') {
+      return 'Ни один сохранённый резерв не доступен в этой сети. Попробуйте другую сеть или обновите список позже.';
+    }
     return switch (error.statusCode) {
       401 ||
       403 =>
@@ -292,7 +298,7 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
     }
     setState(() {
       _connecting = true;
-      _error = '';
+      _connectError = '';
     });
     try {
       await widget.onConnect(
@@ -313,13 +319,13 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
     } on BootstrapFailure catch (error) {
       if (mounted) {
         setState(() {
-          _error = _safeConnectFailure(error);
+          _connectError = _safeConnectFailure(error);
         });
       }
     } on Object {
       if (mounted) {
         setState(() {
-          _error = 'Не удалось подключить экстренный маршрут.';
+          _connectError = 'Не удалось подключить экстренный маршрут.';
         });
       }
     } finally {
@@ -418,6 +424,14 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
                 lines: [_unavailableMessage(_result!)],
               )
             else if (catalog != null) ...[
+              if (_connectError.isNotEmpty) ...[
+                _SectionCard(
+                  title: 'Не удалось подключиться',
+                  tone: _SectionTone.muted,
+                  lines: [_connectError],
+                ),
+                const SizedBox(height: 10),
+              ],
               if (_error.isNotEmpty) ...[
                 _SectionCard(
                   title: 'Работаем по офлайн-копии',
@@ -642,7 +656,7 @@ class _EmergencyReserveRow extends StatelessWidget {
 }
 
 String _emergencyStatusLabel(EmergencyReserveStatus status) => switch (status) {
-      EmergencyReserveStatus.working => 'Работает',
+      EmergencyReserveStatus.working => 'Проверен сервером',
       EmergencyReserveStatus.checking => 'Проверяется',
       EmergencyReserveStatus.unavailable => 'Недоступен',
       EmergencyReserveStatus.stale => 'Данные устарели',
@@ -650,7 +664,7 @@ String _emergencyStatusLabel(EmergencyReserveStatus status) => switch (status) {
 
 String _emergencyVerificationLabel(EmergencyVerificationLevel level) =>
     switch (level) {
-      EmergencyVerificationLevel.ordinary => 'Обычная проверка',
+      EmergencyVerificationLevel.ordinary => 'Не проверен в сети устройства',
       EmergencyVerificationLevel.syntheticBs => 'Проверено в лаборатории БС',
       EmergencyVerificationLevel.realBs => 'Проверено при реальном БС',
     };

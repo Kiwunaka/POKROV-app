@@ -317,6 +317,7 @@ const _publicRuntimeFailureKinds = <String>{
   'runtime_stop_failed',
   'core_egress_probe_failed',
   'core_egress_probe_unavailable',
+  'emergency_endpoint_unreachable',
   'profile_staging_failed',
   'config_apply_failed',
   'notification_permission_denied',

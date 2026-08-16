@@ -257,7 +257,8 @@ Related backend contracts:
 - `POST /api/channel/subscriber/check`
 - `POST /api/bonuses/channel/claim`
 
-Linked Telegram identity and membership in `@pokrov_vpn` can grant `+10 days`.
+Linked Telegram identity and membership in `@pokrov_vpn` can grant the current
+one-time `+5 days` acquisition bonus.
 Promo codes can be redeemed through the unified code entry or the app-facing
 bonus promo endpoint. Bonus history is available as a compact app-safe ledger
 and Account may show the latest safe reward events inside the existing bonus
@@ -271,6 +272,11 @@ granting, and campaign tuning remain backend-owned.
 `GET /api/client/promo-slots?surface=app` may feed the same Rewards Hub with
 enabled first-party slots only; third-party ads, unsafe links, and tracking
 campaigns stay out of the app.
+
+A Telegram-authenticated account is already linked by definition. The profile
+reads that state from `/api/client/subscription`, shows the safe username (or
+`Привязан`), and does not open a redundant bot-link flow. Telegram does not
+provide an email address; email remains an independent verified identity.
 
 ### Returning-user recovery
 
@@ -356,14 +362,21 @@ purpose handle remains `unknown`.
 ### Emergency offline readiness
 
 - once `/api/client/subscription` confirms `trialPremium` or `paidUnlimited`,
-  the app refreshes the authenticated signed emergency bundle in the
-  background without blocking the home screen
+  the app refreshes the authenticated signed emergency bundle with the
+  explicit precache flag in the background without blocking the home screen
+- the precached bundle stays hidden until trusted RU evidence or the user's
+  `Ограниченная сеть` confirmation; precaching is not automatic country proof
 - a valid encrypted bundle is reused immediately on cold start when POKROV
   control-plane domains are unavailable; server refresh resumes whenever the
   normal network is reachable
 - a reserve whose probe age is marked `stale` remains a selectable signed
   last-known-good path until the bounded catalog lease expires
-- the bundle contains no authorization for a different install and expires no
+- on Android, an offline emergency connection probes only the root reserve on
+  the active non-VPN network before starting Core. An unreachable root is
+  rejected without creating a TUN, and the app rotates through the other
+  signed compatible reserves before reporting that none work on this network
+- the bundle binds to the active paired-device install from the access token,
+  contains no authorization for a different install, and expires no
   later than the confirmed trial/subscription. A new or reset device still
   needs one successful online activation before it can work offline
 

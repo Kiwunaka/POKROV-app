@@ -182,6 +182,14 @@ class _ProfileSection extends StatelessWidget {
     final telegramBonusBlocked = currentBonusSummary != null &&
         !telegramBonusClaimed &&
         !currentBonusSummary.channelBonusEligible;
+    final telegramLinked = subscriptionInfo?.telegramLinked ?? false;
+    final telegramUsername = subscriptionInfo?.telegramUsername.trim() ?? '';
+    final telegramValue = telegramLinked
+        ? (telegramUsername.isEmpty ? 'Привязан' : '@$telegramUsername')
+        : (telegramBonusBusy ? 'Проверяем' : 'Привязать');
+    final emailAddress = subscriptionInfo?.emailAddress.trim() ?? '';
+    final emailLinked =
+        (subscriptionInfo?.emailVerified ?? false) && emailAddress.isNotEmpty;
     final statusLabel = _consumerProtectionStatusLabel(runtimeSnapshot);
     final warpLifecycle = PokrovWarpLifecycle.resolve(
       policy: warpPolicy,
@@ -296,23 +304,25 @@ class _ProfileSection extends StatelessWidget {
                       key: const ValueKey('profile-telegram-link-action'),
                       icon: Icons.send_outlined,
                       title: 'Telegram',
-                      value: telegramBonusBusy ? 'Проверяем' : 'Привязать',
-                      valueIsAction: !telegramBonusBusy,
-                      enabled: !telegramBonusBusy,
-                      onTap: onCreateTelegramLink,
+                      value: telegramValue,
+                      valueIsAction: !telegramLinked && !telegramBonusBusy,
+                      enabled: telegramLinked || !telegramBonusBusy,
+                      onTap: telegramLinked ? null : onCreateTelegramLink,
                     ),
                     const _SettingsRowDivider(),
                     _SettingsRow(
                       key: const ValueKey('profile-email-action'),
                       icon: Icons.alternate_email_rounded,
                       title: 'Email',
-                      value: 'Добавить',
-                      valueIsAction: true,
-                      onTap: () => _showEmailRecoverySheet(
-                        context,
-                        appContext: appContext,
-                        onOpenHandoff: onOpenHandoff,
-                      ),
+                      value: emailLinked ? emailAddress : 'Добавить',
+                      valueIsAction: !emailLinked,
+                      onTap: emailLinked
+                          ? null
+                          : () => _showEmailRecoverySheet(
+                                context,
+                                appContext: appContext,
+                                onOpenHandoff: onOpenHandoff,
+                              ),
                     ),
                     const _SettingsRowDivider(),
                     _SettingsRow(

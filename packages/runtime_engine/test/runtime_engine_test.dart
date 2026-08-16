@@ -615,6 +615,35 @@ void main() {
     }
   });
 
+  test('mobile lane preserves the safe emergency endpoint failure kind',
+      () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.snapshot') {
+        return <String, Object?>{
+          'phase': 'configStaged',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'message': 'Этот резерв недоступен в текущей сети.',
+          'last_failure_kind': 'emergency_endpoint_unreachable',
+        };
+      }
+      return null;
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    final snapshot =
+        await createRuntimeEngine(hostPlatform: HostPlatform.android)
+            .snapshot();
+
+    expect(snapshot.lastFailureKind, 'emergency_endpoint_unreachable');
+  });
+
   test('mobile lane redacts PlatformException details after fallback fails',
       () async {
     const channel = MethodChannel('space.pokrov/runtime_engine');

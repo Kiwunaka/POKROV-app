@@ -321,19 +321,27 @@ After activation:
   `api.pokrov.space` when the signed copy is valid. A `stale` row remains
   selectable until the signed lease expires; its label stays honest.
 - The offline lease is at most seven days and is always capped by the active
-  trial/subscription, catalog, and RU/manual eligibility expiry. A fresh device
-  that has never confirmed an eligible session cannot be authorized offline.
+  trial/subscription, catalog, and eligibility expiry. A fresh paired device
+  may precache after one authenticated online activation, but that copy stays
+  hidden until trusted RU evidence or explicit `Ограниченная сеть`
+  confirmation; it cannot silently authorize a non-RU session.
   Invalid signatures, expired material, or an exact profile mismatch clear the
   affected emergency cache and fail closed.
-- Reserve rows distinguish current availability from proof level: ordinary,
-  synthetic blocked-network lab, and real restricted-network proof. The client
-  must not relabel ordinary reachability as a real mobile-network pass.
+- Reserve rows explicitly label catalog health as a server-side check and
+  distinguish it from proof on the current device network. Proof levels remain
+  ordinary, synthetic blocked-network lab, and real restricted-network proof;
+  the client must not relabel ordinary reachability as a real mobile-network
+  pass.
 - Emergency connect never requires a live POKROV API probe after the signed
   offline bundle has passed local validation. Android keeps the exact signed
   terminal proxy as the runtime final and does not stop that TUN merely because
-  a control-plane health URL is blocked. There is no direct foreign fallback;
-  failed reserve traffic remains fail-closed until the person retries another
-  reserve, while online catalog checks resume opportunistically.
+  a control-plane health URL is blocked. Before Core or the TUN starts, Android
+  requires the root reserve endpoint to be reachable on the active non-VPN
+  network. A failed root check cannot produce a green system VPN: the client
+  automatically tries each other signed compatible reserve once, then shows a
+  bounded current-network error. Detoured POKROV hops are not incorrectly
+  required to be directly reachable outside that root reserve. There is no
+  direct foreign fallback; online catalog checks resume opportunistically.
 - An operator distribution stop prevents new catalog delivery and automatic
   worker promotion. A previously issued signed offline copy cannot be recalled
   and may remain usable only until its existing expiry.
@@ -547,7 +555,7 @@ Release continuity rules:
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
 - stable candidates after installed `1.0.5` beta builds use a strictly newer
-  semantic version (`1.0.12` is current) so existing users are prompted
+  semantic version (`1.0.13` is current) so existing users are prompted
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates

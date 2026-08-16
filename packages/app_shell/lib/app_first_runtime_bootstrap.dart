@@ -927,6 +927,10 @@ class ClientSubscriptionInfo {
     this.activeConnections = 0,
     this.lastOnlineAt = '',
     this.usageSource = '',
+    this.telegramLinked = false,
+    this.telegramUsername = '',
+    this.emailAddress = '',
+    this.emailVerified = false,
   });
 
   final String lane;
@@ -940,9 +944,16 @@ class ClientSubscriptionInfo {
   final int activeConnections;
   final String lastOnlineAt;
   final String usageSource;
+  final bool telegramLinked;
+  final String telegramUsername;
+  final String emailAddress;
+  final bool emailVerified;
 
   factory ClientSubscriptionInfo.fromJson(Map<String, dynamic> json) {
     final usage = _clientObjectMap(json['usage']);
+    final identities = _clientObjectMap(json['identities']);
+    final telegram = _clientObjectMap(identities['telegram']);
+    final email = _clientObjectMap(identities['email']);
     return ClientSubscriptionInfo(
       lane: _clientText(json['lane']),
       expiresAt: _clientText(json['expiresAt'] ?? json['expires_at']),
@@ -965,6 +976,10 @@ class ClientSubscriptionInfo {
         usage['lastOnlineAt'] ?? usage['last_online_at'],
       ),
       usageSource: _clientText(usage['source']),
+      telegramLinked: _clientBool(telegram['linked']),
+      telegramUsername: _clientText(telegram['username']),
+      emailAddress: _clientText(email['address']),
+      emailVerified: _clientBool(email['verified']),
     );
   }
 }
@@ -3030,6 +3045,7 @@ class AppFirstRuntimeBootstrapper
     return _refreshEmergencyOfflineBundle(
       hostPlatform: hostPlatform,
       manualLimitedNetwork: manualLimitedNetwork,
+      precacheOnly: false,
     );
   }
 
@@ -3083,12 +3099,14 @@ class AppFirstRuntimeBootstrapper
     await _refreshEmergencyOfflineBundle(
       hostPlatform: hostPlatform,
       manualLimitedNetwork: manualLimitedNetwork,
+      precacheOnly: true,
     );
   }
 
   Future<AppFirstEmergencyCatalogResult> _refreshEmergencyOfflineBundle({
     required HostPlatform hostPlatform,
     required bool manualLimitedNetwork,
+    required bool precacheOnly,
   }) async {
     final initialState = await _loadOrCreateState(hostPlatform);
     final binding = await _emergencyEnvelopeVerifier.deviceBinding(
@@ -3101,6 +3119,7 @@ class AppFirstRuntimeBootstrapper
         path: '/api/client/emergency-network/offline-bundle',
         body: <String, Object?>{
           'manual_limited_network': manualLimitedNetwork,
+          if (precacheOnly) 'precache_only': true,
         },
       );
       if (_readText(response['schemaVersion']) !=
@@ -3186,12 +3205,24 @@ class AppFirstRuntimeBootstrapper
         code: error.code,
       );
     } on BootstrapFailure catch (error) {
-      if (error.statusCode == HttpStatus.unauthorized ||
-          error.statusCode == HttpStatus.forbidden) {
-        await _emergencyNetworkStore.clear(
+      if (error.statusCode == HttpStatus.unauthorized) {
+        final cached = await _readCachedEmergencyCatalog(
           hostPlatform: hostPlatform,
+          installId: initialState.installId,
           deviceBinding: binding,
+          manualLimitedNetwork: manualLimitedNetwork,
         );
+        if (cached != null) {
+          return AppFirstEmergencyCatalogResult(
+            catalog: cached,
+            reason: 'cached',
+            eligibilitySource: cached.eligibilitySource,
+            usingCache: true,
+          );
+        }
+        rethrow;
+      }
+      if (error.statusCode == HttpStatus.forbidden) {
         rethrow;
       }
       if (_isTransientEmergencyFailure(error)) {
@@ -3234,7 +3265,8 @@ class AppFirstRuntimeBootstrapper
         installId: installId,
       );
       if (!manualLimitedNetwork &&
-          catalog.eligibilitySource == 'manual_limited_network') {
+          const {'manual_limited_network', 'entitlement_precache'}
+              .contains(catalog.eligibilitySource)) {
         return null;
       }
       return catalog;

@@ -168,6 +168,8 @@ internal object AndroidRuntimeSafety {
             "POKROV не подтвердил защищенное подключение и отключил системный VPN."
         "core_egress_probe_unavailable" ->
             "POKROV не завершил проверку защищенного подключения и отключил системный VPN. Попробуйте еще раз."
+        "emergency_endpoint_unreachable" ->
+            "Этот резерв недоступен в текущей сети. POKROV не включил системный VPN."
         "profile_staging_failed" ->
             "POKROV не смог подготовить настройки подключения."
         "config_apply_failed" ->

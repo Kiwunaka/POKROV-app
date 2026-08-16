@@ -1054,6 +1054,7 @@ void _installReadyRuntimeBridgeMock({
   Map<String, Object?>? variantProbeSnapshot,
   bool reportDegradedAfterConnect = false,
   bool failFirstConnect = false,
+  bool failAllEmergencyConnects = false,
   bool failAfterConnect = false,
   bool failApplyWarp = false,
 }) {
@@ -1067,6 +1068,22 @@ void _installReadyRuntimeBridgeMock({
     calls?.add(call.method);
     switch (call.method) {
       case 'runtimeEngine.snapshot':
+        if ((failAllEmergencyConnects ||
+                (failFirstConnect && connectCalls == 1)) &&
+            connectCalls > 0 &&
+            !connected) {
+          return <String, Object?>{
+            'phase': 'configStaged',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+            'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': true,
+            'last_failure_kind': 'emergency_endpoint_unreachable',
+            'message': 'Этот резерв недоступен в текущей сети.',
+          };
+        }
         if (failAfterConnect && connected && connectCalls == 1) {
           connected = false;
           return <String, Object?>{
@@ -1147,7 +1164,8 @@ void _installReadyRuntimeBridgeMock({
         };
       case 'runtimeEngine.connect':
         connectCalls += 1;
-        if (failFirstConnect && connectCalls == 1) {
+        if (failAllEmergencyConnects ||
+            (failFirstConnect && connectCalls == 1)) {
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
@@ -1156,8 +1174,8 @@ void _installReadyRuntimeBridgeMock({
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': true,
-            'last_failure_kind': 'core_egress_failed',
-            'message': 'Выход через выбранную локацию не подтверждён.',
+            'last_failure_kind': 'emergency_endpoint_unreachable',
+            'message': 'Этот резерв недоступен в текущей сети.',
           };
         }
         connected = true;
@@ -3380,6 +3398,53 @@ void main() {
       launched.single.queryParameters['handoff_token'],
       'short-cabinet-token',
     );
+  });
+
+  testWidgets(
+      'profile shows native Telegram identity without another link action',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      subscriptionInfo: const ClientSubscriptionInfo(
+        lane: 'paidUnlimited',
+        expiresAt: '2027-01-01T00:00:00Z',
+        daysLeft: 263,
+        autoRenew: false,
+        renewUrl: null,
+        plans: <ClientSubscriptionPlan>[],
+        trafficPolicy: <String, Object?>{},
+        telegramLinked: true,
+        telegramUsername: 'pokrov_owner',
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-profile');
+    final telegramRow =
+        find.byKey(const ValueKey('profile-telegram-link-action'));
+    await tester.dragUntilVisible(
+      telegramRow,
+      find.byType(Scrollable).first,
+      const Offset(0, -220),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('@pokrov_owner'), findsOneWidget);
+    expect(find.text('Привязать'), findsNothing);
+    await tester.tap(telegramRow);
+    await tester.pumpAndSettle();
+    expect(bootstrapper.telegramLinkCalls, 0);
   });
 
   testWidgets('profile Telegram bonus works before payment', (tester) async {
@@ -10947,6 +11012,111 @@ void main() {
     );
     expect(runtimeCalls, contains('runtimeEngine.stageManagedProfile'));
     expect(runtimeCalls, contains('runtimeEngine.connect'));
+  });
+
+  testWidgets('emergency connect rotates to the next reserve on Android',
+      (tester) async {
+    final runtimeCalls = <String>[];
+    _installReadyRuntimeBridgeMock(
+      calls: runtimeCalls,
+      failFirstConnect: true,
+    );
+    final bootstrapper = _FakeEmergencyBootstrapper(
+      catalogResult: AppFirstEmergencyCatalogResult(
+        catalog: _emergencyCatalog(),
+        reason: '',
+        eligibilitySource: 'server_cached_ru',
+        usingCache: true,
+      ),
+    );
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _tapNav(tester, 'nav-locations');
+    final launcher = find.byKey(
+      const ValueKey('emergency-network-launcher'),
+    );
+    await tester.ensureVisible(launcher);
+    await tester.tap(launcher);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('emergency-connect')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('emergency-disclosure-accept')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.emergencyProfileCalls, 2);
+    expect(
+      bootstrapper.lastEmergencyReserveId,
+      'emg_000000000000000000000002',
+    );
+    expect(
+      runtimeCalls.where((call) => call == 'runtimeEngine.connect'),
+      hasLength(2),
+    );
+    expect(
+      runtimeCalls,
+      contains('runtimeEngine.disconnect'),
+    );
+  });
+
+  testWidgets('emergency connect reports when every saved reserve is blocked',
+      (tester) async {
+    final runtimeCalls = <String>[];
+    _installReadyRuntimeBridgeMock(
+      calls: runtimeCalls,
+      failAllEmergencyConnects: true,
+    );
+    final bootstrapper = _FakeEmergencyBootstrapper(
+      catalogResult: AppFirstEmergencyCatalogResult(
+        catalog: _emergencyCatalog(),
+        reason: '',
+        eligibilitySource: 'server_cached_ru',
+        usingCache: true,
+      ),
+    );
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _tapNav(tester, 'nav-locations');
+    final launcher = find.byKey(
+      const ValueKey('emergency-network-launcher'),
+    );
+    await tester.ensureVisible(launcher);
+    await tester.tap(launcher);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('emergency-connect')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('emergency-disclosure-accept')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.emergencyProfileCalls, 4);
+    expect(
+      runtimeCalls.where((call) => call == 'runtimeEngine.connect'),
+      hasLength(4),
+    );
+    expect(find.text('Не удалось подключиться'), findsOneWidget);
+    expect(
+      find.text(
+        'Ни один сохранённый резерв не доступен в этой сети. Попробуйте другую сеть или обновите список позже.',
+      ),
+      findsOneWidget,
+    );
   });
 
   test('builds seed app context for public and readiness-only host lanes', () {
