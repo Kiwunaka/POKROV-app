@@ -26,7 +26,7 @@
     "runtime_sync_allowed": true,
     "public_announcement_allowed": true,
     "paid_checkout_allowed": true,
-    "recorded_publication_state": "PUBLIC_STABLE_PUBLISHED_GITHUB_DIGEST_VERIFIED_RUNTIME_SYNC_PENDING",
+    "recorded_publication_state": "PUBLIC_STABLE_PUBLISHED_GITHUB_DIGEST_VERIFIED_RUNTIME_SYNCED",
     "reuse_for_new_promotion": false,
     "signing_evidence": {
       "android": "PASS",
@@ -120,7 +120,7 @@
     "github_repo_visibility": "public",
     "anonymous_download_smoke": "PASS_ALL_EIGHT_PUBLIC_GITHUB_ASSETS_RANGE_206_AND_EXACT_GITHUB_SIZE_DIGEST",
     "authenticated_github_release_smoke": "PASS_EXACT_GITHUB_ASSET_DIGEST",
-    "live_app_session_download_smoke": "PENDING_EXACT_V1_0_12_RUNTIME_SYNC",
+    "live_app_session_download_smoke": "PASS_BRAIN_SIGNED_AND_ANONYMOUS_EXACT_V1_0_12_RUNTIME_CATALOG",
     "built_from_client_commit": "221332d111423e72239fbd456f455b9a2216bba2",
     "verification": {
       "app_shell_tests": "PASS_297",
@@ -134,7 +134,7 @@
       "windows_launch_ui_smoke": "PASS_STABLE_METADATA_BUILD_MANIFEST_HASH; CLEAN_TUN_MANUAL_FOLLOWUP",
       "github_asset_digest": "PASS_EXACT_EIGHT_ASSET_SIZE_AND_SHA256"
     },
-    "runtime_sync_result": "PENDING_EXACT_V1_0_12_BRAIN_HANDOFF_DEPLOY_AND_POST_DEPLOY_VERIFY"
+    "runtime_sync_result": "PASS_EXACT_V1_0_12_BRAIN_HANDOFF_STATIC_DEPLOY_AND_POST_DEPLOY_VERIFY"
   },
   "manual_gates_before_stronger_claims": [
     "EXACT_FINAL_WARP_PER_APP_UPLINK_REPETITION",
