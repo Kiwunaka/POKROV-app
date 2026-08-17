@@ -2586,10 +2586,13 @@ void main() {
     expect(find.byType(BottomSheet), findsOneWidget);
     expect(find.text('Состояние защиты'), findsOneWidget);
     expect(find.text('Туннель'), findsOneWidget);
-    expect(find.text('DNS для подключения'), findsOneWidget);
+    expect(find.text('Адреса сайтов'), findsOneWidget);
     expect(find.text('Выход через VPN'), findsOneWidget);
     expect(find.text('Маршруты'), findsOneWidget);
-    expect(find.textContaining('не доказывают отсутствие'), findsOneWidget);
+    expect(
+      find.text('POKROV проверяет соединение на этом устройстве.'),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey('protection-repair-action')),
       findsOneWidget,

@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-08-17
+Last updated: 2026-08-18
 
 ## Document Status
 
@@ -11,7 +11,7 @@ This file is the living client product contract for `POKROV-app/main`.
 This repo is the canonical client-development lane for `POKROV`.
 
 - public `v1` scope: `Android + Windows`
-- `iOS` and `macOS`: readiness, packaging, and signing-preparation only in this wave
+- native `iOS` and `macOS`: readiness, packaging, and signing-preparation only in this wave; Apple users keep a platform-owned authenticated compatible-client key path until those clients ship
 - cross-surface product facts inherit from the exact platform owners listed
   below; this client contract must not fork them
 
@@ -50,6 +50,7 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - identity model: `app-first`
 - public `v1` scope: `Android + Windows`
 - Apple scope in this wave: readiness only
+- Android and Windows onboarding uses only the official APK/EXE plus managed login; raw subscription keys are reserved for the authenticated Apple compatibility path
 - default runtime core: `sing-box`
 - `xray` role: advanced compatibility fallback only
 - free trial: `5 days`
@@ -57,7 +58,7 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
   first payment. Wheel, calendar, and referral rewards remain paid-only. Already-issued
   `+10 days` grants remain grandfathered and must render with their
   backend-returned value
-- public user-facing version line: `1.1.1` stable; beta/prerelease candidates
+- public user-facing version line: `1.1.2` release candidate; `1.1.1` remains the stable runtime until exact artifacts are uploaded and synchronized; beta/prerelease candidates
   are an explicit opt-in lane and never replace stable metadata implicitly
 - recommended public routing mode: `All except RU`
 - public routing mode set: `All except RU` and `Full tunnel`

@@ -182,7 +182,8 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
     } on Object {
       if (mounted) {
         setState(() {
-          _error = 'Восстановление не завершилось. Не удалось получить свежие проверки.';
+          _error =
+              'Восстановление не завершилось. Не удалось получить свежие проверки.';
         });
       }
     } finally {
@@ -299,7 +300,7 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Четыре независимые проверки. Локальные маршруты не доказывают отсутствие внешних утечек.',
+                'POKROV проверяет соединение на этом устройстве.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: p.muted,
                       height: 1.35,
@@ -320,13 +321,13 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
                   label: Text(
                     _repairing
                         ? 'Восстанавливаем…'
-                        : 'Восстановить подключение',
+                        : 'Проверить и восстановить',
                   ),
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Один ограниченный цикл: отключение, свежий профиль, запуск и повторная проверка. Автоповторов нет.',
+                'POKROV один раз переподключится и повторит проверку. Локация и правила сохранятся.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: p.muted,
                       height: 1.35,
@@ -399,7 +400,7 @@ List<_ProtectionCheck> _protectionChecks(_ProtectionCenterData data) {
           RuntimeHostHealth.healthy => const _ProtectionCheck(
               title: 'Туннель',
               value: 'Активен',
-              detail: 'Хост подтвердил рабочее состояние runtime.',
+              detail: 'Защищённое соединение работает.',
               icon: Icons.shield_rounded,
               tone: _ProtectionCheckTone.success,
             ),
@@ -412,9 +413,8 @@ List<_ProtectionCheck> _protectionChecks(_ProtectionCenterData data) {
             ),
           RuntimeHostHealth.unknown => const _ProtectionCheck(
               title: 'Туннель',
-              value: 'Активен, проверка хоста —',
-              detail:
-                  'Runtime запущен, отдельная host-health проверка недоступна.',
+              value: 'Активен, проверяем',
+              detail: 'Соединение запущено, свежий результат ещё не получен.',
               icon: Icons.shield_outlined,
               tone: _ProtectionCheckTone.unknown,
             ),
@@ -422,32 +422,31 @@ List<_ProtectionCheck> _protectionChecks(_ProtectionCenterData data) {
 
   final dns = !running
       ? const _ProtectionCheck(
-          title: 'DNS для подключения',
+          title: 'Адреса сайтов',
           value: 'Не проверялся',
-          detail: 'Bootstrap DNS проверяется при активном соединении.',
+          detail: 'Проверка начнётся после подключения.',
           icon: Icons.dns_outlined,
           tone: _ProtectionCheckTone.unknown,
         )
       : switch (snapshot!.dnsState) {
           RuntimeDiagnosticState.healthy => const _ProtectionCheck(
-              title: 'DNS для подключения',
+              title: 'Адреса сайтов',
               value: 'Готов',
-              detail:
-                  'Системный DNS готов для адресов нод. DNS приложений внутри VPN проверяется вместе с выходом через VPN.',
+              detail: 'POKROV может находить адреса сайтов и локаций.',
               icon: Icons.dns_rounded,
               tone: _ProtectionCheckTone.success,
             ),
           RuntimeDiagnosticState.degraded => const _ProtectionCheck(
-              title: 'DNS для подключения',
+              title: 'Адреса сайтов',
               value: 'Недоступен',
-              detail: 'Хост не смог подготовить DNS для адресов подключения.',
+              detail: 'Не удалось получить адрес для подключения.',
               icon: Icons.dns_outlined,
               tone: _ProtectionCheckTone.danger,
             ),
           RuntimeDiagnosticState.unknown => const _ProtectionCheck(
-              title: 'DNS для подключения',
+              title: 'Адреса сайтов',
               value: 'Нет измерения',
-              detail: 'Хост не отдал результат bootstrap DNS-проверки.',
+              detail: 'Результат проверки пока не получен.',
               icon: Icons.dns_outlined,
               tone: _ProtectionCheckTone.unknown,
             ),
@@ -465,8 +464,7 @@ List<_ProtectionCheck> _protectionChecks(_ProtectionCenterData data) {
           ? const _ProtectionCheck(
               title: 'Выход через VPN',
               value: 'Подтверждён',
-              detail:
-                  'POKROV Core открыл тестовый HTTPS-адрес через выбранную локацию.',
+              detail: 'Тестовый адрес открылся через выбранную локацию.',
               icon: Icons.public_rounded,
               tone: _ProtectionCheckTone.success,
             )
@@ -474,15 +472,14 @@ List<_ProtectionCheck> _protectionChecks(_ProtectionCenterData data) {
               ? const _ProtectionCheck(
                   title: 'Выход через VPN',
                   value: 'Не подтверждён',
-                  detail:
-                      'POKROV Core не смог открыть тестовый HTTPS-адрес через выбранную локацию.',
+                  detail: 'Тестовый адрес не открылся через выбранную локацию.',
                   icon: Icons.public_off_outlined,
                   tone: _ProtectionCheckTone.danger,
                 )
               : const _ProtectionCheck(
                   title: 'Выход через VPN',
                   value: 'Проверяется',
-                  detail: 'Ожидаем свежий результат POKROV Core.',
+                  detail: 'Ожидаем свежий результат проверки.',
                   icon: Icons.public_outlined,
                   tone: _ProtectionCheckTone.unknown,
                 );

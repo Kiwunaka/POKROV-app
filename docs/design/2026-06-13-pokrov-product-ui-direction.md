@@ -12,6 +12,11 @@ preserving the selected visual references from
 
 ## Owner Decisions
 
+The consumer protection sheet keeps its first layer plain: one refresh, one
+bounded reconnect action, and short results. Terms such as runtime,
+host-health, bootstrap DNS, and Core belong in diagnostics/evidence rather than
+the normal user explanation.
+
 1. Android and Windows are equally important product surfaces. The shared shell
    must support mobile density and Windows resize behavior from the same design
    foundation.
