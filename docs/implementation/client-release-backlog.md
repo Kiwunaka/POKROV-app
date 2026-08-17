@@ -12,12 +12,14 @@ for their recorded candidate; they do not become reusable release passes.
 
 ## Current Status
 
-The active source candidate is `1.1.0+23` for Android and Windows. Its scope is
+The current public stable source is `1.1.0+23` for Android and Windows. It ships
 account/profile restoration after one-time code claim, verified Telegram return,
 safe diagnostic error events, and the simplified `Режим белых списков` recovery
-surface. It is not public release truth until exact signed artifacts, Russian
-release metadata, runtime `latest=min_supported=1.1.0`, and post-deploy checks
-are complete.
+surface. Exact Android and Windows artifacts are published at `v1.1.0`; all
+eight public assets passed unauthenticated full-download size and SHA-256 checks,
+and production now reports `latest=min_supported=1.1.0`. Android carrier/RU-origin
+whitelist reachability and Windows clean-TUN proof remain manual gates for
+stronger network claims, not for the recorded direct stable publication.
 
 The app-first foundation and consumer information architecture are in place.
 The published `1.0.0-beta` URLs, hashes, and upload/download checks remain

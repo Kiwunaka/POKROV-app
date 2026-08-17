@@ -567,9 +567,10 @@ Release continuity rules:
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
 - stable candidates after installed `1.0.5` beta builds use a strictly newer
-  semantic version. `1.0.13` remains current public truth until promotion;
-  `1.1.0+23` is the active source candidate and becomes `min_supported` only
-  after its exact signed assets are public
+  semantic version. `1.1.0+23` is the current public source and its exact
+  `v1.1.0` assets are the stable direct release. Production reports both
+  `latest_version` and `min_supported_version` as `1.1.0`; older clients receive
+  a required Russian update prompt
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates
