@@ -58,7 +58,7 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
   first payment. Wheel, calendar, and referral rewards remain paid-only. Already-issued
   `+10 days` grants remain grandfathered and must render with their
   backend-returned value
-- public user-facing version line: `1.1.2` release candidate; `1.1.1` remains the stable runtime until exact artifacts are uploaded and synchronized; beta/prerelease candidates
+- public user-facing version line: `1.1.2` stable and runtime-synchronized; beta/prerelease candidates
   are an explicit opt-in lane and never replace stable metadata implicitly
 - recommended public routing mode: `All except RU`
 - public routing mode set: `All except RU` and `Full tunnel`
@@ -74,7 +74,7 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - `Android + Windows` remain the only public release pair for this wave
 - the published `1.0.0-beta` handoff and `2026-05-15` decision pack are retained
   historical exact-candidate evidence; neither is reusable approval for a rebuild
-- `v1.1.1` is the current public stable direct release and its production
+- `v1.1.2` is the current public stable direct release and its production
   runtime sync is complete. Every later promotion still requires fresh
   exact-candidate signing and release proof; a local build or old public URL is
   not signing proof
@@ -586,11 +586,12 @@ Release continuity rules:
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
 - stable candidates after installed `1.0.5` beta builds use a strictly newer
-  semantic version. `1.1.1+24` is the current public source and its exact
-  `v1.1.1` assets are the stable direct release. Production synchronization sets
-  both `latest_version` and `min_supported_version` to `1.1.1`; older clients
+  semantic version. `1.1.2+25` is the current public source and its exact
+  `v1.1.2` assets are the stable direct release. Production synchronization sets
+  both `latest_version` and `min_supported_version` to `1.1.2`; older clients
   receive a required Russian update prompt. The exact `2026-08-17` runtime
-  readback, in-app progress UI, and Android Package Installer handoff are PASS
+  readback and LDPlayer same-signer update/session preservation are PASS;
+  Package Installer handoff was not repeated for this patch
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates
@@ -600,7 +601,7 @@ Release continuity rules:
 - the shared runtime identity is `pokrovClientVersion`; release builds pass
   `--dart-define=POKROV_APP_VERSION=<host pubspec version without +build>` so
   provisioning, update checks, diagnostics, and visible version text match the
-  package. Local builds use the current package base-version fallback `1.1.1`;
+  package. Local builds use the current package base-version fallback `1.1.2`;
   production packaging passes that value explicitly through `POKROV_APP_VERSION`.
 - local non-release builds keep updater and source-code surfaces disabled instead of falling back to a personal repository URL
 - an update prompt or tap may use only
@@ -619,7 +620,7 @@ Release continuity rules:
 - downloaded-byte verification does not replace production-signing, install,
   runtime, or exact-candidate release proof
 - update prompts, release notes, remote banners, and Telegram release notices
-  for `1.1.1` use short Russian copy; the default client channel remains
+  for `1.1.2` use short Russian copy; the default client channel remains
   `stable`, without a permanent beta label
 - release handoff must keep app, bot, and authenticated web surfaces aligned with the same runtime `APP_*` URLs
 

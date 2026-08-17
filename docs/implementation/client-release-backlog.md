@@ -12,21 +12,21 @@ for their recorded candidate; they do not become reusable release passes.
 
 ## Current Status
 
-The current public stable source is `1.1.1+24` for Android and Windows. It ships
-full-chain DNS/web verification and candidate-major fallback for `Режим белых
-списков`, honest per-device channel states, a 4–20 reserve contract, and safer
-Android Wi-Fi/LTE handover. Exact Android and Windows artifacts are published at
-`v1.1.1`; all eight public assets passed unauthenticated full-download size and
-SHA-256 checks. Exact signed arm64 installation and the whitelist TUN/full-chain
-probe passed on Huawei over Beeline LTE. Production now reports exact stable
-`1.1.1` latest/min-supported metadata; the anonymous required-update response,
-in-app download progress and Package Installer handoff passed on LDPlayer.
-Windows clean-TUN proof remains a manual gate for stronger network claims.
+The current public stable source is `1.1.2+25` for Android and Windows. It keeps
+the official APK/EXE as the consumer path, reserves personal subscription keys
+for the Apple compatibility path, and replaces the technical protection sheet
+with plain user-facing connection states. Exact Android and Windows artifacts
+are published at `v1.1.2`; all eight public assets have exact GitHub size/SHA-256
+metadata and accept anonymous range downloads. Production reports exact stable
+`1.1.2` latest/min-supported metadata with a required Russian update response.
+The signed x86_64 build updated on LDPlayer with the session preserved and the
+final Home/protection screens retained. Exact Huawei arm64 and Windows clean-TUN
+proof remain manual gates for stronger network claims.
 
 The app-first foundation and consumer information architecture are in place.
 The published `1.0.0-beta` URLs, hashes, and upload/download checks remain
 historical exact-candidate evidence; they do not describe the current channel.
-The `1.1.1` production promotion and runtime sync are closed. A later public
+The `1.1.2` production promotion and runtime sync are closed. A later public
 candidate still needs exact-candidate Android signing and release proof;
 trusted Windows signing and RU-origin evidence remain follow-up gates for
 stronger claims.
