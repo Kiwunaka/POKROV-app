@@ -544,6 +544,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   // Direction of the current busy transition so the UI can honestly say
   // «Отключаем...» instead of pretending every busy state is a connect.
   bool _runtimeDisconnecting = false;
+  DateTime? _connectionAttemptStartedAt;
+  int _connectionAttemptNumber = 0;
   bool _emergencyRuntimeActive = false;
   bool _firstLaunchBusy = false;
   bool _managedProfileDirty = true;
@@ -701,6 +703,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       unawaited(_checkForClientUpdate());
       unawaited(_refreshAccountSummary());
       unawaited(_loadSystemSurfacePreferences());
+      unawaited(_reportClientLifecycle('app_opened'));
     });
   }
 
@@ -1741,7 +1744,20 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  Future<void> _reportClientRuntimeError(String errorCode) async {
+  int? _connectionAttemptDurationMs() {
+    final startedAt = _connectionAttemptStartedAt;
+    if (startedAt == null) {
+      return null;
+    }
+    return DateTime.now().toUtc().difference(startedAt).inMilliseconds;
+  }
+
+  Future<void> _reportClientLifecycle(
+    String phase, {
+    bool connected = false,
+    String errorCode = '',
+    bool? retryable,
+  }) async {
     final service = _experienceService;
     if (service == null) {
       return;
@@ -1749,14 +1765,29 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     try {
       await service.reportRuntimeStats(
         hostPlatform: widget.appContext.hostPlatform,
-        runtimePhase: 'failed',
-        connected: false,
+        runtimePhase: phase,
+        connected: connected,
         errorCode: errorCode,
+        selectedNodeCode: _activeNodeCode.isNotEmpty
+            ? _activeNodeCode
+            : _resolvedProfileNodeCode,
+        routeMode: _selectedRouteMode.name,
+        durationMs: _connectionAttemptDurationMs(),
+        attemptNumber:
+            _connectionAttemptNumber > 0 ? _connectionAttemptNumber : null,
+        retryable: retryable,
       );
     } on Object {
       // Diagnostics must never replace the original user-facing failure.
     }
   }
+
+  Future<void> _reportClientRuntimeError(String errorCode) =>
+      _reportClientLifecycle(
+        'failed',
+        errorCode: errorCode,
+        retryable: errorCode != 'redeem_failed',
+      );
 
   Future<void> _refreshNotifications() async {
     final service = _clientDataService;
@@ -2211,9 +2242,17 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!update.shouldPrompt || promptKey == _lastPromptedUpdateKey) {
         return;
       }
+      unawaited(_reportClientLifecycle('update_available'));
       _lastPromptedUpdateKey = promptKey;
       await _showClientUpdatePrompt(update);
     } catch (_) {
+      unawaited(
+        _reportClientLifecycle(
+          'failed',
+          errorCode: 'update_check_failed',
+          retryable: true,
+        ),
+      );
       // Update checks are advisory; never block the app on startup.
     } finally {
       _clientUpdateCheckBusy = false;
@@ -2364,6 +2403,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return;
     }
     if (widget.appContext.hostPlatform == HostPlatform.android) {
+      unawaited(_reportClientLifecycle('update_download_started'));
       final installer = widget.clientUpdateInstaller ??
           (ClientAppUpdateInfo value) => installPokrovClientUpdate(
                 widget.appContext.hostPlatform,
@@ -2495,18 +2535,33 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       progress.dispose();
       switch (status) {
         case PokrovClientUpdateInstallStatus.installerOpened:
+          unawaited(_reportClientLifecycle('update_installer_opened'));
           showPokrovSnack(
             context,
             'Обновление проверено. Подтвердите установку в системном окне.',
             tone: PokrovSnackTone.success,
           );
         case PokrovClientUpdateInstallStatus.permissionRequired:
+          unawaited(
+            _reportClientLifecycle(
+              'failed',
+              errorCode: 'update_permission_required',
+              retryable: true,
+            ),
+          );
           showPokrovSnack(
             context,
             'Разрешите POKROV устанавливать обновления. Скачанный APK уже проверен.',
           );
         case PokrovClientUpdateInstallStatus.unsupported:
         case PokrovClientUpdateInstallStatus.failed:
+          unawaited(
+            _reportClientLifecycle(
+              'failed',
+              errorCode: 'update_download_failed',
+              retryable: true,
+            ),
+          );
           showPokrovSnack(
             context,
             'Не удалось скачать или проверить обновление. Попробуйте еще раз.',
@@ -4240,6 +4295,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _runtimeBusy = true;
       _runtimeDisconnecting = _runtimeSnapshot?.phase == RuntimePhase.running;
     });
+    if (!_runtimeDisconnecting) {
+      _connectionAttemptStartedAt = DateTime.now().toUtc();
+      _connectionAttemptNumber += 1;
+      unawaited(_reportClientLifecycle('connect_requested'));
+    }
 
     try {
       RuntimeSnapshot snapshot = _runtimeSnapshot ??
@@ -4503,6 +4563,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         }
         if (current.phase != RuntimePhase.running &&
             current.message.trim().isNotEmpty) {
+          unawaited(_reportClientRuntimeError('connect_not_running'));
           unawaited(_reportWarpRuntimeFallback(current));
           showPokrovSnack(
             context,
@@ -4539,6 +4600,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _runtimeDisconnecting = false;
         });
       }
+      if (_runtimeSnapshot?.phase != RuntimePhase.running) {
+        _connectionAttemptStartedAt = null;
+      }
       widget.shellController?.refresh();
     }
   }
@@ -4555,6 +4619,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         hostPlatform: widget.appContext.hostPlatform,
         runtimePhase: snapshot.phase.name,
         connected: snapshot.phase == RuntimePhase.running,
+        selectedNodeCode: _activeNodeCode.isNotEmpty
+            ? _activeNodeCode
+            : _resolvedProfileNodeCode,
+        routeMode: _selectedRouteMode.name,
+        durationMs: _connectionAttemptDurationMs(),
+        attemptNumber:
+            _connectionAttemptNumber > 0 ? _connectionAttemptNumber : null,
       );
     } catch (_) {
       // UX telemetry must never turn a working tunnel into a failed connect.
@@ -4566,6 +4637,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     } catch (_) {
       // Account-scoped onboarding sync is best-effort and retried on connect.
     }
+    _connectionAttemptStartedAt = null;
   }
 
   bool _isConnectionProven(RuntimeSnapshot snapshot) =>

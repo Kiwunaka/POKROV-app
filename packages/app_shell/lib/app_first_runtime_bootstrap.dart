@@ -420,6 +420,12 @@ abstract interface class AppFirstExperienceService {
     required String runtimePhase,
     required bool connected,
     String errorCode = '',
+    String selectedNodeCode = '',
+    String routeMode = '',
+    int? durationMs,
+    int? attemptNumber,
+    bool? retryable,
+    String networkClass = '',
   });
 
   Future<void> completeAccountOnboarding({
@@ -2851,9 +2857,18 @@ class AppFirstRuntimeBootstrapper
     required String runtimePhase,
     required bool connected,
     String errorCode = '',
+    String selectedNodeCode = '',
+    String routeMode = '',
+    int? durationMs,
+    int? attemptNumber,
+    bool? retryable,
+    String networkClass = '',
   }) async {
     final phase = runtimePhase.trim().toLowerCase();
     final safeErrorCode = errorCode.trim().toLowerCase();
+    final safeNodeCode = selectedNodeCode.trim().toLowerCase();
+    final safeRouteMode = routeMode.trim().toLowerCase();
+    final safeNetworkClass = networkClass.trim().toLowerCase();
     await _requestClientJsonWithSession(
       hostPlatform: hostPlatform,
       method: 'POST',
@@ -2863,6 +2878,16 @@ class AppFirstRuntimeBootstrapper
         'connected': connected,
         if (RegExp(r'^[a-z][a-z0-9_]{0,63}$').hasMatch(safeErrorCode))
           'error_code': safeErrorCode,
+        if (RegExp(r'^[a-z0-9_.-]{1,32}$').hasMatch(safeNodeCode))
+          'selected_node_code': safeNodeCode,
+        if (RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(safeRouteMode))
+          'route_mode': safeRouteMode,
+        if (durationMs != null) 'duration_ms': durationMs.clamp(0, 3600000),
+        if (attemptNumber != null)
+          'attempt_number': attemptNumber.clamp(1, 100),
+        if (retryable != null) 'retryable': retryable,
+        if (RegExp(r'^[a-z][a-z0-9_.-]{0,23}$').hasMatch(safeNetworkClass))
+          'network_class': safeNetworkClass,
       },
     );
   }

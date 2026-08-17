@@ -57,6 +57,12 @@ class _StubBootstrapper
     required String runtimePhase,
     required bool connected,
     String errorCode = '',
+    String selectedNodeCode = '',
+    String routeMode = '',
+    int? durationMs,
+    int? attemptNumber,
+    bool? retryable,
+    String networkClass = '',
   }) async {
     onRuntimeStats?.call(runtimePhase, connected);
   }
@@ -232,7 +238,11 @@ void main() {
     expect(find.text('Нажмите, чтобы подключиться'), findsNothing);
     expect(find.byKey(const ValueKey('home-connect-hint-pulse')), findsNothing);
     expect(hintStateFile().readAsStringSync().trim(), 'done');
-    expect(reports, <(String, bool)>[('running', true)]);
+    expect(reports, <(String, bool)>[
+      ('app_opened', false),
+      ('connect_requested', false),
+      ('running', true),
+    ]);
     expect(onboardingCompleted, 1);
   });
 
@@ -258,7 +268,11 @@ void main() {
     // pending until a confirmed running snapshot, not until a failed attempt.
     expect(find.textContaining('Connection failed.'), findsNothing);
     expect(hintStateFile().existsSync(), isFalse);
-    expect(reports, isEmpty);
+    expect(reports, <(String, bool)>[
+      ('app_opened', false),
+      ('connect_requested', false),
+      ('failed', false),
+    ]);
     expect(onboardingCompleted, 0);
   });
 
