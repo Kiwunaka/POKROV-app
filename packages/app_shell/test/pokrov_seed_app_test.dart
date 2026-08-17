@@ -996,6 +996,8 @@ class _FakeEmergencyBootstrapper extends _FakeBootstrapper
   int emergencyProfileCalls = 0;
   String lastEmergencyReserveId = '';
   EmergencyChainMode? lastEmergencyChainMode;
+  final List<(String, EmergencyChainMode)> emergencyProfileRequests =
+      <(String, EmergencyChainMode)>[];
 
   @override
   Future<AppFirstEmergencyCatalogResult> fetchEmergencyCatalog({
@@ -1028,6 +1030,7 @@ class _FakeEmergencyBootstrapper extends _FakeBootstrapper
     emergencyProfileCalls += 1;
     lastEmergencyReserveId = reserveId;
     lastEmergencyChainMode = chainMode;
+    emergencyProfileRequests.add((reserveId, chainMode));
     final now = DateTime.now().toUtc();
     return AppFirstEmergencyProfileResult(
       profile: EmergencyProfile(
@@ -1199,7 +1202,7 @@ void _installReadyRuntimeBridgeMock({
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': true,
-          'core_egress_validated': !failAfterConnect,
+          'core_egress_validated': failAfterConnect ? null : true,
           'message': 'Runtime service is running.',
         };
       case 'runtimeEngine.disconnect':
@@ -5384,6 +5387,16 @@ void main() {
       const Offset(0, -260),
     );
     await tester.pumpAndSettle();
+
+    final atlas = find.byKey(const ValueKey('profile-guides-action'));
+    await tester.ensureVisible(atlas);
+    await tester.tap(atlas);
+    await tester.pumpAndSettle();
+
+    expect(opened.last.toString(), 'https://pokrov.space/guides/pokrov-app/');
+
+    await tester.ensureVisible(support);
+    await tester.pumpAndSettle();
     await tester.tap(support);
     await tester.pumpAndSettle();
 
@@ -5391,7 +5404,7 @@ void main() {
     expect(find.byKey(const ValueKey('support-chat-composer')), findsOneWidget);
     expect(find.byKey(const ValueKey('support-attach-diagnostics')),
         findsOneWidget);
-    expect(opened.length, 1);
+    expect(opened.length, 2);
 
     await tester.enterText(
       find.byKey(const ValueKey('support-chat-composer')),
@@ -5458,7 +5471,7 @@ void main() {
       'Плитка иногда показывает неверный статус.',
     );
     expect(supportTicketService.lastDiagnostics, isNotEmpty);
-    expect(opened, hasLength(1));
+    expect(opened, hasLength(2));
     expect(find.textContaining('отзыв #777 отправлен'), findsOneWidget);
   });
 
@@ -10890,6 +10903,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Режим белых списков'), findsWidgets);
+    expect(find.text('Автоматически · Через POKROV'), findsOneWidget);
   });
 
   testWidgets(
@@ -10929,6 +10943,12 @@ void main() {
       find.byKey(const ValueKey('emergency-manual-limited-network')),
       findsNothing,
     );
+    expect(
+      find.byKey(const ValueKey('emergency-how-it-works')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('каналов сохранено'), findsOneWidget);
+    expect(find.text('Маршрут подключения'), findsOneWidget);
     expect(bootstrapper.manualLimitedNetworkCalls, <bool>[true]);
     expect(experienceStore.state.emergencyManualLimitedNetwork, isTrue);
   });
@@ -11010,14 +11030,13 @@ void main() {
     expect(find.text('Not Found'), findsNothing);
   });
 
-  testWidgets('trial and paid emergency catalogs fit 4 or 12 narrow rows',
-      (tester) async {
+  testWidgets('emergency catalogs fit 4 or 20 narrow rows', (tester) async {
     await tester.binding.setSurfaceSize(const Size(320, 760));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     for (final fixture in const <(String, int)>[
       ('trial_premium', 4),
-      ('paid_unlimited', 12),
+      ('paid_unlimited', 20),
     ]) {
       _installReadyRuntimeBridgeMock();
       final bootstrapper = _FakeEmergencyBootstrapper(
@@ -11134,7 +11153,7 @@ void main() {
       find.byKey(const ValueKey('home-whitelist-active')),
       findsOneWidget,
     );
-    expect(find.text('Канал выбран автоматически'), findsOneWidget);
+    expect(find.text('Через POKROV'), findsOneWidget);
     expect(find.byKey(const ValueKey('home-location-chip')), findsNothing);
     expect(find.byKey(const ValueKey('home-route-chip')), findsNothing);
     expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
@@ -11184,6 +11203,10 @@ void main() {
       'emg_000000000000000000000002',
     );
     expect(
+      bootstrapper.lastEmergencyChainMode,
+      EmergencyChainMode.reserveForeign,
+    );
+    expect(
       runtimeCalls.where((call) => call == 'runtimeEngine.connect'),
       hasLength(2),
     );
@@ -11191,6 +11214,133 @@ void main() {
       runtimeCalls,
       contains('runtimeEngine.disconnect'),
     );
+  });
+
+  testWidgets(
+      'emergency connect rotates after the full-chain egress probe fails',
+      (tester) async {
+    final runtimeCalls = <String>[];
+    _installReadyRuntimeBridgeMock(
+      calls: runtimeCalls,
+      failAfterConnect: true,
+    );
+    final bootstrapper = _FakeEmergencyBootstrapper(
+      catalogResult: AppFirstEmergencyCatalogResult(
+        catalog: _emergencyCatalog(),
+        reason: '',
+        eligibilitySource: 'server_cached_ru',
+        usingCache: true,
+      ),
+    );
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _tapNav(tester, 'nav-locations');
+    final launcher = find.byKey(
+      const ValueKey('emergency-network-launcher'),
+    );
+    await tester.ensureVisible(launcher);
+    await tester.tap(launcher);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('emergency-connect')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('emergency-disclosure-accept')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.emergencyProfileCalls, 2);
+    expect(
+      bootstrapper.lastEmergencyReserveId,
+      'emg_000000000000000000000001',
+    );
+    expect(
+      bootstrapper.lastEmergencyChainMode,
+      EmergencyChainMode.reserveDirect,
+    );
+    expect(
+      runtimeCalls.where((call) => call == 'runtimeEngine.connect'),
+      hasLength(2),
+    );
+    expect(runtimeCalls, contains('runtimeEngine.snapshot'));
+    expect(runtimeCalls, contains('runtimeEngine.disconnect'));
+  });
+
+  testWidgets('manual whitelist route keeps the selected hop chain',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(408, 876));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final runtimeCalls = <String>[];
+    _installReadyRuntimeBridgeMock(calls: runtimeCalls);
+    final experienceStore = _FakeClientExperienceStore();
+    final bootstrapper = _FakeEmergencyBootstrapper(
+      catalogResult: AppFirstEmergencyCatalogResult(
+        catalog: _emergencyCatalog(),
+        reason: '',
+        eligibilitySource: 'server_cached_ru',
+        usingCache: true,
+      ),
+    );
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        clientExperienceStore: experienceStore,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _tapNav(tester, 'nav-locations');
+    final launcher = find.byKey(
+      const ValueKey('emergency-network-launcher'),
+    );
+    await tester.ensureVisible(launcher);
+    await tester.tap(launcher);
+    await tester.pumpAndSettle();
+
+    final routeTile = find.byKey(const ValueKey('emergency-route-mode'));
+    await tester.ensureVisible(routeTile);
+    await tester.tap(routeTile);
+    await tester.pumpAndSettle();
+    final enhanced = find.byKey(
+      const ValueKey('emergency-route-reserve_ru_foreign'),
+    );
+    final emergencyList = find.byType(ListView).last;
+    await tester.drag(emergencyList, const Offset(0, -520));
+    await tester.pumpAndSettle();
+    await tester.tap(enhanced);
+    await tester.pumpAndSettle();
+    expect(find.text('Усиленная цепочка'), findsWidgets);
+
+    final connect = find.byKey(const ValueKey('emergency-connect'));
+    await tester.drag(emergencyList, const Offset(0, 520));
+    await tester.pumpAndSettle();
+    await tester.tap(connect);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('emergency-disclosure-accept')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.emergencyProfileCalls, 1);
+    expect(
+      bootstrapper.lastEmergencyChainMode,
+      EmergencyChainMode.reserveRuForeign,
+    );
+    expect(experienceStore.state.emergencyAutomaticRoute, isFalse);
+    expect(
+      experienceStore.state.emergencyChainMode,
+      EmergencyChainMode.reserveRuForeign.wireValue,
+    );
+    await _tapNav(tester, 'nav-protection');
+    expect(find.text('Усиленная цепочка'), findsOneWidget);
   });
 
   testWidgets('emergency connect reports when every saved reserve is blocked',
@@ -11235,6 +11385,17 @@ void main() {
     expect(
       runtimeCalls.where((call) => call == 'runtimeEngine.connect'),
       hasLength(4),
+    );
+    expect(
+      bootstrapper.emergencyProfileRequests
+          .map((request) => request.$2)
+          .toList(growable: false),
+      <EmergencyChainMode>[
+        ...List<EmergencyChainMode>.filled(
+          4,
+          EmergencyChainMode.reserveForeign,
+        ),
+      ],
     );
     expect(find.text('Не удалось подключиться'), findsOneWidget);
     expect(

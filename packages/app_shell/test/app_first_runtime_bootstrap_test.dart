@@ -475,15 +475,46 @@ void main() {
     expect(resolved.usingCache, isTrue);
     expect(resolved.profile.reserveId, reserveIds.last);
     expect(resolved.managedProfile.materializedForRuntime, isTrue);
-    expect(resolved.managedProfile.coreEgressProbeRequired, isFalse);
+    expect(resolved.managedProfile.coreEgressProbeRequired, isTrue);
     final runtimeConfig =
         jsonDecode(resolved.managedProfile.configPayload) as Map;
     final runtimeRoute = runtimeConfig['route'] as Map;
+    final runtimeDns = runtimeConfig['dns'] as Map;
+    final emergencyDns = (runtimeDns['servers'] as List)
+        .cast<Map>()
+        .singleWhere((server) => server['tag'] == 'emergency-dns');
     final runtimeOutbounds = (runtimeConfig['outbounds'] as List).cast<Map>();
-    expect(runtimeRoute['final'], 'POKROV emergency reserve');
+    expect(runtimeRoute['final'], 'pokrov-emergency-health');
+    expect(runtimeDns['strategy'], 'ipv4_only');
+    expect(emergencyDns['address'], 'https://1.1.1.1/dns-query');
+    final emergencyProbe = runtimeOutbounds.singleWhere(
+      (outbound) => outbound['tag'] == 'pokrov-emergency-health',
+    );
+    expect(emergencyProbe['type'], 'selector');
+    expect(
+      emergencyProbe['outbounds'],
+      <String>[
+        'POKROV emergency reserve',
+        'pokrov-emergency-probe-copy',
+      ],
+    );
+    final emergencyProbeCopy = runtimeOutbounds.singleWhere(
+      (outbound) => outbound['tag'] == 'pokrov-emergency-probe-copy',
+    );
+    expect(emergencyProbeCopy['type'], 'vless');
+    expect(
+      emergencyProbeCopy['server'],
+      runtimeOutbounds
+          .singleWhere(
+            (outbound) => outbound['tag'] == 'POKROV emergency reserve',
+          )['server'],
+    );
+    expect(emergencyProbe['default'], 'POKROV emergency reserve');
+    expect(emergencyDns['detour'], 'POKROV emergency reserve');
+    expect(emergencyDns.containsKey('type'), isFalse);
     expect(
       runtimeOutbounds.where((outbound) => outbound['type'] == 'selector'),
-      isEmpty,
+      hasLength(1),
     );
     expect(
       runtimeOutbounds.where((outbound) => outbound['type'] == 'urltest'),

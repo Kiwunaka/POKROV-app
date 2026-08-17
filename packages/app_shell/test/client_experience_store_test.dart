@@ -116,6 +116,9 @@ void main() {
           )!,
         ],
       ),
+      emergencyReserveId: 'emg_000000000000000000000001',
+      emergencyChainMode: EmergencyChainMode.reserveRuForeign.wireValue,
+      emergencyAutomaticRoute: false,
     );
 
     await store.write(state);
@@ -153,6 +156,11 @@ void main() {
     expect(restored.routingPreferences.allowLan, isFalse);
     expect(
         restored.routingPreferences.overrides.single.value, 'private.example');
+    expect(restored.emergencyAutomaticRoute, isFalse);
+    expect(
+      restored.emergencyChainMode,
+      EmergencyChainMode.reserveRuForeign.wireValue,
+    );
 
     final file =
         await directory.list().where((item) => item is File).single as File;

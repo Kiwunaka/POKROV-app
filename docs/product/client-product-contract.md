@@ -302,7 +302,7 @@ After activation:
   recovery surface itself assumes a limited network without asking the person
   to understand or toggle that internal state. If ordinary profile resolution
   fails transiently, Home offers this mode directly.
-- The app accepts only an Ed25519-signed server-owned catalog with 4–12 unique,
+- The app accepts only an Ed25519-signed server-owned catalog with 4–20 unique,
   recently authenticated non-RU reserve exits. The signing key id and public
   key are release-time constants; missing or malformed constants fail closed.
 - Raw reserve addresses, credentials and third-party source material never
@@ -327,19 +327,30 @@ After activation:
   confirmation; it cannot silently authorize a non-RU session.
   Invalid signatures, expired material, or an exact profile mismatch clear the
   affected emergency cache and fail closed.
-- The first layer shows one readiness summary and one connect action. POKROV
-  automatically prefers reserve → POKROV foreign exit, then reserve → internet,
-  then reserve → POKROV RU hop → POKROV foreign exit, and rotates through every
-  compatible saved reserve after a root-endpoint failure. Per-channel status and
-  latency stay inside a collapsed diagnostics section without provider or
-  geography claims. Those values describe the last server-side POKROV check,
-  not a live measurement from the current device.
+- The first layer shows one readiness summary, one connect action, and one
+  collapsed route control. Automatic mode prefers reserve → POKROV foreign
+  exit, then reserve → internet, then reserve → POKROV RU hop → POKROV foreign
+  exit. A person may instead pin one of those three exact routes; that choice
+  persists locally and fallback then rotates only through compatible reserves,
+  never through a different route shape. Per-channel status and latency stay
+  inside a separate collapsed diagnostics section without provider or geography
+  claims. Those values describe the last server-side POKROV check, not a live
+  measurement from the current device.
 - While whitelist mode is the active Android runtime, Home replaces the normal
   location, route and WARP controls with one explicit `Режим белых списков`
-  status card saying that the channel was selected automatically. It must not
-  imply that normal location, route or WARP choices apply to that tunnel.
+  status card naming the active route (`Через POKROV`, `Через белый канал`, or
+  `Усиленная цепочка`). It must not imply that normal location, route or WARP
+  choices apply to that tunnel.
 - Ordinary DNS overrides, WARP, and per-app rules do not modify the signed
   whitelist-mode profile.
+- After signature verification, the runtime normalizes emergency DNS to
+  literal-IP DoH inside the selected encrypted reserve-first chain. This
+  also keeps already cached signed DoH profiles usable after the update while
+  avoiding local-RU DNS and stale HTTP/2 transport across Wi-Fi/LTE changes.
+  The emergency resolver uses IPv4-only answers because the current reserve
+  chain is IPv4-authoritative and must not launch paired A/AAAA requests on a
+  constrained first hop. The DoH transport remains encapsulated by the
+  encrypted VLESS reserve path rather than leaving through the local network.
 - Emergency connect never requires a live POKROV API probe after the signed
   offline bundle has passed local validation. Android keeps the exact signed
   terminal proxy as the runtime final and does not stop that TUN merely because
@@ -406,6 +417,10 @@ Support should be reachable from:
 Support contract rules:
 
 - support is a real ticket-backed flow, not decorative chat UI
+- `Атлас приложения` opens the owned in-app surface at
+  `/guides/pokrov-app/` directly and uses real redacted Android screenshots;
+  the generic guide catalog and three-step illustration cards are not a
+  substitute for that app-screen atlas
 - app support should prepare account and device context before handing the user into the ticket flow or fallback channels
 - authenticated browser support should continue through `/api/tickets`, `/api/tickets/{ticket_id}`, `/api/tickets/{ticket_id}/messages`, and `/api/tickets/uploads`
 - app support may attach redacted diagnostics on ticket creation and on one explicitly confirmed follow-up reply

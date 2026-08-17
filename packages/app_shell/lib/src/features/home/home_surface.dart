@@ -7,6 +7,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.selectedRouteMode,
     required this.locationLabel,
     required this.emergencyRuntimeActive,
+    required this.emergencyChainMode,
     required this.runtimeSnapshot,
     required this.runtimeHeadline,
     required this.runtimeBusy,
@@ -42,6 +43,7 @@ class _QuickConnectSection extends StatelessWidget {
   final RouteMode selectedRouteMode;
   final String locationLabel;
   final bool emergencyRuntimeActive;
+  final EmergencyChainMode emergencyChainMode;
   final RuntimeSnapshot? runtimeSnapshot;
   final String? runtimeHeadline;
   final bool runtimeBusy;
@@ -172,6 +174,7 @@ class _QuickConnectSection extends StatelessWidget {
               selectedRouteMode: selectedRouteMode,
               locationLabel: locationLabel,
               emergencyRuntimeActive: emergencyRuntimeActive,
+              emergencyChainMode: emergencyChainMode,
               warpPolicy: warpPolicy,
               warpRuntimeConsent: warpRuntimeConsent,
               warpRuntimeActive: warpRuntimeActive,
@@ -221,6 +224,7 @@ class _HomeStage extends StatefulWidget {
     required this.selectedRouteMode,
     required this.locationLabel,
     required this.emergencyRuntimeActive,
+    required this.emergencyChainMode,
     required this.warpPolicy,
     required this.warpRuntimeConsent,
     required this.warpRuntimeActive,
@@ -265,6 +269,7 @@ class _HomeStage extends StatefulWidget {
   final RouteMode selectedRouteMode;
   final String locationLabel;
   final bool emergencyRuntimeActive;
+  final EmergencyChainMode emergencyChainMode;
   final WarpRuntimePolicy warpPolicy;
   final bool warpRuntimeConsent;
   final bool warpRuntimeActive;
@@ -439,6 +444,7 @@ class _HomeStageState extends State<_HomeStage>
           end: 0.88,
           child: widget.emergencyRuntimeActive
               ? _HomeEmergencyRuntimeCard(
+                  chainMode: widget.emergencyChainMode,
                   onTap: widget.onOpenWhitelistRecovery,
                 )
               : _HomeModeChips(
@@ -577,6 +583,7 @@ class _HomeStageState extends State<_HomeStage>
                   selectedRouteMode: widget.selectedRouteMode,
                   locationLabel: widget.locationLabel,
                   emergencyRuntimeActive: widget.emergencyRuntimeActive,
+                  emergencyChainMode: widget.emergencyChainMode,
                   onToggleRuntime: widget.onToggleRuntime,
                   onOpenConnectionDetails: widget.onOpenConnectionDetails,
                   onOpenLocations: widget.onOpenLocations,
@@ -727,8 +734,12 @@ class _WhitelistRecoveryCard extends StatelessWidget {
 }
 
 class _HomeEmergencyRuntimeCard extends StatelessWidget {
-  const _HomeEmergencyRuntimeCard({required this.onTap});
+  const _HomeEmergencyRuntimeCard({
+    required this.chainMode,
+    required this.onTap,
+  });
 
+  final EmergencyChainMode chainMode;
   final VoidCallback onTap;
 
   @override
@@ -758,16 +769,16 @@ class _HomeEmergencyRuntimeCard extends StatelessWidget {
                 child: Icon(Icons.route_rounded, color: p.reward),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Режим белых списков',
                       style: TextStyle(fontWeight: FontWeight.w700),
                     ),
-                    SizedBox(height: 2),
-                    Text('Канал выбран автоматически'),
+                    const SizedBox(height: 2),
+                    Text(_emergencyChainModeTitle(chainMode)),
                   ],
                 ),
               ),
@@ -794,6 +805,7 @@ class _HomeConnectPanel extends StatelessWidget {
     required this.selectedRouteMode,
     required this.locationLabel,
     required this.emergencyRuntimeActive,
+    required this.emergencyChainMode,
     required this.onToggleRuntime,
     required this.onOpenConnectionDetails,
     required this.onOpenLocations,
@@ -813,6 +825,7 @@ class _HomeConnectPanel extends StatelessWidget {
   final RouteMode selectedRouteMode;
   final String locationLabel;
   final bool emergencyRuntimeActive;
+  final EmergencyChainMode emergencyChainMode;
   final Future<void> Function() onToggleRuntime;
   final VoidCallback onOpenConnectionDetails;
   final VoidCallback onOpenLocations;
@@ -856,7 +869,10 @@ class _HomeConnectPanel extends StatelessWidget {
           ),
           const SizedBox(height: 30),
           emergencyRuntimeActive
-              ? _HomeEmergencyRuntimeCard(onTap: onOpenEmergencyNetwork)
+              ? _HomeEmergencyRuntimeCard(
+                  chainMode: emergencyChainMode,
+                  onTap: onOpenEmergencyNetwork,
+                )
               : _HomeModeChips(
                   locationLabel: locationLabel,
                   routeMode: selectedRouteMode,

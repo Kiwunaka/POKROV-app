@@ -3497,8 +3497,19 @@ class AppFirstRuntimeBootstrapper
     required HostPlatform hostPlatform,
     required EmergencyProfile profile,
   }) async {
+    final runtimePayload = jsonDecode(jsonEncode(profile.configPayload));
+    if (runtimePayload is! Map) {
+      throw const BootstrapFailure(
+        'POKROV получил неполный резервный профиль.',
+      );
+    }
+    final emergencyConfig = runtimePayload.map(
+      (key, value) => MapEntry(key.toString(), value),
+    );
+    _normalizeEmergencyRuntimeDns(emergencyConfig);
+    _addEmergencyRuntimeEgressProbe(emergencyConfig);
     final materialized = await _materializeRuntimeConfig(
-      rawConfigPayload: jsonEncode(profile.configPayload),
+      rawConfigPayload: jsonEncode(emergencyConfig),
       hostPlatform: hostPlatform,
       routeMode: RouteMode.allExceptRu,
       selectedApps: const <String>[],
@@ -3513,10 +3524,87 @@ class AppFirstRuntimeBootstrapper
       configPayload: materialized,
       materializedForRuntime: true,
       quickSettingsEligible: false,
-      coreEgressProbeRequired: false,
+      coreEgressProbeRequired: true,
       routeMode: RouteMode.allExceptRu,
       warpPolicy: WarpRuntimePolicy.disabled,
     );
+  }
+
+  void _normalizeEmergencyRuntimeDns(Map<String, dynamic> config) {
+    final dns = Map<String, dynamic>.from(_readMap(config['dns']));
+    final servers = _readListOfMaps(dns['servers'])
+        .map((server) => Map<String, dynamic>.from(server))
+        .toList(growable: false);
+    final emergencyServers = servers
+        .where((server) => _readText(server['tag']) == 'emergency-dns')
+        .toList(growable: false);
+    if (emergencyServers.length != 1) {
+      throw const BootstrapFailure(
+        'POKROV получил неполный резервный профиль.',
+      );
+    }
+    emergencyServers.single
+      ..remove('type')
+      ..remove('server')
+      ..remove('server_port')
+      ..remove('address_resolver')
+      ..['address'] = 'https://1.1.1.1/dns-query';
+    dns['strategy'] = 'ipv4_only';
+    dns['servers'] = servers;
+    config['dns'] = dns;
+  }
+
+  void _addEmergencyRuntimeEgressProbe(Map<String, dynamic> config) {
+    final outbounds = _readListOfMaps(config['outbounds'])
+        .map((outbound) => Map<String, dynamic>.from(outbound))
+        .toList(growable: true);
+    final route = Map<String, dynamic>.from(_readMap(config['route']));
+    final finalTag = _readText(route['final']);
+    final existingTags = outbounds
+        .map((outbound) => _readText(outbound['tag']))
+        .where((tag) => tag.isNotEmpty)
+        .toSet();
+    if (finalTag.isEmpty || !existingTags.contains(finalTag)) {
+      throw const BootstrapFailure(
+        'POKROV получил неполный резервный профиль.',
+      );
+    }
+    final finalOutbound = outbounds.singleWhere(
+      (outbound) => _readText(outbound['tag']) == finalTag,
+    );
+    var probeCopyTag = 'pokrov-emergency-probe-copy';
+    var copySuffix = 2;
+    while (existingTags.contains(probeCopyTag)) {
+      probeCopyTag = 'pokrov-emergency-probe-copy-$copySuffix';
+      copySuffix += 1;
+    }
+    final probeCopyPayload = jsonDecode(jsonEncode(finalOutbound));
+    if (probeCopyPayload is! Map) {
+      throw const BootstrapFailure(
+        'POKROV получил неполный резервный профиль.',
+      );
+    }
+    final probeCopy = probeCopyPayload.map(
+      (key, value) => MapEntry(key.toString(), value),
+    )..['tag'] = probeCopyTag;
+    outbounds.add(probeCopy);
+    existingTags.add(probeCopyTag);
+    var probeTag = 'pokrov-emergency-health';
+    var suffix = 2;
+    while (existingTags.contains(probeTag)) {
+      probeTag = 'pokrov-emergency-health-$suffix';
+      suffix += 1;
+    }
+    outbounds.add(<String, dynamic>{
+      'type': 'selector',
+      'tag': probeTag,
+      'outbounds': <String>[finalTag, probeCopyTag],
+      'default': finalTag,
+      'interrupt_exist_connections': false,
+    });
+    route['final'] = probeTag;
+    config['outbounds'] = outbounds;
+    config['route'] = route;
   }
 
   bool _isTransientEmergencyFailure(BootstrapFailure error) {

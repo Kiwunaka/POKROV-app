@@ -33,6 +33,16 @@ internal fun resolveDefaultNetworkRefreshAction(
     else -> DefaultNetworkRefreshAction.NONE
 }
 
+internal fun shouldReloadRuntimeForInterfaceChange(
+    previousInterfaceName: String?,
+    nextInterfaceName: String?,
+    dnsReady: Boolean,
+): Boolean =
+    dnsReady &&
+        previousInterfaceName != null &&
+        nextInterfaceName != null &&
+        previousInterfaceName != nextInterfaceName
+
 internal object AndroidDefaultNetworkMonitor {
     private val request = NetworkRequest.Builder().apply {
         addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
@@ -48,6 +58,8 @@ internal object AndroidDefaultNetworkMonitor {
     @Volatile
     private var listener: InterfaceUpdateListener? = null
     @Volatile
+    private var resetRuntimeNetwork: (() -> Unit)? = null
+    @Volatile
     private var currentNetwork: Network? = null
     private var appContext: Context? = null
     private var registered = false
@@ -60,6 +72,7 @@ internal object AndroidDefaultNetworkMonitor {
     private var resolvedInterfaceName: String? = null
     private var resolvedInterfaceIndex: Int? = null
     private var interfaceResolutionGeneration: Long? = null
+    private var lastPublishedInterfaceName: String? = null
 
     private val callback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
@@ -74,17 +87,10 @@ internal object AndroidDefaultNetworkMonitor {
         }
 
         override fun onLost(network: Network) {
-            if (clearCurrentNetworkIfMatches(network)) {
+            val missingGeneration = clearCurrentNetworkIfMatches(network)
+            if (missingGeneration != null) {
                 Log.w(LOG_TAG, "Lost default uplink network.")
-                publishInterfaceState(
-                    interfaceName = null,
-                    interfaceIndex = null,
-                    dnsReady = false,
-                )
-                AndroidRuntimeState.markDegraded(
-                    failureKind = "default_network_unavailable",
-                    message = "Android tun is established, but the default uplink is unavailable for DNS resolution.",
-                )
+                scheduleMissingNetworkSettlement(missingGeneration)
                 signalNetworkUpdate()
             }
         }
@@ -104,8 +110,13 @@ internal object AndroidDefaultNetworkMonitor {
         }
     }
 
-    fun start(context: Context, listener: InterfaceUpdateListener) {
+    fun start(
+        context: Context,
+        listener: InterfaceUpdateListener,
+        resetRuntimeNetwork: () -> Unit,
+    ) {
         this.listener = listener
+        this.resetRuntimeNetwork = resetRuntimeNetwork
         ensureStarted(context)
         val network = currentNetwork ?: activeNetwork()
         if (network != null) {
@@ -137,11 +148,15 @@ internal object AndroidDefaultNetworkMonitor {
     fun stop(listener: InterfaceUpdateListener?) {
         if (listener == null || this.listener === listener) {
             this.listener = null
+            resetRuntimeNetwork = null
         }
         if (this.listener == null) {
             unregister()
             appContext = null
             registered = false
+            synchronized(networkLock) {
+                lastPublishedInterfaceName = null
+            }
         }
     }
 
@@ -244,16 +259,9 @@ internal object AndroidDefaultNetworkMonitor {
                     "Пропускаем VPN-сеть при выборе обычной сети устройства.",
                 )
             }
-            if (clearCurrentNetworkIfMatches(network)) {
-                publishInterfaceState(
-                    interfaceName = null,
-                    interfaceIndex = null,
-                    dnsReady = false,
-                )
-                AndroidRuntimeState.markDegraded(
-                    failureKind = "default_network_unavailable",
-                    message = "Android tun is established, but the default uplink is unavailable for DNS resolution.",
-                )
+            val missingGeneration = clearCurrentNetworkIfMatches(network)
+            if (missingGeneration != null) {
+                scheduleMissingNetworkSettlement(missingGeneration)
                 signalNetworkUpdate()
             }
             return
@@ -360,9 +368,9 @@ internal object AndroidDefaultNetworkMonitor {
         signalNetworkUpdate()
     }
 
-    private fun clearCurrentNetworkIfMatches(network: Network): Boolean = synchronized(networkLock) {
+    private fun clearCurrentNetworkIfMatches(network: Network): Long? = synchronized(networkLock) {
         if (currentNetwork != network) {
-            false
+            null
         } else {
             currentNetwork = null
             ++currentNetworkGeneration
@@ -371,8 +379,36 @@ internal object AndroidDefaultNetworkMonitor {
             resolvedInterfaceName = null
             resolvedInterfaceIndex = null
             interfaceResolutionGeneration = null
-            true
+            currentNetworkGeneration
         }
+    }
+
+    private fun scheduleMissingNetworkSettlement(generation: Long) {
+        mainHandler.postDelayed(
+            {
+                val shouldPublish = synchronized(networkLock) {
+                    AndroidPlatformRuntimeBridge.shouldPublishMissingNetwork(
+                        requestGeneration = generation,
+                        activeGeneration = currentNetworkGeneration,
+                        hasCurrentNetwork = currentNetwork != null,
+                    )
+                }
+                if (!shouldPublish) {
+                    return@postDelayed
+                }
+                publishInterfaceState(
+                    interfaceName = null,
+                    interfaceIndex = null,
+                    dnsReady = false,
+                )
+                AndroidRuntimeState.markDegraded(
+                    failureKind = "default_network_unavailable",
+                    message = "Android tun is established, but the default uplink is unavailable for DNS resolution.",
+                )
+                signalNetworkUpdate()
+            },
+            AndroidPlatformRuntimeBridge.DEFAULT_NETWORK_WAIT_TIMEOUT_MILLIS,
+        )
     }
 
     private fun invalidateCurrentNetwork() {
@@ -418,7 +454,12 @@ internal object AndroidDefaultNetworkMonitor {
                 isCurrentNetwork = isCurrentNetwork,
             )
         ) {
-            publishInterfaceState(interfaceName, interfaceIndex, dnsReady)
+            publishInterfaceState(
+                interfaceName,
+                interfaceIndex,
+                dnsReady,
+                resetRuntimeNetworkAfterUpdate = dnsReady,
+            )
         }
     }
 
@@ -505,14 +546,27 @@ internal object AndroidDefaultNetworkMonitor {
         interfaceName: String?,
         interfaceIndex: Int?,
         dnsReady: Boolean,
+        resetRuntimeNetworkAfterUpdate: Boolean = false,
     ) {
         val targetListener: InterfaceUpdateListener?
+        val targetRuntimeReset: (() -> Unit)?
         val isExpensive: Boolean
         val isConstrained: Boolean
+        val shouldResetRuntimeNetwork: Boolean
         synchronized(networkLock) {
             targetListener = listener
+            targetRuntimeReset = resetRuntimeNetwork
             isExpensive = currentNetworkIsExpensive ?: false
             isConstrained = currentNetworkIsConstrained ?: false
+            shouldResetRuntimeNetwork = resetRuntimeNetworkAfterUpdate &&
+                shouldReloadRuntimeForInterfaceChange(
+                    previousInterfaceName = lastPublishedInterfaceName,
+                    nextInterfaceName = interfaceName,
+                    dnsReady = dnsReady,
+                )
+            if (dnsReady && interfaceName != null) {
+                lastPublishedInterfaceName = interfaceName
+            }
         }
         AndroidRuntimeState.updateDefaultNetwork(
             interfaceName = interfaceName,
@@ -529,6 +583,9 @@ internal object AndroidDefaultNetworkMonitor {
                             isExpensive,
                             isConstrained,
                         )
+                        if (shouldResetRuntimeNetwork && resetRuntimeNetwork === targetRuntimeReset) {
+                            targetRuntimeReset?.invoke()
+                        }
                     }.onFailure { error ->
                         Log.e(LOG_TAG, "Failed to publish the default uplink interface.", error)
                     }

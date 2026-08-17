@@ -1223,13 +1223,47 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 }
                 val failureMessage = AndroidRuntimeSafety.publicFailureMessage(failureKind)
                 AndroidRuntimeState.markDnsTransportFailure(failureKind, failureMessage)
-                Log.w(LOG_TAG, "Android DNS transport failed; stopping runtime.")
-                stopRuntime(
-                    message = failureMessage,
-                    stopReason = failureKind,
-                    failureKind = failureKind,
+                // A Wi-Fi/cellular handover can invalidate one in-flight Android
+                // resolver request before the replacement default network is
+                // published. Keep the TUN up (which remains fail-closed), discard
+                // stale Core transports, and let the next lookup use the new
+                // uplink. Stopping VpnService here would expose all applications
+                // to the ordinary network precisely during the handover.
+                runCatching { commandServer?.resetNetwork() }
+                Log.w(
+                    LOG_TAG,
+                    "Android DNS transport failed; keeping fail-closed tunnel active during recovery.",
                 )
-                mainHandler.post { stopSelf() }
+            }
+        }
+    }
+
+    private fun reloadActiveRuntimeAfterDefaultNetworkChange() {
+        runCatching {
+            runtimeExecutor.execute {
+                if (!lifecycleActive.get() || activeTun == null) {
+                    return@execute
+                }
+                val server = commandServer ?: return@execute
+                val content = activeConfigContent ?: return@execute
+                val previousTun = activeTun
+                healthGeneration.incrementAndGet()
+                runCatching {
+                    server.startOrReloadService(content, OverrideOptions())
+                }.onSuccess {
+                    if (activeTun !== previousTun) {
+                        runCatching { previousTun?.close() }
+                    }
+                    Log.i(LOG_TAG, "Android runtime reloaded after default uplink change.")
+                }.onFailure {
+                    AndroidRuntimeState.markDegraded(
+                        failureKind = "default_network_unavailable",
+                        message = AndroidRuntimeSafety.publicFailureMessage(
+                            "default_network_unavailable",
+                        ),
+                    )
+                    Log.w(LOG_TAG, "Android runtime reload after default uplink change failed safely.")
+                }
             }
         }
     }
@@ -1237,7 +1271,9 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     override fun readWIFIState(): WIFIState? = null
 
     override fun startDefaultInterfaceMonitor(listener: InterfaceUpdateListener) {
-        AndroidDefaultNetworkMonitor.start(this, listener)
+        AndroidDefaultNetworkMonitor.start(this, listener) {
+            reloadActiveRuntimeAfterDefaultNetworkChange()
+        }
     }
 
     override fun underNetworkExtension(): Boolean = false

@@ -329,7 +329,7 @@ class EmergencyEnvelopeVerifier {
       throw const EmergencyContractFailure('catalog_lease_invalid');
     }
     final rawItems = payload['items'];
-    if (rawItems is! List || rawItems.length < 4 || rawItems.length > 12) {
+    if (rawItems is! List || rawItems.length < 4 || rawItems.length > 20) {
       throw const EmergencyContractFailure('catalog_items_invalid');
     }
     final items = <EmergencyReserve>[];

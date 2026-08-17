@@ -119,7 +119,8 @@ class PokrovClientExperienceState {
     this.emergencyManualLimitedNetwork = false,
     this.emergencyDisclosureRevision = '',
     this.emergencyReserveId = '',
-    this.emergencyChainMode = 'reserve_direct',
+    this.emergencyChainMode = 'reserve_foreign',
+    this.emergencyAutomaticRoute = true,
   });
 
   const PokrovClientExperienceState.empty()
@@ -141,7 +142,8 @@ class PokrovClientExperienceState {
         emergencyManualLimitedNetwork = false,
         emergencyDisclosureRevision = '',
         emergencyReserveId = '',
-        emergencyChainMode = 'reserve_direct';
+        emergencyChainMode = 'reserve_foreign',
+        emergencyAutomaticRoute = true;
 
   final List<String> favoriteNodeCodes;
   final List<String> recentNodeCodes;
@@ -166,6 +168,7 @@ class PokrovClientExperienceState {
   final String emergencyDisclosureRevision;
   final String emergencyReserveId;
   final String emergencyChainMode;
+  final bool emergencyAutomaticRoute;
 
   PokrovClientExperienceState copyWith({
     List<String>? favoriteNodeCodes,
@@ -187,6 +190,7 @@ class PokrovClientExperienceState {
     String? emergencyDisclosureRevision,
     String? emergencyReserveId,
     String? emergencyChainMode,
+    bool? emergencyAutomaticRoute,
   }) {
     return PokrovClientExperienceState(
       favoriteNodeCodes: favoriteNodeCodes ?? this.favoriteNodeCodes,
@@ -213,6 +217,8 @@ class PokrovClientExperienceState {
           emergencyDisclosureRevision ?? this.emergencyDisclosureRevision,
       emergencyReserveId: emergencyReserveId ?? this.emergencyReserveId,
       emergencyChainMode: emergencyChainMode ?? this.emergencyChainMode,
+      emergencyAutomaticRoute:
+          emergencyAutomaticRoute ?? this.emergencyAutomaticRoute,
     );
   }
 
@@ -281,7 +287,8 @@ class PokrovClientExperienceState {
       emergencyChainMode: EmergencyChainMode.tryParse(
             json['emergencyChainMode'],
           )?.wireValue ??
-          'reserve_direct',
+          'reserve_foreign',
+      emergencyAutomaticRoute: json['emergencyAutomaticRoute'] != false,
     );
   }
 
@@ -322,6 +329,7 @@ class PokrovClientExperienceState {
         if (emergencyReserveId.isNotEmpty)
           'emergencyReserveId': emergencyReserveId,
         'emergencyChainMode': emergencyChainMode,
+        'emergencyAutomaticRoute': emergencyAutomaticRoute,
       };
 }
 

@@ -404,11 +404,11 @@ class _ProfileSection extends StatelessWidget {
                       _SettingsRow(
                         key: const ValueKey('profile-guides-action'),
                         icon: Icons.menu_book_outlined,
-                        title: 'Пошаговые инструкции',
-                        value: 'Открыть',
+                        title: 'Атлас приложения',
+                        value: 'Реальные экраны',
                         onTap: () => onOpenHandoff(
                           'download',
-                          'https://pokrov.space/guides/',
+                          'https://pokrov.space/guides/pokrov-app/',
                         ),
                       ),
                       const _SettingsRowDivider(),

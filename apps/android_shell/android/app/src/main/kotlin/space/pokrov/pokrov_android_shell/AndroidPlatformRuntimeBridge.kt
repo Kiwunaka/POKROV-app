@@ -7,6 +7,12 @@ import kotlin.math.min
 
 internal object AndroidPlatformRuntimeBridge {
     const val DEFAULT_NETWORK_WAIT_TIMEOUT_MILLIS = 5_000L
+
+    fun shouldPublishMissingNetwork(
+        requestGeneration: Long,
+        activeGeneration: Long,
+        hasCurrentNetwork: Boolean,
+    ): Boolean = requestGeneration == activeGeneration && !hasCurrentNetwork
     const val DEFAULT_NETWORK_WAIT_SLICE_MILLIS = 250L
 
     data class SupportFlags(

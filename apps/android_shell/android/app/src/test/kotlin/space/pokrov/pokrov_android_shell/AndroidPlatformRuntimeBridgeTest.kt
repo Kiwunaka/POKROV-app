@@ -9,6 +9,31 @@ import org.junit.Test
 
 class AndroidPlatformRuntimeBridgeTest {
     @Test
+    fun transientUplinkLossDoesNotPublishAfterReplacementArrives() {
+        assertFalse(
+            AndroidPlatformRuntimeBridge.shouldPublishMissingNetwork(
+                requestGeneration = 4L,
+                activeGeneration = 5L,
+                hasCurrentNetwork = true,
+            ),
+        )
+        assertFalse(
+            AndroidPlatformRuntimeBridge.shouldPublishMissingNetwork(
+                requestGeneration = 4L,
+                activeGeneration = 4L,
+                hasCurrentNetwork = true,
+            ),
+        )
+        assertTrue(
+            AndroidPlatformRuntimeBridge.shouldPublishMissingNetwork(
+                requestGeneration = 4L,
+                activeGeneration = 4L,
+                hasCurrentNetwork = false,
+            ),
+        )
+    }
+
+    @Test
     fun supportFlags_enablePlatformMonitoringOnModernAndroid() {
         val flags = AndroidPlatformRuntimeBridge.supportFlags(34)
 
@@ -114,6 +139,38 @@ class AndroidPlatformRuntimeBridgeTest {
                 capabilitiesChanged = false,
                 interfaceReady = false,
                 resolutionPending = true,
+            ),
+        )
+    }
+
+    @Test
+    fun runtimeReload_happensOnlyForAResolvedUplinkInterfaceHandover() {
+        assertFalse(
+            shouldReloadRuntimeForInterfaceChange(
+                previousInterfaceName = null,
+                nextInterfaceName = "rmnet_data1",
+                dnsReady = true,
+            ),
+        )
+        assertFalse(
+            shouldReloadRuntimeForInterfaceChange(
+                previousInterfaceName = "wlan0",
+                nextInterfaceName = "wlan0",
+                dnsReady = true,
+            ),
+        )
+        assertFalse(
+            shouldReloadRuntimeForInterfaceChange(
+                previousInterfaceName = "wlan0",
+                nextInterfaceName = "rmnet_data1",
+                dnsReady = false,
+            ),
+        )
+        assertTrue(
+            shouldReloadRuntimeForInterfaceChange(
+                previousInterfaceName = "wlan0",
+                nextInterfaceName = "rmnet_data1",
+                dnsReady = true,
             ),
         )
     }

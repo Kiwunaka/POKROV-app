@@ -1139,6 +1139,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     required String disclosureRevision,
     required String reserveId,
     required EmergencyChainMode chainMode,
+    required bool automaticRoute,
   }) {
     setState(() {
       _clientExperience = _clientExperience.copyWith(
@@ -1146,6 +1147,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         emergencyDisclosureRevision: disclosureRevision,
         emergencyReserveId: reserveId,
         emergencyChainMode: chainMode.wireValue,
+        emergencyAutomaticRoute: automaticRoute,
       );
     });
     _queueClientExperienceWrite();
@@ -1174,7 +1176,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           initialChainMode: EmergencyChainMode.tryParse(
                 _clientExperience.emergencyChainMode,
               ) ??
-              EmergencyChainMode.reserveDirect,
+              EmergencyChainMode.reserveForeign,
+          initialAutomaticRoute: _clientExperience.emergencyAutomaticRoute,
           onPreferencesChanged: _saveEmergencyPreferences,
           onConnect: _connectEmergencyProfile,
         ),
@@ -1186,7 +1189,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     required EmergencyCatalog catalog,
     required EmergencyReserve reserve,
     required EmergencyChainMode chainMode,
+    required bool automaticRoute,
     required bool manualLimitedNetwork,
+    required _EmergencyConnectProgress onProgress,
   }) async {
     final service = _emergencyNetworkService;
     if (service == null) {
@@ -1224,58 +1229,107 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           (item) => item.id != reserve.id && item.available,
         ),
       ];
+      final modeOrder = automaticRoute
+          ? const <EmergencyChainMode>[
+              EmergencyChainMode.reserveForeign,
+              EmergencyChainMode.reserveDirect,
+              EmergencyChainMode.reserveRuForeign,
+            ]
+          : <EmergencyChainMode>[chainMode];
+      final eligibleCandidates = candidates
+          .where(
+            (candidate) =>
+                candidate.available && modeOrder.any(candidate.modes.contains),
+          )
+          .toList(growable: false);
       AppFirstEmergencyProfileResult? connectedResult;
       EmergencyReserve? connectedReserve;
       EmergencyChainMode? connectedMode;
-      for (var index = 0; index < candidates.length; index += 1) {
-        final candidate = candidates[index];
-        final candidateMode = _preferredEmergencyMode(
-          candidate,
-          fallback: chainMode,
-        );
-        if (candidateMode == null) {
-          continue;
-        }
-        final result = await service.resolveEmergencyProfile(
-          hostPlatform: widget.appContext.hostPlatform,
-          catalogRevision: catalog.revision,
+      candidateLoop:
+      for (var candidateIndex = 0;
+          candidateIndex < eligibleCandidates.length;
+          candidateIndex += 1) {
+        final candidate = eligibleCandidates[candidateIndex];
+        onProgress(
           reserveId: candidate.id,
-          chainMode: candidateMode,
-          manualLimitedNetwork: true,
+          current: candidateIndex + 1,
+          total: eligibleCandidates.length,
+          working: null,
         );
-        current = await _withRuntimeActionTimeout(
-          'stageEmergencyProfile',
-          () => _runtimeEngine.stageManagedProfile(result.managedProfile),
-        );
-        current = await _withRuntimeActionTimeout(
-          'connectEmergency',
-          _runtimeEngine.connect,
-        );
-        current = await _settleRuntimeTransition(current);
-        if (current.phase == RuntimePhase.running) {
-          connectedResult = result;
-          connectedReserve = candidate;
-          connectedMode = candidateMode;
-          break;
-        }
-        final emergencyEndpointUnavailable = widget.appContext.hostPlatform ==
-                HostPlatform.android &&
-            current.lastFailureKind?.trim() == 'emergency_endpoint_unreachable';
-        if (!emergencyEndpointUnavailable) {
-          throw BootstrapFailure(
-            current.message.trim().isEmpty
-                ? 'Экстренный маршрут не подключился.'
-                : current.message,
+        final candidateModes =
+            modeOrder.where(candidate.modes.contains).toList(growable: false);
+        for (final candidateMode in candidateModes) {
+          final result = await service.resolveEmergencyProfile(
+            hostPlatform: widget.appContext.hostPlatform,
+            catalogRevision: catalog.revision,
+            reserveId: candidate.id,
+            chainMode: candidateMode,
+            manualLimitedNetwork: true,
           );
+          current = await _withRuntimeActionTimeout(
+            'stageEmergencyProfile',
+            () => _runtimeEngine.stageManagedProfile(result.managedProfile),
+          );
+          current = await _withRuntimeActionTimeout(
+            'connectEmergency',
+            _runtimeEngine.connect,
+          );
+          current = await _settleRuntimeTransition(current);
+          if (current.phase == RuntimePhase.running &&
+              widget.appContext.hostPlatform == HostPlatform.android) {
+            if (mounted) {
+              setState(() {
+                _runtimeSnapshot = current;
+                _runtimeHeadline =
+                    'Проверяем канал ${candidateIndex + 1} из ${eligibleCandidates.length}…';
+              });
+            }
+            current = await _settleEmergencyEgressValidation(current);
+          }
+          if (_isConnectionProven(current)) {
+            connectedResult = result;
+            connectedReserve = candidate;
+            connectedMode = candidateMode;
+            onProgress(
+              reserveId: candidate.id,
+              current: candidateIndex + 1,
+              total: eligibleCandidates.length,
+              working: true,
+            );
+            break candidateLoop;
+          }
+          final failureKind = current.lastFailureKind?.trim() ?? '';
+          final retryableEmergencyFailure =
+              widget.appContext.hostPlatform == HostPlatform.android &&
+                  (const <String>{
+                        'emergency_endpoint_unreachable',
+                        'core_egress_probe_failed',
+                        'core_egress_probe_unavailable',
+                      }.contains(failureKind) ||
+                      (current.phase == RuntimePhase.running &&
+                          current.isCoreEgressValidationPending));
+          if (!retryableEmergencyFailure) {
+            throw BootstrapFailure(
+              current.message.trim().isEmpty
+                  ? 'Экстренный маршрут не подключился.'
+                  : current.message,
+            );
+          }
+          current = await _withRuntimeActionTimeout(
+            'disconnectUnavailableEmergencyReserve',
+            _runtimeEngine.disconnect,
+          );
+          current = await _settleRuntimeDisconnectTransition(current);
+          if (failureKind == 'emergency_endpoint_unreachable') {
+            break;
+          }
         }
-        if (index + 1 >= candidates.length) {
-          break;
-        }
-        current = await _withRuntimeActionTimeout(
-          'disconnectUnavailableEmergencyReserve',
-          _runtimeEngine.disconnect,
+        onProgress(
+          reserveId: candidate.id,
+          current: candidateIndex + 1,
+          total: eligibleCandidates.length,
+          working: false,
         );
-        current = await _settleRuntimeDisconnectTransition(current);
       }
       if (connectedResult == null ||
           connectedReserve == null ||
@@ -1308,13 +1362,16 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           disclosureRevision: catalog.disclosureRevision,
           reserveId: connectedReserve.id,
           chainMode: connectedMode,
+          automaticRoute: automaticRoute,
         );
       }
       _cachedProfileFallbackGate.markUserChange();
       _recordProtectionEvent(
         kind: 'emergency_connected',
         title: 'Режим белых списков подключён',
-        detail: 'Рабочий канал выбран автоматически.',
+        detail: automaticRoute
+            ? 'Маршрут ${_emergencyChainModeTitle(connectedMode)} выбран автоматически.'
+            : 'Подключён маршрут ${_emergencyChainModeTitle(connectedMode)}.',
         tone: PokrovProtectionEventTone.warning,
       );
     } finally {
@@ -1682,23 +1739,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       return false;
     }
-  }
-
-  EmergencyChainMode? _preferredEmergencyMode(
-    EmergencyReserve reserve, {
-    required EmergencyChainMode fallback,
-  }) {
-    const preference = <EmergencyChainMode>[
-      EmergencyChainMode.reserveForeign,
-      EmergencyChainMode.reserveDirect,
-      EmergencyChainMode.reserveRuForeign,
-    ];
-    for (final mode in preference) {
-      if (reserve.modes.contains(mode)) {
-        return mode;
-      }
-    }
-    return reserve.modes.contains(fallback) ? fallback : null;
   }
 
   Future<void> _reportClientRuntimeError(String errorCode) async {
@@ -5017,6 +5057,40 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     return current;
   }
 
+  Future<RuntimeSnapshot> _settleEmergencyEgressValidation(
+    RuntimeSnapshot snapshot,
+  ) async {
+    if (widget.appContext.hostPlatform != HostPlatform.android ||
+        snapshot.phase != RuntimePhase.running ||
+        !snapshot.isCoreEgressValidationPending) {
+      return snapshot;
+    }
+
+    var current = snapshot;
+    // The Android host owns the fail-closed full-chain probe. A saved reserve
+    // is usable only after that probe confirms real DNS and web egress through
+    // every hop; a reachable first hop alone is not enough. Keep this bounded
+    // slightly above the normal 19-second group probe, then rotate channels.
+    for (var attempt = 0; attempt < 32; attempt += 1) {
+      await Future<void>.delayed(const Duration(milliseconds: 750));
+      current = await _withRuntimeActionTimeout(
+        'settleEmergencyEgressSnapshot',
+        _runtimeEngine.snapshot,
+      );
+      if (!mounted) {
+        return current;
+      }
+      setState(() {
+        _runtimeSnapshot = current;
+      });
+      if (current.phase != RuntimePhase.running ||
+          !current.isCoreEgressValidationPending) {
+        return current;
+      }
+    }
+    return current;
+  }
+
   Future<RuntimeSnapshot> _settleRuntimeDisconnectTransition(
     RuntimeSnapshot snapshot,
   ) async {
@@ -5208,6 +5282,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                         (_emergencyRuntimeActive &&
                             _runtimeSnapshot?.coreEgressValidationRequired !=
                                 true)),
+            emergencyChainMode: EmergencyChainMode.tryParse(
+                  _clientExperience.emergencyChainMode,
+                ) ??
+                EmergencyChainMode.reserveForeign,
             runtimeSnapshot: _runtimeSnapshot,
             runtimeHeadline: _runtimeHeadline,
             runtimeBusy: _runtimeBusy,

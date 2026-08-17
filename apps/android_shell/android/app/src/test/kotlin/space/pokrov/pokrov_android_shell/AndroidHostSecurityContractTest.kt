@@ -276,20 +276,25 @@ class AndroidHostSecurityContractTest {
         assertTrue(resolverSource.contains("reportTransportFailure(AndroidResolverPolicy.TIMEOUT, runtimeToken)"))
         assertTrue(resolverSource.contains("AndroidResolverPolicy.shouldFailCloseRuntime(outcome)"))
         assertTrue(serviceSource.contains("reportDnsTransportFailure(token: Any, failureKind: String)"))
-        assertTrue(serviceSource.contains("stopRuntime("))
-        assertTrue(serviceSource.contains("stopReason = failureKind"))
-        assertTrue(serviceSource.contains("failureKind = failureKind"))
+        assertTrue(serviceSource.contains("AndroidRuntimeState.markDnsTransportFailure(failureKind, failureMessage)"))
+        assertTrue(serviceSource.contains("runCatching { commandServer?.resetNetwork() }"))
+        assertTrue(serviceSource.contains("keeping fail-closed tunnel active during recovery"))
+        assertFalse(serviceSource.contains("Android DNS transport failed; stopping runtime."))
     }
 
     @Test
     fun defaultNetworkInterfaceResolutionAndNativePublishRunOffCallbackThread() {
         val monitorSource = source("AndroidDefaultNetworkMonitor.kt")
+        val serviceSource = source("PokrovRuntimeVpnService.kt")
 
         assertTrue(monitorSource.contains("Executors.newSingleThreadExecutor()"))
         assertTrue(monitorSource.contains("submitInterfaceResolution"))
         assertTrue(monitorSource.contains("interfaceListenerExecutor"))
         assertTrue(monitorSource.contains("submitInterfaceListenerUpdate {"))
         assertTrue(monitorSource.contains("targetListener.updateDefaultInterface("))
+        assertTrue(monitorSource.contains("shouldReloadRuntimeForInterfaceChange("))
+        assertTrue(serviceSource.contains("reloadActiveRuntimeAfterDefaultNetworkChange()"))
+        assertTrue(serviceSource.contains("server.startOrReloadService(content, OverrideOptions())"))
         assertTrue(monitorSource.contains("shutdownNow()"))
         assertTrue(monitorSource.contains("canPublishNetworkResolution("))
     }
