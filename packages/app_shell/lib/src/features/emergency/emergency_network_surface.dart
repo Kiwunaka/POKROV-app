@@ -24,7 +24,7 @@ class _EmergencyNetworkLauncherCard extends StatelessWidget {
     final p = PokrovPalette.of(context);
     return Semantics(
       button: true,
-      label: 'Открыть экстренную сеть POKROV',
+      label: 'Открыть режим белых списков',
       child: Material(
         color: p.reward.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
@@ -54,7 +54,7 @@ class _EmergencyNetworkLauncherCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Экстренная сеть POKROV',
+                        'Режим белых списков',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: p.ink,
@@ -62,7 +62,7 @@ class _EmergencyNetworkLauncherCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Резерв при ограниченной сети',
+                        'Когда открываются только отдельные сайты',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: p.muted,
                             ),
@@ -147,7 +147,7 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
   @override
   void initState() {
     super.initState();
-    _manualLimitedNetwork = widget.initialManualLimitedNetwork;
+    _manualLimitedNetwork = true;
     _acceptedDisclosureRevision = widget.acceptedDisclosureRevision;
     _selectedReserveId = widget.initialReserveId;
     _selectedMode = widget.initialChainMode;
@@ -175,26 +175,17 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
       setState(() {
         _result = result;
         if (catalog != null) {
-          final selectedMatches = catalog.items.where(
-            (item) => item.id == _selectedReserveId && item.available,
-          );
-          if (selectedMatches.isEmpty) {
-            _selectedReserveId = catalog.items
-                .firstWhere(
-                  (item) => item.available,
-                  orElse: () => catalog.items.first,
-                )
-                .id;
-          }
-          final selected = catalog.items.firstWhere(
-            (item) => item.id == _selectedReserveId,
-          );
-          if (!selected.modes.contains(_selectedMode)) {
-            _selectedMode = selected.modes.first;
-          }
+          _selectAutomaticRoute(catalog);
         }
       });
       _persistPreferences();
+      if (forceRefresh) {
+        showPokrovSnack(
+          context,
+          'Каналы проверены и обновлены.',
+          tone: PokrovSnackTone.success,
+        );
+      }
     } on BootstrapFailure catch (error) {
       if (!mounted) {
         return;
@@ -216,6 +207,31 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
         });
       }
     }
+  }
+
+  void _selectAutomaticRoute(EmergencyCatalog catalog) {
+    const preference = <EmergencyChainMode>[
+      EmergencyChainMode.reserveForeign,
+      EmergencyChainMode.reserveDirect,
+      EmergencyChainMode.reserveRuForeign,
+    ];
+    for (final mode in preference) {
+      for (final reserve in catalog.items) {
+        if (reserve.available && reserve.modes.contains(mode)) {
+          _selectedReserveId = reserve.id;
+          _selectedMode = mode;
+          return;
+        }
+      }
+    }
+    for (final reserve in catalog.items) {
+      if (reserve.modes.isNotEmpty) {
+        _selectedReserveId = reserve.id;
+        _selectedMode = reserve.modes.first;
+        return;
+      }
+    }
+    _selectedReserveId = '';
   }
 
   void _persistPreferences() {
@@ -243,16 +259,16 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Как работает экстренная сеть',
+                'Как работает режим белых списков',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
               const Text(
-                'В режиме «Быстрый выход» первая точка берётся из согласованного резервного пула и не управляется POKROV. В режимах «Через POKROV» и «Усиленная цепочка» конечный выход остаётся на инфраструктуре POKROV.',
+                'POKROV автоматически перебирает заранее проверенные каналы, доступные при ограничениях мобильной сети. Сначала приложение старается сохранить выход через инфраструктуру POKROV.',
               ),
               const SizedBox(height: 10),
               const Text(
-                'Резервы регулярно перепроверяются. WARP и маршруты по отдельным приложениям в экстренном режиме не используются.',
+                'Если основной вариант не проходит, приложение пробует совместимый резерв. Обычные DNS-настройки, WARP и правила отдельных приложений здесь временно не используются.',
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -312,7 +328,7 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
       }
       showPokrovSnack(
         context,
-        'Экстренная сеть подключена.',
+        'Режим белых списков подключён.',
         tone: PokrovSnackTone.success,
       );
       Navigator.of(context).pop();
@@ -340,13 +356,13 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
   String _unavailableMessage(AppFirstEmergencyCatalogResult result) =>
       switch (result.eligibilitySource) {
         'access_denied' =>
-          'Экстренная сеть доступна во время пробного периода и с активной подпиской.',
+          'Режим белых списков доступен во время пробного периода и с активной подпиской.',
         'country_unknown' ||
         'install_unknown' =>
           'Мы не смогли подтвердить сеть РФ. Если обычный интернет ограничен, включите режим ниже.',
         _ when result.reason == 'insufficient_working_reserves' =>
           'Сейчас недостаточно проверенных резервов. Мы не предлагаем сомнительный маршрут.',
-        _ => 'Экстренная сеть временно недоступна.',
+        _ => 'Режим белых списков временно недоступен.',
       };
 
   @override
@@ -358,53 +374,30 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
             .toList(growable: false) ??
         const <EmergencyReserve>[];
     final selected = selectedMatches.isEmpty ? null : selectedMatches.first;
-    final modes = selected?.modes ?? const <EmergencyChainMode>[];
+    final availableCount =
+        catalog?.items.where((item) => item.available).length ?? 0;
     return Scaffold(
       appBar: AppBar(
         leading: const BackButton(),
-        title: const Text('Экстренная сеть'),
-        actions: [
-          IconButton(
-            key: const ValueKey('emergency-refresh'),
-            tooltip: 'Обновить резервы',
-            onPressed:
-                _busy ? null : () => unawaited(_refresh(forceRefresh: true)),
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
+        title: const Text('Режим белых списков'),
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
           children: [
             _SectionCard(
-              title: 'Если обычное подключение недоступно',
+              title: 'Если открываются только отдельные сайты',
               tone: _SectionTone.reward,
               lines: const [
-                'POKROV заранее сохраняет подписанные резервы на устройстве и может запустить их без доступа к нашим серверам.',
+                'POKROV сам выберет рабочий канал и попробует восстановить обычный интернет.',
+                'Обычные DNS-настройки, WARP и правила приложений в этом режиме временно не используются.',
               ],
-              child: SwitchListTile.adaptive(
-                key: const ValueKey('emergency-manual-limited-network'),
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Ограниченная сеть'),
-                subtitle: const Text(
-                    'Включите вручную, если сеть РФ не определилась'),
-                value: _manualLimitedNetwork,
-                onChanged: _busy
-                    ? null
-                    : (value) {
-                        setState(() {
-                          _manualLimitedNetwork = value;
-                        });
-                        _persistPreferences();
-                        unawaited(_refresh(forceRefresh: true));
-                      },
-              ),
             ),
+            const SizedBox(height: 12),
             if (_busy && catalog == null)
               const _MotionSkeletonList(
                 key: ValueKey('emergency-loading'),
-                rows: 4,
+                rows: 2,
               )
             else if (_error.isNotEmpty && catalog == null)
               _SectionCard(
@@ -434,110 +427,104 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
               ],
               if (_error.isNotEmpty) ...[
                 _SectionCard(
-                  title: 'Работаем по офлайн-копии',
+                  title: 'Используем сохранённый список',
                   tone: _SectionTone.muted,
                   lines: const [
-                    'Обновить резервы сейчас не удалось. Сохранённый подписанный набор остаётся доступен.',
+                    'Свежая проверка сейчас недоступна, но подписанные каналы сохранены на устройстве.',
                   ],
                 ),
                 const SizedBox(height: 10),
               ],
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Проверенные резервы',
-                      style: Theme.of(context).textTheme.titleLarge,
+              _SectionCard(
+                title: availableCount > 0
+                    ? 'Готово к подключению'
+                    : 'Рабочих каналов сейчас нет',
+                tone: availableCount > 0
+                    ? _SectionTone.accent
+                    : _SectionTone.muted,
+                lines: [
+                  availableCount > 0
+                      ? 'Доступно каналов: $availableCount. Выбор и переключение произойдут автоматически.'
+                      : 'Проверьте список позже или попробуйте другую сеть.',
+                  if (_result?.usingCache == true)
+                    'Список сохранён на устройстве и доступен без связи с POKROV.',
+                ],
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    key: const ValueKey('emergency-connect'),
+                    onPressed: _connecting || selected?.available != true
+                        ? null
+                        : _connect,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                    ),
+                    icon: _connecting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.shield_rounded),
+                    label: Text(
+                      _connecting
+                          ? 'Ищем рабочий канал…'
+                          : 'Подключиться через белые списки',
                     ),
                   ),
-                  if (_result?.usingCache == true)
-                    const Chip(label: Text('Офлайн-копия')),
-                ],
+                ),
               ),
-              const SizedBox(height: 10),
-              ...catalog.items.map(
-                (item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _EmergencyReserveRow(
-                    reserve: item,
-                    selected: item.id == _selectedReserveId,
-                    onTap: !item.available || _connecting
-                        ? null
-                        : () {
-                            setState(() {
-                              _selectedReserveId = item.id;
-                              if (!item.modes.contains(_selectedMode)) {
-                                _selectedMode = item.modes.first;
-                              }
-                            });
-                            _persistPreferences();
-                          },
+              const SizedBox(height: 12),
+              Material(
+                color: p.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: PokrovRadii.cardLg,
+                  side: BorderSide(color: p.line),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: ExpansionTile(
+                  key: const ValueKey('emergency-diagnostics'),
+                  title: const Text('Диагностика каналов'),
+                  subtitle: Text(
+                    '$availableCount из ${catalog.items.length} доступны',
                   ),
+                  childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(2, 0, 2, 10),
+                      child: Text(
+                        'Статус и задержка — последняя проверка POKROV, а не замер с этого устройства.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: p.muted,
+                            ),
+                      ),
+                    ),
+                    ...catalog.items.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _EmergencyReserveRow(reserve: item),
+                      ),
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        key: const ValueKey('emergency-refresh'),
+                        onPressed: _busy
+                            ? null
+                            : () => unawaited(
+                                  _refresh(forceRefresh: true),
+                                ),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Проверить каналы снова'),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text('Маршрут', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 10),
-              RadioGroup<EmergencyChainMode>(
-                groupValue: _selectedMode,
-                onChanged: (value) {
-                  if (_connecting || value == null) {
-                    return;
-                  }
-                  setState(() {
-                    _selectedMode = value;
-                  });
-                  _persistPreferences();
-                },
-                child: Column(
-                  children: modes
-                      .map(
-                        (mode) => RadioListTile<EmergencyChainMode>(
-                          key: ValueKey(
-                            'emergency-mode-${mode.wireValue}',
-                          ),
-                          value: mode,
-                          enabled: !_connecting,
-                          title: Text(mode.label),
-                          subtitle: Text(_emergencyModeDescription(mode)),
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      )
-                      .toList(growable: false),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextButton.icon(
-                onPressed: () => unawaited(_confirmDisclosure(catalog)),
-                icon: const Icon(Icons.info_outline_rounded),
-                label: const Text('Как это работает'),
               ),
             ],
           ],
         ),
       ),
-      bottomNavigationBar: catalog == null
-          ? null
-          : SafeArea(
-              minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: FilledButton.icon(
-                key: const ValueKey('emergency-connect'),
-                onPressed: _connecting || selected?.available != true
-                    ? null
-                    : _connect,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                ),
-                icon: _connecting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.shield_rounded),
-                label: Text(_connecting ? 'Подключаем…' : 'Подключить'),
-              ),
-            ),
       backgroundColor: p.canvas,
     );
   }
@@ -546,13 +533,9 @@ class _EmergencyNetworkSurfaceState extends State<_EmergencyNetworkSurface> {
 class _EmergencyReserveRow extends StatelessWidget {
   const _EmergencyReserveRow({
     required this.reserve,
-    required this.selected,
-    required this.onTap,
   });
 
   final EmergencyReserve reserve;
-  final bool selected;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -564,91 +547,83 @@ class _EmergencyReserveRow extends StatelessWidget {
       EmergencyReserveStatus.stale => p.muted,
     };
     return Material(
-      color: selected ? p.accent.withValues(alpha: 0.08) : p.surface,
+      color: p.surface,
       shape: RoundedRectangleBorder(
         borderRadius: PokrovRadii.card,
-        side: BorderSide(color: selected ? p.accent : p.line),
+        side: BorderSide(color: p.line),
       ),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: p.surfaceMuted,
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: CountryFlag.fromCountryCode(
-                  reserve.countryCode,
-                  theme: const ImageTheme(
-                    width: 30,
-                    height: 22,
-                    shape: RoundedRectangle(6),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: p.surfaceMuted,
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Icon(Icons.route_rounded, color: p.accent),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Канал ${reserve.ordinal}',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Резерв ${reserve.ordinal}',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        Container(
-                          width: 7,
-                          height: 7,
-                          decoration: BoxDecoration(
-                            color: statusColor,
-                            shape: BoxShape.circle,
-                          ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
                         ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            _emergencyStatusLabel(reserve.status),
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: p.muted,
-                                    ),
-                          ),
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          _emergencyStatusLabel(reserve.status),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: p.muted,
+                                  ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _emergencyVerificationLabel(reserve.verification),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: p.muted,
-                          ),
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _emergencyVerificationLabel(reserve.verification),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: p.muted,
+                        ),
+                  ),
+                ],
               ),
-              if (reserve.latencyMs != null)
-                Text(
-                  '${reserve.latencyMs} мс',
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
-              const SizedBox(width: 8),
-              Icon(
-                selected ? Icons.check_circle_rounded : Icons.circle_outlined,
-                color: selected ? p.accent : p.muted,
+            ),
+            if (reserve.latencyMs != null)
+              Text(
+                '${reserve.latencyMs} мс',
+                style: Theme.of(context).textTheme.labelLarge,
               ),
-            ],
-          ),
+            const SizedBox(width: 8),
+            Icon(
+              reserve.available
+                  ? Icons.check_circle_rounded
+                  : Icons.cancel_outlined,
+              color: reserve.available ? p.success : p.muted,
+            ),
+          ],
         ),
       ),
     );
@@ -656,7 +631,7 @@ class _EmergencyReserveRow extends StatelessWidget {
 }
 
 String _emergencyStatusLabel(EmergencyReserveStatus status) => switch (status) {
-      EmergencyReserveStatus.working => 'Проверен сервером',
+      EmergencyReserveStatus.working => 'Доступен',
       EmergencyReserveStatus.checking => 'Проверяется',
       EmergencyReserveStatus.unavailable => 'Недоступен',
       EmergencyReserveStatus.stale => 'Данные устарели',
@@ -664,16 +639,9 @@ String _emergencyStatusLabel(EmergencyReserveStatus status) => switch (status) {
 
 String _emergencyVerificationLabel(EmergencyVerificationLevel level) =>
     switch (level) {
-      EmergencyVerificationLevel.ordinary => 'Не проверен в сети устройства',
-      EmergencyVerificationLevel.syntheticBs => 'Проверено в лаборатории БС',
-      EmergencyVerificationLevel.realBs => 'Проверено при реальном БС',
-    };
-
-String _emergencyModeDescription(EmergencyChainMode mode) => switch (mode) {
-      EmergencyChainMode.reserveDirect =>
-        'Резерв → интернет. Быстрее и короче.',
-      EmergencyChainMode.reserveForeign =>
-        'Резерв → иностранная нода POKROV. Выход через POKROV.',
-      EmergencyChainMode.reserveRuForeign =>
-        'Резерв → RU-хоп POKROV → иностранная нода. Надёжнее, но медленнее.',
+      EmergencyVerificationLevel.ordinary => 'Проверен POKROV',
+      EmergencyVerificationLevel.syntheticBs =>
+        'Проверен в тестовой ограниченной сети',
+      EmergencyVerificationLevel.realBs =>
+        'Проверен в реальной ограниченной сети',
     };

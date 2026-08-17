@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-08-16
+Last updated: 2026-08-17
 
 ## Document Status
 
@@ -293,15 +293,15 @@ After activation:
 - trial and Telegram-bonus access must read as premium-pool access, never as
   `free node` access
 
-### Emergency network
+### Whitelist mode
 
-- `Экстренная сеть` is a separate nested surface under Locations for trial and
+- `Режим белых списков` is a separate nested surface under Locations for trial and
   paid accounts in Russia. It is not a fifth main tab and it does not replace
   normal Smart Connect.
-- Eligibility uses a bounded server-cached country observation. A person may
-  explicitly enable `Ограниченная сеть` when that observation cannot refresh;
-  a cache issued only from that override is ignored while the switch is off
-  but retained so the person can recover when the control plane is blocked.
+- Eligibility uses a bounded server-cached country observation, while the
+  recovery surface itself assumes a limited network without asking the person
+  to understand or toggle that internal state. If ordinary profile resolution
+  fails transiently, Home offers this mode directly.
 - The app accepts only an Ed25519-signed server-owned catalog with 4–12 unique,
   recently authenticated non-RU reserve exits. The signing key id and public
   key are release-time constants; missing or malformed constants fail closed.
@@ -327,11 +327,19 @@ After activation:
   confirmation; it cannot silently authorize a non-RU session.
   Invalid signatures, expired material, or an exact profile mismatch clear the
   affected emergency cache and fail closed.
-- Reserve rows explicitly label catalog health as a server-side check and
-  distinguish it from proof on the current device network. Proof levels remain
-  ordinary, synthetic blocked-network lab, and real restricted-network proof;
-  the client must not relabel ordinary reachability as a real mobile-network
-  pass.
+- The first layer shows one readiness summary and one connect action. POKROV
+  automatically prefers reserve → POKROV foreign exit, then reserve → internet,
+  then reserve → POKROV RU hop → POKROV foreign exit, and rotates through every
+  compatible saved reserve after a root-endpoint failure. Per-channel status and
+  latency stay inside a collapsed diagnostics section without provider or
+  geography claims. Those values describe the last server-side POKROV check,
+  not a live measurement from the current device.
+- While whitelist mode is the active Android runtime, Home replaces the normal
+  location, route and WARP controls with one explicit `Режим белых списков`
+  status card saying that the channel was selected automatically. It must not
+  imply that normal location, route or WARP choices apply to that tunnel.
+- Ordinary DNS overrides, WARP, and per-app rules do not modify the signed
+  whitelist-mode profile.
 - Emergency connect never requires a live POKROV API probe after the signed
   offline bundle has passed local validation. Android keeps the exact signed
   terminal proxy as the runtime final and does not stop that TUN merely because
@@ -523,6 +531,10 @@ Device continuation uses a short-lived, one-time pairing code created by an
 already authenticated device or cabinet. The new device receives its own
 revocable session and still obeys the account device limit. The app never
 shares an Apple Account or a reusable raw subscription secret for pairing.
+An authorized operator may issue the same ten-minute code for an existing
+legacy user through the guarded admin surface. After claim, the client switches
+to the returned canonical account session and refreshes subscription identity;
+it must not keep showing the abandoned local trial profile.
 Account device labels use a human-safe platform identity: Android contributes
 manufacturer and model, while serial numbers, hardware IDs and install IDs
 remain hidden. Generic runtime hostnames such as `localhost` are never shown as
@@ -555,7 +567,9 @@ Release continuity rules:
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
 - stable candidates after installed `1.0.5` beta builds use a strictly newer
-  semantic version (`1.0.13` is current) so existing users are prompted
+  semantic version. `1.0.13` remains current public truth until promotion;
+  `1.1.0+23` is the active source candidate and becomes `min_supported` only
+  after its exact signed assets are public
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates
@@ -565,7 +579,7 @@ Release continuity rules:
 - the shared runtime identity is `pokrovClientVersion`; release builds pass
   `--dart-define=POKROV_APP_VERSION=<host pubspec version without +build>` so
   provisioning, update checks, diagnostics, and visible version text match the
-  package. Local builds use the current Android package base-version fallback `1.0.2`;
+  package. Local builds use the current package base-version fallback `1.1.0`;
   production packaging passes that value explicitly through `POKROV_APP_VERSION`.
 - local non-release builds keep updater and source-code surfaces disabled instead of falling back to a personal repository URL
 - an update prompt or tap may use only
@@ -583,6 +597,9 @@ Release continuity rules:
   Windows continues through the trusted browser download lane.
 - downloaded-byte verification does not replace production-signing, install,
   runtime, or exact-candidate release proof
+- update prompts, release notes, remote banners, and Telegram release notices
+  for `1.1.0` use short Russian copy; the default client channel remains
+  `stable`, without a permanent beta label
 - release handoff must keep app, bot, and authenticated web surfaces aligned with the same runtime `APP_*` URLs
 
 ## Branding Requirements

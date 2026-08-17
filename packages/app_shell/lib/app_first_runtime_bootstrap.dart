@@ -18,7 +18,7 @@ import 'src/emergency/emergency_network_store.dart';
 /// package base version (without Android's build number).
 const pokrovClientVersion = String.fromEnvironment(
   'POKROV_APP_VERSION',
-  defaultValue: '1.0.11',
+  defaultValue: '1.1.0',
 );
 
 const _platformErrorCodeHeader = 'X-POKROV-Auth-Error';
@@ -352,6 +352,11 @@ abstract interface class AppFirstBonusActionService {
     required HostPlatform hostPlatform,
   });
 
+  Future<void> reportTelegramLinkEvent({
+    required HostPlatform hostPlatform,
+    required String eventName,
+  });
+
   Future<ChannelBonusStatus> checkChannelBonus({
     required HostPlatform hostPlatform,
   });
@@ -414,6 +419,7 @@ abstract interface class AppFirstExperienceService {
     required HostPlatform hostPlatform,
     required String runtimePhase,
     required bool connected,
+    String errorCode = '',
   });
 
   Future<void> completeAccountOnboarding({
@@ -2844,8 +2850,10 @@ class AppFirstRuntimeBootstrapper
     required HostPlatform hostPlatform,
     required String runtimePhase,
     required bool connected,
+    String errorCode = '',
   }) async {
     final phase = runtimePhase.trim().toLowerCase();
+    final safeErrorCode = errorCode.trim().toLowerCase();
     await _requestClientJsonWithSession(
       hostPlatform: hostPlatform,
       method: 'POST',
@@ -2853,6 +2861,8 @@ class AppFirstRuntimeBootstrapper
       body: <String, Object?>{
         'runtime_phase': phase.length <= 32 ? phase : phase.substring(0, 32),
         'connected': connected,
+        if (RegExp(r'^[a-z][a-z0-9_]{0,63}$').hasMatch(safeErrorCode))
+          'error_code': safeErrorCode,
       },
     );
   }
@@ -3824,6 +3834,28 @@ class AppFirstRuntimeBootstrapper
     } finally {
       client.close(force: true);
     }
+  }
+
+  @override
+  Future<void> reportTelegramLinkEvent({
+    required HostPlatform hostPlatform,
+    required String eventName,
+  }) async {
+    const allowed = <String>{
+      'handoff_opened',
+      'handoff_open_failed',
+      'verify_requested',
+    };
+    final normalized = eventName.trim().toLowerCase();
+    if (!allowed.contains(normalized)) {
+      return;
+    }
+    await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: '/api/client/telegram/link/events',
+      body: <String, Object?>{'event_name': normalized},
+    );
   }
 
   Future<ChannelBonusStatus> checkChannelBonus({

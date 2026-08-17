@@ -56,6 +56,7 @@ class _StubBootstrapper
     required HostPlatform hostPlatform,
     required String runtimePhase,
     required bool connected,
+    String errorCode = '',
   }) async {
     onRuntimeStats?.call(runtimePhase, connected);
   }

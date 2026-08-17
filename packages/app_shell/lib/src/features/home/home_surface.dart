@@ -6,6 +6,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.freeProfileAccess,
     required this.selectedRouteMode,
     required this.locationLabel,
+    required this.emergencyRuntimeActive,
     required this.runtimeSnapshot,
     required this.runtimeHeadline,
     required this.runtimeBusy,
@@ -32,12 +33,15 @@ class _QuickConnectSection extends StatelessWidget {
     required this.onOpenProfile,
     required this.onOpenPromoHandoff,
     required this.onPromoEvent,
+    required this.showWhitelistRecovery,
+    required this.onOpenWhitelistRecovery,
   });
 
   final SeedAppContext appContext;
   final FreeProfileAccess? freeProfileAccess;
   final RouteMode selectedRouteMode;
   final String locationLabel;
+  final bool emergencyRuntimeActive;
   final RuntimeSnapshot? runtimeSnapshot;
   final String? runtimeHeadline;
   final bool runtimeBusy;
@@ -67,6 +71,8 @@ class _QuickConnectSection extends StatelessWidget {
   final VoidCallback onOpenProfile;
   final void Function(String label, String value) onOpenPromoHandoff;
   final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
+  final bool showWhitelistRecovery;
+  final VoidCallback onOpenWhitelistRecovery;
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +82,7 @@ class _QuickConnectSection extends StatelessWidget {
     final egressValidationPending =
         appContext.hostPlatform == HostPlatform.android &&
             tunnelRunning &&
+            (snapshot?.requiresCoreEgressValidation ?? true) &&
             snapshot?.coreEgressValidated != true;
     // Android's TUN is only the transport. The consumer-facing connected state
     // starts after Core proves egress through the selected outbound.
@@ -164,6 +171,7 @@ class _QuickConnectSection extends StatelessWidget {
                   : null,
               selectedRouteMode: selectedRouteMode,
               locationLabel: locationLabel,
+              emergencyRuntimeActive: emergencyRuntimeActive,
               warpPolicy: warpPolicy,
               warpRuntimeConsent: warpRuntimeConsent,
               warpRuntimeActive: warpRuntimeActive,
@@ -181,6 +189,8 @@ class _QuickConnectSection extends StatelessWidget {
               onOpenProfile: onOpenProfile,
               onOpenPromoHandoff: onOpenPromoHandoff,
               onPromoEvent: onPromoEvent,
+              showWhitelistRecovery: showWhitelistRecovery,
+              onOpenWhitelistRecovery: onOpenWhitelistRecovery,
             ),
           ),
         ),
@@ -210,6 +220,7 @@ class _HomeStage extends StatefulWidget {
     required this.telegramBonusClaimedDays,
     required this.selectedRouteMode,
     required this.locationLabel,
+    required this.emergencyRuntimeActive,
     required this.warpPolicy,
     required this.warpRuntimeConsent,
     required this.warpRuntimeActive,
@@ -227,6 +238,8 @@ class _HomeStage extends StatefulWidget {
     required this.onOpenProfile,
     required this.onOpenPromoHandoff,
     required this.onPromoEvent,
+    required this.showWhitelistRecovery,
+    required this.onOpenWhitelistRecovery,
   });
 
   final bool preferDesktopLayout;
@@ -251,6 +264,7 @@ class _HomeStage extends StatefulWidget {
   final int? telegramBonusClaimedDays;
   final RouteMode selectedRouteMode;
   final String locationLabel;
+  final bool emergencyRuntimeActive;
   final WarpRuntimePolicy warpPolicy;
   final bool warpRuntimeConsent;
   final bool warpRuntimeActive;
@@ -268,6 +282,8 @@ class _HomeStage extends StatefulWidget {
   final VoidCallback onOpenProfile;
   final void Function(String label, String value) onOpenPromoHandoff;
   final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
+  final bool showWhitelistRecovery;
+  final VoidCallback onOpenWhitelistRecovery;
 
   @override
   State<_HomeStage> createState() => _HomeStageState();
@@ -405,33 +421,50 @@ class _HomeStageState extends State<_HomeStage>
             child: _MotionRecoveryBanner(message: widget.recoveryNotice!),
           ),
         ],
+        if (widget.showWhitelistRecovery) ...[
+          const SizedBox(height: 10),
+          _HomeRevealSlice(
+            controller: _revealController,
+            begin: 0.34,
+            end: 0.82,
+            child: _WhitelistRecoveryCard(
+              onTap: widget.onOpenWhitelistRecovery,
+            ),
+          ),
+        ],
         const SizedBox(height: 20),
         _HomeRevealSlice(
           controller: _revealController,
           begin: 0.38,
           end: 0.88,
-          child: _HomeModeChips(
-            locationLabel: widget.locationLabel,
-            routeMode: widget.selectedRouteMode,
-            onOpenLocations: widget.onOpenLocations,
-            onOpenRules: widget.onOpenRules,
-          ),
+          child: widget.emergencyRuntimeActive
+              ? _HomeEmergencyRuntimeCard(
+                  onTap: widget.onOpenWhitelistRecovery,
+                )
+              : _HomeModeChips(
+                  locationLabel: widget.locationLabel,
+                  routeMode: widget.selectedRouteMode,
+                  onOpenLocations: widget.onOpenLocations,
+                  onOpenRules: widget.onOpenRules,
+                ),
         ),
-        const SizedBox(height: 12),
-        _HomeRevealSlice(
-          controller: _revealController,
-          begin: 0.50,
-          end: 1,
-          child: _HomeWarpTile(
-            policy: widget.warpPolicy,
-            runtimeConsent: widget.warpRuntimeConsent,
-            runtimeActive: widget.warpRuntimeActive,
-            busy: widget.warpBusy,
-            compact: true,
-            onOpen: widget.onOpenWarp,
-            onChanged: widget.onWarpConsentChanged,
+        if (!widget.emergencyRuntimeActive) ...[
+          const SizedBox(height: 12),
+          _HomeRevealSlice(
+            controller: _revealController,
+            begin: 0.50,
+            end: 1,
+            child: _HomeWarpTile(
+              policy: widget.warpPolicy,
+              runtimeConsent: widget.warpRuntimeConsent,
+              runtimeActive: widget.warpRuntimeActive,
+              busy: widget.warpBusy,
+              compact: true,
+              onOpen: widget.onOpenWarp,
+              onChanged: widget.onWarpConsentChanged,
+            ),
           ),
-        ),
+        ],
         if (widget.infoNotice != null) ...[
           const SizedBox(height: 8),
           _HomeRevealSlice(
@@ -543,10 +576,12 @@ class _HomeStageState extends State<_HomeStage>
                   recoveryNotice: widget.recoveryNotice,
                   selectedRouteMode: widget.selectedRouteMode,
                   locationLabel: widget.locationLabel,
+                  emergencyRuntimeActive: widget.emergencyRuntimeActive,
                   onToggleRuntime: widget.onToggleRuntime,
                   onOpenConnectionDetails: widget.onOpenConnectionDetails,
                   onOpenLocations: widget.onOpenLocations,
                   onOpenRules: widget.onOpenRules,
+                  onOpenEmergencyNetwork: widget.onOpenWhitelistRecovery,
                 ),
               ),
             ),
@@ -555,20 +590,21 @@ class _HomeStageState extends State<_HomeStage>
               flex: 9,
               child: Column(
                 children: [
-                  _HomeRevealSlice(
-                    controller: _revealController,
-                    begin: 0.22,
-                    end: 0.76,
-                    child: _HomeWarpTile(
-                      policy: widget.warpPolicy,
-                      runtimeConsent: widget.warpRuntimeConsent,
-                      runtimeActive: widget.warpRuntimeActive,
-                      busy: widget.warpBusy,
-                      compact: false,
-                      onOpen: widget.onOpenWarp,
-                      onChanged: widget.onWarpConsentChanged,
+                  if (!widget.emergencyRuntimeActive)
+                    _HomeRevealSlice(
+                      controller: _revealController,
+                      begin: 0.22,
+                      end: 0.76,
+                      child: _HomeWarpTile(
+                        policy: widget.warpPolicy,
+                        runtimeConsent: widget.warpRuntimeConsent,
+                        runtimeActive: widget.warpRuntimeActive,
+                        busy: widget.warpBusy,
+                        compact: false,
+                        onOpen: widget.onOpenWarp,
+                        onChanged: widget.onWarpConsentChanged,
+                      ),
                     ),
-                  ),
                   if (widget.infoNotice != null) ...[
                     const SizedBox(height: 10),
                     _HomeRevealSlice(
@@ -635,7 +671,111 @@ class _HomeStageState extends State<_HomeStage>
           const SizedBox(height: 14),
           _MotionRecoveryBanner(message: widget.recoveryNotice!),
         ],
+        if (widget.showWhitelistRecovery) ...[
+          const SizedBox(height: 10),
+          _WhitelistRecoveryCard(onTap: widget.onOpenWhitelistRecovery),
+        ],
       ],
+    );
+  }
+}
+
+class _WhitelistRecoveryCard extends StatelessWidget {
+  const _WhitelistRecoveryCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    return Material(
+      color: p.reward.withValues(alpha: 0.10),
+      shape: RoundedRectangleBorder(
+        borderRadius: PokrovRadii.card,
+        side: BorderSide(color: p.reward.withValues(alpha: 0.28)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: const ValueKey('home-whitelist-recovery'),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Icon(Icons.route_rounded, color: p.reward),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Открываются только отдельные сайты?',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    SizedBox(height: 2),
+                    Text('Попробовать режим белых списков'),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: p.muted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeEmergencyRuntimeCard extends StatelessWidget {
+  const _HomeEmergencyRuntimeCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    return Material(
+      color: p.reward.withValues(alpha: 0.10),
+      shape: RoundedRectangleBorder(
+        borderRadius: PokrovRadii.card,
+        side: BorderSide(color: p.reward.withValues(alpha: 0.28)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: const ValueKey('home-whitelist-active'),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: p.reward.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.route_rounded, color: p.reward),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Режим белых списков',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    SizedBox(height: 2),
+                    Text('Канал выбран автоматически'),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: p.muted),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -653,10 +793,12 @@ class _HomeConnectPanel extends StatelessWidget {
     required this.recoveryNotice,
     required this.selectedRouteMode,
     required this.locationLabel,
+    required this.emergencyRuntimeActive,
     required this.onToggleRuntime,
     required this.onOpenConnectionDetails,
     required this.onOpenLocations,
     required this.onOpenRules,
+    required this.onOpenEmergencyNetwork,
   });
 
   final String statusLabel;
@@ -670,10 +812,12 @@ class _HomeConnectPanel extends StatelessWidget {
   final String? recoveryNotice;
   final RouteMode selectedRouteMode;
   final String locationLabel;
+  final bool emergencyRuntimeActive;
   final Future<void> Function() onToggleRuntime;
   final VoidCallback onOpenConnectionDetails;
   final VoidCallback onOpenLocations;
   final VoidCallback onOpenRules;
+  final VoidCallback onOpenEmergencyNetwork;
 
   @override
   Widget build(BuildContext context) {
@@ -711,12 +855,14 @@ class _HomeConnectPanel extends StatelessWidget {
             onTap: onOpenConnectionDetails,
           ),
           const SizedBox(height: 30),
-          _HomeModeChips(
-            locationLabel: locationLabel,
-            routeMode: selectedRouteMode,
-            onOpenLocations: onOpenLocations,
-            onOpenRules: onOpenRules,
-          ),
+          emergencyRuntimeActive
+              ? _HomeEmergencyRuntimeCard(onTap: onOpenEmergencyNetwork)
+              : _HomeModeChips(
+                  locationLabel: locationLabel,
+                  routeMode: selectedRouteMode,
+                  onOpenLocations: onOpenLocations,
+                  onOpenRules: onOpenRules,
+                ),
         ],
       ),
     );
@@ -1483,20 +1629,19 @@ class _HomeAdminPromoCardState extends State<_HomeAdminPromoCard> {
                           ),
                         ],
                       );
-                      final copyWithDismiss = slot.dismissible &&
-                              bannerImage &&
-                              safeMedia != null
-                          ? Stack(
-                              children: [
-                                copy,
-                                Positioned(
-                                  top: 0,
-                                  right: 0,
-                                  child: dismissButton,
-                                ),
-                              ],
-                            )
-                          : copy;
+                      final copyWithDismiss =
+                          slot.dismissible && bannerImage && safeMedia != null
+                              ? Stack(
+                                  children: [
+                                    copy,
+                                    Positioned(
+                                      top: 0,
+                                      right: 0,
+                                      child: dismissButton,
+                                    ),
+                                  ],
+                                )
+                              : copy;
                       final action = open == null
                           ? null
                           : FilledButton(

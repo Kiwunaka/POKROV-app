@@ -1,6 +1,6 @@
 # POKROV Client Release Backlog
 
-Last updated: 2026-07-18
+Last updated: 2026-08-17
 
 ## Document Status
 
@@ -11,6 +11,13 @@ This file tracks current manual gates and follow-up work for
 for their recorded candidate; they do not become reusable release passes.
 
 ## Current Status
+
+The active source candidate is `1.1.0+23` for Android and Windows. Its scope is
+account/profile restoration after one-time code claim, verified Telegram return,
+safe diagnostic error events, and the simplified `Режим белых списков` recovery
+surface. It is not public release truth until exact signed artifacts, Russian
+release metadata, runtime `latest=min_supported=1.1.0`, and post-deploy checks
+are complete.
 
 The app-first foundation and consumer information architecture are in place.
 The published `1.0.0-beta` URLs, hashes, and upload/download checks remain

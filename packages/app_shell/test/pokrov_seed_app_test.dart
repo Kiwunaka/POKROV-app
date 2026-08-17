@@ -266,7 +266,7 @@ class _FakeBootstrapper
   final AppFirstBonusSummary bonusSummary;
   final ClientAppsMetadata clientAppsMetadata;
   final ClientLocationsCatalog locationsCatalog;
-  final ClientSubscriptionInfo subscriptionInfo;
+  ClientSubscriptionInfo subscriptionInfo;
   final ClientSupportAssistantReply assistantReply;
   final Future<void>? assistantGate;
   final Set<int> assistantFailureCalls;
@@ -289,6 +289,7 @@ class _FakeBootstrapper
   Map<String, Object?>? lastAssistantDiagnostics;
   int cabinetCalls = 0;
   int telegramLinkCalls = 0;
+  final List<String> telegramLinkEvents = <String>[];
   int channelBonusCheckCalls = 0;
   int channelBonusClaimCalls = 0;
   int bonusSummaryCalls = 0;
@@ -426,6 +427,15 @@ class _FakeBootstrapper
     telegramLinkCalls += 1;
     lastTelegramLinkHostPlatform = hostPlatform;
     return telegramLinkResult;
+  }
+
+  @override
+  Future<void> reportTelegramLinkEvent({
+    required HostPlatform hostPlatform,
+    required String eventName,
+  }) async {
+    lastTelegramLinkHostPlatform = hostPlatform;
+    telegramLinkEvents.add(eventName);
   }
 
   @override
@@ -969,6 +979,7 @@ class _FakeEmergencyBootstrapper extends _FakeBootstrapper
   _FakeEmergencyBootstrapper({
     required this.catalogResult,
     this.catalogFailure,
+    BootstrapFailure? managedProfileFailure,
   }) : super(
           const ManagedProfilePayload(
             profileName: 'normal-widget-profile',
@@ -976,6 +987,7 @@ class _FakeEmergencyBootstrapper extends _FakeBootstrapper
             materializedForRuntime: true,
             warpPolicy: WarpRuntimePolicy.disabled,
           ),
+          managedProfileFailure: managedProfileFailure,
         );
 
   final AppFirstEmergencyCatalogResult catalogResult;
@@ -1890,11 +1902,13 @@ void main() {
     expect(bootstrapper.pairingClaimCalls, 1);
     expect(bootstrapper.lastPairingCode, 'ABCD-9XYZ');
     expect(bootstrapper.redeemCalls, 0);
+    expect(bootstrapper.subscriptionCalls, greaterThanOrEqualTo(2));
     expect(
       find.byKey(const ValueKey('first-launch-restore-screen')),
       findsNothing,
     );
-    expect(find.text('Устройство привязано. Код больше не действует.'),
+    expect(
+        find.text('Устройство и профиль привязаны. Код больше не действует.'),
         findsOneWidget);
   });
 
@@ -3484,6 +3498,7 @@ void main() {
 
     expect(bootstrapper.telegramLinkCalls, 1);
     expect(bootstrapper.lastTelegramLinkHostPlatform, HostPlatform.android);
+    expect(bootstrapper.telegramLinkEvents, <String>['handoff_opened']);
     expect(launched.single.host, 't.me');
     expect(launched.single.queryParameters['start'], 'app-link-2026');
 
@@ -3518,6 +3533,65 @@ void main() {
     expect(
         bootstrapper.lastChannelBonusClaimHostPlatform, HostPlatform.android);
     expect(find.textContaining('5'), findsWidgets);
+  });
+
+  testWidgets('profile verifies Telegram after returning from the bot',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        handoffLauncher: (_) async => true,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-profile');
+    final telegramLink =
+        find.byKey(const ValueKey('profile-telegram-link-action'));
+    await Scrollable.ensureVisible(
+      tester.element(telegramLink),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(telegramLink);
+    await tester.pumpAndSettle();
+
+    bootstrapper.subscriptionInfo = const ClientSubscriptionInfo(
+      lane: 'trialPremium',
+      expiresAt: '2026-08-22T00:00:00Z',
+      daysLeft: 5,
+      autoRenew: false,
+      renewUrl: null,
+      plans: <ClientSubscriptionPlan>[],
+      trafficPolicy: <String, Object?>{},
+      telegramLinked: true,
+      telegramUsername: 'linked_owner',
+    );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(
+      bootstrapper.telegramLinkEvents,
+      <String>['handoff_opened', 'verify_requested'],
+    );
+    expect(find.text('@linked_owner'), findsOneWidget);
+    expect(bootstrapper.telegramLinkCalls, 1);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 300));
   });
 
   testWidgets('profile loads compact bonus summary with reward preview',
@@ -10784,8 +10858,42 @@ void main() {
     );
   });
 
+  testWidgets('home offers whitelist recovery after control-plane failure',
+      (tester) async {
+    _installReadyRuntimeBridgeMock();
+    final bootstrapper = _FakeEmergencyBootstrapper(
+      catalogResult: AppFirstEmergencyCatalogResult(
+        catalog: _emergencyCatalog(),
+        reason: '',
+        eligibilitySource: 'server_cached_ru',
+        usingCache: true,
+      ),
+      managedProfileFailure: const BootstrapFailure(
+        'Сервис временно недоступен.',
+        statusCode: 503,
+      ),
+    );
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    final recovery = find.byKey(const ValueKey('home-whitelist-recovery'));
+    expect(recovery, findsOneWidget);
+    await tester.tap(recovery);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Режим белых списков'), findsWidgets);
+  });
+
   testWidgets(
-      'emergency launcher opens the page and manual limited mode persists',
+      'whitelist mode opens ready for restricted networks without extra toggle',
       (tester) async {
     _installReadyRuntimeBridgeMock();
     final experienceStore = _FakeClientExperienceStore();
@@ -10816,19 +10924,12 @@ void main() {
     await tester.tap(launcher);
     await tester.pumpAndSettle();
 
-    expect(find.text('Экстренная сеть'), findsOneWidget);
+    expect(find.text('Режим белых списков'), findsWidgets);
     expect(
       find.byKey(const ValueKey('emergency-manual-limited-network')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(bootstrapper.manualLimitedNetworkCalls, <bool>[false]);
-
-    await tester.tap(
-      find.byKey(const ValueKey('emergency-manual-limited-network')),
-    );
-    await tester.pumpAndSettle();
-
-    expect(bootstrapper.manualLimitedNetworkCalls, <bool>[false, true]);
+    expect(bootstrapper.manualLimitedNetworkCalls, <bool>[true]);
     expect(experienceStore.state.emergencyManualLimitedNetwork, isTrue);
   });
 
@@ -10863,7 +10964,7 @@ void main() {
     expect(find.text('Пока недоступно'), findsOneWidget);
     expect(
       find.text(
-        'Экстренная сеть доступна во время пробного периода и с активной подпиской.',
+        'Режим белых списков доступен во время пробного периода и с активной подпиской.',
       ),
       findsOneWidget,
     );
@@ -10947,8 +11048,23 @@ void main() {
       await tester.tap(launcher);
       await tester.pumpAndSettle();
 
-      expect(find.text('Резерв 1'), findsOneWidget);
-      final lastReserve = find.text('Резерв ${fixture.$2}');
+      final diagnosticsTile = find.byKey(
+        const ValueKey('emergency-diagnostics'),
+      );
+      await tester.scrollUntilVisible(
+        diagnosticsTile,
+        120,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.drag(
+        find.byType(Scrollable).last,
+        const Offset(0, -80),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(diagnosticsTile);
+      await tester.pumpAndSettle();
+      expect(find.text('Канал 1'), findsOneWidget);
+      final lastReserve = find.text('Канал ${fixture.$2}');
       await tester.scrollUntilVisible(
         lastReserve,
         260,
@@ -10993,7 +11109,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('emergency-connect')));
     await tester.pumpAndSettle();
-    expect(find.text('Как работает экстренная сеть'), findsOneWidget);
+    expect(find.text('Как работает режим белых списков'), findsOneWidget);
     expect(bootstrapper.emergencyProfileCalls, 0);
 
     await tester.tap(
@@ -11008,10 +11124,20 @@ void main() {
     );
     expect(
       bootstrapper.lastEmergencyChainMode,
-      EmergencyChainMode.reserveDirect,
+      EmergencyChainMode.reserveForeign,
     );
     expect(runtimeCalls, contains('runtimeEngine.stageManagedProfile'));
     expect(runtimeCalls, contains('runtimeEngine.connect'));
+
+    await _tapNav(tester, 'nav-protection');
+    expect(
+      find.byKey(const ValueKey('home-whitelist-active')),
+      findsOneWidget,
+    );
+    expect(find.text('Канал выбран автоматически'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-location-chip')), findsNothing);
+    expect(find.byKey(const ValueKey('home-route-chip')), findsNothing);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
   });
 
   testWidgets('emergency connect rotates to the next reserve on Android',

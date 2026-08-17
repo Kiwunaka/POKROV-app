@@ -1,6 +1,6 @@
 # App-First Onboarding Flow
 
-Last updated: 2026-08-16
+Last updated: 2026-08-17
 
 ## Document Status
 
@@ -277,12 +277,21 @@ A Telegram-authenticated account is already linked by definition. The profile
 reads that state from `/api/client/subscription`, shows the safe username (or
 `Привязан`), and does not open a redundant bot-link flow. Telegram does not
 provide an email address; email remains an independent verified identity.
+For an app-first account, `POST /api/client/telegram/link` creates a one-time
+15-minute bot handoff. The client records only allowlisted handoff diagnostics,
+then re-reads `/api/client/subscription` after returning to the foreground or
+after an explicit `Проверить`; opening Telegram alone is never treated as a
+successful link.
 
 ### Returning-user recovery
 
 - returning users restore from the first-launch screen with a one-time device
   code issued by the canonical main bot or cabinet, or with an activation code
   received through Telegram, site, email, or an operator
+- an operator may issue the same ten-minute device code from the guarded admin
+  user card for a legacy account; successful claim preserves entitlement,
+  creates a new revocable device session, replaces the local trial session, and
+  refreshes the visible subscription/profile identity before success is shown
 - the first-launch `Получить код в боте` action opens
   `@pokrov_vpnbot` with `start=pair_device`; the bot exposes the same explicit
   action in its device picker and issues an eight-character single-use code

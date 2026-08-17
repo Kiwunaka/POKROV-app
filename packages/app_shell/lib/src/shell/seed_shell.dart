@@ -544,6 +544,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   // Direction of the current busy transition so the UI can honestly say
   // «Отключаем...» instead of pretending every busy state is a connect.
   bool _runtimeDisconnecting = false;
+  bool _emergencyRuntimeActive = false;
   bool _firstLaunchBusy = false;
   bool _managedProfileDirty = true;
   int _managedProfileRevision = 0;
@@ -570,6 +571,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   FreeProfileAccess? _freeProfileAccess;
   String _telegramBonusStatus = 'Получить код';
   bool _telegramBonusBusy = false;
+  bool _telegramLinkVerificationPending = false;
+  bool _whitelistRecoverySuggested = false;
   bool _telegramBonusCanClaim = false;
   String? _telegramBonusError;
   AppFirstBonusSummary? _bonusSummary;
@@ -1218,22 +1221,27 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       final candidates = <EmergencyReserve>[
         reserve,
         ...catalog.items.where(
-          (item) =>
-              item.id != reserve.id &&
-              item.available &&
-              item.modes.contains(chainMode),
+          (item) => item.id != reserve.id && item.available,
         ),
       ];
       AppFirstEmergencyProfileResult? connectedResult;
       EmergencyReserve? connectedReserve;
+      EmergencyChainMode? connectedMode;
       for (var index = 0; index < candidates.length; index += 1) {
         final candidate = candidates[index];
+        final candidateMode = _preferredEmergencyMode(
+          candidate,
+          fallback: chainMode,
+        );
+        if (candidateMode == null) {
+          continue;
+        }
         final result = await service.resolveEmergencyProfile(
           hostPlatform: widget.appContext.hostPlatform,
           catalogRevision: catalog.revision,
           reserveId: candidate.id,
-          chainMode: chainMode,
-          manualLimitedNetwork: manualLimitedNetwork,
+          chainMode: candidateMode,
+          manualLimitedNetwork: true,
         );
         current = await _withRuntimeActionTimeout(
           'stageEmergencyProfile',
@@ -1247,12 +1255,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         if (current.phase == RuntimePhase.running) {
           connectedResult = result;
           connectedReserve = candidate;
+          connectedMode = candidateMode;
           break;
         }
-        final emergencyEndpointUnavailable =
-            widget.appContext.hostPlatform == HostPlatform.android &&
-                current.lastFailureKind?.trim() ==
-                    'emergency_endpoint_unreachable';
+        final emergencyEndpointUnavailable = widget.appContext.hostPlatform ==
+                HostPlatform.android &&
+            current.lastFailureKind?.trim() == 'emergency_endpoint_unreachable';
         if (!emergencyEndpointUnavailable) {
           throw BootstrapFailure(
             current.message.trim().isEmpty
@@ -1269,7 +1277,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         );
         current = await _settleRuntimeDisconnectTransition(current);
       }
-      if (connectedResult == null || connectedReserve == null) {
+      if (connectedResult == null ||
+          connectedReserve == null ||
+          connectedMode == null) {
         throw const BootstrapFailure(
           'Ни один сохранённый резерв не доступен в текущей сети.',
           code: 'emergency_reserves_unreachable',
@@ -1280,6 +1290,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _runtimeSnapshot = current;
+        _emergencyRuntimeActive = true;
         _runtimeHeadline = connectedResult!.usingCache
             ? 'Экстренная сеть подключена по подписанной офлайн-копии.'
             : 'Экстренная сеть подключена.';
@@ -1291,19 +1302,19 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _activeNodeCode = '';
         _activeVariantId = 'direct';
       });
-      if (connectedReserve.id != reserve.id) {
+      if (connectedReserve.id != reserve.id || connectedMode != chainMode) {
         _saveEmergencyPreferences(
-          manualLimitedNetwork: manualLimitedNetwork,
+          manualLimitedNetwork: true,
           disclosureRevision: catalog.disclosureRevision,
           reserveId: connectedReserve.id,
-          chainMode: chainMode,
+          chainMode: connectedMode,
         );
       }
       _cachedProfileFallbackGate.markUserChange();
       _recordProtectionEvent(
         kind: 'emergency_connected',
-        title: 'Экстренная сеть подключена',
-        detail: '${chainMode.label} · резерв ${connectedReserve.ordinal}',
+        title: 'Режим белых списков подключён',
+        detail: 'Рабочий канал выбран автоматически.',
         tone: PokrovProtectionEventTone.warning,
       );
     } finally {
@@ -1623,20 +1634,27 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  Future<void> _refreshSubscriptionInfo() async {
+  Future<bool> _refreshSubscriptionInfo({bool showFailure = false}) async {
     final service = _clientDataService;
     if (service == null) {
-      return;
+      return false;
     }
     try {
       final info = await service.fetchClientSubscription(
         hostPlatform: widget.appContext.hostPlatform,
       );
       if (!mounted) {
-        return;
+        return false;
       }
       setState(() {
         _subscriptionInfo = info;
+        if (info.telegramLinked) {
+          _telegramLinkVerificationPending = false;
+          _telegramBonusStatus = info.telegramUsername.trim().isEmpty
+              ? 'Telegram привязан'
+              : '@${info.telegramUsername.trim()}';
+          _telegramBonusError = null;
+        }
       });
       if (const {'trialPremium', 'paidUnlimited'}.contains(info.lane)) {
         final emergencyService = _emergencyNetworkService;
@@ -1652,8 +1670,51 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           );
         }
       }
+      return true;
     } on Object {
-      // Subscription detail is optional; the sheet falls back to access lane.
+      unawaited(_reportClientRuntimeError('subscription_refresh_failed'));
+      if (mounted && showFailure) {
+        showPokrovSnack(
+          context,
+          'Аккаунт привязан, но профиль не обновился. Проверьте соединение и повторите.',
+          tone: PokrovSnackTone.danger,
+        );
+      }
+      return false;
+    }
+  }
+
+  EmergencyChainMode? _preferredEmergencyMode(
+    EmergencyReserve reserve, {
+    required EmergencyChainMode fallback,
+  }) {
+    const preference = <EmergencyChainMode>[
+      EmergencyChainMode.reserveForeign,
+      EmergencyChainMode.reserveDirect,
+      EmergencyChainMode.reserveRuForeign,
+    ];
+    for (final mode in preference) {
+      if (reserve.modes.contains(mode)) {
+        return mode;
+      }
+    }
+    return reserve.modes.contains(fallback) ? fallback : null;
+  }
+
+  Future<void> _reportClientRuntimeError(String errorCode) async {
+    final service = _experienceService;
+    if (service == null) {
+      return;
+    }
+    try {
+      await service.reportRuntimeStats(
+        hostPlatform: widget.appContext.hostPlatform,
+        runtimePhase: 'failed',
+        connected: false,
+        errorCode: errorCode,
+      );
+    } on Object {
+      // Diagnostics must never replace the original user-facing failure.
     }
   }
 
@@ -1835,6 +1896,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       unawaited(_resumeRuntimeAndTrustedWifiChecks());
       unawaited(_checkForClientUpdate());
       unawaited(_refreshNotifications());
+      if (_telegramLinkVerificationPending) {
+        unawaited(_verifyTelegramLinkAfterHandoff());
+      }
     }
   }
 
@@ -2472,6 +2536,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       );
       return false;
     }
+    final isPairingCode = _looksLikeDevicePairingCode(code);
 
     final accountActions = _accountActionService;
     if (accountActions == null) {
@@ -2481,7 +2546,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
     try {
       PokrovHaptics.tap();
-      if (_looksLikeDevicePairingCode(code)) {
+      if (isPairingCode) {
         final paired = await accountActions.claimDevicePairingCode(
           hostPlatform: widget.appContext.hostPlatform,
           code: code,
@@ -2495,13 +2560,20 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _runtimeHeadline = 'Устройство привязано к вашему аккаунту.';
         });
         unawaited(_loadBonusSummary(force: true));
-        unawaited(_refreshSubscriptionInfo());
+        final profileUpdated = await _refreshSubscriptionInfo(
+          showFailure: true,
+        );
         unawaited(_refreshNotifications());
         unawaited(_refreshLocationsCatalog());
+        if (!mounted) {
+          return paired.ok;
+        }
         showPokrovSnack(
           context,
-          'Устройство привязано. Код больше не действует.',
-          tone: PokrovSnackTone.success,
+          profileUpdated
+              ? 'Устройство и профиль привязаны. Код больше не действует.'
+              : 'Устройство привязано. Обновите профиль, когда сеть восстановится.',
+          tone: profileUpdated ? PokrovSnackTone.success : PokrovSnackTone.info,
         );
         return paired.ok;
       }
@@ -2525,6 +2597,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       showPokrovSnack(context, confirmationText, tone: PokrovSnackTone.success);
       return true;
     } on BootstrapFailure catch (error) {
+      unawaited(
+        _reportClientRuntimeError(
+          isPairingCode ? 'pairing_claim_failed' : 'redeem_failed',
+        ),
+      );
       debugPrint('POKROV code action failed: ${error.statusCode ?? 0}');
       if (!mounted) {
         return false;
@@ -2536,6 +2613,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       );
       return false;
     } catch (error) {
+      unawaited(
+        _reportClientRuntimeError(
+          isPairingCode ? 'pairing_claim_failed' : 'redeem_failed',
+        ),
+      );
       debugPrint('POKROV redeem code failed (${error.runtimeType})');
       if (!mounted) {
         return false;
@@ -2643,6 +2725,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       );
       return;
     }
+    if (_telegramLinkVerificationPending) {
+      await _verifyTelegramLinkAfterHandoff();
+      return;
+    }
 
     setState(() {
       _telegramBonusBusy = true;
@@ -2655,21 +2741,30 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       );
       final opened =
           result.linked ? true : await _launchExternalHandoff(result.botUrl);
+      unawaited(
+        bonusActions.reportTelegramLinkEvent(
+          hostPlatform: widget.appContext.hostPlatform,
+          eventName: opened ? 'handoff_opened' : 'handoff_open_failed',
+        ),
+      );
       if (!mounted) {
         return;
       }
       setState(() {
         _telegramBonusBusy = false;
-        _telegramBonusStatus =
-            result.linked ? 'Telegram привязан' : 'Код открыт в Telegram';
+        _telegramBonusStatus = result.linked
+            ? 'Telegram привязан'
+            : 'Вернитесь и нажмите «Проверить»';
+        _telegramLinkVerificationPending = !result.linked && opened;
         if (!opened) {
           _telegramBonusError = 'Не удалось открыть Telegram автоматически.';
         }
       });
       if (result.linked) {
-        unawaited(_refreshSubscriptionInfo());
+        await _refreshSubscriptionInfo(showFailure: true);
       }
     } catch (error) {
+      unawaited(_reportClientRuntimeError('telegram_link_failed'));
       debugPrint('POKROV telegram link failed (${error.runtimeType})');
       if (!mounted) {
         return;
@@ -2679,6 +2774,53 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _telegramBonusError =
             'Не удалось получить код для Telegram. Проверьте соединение и попробуйте еще раз.';
       });
+    }
+  }
+
+  Future<void> _verifyTelegramLinkAfterHandoff() async {
+    if (_telegramBonusBusy || !_telegramLinkVerificationPending) {
+      return;
+    }
+    final bonusActions = _bonusActionService;
+    if (bonusActions == null) {
+      return;
+    }
+    setState(() {
+      _telegramBonusBusy = true;
+      _telegramBonusError = null;
+      _telegramBonusStatus = 'Проверяем Telegram…';
+    });
+    try {
+      unawaited(
+        bonusActions.reportTelegramLinkEvent(
+          hostPlatform: widget.appContext.hostPlatform,
+          eventName: 'verify_requested',
+        ),
+      );
+      final updated = await _refreshSubscriptionInfo();
+      if (!mounted) {
+        return;
+      }
+      final linked = updated && (_subscriptionInfo?.telegramLinked ?? false);
+      setState(() {
+        _telegramBonusBusy = false;
+        _telegramLinkVerificationPending = !linked;
+        if (!linked) {
+          _telegramBonusStatus = 'Проверить';
+          _telegramBonusError = updated
+              ? 'Telegram ещё не привязан. В боте нажмите «Старт», затем проверьте снова.'
+              : 'Не удалось проверить привязку. Проверьте соединение.';
+        }
+      });
+    } on Object {
+      unawaited(_reportClientRuntimeError('telegram_verify_failed'));
+      if (mounted) {
+        setState(() {
+          _telegramBonusBusy = false;
+          _telegramBonusStatus = 'Проверить';
+          _telegramBonusError = 'Не удалось проверить привязку Telegram.';
+        });
+      }
     }
   }
 
@@ -3149,6 +3291,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         // displaying the pre-repair running snapshot as active protection.
         setState(() {
           _runtimeSnapshot = current;
+          if (current.phase == RuntimePhase.running) {
+            _whitelistRecoverySuggested = false;
+          }
           _runtimeHeadline = current.message;
         });
       }
@@ -3192,6 +3337,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _runtimeSnapshot = current;
+        if (current.phase == RuntimePhase.running) {
+          _emergencyRuntimeActive = false;
+        }
         _runtimeHeadline = current.phase == RuntimePhase.running
             ? current.isCoreEgressValidationPending
                 ? 'Проверяем выход через VPN…'
@@ -3235,7 +3383,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _runtimeHeadline = error.message;
+        _whitelistRecoverySuggested = _isTransientProfileFailure(error);
       });
+      unawaited(_reportClientRuntimeError('connect_failed'));
       showPokrovSnack(context, error.message, tone: PokrovSnackTone.danger);
       _recordProtectionEvent(
         kind: 'repair_failed',
@@ -3251,7 +3401,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       final message = _runtimeUnexpectedErrorMessage(error);
       setState(() {
         _runtimeHeadline = message;
+        _whitelistRecoverySuggested = true;
       });
+      unawaited(_reportClientRuntimeError('connect_unexpected'));
       showPokrovSnack(context, message, tone: PokrovSnackTone.danger);
       _recordProtectionEvent(
         kind: 'repair_failed',
@@ -3457,6 +3609,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
       setState(() {
         _runtimeSnapshot = snapshot;
+        if (snapshot.phase != RuntimePhase.running) {
+          _emergencyRuntimeActive = false;
+        } else if (snapshot.coreEgressValidationRequired == false) {
+          _emergencyRuntimeActive = true;
+        }
         _runtimeHeadline = null;
       });
       widget.shellController?.refresh();
@@ -4069,6 +4226,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         }
         setState(() {
           _runtimeSnapshot = current;
+          _emergencyRuntimeActive = false;
           _runtimeHeadline = current.message;
         });
         if (!reconnectAfterDisconnect) {
@@ -4241,6 +4399,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         }
         setState(() {
           _runtimeSnapshot = current;
+          if (current.phase == RuntimePhase.running) {
+            _emergencyRuntimeActive = false;
+          }
+          if (current.phase == RuntimePhase.running) {
+            _whitelistRecoverySuggested = false;
+          }
           _runtimeHeadline = warpFallbackUsed
               ? 'POKROV подключен. WARP временно на паузе.'
               : current.phase == RuntimePhase.running && usedCachedProfile
@@ -4313,7 +4477,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _runtimeHeadline = error.message;
+        _whitelistRecoverySuggested = _isTransientProfileFailure(error);
       });
+      unawaited(_reportClientRuntimeError('connect_failed'));
       showPokrovSnack(context, error.message, tone: PokrovSnackTone.danger);
     } on Object catch (error) {
       if (!mounted) {
@@ -4322,7 +4488,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       final message = _runtimeUnexpectedErrorMessage(error);
       setState(() {
         _runtimeHeadline = message;
+        _whitelistRecoverySuggested = true;
       });
+      unawaited(_reportClientRuntimeError('connect_unexpected'));
       showPokrovSnack(context, message, tone: PokrovSnackTone.danger);
     } finally {
       if (mounted) {
@@ -5034,6 +5202,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             freeProfileAccess: _freeProfileAccess,
             selectedRouteMode: _selectedRouteMode,
             locationLabel: _homeLocationLabel,
+            emergencyRuntimeActive:
+                (_runtimeSnapshot?.phase == RuntimePhase.running) &&
+                    (_runtimeSnapshot?.coreEgressValidationRequired == false ||
+                        (_emergencyRuntimeActive &&
+                            _runtimeSnapshot?.coreEgressValidationRequired !=
+                                true)),
             runtimeSnapshot: _runtimeSnapshot,
             runtimeHeadline: _runtimeHeadline,
             runtimeBusy: _runtimeBusy,
@@ -5068,6 +5242,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             onOpenProfile: () => _selectTab(SeedTab.profile),
             onOpenPromoHandoff: _showSeedHandoff,
             onPromoEvent: _reportPromoEvent,
+            showWhitelistRecovery: _whitelistRecoverySuggested,
+            onOpenWhitelistRecovery: () {
+              unawaited(_openEmergencyNetwork());
+            },
           ),
       (context) => _LocationsSection(
             appContext: widget.appContext,

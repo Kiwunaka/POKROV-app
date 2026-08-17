@@ -1300,7 +1300,8 @@ void main() {
     });
 
     final requests = <String>[];
-    Map<String, dynamic>? statsBody;
+    final statsBodies = <Map<String, dynamic>>[];
+    final telegramLinkEventBodies = <Map<String, dynamic>>[];
     Map<String, dynamic>? onboardingBody;
     final eventBodies = <Map<String, dynamic>>[];
     Map<String, dynamic>? acquisitionBody;
@@ -1338,7 +1339,21 @@ void main() {
             request.headers.value(HttpHeaders.authorizationHeader),
             'Bearer runtime-stats-session',
           );
-          statsBody = jsonDecode(body) as Map<String, dynamic>;
+          statsBodies.add(jsonDecode(body) as Map<String, dynamic>);
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+          await request.response.close();
+          continue;
+        }
+        if (request.uri.path == '/api/client/telegram/link/events') {
+          expect(
+            request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer runtime-stats-session',
+          );
+          telegramLinkEventBodies.add(
+            jsonDecode(body) as Map<String, dynamic>,
+          );
           request.response
             ..headers.contentType = ContentType.json
             ..write(jsonEncode(<String, Object?>{'ok': true}));
@@ -1398,6 +1413,16 @@ void main() {
       runtimePhase: 'RUNNING',
       connected: true,
     );
+    await bootstrapper.reportRuntimeStats(
+      hostPlatform: HostPlatform.android,
+      runtimePhase: 'FAILED',
+      connected: false,
+      errorCode: 'pairing_claim_failed',
+    );
+    await bootstrapper.reportTelegramLinkEvent(
+      hostPlatform: HostPlatform.android,
+      eventName: 'verify_requested',
+    );
     await bootstrapper.completeAccountOnboarding(
       hostPlatform: HostPlatform.android,
     );
@@ -1429,15 +1454,27 @@ void main() {
     expect(requests, <String>[
       'POST /api/client/session/start-trial',
       'POST /api/client/runtime/stats',
+      'POST /api/client/runtime/stats',
+      'POST /api/client/telegram/link/events',
       'POST /api/account/experience/onboarding',
       'POST /api/events',
       'POST /api/events',
       'POST /api/acquisition/handoffs/consume',
     ]);
-    expect(statsBody, <String, Object?>{
-      'runtime_phase': 'running',
-      'connected': true,
-    });
+    expect(statsBodies, <Map<String, dynamic>>[
+      <String, Object?>{
+        'runtime_phase': 'running',
+        'connected': true,
+      },
+      <String, Object?>{
+        'runtime_phase': 'failed',
+        'connected': false,
+        'error_code': 'pairing_claim_failed',
+      },
+    ]);
+    expect(telegramLinkEventBodies, <Map<String, dynamic>>[
+      <String, Object?>{'event_name': 'verify_requested'},
+    ]);
     expect(onboardingBody, <String, Object?>{'status': 'completed'});
     expect(eventBodies, <Map<String, dynamic>>[
       <String, Object?>{
