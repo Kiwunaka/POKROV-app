@@ -16,7 +16,7 @@
   "advanced_fallback_core": "xray",
   "trial_days": 5,
   "telegram_bonus_days": 5,
-  "client_version_line": "1.1.0",
+  "client_version_line": "1.1.1",
   "free_tier": {
     "enabled": false,
     "status": "retired_pending_replacement",
@@ -33,9 +33,9 @@
     "selected_apps"
   ],
   "selected_apps_status": {
-    "android": "beta_picker_and_policy_active",
-    "windows": "beta_picker_and_policy_active",
-    "public_claim": "picker_and_policy_active_production_proof_gated"
+    "android": "stable_picker_and_policy_active",
+    "windows": "stable_picker_and_policy_active",
+    "public_claim": "picker_and_policy_active_stronger_cross_platform_proof_gated"
   },
   "location_variant_order": [
     "vless_reality",

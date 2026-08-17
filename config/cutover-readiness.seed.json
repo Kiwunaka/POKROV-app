@@ -1,37 +1,37 @@
 {
   "lane": "POKROV-app/main",
-  "status": "android_direct_apk_1_1_0_public_stable_published_runtime_synced_global_cutover_blocked_on_windows_trust_and_apple_gates",
+  "status": "android_direct_apk_1_1_1_public_stable_runtime_synced_global_cutover_blocked_on_windows_trust_and_apple_gates",
   "public_cutover_allowed": false,
   "last_updated": "2026-08-17",
   "latest_repo_backed_release": {
-    "version": "1.1.0",
-    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.1.0",
-    "asset_refresh_utc": "2026-08-17T01:10:19Z",
+    "version": "1.1.1",
+    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.1.1",
+    "asset_refresh_utc": "2026-08-17T14:08:08Z",
     "github_repo_visibility": "public",
     "anonymous_download_smoke": "PASS_ALL_EIGHT_PUBLIC_ASSETS_FULL_DOWNLOAD_EXACT_SIZE_DIGEST",
     "authenticated_github_release_smoke": "PASS_EXACT_GITHUB_ASSET_DIGEST",
-    "live_app_session_download_smoke": "PASS_PUBLIC_EXACT_V1_1_0_REQUIRED_UPDATE_AND_BRAIN_READY"
+    "live_app_session_download_smoke": "PASS_PUBLIC_EXACT_V1_1_1_REQUIRED_UPDATE_DISCOVERY_DOWNLOAD_PROGRESS_AND_INSTALLER_HANDOFF"
   },
   "android_release": {
-    "beta_distribution": "public_production_signed_direct_apk",
+    "distribution": "public_production_signed_stable_direct_apk",
     "public_approved": true,
     "current_internal_candidate": {
-      "version_name": "1.1.0",
-      "version_code": 2023,
-      "apk_size_bytes": 100318718,
-      "apk_sha256": "8ACFD03AECC6D7F2D8E254770EAA681C157D64B24D71C89FEA6047E86E7FC4F1",
+      "version_name": "1.1.1",
+      "version_code": 2024,
+      "apk_size_bytes": 100384250,
+      "apk_sha256": "CB1C2DB3ED78F72B7EFC84F8FE764413B8E305E7D3D563B913C2CD25454B18DF",
       "build_mode": "release",
       "debuggable": false,
       "signing_state": "PASS_PRODUCTION_SELF_MANAGED_DIRECT_APK",
       "certificate_sha256": "0A0602A7DF5D96A0B427909D004F3DDF26DEF86587634BF16694DA8D654B2500",
       "signature_scheme": "APK_SIGNATURE_SCHEME_V2",
-      "emulator_install_identity": "PASS_EXACT_SIGNED_X86_64_1_1_0_SAME_SIGNER_UPDATE_SESSION_PRESERVED",
-      "emulator_launch_localhost_preflight": "PASS_WHITELIST_UI_TUN_LIFECYCLE_TELEGRAM_RETURN_NO_CRASH",
-      "physical_device_install_identity": "MANUAL_OWNER_TEST_EXACT_1_1_0_ARM64",
-      "physical_device_pre_tunnel": "MANUAL_OWNER_TEST_EXACT_1_1_0_RU_ORIGIN",
+      "emulator_install_identity": "PASS_EXACT_SIGNED_X86_64_1_1_1_SAME_SIGNER_UPDATE_SESSION_PRESERVED",
+      "emulator_launch_localhost_preflight": "PASS_EXACT_1_1_1_LAUNCH_NO_CRASH",
+      "physical_device_install_identity": "PASS_EXACT_SIGNED_ARM64_1_1_1_BYTE_MATCH",
+      "physical_device_pre_tunnel": "PASS_EXACT_1_1_1_HUAWEI_BEELINE_LTE_WHITELIST_FULL_CHAIN",
       "quick_settings_tile": "PASS_FINAL_SOURCE_CONTRACT; PHYSICAL_ENDURANCE_DEFERRED",
       "chrome_egress_check": "PASS_FRESH_PROCESS_FULL_TUNNEL_AND_EXCLUDED_APPS_BEFORE_FINAL_UI_ONLY",
-      "physical_device_audit": "LDPLAYER_PREFLIGHT_PASS; EXACT_1_1_0_RU_ORIGIN_AND_ENDURANCE_MANUAL_OWNER_TEST",
+      "physical_device_audit": "PASS_EXACT_HUAWEI_BEELINE_LTE_WHITELIST_TUN_AND_FULL_CHAIN; ENDURANCE_WARP_PER_APP_UPLINK_REPETITION_MANUAL_OWNER_TEST",
       "offline_signing_recovery_backup": "MANUAL_OWNER_TEST",
       "play_store_channel": "NOT_REQUESTED_DIRECT_APK_FIRST",
       "public_approved": true
@@ -42,11 +42,11 @@
       "long-duration endurance, uplink handoff, blocked-UDP/53, WARP, battery, sleep/resume, and MTU matrix"
     ],
     "accepted_evidence": [
-      "operator-attested physical-device localhost/control-surface audit for this beta wave"
+      "exact signed physical-device install and Beeline LTE whitelist full-chain proof for 1.1.1"
     ]
   },
   "windows_release": {
-    "beta_distribution": "outside_store_unsigned_stable_direct",
+    "distribution": "outside_store_unsigned_stable_direct",
     "public_approved": false,
     "required_user_warning": "Microsoft Defender SmartScreen or unknown-publisher warning is expected until trusted signing is complete.",
     "blocked_on": [
@@ -55,7 +55,7 @@
       "trusted signing and SmartScreen reputation for later broad distribution"
     ],
     "accepted_evidence": [
-      "unsigned beta risk accepted for this outside-store beta wave"
+      "unsigned publisher warning accepted for the current outside-store stable-direct wave"
     ]
   },
   "blocking_dependencies": [
@@ -65,7 +65,7 @@
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
-    "Android 1.0.13 split APKs and Windows 1.0.13 stable-direct artifacts are public, GitHub-digest verified and production runtime metadata is synchronized; Windows trusted signing remains an owner gate"
+    "Android 1.1.1 split APKs and Windows 1.1.1 stable-direct artifacts are public, GitHub-digest verified, and synchronized into production; Windows trusted signing remains an owner gate"
   ],
   "repo_side_closed": [
     "P0-P6 beta implementation scope",
@@ -74,8 +74,8 @@
     "authenticated GitHub download proof for all current release assets",
     "Android build-tool future-support warning closed with Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0",
     "release-note guardrails recorded; post-announcement monitoring remains operator work",
-    "1.1.0 GitHub stable release, exact eight-asset full-download digest verification, production handoff, required-update cutover, static deploy and post-deploy runtime smoke PASS",
-    "Android 1.1.0 split APKs are production-signed; LDPlayer same-signer update, whitelist UI/TUN lifecycle and Telegram return verification PASS; RU-origin carrier proof remains manual"
+    "1.1.1 GitHub stable release, exact eight-asset anonymous full-download digest verification, production handoff, deploy and five post-deploy checks PASS",
+    "Android 1.1.1 split APKs are production-signed; exact Huawei arm64 install plus Beeline LTE whitelist TUN/full-chain proof and LDPlayer x86_64 update/launch PASS"
   ],
   "ios_release_gates": [
     "Apple team selected",
@@ -102,7 +102,7 @@
     "flutter build windows --release succeeds",
     "local release bundle includes POKROV Core 1.0.3 and libcronet.dll",
     "trusted signing certificate and timestamping path are provided for a later trusted build",
-    "outside-store EXE path stays first-layer for this beta wave while MSIX/ZIP remain operator/store artifacts"
+    "outside-store EXE path stays first-layer for this stable-direct wave while MSIX/ZIP remain operator/store artifacts"
   ],
   "operator_required_evidence": {
     "ios": [

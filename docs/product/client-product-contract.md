@@ -57,7 +57,8 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
   first payment. Wheel, calendar, and referral rewards remain paid-only. Already-issued
   `+10 days` grants remain grandfathered and must render with their
   backend-returned value
-- public user-facing version line: current paid beta evidence uses `1.0.0-beta`; patch/build labels such as `1.0.0-beta.3` are still beta labels, not stable `1.0.0` claims
+- public user-facing version line: `1.1.1` stable; beta/prerelease candidates
+  are an explicit opt-in lane and never replace stable metadata implicitly
 - recommended public routing mode: `All except RU`
 - public routing mode set: `All except RU` and `Full tunnel`
 - public recovery order: `POKROV app -> web cabinet -> Telegram fallback`
@@ -71,9 +72,11 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 
 - `Android + Windows` remain the only public release pair for this wave
 - the published `1.0.0-beta` handoff and `2026-05-15` decision pack are retained
-  exact-candidate evidence; neither is reusable approval for a rebuild
-- new public promotion and runtime sync are blocked until exact-candidate
-  signing gates pass; a local build or an old public URL is not signing proof
+  historical exact-candidate evidence; neither is reusable approval for a rebuild
+- `v1.1.1` is the current public stable direct release and its production
+  runtime sync is complete. Every later promotion still requires fresh
+  exact-candidate signing and release proof; a local build or old public URL is
+  not signing proof
 - Android release builds require the operator-provided production signing
   inputs by default; debug signing is an explicit non-public smoke path only
 - Windows unsigned packaging remains useful for gated engineering smoke, but
@@ -193,8 +196,8 @@ Product rules for that choice:
 - `Rules` must not expose raw rule-set filenames, geo labels, CIDR, JSON,
   protocol names, ports, or engine internals in the normal UI
 - selected-app picker, route-policy sync, persistence, and runtime
-  materialization are beta-active on Android and Windows; public production
-  behavior remains gated on exact-artifact physical-device and clean-VM proof
+  materialization are active on Android and Windows. Exact physical-device and
+  clean-VM evidence remains required for stronger platform-wide claims
 - picker rows disambiguate duplicate consumer labels without exposing package
   or executable identifiers, announce selected/available state to assistive
   technology, and remain usable above the on-screen keyboard
@@ -582,10 +585,11 @@ Release continuity rules:
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
 - stable candidates after installed `1.0.5` beta builds use a strictly newer
-  semantic version. `1.1.0+23` is the current public source and its exact
-  `v1.1.0` assets are the stable direct release. Production reports both
-  `latest_version` and `min_supported_version` as `1.1.0`; older clients receive
-  a required Russian update prompt
+  semantic version. `1.1.1+24` is the current public source and its exact
+  `v1.1.1` assets are the stable direct release. Production synchronization sets
+  both `latest_version` and `min_supported_version` to `1.1.1`; older clients
+  receive a required Russian update prompt. The exact `2026-08-17` runtime
+  readback, in-app progress UI, and Android Package Installer handoff are PASS
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates
@@ -595,7 +599,7 @@ Release continuity rules:
 - the shared runtime identity is `pokrovClientVersion`; release builds pass
   `--dart-define=POKROV_APP_VERSION=<host pubspec version without +build>` so
   provisioning, update checks, diagnostics, and visible version text match the
-  package. Local builds use the current package base-version fallback `1.1.0`;
+  package. Local builds use the current package base-version fallback `1.1.1`;
   production packaging passes that value explicitly through `POKROV_APP_VERSION`.
 - local non-release builds keep updater and source-code surfaces disabled instead of falling back to a personal repository URL
 - an update prompt or tap may use only
@@ -614,7 +618,7 @@ Release continuity rules:
 - downloaded-byte verification does not replace production-signing, install,
   runtime, or exact-candidate release proof
 - update prompts, release notes, remote banners, and Telegram release notices
-  for `1.1.0` use short Russian copy; the default client channel remains
+  for `1.1.1` use short Russian copy; the default client channel remains
   `stable`, without a permanent beta label
 - release handoff must keep app, bot, and authenticated web surfaces aligned with the same runtime `APP_*` URLs
 

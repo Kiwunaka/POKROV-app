@@ -14,7 +14,7 @@
     "windows": "apps/windows_shell"
   },
   "release_readiness": {
-    "android": "direct_apk_1_0_2_public_release_pass_endurance_followups_manual",
+    "android": "direct_apk_1_1_1_public_stable_runtime_synced_endurance_followups_manual",
     "ios": "readiness_only_store_blocked",
     "macos": "readiness_only_notarization_blocked",
     "windows": "outside_store_unsigned_beta_retained_new_public_promotion_blocked_pending_trusted_signing"

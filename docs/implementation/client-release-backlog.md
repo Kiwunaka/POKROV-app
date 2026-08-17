@@ -12,27 +12,30 @@ for their recorded candidate; they do not become reusable release passes.
 
 ## Current Status
 
-The current public stable source is `1.1.0+23` for Android and Windows. It ships
-account/profile restoration after one-time code claim, verified Telegram return,
-safe diagnostic error events, and the simplified `Режим белых списков` recovery
-surface. Exact Android and Windows artifacts are published at `v1.1.0`; all
-eight public assets passed unauthenticated full-download size and SHA-256 checks,
-and production now reports `latest=min_supported=1.1.0`. Android carrier/RU-origin
-whitelist reachability and Windows clean-TUN proof remain manual gates for
-stronger network claims, not for the recorded direct stable publication.
+The current public stable source is `1.1.1+24` for Android and Windows. It ships
+full-chain DNS/web verification and candidate-major fallback for `Режим белых
+списков`, honest per-device channel states, a 4–20 reserve contract, and safer
+Android Wi-Fi/LTE handover. Exact Android and Windows artifacts are published at
+`v1.1.1`; all eight public assets passed unauthenticated full-download size and
+SHA-256 checks. Exact signed arm64 installation and the whitelist TUN/full-chain
+probe passed on Huawei over Beeline LTE. Production now reports exact stable
+`1.1.1` latest/min-supported metadata; the anonymous required-update response,
+in-app download progress and Package Installer handoff passed on LDPlayer.
+Windows clean-TUN proof remains a manual gate for stronger network claims.
 
 The app-first foundation and consumer information architecture are in place.
 The published `1.0.0-beta` URLs, hashes, and upload/download checks remain
-exact-candidate evidence, but current promotion and runtime sync are blocked.
-A later public candidate needs production Android signing and trusted Windows
-signing evidence for the exact artifacts; live install/app-session smoke and
-RU-origin readiness also remain unproven.
+historical exact-candidate evidence; they do not describe the current channel.
+The `1.1.1` production promotion and runtime sync are closed. A later public
+candidate still needs exact-candidate Android signing and release proof;
+trusted Windows signing and RU-origin evidence remain follow-up gates for
+stronger claims.
 
 As of the final `2026-06-05` closure pass, repo-side P0-P6 implementation,
 authenticated GitHub release upload/checksum proof, Android build-tool refresh,
-and handoff metadata alignment are closed for the current beta. The remaining
-open items are manual/local release-build tests, live account/session smokes,
-DNS/leak/runtime proof, and signing/trust/store work.
+and handoff metadata alignment are retained for that historical beta. Later
+stable passes supersede its release state. Current open items are the explicit
+endurance, clean Windows TUN/DNS, signing/trust, RU-origin, and store gates.
 
 Latest documented repo-level gate note:
 
