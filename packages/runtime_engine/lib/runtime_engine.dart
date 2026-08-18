@@ -1326,8 +1326,10 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
             );
     }
     final mixedProxyPort = await _stagedMixedProxyPort();
-    final attempts =
-        _stagedPayload?.warpPolicy.canEnableRuntime == true ? 3 : 1;
+    final attempts = hostPlatform == HostPlatform.windows ||
+            _stagedPayload?.warpPolicy.canEnableRuntime == true
+        ? 3
+        : 1;
     String? lastError;
     if (mixedProxyPort != null || _mixedProxyProbe != null) {
       for (var attempt = 0; attempt < attempts; attempt += 1) {
@@ -1355,9 +1357,9 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       return null;
     }
     for (var attempt = 0; attempt < attempts; attempt += 1) {
-      if (attempt > 0) {
-        await Future<void>.delayed(const Duration(milliseconds: 1500));
-      }
+      await Future<void>.delayed(
+        Duration(milliseconds: attempt == 0 ? 750 : 1500),
+      );
       lastError = await (_systemTunnelProbe?.call() ??
           _probeHttp(
             proxyPort: null,
@@ -1389,12 +1391,16 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     }
     try {
       final request = await client
-          .getUrl(Uri.parse('http://cp.cloudflare.com'))
+          .getUrl(Uri.parse(
+            'https://api.pokrov.space/api/public/authenticated-egress-probe',
+          ))
           .timeout(timeout);
       request.followRedirects = false;
       final response = await request.close().timeout(timeout);
       await response.drain<void>().timeout(timeout);
-      if (response.statusCode >= 200 && response.statusCode < 500) {
+      if (response.statusCode == HttpStatus.noContent &&
+          response.headers.value('x-pokrov-egress-probe') ==
+              'pokrov-authenticated-egress-v1') {
         return null;
       }
       return 'проверка соединения вернула HTTP ${response.statusCode}';

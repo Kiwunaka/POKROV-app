@@ -978,10 +978,6 @@ void main() {
       'pokrov-core-probe-',
     );
     final proxy = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    proxy.listen((request) async {
-      request.response.statusCode = HttpStatus.noContent;
-      await request.response.close();
-    });
     addTearDown(() async {
       await proxy.close(force: true);
       if (await root.exists()) {
@@ -997,6 +993,8 @@ void main() {
     final engine = DesktopRuntimeEngine(
       hostPlatform: HostPlatform.windows,
       assetRootOverride: root.path,
+      mixedProxyProbe: () async => null,
+      systemTunnelProbe: () async => null,
       bindingsLoader: (_) => bindings,
     );
 
@@ -1136,6 +1134,7 @@ void main() {
     final engine = DesktopRuntimeEngine(
       hostPlatform: HostPlatform.windows,
       assetRootOverride: root.path,
+      systemTunnelProbe: () async => null,
       bindingsLoader: (_) => bindings,
     );
 
@@ -1259,6 +1258,7 @@ void main() {
     final engine = DesktopRuntimeEngine(
       hostPlatform: HostPlatform.windows,
       assetRootOverride: root.path,
+      systemTunnelProbe: () async => null,
       bindingsLoader: (_) => bindings,
     );
 
@@ -1370,6 +1370,7 @@ void main() {
     final engine = DesktopRuntimeEngine(
       hostPlatform: HostPlatform.windows,
       assetRootOverride: root.path,
+      systemTunnelProbe: () async => null,
       bindingsLoader: (_) => bindings,
     );
 
@@ -1418,6 +1419,7 @@ void main() {
     final engine = DesktopRuntimeEngine(
       hostPlatform: HostPlatform.windows,
       assetRootOverride: root.path,
+      systemTunnelProbe: () async => null,
       bindingsLoader: (_) => bindings,
     );
 
@@ -1724,7 +1726,7 @@ void main() {
     final snapshot = await engine.connect();
 
     expect(mixedProbeCalls, 1);
-    expect(systemProbeCalls, 1);
+    expect(systemProbeCalls, 3);
     expect(snapshot.phase, RuntimePhase.configStaged);
     expect(snapshot.lastFailureKind, 'desktop_tun_egress_probe_failed');
     expect(snapshot.message, contains('Windows не пропускает трафик'));
@@ -1736,6 +1738,52 @@ void main() {
     expect(refreshed.lastFailureKind, 'desktop_tun_egress_probe_failed');
     expect(refreshed.message, contains('Windows не пропускает трафик'));
     expect(refreshed.message, isNot(contains('Профиль доступа готов')));
+  });
+
+  test('desktop lane waits for a late Windows TUN route before passing',
+      () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-tun-probe-late-success-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+    var systemProbeCalls = 0;
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      mixedProxyProbe: () async => null,
+      systemTunnelProbe: () async {
+        systemProbeCalls += 1;
+        return systemProbeCalls < 3 ? 'host path not ready' : null;
+      },
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'windows-tun-probe-late-success',
+        configPayload:
+            '{"inbounds":[{"type":"tun","tag":"tun-in"},{"type":"mixed","tag":"mixed-in","listen":"127.0.0.1","listen_port":12334}],"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.fullTunnel,
+      ),
+    );
+    final snapshot = await engine.connect();
+
+    expect(systemProbeCalls, 3);
+    expect(snapshot.phase, RuntimePhase.running);
+    expect(snapshot.lastFailureKind, isNull);
+    expect(bindings.startCalls, 1);
+    expect(bindings.stopCalls, 0);
   });
 
   test('desktop lane keeps runtime-ready WARP disabled without user consent',
