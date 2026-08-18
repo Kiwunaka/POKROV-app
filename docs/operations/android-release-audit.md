@@ -1,7 +1,7 @@
 # Android Release Audit
 
-Status: direct APK 1.0.4+13 public prerelease PASS for signing, exact Huawei install, ordinary tunnel, native system UX, live support AI, anonymous downloads, and production runtime handoff; exact-final WARP/per-app/uplink repetition remains manual
-Last updated: 2026-08-14
+Status: direct APK 1.1.5+28 public stable PASS for production signing, exact GitHub size/digest, anonymous downloads and production update handoff; exact Huawei install, WARP/per-app/uplink repetition and long-cycle proof remain manual
+Last updated: 2026-08-19
 
 ## Required Dependency
 

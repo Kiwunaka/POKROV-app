@@ -593,18 +593,18 @@ Release continuity rules:
   opt-in lane and must never be returned as the stable candidate
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
-- stable candidates use a strictly newer semantic version. Android `1.1.2`
-  and Windows `1.1.3` remain the current published stable direct artifacts
-  until a later exact candidate is promoted. Both sources are aligned at
-  unreleased candidate
-  `1.1.5+28`; both production build scripts fail before packaging when their
-  package versions differ. This source alignment is not a release claim and
-  does not update public metadata or assets by itself.
+- stable candidates use a strictly newer semantic version. Android and Windows
+  `1.1.5+28` are the current published stable-direct artifacts under
+  `Kiwunaka/pokrov` tag `v1.1.5`; both production build scripts fail before
+  packaging when their package versions differ. The four Android APKs are
+  production-signed and every published asset matches its retained size and
+  SHA-256; exact Huawei and clean Windows network proof remain manual.
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates
-- unsigned Windows bundles are non-public engineering smoke with a SmartScreen
-  or unknown-publisher warning; public promotion requires trusted signing
+- the owner explicitly accepts the unsigned Windows installer for the current
+  outside-store stable-direct lane with a SmartScreen/unknown-publisher warning;
+  this is not a trusted-signing or reputation claim
 - signed release builds inject updater and source metadata through the documented `PORTAL_RELEASE_*` environment variables
 - the shared runtime identity is `pokrovClientVersion`; release builds pass
   `--dart-define=POKROV_APP_VERSION=<host pubspec version without +build>` so
