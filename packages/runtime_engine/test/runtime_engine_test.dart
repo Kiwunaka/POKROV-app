@@ -1714,7 +1714,7 @@ void main() {
       bindingsLoader: (_) => bindings,
     );
 
-    await engine.stageManagedProfile(
+    final staged = await engine.stageManagedProfile(
       const ManagedProfilePayload(
         profileName: 'windows-tun-probe-failure',
         configPayload:
@@ -1738,6 +1738,20 @@ void main() {
     expect(refreshed.lastFailureKind, 'desktop_tun_egress_probe_failed');
     expect(refreshed.message, contains('Windows не пропускает трафик'));
     expect(refreshed.message, isNot(contains('Профиль доступа готов')));
+    final journal = File(
+      '${File(staged.stagedConfigPath!).parent.parent.path}'
+      '${Platform.pathSeparator}pokrov-runtime-events.jsonl',
+    );
+    expect(await journal.exists(), isTrue);
+    final journalText = await journal.readAsString();
+    expect(journalText, contains('"event":"mixed_proxy_probe"'));
+    expect(journalText, contains('"event":"windows_tun_probe"'));
+    expect(journalText, contains('"attempt":3'));
+    expect(
+      journalText,
+      contains('"failure_kind":"desktop_tun_egress_probe_failed"'),
+    );
+    _expectNoSensitiveRuntimeDetail(journalText);
   });
 
   test('desktop lane waits for a late Windows TUN route before passing',

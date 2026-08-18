@@ -7145,15 +7145,20 @@ class AppFirstRuntimeBootstrapper
         (rule) =>
             _readText(rule['inbound']) == 'dns-in' ||
             _readText(rule['protocol']).toLowerCase() == 'dns' ||
+            rule['port'] == 53 ||
             _readText(rule['outbound']) == 'dns-out' ||
             _readText(rule['action']).toLowerCase() == 'sniff' ||
             _readText(rule['action']).toLowerCase() == 'hijack-dns',
       );
       rules.insert(0, <String, dynamic>{
-        'protocol': 'dns',
+        // The Windows system resolver sends UDP/TCP to the LAN DNS address.
+        // This Core generation does not classify that packet as `protocol:
+        // dns` before the private-address rule runs, so match port 53
+        // explicitly and keep DNS inside POKROV.
+        'port': 53,
         'action': 'hijack-dns',
       });
-      rules.insert(0, <String, dynamic>{'action': 'sniff'});
+      rules.insert(1, <String, dynamic>{'action': 'sniff'});
     } else {
       final resolvedDnsOutboundTag = dnsOutboundTag!;
       final hasDnsInboundRule = rules.any(

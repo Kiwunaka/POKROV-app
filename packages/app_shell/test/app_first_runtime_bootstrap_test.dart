@@ -4956,11 +4956,15 @@ void main() {
     expect(route['final'], 'select');
     expect(route['auto_detect_interface'], true);
     expect(route.containsKey('override_android_vpn'), isFalse);
-    expect(routeRules.first, <String, dynamic>{'action': 'sniff'});
-    expect(routeRules[1], <String, dynamic>{
-      'protocol': 'dns',
+    expect(routeRules.first, <String, dynamic>{
+      'port': 53,
       'action': 'hijack-dns',
     });
+    expect(routeRules[1], <String, dynamic>{'action': 'sniff'});
+    expect(
+      routeRules.indexWhere((rule) => rule['ip_is_private'] == true),
+      greaterThan(1),
+    );
     expect(
       routeRules.any((rule) =>
           (rule['rule_set'] as List?)?.contains('geoip-ru') == true &&
@@ -6600,11 +6604,11 @@ void main() {
     final dnsServers = (dns['servers'] as List).cast<Map<String, dynamic>>();
     final outbounds =
         (config['outbounds'] as List).cast<Map<String, dynamic>>();
-    expect(routeRules.first, <String, dynamic>{'action': 'sniff'});
-    expect(routeRules[1], <String, dynamic>{
-      'protocol': 'dns',
+    expect(routeRules.first, <String, dynamic>{
+      'port': 53,
       'action': 'hijack-dns',
     });
+    expect(routeRules[1], <String, dynamic>{'action': 'sniff'});
     expect(
       dnsServers.singleWhere((server) => server['tag'] == 'dns-remote'),
       containsPair('type', 'tcp'),

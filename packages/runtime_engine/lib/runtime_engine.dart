@@ -1099,6 +1099,9 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   String? _lastFailureKind;
   RuntimePhase _phase = RuntimePhase.artifactMissing;
   String _message = _missingArtifactMessage;
+  static const _runtimeJournalFileName = 'pokrov-runtime-events.jsonl';
+  static const _runtimeJournalMaxBytes = 128 * 1024;
+  static const _runtimeJournalRetainedLines = 300;
   static const defaultCoreTag = 'v1.0.3';
   static const _missingArtifactMessage =
       'Модуль подключения не найден в этой сборке. Обновите приложение или проверьте сборку.';
@@ -1129,7 +1132,8 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
           'Ядро готово. Подключение запустится, когда приложение запросит старт.',
         RuntimePhase.initialized =>
           'Подготовка завершена. Осталось получить профиль доступа.',
-        RuntimePhase.configStaged => 'Профиль доступа готов. Можно подключаться.',
+        RuntimePhase.configStaged =>
+          'Профиль доступа готов. Можно подключаться.',
         RuntimePhase.running => 'POKROV подключен с текущим профилем доступа.',
         RuntimePhase.artifactMissing => _missingArtifactMessage,
       };
@@ -1161,6 +1165,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     try {
       final directories = _directories ?? await _resolveDirectories();
       _directories = directories;
+      await _appendRuntimeEvent(event: 'initialize', outcome: 'started');
       _statusPort ??= ReceivePort('pokrov runtime status');
       _bindings ??= _bindingsLoader(artifacts.coreBinary!.path);
       final error = _bindings!.setup(
@@ -1174,6 +1179,11 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         _phase = RuntimePhase.artifactReady;
         _lastFailureKind = 'runtime_initialization_failed';
         _message = 'Не удалось подготовить подключение.';
+        await _appendRuntimeEvent(
+          event: 'initialize',
+          outcome: 'failed',
+          failureKind: _lastFailureKind,
+        );
         return _snapshotPreservingCurrentMessage(
           phase: _phase,
           canInitialize: true,
@@ -1183,11 +1193,17 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         _phase = RuntimePhase.initialized;
         _lastFailureKind = null;
         _message = 'Подготовка подключения завершена.';
+        await _appendRuntimeEvent(event: 'initialize', outcome: 'ready');
       }
     } catch (_) {
       _phase = RuntimePhase.artifactReady;
       _lastFailureKind = 'runtime_initialization_failed';
       _message = 'Не удалось загрузить модуль подключения.';
+      await _appendRuntimeEvent(
+        event: 'initialize',
+        outcome: 'failed',
+        failureKind: _lastFailureKind,
+      );
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: true,
@@ -1203,7 +1219,13 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     ManagedProfilePayload payload,
   ) async {
     final before = await initialize();
+    await _appendRuntimeEvent(event: 'profile_stage', outcome: 'started');
     if (!before.canInitialize || _bindings == null || _directories == null) {
+      await _appendRuntimeEvent(
+        event: 'profile_stage',
+        outcome: 'blocked',
+        failureKind: _lastFailureKind,
+      );
       return before;
     }
 
@@ -1212,6 +1234,11 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       _lastFailureKind = 'profile_staging_failed';
       _message =
           'POKROV Core нужен уже собранный sing-box профиль. Обновите приложение или профиль доступа.';
+      await _appendRuntimeEvent(
+        event: 'profile_stage',
+        outcome: 'failed',
+        failureKind: _lastFailureKind,
+      );
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: true,
@@ -1234,6 +1261,11 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       _phase = RuntimePhase.initialized;
       _lastFailureKind = 'profile_staging_failed';
       _message = 'Профиль доступа не прошел проверку.';
+      await _appendRuntimeEvent(
+        event: 'profile_stage',
+        outcome: 'failed',
+        failureKind: _lastFailureKind,
+      );
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: true,
@@ -1246,6 +1278,11 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       _phase = RuntimePhase.initialized;
       _lastFailureKind = 'profile_staging_failed';
       _message = 'POKROV не смог защитить файл профиля.';
+      await _appendRuntimeEvent(
+        event: 'profile_stage',
+        outcome: 'failed',
+        failureKind: _lastFailureKind,
+      );
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: true,
@@ -1258,6 +1295,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     _phase = RuntimePhase.configStaged;
     _lastFailureKind = null;
     _message = 'Настройки POKROV готовы.';
+    await _appendRuntimeEvent(event: 'profile_stage', outcome: 'ready');
     return snapshot();
   }
 
@@ -1269,6 +1307,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     final before = await snapshot();
     if (!before.canConnect || _bindings == null || _stagedPayload == null) {
       _message = 'POKROV ждет подготовленные настройки и готовый runtime.';
+      await _appendRuntimeEvent(event: 'connect', outcome: 'blocked');
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: before.canInitialize,
@@ -1276,6 +1315,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       );
     }
 
+    await _appendRuntimeEvent(event: 'core_start', outcome: 'started');
     final error = _bindings!.start(
       configPath: _stagedConfigPath!,
       disableMemoryLimit: _stagedPayload!.disableMemoryLimit,
@@ -1287,6 +1327,11 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         phase: _phase,
         failureKind: _lastFailureKind,
       );
+      await _appendRuntimeEvent(
+        event: 'core_start',
+        outcome: 'failed',
+        failureKind: _lastFailureKind,
+      );
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: true,
@@ -1294,12 +1339,18 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       );
     }
 
+    await _appendRuntimeEvent(event: 'core_start', outcome: 'ready');
     final probeFailure = await _verifyStartedRuntime();
     if (probeFailure != null) {
       _bindings!.stop();
       _phase = RuntimePhase.configStaged;
       _lastFailureKind = probeFailure.kind;
       _message = probeFailure.message;
+      await _appendRuntimeEvent(
+        event: 'connect',
+        outcome: 'failed',
+        failureKind: _lastFailureKind,
+      );
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: true,
@@ -1311,6 +1362,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     _lastFailureKind = null;
     _runningSince ??= DateTime.now().toUtc();
     _message = 'POKROV включен.';
+    await _appendRuntimeEvent(event: 'connect', outcome: 'running');
     return snapshot();
   }
 
@@ -1318,6 +1370,12 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     final injectedProbe = _connectivityProbe;
     if (injectedProbe != null) {
       final error = await injectedProbe();
+      await _appendRuntimeEvent(
+        event: 'connectivity_probe',
+        outcome: error == null ? 'passed' : 'failed',
+        failureKind: error == null ? null : 'core_egress_probe_failed',
+        attempt: 1,
+      );
       return error == null
           ? null
           : const _DesktopProbeFailure(
@@ -1341,6 +1399,12 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
               proxyPort: mixedProxyPort,
               timeout: const Duration(seconds: 6),
             ));
+        await _appendRuntimeEvent(
+          event: 'mixed_proxy_probe',
+          outcome: lastError == null ? 'passed' : 'failed',
+          failureKind: lastError == null ? null : 'core_egress_probe_failed',
+          attempt: attempt + 1,
+        );
         if (lastError == null) {
           break;
         }
@@ -1366,6 +1430,13 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
             timeout: const Duration(seconds: 6),
             forceDirect: true,
           ));
+      await _appendRuntimeEvent(
+        event: 'windows_tun_probe',
+        outcome: lastError == null ? 'passed' : 'failed',
+        failureKind:
+            lastError == null ? null : 'desktop_tun_egress_probe_failed',
+        attempt: attempt + 1,
+      );
       if (lastError == null) {
         return null;
       }
@@ -1440,6 +1511,51 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     return null;
   }
 
+  Future<void> _appendRuntimeEvent({
+    required String event,
+    required String outcome,
+    String? failureKind,
+    int? attempt,
+  }) async {
+    final directories = _directories;
+    if (directories == null) {
+      return;
+    }
+    try {
+      final file = File(
+        p.join(directories.workingDir.path, _runtimeJournalFileName),
+      );
+      final entry = <String, Object?>{
+        'at': DateTime.now().toUtc().toIso8601String(),
+        'platform': hostPlatform.name,
+        'event': event,
+        'outcome': outcome,
+        'phase': _phase.name,
+        if (attempt != null) 'attempt': attempt,
+        if (failureKind != null && failureKind.isNotEmpty)
+          'failure_kind': failureKind,
+      };
+      await file.writeAsString(
+        '${jsonEncode(entry)}\n',
+        mode: FileMode.append,
+        flush: true,
+      );
+      if (await file.length() <= _runtimeJournalMaxBytes) {
+        return;
+      }
+      final lines = await file.readAsLines();
+      final retained = lines.length <= _runtimeJournalRetainedLines
+          ? lines
+          : lines.sublist(lines.length - _runtimeJournalRetainedLines);
+      await file.writeAsString(
+        '${retained.join('\n')}\n',
+        flush: true,
+      );
+    } on Object {
+      // Diagnostics are best-effort and must never block a connection.
+    }
+  }
+
   @override
   Future<RuntimeSnapshot> disconnect() async {
     final artifacts = _artifacts ?? await _resolveArtifacts();
@@ -1448,10 +1564,16 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       return snapshot();
     }
 
+    await _appendRuntimeEvent(event: 'disconnect', outcome: 'started');
     final error = _bindings!.stop();
     if (error.isNotEmpty) {
       _lastFailureKind = 'runtime_stop_failed';
       _message = 'POKROV не смог отключиться.';
+      await _appendRuntimeEvent(
+        event: 'disconnect',
+        outcome: 'failed',
+        failureKind: _lastFailureKind,
+      );
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: artifacts.coreBinary != null,
@@ -1465,6 +1587,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     _runningSince = null;
     _lastFailureKind = null;
     _message = 'POKROV отключен.';
+    await _appendRuntimeEvent(event: 'disconnect', outcome: 'stopped');
     return _snapshotPreservingCurrentMessage(
       phase: _phase,
       canInitialize: artifacts.coreBinary != null,
