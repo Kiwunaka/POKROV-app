@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
@@ -105,12 +106,51 @@ void main() {
         calls.add('isPreventClose');
         return true;
       },
+      closeToTray: () async {
+        calls.add('closeToTray');
+        return true;
+      },
       hide: () async {
         calls.add('hide');
       },
+      destroyTray: () async {
+        calls.add('destroyTray');
+      },
+      destroyWindow: () async {
+        calls.add('destroyWindow');
+      },
     );
 
-    expect(calls, ['isPreventClose', 'hide']);
+    expect(calls, ['isPreventClose', 'closeToTray', 'hide']);
+  });
+
+  test('windows close exits when close-to-tray is disabled', () async {
+    final calls = <String>[];
+
+    await windows_shell.pokrovWindowsHandleClose(
+      isPreventClose: () async {
+        calls.add('isPreventClose');
+        return true;
+      },
+      closeToTray: () async {
+        calls.add('closeToTray');
+        return false;
+      },
+      hide: () async {
+        calls.add('hide');
+      },
+      destroyTray: () async {
+        calls.add('destroyTray');
+      },
+      destroyWindow: () async {
+        calls.add('destroyWindow');
+      },
+    );
+
+    expect(
+      calls,
+      ['isPreventClose', 'closeToTray', 'destroyTray', 'destroyWindow'],
+    );
   });
 
   test(
@@ -123,8 +163,18 @@ void main() {
           calls.add('isPreventClose');
           return false;
         },
+        closeToTray: () async {
+          calls.add('closeToTray');
+          return true;
+        },
         hide: () async {
           calls.add('hide');
+        },
+        destroyTray: () async {
+          calls.add('destroyTray');
+        },
+        destroyWindow: () async {
+          calls.add('destroyWindow');
         },
       );
 
@@ -145,6 +195,38 @@ void main() {
     );
 
     expect(calls, ['destroyTray', 'destroyWindow']);
+  });
+
+  test('windows elevated continuation is explicit and exact', () {
+    expect(windows_shell.pokrovWindowsShouldAutoConnect(['--connect']), isTrue);
+    expect(
+      windows_shell.pokrovWindowsShouldAutoConnect(['--connected']),
+      isFalse,
+    );
+    expect(windows_shell.pokrovWindowsShouldAutoConnect([]), isFalse);
+  });
+
+  test('windows tunnel authorization stops when UAC relaunch is denied',
+      () async {
+    const channel = MethodChannel('space.pokrov/windows-shell');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final calls = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call.method);
+      return switch (call.method) {
+        'isElevated' => false,
+        'relaunchElevated' => false,
+        _ => null,
+      };
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    expect(
+      await requestPokrovWindowsTunnelAuthorization(HostPlatform.windows),
+      PokrovWindowsTunnelAuthorization.denied,
+    );
+    expect(calls, ['isElevated', 'relaunchElevated']);
   });
 
   testWidgets('windows shell boots the shared protection surface', (

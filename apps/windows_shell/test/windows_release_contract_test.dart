@@ -67,9 +67,18 @@ void main() {
     final runnerContent = await runner.readAsString();
     final windowContent = await window.readAsString();
 
-    expect(scriptContent, contains('HKCU:\\Software\\Classes\\pokrov'));
-    expect(scriptContent, contains('"URL Protocol"'));
+    expect(scriptContent, contains('Inno Setup 6'));
+    expect(scriptContent, contains('DisableDirPage=no'));
+    expect(scriptContent, contains('Languages\\Russian.isl'));
+    expect(scriptContent, contains('Name: "desktopicon"'));
+    expect(scriptContent, contains('Name: "autostart"'));
+    expect(scriptContent, contains('Software\\Classes\\pokrov'));
+    expect(scriptContent, contains('ValueName: "URL Protocol"'));
     expect(scriptContent, contains('shell\\open\\command'));
+    expect(
+      scriptContent,
+      isNot(contains('Class=IEXPRESS')),
+    );
     expect(runnerContent, contains('pokrov://acquisition/continue?'));
     expect(runnerContent, contains('SendMessageTimeoutW'));
     expect(windowContent, contains('case WM_COPYDATA'));
@@ -77,5 +86,34 @@ void main() {
       windowContent,
       contains('space.pokrov/acquisition-links'),
     );
+  });
+
+  test('windows shell gates TUN elevation and owns user preferences', () async {
+    final window = File('windows/runner/flutter_window.cpp');
+    final sharedShell =
+        File('../../packages/app_shell/lib/src/shell/seed_shell.dart');
+    final content = await window.readAsString();
+    final sharedContent = await sharedShell.readAsString();
+
+    expect(content, contains('space.pokrov/windows-shell'));
+    expect(content, contains('TokenElevation'));
+    expect(content, contains('ShellExecuteW'));
+    expect(content, contains('L"--connect"'));
+    expect(content, contains('CloseToTray'));
+    expect(content, contains('CurrentVersion\\\\Run'));
+    final authorizationIndex = sharedContent.indexOf(
+      '!await _authorizeWindowsTunnelConnect()',
+    );
+    final busyIndex = sharedContent.indexOf(
+      '_runtimeBusy = true;',
+      authorizationIndex,
+    );
+    final coreConnectIndex = sharedContent.indexOf(
+      '_runtimeEngine.connect',
+      authorizationIndex,
+    );
+    expect(authorizationIndex, greaterThanOrEqualTo(0));
+    expect(busyIndex, greaterThan(authorizationIndex));
+    expect(coreConnectIndex, greaterThan(busyIndex));
   });
 }

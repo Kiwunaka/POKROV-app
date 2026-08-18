@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-08-14
+Last updated: 2026-08-18
 
 This document is the concrete Windows readiness note for the `POKROV-app` lane.
 
@@ -16,19 +16,26 @@ Historical mapping note:
 - the active runtime is POKROV Core `v1.0.3` desktop ABI 2; its exact release commit, DLL hash, and `libcronet.dll` hash are pinned in `config/runtime-artifacts.seed.json`
 - `flutter build windows --release` copies `pokrov-core.dll` and `libcronet.dll` next to the Flutter runner
 - `scripts/sync-pokrov-core-runtime.ps1` accepts only the exact locally built core commit and artifacts before syncing them into the host
-- `scripts/build-windows-release.ps1` now runs the local Windows verification lane: seed validation, tests, `flutter analyze`, `flutter build windows --release`, bundle verification, unsigned portable ZIP staging, and unsigned beta setup EXE staging through Windows `iexpress.exe`
+- `scripts/build-windows-release.ps1` runs the local Windows verification lane: seed validation, tests, `flutter analyze`, `flutter build windows --release`, bundle verification, unsigned portable ZIP staging, and a per-user Inno Setup 6 wizard. The wizard exposes the install directory plus optional desktop shortcut and autostart choices and registers the bounded `pokrov://` continuation protocol with uninstall cleanup
 - the seed validation inside that helper now aligns with the current product canon: `Android + Windows` public scope, `iOS + macOS` readiness-only hosts
 - stable direct executables present the public product name `POKROV` and no longer carry the Windows `VS_FF_PRERELEASE` metadata flag; debug builds retain only `VS_FF_DEBUG`
 - app-first session secrets must not remain in plaintext JSON state; the current source implements legacy `session_token` migration into platform secure storage, atomically replaces the JSON state, and writes only a `session_token_storage=secure` marker after a durable write; a marker whose platform secret is missing enters recovery instead of minting another trial, while exact-artifact restart proof remains a release gate
 - local runtime/control surfaces must stay loopback-only: mixed/system-proxy ports bind to `127.0.0.1`, Clash/control APIs stay disabled unless explicitly protected by a per-install random secret, and no unauthenticated LAN listener is release-acceptable
+- loopback helper ports are availability-checked for TCP and UDP during staging. Busy ports are replaced with OS-selected loopback ports so an already-running local proxy such as Hiddify does not make POKROV Core fail before TUN start
 - public download copy must match the actual handoff URL and signing state
 - support macros must explain SmartScreen or unknown-publisher behavior for gated beta testers
-- the shell opens centered at 1280x720, permits resize down to 700x640 so the
-  canonical compact drawer remains reachable, and hides to tray on window
-  close; tray `Выход` disposes tray state before requesting native teardown
+- the shell opens centered at 1280x720 and permits resize down to 700x640 so
+  the canonical compact drawer remains reachable. Profile settings expose
+  per-user autostart and whether the close button hides to tray (default) or
+  exits; tray `Выход` disposes tray state before requesting native teardown
+- the regular process remains unelevated. A non-running TUN connect checks the
+  Windows token, requests `runas` only when required, and continues with the
+  bounded `--connect` argument. Denial or unavailable native integration stops
+  before Core start instead of allowing a proxy-only false success
 - source and widget tests prove lifecycle ordering, but connected exact-artifact
   tray exit still requires runtime/TUN teardown and any compatibility
   system-proxy restoration proof
+- the local `1.1.2+25` QA build remapped Hiddify's occupied `127.0.0.1:12334` to `127.0.0.1:54303`. Its live TUN attempt affected the active Codex route and was operator-terminated before a final connected event, so this is collision-fix evidence, not clean egress/DNS or teardown PASS
 
 ## Current 2026-08-13 Candidate State
 

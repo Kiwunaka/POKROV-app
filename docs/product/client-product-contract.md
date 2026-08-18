@@ -203,7 +203,8 @@ Product rules for that choice:
   or executable identifiers, announce selected/available state to assistive
   technology, and remain usable above the on-screen keyboard
 - raw selected-app rule editing remains hidden behind advanced/debug gates
-- if the chosen desktop route mode requires elevation, the app must explain that before connect and guide the user to relaunch as administrator
+- Windows checks elevation before every non-running TUN connect. When required, it uses the native Windows `runas` prompt and continues exactly once with `--connect`; denial or unavailable host integration stops before Core start and must not produce a connected state
+- Windows keeps desktop helper listeners on loopback and checks their requested TCP/UDP ports before staging. If another local proxy already owns a requested port, POKROV selects an available loopback port and keeps the other application running
 - first-layer UX must not force users into raw system-proxy, service-mode, or low-level transport toggles
 
 ### Before trial activation
@@ -644,9 +645,10 @@ Host behavior:
 - Android uses the canonical POKROV mark for adaptive launcher and Android 12+
   splash surfaces; edge-to-edge system chrome must preserve safe areas and
   theme-matched system icon contrast.
-- Windows opens centered, remains resizable down to the 700 px compact/drawer
-  lane, and treats window close as hide-to-tray. The explicit tray `Выход`
-  action requests native teardown; exact-artifact runtime shutdown and system
+- Windows opens centered and remains resizable down to the 700 px compact/drawer
+  lane. Profile settings own per-user autostart and whether the window close
+  button hides to tray (default) or exits; the explicit tray `Выход` action
+  always requests native teardown. Exact-artifact runtime shutdown and system
   proxy restoration remain a manual release check.
 
 Compatibility-only residue may still exist in internal identifiers, imports, namespaces, or hidden handlers such as `pokrovvpn://`, but it must not define the user-facing product story.

@@ -1264,6 +1264,69 @@ void main() {
     expect((config['route'] as Map<String, dynamic>)['final'], 'proxy');
   });
 
+  test('desktop lane remaps a busy loopback port before core start', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-port-conflict-',
+    );
+    final occupied = await ServerSocket.bind(
+      InternetAddress.loopbackIPv4,
+      0,
+      shared: false,
+    );
+    addTearDown(() async {
+      await occupied.close();
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      bindingsLoader: (_) => bindings,
+    );
+
+    final staged = await engine.stageManagedProfile(
+      ManagedProfilePayload(
+        profileName: 'connect-desktop-port-conflict',
+        configPayload: jsonEncode(<String, Object?>{
+          'inbounds': <Object?>[
+            <String, Object?>{
+              'type': 'tun',
+              'tag': 'tun-in',
+            },
+            <String, Object?>{
+              'type': 'mixed',
+              'tag': 'mixed-in',
+              'listen': '127.0.0.1',
+              'listen_port': occupied.port,
+            },
+          ],
+          'outbounds': <Object?>[
+            <String, Object?>{'type': 'direct', 'tag': 'direct'},
+          ],
+          'route': <String, Object?>{'final': 'direct'},
+        }),
+        materializedForRuntime: true,
+        routeMode: RouteMode.fullTunnel,
+      ),
+    );
+    final config = jsonDecode(
+      await File(staged.stagedConfigPath!).readAsString(),
+    ) as Map<String, dynamic>;
+    final mixed =
+        (config['inbounds'] as List<dynamic>)[1] as Map<String, dynamic>;
+
+    expect(staged.phase, RuntimePhase.configStaged);
+    expect(mixed['listen_port'], isNot(occupied.port));
+    expect(mixed['listen_port'], inInclusiveRange(1, 65535));
+  });
+
   test('desktop lane keeps Windows all-except-RU on TUN before core start',
       () async {
     final root = await Directory.systemTemp.createTemp(
@@ -1387,6 +1450,7 @@ void main() {
 
     expect(snapshot.phase, RuntimePhase.artifactReady);
     expect(snapshot.message, 'Не удалось подготовить подключение.');
+    expect(snapshot.lastFailureKind, 'runtime_initialization_failed');
     _expectNoSensitiveRuntimeDetail(snapshot.message);
     expect(snapshot.canConnect, isFalse);
   });
@@ -1426,7 +1490,8 @@ void main() {
     final snapshot = await engine.connect();
 
     expect(snapshot.phase, RuntimePhase.configStaged);
-    expect(snapshot.message, 'POKROV не смог подключиться.');
+    expect(snapshot.message, 'POKROV не смог подключиться на этом устройстве.');
+    expect(snapshot.lastFailureKind, 'runtime_start_failed');
     _expectNoSensitiveRuntimeDetail(snapshot.message);
     expect(snapshot.canConnect, isTrue);
   });
@@ -1503,6 +1568,7 @@ void main() {
 
     expect(snapshot.phase, RuntimePhase.initialized);
     expect(snapshot.message, 'POKROV не смог защитить файл профиля.');
+    expect(snapshot.lastFailureKind, 'profile_staging_failed');
     _expectNoSensitiveRuntimeDetail(snapshot.message);
     expect(snapshot.canConnect, isFalse);
     expect(bindings.startCalls, 0);
@@ -1584,6 +1650,7 @@ void main() {
 
     expect(snapshot.phase, RuntimePhase.configStaged);
     expect(snapshot.message, 'POKROV запустил модуль, но трафик не проходит.');
+    expect(snapshot.lastFailureKind, 'core_egress_probe_failed');
     expect(bindings.stopCalls, 1);
     _expectNoSensitiveRuntimeDetail(snapshot.message);
     _expectNoSensitiveRuntimeDetail(snapshot.toString());

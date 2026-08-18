@@ -15,7 +15,7 @@ import 'acquisition_links.dart';
 const Size _pokrovWindowSize = Size(1280, 720);
 const Size pokrovWindowsMinimumSize = Size(700, 640);
 
-Future<void> main() async {
+Future<void> main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
   final shellController = PokrovShellController();
@@ -44,8 +44,51 @@ Future<void> main() async {
       shellController: shellController,
       initialAcquisitionUri: initialAcquisitionUri,
       acquisitionUriStream: acquisitionLinks.stream,
+      windowsTunnelAuthorizer: () async {
+        final result = await requestPokrovWindowsTunnelAuthorization(
+          HostPlatform.windows,
+        );
+        if (result == PokrovWindowsTunnelAuthorization.relaunching) {
+          unawaited(
+            Future<void>.delayed(const Duration(milliseconds: 250), () async {
+              await _PokrovWindowsTray.shutdownForRelaunch();
+              exit(0);
+            }),
+          );
+        }
+        return result;
+      },
+      windowsShellPreferencesReader: () =>
+          readPokrovWindowsShellPreferences(HostPlatform.windows),
+      windowsShellPreferencesUpdater: (preferences) =>
+          updatePokrovWindowsShellPreferences(
+        HostPlatform.windows,
+        preferences,
+      ),
     ),
   );
+  if (pokrovWindowsShouldAutoConnect(arguments)) {
+    _connectWhenReady(shellController);
+  }
+}
+
+@visibleForTesting
+bool pokrovWindowsShouldAutoConnect(Iterable<String> arguments) =>
+    arguments.any((argument) => argument.trim() == '--connect');
+
+void _connectWhenReady(PokrovShellController controller) {
+  var started = false;
+  late VoidCallback listener;
+  listener = () {
+    if (started || !controller.canToggle) {
+      return;
+    }
+    started = true;
+    controller.removeListener(listener);
+    unawaited(controller.toggleConnection());
+  };
+  controller.addListener(listener);
+  listener();
 }
 
 @visibleForTesting
@@ -62,16 +105,27 @@ Future<void> pokrovWindowsShowWindow({
   await focus();
 }
 
-/// Close button semantics for the tray-first shell: with prevent-close
-/// active the window hides to tray instead of quitting.
+/// Close button semantics follow the user's Windows preference: keep the VPN
+/// in the tray or perform an explicit application exit.
 @visibleForTesting
 Future<void> pokrovWindowsHandleClose({
   required Future<bool> Function() isPreventClose,
+  required Future<bool> Function() closeToTray,
   required Future<void> Function() hide,
+  required Future<void> Function() destroyTray,
+  required Future<void> Function() destroyWindow,
 }) async {
-  if (await isPreventClose()) {
-    await hide();
+  if (!await isPreventClose()) {
+    return;
   }
+  if (await closeToTray()) {
+    await hide();
+    return;
+  }
+  await pokrovWindowsExit(
+    destroyTray: destroyTray,
+    destroyWindow: destroyWindow,
+  );
 }
 
 /// Dispose tray state before requesting native window teardown. This orders
@@ -122,6 +176,8 @@ final class _PokrovWindowsTray with TrayListener, WindowListener {
     await trayManager.setIcon('windows/runner/resources/app_icon.ico');
     await _instance._applyControllerState();
   }
+
+  static Future<void> shutdownForRelaunch() => _instance._destroyTray();
 
   void _scheduleMenuUpdate() {
     _menuUpdate = _menuUpdate.then((_) => _applyControllerState()).catchError(
@@ -186,7 +242,15 @@ final class _PokrovWindowsTray with TrayListener, WindowListener {
     unawaited(
       pokrovWindowsHandleClose(
         isPreventClose: windowManager.isPreventClose,
+        closeToTray: () async {
+          final preferences = await readPokrovWindowsShellPreferences(
+            HostPlatform.windows,
+          );
+          return preferences.closeToTray;
+        },
         hide: windowManager.hide,
+        destroyTray: _destroyTray,
+        destroyWindow: windowManager.destroy,
       ),
     );
   }

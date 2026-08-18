@@ -20,6 +20,9 @@ class PokrovSeedApp extends StatefulWidget {
     this.wifiPermissionRequester,
     this.vpnSettingsLauncher,
     this.nodeLatencyProbe,
+    this.windowsTunnelAuthorizer,
+    this.windowsShellPreferencesReader,
+    this.windowsShellPreferencesUpdater,
     this.initialAcquisitionUri,
     this.acquisitionUriStream,
   });
@@ -41,6 +44,9 @@ class PokrovSeedApp extends StatefulWidget {
   final PokrovWifiPermissionRequester? wifiPermissionRequester;
   final PokrovVpnSettingsLauncher? vpnSettingsLauncher;
   final PokrovNodeLatencyProbe? nodeLatencyProbe;
+  final PokrovWindowsTunnelAuthorizer? windowsTunnelAuthorizer;
+  final PokrovWindowsShellPreferencesReader? windowsShellPreferencesReader;
+  final PokrovWindowsShellPreferencesUpdater? windowsShellPreferencesUpdater;
   final Uri? initialAcquisitionUri;
   final Stream<Uri>? acquisitionUriStream;
 
@@ -110,6 +116,9 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
         wifiPermissionRequester: widget.wifiPermissionRequester,
         vpnSettingsLauncher: widget.vpnSettingsLauncher,
         nodeLatencyProbe: widget.nodeLatencyProbe,
+        windowsTunnelAuthorizer: widget.windowsTunnelAuthorizer,
+        windowsShellPreferencesReader: widget.windowsShellPreferencesReader,
+        windowsShellPreferencesUpdater: widget.windowsShellPreferencesUpdater,
         initialAcquisitionUri: widget.initialAcquisitionUri,
         acquisitionUriStream: widget.acquisitionUriStream,
         themeMode: _themeMode,
@@ -464,6 +473,9 @@ class PokrovSeedShell extends StatefulWidget {
     this.wifiPermissionRequester,
     this.vpnSettingsLauncher,
     this.nodeLatencyProbe,
+    this.windowsTunnelAuthorizer,
+    this.windowsShellPreferencesReader,
+    this.windowsShellPreferencesUpdater,
     this.initialAcquisitionUri,
     this.acquisitionUriStream,
   });
@@ -486,6 +498,9 @@ class PokrovSeedShell extends StatefulWidget {
   final PokrovWifiPermissionRequester? wifiPermissionRequester;
   final PokrovVpnSettingsLauncher? vpnSettingsLauncher;
   final PokrovNodeLatencyProbe? nodeLatencyProbe;
+  final PokrovWindowsTunnelAuthorizer? windowsTunnelAuthorizer;
+  final PokrovWindowsShellPreferencesReader? windowsShellPreferencesReader;
+  final PokrovWindowsShellPreferencesUpdater? windowsShellPreferencesUpdater;
   final Uri? initialAcquisitionUri;
   final Stream<Uri>? acquisitionUriStream;
 
@@ -529,6 +544,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   late final PokrovClientExperienceStore _clientExperienceStore;
   PokrovClientExperienceState _clientExperience =
       const PokrovClientExperienceState.empty();
+  bool _clientExperienceLoaded = false;
   Future<void> _clientExperienceWriteQueue = Future<void>.value();
   int _clientExperienceRevision = 0;
   bool _locationsUsingCache = false;
@@ -615,6 +631,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   ClientSubscriptionInfo? _subscriptionInfo;
   PokrovSystemSurfacePreferences _systemSurfacePreferences =
       const PokrovSystemSurfacePreferences();
+  PokrovWindowsShellPreferences _windowsShellPreferences =
+      const PokrovWindowsShellPreferences();
   ClientNotificationInbox? _notificationsInbox;
   bool _notificationsBusy = false;
   int _notificationsUnread = 0;
@@ -637,8 +655,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       isConnected: () => _runtimeSnapshot?.phase == RuntimePhase.running,
       isBusy: () => _runtimeBusy,
       canToggle: () =>
-          _runtimeSnapshot?.phase == RuntimePhase.running ||
-          _canPrimaryConnect(_runtimeSnapshot),
+          _clientExperienceLoaded &&
+          _firstLaunchStep == _FirstLaunchStep.ready &&
+          (_runtimeSnapshot?.phase == RuntimePhase.running ||
+              _canPrimaryConnect(_runtimeSnapshot)),
     );
     final bootstrapper = widget.bootstrapper ??
         AppFirstRuntimeBootstrapper(
@@ -703,6 +723,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       unawaited(_checkForClientUpdate());
       unawaited(_refreshAccountSummary());
       unawaited(_loadSystemSurfacePreferences());
+      unawaited(_loadWindowsShellPreferences());
       unawaited(_reportClientLifecycle('app_opened'));
     });
   }
@@ -740,83 +761,97 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   Future<void> _restoreClientExperience() async {
     final restoreRevision = _clientExperienceRevision;
-    final restored = await _clientExperienceStore.read();
-    if (!mounted || restoreRevision != _clientExperienceRevision) {
-      return;
+    try {
+      final restored = await _clientExperienceStore.read();
+      if (!mounted || restoreRevision != _clientExperienceRevision) {
+        return;
+      }
+      final preferredCode = restored.preferredNodeCode.trim().toLowerCase();
+      final preferredVariantId = preferredCode.isEmpty
+          ? 'direct'
+          : normalizeClientLocationVariantId(restored.preferredVariantId) ??
+              'direct';
+      final now = DateTime.now().toUtc();
+      final maximumTrustedExpiry = now.add(const Duration(hours: 1));
+      final restoredQuarantine = <String, DateTime>{};
+      for (final entry in restored.automaticNodeQuarantineUntil.entries) {
+        final expiresAt = DateTime.tryParse(entry.value)?.toUtc();
+        if (expiresAt == null ||
+            !expiresAt.isAfter(now) ||
+            expiresAt.isAfter(maximumTrustedExpiry)) {
+          continue;
+        }
+        restoredQuarantine[entry.key.trim().toLowerCase()] = expiresAt;
+      }
+      if (preferredCode.isNotEmpty) {
+        // A persisted manual choice is not proof that the staged profile still
+        // selects it after a restart. Require a fresh manifest before using any
+        // cached config, so the home label cannot outrun the runtime selector.
+        _cachedProfileFallbackGate.markUserChange();
+      }
+      final restoredSelectedAppIds = restored.selectedAppIds
+          .map(
+            (identifier) => normalizePokrovSelectedAppIdentifier(
+              identifier,
+              hostPlatform: widget.appContext.hostPlatform,
+            ),
+          )
+          .whereType<String>()
+          .toSet()
+          .take(128)
+          .toList(growable: false);
+      final effectiveState = restored.copyWith(
+        preferredNodeCode: preferredCode,
+        preferredVariantId: preferredVariantId,
+        automaticNodeQuarantineUntil: <String, String>{
+          for (final entry in restoredQuarantine.entries)
+            entry.key: entry.value.toIso8601String(),
+        },
+        selectedAppIds: restoredSelectedAppIds,
+      );
+      setState(() {
+        _clientExperience = effectiveState;
+        _selectedAppIds
+          ..clear()
+          ..addAll(restoredSelectedAppIds);
+        _preferredNodeCode = preferredCode;
+        _preferredVariantId = preferredVariantId;
+        _automaticNodeQuarantineUntil
+          ..clear()
+          ..addAll(restoredQuarantine);
+        final restoredRouteMode = effectiveState.firstRouteScopeMode;
+        if (effectiveState.firstRouteScopeConfirmed &&
+            restoredRouteMode != null &&
+            widget.appContext.runtimeProfile.supportedRouteModes.contains(
+              restoredRouteMode,
+            )) {
+          _selectedRouteMode = restoredRouteMode;
+        }
+        if (_locationsCatalog == null &&
+            effectiveState.cachedLocations != null) {
+          _locationsCatalog = effectiveState.cachedLocations;
+          _locationsUsingCache = true;
+        }
+        if (_notificationsInbox == null &&
+            effectiveState.cachedNotifications != null) {
+          _notificationsInbox = effectiveState.cachedNotifications;
+          _notificationsUnread =
+              effectiveState.cachedNotifications!.unreadCount;
+          _notificationsUsingCache = true;
+        }
+      });
+      unawaited(_refreshNotifications());
+    } catch (_) {
+      // Local convenience state may be missing or unreadable after an update.
+      // Keep the safe defaults and let the user choose again in the UI.
+    } finally {
+      if (mounted) {
+        setState(() {
+          _clientExperienceLoaded = true;
+        });
+        widget.shellController?.refresh();
+      }
     }
-    final preferredCode = restored.preferredNodeCode.trim().toLowerCase();
-    final preferredVariantId = preferredCode.isEmpty
-        ? 'direct'
-        : normalizeClientLocationVariantId(restored.preferredVariantId) ??
-            'direct';
-    final now = DateTime.now().toUtc();
-    final maximumTrustedExpiry = now.add(const Duration(hours: 1));
-    final restoredQuarantine = <String, DateTime>{};
-    for (final entry in restored.automaticNodeQuarantineUntil.entries) {
-      final expiresAt = DateTime.tryParse(entry.value)?.toUtc();
-      if (expiresAt == null ||
-          !expiresAt.isAfter(now) ||
-          expiresAt.isAfter(maximumTrustedExpiry)) {
-        continue;
-      }
-      restoredQuarantine[entry.key.trim().toLowerCase()] = expiresAt;
-    }
-    if (preferredCode.isNotEmpty) {
-      // A persisted manual choice is not proof that the staged profile still
-      // selects it after a restart. Require a fresh manifest before using any
-      // cached config, so the home label cannot outrun the runtime selector.
-      _cachedProfileFallbackGate.markUserChange();
-    }
-    final restoredSelectedAppIds = restored.selectedAppIds
-        .map(
-          (identifier) => normalizePokrovSelectedAppIdentifier(
-            identifier,
-            hostPlatform: widget.appContext.hostPlatform,
-          ),
-        )
-        .whereType<String>()
-        .toSet()
-        .take(128)
-        .toList(growable: false);
-    final effectiveState = restored.copyWith(
-      preferredNodeCode: preferredCode,
-      preferredVariantId: preferredVariantId,
-      automaticNodeQuarantineUntil: <String, String>{
-        for (final entry in restoredQuarantine.entries)
-          entry.key: entry.value.toIso8601String(),
-      },
-      selectedAppIds: restoredSelectedAppIds,
-    );
-    setState(() {
-      _clientExperience = effectiveState;
-      _selectedAppIds
-        ..clear()
-        ..addAll(restoredSelectedAppIds);
-      _preferredNodeCode = preferredCode;
-      _preferredVariantId = preferredVariantId;
-      _automaticNodeQuarantineUntil
-        ..clear()
-        ..addAll(restoredQuarantine);
-      final restoredRouteMode = effectiveState.firstRouteScopeMode;
-      if (effectiveState.firstRouteScopeConfirmed &&
-          restoredRouteMode != null &&
-          widget.appContext.runtimeProfile.supportedRouteModes.contains(
-            restoredRouteMode,
-          )) {
-        _selectedRouteMode = restoredRouteMode;
-      }
-      if (_locationsCatalog == null && effectiveState.cachedLocations != null) {
-        _locationsCatalog = effectiveState.cachedLocations;
-        _locationsUsingCache = true;
-      }
-      if (_notificationsInbox == null &&
-          effectiveState.cachedNotifications != null) {
-        _notificationsInbox = effectiveState.cachedNotifications;
-        _notificationsUnread = effectiveState.cachedNotifications!.unreadCount;
-        _notificationsUsingCache = true;
-      }
-    });
-    unawaited(_refreshNotifications());
   }
 
   void _queueClientExperienceWrite() {
@@ -2068,6 +2103,80 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     return true;
   }
 
+  Future<void> _loadWindowsShellPreferences() async {
+    if (widget.appContext.hostPlatform != HostPlatform.windows) {
+      return;
+    }
+    final reader = widget.windowsShellPreferencesReader;
+    final preferences = reader != null
+        ? await reader()
+        : await readPokrovWindowsShellPreferences(
+            widget.appContext.hostPlatform,
+          );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _windowsShellPreferences = preferences;
+    });
+  }
+
+  Future<bool> _updateWindowsShellPreferences(
+    PokrovWindowsShellPreferences preferences,
+  ) async {
+    final updater = widget.windowsShellPreferencesUpdater;
+    final saved = updater != null
+        ? await updater(preferences)
+        : await updatePokrovWindowsShellPreferences(
+            widget.appContext.hostPlatform,
+            preferences,
+          );
+    if (saved == null || !mounted) {
+      return false;
+    }
+    setState(() {
+      _windowsShellPreferences = saved;
+    });
+    return true;
+  }
+
+  Future<bool> _authorizeWindowsTunnelConnect() async {
+    if (widget.appContext.hostPlatform != HostPlatform.windows) {
+      return true;
+    }
+    final authorizer = widget.windowsTunnelAuthorizer;
+    final result = authorizer != null
+        ? await authorizer()
+        : await requestPokrovWindowsTunnelAuthorization(
+            widget.appContext.hostPlatform,
+          );
+    if (!mounted) {
+      return false;
+    }
+    switch (result) {
+      case PokrovWindowsTunnelAuthorization.allowed:
+        return true;
+      case PokrovWindowsTunnelAuthorization.relaunching:
+        setState(() {
+          _runtimeHeadline =
+              'Подтвердите запрос Windows. POKROV продолжит подключение сам.';
+        });
+        return false;
+      case PokrovWindowsTunnelAuthorization.denied:
+        setState(() {
+          _runtimeHeadline =
+              'Для системного VPN нужны права администратора. Нажмите «Подключить» и подтвердите запрос Windows.';
+        });
+        return false;
+      case PokrovWindowsTunnelAuthorization.unavailable:
+        setState(() {
+          _runtimeHeadline =
+              'Не удалось запросить права для системного VPN. Перезапустите POKROV от имени администратора.';
+        });
+        return false;
+    }
+  }
+
   Future<PokrovWifiNetworkStatus?> _activeTrustedWifi() async {
     final preferences = _clientExperience.routingPreferences;
     if (!preferences.pauseOnTrustedWifi ||
@@ -3206,6 +3315,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     setState(() {
       _firstLaunchStep = _FirstLaunchStep.ready;
     });
+    widget.shellController?.refresh();
   }
 
   Future<void> _markFirstLaunchCompleted() async {
@@ -3223,6 +3333,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _firstLaunchExitAnimated = true;
       _firstLaunchStep = _FirstLaunchStep.ready;
     });
+    widget.shellController?.refresh();
   }
 
   Future<void> _loadConnectHintState() async {
@@ -4291,6 +4402,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return;
     }
 
+    if (_runtimeSnapshot?.phase != RuntimePhase.running &&
+        !await _authorizeWindowsTunnelConnect()) {
+      return;
+    }
+
     setState(() {
       _runtimeBusy = true;
       _runtimeDisconnecting = _runtimeSnapshot?.phase == RuntimePhase.running;
@@ -4563,7 +4679,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         }
         if (current.phase != RuntimePhase.running &&
             current.message.trim().isNotEmpty) {
-          unawaited(_reportClientRuntimeError('connect_not_running'));
+          unawaited(
+            _reportClientRuntimeError(
+              current.lastFailureKind ?? 'connect_not_running',
+            ),
+          );
           unawaited(_reportWarpRuntimeFallback(current));
           showPokrovSnack(
             context,
@@ -5474,6 +5594,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             subscriptionInfo: _subscriptionInfo,
             systemSurfacePreferences: _systemSurfacePreferences,
             onSystemSurfacePreferencesChanged: _updateSystemSurfacePreferences,
+            windowsShellPreferences: _windowsShellPreferences,
+            onWindowsShellPreferencesChanged: _updateWindowsShellPreferences,
             onOpenNotificationSettings: () => openPokrovNotificationSettings(
               widget.appContext.hostPlatform,
             ),

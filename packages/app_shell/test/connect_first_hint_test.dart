@@ -30,9 +30,14 @@ class _CompletedFirstLaunchStore implements PokrovFirstLaunchStore {
 
 class _StubBootstrapper
     implements ManagedProfileBootstrapper, AppFirstExperienceService {
-  const _StubBootstrapper({this.onRuntimeStats, this.onOnboardingCompleted});
+  const _StubBootstrapper({
+    this.onRuntimeStats,
+    this.onRuntimeError,
+    this.onOnboardingCompleted,
+  });
 
   final void Function(String runtimePhase, bool connected)? onRuntimeStats;
+  final void Function(String errorCode)? onRuntimeError;
   final VoidCallback? onOnboardingCompleted;
 
   @override
@@ -65,6 +70,9 @@ class _StubBootstrapper
     String networkClass = '',
   }) async {
     onRuntimeStats?.call(runtimePhase, connected);
+    if (errorCode.isNotEmpty) {
+      onRuntimeError?.call(errorCode);
+    }
   }
 
   @override
@@ -79,10 +87,24 @@ void _installReadyRuntimeBridgeMock({bool connectSucceeds = true}) {
   const channel = MethodChannel('space.pokrov/runtime_engine');
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  var connectAttempted = false;
 
   messenger.setMockMethodCallHandler(channel, (call) async {
     switch (call.method) {
       case 'runtimeEngine.snapshot':
+        if (connectAttempted && !connectSucceeds) {
+          return <String, Object?>{
+            'phase': 'configStaged',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+            'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': true,
+            'last_failure_kind': 'runtime_start_failed',
+            'message': 'Connection failed.',
+          };
+        }
         return <String, Object?>{
           'phase': 'artifactReady',
           'artifactDirectory': '/host/runtime',
@@ -114,6 +136,7 @@ void _installReadyRuntimeBridgeMock({bool connectSucceeds = true}) {
           'message': 'Managed profile staged on the host bridge.',
         };
       case 'runtimeEngine.connect':
+        connectAttempted = true;
         return <String, Object?>{
           'phase': connectSucceeds ? 'running' : 'configStaged',
           'artifactDirectory': '/host/runtime',
@@ -123,6 +146,7 @@ void _installReadyRuntimeBridgeMock({bool connectSucceeds = true}) {
           'canInitialize': true,
           'canConnect': true,
           if (connectSucceeds) 'core_egress_validated': true,
+          if (!connectSucceeds) 'last_failure_kind': 'runtime_start_failed',
           'message': connectSucceeds
               ? 'Runtime service is running.'
               : 'Connection failed.',
@@ -249,12 +273,14 @@ void main() {
   testWidgets('failed first connection keeps the milestone pending',
       (tester) async {
     final reports = <(String, bool)>[];
+    final errors = <String>[];
     var onboardingCompleted = 0;
     await _pumpReadyHome(
       tester,
       connectSucceeds: false,
       bootstrapper: _StubBootstrapper(
         onRuntimeStats: (phase, connected) => reports.add((phase, connected)),
+        onRuntimeError: errors.add,
         onOnboardingCompleted: () => onboardingCompleted += 1,
       ),
     );
@@ -273,6 +299,7 @@ void main() {
       ('connect_requested', false),
       ('failed', false),
     ]);
+    expect(errors, <String>['runtime_start_failed']);
     expect(onboardingCompleted, 0);
   });
 

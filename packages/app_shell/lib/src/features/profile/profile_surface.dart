@@ -34,6 +34,8 @@ class _ProfileSection extends StatelessWidget {
     required this.subscriptionInfo,
     required this.systemSurfacePreferences,
     required this.onSystemSurfacePreferencesChanged,
+    required this.windowsShellPreferences,
+    required this.onWindowsShellPreferencesChanged,
     required this.onOpenNotificationSettings,
     required this.notifications,
     required this.notificationsUnread,
@@ -84,6 +86,9 @@ class _ProfileSection extends StatelessWidget {
   final PokrovSystemSurfacePreferences systemSurfacePreferences;
   final Future<bool> Function(PokrovSystemSurfacePreferences preferences)
       onSystemSurfacePreferencesChanged;
+  final PokrovWindowsShellPreferences windowsShellPreferences;
+  final Future<bool> Function(PokrovWindowsShellPreferences preferences)
+      onWindowsShellPreferencesChanged;
   final Future<bool> Function() onOpenNotificationSettings;
   final List<ClientNotificationItem> notifications;
   final int notificationsUnread;
@@ -478,6 +483,20 @@ class _ProfileSection extends StatelessWidget {
                           onChanged: onSystemSurfacePreferencesChanged,
                           onOpenNotificationSettings:
                               onOpenNotificationSettings,
+                        ),
+                      ),
+                      const _SettingsRowDivider(),
+                    ],
+                    if (appContext.hostPlatform == HostPlatform.windows) ...[
+                      _SettingsRow(
+                        key: const ValueKey('profile-windows-shell-action'),
+                        icon: Icons.desktop_windows_outlined,
+                        title: 'Windows',
+                        value: windowsShellPreferences.summary,
+                        onTap: () => _showWindowsShellPreferencesSheet(
+                          context,
+                          preferences: windowsShellPreferences,
+                          onChanged: onWindowsShellPreferencesChanged,
                         ),
                       ),
                       const _SettingsRowDivider(),
@@ -1121,6 +1140,147 @@ void _showSystemSurfacePreferencesSheet(
                     icon: const Icon(Icons.settings_outlined),
                     label: const Text('Настройки уведомлений Android'),
                   ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    ),
+  );
+}
+
+void _showWindowsShellPreferencesSheet(
+  BuildContext context, {
+  required PokrovWindowsShellPreferences preferences,
+  required Future<bool> Function(PokrovWindowsShellPreferences preferences)
+      onChanged,
+}) {
+  var current = preferences;
+  var busy = false;
+
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
+    builder: (sheetContext) => StatefulBuilder(
+      builder: (sheetContext, setSheetState) {
+        Future<void> save(PokrovWindowsShellPreferences next) async {
+          if (busy) {
+            return;
+          }
+          setSheetState(() => busy = true);
+          final saved = await onChanged(next);
+          if (!sheetContext.mounted) {
+            return;
+          }
+          setSheetState(() {
+            if (saved) {
+              current = next;
+            }
+            busy = false;
+          });
+          if (!saved) {
+            showPokrovSnack(
+              sheetContext,
+              'Не удалось сохранить настройки Windows.',
+              tone: PokrovSnackTone.danger,
+            );
+          }
+        }
+
+        Widget toggleRow({
+          required Key key,
+          required String title,
+          required String description,
+          required bool value,
+          required PokrovWindowsShellPreferences Function(bool value) next,
+        }) {
+          return Padding(
+            key: key,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(sheetContext).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        description,
+                        style: Theme.of(sheetContext)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(
+                              color: PokrovPalette.of(sheetContext).muted,
+                              height: 1.3,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                PokrovSwitch(
+                  value: value,
+                  onChanged: busy
+                      ? null
+                      : (value) {
+                          unawaited(save(next(value)));
+                        },
+                ),
+              ],
+            ),
+          );
+        }
+
+        return SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              22,
+              4,
+              22,
+              24 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+            ),
+            child: Column(
+              key: const ValueKey('profile-windows-shell-sheet'),
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'POKROV в Windows',
+                  style: Theme.of(sheetContext).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Автозапуск не включает VPN сам. Системный туннель запросит права Windows только при подключении.',
+                  style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
+                        color: PokrovPalette.of(sheetContext).muted,
+                        height: 1.35,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                toggleRow(
+                  key: const ValueKey('windows-launch-at-login-toggle'),
+                  title: 'Запускать вместе с Windows',
+                  description:
+                      'POKROV откроется после входа в систему, но подключение останется под вашим контролем.',
+                  value: current.launchAtLogin,
+                  next: (value) => current.copyWith(launchAtLogin: value),
+                ),
+                const Divider(height: 1),
+                toggleRow(
+                  key: const ValueKey('windows-close-to-tray-toggle'),
+                  title: 'Крестик сворачивает в трей',
+                  description:
+                      'Если выключить, крестик полностью закроет POKROV. Пункт «Выход» в трее работает всегда.',
+                  value: current.closeToTray,
+                  next: (value) => current.copyWith(closeToTray: value),
                 ),
               ],
             ),

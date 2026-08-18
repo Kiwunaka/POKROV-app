@@ -45,7 +45,8 @@
   "safe_claims": [
     "The Windows shell uses the desktop FFI runtime lane.",
     "The local release build bundles POKROV Core 1.0.3 and its pinned libcronet.dll dependency next to the Flutter runner.",
-    "Local packaging produces an unsigned direct-download installer EXE and portable ZIP with the SmartScreen warning above."
+    "Windows requests elevation only when a system TUN connection is started and does not report a successful VPN connection when elevation is unavailable.",
+    "Local packaging uses an Inno Setup per-user wizard with install-directory, desktop-shortcut, and autostart choices, plus an unsigned direct-download installer EXE and portable ZIP with the SmartScreen warning above."
   ],
   "blocked_on": []
 }

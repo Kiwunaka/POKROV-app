@@ -244,120 +244,80 @@ if (-not $SkipZip) {
 
 $installerSha256 = $null
 if (-not $SkipInstaller) {
-  if ($SkipZip) {
-    throw "Windows installer packaging requires the versioned zip. Remove -SkipZip or pass -SkipInstaller."
-  }
-  $iexpress = Get-Command "iexpress.exe" -ErrorAction SilentlyContinue
-  if (-not $iexpress) {
-    throw "iexpress.exe is required to build the unsigned Windows direct-download installer EXE"
+  $innoCandidates = @(
+    (Get-Command "ISCC.exe" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue),
+    (Join-Path $env:LOCALAPPDATA "Programs\Inno Setup 6\ISCC.exe"),
+    (Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"),
+    (Join-Path $env:ProgramFiles "Inno Setup 6\ISCC.exe")
+  ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -Unique
+  $iscc = $innoCandidates | Select-Object -First 1
+  if (-not $iscc) {
+    throw "Inno Setup 6 (ISCC.exe) is required to build the Windows installer."
   }
 
-  $installerPayloadDirectory = Join-Path $artifactRoot ("installer_payload_" + ($version -replace '[^A-Za-z0-9_.-]', '_'))
-  if (Test-Path -LiteralPath $installerPayloadDirectory) {
-    Remove-Item -Recurse -Force -LiteralPath $installerPayloadDirectory
-  }
-  New-Item -ItemType Directory -Force -Path $installerPayloadDirectory | Out-Null
+  $issPath = Join-Path $artifactRoot ($installerName + ".iss")
+  $installerOutputName = [System.IO.Path]::GetFileNameWithoutExtension($installerName)
+  $setupIconPath = Join-Path $appDirectory "windows\runner\resources\app_icon.ico"
+  $iss = @"
+[Setup]
+AppId={{A8EE9193-93A9-4B13-A7AD-8441D98A48E1}
+AppName=POKROV VPN
+AppVersion=$version
+AppPublisher=POKROV
+AppPublisherURL=https://pokrov.space/
+AppSupportURL=https://pokrov.space/support/
+DefaultDirName={localappdata}\Programs\POKROV
+DefaultGroupName=POKROV
+DisableDirPage=no
+DisableProgramGroupPage=no
+PrivilegesRequired=lowest
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
+OutputDir=$artifactRoot
+OutputBaseFilename=$installerOutputName
+SetupIconFile=$setupIconPath
+UninstallDisplayIcon={app}\$($windowsReleaseConfig.binary_name)
+Compression=lzma2
+SolidCompression=yes
+WizardStyle=modern
+CloseApplications=yes
+RestartApplications=no
+AppMutex=POKROV.Windows.Shell
 
-  $zipLeaf = Split-Path -Leaf $zipPath
-  Copy-Item -Force -LiteralPath $zipPath -Destination (Join-Path $installerPayloadDirectory $zipLeaf)
+[Languages]
+Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 
-  $installPs1Path = Join-Path $installerPayloadDirectory "install-pokrov.ps1"
-  $installCmdPath = Join-Path $installerPayloadDirectory "install-pokrov.cmd"
-  $installPs1 = @"
-`$ErrorActionPreference = "Stop"
-`$sourceDir = Split-Path -Parent `$MyInvocation.MyCommand.Path
-`$zipPath = Join-Path `$sourceDir "$zipLeaf"
-`$target = Join-Path `$env:LOCALAPPDATA "Programs\\POKROV"
-`$temp = Join-Path `$env:TEMP ("pokrov-install-" + [guid]::NewGuid().ToString("N"))
-New-Item -ItemType Directory -Force -Path `$temp | Out-Null
-try {
-  Expand-Archive -Path `$zipPath -DestinationPath `$temp -Force
-  if (Test-Path -LiteralPath `$target) {
-    Remove-Item -Recurse -Force -LiteralPath `$target
-  }
-  New-Item -ItemType Directory -Force -Path `$target | Out-Null
-  Copy-Item -Recurse -Force -Path (Join-Path `$temp "*") -Destination `$target
-  `$exe = Join-Path `$target "$($windowsReleaseConfig.binary_name)"
-  `$shell = New-Object -ComObject WScript.Shell
-  `$programs = [Environment]::GetFolderPath("Programs")
-  `$shortcut = `$shell.CreateShortcut((Join-Path `$programs "POKROV.lnk"))
-  `$shortcut.TargetPath = `$exe
-  `$shortcut.WorkingDirectory = `$target
-  `$shortcut.Save()
-  `$protocolRoot = "HKCU:\Software\Classes\pokrov"
-  New-Item -Path `$protocolRoot -Force | Out-Null
-  Set-Item -LiteralPath `$protocolRoot -Value "URL:POKROV acquisition continuation"
-  New-ItemProperty -LiteralPath `$protocolRoot -Name "URL Protocol" -Value "" -PropertyType String -Force | Out-Null
-  `$iconKey = Join-Path `$protocolRoot "DefaultIcon"
-  New-Item -Path `$iconKey -Force | Out-Null
-  Set-Item -LiteralPath `$iconKey -Value ('"' + `$exe + '",0')
-  `$commandKey = Join-Path `$protocolRoot "shell\open\command"
-  New-Item -Path `$commandKey -Force | Out-Null
-  Set-Item -LiteralPath `$commandKey -Value ('"' + `$exe + '" "%1"')
-  Start-Process -FilePath `$exe -WorkingDirectory `$target
-} finally {
-  if (Test-Path -LiteralPath `$temp) {
-    Remove-Item -Recurse -Force -LiteralPath `$temp
-  }
-}
+[Tasks]
+Name: "desktopicon"; Description: "Создать ярлык на рабочем столе"; GroupDescription: "Ярлыки:"; Flags: unchecked
+Name: "autostart"; Description: "Запускать POKROV вместе с Windows"; GroupDescription: "Запуск:"; Flags: unchecked
+
+[Files]
+Source: "$stagedBundleDirectory\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+[Icons]
+Name: "{group}\POKROV"; Filename: "{app}\$($windowsReleaseConfig.binary_name)"; WorkingDir: "{app}"
+Name: "{autodesktop}\POKROV"; Filename: "{app}\$($windowsReleaseConfig.binary_name)"; WorkingDir: "{app}"; Tasks: desktopicon
+
+[Registry]
+Root: HKCU; Subkey: "Software\Classes\pokrov"; ValueType: string; ValueName: ""; ValueData: "URL:POKROV acquisition continuation"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\pokrov"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
+Root: HKCU; Subkey: "Software\Classes\pokrov\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\$($windowsReleaseConfig.binary_name),0"
+Root: HKCU; Subkey: "Software\Classes\pokrov\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\$($windowsReleaseConfig.binary_name)"" ""%1"""
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "POKROV"; ValueData: """{app}\$($windowsReleaseConfig.binary_name)"""; Tasks: autostart; Flags: uninsdeletevalue
+
+[Run]
+Filename: "{app}\$($windowsReleaseConfig.binary_name)"; WorkingDir: "{app}"; Description: "Запустить POKROV"; Flags: nowait postinstall skipifsilent
 "@
-  $installCmd = @"
-@echo off
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0install-pokrov.ps1"
-exit /b %ERRORLEVEL%
-"@
-  Write-Utf8File -Path $installPs1Path -Content $installPs1
-  Write-Utf8File -Path $installCmdPath -Content $installCmd
-
-  $sedPath = Join-Path $artifactRoot ($installerName + ".sed")
-  $sed = @"
-[Version]
-Class=IEXPRESS
-SEDVersion=3
-[Options]
-PackagePurpose=InstallApp
-ShowInstallProgramWindow=1
-HideExtractAnimation=0
-UseLongFileName=1
-InsideCompressed=0
-CAB_FixedSize=0
-CAB_ResvCodeSigning=0
-RebootMode=N
-InstallPrompt=
-DisplayLicense=
-FinishMessage=POKROV installed.
-TargetName=$installerPath
-FriendlyName=POKROV Windows installer
-AppLaunched=install-pokrov.cmd
-PostInstallCmd=<None>
-AdminQuietInstCmd=install-pokrov.cmd
-UserQuietInstCmd=install-pokrov.cmd
-SourceFiles=SourceFiles
-[SourceFiles]
-SourceFiles0=$installerPayloadDirectory
-[SourceFiles0]
-install-pokrov.cmd=
-install-pokrov.ps1=
-$zipLeaf=
-"@
-  Write-Utf8File -Path $sedPath -Content $sed
+  Write-Utf8File -Path $issPath -Content $iss
   if (Test-Path -LiteralPath $installerPath) {
     Remove-Item -Force -LiteralPath $installerPath
   }
-  $iexpressProcess = Start-Process -FilePath $iexpress.Source -ArgumentList @("/N", "/Q", $sedPath) -NoNewWindow -Wait -PassThru
-  if ($iexpressProcess.ExitCode -ne 0) {
-    throw "iexpress.exe failed with exit code $($iexpressProcess.ExitCode)"
+  $innoProcess = Start-Process -FilePath $iscc -ArgumentList @("/Qp", $issPath) -NoNewWindow -Wait -PassThru
+  if ($innoProcess.ExitCode -ne 0) {
+    throw "ISCC.exe failed with exit code $($innoProcess.ExitCode)"
   }
-  $installerReady = $false
-  for ($attempt = 0; $attempt -lt 60; $attempt++) {
-    if (Test-Path -LiteralPath $installerPath) {
-      $installerReady = $true
-      break
-    }
-    Start-Sleep -Seconds 1
-  }
-  if (-not $installerReady) {
-    throw "iexpress.exe did not produce installer: $installerPath"
+  if (-not (Test-Path -LiteralPath $installerPath)) {
+    throw "ISCC.exe did not produce installer: $installerPath"
   }
   $installerSha256 = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash
 }

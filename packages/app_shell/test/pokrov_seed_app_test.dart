@@ -4680,6 +4680,60 @@ void main() {
     );
   });
 
+  testWidgets('windows profile controls autostart and close behavior',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1180, 820));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    var saved = const PokrovWindowsShellPreferences(
+      launchAtLogin: true,
+      closeToTray: false,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        windowsShellPreferencesReader: () async => saved,
+        windowsShellPreferencesUpdater: (next) async {
+          saved = next;
+          return next;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-profile');
+
+    final action = find.byKey(
+      const ValueKey('profile-windows-shell-action'),
+    );
+    final profileScrollable =
+        find.ancestor(of: action, matching: find.byType(Scrollable)).first;
+    await tester.dragUntilVisible(
+      action,
+      profileScrollable,
+      const Offset(0, -300),
+      maxIteration: 12,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('profile-windows-shell-sheet')),
+      findsOneWidget,
+    );
+    expect(find.text('POKROV в Windows'), findsOneWidget);
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const ValueKey('windows-close-to-tray-toggle')),
+        matching: find.byType(CupertinoSwitch),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(saved.closeToTray, isTrue);
+    expect(saved.launchAtLogin, isTrue);
+  });
+
   testWidgets('enhanced protection asks for explicit consent before activation',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1180, 820));
@@ -7039,6 +7093,40 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
     expect(controller.attached, isFalse);
+  });
+
+  testWidgets(
+      'desktop shell waits for saved route scope before elevated continuation',
+      (tester) async {
+    _installReadyRuntimeBridgeMock();
+    final controller = PokrovShellController();
+    final store = _DelayedClientExperienceStore(
+      const PokrovClientExperienceState.empty().copyWith(
+        firstRouteScopeConfirmed: true,
+        firstRouteScopeMode: RouteMode.fullTunnel,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        // The shell-controller gate is shared. Android's test bridge makes
+        // the runtime independently ready so this regression isolates the
+        // delayed preference restore that broke Windows --connect handoff.
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        shellController: controller,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        clientExperienceStore: store,
+      ),
+    );
+    await tester.pump();
+
+    expect(controller.attached, isTrue);
+    expect(controller.canToggle, isFalse);
+
+    store.releaseStaleRead();
+    await tester.pumpAndSettle();
+
+    expect(controller.canToggle, isTrue);
   });
 
   testWidgets('rules lets user add a custom selected app identifier',

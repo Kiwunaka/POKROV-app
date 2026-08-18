@@ -32,6 +32,8 @@ class FlutterWindow : public Win32Window {
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
       acquisition_links_channel_;
+  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
+      windows_shell_channel_;
   std::string pending_acquisition_uri_;
 };
 

@@ -216,6 +216,61 @@ class PokrovSystemSurfacePreferences {
   }
 }
 
+class PokrovWindowsShellPreferences {
+  const PokrovWindowsShellPreferences({
+    this.launchAtLogin = false,
+    this.closeToTray = true,
+  });
+
+  final bool launchAtLogin;
+  final bool closeToTray;
+
+  PokrovWindowsShellPreferences copyWith({
+    bool? launchAtLogin,
+    bool? closeToTray,
+  }) {
+    return PokrovWindowsShellPreferences(
+      launchAtLogin: launchAtLogin ?? this.launchAtLogin,
+      closeToTray: closeToTray ?? this.closeToTray,
+    );
+  }
+
+  factory PokrovWindowsShellPreferences.fromMap(
+    Map<String, Object?>? value,
+  ) {
+    return PokrovWindowsShellPreferences(
+      launchAtLogin: value?['launchAtLogin'] == true,
+      closeToTray: value?['closeToTray'] != false,
+    );
+  }
+
+  Map<String, Object?> toMap() => <String, Object?>{
+        'launchAtLogin': launchAtLogin,
+        'closeToTray': closeToTray,
+      };
+
+  String get summary => [
+        launchAtLogin ? 'автозапуск' : 'без автозапуска',
+        closeToTray ? 'крестик → трей' : 'крестик → выход',
+      ].join(' · ');
+}
+
+enum PokrovWindowsTunnelAuthorization {
+  allowed,
+  relaunching,
+  denied,
+  unavailable,
+}
+
+typedef PokrovWindowsTunnelAuthorizer = Future<PokrovWindowsTunnelAuthorization>
+    Function();
+typedef PokrovWindowsShellPreferencesReader
+    = Future<PokrovWindowsShellPreferences> Function();
+typedef PokrovWindowsShellPreferencesUpdater
+    = Future<PokrovWindowsShellPreferences?> Function(
+  PokrovWindowsShellPreferences preferences,
+);
+
 /// Host-facing control used by desktop tray integrations. It deliberately
 /// delegates to the same shell action as the main button, so staging,
 /// permission checks, trusted Wi-Fi and error handling cannot diverge.
@@ -274,6 +329,73 @@ class PokrovShellController extends ChangeNotifier {
 
 const MethodChannel _pokrovRuntimeSystemChannel =
     MethodChannel('space.pokrov/runtime_engine');
+const MethodChannel _pokrovWindowsShellChannel =
+    MethodChannel('space.pokrov/windows-shell');
+
+Future<PokrovWindowsTunnelAuthorization>
+    requestPokrovWindowsTunnelAuthorization(HostPlatform hostPlatform) async {
+  if (hostPlatform != HostPlatform.windows) {
+    return PokrovWindowsTunnelAuthorization.allowed;
+  }
+  try {
+    final elevated = await _pokrovWindowsShellChannel.invokeMethod<bool>(
+          'isElevated',
+        ) ??
+        false;
+    if (elevated) {
+      return PokrovWindowsTunnelAuthorization.allowed;
+    }
+    final relaunched = await _pokrovWindowsShellChannel.invokeMethod<bool>(
+          'relaunchElevated',
+        ) ??
+        false;
+    return relaunched
+        ? PokrovWindowsTunnelAuthorization.relaunching
+        : PokrovWindowsTunnelAuthorization.denied;
+  } on PlatformException {
+    return PokrovWindowsTunnelAuthorization.denied;
+  } on MissingPluginException {
+    return PokrovWindowsTunnelAuthorization.unavailable;
+  }
+}
+
+Future<PokrovWindowsShellPreferences> readPokrovWindowsShellPreferences(
+  HostPlatform hostPlatform,
+) async {
+  if (hostPlatform != HostPlatform.windows) {
+    return const PokrovWindowsShellPreferences();
+  }
+  try {
+    final value = await _pokrovWindowsShellChannel
+        .invokeMapMethod<String, Object?>('readPreferences');
+    return PokrovWindowsShellPreferences.fromMap(value);
+  } on PlatformException {
+    return const PokrovWindowsShellPreferences();
+  } on MissingPluginException {
+    return const PokrovWindowsShellPreferences();
+  }
+}
+
+Future<PokrovWindowsShellPreferences?> updatePokrovWindowsShellPreferences(
+  HostPlatform hostPlatform,
+  PokrovWindowsShellPreferences preferences,
+) async {
+  if (hostPlatform != HostPlatform.windows) {
+    return null;
+  }
+  try {
+    final value =
+        await _pokrovWindowsShellChannel.invokeMapMethod<String, Object?>(
+      'updatePreferences',
+      preferences.toMap(),
+    );
+    return PokrovWindowsShellPreferences.fromMap(value);
+  } on PlatformException {
+    return null;
+  } on MissingPluginException {
+    return null;
+  }
+}
 
 Future<PokrovClientUpdateInstallStatus> installPokrovClientUpdate(
   HostPlatform hostPlatform,

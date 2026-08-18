@@ -309,6 +309,7 @@ String? _runtimeNullableText(Object? value) {
 }
 
 const _publicRuntimeFailureKinds = <String>{
+  'desktop_loopback_port_conflict',
   'runtime_initialization_failed',
   'runtime_start_after_permission_failed',
   'runtime_start_failed',
@@ -442,6 +443,8 @@ String _publicRuntimeMessage({
     return 'Не удалось связаться с системным модулем.';
   }
   switch (failureKind) {
+    case 'desktop_loopback_port_conflict':
+      return 'Локальный порт POKROV занят другой программой. Повторите подключение.';
     case 'runtime_initialization_failed':
       return 'POKROV не смог подготовить устройство.';
     case 'runtime_start_after_permission_failed':
@@ -1073,6 +1076,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   ManagedProfilePayload? _stagedPayload;
   String? _stagedConfigPath;
   DateTime? _runningSince;
+  String? _lastFailureKind;
   RuntimePhase _phase = RuntimePhase.artifactMissing;
   String _message = _missingArtifactMessage;
   static const defaultCoreTag = 'v1.0.3';
@@ -1146,6 +1150,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       );
       if (error.isNotEmpty) {
         _phase = RuntimePhase.artifactReady;
+        _lastFailureKind = 'runtime_initialization_failed';
         _message = 'Не удалось подготовить подключение.';
         return _snapshotPreservingCurrentMessage(
           phase: _phase,
@@ -1154,10 +1159,12 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         );
       } else {
         _phase = RuntimePhase.initialized;
+        _lastFailureKind = null;
         _message = 'Подготовка подключения завершена.';
       }
     } catch (_) {
       _phase = RuntimePhase.artifactReady;
+      _lastFailureKind = 'runtime_initialization_failed';
       _message = 'Не удалось загрузить модуль подключения.';
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
@@ -1180,6 +1187,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
 
     if (!payload.materializedForRuntime) {
       _phase = RuntimePhase.initialized;
+      _lastFailureKind = 'profile_staging_failed';
       _message =
           'POKROV Core нужен уже собранный sing-box профиль. Обновите приложение или профиль доступа.';
       return _snapshotPreservingCurrentMessage(
@@ -1194,13 +1202,15 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       'managed-profile.json',
     );
     try {
-      final configPayload = _materializePokrovCoreConfig(
+      var configPayload = _materializePokrovCoreConfig(
         payload.configPayload,
         payload.warpPolicy,
       );
+      configPayload = await _remapBusyDesktopLoopbackPorts(configPayload);
       await File(finalPath).writeAsString(configPayload, flush: true);
     } on Object catch (_) {
       _phase = RuntimePhase.initialized;
+      _lastFailureKind = 'profile_staging_failed';
       _message = 'Профиль доступа не прошел проверку.';
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
@@ -1212,6 +1222,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     final secureError = _bindings!.secureFile(finalPath);
     if (secureError.isNotEmpty) {
       _phase = RuntimePhase.initialized;
+      _lastFailureKind = 'profile_staging_failed';
       _message = 'POKROV не смог защитить файл профиля.';
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
@@ -1223,6 +1234,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     _stagedPayload = payload;
     _stagedConfigPath = finalPath;
     _phase = RuntimePhase.configStaged;
+    _lastFailureKind = null;
     _message = 'Настройки POKROV готовы.';
     return snapshot();
   }
@@ -1248,7 +1260,11 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     );
     if (error.isNotEmpty) {
       _phase = RuntimePhase.configStaged;
-      _message = 'POKROV не смог подключиться.';
+      _lastFailureKind = _desktopStartFailureKind(error);
+      _message = _publicRuntimeMessage(
+        phase: _phase,
+        failureKind: _lastFailureKind,
+      );
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: true,
@@ -1260,6 +1276,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     if (probeError != null) {
       _bindings!.stop();
       _phase = RuntimePhase.configStaged;
+      _lastFailureKind = 'core_egress_probe_failed';
       _message = 'POKROV запустил модуль, но трафик не проходит.';
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
@@ -1269,6 +1286,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     }
 
     _phase = RuntimePhase.running;
+    _lastFailureKind = null;
     _runningSince ??= DateTime.now().toUtc();
     _message = 'POKROV включен.';
     return snapshot();
@@ -1364,6 +1382,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
 
     final error = _bindings!.stop();
     if (error.isNotEmpty) {
+      _lastFailureKind = 'runtime_stop_failed';
       _message = 'POKROV не смог отключиться.';
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
@@ -1376,6 +1395,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         ? RuntimePhase.initialized
         : RuntimePhase.configStaged;
     _runningSince = null;
+    _lastFailureKind = null;
     _message = 'POKROV отключен.';
     return _snapshotPreservingCurrentMessage(
       phase: _phase,
@@ -1587,7 +1607,122 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       canInitialize: canInitialize,
       canConnect: canConnect,
       message: _message,
+      lastFailureKind: _lastFailureKind,
     );
+  }
+}
+
+String _desktopStartFailureKind(String error) {
+  final normalized = error.toLowerCase();
+  if ((normalized.contains('bind') || normalized.contains('listen')) &&
+      (normalized.contains('address') || normalized.contains('network'))) {
+    return 'desktop_loopback_port_conflict';
+  }
+  if (normalized.contains('permission') ||
+      normalized.contains('access') ||
+      normalized.contains('administrator')) {
+    return 'runtime_start_after_permission_failed';
+  }
+  return 'runtime_start_failed';
+}
+
+Future<String> _remapBusyDesktopLoopbackPorts(String configPayload) async {
+  final decoded = jsonDecode(configPayload);
+  if (decoded is! Map) {
+    return configPayload;
+  }
+  final config = decoded.map<String, Object?>(
+    (key, value) => MapEntry(key.toString(), value),
+  );
+  final inbounds = _runtimeMapList(config['inbounds']);
+  if (inbounds.isEmpty) {
+    return configPayload;
+  }
+
+  var changed = false;
+  final plannedPorts = <int>{};
+  for (final inbound in inbounds) {
+    final listen = _runtimeText(inbound['listen']).toLowerCase();
+    final port = _runtimeNullableInt(inbound['listen_port']);
+    if (!const {'127.0.0.1', 'localhost', '::1'}.contains(listen) ||
+        port == null ||
+        port <= 0 ||
+        port > 65535) {
+      continue;
+    }
+    final duplicate = plannedPorts.contains(port);
+    final available = !duplicate && await _desktopLoopbackPortAvailable(port);
+    if (available) {
+      plannedPorts.add(port);
+      continue;
+    }
+    final replacement = await _findDesktopLoopbackPort(plannedPorts);
+    if (replacement == null) {
+      throw const SocketException('No local runtime port is available');
+    }
+    inbound['listen_port'] = replacement;
+    plannedPorts.add(replacement);
+    changed = true;
+  }
+  if (!changed) {
+    return configPayload;
+  }
+  config['inbounds'] = inbounds;
+  return const JsonEncoder.withIndent('  ').convert(config);
+}
+
+Future<int?> _findDesktopLoopbackPort(Set<int> excluded) async {
+  for (var attempt = 0; attempt < 16; attempt += 1) {
+    ServerSocket? tcp;
+    RawDatagramSocket? udp;
+    try {
+      tcp = await ServerSocket.bind(
+        InternetAddress.loopbackIPv4,
+        0,
+        shared: false,
+      );
+      final candidate = tcp.port;
+      if (excluded.contains(candidate)) {
+        continue;
+      }
+      udp = await RawDatagramSocket.bind(
+        InternetAddress.loopbackIPv4,
+        candidate,
+        reuseAddress: false,
+        reusePort: false,
+      );
+      return candidate;
+    } on SocketException {
+      // A concurrent local process won this candidate. Ask the OS again.
+    } finally {
+      udp?.close();
+      await tcp?.close();
+    }
+  }
+  return null;
+}
+
+Future<bool> _desktopLoopbackPortAvailable(int port) async {
+  ServerSocket? tcp;
+  RawDatagramSocket? udp;
+  try {
+    tcp = await ServerSocket.bind(
+      InternetAddress.loopbackIPv4,
+      port,
+      shared: false,
+    );
+    udp = await RawDatagramSocket.bind(
+      InternetAddress.loopbackIPv4,
+      port,
+      reuseAddress: false,
+      reusePort: false,
+    );
+    return true;
+  } on SocketException {
+    return false;
+  } finally {
+    udp?.close();
+    await tcp?.close();
   }
 }
 
