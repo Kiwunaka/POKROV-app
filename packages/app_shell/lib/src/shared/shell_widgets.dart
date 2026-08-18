@@ -408,7 +408,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
             : widget.running
                 ? 'Защита работает на этом устройстве'
                 : (widget.degraded || widget.error)
-                    ? 'Откройте детали и повторите'
+                    ? 'Нажмите, чтобы повторить'
                     : 'Одно нажатие — и готово';
 
     if (!widget.desktopSize) {

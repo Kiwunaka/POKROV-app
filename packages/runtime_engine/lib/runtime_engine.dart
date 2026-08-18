@@ -1123,15 +1123,17 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         ? RuntimePhase.artifactReady
         : _phase;
     _phase = phase;
-    _message = switch (phase) {
-      RuntimePhase.artifactReady =>
-        'Ядро готово. Подключение запустится, когда приложение запросит старт.',
-      RuntimePhase.initialized =>
-        'Подготовка завершена. Осталось получить профиль доступа.',
-      RuntimePhase.configStaged => 'Профиль доступа готов. Можно подключаться.',
-      RuntimePhase.running => 'POKROV подключен с текущим профилем доступа.',
-      RuntimePhase.artifactMissing => _missingArtifactMessage,
-    };
+    if (_lastFailureKind == null) {
+      _message = switch (phase) {
+        RuntimePhase.artifactReady =>
+          'Ядро готово. Подключение запустится, когда приложение запросит старт.',
+        RuntimePhase.initialized =>
+          'Подготовка завершена. Осталось получить профиль доступа.',
+        RuntimePhase.configStaged => 'Профиль доступа готов. Можно подключаться.',
+        RuntimePhase.running => 'POKROV подключен с текущим профилем доступа.',
+        RuntimePhase.artifactMissing => _missingArtifactMessage,
+      };
+    }
 
     return _buildSnapshot(
       artifacts: artifacts,

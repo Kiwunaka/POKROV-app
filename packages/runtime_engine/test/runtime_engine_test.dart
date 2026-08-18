@@ -1730,6 +1730,12 @@ void main() {
     expect(snapshot.message, contains('Windows не пропускает трафик'));
     expect(bindings.startCalls, 1);
     expect(bindings.stopCalls, 1);
+
+    final refreshed = await engine.snapshot();
+    expect(refreshed.phase, RuntimePhase.configStaged);
+    expect(refreshed.lastFailureKind, 'desktop_tun_egress_probe_failed');
+    expect(refreshed.message, contains('Windows не пропускает трафик'));
+    expect(refreshed.message, isNot(contains('Профиль доступа готов')));
   });
 
   test('desktop lane keeps runtime-ready WARP disabled without user consent',
