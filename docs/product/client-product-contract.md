@@ -593,10 +593,11 @@ Release continuity rules:
   opt-in lane and must never be returned as the stable candidate
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
-- stable candidates use a strictly newer semantic version. `1.1.2+25` remains
-  the current published stable direct release until a later exact candidate is
-  promoted. Android and Windows source are aligned at unreleased candidate
-  `1.1.4+27`; both production build scripts fail before packaging when their
+- stable candidates use a strictly newer semantic version. Android `1.1.2`
+  and Windows `1.1.3` remain the current published stable direct artifacts
+  until a later exact candidate is promoted. Both sources are aligned at
+  unreleased candidate
+  `1.1.5+28`; both production build scripts fail before packaging when their
   package versions differ. This source alignment is not a release claim and
   does not update public metadata or assets by itself.
 - the `2026-05-15` Android handoff explains the retained beta publication but
@@ -608,7 +609,7 @@ Release continuity rules:
 - the shared runtime identity is `pokrovClientVersion`; release builds pass
   `--dart-define=POKROV_APP_VERSION=<host pubspec version without +build>` so
   provisioning, update checks, diagnostics, and visible version text match the
-  package. Local builds use the current package base-version fallback `1.1.2`;
+  package. Local builds use the current package base-version fallback `1.1.5`;
   production packaging passes that value explicitly through `POKROV_APP_VERSION`.
 - local non-release builds keep updater and source-code surfaces disabled instead of falling back to a personal repository URL
 - an update prompt or tap may use only

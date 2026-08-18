@@ -18,7 +18,7 @@ import 'src/emergency/emergency_network_store.dart';
 /// package base version (without Android's build number).
 const pokrovClientVersion = String.fromEnvironment(
   'POKROV_APP_VERSION',
-  defaultValue: '1.1.0',
+  defaultValue: '1.1.5',
 );
 
 const _platformErrorCodeHeader = 'X-POKROV-Auth-Error';
