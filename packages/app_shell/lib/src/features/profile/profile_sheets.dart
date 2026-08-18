@@ -704,6 +704,7 @@ void _showNotificationsSheet(
   required bool usingCache,
   required String cachedAt,
   required Future<void> Function() onRefresh,
+  required Future<bool> Function(List<String> ids) onDismiss,
   required void Function(String label, String value) onOpenHandoff,
 }) {
   showModalBottomSheet<void>(
@@ -716,6 +717,7 @@ void _showNotificationsSheet(
       usingCache: usingCache,
       cachedAt: cachedAt,
       onRefresh: onRefresh,
+      onDismiss: onDismiss,
       onOpenHandoff: onOpenHandoff,
     ),
   );
@@ -727,6 +729,7 @@ class _NotificationsSheet extends StatelessWidget {
     required this.usingCache,
     required this.cachedAt,
     required this.onRefresh,
+    required this.onDismiss,
     required this.onOpenHandoff,
   });
 
@@ -734,6 +737,7 @@ class _NotificationsSheet extends StatelessWidget {
   final bool usingCache;
   final String cachedAt;
   final Future<void> Function() onRefresh;
+  final Future<bool> Function(List<String> ids) onDismiss;
   final void Function(String label, String value) onOpenHandoff;
 
   @override
@@ -760,6 +764,21 @@ class _NotificationsSheet extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
+                  if (notifications.isNotEmpty)
+                    TextButton(
+                      key: const ValueKey('profile-notifications-clear'),
+                      onPressed: () async {
+                        final ids = notifications
+                            .map((item) => item.id)
+                            .where((id) => id.trim().isNotEmpty)
+                            .toList(growable: false);
+                        final ok = await onDismiss(ids);
+                        if (ok && context.mounted) {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      child: const Text('Очистить'),
+                    ),
                   IconButton(
                     key: const ValueKey('profile-notifications-refresh'),
                     tooltip: 'Обновить',

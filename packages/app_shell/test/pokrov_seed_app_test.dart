@@ -139,6 +139,7 @@ class _FakeBootstrapper
     ClientAppsMetadata? clientAppsMetadata,
     ClientLocationsCatalog? locationsCatalog,
     ClientSubscriptionInfo? subscriptionInfo,
+    ClientNotificationInbox? notificationsInbox,
     ClientSupportAssistantReply? assistantReply,
     this.assistantGate,
     this.assistantFailureCalls = const <int>{},
@@ -251,6 +252,12 @@ class _FakeBootstrapper
                 ),
               ],
               trafficPolicy: const <String, Object?>{},
+            ),
+        notificationsInbox = notificationsInbox ??
+            const ClientNotificationInbox(
+              items: <ClientNotificationItem>[],
+              nextCursor: '',
+              unreadCount: 0,
             );
 
   final ManagedProfilePayload payload;
@@ -267,6 +274,7 @@ class _FakeBootstrapper
   final ClientAppsMetadata clientAppsMetadata;
   final ClientLocationsCatalog locationsCatalog;
   ClientSubscriptionInfo subscriptionInfo;
+  final ClientNotificationInbox notificationsInbox;
   final ClientSupportAssistantReply assistantReply;
   final Future<void>? assistantGate;
   final Set<int> assistantFailureCalls;
@@ -306,6 +314,7 @@ class _FakeBootstrapper
   int pairingIssueCalls = 0;
   int pairingCancelCalls = 0;
   final List<String> markedNotificationIds = <String>[];
+  final List<String> dismissedNotificationIds = <String>[];
   bool? lastWarpConsentEnabled;
   String? lastWarpRuntimeEventName;
   String? lastWarpRuntimeEventState;
@@ -552,11 +561,7 @@ class _FakeBootstrapper
     if (notificationsFailure != null) {
       throw BootstrapFailure(notificationsFailure!);
     }
-    return const ClientNotificationInbox(
-      items: <ClientNotificationItem>[],
-      nextCursor: '',
-      unreadCount: 0,
-    );
+    return notificationsInbox;
   }
 
   @override
@@ -565,6 +570,15 @@ class _FakeBootstrapper
     required List<String> ids,
   }) async {
     markedNotificationIds.addAll(ids);
+    return true;
+  }
+
+  @override
+  Future<bool> dismissClientNotifications({
+    required HostPlatform hostPlatform,
+    required List<String> ids,
+  }) async {
+    dismissedNotificationIds.addAll(ids);
     return true;
   }
 
@@ -4390,6 +4404,22 @@ void main() {
         configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
+      notificationsInbox: const ClientNotificationInbox(
+        items: <ClientNotificationItem>[
+          ClientNotificationItem(
+            id: 'release.111',
+            kind: 'release',
+            title: 'Старое обновление',
+            body: 'Уведомление можно убрать.',
+            createdAt: '2026-08-17T10:00:00Z',
+            ctaLabel: '',
+            ctaHref: null,
+            read: false,
+          ),
+        ],
+        nextCursor: '',
+        unreadCount: 1,
+      ),
     );
     final launched = <Uri>[];
 
@@ -4465,7 +4495,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('profile-notifications-sheet')),
         findsOneWidget);
-    expect(find.text('Пока нет уведомлений.'), findsOneWidget);
+    expect(find.text('Старое обновление'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey('profile-notifications-clear')),
+    );
+    await tester.pumpAndSettle();
+    expect(bootstrapper.dismissedNotificationIds, <String>['release.111']);
+    expect(find.byKey(const ValueKey('profile-notifications-sheet')),
+        findsNothing);
 
     expect(launched, isEmpty);
   });

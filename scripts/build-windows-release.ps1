@@ -14,6 +14,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+& (Join-Path $PSScriptRoot "check-client-version-parity.ps1")
+
 $EmergencySigningKeyId = [string]$EmergencySigningKeyId
 $EmergencySigningPublicKey = [string]$EmergencySigningPublicKey
 if ($EmergencySigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$') {

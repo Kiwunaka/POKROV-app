@@ -44,6 +44,7 @@ class _ProfileSection extends StatelessWidget {
     required this.notificationsCachedAt,
     required this.onOpenNotifications,
     required this.onRefreshNotifications,
+    required this.onDismissNotifications,
     required this.onFetchDevices,
     required this.onRevokeDevice,
     required this.onIssuePairingCode,
@@ -97,6 +98,7 @@ class _ProfileSection extends StatelessWidget {
   final String notificationsCachedAt;
   final VoidCallback onOpenNotifications;
   final Future<void> Function() onRefreshNotifications;
+  final Future<bool> Function(List<String> ids) onDismissNotifications;
   final Future<ClientDeviceList> Function() onFetchDevices;
   final Future<bool> Function(String deviceId) onRevokeDevice;
   final Future<ClientDevicePairingCode> Function() onIssuePairingCode;
@@ -522,6 +524,7 @@ class _ProfileSection extends StatelessWidget {
                           usingCache: notificationsUsingCache,
                           cachedAt: notificationsCachedAt,
                           onRefresh: onRefreshNotifications,
+                          onDismiss: onDismissNotifications,
                           onOpenHandoff: onOpenHandoff,
                         );
                       },

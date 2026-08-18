@@ -98,6 +98,7 @@ $requiredFiles = @(
   "scripts\\configure-android-production-signing.ps1",
   "scripts\\build-android-production.ps1",
   "scripts\\build-windows-release.ps1",
+  "scripts\\check-client-version-parity.ps1",
   "scripts\\sync-pokrov-core-runtime.ps1",
   "scripts\\run-tests.ps1",
   "scripts\\validate-seed.ps1",
@@ -443,6 +444,15 @@ if ($missing.Count -gt 0 -or $invalidJson.Count -gt 0 -or $manifestErrors.Count 
   $manifestErrors | ForEach-Object { Write-Host $_ }
 
   exit 1
+}
+
+try {
+  & (Join-Path $root "scripts\\check-client-version-parity.ps1")
+  if (-not $?) {
+    throw "Client version parity returned an unsuccessful PowerShell status."
+  }
+} catch {
+  throw "Client version parity failed during seed validation: $($_.Exception.Message)"
 }
 
 try {

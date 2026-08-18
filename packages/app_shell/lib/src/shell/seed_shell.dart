@@ -1928,8 +1928,56 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       usingCache: _notificationsUsingCache,
       cachedAt: _clientExperience.notificationsCachedAt,
       onRefresh: _refreshNotifications,
+      onDismiss: _dismissNotifications,
       onOpenHandoff: _showSeedHandoff,
     );
+  }
+
+  Future<bool> _dismissNotifications(List<String> ids) async {
+    final normalizedIds = ids
+        .map((id) => id.trim())
+        .where((id) => id.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    if (normalizedIds.isEmpty) {
+      return true;
+    }
+    final service = _clientDataService;
+    if (service == null) {
+      return false;
+    }
+    try {
+      final ok = await service.dismissClientNotifications(
+        hostPlatform: widget.appContext.hostPlatform,
+        ids: normalizedIds,
+      );
+      if (!ok || !mounted) {
+        return ok;
+      }
+      final inbox = _notificationsInbox;
+      final remaining = inbox?.items
+              .where((item) => !normalizedIds.contains(item.id))
+              .toList(growable: false) ??
+          const <ClientNotificationItem>[];
+      final updated = ClientNotificationInbox(
+        items: remaining,
+        nextCursor: inbox?.nextCursor ?? '',
+        unreadCount: remaining.where((item) => !item.read).length,
+      );
+      setState(() {
+        _notificationsInbox = updated;
+        _notificationsUnread = updated.unreadCount;
+        _notificationsUsingCache = false;
+        _clientExperience = _clientExperience.copyWith(
+          cachedNotifications: updated,
+          notificationsCachedAt: DateTime.now().toUtc().toIso8601String(),
+        );
+      });
+      _queueClientExperienceWrite();
+      return true;
+    } on Object {
+      return false;
+    }
   }
 
   Future<ClientDeviceList> _fetchClientDevices() async {
@@ -5607,6 +5655,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             notificationsCachedAt: _clientExperience.notificationsCachedAt,
             onOpenNotifications: _markNotificationsRead,
             onRefreshNotifications: _refreshNotifications,
+            onDismissNotifications: _dismissNotifications,
             onFetchDevices: _fetchClientDevices,
             onRevokeDevice: _revokeClientDevice,
             onIssuePairingCode: _issueDevicePairingCode,

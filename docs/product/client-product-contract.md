@@ -127,7 +127,9 @@ in-control status and a finite hourglass busy state, then two quick controls,
 WARP and an optional remote campaign above navigation. The premium-day pill
 opens Profile, where subscription details and renewal remain explicit. A visible
 notification bell opens the cached/refreshed in-app inbox from Home. Telegram
-reward does not occupy Home's first layer.
+reward does not occupy Home's first layer. The inbox exposes a user-controlled
+`Очистить` action that dismisses the visible notification ids server-side; it
+does not erase the underlying release, incident, entitlement, or audit record.
 
 Nested under `Profile`:
 
@@ -586,13 +588,12 @@ Release continuity rules:
   opt-in lane and must never be returned as the stable candidate
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
-- stable candidates after installed `1.0.5` beta builds use a strictly newer
-  semantic version. `1.1.2+25` is the current public source and its exact
-  `v1.1.2` assets are the stable direct release. Production synchronization sets
-  both `latest_version` and `min_supported_version` to `1.1.2`; older clients
-  receive a required Russian update prompt. The exact `2026-08-17` runtime
-  readback and LDPlayer same-signer update/session preservation are PASS;
-  Package Installer handoff was not repeated for this patch
+- stable candidates use a strictly newer semantic version. `1.1.2+25` remains
+  the current published stable direct release until a later exact candidate is
+  promoted. Android and Windows source are aligned at unreleased candidate
+  `1.1.4+27`; both production build scripts fail before packaging when their
+  package versions differ. This source alignment is not a release claim and
+  does not update public metadata or assets by itself.
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates
@@ -621,8 +622,8 @@ Release continuity rules:
 - downloaded-byte verification does not replace production-signing, install,
   runtime, or exact-candidate release proof
 - update prompts, release notes, remote banners, and Telegram release notices
-  for `1.1.2` use short Russian copy; the default client channel remains
-  `stable`, without a permanent beta label
+  use short Russian copy; the default client channel remains `stable`, without
+  a permanent beta label
 - release handoff must keep app, bot, and authenticated web surfaces aligned with the same runtime `APP_*` URLs
 
 ## Branding Requirements

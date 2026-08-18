@@ -7623,6 +7623,7 @@ void main() {
     final requests = <String>[];
     Map<String, dynamic>? pushBody;
     Map<String, dynamic>? readBody;
+    Map<String, dynamic>? dismissBody;
     Map<String, dynamic>? deviceMetadataBody;
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
@@ -7813,6 +7814,15 @@ void main() {
           continue;
         }
 
+        if (request.uri.path == '/api/client/notifications/dismiss') {
+          dismissBody = jsonDecode(body) as Map<String, dynamic>;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'ok': true}));
+          await request.response.close();
+          continue;
+        }
+
         if (request.uri.path == '/api/client/push/register') {
           pushBody = jsonDecode(body) as Map<String, dynamic>;
           request.response
@@ -7892,6 +7902,13 @@ void main() {
     expect(read, isTrue);
     expect(readBody, containsPair('ids', <Object?>['ntf_access']));
 
+    final dismissed = await bootstrapper.dismissClientNotifications(
+      hostPlatform: HostPlatform.windows,
+      ids: const <String>['ntf_access'],
+    );
+    expect(dismissed, isTrue);
+    expect(dismissBody, containsPair('ids', <Object?>['ntf_access']));
+
     final push = await bootstrapper.registerClientPushToken(
       hostPlatform: HostPlatform.windows,
       token: 'wns-token',
@@ -7912,6 +7929,7 @@ void main() {
         'GET /api/client/devices',
         'GET /api/client/notifications',
         'POST /api/client/notifications/read',
+        'POST /api/client/notifications/dismiss',
         'POST /api/client/push/register',
       ]),
     );

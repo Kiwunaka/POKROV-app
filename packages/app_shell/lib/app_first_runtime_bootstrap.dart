@@ -529,6 +529,11 @@ abstract interface class AppFirstClientDataService {
     required List<String> ids,
   });
 
+  Future<bool> dismissClientNotifications({
+    required HostPlatform hostPlatform,
+    required List<String> ids,
+  });
+
   Future<ClientPushRegistration> registerClientPushToken({
     required HostPlatform hostPlatform,
     required String token,
@@ -3778,6 +3783,28 @@ class AppFirstRuntimeBootstrapper
       hostPlatform: hostPlatform,
       method: 'POST',
       path: '/api/client/notifications/read',
+      body: <String, Object?>{'ids': normalizedIds},
+    );
+    return response['ok'] != false;
+  }
+
+  @override
+  Future<bool> dismissClientNotifications({
+    required HostPlatform hostPlatform,
+    required List<String> ids,
+  }) async {
+    final normalizedIds = ids
+        .map((id) => id.trim())
+        .where((id) => id.isNotEmpty)
+        .take(100)
+        .toList(growable: false);
+    if (normalizedIds.isEmpty) {
+      return true;
+    }
+    final response = await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: '/api/client/notifications/dismiss',
       body: <String, Object?>{'ids': normalizedIds},
     );
     return response['ok'] != false;

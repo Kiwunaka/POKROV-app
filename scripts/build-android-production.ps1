@@ -62,6 +62,7 @@ function Set-ProcessEnvironmentValue {
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
+& (Join-Path $PSScriptRoot "check-client-version-parity.ps1")
 $androidRoot = Join-Path $repoRoot "apps\android_shell"
 $pubspecPath = Join-Path $androidRoot "pubspec.yaml"
 $pubspecText = Get-Content -Raw -LiteralPath $pubspecPath
