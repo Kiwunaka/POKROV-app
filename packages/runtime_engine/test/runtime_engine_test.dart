@@ -744,6 +744,16 @@ void main() {
           profileName: 'pokrov-core-real-start-stop-backtest',
           configPayload: jsonEncode(<String, Object?>{
             'log': <String, Object?>{'disabled': true},
+            'dns': <String, Object?>{
+              'servers': <Object?>[
+                <String, Object?>{
+                  'type': 'udp',
+                  'tag': 'dns-direct',
+                  'server': '1.1.1.1',
+                },
+              ],
+              'final': 'dns-direct',
+            },
             'inbounds': <Object?>[
               <String, Object?>{
                 'type': 'mixed',
@@ -755,7 +765,20 @@ void main() {
             'outbounds': <Object?>[
               <String, Object?>{'type': 'direct', 'tag': 'direct'},
             ],
-            'route': <String, Object?>{'final': 'direct'},
+            'route': <String, Object?>{
+              'rules': <Object?>[
+                <String, Object?>{'action': 'sniff'},
+                <String, Object?>{
+                  'protocol': 'dns',
+                  'action': 'hijack-dns',
+                },
+              ],
+              'final': 'direct',
+              'default_domain_resolver': <String, Object?>{
+                'server': 'dns-direct',
+                'strategy': 'ipv4_only',
+              },
+            },
           }),
           materializedForRuntime: true,
         ),
@@ -1654,6 +1677,59 @@ void main() {
     expect(bindings.stopCalls, 1);
     _expectNoSensitiveRuntimeDetail(snapshot.message);
     _expectNoSensitiveRuntimeDetail(snapshot.toString());
+  });
+
+  test(
+      'desktop lane never reports running when proxy passes but Windows TUN fails',
+      () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-tun-probe-failure-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+    var mixedProbeCalls = 0;
+    var systemProbeCalls = 0;
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      mixedProxyProbe: () async {
+        mixedProbeCalls += 1;
+        return null;
+      },
+      systemTunnelProbe: () async {
+        systemProbeCalls += 1;
+        return 'host path unavailable';
+      },
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'windows-tun-probe-failure',
+        configPayload:
+            '{"inbounds":[{"type":"tun","tag":"tun-in"},{"type":"mixed","tag":"mixed-in","listen":"127.0.0.1","listen_port":12334}],"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.fullTunnel,
+      ),
+    );
+    final snapshot = await engine.connect();
+
+    expect(mixedProbeCalls, 1);
+    expect(systemProbeCalls, 1);
+    expect(snapshot.phase, RuntimePhase.configStaged);
+    expect(snapshot.lastFailureKind, 'desktop_tun_egress_probe_failed');
+    expect(snapshot.message, contains('Windows не пропускает трафик'));
+    expect(bindings.startCalls, 1);
+    expect(bindings.stopCalls, 1);
   });
 
   test('desktop lane keeps runtime-ready WARP disabled without user consent',

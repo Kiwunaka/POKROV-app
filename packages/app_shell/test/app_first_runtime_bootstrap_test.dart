@@ -504,10 +504,9 @@ void main() {
     expect(emergencyProbeCopy['type'], 'vless');
     expect(
       emergencyProbeCopy['server'],
-      runtimeOutbounds
-          .singleWhere(
-            (outbound) => outbound['tag'] == 'POKROV emergency reserve',
-          )['server'],
+      runtimeOutbounds.singleWhere(
+        (outbound) => outbound['tag'] == 'POKROV emergency reserve',
+      )['server'],
     );
     expect(emergencyProbe['default'], 'POKROV emergency reserve');
     expect(emergencyDns['detour'], 'POKROV emergency reserve');
@@ -4893,6 +4892,22 @@ void main() {
                         },
                       },
                     ],
+                    'route': <String, Object?>{
+                      'rules': <Object?>[
+                        <String, Object?>{
+                          'rule_set': <String>['geoip-ru'],
+                          'outbound': 'direct',
+                        },
+                        <String, Object?>{
+                          'process_name': <String>['steam.exe'],
+                          'outbound': 'direct',
+                        },
+                        <String, Object?>{
+                          'ip_is_private': true,
+                          'outbound': 'direct',
+                        },
+                      ],
+                    },
                   },
                 },
               ),
@@ -4924,13 +4939,62 @@ void main() {
     );
     final realityTls = realityOutbound['tls'] as Map<String, dynamic>;
     final route = config['route'] as Map<String, dynamic>;
+    final routeRules = (route['rules'] as List).cast<Map<String, dynamic>>();
+    final dns = config['dns'] as Map<String, dynamic>;
+    final dnsServers = (dns['servers'] as List).cast<Map<String, dynamic>>();
+    final tunInbound =
+        inbounds.singleWhere((inbound) => inbound['type'] == 'tun');
 
-    expect(inbounds, isNotEmpty);
-    expect(inbounds.first['type'], 'tun');
+    expect(inbounds, hasLength(2));
+    expect(tunInbound['stack'], 'system');
+    expect(tunInbound['address'], isNotEmpty);
+    expect(tunInbound.containsKey('inet4_address'), isFalse);
+    expect(tunInbound.containsKey('endpoint_independent_nat'), isFalse);
+    expect(tunInbound.containsKey('sniff'), isFalse);
+    expect(inbounds.where((inbound) => inbound['tag'] == 'dns-in'), isEmpty);
     expect(config.containsKey('_meta'), isFalse);
     expect(route['final'], 'select');
     expect(route['auto_detect_interface'], true);
     expect(route.containsKey('override_android_vpn'), isFalse);
+    expect(routeRules.first, <String, dynamic>{'action': 'sniff'});
+    expect(routeRules[1], <String, dynamic>{
+      'protocol': 'dns',
+      'action': 'hijack-dns',
+    });
+    expect(
+      routeRules.any((rule) =>
+          (rule['rule_set'] as List?)?.contains('geoip-ru') == true &&
+          rule['outbound'] == 'direct'),
+      isFalse,
+    );
+    expect(
+      routeRules.any((rule) =>
+          (rule['process_name'] as List?)?.contains('steam.exe') == true &&
+          rule['outbound'] == 'direct'),
+      isFalse,
+    );
+    expect(
+      routeRules.any((rule) =>
+          rule['ip_is_private'] == true && rule['outbound'] == 'direct'),
+      isTrue,
+    );
+    expect(route['default_domain_resolver'], <String, dynamic>{
+      'server': 'dns-direct',
+      'strategy': 'ipv4_only',
+    });
+    expect(dns['final'], 'dns-remote');
+    expect(
+      dnsServers.singleWhere((server) => server['tag'] == 'dns-remote'),
+      containsPair('type', 'tcp'),
+    );
+    expect(
+      dnsServers.singleWhere((server) => server['tag'] == 'dns-direct'),
+      containsPair('type', 'udp'),
+    );
+    expect(
+      outbounds.where((outbound) => outbound['type'] == 'dns'),
+      isEmpty,
+    );
     expect(config['outbounds'].toString(), contains('urltest'));
     expect(realityTls['fragment'], true);
     expect(realityTls['record_fragment'], true);
@@ -6533,6 +6597,19 @@ void main() {
         _ruIpWhitelistRuleSetTag,
       ]),
     );
+    final dnsServers = (dns['servers'] as List).cast<Map<String, dynamic>>();
+    final outbounds =
+        (config['outbounds'] as List).cast<Map<String, dynamic>>();
+    expect(routeRules.first, <String, dynamic>{'action': 'sniff'});
+    expect(routeRules[1], <String, dynamic>{
+      'protocol': 'dns',
+      'action': 'hijack-dns',
+    });
+    expect(
+      dnsServers.singleWhere((server) => server['tag'] == 'dns-remote'),
+      containsPair('type', 'tcp'),
+    );
+    expect(outbounds.where((outbound) => outbound['type'] == 'dns'), isEmpty);
     expect(
       routeRules.any(
         (rule) =>
@@ -7009,12 +7086,19 @@ void main() {
 
         if (request.uri.path == '/api/client/route-policy') {
           final decoded = jsonDecode(body) as Map<String, dynamic>;
-          expect(decoded['route_mode'], 'selected_apps');
-          expect(decoded['selected_apps'], <String>[
-            'Telegram.exe',
-            'msedge',
-          ]);
-          expect(decoded['requires_elevated_privileges'], isTrue);
+          if (decoded['route_mode'] == 'selected_apps') {
+            expect(decoded['selected_apps'], <String>[
+              'Telegram.exe',
+              'msedge',
+            ]);
+          } else {
+            expect(decoded['route_mode'], 'all_traffic');
+            expect(decoded['selected_apps'], isEmpty);
+          }
+          expect(
+            decoded['requires_elevated_privileges'],
+            decoded['route_mode'] == 'selected_apps',
+          );
           request.response
             ..headers.contentType = ContentType.json
             ..write(jsonEncode(<String, Object?>{'ok': true}));
@@ -7107,6 +7191,36 @@ void main() {
             (rule['process_name'] as List?)?.contains('msedge.exe') == true &&
             rule['server'] == 'dns-remote',
       ),
+      isTrue,
+    );
+    final excludedPayload = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.excludedApps,
+      selectedApps: const <String>['YandexBrowser.exe'],
+    );
+    final excludedConfig =
+        jsonDecode(excludedPayload.configPayload) as Map<String, dynamic>;
+    final excludedDns = excludedConfig['dns'] as Map<String, dynamic>;
+    final excludedDnsRules =
+        (excludedDns['rules'] as List).cast<Map<String, dynamic>>();
+    final excludedRoute = excludedConfig['route'] as Map<String, dynamic>;
+    final excludedRouteRules =
+        (excludedRoute['rules'] as List).cast<Map<String, dynamic>>();
+
+    expect(excludedRoute['final'], 'proxy');
+    expect(
+      excludedRouteRules.any((rule) =>
+          (rule['process_name'] as List?)?.contains('yandexbrowser.exe') ==
+              true &&
+          rule['outbound'] == 'direct'),
+      isTrue,
+    );
+    expect(excludedDns['final'], 'dns-remote');
+    expect(
+      excludedDnsRules.any((rule) =>
+          (rule['process_name'] as List?)?.contains('yandexbrowser.exe') ==
+              true &&
+          rule['server'] == 'dns-direct'),
       isTrue,
     );
   });

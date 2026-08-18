@@ -36,6 +36,8 @@ Historical mapping note:
   tray exit still requires runtime/TUN teardown and any compatibility
   system-proxy restoration proof
 - the local `1.1.2+25` QA build remapped Hiddify's occupied `127.0.0.1:12334` to `127.0.0.1:54303`. Its live TUN attempt affected the active Codex route and was operator-terminated before a final connected event, so this is collision-fix evidence, not clean egress/DNS or teardown PASS
+- owner testing of the public `1.1.3+26` build on `2026-08-18` exposed a real Windows failure: Core and the mixed proxy came up, the shell showed a green connected state, but normal browser traffic and DNS through the system TUN stalled. This invalidates `1.1.3` as evidence for working Windows TUN traffic even though its published hashes and install/update handoff remain exact
+- current source fixes that false-positive boundary. Windows materialization now matches the known-working local Hiddify/Core shape (`system`, strict routing, typed TCP/UDP DNS, route-level sniff and DNS hijack, no legacy `dns-out`), and connect requires both mixed-proxy egress and an ordinary Windows TUN/DNS request before it reports running. Source tests are `PASS`; a new packaged version and clean Hiddify-off owner run remain required before publication
 
 ## Current 2026-08-13 Candidate State
 
@@ -193,6 +195,9 @@ Safe to claim now:
 - the current Windows source materializes `Full tunnel`, `All except RU`,
   selected-process routing, and client-local WARP into raw config before the
   POKROV Core start call; system proxy remains a disabled compatibility-only path
+- current source fail-closes when the selected outbound works through the local
+  proxy but the ordinary Windows TUN/DNS path does not; this is source evidence,
+  not proof for the still-public `1.1.3` artifact
 - this source-level change does not prove elevation, route capture, DNS/leak
   behavior, or teardown on the published or any future exact candidate
 - this Windows lane now lives in the canonical `POKROV-app` repo
@@ -253,9 +258,10 @@ trusted/stable claims, attach:
 
 ## Release Rule
 
-Windows outside-store beta upload is complete for `v1.0.3-beta.2` with approved
-unsigned-warning posture. Current source is newer and cannot reuse that release
-identity. Stronger trusted/stable/store claims remain blocked until the next
-exact artifact passes live install/restart/secure-storage smoke, trusted
-signing/SmartScreen reputation, support-copy evidence, and the target channel's
-publishing requirements are approved.
+Windows stable-direct upload is complete for `v1.1.3` with the approved
+unsigned-warning posture, but owner traffic testing found the TUN/DNS failure
+described above. Current source is newer and cannot reuse that release identity.
+Do not publish its successor until the exact setup/portable candidate passes a
+Hiddify-off full-tunnel browser/DNS check, reconnect and disconnect. Stronger
+trusted/store claims remain blocked on signing, SmartScreen reputation and the
+target channel's publishing requirements.

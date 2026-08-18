@@ -6203,11 +6203,13 @@ class AppFirstRuntimeBootstrapper
       preferredTag: 'block',
       type: 'block',
     );
-    final androidLegacyDnsOutboundTags = hostPlatform == HostPlatform.android
-        ? _removeAndroidLegacyDnsOutbounds(outbounds)
+    final legacyDnsOutboundTags = hostPlatform == HostPlatform.android ||
+            hostPlatform == HostPlatform.windows
+        ? _removeLegacyDnsOutbounds(outbounds)
         : const <String>{};
-    existingTags.removeAll(androidLegacyDnsOutboundTags);
-    final dnsOutboundTag = hostPlatform == HostPlatform.android
+    existingTags.removeAll(legacyDnsOutboundTags);
+    final dnsOutboundTag = hostPlatform == HostPlatform.android ||
+            hostPlatform == HostPlatform.windows
         ? null
         : _ensureAuxiliaryOutbound(
             outbounds,
@@ -6277,7 +6279,7 @@ class AppFirstRuntimeBootstrapper
         'route': _buildAndroidRouteBlock(
           baseRoute: baseConfig['route'],
           directTag: directTag,
-          legacyDnsOutboundTags: androidLegacyDnsOutboundTags,
+          legacyDnsOutboundTags: legacyDnsOutboundTags,
           finalOutboundTag: finalOutboundTag,
           routeMode: routeMode,
           clientRuleSetCatalog: clientRuleSetCatalog,
@@ -6312,7 +6314,7 @@ class AppFirstRuntimeBootstrapper
       'route': _buildRouteBlock(
         baseRoute: baseConfig['route'],
         directTag: directTag,
-        dnsOutboundTag: dnsOutboundTag!,
+        dnsOutboundTag: dnsOutboundTag,
         finalOutboundTag: finalOutboundTag,
         hostPlatform: hostPlatform,
         routeMode: routeMode,
@@ -6837,6 +6839,16 @@ class AppFirstRuntimeBootstrapper
     required List<String> selectedApps,
     required _ClientRuleSetCatalog clientRuleSetCatalog,
   }) {
+    if (hostPlatform == HostPlatform.windows) {
+      return _buildWindowsDnsBlock(
+        baseDns: baseDns,
+        outbounds: outbounds,
+        finalOutboundTag: finalOutboundTag,
+        routeMode: routeMode,
+        selectedApps: selectedApps,
+        clientRuleSetCatalog: clientRuleSetCatalog,
+      );
+    }
     final dns = _readMap(baseDns).isEmpty
         ? <String, dynamic>{}
         : Map<String, dynamic>.from(_readMap(baseDns));
@@ -6927,6 +6939,80 @@ class AppFirstRuntimeBootstrapper
     return dns;
   }
 
+  Map<String, dynamic> _buildWindowsDnsBlock({
+    required Object? baseDns,
+    required List<Map<String, dynamic>> outbounds,
+    required String finalOutboundTag,
+    required RouteMode routeMode,
+    required List<String> selectedApps,
+    required _ClientRuleSetCatalog clientRuleSetCatalog,
+  }) {
+    final serverDomains = outbounds
+        .map((outbound) => _readText(outbound['server']))
+        .where((domain) => domain.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    final processNames =
+        _selectedWindowsProcessNames(HostPlatform.windows, selectedApps);
+    final rules = <Map<String, dynamic>>[];
+
+    _ensureDnsServerDomainRule(
+      rules: rules,
+      serverDomains: serverDomains,
+      serverTag: 'dns-direct',
+    );
+    _ensureDnsIpPrivateRule(
+      rules: rules,
+      serverTag: 'dns-direct',
+    );
+    if (processNames.isNotEmpty) {
+      _ensureWindowsSelectedProcessDnsRule(
+        rules: rules,
+        processNames: processNames,
+        serverTag:
+            routeMode == RouteMode.excludedApps ? 'dns-direct' : 'dns-remote',
+      );
+    }
+    if (routeMode == RouteMode.allExceptRu) {
+      _ensureDnsDomainSuffixRule(rules, '.ru', 'dns-direct');
+      _ensureDnsDomainSuffixRule(rules, '.xn--p1ai', 'dns-direct');
+      _ensureDnsDomainSuffixRule(rules, '.su', 'dns-direct');
+      _ensureDnsRuleSetServerRule(
+        rules: rules,
+        ruleSetTags: clientRuleSetCatalog.domainRuleSetTags,
+        serverTag: 'dns-direct',
+      );
+    }
+
+    return <String, dynamic>{
+      'servers': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'type': 'tcp',
+          'tag': 'dns-remote',
+          'detour': finalOutboundTag,
+          'server': '1.1.1.1',
+        },
+        <String, dynamic>{
+          'type': 'udp',
+          'tag': 'dns-direct',
+          'connect_timeout': '5s',
+          'disable_tcp_keep_alive': true,
+          'server': '1.1.1.1',
+        },
+        <String, dynamic>{
+          'type': 'local',
+          'tag': 'dns-local',
+          'prefer_go': true,
+        },
+      ],
+      'rules': rules,
+      'final':
+          routeMode == RouteMode.selectedApps ? 'dns-direct' : 'dns-remote',
+      'disable_expire': true,
+      'independent_cache': true,
+    };
+  }
+
   List<Map<String, dynamic>> _buildInbounds({
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
@@ -6945,10 +7031,13 @@ class AppFirstRuntimeBootstrapper
       'mtu': tunMtu,
       'auto_route': true,
       'strict_route': true,
-      'endpoint_independent_nat': true,
       'stack': hostPlatform == HostPlatform.android ? 'mixed' : 'system',
-      'sniff': true,
     };
+    if (hostPlatform == HostPlatform.android) {
+      tunInbound
+        ..['endpoint_independent_nat'] = true
+        ..['sniff'] = true;
+    }
     if (hostPlatform == HostPlatform.android) {
       if (ipVersionPreference == 'ipv6_only') {
         tunInbound.remove('inet4_address');
@@ -6964,14 +7053,16 @@ class AppFirstRuntimeBootstrapper
         tunInbound['domain_strategy'] = 'prefer_ipv4';
       }
     } else if (ipVersionPreference == 'ipv6_only') {
-      tunInbound['inet6_address'] = 'fdfe:dcba:9876::1/126';
+      tunInbound['address'] = <String>['fdfe:dcba:9876::1/126'];
       tunInbound['domain_strategy'] = 'ipv6_only';
     } else if (ipVersionPreference == 'ipv4_only') {
-      tunInbound['inet4_address'] = '172.19.0.1/28';
+      tunInbound['address'] = <String>['172.19.0.1/28'];
       tunInbound['domain_strategy'] = 'ipv4_only';
     } else {
-      tunInbound['inet4_address'] = '172.19.0.1/28';
-      tunInbound['inet6_address'] = 'fdfe:dcba:9876::1/126';
+      tunInbound['address'] = <String>[
+        '172.19.0.1/28',
+        'fdfe:dcba:9876::1/126',
+      ];
       tunInbound['domain_strategy'] = 'prefer_ipv4';
     }
     if (hostPlatform == HostPlatform.android) {
@@ -6996,15 +7087,7 @@ class AppFirstRuntimeBootstrapper
         'tag': 'mixed-in',
         'listen': '127.0.0.1',
         'listen_port': 12334,
-        'sniff': true,
-        'sniff_override_destination': true,
         'domain_strategy': 'ipv4_only',
-      },
-      <String, dynamic>{
-        'type': 'direct',
-        'tag': 'dns-in',
-        'listen': '127.0.0.1',
-        'listen_port': 16450,
       },
     ];
   }
@@ -7012,7 +7095,7 @@ class AppFirstRuntimeBootstrapper
   Map<String, dynamic> _buildRouteBlock({
     required Object? baseRoute,
     required String directTag,
-    required String dnsOutboundTag,
+    required String? dnsOutboundTag,
     required String finalOutboundTag,
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
@@ -7025,26 +7108,49 @@ class AppFirstRuntimeBootstrapper
     final rules = _readListOfMaps(route['rules'])
         .map((rule) => Map<String, dynamic>.from(rule))
         .toList(growable: true);
-    final hasDnsInboundRule = rules.any(
-      (rule) =>
-          _readText(rule['inbound']) == 'dns-in' &&
-          _readText(rule['outbound']) == dnsOutboundTag,
-    );
-    if (hostPlatform != HostPlatform.android && !hasDnsInboundRule) {
+    if (hostPlatform == HostPlatform.windows) {
+      _normalizeWindowsRouteModeRules(
+        rules: rules,
+        routeMode: routeMode,
+        directTag: directTag,
+      );
+      rules.removeWhere(
+        (rule) =>
+            _readText(rule['inbound']) == 'dns-in' ||
+            _readText(rule['protocol']).toLowerCase() == 'dns' ||
+            _readText(rule['outbound']) == 'dns-out' ||
+            _readText(rule['action']).toLowerCase() == 'sniff' ||
+            _readText(rule['action']).toLowerCase() == 'hijack-dns',
+      );
       rules.insert(0, <String, dynamic>{
-        'inbound': 'dns-in',
-        'outbound': dnsOutboundTag,
+        'protocol': 'dns',
+        'action': 'hijack-dns',
       });
-    }
-    final hasDnsPortRule = rules.any(
-      (rule) =>
-          rule['port'] == 53 && _readText(rule['outbound']) == dnsOutboundTag,
-    );
-    if (!hasDnsPortRule) {
-      rules.insert(0, <String, dynamic>{
-        'port': 53,
-        'outbound': dnsOutboundTag,
-      });
+      rules.insert(0, <String, dynamic>{'action': 'sniff'});
+    } else {
+      final resolvedDnsOutboundTag = dnsOutboundTag!;
+      final hasDnsInboundRule = rules.any(
+        (rule) =>
+            _readText(rule['inbound']) == 'dns-in' &&
+            _readText(rule['outbound']) == resolvedDnsOutboundTag,
+      );
+      if (!hasDnsInboundRule) {
+        rules.insert(0, <String, dynamic>{
+          'inbound': 'dns-in',
+          'outbound': resolvedDnsOutboundTag,
+        });
+      }
+      final hasDnsPortRule = rules.any(
+        (rule) =>
+            rule['port'] == 53 &&
+            _readText(rule['outbound']) == resolvedDnsOutboundTag,
+      );
+      if (!hasDnsPortRule) {
+        rules.insert(0, <String, dynamic>{
+          'port': 53,
+          'outbound': resolvedDnsOutboundTag,
+        });
+      }
     }
     final hasPrivateRule = rules.any(
       (rule) =>
@@ -7063,7 +7169,8 @@ class AppFirstRuntimeBootstrapper
       _ensureWindowsSelectedProcessRouteRule(
         rules: rules,
         processNames: selectedProcessNames,
-        outboundTag: finalOutboundTag,
+        outboundTag:
+            routeMode == RouteMode.excludedApps ? directTag : finalOutboundTag,
       );
     }
     if (routeMode == RouteMode.allExceptRu) {
@@ -7084,7 +7191,7 @@ class AppFirstRuntimeBootstrapper
     route
       ..['rules'] = rules
       ..['final'] =
-          selectedProcessNames.isNotEmpty ? directTag : finalOutboundTag;
+          routeMode == RouteMode.selectedApps ? directTag : finalOutboundTag;
     if (hostPlatform != HostPlatform.android) {
       route['auto_detect_interface'] = true;
     } else {
@@ -7093,9 +7200,31 @@ class AppFirstRuntimeBootstrapper
         ..remove('override_android_vpn');
     }
     if (hostPlatform == HostPlatform.windows) {
-      route['find_process'] = true;
+      route
+        ..['find_process'] = true
+        ..['default_domain_resolver'] = <String, dynamic>{
+          'server': 'dns-direct',
+          'strategy': 'ipv4_only',
+        };
     }
     return route;
+  }
+
+  void _normalizeWindowsRouteModeRules({
+    required List<Map<String, dynamic>> rules,
+    required RouteMode routeMode,
+    required String directTag,
+  }) {
+    rules.removeWhere((rule) {
+      if (_readText(rule['outbound']) != directTag) {
+        return false;
+      }
+      if (rule['ip_is_private'] == true) {
+        return false;
+      }
+      return routeMode != RouteMode.allExceptRu ||
+          !_isRuBypassRule(rule: rule, directTag: directTag);
+    });
   }
 
   Future<_ClientRuleSetCatalog> _ensureAllExceptRuRuleSetCatalog({
@@ -7300,12 +7429,18 @@ class AppFirstRuntimeBootstrapper
       preferredTag: 'block',
       type: 'block',
     );
-    final dnsOutboundTag = _ensureAuxiliaryOutbound(
-      outbounds,
-      existingTags,
-      preferredTag: 'dns-out',
-      type: 'dns',
-    );
+    final legacyDnsOutboundTags = hostPlatform == HostPlatform.windows
+        ? _removeLegacyDnsOutbounds(outbounds)
+        : const <String>{};
+    existingTags.removeAll(legacyDnsOutboundTags);
+    final dnsOutboundTag = hostPlatform == HostPlatform.windows
+        ? null
+        : _ensureAuxiliaryOutbound(
+            outbounds,
+            existingTags,
+            preferredTag: 'dns-out',
+            type: 'dns',
+          );
     final proxyOutboundTags = outbounds
         .where(_isProxyTransportOutbound)
         .map((outbound) => _readText(outbound['tag']))
@@ -7562,7 +7697,7 @@ class AppFirstRuntimeBootstrapper
           _sameStringList(_readTagList(rule['process_name']), processNames),
     );
     if (!alreadyPresent) {
-      rules.add(<String, dynamic>{
+      rules.insert(min(2, rules.length), <String, dynamic>{
         'process_name': processNames,
         'outbound': outboundTag,
       });
@@ -7718,7 +7853,7 @@ class AppFirstRuntimeBootstrapper
         .contains(type);
   }
 
-  Set<String> _removeAndroidLegacyDnsOutbounds(
+  Set<String> _removeLegacyDnsOutbounds(
     List<Map<String, dynamic>> outbounds,
   ) {
     final removedTags = <String>{'dns-out'};

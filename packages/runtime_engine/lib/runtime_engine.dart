@@ -318,6 +318,7 @@ const _publicRuntimeFailureKinds = <String>{
   'runtime_stop_failed',
   'core_egress_probe_failed',
   'core_egress_probe_unavailable',
+  'desktop_tun_egress_probe_failed',
   'emergency_endpoint_unreachable',
   'profile_staging_failed',
   'config_apply_failed',
@@ -338,6 +339,7 @@ const _publicRuntimeStopReasons = <String>{
   'command_server_requested',
   'core_egress_probe_failed',
   'core_egress_probe_unavailable',
+  'desktop_tun_egress_probe_failed',
 };
 
 String? _publicRuntimeFailureKind(Object? value) {
@@ -459,6 +461,8 @@ String _publicRuntimeMessage({
       return 'POKROV не подтвердил защищенное подключение и отключил системный VPN.';
     case 'core_egress_probe_unavailable':
       return 'POKROV не завершил проверку защищенного подключения и отключил системный VPN. Попробуйте еще раз.';
+    case 'desktop_tun_egress_probe_failed':
+      return 'Туннель запущен, но Windows не пропускает трафик. POKROV отключил его, чтобы не оставить устройство без сети.';
     case 'profile_staging_failed':
       return 'POKROV не смог подготовить настройки подключения.';
     case 'config_apply_failed':
@@ -1055,18 +1059,34 @@ PokrovRuntimeEngine createRuntimeEngine({
   }
 }
 
+class _DesktopProbeFailure {
+  const _DesktopProbeFailure({
+    required this.kind,
+    required this.message,
+  });
+
+  final String kind;
+  final String message;
+}
+
 class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   DesktopRuntimeEngine({
     required this.hostPlatform,
     this.assetRootOverride,
     Future<String?> Function()? connectivityProbe,
+    Future<String?> Function()? mixedProxyProbe,
+    Future<String?> Function()? systemTunnelProbe,
     DesktopRuntimeBindings Function(String libraryPath)? bindingsLoader,
   })  : _connectivityProbe = connectivityProbe,
+        _mixedProxyProbe = mixedProxyProbe,
+        _systemTunnelProbe = systemTunnelProbe,
         _bindingsLoader = bindingsLoader ?? _PokrovCoreBindingsLoader.load;
 
   final HostPlatform hostPlatform;
   final String? assetRootOverride;
   final Future<String?> Function()? _connectivityProbe;
+  final Future<String?> Function()? _mixedProxyProbe;
+  final Future<String?> Function()? _systemTunnelProbe;
   final DesktopRuntimeBindings Function(String libraryPath) _bindingsLoader;
 
   _RuntimeDirectories? _directories;
@@ -1272,12 +1292,12 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       );
     }
 
-    final probeError = await _verifyStartedRuntime();
-    if (probeError != null) {
+    final probeFailure = await _verifyStartedRuntime();
+    if (probeFailure != null) {
       _bindings!.stop();
       _phase = RuntimePhase.configStaged;
-      _lastFailureKind = 'core_egress_probe_failed';
-      _message = 'POKROV запустил модуль, но трафик не проходит.';
+      _lastFailureKind = probeFailure.kind;
+      _message = probeFailure.message;
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: true,
@@ -1292,38 +1312,78 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     return snapshot();
   }
 
-  Future<String?> _verifyStartedRuntime() async {
+  Future<_DesktopProbeFailure?> _verifyStartedRuntime() async {
     final injectedProbe = _connectivityProbe;
     if (injectedProbe != null) {
-      return injectedProbe();
+      final error = await injectedProbe();
+      return error == null
+          ? null
+          : const _DesktopProbeFailure(
+              kind: 'core_egress_probe_failed',
+              message: 'POKROV запустил модуль, но трафик не проходит.',
+            );
     }
     final mixedProxyPort = await _stagedMixedProxyPort();
     final attempts =
         _stagedPayload?.warpPolicy.canEnableRuntime == true ? 3 : 1;
     String? lastError;
+    if (mixedProxyPort != null || _mixedProxyProbe != null) {
+      for (var attempt = 0; attempt < attempts; attempt += 1) {
+        await Future<void>.delayed(
+          Duration(milliseconds: attempt == 0 ? 900 : 1500),
+        );
+        lastError = await (_mixedProxyProbe?.call() ??
+            _probeHttp(
+              proxyPort: mixedProxyPort,
+              timeout: const Duration(seconds: 6),
+            ));
+        if (lastError == null) {
+          break;
+        }
+      }
+      if (lastError != null) {
+        return const _DesktopProbeFailure(
+          kind: 'core_egress_probe_failed',
+          message: 'POKROV запустил модуль, но трафик не проходит.',
+        );
+      }
+    }
+
+    if (hostPlatform != HostPlatform.windows) {
+      return null;
+    }
     for (var attempt = 0; attempt < attempts; attempt += 1) {
-      await Future<void>.delayed(
-        Duration(milliseconds: attempt == 0 ? 900 : 1500),
-      );
-      lastError = await _probeHttp(
-        proxyPort: mixedProxyPort,
-        timeout: const Duration(seconds: 6),
-      );
+      if (attempt > 0) {
+        await Future<void>.delayed(const Duration(milliseconds: 1500));
+      }
+      lastError = await (_systemTunnelProbe?.call() ??
+          _probeHttp(
+            proxyPort: null,
+            timeout: const Duration(seconds: 6),
+            forceDirect: true,
+          ));
       if (lastError == null) {
         return null;
       }
     }
-    return lastError;
+    return const _DesktopProbeFailure(
+      kind: 'desktop_tun_egress_probe_failed',
+      message:
+          'Туннель запущен, но Windows не пропускает трафик. POKROV отключил его, чтобы сохранить доступ к сети.',
+    );
   }
 
   Future<String?> _probeHttp({
     required int? proxyPort,
     required Duration timeout,
+    bool forceDirect = false,
   }) async {
     final client = HttpClient();
     client.connectionTimeout = timeout;
     if (proxyPort != null) {
       client.findProxy = (uri) => 'PROXY 127.0.0.1:$proxyPort';
+    } else if (forceDirect) {
+      client.findProxy = (uri) => 'DIRECT';
     }
     try {
       final request = await client
