@@ -264,6 +264,7 @@ enum PokrovWindowsTunnelAuthorization {
 
 typedef PokrovWindowsTunnelAuthorizer = Future<PokrovWindowsTunnelAuthorization>
     Function();
+typedef PokrovWindowsElevationChecker = Future<bool?> Function();
 typedef PokrovWindowsShellPreferencesReader
     = Future<PokrovWindowsShellPreferences> Function();
 typedef PokrovWindowsShellPreferencesUpdater
@@ -332,17 +333,28 @@ const MethodChannel _pokrovRuntimeSystemChannel =
 const MethodChannel _pokrovWindowsShellChannel =
     MethodChannel('space.pokrov/windows-shell');
 
+Future<bool?> readPokrovWindowsProcessElevated(
+  HostPlatform hostPlatform,
+) async {
+  if (hostPlatform != HostPlatform.windows) {
+    return true;
+  }
+  try {
+    return await _pokrovWindowsShellChannel.invokeMethod<bool>('isElevated');
+  } on PlatformException {
+    return null;
+  } on MissingPluginException {
+    return null;
+  }
+}
+
 Future<PokrovWindowsTunnelAuthorization>
     requestPokrovWindowsTunnelAuthorization(HostPlatform hostPlatform) async {
   if (hostPlatform != HostPlatform.windows) {
     return PokrovWindowsTunnelAuthorization.allowed;
   }
   try {
-    final elevated = await _pokrovWindowsShellChannel.invokeMethod<bool>(
-          'isElevated',
-        ) ??
-        false;
-    if (elevated) {
+    if (await readPokrovWindowsProcessElevated(hostPlatform) == true) {
       return PokrovWindowsTunnelAuthorization.allowed;
     }
     final relaunched = await _pokrovWindowsShellChannel.invokeMethod<bool>(

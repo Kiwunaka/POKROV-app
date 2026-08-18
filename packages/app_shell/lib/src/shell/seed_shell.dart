@@ -20,6 +20,7 @@ class PokrovSeedApp extends StatefulWidget {
     this.wifiPermissionRequester,
     this.vpnSettingsLauncher,
     this.nodeLatencyProbe,
+    this.windowsElevationChecker,
     this.windowsTunnelAuthorizer,
     this.windowsShellPreferencesReader,
     this.windowsShellPreferencesUpdater,
@@ -44,6 +45,7 @@ class PokrovSeedApp extends StatefulWidget {
   final PokrovWifiPermissionRequester? wifiPermissionRequester;
   final PokrovVpnSettingsLauncher? vpnSettingsLauncher;
   final PokrovNodeLatencyProbe? nodeLatencyProbe;
+  final PokrovWindowsElevationChecker? windowsElevationChecker;
   final PokrovWindowsTunnelAuthorizer? windowsTunnelAuthorizer;
   final PokrovWindowsShellPreferencesReader? windowsShellPreferencesReader;
   final PokrovWindowsShellPreferencesUpdater? windowsShellPreferencesUpdater;
@@ -116,6 +118,7 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
         wifiPermissionRequester: widget.wifiPermissionRequester,
         vpnSettingsLauncher: widget.vpnSettingsLauncher,
         nodeLatencyProbe: widget.nodeLatencyProbe,
+        windowsElevationChecker: widget.windowsElevationChecker,
         windowsTunnelAuthorizer: widget.windowsTunnelAuthorizer,
         windowsShellPreferencesReader: widget.windowsShellPreferencesReader,
         windowsShellPreferencesUpdater: widget.windowsShellPreferencesUpdater,
@@ -473,6 +476,7 @@ class PokrovSeedShell extends StatefulWidget {
     this.wifiPermissionRequester,
     this.vpnSettingsLauncher,
     this.nodeLatencyProbe,
+    this.windowsElevationChecker,
     this.windowsTunnelAuthorizer,
     this.windowsShellPreferencesReader,
     this.windowsShellPreferencesUpdater,
@@ -498,6 +502,7 @@ class PokrovSeedShell extends StatefulWidget {
   final PokrovWifiPermissionRequester? wifiPermissionRequester;
   final PokrovVpnSettingsLauncher? vpnSettingsLauncher;
   final PokrovNodeLatencyProbe? nodeLatencyProbe;
+  final PokrovWindowsElevationChecker? windowsElevationChecker;
   final PokrovWindowsTunnelAuthorizer? windowsTunnelAuthorizer;
   final PokrovWindowsShellPreferencesReader? windowsShellPreferencesReader;
   final PokrovWindowsShellPreferencesUpdater? windowsShellPreferencesUpdater;
@@ -2196,37 +2201,75 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         PokrovWindowsConnectionMode.systemProxy) {
       return true;
     }
-    final authorizer = widget.windowsTunnelAuthorizer;
-    final result = authorizer != null
-        ? await authorizer()
-        : await requestPokrovWindowsTunnelAuthorization(
+    final elevationChecker = widget.windowsElevationChecker;
+    final elevated = elevationChecker != null
+        ? await elevationChecker()
+        : await readPokrovWindowsProcessElevated(
             widget.appContext.hostPlatform,
           );
     if (!mounted) {
       return false;
     }
-    switch (result) {
-      case PokrovWindowsTunnelAuthorization.allowed:
-        return true;
-      case PokrovWindowsTunnelAuthorization.relaunching:
-        setState(() {
-          _runtimeHeadline =
-              'Подтвердите запрос Windows. POKROV продолжит подключение сам.';
-        });
-        return false;
-      case PokrovWindowsTunnelAuthorization.denied:
-        setState(() {
-          _runtimeHeadline =
-              'Для системного VPN нужны права администратора. Нажмите «Подключить» и подтвердите запрос Windows.';
-        });
-        return false;
-      case PokrovWindowsTunnelAuthorization.unavailable:
-        setState(() {
-          _runtimeHeadline =
-              'Не удалось запросить права для системного VPN. Перезапустите POKROV от имени администратора.';
-        });
-        return false;
+    if (elevated == true) {
+      return true;
     }
+
+    var permissionFailed = false;
+    while (mounted) {
+      final choice = await showPokrovWindowsTunnelPermissionSheet(
+        context,
+        permissionFailed: permissionFailed,
+      );
+      if (!mounted || choice == null) {
+        return false;
+      }
+      if (choice == PokrovWindowsTunnelConnectChoice.systemProxy) {
+        final preferences = _clientExperience.routingPreferences.copyWith(
+          windowsConnectionMode: PokrovWindowsConnectionMode.systemProxy,
+        );
+        _setRoutingPreferences(preferences);
+        setState(() {
+          _runtimeHeadline =
+              'Включён системный прокси. POKROV подключится без прав администратора.';
+        });
+        showPokrovSnack(
+          context,
+          'Режим без администратора включён. Он работает только в приложениях, которые используют системный прокси Windows.',
+        );
+        return true;
+      }
+      if (choice == PokrovWindowsTunnelConnectChoice.cancel) {
+        setState(() {
+          _runtimeHeadline =
+              'Подключение отменено. Полный VPN требует подтверждения Windows.';
+        });
+        return false;
+      }
+
+      final authorizer = widget.windowsTunnelAuthorizer;
+      final result = authorizer != null
+          ? await authorizer()
+          : await requestPokrovWindowsTunnelAuthorization(
+              widget.appContext.hostPlatform,
+            );
+      if (!mounted) {
+        return false;
+      }
+      switch (result) {
+        case PokrovWindowsTunnelAuthorization.allowed:
+          return true;
+        case PokrovWindowsTunnelAuthorization.relaunching:
+          setState(() {
+            _runtimeHeadline =
+                'Подтвердите запрос Windows. POKROV продолжит подключение сам.';
+          });
+          return false;
+        case PokrovWindowsTunnelAuthorization.denied:
+        case PokrovWindowsTunnelAuthorization.unavailable:
+          permissionFailed = true;
+      }
+    }
+    return false;
   }
 
   Future<PokrovWifiNetworkStatus?> _activeTrustedWifi() async {
@@ -5789,6 +5832,134 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       ),
     );
   }
+}
+
+enum PokrovWindowsTunnelConnectChoice { administrator, systemProxy, cancel }
+
+@visibleForTesting
+Future<PokrovWindowsTunnelConnectChoice?>
+    showPokrovWindowsTunnelPermissionSheet(
+  BuildContext context, {
+  required bool permissionFailed,
+}) {
+  return showModalBottomSheet<PokrovWindowsTunnelConnectChoice>(
+    context: context,
+    isDismissible: false,
+    enableDrag: false,
+    isScrollControlled: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    ),
+    builder: (sheetContext) {
+      final p = PokrovPalette.of(sheetContext);
+      final theme = Theme.of(sheetContext);
+      return PopScope(
+        canPop: false,
+        child: SafeArea(
+          top: false,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: SingleChildScrollView(
+                key: const ValueKey('windows-tunnel-permission-sheet'),
+                padding: const EdgeInsets.fromLTRB(22, 22, 22, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: p.accent.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(
+                            Icons.admin_panel_settings_rounded,
+                            color: p.accent,
+                            size: 26,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                permissionFailed
+                                    ? 'Не получилось включить полный VPN'
+                                    : 'Для полного VPN нужны права',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  color: p.ink,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                permissionFailed
+                                    ? 'Можно повторить системный запрос или подключиться без прав администратора.'
+                                    : 'POKROV по умолчанию защищает всё устройство через VPN-туннель. Windows покажет системный запрос — нажмите «Да».',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: p.muted,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton.icon(
+                      key: const ValueKey('windows-tunnel-use-administrator'),
+                      onPressed: () => Navigator.of(sheetContext).pop(
+                        PokrovWindowsTunnelConnectChoice.administrator,
+                      ),
+                      icon: const Icon(Icons.shield_rounded),
+                      label: Text(
+                        permissionFailed
+                            ? 'Повторить запрос Windows'
+                            : 'Включить полный VPN',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      key: const ValueKey('windows-tunnel-use-system-proxy'),
+                      onPressed: () => Navigator.of(sheetContext).pop(
+                        PokrovWindowsTunnelConnectChoice.systemProxy,
+                      ),
+                      icon: const Icon(Icons.language_rounded),
+                      label: const Text('Продолжить без администратора'),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Без прав включится системный прокси. Он подходит браузерам и совместимым приложениям, но не заменяет VPN для всего устройства. Режим можно изменить в «Правила → Дополнительно».',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: p.muted,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextButton(
+                      key: const ValueKey('windows-tunnel-cancel'),
+                      onPressed: () => Navigator.of(sheetContext).pop(
+                        PokrovWindowsTunnelConnectChoice.cancel,
+                      ),
+                      child: const Text('Не подключаться'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
 }
 
 /// The first live connection needs one consumer decision about device scope.

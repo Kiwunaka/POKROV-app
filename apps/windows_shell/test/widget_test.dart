@@ -229,6 +229,24 @@ void main() {
     expect(calls, ['isElevated', 'relaunchElevated']);
   });
 
+  test('windows elevation preflight does not trigger UAC', () async {
+    const channel = MethodChannel('space.pokrov/windows-shell');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final calls = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call.method);
+      return call.method == 'isElevated';
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    expect(
+      await readPokrovWindowsProcessElevated(HostPlatform.windows),
+      isTrue,
+    );
+    expect(calls, ['isElevated']);
+  });
+
   testWidgets('windows shell boots the shared protection surface', (
     tester,
   ) async {

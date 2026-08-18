@@ -120,6 +120,11 @@ Expected first-layer behavior:
   controls stay behind the single `Дополнительно` disclosure in Rules. The
   Windows default is named in consumer language; `System`, `Mixed`, `gVisor`,
   and `Системный прокси` appear only after that deliberate expansion.
+- The default Windows connect stays full-device VPN/TUN. In an unelevated
+  process, one focused sheet explains the Windows permission request and keeps
+  the recommended full-VPN action primary. `Продолжить без администратора` is
+  an explicit secondary fallback with a visible warning that system proxy is
+  limited to compatible applications; a cancelled UAC returns to this choice.
 
 The first contract coverage lives in
 `packages/app_shell/test/design_system_contract_test.dart` and checks the

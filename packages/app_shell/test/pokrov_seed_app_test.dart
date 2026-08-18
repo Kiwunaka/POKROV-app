@@ -4652,6 +4652,86 @@ void main() {
         findsWidgets);
   });
 
+  testWidgets('windows TUN onboarding offers the honest no-admin fallback',
+      (tester) async {
+    Future<PokrovWindowsTunnelConnectChoice?>? choice;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () {
+              choice = showPokrovWindowsTunnelPermissionSheet(
+                context,
+                permissionFailed: false,
+              );
+            },
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('windows-tunnel-permission-sheet')),
+      findsOneWidget,
+    );
+    expect(find.text('Для полного VPN нужны права'), findsOneWidget);
+    expect(find.textContaining('системный прокси'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey('windows-tunnel-use-system-proxy')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      await choice,
+      PokrovWindowsTunnelConnectChoice.systemProxy,
+    );
+    expect(
+      find.byKey(const ValueKey('windows-tunnel-permission-sheet')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('windows rejected UAC returns to the proxy fallback choice',
+      (tester) async {
+    Future<PokrovWindowsTunnelConnectChoice?>? choice;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () {
+              choice = showPokrovWindowsTunnelPermissionSheet(
+                context,
+                permissionFailed: true,
+              );
+            },
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Не получилось включить полный VPN'), findsOneWidget);
+    expect(find.text('Повторить запрос Windows'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('windows-tunnel-use-system-proxy')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('windows-tunnel-use-administrator')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      await choice,
+      PokrovWindowsTunnelConnectChoice.administrator,
+    );
+  });
+
   testWidgets('windows shell hides unavailable enhanced protection',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(960, 640));

@@ -29,9 +29,11 @@ Historical mapping note:
   per-user autostart and whether the close button hides to tray (default) or
   exits; tray `Выход` disposes tray state before requesting native teardown
 - the regular process remains unelevated. A non-running TUN connect checks the
-  Windows token, requests `runas` only when required, and continues with the
-  bounded `--connect` argument. Denial or unavailable native integration stops
-  before Core start instead of allowing a proxy-only false success
+  Windows token and explains the administrator boundary before requesting
+  `runas`. The recommended action continues with the bounded `--connect`
+  argument; the explicit no-admin action persists the loopback system-proxy
+  compatibility mode before staging. Denial or unavailable native integration
+  returns to that choice instead of allowing a proxy-only false TUN success
 - source and widget tests prove lifecycle ordering, but connected exact-artifact
   tray exit still requires runtime/TUN teardown and any compatibility
   system-proxy restoration proof
