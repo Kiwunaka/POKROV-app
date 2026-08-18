@@ -1420,6 +1420,13 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     if (hostPlatform != HostPlatform.windows) {
       return null;
     }
+    if (await _stagedUsesWindowsSystemProxy()) {
+      await _appendRuntimeEvent(
+        event: 'windows_system_proxy',
+        outcome: 'ready',
+      );
+      return null;
+    }
     for (var attempt = 0; attempt < attempts; attempt += 1) {
       await Future<void>.delayed(
         Duration(milliseconds: attempt == 0 ? 750 : 1500),
@@ -1509,6 +1516,41 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       return null;
     }
     return null;
+  }
+
+  Future<bool> _stagedUsesWindowsSystemProxy() async {
+    final configPath = _stagedConfigPath;
+    if (configPath == null) {
+      return false;
+    }
+    try {
+      final decoded = jsonDecode(await File(configPath).readAsString());
+      if (decoded is! Map || decoded['inbounds'] is! List) {
+        return false;
+      }
+      var hasTun = false;
+      var hasOwnedSystemProxy = false;
+      for (final inbound in decoded['inbounds'] as List<dynamic>) {
+        if (inbound is! Map) {
+          continue;
+        }
+        final type = inbound['type']?.toString().trim().toLowerCase();
+        if (type == 'tun') {
+          hasTun = true;
+          continue;
+        }
+        if (type != 'mixed' || inbound['set_system_proxy'] != true) {
+          continue;
+        }
+        final listen = inbound['listen']?.toString().trim().toLowerCase();
+        if (listen == '127.0.0.1' || listen == 'localhost' || listen == '::1') {
+          hasOwnedSystemProxy = true;
+        }
+      }
+      return !hasTun && hasOwnedSystemProxy;
+    } on Object {
+      return false;
+    }
   }
 
   Future<void> _appendRuntimeEvent({

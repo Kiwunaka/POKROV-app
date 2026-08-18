@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-08-18
+Last updated: 2026-08-19
 
 ## Document Status
 
@@ -207,7 +207,7 @@ Product rules for that choice:
 - raw selected-app rule editing remains hidden behind advanced/debug gates
 - Windows checks elevation before every non-running TUN connect. When required, it uses the native Windows `runas` prompt and continues exactly once with `--connect`; denial or unavailable host integration stops before Core start and must not produce a connected state
 - Windows keeps desktop helper listeners on loopback and checks their requested TCP/UDP ports before staging. If another local proxy already owns a requested port, POKROV selects an available loopback port and keeps the other application running
-- first-layer UX must not force users into raw system-proxy, service-mode, or low-level transport toggles
+- first-layer UX must not force users into raw system-proxy, service-mode, or low-level transport toggles. Windows keeps `VPN/TUN + System` as the default; `Системный прокси`, `Mixed`, and `gVisor` live only under `Правила -> Дополнительно`, persist per device, and clearly describe their compatibility trade-off. The Core-owned system-proxy mode stays loopback-only, does not request elevation, and restores the Windows proxy when Core stops
 
 ### Before trial activation
 
@@ -529,6 +529,11 @@ validated preferences and reports a routing-lesson completion event on a
 best-effort basis. Android Wi-Fi inspection requests the platform permission
 when required; Windows uses the current WLAN interface. Failure to identify a
 network never counts as a trusted match.
+
+DNS, LAN, custom routing, trusted Wi-Fi, and the Windows compatibility controls
+stay collapsed under `Дополнительно`. On Windows the final materialization
+always places the port-53 DNS interception and sniff actions before every
+user/LAN route, so an advanced preference cannot silently break the system TUN.
 
 Android exposes a Quick Settings tile backed by the same runtime service and
 permission handoff as the main connect action. Windows tray connect/disconnect

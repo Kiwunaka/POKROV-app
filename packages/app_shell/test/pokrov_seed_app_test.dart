@@ -6874,6 +6874,9 @@ void main() {
     await _completeFirstLaunchIfPresent(tester);
     await _tapNav(tester, 'nav-rules');
 
+    expect(find.byKey(const ValueKey('rules-dns-lan')), findsNothing);
+    await _openAdvancedRules(tester);
+
     final dnsCard = find.byKey(const ValueKey('rules-dns-lan'));
     await tester.dragUntilVisible(
       dnsCard,
@@ -6887,8 +6890,6 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('rules-lan-toggle')));
     await tester.pumpAndSettle();
     expect(store.state.routingPreferences.allowLan, isFalse);
-
-    await _openAdvancedRules(tester);
 
     final purposeCard = find.byKey(const ValueKey('rules-purpose-routes'));
     await tester.dragUntilVisible(
@@ -6944,6 +6945,66 @@ void main() {
 
     expect(store.writeCalls, greaterThanOrEqualTo(4));
     semantics.dispose();
+  });
+
+  testWidgets('Windows advanced settings persist proxy mode and TUN stack',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final store = _FakeClientExperienceStore();
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        clientExperienceStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-rules');
+
+    expect(
+      find.byKey(const ValueKey('rules-windows-connection')),
+      findsNothing,
+    );
+    await _openAdvancedRules(tester);
+
+    final card = find.byKey(const ValueKey('rules-windows-connection'));
+    await tester.dragUntilVisible(
+      card,
+      find.byType(Scrollable).first,
+      const Offset(0, -280),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('rules-windows-tun-stack')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('rules-windows-tun-stack')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('rules-windows-stack-mixed')),
+    );
+    await tester.pumpAndSettle();
+    expect(store.state.routingPreferences.tunStack, PokrovTunStack.mixed);
+
+    await tester.tap(
+      find.byKey(const ValueKey('rules-windows-connection-mode')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('rules-windows-mode-systemProxy')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      store.state.routingPreferences.windowsConnectionMode,
+      PokrovWindowsConnectionMode.systemProxy,
+    );
+    expect(
+      find.byKey(const ValueKey('rules-windows-tun-stack')),
+      findsNothing,
+    );
   });
 
   testWidgets('trusted Wi-Fi detects, stores and enables a real network rule',
@@ -7619,7 +7680,9 @@ void main() {
     expect(availableSemantics.properties.selected, isFalse);
 
     await tester.tap(nativeOption);
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
 
     expect(
       find.byKey(

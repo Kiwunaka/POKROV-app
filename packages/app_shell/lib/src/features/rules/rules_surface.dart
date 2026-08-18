@@ -163,10 +163,6 @@ class _RulesSection extends StatelessWidget {
               onRemove: onSelectedAppRemoved,
             ),
           ),
-        _DnsAndLanCard(
-          preferences: routingPreferences,
-          onChanged: onRoutingPreferencesChanged,
-        ),
         _RulesAdvancedSection(
           hostPlatform: appContext.hostPlatform,
           preferences: routingPreferences,
@@ -214,14 +210,25 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
   Widget build(BuildContext context) {
     final configuredCount = widget.preferences.purposeRoutes.length +
         widget.preferences.overrides.length +
-        widget.preferences.trustedWifiNames.length;
+        widget.preferences.trustedWifiNames.length +
+        (widget.preferences.dnsPreset == PokrovDnsPreset.automatic ? 0 : 1) +
+        (widget.preferences.allowLan ? 0 : 1) +
+        (widget.hostPlatform == HostPlatform.windows &&
+                widget.preferences.windowsConnectionMode !=
+                    PokrovWindowsConnectionMode.vpn
+            ? 1
+            : 0) +
+        (widget.hostPlatform == HostPlatform.windows &&
+                widget.preferences.tunStack != PokrovTunStack.system
+            ? 1
+            : 0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _SectionCard(
           key: const ValueKey('rules-advanced-disclosure'),
           title: 'Дополнительно',
-          lines: const ['Свои маршруты, Wi-Fi и системная защита.'],
+          lines: const ['Подключение, DNS, свои маршруты и Wi-Fi.'],
           child: _SettingsRow(
             key: const ValueKey('rules-advanced-toggle'),
             icon: Icons.tune_rounded,
@@ -243,6 +250,15 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
               : Column(
                   key: const ValueKey('rules-advanced-open'),
                   children: [
+                    if (widget.hostPlatform == HostPlatform.windows)
+                      _WindowsConnectionCard(
+                        preferences: widget.preferences,
+                        onChanged: widget.onChanged,
+                      ),
+                    _DnsAndLanCard(
+                      preferences: widget.preferences,
+                      onChanged: widget.onChanged,
+                    ),
                     _PurposeRoutingCard(
                       preferences: widget.preferences,
                       onChanged: widget.onChanged,

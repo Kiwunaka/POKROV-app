@@ -1800,6 +1800,61 @@ void main() {
     expect(bindings.stopCalls, 0);
   });
 
+  test('desktop system-proxy mode skips the Windows TUN-only probe', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-system-proxy-success-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+    var mixedProbeCalls = 0;
+    var systemProbeCalls = 0;
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      mixedProxyProbe: () async {
+        mixedProbeCalls += 1;
+        return null;
+      },
+      systemTunnelProbe: () async {
+        systemProbeCalls += 1;
+        return 'TUN probe must not run in system-proxy mode';
+      },
+      bindingsLoader: (_) => bindings,
+    );
+
+    final staged = await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'windows-system-proxy-success',
+        configPayload:
+            '{"inbounds":[{"type":"mixed","tag":"mixed-in","listen":"127.0.0.1","listen_port":12334,"set_system_proxy":true}],"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.fullTunnel,
+      ),
+    );
+    final snapshot = await engine.connect();
+
+    expect(mixedProbeCalls, 1);
+    expect(systemProbeCalls, 0);
+    expect(snapshot.phase, RuntimePhase.running);
+    expect(snapshot.lastFailureKind, isNull);
+    expect(bindings.startCalls, 1);
+    expect(bindings.stopCalls, 0);
+    final journal = File(
+      '${File(staged.stagedConfigPath!).parent.parent.path}'
+      '${Platform.pathSeparator}pokrov-runtime-events.jsonl',
+    );
+    expect(await journal.readAsString(), contains('"windows_system_proxy"'));
+  });
+
   test('desktop lane keeps runtime-ready WARP disabled without user consent',
       () async {
     final root = await Directory.systemTemp.createTemp(

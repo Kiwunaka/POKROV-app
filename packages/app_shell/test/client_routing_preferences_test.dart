@@ -60,6 +60,7 @@ void main() {
     final transformed = applyPokrovRoutingPreferences(
       _profile(),
       preferences,
+      hostPlatform: HostPlatform.android,
     );
     final config = _jsonMap(transformed.configPayload);
     final route = _map(config['route']);
@@ -98,6 +99,7 @@ void main() {
     final transformed = applyPokrovRoutingPreferences(
       _profile(),
       preferences,
+      hostPlatform: HostPlatform.android,
     );
     final config = _jsonMap(transformed.configPayload);
     final routeRules = _maps(_map(config['route'])['rules']);
@@ -121,6 +123,7 @@ void main() {
       const PokrovRoutingPreferences.defaults().copyWith(
         dnsPreset: PokrovDnsPreset.adguard,
       ),
+      hostPlatform: HostPlatform.android,
     );
     final dns = _map(_jsonMap(transformed.configPayload)['dns']);
     final dnsServers = _maps(dns['servers']);
@@ -134,6 +137,62 @@ void main() {
     });
   });
 
+  test('Windows keeps DNS interception ahead of LAN and applies TUN stack', () {
+    final override = PokrovRouteOverride.tryCreate(
+      value: 'private.example',
+      action: PokrovRouteAction.vpn,
+    )!;
+    final transformed = applyPokrovRoutingPreferences(
+      _windowsProfile(),
+      const PokrovRoutingPreferences.defaults().copyWith(
+        purposeRoutes: <PokrovPurposeRoute>{PokrovPurposeRoute.video},
+        overrides: <PokrovRouteOverride>[override],
+        tunStack: PokrovTunStack.gvisor,
+      ),
+      hostPlatform: HostPlatform.windows,
+    );
+    final config = _jsonMap(transformed.configPayload);
+    final rules = _maps(_map(config['route'])['rules']);
+    final inbounds = _maps(config['inbounds']);
+
+    expect(rules.first, <String, Object?>{
+      'port': 53,
+      'action': 'hijack-dns',
+    });
+    expect(rules[1], <String, Object?>{'action': 'sniff'});
+    expect(
+      rules.indexWhere((rule) => rule['ip_is_private'] == true),
+      greaterThan(1),
+    );
+    expect(
+      inbounds.singleWhere((inbound) => inbound['type'] == 'tun')['stack'],
+      'gvisor',
+    );
+    expect(
+      inbounds
+          .singleWhere((inbound) => inbound['type'] == 'mixed')
+          .containsKey('set_system_proxy'),
+      isFalse,
+    );
+  });
+
+  test('Windows system proxy removes TUN and enables Core-owned cleanup', () {
+    final transformed = applyPokrovRoutingPreferences(
+      _windowsProfile(),
+      const PokrovRoutingPreferences.defaults().copyWith(
+        windowsConnectionMode: PokrovWindowsConnectionMode.systemProxy,
+      ),
+      hostPlatform: HostPlatform.windows,
+    );
+    final inbounds = _maps(_jsonMap(transformed.configPayload)['inbounds']);
+
+    expect(inbounds.where((inbound) => inbound['type'] == 'tun'), isEmpty);
+    expect(
+      inbounds.singleWhere((inbound) => inbound['type'] == 'mixed'),
+      containsPair('set_system_proxy', true),
+    );
+  });
+
   test('same preferences are idempotent and malformed config is untouched', () {
     final rule = PokrovRouteOverride.tryCreate(
       value: 'example.com',
@@ -143,8 +202,16 @@ void main() {
       overrides: <PokrovRouteOverride>[rule],
       dnsPreset: PokrovDnsPreset.google,
     );
-    final once = applyPokrovRoutingPreferences(_profile(), preferences);
-    final twice = applyPokrovRoutingPreferences(once, preferences);
+    final once = applyPokrovRoutingPreferences(
+      _profile(),
+      preferences,
+      hostPlatform: HostPlatform.android,
+    );
+    final twice = applyPokrovRoutingPreferences(
+      once,
+      preferences,
+      hostPlatform: HostPlatform.android,
+    );
     final rules = _maps(_map(_jsonMap(twice.configPayload)['route'])['rules']);
 
     expect(
@@ -173,7 +240,11 @@ void main() {
     );
     expect(
       identical(
-        applyPokrovRoutingPreferences(malformed, preferences),
+        applyPokrovRoutingPreferences(
+          malformed,
+          preferences,
+          hostPlatform: HostPlatform.android,
+        ),
         malformed,
       ),
       isTrue,
@@ -230,6 +301,54 @@ ManagedProfilePayload _profile() => ManagedProfilePayload(
               'outbound': 'direct',
             },
             <String, Object?>{'protocol': 'dns', 'outbound': 'dns-out'},
+          ],
+        },
+      }),
+      materializedForRuntime: true,
+    );
+
+ManagedProfilePayload _windowsProfile() => ManagedProfilePayload(
+      profileName: 'windows-routing-test',
+      configPayload: jsonEncode(<String, Object?>{
+        'dns': <String, Object?>{
+          'servers': <Object?>[
+            <String, Object?>{
+              'type': 'tcp',
+              'tag': 'dns-remote',
+              'server': '1.1.1.1',
+              'detour': 'proxy',
+            },
+          ],
+          'final': 'dns-remote',
+        },
+        'inbounds': <Object?>[
+          <String, Object?>{
+            'type': 'tun',
+            'tag': 'tun-in',
+            'stack': 'system',
+            'auto_route': true,
+            'strict_route': true,
+          },
+          <String, Object?>{
+            'type': 'mixed',
+            'tag': 'mixed-in',
+            'listen': '127.0.0.1',
+            'listen_port': 12334,
+          },
+        ],
+        'outbounds': <Object?>[
+          <String, Object?>{'type': 'direct', 'tag': 'direct'},
+          <String, Object?>{'type': 'vless', 'tag': 'proxy'},
+        ],
+        'route': <String, Object?>{
+          'final': 'proxy',
+          'rules': <Object?>[
+            <String, Object?>{
+              'ip_is_private': true,
+              'outbound': 'direct',
+            },
+            <String, Object?>{'port': 53, 'action': 'hijack-dns'},
+            <String, Object?>{'action': 'sniff'},
           ],
         },
       }),

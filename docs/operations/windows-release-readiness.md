@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-08-18
+Last updated: 2026-08-19
 
 This document is the concrete Windows readiness note for the `POKROV-app` lane.
 
@@ -37,7 +37,8 @@ Historical mapping note:
   system-proxy restoration proof
 - the local `1.1.2+25` QA build remapped Hiddify's occupied `127.0.0.1:12334` to `127.0.0.1:54303`. Its live TUN attempt affected the active Codex route and was operator-terminated before a final connected event, so this is collision-fix evidence, not clean egress/DNS or teardown PASS
 - owner testing of the public `1.1.3+26` build on `2026-08-18` exposed a real Windows failure: Core and the mixed proxy came up, the shell showed a green connected state, but normal browser traffic and DNS through the system TUN stalled. This invalidates `1.1.3` as evidence for working Windows TUN traffic even though its published hashes and install/update handoff remain exact
-- current source fixes that false-positive boundary. Windows materialization now matches the known-working local Hiddify/Core shape (`system`, strict routing, typed TCP/UDP DNS, explicit port-53 DNS hijack before LAN/direct rules, route-level sniff, no legacy `dns-out`), and connect requires both mixed-proxy egress and an ordinary Windows TUN/DNS request before it reports running. An exact local Core diagnostic on 2026-08-19 reproduced mixed-proxy `PASS` with TUN/DNS `FAIL` under the old protocol-only DNS rule, then produced mixed-proxy, system-TUN HTTPS, and DNS `PASS` after changing only the first route rule to `port: 53 -> hijack-dns`. A newly packaged exact candidate and clean Hiddify-off owner run remain required before publication
+- current source fixes that false-positive boundary. Windows materialization now matches the known-working local Hiddify/Core shape (`system` by default, strict routing, typed TCP/UDP DNS, explicit port-53 DNS hijack and sniff before LAN/direct or user rules, no legacy `dns-out`), and connect requires both mixed-proxy egress and an ordinary Windows TUN/DNS request before it reports running. The final preference pass now reasserts this order; the earlier `5074138` local candidate still failed because it moved the LAN direct rule back above DNS after the base profile was built. Advanced settings expose Core-supported `mixed`/`gvisor` TUN stacks and a loopback Core-owned system-proxy compatibility mode without changing the default. A newly packaged exact candidate and clean Hiddify-off owner run remain required before publication
+- the non-public `1.1.4+27` working-tree candidate was built and installed locally on 2026-08-19. The setup SHA-256 is `5EBFD638B0DCB2E7E70B6A9257C8A73D48D75B181C80B1C437ABB5837B1EA757`; the installed `data/app.so` exactly matched the build at `C5D30FBE718310166202ABAFB8B7F170D31CF5DF6D750C23AA0A9CEBA4541900`. Per owner instruction the newly installed app was left closed, so this is install-integrity evidence only and not Windows TUN/DNS or system-proxy runtime `PASS`
 - each desktop start now appends a bounded, secret-free lifecycle journal under the POKROV application-support runtime directory. Support can distinguish initialization, staging, Core start, mixed-proxy verification, each Windows TUN verification attempt, connect, and teardown without retaining browsing history or raw connection material
 
 ## Current 2026-08-13 Candidate State
@@ -195,7 +196,9 @@ Safe to claim now:
   to the public GitHub prerelease for outside-store beta access
 - the current Windows source materializes `Full tunnel`, `All except RU`,
   selected-process routing, and client-local WARP into raw config before the
-  POKROV Core start call; system proxy remains a disabled compatibility-only path
+  POKROV Core start call. `VPN/TUN + system` remains the default; advanced
+  settings expose `mixed`, `gvisor`, and a loopback-only Core-owned system proxy
+  that is restored on stop
 - current source fail-closes when the selected outbound works through the local
   proxy but the ordinary Windows TUN/DNS path does not; this is source evidence,
   not proof for the still-public `1.1.3` artifact

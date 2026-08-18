@@ -12,6 +12,10 @@ enum PokrovRouteMatchType { domain, ip, subnet }
 
 enum PokrovDnsPreset { automatic, cloudflare, google, adguard, custom }
 
+enum PokrovWindowsConnectionMode { vpn, systemProxy }
+
+enum PokrovTunStack { system, mixed, gvisor }
+
 extension PokrovPurposeRoutePresentation on PokrovPurposeRoute {
   String get title => switch (this) {
         PokrovPurposeRoute.video => 'Видео',
@@ -45,6 +49,29 @@ extension PokrovDnsPresetPresentation on PokrovDnsPreset {
         PokrovDnsPreset.google => 'https://dns.google/dns-query',
         PokrovDnsPreset.adguard => 'https://dns.adguard-dns.com/dns-query',
         PokrovDnsPreset.custom => null,
+      };
+}
+
+extension PokrovWindowsConnectionModePresentation
+    on PokrovWindowsConnectionMode {
+  String get title => switch (this) {
+        PokrovWindowsConnectionMode.vpn => 'VPN для всего устройства',
+        PokrovWindowsConnectionMode.systemProxy => 'Системный прокси',
+      };
+
+  String get summary => switch (this) {
+        PokrovWindowsConnectionMode.vpn =>
+          'Защищает TCP и UDP через системный TUN. Нужны права администратора.',
+        PokrovWindowsConnectionMode.systemProxy =>
+          'Режим совместимости для программ, которые используют прокси Windows. UDP и часть приложений могут идти напрямую.',
+      };
+}
+
+extension PokrovTunStackPresentation on PokrovTunStack {
+  String get title => switch (this) {
+        PokrovTunStack.system => 'System · рекомендуется',
+        PokrovTunStack.mixed => 'Mixed · system TCP + gVisor UDP',
+        PokrovTunStack.gvisor => 'gVisor · виртуальный стек',
       };
 }
 
@@ -110,6 +137,8 @@ class PokrovRoutingPreferences {
     required this.allowLan,
     required this.trustedWifiNames,
     required this.pauseOnTrustedWifi,
+    required this.windowsConnectionMode,
+    required this.tunStack,
   });
 
   const PokrovRoutingPreferences.defaults()
@@ -119,7 +148,9 @@ class PokrovRoutingPreferences {
         customDnsUrl = '',
         allowLan = true,
         trustedWifiNames = const <String>[],
-        pauseOnTrustedWifi = false;
+        pauseOnTrustedWifi = false,
+        windowsConnectionMode = PokrovWindowsConnectionMode.vpn,
+        tunStack = PokrovTunStack.system;
 
   final Set<PokrovPurposeRoute> purposeRoutes;
   final List<PokrovRouteOverride> overrides;
@@ -128,6 +159,8 @@ class PokrovRoutingPreferences {
   final bool allowLan;
   final List<String> trustedWifiNames;
   final bool pauseOnTrustedWifi;
+  final PokrovWindowsConnectionMode windowsConnectionMode;
+  final PokrovTunStack tunStack;
 
   PokrovRoutingPreferences copyWith({
     Set<PokrovPurposeRoute>? purposeRoutes,
@@ -137,6 +170,8 @@ class PokrovRoutingPreferences {
     bool? allowLan,
     List<String>? trustedWifiNames,
     bool? pauseOnTrustedWifi,
+    PokrovWindowsConnectionMode? windowsConnectionMode,
+    PokrovTunStack? tunStack,
   }) {
     return PokrovRoutingPreferences(
       purposeRoutes: purposeRoutes ?? this.purposeRoutes,
@@ -146,6 +181,9 @@ class PokrovRoutingPreferences {
       allowLan: allowLan ?? this.allowLan,
       trustedWifiNames: trustedWifiNames ?? this.trustedWifiNames,
       pauseOnTrustedWifi: pauseOnTrustedWifi ?? this.pauseOnTrustedWifi,
+      windowsConnectionMode:
+          windowsConnectionMode ?? this.windowsConnectionMode,
+      tunStack: tunStack ?? this.tunStack,
     );
   }
 
@@ -176,6 +214,14 @@ class PokrovRoutingPreferences {
         .toSet()
         .take(20)
         .toList(growable: false);
+    final windowsConnectionMode = PokrovWindowsConnectionMode.values.firstWhere(
+      (item) => item.name == _routingText(json['windowsConnectionMode']),
+      orElse: () => PokrovWindowsConnectionMode.vpn,
+    );
+    final tunStack = PokrovTunStack.values.firstWhere(
+      (item) => item.name == _routingText(json['tunStack']),
+      orElse: () => PokrovTunStack.system,
+    );
     return PokrovRoutingPreferences(
       purposeRoutes: Set<PokrovPurposeRoute>.unmodifiable(purposes),
       overrides: List<PokrovRouteOverride>.unmodifiable(overrides),
@@ -187,6 +233,8 @@ class PokrovRoutingPreferences {
       trustedWifiNames: List<String>.unmodifiable(trustedWifi),
       pauseOnTrustedWifi:
           json['pauseOnTrustedWifi'] == true && trustedWifi.isNotEmpty,
+      windowsConnectionMode: windowsConnectionMode,
+      tunStack: tunStack,
     );
   }
 
@@ -198,6 +246,8 @@ class PokrovRoutingPreferences {
         'allowLan': allowLan,
         'trustedWifiNames': trustedWifiNames.take(20).toList(),
         'pauseOnTrustedWifi': pauseOnTrustedWifi,
+        'windowsConnectionMode': windowsConnectionMode.name,
+        'tunStack': tunStack.name,
       };
 
   String? get effectiveDnsAddress => switch (dnsPreset) {
@@ -277,8 +327,9 @@ PokrovRouteDecision explainPokrovRouteDecision({
 
 ManagedProfilePayload applyPokrovRoutingPreferences(
   ManagedProfilePayload payload,
-  PokrovRoutingPreferences preferences,
-) {
+  PokrovRoutingPreferences preferences, {
+  required HostPlatform hostPlatform,
+}) {
   Map<String, dynamic> config;
   try {
     final decoded = jsonDecode(payload.configPayload);
@@ -304,6 +355,20 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
         rule['ip_is_private'] == true &&
         _routingText(rule['outbound']) == directTag,
   );
+  final protectedRules = <Map<String, dynamic>>[];
+  if (hostPlatform == HostPlatform.windows) {
+    rules.removeWhere((rule) {
+      final action = _routingText(rule['action']).toLowerCase();
+      final isDnsRule = rule['port'] == 53 ||
+          _routingText(rule['protocol']).toLowerCase() == 'dns' ||
+          action == 'hijack-dns';
+      return isDnsRule || action == 'sniff';
+    });
+    protectedRules.addAll(const <Map<String, dynamic>>[
+      <String, dynamic>{'port': 53, 'action': 'hijack-dns'},
+      <String, dynamic>{'action': 'sniff'},
+    ]);
+  }
   final injected = <Map<String, dynamic>>[];
   for (final override in preferences.overrides) {
     final target =
@@ -333,14 +398,39 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
       'outbound': directTag,
     });
   }
+  rules.insertAll(0, protectedRules);
   rules.insertAll(
-    0,
+    protectedRules.length,
     injected.where(
       (rule) => !rules.any((existing) => _sameRoutingRule(existing, rule)),
     ),
   );
   route['rules'] = rules;
   config['route'] = route;
+
+  if (hostPlatform == HostPlatform.windows) {
+    final inbounds = _routingListOfMaps(config['inbounds']);
+    final mixedInbound = inbounds
+        .where((inbound) => _routingText(inbound['type']) == 'mixed')
+        .firstOrNull;
+    if (preferences.windowsConnectionMode ==
+        PokrovWindowsConnectionMode.systemProxy) {
+      if (mixedInbound != null) {
+        inbounds.removeWhere(
+          (inbound) => _routingText(inbound['type']) == 'tun',
+        );
+        mixedInbound['set_system_proxy'] = true;
+      }
+    } else {
+      mixedInbound?.remove('set_system_proxy');
+      for (final inbound in inbounds) {
+        if (_routingText(inbound['type']) == 'tun') {
+          inbound['stack'] = preferences.tunStack.name;
+        }
+      }
+    }
+    config['inbounds'] = inbounds;
+  }
 
   final dnsAddress = preferences.effectiveDnsAddress;
   if (dnsAddress != null) {

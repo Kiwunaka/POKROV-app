@@ -116,6 +116,10 @@ Expected first-layer behavior:
   Auto card does not duplicate that spinner, preserving the full
   `Автоматически` title on narrow Huawei-class layouts.
 - The shell keeps four top-level sections and lazy-builds non-Home tabs.
+- DNS, LAN, custom routes, trusted Wi-Fi, and Windows transport compatibility
+  controls stay behind the single `Дополнительно` disclosure in Rules. The
+  Windows default is named in consumer language; `System`, `Mixed`, `gVisor`,
+  and `Системный прокси` appear only after that deliberate expansion.
 
 The first contract coverage lives in
 `packages/app_shell/test/design_system_contract_test.dart` and checks the

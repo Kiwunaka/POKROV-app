@@ -109,6 +109,8 @@ void main() {
         purposeRoutes: const <PokrovPurposeRoute>{PokrovPurposeRoute.video},
         dnsPreset: PokrovDnsPreset.cloudflare,
         allowLan: false,
+        windowsConnectionMode: PokrovWindowsConnectionMode.systemProxy,
+        tunStack: PokrovTunStack.mixed,
         overrides: <PokrovRouteOverride>[
           PokrovRouteOverride.tryCreate(
             value: 'private.example',
@@ -154,6 +156,11 @@ void main() {
     );
     expect(restored.routingPreferences.dnsPreset, PokrovDnsPreset.cloudflare);
     expect(restored.routingPreferences.allowLan, isFalse);
+    expect(
+      restored.routingPreferences.windowsConnectionMode,
+      PokrovWindowsConnectionMode.systemProxy,
+    );
+    expect(restored.routingPreferences.tunStack, PokrovTunStack.mixed);
     expect(
         restored.routingPreferences.overrides.single.value, 'private.example');
     expect(restored.emergencyAutomaticRoute, isFalse);

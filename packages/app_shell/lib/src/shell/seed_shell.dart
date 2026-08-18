@@ -2192,6 +2192,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (widget.appContext.hostPlatform != HostPlatform.windows) {
       return true;
     }
+    if (_clientExperience.routingPreferences.windowsConnectionMode ==
+        PokrovWindowsConnectionMode.systemProxy) {
+      return true;
+    }
     final authorizer = widget.windowsTunnelAuthorizer;
     final result = authorizer != null
         ? await authorizer()
@@ -3974,6 +3978,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final configuredPayload = applyPokrovRoutingPreferences(
       runtimePayload,
       _clientExperience.routingPreferences,
+      hostPlatform: widget.appContext.hostPlatform,
     );
     if (mounted) {
       final resolvedAutomatic = payload.resolvedNodeCode.trim().toLowerCase();
