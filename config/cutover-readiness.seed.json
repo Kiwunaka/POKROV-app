@@ -1,16 +1,16 @@
 {
   "lane": "POKROV-app/main",
-  "status": "android_direct_apk_1_1_2_public_stable_runtime_synced_global_cutover_blocked_on_windows_trust_and_native_apple_gates",
+  "status": "android_1_1_2_and_windows_1_1_3_public_stable_windows_runtime_sync_pending_global_cutover_blocked_on_windows_trust_and_native_apple_gates",
   "public_cutover_allowed": false,
-  "last_updated": "2026-08-17",
+  "last_updated": "2026-08-18",
   "latest_repo_backed_release": {
-    "version": "1.1.2",
-    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.1.2",
-    "asset_refresh_utc": "2026-08-17T19:55:20Z",
+    "version": "1.1.3",
+    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.1.3",
+    "asset_refresh_utc": "2026-08-18T11:12:33Z",
     "github_repo_visibility": "public",
-    "anonymous_download_smoke": "PASS_ALL_EIGHT_PUBLIC_ASSETS_RANGE_GET_206_AND_GITHUB_SIZE_DIGEST",
-    "authenticated_github_release_smoke": "PASS_EXACT_GITHUB_ASSET_DIGEST",
-    "live_app_session_download_smoke": "PASS_PUBLIC_EXACT_V1_1_2_REQUIRED_UPDATE_DISCOVERY; INSTALLER_HANDOFF_NOT_RETESTED"
+    "anonymous_download_smoke": "PASS_ALL_FOUR_WINDOWS_1_1_3_PUBLIC_ASSETS_RANGE_GET_206_AND_GITHUB_SIZE_DIGEST",
+    "authenticated_github_release_smoke": "PASS_EXACT_WINDOWS_1_1_3_GITHUB_ASSET_DIGEST",
+    "live_app_session_download_smoke": "PENDING_WINDOWS_1_1_3_RUNTIME_SYNC; ANDROID_1_1_2_REMAINS_ACTIVE"
   },
   "android_release": {
     "distribution": "public_production_signed_stable_direct_apk",
@@ -55,7 +55,9 @@
       "trusted signing and SmartScreen reputation for later broad distribution"
     ],
     "accepted_evidence": [
-      "unsigned publisher warning accepted for the current outside-store stable-direct wave"
+      "unsigned publisher warning accepted for the current outside-store stable-direct wave",
+      "Windows 1.1.3 production bundle, portable ZIP and manifest hashes match the public GitHub assets",
+      "local occupied-port QA remapped the helper listener and reached TUN routing; clean egress remains a manual follow-up because this workstation depends on Hiddify"
     ]
   },
   "blocking_dependencies": [
@@ -65,7 +67,7 @@
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
-    "Android 1.1.2 split APKs and Windows 1.1.2 stable-direct artifacts are public, GitHub-digest verified, and synchronized into production; Windows trusted signing remains an owner gate"
+    "Android 1.1.2 split APKs remain production-synchronized; Windows 1.1.3 stable-direct artifacts are public and GitHub-digest verified but runtime sync is pending; Windows trusted signing remains an owner gate"
   ],
   "repo_side_closed": [
     "P0-P6 beta implementation scope",
@@ -74,7 +76,7 @@
     "authenticated GitHub download proof for all current release assets",
     "Android build-tool future-support warning closed with Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0",
     "release-note guardrails recorded; post-announcement monitoring remains operator work",
-    "1.1.2 GitHub stable release, exact eight-asset GitHub digest plus anonymous range-download verification, production handoff, deploy and post-deploy checks PASS",
+    "1.1.3 Windows stable hotfix, exact four-asset GitHub digest plus anonymous range-download verification PASS; production handoff and deploy are pending",
     "Android 1.1.2 split APKs are production-signed; LDPlayer x86_64 update/session/UI PASS, while exact Huawei arm64 and carrier proof remain manual"
   ],
   "ios_release_gates": [
