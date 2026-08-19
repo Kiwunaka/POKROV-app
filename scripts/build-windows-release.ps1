@@ -192,6 +192,18 @@ if (-not $SkipBuild) {
   ) -WorkingDirectory $appDirectory
 }
 
+function Write-Utf8BomFile {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Path,
+    [Parameter(Mandatory = $true)]
+    [string]$Content
+  )
+
+  $utf8Bom = New-Object System.Text.UTF8Encoding($true)
+  [System.IO.File]::WriteAllText($Path, $Content, $utf8Bom)
+}
+
 $releaseOutputDirectory = Join-Path $root $windowsReleaseConfig.bundle_root
 $missingBuildFiles = Test-RequiredFiles -BasePath $releaseOutputDirectory -RelativePaths $windowsReleaseConfig.required_files
 if ($missingBuildFiles.Count -gt 0) {
@@ -261,6 +273,7 @@ if (-not $SkipInstaller) {
   $installerOutputName = [System.IO.Path]::GetFileNameWithoutExtension($installerName)
   $setupIconPath = Join-Path $appDirectory "windows\runner\resources\app_icon.ico"
   $iss = @"
+#pragma code_page 65001
 [Setup]
 AppId={{A8EE9193-93A9-4B13-A7AD-8441D98A48E1}
 AppName=POKROV VPN
@@ -310,7 +323,7 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 [Run]
 Filename: "{app}\$($windowsReleaseConfig.binary_name)"; WorkingDir: "{app}"; Description: "Запустить POKROV"; Flags: nowait postinstall skipifsilent
 "@
-  Write-Utf8File -Path $issPath -Content $iss
+  Write-Utf8BomFile -Path $issPath -Content $iss
   if (Test-Path -LiteralPath $installerPath) {
     Remove-Item -Force -LiteralPath $installerPath
   }

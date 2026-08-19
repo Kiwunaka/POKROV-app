@@ -24,6 +24,7 @@ void main() {
     expect(releaseJson['artifact_status'], 'unsigned_direct');
     expect(requiredFiles, contains('pokrov-core.dll'));
     expect(requiredFiles, contains('libcronet.dll'));
+    expect(requiredFiles, contains('pokrov_tray.ico'));
     expect(requiredFiles, contains('pokrov_windows.exe'));
     expect(requiredFiles, isNot(contains('pokrov_windows_seed.exe')));
 
@@ -63,13 +64,18 @@ void main() {
     final buildScript = File('../../scripts/build-windows-release.ps1');
     final runner = File('windows/runner/main.cpp');
     final window = File('windows/runner/flutter_window.cpp');
+    final cmake = File('windows/CMakeLists.txt');
+    final trayIcon = File('windows/runner/resources/pokrov_tray.ico');
     final scriptContent = await buildScript.readAsString();
     final runnerContent = await runner.readAsString();
     final windowContent = await window.readAsString();
+    final cmakeContent = await cmake.readAsString();
 
     expect(scriptContent, contains('Inno Setup 6'));
     expect(scriptContent, contains('DisableDirPage=no'));
     expect(scriptContent, contains('Languages\\Russian.isl'));
+    expect(scriptContent, contains('#pragma code_page 65001'));
+    expect(scriptContent, contains('Write-Utf8BomFile -Path \$issPath'));
     expect(scriptContent, contains('Name: "desktopicon"'));
     expect(scriptContent, contains('Name: "autostart"'));
     expect(scriptContent, contains('Software\\Classes\\pokrov'));
@@ -86,6 +92,9 @@ void main() {
       windowContent,
       contains('space.pokrov/acquisition-links'),
     );
+    expect(await trayIcon.exists(), isTrue);
+    expect(await trayIcon.length(), greaterThan(1024));
+    expect(cmakeContent, contains('pokrov_tray.ico'));
   });
 
   test('windows shell gates TUN elevation and owns user preferences', () async {

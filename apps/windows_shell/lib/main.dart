@@ -76,6 +76,12 @@ Future<void> main(List<String> arguments) async {
 bool pokrovWindowsShouldAutoConnect(Iterable<String> arguments) =>
     arguments.any((argument) => argument.trim() == '--connect');
 
+@visibleForTesting
+String pokrovWindowsTrayIconPath({String? executablePath}) {
+  final executable = File(executablePath ?? Platform.resolvedExecutable);
+  return '${executable.parent.path}${Platform.pathSeparator}pokrov_tray.ico';
+}
+
 void _connectWhenReady(PokrovShellController controller) {
   var started = false;
   late VoidCallback listener;
@@ -173,7 +179,7 @@ final class _PokrovWindowsTray with TrayListener, WindowListener {
     shellController.addListener(_instance._scheduleMenuUpdate);
     trayManager.addListener(_instance);
     windowManager.addListener(_instance);
-    await trayManager.setIcon('windows/runner/resources/app_icon.ico');
+    await trayManager.setIcon(pokrovWindowsTrayIconPath());
     await _instance._applyControllerState();
   }
 

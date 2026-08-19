@@ -309,7 +309,9 @@ String? _runtimeNullableText(Object? value) {
 }
 
 const _publicRuntimeFailureKinds = <String>{
+  'desktop_competing_vpn_active',
   'desktop_loopback_port_conflict',
+  'desktop_tun_start_failed',
   'runtime_initialization_failed',
   'runtime_start_after_permission_failed',
   'runtime_start_failed',
@@ -445,8 +447,12 @@ String _publicRuntimeMessage({
     return 'Не удалось связаться с системным модулем.';
   }
   switch (failureKind) {
+    case 'desktop_competing_vpn_active':
+      return 'Другой системный VPN уже управляет маршрутами Windows. Отключите его туннель и повторите подключение POKROV.';
     case 'desktop_loopback_port_conflict':
       return 'Локальный порт POKROV занят другой программой. Повторите подключение.';
+    case 'desktop_tun_start_failed':
+      return 'Windows не запустил системный туннель. Закройте другие VPN, затем запустите POKROV от имени администратора.';
     case 'runtime_initialization_failed':
       return 'POKROV не смог подготовить устройство.';
     case 'runtime_start_after_permission_failed':
@@ -1049,6 +1055,9 @@ PokrovRuntimeEngine createRuntimeEngine({
       return DesktopRuntimeEngine(
         hostPlatform: hostPlatform,
         assetRootOverride: assetRootOverride,
+        competingVpnProbe: hostPlatform == HostPlatform.windows
+            ? _defaultWindowsCompetingVpnProbe
+            : null,
       );
     case HostPlatform.android:
     case HostPlatform.ios:
@@ -1076,10 +1085,12 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     Future<String?> Function()? connectivityProbe,
     Future<String?> Function()? mixedProxyProbe,
     Future<String?> Function()? systemTunnelProbe,
+    Future<bool> Function()? competingVpnProbe,
     DesktopRuntimeBindings Function(String libraryPath)? bindingsLoader,
   })  : _connectivityProbe = connectivityProbe,
         _mixedProxyProbe = mixedProxyProbe,
         _systemTunnelProbe = systemTunnelProbe,
+        _competingVpnProbe = competingVpnProbe,
         _bindingsLoader = bindingsLoader ?? _PokrovCoreBindingsLoader.load;
 
   final HostPlatform hostPlatform;
@@ -1087,6 +1098,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   final Future<String?> Function()? _connectivityProbe;
   final Future<String?> Function()? _mixedProxyProbe;
   final Future<String?> Function()? _systemTunnelProbe;
+  final Future<bool> Function()? _competingVpnProbe;
   final DesktopRuntimeBindings Function(String libraryPath) _bindingsLoader;
 
   _RuntimeDirectories? _directories;
@@ -1097,6 +1109,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   String? _stagedConfigPath;
   DateTime? _runningSince;
   String? _lastFailureKind;
+  bool _desktopVerificationPassed = false;
   RuntimePhase _phase = RuntimePhase.artifactMissing;
   String _message = _missingArtifactMessage;
   static const _runtimeJournalFileName = 'pokrov-runtime-events.jsonl';
@@ -1218,6 +1231,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   Future<RuntimeSnapshot> stageManagedProfile(
     ManagedProfilePayload payload,
   ) async {
+    _desktopVerificationPassed = false;
     final before = await initialize();
     await _appendRuntimeEvent(event: 'profile_stage', outcome: 'started');
     if (!before.canInitialize || _bindings == null || _directories == null) {
@@ -1304,6 +1318,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
 
   @override
   Future<RuntimeSnapshot> connect() async {
+    _desktopVerificationPassed = false;
     final before = await snapshot();
     if (!before.canConnect || _bindings == null || _stagedPayload == null) {
       _message = 'POKROV ждет подготовленные настройки и готовый runtime.';
@@ -1312,6 +1327,26 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         phase: _phase,
         canInitialize: before.canInitialize,
         canConnect: before.canConnect,
+      );
+    }
+
+    if (!await _stagedUsesWindowsSystemProxy() &&
+        await _hasCompetingWindowsVpn()) {
+      _phase = RuntimePhase.configStaged;
+      _lastFailureKind = 'desktop_competing_vpn_active';
+      _message = _publicRuntimeMessage(
+        phase: _phase,
+        failureKind: _lastFailureKind,
+      );
+      await _appendRuntimeEvent(
+        event: 'windows_vpn_preflight',
+        outcome: 'blocked',
+        failureKind: _lastFailureKind,
+      );
+      return _snapshotPreservingCurrentMessage(
+        phase: _phase,
+        canInitialize: true,
+        canConnect: true,
       );
     }
 
@@ -1360,6 +1395,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
 
     _phase = RuntimePhase.running;
     _lastFailureKind = null;
+    _desktopVerificationPassed = true;
     _runningSince ??= DateTime.now().toUtc();
     _message = 'POKROV включен.';
     await _appendRuntimeEvent(event: 'connect', outcome: 'running');
@@ -1453,6 +1489,17 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       message:
           'Туннель запущен, но Windows не пропускает трафик. POKROV отключил его, чтобы сохранить доступ к сети.',
     );
+  }
+
+  Future<bool> _hasCompetingWindowsVpn() async {
+    if (hostPlatform != HostPlatform.windows) {
+      return false;
+    }
+    final injected = _competingVpnProbe;
+    if (injected == null) {
+      return false;
+    }
+    return injected();
   }
 
   Future<String?> _probeHttp({
@@ -1628,6 +1675,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         : RuntimePhase.configStaged;
     _runningSince = null;
     _lastFailureKind = null;
+    _desktopVerificationPassed = false;
     _message = 'POKROV отключен.';
     await _appendRuntimeEvent(event: 'disconnect', outcome: 'stopped');
     return _snapshotPreservingCurrentMessage(
@@ -1828,6 +1876,9 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     required bool canInitialize,
     required bool canConnect,
   }) {
+    final verifiedRunning = phase == RuntimePhase.running &&
+        _desktopVerificationPassed &&
+        _lastFailureKind == null;
     return RuntimeSnapshot(
       hostPlatform: hostPlatform,
       lane: RuntimeLane.desktopFfi,
@@ -1840,8 +1891,43 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       canInitialize: canInitialize,
       canConnect: canConnect,
       message: _message,
+      hostHealth: verifiedRunning
+          ? RuntimeHostHealth.healthy
+          : RuntimeHostHealth.unknown,
+      dnsState: verifiedRunning
+          ? RuntimeDiagnosticState.healthy
+          : RuntimeDiagnosticState.unknown,
+      uplinkState: verifiedRunning
+          ? RuntimeDiagnosticState.healthy
+          : RuntimeDiagnosticState.unknown,
+      dnsReady: verifiedRunning ? true : null,
+      coreEgressValidated: verifiedRunning ? true : null,
+      coreEgressValidationRequired: false,
       lastFailureKind: _lastFailureKind,
     );
+  }
+}
+
+Future<bool> _defaultWindowsCompetingVpnProbe() async {
+  try {
+    final result = await Process.run(
+      'powershell.exe',
+      const [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        r"@(Get-NetRoute -AddressFamily IPv4 -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | Where-Object { $_.InterfaceAlias -match '^(tun\d*|hiddify)$' }).Count",
+      ],
+      runInShell: false,
+    ).timeout(const Duration(seconds: 3));
+    if (result.exitCode != 0) {
+      return false;
+    }
+    final count = int.tryParse(result.stdout.toString().trim());
+    return count != null && count > 0;
+  } on Object {
+    // An unavailable route inventory must not block normal connection.
+    return false;
   }
 }
 
@@ -1855,6 +1941,12 @@ String _desktopStartFailureKind(String error) {
       normalized.contains('access') ||
       normalized.contains('administrator')) {
     return 'runtime_start_after_permission_failed';
+  }
+  if (normalized.contains('wintun') ||
+      normalized.contains('tun interface') ||
+      normalized.contains('inbound/tun') ||
+      normalized.contains('inbound tun')) {
+    return 'desktop_tun_start_failed';
   }
   return 'runtime_start_failed';
 }

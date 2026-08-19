@@ -1796,8 +1796,137 @@ void main() {
     expect(systemProbeCalls, 3);
     expect(snapshot.phase, RuntimePhase.running);
     expect(snapshot.lastFailureKind, isNull);
+    expect(snapshot.hostHealth, RuntimeHostHealth.healthy);
+    expect(snapshot.dnsState, RuntimeDiagnosticState.healthy);
+    expect(snapshot.uplinkState, RuntimeDiagnosticState.healthy);
+    expect(snapshot.dnsReady, isTrue);
+    expect(snapshot.coreEgressValidated, isTrue);
+    expect(snapshot.isCleanlyHealthy, isTrue);
     expect(bindings.startCalls, 1);
     expect(bindings.stopCalls, 0);
+
+    final stopped = await engine.disconnect();
+    expect(stopped.phase, RuntimePhase.configStaged);
+    expect(stopped.hostHealth, RuntimeHostHealth.unknown);
+    expect(stopped.dnsState, RuntimeDiagnosticState.unknown);
+    expect(stopped.uplinkState, RuntimeDiagnosticState.unknown);
+    expect(stopped.coreEgressValidated, isNull);
+  });
+
+  test('desktop lane classifies Windows TUN startup failures', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-tun-start-error-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings(
+      startResult: 'start inbound/tun: create Wintun adapter failed',
+    );
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'windows-tun-start-error',
+        configPayload:
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+      ),
+    );
+    final snapshot = await engine.connect();
+
+    expect(snapshot.phase, RuntimePhase.configStaged);
+    expect(snapshot.lastFailureKind, 'desktop_tun_start_failed');
+    expect(snapshot.message, contains('Закройте другие VPN'));
+  });
+
+  test('desktop lane blocks a known competing Windows VPN before Core start',
+      () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-competing-vpn-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      competingVpnProbe: () async => true,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'windows-competing-vpn',
+        configPayload:
+            '{"inbounds":[{"type":"tun","tag":"tun-in"}],"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.fullTunnel,
+      ),
+    );
+    final snapshot = await engine.connect();
+
+    expect(snapshot.phase, RuntimePhase.configStaged);
+    expect(snapshot.lastFailureKind, 'desktop_competing_vpn_active');
+    expect(snapshot.message, contains('Другой системный VPN'));
+    expect(bindings.startCalls, 0);
+  });
+
+  test('desktop system-proxy mode ignores a competing TUN preflight', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-runtime-desktop-system-proxy-with-other-tun-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    final platformDirectory = Directory('${root.path}\\windows')
+      ..createSync(recursive: true);
+    File('${platformDirectory.path}\\pokrov-core.dll')
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      competingVpnProbe: () async => true,
+      mixedProxyProbe: () async => null,
+      bindingsLoader: (_) => bindings,
+    );
+
+    await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'windows-system-proxy-with-other-tun',
+        configPayload:
+            '{"inbounds":[{"type":"mixed","listen":"127.0.0.1","listen_port":12334,"set_system_proxy":true}],"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+        routeMode: RouteMode.fullTunnel,
+      ),
+    );
+    final snapshot = await engine.connect();
+
+    expect(snapshot.phase, RuntimePhase.running);
+    expect(bindings.startCalls, 1);
   });
 
   test('desktop system-proxy mode skips the Windows TUN-only probe', () async {

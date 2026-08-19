@@ -48,6 +48,15 @@ void main() {
     );
   });
 
+  test('windows tray icon resolves beside the installed executable', () {
+    expect(
+      windows_shell.pokrovWindowsTrayIconPath(
+        executablePath: r'C:\Program Files\POKROV\pokrov_windows.exe',
+      ),
+      r'C:\Program Files\POKROV\pokrov_tray.ico',
+    );
+  });
+
   const windowsTrayPrivateHelperBehaviorCoverage = ['_showWindow'];
 
   test(

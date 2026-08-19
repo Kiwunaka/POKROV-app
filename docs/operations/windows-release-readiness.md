@@ -29,6 +29,11 @@ Historical mapping note:
   Android and Windows release assets. Production serves the exact `1.1.5`
   URL, size, hash and Russian notes; static release `20260818230725` and the
   post-deploy readiness check pass
+- exact `1.1.6+29` is the current source release candidate. It fixes the
+  verified-connection UI state, installed tray icon and Russian Inno Setup
+  encoding, and blocks only a real competing Windows TUN default route rather
+  than the presence of another VPN process. Publication hashes and clean-host
+  runtime proof are recorded only after packaging and promotion
 - stable direct executables present the public product name `POKROV` and no longer carry the Windows `VS_FF_PRERELEASE` metadata flag; debug builds retain only `VS_FF_DEBUG`
 - app-first session secrets must not remain in plaintext JSON state; the current source implements legacy `session_token` migration into platform secure storage, atomically replaces the JSON state, and writes only a `session_token_storage=secure` marker after a durable write; a marker whose platform secret is missing enters recovery instead of minting another trial, while exact-artifact restart proof remains a release gate
 - local runtime/control surfaces must stay loopback-only: mixed/system-proxy ports bind to `127.0.0.1`, Clash/control APIs stay disabled unless explicitly protected by a per-install random secret, and no unauthenticated LAN listener is release-acceptable
@@ -53,6 +58,20 @@ Historical mapping note:
 - current source fixes that false-positive boundary. Windows materialization now matches the known-working local Hiddify/Core shape (`system` by default, strict routing, typed TCP/UDP DNS, explicit port-53 DNS hijack and sniff before LAN/direct or user rules, no legacy `dns-out`), and connect requires both mixed-proxy egress and an ordinary Windows TUN/DNS request before it reports running. The final preference pass now reasserts this order; the earlier `5074138` local candidate still failed because it moved the LAN direct rule back above DNS after the base profile was built. Advanced settings expose Core-supported `mixed`/`gvisor` TUN stacks and a loopback Core-owned system-proxy compatibility mode without changing the default. The owner authorized the exact unsigned `1.1.5` stable-direct publication with the explicit warning; a clean Hiddify-off run remains `MANUAL_OWNER_TEST` before any stronger Windows TUN/DNS claim
 - the non-public `1.1.4+27` working-tree candidate was built and installed locally on 2026-08-19. The setup SHA-256 is `5EBFD638B0DCB2E7E70B6A9257C8A73D48D75B181C80B1C437ABB5837B1EA757`; the installed `data/app.so` exactly matched the build at `C5D30FBE718310166202ABAFB8B7F170D31CF5DF6D750C23AA0A9CEBA4541900`. Per owner instruction the newly installed app was left closed, so this is install-integrity evidence only and not Windows TUN/DNS or system-proxy runtime `PASS`
 - each desktop start now appends a bounded, secret-free lifecycle journal under the POKROV application-support runtime directory. Support can distinguish initialization, staging, Core start, mixed-proxy verification, each Windows TUN verification attempt, connect, and teardown without retaining browsing history or raw connection material
+- the TUN preflight checks an active competing default route rather than a process name. A running Hiddify process therefore does not block POKROV's compatibility system-proxy mode, while a real active `tun*` default route still blocks a second system tunnel before Core start
+- a desktop snapshot now marks host, DNS and uplink healthy only after the
+  mixed-proxy and required Windows TUN probe pass; the shell therefore leaves
+  `Проверяем…` after a proven connection instead of waiting for Android-only
+  host callbacks. Disconnect or restaging clears that proof
+- Windows preflight recognizes an active competing `tun*` default route and
+  blocks before Core start with an actionable close-the-other-tunnel message.
+  A merely running Hiddify process is not sufficient evidence of a conflict,
+  and compatibility system-proxy mode intentionally skips this TUN-only gate;
+  POKROV never terminates the other process itself
+- the tray icon is a dedicated transparent POKROV mark bundled beside the EXE,
+  and the shell resolves that installed path instead of a source-tree-relative
+  path. Inno Setup input is emitted as UTF-8 with BOM plus code page `65001`, so
+  Russian shortcut/autostart task labels remain readable
 
 ## Current 2026-08-13 Candidate State
 

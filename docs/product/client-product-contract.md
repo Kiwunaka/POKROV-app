@@ -594,8 +594,9 @@ Release continuity rules:
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
 - stable candidates use a strictly newer semantic version. Android and Windows
-  `1.1.5+28` are the current published stable-direct artifacts under
-  `Kiwunaka/pokrov` tag `v1.1.5`; both production build scripts fail before
+  `1.1.6+29` are the current stable-direct release candidate; the previous
+  public artifacts remain `1.1.5+28` under `Kiwunaka/pokrov` tag `v1.1.5`
+  until exact `v1.1.6` assets are published. Both production build scripts fail before
   packaging when their package versions differ. The four Android APKs are
   production-signed and every published asset matches its retained size and
   SHA-256; exact Huawei and clean Windows network proof remain manual.
@@ -609,7 +610,7 @@ Release continuity rules:
 - the shared runtime identity is `pokrovClientVersion`; release builds pass
   `--dart-define=POKROV_APP_VERSION=<host pubspec version without +build>` so
   provisioning, update checks, diagnostics, and visible version text match the
-  package. Local builds use the current package base-version fallback `1.1.5`;
+  package. Local builds use the current package base-version fallback `1.1.6`;
   production packaging passes that value explicitly through `POKROV_APP_VERSION`.
 - local non-release builds keep updater and source-code surfaces disabled instead of falling back to a personal repository URL
 - an update prompt or tap may use only
