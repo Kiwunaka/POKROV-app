@@ -58,7 +58,7 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
   first payment. Wheel, calendar, and referral rewards remain paid-only. Already-issued
   `+10 days` grants remain grandfathered and must render with their
   backend-returned value
-- public user-facing version line: `1.1.2` stable and runtime-synchronized; beta/prerelease candidates
+- public user-facing version line: `1.1.6` stable and runtime-synchronized; beta/prerelease candidates
   are an explicit opt-in lane and never replace stable metadata implicitly
 - recommended public routing mode: `All except RU`
 - public routing mode set: `All except RU` and `Full tunnel`
@@ -74,7 +74,7 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - `Android + Windows` remain the only public release pair for this wave
 - the published `1.0.0-beta` handoff and `2026-05-15` decision pack are retained
   historical exact-candidate evidence; neither is reusable approval for a rebuild
-- `v1.1.2` is the current public stable direct release and its production
+- `v1.1.6` is the current public stable direct release and its production
   runtime sync is complete. Every later promotion still requires fresh
   exact-candidate signing and release proof; a local build or old public URL is
   not signing proof
@@ -594,12 +594,12 @@ Release continuity rules:
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
 - stable candidates use a strictly newer semantic version. Android and Windows
-  `1.1.6+29` are the current stable-direct release candidate; the previous
-  public artifacts remain `1.1.5+28` under `Kiwunaka/pokrov` tag `v1.1.5`
-  until exact `v1.1.6` assets are published. Both production build scripts fail before
+  `1.1.6+29` are the current public stable-direct release under
+  `Kiwunaka/pokrov` tag `v1.1.6`. Both production build scripts fail before
   packaging when their package versions differ. The four Android APKs are
   production-signed and every published asset matches its retained size and
-  SHA-256; exact Huawei and clean Windows network proof remain manual.
+  SHA-256; the production catalog requires `1.1.6` for older clients. Exact
+  Huawei and clean Windows network proof remain manual.
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates

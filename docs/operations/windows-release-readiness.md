@@ -18,22 +18,21 @@ Historical mapping note:
 - `scripts/sync-pokrov-core-runtime.ps1` accepts only the exact locally built core commit and artifacts before syncing them into the host
 - `scripts/build-windows-release.ps1` runs the local Windows verification lane: seed validation, tests, `flutter analyze`, `flutter build windows --release`, bundle verification, unsigned portable ZIP staging, and a per-user Inno Setup 6 wizard. The wizard exposes the install directory plus optional desktop shortcut and autostart choices and registers the bounded `pokrov://` continuation protocol with uninstall cleanup
 - the seed validation inside that helper now aligns with the current product canon: `Android + Windows` public scope, `iOS + macOS` readiness-only hosts
-- exact `1.1.5+28` is the current public stable-direct Windows candidate at
-  `Kiwunaka/pokrov` tag `v1.1.5`. Setup SHA-256 is
-  `F58B9F074B10C3E06CE9301B3145722A5FB126C095CCCC76B972FC0AEAA55E36`,
+- exact `1.1.6+29` is the current public stable-direct Windows candidate at
+  `Kiwunaka/pokrov` tag `v1.1.6`. Setup SHA-256 is
+  `DBAA664CF9046205F969204DF79F9366B8A944F7D2A6B8D8BBD371522A3B8AE8`,
   portable ZIP SHA-256 is
-  `3E992934A2026157D40582F7EAA674F09849CCD8338EFF2ABD1DC0A995ECAAD8`,
+  `9ECF90BCDEC496F6820BB6D3A9658A72009C38664C9947C8D7D07B0EF2CBF27A`,
   and manifest SHA-256 is
-  `E376DE6AE4A4D74F1ECE7078F8B8700FA0CEC7FFFE12862A5E340D229AE65879`.
+  `2E4383B901629AEB1998B7774E7E308A333A77C5233335A4200CF5677803886D`.
   GitHub size/digest comparison and anonymous range GET pass for all eight
-  Android and Windows release assets. Production serves the exact `1.1.5`
-  URL, size, hash and Russian notes; static release `20260818230725` and the
-  post-deploy readiness check pass
-- exact `1.1.6+29` is the current source release candidate. It fixes the
+  Android and Windows release assets. Production serves the exact `1.1.6`
+  URL, size, hash and Russian notes; authenticated and anonymous runtime
+  catalog checks plus the post-deploy readiness check pass. This release fixes the
   verified-connection UI state, installed tray icon and Russian Inno Setup
   encoding, and blocks only a real competing Windows TUN default route rather
-  than the presence of another VPN process. Publication hashes and clean-host
-  runtime proof are recorded only after packaging and promotion
+  than the presence of another VPN process. Clean-host TUN/DNS proof remains
+  `MANUAL_OWNER_TEST`
 - stable direct executables present the public product name `POKROV` and no longer carry the Windows `VS_FF_PRERELEASE` metadata flag; debug builds retain only `VS_FF_DEBUG`
 - app-first session secrets must not remain in plaintext JSON state; the current source implements legacy `session_token` migration into platform secure storage, atomically replaces the JSON state, and writes only a `session_token_storage=secure` marker after a durable write; a marker whose platform secret is missing enters recovery instead of minting another trial, while exact-artifact restart proof remains a release gate
 - local runtime/control surfaces must stay loopback-only: mixed/system-proxy ports bind to `127.0.0.1`, Clash/control APIs stay disabled unless explicitly protected by a per-install random secret, and no unauthenticated LAN listener is release-acceptable
@@ -55,7 +54,7 @@ Historical mapping note:
   system-proxy restoration proof
 - the local `1.1.2+25` QA build remapped Hiddify's occupied `127.0.0.1:12334` to `127.0.0.1:54303`. Its live TUN attempt affected the active Codex route and was operator-terminated before a final connected event, so this is collision-fix evidence, not clean egress/DNS or teardown PASS
 - owner testing of the public `1.1.3+26` build on `2026-08-18` exposed a real Windows failure: Core and the mixed proxy came up, the shell showed a green connected state, but normal browser traffic and DNS through the system TUN stalled. This invalidates `1.1.3` as evidence for working Windows TUN traffic even though its published hashes and install/update handoff remain exact
-- current source fixes that false-positive boundary. Windows materialization now matches the known-working local Hiddify/Core shape (`system` by default, strict routing, typed TCP/UDP DNS, explicit port-53 DNS hijack and sniff before LAN/direct or user rules, no legacy `dns-out`), and connect requires both mixed-proxy egress and an ordinary Windows TUN/DNS request before it reports running. The final preference pass now reasserts this order; the earlier `5074138` local candidate still failed because it moved the LAN direct rule back above DNS after the base profile was built. Advanced settings expose Core-supported `mixed`/`gvisor` TUN stacks and a loopback Core-owned system-proxy compatibility mode without changing the default. The owner authorized the exact unsigned `1.1.5` stable-direct publication with the explicit warning; a clean Hiddify-off run remains `MANUAL_OWNER_TEST` before any stronger Windows TUN/DNS claim
+- current source fixes that false-positive boundary. Windows materialization now matches the known-working local Hiddify/Core shape (`system` by default, strict routing, typed TCP/UDP DNS, explicit port-53 DNS hijack and sniff before LAN/direct or user rules, no legacy `dns-out`), and connect requires both mixed-proxy egress and an ordinary Windows TUN/DNS request before it reports running. The final preference pass now reasserts this order; the earlier `5074138` local candidate still failed because it moved the LAN direct rule back above DNS after the base profile was built. Advanced settings expose Core-supported `mixed`/`gvisor` TUN stacks and a loopback Core-owned system-proxy compatibility mode without changing the default. The owner authorized the exact unsigned `1.1.6` stable-direct publication with the explicit warning; a clean Hiddify-off run remains `MANUAL_OWNER_TEST` before any stronger Windows TUN/DNS claim
 - the non-public `1.1.4+27` working-tree candidate was built and installed locally on 2026-08-19. The setup SHA-256 is `5EBFD638B0DCB2E7E70B6A9257C8A73D48D75B181C80B1C437ABB5837B1EA757`; the installed `data/app.so` exactly matched the build at `C5D30FBE718310166202ABAFB8B7F170D31CF5DF6D750C23AA0A9CEBA4541900`. Per owner instruction the newly installed app was left closed, so this is install-integrity evidence only and not Windows TUN/DNS or system-proxy runtime `PASS`
 - each desktop start now appends a bounded, secret-free lifecycle journal under the POKROV application-support runtime directory. Support can distinguish initialization, staging, Core start, mixed-proxy verification, each Windows TUN verification attempt, connect, and teardown without retaining browsing history or raw connection material
 - the TUN preflight checks an active competing default route rather than a process name. A running Hiddify process therefore does not block POKROV's compatibility system-proxy mode, while a real active `tun*` default route still blocks a second system tunnel before Core start
@@ -73,9 +72,9 @@ Historical mapping note:
   path. Inno Setup input is emitted as UTF-8 with BOM plus code page `65001`, so
   Russian shortcut/autostart task labels remain readable
 
-## Current 2026-08-13 Candidate State
+## Retained 2026-08-13 Candidate Evidence
 
-- The current public outside-store Windows beta is `v1.0.4-beta.1`. The exact
+- The historical outside-store Windows beta was `v1.0.4-beta.1`. The exact
   `1.0.4-beta.1+13` candidate was rebuilt from the current tree with pinned
   POKROV Core `v1.0.3`, passed Windows analyze and the full workspace
   Flutter/Android test lane, and was visually checked from the exact EXE at

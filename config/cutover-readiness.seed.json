@@ -1,37 +1,37 @@
 {
   "lane": "POKROV-app/main",
-  "status": "android_1_1_5_and_windows_1_1_5_public_stable_runtime_synced_global_cutover_blocked_on_windows_trust_and_native_apple_gates",
+  "status": "android_1_1_6_and_windows_1_1_6_public_stable_runtime_synced_global_cutover_blocked_on_windows_trust_and_native_apple_gates",
   "public_cutover_allowed": false,
   "last_updated": "2026-08-19",
   "latest_repo_backed_release": {
-    "version": "1.1.5",
-    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.1.5",
-    "asset_refresh_utc": "2026-08-18T22:59:14Z",
+    "version": "1.1.6",
+    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.1.6",
+    "asset_refresh_utc": "2026-08-19T12:26:40Z",
     "github_repo_visibility": "public",
-    "anonymous_download_smoke": "PASS_ALL_EIGHT_1_1_5_PUBLIC_ASSETS_RANGE_GET_206_AND_GITHUB_SIZE_DIGEST",
-    "authenticated_github_release_smoke": "PASS_EXACT_1_1_5_EIGHT_ASSET_GITHUB_DIGEST",
-    "live_app_session_download_smoke": "PASS_1_1_5_REQUIRED_UPDATE_FOR_1_1_4_AND_NONE_FOR_1_1_5_ANDROID_WINDOWS_EXACT_METADATA"
+    "anonymous_download_smoke": "PASS_ALL_EIGHT_1_1_6_PUBLIC_ASSETS_RANGE_GET_206_AND_GITHUB_SIZE_DIGEST",
+    "authenticated_github_release_smoke": "PASS_EXACT_1_1_6_EIGHT_ASSET_GITHUB_DIGEST",
+    "live_app_session_download_smoke": "PASS_1_1_6_REQUIRED_UPDATE_FOR_1_1_5_AND_NONE_FOR_1_1_6_ANDROID_WINDOWS_EXACT_METADATA"
   },
   "android_release": {
     "distribution": "public_production_signed_stable_direct_apk",
     "public_approved": true,
     "current_internal_candidate": {
-      "version_name": "1.1.5",
-      "version_code": 2028,
+      "version_name": "1.1.6",
+      "version_code": 2029,
       "apk_size_bytes": 100450426,
-      "apk_sha256": "234038F569747071A94510A9AFE288880A9148D5E751E927210DAF6BEF793D82",
+      "apk_sha256": "6AC6AC33D2FAE7041B2D408A2C55B93EEDDB7D50825C4068F8C9C6087F0D97CA",
       "build_mode": "release",
       "debuggable": false,
       "signing_state": "PASS_PRODUCTION_SELF_MANAGED_DIRECT_APK",
       "certificate_sha256": "0A0602A7DF5D96A0B427909D004F3DDF26DEF86587634BF16694DA8D654B2500",
       "signature_scheme": "APK_SIGNATURE_SCHEME_V2",
-      "emulator_install_identity": "MANUAL_OWNER_TEST_EXACT_SIGNED_X86_64_1_1_5",
-      "emulator_launch_localhost_preflight": "MANUAL_OWNER_TEST_EXACT_1_1_5",
-      "physical_device_install_identity": "MANUAL_OWNER_TEST_EXACT_1_1_5_ARM64",
-      "physical_device_pre_tunnel": "MANUAL_OWNER_TEST_EXACT_1_1_5_RU_ORIGIN",
+      "emulator_install_identity": "MANUAL_OWNER_TEST_EXACT_SIGNED_X86_64_1_1_6",
+      "emulator_launch_localhost_preflight": "MANUAL_OWNER_TEST_EXACT_1_1_6",
+      "physical_device_install_identity": "MANUAL_OWNER_TEST_EXACT_1_1_6_ARM64",
+      "physical_device_pre_tunnel": "MANUAL_OWNER_TEST_EXACT_1_1_6_RU_ORIGIN",
       "quick_settings_tile": "PASS_FINAL_SOURCE_CONTRACT; PHYSICAL_ENDURANCE_DEFERRED",
       "chrome_egress_check": "PASS_FRESH_PROCESS_FULL_TUNNEL_AND_EXCLUDED_APPS_BEFORE_FINAL_UI_ONLY",
-      "physical_device_audit": "PREVIOUS_HUAWEI_PROOF_RETAINED; EXACT_1_1_5_MANUAL_OWNER_TEST",
+      "physical_device_audit": "PREVIOUS_HUAWEI_PROOF_RETAINED; EXACT_1_1_6_MANUAL_OWNER_TEST",
       "offline_signing_recovery_backup": "MANUAL_OWNER_TEST",
       "play_store_channel": "NOT_REQUESTED_DIRECT_APK_FIRST",
       "public_approved": true
@@ -42,7 +42,7 @@
       "long-duration endurance, uplink handoff, blocked-UDP/53, WARP, battery, sleep/resume, and MTU matrix"
     ],
     "accepted_evidence": [
-      "four exact 1.1.5 APKs pass production signer, version, ABI, non-debuggable, GitHub digest and anonymous range checks"
+      "four exact 1.1.6 APKs pass production signer, version, ABI, non-debuggable, GitHub digest and anonymous range checks"
     ]
   },
   "windows_release": {
@@ -55,9 +55,9 @@
       "trusted signing and SmartScreen reputation for later broad distribution"
     ],
     "accepted_evidence": [
-      "unsigned publisher warning accepted by owner for the 1.1.5 outside-store stable-direct wave",
-      "Windows 1.1.5 production setup, portable ZIP and manifest match exact public GitHub sizes and SHA-256",
-      "clean Hiddify-off TUN/DNS egress remains MANUAL_OWNER_TEST because this workstation session depends on Hiddify"
+      "unsigned publisher warning accepted by owner for the 1.1.6 outside-store stable-direct wave",
+      "Windows 1.1.6 production setup, portable ZIP and manifest match exact public GitHub sizes and SHA-256",
+      "local mixed-proxy verification and host-result UI transition pass; clean Hiddify-off TUN/DNS egress remains MANUAL_OWNER_TEST because this workstation session depends on Hiddify"
     ]
   },
   "blocking_dependencies": [
@@ -67,7 +67,7 @@
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
-    "Android and Windows 1.1.5 stable-direct artifacts are public, GitHub-digest verified, and synchronized into production; Windows trusted signing remains an owner gate"
+    "Android and Windows 1.1.6 stable-direct artifacts are public, GitHub-digest verified, and synchronized into production; Windows trusted signing remains an owner gate"
   ],
   "repo_side_closed": [
     "P0-P6 beta implementation scope",
@@ -76,8 +76,8 @@
     "authenticated GitHub download proof for all current release assets",
     "Android build-tool future-support warning closed with Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0",
     "release-note guardrails recorded; post-announcement monitoring remains operator work",
-    "POKROV 1.1.5 exact eight-asset GitHub digest, anonymous range-download verification, production handoff, static release 20260818230725 and post-deploy checks PASS",
-    "Android 1.1.5 split APKs are production-signed; exact Huawei and clean Windows TUN/DNS remain manual"
+    "POKROV 1.1.6 exact eight-asset GitHub digest, anonymous range-download verification, production handoff and authenticated/anonymous catalog checks PASS",
+    "Android 1.1.6 split APKs are production-signed; exact Huawei and clean Windows TUN/DNS remain manual"
   ],
   "ios_release_gates": [
     "Apple team selected",
