@@ -1,5 +1,32 @@
 part of pokrov_app_shell;
 
+/// Owns account-scoped actions and the current access/subscription view state.
+///
+/// Local routing preferences and runtime truth deliberately stay outside this
+/// coordinator; clearing an account refresh never mutates device policy.
+class AccountSessionCoordinator {
+  AccountSessionCoordinator({required this.accountActions});
+
+  final AppFirstAccountActionService? accountActions;
+  FreeProfileAccess? _freeProfileAccess;
+  ClientSubscriptionInfo? _subscriptionInfo;
+
+  FreeProfileAccess? get freeProfileAccess => _freeProfileAccess;
+  ClientSubscriptionInfo? get subscriptionInfo => _subscriptionInfo;
+
+  void updateFreeProfileAccess(FreeProfileAccess? value) {
+    _freeProfileAccess = value;
+  }
+
+  void updateSubscriptionInfo(ClientSubscriptionInfo? value) {
+    _subscriptionInfo = value;
+  }
+
+  void clearSubscriptionInfo() {
+    _subscriptionInfo = null;
+  }
+}
+
 class _ProfileSection extends StatelessWidget {
   const _ProfileSection({
     required this.appContext,
@@ -9,6 +36,7 @@ class _ProfileSection extends StatelessWidget {
     required this.onOpenHandoff,
     required this.onPromoEvent,
     required this.onOpenSupportHub,
+    required this.onOpenDiagnostics,
     required this.onCreateTelegramLink,
     required this.onCheckTelegramBonus,
     required this.onClaimTelegramBonus,
@@ -26,7 +54,7 @@ class _ProfileSection extends StatelessWidget {
     required this.warpPolicy,
     required this.warpRuntimeConsent,
     required this.warpBusy,
-    required this.runtimeSnapshot,
+    required this.connectionPresentation,
     required this.runtimeHeadline,
     required this.onOpenWarp,
     required this.themeMode,
@@ -58,6 +86,7 @@ class _ProfileSection extends StatelessWidget {
   final void Function(String label, String value) onOpenHandoff;
   final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
   final VoidCallback onOpenSupportHub;
+  final VoidCallback onOpenDiagnostics;
   final VoidCallback onCreateTelegramLink;
   final VoidCallback onCheckTelegramBonus;
   final VoidCallback onClaimTelegramBonus;
@@ -78,7 +107,7 @@ class _ProfileSection extends StatelessWidget {
   final WarpRuntimePolicy warpPolicy;
   final bool warpRuntimeConsent;
   final bool warpBusy;
-  final RuntimeSnapshot? runtimeSnapshot;
+  final ConnectionPresentation connectionPresentation;
   final String? runtimeHeadline;
   final Future<void> Function() onOpenWarp;
   final ThemeMode themeMode;
@@ -111,9 +140,7 @@ class _ProfileSection extends StatelessWidget {
     }
     if (summary == null) {
       if (_bonusPaidRequired(null)) {
-        return const [
-          'Telegram +5 дней доступен сейчас · рулетка и приглашения после оплаты'
-        ];
+        return [_PlatformProductCopy.telegramRewardPaidGateSummary];
       }
       return const ['Рулетка · Telegram · приглашения'];
     }
@@ -142,7 +169,9 @@ class _ProfileSection extends StatelessWidget {
       return 'Обновляем';
     }
     if (summary == null) {
-      return _bonusPaidRequired(null) ? 'Telegram +5 дней' : 'Открыть';
+      return _bonusPaidRequired(null)
+          ? _PlatformProductCopy.telegramRewardLabel
+          : 'Открыть';
     }
     if (_bonusPaidRequired(summary)) {
       if (summary.channelBonusClaimed) {
@@ -197,7 +226,7 @@ class _ProfileSection extends StatelessWidget {
     final emailAddress = subscriptionInfo?.emailAddress.trim() ?? '';
     final emailLinked =
         (subscriptionInfo?.emailVerified ?? false) && emailAddress.isNotEmpty;
-    final statusLabel = _consumerProtectionStatusLabel(runtimeSnapshot);
+    final statusLabel = connectionPresentation.title;
     final warpLifecycle = PokrovWarpLifecycle.resolve(
       policy: warpPolicy,
       consented: warpRuntimeConsent,
@@ -424,13 +453,7 @@ class _ProfileSection extends StatelessWidget {
                         icon: Icons.health_and_safety_outlined,
                         title: 'Сведения для поддержки',
                         value: 'Открыть',
-                        onTap: () => _showAdvancedSettingsSheet(
-                          context,
-                          hostPlatform: appContext.hostPlatform,
-                          selectedRouteMode: selectedRouteMode,
-                          statusLabel: statusLabel,
-                          warpStatus: warpLifecycle.publicStatus,
-                        ),
+                        onTap: onOpenDiagnostics,
                       ),
                     ],
                   ),
@@ -481,8 +504,6 @@ class _ProfileSection extends StatelessWidget {
                         value: systemSurfacePreferences.summary,
                         onTap: () => _showSystemSurfacePreferencesSheet(
                           context,
-                          preferences: systemSurfacePreferences,
-                          onChanged: onSystemSurfacePreferencesChanged,
                           onOpenNotificationSettings:
                               onOpenNotificationSettings,
                         ),
@@ -539,6 +560,39 @@ class _ProfileSection extends StatelessWidget {
                         context,
                         selected: themeMode,
                         onChanged: onThemeModeChanged,
+                      ),
+                    ),
+                    const _SettingsRowDivider(),
+                    _SettingsRow(
+                      key: const ValueKey('profile-offer-action'),
+                      icon: Icons.description_outlined,
+                      title: 'Публичная оферта',
+                      value: 'Открыть',
+                      onTap: () => onOpenHandoff(
+                        'legal',
+                        PlatformProductFacts.offerUrl,
+                      ),
+                    ),
+                    const _SettingsRowDivider(),
+                    _SettingsRow(
+                      key: const ValueKey('profile-privacy-action'),
+                      icon: Icons.policy_outlined,
+                      title: 'Конфиденциальность',
+                      value: 'Открыть',
+                      onTap: () => onOpenHandoff(
+                        'legal',
+                        PlatformProductFacts.privacyUrl,
+                      ),
+                    ),
+                    const _SettingsRowDivider(),
+                    _SettingsRow(
+                      key: const ValueKey('profile-releases-action'),
+                      icon: Icons.new_releases_outlined,
+                      title: 'Официальные релизы',
+                      value: 'GitHub',
+                      onTap: () => onOpenHandoff(
+                        'release',
+                        PlatformProductFacts.githubReleasesUrl,
                       ),
                     ),
                     const _SettingsRowDivider(),
@@ -976,179 +1030,70 @@ void _showThemeModeSheet(
 
 void _showSystemSurfacePreferencesSheet(
   BuildContext context, {
-  required PokrovSystemSurfacePreferences preferences,
-  required Future<bool> Function(PokrovSystemSurfacePreferences preferences)
-      onChanged,
   required Future<bool> Function() onOpenNotificationSettings,
 }) {
-  var current = preferences;
-  var busy = false;
-
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
     sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
-    builder: (sheetContext) => StatefulBuilder(
-      builder: (sheetContext, setSheetState) {
-        Future<void> save(PokrovSystemSurfacePreferences next) async {
-          if (busy) {
-            return;
-          }
-          setSheetState(() => busy = true);
-          final saved = await onChanged(next);
-          if (!sheetContext.mounted) {
-            return;
-          }
-          setSheetState(() {
-            if (saved) {
-              current = next;
-            }
-            busy = false;
-          });
-          if (!saved) {
-            showPokrovSnack(
-              sheetContext,
-              'Не удалось сохранить настройки шторки.',
-              tone: PokrovSnackTone.danger,
-            );
-          }
-        }
-
-        Widget toggleRow({
-          required Key key,
-          required String title,
-          required String description,
-          required bool value,
-          required PokrovSystemSurfacePreferences Function(bool value) next,
-        }) {
-          return Padding(
-            key: key,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: Theme.of(sheetContext).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        description,
-                        style: Theme.of(sheetContext)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(
-                              color: PokrovPalette.of(sheetContext).muted,
-                              height: 1.3,
-                            ),
-                      ),
-                    ],
+    builder: (sheetContext) => SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          22,
+          4,
+          22,
+          24 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+        ),
+        child: Column(
+          key: const ValueKey('profile-system-surfaces-sheet'),
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Шторка и VPN-уведомление',
+              style: Theme.of(sheetContext).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Android получает только общий статус защиты. Страна, маршрут, приложения, узел и скорость доступны только внутри разблокированного POKROV.',
+              style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
+                    color: PokrovPalette.of(sheetContext).muted,
+                    height: 1.35,
                   ),
-                ),
-                const SizedBox(width: 16),
-                PokrovSwitch(
-                  value: value,
-                  onChanged: busy
-                      ? null
-                      : (value) {
-                          unawaited(save(next(value)));
-                        },
-                ),
-              ],
             ),
-          );
-        }
-
-        return SafeArea(
-          top: false,
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              22,
-              4,
-              22,
-              24 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+            const SizedBox(height: 16),
+            Text(
+              'Быстрая кнопка',
+              style: Theme.of(sheetContext).textTheme.titleSmall,
             ),
-            child: Column(
-              key: const ValueKey('profile-system-surfaces-sheet'),
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Шторка и VPN-уведомление',
-                  style: Theme.of(sheetContext).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Статус подключения остаётся всегда. Остальные данные можно скрыть.',
-                  style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
-                        color: PokrovPalette.of(sheetContext).muted,
-                        height: 1.35,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                toggleRow(
-                  key: const ValueKey('system-surface-country-toggle'),
-                  title: 'Страна',
-                  description:
-                      'Показывать страну в VPN-уведомлении. В плитке — только если это поддерживает оболочка Android.',
-                  value: current.showCountry,
-                  next: (value) => current.copyWith(showCountry: value),
-                ),
-                const Divider(height: 1),
-                toggleRow(
-                  key: const ValueKey('system-surface-speed-toggle'),
-                  title: 'Скорость',
-                  description:
-                      'Показывать текущие входящую и исходящую скорости.',
-                  value: current.showSpeed,
-                  next: (value) => current.copyWith(showSpeed: value),
-                ),
-                const Divider(height: 1),
-                toggleRow(
-                  key: const ValueKey('system-surface-route-toggle'),
-                  title: 'Режим маршрутизации',
-                  description:
-                      'Например: «РФ напрямую» или «Весь трафик через VPN».',
-                  value: current.showRouteMode,
-                  next: (value) => current.copyWith(showRouteMode: value),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Быстрая кнопка',
-                  style: Theme.of(sheetContext).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Если плитки POKROV нет: раскройте шторку, нажмите «Изменить» и перетащите POKROV в активные кнопки.',
-                  style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
-                        color: PokrovPalette.of(sheetContext).muted,
-                        height: 1.35,
-                      ),
-                ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    key: const ValueKey(
-                      'system-surface-notification-settings-action',
-                    ),
-                    onPressed: () {
-                      Navigator.of(sheetContext).pop();
-                      unawaited(onOpenNotificationSettings());
-                    },
-                    icon: const Icon(Icons.settings_outlined),
-                    label: const Text('Настройки уведомлений Android'),
+            const SizedBox(height: 4),
+            Text(
+              'Если плитки POKROV нет: раскройте шторку, нажмите «Изменить» и перетащите POKROV в активные кнопки.',
+              style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
+                    color: PokrovPalette.of(sheetContext).muted,
+                    height: 1.35,
                   ),
-                ),
-              ],
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                key: const ValueKey(
+                  'system-surface-notification-settings-action',
+                ),
+                onPressed: () {
+                  Navigator.of(sheetContext).pop();
+                  unawaited(onOpenNotificationSettings());
+                },
+                icon: const Icon(Icons.settings_outlined),
+                label: const Text('Настройки уведомлений Android'),
+              ),
+            ),
+          ],
+        ),
+      ),
     ),
   );
 }

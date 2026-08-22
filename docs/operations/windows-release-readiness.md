@@ -1,302 +1,83 @@
 # Windows Release Readiness
 
-Last updated: 2026-08-19
+Last updated: 2026-08-22
 
-This document is the concrete Windows readiness note for the `POKROV-app` lane.
+## Document Status
 
-Historical mapping note:
+Registry class: `ACTIVE_EXECUTION`.
 
-- older notes may still reference `external/pokrov-next-client/` or `app-next/`
-- the initial local snapshot for this repo was bootstrapped from `C:/Users/kiwun/Documents/ai/VPN/app-next/`
-- this document now tracks the Windows readiness of the canonical `POKROV-app` repo lane
+This file contains the current Windows gate for the `1.2.0` working target.
+Older unsigned packages and pre-service behavior are retained as evidence.
 
 ## Current Truth
 
-- the Windows shell is not a blank stub; it boots the shared app shell and drives the desktop FFI `runtime_engine` lane
-- the active runtime is POKROV Core `v1.0.3` desktop ABI 2; its exact release commit, DLL hash, and `libcronet.dll` hash are pinned in `config/runtime-artifacts.seed.json`
-- `flutter build windows --release` copies `pokrov-core.dll` and `libcronet.dll` next to the Flutter runner
-- `scripts/sync-pokrov-core-runtime.ps1` accepts only the exact locally built core commit and artifacts before syncing them into the host
-- `scripts/build-windows-release.ps1` runs the local Windows verification lane: seed validation, tests, `flutter analyze`, `flutter build windows --release`, bundle verification, unsigned portable ZIP staging, and a per-user Inno Setup 6 wizard. The wizard exposes the install directory plus optional desktop shortcut and autostart choices and registers the bounded `pokrov://` continuation protocol with uninstall cleanup
-- the seed validation inside that helper now aligns with the current product canon: `Android + Windows` public scope, `iOS + macOS` readiness-only hosts
-- exact `1.1.6+29` is the current public stable-direct Windows candidate at
-  `Kiwunaka/pokrov` tag `v1.1.6`. Setup SHA-256 is
-  `DBAA664CF9046205F969204DF79F9366B8A944F7D2A6B8D8BBD371522A3B8AE8`,
-  portable ZIP SHA-256 is
-  `9ECF90BCDEC496F6820BB6D3A9658A72009C38664C9947C8D7D07B0EF2CBF27A`,
-  and manifest SHA-256 is
-  `2E4383B901629AEB1998B7774E7E308A333A77C5233335A4200CF5677803886D`.
-  GitHub size/digest comparison and anonymous range GET pass for all eight
-  Android and Windows release assets. Production serves the exact `1.1.6`
-  URL, size, hash and Russian notes; authenticated and anonymous runtime
-  catalog checks plus the post-deploy readiness check pass. This release fixes the
-  verified-connection UI state, installed tray icon and Russian Inno Setup
-  encoding, and blocks only a real competing Windows TUN default route rather
-  than the presence of another VPN process. Clean-host TUN/DNS proof remains
-  `MANUAL_OWNER_TEST`
-- stable direct executables present the public product name `POKROV` and no longer carry the Windows `VS_FF_PRERELEASE` metadata flag; debug builds retain only `VS_FF_DEBUG`
-- app-first session secrets must not remain in plaintext JSON state; the current source implements legacy `session_token` migration into platform secure storage, atomically replaces the JSON state, and writes only a `session_token_storage=secure` marker after a durable write; a marker whose platform secret is missing enters recovery instead of minting another trial, while exact-artifact restart proof remains a release gate
-- local runtime/control surfaces must stay loopback-only: mixed/system-proxy ports bind to `127.0.0.1`, Clash/control APIs stay disabled unless explicitly protected by a per-install random secret, and no unauthenticated LAN listener is release-acceptable
-- loopback helper ports are availability-checked for TCP and UDP during staging. Busy ports are replaced with OS-selected loopback ports so an already-running local proxy such as Hiddify does not make POKROV Core fail before TUN start
-- public download copy must match the actual handoff URL and signing state
-- support macros must explain SmartScreen or unknown-publisher behavior for gated beta testers
-- the shell opens centered at 1280x720 and permits resize down to 700x640 so
-  the canonical compact drawer remains reachable. Profile settings expose
-  per-user autostart and whether the close button hides to tray (default) or
-  exits; tray `Выход` disposes tray state before requesting native teardown
-- the regular process remains unelevated. A non-running TUN connect checks the
-  Windows token and explains the administrator boundary before requesting
-  `runas`. The recommended action continues with the bounded `--connect`
-  argument; the explicit no-admin action persists the loopback system-proxy
-  compatibility mode before staging. Denial or unavailable native integration
-  returns to that choice instead of allowing a proxy-only false TUN success
-- source and widget tests prove lifecycle ordering, but connected exact-artifact
-  tray exit still requires runtime/TUN teardown and any compatibility
-  system-proxy restoration proof
-- the local `1.1.2+25` QA build remapped Hiddify's occupied `127.0.0.1:12334` to `127.0.0.1:54303`. Its live TUN attempt affected the active Codex route and was operator-terminated before a final connected event, so this is collision-fix evidence, not clean egress/DNS or teardown PASS
-- owner testing of the public `1.1.3+26` build on `2026-08-18` exposed a real Windows failure: Core and the mixed proxy came up, the shell showed a green connected state, but normal browser traffic and DNS through the system TUN stalled. This invalidates `1.1.3` as evidence for working Windows TUN traffic even though its published hashes and install/update handoff remain exact
-- current source fixes that false-positive boundary. Windows materialization now matches the known-working local Hiddify/Core shape (`system` by default, strict routing, typed TCP/UDP DNS, explicit port-53 DNS hijack and sniff before LAN/direct or user rules, no legacy `dns-out`), and connect requires both mixed-proxy egress and an ordinary Windows TUN/DNS request before it reports running. The final preference pass now reasserts this order; the earlier `5074138` local candidate still failed because it moved the LAN direct rule back above DNS after the base profile was built. Advanced settings expose Core-supported `mixed`/`gvisor` TUN stacks and a loopback Core-owned system-proxy compatibility mode without changing the default. The owner authorized the exact unsigned `1.1.6` stable-direct publication with the explicit warning; a clean Hiddify-off run remains `MANUAL_OWNER_TEST` before any stronger Windows TUN/DNS claim
-- the non-public `1.1.4+27` working-tree candidate was built and installed locally on 2026-08-19. The setup SHA-256 is `5EBFD638B0DCB2E7E70B6A9257C8A73D48D75B181C80B1C437ABB5837B1EA757`; the installed `data/app.so` exactly matched the build at `C5D30FBE718310166202ABAFB8B7F170D31CF5DF6D750C23AA0A9CEBA4541900`. Per owner instruction the newly installed app was left closed, so this is install-integrity evidence only and not Windows TUN/DNS or system-proxy runtime `PASS`
-- each desktop start now appends a bounded, secret-free lifecycle journal under the POKROV application-support runtime directory. Support can distinguish initialization, staging, Core start, mixed-proxy verification, each Windows TUN verification attempt, connect, and teardown without retaining browsing history or raw connection material
-- the TUN preflight checks an active competing default route rather than a process name. A running Hiddify process therefore does not block POKROV's compatibility system-proxy mode, while a real active `tun*` default route still blocks a second system tunnel before Core start
-- a desktop snapshot now marks host, DNS and uplink healthy only after the
-  mixed-proxy and required Windows TUN probe pass; the shell therefore leaves
-  `Проверяем…` after a proven connection instead of waiting for Android-only
-  host callbacks. Disconnect or restaging clears that proof
-- Windows preflight recognizes an active competing `tun*` default route and
-  blocks before Core start with an actionable close-the-other-tunnel message.
-  A merely running Hiddify process is not sufficient evidence of a conflict,
-  and compatibility system-proxy mode intentionally skips this TUN-only gate;
-  POKROV never terminates the other process itself
-- the tray icon is a dedicated transparent POKROV mark bundled beside the EXE,
-  and the shell resolves that installed path instead of a source-tree-relative
-  path. Inno Setup input is emitted as UTF-8 with BOM plus code page `65001`, so
-  Russian shortcut/autostart task labels remain readable
+| Fact | Current state |
+|---|---|
+| Retained public Windows release | Unsigned direct setup `1.1.6` |
+| Working package target | `1.2.0+30` |
+| Candidate created | `false` |
+| Runtime architecture | Unelevated UI plus authenticated SCM service |
+| Required service | `pokrov_service.exe` |
+| Active Core | POKROV Core `1.0.3`, desktop ABI `2` |
+| Intended Core replacement | `1.1.0`, exact artifact pending |
+| Portable ZIP | Unsupported for the service-first runtime |
+| Trusted signing | `MISSING` |
+| Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
-## Retained 2026-08-13 Candidate Evidence
+The ordinary UI does not load Core, run elevated or use a system-proxy
+fallback. The service owns Core, managed state and recovery. Green state
+requires the authenticated egress proof.
 
-- The historical outside-store Windows beta was `v1.0.4-beta.1`. The exact
-  `1.0.4-beta.1+13` candidate was rebuilt from the current tree with pinned
-  POKROV Core `v1.0.3`, passed Windows analyze and the full workspace
-  Flutter/Android test lane, and was visually checked from the exact EXE at
-  `1600x900`. The DPI-aware retained capture shows the complete window; close
-  correctly hides the window while the tray process remains responsive.
-- The local `1.0.4-beta.1+13` setup SHA-256 is
-  `AD93F7F307552210BE4A8E6263382D4D221E993D8D743CEB6809D774DA007095`;
-  its portable ZIP SHA-256 is
-  `E25A3E7CAF900D8B8DFE14A4AE58DCDB40B3EBC61B2C631916E7F3BD42B28ADD`;
-  and its manifest SHA-256 is
-  `C08AECB5D88DA0F54D63F1F518AB3BBC6E77A134E3FD910AD517A5AD447FBC55`.
-  These hashes describe the public prerelease assets. Setup, portable ZIP,
-  and manifest completed anonymous full-size SHA-256 verification, and the
-  production synthetic signed `/api/client/apps` response returns the exact
-  setup URL, hash, and size.
-- The final shared-UI rebuild launched the exact EXE, remained responsive, and
-  handled the normal window-close request by hiding the window while keeping
-  the tray process alive and responsive. The test process was terminated after
-  the smoke; connected tray-exit/TUN teardown remains a separate manual gate.
-- The rebuilt setup remains `NotSigned`. The accepted outside-store beta risk
-  does not turn that result into trusted signing or SmartScreen reputation.
-- Retained visual evidence is under
-  `E:/POKROV-ops-evidence/2026-08-13-goal-continuation/windows-app-audit/`,
-  including `1.0.4-final-home.png`.
+Local source and fault-injection tests cover IPC, journal, network snapshot and
+rollback logic. They do not install the service or mutate this host's network.
+The native crash filter writes only exception code plus at most 32 allowlisted
+module-relative frame offsets. UI and service use separate protected
+current/previous files; paths, symbols, registers, exception text, heap and full
+memory dumps have no output field. The controlled-crash and recovery readback
+still belongs to the exact-candidate gate below.
 
-## Local Verification Commands
+## Exact-Candidate Gate
 
-From `POKROV-app/`:
+| Check | Current state |
+|---|---|
+| Clean client/Core revisions | `BLOCKED` |
+| Exact Core DLL and dependency identity | `DEVELOPMENT_REPLACEMENT_PENDING` |
+| Machine-wide setup package | `MISSING` |
+| Service install/start and UI authentication | `MANUAL_OWNER_TEST` |
+| Trusted code signing and timestamp | `MANUAL_OWNER_TEST` |
+| Clean-host TUN/DNS/egress | `MANUAL_OWNER_TEST` |
+| Crash/reboot/sleep/SCM recovery | `MANUAL_OWNER_TEST` |
+| Route and DNS restoration | `MANUAL_OWNER_TEST` |
+| Uninstall while connected | `MANUAL_OWNER_TEST` |
+| SmartScreen/reputation observation | `MANUAL_OWNER_TEST` |
+| Strict-v2 size/SHA-256/source binding | `MISSING` |
+| Anonymous download and install | `NOT_RUN` |
+| Rollback drill | `NOT_RUN` |
+
+## Safe Current Claims
+
+- The `1.2.0` source targets an unelevated UI and authenticated Windows service.
+- Local tests prove source contracts and isolated recovery logic only.
+- A trusted-signed, clean-host-verified `1.2.0` Windows candidate does not yet
+  exist.
+- The retained unsigned `1.1.6` publication does not prove `1.2.0` trust,
+  recovery or network behavior.
+
+## Verification Commands
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\sync-pokrov-core-runtime.ps1 -CoreRoot '<POKROV-core checkout>' -Platforms windows
-powershell -ExecutionPolicy Bypass -File .\scripts\run-tests.ps1
-Push-Location .\apps\windows_shell
-flutter analyze
-flutter build windows --release
-Pop-Location
-powershell -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 -SyncRuntime
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-seed.ps1 `
+  -PlatformRoot C:\path\to\platform `
+  -CoreRoot C:\path\to\POKROV-core
+
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1
 ```
 
-After launching the exact candidate once, resolve its live application-support
-directory from diagnostics and inspect the state file there:
+Packaging remains local and unsigned until the owner provides trusted signing
+and authorizes exact-candidate release work.
 
-```powershell
-$statePath = '<application-support-path>\app-first-session-windows.json'
-$state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
-if ($null -ne $state.session_token) { throw 'Raw session_token remains in JSON state.' }
-if ($state.session_token_storage -ne 'secure') { throw 'Secure-storage marker is missing.' }
-```
+## Retained History
 
-Restart the candidate and perform an authenticated profile refresh before
-accepting this check. Expected result: no raw `session_token` value in app
-state, support export, or logs, and the existing session still works.
-The runtime options test must also keep LAN control exposure closed:
-`allow-connection-from-lan=false`, `enable-clash-api=false`, and local ports on
-`127.0.0.1` only unless a future release explicitly documents a protected
-control API.
-
-For a gated beta packaging smoke where tests/analyze already ran:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze
-```
-
-If the local Flutter/Dart toolchain fails in the online `pub.dev` security-advisory report while the dependency cache is already populated, rerun with `-OfflinePubGet`:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 -SyncRuntime -OfflinePubGet
-```
-
-## Expected Local Outputs
-
-- release runner root: `apps/windows_shell/build/windows/x64/runner/Release/`
-- staged unsigned bundle root: `apps/windows_shell/build/release_bundle/`
-- expected release files:
-  - `pokrov_windows_beta.exe`
-  - `flutter_windows.dll`
-  - `pokrov-core.dll`
-  - `libcronet.dll`
-  - `data/app.so`
-  - `data/icudtl.dat`
-- staged manifest:
-  - `pokrov-windows-beta-x64-<version>.manifest.json`
-- staged unsigned beta installer:
-  - `pokrov-windows-beta-x64-<version>-setup.exe`
-
-These outputs are regenerated local verification artifacts. They are useful for operator inspection and local validation, but they are not production release truth.
-
-Historical local packaging notes:
-
-- `2026-06-03`: `scripts/build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze`
-  succeeded after the full Task 8 verification run.
-- The generated unsigned setup EXE, portable ZIP, manifest, and the Android
-  debug smoke APK were retained in
-  `artifacts/releases/pokrov-app/0.2.0-beta.1+20260603-local-mvp/`.
-- This retained pack remains local engineering handoff, not trusted signing or
-  public hosting approval.
-- `2026-06-04`: the same packaging command succeeded again for the local RC
-  pass after Android release-smoke APK/AAB builds. The generated unsigned setup
-  EXE, portable ZIP, and manifest were retained in
-  `artifacts/releases/pokrov-app/0.2.0-beta.1+20260604-rc-local/` with
-  verified checksums and `runtime_sync_allowed=false`.
-- Owner decision on `2026-06-04`: trusted Windows signing is an accepted skip
-  for the current outside-store beta, but trusted signing, SmartScreen
-  reputation, Microsoft Store, WinGet, and broad stable-distribution claims are
-  still not allowed.
-- `2026-06-05`: `scripts/build-windows-release.ps1 -SyncRuntime -SkipTests
-  -SkipAnalyze` succeeded after the P5/WARP pass and produced local
-  `1.0.0-beta` unsigned artifacts under
-  `apps/windows_shell/build/release_bundle/pokrov-windows-beta-x64-1.0.0-beta*`.
-- Phase 6 uploaded `pokrov-windows-setup-x64.exe` on `2026-06-05`; its
-  recorded hash is dated evidence and was superseded by the `2026-06-08`
-  refresh. Read `config/release-handoff.seed.json` for the current exact
-  filename, hash, size, public repository, and download-smoke state.
-
-## Current 2026-08-13 Core Gate
-
-The exact POKROV Core `v1.0.3` DLL pinned in
-`config/runtime-artifacts.seed.json` completed 100 serial raw start/stop cycles
-through the real desktop bindings. This is `PASS` for DLL loading and lifecycle
-shutdown only. A new packaged Windows client candidate, private ACL, TUN
-traffic, route modes, DNS/leak, real WARP, sleep/resume, and clean-machine
-checks remain required.
-
-## Retained 2026-08-04 Internal Build
-
-The unsigned `1.0.2-core-test.1` Windows client completed the canonical local
-release pipeline. The exact local QA artifacts are:
-
-- portable ZIP: `37506815` bytes, SHA-256
-  `4a37bc459c582c3ebd368dbc3875382893a7dd951a053fbaf9b39b7624bbbd94`.
-- setup EXE: `37392384` bytes, SHA-256
-  `27ac017896eeba18b7b5ad9077f731effefe425e556160ee6bfca41fbcbc9570`.
-- manifest: `2675` bytes, SHA-256
-  `903ebd2de8ae471479e1c133abaf618fe205d75d7109d69d09a1d24b61840d99`.
-- trusted signing and public publication: `NOT_REQUESTED`.
-
-The exact bundled DLL also passed the 100-cycle local runtime gate. Packaged
-TUN traffic, elevation, sleep/resume, and clean-machine installation remain
-manual exact-candidate checks.
-
-## Safe Claims
-
-Safe to claim now:
-
-- the Windows host shell uses the real desktop FFI runtime lane
-- the Windows connect path fetches a live managed profile, materializes route mode and optional WARP in Dart, secures the staged file, and starts POKROV Core through desktop ABI 2
-- the local release build bundles the pinned POKROV DLL and `libcronet.dll` into the Windows runner output
-- the Windows seed lane has a reproducible unsigned package step with a manifest, portable ZIP, and first-layer setup EXE for gated beta inspection
-- the current `v1.0.3-beta.2` unsigned setup EXE and portable ZIP are uploaded
-  to the public GitHub prerelease for outside-store beta access
-- the current Windows source materializes `Full tunnel`, `All except RU`,
-  selected-process routing, and client-local WARP into raw config before the
-  POKROV Core start call. `VPN/TUN + system` remains the default; advanced
-  settings expose `mixed`, `gvisor`, and a loopback-only Core-owned system proxy
-  that is restored on stop
-- current source fail-closes when the selected outbound works through the local
-  proxy but the ordinary Windows TUN/DNS path does not; this is source evidence,
-  not proof for the still-public `1.1.3` artifact
-- this source-level change does not prove elevation, route capture, DNS/leak
-  behavior, or teardown on the published or any future exact candidate
-- this Windows lane now lives in the canonical `POKROV-app` repo
-- this Windows lane is the current repo-backed outside-store beta release truth
-  for Windows, but not a trusted-signed, store, or broad stable distribution
-  lane
-- unsigned Windows builds may be used for gated beta only with explicit SmartScreen or unknown-publisher warning guidance
-
-Not safe to claim now:
-
-- the Windows executable is production signed
-- a trusted-signed production installer or `MSIX` publication flow is ready
-- Microsoft Store, WinGet, or SmartScreen reputation is approved
-- the Windows lane is approved for broad public distribution
-- this lane is trusted-signed, store, or stable release truth for Windows
-- this repo alone authorizes a later candidate without its own current handoff
-  and evidence
-
-## External Blockers
-
-- trusted Windows code-signing material is not wired into this lane
-- trusted installer signing and `MSIX` publication are still not wired into this lane
-- anonymous public artifact hosting is closed through `Kiwunaka/pokrov`;
-  stronger updater policy remains distribution scope, not a repo-side blocker
-  for the current outside-store beta
-- outside-store Windows beta distribution is no longer blocked on unsigned
-  posture: the owner accepted unsigned beta risk and the setup EXE is uploaded.
-  Stronger broad/trusted distribution remains blocked on signing, live
-  exact-artifact runtime route-mode smoke, and DNS/leak validation
-- platform publishing policy remains outside this client readiness document
-
-## Blocked Runtime Verification
-
-The current outside-store beta handoff remains valid for its recorded
-candidate. Before reusing that result for a later candidate or making stronger
-trusted/stable claims, attach:
-
-- exact-artifact install, restart, session restore, secure-storage, and
-  selected-app process-routing smoke: `MANUAL_OWNER_TEST`.
-- POKROV Core ABI/export/hash probe is locally complete; clean-profile traffic,
-  Naive/libcronet loading, Windows version compatibility, and user-only ACL
-  behavior inside the packaged exact candidate remain `MANUAL_OWNER_TEST`.
-- The rebuilt exact DLL completed 100 serial raw start/stop cycles locally.
-  This is `PASS` for the narrow DLL shutdown backtest only; sleep/resume,
-  interface changes, permission/elevation, real WARP, Naive/Cronet, and packaged
-  TUN behavior remain `MANUAL_OWNER_TEST`.
-- `Only selected apps` picker, persistence, route-policy echo, and generated
-  `process_name` / `process_path` behavior.
-- `Full tunnel` route-mode smoke.
-- `All except RU` route-mode smoke.
-- DNS split behavior and leak checks.
-- Connect, reconnect, disconnect, and recovery after failure.
-- Close while connected -> hidden tray state -> reopen without losing the
-  running session; then tray `Выход` -> process/runtime and TUN stop, plus any
-  compatibility system-proxy restoration: `MANUAL_OWNER_TEST` for the exact
-  candidate.
-- current-origin, brain-origin, and RU-origin checks where runtime reachability matters.
-
-## Release Rule
-
-Windows stable-direct upload is complete for `v1.1.3` with the approved
-unsigned-warning posture, but owner traffic testing found the TUN/DNS failure
-described above. Current source is newer and cannot reuse that release identity.
-Do not publish its successor until the exact setup/portable candidate passes a
-Hiddify-off full-tunnel browser/DNS check, reconnect and disconnect. Stronger
-trusted/store claims remain blocked on signing, SmartScreen reputation and the
-target channel's publishing requirements.
+Prior Windows packages, hashes and pre-service notes are preserved as
+[2026-08-21-windows-release-readiness-snapshot.md](history/2026-08-21-windows-release-readiness-snapshot.md).
+They cannot approve `1.2.0`.

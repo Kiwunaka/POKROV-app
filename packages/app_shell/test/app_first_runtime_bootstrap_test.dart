@@ -20,6 +20,19 @@ const _ruIpWhitelistRuleSetTag = 'pokrov-ru-ip-whitelist';
 const _validClientUpdateSha256 =
     'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
+Future<String> _readBootstrapFixture(String name) async {
+  for (final path in <String>[
+    'packages/app_shell/test/fixtures/$name',
+    'test/fixtures/$name',
+  ]) {
+    final file = File(path);
+    if (await file.exists()) {
+      return file.readAsString();
+    }
+  }
+  throw FileSystemException('Fixture not found', name);
+}
+
 String _emergencyB64(List<int> value) =>
     base64UrlEncode(value).replaceAll('=', '');
 
@@ -120,12 +133,13 @@ ClientAppUpdateInfo _clientUpdateInfo({
       'https://github.com/Kiwunaka/pokrov/releases/download/v1.0.1-beta/pokrov-android-arm64-v8a.apk',
   String sha256 = _validClientUpdateSha256,
   int size = 123456,
+  String latestVersion = '1.0.1-beta',
   String updatePolicy = 'recommended',
 }) {
   return ClientAppUpdateInfo(
     platform: 'android',
     channel: 'beta',
-    latestVersion: '1.0.1-beta',
+    latestVersion: latestVersion,
     minSupportedVersion: '1.0.0-beta',
     updatePolicy: updatePolicy,
     url: url,
@@ -290,6 +304,19 @@ void main() {
   });
   tearDown(() {
     FlutterSecureStoragePlatform.instance = defaultSecureStoragePlatform;
+  });
+
+  test('managed TUN MTU rejects missing malformed and unsafe values', () {
+    expect(selectSafeTunMtu(null), 1280);
+    expect(selectSafeTunMtu('1400'), 1280);
+    expect(selectSafeTunMtu(1400.0), 1280);
+    expect(selectSafeTunMtu(1279), 1280);
+    expect(selectSafeTunMtu(1501), 1280);
+    expect(selectSafeTunMtu(9000), 1280);
+    expect(selectSafeTunMtu(1280), 1280);
+    expect(selectSafeTunMtu(1400), 1400);
+    expect(selectSafeTunMtu(1492), 1492);
+    expect(selectSafeTunMtu(1500), 1500);
   });
 
   test('prewarmed emergency bundle connects without any control-plane request',
@@ -581,6 +608,16 @@ void main() {
       expect(_clientUpdateInfo(sha256: 'not-a-sha256').shouldPrompt, isFalse);
       expect(_clientUpdateInfo(size: 0).shouldPrompt, isFalse);
       expect(_clientUpdateInfo(size: -1).shouldPrompt, isFalse);
+      expect(
+        _clientUpdateInfo(size: 256 * 1024 * 1024 + 1).shouldPrompt,
+        isFalse,
+      );
+      expect(
+        _clientUpdateInfo(
+          latestVersion: '1.${List.filled(65, '2').join()}.0',
+        ).shouldPrompt,
+        isFalse,
+      );
     });
   });
 
@@ -627,6 +664,148 @@ void main() {
       ),
       throwsA(isA<PlatformException>()),
     );
+  });
+
+  test('secure session store migrates a legacy raw credential idempotently',
+      () async {
+    const installId = 'legacy-secure-fixture';
+    const key = 'pokrov.app_first.session.windows.$installId';
+    final legacyCredential =
+        (await _readBootstrapFixture('secure-session-v0.txt')).trim();
+    final values = <String, String>{key: legacyCredential};
+    FlutterSecureStoragePlatform.instance =
+        TestFlutterSecureStoragePlatform(values);
+    final store = FlutterSecureAppFirstSessionSecretStore();
+
+    expect(
+      await store.readSessionToken(
+        hostPlatform: HostPlatform.windows,
+        installId: installId,
+      ),
+      legacyCredential,
+    );
+    final migrated = values[key];
+    expect(migrated, isNotNull);
+    expect((jsonDecode(migrated!) as Map<String, dynamic>)['version'], 1);
+
+    expect(
+      (await store.readSessionPair(
+        hostPlatform: HostPlatform.windows,
+        installId: installId,
+      ))
+          ?.accessToken,
+      legacyCredential,
+    );
+    expect(values[key], migrated);
+  });
+
+  test('secure session store preserves and rejects a future credential schema',
+      () async {
+    const installId = 'future-secure-fixture';
+    const key = 'pokrov.app_first.session.android.$installId';
+    const future = '{"version":2,"access_token":"synthetic-future-access"}';
+    final values = <String, String>{key: future};
+    FlutterSecureStoragePlatform.instance =
+        TestFlutterSecureStoragePlatform(values);
+    final store = FlutterSecureAppFirstSessionSecretStore();
+
+    expect(
+      await store.readSessionPair(
+        hostPlatform: HostPlatform.android,
+        installId: installId,
+      ),
+      isNull,
+    );
+    expect(values[key], future);
+  });
+
+  test('migrates the unversioned bootstrap fixture exactly once', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-schema-migration-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}'
+      'app-first-session-windows.json',
+    );
+    await stateFile.writeAsString(
+      await _readBootstrapFixture('app-first-session-v0.json'),
+      flush: true,
+    );
+    final secretStore = MemoryAppFirstSessionSecretStore();
+    await secretStore.writeSessionPair(
+      hostPlatform: HostPlatform.windows,
+      installId: 'fixture-install-v0',
+      pair: const AppFirstSessionCredentials(
+        accessToken: 'synthetic-fixture-access',
+        refreshToken: 'synthetic-fixture-refresh',
+      ),
+    );
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:1/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: secretStore,
+      maxRequestAttempts: 1,
+      connectionTimeout: const Duration(milliseconds: 25),
+      requestTimeout: const Duration(milliseconds: 25),
+    );
+
+    String? migrated;
+    for (var attempt = 0; attempt < 2; attempt += 1) {
+      await expectLater(
+        bootstrapper.fetchClientSubscription(
+          hostPlatform: HostPlatform.windows,
+        ),
+        throwsA(isA<BootstrapFailure>()),
+      );
+      final text = await stateFile.readAsString();
+      final state = jsonDecode(text) as Map<String, dynamic>;
+      expect(state['schema_version'], 1);
+      expect(state['session_token_storage'], 'secure');
+      expect(state.containsKey('session_token'), isFalse);
+      if (attempt == 0) {
+        migrated = text;
+      } else {
+        expect(text, migrated);
+      }
+    }
+  });
+
+  test('future bootstrap state fails closed and remains available for rollback',
+      () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-future-schema-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}'
+      'app-first-session-windows.json',
+    );
+    const future = '{"schema_version":2,"install_id":"future-fixture",'
+        '"managed_manifest_path":"/api/client/profile/managed"}';
+    await stateFile.writeAsString(future, flush: true);
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:1/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: MemoryAppFirstSessionSecretStore(),
+      maxRequestAttempts: 1,
+    );
+
+    await expectLater(
+      bootstrapper.fetchClientSubscription(
+        hostPlatform: HostPlatform.windows,
+      ),
+      throwsA(isA<BootstrapFailure>()),
+    );
+    expect(await stateFile.readAsString(), future);
   });
 
   test('migrates a legacy JSON session token into secure storage', () async {
@@ -1471,9 +1650,35 @@ void main() {
         placement: 'home_banner',
         ctaLabel: 'Open',
         ctaHref: 'https://pokrov.space/pricing/',
+        pilotId: 'release_1_2_winback_paid_7_30d',
+        pilotRevision: '2026-08-22.1',
+        pilotContractSha256:
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        commercialRevision: '2026-08-21.1',
+        campaignId: 'cmp_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        offerId: 'off_cccccccccccccccccccccccccccccccc',
+        creativeId: 'crv_dddddddddddddddddddddddddddddddd',
+        variant: 'a',
+        assignmentId: 'asg_eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+        impressionId: 'imp_eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+        clickId: 'clk_eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
         kind: 'sale',
         goal: 'checkout',
       ),
+    );
+    await bootstrapper.reportFirstSessionEvent(
+      hostPlatform: HostPlatform.android,
+      eventName: 'vpn_permission_result',
+      stage: 'vpn_permission',
+      result: 'failure',
+      errorCode: 'vpn_permission_denied',
+      retryable: true,
+    );
+    await bootstrapper.reportFirstSessionEvent(
+      hostPlatform: HostPlatform.android,
+      eventName: 'not_allowed',
+      stage: 'raw/session/token',
+      result: 'failure',
     );
     await bootstrapper.consumeAcquisitionHandoff(
       hostPlatform: HostPlatform.android,
@@ -1487,6 +1692,7 @@ void main() {
       'POST /api/client/runtime/stats',
       'POST /api/client/telegram/link/events',
       'POST /api/account/experience/onboarding',
+      'POST /api/events',
       'POST /api/events',
       'POST /api/events',
       'POST /api/acquisition/handoffs/consume',
@@ -1519,7 +1725,32 @@ void main() {
           'slot_id': 'home_banner',
           'content_id': 'sale_70',
           'placement': 'home_banner',
+          'pilot_id': 'release_1_2_winback_paid_7_30d',
+          'pilot_revision': '2026-08-22.1',
+          'pilot_contract_sha256':
+              'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          'commercial_revision': '2026-08-21.1',
+          'campaign_id': 'cmp_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+          'offer_id': 'off_cccccccccccccccccccccccccccccccc',
+          'creative_id': 'crv_dddddddddddddddddddddddddddddddd',
+          'variant': 'a',
+          'assignment_id': 'asg_eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+          'impression_id': 'imp_eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+          'click_id': 'clk_eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
         },
+      },
+      <String, Object?>{
+        'event_name': 'vpn_permission_result',
+        'source': 'app',
+        'platform': 'android',
+        'app_version': pokrovClientVersion,
+        'surface': 'first_session',
+        'subsystem': 'onboarding',
+        'stage': 'vpn_permission',
+        'result': 'failure',
+        'error_category': 'first_session',
+        'error_code': 'vpn_permission_denied',
+        'retryable': true,
       },
     ]);
     expect(acquisitionBody, <String, Object?>{
@@ -1734,6 +1965,10 @@ void main() {
     );
     expect(await warpCacheFile.exists(), isTrue);
     final warpCacheJson = await warpCacheFile.readAsString();
+    expect(
+      (jsonDecode(warpCacheJson) as Map<String, dynamic>)['schema_version'],
+      1,
+    );
     expect(warpCacheJson, contains('extended_protection'));
     expect(warpCacheJson, contains('WARP'));
     expect(warpCacheJson, contains('fallback'));
@@ -3606,7 +3841,7 @@ void main() {
                   'slots': <Object?>[
                     <String, Object?>{
                       'slot_id': 'rewards_top',
-                      'content_id': 'telegram_bonus',
+                      'content_id': 'winback_offer',
                       'enabled': true,
                       'title': 'Telegram +5 days',
                       'body': 'Connect Telegram and claim the reward.',
@@ -3641,6 +3876,27 @@ void main() {
                       'countdown_label': '−70% · осталось',
                       'kind': 'bonus',
                       'goal': 'bonus_claim',
+                      'pilot_id': 'release_1_2_winback_paid_7_30d',
+                      'pilot_revision': '2026-08-22.1',
+                      'pilot_contract_sha256':
+                          'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                      'commercial_revision': '2026-08-21.1',
+                      'campaign_id': 'cmp_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+                      'offer_id': 'off_cccccccccccccccccccccccccccccccc',
+                      'creative_id': 'crv_dddddddddddddddddddddddddddddddd',
+                      'variant': 'a',
+                      'assignment_id': 'asg_eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+                      'impression_id': 'imp_eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+                      'click_id': 'clk_eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+                      'offer_state': 'ready',
+                      'reason_code': 'ready',
+                      'plan_code': '3_months',
+                      'currency': 'RUB',
+                      'base_price_rub': 669,
+                      'final_price_rub': 602,
+                      'benefit_percent': 10,
+                      'remaining_quota_lower_bound': 20,
+                      'terms_url': 'https://pokrov.space/offer/',
                     },
                     ...List<Object?>.generate(
                       5,
@@ -3748,6 +4004,16 @@ void main() {
     expect(primaryPromo.placement, 'home_banner');
     expect(primaryPromo.dismissible, isFalse);
     expect(primaryPromo.wholeCardClickable, isTrue);
+    expect(primaryPromo.hasCommercialLineage, isTrue);
+    expect(primaryPromo.pilotId, 'release_1_2_winback_paid_7_30d');
+    expect(primaryPromo.campaignId, 'cmp_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
+    expect(primaryPromo.impressionId, 'imp_eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
+    expect(primaryPromo.hasReadyCommercialOffer, isTrue);
+    expect(primaryPromo.basePriceRub, 669);
+    expect(primaryPromo.finalPriceRub, 602);
+    expect(primaryPromo.remainingQuotaLowerBound, 20);
+    expect(primaryPromo.termsUrl, 'https://pokrov.space/offer/');
+    expect(summary.promoSlots.slots[1].hasCommercialLineage, isFalse);
     expect(summary.promoSlots.visibleForPlacement('home_banner'), hasLength(1));
     expect(
       primaryPromo.ctaHref,

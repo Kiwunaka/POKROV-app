@@ -21,15 +21,21 @@ class AndroidManifestPermissionsTest {
     }
 
     @Test
-    fun verifiedUpdaterUsesPrivateFileProviderAndInstallerPermission() {
-        val manifest = File("src/main/AndroidManifest.xml").readText()
+    fun directUpdaterAloneUsesPrivateFileProviderAndInstallerPermission() {
+        val commonManifest = File("src/main/AndroidManifest.xml").readText()
+        val directManifest = File("src/direct/AndroidManifest.xml").readText()
+        val storeManifest = File("src/store/AndroidManifest.xml").readText()
         val paths = File("src/main/res/xml/pokrov_update_paths.xml").readText()
 
-        assertTrue(manifest.contains("android.permission.REQUEST_INSTALL_PACKAGES"))
-        assertTrue(manifest.contains("androidx.core.content.FileProvider"))
-        assertTrue(manifest.contains("android:authorities=\"\${applicationId}.updates\""))
-        assertTrue(manifest.contains("android:exported=\"false\""))
-        assertTrue(manifest.contains("@xml/pokrov_update_paths"))
+        assertFalse(commonManifest.contains("android.permission.REQUEST_INSTALL_PACKAGES"))
+        assertFalse(commonManifest.contains("androidx.core.content.FileProvider"))
+        assertFalse(storeManifest.contains("android.permission.REQUEST_INSTALL_PACKAGES"))
+        assertFalse(storeManifest.contains("androidx.core.content.FileProvider"))
+        assertTrue(directManifest.contains("android.permission.REQUEST_INSTALL_PACKAGES"))
+        assertTrue(directManifest.contains("androidx.core.content.FileProvider"))
+        assertTrue(directManifest.contains("android:authorities=\"\${applicationId}.updates\""))
+        assertTrue(directManifest.contains("android:exported=\"false\""))
+        assertTrue(directManifest.contains("@xml/pokrov_update_paths"))
         assertTrue(paths.contains("<cache-path"))
         assertTrue(paths.contains("path=\"updates/\""))
     }

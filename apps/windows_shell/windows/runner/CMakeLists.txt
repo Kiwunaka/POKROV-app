@@ -7,6 +7,8 @@ project(runner LANGUAGES CXX)
 #
 # Any new source files that you add to the application should be added here.
 add_executable(${BINARY_NAME} WIN32
+  "activation_protocol.cpp"
+  "../service/service_client.cpp"
   "flutter_window.cpp"
   "main.cpp"
   "utils.cpp"
@@ -34,7 +36,29 @@ target_compile_definitions(${BINARY_NAME} PRIVATE "NOMINMAX")
 # dependencies here.
 target_link_libraries(${BINARY_NAME} PRIVATE flutter flutter_wrapper_app)
 target_link_libraries(${BINARY_NAME} PRIVATE "dwmapi.lib")
+target_link_libraries(${BINARY_NAME} PRIVATE
+  pokrov_service_common
+  "bcrypt.lib"
+)
+target_include_directories(${BINARY_NAME} PRIVATE
+  "${CMAKE_CURRENT_SOURCE_DIR}/../service")
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
+add_dependencies(${BINARY_NAME} pokrov_service)
+add_custom_command(TARGET ${BINARY_NAME} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "$<TARGET_FILE:pokrov_service>"
+    "$<TARGET_FILE_DIR:${BINARY_NAME}>/pokrov_service.exe"
+  VERBATIM)
+
+if(BUILD_TESTING)
+  add_executable(pokrov_activation_protocol_test
+    "activation_protocol.cpp"
+    "activation_protocol_test.cpp"
+  )
+  apply_standard_settings(pokrov_activation_protocol_test)
+  add_test(NAME pokrov_activation_protocol
+    COMMAND pokrov_activation_protocol_test)
+endif()

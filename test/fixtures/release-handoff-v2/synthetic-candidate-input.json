@@ -1,0 +1,100 @@
+{
+  "purpose": "synthetic_contract_test",
+  "release": {
+    "version": "1.2.0",
+    "channel": "alpha",
+    "candidate_label": "pokrov-1.2.0",
+    "created_at_utc": "2026-08-21T12:00:00Z",
+    "release_notes": {
+      "summary": "POKROV 1.2.0 alpha: synthetic contract candidate.",
+      "url": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.2.0"
+    }
+  },
+  "sources": {
+    "platform": {
+      "repository": "Kiwunaka/portal",
+      "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "core": {
+      "repository": "Kiwunaka/pokrov-core",
+      "revision": "69a74545101708e56183c92e31f2b4c7b2509884"
+    },
+    "release_index": {
+      "repository": "Kiwunaka/pokrov",
+      "revision": "dddddddddddddddddddddddddddddddddddddddd"
+    }
+  },
+  "compatibility": {
+    "app_contract_version": "2",
+    "api_contract_version": "2",
+    "contracts": [
+      {
+        "id": "product-facts",
+        "version": "1",
+        "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      },
+      {
+        "id": "release-handoff",
+        "version": "2",
+        "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "platform": "android",
+      "kind": "apk",
+      "architecture": "arm64-v8a",
+      "file_name": "pokrov-android-arm64-v8a.apk",
+      "public_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.2.0-test/pokrov-android-arm64-v8a.apk",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "size_bytes": 100000000,
+      "signing": {
+        "status": "MISSING"
+      },
+      "sbom": {
+        "status": "NOT_REQUESTED"
+      },
+      "provenance": {
+        "status": "MISSING"
+      }
+    },
+    {
+      "platform": "windows",
+      "kind": "exe",
+      "architecture": "x64",
+      "file_name": "pokrov-windows-setup-x64.exe",
+      "public_url": "https://github.com/Kiwunaka/pokrov/releases/download/v1.2.0-test/pokrov-windows-setup-x64.exe",
+      "sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+      "size_bytes": 30000000,
+      "signing": {
+        "status": "MISSING"
+      },
+      "sbom": {
+        "status": "NOT_REQUESTED"
+      },
+      "provenance": {
+        "status": "MISSING"
+      }
+    }
+  ],
+  "manual_gates": [
+    {
+      "id": "WINDOWS_TRUSTED_SIGNING",
+      "origin": "owner",
+      "status": "MISSING",
+      "required_for_promotion": true
+    },
+    {
+      "id": "RU_ORIGIN_IF_CLAIMED",
+      "origin": "ru",
+      "status": "NOT_REQUESTED",
+      "required_for_promotion": false
+    }
+  ],
+  "promotion": {
+    "target_channel": "alpha",
+    "same_byte_required": true,
+    "observed_status": "NOT_REQUESTED"
+  }
+}

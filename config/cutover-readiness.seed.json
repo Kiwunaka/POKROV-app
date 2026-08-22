@@ -2,7 +2,7 @@
   "lane": "POKROV-app/main",
   "status": "android_1_1_6_and_windows_1_1_6_public_stable_runtime_synced_global_cutover_blocked_on_windows_trust_and_native_apple_gates",
   "public_cutover_allowed": false,
-  "last_updated": "2026-08-19",
+  "last_updated": "2026-08-22",
   "latest_repo_backed_release": {
     "version": "1.1.6",
     "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.1.6",
@@ -11,6 +11,15 @@
     "anonymous_download_smoke": "PASS_ALL_EIGHT_1_1_6_PUBLIC_ASSETS_RANGE_GET_206_AND_GITHUB_SIZE_DIGEST",
     "authenticated_github_release_smoke": "PASS_EXACT_1_1_6_EIGHT_ASSET_GITHUB_DIGEST",
     "live_app_session_download_smoke": "PASS_1_1_6_REQUIRED_UPDATE_FOR_1_1_5_AND_NONE_FOR_1_1_6_ANDROID_WINDOWS_EXACT_METADATA"
+  },
+  "release_rollback": {
+    "catalog": "config/release-rollback-catalog.seed.json",
+    "stable_pointer": "artifacts/releases/release-handoff.json",
+    "retained_target": "1.1.6+20260819",
+    "source_contract": "PASS_LOCAL",
+    "synthetic_pointer_reversal": "PASS_LOCAL",
+    "exact_candidate_drill": "NOT_RUN",
+    "mutation_authority": "NOT_AUTHORIZED"
   },
   "android_release": {
     "distribution": "public_production_signed_stable_direct_apk",

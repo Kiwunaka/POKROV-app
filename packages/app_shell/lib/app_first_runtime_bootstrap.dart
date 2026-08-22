@@ -3,10 +3,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:file_selector/file_selector.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
+import 'package:pokrov_observability_runtime/observability_runtime.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
+import 'package:pokrov_support_bundle/support_bundle.dart';
 
 import 'emergency_network_contract.dart';
 import 'src/emergency/emergency_network_store.dart';
@@ -18,14 +22,36 @@ import 'src/emergency/emergency_network_store.dart';
 /// package base version (without Android's build number).
 const pokrovClientVersion = String.fromEnvironment(
   'POKROV_APP_VERSION',
-  defaultValue: '1.1.6',
+  defaultValue: '1.2.0',
+);
+const pokrovSupportSigningKeyId = String.fromEnvironment(
+  'POKROV_SUPPORT_SIGNING_KEY_ID',
+);
+const pokrovSupportSigningPublicKeyB64 = String.fromEnvironment(
+  'POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64',
 );
 
 const _platformErrorCodeHeader = 'X-POKROV-Auth-Error';
+const _correlationIdHeader = 'X-Correlation-ID';
 const _androidCoreEgressProbeUrl =
     'https://api.pokrov.space/api/public/authenticated-egress-probe';
 const _smartConnectProfileRefreshTimeout = Duration(seconds: 6);
+const _appFirstSessionCredentialsVersion = 1;
+const _appFirstBootstrapStateVersion = 1;
 final _platformErrorCodePattern = RegExp(r'^[a-z0-9_]{1,64}$');
+
+/// Selects the managed TUN MTU before handing the profile to a native host.
+///
+/// Integer values inside the IPv6-safe 1280..1500 interval are preserved.
+/// Missing, malformed, and out-of-range control-plane values fail closed to
+/// the conservative default. Native hosts apply their platform interface
+/// ceiling again immediately before creating the TUN device.
+int selectSafeTunMtu(Object? value) {
+  if (value is! int || value < 1280 || value > 1500) {
+    return 1280;
+  }
+  return value;
+}
 
 abstract interface class ManagedProfileBootstrapper {
   Future<ManagedProfilePayload> resolveManagedProfile({
@@ -158,7 +184,7 @@ class AppFirstSessionCredentials {
   bool get hasAccessToken => accessToken.trim().isNotEmpty;
 
   String _encode() => jsonEncode(<String, Object?>{
-        'version': 1,
+        'version': _appFirstSessionCredentialsVersion,
         'access_token': accessToken.trim(),
         if (refreshToken.trim().isNotEmpty)
           'refresh_token': refreshToken.trim(),
@@ -172,6 +198,10 @@ class AppFirstSessionCredentials {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is Map) {
+        final version = decoded['version'];
+        if (version is! int || version != _appFirstSessionCredentialsVersion) {
+          return null;
+        }
         final accessToken = (decoded['access_token'] ?? '').toString().trim();
         final refreshToken = (decoded['refresh_token'] ?? '').toString().trim();
         return accessToken.isEmpty
@@ -185,6 +215,18 @@ class AppFirstSessionCredentials {
       // Legacy secure entries contain only the access token.
     }
     return AppFirstSessionCredentials(accessToken: raw, refreshToken: '');
+  }
+
+  static bool _isLegacyEncoding(String value) {
+    final raw = value.trim();
+    if (raw.isEmpty) {
+      return false;
+    }
+    try {
+      return jsonDecode(raw) is! Map;
+    } on FormatException {
+      return true;
+    }
   }
 }
 
@@ -206,13 +248,12 @@ class FlutterSecureAppFirstSessionSecretStore
   Future<String?> readSessionToken({
     required HostPlatform hostPlatform,
     required String installId,
-  }) async {
-    final key = _key(hostPlatform: hostPlatform, installId: installId);
-    final pair = AppFirstSessionCredentials._decode(
-      await _storage.read(key: key) ?? '',
-    );
-    return pair?.accessToken;
-  }
+  }) async =>
+      (await _readSessionPairAndMigrate(
+        hostPlatform: hostPlatform,
+        installId: installId,
+      ))
+          ?.accessToken;
 
   @override
   Future<void> writeSessionToken({
@@ -246,11 +287,28 @@ class FlutterSecureAppFirstSessionSecretStore
   Future<AppFirstSessionCredentials?> readSessionPair({
     required HostPlatform hostPlatform,
     required String installId,
+  }) =>
+      _readSessionPairAndMigrate(
+        hostPlatform: hostPlatform,
+        installId: installId,
+      );
+
+  Future<AppFirstSessionCredentials?> _readSessionPairAndMigrate({
+    required HostPlatform hostPlatform,
+    required String installId,
   }) async {
     final key = _key(hostPlatform: hostPlatform, installId: installId);
-    return AppFirstSessionCredentials._decode(
-      await _storage.read(key: key) ?? '',
-    );
+    final raw = await _storage.read(key: key) ?? '';
+    final pair = AppFirstSessionCredentials._decode(raw);
+    if (pair != null && AppFirstSessionCredentials._isLegacyEncoding(raw)) {
+      try {
+        await _storage.write(key: key, value: pair._encode());
+      } on Object {
+        // The legacy credential remains usable and untouched when its
+        // idempotent schema rewrite cannot be persisted.
+      }
+    }
+    return pair;
   }
 
   @override
@@ -433,6 +491,28 @@ abstract interface class AppFirstExperienceService {
   });
 }
 
+/// Authenticated first-session analytics. Account and device correlation are
+/// resolved server-side from the app session; callers must not pass session,
+/// profile, acquisition-handle, or other raw identifiers in this envelope.
+abstract interface class AppFirstFirstSessionEventService {
+  Future<void> reportFirstSessionEvent({
+    required HostPlatform hostPlatform,
+    required String eventName,
+    required String stage,
+    required String result,
+    String errorCode = '',
+    bool? retryable,
+  });
+}
+
+abstract interface class AppFirstReleaseHealthService {
+  Future<bool> submitReleaseHealthBatch({
+    required HostPlatform hostPlatform,
+    required Map<String, Object?> batch,
+    required String correlationId,
+  });
+}
+
 /// Consumes an opaque, short-lived acquisition handoff after a person opens
 /// the installed app from a POKROV-owned continuation link. The handle is not
 /// an identity token and must never be logged or persisted by the client.
@@ -604,12 +684,21 @@ class BootstrapFailure implements Exception {
     this.statusCode,
     this.operation,
     this.code = '',
+    this.operationalCode,
   });
 
   final String message;
   final int? statusCode;
   final String? operation;
   final String code;
+  final String? operationalCode;
+
+  String get operationalErrorCode =>
+      operationalCode ??
+      OperationalFailureMapper.portal(
+        statusCode: statusCode,
+        platformCode: code,
+      );
 
   @override
   String toString() => message;
@@ -2010,6 +2099,8 @@ class AppFirstPromoSlots {
       .where(
         (slot) =>
             slot.enabled &&
+            (slot.contentId.trim() != 'winback_offer' ||
+                slot.hasReadyCommercialOffer) &&
             (slot.title.trim().isNotEmpty ||
                 slot.body.trim().isNotEmpty ||
                 slot.mediaUrl.trim().isNotEmpty ||
@@ -2060,6 +2151,26 @@ class AppFirstPromoSlot {
     this.countdownMode = 'none',
     this.countdownLabel = '',
     this.serverTimeOffsetMs = 0,
+    this.pilotId = '',
+    this.pilotRevision = '',
+    this.pilotContractSha256 = '',
+    this.commercialRevision = '',
+    this.campaignId = '',
+    this.offerId = '',
+    this.creativeId = '',
+    this.variant = '',
+    this.assignmentId = '',
+    this.impressionId = '',
+    this.clickId = '',
+    this.offerState = '',
+    this.reasonCode = '',
+    this.planCode = '',
+    this.currency = '',
+    this.basePriceRub,
+    this.finalPriceRub,
+    this.benefitPercent,
+    this.remainingQuotaLowerBound,
+    this.termsUrl = '',
     required this.kind,
     required this.goal,
   });
@@ -2098,8 +2209,115 @@ class AppFirstPromoSlot {
   final String countdownMode;
   final String countdownLabel;
   final int serverTimeOffsetMs;
+  final String pilotId;
+  final String pilotRevision;
+  final String pilotContractSha256;
+  final String commercialRevision;
+  final String campaignId;
+  final String offerId;
+  final String creativeId;
+  final String variant;
+  final String assignmentId;
+  final String impressionId;
+  final String clickId;
+  final String offerState;
+  final String reasonCode;
+  final String planCode;
+  final String currency;
+  final int? basePriceRub;
+  final int? finalPriceRub;
+  final int? benefitPercent;
+  final int? remainingQuotaLowerBound;
+  final String termsUrl;
   final String kind;
   final String goal;
+
+  bool get hasCommercialLineage =>
+      _validPromoCommercialLineage(<String, String>{
+        'pilot_id': pilotId,
+        'pilot_revision': pilotRevision,
+        'pilot_contract_sha256': pilotContractSha256,
+        'commercial_revision': commercialRevision,
+        'campaign_id': campaignId,
+        'offer_id': offerId,
+        'creative_id': creativeId,
+        'variant': variant,
+        'assignment_id': assignmentId,
+        'impression_id': impressionId,
+        'click_id': clickId,
+      });
+
+  bool get hasReadyCommercialOffer {
+    final terms = Uri.tryParse(termsUrl.trim());
+    final end = DateTime.tryParse(endsAt.trim());
+    return hasCommercialLineage &&
+        offerState.trim().toLowerCase() == 'ready' &&
+        reasonCode.trim().toLowerCase() == 'ready' &&
+        planCode.trim().isNotEmpty &&
+        currency.trim().toUpperCase() == 'RUB' &&
+        basePriceRub != null &&
+        finalPriceRub != null &&
+        basePriceRub! > finalPriceRub! &&
+        finalPriceRub! > 0 &&
+        benefitPercent != null &&
+        benefitPercent! > 0 &&
+        benefitPercent! < 100 &&
+        remainingQuotaLowerBound != null &&
+        remainingQuotaLowerBound! > 0 &&
+        terms != null &&
+        terms.scheme == 'https' &&
+        terms.host.toLowerCase() == 'pokrov.space' &&
+        end != null;
+  }
+}
+
+const _promoCommercialLineageKeys = <String>{
+  'pilot_id',
+  'pilot_revision',
+  'pilot_contract_sha256',
+  'commercial_revision',
+  'campaign_id',
+  'offer_id',
+  'creative_id',
+  'variant',
+  'assignment_id',
+  'impression_id',
+  'click_id',
+};
+
+bool _validPromoCommercialLineage(Map<String, String> lineage) {
+  if (lineage.keys.toSet().containsAll(_promoCommercialLineageKeys) == false) {
+    return false;
+  }
+  bool matches(String key, String pattern) =>
+      RegExp(pattern).hasMatch(lineage[key]?.trim().toLowerCase() ?? '');
+  return matches('pilot_id', r'^[a-z0-9_]{3,96}$') &&
+      matches('pilot_revision', r'^[a-z0-9_.-]{3,64}$') &&
+      matches('pilot_contract_sha256', r'^[a-f0-9]{64}$') &&
+      matches('commercial_revision', r'^[a-z0-9_.-]{3,64}$') &&
+      matches('campaign_id', r'^cmp_[a-f0-9]{32}$') &&
+      matches('offer_id', r'^off_[a-f0-9]{32}$') &&
+      matches('creative_id', r'^crv_[a-f0-9]{32}$') &&
+      matches('variant', r'^[a-z0-9_]{1,32}$') &&
+      matches('assignment_id', r'^asg_[a-f0-9]{32}$') &&
+      matches('impression_id', r'^imp_[a-f0-9]{32}$') &&
+      matches('click_id', r'^clk_[a-f0-9]{32}$');
+}
+
+Map<String, String> _readPromoCommercialLineage(Map<String, dynamic> slot) {
+  final present = _promoCommercialLineageKeys
+      .where((key) => (slot[key]?.toString().trim() ?? '').isNotEmpty)
+      .toSet();
+  if (present.isEmpty || present.length != _promoCommercialLineageKeys.length) {
+    return const <String, String>{};
+  }
+  final lineage = <String, String>{
+    for (final key in _promoCommercialLineageKeys)
+      key: slot[key].toString().trim().toLowerCase(),
+  };
+  return _validPromoCommercialLineage(lineage)
+      ? Map<String, String>.unmodifiable(lineage)
+      : const <String, String>{};
 }
 
 class ClientAppsMetadata {
@@ -2231,6 +2449,11 @@ class ClientAppUpdateInfo {
   final String publishedAt;
 
   static final RegExp _sha256Pattern = RegExp(r'^[a-fA-F0-9]{64}$');
+  static final RegExp _versionPattern =
+      RegExp(r'^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$');
+  static const _maxApkBytes = 256 * 1024 * 1024;
+  static const _maxReleaseUrlLength = 2048;
+  static const _maxVersionLength = 64;
   static const _canonicalReleaseHost = 'github.com';
   static const _canonicalReleaseOwner = 'kiwunaka';
   static const _canonicalReleaseRepository = 'pokrov';
@@ -2239,10 +2462,17 @@ class ClientAppUpdateInfo {
   /// separately verifies the exact size and SHA-256 before opening the system
   /// package installer.
   Uri? get trustedHandoffUri {
-    if (!_sha256Pattern.hasMatch(sha256.trim()) || size <= 0) {
+    final normalizedVersion = latestVersion.trim();
+    final normalizedUrl = url.trim();
+    if (!_sha256Pattern.hasMatch(sha256.trim()) ||
+        size <= 0 ||
+        size > _maxApkBytes ||
+        normalizedUrl.length > _maxReleaseUrlLength ||
+        normalizedVersion.length > _maxVersionLength ||
+        !_versionPattern.hasMatch(normalizedVersion)) {
       return null;
     }
-    final uri = Uri.tryParse(url.trim());
+    final uri = Uri.tryParse(normalizedUrl);
     if (uri == null ||
         uri.scheme.toLowerCase() != 'https' ||
         uri.host.toLowerCase() != _canonicalReleaseHost ||
@@ -2314,7 +2544,9 @@ class AppFirstRuntimeBootstrapper
         AppFirstBonusActionService,
         AppFirstWarpActionService,
         AppFirstReleaseActionService,
+        AppFirstReleaseHealthService,
         AppFirstExperienceService,
+        AppFirstFirstSessionEventService,
         AppFirstAcquisitionService,
         AppFirstQuestEventService,
         AppFirstPromoEventService,
@@ -2390,6 +2622,38 @@ class AppFirstRuntimeBootstrapper
   static const _maxJsonResponseBytes = 8 * 1024 * 1024;
   static const _maxRuleSetResponseBytes = 32 * 1024 * 1024;
   static const _androidShellPackageName = 'space.pokrov.pokrov_android_shell';
+
+  @override
+  Future<bool> submitReleaseHealthBatch({
+    required HostPlatform hostPlatform,
+    required Map<String, Object?> batch,
+    required String correlationId,
+  }) async {
+    final state = await _loadOrCreateState(hostPlatform);
+    if (!state.hasSession) {
+      return false;
+    }
+    final client = _createHttpClient(hostPlatform);
+    try {
+      await PortalCorrelationScope.run(
+        correlationId,
+        () => _requestJson(
+          method: 'POST',
+          path: '/api/client/observability/release-health/batches',
+          hostPlatform: hostPlatform,
+          client: client,
+          bearerToken: state.sessionToken,
+          body: batch,
+        ),
+      );
+      return true;
+    } on BootstrapFailure {
+      return false;
+    } finally {
+      client.close(force: true);
+    }
+  }
+
   static const _allExceptRuRuleSetCacheDirectoryName =
       'all-except-ru-rule-sets';
   static const _smartConnectTelemetryMaxNodes = 8;
@@ -2898,6 +3162,68 @@ class AppFirstRuntimeBootstrapper
   }
 
   @override
+  Future<void> reportFirstSessionEvent({
+    required HostPlatform hostPlatform,
+    required String eventName,
+    required String stage,
+    required String result,
+    String errorCode = '',
+    bool? retryable,
+  }) async {
+    const allowedEvents = <String>{
+      'app_first_open',
+      'acquisition_handoff_received',
+      'acquisition_handoff_failed',
+      'trial_start_selected',
+      'existing_access_selected',
+      'vpn_permission_explainer_shown',
+      'vpn_permission_result',
+      'first_home_seen',
+      'connect_requested',
+      'first_verified_connect',
+    };
+    const allowedResults = <String>{
+      'shown',
+      'received',
+      'selected',
+      'started',
+      'seen',
+      'success',
+      'failure',
+      'dismissed',
+    };
+    final safeEvent = eventName.trim().toLowerCase();
+    final safeStage = stage.trim().toLowerCase();
+    final safeResult = result.trim().toLowerCase();
+    final safeErrorCode = errorCode.trim().toLowerCase();
+    if (!allowedEvents.contains(safeEvent) ||
+        !RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(safeStage) ||
+        !allowedResults.contains(safeResult) ||
+        (safeErrorCode.isNotEmpty &&
+            !RegExp(r'^[a-z][a-z0-9_]{0,63}$').hasMatch(safeErrorCode))) {
+      return;
+    }
+    await _requestClientJsonWithSession(
+      hostPlatform: hostPlatform,
+      method: 'POST',
+      path: '/api/events',
+      body: <String, Object?>{
+        'event_name': safeEvent,
+        'source': 'app',
+        'platform': hostPlatform.name,
+        'app_version': pokrovClientVersion,
+        'surface': 'first_session',
+        'subsystem': 'onboarding',
+        'stage': safeStage,
+        'result': safeResult,
+        if (safeErrorCode.isNotEmpty) 'error_category': 'first_session',
+        if (safeErrorCode.isNotEmpty) 'error_code': safeErrorCode,
+        if (retryable != null) 'retryable': retryable,
+      },
+    );
+  }
+
+  @override
   Future<void> reportPromoEvent({
     required HostPlatform hostPlatform,
     required String eventName,
@@ -2928,6 +3254,19 @@ class AppFirstRuntimeBootstrapper
                 0,
                 min(64, slot.placement.trim().length),
               ),
+          if (slot.hasCommercialLineage) ...<String, Object?>{
+            'pilot_id': slot.pilotId.trim(),
+            'pilot_revision': slot.pilotRevision.trim(),
+            'pilot_contract_sha256': slot.pilotContractSha256.trim(),
+            'commercial_revision': slot.commercialRevision.trim(),
+            'campaign_id': slot.campaignId.trim(),
+            'offer_id': slot.offerId.trim(),
+            'creative_id': slot.creativeId.trim(),
+            'variant': slot.variant.trim(),
+            'assignment_id': slot.assignmentId.trim(),
+            'impression_id': slot.impressionId.trim(),
+            'click_id': slot.clickId.trim(),
+          },
         },
       },
     );
@@ -4553,8 +4892,9 @@ class AppFirstRuntimeBootstrapper
         mode: _readText(response['mode']),
         serverTime: serverTime,
         slots: _readListOfMaps(response['slots'])
-            .map(
-              (slot) => AppFirstPromoSlot(
+            .map((slot) {
+              final lineage = _readPromoCommercialLineage(slot);
+              return AppFirstPromoSlot(
                 slotId: _readText(slot['slot_id']),
                 contentId: _readText(slot['content_id']),
                 enabled: slot['enabled'] != false,
@@ -4594,10 +4934,40 @@ class AppFirstRuntimeBootstrapper
                     : _readText(slot['countdown_mode']),
                 countdownLabel: _readText(slot['countdown_label']),
                 serverTimeOffsetMs: serverTimeOffsetMs,
+                pilotId: lineage['pilot_id'] ?? '',
+                pilotRevision: lineage['pilot_revision'] ?? '',
+                pilotContractSha256: lineage['pilot_contract_sha256'] ?? '',
+                commercialRevision: lineage['commercial_revision'] ?? '',
+                campaignId: lineage['campaign_id'] ?? '',
+                offerId: lineage['offer_id'] ?? '',
+                creativeId: lineage['creative_id'] ?? '',
+                variant: lineage['variant'] ?? '',
+                assignmentId: lineage['assignment_id'] ?? '',
+                impressionId: lineage['impression_id'] ?? '',
+                clickId: lineage['click_id'] ?? '',
+                offerState:
+                    lineage.isEmpty ? '' : _readText(slot['offer_state']),
+                reasonCode:
+                    lineage.isEmpty ? '' : _readText(slot['reason_code']),
+                planCode: lineage.isEmpty ? '' : _readText(slot['plan_code']),
+                currency: lineage.isEmpty ? '' : _readText(slot['currency']),
+                basePriceRub: lineage.isEmpty
+                    ? null
+                    : _readNullableInt(slot['base_price_rub']),
+                finalPriceRub: lineage.isEmpty
+                    ? null
+                    : _readNullableInt(slot['final_price_rub']),
+                benefitPercent: lineage.isEmpty
+                    ? null
+                    : _readNullableInt(slot['benefit_percent']),
+                remainingQuotaLowerBound: lineage.isEmpty
+                    ? null
+                    : _readNullableInt(slot['remaining_quota_lower_bound']),
+                termsUrl: lineage.isEmpty ? '' : _readText(slot['terms_url']),
                 kind: _readText(slot['kind']),
                 goal: _readText(slot['goal']),
-              ),
-            )
+              );
+            })
             .where((slot) => slot.slotId.isNotEmpty)
             .toList(growable: false),
       );
@@ -4881,7 +5251,7 @@ class AppFirstRuntimeBootstrapper
       installId: parsed.installId,
     );
     if (securePair != null && securePair.hasAccessToken) {
-      if (parsed.sessionToken.isNotEmpty) {
+      if (parsed.sessionToken.isNotEmpty || parsed.requiresSchemaMigration) {
         await _persistStateToFile(
           hostPlatform: hostPlatform,
           file: file,
@@ -4921,6 +5291,13 @@ class AppFirstRuntimeBootstrapper
       throw const BootstrapFailure(
         'Сохраненная сессия устройства недоступна. Используйте почту или код, '
         'чтобы восстановить доступ.',
+      );
+    }
+    if (parsed.requiresSchemaMigration) {
+      await _persistStateToFile(
+        hostPlatform: hostPlatform,
+        file: file,
+        state: parsed,
       );
     }
     await _cleanupStateWriteArtifacts(file);
@@ -4994,6 +5371,7 @@ class AppFirstRuntimeBootstrapper
     await file.writeAsString(
       jsonEncode(
         <String, Object?>{
+          'schema_version': 1,
           'feature': 'extended_protection',
           'public_label': _safeWarpPublicLabel(status.publicLabel),
           'consented': status.consented,
@@ -7048,10 +7426,7 @@ class AppFirstRuntimeBootstrapper
   }) {
     final ipVersionPreference =
         _readText(supportContext['ip_version_preference']).toLowerCase();
-    final requestedTunMtu = _readInt(supportContext['tun_mtu']);
-    const allowedTunMtuValues = <int>{1280, 1400, 1492, 1500, 9000};
-    final tunMtu =
-        allowedTunMtuValues.contains(requestedTunMtu) ? requestedTunMtu : 9000;
+    final tunMtu = selectSafeTunMtu(supportContext['tun_mtu']);
     final tunInbound = <String, dynamic>{
       'type': 'tun',
       'tag': 'tun-in',
@@ -8106,7 +8481,6 @@ class AppFirstRuntimeBootstrapper
           HttpHeaders.userAgentHeader,
           _userAgent(hostPlatform),
         );
-
         final response = await request.close().timeout(requestTimeout);
         final bytes = await _readBoundedResponseBytes(
           response,
@@ -8185,8 +8559,14 @@ class AppFirstRuntimeBootstrapper
     required HttpClient client,
     String bearerToken = '',
     Map<String, Object?>? body,
+    Map<String, String> headers = const <String, String>{},
+    List<int>? rawBody,
+    String rawContentType = 'application/octet-stream',
     Duration? requestTimeoutOverride,
   }) async {
+    if (body != null && rawBody != null) {
+      throw ArgumentError('JSON body and raw body are mutually exclusive.');
+    }
     BootstrapFailure? lastFailure;
     final requestUri = Uri.parse(apiBaseUrl).resolve(path);
     final operation = '$method $path';
@@ -8203,11 +8583,18 @@ class AppFirstRuntimeBootstrapper
           HttpHeaders.userAgentHeader,
           _userAgent(hostPlatform),
         );
+        request.headers.set(
+          _correlationIdHeader,
+          PortalCorrelationScope.currentOrCreate(),
+        );
         if (bearerToken.isNotEmpty) {
           request.headers.set(
             HttpHeaders.authorizationHeader,
             'Bearer $bearerToken',
           );
+        }
+        for (final entry in headers.entries) {
+          request.headers.set(entry.key, entry.value);
         }
         if (body != null) {
           request.headers.set(
@@ -8215,6 +8602,9 @@ class AppFirstRuntimeBootstrapper
             'application/json; charset=utf-8',
           );
           request.write(jsonEncode(body));
+        } else if (rawBody != null) {
+          request.headers.set(HttpHeaders.contentTypeHeader, rawContentType);
+          request.add(rawBody);
         }
 
         final effectiveRequestTimeout =
@@ -8259,11 +8649,13 @@ class AppFirstRuntimeBootstrapper
         throw BootstrapFailure(
           'POKROV получил неожиданный ответ во время подготовки устройства.',
           operation: operation,
+          operationalCode: 'API-008',
         );
       } on SocketException {
         final failure = BootstrapFailure(
           'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
           operation: operation,
+          operationalCode: 'API-002',
         );
         if (attempt >= attemptLimit - 1) {
           throw failure;
@@ -8273,6 +8665,7 @@ class AppFirstRuntimeBootstrapper
         final failure = BootstrapFailure(
           'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
           operation: operation,
+          operationalCode: 'API-002',
         );
         if (attempt >= attemptLimit - 1) {
           throw failure;
@@ -8282,6 +8675,7 @@ class AppFirstRuntimeBootstrapper
         final failure = BootstrapFailure(
           'Не удалось безопасно подключиться к сервису. Проверьте дату, время и интернет.',
           operation: operation,
+          operationalCode: 'API-003',
         );
         if (attempt >= attemptLimit - 1) {
           throw failure;
@@ -8292,6 +8686,7 @@ class AppFirstRuntimeBootstrapper
           'Сервис не ответил вовремя. Попробуйте ещё раз.',
           statusCode: HttpStatus.gatewayTimeout,
           operation: operation,
+          operationalCode: 'API-002',
         );
         if (attempt >= attemptLimit - 1) {
           throw failure;
@@ -8318,6 +8713,7 @@ class AppFirstRuntimeBootstrapper
     if (contentLength > maxBytes) {
       throw const BootstrapFailure(
         'Ответ сервиса оказался слишком большим. Попробуйте ещё раз.',
+        operationalCode: 'API-010',
       );
     }
 
@@ -8338,6 +8734,7 @@ class AppFirstRuntimeBootstrapper
         if (chunk.length > maxBytes - bytes.length) {
           throw const BootstrapFailure(
             'Ответ сервиса оказался слишком большим. Попробуйте ещё раз.',
+            operationalCode: 'API-010',
           );
         }
         bytes.addAll(chunk);
@@ -8736,7 +9133,300 @@ class SupportTicketFailure implements Exception {
   String toString() => message;
 }
 
-class AppFirstSupportTicketService implements SupportTicketService {
+abstract interface class SupportBundleTransferService {
+  bool get supportBundleEncryptionConfigured;
+
+  Future<SupportModeActivation> redeemSupportMode({
+    required HostPlatform hostPlatform,
+    required String activationCode,
+    required String appVersion,
+    required String buildNumber,
+  });
+
+  Future<SupportBundleExportResult> exportSupportBundle({
+    required HostPlatform hostPlatform,
+    required PreparedSupportBundle prepared,
+  });
+
+  Future<SupportBundleDeliveryResult> deliverSupportBundle({
+    required HostPlatform hostPlatform,
+    required PreparedSupportBundle prepared,
+    required String caseSummary,
+    int? ticketId,
+  });
+}
+
+abstract interface class SupportBundleExportDestination {
+  Future<bool> save({
+    required HostPlatform hostPlatform,
+    required EncryptedSupportBundle bundle,
+  });
+}
+
+final class PokrovPlatformSupportBundleExportDestination
+    implements SupportBundleExportDestination {
+  const PokrovPlatformSupportBundleExportDestination();
+
+  static const _androidChannel = MethodChannel('space.pokrov/support-export');
+
+  @override
+  Future<bool> save({
+    required HostPlatform hostPlatform,
+    required EncryptedSupportBundle bundle,
+  }) async {
+    if (hostPlatform == HostPlatform.android) {
+      final selected = await _androidChannel.invokeMethod<String?>(
+        'saveEncryptedBundle',
+        <String, Object?>{
+          'bytes': bundle.bytes,
+          'name': bundle.suggestedFileName,
+        },
+      );
+      return selected != null && selected.isNotEmpty;
+    }
+    if (hostPlatform == HostPlatform.windows) {
+      final location = await getSaveLocation(
+        suggestedName: bundle.suggestedFileName,
+        acceptedTypeGroups: const <XTypeGroup>[
+          XTypeGroup(
+            label: 'POKROV encrypted support bundle',
+            extensions: <String>['pokrov-support'],
+          ),
+        ],
+      );
+      if (location == null) {
+        return false;
+      }
+      final file = XFile.fromData(
+        bundle.bytes,
+        mimeType: 'application/vnd.pokrov.support-bundle+json',
+        name: bundle.suggestedFileName,
+      );
+      await file.saveTo(location.path);
+      return true;
+    }
+    throw const SupportBundleTransferFailure(
+      'support_export_unsupported',
+      'Экспорт диагностики недоступен на этой платформе.',
+    );
+  }
+}
+
+final class SupportModeActivation {
+  SupportModeActivation({
+    required Map<String, Object?> signedPolicy,
+    required this.policy,
+  }) : signedPolicy = Map<String, Object?>.unmodifiable(signedPolicy);
+
+  final Map<String, Object?> signedPolicy;
+  final VerifiedSupportCollectionPolicy policy;
+}
+
+class SupportBundleTransferFailure implements Exception {
+  const SupportBundleTransferFailure(this.code, this.message);
+
+  final String code;
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
+class PokrovFileSupportBundleOutbox implements SupportBundleEncryptedOutbox {
+  const PokrovFileSupportBundleOutbox({
+    Future<Directory> Function()? directoryResolver,
+  }) : _directoryResolver = directoryResolver ?? getApplicationSupportDirectory;
+
+  static const _maximumEnvelopeBytes = 2621440;
+  final Future<Directory> Function() _directoryResolver;
+
+  Future<Directory> _root() async {
+    final support = await _directoryResolver();
+    final root = Directory(
+      '${support.path}${Platform.pathSeparator}support-bundle-outbox',
+    );
+    await root.create(recursive: true);
+    return root;
+  }
+
+  String _validateDiagnosticId(String value) {
+    if (!RegExp(r'^diag-[a-f0-9]{24}$').hasMatch(value)) {
+      throw const SupportBundleTransferFailure(
+        'outbox_name_invalid',
+        'Не удалось безопасно сохранить пакет диагностики.',
+      );
+    }
+    return value;
+  }
+
+  Future<File> _file(String diagnosticId) async {
+    final root = await _root();
+    final safeId = _validateDiagnosticId(diagnosticId);
+    return File('${root.path}${Platform.pathSeparator}$safeId.pokrov-support');
+  }
+
+  @override
+  Future<StoredEncryptedSupportBundle?> load(String diagnosticId) async {
+    final file = await _file(diagnosticId);
+    if (!await file.exists()) {
+      return null;
+    }
+    final length = await file.length();
+    if (length <= 0 || length > _maximumEnvelopeBytes) {
+      throw const SupportBundleTransferFailure(
+        'outbox_content_invalid',
+        'Сохраненный пакет диагностики поврежден.',
+      );
+    }
+    final bytes = await file.readAsBytes();
+    _validateEncryptedEnvelope(bytes, diagnosticId);
+    return StoredEncryptedSupportBundle(
+      diagnosticId: diagnosticId,
+      reference: file.path,
+      bytes: bytes,
+    );
+  }
+
+  @override
+  Future<StoredEncryptedSupportBundle> save(
+    EncryptedSupportBundle bundle,
+  ) async {
+    final existing = await load(bundle.diagnosticId);
+    if (existing != null) {
+      return existing;
+    }
+    final file = await _file(bundle.diagnosticId);
+    final next = File('${file.path}.next');
+    final bytes = bundle.bytes;
+    _validateEncryptedEnvelope(bytes, bundle.diagnosticId);
+    if (await next.exists()) {
+      await next.delete();
+    }
+    await next.writeAsBytes(bytes, flush: true);
+    try {
+      await next.rename(file.path);
+    } on FileSystemException {
+      if (await file.exists()) {
+        try {
+          await next.delete();
+        } on FileSystemException {
+          // The canonical encrypted object already won the race. A stale
+          // temporary file is harmless and will be replaced on the next save.
+        }
+      } else {
+        rethrow;
+      }
+    }
+    return (await load(bundle.diagnosticId))!;
+  }
+
+  @override
+  Future<void> remove(StoredEncryptedSupportBundle stored) async {
+    final file = await _file(stored.diagnosticId);
+    if (file.path != stored.reference) {
+      throw const SupportBundleTransferFailure(
+        'outbox_reference_invalid',
+        'Не удалось безопасно удалить отправленный пакет.',
+      );
+    }
+    if (await file.exists()) {
+      await file.delete();
+    }
+  }
+
+  void _validateEncryptedEnvelope(List<int> bytes, String diagnosticId) {
+    try {
+      final decoded = jsonDecode(utf8.decode(bytes, allowMalformed: false));
+      const expectedFields = <String>{
+        'algorithm',
+        'bundle_sha256',
+        'ciphertext_b64',
+        'diagnostic_id',
+        'ephemeral_public_key_b64',
+        'mac_b64',
+        'manifest_sha256',
+        'nonce_b64',
+        'recipient_key_id',
+        'schema_version',
+      };
+      final actualFields = decoded is Map
+          ? decoded.keys.map((key) => key.toString()).toSet()
+          : const <String>{};
+      if (decoded is! Map ||
+          actualFields.length != expectedFields.length ||
+          !actualFields.containsAll(expectedFields) ||
+          decoded['schema_version'] != 1 ||
+          decoded['algorithm'] != 'X25519-HKDF-SHA256-AES-256-GCM' ||
+          decoded['diagnostic_id'] != diagnosticId ||
+          decoded['bundle_sha256'] is! String ||
+          decoded['ciphertext_b64'] is! String ||
+          decoded['ephemeral_public_key_b64'] is! String ||
+          decoded['mac_b64'] is! String ||
+          decoded['manifest_sha256'] is! String ||
+          decoded['nonce_b64'] is! String ||
+          decoded['recipient_key_id'] is! String) {
+        throw const FormatException('invalid encrypted envelope');
+      }
+    } on Object {
+      throw const SupportBundleTransferFailure(
+        'outbox_content_invalid',
+        'Сохраненный пакет диагностики поврежден.',
+      );
+    }
+  }
+}
+
+class _SupportBundleSignedKeySetCache {
+  const _SupportBundleSignedKeySetCache(this._directoryResolver);
+
+  final Future<Directory> Function() _directoryResolver;
+
+  Future<File> _file() async {
+    final directory = await _directoryResolver();
+    await directory.create(recursive: true);
+    return File(
+      '${directory.path}${Platform.pathSeparator}support-key-set-v1.json',
+    );
+  }
+
+  Future<Map<String, Object?>?> read() async {
+    try {
+      final file = await _file();
+      if (!await file.exists() || await file.length() > 24 * 1024) {
+        return null;
+      }
+      final value = jsonDecode(await file.readAsString());
+      return value is Map
+          ? value.map((key, item) => MapEntry(key.toString(), item))
+          : null;
+    } on Object {
+      return null;
+    }
+  }
+
+  Future<void> write(Map<String, Object?> envelope) async {
+    final file = await _file();
+    final next = File('${file.path}.next');
+    await next.writeAsString(jsonEncode(envelope), flush: true);
+    if (await file.exists()) {
+      await file.delete();
+    }
+    await next.rename(file.path);
+  }
+}
+
+Map<String, String> _compiledSupportSigningKeys() {
+  if (pokrovSupportSigningKeyId.isEmpty ||
+      pokrovSupportSigningPublicKeyB64.isEmpty) {
+    return const <String, String>{};
+  }
+  return <String, String>{
+    pokrovSupportSigningKeyId: pokrovSupportSigningPublicKeyB64,
+  };
+}
+
+class AppFirstSupportTicketService
+    implements SupportTicketService, SupportBundleTransferService {
   AppFirstSupportTicketService({
     String apiBaseUrl = 'https://api.pokrov.space',
     Future<Directory> Function()? supportDirectoryResolver,
@@ -8745,7 +9435,22 @@ class AppFirstSupportTicketService implements SupportTicketService {
     Duration connectionTimeout = const Duration(seconds: 8),
     Duration requestTimeout = const Duration(seconds: 15),
     int maxRequestAttempts = 3,
-  }) : _bootstrapper = AppFirstRuntimeBootstrapper(
+    Map<String, String>? supportSigningPublicKeysById,
+    SupportBundleEncryptedOutbox? supportBundleOutbox,
+    SupportBundleExportDestination? supportBundleExportDestination,
+  })  : _supportSigningPublicKeysById = Map<String, String>.unmodifiable(
+          supportSigningPublicKeysById ?? _compiledSupportSigningKeys(),
+        ),
+        _supportBundleOutbox = supportBundleOutbox ??
+            PokrovFileSupportBundleOutbox(
+              directoryResolver: supportDirectoryResolver,
+            ),
+        _supportBundleExportDestination = supportBundleExportDestination ??
+            const PokrovPlatformSupportBundleExportDestination(),
+        _supportKeySetCache = _SupportBundleSignedKeySetCache(
+          supportDirectoryResolver ?? getApplicationSupportDirectory,
+        ),
+        _bootstrapper = AppFirstRuntimeBootstrapper(
           apiBaseUrl: apiBaseUrl,
           supportDirectoryResolver: supportDirectoryResolver,
           httpClientFactory: httpClientFactory,
@@ -8756,6 +9461,10 @@ class AppFirstSupportTicketService implements SupportTicketService {
         );
 
   final AppFirstRuntimeBootstrapper _bootstrapper;
+  final Map<String, String> _supportSigningPublicKeysById;
+  final SupportBundleEncryptedOutbox _supportBundleOutbox;
+  final SupportBundleExportDestination _supportBundleExportDestination;
+  final _SupportBundleSignedKeySetCache _supportKeySetCache;
 
   static const _defaultSubject = 'Поддержка POKROV';
   static const _diagnosticMediaType = 'app_diagnostics';
@@ -8778,6 +9487,190 @@ class AppFirstSupportTicketService implements SupportTicketService {
     'enhanced_protection_available',
     'enhanced_protection_error',
   };
+
+  @override
+  bool get supportBundleEncryptionConfigured =>
+      _supportSigningPublicKeysById.isNotEmpty;
+
+  @override
+  Future<SupportModeActivation> redeemSupportMode({
+    required HostPlatform hostPlatform,
+    required String activationCode,
+    required String appVersion,
+    required String buildNumber,
+  }) async {
+    if (!supportBundleEncryptionConfigured ||
+        (hostPlatform != HostPlatform.android &&
+            hostPlatform != HostPlatform.windows)) {
+      throw const SupportBundleTransferFailure(
+        'support_mode_unavailable',
+        'Временный режим поддержки недоступен в этой сборке.',
+      );
+    }
+    final response = await _requestJsonWithSession(
+      method: 'POST',
+      path: '/api/client/support/mode/redeem',
+      hostPlatform: hostPlatform,
+      body: <String, Object?>{
+        'app_version': appVersion,
+        'build_number': buildNumber,
+        'code': activationCode.trim(),
+        'platform': hostPlatform.name,
+      },
+    );
+    final rawPolicy = response['policy'];
+    if (rawPolicy is! Map) {
+      throw const SupportBundleTransferFailure(
+        'support_mode_policy_invalid',
+        'Сервер вернул недействительную политику поддержки.',
+      );
+    }
+    final envelope = rawPolicy.map<String, Object?>(
+      (key, value) => MapEntry(key.toString(), value),
+    );
+    try {
+      final policy = await SupportSignedContractVerifier(
+        signingPublicKeysById: _supportSigningPublicKeysById,
+      ).verifyCollectionPolicy(
+        envelope,
+        now: DateTime.now().toUtc(),
+        platform: hostPlatform.name,
+        appVersion: appVersion,
+        buildNumber: buildNumber,
+      );
+      return SupportModeActivation(signedPolicy: envelope, policy: policy);
+    } on SupportBundleFailure {
+      throw const SupportBundleTransferFailure(
+        'support_mode_policy_invalid',
+        'Подпись или параметры режима поддержки недействительны.',
+      );
+    }
+  }
+
+  @override
+  Future<SupportBundleExportResult> exportSupportBundle({
+    required HostPlatform hostPlatform,
+    required PreparedSupportBundle prepared,
+  }) async {
+    if (!supportBundleEncryptionConfigured) {
+      throw const SupportBundleTransferFailure(
+        'support_signing_key_unavailable',
+        'Подписанный ключ поддержки не настроен в этой сборке.',
+      );
+    }
+    final now = DateTime.now().toUtc();
+    final resolution = await _resolveSupportRecipient(
+      hostPlatform: hostPlatform,
+      now: now,
+    );
+    final recipient = resolution.recipient;
+    if (recipient == null) {
+      throw SupportBundleTransferFailure(
+        'support_recipient_unavailable',
+        resolution.onlineFailure is SupportTicketFailure
+            ? (resolution.onlineFailure! as SupportTicketFailure).message
+            : 'Не удалось получить проверенный ключ поддержки.',
+      );
+    }
+    final encrypted = await prepared.encrypt(recipient: recipient, now: now);
+    final saved = await _supportBundleExportDestination.save(
+      hostPlatform: hostPlatform,
+      bundle: encrypted,
+    );
+    return SupportBundleExportResult(
+      state: saved
+          ? SupportBundleExportState.exported
+          : SupportBundleExportState.cancelled,
+      fileName: encrypted.suggestedFileName,
+    );
+  }
+
+  @override
+  Future<SupportBundleDeliveryResult> deliverSupportBundle({
+    required HostPlatform hostPlatform,
+    required PreparedSupportBundle prepared,
+    required String caseSummary,
+    int? ticketId,
+  }) async {
+    if (!supportBundleEncryptionConfigured) {
+      throw const SupportBundleTransferFailure(
+        'support_signing_key_unavailable',
+        'Подписанный ключ поддержки не настроен в этой сборке.',
+      );
+    }
+    final now = DateTime.now().toUtc();
+    final resolution = await _resolveSupportRecipient(
+      hostPlatform: hostPlatform,
+      now: now,
+    );
+    final recipient = resolution.recipient;
+    final onlineFailure = resolution.onlineFailure;
+    final existing = await _supportBundleOutbox.load(
+      prepared.preview.diagnosticId,
+    );
+    if (recipient == null && existing == null) {
+      throw SupportBundleTransferFailure(
+        'support_recipient_unavailable',
+        onlineFailure is SupportTicketFailure
+            ? onlineFailure.message
+            : 'Не удалось получить проверенный ключ поддержки.',
+      );
+    }
+    return SupportBundleDeliveryCoordinator(
+      transport: _AppFirstSupportBundleUploadTransport(
+        service: this,
+        hostPlatform: hostPlatform,
+      ),
+      outbox: _supportBundleOutbox,
+      delayScheduler: _bootstrapper._delayScheduler,
+    ).deliver(
+      prepared: prepared,
+      recipient: recipient,
+      now: now,
+      caseSummary: _trimForTicket(caseSummary, 500),
+      ticketId: ticketId,
+    );
+  }
+
+  Future<({VerifiedSupportRecipient? recipient, Object? onlineFailure})>
+      _resolveSupportRecipient({
+    required HostPlatform hostPlatform,
+    required DateTime now,
+  }) async {
+    final verifier = SupportSignedContractVerifier(
+      signingPublicKeysById: _supportSigningPublicKeysById,
+    );
+    VerifiedSupportRecipient? recipient;
+    Object? onlineFailure;
+    try {
+      final envelope = await _requestJsonWithSession(
+        method: 'GET',
+        path: '/api/client/support/bundles/key-set',
+        hostPlatform: hostPlatform,
+      );
+      final normalized = envelope.map<String, Object?>(
+        (key, value) => MapEntry(key, value),
+      );
+      final keySet = await verifier.verifyKeySet(normalized, now: now);
+      recipient = keySet.activeRecipient(now);
+      await _supportKeySetCache.write(normalized);
+    } on Object catch (error) {
+      onlineFailure = error;
+      final cached = await _supportKeySetCache.read();
+      if (cached != null) {
+        try {
+          final keySet = await verifier.verifyKeySet(cached, now: now);
+          recipient = keySet.activeRecipient(now);
+        } on Object {
+          recipient = null;
+        }
+      }
+    }
+    return (
+      recipient: recipient,
+      onlineFailure: onlineFailure,
+    );
+  }
 
   @override
   Future<List<SupportTicketThread>> listTickets({
@@ -8931,6 +9824,9 @@ class AppFirstSupportTicketService implements SupportTicketService {
     required String path,
     required HostPlatform hostPlatform,
     Map<String, Object?>? body,
+    Map<String, String> headers = const <String, String>{},
+    List<int>? rawBody,
+    String rawContentType = 'application/octet-stream',
   }) async {
     var state = await _bootstrapper._loadOrCreateState(hostPlatform);
     final client = _bootstrapper._createHttpClient(hostPlatform);
@@ -8952,6 +9848,9 @@ class AppFirstSupportTicketService implements SupportTicketService {
             bearerToken: state.sessionToken,
             hostPlatform: hostPlatform,
             body: body,
+            headers: headers,
+            rawBody: rawBody,
+            rawContentType: rawContentType,
           );
         } on BootstrapFailure catch (error) {
           if (attempt == 0 &&
@@ -9135,6 +10034,110 @@ class AppFirstSupportTicketService implements SupportTicketService {
   }
 }
 
+class _AppFirstSupportBundleUploadTransport
+    implements SupportBundleUploadTransport {
+  const _AppFirstSupportBundleUploadTransport({
+    required this.service,
+    required this.hostPlatform,
+  });
+
+  final AppFirstSupportTicketService service;
+  final HostPlatform hostPlatform;
+
+  @override
+  Future<SupportBundleUploadTicket> issue(
+    SupportBundleUploadRequest request,
+  ) async {
+    final response = await service._requestJsonWithSession(
+      method: 'POST',
+      path: '/api/client/support/bundles/upload-tickets',
+      hostPlatform: hostPlatform,
+      body: <String, Object?>{
+        'bundle_id': request.bundleId,
+        'case_summary': request.caseSummary,
+        'content_type': request.contentType,
+        'idempotency_key': request.idempotencyKey,
+        'sha256': request.sha256,
+        'size_bytes': request.sizeBytes,
+        if (request.ticketId != null) 'ticket_id': request.ticketId,
+      },
+    );
+    final uploadId = (response['upload_id'] ?? '').toString();
+    final uploadTicket = (response['upload_ticket'] ?? '').toString();
+    final ticketId = service._readInt(response['ticket_id']);
+    final nextOffset = service._readInt(response['next_offset']);
+    final status = (response['status'] ?? '').toString();
+    if (!RegExp(
+          r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+        ).hasMatch(uploadId) ||
+        uploadTicket.isEmpty ||
+        ticketId <= 0 ||
+        nextOffset < 0 ||
+        !<String>{
+          'issued',
+          'uploading',
+          'queued',
+          'validated',
+        }.contains(status)) {
+      throw const SupportBundleTransferFailure(
+        'upload_ticket_invalid',
+        'Сервис вернул некорректный тикет загрузки.',
+      );
+    }
+    return SupportBundleUploadTicket(
+      uploadId: uploadId,
+      uploadTicket: uploadTicket,
+      ticketId: ticketId,
+      nextOffset: nextOffset,
+      status: status,
+    );
+  }
+
+  @override
+  Future<SupportBundleChunkReceipt> putChunk({
+    required SupportBundleUploadTicket ticket,
+    required int offset,
+    required String sha256,
+    required List<int> bytes,
+  }) async {
+    final response = await service._requestJsonWithSession(
+      method: 'PUT',
+      path: '/api/client/support/bundles/uploads/${ticket.uploadId}/chunks',
+      hostPlatform: hostPlatform,
+      headers: <String, String>{
+        'X-Pokrov-Upload-Ticket': ticket.uploadTicket,
+        'X-Pokrov-Chunk-Offset': '$offset',
+        'X-Pokrov-Chunk-Sha256': sha256,
+      },
+      rawBody: bytes,
+    );
+    final nextOffset = service._readInt(response['next_offset']);
+    if (nextOffset <= offset || response['complete'] is! bool) {
+      throw const SupportBundleTransferFailure(
+        'chunk_receipt_invalid',
+        'Сервис вернул некорректное подтверждение части пакета.',
+      );
+    }
+    return SupportBundleChunkReceipt(
+      nextOffset: nextOffset,
+      complete: response['complete'] as bool,
+    );
+  }
+
+  @override
+  Future<String> complete(SupportBundleUploadTicket ticket) async {
+    final response = await service._requestJsonWithSession(
+      method: 'POST',
+      path: '/api/client/support/bundles/uploads/${ticket.uploadId}/complete',
+      hostPlatform: hostPlatform,
+      headers: <String, String>{
+        'X-Pokrov-Upload-Ticket': ticket.uploadTicket,
+      },
+    );
+    return (response['status'] ?? '').toString();
+  }
+}
+
 class _ManagedManifestEnvelope {
   const _ManagedManifestEnvelope({
     required this.payload,
@@ -9210,6 +10213,7 @@ class _StoredBootstrapState {
     required this.profileRevision,
     this.refreshToken = '',
     this.expectsSecureSessionToken = false,
+    this.sourceSchemaVersion = _appFirstBootstrapStateVersion,
   });
 
   final String installId;
@@ -9219,8 +10223,10 @@ class _StoredBootstrapState {
   final String profileRevision;
   final String refreshToken;
   final bool expectsSecureSessionToken;
+  final int sourceSchemaVersion;
 
   bool get hasSession => sessionToken.trim().isNotEmpty;
+  bool get requiresSchemaMigration => sourceSchemaVersion == 0;
 
   _StoredBootstrapState copyWith({
     String? installId,
@@ -9240,11 +10246,13 @@ class _StoredBootstrapState {
       refreshToken: refreshToken ?? this.refreshToken,
       expectsSecureSessionToken:
           expectsSecureSessionToken ?? this.expectsSecureSessionToken,
+      sourceSchemaVersion: sourceSchemaVersion,
     );
   }
 
   Map<String, Object?> toJson() {
     return <String, Object?>{
+      'schema_version': _appFirstBootstrapStateVersion,
       'install_id': installId,
       if (sessionToken.trim().isNotEmpty || expectsSecureSessionToken)
         'session_token_storage': 'secure',
@@ -9255,6 +10263,7 @@ class _StoredBootstrapState {
   }
 
   static _StoredBootstrapState fromJson(Map<String, dynamic> json) {
+    final sourceSchemaVersion = _appFirstBootstrapSchemaVersion(json);
     return _StoredBootstrapState(
       installId: (json['install_id'] ?? '').toString(),
       sessionToken: (json['session_token'] ?? '').toString(),
@@ -9265,8 +10274,23 @@ class _StoredBootstrapState {
       profileRevision: (json['profile_revision'] ?? '').toString(),
       expectsSecureSessionToken:
           (json['session_token_storage'] ?? '').toString() == 'secure',
+      sourceSchemaVersion: sourceSchemaVersion,
     );
   }
+}
+
+int _appFirstBootstrapSchemaVersion(Map<String, dynamic> json) {
+  if (!json.containsKey('schema_version')) {
+    return 0;
+  }
+  final version = json['schema_version'];
+  if (version is int && version == _appFirstBootstrapStateVersion) {
+    return version;
+  }
+  throw const BootstrapFailure(
+    'Эта версия POKROV не может безопасно прочитать сохраненное состояние. '
+    'Обновите приложение или восстановите совместимую версию.',
+  );
 }
 
 class _ClientRuleSetCatalog {

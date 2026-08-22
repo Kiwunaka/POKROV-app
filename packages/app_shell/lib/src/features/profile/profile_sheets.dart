@@ -1,34 +1,5 @@
 part of pokrov_app_shell;
 
-void _showAdvancedSettingsSheet(
-  BuildContext context, {
-  required HostPlatform hostPlatform,
-  required RouteMode selectedRouteMode,
-  required String statusLabel,
-  required String warpStatus,
-}) {
-  showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
-    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
-    builder: (context) {
-      return SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
-          child: _AdvancedSettingsCard(
-            key: const ValueKey('profile-advanced-settings-sheet'),
-            hostPlatform: hostPlatform,
-            selectedRouteMode: selectedRouteMode,
-            statusLabel: statusLabel,
-            warpStatus: warpStatus,
-          ),
-        ),
-      );
-    },
-  );
-}
-
 void _showRedeemSheet(
   BuildContext context, {
   required String hintCode,
@@ -154,77 +125,6 @@ class _RedeemFieldsState extends State<_RedeemFields> {
           label: const Text('Ввести код'),
         ),
       ],
-    );
-  }
-}
-
-class _AdvancedSettingsCard extends StatelessWidget {
-  const _AdvancedSettingsCard({
-    super.key,
-    required this.hostPlatform,
-    required this.selectedRouteMode,
-    required this.statusLabel,
-    required this.warpStatus,
-  });
-
-  final HostPlatform hostPlatform;
-  final RouteMode selectedRouteMode;
-  final String statusLabel;
-  final String warpStatus;
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionCard(
-      title: 'Диагностика',
-      lines: const [
-        'Безопасная сводка для поддержки: устройство, версия приложения, статус VPN, режим и WARP.',
-      ],
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SettingsRow(
-            key: const ValueKey('advanced-app-version'),
-            icon: Icons.info_outline_rounded,
-            title: 'Версия',
-            value: pokrovClientVersion,
-          ),
-          const _SettingsRowDivider(),
-          _SettingsRow(
-            key: const ValueKey('advanced-channel'),
-            icon: Icons.science_outlined,
-            title: 'Канал',
-            value: 'Stable',
-          ),
-          const _SettingsRowDivider(),
-          _SettingsRow(
-            key: const ValueKey('advanced-device'),
-            icon: Icons.devices_rounded,
-            title: 'Устройство',
-            value: hostPlatform.label,
-          ),
-          const _SettingsRowDivider(),
-          _SettingsRow(
-            key: const ValueKey('advanced-connection-status'),
-            icon: Icons.shield_outlined,
-            title: 'Статус VPN',
-            value: statusLabel,
-          ),
-          const _SettingsRowDivider(),
-          _SettingsRow(
-            key: const ValueKey('advanced-route-mode'),
-            icon: Icons.alt_route_rounded,
-            title: 'Режим',
-            value: _routeModeShortLabel(selectedRouteMode),
-          ),
-          const _SettingsRowDivider(),
-          _SettingsRow(
-            key: const ValueKey('advanced-warp-status'),
-            icon: Icons.privacy_tip_outlined,
-            title: 'WARP',
-            value: warpStatus,
-          ),
-        ],
-      ),
     );
   }
 }

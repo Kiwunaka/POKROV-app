@@ -1,3 +1,9 @@
+[CmdletBinding()]
+param(
+  [string]$PlatformRoot,
+  [string]$CoreRoot
+)
+
 $root = Split-Path -Parent $PSScriptRoot
 
 $expectedFiles = @(
@@ -8,9 +14,12 @@ $expectedFiles = @(
   "config\\templates\\device-overrides.seed.json",
   "docs\\architecture\\bootstrap-workflow.md",
   "docs\\architecture\\package-boundaries.md",
+  "docs\\architecture\\persisted-state-contract.md",
   "scripts\\bootstrap-workspace.ps1",
   "scripts\\bootstrap-local.ps1",
   "scripts\\run-tests.ps1",
+  "scripts\\collect-client-performance-samples.ps1",
+  "test\\client-performance-collector-contract.ps1",
   "apps\\android_shell\\pubspec.yaml",
   "apps\\android_shell\\lib\\main.dart",
   "apps\\ios_shell\\pubspec.yaml",
@@ -22,6 +31,9 @@ $expectedFiles = @(
   "packages\\app_shell\\pubspec.yaml",
   "packages\\app_shell\\lib\\app_shell.dart",
   "packages\\app_shell\\test\\pokrov_seed_app_test.dart",
+  "packages\\app_shell\\test\\fixtures\\app-first-session-v0.json",
+  "packages\\app_shell\\test\\fixtures\\client-experience-v0.json",
+  "apps\\android_shell\\android\\app\\src\\test\\resources\\runtime-profile-v0.properties",
   "packages\\core_domain\\pubspec.yaml",
   "packages\\core_domain\\lib\\core_domain.dart",
   "packages\\platform_contracts\\pubspec.yaml",
@@ -45,5 +57,12 @@ if ($missing.Count -gt 0) {
   exit 1
 }
 
-& (Join-Path $root "scripts\\validate-seed.ps1")
+$validationArguments = @{}
+if (-not [string]::IsNullOrWhiteSpace($PlatformRoot)) {
+  $validationArguments.PlatformRoot = $PlatformRoot
+}
+if (-not [string]::IsNullOrWhiteSpace($CoreRoot)) {
+  $validationArguments.CoreRoot = $CoreRoot
+}
+& (Join-Path $root "scripts\\validate-seed.ps1") @validationArguments
 exit $LASTEXITCODE

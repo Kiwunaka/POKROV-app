@@ -15,12 +15,12 @@ Use this index to load only the context required for the current client task. `P
 | Task | Read first | Inspect | Verify | Docs impact |
 | --- | --- | --- | --- | --- |
 | Shell, UI, or copy | `product/client-product-contract.md`; `design/2026-06-13-pokrov-product-ui-direction.md`; root `DESIGN.md` | `packages/app_shell/`; affected `apps/*_shell/`; assets and copy tests | Focused Flutter widget/copy/design tests; `scripts/validate-seed.ps1`; `git diff --check` | Product contract, current design direction, and affected host docs |
-| App-first, account, or API | `architecture/app-first-onboarding-flow.md`; platform app-first contract | `packages/app_shell/`; API/session/support clients; secure storage | Focused bootstrap, assistant, auth, logout, migration, and corrupt-state tests | Client onboarding/assistant docs and the platform API owner when the contract changes |
+| App-first, account, or API | `architecture/app-first-onboarding-flow.md`; `architecture/persisted-state-contract.md`; platform app-first contract | `packages/app_shell/`; API/session/support clients; secure storage | Focused bootstrap, assistant, auth, logout, migration, and corrupt-state tests | Client onboarding, saved-state and assistant docs, plus the platform API owner when the contract changes |
 | Runtime, core, or WARP | `architecture/bootstrap-workflow.md`; `decisions/2026-08-13-pokrov-core-1.0.3-release.md`; `operations/warp-runtime-proof-checklist.md`; `config/runtime-profile.seed.json` | `packages/runtime_engine/`; host bridges; runtime artifact contract | Focused runtime/WARP tests and only the affected host checks; no docs-only release build | Bootstrap/runtime architecture, active core decision, and WARP proof checklist |
 | Android | `operations/android-release-audit.md`; `config/platform-matrix.seed.json` | `apps/android_shell/`; Android bridge, service, manifest, Gradle tests | Focused Android Flutter/JVM tests through `scripts/run-tests.ps1`; manual device gates stay explicit | Android audit plus shared runtime/onboarding docs when behavior changes |
 | Windows | `operations/windows-release-readiness.md`; `config/windows-release.seed.json` | `apps/windows_shell/`; Windows FFI and packaging scripts | Focused Flutter/runtime tests; package smoke only for an authorized packaging task | Windows readiness, runtime docs, and release metadata owner |
 | Apple readiness | `operations/apple-release-readiness.md`; `config/apple-release.seed.json` | `apps/ios_shell/`; `apps/macos_shell/`; entitlements and runtime bridges | Analyze/tests that do not require credentials; keep signing, archive, notarization, device, and store checks manual | Apple readiness only; never broaden public scope from inventory |
-| Release metadata | `config/release-handoff.seed.json`; `operations/cutover-readiness.md`; platform publishing owner | Release/cutover seeds, packaging scripts, exact candidate evidence | `scripts/validate-seed.ps1`; artifact diff; current manual gates; no historical pass reuse | Current readiness/backlog and platform delivery/publishing owners |
+| Release metadata | `config/release-handoff.seed.json`; `operations/cutover-readiness.md`; `../artifacts/README.md`; platform publishing owner | Release/cutover seeds, packaging scripts, source/artifact boundary, exact candidate evidence | `scripts/validate-seed.ps1`; repository hygiene contract; artifact diff; current manual gates; no historical pass reuse | Current readiness/backlog and platform delivery/publishing owners |
 | Design | Root `DESIGN.md`; `design/2026-06-13-pokrov-product-ui-direction.md` | `packages/app_shell/`; brand assets; generated references only when requested | Focused design-system and copy tests; responsive proof when layout changes | Current root design contract and direction; keep older briefs historical |
 | Docs or history | This file; the registry row for the subject | Canonical owner first, then evidence/history for rationale | `test/docs-contract.ps1`; `scripts/validate-seed.ps1`; `git diff --check` | Update classification/review state without rewriting retained evidence |
 
@@ -44,6 +44,8 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | CANONICAL | RECONCILED | Client design system | `DESIGN.md` |
 | CANONICAL | RECONCILED | Client product | `docs/product/client-product-contract.md` |
 | CANONICAL | RECONCILED | App-first onboarding | `docs/architecture/app-first-onboarding-flow.md` |
+| CANONICAL | RECONCILED | Client persisted state and migrations | `docs/architecture/persisted-state-contract.md` |
+| CANONICAL | RECONCILED | Platform privilege and runtime boundaries | `docs/architecture/platform-privilege-runtime-contract.md` |
 | CANONICAL | REVIEWED_NO_CHANGE | Repository structure | `docs/architecture/folder-structure.md` |
 | CANONICAL | RECONCILED | Package boundaries | `docs/architecture/package-boundaries.md` |
 | CANONICAL | RECONCILED | Runtime bootstrap | `docs/architecture/bootstrap-workflow.md` |
@@ -56,6 +58,7 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | CANONICAL | REVIEWED_NO_CHANGE | Runtime profile facts | `config/runtime-profile.seed.json` |
 | CANONICAL | RECONCILED | Cutover readiness facts | `config/cutover-readiness.seed.json` |
 | CANONICAL | RECONCILED | Release handoff facts | `config/release-handoff.seed.json` |
+| CANONICAL | RECONCILED | Stable release pointer and rollback targets | `config/release-rollback-catalog.seed.json` |
 | ACTIVE_EXECUTION | RECONCILED | Client release execution | `docs/implementation/client-release-backlog.md` |
 | ACTIVE_EXECUTION | RECONCILED | Cutover checklist | `docs/operations/cutover-readiness.md` |
 | ACTIVE_EXECUTION | RECONCILED | Android readiness | `docs/operations/android-release-audit.md` |
@@ -64,6 +67,7 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Responsive proof | `docs/operations/responsive-golden-capture-plan.md` |
 | ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Motion/performance proof | `docs/operations/client-motion-performance-checklist.md` |
 | ACTIVE_EXECUTION | RECONCILED | Apple readiness | `docs/operations/apple-release-readiness.md` |
+| EVIDENCE | RECONCILED | Readiness snapshots before current/history split | `docs/implementation/history/`; `docs/operations/history/` |
 | EVIDENCE | REVIEWED_NO_CHANGE | Public beta product evidence | `docs/product/client-public-beta-prd.md` |
 | EVIDENCE | REVIEWED_NO_CHANGE | Dated handoffs and closure audits | `docs/operations/2026-06-04-public-beta-operator-handoff.md`; `docs/operations/2026-06-05-phase-6-release-beta-handoff.md`; `docs/operations/2026-06-05-final-beta-closure-except-manual-tests-signing.md`; `docs/operations/2026-06-13-pokrov-product-ui-plan-closure-audit.md` |
 | EVIDENCE | REVIEWED_NO_CHANGE | Client/API additions record | `docs/operations/client-ui-api-additions.md` |

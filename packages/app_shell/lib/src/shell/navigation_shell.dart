@@ -14,8 +14,8 @@ class _SeedContentList extends StatelessWidget {
   final double top;
   final double maxContentWidth;
 
-  /// When set, the list mounts the signature-arc pull-to-refresh control
-  /// above its content (sliver route; plain [ListView] otherwise).
+  /// When set, refresh follows host physics: Apple uses the signature sliver,
+  /// while Android/Windows use Material pull-to-refresh.
   final Future<void> Function()? onRefresh;
   final Key? refreshIndicatorKey;
 
@@ -31,8 +31,24 @@ class _SeedContentList extends StatelessWidget {
         if (onRefresh == null) {
           return ListView(padding: padding, children: children);
         }
+        final platform = Theme.of(context).platform;
+        final physics = AlwaysScrollableScrollPhysics(
+          parent: pokrovScrollPhysicsFor(platform),
+        );
+        if (!pokrovUsesCupertinoInteraction(platform)) {
+          return RefreshIndicator(
+            key: refreshIndicatorKey,
+            color: PokrovPalette.of(context).accent,
+            onRefresh: onRefresh,
+            child: ListView(
+              physics: physics,
+              padding: padding,
+              children: children,
+            ),
+          );
+        }
         return CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
+          physics: physics,
           slivers: [
             CupertinoSliverRefreshControl(
               key: refreshIndicatorKey,
@@ -736,18 +752,30 @@ class _BrandLockup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final largeText = MediaQuery.textScalerOf(context).scale(1) >= 1.6;
     final label = Text(
       'POKROV',
+      textAlign: center ? TextAlign.center : TextAlign.start,
       style: Theme.of(context).textTheme.titleLarge?.copyWith(
             color: PokrovPalette.of(context).ink,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.2,
           ),
     );
-    final children = [
+    if (center && largeText) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _BrandMark(size: markSize),
+          const SizedBox(height: 6),
+          label,
+        ],
+      );
+    }
+    final children = <Widget>[
       _BrandMark(size: markSize),
       const SizedBox(width: 10),
-      label,
+      Flexible(child: label),
     ];
     return Row(
       mainAxisSize: MainAxisSize.min,

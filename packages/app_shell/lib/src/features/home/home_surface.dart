@@ -4,16 +4,8 @@ class _QuickConnectSection extends StatelessWidget {
   const _QuickConnectSection({
     required this.appContext,
     required this.freeProfileAccess,
-    required this.selectedRouteMode,
-    required this.locationLabel,
-    required this.emergencyRuntimeActive,
-    required this.emergencyChainMode,
-    required this.runtimeSnapshot,
-    required this.runtimeHeadline,
-    required this.runtimeBusy,
-    required this.runtimeDisconnecting,
-    required this.primaryConnectEnabled,
-    required this.connectHintVisible,
+    required this.protectionState,
+    required this.protectionIntents,
     required this.revealHold,
     required this.bonusSummary,
     required this.subscriptionInfo,
@@ -22,11 +14,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.warpRuntimeConsent,
     required this.warpRuntimeActive,
     required this.warpBusy,
-    required this.onToggleRuntime,
-    required this.onOpenConnectionDetails,
     required this.onTelegramBonus,
-    required this.onOpenLocations,
-    required this.onOpenRules,
     required this.onOpenWarp,
     required this.onWarpConsentChanged,
     required this.notificationsUnread,
@@ -34,22 +22,12 @@ class _QuickConnectSection extends StatelessWidget {
     required this.onOpenProfile,
     required this.onOpenPromoHandoff,
     required this.onPromoEvent,
-    required this.showWhitelistRecovery,
-    required this.onOpenWhitelistRecovery,
   });
 
   final SeedAppContext appContext;
   final FreeProfileAccess? freeProfileAccess;
-  final RouteMode selectedRouteMode;
-  final String locationLabel;
-  final bool emergencyRuntimeActive;
-  final EmergencyChainMode emergencyChainMode;
-  final RuntimeSnapshot? runtimeSnapshot;
-  final String? runtimeHeadline;
-  final bool runtimeBusy;
-  final bool runtimeDisconnecting;
-  final bool primaryConnectEnabled;
-  final bool connectHintVisible;
+  final ProtectionViewState protectionState;
+  final ProtectionIntents protectionIntents;
 
   /// Welcome Handover: true while the first-launch gate covers the shell,
   /// so the staged reveal waits for the handover instead of burning at boot.
@@ -61,11 +39,7 @@ class _QuickConnectSection extends StatelessWidget {
   final bool warpRuntimeConsent;
   final bool warpRuntimeActive;
   final bool warpBusy;
-  final Future<void> Function() onToggleRuntime;
-  final VoidCallback onOpenConnectionDetails;
   final VoidCallback? onTelegramBonus;
-  final VoidCallback onOpenLocations;
-  final VoidCallback onOpenRules;
   final Future<void> Function() onOpenWarp;
   final Future<void> Function(bool value) onWarpConsentChanged;
   final int notificationsUnread;
@@ -73,61 +47,33 @@ class _QuickConnectSection extends StatelessWidget {
   final VoidCallback onOpenProfile;
   final void Function(String label, String value) onOpenPromoHandoff;
   final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
-  final bool showWhitelistRecovery;
-  final VoidCallback onOpenWhitelistRecovery;
 
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    final snapshot = runtimeSnapshot;
-    final tunnelRunning = snapshot?.phase == RuntimePhase.running;
-    final egressValidationPending =
-        appContext.hostPlatform == HostPlatform.android &&
-            tunnelRunning &&
-            (snapshot?.requiresCoreEgressValidation ?? true) &&
-            snapshot?.coreEgressValidated != true;
-    // Android's TUN is only the transport. The consumer-facing connected state
-    // starts after Core proves egress through the selected outbound.
-    final isRunning = tunnelRunning && !egressValidationPending;
-    final isHealthyRunning = snapshot?.isCleanlyHealthy ?? false;
-    final statusLabel = _homeProtectionStatusLabel(
-      snapshot,
-      busy: runtimeBusy,
-      disconnecting: runtimeDisconnecting,
-    );
-    final primaryActionEnabled = !runtimeBusy && primaryConnectEnabled;
+    final protection = protectionState;
+    final presentation = protection.connection;
+    final snapshot = presentation.experience.snapshot;
     final isDesktop = switch (appContext.hostPlatform) {
       HostPlatform.windows || HostPlatform.macos => true,
       HostPlatform.android || HostPlatform.ios => false,
     };
-    final statusColor = runtimeBusy
-        ? p.muted
-        : tunnelRunning
-            ? isHealthyRunning
-                ? p.success
-                : p.warning
-            : p.muted;
-    final actionLabel = runtimeBusy
-        // Honest direction while busy: tearing the tunnel down must never
-        // read as if a connection is being established.
-        ? runtimeDisconnecting
-            ? 'Отключаем…'
-            : 'Подключаемся…'
-        : tunnelRunning
-            ? 'Отключить'
-            : primaryActionEnabled
-                ? 'Подключить'
-                : 'Пока недоступно';
+    final statusColor = switch (presentation.tone) {
+      ConnectionTone.success => p.success,
+      ConnectionTone.warning => p.warning,
+      ConnectionTone.danger => p.danger,
+      ConnectionTone.muted => p.muted,
+    };
     final freeProfileNotice = _freeProfileAccessNotice(freeProfileAccess);
     final recoveryNotice = freeProfileAccess?.hasRecoverableError ?? false
         ? freeProfileNotice
         : _motionRecoveryNotice(
             snapshot,
-            headline: runtimeHeadline,
-            busy: runtimeBusy,
+            headline: protection.runtimeNotice,
+            busy: presentation.discMotionBusy,
           );
     final infoNotice = recoveryNotice == null
-        ? (freeProfileNotice ?? _homeInfoNotice(runtimeHeadline))
+        ? (freeProfileNotice ?? _homeInfoNotice(protection.runtimeNotice))
         : null;
     final homePromoSlots = _homeAdminPromoSlots(bonusSummary);
     final telegramBonusClaimed =
@@ -144,14 +90,9 @@ class _QuickConnectSection extends StatelessWidget {
             child: _HomeStage(
               preferDesktopLayout: isDesktop,
               revealHold: revealHold,
-              statusLabel: statusLabel,
+              protectionState: protection,
+              protectionIntents: protectionIntents,
               statusColor: statusColor,
-              actionLabel: actionLabel,
-              actionEnabled: primaryActionEnabled,
-              running: isRunning,
-              busy: runtimeBusy || egressValidationPending,
-              degraded: isRunning && !isHealthyRunning,
-              connectHintVisible: connectHintVisible,
               recoveryNotice: recoveryNotice,
               infoNotice: infoNotice,
               accessLabel: _accessMainLabel(
@@ -171,20 +112,12 @@ class _QuickConnectSection extends StatelessWidget {
               telegramBonusClaimedDays: telegramBonusClaimed
                   ? _claimedTelegramBonusDays(bonusSummary)
                   : null,
-              selectedRouteMode: selectedRouteMode,
-              locationLabel: locationLabel,
-              emergencyRuntimeActive: emergencyRuntimeActive,
-              emergencyChainMode: emergencyChainMode,
               warpPolicy: warpPolicy,
               warpRuntimeConsent: warpRuntimeConsent,
               warpRuntimeActive: warpRuntimeActive,
               warpBusy: warpBusy,
               homePromoSlots: homePromoSlots,
-              onToggleRuntime: onToggleRuntime,
               onTelegramBonus: onTelegramBonus,
-              onOpenConnectionDetails: onOpenConnectionDetails,
-              onOpenLocations: onOpenLocations,
-              onOpenRules: onOpenRules,
               onOpenWarp: onOpenWarp,
               onWarpConsentChanged: onWarpConsentChanged,
               notificationsUnread: notificationsUnread,
@@ -192,8 +125,6 @@ class _QuickConnectSection extends StatelessWidget {
               onOpenProfile: onOpenProfile,
               onOpenPromoHandoff: onOpenPromoHandoff,
               onPromoEvent: onPromoEvent,
-              showWhitelistRecovery: showWhitelistRecovery,
-              onOpenWhitelistRecovery: onOpenWhitelistRecovery,
             ),
           ),
         ),
@@ -206,14 +137,9 @@ class _HomeStage extends StatefulWidget {
   const _HomeStage({
     required this.preferDesktopLayout,
     required this.revealHold,
-    required this.statusLabel,
+    required this.protectionState,
+    required this.protectionIntents,
     required this.statusColor,
-    required this.actionLabel,
-    required this.actionEnabled,
-    required this.running,
-    required this.busy,
-    required this.degraded,
-    required this.connectHintVisible,
     required this.recoveryNotice,
     required this.infoNotice,
     required this.accessLabel,
@@ -221,20 +147,12 @@ class _HomeStage extends StatefulWidget {
     required this.telegramBonusLabel,
     required this.telegramBonusClaimed,
     required this.telegramBonusClaimedDays,
-    required this.selectedRouteMode,
-    required this.locationLabel,
-    required this.emergencyRuntimeActive,
-    required this.emergencyChainMode,
     required this.warpPolicy,
     required this.warpRuntimeConsent,
     required this.warpRuntimeActive,
     required this.warpBusy,
     required this.homePromoSlots,
-    required this.onToggleRuntime,
     required this.onTelegramBonus,
-    required this.onOpenConnectionDetails,
-    required this.onOpenLocations,
-    required this.onOpenRules,
     required this.onOpenWarp,
     required this.onWarpConsentChanged,
     required this.notificationsUnread,
@@ -242,8 +160,6 @@ class _HomeStage extends StatefulWidget {
     required this.onOpenProfile,
     required this.onOpenPromoHandoff,
     required this.onPromoEvent,
-    required this.showWhitelistRecovery,
-    required this.onOpenWhitelistRecovery,
   });
 
   final bool preferDesktopLayout;
@@ -251,14 +167,9 @@ class _HomeStage extends StatefulWidget {
   /// Welcome Handover: while true the staged reveal stays parked at zero;
   /// the flip to false starts it a beat into the gate's exit.
   final bool revealHold;
-  final String statusLabel;
+  final ProtectionViewState protectionState;
+  final ProtectionIntents protectionIntents;
   final Color statusColor;
-  final String actionLabel;
-  final bool actionEnabled;
-  final bool running;
-  final bool busy;
-  final bool degraded;
-  final bool connectHintVisible;
   final String? recoveryNotice;
   final String? infoNotice;
   final String accessLabel;
@@ -266,20 +177,12 @@ class _HomeStage extends StatefulWidget {
   final String telegramBonusLabel;
   final bool telegramBonusClaimed;
   final int? telegramBonusClaimedDays;
-  final RouteMode selectedRouteMode;
-  final String locationLabel;
-  final bool emergencyRuntimeActive;
-  final EmergencyChainMode emergencyChainMode;
   final WarpRuntimePolicy warpPolicy;
   final bool warpRuntimeConsent;
   final bool warpRuntimeActive;
   final bool warpBusy;
   final List<AppFirstPromoSlot> homePromoSlots;
-  final Future<void> Function() onToggleRuntime;
   final VoidCallback? onTelegramBonus;
-  final VoidCallback onOpenConnectionDetails;
-  final VoidCallback onOpenLocations;
-  final VoidCallback onOpenRules;
   final Future<void> Function() onOpenWarp;
   final Future<void> Function(bool value) onWarpConsentChanged;
   final int notificationsUnread;
@@ -287,8 +190,6 @@ class _HomeStage extends StatefulWidget {
   final VoidCallback onOpenProfile;
   final void Function(String label, String value) onOpenPromoHandoff;
   final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
-  final bool showWhitelistRecovery;
-  final VoidCallback onOpenWhitelistRecovery;
 
   @override
   State<_HomeStage> createState() => _HomeStageState();
@@ -354,11 +255,11 @@ class _HomeStageState extends State<_HomeStage>
   /// The one-time hint only makes sense while the disc is idle and the
   /// primary connect action is actually available.
   bool get _showConnectHint =>
-      widget.connectHintVisible &&
-      widget.actionEnabled &&
-      !widget.running &&
-      !widget.busy &&
-      !widget.degraded &&
+      widget.protectionState.connectHintVisible &&
+      widget.protectionState.connection.primaryActionEnabled &&
+      !widget.protectionState.connection.showsTunnelActive &&
+      !widget.protectionState.connection.discMotionBusy &&
+      !widget.protectionState.connection.isDegraded &&
       widget.recoveryNotice == null;
 
   @override
@@ -401,19 +302,17 @@ class _HomeStageState extends State<_HomeStage>
           child: _ConnectHintHalo(
             visible: _showConnectHint,
             child: _ConnectOrbButton(
-              actionLabel: widget.actionLabel,
-              enabled: widget.actionEnabled,
-              running: widget.running,
-              degraded: widget.degraded,
+              presentation: widget.protectionState.connection,
               error: widget.recoveryNotice != null,
-              busy: widget.busy,
               status: _HomeStatusAction(
-                statusLabel: widget.statusLabel,
+                statusLabel: widget.protectionState.connection.title,
                 statusColor: widget.statusColor,
-                onTap: widget.onOpenConnectionDetails,
+                onTap: widget.protectionIntents.openConnectionDetails,
                 compact: true,
               ),
-              onPressed: widget.actionEnabled ? widget.onToggleRuntime : null,
+              onPressed: widget.protectionState.connection.primaryActionEnabled
+                  ? widget.protectionIntents.toggleConnection
+                  : null,
             ),
           ),
         ),
@@ -426,14 +325,37 @@ class _HomeStageState extends State<_HomeStage>
             child: _MotionRecoveryBanner(message: widget.recoveryNotice!),
           ),
         ],
-        if (widget.showWhitelistRecovery) ...[
+        if (widget.protectionState.slowConnectionVisible) ...[
+          const SizedBox(height: 10),
+          _HomeRevealSlice(
+            controller: _revealController,
+            begin: 0.34,
+            end: 0.82,
+            child: _SlowConnectionNotice(
+              presentation: widget.protectionState.connection,
+              onDetails: widget.protectionIntents.openConnectionDetails,
+            ),
+          ),
+        ],
+        if (widget.protectionState.vpnPermissionRecoveryVisible) ...[
+          const SizedBox(height: 10),
+          _HomeRevealSlice(
+            controller: _revealController,
+            begin: 0.34,
+            end: 0.82,
+            child: _VpnPermissionRecoveryCard(
+              onTap: widget.protectionIntents.toggleConnection,
+            ),
+          ),
+        ],
+        if (widget.protectionState.whitelistRecoverySuggested) ...[
           const SizedBox(height: 10),
           _HomeRevealSlice(
             controller: _revealController,
             begin: 0.34,
             end: 0.82,
             child: _WhitelistRecoveryCard(
-              onTap: widget.onOpenWhitelistRecovery,
+              onTap: widget.protectionIntents.openRecovery,
             ),
           ),
         ],
@@ -442,19 +364,19 @@ class _HomeStageState extends State<_HomeStage>
           controller: _revealController,
           begin: 0.38,
           end: 0.88,
-          child: widget.emergencyRuntimeActive
+          child: widget.protectionState.emergencyRuntimeActive
               ? _HomeEmergencyRuntimeCard(
-                  chainMode: widget.emergencyChainMode,
-                  onTap: widget.onOpenWhitelistRecovery,
+                  chainMode: widget.protectionState.emergencyChainMode,
+                  onTap: widget.protectionIntents.openRecovery,
                 )
               : _HomeModeChips(
-                  locationLabel: widget.locationLabel,
-                  routeMode: widget.selectedRouteMode,
-                  onOpenLocations: widget.onOpenLocations,
-                  onOpenRules: widget.onOpenRules,
+                  locationLabel: widget.protectionState.locationLabel,
+                  routeMode: widget.protectionState.routeMode,
+                  onOpenLocations: widget.protectionIntents.openLocations,
+                  onOpenRules: widget.protectionIntents.openRules,
                 ),
         ),
-        if (!widget.emergencyRuntimeActive) ...[
+        if (!widget.protectionState.emergencyRuntimeActive) ...[
           const SizedBox(height: 12),
           _HomeRevealSlice(
             controller: _revealController,
@@ -543,7 +465,7 @@ class _HomeStageState extends State<_HomeStage>
               IconButton(
                 key: const ValueKey('home-desktop-connection-details-action'),
                 tooltip: 'Детали подключения',
-                onPressed: widget.onOpenConnectionDetails,
+                onPressed: widget.protectionIntents.openConnectionDetails,
                 icon: const Icon(Icons.info_outline_rounded),
               ),
               _HomeNotificationsButton(
@@ -554,7 +476,7 @@ class _HomeStageState extends State<_HomeStage>
               IconButton(
                 key: const ValueKey('home-desktop-settings-action'),
                 tooltip: 'Правила',
-                onPressed: widget.onOpenRules,
+                onPressed: widget.protectionIntents.openRules,
                 icon: const Icon(Icons.tune_rounded),
               ),
             ],
@@ -571,24 +493,11 @@ class _HomeStageState extends State<_HomeStage>
                 begin: 0.16,
                 end: 0.72,
                 child: _HomeConnectPanel(
-                  statusLabel: widget.statusLabel,
+                  protectionState: widget.protectionState,
+                  protectionIntents: widget.protectionIntents,
                   statusColor: widget.statusColor,
-                  actionLabel: widget.actionLabel,
-                  actionEnabled: widget.actionEnabled,
-                  running: widget.running,
-                  busy: widget.busy,
-                  degraded: widget.degraded,
                   connectHintVisible: _showConnectHint,
                   recoveryNotice: widget.recoveryNotice,
-                  selectedRouteMode: widget.selectedRouteMode,
-                  locationLabel: widget.locationLabel,
-                  emergencyRuntimeActive: widget.emergencyRuntimeActive,
-                  emergencyChainMode: widget.emergencyChainMode,
-                  onToggleRuntime: widget.onToggleRuntime,
-                  onOpenConnectionDetails: widget.onOpenConnectionDetails,
-                  onOpenLocations: widget.onOpenLocations,
-                  onOpenRules: widget.onOpenRules,
-                  onOpenEmergencyNetwork: widget.onOpenWhitelistRecovery,
                 ),
               ),
             ),
@@ -597,7 +506,31 @@ class _HomeStageState extends State<_HomeStage>
               flex: 9,
               child: Column(
                 children: [
-                  if (!widget.emergencyRuntimeActive)
+                  if (widget.protectionState.slowConnectionVisible) ...[
+                    _HomeRevealSlice(
+                      controller: _revealController,
+                      begin: 0.22,
+                      end: 0.76,
+                      child: _SlowConnectionNotice(
+                        presentation: widget.protectionState.connection,
+                        onDetails:
+                            widget.protectionIntents.openConnectionDetails,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  if (widget.protectionState.vpnPermissionRecoveryVisible) ...[
+                    _HomeRevealSlice(
+                      controller: _revealController,
+                      begin: 0.24,
+                      end: 0.78,
+                      child: _VpnPermissionRecoveryCard(
+                        onTap: widget.protectionIntents.toggleConnection,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  if (!widget.protectionState.emergencyRuntimeActive)
                     _HomeRevealSlice(
                       controller: _revealController,
                       begin: 0.22,
@@ -678,9 +611,9 @@ class _HomeStageState extends State<_HomeStage>
           const SizedBox(height: 14),
           _MotionRecoveryBanner(message: widget.recoveryNotice!),
         ],
-        if (widget.showWhitelistRecovery) ...[
+        if (widget.protectionState.whitelistRecoverySuggested) ...[
           const SizedBox(height: 10),
-          _WhitelistRecoveryCard(onTap: widget.onOpenWhitelistRecovery),
+          _WhitelistRecoveryCard(onTap: widget.protectionIntents.openRecovery),
         ],
       ],
     );
@@ -793,48 +726,25 @@ class _HomeEmergencyRuntimeCard extends StatelessWidget {
 
 class _HomeConnectPanel extends StatelessWidget {
   const _HomeConnectPanel({
-    required this.statusLabel,
+    required this.protectionState,
+    required this.protectionIntents,
     required this.statusColor,
-    required this.actionLabel,
-    required this.actionEnabled,
-    required this.running,
-    required this.busy,
-    required this.degraded,
     required this.connectHintVisible,
     required this.recoveryNotice,
-    required this.selectedRouteMode,
-    required this.locationLabel,
-    required this.emergencyRuntimeActive,
-    required this.emergencyChainMode,
-    required this.onToggleRuntime,
-    required this.onOpenConnectionDetails,
-    required this.onOpenLocations,
-    required this.onOpenRules,
-    required this.onOpenEmergencyNetwork,
   });
 
-  final String statusLabel;
+  final ProtectionViewState protectionState;
+  final ProtectionIntents protectionIntents;
   final Color statusColor;
-  final String actionLabel;
-  final bool actionEnabled;
-  final bool running;
-  final bool busy;
-  final bool degraded;
   final bool connectHintVisible;
   final String? recoveryNotice;
-  final RouteMode selectedRouteMode;
-  final String locationLabel;
-  final bool emergencyRuntimeActive;
-  final EmergencyChainMode emergencyChainMode;
-  final Future<void> Function() onToggleRuntime;
-  final VoidCallback onOpenConnectionDetails;
-  final VoidCallback onOpenLocations;
-  final VoidCallback onOpenRules;
-  final VoidCallback onOpenEmergencyNetwork;
 
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
+    final protection = protectionState;
+    final presentation = protection.connection;
+    final intents = protectionIntents;
     return Container(
       key: const ValueKey('home-desktop-connect-panel'),
       constraints: const BoxConstraints(minHeight: 440),
@@ -851,33 +761,31 @@ class _HomeConnectPanel extends StatelessWidget {
           _ConnectHintHalo(
             visible: connectHintVisible,
             child: _ConnectOrbButton(
-              actionLabel: actionLabel,
-              enabled: actionEnabled,
-              running: running,
-              degraded: degraded,
+              presentation: presentation,
               error: recoveryNotice != null,
-              busy: busy,
               desktopSize: true,
-              onPressed: actionEnabled ? onToggleRuntime : null,
+              onPressed: presentation.primaryActionEnabled
+                  ? intents.toggleConnection
+                  : null,
             ),
           ),
           const SizedBox(height: 22),
           _HomeStatusAction(
-            statusLabel: statusLabel,
+            statusLabel: presentation.title,
             statusColor: statusColor,
-            onTap: onOpenConnectionDetails,
+            onTap: intents.openConnectionDetails,
           ),
           const SizedBox(height: 30),
-          emergencyRuntimeActive
+          protection.emergencyRuntimeActive
               ? _HomeEmergencyRuntimeCard(
-                  chainMode: emergencyChainMode,
-                  onTap: onOpenEmergencyNetwork,
+                  chainMode: protection.emergencyChainMode,
+                  onTap: intents.openRecovery,
                 )
               : _HomeModeChips(
-                  locationLabel: locationLabel,
-                  routeMode: selectedRouteMode,
-                  onOpenLocations: onOpenLocations,
-                  onOpenRules: onOpenRules,
+                  locationLabel: protection.locationLabel,
+                  routeMode: protection.routeMode,
+                  onOpenLocations: intents.openLocations,
+                  onOpenRules: intents.openRules,
                 ),
         ],
       ),
@@ -901,76 +809,205 @@ class _HomeStatusAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
+    final semanticLabel = 'Статус защиты: $statusLabel. Открыть подробности';
     if (compact) {
-      return KeyedSubtree(
+      return Semantics(
         key: const ValueKey('home-connection-details-action'),
-        child: PokrovSettingsRowPressSurface(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: p.surfaceMuted.withValues(alpha: 0.72),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: p.line),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.info_outline_rounded, size: 14, color: p.muted),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: AnimatedSwitcher(
-                    key: const ValueKey('home-status-switcher'),
-                    duration:
-                        _MotionScope.of(context).duration(_MotionTokens.short),
-                    transitionBuilder: _fadeSlideTransition,
-                    child: Text(
-                      statusLabel,
-                      key: ValueKey(statusLabel),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: p.muted,
-                            fontWeight: FontWeight.w600,
-                          ),
+        container: true,
+        button: true,
+        liveRegion: true,
+        label: semanticLabel,
+        onTap: onTap,
+        child: ExcludeSemantics(
+          child: PokrovSettingsRowPressSurface(
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: p.surfaceMuted.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: p.line),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.info_outline_rounded, size: 14, color: p.muted),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: AnimatedSwitcher(
+                      key: const ValueKey('home-status-switcher'),
+                      duration: _MotionScope.of(context)
+                          .duration(_MotionTokens.short),
+                      transitionBuilder: _fadeSlideTransition,
+                      child: Text(
+                        statusLabel,
+                        key: ValueKey(statusLabel),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style:
+                            Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  color: p.muted,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 1),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 15,
-                  color: p.muted.withValues(alpha: 0.72),
-                ),
-              ],
+                  const SizedBox(width: 1),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 15,
+                    color: p.muted.withValues(alpha: 0.72),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       );
     }
-    // Keep the design branch's disclosure affordance while using the shared
-    // press-scale grammar instead of a one-off InkWell.
-    return KeyedSubtree(
-      key: const ValueKey('home-connection-details-action'),
-      child: PokrovSettingsRowPressSurface(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: _StatusDotLabel(label: statusLabel, color: statusColor),
-              ),
-              const SizedBox(width: 2),
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 16,
-                color: p.muted.withValues(alpha: 0.6),
-              ),
-            ],
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: _StatusDotLabel(label: statusLabel, color: statusColor),
           ),
+          const SizedBox(width: 2),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 16,
+            color: p.muted.withValues(alpha: 0.6),
+          ),
+        ],
+      ),
+    );
+    return Semantics(
+      key: const ValueKey('home-connection-details-action'),
+      container: true,
+      button: true,
+      liveRegion: true,
+      label: semanticLabel,
+      onTap: onTap,
+      child: ExcludeSemantics(
+        child: PokrovSettingsRowPressSurface(
+          onTap: onTap,
+          child: content,
+        ),
+      ),
+    );
+  }
+}
+
+class _VpnPermissionRecoveryCard extends StatelessWidget {
+  const _VpnPermissionRecoveryCard({required this.onTap});
+
+  final Future<void> Function() onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    return Container(
+      key: const ValueKey('home-vpn-permission-recovery'),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 10, 10),
+      decoration: BoxDecoration(
+        color: p.warning.withValues(alpha: 0.09),
+        borderRadius: PokrovRadii.card,
+        border: Border.all(color: p.warning.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.vpn_key_rounded, color: p.warning, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Android ждёт разрешение на VPN',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Повторите запрос и подтвердите системное окно.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: p.muted,
+                        height: 1.3,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            key: const ValueKey('home-vpn-permission-retry'),
+            onPressed: onTap,
+            child: const Text('Разрешить VPN'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SlowConnectionNotice extends StatelessWidget {
+  const _SlowConnectionNotice({
+    required this.presentation,
+    required this.onDetails,
+  });
+
+  final ConnectionPresentation presentation;
+  final VoidCallback onDetails;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    return Semantics(
+      liveRegion: true,
+      container: true,
+      label:
+          'Подключение занимает больше времени. ${presentation.title}. ${presentation.subtitle}',
+      child: Container(
+        key: const ValueKey('home-slow-connection-notice'),
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(14, 12, 10, 10),
+        decoration: BoxDecoration(
+          color: p.warning.withValues(alpha: 0.09),
+          borderRadius: PokrovRadii.card,
+          border: Border.all(color: p.warning.withValues(alpha: 0.28)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.hourglass_top_rounded, color: p.warning, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Подключение занимает больше времени',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${presentation.title}. ${presentation.subtitle}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: p.muted,
+                          height: 1.3,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            TextButton(
+              key: const ValueKey('home-slow-connection-details'),
+              onPressed: onDetails,
+              child: const Text('Подробнее'),
+            ),
+          ],
         ),
       ),
     );
@@ -1040,8 +1077,8 @@ class _HomeAccessStrip extends StatelessWidget {
         ? telegramBonusClaimedDays == null
             ? 'Telegram'
             : '+${ruDays(telegramBonusClaimedDays!)}'
-        : accessLabel.startsWith('5 ')
-            ? '5 дней'
+        : accessLabel.startsWith('${PlatformProductFacts.trialDays} ')
+            ? _PlatformProductCopy.trialDaysLabel
             : accessLabel.toLowerCase().contains('премиум')
                 ? 'Премиум'
                 : 'Активен';
@@ -1411,6 +1448,10 @@ class _HomeAdminPromoCardState extends State<_HomeAdminPromoCard> {
     widget.onOpenHandoff('promo', href.toString());
   }
 
+  void _openTerms(Uri href) {
+    widget.onOpenHandoff('promo_terms', href.toString());
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_dismissStateLoaded || _dismissed || _expired) {
@@ -1420,6 +1461,9 @@ class _HomeAdminPromoCardState extends State<_HomeAdminPromoCard> {
     }
     final slot = widget.slot;
     final safeHref = _safeHomePromoSlotHref(slot.ctaHref);
+    final safeTermsHref = slot.hasReadyCommercialOffer
+        ? _safeHomePromoSlotHref(slot.termsUrl)
+        : null;
     final safeMedia = _safeHomePromoImageUri(
       slot.mediaUrl.trim().isEmpty ? slot.imageUrl : slot.mediaUrl,
     );
@@ -1448,6 +1492,12 @@ class _HomeAdminPromoCardState extends State<_HomeAdminPromoCard> {
     final countdownLabel = slot.countdownLabel.trim().isEmpty
         ? 'Осталось'
         : slot.countdownLabel.trim();
+    final commercialPrice = slot.hasReadyCommercialOffer
+        ? '${slot.basePriceRub} ₽ → ${slot.finalPriceRub} ₽'
+        : '';
+    final commercialDeadline = slot.hasReadyCommercialOffer
+        ? _formatPromoAbsoluteDeadline(slot.endsAt)
+        : '';
     final aspectRatio = slot.mediaWidth != null &&
             slot.mediaHeight != null &&
             slot.mediaWidth! > 0 &&
@@ -1639,6 +1689,53 @@ class _HomeAdminPromoCardState extends State<_HomeAdminPromoCard> {
                                           ),
                                     ),
                                   ],
+                                  if (commercialPrice.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      commercialPrice,
+                                      key: ValueKey(
+                                        '${widget.keyPrefix}-price',
+                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            color: textColor,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                    ),
+                                    Text(
+                                      'До $commercialDeadline · доступно не более ${slot.remainingQuotaLowerBound}',
+                                      key: ValueKey(
+                                        '${widget.keyPrefix}-commercial-state',
+                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelMedium
+                                          ?.copyWith(
+                                            color: textColor.withValues(
+                                              alpha: 0.72,
+                                            ),
+                                          ),
+                                    ),
+                                    if (safeTermsHref != null)
+                                      TextButton(
+                                        key: ValueKey(
+                                          '${widget.keyPrefix}-terms',
+                                        ),
+                                        onPressed: () =>
+                                            _openTerms(safeTermsHref),
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          minimumSize: const Size(48, 44),
+                                          alignment: Alignment.centerLeft,
+                                          foregroundColor: accent,
+                                        ),
+                                        child: const Text(
+                                          'Условия предложения',
+                                        ),
+                                      ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -1755,6 +1852,16 @@ String _formatPromoCountdown(Duration remaining) {
   final seconds = totalSeconds % 60;
   String two(int value) => value.toString().padLeft(2, '0');
   return '${two(hours)}:${two(minutes)}:${two(seconds)}';
+}
+
+String _formatPromoAbsoluteDeadline(String value) {
+  final parsed = DateTime.tryParse(value.trim())?.toLocal();
+  if (parsed == null) {
+    return 'срок уточняется';
+  }
+  String two(int number) => number.toString().padLeft(2, '0');
+  return '${two(parsed.day)}.${two(parsed.month)}.${parsed.year} '
+      '${two(parsed.hour)}:${two(parsed.minute)}';
 }
 
 class _PromoVideo extends StatefulWidget {
@@ -2086,16 +2193,19 @@ class _HomeWarpTile extends StatelessWidget {
                     child: compact
                         ? Row(
                             children: [
-                              Text(
-                                title,
-                                maxLines: 1,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(
-                                      color: p.ink,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                              Flexible(
+                                child: Text(
+                                  title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        color: p.ink,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
                               ),
                               const SizedBox(width: 4),
                               IconButton(
@@ -2341,31 +2451,6 @@ class _HomeNotificationsButton extends StatelessWidget {
       ),
     );
   }
-}
-
-String _homeProtectionStatusLabel(
-  RuntimeSnapshot? snapshot, {
-  bool busy = false,
-  bool disconnecting = false,
-}) {
-  if (busy) {
-    return disconnecting ? 'Завершаем соединение' : 'Настраиваем';
-  }
-  if (snapshot?.phase == RuntimePhase.running) {
-    if (snapshot?.isCoreEgressValidationPending ?? false) {
-      return 'Проверяем…';
-    }
-    if (snapshot?.hostHealth == RuntimeHostHealth.unknown) {
-      return 'Проверяем…';
-    }
-    return (snapshot?.isCleanlyHealthy ?? false)
-        ? 'Подключено'
-        : 'Нужно внимание';
-  }
-  if (snapshot?.phase == RuntimePhase.artifactMissing) {
-    return 'Не получилось подключиться';
-  }
-  return 'Не защищено';
 }
 
 String _accessHomeSupportLabel(

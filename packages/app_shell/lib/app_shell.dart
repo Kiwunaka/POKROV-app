@@ -11,13 +11,18 @@ import 'package:flutter/cupertino.dart'
         CupertinoActivityIndicator,
         CupertinoSliverRefreshControl,
         RefreshIndicatorMode;
+import 'package:flutter/foundation.dart' show listEquals, setEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
+import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
+import 'package:pokrov_observability_contracts/observability_contracts.dart';
+import 'package:pokrov_observability_runtime/observability_runtime.dart';
 import 'package:pokrov_platform_contracts/platform_contracts.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_context/support_context.dart';
+import 'package:pokrov_support_bundle/support_bundle.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
@@ -26,11 +31,24 @@ import 'client_routing_preferences.dart';
 import 'emergency_network_contract.dart';
 import 'src/assistant/pokrov_ai_assistant.dart';
 import 'src/design_system/design_system.dart';
+import 'src/features/diagnostics/client_diagnostics.dart';
+import 'src/features/diagnostics/support_mode.dart';
+import 'src/features/support/support_polling.dart';
+import 'src/features/update/client_update.dart';
+import 'src/seed/platform_product_facts.g.dart';
 import 'src/shell/cached_profile_fallback_gate.dart';
+import 'src/shared/pokrov_haptics.dart';
+import 'src/shared/ru_plural.dart';
 import 'src/warp/pokrov_warp_lifecycle.dart';
 export 'app_first_runtime_bootstrap.dart';
 export 'client_routing_preferences.dart';
 export 'emergency_network_contract.dart';
+export 'src/features/diagnostics/client_diagnostics.dart';
+export 'src/features/diagnostics/support_mode.dart';
+export 'src/features/support/support_polling.dart';
+export 'src/features/update/client_update.dart';
+export 'src/shared/pokrov_haptics.dart';
+export 'src/shared/ru_plural.dart';
 part 'app_shell_ui_helpers.dart';
 
 part 'src/seed/seed_context.dart';
@@ -39,13 +57,14 @@ part 'src/shell/navigation_shell.dart';
 part 'src/shared/info_sheet.dart';
 part 'src/features/support/support_chat.dart';
 part 'src/shared/shell_widgets.dart';
-part 'src/shared/ru_plural.dart';
-part 'src/shared/pokrov_haptics.dart';
+part 'src/shared/platform_product_copy.dart';
 part 'src/shared/pokrov_snack.dart';
 part 'src/shared/client_experience_store.dart';
 part 'src/shared/system_network_controls.dart';
 
 part 'src/features/onboarding/onboarding_flow.dart';
+part 'src/observability/client_observability.dart';
+part 'src/features/home/connection_experience.dart';
 part 'src/features/home/home_surface.dart';
 part 'src/features/home/protection_center.dart';
 part 'src/features/locations/locations_surface.dart';
@@ -97,59 +116,6 @@ enum _FirstLaunchStep {
 }
 
 typedef ExternalHandoffLauncher = Future<bool> Function(Uri uri);
-
-enum PokrovClientUpdateInstallStatus {
-  installerOpened,
-  permissionRequired,
-  unsupported,
-  failed,
-}
-
-typedef PokrovClientUpdateInstaller = Future<PokrovClientUpdateInstallStatus>
-    Function(
-  ClientAppUpdateInfo update,
-);
-
-enum PokrovClientUpdateProgressPhase {
-  idle,
-  preparing,
-  downloading,
-  verifying,
-  installing,
-  failed,
-}
-
-class PokrovClientUpdateProgress {
-  const PokrovClientUpdateProgress({
-    required this.phase,
-    required this.downloadedBytes,
-    required this.totalBytes,
-  });
-
-  const PokrovClientUpdateProgress.idle()
-      : phase = PokrovClientUpdateProgressPhase.idle,
-        downloadedBytes = 0,
-        totalBytes = 0;
-
-  final PokrovClientUpdateProgressPhase phase;
-  final int downloadedBytes;
-  final int totalBytes;
-
-  double? get fraction {
-    if (totalBytes <= 0) {
-      return null;
-    }
-    return (downloadedBytes / totalBytes).clamp(0.0, 1.0);
-  }
-
-  int? get percent {
-    final value = fraction;
-    return value == null ? null : (value * 100).round().clamp(0, 100);
-  }
-}
-
-typedef PokrovClientUpdateProgressReader = Future<PokrovClientUpdateProgress>
-    Function();
 
 abstract class PokrovFirstLaunchStore {
   Future<bool> isCompleted();

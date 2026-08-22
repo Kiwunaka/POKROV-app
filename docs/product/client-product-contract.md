@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-08-19
+Last updated: 2026-08-22
 
 ## Document Status
 
@@ -25,6 +25,19 @@ Platform-owned contracts:
 - publishing and signing:
   `C:/Users/kiwun/Documents/ai/VPN/docs/operations/publishing-and-signing-guide.md`
 - shared machine facts: `C:/Users/kiwun/Documents/ai/VPN/shared/product-facts.json`
+
+The client retains only a generated projection of those platform facts.
+`config/product-contract.seed.json` pins the product-facts, public-URLs,
+tariff-catalog and commercial-contract digests plus the commercial revision.
+`packages/app_shell/lib/src/seed/platform_product_facts.g.dart` is generated
+from the same owners and supplies runtime trial, Telegram reward, platform
+routing, legal, official-release and support constants. Consumer fallback copy is assembled
+in `src/shared/platform_product_copy.dart`; account-specific values still come
+from server responses. `validate-seed.ps1`
+runs the platform synchronizer in read-only `--check` mode and fails on any
+seed, digest, generated-Dart, product-copy hardcode or runtime-consumer drift. Prices, promo terms,
+referral account state and payment outcomes remain server response authority;
+the generated projection does not make the client a commercial authority.
 
 ## Summary
 
@@ -87,6 +100,17 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - the current green repo/static gate snapshot is necessary but not sufficient for future candidates; the `2026-05-15` beta pack includes runtime handoff validation, paid/email evidence, and separate `current-origin`, `brain-origin`, and accepted-skip `RU-origin` handling
 - emulator or adb-only Android audits are valid preflight, not final release approval
 - `iOS` and `macOS` readiness work does not block the public Android+Windows ship, but it also does not expand the public promise
+- Linux is explicitly `NOT_SHIPPED_IN_1.2.0`. Transitive Flutter desktop
+  dependencies, compatibility-client instructions, dormant Linux error codes
+  and the PB-09 `notShipped` entry do not constitute an official Linux binary,
+  daemon, package, support matrix or availability promise.
+- Android OEM battery/background policy, VPN-permission behavior, notification
+  delivery and cached Quick Settings state may stop or delay recovery despite
+  the foreground-service contract. The app exposes bounded PB-08 recovery via
+  `AND-BG-001/002/003` and `AND-VPN-004`; it does not promise uninterrupted
+  background operation across OEMs. Exact-candidate background, screen-off,
+  lockscreen, notification, tile, permission-revoke and reconnect behavior
+  remains a physical-device gate.
 
 ## Target User Experience
 
@@ -104,6 +128,18 @@ The app should not require:
 - activation keys
 - subscription URLs
 - manual import as the primary path
+
+The welcome screen owns two non-blocking access choices: `Начать бесплатно`
+and restore by one-time code. A valid acquisition continuation is confirmed in
+place without showing its opaque handle; invalid or expired attribution never
+blocks either choice. Account refresh and trial provisioning do not start merely
+because the choice screen rendered.
+
+Before the first Android system VPN request, the app explains why the
+permission is needed and offers `Не сейчас`. If Android denies it, Home remains
+honestly disconnected and shows `Разрешить VPN`; retry reopens the explanation
+and system request. Only a cleanly verified tunnel completes the one-time
+first-connect milestone.
 
 ### After trial activation
 
@@ -190,6 +226,9 @@ Product rules for that choice:
   and sends `selected_apps` through app-first route policy
 - selected-app identifiers are device-local, survive app restart, normalized,
   and capped at 128; an empty selected-apps list still blocks connection
+  when that routing mode is active. Operational release health may report only
+  the bounded Android selection count (`0..128`); package or executable
+  identifiers and the selected-app list never enter remote telemetry
 - Windows `Rules` uses consumer route copy (`Режим работы`,
   `Российские сервисы`, `Выбранные приложения`) instead of Android-only bank,
   Gosuslugi, and marketplace presets
@@ -205,9 +244,22 @@ Product rules for that choice:
   or executable identifiers, announce selected/available state to assistive
   technology, and remain usable above the on-screen keyboard
 - raw selected-app rule editing remains hidden behind advanced/debug gates
-- Windows checks elevation before every non-running TUN connect. An already elevated process continues without another prompt. Otherwise the shell first explains that the default full-device `VPN/TUN` lane needs administrator rights and offers two explicit choices: continue through the native Windows `runas` prompt, or persist the limited Core-owned system-proxy mode and connect without elevation. A cancelled or unavailable `runas` returns to the same honest choice instead of starting Core or claiming protection; elevated continuation still occurs exactly once through `--connect`
+- Windows keeps the Flutter UI unelevated. Installation or explicit service
+  repair is the only UAC boundary; ordinary connect authenticates the installed
+  POKROV service and sends a bounded typed request. Service absence, identity
+  failure or protocol incompatibility blocks connection and never falls back
+  to an elevated UI
 - Windows keeps desktop helper listeners on loopback and checks their requested TCP/UDP ports before staging. If another local proxy already owns a requested port, POKROV selects an available loopback port and keeps the other application running
-- first-layer UX must not force users into raw system-proxy, service-mode, or low-level transport toggles. Windows keeps `VPN/TUN + System` as the default; `Системный прокси`, `Mixed`, and `gVisor` live only under `Правила -> Дополнительно`, persist per device, and clearly describe their compatibility trade-off. The Core-owned system-proxy mode stays loopback-only, does not request elevation, and restores the Windows proxy when Core stops
+- first-layer UX does not expose raw service controls or low-level transport
+  toggles. Windows has one supported `VPN/TUN` service lane. `System`, `Mixed`
+  and `gVisor` remain under `Правила -> Дополнительно` and persist per device;
+  the removed per-user system-proxy compatibility value is accepted only as
+  migrated saved state and becomes `VPN/TUN`
+- experimental transport families remain backend-managed and absent from
+  consumer choices. The disabled owner-only `awg2_lab` path may enter the app
+  only through an authenticated, digest-bound managed profile; it never adds
+  raw config import, QR onboarding, keys, endpoint IPs or protocol controls to
+  the product UI.
 
 ### Before trial activation
 
@@ -432,6 +484,35 @@ Support contract rules:
 - authenticated browser support should continue through `/api/tickets`, `/api/tickets/{ticket_id}`, `/api/tickets/{ticket_id}/messages`, and `/api/tickets/uploads`
 - app support may attach redacted diagnostics on ticket creation and on one explicitly confirmed follow-up reply
 - diagnostics should expose route mode, DNS policy, transport profile, ruleset/package-catalog version, app version, and linked Telegram state without leaking raw config, keys, or share links
+- the diagnostic preview is the consent boundary: it shows the diagnostic ID,
+  categories, virtual files, sizes and redaction count derived from the same
+  canonical payload that will be encrypted
+- encrypted bundle delivery is available only when the release embeds an
+  explicit Ed25519 verification pin and the platform returns a valid signed
+  X25519 recipient key set. The client stores only the encrypted envelope in
+  private app support storage before upload, follows the server-authoritative
+  resume offset and removes it only after queued/validated completion
+- offline or interrupted delivery keeps the encrypted object for explicit
+  retry; it must not fall back to plaintext ZIP, legacy chat attachment or raw
+  diagnostic text. The separately labelled short summary remains available
+  when the signed-key lane is not configured
+- the ordinary diagnostics screen emits a versioned `PSD1-*` support code that
+  expires after 14 days and contains only platform, route/connection class,
+  app/build and a short diagnostic hash prefix. Copying it uploads no file and
+  it is not account, device or installation identity
+- Android and Windows may manually export only the encrypted
+  `.pokrov-support` envelope through the system document/save picker. Cancelling
+  the picker creates no file and the UI must not claim success. Plaintext bundle
+  bytes have no host filesystem destination
+- temporary support mode starts only after one authenticated, case-bound
+  `PSM1-*` code is redeemed and its Ed25519 policy independently verifies for
+  the exact platform/app/build. The app then shows categories, expiry and caps
+  and requires explicit confirmation; redemption alone cannot activate it
+- while active, support mode has a persistent app-level indicator and manual
+  disable action. It cannot execute commands, modify VPN/routes/DNS, read user
+  files, capture packets/destinations, expose tokens/configuration, hide itself
+  or extend itself. It expires within 30 minutes and enforces the signed
+  per-bundle, cumulative-byte and one/two-bundle limits across restart
 - ticket history restores into the existing conversation; loading and offline
   states keep one lifecycle hint and one retry instead of duplicate notices
 - a failed ticket send keeps the draft and removes its unconfirmed optimistic
@@ -542,10 +623,14 @@ state machine. The Android tile resolves the authoritative TUN plus the
 app-owned VPN-service presence on every tap before choosing start or stop. It
 publishes only an honest on/off state. The service uses Android's active-tile
 mode and asks SystemUI to listen again after each committed runtime transition,
-so an OEM-cached highlight cannot remain
-the sole source of truth. The foreground notification owns the detailed live
-status, country, route mode and speed. A user change to location, routing,
-selected apps, or WARP
+so an OEM-cached highlight cannot remain the sole source of truth. The
+foreground notification is private and exposes only a generic protection
+state; country, route mode, selected applications, endpoint and speed stay
+inside the authenticated app. Inside that app, Android transfer rates and
+session totals come only from Core/TUN counters. The product model keeps
+unavailable, warming, reset and overflow distinct and never substitutes
+whole-app UID traffic or turns a counter reset into a speed spike. A user
+change to location, routing, selected apps, or WARP
 invalidates Android's reusable Quick Settings profile without stopping a live
 tunnel: the tile can still stop that tunnel, but after stop it opens the app
 until a fresh managed-profile stage saves the new reusable profile.
@@ -600,6 +685,12 @@ Release continuity rules:
   production-signed and every published asset matches its retained size and
   SHA-256; the production catalog requires `1.1.6` for older clients. Exact
   Huawei and clean Windows network proof remain manual.
+- the active source target is separately recorded in the same canonical
+  release-handoff seed as `1.2.0+30`, state `PRE_CANDIDATE_LOCAL`, with
+  `candidate_created=false`. Android, Windows and app-shell source versions
+  must match that target, while the historical `1.1.6` public record remains
+  immutable and has `reuse_for_new_promotion=false`. This target is not a
+  release candidate, public update or promotion claim.
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates
@@ -607,25 +698,46 @@ Release continuity rules:
   outside-store stable-direct lane with a SmartScreen/unknown-publisher warning;
   this is not a trusted-signing or reputation claim
 - signed release builds inject updater and source metadata through the documented `PORTAL_RELEASE_*` environment variables
+- signed release builds that enable encrypted support delivery inject the
+  public `POKROV_SUPPORT_SIGNING_KEY_ID` and
+  `POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64` pair together. Blank values disable
+  the encrypted-send action; no development or generated pin is accepted
 - the shared runtime identity is `pokrovClientVersion`; release builds pass
   `--dart-define=POKROV_APP_VERSION=<host pubspec version without +build>` so
   provisioning, update checks, diagnostics, and visible version text match the
-  package. Local builds use the current package base-version fallback `1.1.6`;
+  package. Local 1.2.0 development builds use the target package base-version
+  fallback `1.2.0`; the published catalog remains authoritative for current
+  public `1.1.6` clients;
   production packaging passes that value explicitly through `POKROV_APP_VERSION`.
+- a new strict-v2 candidate requires `release.release_notes.summary` and a
+  canonical version-matched GitHub release URL. The same manifest version is
+  checked against Android, Windows and app-shell package versions before the
+  handoff is generated; the platform projects that version and the same notes
+  into `/api/client/apps`, which is the update prompt and cabinet authority.
 - local non-release builds keep updater and source-code surfaces disabled instead of falling back to a personal repository URL
 - an update prompt or tap may use only
   `https://github.com/Kiwunaka/pokrov/releases/download/<tag>/<asset>.apk`
   when metadata also carries a 64-hex SHA-256 and a positive bounded byte size;
   alternate initial hosts, repositories, URL authority fields, query strings,
   fragments, and non-APK assets fail closed
-- Android downloads into app-private cache, permits only bounded HTTPS
-  redirects to GitHub-owned asset hosts, and verifies exact byte size plus
-  SHA-256 before exposing the file through a non-exported `FileProvider`. The
-  update sheet polls the native downloader and shows downloaded-byte progress,
-  then an explicit verification/installing phase; only after verification does
-  it open Android's required package-installer confirmation. Android 8+ may
-  first require the owner to grant POKROV install-source permission.
-  Windows continues through the trusted browser download lane.
+- Android `direct` and `store` are separate build flavors with the same package
+  ID/signing lineage. Only `direct` contains `REQUEST_INSTALL_PACKAGES`, a
+  non-exported `FileProvider`, the private-cache downloader and Android package
+  installer. `store` contains none of those surfaces and opens only the exact
+  POKROV listing in Google Play; store-managed update remains store authority.
+- before a direct cache commit and again before installer intent, Android
+  verifies bounded canonical origin/channel/version/size metadata, exact bytes
+  and SHA-256, expected package ID and requested version, strictly increasing
+  `versionCode`, compatible minimum SDK/ABI, an authorized production signer,
+  and continuity from the installed signer into the platform-verified target
+  lineage. Package/origin drift, downgrade, malformed APK, incompatible SDK/ABI
+  or unauthorized signer rotation fails before any intent. Cached APK reuse
+  repeats the complete identity check.
+- the update sheet shows bounded official-source, version, size, phase and byte
+  progress only; it does not expose URL, digest, certificate or provider
+  material. Direct then opens Android's package-installer confirmation, and
+  Android 8+ may first require install-source permission. Store opens Google
+  Play. Windows continues through the trusted browser download lane.
 - downloaded-byte verification does not replace production-signing, install,
   runtime, or exact-candidate release proof
 - update prompts, release notes, remote banners, and Telegram release notices

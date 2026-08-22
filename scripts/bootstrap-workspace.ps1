@@ -5,6 +5,7 @@ param(
 $root = Split-Path -Parent $PSScriptRoot
 $androidShellPath = Join-Path $root "apps\android_shell"
 $androidWrapperRelativePaths = @(
+  "android\gradlew",
   "android\gradlew.bat",
   "android\gradle\wrapper\gradle-wrapper.jar"
 )
@@ -106,9 +107,22 @@ if ($missingAndroidWrapperFiles.Count -gt 0) {
   }
 }
 
+if (-not $IsWindows) {
+  $unixGradleWrapper = Join-Path $androidShellPath "android\gradlew"
+  & chmod +x $unixGradleWrapper
+  if ($LASTEXITCODE -ne 0) {
+    Write-Error "Failed to mark Android Gradle wrapper executable: $unixGradleWrapper"
+    exit $LASTEXITCODE
+  }
+}
+
 $workspacePackages = @(
   "packages\\core_domain",
   "packages\\platform_contracts",
+  "packages\\observability_contracts",
+  "packages\\observability_runtime",
+  "packages\\diagnostics_collectors",
+  "packages\\support_bundle",
   "packages\\support_context",
   "packages\\runtime_engine",
   "packages\\app_shell",

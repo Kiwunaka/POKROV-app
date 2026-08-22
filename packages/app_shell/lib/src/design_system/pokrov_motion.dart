@@ -2,16 +2,41 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-/// iPhone-feel scrolling on every platform: iOS bouncing physics and no
-/// Android glow/stretch overscroll indicator.
+bool pokrovUsesCupertinoInteraction(TargetPlatform platform) {
+  return platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
+}
+
+ScrollPhysics pokrovScrollPhysicsFor(TargetPlatform platform) {
+  if (pokrovUsesCupertinoInteraction(platform)) {
+    return const BouncingScrollPhysics(
+      parent: AlwaysScrollableScrollPhysics(),
+    );
+  }
+  return const ClampingScrollPhysics(
+    parent: AlwaysScrollableScrollPhysics(),
+  );
+}
+
+PageTransitionsTheme pokrovAdaptivePageTransitionsTheme() {
+  return const PageTransitionsTheme(
+    builders: <TargetPlatform, PageTransitionsBuilder>{
+      TargetPlatform.android: ZoomPageTransitionsBuilder(),
+      TargetPlatform.fuchsia: ZoomPageTransitionsBuilder(),
+      TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+      TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+      TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+    },
+  );
+}
+
+/// Shared brand semantics with native-feeling platform scroll physics.
 class PokrovScrollBehavior extends MaterialScrollBehavior {
   const PokrovScrollBehavior();
 
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) {
-    return const BouncingScrollPhysics(
-      parent: AlwaysScrollableScrollPhysics(),
-    );
+    return pokrovScrollPhysicsFor(Theme.of(context).platform);
   }
 
   @override
@@ -20,6 +45,9 @@ class PokrovScrollBehavior extends MaterialScrollBehavior {
     Widget child,
     ScrollableDetails details,
   ) {
+    if (Theme.of(context).platform == TargetPlatform.android) {
+      return super.buildOverscrollIndicator(context, child, details);
+    }
     return child;
   }
 }

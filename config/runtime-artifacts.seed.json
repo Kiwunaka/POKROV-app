@@ -1,8 +1,10 @@
 {
   "core": {
     "repository": "Kiwunaka/POKROV-core",
+    "version": "1.0.3",
     "release_tag": "v1.0.3",
     "source_commit": "69a74545101708e56183c92e31f2b4c7b2509884",
+    "android_package": "space.pokrov.core",
     "sing_box_version": "1.13.0",
     "sing_dependency": "v0.8.0-beta.12",
     "go_toolchain": "go1.25.12",
@@ -24,12 +26,52 @@
       },
       "promotion_rule": "accept_exact_v1.0.3_release_artifacts"
     },
+    "development_target": {
+      "required_for_product": "1.2.0",
+      "version": "1.1.0",
+      "release_tag": "v1.1.0",
+      "state": "PRE_CANDIDATE_LOCAL",
+      "candidate_created": false,
+      "artifact_state": "pending"
+    },
     "activation_state": "active",
     "desktop_abi": {
       "name": "pokrov-core",
       "version": 2,
       "required_symbol": "pokrovCoreAbiVersion",
-      "secure_file_symbol": "pokrovSecureFile"
+      "secure_file_symbol": "pokrovSecureFile",
+      "optional_capabilities_symbol": "pokrovCoreCapabilities",
+      "capability_schema": 1,
+      "event_abi": 1,
+      "legacy_without_capabilities_symbol": [
+        2
+      ],
+      "required_capabilities": [
+        "bounded_stop_reason",
+        "core_start_stop",
+        "materialized_profile",
+        "secure_profile_file",
+        "structured_operational_events",
+        "typed_lifecycle_events"
+      ],
+      "structured_events": {
+        "required_for_release": "1.2.0",
+        "callback_symbol": "pokrovCoreSetEventCallback",
+        "context_symbol": "pokrovCoreSetEventContext",
+        "retained_v1_0_3_artifact_mode": "legacy_without_structured_events",
+        "exact_replacement_artifact": "pending"
+      },
+      "lifecycle_events": [
+        "initialization",
+        "profile",
+        "core_start",
+        "tun",
+        "routes",
+        "dns",
+        "egress",
+        "recovery",
+        "stop"
+      ]
     },
     "assets": {
       "android": {

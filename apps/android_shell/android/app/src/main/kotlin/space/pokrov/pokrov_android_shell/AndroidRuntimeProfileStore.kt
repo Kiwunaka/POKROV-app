@@ -36,6 +36,58 @@ internal fun ownsLatestRuntimeServiceCommand(
     currentGeneration: Long,
 ): Boolean = completedGeneration == null || completedGeneration == currentGeneration
 
+internal const val RUNTIME_PROFILE_SCHEMA_VERSION = 1
+
+internal enum class RuntimeProfileSchemaRoute {
+    LEGACY_V0,
+    CURRENT_V1,
+    FORWARD_UNKNOWN,
+}
+
+internal fun runtimeProfileSchemaRoute(values: Map<String, *>): RuntimeProfileSchemaRoute {
+    if (!values.containsKey("schema_version")) {
+        return RuntimeProfileSchemaRoute.LEGACY_V0
+    }
+    return if (values["schema_version"] == RUNTIME_PROFILE_SCHEMA_VERSION) {
+        RuntimeProfileSchemaRoute.CURRENT_V1
+    } else {
+        RuntimeProfileSchemaRoute.FORWARD_UNKNOWN
+    }
+}
+
+internal fun runtimeProfileStorageValues(profile: PersistedRuntimeProfile): Map<String, Any> = mapOf(
+    "schema_version" to RUNTIME_PROFILE_SCHEMA_VERSION,
+    "config_path" to profile.configPath,
+    "route_mode" to profile.routeMode,
+    "quick_settings_eligible" to profile.quickSettingsEligible,
+    "core_egress_probe_required" to profile.coreEgressProbeRequired,
+    "display_country" to profile.displayCountry,
+    "display_node_code" to profile.displayNodeCode,
+    "display_route_mode" to profile.displayRouteMode,
+)
+
+internal fun decodeRuntimeProfileStorage(
+    values: Map<String, *>,
+    configExists: (String) -> Boolean,
+): PersistedRuntimeProfile? {
+    if (runtimeProfileSchemaRoute(values) == RuntimeProfileSchemaRoute.FORWARD_UNKNOWN) {
+        return null
+    }
+    val configPath = (values["config_path"] as? String)
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() && configExists(it) }
+        ?: return null
+    return PersistedRuntimeProfile(
+        configPath = configPath,
+        routeMode = (values["route_mode"] as? String).orEmpty(),
+        quickSettingsEligible = values["quick_settings_eligible"] as? Boolean ?: false,
+        coreEgressProbeRequired = values["core_egress_probe_required"] as? Boolean ?: true,
+        displayCountry = (values["display_country"] as? String).orEmpty(),
+        displayNodeCode = (values["display_node_code"] as? String).orEmpty(),
+        displayRouteMode = (values["display_route_mode"] as? String).orEmpty(),
+    )
+}
+
 /**
  * Keeps only the private materialized runtime path so the Quick Settings tile
  * can reuse the profile after the Flutter activity has left memory. Access
@@ -43,26 +95,19 @@ internal fun ownsLatestRuntimeServiceCommand(
  */
 internal object AndroidRuntimeProfileStore {
     private const val PREFERENCES_NAME = "pokrov_runtime_profile"
-    private const val KEY_CONFIG_PATH = "config_path"
-    private const val KEY_QUICK_SETTINGS_ELIGIBLE = "quick_settings_eligible"
-    private const val KEY_CORE_EGRESS_PROBE_REQUIRED = "core_egress_probe_required"
-    private const val KEY_ROUTE_MODE = "route_mode"
-    private const val KEY_DISPLAY_COUNTRY = "display_country"
-    private const val KEY_DISPLAY_NODE_CODE = "display_node_code"
-    private const val KEY_DISPLAY_ROUTE_MODE = "display_route_mode"
 
     fun save(context: Context, profile: PersistedRuntimeProfile) {
-        context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+        val editor = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
             .edit()
             .clear()
-            .putString(KEY_CONFIG_PATH, profile.configPath)
-            .putString(KEY_ROUTE_MODE, profile.routeMode)
-            .putBoolean(KEY_QUICK_SETTINGS_ELIGIBLE, profile.quickSettingsEligible)
-            .putBoolean(KEY_CORE_EGRESS_PROBE_REQUIRED, profile.coreEgressProbeRequired)
-            .putString(KEY_DISPLAY_COUNTRY, profile.displayCountry)
-            .putString(KEY_DISPLAY_NODE_CODE, profile.displayNodeCode)
-            .putString(KEY_DISPLAY_ROUTE_MODE, profile.displayRouteMode)
-            .apply()
+        for ((key, value) in runtimeProfileStorageValues(profile)) {
+            when (value) {
+                is String -> editor.putString(key, value)
+                is Boolean -> editor.putBoolean(key, value)
+                is Int -> editor.putInt(key, value)
+            }
+        }
+        editor.apply()
     }
 
     fun load(context: Context): PersistedRuntimeProfile? {
@@ -70,29 +115,22 @@ internal object AndroidRuntimeProfileStore {
             PREFERENCES_NAME,
             Context.MODE_PRIVATE,
         )
-        val configPath = preferences.getString(KEY_CONFIG_PATH, null)
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
-            ?: return null
-        if (!File(configPath).isFile) {
+        val values = preferences.all
+        val schemaRoute = runtimeProfileSchemaRoute(values)
+        if (schemaRoute == RuntimeProfileSchemaRoute.FORWARD_UNKNOWN) {
+            // Do not reuse or erase state owned by a newer app. This keeps the
+            // current runtime fail-closed while preserving downgrade recovery.
+            return null
+        }
+        val profile = decodeRuntimeProfileStorage(values) { path -> File(path).isFile }
+        if (profile == null) {
             clear(context)
             return null
         }
-        return PersistedRuntimeProfile(
-            configPath = configPath,
-            routeMode = preferences.getString(KEY_ROUTE_MODE, "").orEmpty(),
-            quickSettingsEligible = preferences.getBoolean(
-                KEY_QUICK_SETTINGS_ELIGIBLE,
-                false,
-            ),
-            coreEgressProbeRequired = preferences.getBoolean(
-                KEY_CORE_EGRESS_PROBE_REQUIRED,
-                true,
-            ),
-            displayCountry = preferences.getString(KEY_DISPLAY_COUNTRY, "").orEmpty(),
-            displayNodeCode = preferences.getString(KEY_DISPLAY_NODE_CODE, "").orEmpty(),
-            displayRouteMode = preferences.getString(KEY_DISPLAY_ROUTE_MODE, "").orEmpty(),
-        )
+        if (schemaRoute == RuntimeProfileSchemaRoute.LEGACY_V0) {
+            save(context, profile)
+        }
+        return profile
     }
 
     fun clear(context: Context) {

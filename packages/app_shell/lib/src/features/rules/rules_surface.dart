@@ -11,6 +11,8 @@ class _RulesSection extends StatelessWidget {
     required this.onSelectedAppRemoved,
     required this.onRuAppPresetApplied,
     required this.onRoutingPreferencesChanged,
+    required this.onRoutingPreferencesApply,
+    required this.connectionActive,
     required this.onReadCurrentWifi,
     required this.onRequestWifiPermission,
     required this.onOpenVpnSettings,
@@ -26,6 +28,8 @@ class _RulesSection extends StatelessWidget {
   final ValueChanged<String> onSelectedAppRemoved;
   final void Function(RouteMode mode, List<String> appIds) onRuAppPresetApplied;
   final ValueChanged<PokrovRoutingPreferences> onRoutingPreferencesChanged;
+  final ValueChanged<PokrovRoutingPreferences> onRoutingPreferencesApply;
+  final bool connectionActive;
   final PokrovWifiProbe onReadCurrentWifi;
   final PokrovWifiPermissionRequester onRequestWifiPermission;
   final PokrovVpnSettingsLauncher onOpenVpnSettings;
@@ -168,6 +172,8 @@ class _RulesSection extends StatelessWidget {
           preferences: routingPreferences,
           fallbackMode: selectedRouteMode,
           onChanged: onRoutingPreferencesChanged,
+          onApply: onRoutingPreferencesApply,
+          connectionActive: connectionActive,
           onReadCurrentWifi: onReadCurrentWifi,
           onRequestWifiPermission: onRequestWifiPermission,
           onOpenVpnSettings: onOpenVpnSettings,
@@ -184,6 +190,8 @@ class _RulesAdvancedSection extends StatefulWidget {
     required this.preferences,
     required this.fallbackMode,
     required this.onChanged,
+    required this.onApply,
+    required this.connectionActive,
     required this.onReadCurrentWifi,
     required this.onRequestWifiPermission,
     required this.onOpenVpnSettings,
@@ -194,6 +202,8 @@ class _RulesAdvancedSection extends StatefulWidget {
   final PokrovRoutingPreferences preferences;
   final RouteMode fallbackMode;
   final ValueChanged<PokrovRoutingPreferences> onChanged;
+  final ValueChanged<PokrovRoutingPreferences> onApply;
+  final bool connectionActive;
   final PokrovWifiProbe onReadCurrentWifi;
   final PokrovWifiPermissionRequester onRequestWifiPermission;
   final PokrovVpnSettingsLauncher onOpenVpnSettings;
@@ -205,21 +215,60 @@ class _RulesAdvancedSection extends StatefulWidget {
 
 class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
   bool _expanded = false;
+  late PokrovRoutingPreferences _appliedPreferences;
+  late PokrovRoutingPreferences _draftPreferences;
+
+  @override
+  void initState() {
+    super.initState();
+    _appliedPreferences = widget.preferences;
+    _draftPreferences = widget.preferences;
+  }
+
+  @override
+  void didUpdateWidget(covariant _RulesAdvancedSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_sameRoutingPreferences(widget.preferences, _draftPreferences)) {
+      return;
+    }
+    if (_sameRoutingPreferences(_draftPreferences, _appliedPreferences)) {
+      _appliedPreferences = widget.preferences;
+      _draftPreferences = widget.preferences;
+    }
+  }
+
+  void _stage(PokrovRoutingPreferences next) {
+    setState(() {
+      _draftPreferences = next;
+    });
+    widget.onChanged(next);
+  }
+
+  void _apply() {
+    if (_sameRoutingPreferences(_draftPreferences, _appliedPreferences)) {
+      return;
+    }
+    PokrovHaptics.tap();
+    final next = _draftPreferences;
+    setState(() {
+      _appliedPreferences = next;
+    });
+    widget.onApply(next);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final configuredCount = widget.preferences.purposeRoutes.length +
-        widget.preferences.overrides.length +
-        widget.preferences.trustedWifiNames.length +
-        (widget.preferences.dnsPreset == PokrovDnsPreset.automatic ? 0 : 1) +
-        (widget.preferences.allowLan ? 0 : 1) +
+    final changes = _routingPreferenceChangeLabels(
+      _appliedPreferences,
+      _draftPreferences,
+    );
+    final configuredCount = _draftPreferences.purposeRoutes.length +
+        _draftPreferences.overrides.length +
+        _draftPreferences.trustedWifiNames.length +
+        (_draftPreferences.dnsPreset == PokrovDnsPreset.automatic ? 0 : 1) +
+        (_draftPreferences.allowLan ? 0 : 1) +
         (widget.hostPlatform == HostPlatform.windows &&
-                widget.preferences.windowsConnectionMode !=
-                    PokrovWindowsConnectionMode.vpn
-            ? 1
-            : 0) +
-        (widget.hostPlatform == HostPlatform.windows &&
-                widget.preferences.tunStack != PokrovTunStack.system
+                _draftPreferences.tunStack != PokrovTunStack.system
             ? 1
             : 0);
     return Column(
@@ -252,27 +301,27 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
                   children: [
                     if (widget.hostPlatform == HostPlatform.windows)
                       _WindowsConnectionCard(
-                        preferences: widget.preferences,
-                        onChanged: widget.onChanged,
+                        preferences: _draftPreferences,
+                        onChanged: _stage,
                       ),
                     _DnsAndLanCard(
-                      preferences: widget.preferences,
-                      onChanged: widget.onChanged,
+                      preferences: _draftPreferences,
+                      onChanged: _stage,
                     ),
                     _PurposeRoutingCard(
-                      preferences: widget.preferences,
-                      onChanged: widget.onChanged,
+                      preferences: _draftPreferences,
+                      onChanged: _stage,
                     ),
                     _CustomRoutingCard(
-                      preferences: widget.preferences,
+                      preferences: _draftPreferences,
                       fallbackMode: widget.fallbackMode,
-                      onChanged: widget.onChanged,
+                      onChanged: _stage,
                       onRoutingLessonCompleted: widget.onRoutingLessonCompleted,
                     ),
                     _TrustedWifiCard(
                       hostPlatform: widget.hostPlatform,
-                      preferences: widget.preferences,
-                      onChanged: widget.onChanged,
+                      preferences: _draftPreferences,
+                      onChanged: _stage,
                       onReadCurrentWifi: widget.onReadCurrentWifi,
                       onRequestWifiPermission: widget.onRequestWifiPermission,
                     ),
@@ -283,10 +332,77 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
                   ],
                 ),
         ),
+        if (changes.isNotEmpty)
+          _SectionCard(
+            key: const ValueKey('rules-change-summary'),
+            title: 'Изменения готовы',
+            tone: _SectionTone.accent,
+            lines: [
+              changes.join(' · '),
+              widget.connectionActive
+                  ? 'Одно применение переподключит VPN.'
+                  : 'Изменения вступят в силу при следующем подключении.',
+            ],
+            child: FilledButton.icon(
+              key: const ValueKey('rules-apply-changes'),
+              onPressed: _apply,
+              icon: Icon(
+                widget.connectionActive
+                    ? Icons.sync_rounded
+                    : Icons.check_rounded,
+              ),
+              label: Text(
+                widget.connectionActive
+                    ? 'Применить и переподключить'
+                    : 'Сохранить изменения',
+              ),
+            ),
+          ),
       ],
     );
   }
 }
+
+bool _sameRoutingPreferences(
+  PokrovRoutingPreferences left,
+  PokrovRoutingPreferences right,
+) =>
+    setEquals(left.purposeRoutes, right.purposeRoutes) &&
+    listEquals(
+      left.overrides.map((item) => item.id).toList(growable: false),
+      right.overrides.map((item) => item.id).toList(growable: false),
+    ) &&
+    left.dnsPreset == right.dnsPreset &&
+    left.customDnsUrl == right.customDnsUrl &&
+    left.allowLan == right.allowLan &&
+    listEquals(left.trustedWifiNames, right.trustedWifiNames) &&
+    left.pauseOnTrustedWifi == right.pauseOnTrustedWifi &&
+    left.windowsConnectionMode == right.windowsConnectionMode &&
+    left.tunStack == right.tunStack;
+
+List<String> _routingPreferenceChangeLabels(
+  PokrovRoutingPreferences applied,
+  PokrovRoutingPreferences draft,
+) =>
+    <String>[
+      if (applied.dnsPreset != draft.dnsPreset ||
+          applied.customDnsUrl != draft.customDnsUrl ||
+          applied.allowLan != draft.allowLan)
+        'DNS и локальная сеть',
+      if (!setEquals(applied.purposeRoutes, draft.purposeRoutes))
+        'готовые маршруты',
+      if (!listEquals(
+        applied.overrides.map((item) => item.id).toList(growable: false),
+        draft.overrides.map((item) => item.id).toList(growable: false),
+      ))
+        'свои правила',
+      if (!listEquals(applied.trustedWifiNames, draft.trustedWifiNames) ||
+          applied.pauseOnTrustedWifi != draft.pauseOnTrustedWifi)
+        'доверенный Wi-Fi',
+      if (applied.windowsConnectionMode != draft.windowsConnectionMode ||
+          applied.tunStack != draft.tunStack)
+        'подключение Windows',
+    ];
 
 class _RouteModeSegmentedControl extends StatelessWidget {
   const _RouteModeSegmentedControl({

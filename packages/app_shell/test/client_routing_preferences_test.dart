@@ -1,9 +1,23 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
+
+Future<String> _readRoutingFixture(String name) async {
+  for (final path in <String>[
+    'packages/app_shell/test/fixtures/$name',
+    'test/fixtures/$name',
+  ]) {
+    final file = File(path);
+    if (await file.exists()) {
+      return file.readAsString();
+    }
+  }
+  throw FileSystemException('Fixture not found', name);
+}
 
 void main() {
   test('validates and normalizes domain, IP and CIDR overrides', () {
@@ -176,20 +190,26 @@ void main() {
     );
   });
 
-  test('Windows system proxy removes TUN and enables Core-owned cleanup', () {
+  test('legacy Windows system-proxy preference migrates to service TUN',
+      () async {
+    final fixture = jsonDecode(
+      await _readRoutingFixture('routing-preferences-v0.json'),
+    ) as Map<String, dynamic>;
+    final migrated = PokrovRoutingPreferences.fromJson(
+      fixture,
+    );
     final transformed = applyPokrovRoutingPreferences(
       _windowsProfile(),
-      const PokrovRoutingPreferences.defaults().copyWith(
-        windowsConnectionMode: PokrovWindowsConnectionMode.systemProxy,
-      ),
+      migrated,
       hostPlatform: HostPlatform.windows,
     );
     final inbounds = _maps(_jsonMap(transformed.configPayload)['inbounds']);
 
-    expect(inbounds.where((inbound) => inbound['type'] == 'tun'), isEmpty);
+    expect(migrated.windowsConnectionMode, PokrovWindowsConnectionMode.vpn);
+    expect(inbounds.where((inbound) => inbound['type'] == 'tun'), isNotEmpty);
     expect(
       inbounds.singleWhere((inbound) => inbound['type'] == 'mixed'),
-      containsPair('set_system_proxy', true),
+      isNot(contains('set_system_proxy')),
     );
   });
 

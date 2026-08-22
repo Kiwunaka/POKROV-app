@@ -1,6 +1,5 @@
 package space.pokrov.pokrov_android_shell
 
-import android.util.Log
 import org.json.JSONObject
 import space.pokrov.core.libbox.CommandClientHandler
 import space.pokrov.core.libbox.CommandClientOptions
@@ -133,21 +132,12 @@ internal object AndroidVariantAvailabilityProbe {
         }
         val liveSnapshot = probeLive(catalog)
         val liveComplete = isCompletedSnapshot(liveSnapshot, catalog)
-        var cacheHit = false
         val resolvedSnapshot = if (liveComplete) {
             remember(catalog, liveSnapshot)
             liveSnapshot
         } else {
-            cachedSnapshot(catalog, System.currentTimeMillis())?.also {
-                cacheHit = true
-            } ?: liveSnapshot
+            cachedSnapshot(catalog, System.currentTimeMillis()) ?: liveSnapshot
         }
-        Log.i(
-            LOG_TAG,
-            "Android variant probe readback targets=${catalog.targets.size} " +
-                "liveComplete=$liveComplete cacheHit=$cacheHit " +
-                "results=${(resolvedSnapshot["results"] as? List<*>)?.size ?: 0}.",
-        )
         return filterSnapshot(resolvedSnapshot, requestedId)
     }
 
@@ -192,8 +182,7 @@ internal object AndroidVariantAvailabilityProbe {
                 return unavailableSnapshot("timeout", catalog.targets)
             }
             handler.snapshot()
-        } catch (error: Throwable) {
-            Log.w(LOG_TAG, "Android variant probe client failure=${error.javaClass.simpleName}.")
+        } catch (_: Throwable) {
             unavailableSnapshot("core_unavailable", catalog.targets)
         } finally {
             runCatching { client.disconnect() }
@@ -446,6 +435,5 @@ internal object AndroidVariantAvailabilityProbe {
     private const val SAMPLE_MAX_AGE_MILLIS = 120_000L
     private const val CAPTURE_CONNECT_ATTEMPTS = 3
     private const val CAPTURE_CONNECT_RETRY_MILLIS = 250L
-    private const val LOG_TAG = "PokrovVariantProbe"
     private val SAFE_ID = Regex("[a-z0-9][a-z0-9._-]{0,63}")
 }

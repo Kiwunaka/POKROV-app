@@ -224,13 +224,19 @@ First-layer structure:
 
 Connect control states:
 
-- disconnected
-- connecting
-- connected
-- enhanced
-- error
-- expired
-- restoring/provisioning
+- idle;
+- permission required;
+- preparing/connecting with a user-facing stage;
+- connected, but still unverified;
+- connected and verified only after DNS and egress proof;
+- disconnecting;
+- explicitly reconnecting;
+- blocked;
+- failed.
+
+CTA, status copy, semantics, tone and disc motion come from one connection
+presentation. The disc must not infer reconnecting from `busy && running`.
+One primary action emits one tap haptic and at most one actual outcome haptic.
 
 Owner override (`2026-08-11`): the earlier large circular logo-led control is
 retired. Home uses one wide filled action with an explicit verb, short supporting

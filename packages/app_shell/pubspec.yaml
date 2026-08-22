@@ -1,7 +1,7 @@
 name: pokrov_app_shell
 description: Beta app shell widgets for the POKROV client program.
 publish_to: none
-version: 1.0.0-beta.4
+version: 1.2.0
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -9,18 +9,27 @@ environment:
 dependencies:
   country_flags: ^4.1.2
   cryptography: ^2.9.0
+  file_selector: ^1.1.0
   flutter:
     sdk: flutter
   flutter_secure_storage: ^10.3.1
   path_provider: ^2.1.5
   pokrov_core_domain:
     path: ../core_domain
+  pokrov_diagnostics_collectors:
+    path: ../diagnostics_collectors
+  pokrov_observability_contracts:
+    path: ../observability_contracts
+  pokrov_observability_runtime:
+    path: ../observability_runtime
   pokrov_platform_contracts:
     path: ../platform_contracts
   pokrov_runtime_engine:
     path: ../runtime_engine
   pokrov_support_context:
     path: ../support_context
+  pokrov_support_bundle:
+    path: ../support_bundle
   url_launcher: ^6.3.1
   video_player: 2.11.1
 

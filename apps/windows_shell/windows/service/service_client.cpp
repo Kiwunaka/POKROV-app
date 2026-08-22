@@ -1,0 +1,410 @@
+#include "service_client.h"
+
+#include <windows.h>
+
+#include <bcrypt.h>
+
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <vector>
+
+#include "service_protocol.h"
+#include "service_server.h"
+
+namespace pokrov::service {
+namespace {
+
+std::uint64_t UnixTimeMilliseconds() {
+  FILETIME file_time{};
+  ::GetSystemTimeAsFileTime(&file_time);
+  ULARGE_INTEGER ticks{};
+  ticks.LowPart = file_time.dwLowDateTime;
+  ticks.HighPart = file_time.dwHighDateTime;
+  return (ticks.QuadPart - 116444736000000000ULL) / 10000ULL;
+}
+
+bool GenerateIdentifier(Identifier* output) {
+  return output != nullptr &&
+         ::BCryptGenRandom(nullptr, output->data(),
+                           static_cast<ULONG>(output->size()),
+                           BCRYPT_USE_SYSTEM_PREFERRED_RNG) == 0 &&
+         !IsZeroIdentifier(*output);
+}
+
+bool TransferExact(HANDLE pipe, void* buffer, std::size_t size, bool write) {
+  auto* bytes = static_cast<std::uint8_t*>(buffer);
+  std::size_t offset = 0;
+  while (offset < size) {
+    DWORD transferred = 0;
+    const DWORD chunk = static_cast<DWORD>(size - offset);
+    const BOOL success = write
+                             ? ::WriteFile(pipe, bytes + offset, chunk,
+                                           &transferred, nullptr)
+                             : ::ReadFile(pipe, bytes + offset, chunk,
+                                          &transferred, nullptr);
+    if (!success || transferred == 0) {
+      return false;
+    }
+    offset += transferred;
+  }
+  return true;
+}
+
+bool WriteFrame(HANDLE pipe, const Frame& frame) {
+  auto bytes = Encode(frame);
+  return !bytes.empty() &&
+         TransferExact(pipe, bytes.data(), bytes.size(), true);
+}
+
+std::optional<Frame> ReadFrame(HANDLE pipe) {
+  std::array<std::uint8_t, kFrameHeaderSize> header{};
+  if (!TransferExact(pipe, header.data(), header.size(), false)) {
+    return std::nullopt;
+  }
+  const auto expected = ExpectedFrameSize(header.data(), header.size());
+  if (!expected.has_value()) {
+    return std::nullopt;
+  }
+  std::vector<std::uint8_t> bytes(*expected);
+  std::copy(header.begin(), header.end(), bytes.begin());
+  if (bytes.size() > header.size() &&
+      !TransferExact(pipe, bytes.data() + header.size(),
+                     bytes.size() - header.size(), false)) {
+    return std::nullopt;
+  }
+  return Decode(bytes.data(), bytes.size());
+}
+
+std::wstring CurrentExecutableDirectory() {
+  std::wstring path(32768, L'\0');
+  const DWORD length = ::GetModuleFileNameW(
+      nullptr, path.data(), static_cast<DWORD>(path.size()));
+  if (length == 0 || length >= path.size()) {
+    return L"";
+  }
+  path.resize(length);
+  const auto separator = path.find_last_of(L"\\/");
+  return separator == std::wstring::npos ? L""
+                                         : path.substr(0, separator + 1);
+}
+
+bool IsExpectedServer(HANDLE pipe) {
+  ULONG server_process_id = 0;
+  if (!::GetNamedPipeServerProcessId(pipe, &server_process_id) ||
+      server_process_id == 0) {
+    return false;
+  }
+  HANDLE process =
+      ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE,
+                    static_cast<DWORD>(server_process_id));
+  if (process == nullptr) {
+    return false;
+  }
+
+  std::wstring image_path(32768, L'\0');
+  DWORD image_length = static_cast<DWORD>(image_path.size());
+  const bool has_path =
+      ::QueryFullProcessImageNameW(process, 0, image_path.data(),
+                                   &image_length) != FALSE;
+  image_path.resize(has_path ? image_length : 0);
+
+  HANDLE token = nullptr;
+  bool is_system = false;
+  if (::OpenProcessToken(process, TOKEN_QUERY, &token)) {
+    DWORD required = 0;
+    ::GetTokenInformation(token, TokenUser, nullptr, 0, &required);
+    std::vector<std::uint8_t> buffer(required);
+    if (required > 0 &&
+        ::GetTokenInformation(token, TokenUser, buffer.data(), required,
+                              &required)) {
+      const auto* user = reinterpret_cast<const TOKEN_USER*>(buffer.data());
+      BYTE system_sid[SECURITY_MAX_SID_SIZE]{};
+      DWORD system_sid_size = sizeof(system_sid);
+      is_system =
+          ::CreateWellKnownSid(WinLocalSystemSid, nullptr, system_sid,
+                               &system_sid_size) != FALSE &&
+          ::EqualSid(user->User.Sid, system_sid) != FALSE;
+    }
+    ::CloseHandle(token);
+  }
+  ::CloseHandle(process);
+
+  const auto expected_path =
+      CurrentExecutableDirectory() + L"pokrov_service.exe";
+  return is_system && !expected_path.empty() && !image_path.empty() &&
+         ::CompareStringOrdinal(expected_path.c_str(), -1, image_path.c_str(),
+                                -1, TRUE) == CSTR_EQUAL;
+}
+
+struct ExchangeResult {
+  ClientProbe probe;
+  std::optional<Frame> response;
+};
+
+ExchangeResult Exchange(Command command, const std::string& body) {
+  ExchangeResult result;
+  if (!::WaitNamedPipeW(kProductionPipeName, 250)) {
+    return result;
+  }
+  HANDLE pipe = ::CreateFileW(kProductionPipeName,
+                              GENERIC_READ | GENERIC_WRITE, 0, nullptr,
+                              OPEN_EXISTING, 0, nullptr);
+  if (pipe == INVALID_HANDLE_VALUE) {
+    return result;
+  }
+  result.probe.available = true;
+  if (!IsExpectedServer(pipe)) {
+    result.probe.state = ClientState::kServerUntrusted;
+    ::CloseHandle(pipe);
+    return result;
+  }
+  result.probe.trusted = true;
+
+  Identifier correlation{};
+  if (!GenerateIdentifier(&correlation)) {
+    ::CloseHandle(pipe);
+    return result;
+  }
+  const Frame hello{
+      FrameKind::kHelloRequest,
+      Command::kHello,
+      Status::kNone,
+      correlation,
+      {},
+      {},
+      0,
+      kCapabilityProtocolV1 | kCapabilityStatus | kCapabilityRuntimeControl,
+      "",
+  };
+  if (!WriteFrame(pipe, hello)) {
+    ::CloseHandle(pipe);
+    return result;
+  }
+  const auto hello_response = ReadFrame(pipe);
+  if (!hello_response.has_value() ||
+      hello_response->kind != FrameKind::kResponse ||
+      hello_response->command != Command::kHello ||
+      hello_response->correlation_id != correlation ||
+      hello_response->status != Status::kOk ||
+      (hello_response->capabilities & kCapabilityProtocolV1) == 0 ||
+      (hello_response->capabilities & kCapabilityStatus) == 0 ||
+      (hello_response->capabilities & kCapabilityRuntimeControl) == 0) {
+    result.probe.state = ClientState::kProtocolIncompatible;
+    ::CloseHandle(pipe);
+    return result;
+  }
+  result.probe.compatible = true;
+
+  Identifier request_correlation{};
+  Identifier operation_nonce{};
+  if (!GenerateIdentifier(&request_correlation) ||
+      !GenerateIdentifier(&operation_nonce)) {
+    ::CloseHandle(pipe);
+    return result;
+  }
+  const Frame request{
+      FrameKind::kRequest,
+      command,
+      Status::kNone,
+      request_correlation,
+      hello_response->session_token,
+      operation_nonce,
+      UnixTimeMilliseconds() + 30000,
+      0,
+      body,
+  };
+  if (!WriteFrame(pipe, request)) {
+    ::CloseHandle(pipe);
+    return result;
+  }
+  result.response = ReadFrame(pipe);
+  ::CloseHandle(pipe);
+  if (!result.response.has_value() ||
+      result.response->kind != FrameKind::kResponse ||
+      result.response->command != command ||
+      result.response->correlation_id != request_correlation ||
+      result.response->session_token != hello_response->session_token) {
+    result.probe.state = ClientState::kProtocolIncompatible;
+    result.response.reset();
+    return result;
+  }
+  result.probe.state = ClientState::kBootstrap;
+  return result;
+}
+
+bool ReadField(const std::string& body, std::size_t* offset,
+               const char* key, std::string* value, bool last) {
+  if (offset == nullptr || value == nullptr || key == nullptr) {
+    return false;
+  }
+  const std::string prefix = std::string(key) + "=";
+  if (body.compare(*offset, prefix.size(), prefix) != 0) {
+    return false;
+  }
+  const auto start = *offset + prefix.size();
+  const auto end = last ? body.size() : body.find(';', start);
+  if (end == std::string::npos || end == start) {
+    return false;
+  }
+  *value = body.substr(start, end - start);
+  *offset = last ? body.size() : end + 1;
+  return true;
+}
+
+bool ParseBool(const std::string& value, bool* output) {
+  if (output == nullptr || (value != "0" && value != "1")) {
+    return false;
+  }
+  *output = value == "1";
+  return true;
+}
+
+bool IsKnownPhase(const std::string& value) {
+  return value == "artifact_missing" || value == "artifact_ready" ||
+         value == "initialized" || value == "config_staged" ||
+         value == "running" || value == "recovery_required";
+}
+
+bool IsKnownFailure(const std::string& value) {
+  static constexpr std::array<const char*, 33> failures = {
+      "none",
+      "core_not_initialized",
+      "core_missing",
+      "runtime_directory_failed",
+      "core_load_failed",
+      "core_abi_incompatible",
+      "core_capabilities_incompatible",
+      "runtime_path_invalid",
+      "core_setup_failed",
+      "profile_request_invalid",
+      "profile_payload_invalid",
+      "profile_write_failed",
+      "profile_security_failed",
+      "runtime_running",
+      "profile_not_staged",
+      "core_start_failed",
+      "core_egress_probe_failed",
+      "core_stop_failed",
+      "recovery_unavailable",
+      "recovery_journal_invalid",
+      "recovery_required",
+      "recovery_generation_failed",
+      "recovery_stage_invalid",
+      "recovery_write_failed",
+      "recovery_core_stop_failed",
+      "recovery_network_unavailable",
+      "recovery_network_capture_failed",
+      "recovery_network_snapshot_invalid",
+      "recovery_network_snapshot_too_large",
+      "recovery_network_owner_ambiguous",
+      "recovery_network_owner_missing",
+      "recovery_network_restore_failed",
+      "runtime_failure",
+  };
+  return std::find_if(failures.begin(), failures.end(),
+                      [&value](const char* candidate) {
+                        return value == candidate;
+                      }) != failures.end();
+}
+
+bool ParseSnapshotBody(const std::string& body,
+                       ServiceRuntimeSnapshot* output) {
+  if (output == nullptr || body.size() > kMaxControlBodySize) {
+    return false;
+  }
+  std::size_t offset = 0;
+  std::string phase;
+  std::string core_ready;
+  std::string can_initialize;
+  std::string can_connect;
+  std::string running;
+  std::string egress;
+  std::string dns_ready;
+  std::string failure;
+  if (!ReadField(body, &offset, "phase", &phase, false) ||
+      !ReadField(body, &offset, "core_ready", &core_ready, false) ||
+      !ReadField(body, &offset, "can_initialize", &can_initialize, false) ||
+      !ReadField(body, &offset, "can_connect", &can_connect, false) ||
+      !ReadField(body, &offset, "running", &running, false) ||
+      !ReadField(body, &offset, "core_egress_validated", &egress, false) ||
+      !ReadField(body, &offset, "dns_ready", &dns_ready, false) ||
+      !ReadField(body, &offset, "failure", &failure, true) ||
+      offset != body.size() || !IsKnownPhase(phase) ||
+      !IsKnownFailure(failure) ||
+      !ParseBool(core_ready, &output->core_ready) ||
+      !ParseBool(can_initialize, &output->can_initialize) ||
+      !ParseBool(can_connect, &output->can_connect) ||
+      !ParseBool(running, &output->running) ||
+      !ParseBool(egress, &output->core_egress_validated) ||
+      !ParseBool(dns_ready, &output->dns_ready)) {
+    return false;
+  }
+  if ((phase == "running") != output->running ||
+      output->dns_ready != output->core_egress_validated ||
+      output->running != output->core_egress_validated ||
+      (output->running && !output->core_ready) ||
+      (output->can_connect && !output->core_ready)) {
+    return false;
+  }
+  output->phase = phase;
+  output->failure = failure;
+  return true;
+}
+
+}  // namespace
+
+ClientProbe ProbeInstalledService() {
+  const auto snapshot = InvokeInstalledService(Command::kStatus, "");
+  ClientProbe result;
+  result.state = snapshot.client_state;
+  result.available = snapshot.available;
+  result.trusted = snapshot.trusted;
+  result.compatible = snapshot.compatible;
+  result.runtime_ready = snapshot.core_ready;
+  return result;
+}
+
+ServiceRuntimeSnapshot InvokeInstalledService(Command command,
+                                              const std::string& body) {
+  ServiceRuntimeSnapshot result;
+  const auto exchange = Exchange(command, body);
+  result.client_state = exchange.probe.state;
+  result.available = exchange.probe.available;
+  result.trusted = exchange.probe.trusted;
+  result.compatible = exchange.probe.compatible;
+  if (!exchange.response.has_value()) {
+    return result;
+  }
+  result.status = exchange.response->status;
+  result.command_accepted = result.status == Status::kOk;
+  if (!ParseSnapshotBody(exchange.response->body, &result)) {
+    result.client_state = ClientState::kProtocolIncompatible;
+    result.compatible = false;
+    result.command_accepted = false;
+    return result;
+  }
+  result.client_state = result.core_ready ? ClientState::kReady
+                                          : ClientState::kBootstrap;
+  return result;
+}
+
+const char* ClientStateName(ClientState state) {
+  switch (state) {
+    case ClientState::kUnavailable:
+      return "unavailable";
+    case ClientState::kServerUntrusted:
+      return "server_untrusted";
+    case ClientState::kProtocolIncompatible:
+      return "protocol_incompatible";
+    case ClientState::kBootstrap:
+      return "service_bootstrap";
+    case ClientState::kReady:
+      return "service_ready";
+  }
+  return "protocol_incompatible";
+}
+
+}  // namespace pokrov::service

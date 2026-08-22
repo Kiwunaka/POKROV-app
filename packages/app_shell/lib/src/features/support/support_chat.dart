@@ -5,8 +5,10 @@ class _SupportChatScreen extends StatefulWidget {
     required this.appContext,
     required this.selectedRouteMode,
     required this.statusLabel,
+    required this.runtimeSnapshot,
     required this.extraDiagnostics,
     required this.supportTicketService,
+    required this.observability,
     required this.askAssistant,
     required this.onOpenHandoff,
     required this.promoSlot,
@@ -16,8 +18,10 @@ class _SupportChatScreen extends StatefulWidget {
   final SeedAppContext appContext;
   final RouteMode selectedRouteMode;
   final String statusLabel;
+  final RuntimeSnapshot? runtimeSnapshot;
   final Map<String, Object?> extraDiagnostics;
   final SupportTicketService supportTicketService;
+  final PokrovClientObservability? observability;
 
   /// Knowledge-base question -> answer lane for the AI assistant sheet.
   /// `null` hides the entry point (no client data service available).
@@ -33,13 +37,13 @@ class _SupportChatScreen extends StatefulWidget {
   State<_SupportChatScreen> createState() => _SupportChatScreenState();
 }
 
-class _SupportChatScreenState extends State<_SupportChatScreen> {
-  static const _threadPollInterval = Duration(seconds: 10);
-
+class _SupportChatScreenState extends State<_SupportChatScreen>
+    with WidgetsBindingObserver {
   late final TextEditingController _composer;
   late final FocusNode _composerFocusNode;
   late final ScrollController _messageListController;
-  Timer? _threadPollTimer;
+  late final SupportPollingCoordinator _threadPolling;
+  bool _supportPollingForeground = true;
   bool _sending = false;
   bool _loadingThread = true;
   bool _refreshingThread = false;
@@ -51,10 +55,18 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
   String? _sendError;
   List<_SupportChatMessage> _messages = _supportGreetingMessages();
   bool _attachDiagnosticsToNextMessage = false;
+  bool _sendingBundle = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    final lifecycleState = WidgetsBinding.instance.lifecycleState;
+    _supportPollingForeground =
+        lifecycleState == null || lifecycleState == AppLifecycleState.resumed;
+    _threadPolling = SupportPollingCoordinator(
+      onPoll: () => _refreshActiveThread(pollingOwned: true),
+    );
     _composer = TextEditingController();
     _composerFocusNode = FocusNode(debugLabel: 'support-composer');
     _messageListController = ScrollController(
@@ -65,11 +77,18 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
 
   @override
   void dispose() {
-    _threadPollTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _threadPolling.dispose();
     _composerFocusNode.dispose();
     _messageListController.dispose();
     _composer.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _supportPollingForeground = state == AppLifecycleState.resumed;
+    _syncThreadPolling();
   }
 
   /// Keeps the freshly appended message visible: after the frame with the
@@ -179,40 +198,38 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
   }
 
   void _syncThreadPolling() {
-    _threadPollTimer?.cancel();
-    _threadPollTimer = null;
-    if (!mounted ||
-        _ticketId == null ||
-        _threadClosed ||
-        _loadingThread ||
-        _threadError != null) {
-      return;
-    }
-    _threadPollTimer = Timer.periodic(
-      _threadPollInterval,
-      (_) => unawaited(_refreshActiveThread()),
+    _threadPolling.configure(
+      eligible: mounted &&
+          _ticketId != null &&
+          !_threadClosed &&
+          !_loadingThread &&
+          !_sending &&
+          !_refreshingThread &&
+          _threadError == null,
+      foreground: _supportPollingForeground,
     );
   }
 
-  Future<void> _refreshActiveThread() async {
+  Future<bool> _refreshActiveThread({bool pollingOwned = false}) async {
     final activeTicketId = _ticketId;
     if (activeTicketId == null ||
         _threadClosed ||
         _loadingThread ||
         _sending ||
         _refreshingThread) {
-      return;
+      return true;
     }
     setState(() {
       _refreshingThread = true;
     });
+    _syncThreadPolling();
     try {
       final thread = await widget.supportTicketService.getTicket(
         hostPlatform: widget.appContext.hostPlatform,
         ticketId: activeTicketId,
       );
       if (!mounted) {
-        return;
+        return false;
       }
       setState(() {
         _refreshingThread = false;
@@ -220,14 +237,22 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
         _applyThread(thread);
       });
       _syncThreadPolling();
+      if (!pollingOwned) {
+        _threadPolling.recordExternalResult(success: true);
+      }
+      return true;
     } catch (_) {
       if (!mounted) {
-        return;
+        return false;
       }
       setState(() {
         _refreshingThread = false;
         _threadRefreshFailed = true;
       });
+      if (!pollingOwned) {
+        _threadPolling.recordExternalResult(success: false);
+      }
+      return false;
     }
   }
 
@@ -281,6 +306,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
       _messages.add(pendingMessage);
       _sending = true;
     });
+    _syncThreadPolling();
     _scrollToLatestMessage();
 
     try {
@@ -363,6 +389,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
         _messages.remove(pendingMessage);
         _sendError = 'Сообщение не отправлено. Проверьте интернет и повторите.';
       });
+      _syncThreadPolling();
     }
   }
 
@@ -383,6 +410,31 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
       'connection_status': widget.statusLabel,
       'warp_status': _safeWarpSummary(),
     };
+  }
+
+  PreparedSupportBundle _prepareSupportBundlePreview() {
+    return preparePokrovClientSupportBundle(
+      hostPlatform: widget.appContext.hostPlatform,
+      routeMode: widget.selectedRouteMode,
+      snapshot: widget.runtimeSnapshot,
+      warpState: _supportBundleWarpState(),
+      now: DateTime.now().toUtc(),
+      appVersion: pokrovClientVersion,
+      buildNumber: pokrovClientBuildNumber,
+      releaseChannel: pokrovClientReleaseChannel,
+      candidateLabel: pokrovClientCandidateLabel,
+    );
+  }
+
+  String _supportBundleWarpState() {
+    if (widget.extraDiagnostics['enhanced_protection_consent'] == true) {
+      final state = widget.extraDiagnostics['enhanced_protection_state'];
+      return state == 'fallback' ? 'fallback' : 'enabled';
+    }
+    if (widget.extraDiagnostics['enhanced_protection_available'] == true) {
+      return 'disabled';
+    }
+    return 'unavailable';
   }
 
   String _safeWarpSummary() {
@@ -536,6 +588,34 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
   }
 
   void _showDiagnosticsPreview() {
+    late final PreparedSupportBundle prepared;
+    try {
+      prepared = _prepareSupportBundlePreview();
+    } on Object {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Не удалось безопасно подготовить предпросмотр.'),
+        ),
+      );
+      return;
+    }
+    final preview = prepared.preview;
+    final supportCode = pokrovSupportDiagnosticCode(
+      prepared: prepared,
+      hostPlatform: widget.appContext.hostPlatform,
+      routeMode: widget.selectedRouteMode,
+      snapshot: widget.runtimeSnapshot,
+      appVersion: pokrovClientVersion,
+      buildNumber: pokrovClientBuildNumber,
+      generatedAt: DateTime.now().toUtc(),
+    );
+    final ticketService = widget.supportTicketService;
+    final SupportBundleTransferService? bundleService =
+        ticketService is SupportBundleTransferService
+            ? ticketService as SupportBundleTransferService
+            : null;
+    final encryptedDeliveryAvailable =
+        bundleService?.supportBundleEncryptionConfigured ?? false;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -567,7 +647,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Что отправим',
+                                'Предпросмотр диагностики',
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleLarge
@@ -577,6 +657,105 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                                     ),
                               ),
                               const SizedBox(height: 12),
+                              _KeyValueLine(
+                                label: 'Код поддержки',
+                                value: supportCode,
+                              ),
+                              const SizedBox(height: 4),
+                              Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 8,
+                                runSpacing: 4,
+                                children: [
+                                  OutlinedButton.icon(
+                                    key: const ValueKey(
+                                      'support-diagnostics-copy-code',
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      minimumSize: const Size(0, 44),
+                                    ),
+                                    onPressed: () {
+                                      Clipboard.setData(
+                                        ClipboardData(
+                                          text: supportCode,
+                                        ),
+                                      );
+                                      showPokrovSnack(
+                                        context,
+                                        'Код поддержки скопирован.',
+                                        tone: PokrovSnackTone.success,
+                                      );
+                                    },
+                                    icon: const Icon(
+                                      Icons.copy_rounded,
+                                      size: 18,
+                                    ),
+                                    label: const Text('Скопировать код'),
+                                  ),
+                                  Text(
+                                    'Его можно передать поддержке без загрузки файла.',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(color: p.muted),
+                                  ),
+                                ],
+                              ),
+                              const _KeyValueLine(
+                                label: 'Профиль',
+                                value: 'Краткий',
+                              ),
+                              _KeyValueLine(
+                                label: 'Категории',
+                                value: preview.categories
+                                    .map(_diagnosticCategoryLabel)
+                                    .join(', '),
+                              ),
+                              _KeyValueLine(
+                                label: 'Размер',
+                                value: '${preview.totalPlaintextBytes} байт',
+                              ),
+                              _KeyValueLine(
+                                label: 'Удалено полей',
+                                value: '${preview.removedFieldCount}',
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Файлы пакета',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelLarge
+                                    ?.copyWith(
+                                      color: p.ink,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              for (final file in preview.files)
+                                _KeyValueLine(
+                                  label: file.path,
+                                  value: '${file.size} байт',
+                                ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Не включены: система, события и сбои. Это дополнительные категории других профилей.',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: p.muted, height: 1.3),
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                'Краткая сводка для сообщения',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelLarge
+                                    ?.copyWith(
+                                      color: p.ink,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                              const SizedBox(height: 6),
                               _KeyValueLine(
                                 label: 'Устройство',
                                 value: widget.appContext.hostPlatform.label,
@@ -601,7 +780,9 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                               ),
                               const SizedBox(height: 10),
                               Text(
-                                'Прикрепим только краткую безопасную сводку: устройство, версию приложения, статус VPN, режим и WARP.',
+                                encryptedDeliveryAvailable
+                                    ? 'Пакет будет зашифрован на проверенный подписанный ключ поддержки. При обрыве сети сохранится только зашифрованный файл для безопасного повтора.'
+                                    : 'Зашифрованный пакет выше не отправляется без отдельного шифрования на подписанный ключ поддержки. Код диагностики и показанная краткая сводка остаются доступны без загрузки.',
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodySmall
@@ -643,8 +824,33 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
                               Icons.attach_file_rounded,
                               size: 18,
                             ),
-                            label: const Text('Прикрепить к сообщению'),
+                            label: const Text('Добавить краткую сводку'),
                           ),
+                          if (encryptedDeliveryAvailable)
+                            FilledButton.icon(
+                              key: const ValueKey(
+                                'support-diagnostics-send-encrypted',
+                              ),
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size(0, 48),
+                              ),
+                              onPressed: _sendingBundle
+                                  ? null
+                                  : () {
+                                      Navigator.of(context).maybePop();
+                                      unawaited(
+                                        _sendEncryptedSupportBundle(
+                                          prepared,
+                                          bundleService!,
+                                        ),
+                                      );
+                                    },
+                              icon: const Icon(
+                                Icons.lock_outline_rounded,
+                                size: 18,
+                              ),
+                              label: const Text('Отправить зашифрованно'),
+                            ),
                         ],
                       ),
                     ],
@@ -656,6 +862,66 @@ class _SupportChatScreenState extends State<_SupportChatScreen> {
         );
       },
     );
+  }
+
+  Future<void> _sendEncryptedSupportBundle(
+    PreparedSupportBundle prepared,
+    SupportBundleTransferService service,
+  ) async {
+    if (_sendingBundle) {
+      return;
+    }
+    setState(() {
+      _sendingBundle = true;
+    });
+    widget.observability?.recordSupportBundleStarted();
+    try {
+      final result = await service.deliverSupportBundle(
+        hostPlatform: widget.appContext.hostPlatform,
+        prepared: prepared,
+        caseSummary:
+            'Версия $pokrovClientVersion; ${widget.appContext.hostPlatform.name}; режим ${widget.selectedRouteMode.name}; диагностика приложения.',
+        ticketId: _ticketId,
+      );
+      widget.observability?.recordSupportBundleFinished(prepared: prepared);
+      if (!mounted) {
+        return;
+      }
+      final message = result.state == SupportBundleDeliveryState.queued
+          ? 'Зашифрованная диагностика поставлена в очередь поддержки.'
+          : 'Сеть недоступна. Зашифрованный пакет сохранен на устройстве для повтора.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } on SupportBundleTransferFailure catch (error) {
+      widget.observability?.recordSupportBundleFinished(
+        prepared: prepared,
+        errorCode: _supportBundleOperationalErrorCode(error),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
+        );
+      }
+    } on Object catch (error) {
+      widget.observability?.recordSupportBundleFinished(
+        prepared: prepared,
+        errorCode: _supportBundleOperationalErrorCode(error),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Не удалось подготовить зашифрованную диагностику.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _sendingBundle = false;
+        });
+      }
+    }
   }
 
   @override
@@ -1005,7 +1271,7 @@ class _SupportDiagnosticsQueuedPill extends StatelessWidget {
             Icon(Icons.verified_user_outlined, size: 16, color: p.accent),
             const SizedBox(width: 6),
             Text(
-              'Диагностика будет приложена',
+              'Краткая сводка будет приложена',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: p.ink,
                     fontWeight: FontWeight.w700,
@@ -1014,7 +1280,7 @@ class _SupportDiagnosticsQueuedPill extends StatelessWidget {
             const SizedBox(width: 4),
             IconButton(
               key: const ValueKey('support-diagnostics-clear'),
-              tooltip: 'Не прикладывать',
+              tooltip: 'Не прикладывать сводку',
               visualDensity: VisualDensity.compact,
               iconSize: 16,
               constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
@@ -1028,6 +1294,16 @@ class _SupportDiagnosticsQueuedPill extends StatelessWidget {
     );
   }
 }
+
+String _diagnosticCategoryLabel(DiagnosticCategory category) =>
+    switch (category) {
+      DiagnosticCategory.build => 'сборка',
+      DiagnosticCategory.system => 'система',
+      DiagnosticCategory.network => 'сеть',
+      DiagnosticCategory.events => 'события',
+      DiagnosticCategory.crashes => 'сбои',
+      DiagnosticCategory.redaction => 'очистка',
+    };
 
 enum _SupportChatRole { user, assistant, operator }
 
@@ -2329,28 +2605,6 @@ class _AssistantThinkingStatus extends StatelessWidget {
       ),
     );
   }
-}
-
-String _consumerProtectionStatusLabel(
-  RuntimeSnapshot? snapshot, {
-  bool busy = false,
-  bool disconnecting = false,
-}) {
-  // One status dialect across the app:
-  // «Подключаемся…» / «Подключено» / «Отключаем…» / «Не защищено».
-  if (busy) {
-    return disconnecting ? 'Отключаем…' : 'Подключаемся…';
-  }
-  if (snapshot == null) {
-    return 'Проверяем статус';
-  }
-  if (snapshot.phase == RuntimePhase.running) {
-    return snapshot.isCleanlyHealthy ? 'Подключено' : 'Нужно внимание';
-  }
-  if (snapshot.phase == RuntimePhase.artifactMissing) {
-    return 'Недоступно';
-  }
-  return 'Не защищено';
 }
 
 String? _motionRecoveryNotice(

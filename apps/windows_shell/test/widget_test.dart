@@ -12,7 +12,10 @@ void main() {
     final runnerResource = File('windows/runner/Runner.rc');
     expect(await runnerResource.exists(), isTrue);
 
-    final content = await runnerResource.readAsString();
+    final content = (await runnerResource.readAsString()).replaceAll(
+      '\r\n',
+      '\n',
+    );
     expect(content, contains('#else\n FILEFLAGS 0x0L'));
     expect(content, isNot(contains('VS_FF_PRERELEASE')));
   });
@@ -206,16 +209,21 @@ void main() {
     expect(calls, ['destroyTray', 'destroyWindow']);
   });
 
-  test('windows elevated continuation is explicit and exact', () {
-    expect(windows_shell.pokrovWindowsShouldAutoConnect(['--connect']), isTrue);
+  test('windows startup and acquisition arguments are explicit and exact', () {
     expect(
-      windows_shell.pokrovWindowsShouldAutoConnect(['--connected']),
+      windows_shell.pokrovWindowsShouldStartHidden(['--startup']),
+      isTrue,
+    );
+    expect(
+      windows_shell.pokrovWindowsShouldStartHidden([
+        '--startup',
+        'pokrov://acquisition/continue?result=success',
+      ]),
       isFalse,
     );
-    expect(windows_shell.pokrovWindowsShouldAutoConnect([]), isFalse);
   });
 
-  test('windows tunnel authorization stops when UAC relaunch is denied',
+  test('windows tunnel authorization accepts the authenticated service',
       () async {
     const channel = MethodChannel('space.pokrov/windows-shell');
     final messenger =
@@ -223,10 +231,36 @@ void main() {
     final calls = <String>[];
     messenger.setMockMethodCallHandler(channel, (call) async {
       calls.add(call.method);
-      return switch (call.method) {
-        'isElevated' => false,
-        'relaunchElevated' => false,
-        _ => null,
+      return <String, Object?>{
+        'state': 'service_bootstrap',
+        'available': true,
+        'trusted': true,
+        'compatible': true,
+        'runtimeReady': false,
+      };
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    expect(
+      await requestPokrovWindowsTunnelAuthorization(HostPlatform.windows),
+      PokrovWindowsTunnelAuthorization.allowed,
+    );
+    expect(calls, ['readServiceStatus']);
+  });
+
+  test('windows tunnel authorization rejects an untrusted service', () async {
+    const channel = MethodChannel('space.pokrov/windows-shell');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final calls = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call.method);
+      return <String, Object?>{
+        'state': 'server_untrusted',
+        'available': true,
+        'trusted': false,
+        'compatible': false,
+        'runtimeReady': false,
       };
     });
     addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
@@ -235,25 +269,54 @@ void main() {
       await requestPokrovWindowsTunnelAuthorization(HostPlatform.windows),
       PokrovWindowsTunnelAuthorization.denied,
     );
-    expect(calls, ['isElevated', 'relaunchElevated']);
+    expect(calls, ['readServiceStatus']);
   });
 
-  test('windows elevation preflight does not trigger UAC', () async {
+  test('windows service status accepts a consistent authenticated probe',
+      () async {
     const channel = MethodChannel('space.pokrov/windows-shell');
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     final calls = <String>[];
     messenger.setMockMethodCallHandler(channel, (call) async {
       calls.add(call.method);
-      return call.method == 'isElevated';
+      return <String, Object?>{
+        'state': 'service_ready',
+        'available': true,
+        'trusted': true,
+        'compatible': true,
+        'runtimeReady': true,
+      };
     });
     addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
-    expect(
-      await readPokrovWindowsProcessElevated(HostPlatform.windows),
-      isTrue,
+    final status = await readPokrovWindowsServiceStatus(HostPlatform.windows);
+
+    expect(status.state, PokrovWindowsServiceState.serviceReady);
+    expect(status.available, isTrue);
+    expect(status.trusted, isTrue);
+    expect(status.compatible, isTrue);
+    expect(status.runtimeReady, isTrue);
+    expect(calls, ['readServiceStatus']);
+  });
+
+  test('windows service status rejects inconsistent or unsupported input',
+      () async {
+    final malformed = PokrovWindowsServiceStatus.fromMap(
+      const <String, Object?>{
+        'state': 'service_ready',
+        'available': true,
+        'trusted': false,
+        'compatible': true,
+        'runtimeReady': true,
+      },
     );
-    expect(calls, ['isElevated']);
+    expect(malformed.state, PokrovWindowsServiceState.unavailable);
+    expect(malformed.available, isFalse);
+    expect(
+      (await readPokrovWindowsServiceStatus(HostPlatform.android)).state,
+      PokrovWindowsServiceState.unavailable,
+    );
   });
 
   testWidgets('windows shell boots the shared protection surface', (
@@ -286,13 +349,10 @@ void main() {
     expect(find.text('Connect now'), findsNothing);
     final connectAction = find.byKey(const ValueKey('primary-connect-action'));
     expect(connectAction, findsOneWidget);
-    expect(
-      find.descendant(
-        of: connectAction,
-        matching: find.text('Пока недоступно'),
-      ),
-      findsOneWidget,
+    final focusable = tester.widget<FocusableActionDetector>(
+      find.byKey(const ValueKey('primary-connect-focusable')),
     );
+    expect(focusable.enabled, isFalse);
     expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
     expect(find.text('Дополнительная защита'), findsOneWidget);
   });

@@ -35,11 +35,15 @@ The backend must create a real account, a real device record, a real app session
    - `client_policy`
    - `access`
    - `provisioning`
-9. the app silently imports the managed profile
+9. the shell changes to `Quick Connect`
 10. the app asks `How should this device work?` before the first live route activation
 11. the app saves the chosen per-device route policy
-12. the shell changes to `Quick Connect`
-13. only after the runtime settles in `RuntimePhase.running`, the app reports
+12. the app resolves and silently imports the managed profile
+13. on Android, the app explains the system VPN permission and only then lets
+    the host show `VpnService.prepare`; dismissal leaves Home disconnected and
+    denial exposes an explicit retry instead of a dead end
+14. the host starts the requested connection
+15. only after the runtime settles in a cleanly verified running state, the app reports
     connected runtime state and completes account onboarding through the active
     app session
 
@@ -48,6 +52,14 @@ UX guardrail:
 - until provisioning succeeds with a real subscription payload, `Locations` stays behind an activation gate and must not render fake/demo countries
 - a tap, permission prompt, timeout, or failed connection must not dismiss the
   first-connect milestone
+- rendering the welcome gate alone must not start a trial or authenticated
+  account refresh; access creation begins after trial selection, a valid
+  acquisition continuation, successful restore, or a persisted completed flow
+- invalid, expired, replayed, or wrong-host acquisition continuation never
+  hides or disables either `Начать бесплатно` or restore
+- authenticated first-session analytics use the server-derived account/device
+  identity and a fixed safe vocabulary. The client never sends the opaque
+  acquisition handle, session token, profile, endpoint, or raw host detail.
 
 ## Account Experience And Connection Evidence
 
@@ -120,8 +132,11 @@ Behavior rules:
 - Windows should back that path with an executable or process picker
 - Android should back that path with an installed-package picker
 - the saved route mode must remain editable later from a dedicated route-mode screen
-- if the chosen mode requires elevated rights on desktop, the app must tell the user before connect and guide a relaunch as administrator
-- raw system-proxy, service-mode, and low-level transport toggles stay outside the first-layer onboarding path
+- Windows installation or explicit service repair may require UAC; ordinary
+  connect must keep the UI unelevated and use the authenticated installed
+  service
+- raw service controls and low-level transport toggles stay outside the
+  first-layer onboarding path; the retired system-proxy mode is migration-only
 
 Current implementation bridge:
 
@@ -182,9 +197,10 @@ Internal staged `support_context` controls:
   `fragment_fallback_delay` apply only to VLESS + REALITY over TCP. The control
   defaults off and is not a public user setting; production activation requires
   PCAP and RU LTE/5G evidence.
-- `tun_mtu` accepts only `1280`, `1400`, `1492`, `1500`, or `9000` for a managed
-  backtest matrix. Unsupported values fall back to `9000`; no new default is
-  selected without blocked-ICMP, large-transfer, and QUIC evidence.
+- `tun_mtu` accepts any integer in `1280..1500`. Missing, malformed and
+  out-of-range values use the conservative `1280` default. The Android host
+  validates the range again and applies a usable active-interface MTU ceiling
+  immediately before TUN creation; `9000` is never a fallback.
 
 WARP policy rule:
 
@@ -367,6 +383,17 @@ The client does not fingerprint the device or infer attribution from IP, user
 agent, or timestamps. Only a successfully consumed server handoff may connect a
 browser campaign to an install/account. A missing, expired, replayed, or wrong
 purpose handle remains `unknown`.
+
+While the welcome gate is visible, the app may show only a safe `confirming`,
+`linked`, or `not applied` acquisition notice. It never displays a manual
+handoff code. Consumption and duplicate suppression live in the shared
+first-session coordinator; a failed consume leaves both normal access choices
+active. The first-session events are `app_first_open`,
+`acquisition_handoff_received|failed`, `trial_start_selected`,
+`existing_access_selected`, `vpn_permission_explainer_shown`,
+`vpn_permission_result`, `first_home_seen`, `connect_requested`, and
+`first_verified_connect`. First-open/home/verified milestones do not replay
+after their persisted local completion boundary.
 
 ### Emergency offline readiness
 

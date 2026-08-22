@@ -1,13 +1,18 @@
 # Client Motion Performance Checklist
 
-Last updated: 2026-06-05
+Last updated: 2026-08-22
 
-Use this checklist when refreshing the `1.0.0-beta` Android/Windows client after motion or connect-ritual changes.
+Registry class: `ACTIVE_EXECUTION`.
+
+Use this checklist for the `1.2.x` Android/Windows client after motion,
+connection or observability changes. The platform-owned contract is
+`shared/contracts/performance/performance-budgets.v1.json` in the sibling
+platform repository; this document owns the client capture procedure only.
 
 ## Scope
 
 - Android outside-store APK visual QA.
-- Windows unsigned beta visual QA.
+- Windows outside-store unsigned exact-candidate visual QA.
 - Shared Flutter shell surfaces: Protection, Locations, Rules, Profile, Support chat, Rewards, WARP / enhanced privacy tile.
 
 ## Required Viewports
@@ -39,3 +44,58 @@ Use this checklist when refreshing the `1.0.0-beta` Android/Windows client after
 - Keep screenshots free of raw configs, subscription links, keys, hostnames, or hidden topology.
 - If performance tooling is available, capture whether animation stays near 60 FPS during connect, sidebar collapse, support chat open, and rewards hub open.
 - If a check requires a physical device, record it as `MANUAL_OWNER_TEST` rather than blocking local code review.
+
+## Versioned capture protocol
+
+Every retained run names the exact app version, candidate label, 40-character
+client revision, artifact SHA-256, clean/dirty state, platform/OS/device/CPU
+architecture, release/profile mode, power mode, network profile, collector
+version and UTC capture time. Compare a regression only when the gate-produced
+environment fingerprints match. Three warmups and 20 retained runs are the
+minimum for cold start/connect/rollback; frame evidence discards 60 frames and
+retains at least 600; idle evidence stabilizes for 30 samples and retains 60.
+
+Capture these raw values:
+
+- Android/Windows cold start: OS process launch to the first useful Protection
+  frame. `adb am start -W` alone is not accepted because it cannot prove the
+  useful POKROV frame.
+- Connect/reconnect/disconnect: monotonic time from the user intent to the
+  matching verified/rollback terminal event for the same generation. A green UI
+  label without DNS and egress proof is not a terminal sample.
+- Frame build/raster: Flutter profile-mode `FrameTiming` values while scrolling
+  Locations, Rules and Profile and while exercising the connect ritual. Debug
+  mode and six-frame `gfxinfo` samples are not release evidence.
+- Windows idle: after stabilization, collect CPU or working-set samples from the
+  exact UI/service processes with the client helper. Android idle CPU/PSS uses
+  the selected physical-device profiler; record no domains, config or process
+  command lines.
+- APK/installer size: collect the exact candidate byte length, then compare it
+  with the prior same-kind artifact baseline.
+
+The client helper writes numeric arrays only:
+
+```powershell
+pwsh -File .\scripts\collect-client-performance-samples.ps1 `
+  -Mode WindowsIdleCpu -TargetProcessId <pid> -Warmups 30 -Samples 60 `
+  -OutputPath <temporary-path>\windows-idle-cpu.json
+
+pwsh -File .\scripts\collect-client-performance-samples.ps1 `
+  -Mode ArtifactSize -ArtifactPath <exact-candidate> `
+  -OutputPath <temporary-path>\artifact-size.json
+```
+
+For Android/profile-mode sources, first export a numeric JSON array from the
+approved profiler, then use `-Mode RecordedSamples -InputPath ... -Samples ...`.
+Normalize each array with the platform
+`scripts/new_performance_evidence.py`; validate it with
+`scripts/performance_budget_gate.py`. The builder never turns
+`MANUAL_OWNER_TEST` or `BLOCKED_BY_ACCESS` into `PASS`.
+
+## Current 1.2.0 evidence state
+
+- capture contract, numeric client helper and its executable contract test:
+  `PASS` locally;
+- Android/Windows exact-candidate cold start, verified connect, frame and idle
+  baselines: `MANUAL_OWNER_TEST`;
+- signed artifact-size regression: `MANUAL_OWNER_TEST`.

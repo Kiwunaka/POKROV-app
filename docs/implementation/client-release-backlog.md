@@ -1,267 +1,71 @@
 # POKROV Client Release Backlog
 
-Last updated: 2026-08-17
+Last updated: 2026-08-22
 
 ## Document Status
 
 Registry class: `ACTIVE_EXECUTION`.
 
-This file tracks current manual gates and follow-up work for
-`POKROV-app/main`. Dated build, upload, and handoff entries below are evidence
-for their recorded candidate; they do not become reusable release passes.
+This file contains only the current client release queue. Candidate-specific
+results belong in dated evidence and never become reusable release approval.
 
-## Current Status
+## Current Release Line
 
-The current public stable source is `1.1.2+25` for Android and Windows. It keeps
-the official APK/EXE as the consumer path, reserves personal subscription keys
-for the Apple compatibility path, and replaces the technical protection sheet
-with plain user-facing connection states. Exact Android and Windows artifacts
-are published at `v1.1.2`; all eight public assets have exact GitHub size/SHA-256
-metadata and accept anonymous range downloads. Production reports exact stable
-`1.1.2` latest/min-supported metadata with a required Russian update response.
-The signed x86_64 build updated on LDPlayer with the session preserved and the
-final Home/protection screens retained. Exact Huawei arm64 and Windows clean-TUN
-proof remain manual gates for stronger network claims.
+| Fact | Current state |
+|---|---|
+| Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
+| Working package target | `1.2.0+30` |
+| Working target state | `PRE_CANDIDATE_LOCAL` |
+| Candidate created | `false` |
+| Public cutover allowed for a new candidate | `false` |
+| Google Play | `NOT_REQUESTED` |
+| Active Core artifact | POKROV Core `1.0.3` |
+| Intended Core replacement | `1.1.0`, exact replacement artifact pending |
 
-The app-first foundation and consumer information architecture are in place.
-The published `1.0.0-beta` URLs, hashes, and upload/download checks remain
-historical exact-candidate evidence; they do not describe the current channel.
-The `1.1.2` production promotion and runtime sync are closed. A later public
-candidate still needs exact-candidate Android signing and release proof;
-trusted Windows signing and RU-origin evidence remain follow-up gates for
-stronger claims.
+`config/release-handoff.seed.json` owns the public release and development
+target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
 
-As of the final `2026-06-05` closure pass, repo-side P0-P6 implementation,
-authenticated GitHub release upload/checksum proof, Android build-tool refresh,
-and handoff metadata alignment are retained for that historical beta. Later
-stable passes supersede its release state. Current open items are the explicit
-endurance, clean Windows TUN/DNS, signing/trust, RU-origin, and store gates.
+## Current Local Completion
 
-Latest documented repo-level gate note:
+- Android, Windows and app-shell package versions match `1.2.0+30`.
+- Strict release-handoff v2 generation and client/Core parity pass locally.
+- The retained `1.1.6` stable pointer is hash-bound to its versioned rollback
+  target, and an isolated fixture proves byte-identical A→B→A pointer reversal.
+- Release notes and visible client version share the manifest-validated
+  package identity.
+- Android uses separate direct and store update authorities.
+- Windows uses the service-first privilege boundary in current source.
+- Local observability, diagnostics and support-bundle contracts are present.
 
-- the latest recorded full `python scripts/release_orchestrator.py --gates-only` success snapshot remains the `2026-04-13` run from the platform workspace
-- the `2026-05-15` platform evidence pack adds runtime handoff, live-origin, and payment/email proof for the outside-store beta
-- the `2026-06-04` local RC pack adds exact-candidate Android release-smoke
-  APK/AAB and Windows unsigned packaging evidence
-- the `2026-06-05` Phase 6 handoff refreshes `1.0.0-beta` Android APK,
-  Windows unsigned setup/ZIP/manifest, GitHub prerelease upload, and handoff
-  metadata
-- the later `2026-06-05` Android toolchain refresh upgrades the Android host
-  lane to Gradle `8.11.1`, Android Gradle Plugin `8.9.1`, and Kotlin
-  `2.1.0`, then re-verifies Android analyze/test/APK/AAB without the older
-  Flutter Gradle/AGP/Kotlin future-support warnings; the GitHub prerelease
-  Android APK and `SHA256SUMS.txt` were refreshed after this rebuild
-- owner decision on `2026-06-04`: the recorded beta wave used accepted signing
-  limitations; that dated decision is evidence, not approval to rebuild,
-  republish, or sync a later candidate
-- live app-session runtime download smoke still needs owner/operator proof for
-  the exact `1.0.0-beta` payload rather than relying on local green snapshots
-- Android physical-device audit is operator-attested for this beta wave; do not describe it as raw repo evidence unless a retained audit artifact is attached
+These are source and fixture results. They are not exact-candidate, device,
+signing, hosted-CI, deployed-runtime or promotion proof.
 
-Already verified locally by the current engineering lane:
+## Open Gate Queue
 
-- app-first `Try free` bootstrap with real session persistence
-- client no longer sends caller-controlled `trial_days`; the backend owns the canonical 5-day trial
-- silent managed-profile import and activation
-- quick-connect shell flow
-- route-mode onboarding groundwork
-- consumer-first `Protection / Locations / Rules / Profile` shell structure
-- browser checkout continuation from the app
-- support context preparation and ticket-backed continuation contracts
-- native support inbox adapter for ticket list, ticket load, first ticket
-  creation, follow-up replies, and redacted diagnostics-on-create
-- native profile code entry through `POST /api/redeem` for access keys
-- app -> cabinet continuation through short-lived `POST /api/client/cabinet-token`
-  handoff URLs and one-time `POST /api/auth/cabinet-handoff/exchange`
-- native Telegram reward actions through `POST /api/client/telegram/link`,
-  `POST /api/channel/subscriber/check`, and
-  `POST /api/bonuses/channel/claim`
-- Profile/Account reward rows plus the Rewards Hub for Telegram bonus,
-  referral, promo slots, wheel, calendar, achievements, and history; mutating
-  reward actions stay backend-flagged and quiet until rollout approval
-- `2026-06-03` Task 8 local verification:
-  - root backend focused tests: `18 passed` for app-first API and `65 passed`
-    for auth/tickets
-  - `packages/app_shell`: analyze clean, `49 passed`
-  - `apps/android_shell`: analyze clean, `4 passed`
-  - `apps/windows_shell`: analyze clean, `2 passed`
-  - `packages/runtime_engine`: analyze clean, `11 passed`
-  - `packages/core_domain`: `dart analyze` clean
-  - Android debug APK smoke built at
-    `apps/android_shell/build/app/outputs/flutter-apk/app-debug.apk`
-  - Windows release build produced
-    `apps/windows_shell/build/windows/x64/runner/Release/pokrov_windows_beta.exe`
-    with `pokrov-core.dll` present in the same release bundle
-  - final local handoff pack retained under
-    `artifacts/releases/pokrov-app/0.2.0-beta.1+20260603-local-mvp/`
-    with verified checksums and a non-public `release-handoff.json`
-- `2026-06-04` staged release-candidate local verification:
-  - `python scripts/run_client_release_gate.py preflight`: pass
-  - `python scripts/run_client_release_gate.py build --target android-apk`:
-    built `apps/android_shell/build/app/outputs/flutter-apk/app-release.apk`
-  - `python scripts/run_client_release_gate.py build --target android-aab`:
-    built `apps/android_shell/build/app/outputs/bundle/release/app-release.aab`
-  - `scripts/build-windows-release.ps1 -SyncRuntime -SkipTests -SkipAnalyze`:
-    rebuilt the unsigned Windows setup EXE, portable ZIP, and manifest
-  - local RC pack retained under
-    `artifacts/releases/pokrov-app/0.2.0-beta.1+20260604-rc-local/`
-    with verified `SHA256SUMS.txt`, valid `release-handoff.json`, and
-    `runtime_sync_allowed=false`
-  - GitHub prerelease `v0.2.0-beta.1` refreshed with
-    `pokrov-android-universal.apk` and `pokrov-windows-setup-x64.exe`
-  - current-origin public URL range smoke returned `206` for both assets
-  - `gh release download` confirmed published SHA-256 values match the RC
-  - brain-origin runtime app-download smoke passed against `/api/client/apps`;
-    no runtime `APP_*` mutation was required because URLs stayed stable
-  - public-beta external-access preflight passes publication policy and runtime
-    checks, but remains `BLOCKED_BY_ACCESS` for missing `EMAIL_PROBE_TO` and
-    `LAVATOP_PROBE_EMAIL` live probe env
-- `2026-06-05` Android toolchain refresh local verification:
-  - Android host versions: Gradle `8.11.1`, Android Gradle Plugin `8.9.1`,
-    Kotlin `2.1.0`
-  - `flutter analyze` in `apps/android_shell`: no issues found
-  - `flutter test` in `apps/android_shell`: `4 passed`
-  - `gradlew testDebugUnitTest --no-daemon` in
-    `apps/android_shell/android`: pass
-  - `flutter build apk --release`: pass; built
-    `apps/android_shell/build/app/outputs/flutter-apk/app-release.apk`
-  - `flutter build appbundle --release`: pass; built
-    `apps/android_shell/build/app/outputs/bundle/release/app-release.aab`
-  - `gh release upload v1.0.0-beta ... pokrov-android-universal.apk
-    SHA256SUMS.txt --clobber`: pass
-  - `gh release download v1.0.0-beta --pattern SHA256SUMS.txt --pattern
-    pokrov-android-universal.apk`: pass; downloaded APK hash
-    `3676A18B06C3D5CE4BE82F9C93A4F1EA83DAB72206A06F13B066A37746A8268D`
-  - this closes the recorded Android build-tool future-support warning; it is
-    not raw Android physical-device audit proof, store readiness, or production
-    signing evidence
+| Order | Gate | State | Completion rule |
+|---:|---|---|---|
+| 1 | Clean platform, client and Core revisions | `BLOCKED` | All exact source revisions are clean and frozen. |
+| 2 | Public release-index revision | `BLOCKED_BY_ACCESS` | The index exists and its exact revision is bound into v2. |
+| 3 | POKROV Core `1.1.0` replacement artifact | `DEVELOPMENT_REPLACEMENT_PENDING` | Exact AAR/DLL identities match the declared Core revision. |
+| 4 | Strict-v2 candidate metadata | `MISSING` | The clean client generator produces one validated handoff outside retained history. |
+| 5 | Android exact-candidate build and signer | `MISSING` | Every APK matches v2 size, digest, package, version and signer. |
+| 6 | Android physical-device matrix | `MANUAL_OWNER_TEST` | Huawei install, TUN/DNS/egress, WARP, per-app, handoff and endurance pass on exact bytes. |
+| 7 | Windows exact-candidate package | `MISSING` | Machine-wide setup contains the service, Core and required dependencies. |
+| 8 | Windows trust and clean-host recovery | `MANUAL_OWNER_TEST` | Trusted signing plus clean VM TUN/DNS/egress/crash/reboot/rollback pass. |
+| 9 | Hosted cross-repository CI | `NOT_RUN` | Required checks pass on the frozen platform/client/Core/index revisions. |
+| 10 | Runtime/public readback and rollback | `NOT_AUTHORIZED` | Catalog contains the exact candidate plus prior stable target; owner authorizes sync; pointer backup, receipt, manifest, API, downloads and rollback readback are retained. |
+| 11 | Promotion and go/no-go | `NOT_AUTHORIZED` | All required v2 gates are `PASS` for the same artifact bytes. |
 
-## Public Android+Windows Blockers
+## Next Action Order
 
-The recorded `1.0.0-beta` wave remains retained evidence. These items block a
-new public promotion or runtime sync and also remain gates for stable, store,
-trusted-signing, raw Android-audit, production-WARP, and RU-origin claims.
+1. Clean and freeze all four repository revisions.
+2. Produce the exact Core replacement artifacts.
+3. Generate strict-v2 metadata and verify the artifact set.
+4. Run hosted CI and exact Android/Windows manual gates.
+5. Request separate authority for runtime sync, rollback drill and promotion.
 
-### Android local-surface security gate
+## Retained History
 
-- retain the operator-attested physical-device localhost/control-surface audit for this beta wave
-- replace the attestation with raw audit evidence only if the operator supplies it
-- keep negative tests for unauthorized local-client access and config or key exposure in the release path for later builds
-
-### Route-mode, routing, and DNS verification
-
-- keep the public routing story focused on `All except RU` and `Full tunnel`
-- selected-apps is implemented for beta with a picker-first UI, Android
-  launchable-app bridge, Windows process/exe candidates, selected-app
-  persistence, and route-policy materialization; exact-artifact runtime proof
-  remains a local/manual test gate
-- keep `Blocked only` internal until DNS behavior and leak checks are complete
-  enough for honest verification
-- validate DNS split, geo-routing behavior, and leak behavior on Android and
-  Windows release builds before treating RU-specific routing copy as fully
-  shipped
-- keep the persisted route-mode contract aligned with backend-owned `route_mode`, `selected_apps`, `requires_elevated_privileges`, and `route_policy.*`
-- keep managed-profile `smart_connect` backend-owned and passive in the client
-  until a real RTT measurement/upload loop is implemented and verified
-- WARP/enhanced privacy is implemented as a guarded beta feature with backend
-  policy, consent/revoke/event lifecycle, safe material contracts, fallback
-  reporting, and support/admin redaction; production WARP claims still require
-  Android/Windows release-build runtime and recovery proof
-
-### Release branding, packaging, and hosting
-
-- keep regenerated launcher, tray, and package assets aligned with the final `POKROV` brand set
-- keep Windows package identity, executable naming, installer naming, and public artifacts on the canonical `POKROV` / `pokrov` line
-- build fresh Android and Windows release candidates after every branding,
-  runtime, or release-copy sync
-- require production Android signing and trusted Windows signing for the exact
-  next public candidate; neither an old approval nor a successful local build
-  is reusable signing evidence
-- keep debug-signed Android and unsigned Windows outputs explicitly non-public,
-  beta-labeled engineering smoke only
-- keep Android APK runtime/public download tied to the verified runtime APP_* sync and live download smoke from the current evidence pack; re-run before changing artifacts or URLs
-- Android build-tool future-support warnings are closed as of the `2026-06-05`
-  toolchain refresh; keep later Gradle, Android Gradle Plugin, and Kotlin
-  upgrades as normal maintenance, without expanding raw-device, store, or
-  signing claims
-- keep Windows unsigned bundles gated and beta-labeled, with explicit SmartScreen or unknown-publisher warning text
-- keep runtime download handoff aligned with the currently exposed public targets: Android `Play` / `APK` / mirror and Windows `EXE` / mirror
-- keep `AAB`, `MSIX`, and portable `ZIP` aligned as store/operator artifacts unless the public payload expands
-- treat `0.2.0-beta.1+20260603-local-mvp` as local engineering handoff only;
-  do not sync public runtime `APP_*` values from it without separate operator
-  GO and hosting evidence
-- treat `1.0.0-beta+20260605-p6` as the latest repo-backed beta handoff
-  evidence; Android remains internal beta/release-smoke signed, Windows remains
-  unsigned, and live install/connect smoke plus real-user Telegram/WebApp
-  verification remain manual
-
-### Runtime launch and handoff verification
-
-- verify the shipping client uses the real backend contracts for trial, profile, native redeem, cabinet handoff, support, Telegram bonus, and checkout continuation in release builds
-- verify the release build keeps Telegram reward optional and action-driven:
-  no app startup gate, no membership polling loop, and no wheel/calendar UI
-  before public APIs and feature flags exist
-- validate final download links and release handoff values after any new
-  artifacts are published
-- confirm app, bot, and authenticated web surfaces consume the same runtime `APP_*` values after handoff
-- split release-reachability evidence into `current-origin`, `brain-origin`, and `RU-origin` checks when regional reachability matters
-- keep real-user Telegram/WebApp opening as a manual owner test; synthetic brain-signed init data proves backend/runtime policy, not a real user session
-- on the exact Windows candidate, verify close-to-tray/reopen while connected
-  and tray `Выход` runtime shutdown plus system-proxy restoration; source-level
-  lifecycle ordering is complete, exact-artifact proof remains manual
-
-## Archived Karing-Based Candidate Lane
-
-Owner status on 2026-06-05: not part of the active `1.0.0-beta` client release
-gate.
-
-Retained only as fork/reference hardening backlog:
-
-- prove full-source Karing buildability for Android and Windows if the lane is
-  deliberately reopened;
-- confirm GPL compliance and no Karing-name association before any derivative
-  distribution;
-- implement POKROV managed mode if that fork ever becomes active;
-- hide generic proxy-utility surfaces from the normal POKROV user path;
-- pass Android + Windows release gates before any public cutover from that lane.
-
-## Follow-Up Backlog
-
-### User-facing wording cleanup
-
-- remove remaining user-visible inherited `Pokrov` or legacy power-user wording from advanced surfaces
-- polish Russian copy where inherited text still feels technical or legacy
-- keep advanced networking controls out of first-layer onboarding and daily-use screens
-- `2026-06-05` P3 cleanup moved selected-app manual identifiers behind an
-  explicit manual row and rewrote support diagnostics preview as a safe-summary
-  explanation rather than raw-key/server/config negative copy
-
-### Route-mode and support UX polish
-
-- keep the route-mode editor discoverable from the normal shell instead of hiding it behind compatibility-only settings
-- make sure support diagnostics show safe summaries instead of raw topology or share-link surfaces
-- add lifecycle-safe periodic support refresh or SSE after real operator flow
-  proves the polling cadence and UI states
-- keep recovery actions centered on reconnect, refresh, location change, checkout, and support rather than raw subscription copy/edit actions
-- keep any further `/api/redeem` expansion beyond the current access-key,
-  gift-card, and promo families from reintroducing raw subscription links as
-  account proof
-- keep cabinet handoff exchange covered by e2e because the URL token is
-  intentionally one-time and should be removed before normal cabinet use
-
-### Download-surface continuity
-
-- keep `/api/client/apps` payloads, install docs, and signed release handoff aligned
-- rebuild or redeploy static download surfaces whenever public Android or Windows URLs change
-- keep public-facing version labels on `1.0.0-beta` or an explicit beta-patch
-  label across client, docs, and release notes; never shorten them to stable
-  `1.0.0`
-- selected-apps picker and policy plumbing are closed for beta; richer native
-  icons/file-dialog polish and exact-artifact OS runtime proof remain follow-up
-  quality/manual-test work, not repo-side beta blockers
-
-## Explicit Non-Blockers In This Wave
-
-- internal Dart package/import cleanup remains a coordinated refactor, not a public-release blocker by itself
-- `iOS` and `macOS` remain readiness-only lanes in this wave
-- a local alpha/beta artifact mirror under `artifacts/releases/pokrov-app/` is useful for engineering handoff, but it does not by itself prove public release approval
+The previous mixed backlog is preserved as
+[2026-08-21-client-release-backlog-snapshot.md](history/2026-08-21-client-release-backlog-snapshot.md).
+Its candidate statuses are evidence only.

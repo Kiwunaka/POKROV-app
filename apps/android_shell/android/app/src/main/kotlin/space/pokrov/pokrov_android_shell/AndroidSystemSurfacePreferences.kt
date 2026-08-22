@@ -3,9 +3,9 @@ package space.pokrov.pokrov_android_shell
 import android.content.Context
 
 internal data class AndroidSystemSurfacePreferences(
-    val showCountry: Boolean = true,
-    val showSpeed: Boolean = true,
-    val showRouteMode: Boolean = true,
+    val showCountry: Boolean = false,
+    val showSpeed: Boolean = false,
+    val showRouteMode: Boolean = false,
 ) {
     fun toMap(): Map<String, Boolean> = mapOf(
         "showCountry" to showCountry,
@@ -22,19 +22,21 @@ internal object AndroidSystemSurfacePreferencesStore {
 
     fun load(context: Context): AndroidSystemSurfacePreferences {
         val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
-        return AndroidSystemSurfacePreferences(
-            showCountry = preferences.getBoolean(KEY_SHOW_COUNTRY, true),
-            showSpeed = preferences.getBoolean(KEY_SHOW_SPEED, true),
-            showRouteMode = preferences.getBoolean(KEY_SHOW_ROUTE_MODE, true),
-        )
+        if (preferences.getBoolean(KEY_SHOW_COUNTRY, false) ||
+            preferences.getBoolean(KEY_SHOW_SPEED, false) ||
+            preferences.getBoolean(KEY_SHOW_ROUTE_MODE, false)
+        ) {
+            save(context)
+        }
+        return AndroidSystemSurfacePreferences()
     }
 
-    fun save(context: Context, value: AndroidSystemSurfacePreferences) {
+    fun save(context: Context) {
         context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
             .edit()
-            .putBoolean(KEY_SHOW_COUNTRY, value.showCountry)
-            .putBoolean(KEY_SHOW_SPEED, value.showSpeed)
-            .putBoolean(KEY_SHOW_ROUTE_MODE, value.showRouteMode)
+            .putBoolean(KEY_SHOW_COUNTRY, false)
+            .putBoolean(KEY_SHOW_SPEED, false)
+            .putBoolean(KEY_SHOW_ROUTE_MODE, false)
             .apply()
     }
 }

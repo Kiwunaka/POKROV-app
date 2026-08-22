@@ -1,9 +1,243 @@
 part of pokrov_app_shell;
 
+enum FirstSessionAcquisitionState { idle, consuming, linked, failed }
+
+enum FirstSessionVpnPermissionState {
+  unknown,
+  explaining,
+  requesting,
+  denied,
+  granted,
+}
+
+/// Owns the bounded first-session journey while host and account actions remain
+/// injected by the shell. Opaque acquisition handles are kept only in this
+/// in-memory coordinator and are never exposed to presentation or persistence.
+class FirstSessionCoordinator {
+  FirstSessionCoordinator({required PokrovFirstLaunchStore store})
+      : _store = store;
+
+  final PokrovFirstLaunchStore _store;
+  _FirstLaunchStep _step = _FirstLaunchStep.choice;
+  bool _busy = false;
+  bool _exitAnimated = false;
+  final Set<String> _processedAcquisitionHandles = <String>{};
+  FirstSessionAcquisitionState _acquisitionState =
+      FirstSessionAcquisitionState.idle;
+  FirstSessionVpnPermissionState _vpnPermissionState =
+      FirstSessionVpnPermissionState.unknown;
+  bool _firstHomeSeen = false;
+  bool _firstVerifiedConnectSeen = false;
+  bool _authenticatedAppOpenSeen = false;
+  bool _restoredCompletion = false;
+
+  _FirstLaunchStep get _stepForView => _step;
+  bool get isChoice => _step == _FirstLaunchStep.choice;
+  bool get isReady => _step == _FirstLaunchStep.ready;
+  bool get isRestore => _step == _FirstLaunchStep.restore;
+  bool get busy => _busy;
+  bool get exitAnimated => _exitAnimated;
+  FirstSessionAcquisitionState get acquisitionState => _acquisitionState;
+  FirstSessionVpnPermissionState get vpnPermissionState => _vpnPermissionState;
+  bool get vpnPermissionDenied =>
+      _vpnPermissionState == FirstSessionVpnPermissionState.denied;
+
+  Future<bool> loadPersistedCompletion() async {
+    var completed = false;
+    try {
+      completed = await _store.isCompleted();
+    } catch (_) {
+      completed = false;
+    }
+    if (completed) {
+      _step = _FirstLaunchStep.ready;
+      _exitAnimated = false;
+      _restoredCompletion = true;
+    }
+    return completed;
+  }
+
+  Future<void> persistCompletion() async {
+    try {
+      await _store.markCompleted();
+    } catch (_) {
+      // Local persistence is best-effort; access must not be blocked by it.
+    }
+  }
+
+  void complete({required bool animated}) {
+    _exitAnimated = animated;
+    _step = _FirstLaunchStep.ready;
+  }
+
+  bool selectTrial() {
+    if (_busy) {
+      return false;
+    }
+    complete(animated: true);
+    return true;
+  }
+
+  bool selectExistingAccess() {
+    if (_busy) {
+      return false;
+    }
+    _step = _FirstLaunchStep.restore;
+    return true;
+  }
+
+  void openRestore() {
+    selectExistingAccess();
+  }
+
+  void backToChoice() {
+    if (_busy) {
+      return;
+    }
+    _step = _FirstLaunchStep.choice;
+  }
+
+  bool beginRestore() {
+    if (_busy) {
+      return false;
+    }
+    _busy = true;
+    return true;
+  }
+
+  void finishRestore({required bool succeeded}) {
+    _busy = false;
+    if (succeeded) {
+      complete(animated: true);
+    }
+  }
+
+  bool rejectInvalidAcquisition() {
+    if (_acquisitionState == FirstSessionAcquisitionState.consuming) {
+      return false;
+    }
+    _acquisitionState = FirstSessionAcquisitionState.failed;
+    return true;
+  }
+
+  bool beginAcquisition(String handle) {
+    final opaqueHandle = handle.trim();
+    if (opaqueHandle.isEmpty ||
+        _acquisitionState == FirstSessionAcquisitionState.consuming ||
+        !_processedAcquisitionHandles.add(opaqueHandle)) {
+      return false;
+    }
+    _acquisitionState = FirstSessionAcquisitionState.consuming;
+    return true;
+  }
+
+  void finishAcquisition({required bool succeeded}) {
+    if (_acquisitionState != FirstSessionAcquisitionState.consuming) {
+      return;
+    }
+    _acquisitionState = succeeded
+        ? FirstSessionAcquisitionState.linked
+        : FirstSessionAcquisitionState.failed;
+  }
+
+  bool beginVpnPermissionExplanation() {
+    if (_vpnPermissionState == FirstSessionVpnPermissionState.requesting ||
+        _vpnPermissionState == FirstSessionVpnPermissionState.granted) {
+      return false;
+    }
+    _vpnPermissionState = FirstSessionVpnPermissionState.explaining;
+    return true;
+  }
+
+  void dismissVpnPermissionExplanation() {
+    if (_vpnPermissionState == FirstSessionVpnPermissionState.explaining) {
+      _vpnPermissionState = FirstSessionVpnPermissionState.unknown;
+    }
+  }
+
+  bool beginVpnPermissionRequest() {
+    if (_vpnPermissionState != FirstSessionVpnPermissionState.explaining) {
+      return false;
+    }
+    _vpnPermissionState = FirstSessionVpnPermissionState.requesting;
+    return true;
+  }
+
+  void finishVpnPermissionRequest({
+    required bool granted,
+    required bool denied,
+  }) {
+    if (granted) {
+      _vpnPermissionState = FirstSessionVpnPermissionState.granted;
+      return;
+    }
+    _vpnPermissionState = denied
+        ? FirstSessionVpnPermissionState.denied
+        : FirstSessionVpnPermissionState.unknown;
+  }
+
+  bool markFirstHomeSeen() {
+    if (_restoredCompletion || _firstHomeSeen) {
+      return false;
+    }
+    _firstHomeSeen = true;
+    return true;
+  }
+
+  bool markAuthenticatedAppOpenSeen() {
+    if (_restoredCompletion || _authenticatedAppOpenSeen) {
+      return false;
+    }
+    _authenticatedAppOpenSeen = true;
+    return true;
+  }
+
+  bool markFirstVerifiedConnectSeen() {
+    if (_firstVerifiedConnectSeen) {
+      return false;
+    }
+    _firstVerifiedConnectSeen = true;
+    return true;
+  }
+}
+
+Future<bool> _showVpnPermissionExplainer(
+  BuildContext context, {
+  required bool recovery,
+}) async {
+  final approved = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      key: const ValueKey('vpn-permission-explainer'),
+      icon: const Icon(Icons.vpn_key_rounded),
+      title: Text(recovery ? 'Разрешение на VPN не выдано' : 'Разрешите VPN'),
+      content: Text(
+        recovery
+            ? 'Android снова покажет системный запрос. Выберите «ОК», чтобы POKROV смог создать защищённое подключение.'
+            : 'Сейчас Android покажет системный запрос на VPN. POKROV использует это разрешение только для создания защищённого подключения.',
+      ),
+      actions: [
+        TextButton(
+          key: const ValueKey('vpn-permission-not-now'),
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Не сейчас'),
+        ),
+        FilledButton(
+          key: const ValueKey('vpn-permission-continue'),
+          onPressed: () => Navigator.of(context).pop(true),
+          child: Text(recovery ? 'Повторить запрос' : 'Продолжить'),
+        ),
+      ],
+    ),
+  );
+  return approved ?? false;
+}
+
 class _FirstLaunchGate extends StatelessWidget {
   const _FirstLaunchGate({
     required this.appContext,
     required this.step,
+    required this.acquisitionState,
     required this.restoreCodeController,
     required this.busy,
     required this.onNewUser,
@@ -16,6 +250,7 @@ class _FirstLaunchGate extends StatelessWidget {
 
   final SeedAppContext appContext;
   final _FirstLaunchStep step;
+  final FirstSessionAcquisitionState acquisitionState;
   final TextEditingController restoreCodeController;
   final bool busy;
   final VoidCallback onNewUser;
@@ -100,6 +335,7 @@ class _FirstLaunchGate extends StatelessWidget {
                             )
                           : _FirstLaunchChoiceScreen(
                               appContext: appContext,
+                              acquisitionState: acquisitionState,
                               onNewUser: onNewUser,
                               onReturningUser: onReturningUser,
                             ),
@@ -159,11 +395,13 @@ class _FirstLaunchReveal extends StatelessWidget {
 class _FirstLaunchChoiceScreen extends StatelessWidget {
   const _FirstLaunchChoiceScreen({
     required this.appContext,
+    required this.acquisitionState,
     required this.onNewUser,
     required this.onReturningUser,
   });
 
   final SeedAppContext appContext;
+  final FirstSessionAcquisitionState acquisitionState;
   final VoidCallback onNewUser;
   final VoidCallback onReturningUser;
 
@@ -253,6 +491,15 @@ class _FirstLaunchChoiceScreen extends StatelessWidget {
                   order: 2,
                   child: const _FirstLaunchValueStrip(),
                 ),
+                if (acquisitionState != FirstSessionAcquisitionState.idle) ...[
+                  const SizedBox(height: 12),
+                  _FirstLaunchReveal(
+                    order: 3,
+                    child: _FirstLaunchAcquisitionNotice(
+                      state: acquisitionState,
+                    ),
+                  ),
+                ],
               ],
             );
             final actions = [
@@ -323,6 +570,63 @@ class _FirstLaunchChoiceScreen extends StatelessWidget {
   }
 }
 
+class _FirstLaunchAcquisitionNotice extends StatelessWidget {
+  const _FirstLaunchAcquisitionNotice({required this.state});
+
+  final FirstSessionAcquisitionState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final linked = state == FirstSessionAcquisitionState.linked;
+    final consuming = state == FirstSessionAcquisitionState.consuming;
+    final color = linked
+        ? p.success
+        : consuming
+            ? p.accent
+            : p.warning;
+    final icon = linked
+        ? Icons.check_circle_outline_rounded
+        : consuming
+            ? Icons.sync_rounded
+            : Icons.info_outline_rounded;
+    final text = linked
+        ? 'Переход подтверждён. Можно продолжить без кода.'
+        : consuming
+            ? 'Подтверждаем переход… Выбор доступа уже доступен.'
+            : 'Переход не применён. Начните бесплатно или восстановите доступ — ничего не потеряно.';
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        key: ValueKey('first-launch-acquisition-${state.name}'),
+        constraints: const BoxConstraints(maxWidth: 620),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.09),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.28)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 9),
+            Flexible(
+              child: Text(
+                text,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: p.ink,
+                      height: 1.3,
+                    ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Three calm value points under the welcome header — what the user gets
 /// before any choice is asked. Wraps on narrow widths.
 class _FirstLaunchValueStrip extends StatelessWidget {
@@ -369,17 +673,19 @@ class _FirstLaunchValueChip extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 15, color: p.accent),
           const SizedBox(width: 7),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: p.ink.withValues(alpha: 0.82),
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0,
+          Flexible(
+            child: Text(
+              label,
+              softWrap: true,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: p.ink.withValues(alpha: 0.82),
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0,
+              ),
             ),
           ),
         ],
@@ -547,6 +853,7 @@ class _FirstLaunchRestoreScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final p = PokrovPalette.of(context);
+    final largeText = MediaQuery.textScalerOf(context).scale(1) >= 1.6;
     return Material(
       key: const ValueKey('first-launch-restore-screen'),
       color: Colors.transparent,
@@ -653,22 +960,32 @@ class _FirstLaunchRestoreScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: Divider(color: p.line, height: 1)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Text(
-                      'Нет кода под рукой?',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: p.muted,
-                        fontWeight: FontWeight.w600,
+              if (largeText)
+                Text(
+                  'Нет кода под рукой?',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: p.muted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: p.line, height: 1)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(
+                        'Нет кода под рукой?',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: p.muted,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                  Expanded(child: Divider(color: p.line, height: 1)),
-                ],
-              ),
+                    Expanded(child: Divider(color: p.line, height: 1)),
+                  ],
+                ),
               const SizedBox(height: 12),
               LayoutBuilder(
                 builder: (context, constraints) {

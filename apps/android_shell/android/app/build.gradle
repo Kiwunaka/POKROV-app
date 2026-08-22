@@ -40,12 +40,30 @@ android {
         jvmTarget = JavaVersion.VERSION_1_8
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "space.pokrov.pokrov_android_shell"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+    }
+
+    flavorDimensions += "distribution"
+    productFlavors {
+        direct {
+            dimension = "distribution"
+            buildConfigField "boolean", "POKROV_DIRECT_UPDATE_ENABLED", "true"
+            buildConfigField "String", "POKROV_UPDATE_CHANNEL", '"stable"'
+        }
+        store {
+            dimension = "distribution"
+            buildConfigField "boolean", "POKROV_DIRECT_UPDATE_ENABLED", "false"
+            buildConfigField "String", "POKROV_UPDATE_CHANNEL", '"stable"'
+        }
     }
 
     packaging {

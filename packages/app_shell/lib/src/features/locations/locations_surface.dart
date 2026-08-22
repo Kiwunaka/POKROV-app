@@ -236,65 +236,80 @@ class _LocationsSectionState extends State<_LocationsSection> {
         : !widget.hasProvisionedAccess
             ? _AutoLocationStatus.unavailable
             : _AutoLocationStatus.active;
+    final titleAndHelp = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Text(
+            'Локации',
+            style: theme.textTheme.headlineSmall,
+          ),
+        ),
+        const SizedBox(width: 2),
+        IconButton(
+          key: const ValueKey('locations-metrics-help'),
+          tooltip: 'Как считаются замеры',
+          visualDensity: VisualDensity.compact,
+          onPressed: () => _showInfoSheet(
+            context,
+            title: 'Ping и нагрузка',
+            lines: const [
+              'Ping измеряется с этого устройства до каждой локации. Это не ping выбранного сервера.',
+              'Процент рядом — текущая нагрузка сервера. «Обновить» проверяет список заново.',
+              'Эмулятор может показывать нереально низкий ping. Для решения о локации ориентируйтесь на замер телефона.',
+            ],
+          ),
+          icon: const Icon(Icons.info_outline_rounded, size: 20),
+        ),
+      ],
+    );
+    final refreshAction = Tooltip(
+      message: 'Измерить ping с этого устройства и обновить нагрузку серверов',
+      child: OutlinedButton.icon(
+        key: const ValueKey('locations-refresh-measurements'),
+        onPressed: widget.locationsCatalogBusy
+            ? null
+            : widget.onRefreshLocationsCatalog,
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(0, 44),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+        ),
+        icon: showRefreshSpinner
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CupertinoActivityIndicator(radius: 9),
+              )
+            : const Icon(Icons.refresh_rounded, size: 20),
+        label: Text(
+          widget.locationsCatalogBusy ? 'Обновляем' : 'Обновить',
+        ),
+      ),
+    );
 
     return _SeedContentList(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Row(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final largeText = MediaQuery.textScalerOf(context).scale(1) >= 1.6;
+            if (largeText || constraints.maxWidth < 420) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Flexible(
-                    child: Text(
-                      'Локации',
-                      style: theme.textTheme.headlineSmall,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  IconButton(
-                    key: const ValueKey('locations-metrics-help'),
-                    tooltip: 'Как считаются замеры',
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () => _showInfoSheet(
-                      context,
-                      title: 'Ping и нагрузка',
-                      lines: const [
-                        'Ping измеряется с этого устройства до каждой локации. Это не ping выбранного сервера.',
-                        'Процент рядом — текущая нагрузка сервера. «Обновить» проверяет список заново.',
-                        'Эмулятор может показывать нереально низкий ping. Для решения о локации ориентируйтесь на замер телефона.',
-                      ],
-                    ),
-                    icon: const Icon(Icons.info_outline_rounded, size: 20),
-                  ),
+                  Align(alignment: Alignment.centerLeft, child: titleAndHelp),
+                  const SizedBox(height: 8),
+                  Align(alignment: Alignment.centerLeft, child: refreshAction),
                 ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Tooltip(
-              message:
-                  'Измерить ping с этого устройства и обновить нагрузку серверов',
-              child: OutlinedButton.icon(
-                key: const ValueKey('locations-refresh-measurements'),
-                onPressed: widget.locationsCatalogBusy
-                    ? null
-                    : widget.onRefreshLocationsCatalog,
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(0, 44),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                ),
-                icon: showRefreshSpinner
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CupertinoActivityIndicator(radius: 9),
-                      )
-                    : const Icon(Icons.refresh_rounded, size: 20),
-                label: Text(
-                  widget.locationsCatalogBusy ? 'Обновляем' : 'Обновить',
-                ),
-              ),
-            ),
-          ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: titleAndHelp),
+                const SizedBox(width: 12),
+                refreshAction,
+              ],
+            );
+          },
         ),
         const SizedBox(height: 14),
         if (hasList && locationCount > 4) ...[

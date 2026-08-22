@@ -1,0 +1,7 @@
+{
+  "install_id": "fixture-install-v0",
+  "session_token_storage": "secure",
+  "account_id": "fixture-account",
+  "managed_manifest_path": "/api/client/profile/managed",
+  "profile_revision": "fixture-revision"
+}

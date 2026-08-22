@@ -1,0 +1,68 @@
+name: Release v2 Contract
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-repository-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout client candidate
+        uses: actions/checkout@v4
+        with:
+          path: client
+
+      - name: Checkout platform promotion line
+        uses: actions/checkout@v4
+        with:
+          repository: Kiwunaka/portal
+          ref: master
+          path: platform
+          persist-credentials: false
+
+      - name: Checkout Core promotion line
+        uses: actions/checkout@v4
+        with:
+          repository: Kiwunaka/pokrov-core
+          ref: main
+          path: POKROV-core
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.38.5"
+          cache: true
+
+      - name: Validate cross-repository release-handoff v2 contract
+        shell: pwsh
+        working-directory: client
+        run: >-
+          ./scripts/validate-seed.ps1
+          -PlatformRoot "${{ github.workspace }}/platform"
+          -CoreRoot "${{ github.workspace }}/POKROV-core"
+
+      - name: Run client unit and Android flavor tests
+        shell: pwsh
+        working-directory: client
+        run: ./scripts/run-tests.ps1

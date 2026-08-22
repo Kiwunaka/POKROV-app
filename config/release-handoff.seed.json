@@ -13,8 +13,16 @@
     "public_cutover_allowed": false,
     "public_channel": "direct_android_windows_stable",
     "google_play_state": "NOT_REQUESTED",
+    "development_target": {
+      "product_version": "1.2.0",
+      "platform_build": 30,
+      "package_version": "1.2.0+30",
+      "state": "PRE_CANDIDATE_LOCAL",
+      "candidate_created": false
+    },
     "canonical_development_repo": "C:/Users/kiwun/Documents/ai/POKROV-app",
     "active_release_metadata": "artifacts/releases/release-handoff.json",
+    "rollback_catalog": "config/release-rollback-catalog.seed.json",
     "retained_bridge_archive_root": "artifacts/releases/bridge/0.9.0-beta+20508"
   },
   "latest_repo_backed_release": {

@@ -1,5 +1,3 @@
-part of pokrov_app_shell;
-
 /// Formats [count] with the correct Russian form of the word «день».
 ///
 /// Follows standard Russian plural rules, including the 11-14 exception:

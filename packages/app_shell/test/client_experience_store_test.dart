@@ -1,10 +1,85 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 
+Future<String> _readExperienceFixture(String name) async {
+  for (final path in <String>[
+    'packages/app_shell/test/fixtures/$name',
+    'test/fixtures/$name',
+  ]) {
+    final file = File(path);
+    if (await file.exists()) {
+      return file.readAsString();
+    }
+  }
+  throw FileSystemException('Fixture not found', name);
+}
+
 void main() {
+  test('migrates unversioned client experience fixture exactly once', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'pokrov-client-experience-migration-',
+    );
+    addTearDown(() async {
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    });
+    final stateFile = File(
+      '${directory.path}${Platform.pathSeparator}'
+      'pokrov-client-experience-v1.json',
+    );
+    await stateFile.writeAsString(
+      await _readExperienceFixture('client-experience-v0.json'),
+      flush: true,
+    );
+    final store = PokrovFileClientExperienceStore(
+      supportDirectoryResolver: () async => directory,
+    );
+
+    final first = await store.read();
+    expect(first.favoriteNodeCodes, <String>['nl-fixture-01']);
+    expect(first.firstRouteScopeConfirmed, isTrue);
+    final migrated = await stateFile.readAsString();
+    expect(
+      (jsonDecode(migrated) as Map<String, dynamic>)['version'],
+      1,
+    );
+
+    final second = await store.read();
+    expect(second.favoriteNodeCodes, first.favoriteNodeCodes);
+    expect(await stateFile.readAsString(), migrated);
+  });
+
+  test('future client experience state fails closed without being overwritten',
+      () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'pokrov-client-experience-future-',
+    );
+    addTearDown(() async {
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    });
+    final stateFile = File(
+      '${directory.path}${Platform.pathSeparator}'
+      'pokrov-client-experience-v1.json',
+    );
+    const futureState = '{"version":2,"favoriteNodeCodes":["future-node"]}';
+    await stateFile.writeAsString(futureState, flush: true);
+    final store = PokrovFileClientExperienceStore(
+      supportDirectoryResolver: () async => directory,
+    );
+
+    final restored = await store.read();
+
+    expect(restored.favoriteNodeCodes, isEmpty);
+    expect(await stateFile.readAsString(), futureState);
+  });
+
   test('client experience store survives restart without runtime secrets',
       () async {
     final directory = await Directory.systemTemp.createTemp(
@@ -109,7 +184,7 @@ void main() {
         purposeRoutes: const <PokrovPurposeRoute>{PokrovPurposeRoute.video},
         dnsPreset: PokrovDnsPreset.cloudflare,
         allowLan: false,
-        windowsConnectionMode: PokrovWindowsConnectionMode.systemProxy,
+        windowsConnectionMode: PokrovWindowsConnectionMode.vpn,
         tunStack: PokrovTunStack.mixed,
         overrides: <PokrovRouteOverride>[
           PokrovRouteOverride.tryCreate(
@@ -158,7 +233,7 @@ void main() {
     expect(restored.routingPreferences.allowLan, isFalse);
     expect(
       restored.routingPreferences.windowsConnectionMode,
-      PokrovWindowsConnectionMode.systemProxy,
+      PokrovWindowsConnectionMode.vpn,
     );
     expect(restored.routingPreferences.tunStack, PokrovTunStack.mixed);
     expect(

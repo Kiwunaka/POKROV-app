@@ -17,16 +17,21 @@ From `POKROV-app/`:
 
 1. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\validate-seed.ps1`.
 2. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\bootstrap-workspace.ps1`.
-   If the ignored Android Gradle wrapper BAT or JAR is missing, bootstrap first
+   If an ignored Android Gradle wrapper script or JAR is missing, bootstrap first
    creates a GUID-named project under the system temp directory with Flutter's
-   supported `--no-overwrite` Android flow, copies only the missing BAT/JAR,
+   supported `--no-overwrite` Android flow, copies only the missing
+   Unix/BAT/JAR wrapper files,
    and removes the verified temp directory. Flutter never repairs the tracked
    Android shell in place or replaces existing Android customization.
 3. Build POKROV Core from its separate repository, then run `scripts/sync-pokrov-core-runtime.ps1 -CoreRoot <path> -Platforms android,windows`. The sync helper accepts only the exact source commit, version, sizes, and hashes pinned by the client contract. Apple artifacts must be built on macOS and remain manual.
 4. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\run-tests.ps1`.
-   This now covers the shared Flutter lane, `apps/android_shell` Flutter tests, and `apps/android_shell/android/gradlew.bat testDebugUnitTest`.
+   This now analyzes testless foundation packages, tests every test-bearing
+   package/app across all 11 Flutter modules, and runs both Android
+   flavor tasks through `apps/android_shell/android/gradlew.bat` on Windows or
+   `apps/android_shell/android/gradlew` on Linux:
+   `:app:testDirectDebugUnitTest` / `:app:testStoreDebugUnitTest` tasks.
    On a clean checkout, the bootstrap phase materializes the ignored wrapper
-   BAT and JAR before `testDebugUnitTest` runs.
+   scripts and JAR before the flavor-specific unit-test tasks run.
 5. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\build-windows-release.ps1 -SyncRuntime -CoreRoot <path>` when you want the local Windows analyze, test, build, and unsigned-package lane.
 6. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\bootstrap-local.ps1 -DryRun`.
 7. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\bootstrap-local.ps1` only if you want local config files under `config/local/`.
@@ -39,17 +44,18 @@ From `POKROV-app/`:
 - `config/templates/local.env.example` -> `config/local/local.env`
 - `config/templates/device-overrides.seed.json` -> `config/local/device-overrides.json`
 
-When either required Android Gradle wrapper file is absent,
+When any required Android Gradle wrapper file is absent,
 `bootstrap-workspace.ps1` also runs Flutter's conditional `--no-overwrite`
 Android generation in an isolated GUID-named temp directory and copies only:
 
+- `apps/android_shell/android/gradlew`
 - `apps/android_shell/android/gradlew.bat`
 - `apps/android_shell/android/gradle/wrapper/gradle-wrapper.jar`
 
-The bootstrap does not copy the generated Unix wrapper, Kotlin DSL files,
-IDE metadata, Flutter metadata, or any other temporary project content. It
-also skips each destination that already exists and fails if the BAT or JAR is
-still absent after repair.
+The bootstrap does not copy Kotlin DSL files, IDE metadata, Flutter metadata,
+or any other temporary project content. It skips each destination that already
+exists, marks the Unix wrapper executable on non-Windows hosts, and fails if a
+required wrapper file is still absent after repair.
 
 The generated files are git-ignored and can be deleted or regenerated freely.
 
@@ -62,7 +68,8 @@ shipping truth, or release truth.
 
 The clean-room starter now includes:
 
-- shared domain, platform-contract, and support-context packages
+- shared domain, platform-contract, observability, typed diagnostic collector,
+  encryption-only support-bundle, and support-context packages
 - a shared Material shell that now locks the consumer-first tab set `Protection / Locations / Rules / Profile`
 - Android, iOS, macOS, and Windows host entrypoints that build the shell from shared bootstrap defaults
 - a widget test lane in `packages/app_shell/test/`
@@ -190,16 +197,64 @@ Current blocking dependency:
   behavior remains gated on exact-artifact physical-device and clean-VM proof
 - `iOS` source carries the POKROV Core packet-tunnel bridge: it stages one materialized profile in the shared app-group directory, persists a `NETunnelProviderManager`, boots `LibboxSetup`, starts or reloads `CommandServer`, and opens tun through `NEPacketTunnelFlow`; the framework build, signing, and device validation remain manual
 - `macOS` stays on the desktop ABI 2 lane and expects only `pokrov-core.dylib`; the universal dylib must be built and probed on macOS before that host is runnable
-- `Windows` copies the exact POKROV Core 1.0.3 `pokrov-core.dll` plus pinned `libcronet.dll` into the release bundle. Raw materialized config, WARP, `Full tunnel`, `All except RU`, and selected-process routing are owned by the shared adapter. The default remains `VPN/TUN + system`; the advanced compatibility lane can instead remove the TUN and let the loopback mixed inbound set and restore the Windows system proxy. Advanced TUN stacks are `system`, `mixed` (system TCP plus gVisor UDP), and `gvisor`
+- `Windows` copies `pokrov_service.exe`, the exact POKROV Core 1.0.3
+  `pokrov-core.dll` and pinned `libcronet.dll` into the machine-wide release
+  bundle. Raw materialized config, WARP, `Full tunnel`, `All except RU` and
+  selected-process routing are owned by the shared adapter, then passed as
+  bounded bytes to the authenticated service. The supported connection lane
+  is `VPN/TUN`; advanced TUN stacks remain `system`, `mixed` (system TCP plus
+  gVisor UDP) and `gvisor`. Legacy persisted `systemProxy` state migrates to
+  this lane
 - before securing the desktop config, the Windows runtime verifies every loopback-only helper port for both TCP and UDP. A collision with Hiddify or another local proxy is remapped to an OS-selected free loopback port; external listeners and profile routing are not changed
 - generated Windows VPN profiles follow the proven POKROV Core/Hiddify system-TUN shape: `address`, `stack: system` by default, `strict_route`, a first-match `port: 53 -> hijack-dns` rule before LAN/direct or user routing, route-level `sniff`, typed TCP/UDP DNS servers, and no legacy `dns-out` or TUN-level sniff/NAT fields. The final preference pass reasserts that protected rule prefix after every other transform. The explicit port match is required by the shipped Core generation because Windows sends resolver packets to a private LAN DNS address before protocol sniffing has classified them. `Full tunnel` removes inherited Internet bypass rules while retaining local/private LAN access; selected and excluded process modes use opposite route and DNS decisions as their labels promise
-- Windows VPN verification is two-stage. The loopback mixed-port request proves that Core and the selected outbound work; a second forced-direct request from the normal Windows socket path proves TUN capture and DNS against the owned HTTPS marker `https://api.pokrov.space/api/public/authenticated-egress-probe`. Windows gets three bounded attempts while routes settle. The UI may enter `running` only after the exact `204` and `X-Pokrov-Egress-Probe: pokrov-authenticated-egress-v1` marker succeed. A failed system-path probe stops Core and reports `desktop_tun_egress_probe_failed` instead of showing a false protected state. In explicit system-proxy mode, successful Core start plus the mixed-port egress probe proves the selected compatibility lane; the TUN-only probe is not run because that profile deliberately has no TUN
-- the desktop runtime also keeps a bounded safe event journal at `%APPDATA%/space.pokrov/POKROV/pokrov-runtime/working/pokrov-runtime-events.jsonl`. It records UTC time, platform, lifecycle/probe stage, attempt, outcome, and allowlisted failure kind only; it never records profile contents, endpoints, visited domains, IP addresses, credentials, or raw provider/Core errors. Journal failure cannot block a connection, and files over 128 KiB are reduced to the latest 300 events
+- Windows VPN verification is service-owned. After Core starts, WinHTTP uses
+  proxy bypass to request the owned HTTPS marker at
+  `https://api.pokrov.space/api/public/authenticated-egress-probe`. Windows gets
+  three bounded attempts while TUN routes settle. The service may enter
+  `running` only after exact HTTP `204` and
+  `X-Pokrov-Egress-Probe: pokrov-authenticated-egress-v1`. Failure stops Core,
+  returns to `config_staged` and reports `core_egress_probe_failed`; raw DNS,
+  provider or WinHTTP details never cross IPC
+- the desktop runtime also keeps a bounded safe event journal at `%APPDATA%/space.pokrov/POKROV/pokrov-runtime/working/pokrov-runtime-events.jsonl`. It records UTC time, platform, a closed typed lifecycle event (`initialization`, `profile`, `core_start`, `tun`, `routes`, `dns`, `egress`, `recovery`, `stop`), bounded probe/stop reason, attempt, outcome, and allowlisted failure kind only; it never records profile contents, endpoints, visited domains, IP addresses, credentials, or raw provider/Core errors. Journal failure cannot block a connection, and files over 128 KiB are reduced to the latest 300 events
+- Android and Windows now start the shared operational-observability pipeline
+  before `runApp`. Bootstrap start/finish/UI-ready, the exact
+  `ConnectionExperienceReducer` phase, profile/Core/TUN/routes/DNS/egress
+  proof, verified, rollback, stopped, update handoff, previous exit and crash
+  marker are closed typed events. A successful attempt cannot be emitted until
+  the reducer has current interface, routes/uplink, DNS and selected-outbound
+  egress proof.
+- Every portal JSON request sends one canonical UUIDv4 `X-Correlation-ID`.
+  A connection attempt keeps its attempt UUID in a zone-scoped request context,
+  so managed-profile calls and the server request ID can be reconciled without
+  account, install, device, destination or package identity. Requests outside
+  an attempt receive a fresh UUIDv4.
+- The app-private operational store remains authoritative only for diagnostics.
+  Its two-segment cap is 24 MiB on Android and 64 MiB on Windows. A separate
+  best-effort mirror sends only the identity-free release-health projection
+  after an app session already exists; observability never creates a trial or
+  session. Correlation, attributes, destinations and identity are removed from
+  the batch body. Portal failure cannot block local persistence or runtime.
+- `previous-exit.v1.json` contains only closed run state, catalog crash code,
+  fixed safe crash signature and the bounded breadcrumb ring. Crash handlers
+  flush that marker synchronously because the process may terminate next.
+  Clean exit overwrites it; an active marker on the next launch is reported as
+  unclean. The marker is diagnostic evidence and can never restore or declare
+  runtime state; host/service snapshot and recovery journal remain authority.
 - a failed Windows connect keeps its sanitized failure kind and message across subsequent runtime snapshots until an explicit restage or successful retry clears it; polling must not replace a failed `configStaged` state with the success copy `Профиль доступа готов`
 - `scripts/test-windows-core-proxy-only.ps1` is the host-safe developer lane while another VPN owns Windows routes: it runs the exact bundled DLL through 100 loopback mixed-proxy start/stop cycles and never creates a TUN. A pass proves Core loading, ABI lifecycle, local proxy traffic and teardown only; Windows TUN, DNS capture and leak proof still require an isolated VM or Windows Sandbox
-- source-level runtime tests cover the Windows TUN options for all three route modes; exact-candidate clean-VM routing, DNS/leak, elevation, connect, and teardown proof remains `MANUAL_OWNER_TEST`
-- the regular Windows shell stays unelevated; a TUN connect first checks the process token. If elevation is required, the shared shell explains the full-device VPN/admin boundary before invoking `runas` and offers an explicit no-admin system-proxy fallback. Choosing that fallback persists the compatibility mode before profile staging; cancelling or failing `runas` cannot start Core or be presented as working TUN protection, while the accepted path relaunches the exact executable with the bounded `--connect` continuation
-- `build-windows-release.ps1` verifies the Windows bundle metadata and uses Inno Setup 6 to stage a per-user unsigned setup EXE with install-directory, optional desktop-shortcut, and optional autostart choices, plus a portable ZIP and manifest under `apps/windows_shell/build/release_bundle`
+- source-level runtime tests cover the Windows TUN options for all three route
+  modes; exact-candidate clean-VM SCM installation, routing, DNS/leak, connect,
+  recovery and teardown proof remains `MANUAL_OWNER_TEST`
+- the regular Windows shell stays unelevated and authenticates the service
+  before connection. There is no process-token check, `runas`, `--connect` or
+  per-user system-proxy fallback. Service absence, identity failure or protocol
+  incompatibility blocks the action with bounded recovery copy
+- `build-windows-release.ps1` verifies the Windows bundle metadata and uses
+  Inno Setup 6 to stage an unsigned machine-wide setup EXE. Installer source
+  captures the original owner SID, writes protected service configuration,
+  creates/updates/starts the fixed SCM service and removes it on uninstall.
+  Portable ZIP output is unsupported for this architecture. Per-user startup
+  and `pokrov://` registration are owned by the ordinary UI
 - host `build/` outputs and staged local bundles remain disposable local verification artifacts; they are not release truth for any public lane
 - treat future live connect, service ownership, and traffic-carrying runtime work as one shared contract owned by the lane, not four host-local improvisations
 
@@ -214,6 +269,9 @@ POKROV Core is an independent repository and release line. The client pins
 - Apple artifacts are intentionally absent until built and proven on macOS.
 - Desktop ABI `2` exposes `pokrovCoreAbiVersion`, `pokrovSecureFile`,
   caller-owned strings through `freeString`, and raw materialized-config start.
+  New builds add the optional `pokrovCoreCapabilities` descriptor; released
+  marker-only ABI 2 remains compatible, while any present descriptor is
+  validated fail-closed before setup.
 - Shared Dart materialization owns route modes and client-local WARP before the
   config crosses a host boundary.
 - `selectedApps` materialization requires a non-empty selection before any
@@ -239,16 +297,24 @@ Alternate initial hosts or repositories, URL authority fields, explicit ports,
 query strings, fragments, and non-APK assets fail closed, and the same
 validation runs again at tap time.
 
-On Android the native host downloads into app-private cache, follows at most
-five HTTPS redirects to GitHub-owned asset hosts, verifies exact byte size and
-SHA-256, and shares only the verified file through a non-exported
-`FileProvider`. During the transfer it exposes only phase and byte counters to
-the Flutter sheet so the user sees determinate download progress followed by
-verification and installer handoff. It then opens Android's system package
-installer; Android 8+ may require the user to grant install-source permission
-first. The app never silently installs an APK. Windows retains the trusted
-browser handoff. Signing, install, runtime, and exact-candidate proof remain
-separate release gates.
+Android has two explicit distribution flavors with the same canonical package
+ID and signing lineage. `direct` alone declares `REQUEST_INSTALL_PACKAGES` and
+the non-exported `FileProvider`; it downloads into app-private cache, follows at
+most five HTTPS redirects to GitHub-owned asset hosts, and verifies exact byte
+size, SHA-256, package ID, requested version, increasing `versionCode`, minimum
+SDK, device ABI and signing continuity before the cache commit and again before
+any installer intent. `store` declares neither direct-install surface and opens
+only the app's explicit Google Play listing; it never downloads or hands off an
+APK. Both flavors accept only the configured stable channel and bounded
+metadata.
+
+During a direct transfer the bridge exposes only phase and byte counters. The
+Flutter sheet shows bounded version, official-source and size copy followed by
+verification and installer handoff; it never displays the URL, digest or signer.
+Android 8+ may require the user to grant install-source permission. The app
+never silently installs an APK. Windows retains the trusted browser handoff.
+Signing, install, store-console, runtime, physical-device and exact-candidate
+proof remain separate release gates.
 
 ## Apple Boundary
 

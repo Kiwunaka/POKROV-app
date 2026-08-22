@@ -33,14 +33,14 @@ class PokrovWarpLifecycle {
     final phase = runtimeActive && canOffer && consented
         ? PokrovWarpPhase.active
         : switch (state) {
-      'active' || 'running' => PokrovWarpPhase.active,
-      'degraded' => PokrovWarpPhase.degraded,
-      'fallback' || 'baseline_fallback' => PokrovWarpPhase.fallback,
-      'revoked' => PokrovWarpPhase.revoked,
-      'error' || 'failed' || 'runtime_error' => PokrovWarpPhase.error,
-      _ when canOffer && consented => PokrovWarpPhase.consented,
-      _ when canOffer => PokrovWarpPhase.readyToConsent,
-      _ => PokrovWarpPhase.notReady,
+            'active' || 'running' => PokrovWarpPhase.active,
+            'degraded' => PokrovWarpPhase.degraded,
+            'fallback' || 'baseline_fallback' => PokrovWarpPhase.fallback,
+            'revoked' => PokrovWarpPhase.revoked,
+            'error' || 'failed' || 'runtime_error' => PokrovWarpPhase.error,
+            _ when canOffer && consented => PokrovWarpPhase.consented,
+            _ when canOffer => PokrovWarpPhase.readyToConsent,
+            _ => PokrovWarpPhase.notReady,
           };
     return PokrovWarpLifecycle._(
       phase: phase,

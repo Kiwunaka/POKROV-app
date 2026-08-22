@@ -1,8 +1,12 @@
 # Apple Release Readiness
 
-Last updated: 2026-07-22
+Last updated: 2026-08-22
 
-This document is the concrete Apple release-prep checklist for the next-client lane.
+Registry class: `ACTIVE_EXECUTION`.
+
+This document is the current Apple release-prep checklist for the POKROV
+`1.2.0` line. Apple publication is `NOT_REQUESTED` for the current release and
+the source lane remains readiness-only.
 
 Current truth:
 

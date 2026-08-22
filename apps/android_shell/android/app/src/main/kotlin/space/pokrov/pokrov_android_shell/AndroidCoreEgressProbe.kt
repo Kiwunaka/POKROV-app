@@ -1,6 +1,5 @@
 package space.pokrov.pokrov_android_shell
 
-import android.util.Log
 import org.json.JSONObject
 import space.pokrov.core.libbox.CommandClientHandler
 import space.pokrov.core.libbox.CommandClientOptions
@@ -143,14 +142,11 @@ internal object AndroidCoreEgressProbe {
         val handler = ProbeHandler(target)
         val options = CommandClientOptions().apply {
             addCommand(Libbox.CommandGroup)
-            addCommand(Libbox.CommandLog)
         }
         val client = Libbox.newCommandClient(handler, options)
         var endpointHandlerRegistered = false
         return try {
             client.connect()
-            client.clearLogs()
-            handler.resetLogs()
             if (target.kind == AndroidCoreEgressProbeTargetKind.GROUP) {
                 if (!handler.awaitInitial()) {
                     return AndroidCoreEgressProbeResult.UNAVAILABLE
@@ -177,21 +173,20 @@ internal object AndroidCoreEgressProbe {
         }
     }
 
-    fun writeCoreDebugMessage(message: String) {
-        activeEndpointHandler.get()?.writeCoreDebugMessage(message)
+    fun writeCoreOperationalEvent(event: AndroidCoreOperationalEventRecord) {
+        activeEndpointHandler.get()?.writeCoreOperationalEvent(event)
     }
 
-    internal fun endpointResultFromMessage(message: String): AndroidCoreEgressProbeResult? =
-        when {
-            message.contains(ENDPOINT_SUCCESS_MARKER) ||
-                message == ENDPOINT_DEBUG_SUCCESS_MARKER -> AndroidCoreEgressProbeResult.HEALTHY
-            message.contains(ENDPOINT_FAILURE_MARKER) ||
-                (
-                    message.startsWith(ENDPOINT_DEBUG_PREFIX) &&
-                        message != ENDPOINT_DEBUG_SUCCESS_MARKER
-                    ) -> AndroidCoreEgressProbeResult.FAILED
-            else -> null
-        }
+    internal fun endpointResultFromOperationalEvent(
+        name: String,
+        outcome: String,
+        errorCode: String?,
+    ): AndroidCoreEgressProbeResult? = when {
+        name != "core.egress.probe" -> null
+        outcome == "succeeded" && errorCode == null -> AndroidCoreEgressProbeResult.HEALTHY
+        outcome == "failed" && errorCode == "EGRESS-001" -> AndroidCoreEgressProbeResult.FAILED
+        else -> null
+    }
 
     internal fun isSafeTag(value: String): Boolean =
         value.isNotBlank() &&
@@ -239,11 +234,6 @@ internal object AndroidCoreEgressProbe {
         private var baseline: AndroidCoreEgressProbeSelection? = null
         private var armed = false
         private var result: AndroidCoreEgressProbeResult? = null
-        private val coreLogMessages = mutableListOf<String>()
-        private var postArmUpdates = 0
-        private var latestGroupItemCount = 0
-        private var latestHealthyItemCount = 0
-        private var latestSelectedHasSample = false
 
         fun awaitInitial(): Boolean =
             initialLatch.await(INITIAL_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
@@ -262,18 +252,9 @@ internal object AndroidCoreEgressProbe {
             }
         }
 
-        fun resetLogs() {
+        fun writeCoreOperationalEvent(event: AndroidCoreOperationalEventRecord) {
             synchronized(lock) {
-                coreLogMessages.clear()
-            }
-        }
-
-        fun writeCoreDebugMessage(message: String) {
-            synchronized(lock) {
-                if (coreLogMessages.size < MAX_LOG_MESSAGES) {
-                    coreLogMessages += message
-                }
-                acceptEndpointResult(message)
+                acceptEndpointResult(event)
             }
         }
 
@@ -284,15 +265,6 @@ internal object AndroidCoreEgressProbe {
                 RESULT_TIMEOUT_MILLIS
             }
             if (!resultLatch.await(timeoutMillis, TimeUnit.MILLISECONDS)) {
-                val summary = synchronized(lock) {
-                    "coreCategories=" + coreFailureCategories() +
-                        " coreHints=" + AndroidRuntimeSafety.safeCoreFailureHints(coreLogMessages.joinToString(" ")) +
-                        " updates=$postArmUpdates" +
-                        " groupItems=$latestGroupItemCount" +
-                        " healthyItems=$latestHealthyItemCount" +
-                        " selectedSample=$latestSelectedHasSample"
-                }
-                Log.e(LOG_TAG, "Android egress probe timeout $summary")
                 return AndroidCoreEgressProbeResult.TIMED_OUT
             }
             return synchronized(lock) {
@@ -329,15 +301,6 @@ internal object AndroidCoreEgressProbe {
             synchronized(lock) {
                 currentSelection = selection
                 initialLatch.countDown()
-                if (armed) {
-                    val rootGroup = snapshots[target.tag]
-                    postArmUpdates += 1
-                    latestGroupItemCount = rootGroup?.items?.size ?: 0
-                    latestHealthyItemCount = rootGroup?.items?.values?.count { sample ->
-                        sample != null && isHealthySample(sample.time, sample.delay)
-                    } ?: 0
-                    latestSelectedHasSample = selection.sample != null
-                }
                 if (armed && resultLatch.count > 0L && selection != baseline) {
                     val sample = selection.sample
                     result = if (sample != null && isHealthySample(sample.time, sample.delay)) {
@@ -345,51 +308,22 @@ internal object AndroidCoreEgressProbe {
                     } else {
                         AndroidCoreEgressProbeResult.FAILED
                     }
-                    Log.e(
-                        LOG_TAG,
-                        "Android egress probe terminal result=" + result?.name?.lowercase() +
-                            " coreCategories=" + coreFailureCategories() +
-                            " coreHints=" + AndroidRuntimeSafety.safeCoreFailureHints(
-                                coreLogMessages.joinToString(" "),
-                            ) +
-                            " updates=$postArmUpdates" +
-                            " groupItems=$latestGroupItemCount" +
-                            " healthyItems=$latestHealthyItemCount" +
-                            " selectedSample=$latestSelectedHasSample",
-                    )
                     resultLatch.countDown()
                 }
             }
         }
 
-        override fun clearLogs() = resetLogs()
+        override fun clearLogs() = Unit
         override fun connected() = Unit
         override fun disconnected(message: String) = Unit
         override fun initializeClashMode(modes: StringIterator, currentMode: String) = Unit
         override fun setDefaultLogLevel(level: Int) = Unit
         override fun updateClashMode(newMode: String) = Unit
         override fun writeConnectionEvents(events: ConnectionEvents) = Unit
-        override fun writeLogs(logs: LogIterator) {
-            synchronized(lock) {
-                while (logs.hasNext() && coreLogMessages.size < MAX_LOG_MESSAGES) {
-                    val message = logs.next().message
-                    coreLogMessages += message
-                    acceptEndpointResult(message)
-                }
-            }
-        }
+        override fun writeLogs(logs: LogIterator) = Unit
         override fun writeStatus(status: StatusMessage) = Unit
 
-        private fun coreFailureCategories(): String = coreLogMessages
-            .mapNotNull { message ->
-                CORE_FAILURE_CATEGORY.find(message)?.groupValues?.getOrNull(1)
-            }
-            .distinct()
-            .take(MAX_CORE_FAILURE_CATEGORIES)
-            .joinToString(",")
-            .ifEmpty { "none" }
-
-        private fun acceptEndpointResult(message: String) {
+        private fun acceptEndpointResult(event: AndroidCoreOperationalEventRecord) {
             if (
                 target.kind != AndroidCoreEgressProbeTargetKind.ENDPOINT ||
                 !armed ||
@@ -397,7 +331,11 @@ internal object AndroidCoreEgressProbe {
             ) {
                 return
             }
-            val terminalResult = endpointResultFromMessage(message) ?: return
+            val terminalResult = endpointResultFromOperationalEvent(
+                event.name,
+                event.outcome,
+                event.errorCode,
+            ) ?: return
             result = terminalResult
             resultLatch.countDown()
         }
@@ -420,15 +358,7 @@ internal object AndroidCoreEgressProbe {
     // A first client-local WARP start may need to register and persist its
     // endpoint before the 15-second traffic probe can begin.
     private const val ENDPOINT_RESULT_TIMEOUT_MILLIS = 48_000L
-    private const val MAX_LOG_MESSAGES = 128
-    private const val MAX_CORE_FAILURE_CATEGORIES = 4
-    private const val LOG_TAG = "PokrovEgressProbe"
-    private const val ENDPOINT_SUCCESS_MARKER = "selected endpoint URL test succeeded"
-    private const val ENDPOINT_FAILURE_MARKER = "selected endpoint URL test failed category="
-    private const val ENDPOINT_DEBUG_PREFIX = "selected_endpoint_url_test:"
-    private const val ENDPOINT_DEBUG_SUCCESS_MARKER = "${ENDPOINT_DEBUG_PREFIX}healthy"
     private val activeEndpointHandler = AtomicReference<ProbeHandler?>()
-    private val CORE_FAILURE_CATEGORY = Regex("category=([a-z_]{1,48})")
     private val SELECTABLE_TYPES = setOf("selector", "urltest")
     private val PROBEABLE_ENDPOINT_TYPES = setOf("warp")
 }

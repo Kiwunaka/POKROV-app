@@ -1,0 +1,17 @@
+name: pokrov_support_bundle
+description: Deterministic privacy-scanned and encryption-only support bundles for POKROV.
+publish_to: none
+version: 1.0.0
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  crypto: ^3.0.7
+  cryptography: ^2.9.0
+  pokrov_diagnostics_collectors:
+    path: ../diagnostics_collectors
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

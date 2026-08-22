@@ -9,7 +9,6 @@ import android.net.NetworkRequest
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import space.pokrov.core.libbox.InterfaceUpdateListener
 import java.net.NetworkInterface
 import java.util.concurrent.ExecutorService
@@ -76,6 +75,10 @@ internal object AndroidDefaultNetworkMonitor {
 
     private val callback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
+            AndroidOperationalJournal.recordRateLimited(
+                AndroidOperationalEvent.NETWORK_CALLBACK,
+                AndroidOperationalOutcome.AVAILABLE,
+            )
             updateCurrentNetwork(network)
         }
 
@@ -83,13 +86,20 @@ internal object AndroidDefaultNetworkMonitor {
             network: Network,
             networkCapabilities: NetworkCapabilities,
         ) {
+            AndroidOperationalJournal.recordRateLimited(
+                AndroidOperationalEvent.NETWORK_CALLBACK,
+                AndroidOperationalOutcome.CAPABILITIES_CHANGED,
+            )
             updateCurrentNetwork(network, networkCapabilities)
         }
 
         override fun onLost(network: Network) {
             val missingGeneration = clearCurrentNetworkIfMatches(network)
             if (missingGeneration != null) {
-                Log.w(LOG_TAG, "Lost default uplink network.")
+                AndroidOperationalJournal.recordRateLimited(
+                    AndroidOperationalEvent.NETWORK_CALLBACK,
+                    AndroidOperationalOutcome.LOST,
+                )
                 scheduleMissingNetworkSettlement(missingGeneration)
                 signalNetworkUpdate()
             }
@@ -181,10 +191,6 @@ internal object AndroidDefaultNetworkMonitor {
 
     fun require(): Network {
         currentNetwork?.let { return it }
-        Log.i(
-            LOG_TAG,
-            "Ждем до ${AndroidPlatformRuntimeBridge.DEFAULT_NETWORK_WAIT_TIMEOUT_MILLIS}мс, пока Android покажет обычную сеть устройства.",
-        )
         val network = AndroidPlatformRuntimeBridge.awaitValue(
             currentValue = { currentNetwork },
             refreshValue = {
@@ -197,7 +203,6 @@ internal object AndroidDefaultNetworkMonitor {
             waitForSignal = ::waitForNetworkUpdate,
         )
         if (network != null) {
-            Log.i(LOG_TAG, "Using the default uplink for DNS resolution.")
             return network
         }
         publishInterfaceState(
@@ -217,10 +222,6 @@ internal object AndroidDefaultNetworkMonitor {
         val connectivityManager = connectivity(context)
         val interfaceName = connectivityManager.getLinkProperties(network)?.interfaceName
         if (interfaceName.isNullOrBlank()) {
-            Log.w(
-                LOG_TAG,
-                "Resolved default uplink, but its interface name is unavailable.",
-            )
             publishInterfaceStateIfCurrent(
                 network = network,
                 generation = generation,
@@ -253,12 +254,6 @@ internal object AndroidDefaultNetworkMonitor {
         val connectivityManager = connectivity(context)
         val resolvedCapabilities = capabilities ?: connectivityManager.getNetworkCapabilities(network)
         if (!isUsableNetwork(resolvedCapabilities)) {
-            if (resolvedCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true) {
-                Log.i(
-                    LOG_TAG,
-                    "Пропускаем VPN-сеть при выборе обычной сети устройства.",
-                )
-            }
             val missingGeneration = clearCurrentNetworkIfMatches(network)
             if (missingGeneration != null) {
                 scheduleMissingNetworkSettlement(missingGeneration)
@@ -489,7 +484,6 @@ internal object AndroidDefaultNetworkMonitor {
             NetworkInterface.getByName(it)?.index
         }
         if (interfaceIndex == null) {
-            Log.w(LOG_TAG, "Resolved default uplink, but interface index lookup did not settle.")
             synchronized(networkLock) {
                 if (currentNetwork == network && currentNetworkGeneration == generation) {
                     interfaceResolutionGeneration = null
@@ -504,7 +498,6 @@ internal object AndroidDefaultNetworkMonitor {
             )
             return
         }
-        Log.i(LOG_TAG, "Selected default uplink interface.")
         publishInterfaceStateIfCurrent(
             network = network,
             generation = generation,
@@ -586,8 +579,6 @@ internal object AndroidDefaultNetworkMonitor {
                         if (shouldResetRuntimeNetwork && resetRuntimeNetwork === targetRuntimeReset) {
                             targetRuntimeReset?.invoke()
                         }
-                    }.onFailure { error ->
-                        Log.e(LOG_TAG, "Failed to publish the default uplink interface.", error)
                     }
                 }
             }
@@ -623,5 +614,4 @@ internal object AndroidDefaultNetworkMonitor {
         val resolutionPending: Boolean,
     )
 
-    private const val LOG_TAG = "PokrovDefaultNet"
 }

@@ -32,6 +32,12 @@ executable or release train.
 
 The machine-readable owner is `config/runtime-artifacts.seed.json`.
 
+Compatibility is platform-specific. Android is bound by package
+`space.pokrov.core` and the exact AAR digest above; it has no integer Core ABI.
+Windows is bound by desktop ABI `2` and the exact DLL digest. A release handoff
+must record the embedded Core artifact digest for every client artifact, so an
+app version cannot conceal a changed runtime payload.
+
 ## Provenance And Behavior
 
 The AAR and DLL were each built repeatedly from the tagged source with Go

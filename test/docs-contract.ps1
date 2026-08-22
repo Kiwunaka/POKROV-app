@@ -255,6 +255,8 @@ function New-ExpectedRegistryManifest {
     'CANONICAL|RECONCILED|Client design system|DESIGN.md',
     'CANONICAL|RECONCILED|Client product|docs/product/client-product-contract.md',
     'CANONICAL|RECONCILED|App-first onboarding|docs/architecture/app-first-onboarding-flow.md',
+    'CANONICAL|RECONCILED|Client persisted state and migrations|docs/architecture/persisted-state-contract.md',
+    'CANONICAL|RECONCILED|Platform privilege and runtime boundaries|docs/architecture/platform-privilege-runtime-contract.md',
     'CANONICAL|REVIEWED_NO_CHANGE|Repository structure|docs/architecture/folder-structure.md',
     'CANONICAL|RECONCILED|Package boundaries|docs/architecture/package-boundaries.md',
     'CANONICAL|RECONCILED|Runtime bootstrap|docs/architecture/bootstrap-workflow.md',
@@ -267,6 +269,7 @@ function New-ExpectedRegistryManifest {
     'CANONICAL|REVIEWED_NO_CHANGE|Runtime profile facts|config/runtime-profile.seed.json',
     'CANONICAL|RECONCILED|Cutover readiness facts|config/cutover-readiness.seed.json',
     'CANONICAL|RECONCILED|Release handoff facts|config/release-handoff.seed.json',
+    'CANONICAL|RECONCILED|Stable release pointer and rollback targets|config/release-rollback-catalog.seed.json',
     'ACTIVE_EXECUTION|RECONCILED|Client release execution|docs/implementation/client-release-backlog.md',
     'ACTIVE_EXECUTION|RECONCILED|Cutover checklist|docs/operations/cutover-readiness.md',
     'ACTIVE_EXECUTION|RECONCILED|Android readiness|docs/operations/android-release-audit.md',
@@ -275,6 +278,7 @@ function New-ExpectedRegistryManifest {
     'ACTIVE_EXECUTION|REVIEWED_NO_CHANGE|Responsive proof|docs/operations/responsive-golden-capture-plan.md',
     'ACTIVE_EXECUTION|REVIEWED_NO_CHANGE|Motion/performance proof|docs/operations/client-motion-performance-checklist.md',
     'ACTIVE_EXECUTION|RECONCILED|Apple readiness|docs/operations/apple-release-readiness.md',
+    'EVIDENCE|RECONCILED|Readiness snapshots before current/history split|docs/implementation/history/;docs/operations/history/',
     'EVIDENCE|REVIEWED_NO_CHANGE|Public beta product evidence|docs/product/client-public-beta-prd.md',
     'EVIDENCE|REVIEWED_NO_CHANGE|Dated handoffs and closure audits|docs/operations/2026-06-04-public-beta-operator-handoff.md;docs/operations/2026-06-05-phase-6-release-beta-handoff.md;docs/operations/2026-06-05-final-beta-closure-except-manual-tests-signing.md;docs/operations/2026-06-13-pokrov-product-ui-plan-closure-audit.md',
     'EVIDENCE|REVIEWED_NO_CHANGE|Client/API additions record|docs/operations/client-ui-api-additions.md',
@@ -316,7 +320,7 @@ function New-ExpectedRegistryManifest {
       LogicalKey = $logicalKey
     })
   }
-  if ($manifest.Count -ne 47) { throw "Embedded registry manifest must contain 47 rows, got $($manifest.Count)" }
+  if ($manifest.Count -ne 51) { throw "Embedded registry manifest must contain 51 rows, got $($manifest.Count)" }
   return $manifest.ToArray()
 }
 
@@ -617,11 +621,11 @@ function Test-DocumentationRegistry {
       $expectedPathClasses.Add($relativePath, $expectedRow.Class)
     }
   }
-  if ($expectedPathClasses.Count -ne 57) {
-    throw "Embedded registry manifest must contain 57 concrete paths, got $($expectedPathClasses.Count)"
+  if ($expectedPathClasses.Count -ne 62) {
+    throw "Embedded registry manifest must contain 62 concrete paths, got $($expectedPathClasses.Count)"
   }
   if ($registryTable.Rows.Count -ne $expectedManifest.Count) {
-    [void]$Errors.Add("Document registry must match the exact 47-row manifest (actual rows: $($registryTable.Rows.Count))")
+    [void]$Errors.Add("Document registry must match the exact 51-row manifest (actual rows: $($registryTable.Rows.Count))")
   }
 
   $observedClasses = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
@@ -731,7 +735,7 @@ function Invoke-ClientDocsValidation {
 
   $errors = [System.Collections.Generic.List[string]]::new()
   $agents = ConvertFrom-StrictDocumentBytes -Bytes $AgentsBytes -Name 'AGENTS.md' -MaximumBytes 8192 -MaximumLines 120 -Errors $errors
-  $registry = ConvertFrom-StrictDocumentBytes -Bytes $RegistryBytes -Name 'docs/README.md' -MaximumBytes 12288 -MaximumLines 240 -Errors $errors
+  $registry = ConvertFrom-StrictDocumentBytes -Bytes $RegistryBytes -Name 'docs/README.md' -MaximumBytes 12544 -MaximumLines 240 -Errors $errors
 
   if ($null -ne $agents) {
     Test-AgentContract -Text $agents.Text -Errors $errors
@@ -1018,15 +1022,15 @@ POKROV-app/main
     $rows.RemoveAt($index)
     return 1
   }
-  Assert-ContractRejected -Name 'deleted registry row' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $deletedRowRegistry) -ExpectedErrorPattern 'exact 47-row manifest'
+  Assert-ContractRejected -Name 'deleted registry row' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $deletedRowRegistry) -ExpectedErrorPattern 'exact 51-row manifest'
 
-  $emptyRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 47 -Mutation {
+  $emptyRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 51 -Mutation {
     param($rows)
     $removed = $rows.Count
     $rows.Clear()
     return $removed
   }
-  Assert-ContractRejected -Name 'all registry rows deleted' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $emptyRegistry) -ExpectedErrorPattern 'exact 47-row manifest'
+  Assert-ContractRejected -Name 'all registry rows deleted' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $emptyRegistry) -ExpectedErrorPattern 'exact 51-row manifest'
 
   $invalidReviewRegistry = Set-RegistryRowCell -Text $registryText -Owner 'Client docs routing' -CellIndex 1 -Value 'APPROVED'
   Assert-ContractRejected -Name 'invalid review enum' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $invalidReviewRegistry) -ExpectedErrorPattern 'invalid review: APPROVED'
@@ -1073,7 +1077,7 @@ POKROV-app/main
     $rows.Insert($targetIndex + 1, [pscustomobject]@{ Cells = $secondCells })
     return 1
   }
-  Assert-ContractRejected -Name 'four-path registry row split' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $splitRegistry) -ExpectedErrorPattern 'exact 47-row manifest'
+  Assert-ContractRejected -Name 'four-path registry row split' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $splitRegistry) -ExpectedErrorPattern 'exact 51-row manifest'
 
   $wrongSectionAgents = Move-AgentLineBetweenSections -Text $agentsText -Marker 'Every task runs `git diff --check`' -SourceSection 'Verification And Documentation' -TargetSection 'Start Every Task'
   Assert-ContractRejected -Name 'verification marker moved to wrong section' -RepositoryRoot $RepositoryRoot -AgentsBytes (ConvertTo-Utf8Bytes $wrongSectionAgents) -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'belongs to Verification And Documentation'
@@ -1248,12 +1252,13 @@ if (-not $validAndroidWrapperBoundaries) {
 
   $exactAndroidWrapperPathBlock = @'
 $androidWrapperRelativePaths = @(
+  "android\gradlew",
   "android\gradlew.bat",
   "android\gradle\wrapper\gradle-wrapper.jar"
 )
 '@
   if ($androidWrapperContractBlock.IndexOf($exactAndroidWrapperPathBlock, [StringComparison]::Ordinal) -lt 0) {
-    $errors += 'Workspace bootstrap Android wrapper copy contract must contain exactly the BAT/JAR relative path pair'
+    $errors += 'Workspace bootstrap Android wrapper copy contract must contain exactly the Unix/BAT/JAR relative path set'
   }
 
   if ($androidWrapperRepairIndex -ge 0) {
@@ -1265,7 +1270,7 @@ $androidWrapperRelativePaths = @(
       'Flutter Android wrapper repair did not materialize required file'
     )) {
       if ($postRepairValidation.IndexOf($requiredMarker, [StringComparison]::Ordinal) -lt 0) {
-        $errors += "Workspace bootstrap lacks post-repair Android BAT/JAR validation marker: $requiredMarker"
+        $errors += "Workspace bootstrap lacks post-repair Android Unix/BAT/JAR validation marker: $requiredMarker"
       }
     }
 
@@ -1325,9 +1330,19 @@ $cutover = [IO.File]::ReadAllText((Join-Path $root 'config\cutover-readiness.see
 $runtime = [IO.File]::ReadAllText((Join-Path $root 'config\runtime-profile.seed.json')) | ConvertFrom-Json
 $windowsRelease = [IO.File]::ReadAllText((Join-Path $root 'config\windows-release.seed.json')) | ConvertFrom-Json
 $androidGradle = [IO.File]::ReadAllText((Join-Path $root 'apps\android_shell\android\app\build.gradle'))
+$androidProductionBuild = [IO.File]::ReadAllText((Join-Path $root 'scripts\build-android-production.ps1'))
+$workspaceTests = [IO.File]::ReadAllText((Join-Path $root 'scripts\run-tests.ps1'))
 
 if ($product.client_version_line -ne $release.latest_repo_backed_release.version) {
   $errors += 'Product and release version lines disagree'
+}
+$developmentTarget = $release.release_truth.development_target
+if ($developmentTarget.product_version -ne '1.2.0' -or
+    [int]$developmentTarget.platform_build -ne 30 -or
+    $developmentTarget.package_version -ne '1.2.0+30' -or
+    $developmentTarget.state -ne 'PRE_CANDIDATE_LOCAL' -or
+    $developmentTarget.candidate_created -ne $false) {
+  $errors += 'Release handoff development target must remain exact uncreated 1.2.0+30 pre-candidate truth'
 }
 if ($cutover.latest_repo_backed_release.github_release -ne $release.latest_repo_backed_release.github_release) {
   $errors += 'Cutover and release-handoff URLs disagree'
@@ -1366,6 +1381,26 @@ if (-not $androidGradle.Contains('keepDebugSymbols += ["**/libpokrov-core.so"]')
   $errors += 'Android release packaging must preserve the exact published POKROV Core ELF identity'
 }
 
+foreach ($requiredDirectBuildMarker in @(
+  '"--flavor", "direct"',
+  'app-direct-release.apk',
+  'app-arm64-v8a-direct-release.apk',
+  'app-armeabi-v7a-direct-release.apk',
+  'app-x86_64-direct-release.apk'
+)) {
+  if (-not $androidProductionBuild.Contains($requiredDirectBuildMarker)) {
+    $errors += "Android production builder lacks direct-flavor marker: $requiredDirectBuildMarker"
+  }
+}
+foreach ($requiredFlavorTestTask in @(
+  ':app:testDirectDebugUnitTest',
+  ':app:testStoreDebugUnitTest'
+)) {
+  if (-not $workspaceTests.Contains($requiredFlavorTestTask)) {
+    $errors += "Workspace test gate lacks Android flavor task: $requiredFlavorTestTask"
+  }
+}
+
 if ($release.release_truth.public_cutover_allowed -ne $cutover.public_cutover_allowed) {
   $errors += 'Cutover and release-handoff public approval disagree'
 }
@@ -1392,14 +1427,20 @@ foreach ($requiredPublicTarget in @('android', 'windows')) {
   }
 }
 
-$blockedAndroidReadiness = 'direct_apk_production_signed_device_journey_pass_public_promotion_blocked_pending_distribution_and_recovery_gates'
-$blockedWindowsReadiness = 'outside_store_unsigned_beta_retained_new_public_promotion_blocked_pending_trusted_signing'
+$currentAndroidReadiness = 'direct_apk_1_1_6_public_stable_runtime_synced_exact_huawei_followup_manual'
+$currentWindowsReadiness = 'outside_store_unsigned_1_1_6_public_stable_runtime_synced_new_promotion_blocked_pending_trusted_signing'
+if ($platform.release_readiness.android -ne $currentAndroidReadiness) {
+  $errors += 'Platform matrix Android readiness is not aligned with retained public 1.1.6 truth'
+}
+if ($platform.release_readiness.windows -ne $currentWindowsReadiness) {
+  $errors += 'Platform matrix Windows readiness is not aligned with retained public 1.1.6 truth'
+}
 if ($cutover.android_release.public_approved -ne $true -and
-    $platform.release_readiness.android -ne $blockedAndroidReadiness) {
+    $platform.release_readiness.android -notmatch 'blocked') {
   $errors += 'Platform matrix does not preserve the blocked Android promotion state'
 }
 if ($cutover.windows_release.public_approved -ne $true -and
-    $platform.release_readiness.windows -ne $blockedWindowsReadiness) {
+    $platform.release_readiness.windows -notmatch 'blocked') {
   $errors += 'Platform matrix does not preserve the blocked Windows promotion state'
 }
 if ($cutover.android_release.public_approved -eq $true -and
@@ -1468,6 +1509,59 @@ $backlog = [IO.File]::ReadAllText((Join-Path $root 'docs\implementation\client-r
 $windows = [IO.File]::ReadAllText((Join-Path $root 'docs\operations\windows-release-readiness.md'))
 $warp = [IO.File]::ReadAllText((Join-Path $root 'docs\operations\warp-runtime-proof-checklist.md'))
 $registry = [IO.File]::ReadAllText((Join-Path $root 'docs\README.md'))
+
+$currentReadinessPaths = @(
+  'docs\implementation\client-release-backlog.md',
+  'docs\operations\cutover-readiness.md',
+  'docs\operations\android-release-audit.md',
+  'docs\operations\windows-release-readiness.md',
+  'docs\operations\warp-runtime-proof-checklist.md',
+  'docs\operations\responsive-golden-capture-plan.md',
+  'docs\operations\client-motion-performance-checklist.md',
+  'docs\operations\apple-release-readiness.md'
+)
+$historicalStatusMarkers = @(
+  '`1.0.0-beta` client shell',
+  'direct Android release is production-signed `1.1.2`',
+  'superseded local `1.0.3+11`',
+  'production-signed `1.0.4+13`',
+  '## Current 2026-08-13 Candidate',
+  '## Prior Builds',
+  '## Retained Pre-Service'
+)
+foreach ($relativePath in $currentReadinessPaths) {
+  $currentText = [IO.File]::ReadAllText((Join-Path $root $relativePath))
+  if (-not $currentText.Contains('Registry class: `ACTIVE_EXECUTION`.')) {
+    $errors += "Active readiness document lacks explicit ACTIVE_EXECUTION class: $relativePath"
+  }
+  foreach ($marker in $historicalStatusMarkers) {
+    if ($currentText.Contains($marker)) {
+      $errors += "Active readiness document mixes retained candidate state '$marker': $relativePath"
+    }
+  }
+}
+
+$readinessSnapshots = @(
+  'docs\implementation\history\2026-08-21-client-release-backlog-snapshot.md',
+  'docs\operations\history\2026-08-21-cutover-readiness-snapshot.md',
+  'docs\operations\history\2026-08-19-android-release-audit-snapshot.md',
+  'docs\operations\history\2026-08-21-windows-release-readiness-snapshot.md',
+  'docs\operations\history\2026-08-13-warp-runtime-proof-snapshot.md',
+  'docs\operations\history\2026-08-22-responsive-golden-capture-plan-snapshot.md'
+)
+foreach ($relativePath in $readinessSnapshots) {
+  $snapshotText = [IO.File]::ReadAllText((Join-Path $root $relativePath))
+  if (-not $snapshotText.Contains('Document class: `EVIDENCE`') -or
+      -not $snapshotText.Contains('cannot authorize a new candidate or promotion')) {
+    $errors += "Readiness snapshot lacks evidence-only boundary: $relativePath"
+  }
+}
+
+foreach ($currentFact in @('`1.1.6`', '`1.2.0+30`', '`PRE_CANDIDATE_LOCAL`', '| Candidate created | `false` |')) {
+  if (-not $backlog.Contains($currentFact)) {
+    $errors += "Client backlog lacks current release fact: $currentFact"
+  }
+}
 
 if (-not $legacyDesign.Contains('HISTORICAL_REFERENCE') -or
     -not $legacyDesign.Contains('../../DESIGN.md')) {

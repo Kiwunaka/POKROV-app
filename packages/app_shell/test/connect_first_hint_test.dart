@@ -29,16 +29,21 @@ class _CompletedFirstLaunchStore implements PokrovFirstLaunchStore {
 }
 
 class _StubBootstrapper
-    implements ManagedProfileBootstrapper, AppFirstExperienceService {
+    implements
+        ManagedProfileBootstrapper,
+        AppFirstExperienceService,
+        AppFirstFirstSessionEventService {
   const _StubBootstrapper({
     this.onRuntimeStats,
     this.onRuntimeError,
     this.onOnboardingCompleted,
+    this.onFirstSessionEvent,
   });
 
   final void Function(String runtimePhase, bool connected)? onRuntimeStats;
   final void Function(String errorCode)? onRuntimeError;
   final VoidCallback? onOnboardingCompleted;
+  final void Function(String eventName, String result)? onFirstSessionEvent;
 
   @override
   Future<ManagedProfilePayload> resolveManagedProfile({
@@ -80,6 +85,18 @@ class _StubBootstrapper
     required HostPlatform hostPlatform,
   }) async {
     onOnboardingCompleted?.call();
+  }
+
+  @override
+  Future<void> reportFirstSessionEvent({
+    required HostPlatform hostPlatform,
+    required String eventName,
+    required String stage,
+    required String result,
+    String errorCode = '',
+    bool? retryable,
+  }) async {
+    onFirstSessionEvent?.call(eventName, result);
   }
 }
 
@@ -145,6 +162,9 @@ void _installReadyRuntimeBridgeMock({bool connectSucceeds = true}) {
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': true,
+          if (connectSucceeds) 'hostHealth': 'healthy',
+          if (connectSucceeds) 'dnsState': 'healthy',
+          if (connectSucceeds) 'uplinkState': 'healthy',
           if (connectSucceeds) 'core_egress_validated': true,
           if (!connectSucceeds) 'last_failure_kind': 'runtime_start_failed',
           'message': connectSucceeds
@@ -196,6 +216,13 @@ Future<void> _confirmFirstRouteScope(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(choice);
   await tester.pumpAndSettle();
+  final permission = find.byKey(
+    const ValueKey('vpn-permission-continue'),
+  );
+  if (permission.evaluate().isNotEmpty) {
+    await tester.tap(permission);
+    await tester.pumpAndSettle();
+  }
 }
 
 void main() {
@@ -235,12 +262,16 @@ void main() {
       'successful first connection dismisses the hint and reports UX state',
       (tester) async {
     final reports = <(String, bool)>[];
+    final firstSessionEvents = <(String, String)>[];
     var onboardingCompleted = 0;
     await _pumpReadyHome(
       tester,
       bootstrapper: _StubBootstrapper(
         onRuntimeStats: (phase, connected) => reports.add((phase, connected)),
         onOnboardingCompleted: () => onboardingCompleted += 1,
+        onFirstSessionEvent: (eventName, result) {
+          firstSessionEvents.add((eventName, result));
+        },
       ),
     );
 
@@ -268,6 +299,15 @@ void main() {
       ('running', true),
     ]);
     expect(onboardingCompleted, 1);
+    expect(
+      firstSessionEvents,
+      containsAllInOrder(const <(String, String)>[
+        ('vpn_permission_explainer_shown', 'shown'),
+        ('connect_requested', 'started'),
+        ('vpn_permission_result', 'success'),
+        ('first_verified_connect', 'success'),
+      ]),
+    );
   });
 
   testWidgets('failed first connection keeps the milestone pending',
@@ -321,6 +361,9 @@ void main() {
           'supportsLiveConnect': true,
           'canInitialize': phase == 'artifactReady',
           'canConnect': phase == 'configStaged',
+          if (phase == 'running') 'hostHealth': 'healthy',
+          if (phase == 'running') 'dnsState': 'healthy',
+          if (phase == 'running') 'uplinkState': 'healthy',
           if (phase == 'running') 'core_egress_validated': true,
           'message': phase == 'running'
               ? 'Android runtime service is running.'
@@ -394,6 +437,8 @@ void main() {
           'supportsLiveConnect': true,
           'canInitialize': phase == 'artifactReady',
           'canConnect': phase == 'configStaged',
+          if (phase == 'configStaged')
+            'last_failure_kind': 'vpn_permission_denied',
           'message': phase == 'configStaged'
               ? 'Permission denied.'
               : 'Host bridge ready.',
@@ -438,6 +483,56 @@ void main() {
         findsNothing);
     expect(
         find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('home-vpn-permission-recovery')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey('home-vpn-permission-retry')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Разрешение на VPN не выдано'), findsOneWidget);
+  });
+
+  testWidgets('VPN permission explainer can be dismissed without connecting',
+      (tester) async {
+    final events = <(String, String)>[];
+    await _pumpReadyHome(
+      tester,
+      bootstrapper: _StubBootstrapper(
+        onFirstSessionEvent: (eventName, result) {
+          events.add((eventName, result));
+        },
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
+    final scope = find.byKey(
+      const ValueKey('first-connect-scope-whole-device'),
+    );
+    await tester.tap(scope);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('vpn-permission-explainer')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('vpn-permission-not-now')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Подключить'), findsOneWidget);
+    expect(find.byKey(const ValueKey('connect-disc-connected-settle')),
+        findsNothing);
+    expect(
+      events,
+      containsAllInOrder(const <(String, String)>[
+        ('vpn_permission_explainer_shown', 'shown'),
+        ('vpn_permission_result', 'dismissed'),
+      ]),
+    );
+    expect(events.where((event) => event.$1 == 'connect_requested'), isEmpty);
   });
 
   testWidgets('completed store never renders the hint on an idle ready disc',
