@@ -158,9 +158,19 @@ try {
   }
 
   $dirtyDefaultOutput = Join-Path $temporaryRoot "dirty-default.json"
-  $dirtyDefault = Invoke-ChildScript -Script $generator `
-    -Arguments (New-GeneratorArguments -InputPath $fixture -OutputPath $dirtyDefaultOutput)
-  Assert-Failure -Result $dirtyDefault -Case "dirty worktree without synthetic bypass"
+  $dirtySentinel = Join-Path $root (
+    "release-v2-dirty-sentinel-{0}.txt" -f [guid]::NewGuid().ToString("N")
+  )
+  try {
+    [IO.File]::WriteAllText($dirtySentinel, "synthetic dirty-worktree proof", $utf8NoBom)
+    $dirtyDefault = Invoke-ChildScript -Script $generator `
+      -Arguments (New-GeneratorArguments -InputPath $fixture -OutputPath $dirtyDefaultOutput)
+    Assert-Failure -Result $dirtyDefault -Case "dirty worktree without synthetic bypass"
+  } finally {
+    if (Test-Path -LiteralPath $dirtySentinel -PathType Leaf) {
+      Remove-Item -LiteralPath $dirtySentinel -Force
+    }
+  }
 
   $stableInput = Write-MutatedInput -Name "stable" -Mutation {
     param($payload)
