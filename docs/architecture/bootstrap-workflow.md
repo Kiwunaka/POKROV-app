@@ -85,7 +85,7 @@ that candidate-specific release truth.
 
 Current blocking dependency:
 
-- the active runtime is the clean reproducible POKROV Core `v1.0.3` release at source commit `69a74545101708e56183c92e31f2b4c7b2509884`; clients accept only the published AAR/DLL identities pinned in `config/runtime-artifacts.seed.json`
+- the active local pre-candidate runtime is the clean reproducible POKROV Core `1.1.0` build at source commit `fcb3c8bbc6efdeed284417369aacb522722ebfa2`; clients accept only the exact AAR/DLL identities pinned in `config/runtime-artifacts.seed.json`, while tag creation, signing and publication remain unclaimed
 - `Android` host now reaches a real service-backed connect lane: it can initialize POKROV Core, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
 - Android runtime discovery accepts either an extracted `nativeLibraryDir/libpokrov-core.so` or the ABI-matched `lib/<abi>/libpokrov-core.so` entry in the base/split APK. This is required on physical devices that install the release APK with native-library extraction disabled; Java still loads the packaged Core through the generated bindings
 - Android runtime materialization is intentionally `tun`-only in this lane; desktop loopback listener inbounds such as `mixed-in` and `dns-in` stay disabled for the mobile `VpnService` path
@@ -197,7 +197,7 @@ Current blocking dependency:
   behavior remains gated on exact-artifact physical-device and clean-VM proof
 - `iOS` source carries the POKROV Core packet-tunnel bridge: it stages one materialized profile in the shared app-group directory, persists a `NETunnelProviderManager`, boots `LibboxSetup`, starts or reloads `CommandServer`, and opens tun through `NEPacketTunnelFlow`; the framework build, signing, and device validation remain manual
 - `macOS` stays on the desktop ABI 2 lane and expects only `pokrov-core.dylib`; the universal dylib must be built and probed on macOS before that host is runnable
-- `Windows` copies `pokrov_service.exe`, the exact POKROV Core 1.0.3
+- `Windows` copies `pokrov_service.exe`, the exact POKROV Core 1.1.0
   `pokrov-core.dll` and pinned `libcronet.dll` into the machine-wide release
   bundle. Raw materialized config, WARP, `Full tunnel`, `All except RU` and
   selected-process routing are owned by the shared adapter, then passed as
@@ -258,10 +258,13 @@ Current blocking dependency:
 - host `build/` outputs and staged local bundles remain disposable local verification artifacts; they are not release truth for any public lane
 - treat future live connect, service ownership, and traffic-carrying runtime work as one shared contract owned by the lane, not four host-local improvisations
 
-## POKROV Core 1.0.3
+## POKROV Core 1.1.0 Pre-Candidate Binding
 
-POKROV Core is an independent repository and release line. The client pins
-`v1.0.3` and commit `69a74545101708e56183c92e31f2b4c7b2509884`.
+POKROV Core is an independent repository and release line. The local client
+pre-candidate pins version `1.1.0` and clean commit
+`fcb3c8bbc6efdeed284417369aacb522722ebfa2`. The version-derived `v1.1.0`
+label is not a created Git tag or public release in this state. The retained
+public `v1.0.3` release remains a separate rollback/history identity.
 
 - Android package namespace: `space.pokrov.core`.
 - Android artifact: `pokrov-core.aar`.

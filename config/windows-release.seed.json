@@ -33,7 +33,7 @@
     "runtime_dependencies": [
       "libcronet.dll"
     ],
-    "release_tag": "v1.0.3",
+    "release_tag": "v1.1.0",
     "desktop_abi": 2,
     "crash_profile": {
       "format": "POKROV_WINDOWS_CRASH_V1",
@@ -59,7 +59,7 @@
   },
   "safe_claims": [
     "The ordinary Windows UI uses the authenticated POKROVService runtime lane and does not load POKROV Core directly.",
-    "The local release build bundles POKROV Core 1.0.3, its pinned libcronet.dll dependency, and pokrov_service.exe in one machine-wide installation directory.",
+    "The local pre-candidate build bundles the exact POKROV Core 1.1.0 replacement bytes, its pinned libcronet.dll dependency, and pokrov_service.exe in one machine-wide installation directory.",
     "The installer performs the one-time administrative SCM registration; the ordinary UI does not receive privileged file, path, or shell execution.",
     "Local packaging produces an unsigned direct-download Inno Setup installer with the SmartScreen warning above; a portable ZIP is not a supported runtime artifact."
   ],

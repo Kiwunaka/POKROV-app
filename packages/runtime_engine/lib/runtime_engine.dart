@@ -1203,7 +1203,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   static const _runtimeJournalFileName = 'pokrov-runtime-events.jsonl';
   static const _runtimeJournalMaxBytes = 128 * 1024;
   static const _runtimeJournalRetainedLines = 300;
-  static const defaultCoreTag = 'v1.0.3';
+  static const defaultCoreTag = 'v1.1.0';
   static const _missingArtifactMessage =
       'Модуль подключения не найден в этой сборке. Обновите приложение или проверьте сборку.';
 

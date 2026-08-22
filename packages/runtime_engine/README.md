@@ -11,8 +11,9 @@ Current scope:
 - fail-closed capability/event ABI negotiation; the exact retained 1.0.3
   identity remains an explicit legacy mode, while release 1.2.0 requires the
   structured operational-event capability
-- Core `1.1.0` is the separate `PRE_CANDIDATE_LOCAL` replacement target for
-  product `1.2.0`; this label does not claim an artifact or candidate
+- Core `1.1.0` is the exact reproducible `PRE_CANDIDATE_LOCAL` replacement
+  bound for product `1.2.0`; it does not claim a tag, signed candidate or
+  publication
 - a private `awg2_lab` boundary for Android and Windows: an `awg` endpoint is
   accepted only with the exact `pokrov.awg2.endpoint.v1` ID/SHA, an enabled
   generation marker and `useIntegratedTun=false`; host metadata is stripped

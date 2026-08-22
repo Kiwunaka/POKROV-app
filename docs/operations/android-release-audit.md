@@ -17,8 +17,8 @@ Older APK identities and device runs are retained separately as evidence.
 | Working package target | `1.2.0+30` |
 | Candidate created | `false` |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Active Core package | POKROV Core `1.0.3` AAR |
-| Intended Core replacement | `1.1.0`, exact artifact pending |
+| Active pre-candidate Core package | POKROV Core `1.1.0` AAR, exact local bytes bound |
+| Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
 
 Current source separates direct and store update authority. It also keeps
@@ -34,6 +34,7 @@ These local contracts do not prove final APK bytes or physical behavior.
 | Check | Current state |
 |---|---|
 | Clean client/Core revisions | `BLOCKED` |
+| Exact Core AAR identity | `PASS_LOCAL` — `26a7b9eb…bf93`, two byte-identical builds, four ABIs |
 | Strict-v2 Android artifact entries | `MISSING` |
 | Production signer and lineage | `MISSING` |
 | Package/version/ABI/min-SDK identity | `MISSING` |

@@ -77,8 +77,9 @@ Current status: `MANUAL_OWNER_TEST` for exact `1.2.0` candidate bytes.
   implemented and locally tested.
 - Client-local WARP materialization, enable/disable parity, desktop ABI 2 and
   Android host/JVM boundaries: implemented and locally tested.
-- The active repository-backed Core remains `1.0.3`; the intended `1.1.0`
-  replacement artifact is `DIRTY_DEVELOPMENT_REPLACEMENT_PENDING`.
+- The local pre-candidate client binds exact reproducible Core `1.1.0` AAR/DLL
+  bytes from clean source commit `fcb3c8bbc6efdeed284417369aacb522722ebfa2`.
+  The retained public `1.0.3` identity remains rollback/history only.
 - Exact Android and Windows release-build WARP/uplink/teardown evidence:
   `MANUAL_OWNER_TEST`.
 

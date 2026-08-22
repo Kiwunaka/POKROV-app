@@ -21,7 +21,7 @@ try {
     $env:POKROV_REAL_CORE_ROOT = $resolvedCoreRoot
     Push-Location $runtimePackage
     try {
-        & flutter test test\runtime_engine_test.dart --plain-name "real Windows POKROV Core 1.0.3 survives 100 start-stop cycles"
+        & flutter test test\runtime_engine_test.dart --plain-name "real Windows POKROV Core 1.1.0 survives 100 start-stop cycles"
         if ($LASTEXITCODE -ne 0) {
             throw "Proxy-only Windows Core smoke failed with exit code $LASTEXITCODE."
         }

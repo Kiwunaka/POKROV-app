@@ -19,8 +19,8 @@ results belong in dated evidence and never become reusable release approval.
 | Candidate created | `false` |
 | Public cutover allowed for a new candidate | `false` |
 | Google Play | `NOT_REQUESTED` |
-| Active Core artifact | POKROV Core `1.0.3` |
-| Intended Core replacement | `1.1.0`, exact replacement artifact pending |
+| Active pre-candidate Core artifact | POKROV Core `1.1.0`, exact AAR/DLL identities bound |
+| Retained public Core | `1.0.3`; rollback/history identity only |
 
 `config/release-handoff.seed.json` owns the public release and development
 target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
@@ -46,7 +46,7 @@ signing, hosted-CI, deployed-runtime or promotion proof.
 |---:|---|---|---|
 | 1 | Clean platform, client and Core revisions | `BLOCKED` | All exact source revisions are clean and frozen. |
 | 2 | Public release-index revision | `BLOCKED_BY_ACCESS` | The index exists and its exact revision is bound into v2. |
-| 3 | POKROV Core `1.1.0` replacement artifact | `DEVELOPMENT_REPLACEMENT_PENDING` | Exact AAR/DLL identities match the declared Core revision. |
+| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_LOCAL` | Exact reproducible AAR/DLL identities match clean Core revision `fcb3c8b…bfa2`; candidate/signing/device proof remains later. |
 | 4 | Strict-v2 candidate metadata | `MISSING` | The clean client generator produces one validated handoff outside retained history. |
 | 5 | Android exact-candidate build and signer | `MISSING` | Every APK matches v2 size, digest, package, version and signer. |
 | 6 | Android physical-device matrix | `MANUAL_OWNER_TEST` | Huawei install, TUN/DNS/egress, WARP, per-app, handoff and endurance pass on exact bytes. |

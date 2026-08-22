@@ -69,9 +69,10 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
 - The retained legacy contract pins POKROV Core 1.0.3 at one exact source and
   release commit. Its hashes remain valid historical/runtime evidence, but
   those artifacts do not contain the structured event surface required by
-  release 1.2.0. Android and Windows may consume a replacement only after its
-  exact source, hashes and manifest binding are retained. Apple artifacts
-  remain manual until built and proven on macOS.
+  release 1.2.0. Android and Windows now consume the exact reproducible 1.1.0
+  pre-candidate replacement bound to clean source, hashes, ABI/event contracts
+  and SBOM identities. Apple artifacts remain manual until built and proven on
+  macOS.
 - `platform_contracts` is the only shared package that should grow the POKROV Core artifact source, version, checksum, and load-policy contract.
 - Host shells should consume that contract later instead of baking host-specific runtime provenance into `Android`, `iOS`, `macOS`, or `Windows` independently.
 
@@ -93,10 +94,11 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   service; it does not load Core, mutate TUN/routes/DNS or elevate itself. The
   service loads the exact sibling `pokrov-core.dll` and pinned `libcronet.dll`
   from the machine-wide installation. The build helper verifies metadata,
-  exact files and service-aware package staging. The retained 1.0.3 DLL is an
-  explicit `legacy_without_structured_events` compatibility identity and
-  cannot satisfy a 1.2.0 candidate. The replacement remains pending exact
-  artifact synchronization.
+  exact files and service-aware package staging. The retained 1.0.3 DLL remains
+  an explicit `legacy_without_structured_events` compatibility identity and
+  cannot satisfy a 1.2.0 candidate. The exact 1.1.0 DLL is now synchronized for
+  the local pre-candidate line; clean-host TUN/DNS/egress, signing and package
+  proof remain open.
 - Host shells should still stay thin. Native code should implement only the host-specific bridge and packaging steps required by the shared runtime contract.
 
 ## Connection Experience Truth

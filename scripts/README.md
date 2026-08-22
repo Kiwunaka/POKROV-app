@@ -5,11 +5,8 @@ This folder contains non-destructive client helpers.
 - `validate-seed.ps1` validates the client layout, machine-readable runtime and
   release contracts, Core compatibility authority, release-handoff v2
   behavior, and the non-mutating cross-repository CI workflow. CI callers pass
-  explicit `-PlatformRoot` and `-CoreRoot` values. A clean checkout matching the
-  pinned artifact commit and toolchain reports `PASS`; a compatible Core tree
-  with the declared replacement still pending reports
-  `DEVELOPMENT_REPLACEMENT_PENDING` (or its dirty variant) and never becomes
-  exact artifact proof.
+  explicit `-PlatformRoot` and `-CoreRoot` values. Only a clean Core checkout
+  matching the exact 1.1.0 artifact commit and toolchain reports `PASS`.
 - `new-release-handoff-v2.ps1` generates strict candidate metadata from an
   explicit input plus client-owned version/Core facts, validates it with the
   platform validator, carries the version-matched release-note summary and URL,
@@ -49,7 +46,7 @@ This folder contains non-destructive client helpers.
   rollback regressions; update cache and Windows recovery remain explicit
   non-migrating state with their own tests.
 - `bootstrap-local.ps1` copies example local configuration without touching production paths unless explicitly forced.
-- `sync-pokrov-core-runtime.ps1` copies only the exact POKROV Core 1.0.3 Android and Windows release identities from the separate core checkout after verifying commit, version, sizes, and SHA-256 values.
+- `sync-pokrov-core-runtime.ps1` copies only the exact POKROV Core 1.1.0 Android and Windows pre-candidate identities from the clean separate Core checkout after verifying commit, version, sizes, and SHA-256 values.
 - `configure-android-production-signing.ps1` creates the one-time self-managed direct-APK signing identity outside the repository, stores its password with Windows DPAPI for the current user, exports only the public certificate, and refuses partial or existing-state overwrite.
 - `build-android-production.ps1` loads that local identity only into the current process, builds the universal direct APK plus smaller `arm64-v8a`, `armeabi-v7a`, and emulator-only `x86_64` APKs, rejects Android Debug signing, matches the signer fingerprint, and writes ignored candidate-local signing evidence beside every APK.
 - `build-windows-release.ps1` can sync that pinned Windows runtime, validate the client, build the unsigned Flutter bundle, and stage the local installer/ZIP manifest.

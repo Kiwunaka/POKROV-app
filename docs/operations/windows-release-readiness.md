@@ -18,8 +18,8 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Candidate created | `false` |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active Core | POKROV Core `1.0.3`, desktop ABI `2` |
-| Intended Core replacement | `1.1.0`, exact artifact pending |
+| Active pre-candidate Core | POKROV Core `1.1.0`, desktop ABI `2`, exact local bytes bound |
+| Retained public Core | `1.0.3`; rollback/history identity only |
 | Portable ZIP | Unsupported for the service-first runtime |
 | Trusted signing | `MISSING` |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
@@ -41,7 +41,7 @@ still belongs to the exact-candidate gate below.
 | Check | Current state |
 |---|---|
 | Clean client/Core revisions | `BLOCKED` |
-| Exact Core DLL and dependency identity | `DEVELOPMENT_REPLACEMENT_PENDING` |
+| Exact Core DLL and dependency identity | `PASS_LOCAL` — DLL `10ee475d…dbff`, Cronet `8ef1f8bb…a6f7`, two byte-identical builds and 15 exports |
 | Machine-wide setup package | `MISSING` |
 | Service install/start and UI authentication | `MANUAL_OWNER_TEST` |
 | Trusted code signing and timestamp | `MANUAL_OWNER_TEST` |

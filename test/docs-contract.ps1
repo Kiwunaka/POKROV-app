@@ -260,7 +260,7 @@ function New-ExpectedRegistryManifest {
     'CANONICAL|REVIEWED_NO_CHANGE|Repository structure|docs/architecture/folder-structure.md',
     'CANONICAL|RECONCILED|Package boundaries|docs/architecture/package-boundaries.md',
     'CANONICAL|RECONCILED|Runtime bootstrap|docs/architecture/bootstrap-workflow.md',
-    'CANONICAL|RECONCILED|Active POKROV Core 1.0.3 runtime decision|docs/decisions/2026-08-13-pokrov-core-1.0.3-release.md',
+    'CANONICAL|RECONCILED|Active POKROV Core 1.1.0 pre-candidate runtime binding|docs/decisions/2026-08-23-pokrov-core-1.1.0-pre-candidate-binding.md',
     'CANONICAL|RECONCILED|In-app assistant|docs/architecture/in-app-ai-assistant-contract.md',
     'CANONICAL|RECONCILED|Current product/UI direction|docs/design/2026-06-13-pokrov-product-ui-direction.md',
     'EVIDENCE|RECONCILED|Completed motion/HIG implementation record|docs/design/2026-07-13-agent-uiux-backlog.md',
@@ -286,6 +286,7 @@ function New-ExpectedRegistryManifest {
     'EVIDENCE|REVIEWED_NO_CHANGE|Completed implementation maps|docs/implementation/2026-06-03-client-build-readiness-and-api-plan.md;docs/implementation/2026-06-03-client-mvp-shell-implementation.md;docs/implementation/2026-06-04-decisions-implementation-map.md;docs/implementation/2026-06-05-p6-overload-correction-plan.md',
     'HISTORICAL_REFERENCE|RECONCILED|Superseded POKROV Core 1.0.0 runtime decision|docs/decisions/2026-07-23-pokrov-core-1.0.0-activation.md',
     'HISTORICAL_REFERENCE|RECONCILED|Superseded POKROV Core 1.0.2 runtime decision|docs/decisions/2026-08-04-pokrov-core-1.0.2-release.md',
+    'HISTORICAL_REFERENCE|RECONCILED|Retained public POKROV Core 1.0.3 runtime decision|docs/decisions/2026-08-13-pokrov-core-1.0.3-release.md',
     'HISTORICAL_REFERENCE|RECONCILED|Superseded local design entry|docs/design/DESIGN.md',
     'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Earlier scaffold spec|docs/specs/2026-04-18-wave-7-new-base-client-scaffold.md',
     'HISTORICAL_REFERENCE|REVIEWED_NO_CHANGE|Completed WARP design spec|docs/specs/2026-06-05-p5-warp-approved-design.md',
@@ -320,7 +321,7 @@ function New-ExpectedRegistryManifest {
       LogicalKey = $logicalKey
     })
   }
-  if ($manifest.Count -ne 51) { throw "Embedded registry manifest must contain 51 rows, got $($manifest.Count)" }
+  if ($manifest.Count -ne 52) { throw "Embedded registry manifest must contain 52 rows, got $($manifest.Count)" }
   return $manifest.ToArray()
 }
 
@@ -621,11 +622,11 @@ function Test-DocumentationRegistry {
       $expectedPathClasses.Add($relativePath, $expectedRow.Class)
     }
   }
-  if ($expectedPathClasses.Count -ne 62) {
-    throw "Embedded registry manifest must contain 62 concrete paths, got $($expectedPathClasses.Count)"
+  if ($expectedPathClasses.Count -ne 63) {
+    throw "Embedded registry manifest must contain 63 concrete paths, got $($expectedPathClasses.Count)"
   }
   if ($registryTable.Rows.Count -ne $expectedManifest.Count) {
-    [void]$Errors.Add("Document registry must match the exact 51-row manifest (actual rows: $($registryTable.Rows.Count))")
+    [void]$Errors.Add("Document registry must match the exact 52-row manifest (actual rows: $($registryTable.Rows.Count))")
   }
 
   $observedClasses = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
@@ -1022,15 +1023,15 @@ POKROV-app/main
     $rows.RemoveAt($index)
     return 1
   }
-  Assert-ContractRejected -Name 'deleted registry row' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $deletedRowRegistry) -ExpectedErrorPattern 'exact 51-row manifest'
+  Assert-ContractRejected -Name 'deleted registry row' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $deletedRowRegistry) -ExpectedErrorPattern 'exact 52-row manifest'
 
-  $emptyRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 51 -Mutation {
+  $emptyRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 52 -Mutation {
     param($rows)
     $removed = $rows.Count
     $rows.Clear()
     return $removed
   }
-  Assert-ContractRejected -Name 'all registry rows deleted' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $emptyRegistry) -ExpectedErrorPattern 'exact 51-row manifest'
+  Assert-ContractRejected -Name 'all registry rows deleted' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $emptyRegistry) -ExpectedErrorPattern 'exact 52-row manifest'
 
   $invalidReviewRegistry = Set-RegistryRowCell -Text $registryText -Owner 'Client docs routing' -CellIndex 1 -Value 'APPROVED'
   Assert-ContractRejected -Name 'invalid review enum' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $invalidReviewRegistry) -ExpectedErrorPattern 'invalid review: APPROVED'
@@ -1077,7 +1078,7 @@ POKROV-app/main
     $rows.Insert($targetIndex + 1, [pscustomobject]@{ Cells = $secondCells })
     return 1
   }
-  Assert-ContractRejected -Name 'four-path registry row split' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $splitRegistry) -ExpectedErrorPattern 'exact 51-row manifest'
+  Assert-ContractRejected -Name 'four-path registry row split' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $splitRegistry) -ExpectedErrorPattern 'exact 52-row manifest'
 
   $wrongSectionAgents = Move-AgentLineBetweenSections -Text $agentsText -Marker 'Every task runs `git diff --check`' -SourceSection 'Verification And Documentation' -TargetSection 'Start Every Task'
   Assert-ContractRejected -Name 'verification marker moved to wrong section' -RepositoryRoot $RepositoryRoot -AgentsBytes (ConvertTo-Utf8Bytes $wrongSectionAgents) -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'belongs to Verification And Documentation'

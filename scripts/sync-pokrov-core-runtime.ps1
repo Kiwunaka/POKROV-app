@@ -32,6 +32,10 @@ $coreCommit = (& git -C $CoreRoot rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0 -or $coreCommit -ne $runtime.source_commit) {
   throw "POKROV Core must be checked out at $($runtime.source_commit); found '$coreCommit'."
 }
+$coreStatus = @(& git -C $CoreRoot status --porcelain)
+if ($LASTEXITCODE -ne 0 -or $coreStatus.Count -ne 0) {
+  throw "POKROV Core must be clean before exact runtime artifacts are synchronized."
+}
 
 $version = [System.IO.File]::ReadAllText((Join-Path $CoreRoot "VERSION")).Trim()
 if ("v$version" -ne $runtime.release_tag) {
@@ -62,6 +66,9 @@ function Assert-FileIdentity {
 
 foreach ($platform in $Platforms) {
   $asset = $runtime.assets.$platform
+  if ($asset.sync_policy -ne "exact_pre_candidate_build") {
+    throw "POKROV Core $platform sync policy is not exact_pre_candidate_build."
+  }
   $sourceRoot = Join-Path $CoreRoot "dist\$platform"
   $sourceEntry = Join-Path $sourceRoot $asset.entry
   Assert-FileIdentity `
@@ -101,5 +108,5 @@ foreach ($platform in $Platforms) {
       -ExpectedSha256 ([string]$dependencySha256)
   }
 
-  Write-Host "Synced POKROV Core $($runtime.release_tag) for $platform." -ForegroundColor Green
+  Write-Host "Synced exact POKROV Core $($runtime.release_tag) PRE_CANDIDATE_LOCAL bytes for $platform." -ForegroundColor Green
 }

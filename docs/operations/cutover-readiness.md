@@ -45,7 +45,7 @@ signing, device, runtime and origin evidence cannot be reused for promotion.
 | Temporary support mode and encrypted export | `PASS_LOCAL` | Signed exact-audience activation, explicit consent, persistent indicator, nonce/TTL/cumulative caps, no-upload short code and encrypted-only Android/Windows export pass local source/widget/unit contracts; exact-candidate physical host proof remains later. |
 | Clean frozen revisions | `BLOCKED` | Platform, client, Core and release-index trees are clean. |
 | Release index | `BLOCKED_BY_ACCESS` | Exact public index revision is available. |
-| Core replacement | `DEVELOPMENT_REPLACEMENT_PENDING` | Exact `1.1.0` AAR/DLL identities are retained. |
+| Core replacement | `PASS_LOCAL` | Exact reproducible `1.1.0` AAR/DLL identities are bound to clean Core revision `fcb3c8b…bfa2`; no tag, candidate, signing or publication is claimed. |
 | Candidate handoff | `MISSING` | One strict-v2 handoff binds exact revisions, artifacts and gates. |
 | Android artifact/signing | `MISSING` | Final APK identities and production signer match v2. |
 | Android device proof | `MANUAL_OWNER_TEST` | Exact-candidate physical matrix passes. |

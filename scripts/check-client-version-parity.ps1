@@ -106,7 +106,8 @@ function Assert-CoreAuthority {
 
   $coreTarget = $RuntimeCore.development_target
   $retainedRelease = $release.retained_public_release
-  if ($release.version -ne $coreTarget.version -or
+  if ($release.version -ne $RuntimeCore.version -or
+      $release.version -ne $coreTarget.version -or
       $release.state -ne $coreTarget.state -or
       $release.candidate_created -ne $coreTarget.candidate_created -or
       [int]$release.desktop_abi -ne [int]$RuntimeCore.desktop_abi.version -or
@@ -115,21 +116,24 @@ function Assert-CoreAuthority {
       "v$($release.engine.sing)" -ne $RuntimeCore.sing_dependency) {
     throw "POKROV Core checkout target disagrees with the client development contract."
   }
+  $runtimeRetainedRelease = $RuntimeCore.retained_public_release
   $retainedEvidence = $retainedRelease.local_build_evidence
-  if ($retainedRelease.version -ne $RuntimeCore.version -or
-      $retainedRelease.release_tag -ne $RuntimeCore.release_tag -or
-      $retainedRelease.source_commit -ne $RuntimeCore.source_commit) {
+  if ($retainedRelease.version -ne $runtimeRetainedRelease.version -or
+      $retainedRelease.release_tag -ne $runtimeRetainedRelease.release_tag -or
+      $retainedRelease.source_commit -ne $runtimeRetainedRelease.source_commit -or
+      [int64]$retainedEvidence.android.size -ne
+        [int64]$runtimeRetainedRelease.android.size -or
+      $retainedEvidence.android.sha256 -ne $runtimeRetainedRelease.android.sha256 -or
+      [int64]$retainedEvidence.windows.size -ne
+        [int64]$runtimeRetainedRelease.windows.size -or
+      $retainedEvidence.windows.sha256 -ne $runtimeRetainedRelease.windows.sha256 -or
+      $retainedEvidence.windows.libcronet.sha256 -ne
+        $runtimeRetainedRelease.libcronet_sha256) {
     throw "POKROV Core retained release identity disagrees with the client runtime contract."
   }
   if ($release.artifacts.android -ne $RuntimeCore.assets.android.entry -or
-      [int64]$retainedEvidence.android.size -ne
-        [int64]$RuntimeCore.assets.android.size -or
-      $retainedEvidence.android.sha256 -ne $RuntimeCore.assets.android.sha256 -or
-      $release.artifacts.windows -ne $RuntimeCore.assets.windows.entry -or
-      [int64]$retainedEvidence.windows.size -ne
-        [int64]$RuntimeCore.assets.windows.size -or
-      $retainedEvidence.windows.sha256 -ne $RuntimeCore.assets.windows.sha256) {
-    throw "POKROV Core release artifact evidence disagrees with the client runtime contract."
+      $release.artifacts.windows -ne $RuntimeCore.assets.windows.entry) {
+    throw "POKROV Core artifact names disagree with the client runtime contract."
   }
 
   $runtimeAbi = $RuntimeCore.desktop_abi
@@ -138,7 +142,7 @@ function Assert-CoreAuthority {
       $coreTarget.release_tag -ne "v1.1.0" -or
       $coreTarget.state -ne "PRE_CANDIDATE_LOCAL" -or
       $coreTarget.candidate_created -ne $false -or
-      $coreTarget.artifact_state -ne "pending") {
+      $coreTarget.artifact_state -ne "exact_local_replacement_bound") {
     throw "Core development target must be 1.1.0 PRE_CANDIDATE_LOCAL for product 1.2.0."
   }
   if ([int]$abiContract.schema_version -ne 1 -or
@@ -159,10 +163,11 @@ function Assert-CoreAuthority {
     -Actual @($abiContract.descriptor.lifecycle_events) `
     -Expected @($runtimeAbi.lifecycle_events)
 
-  $replacementPending =
+  $replacementBound =
     $runtimeAbi.structured_events.retained_v1_0_3_artifact_mode -eq
       "legacy_without_structured_events" -and
-    $runtimeAbi.structured_events.exact_replacement_artifact -eq "pending"
+    $runtimeAbi.structured_events.exact_replacement_artifact -eq
+      "bound_pre_candidate_local"
   $exactSourceIdentity =
     $revision -eq ([string]$RuntimeCore.source_commit).ToLowerInvariant() -and
     $release.go_toolchain -eq $RuntimeCore.go_toolchain
@@ -172,17 +177,8 @@ function Assert-CoreAuthority {
   }
   $isDirty = $dirtyLines.Count -gt 0
 
-  if (-not $exactSourceIdentity -or $isDirty) {
-    if (-not $replacementPending) {
-      throw "POKROV Core checkout is not the clean exact source authority for the pinned artifacts."
-    }
-    if ([string]$release.go_toolchain -notmatch '^go1\.[0-9]+\.[0-9]+$') {
-      throw "Pending POKROV Core replacement does not pin a valid Go toolchain."
-    }
-    if ($isDirty) {
-      return "DIRTY_DEVELOPMENT_REPLACEMENT_PENDING"
-    }
-    return "DEVELOPMENT_REPLACEMENT_PENDING"
+  if (-not $replacementBound -or -not $exactSourceIdentity -or $isDirty) {
+    throw "POKROV Core checkout is not the clean exact source authority for the bound 1.1.0 artifacts."
   }
 
   return "PASS"
@@ -240,6 +236,11 @@ if ([string]::IsNullOrWhiteSpace([string]$core.version) -or
     $core.release_tag -ne "v$($core.version)") {
   throw "Runtime Core version and release tag must agree."
 }
+if ($core.version -ne "1.1.0" -or
+    $core.release_tag_created -ne $false -or
+    $core.activation_state -ne "active_pre_candidate_local") {
+  throw "Runtime Core must remain the untagged 1.1.0 active pre-candidate binding."
+}
 if ([string]$core.source_commit -notmatch '^[A-Fa-f0-9]{40}$') {
   throw "Runtime Core source commit must be an exact 40-character Git revision."
 }
@@ -262,7 +263,7 @@ if (-not [string]::IsNullOrWhiteSpace($CoreRoot)) {
 }
 
 $paritySummary = "app=$android public=$($releaseHandoff.latest_repo_backed_release.version) " +
-  "target_state=$($developmentTarget.state) core_public=$($core.version) " +
+  "target_state=$($developmentTarget.state) core_pre_candidate=$($core.version) " +
   "core_target=$($core.development_target.version) " +
   "desktop_abi=$($core.desktop_abi.version) core_checkout=$coreAuthorityState"
 Write-Host "Client/Core version parity OK: $paritySummary" -ForegroundColor Green

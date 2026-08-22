@@ -1099,7 +1099,7 @@ void main() {
   });
 
   test(
-    'real Windows POKROV Core 1.0.3 survives 100 start-stop cycles',
+    'real Windows POKROV Core 1.1.0 survives 100 start-stop cycles',
     () async {
       final artifactRoot =
           Platform.environment['POKROV_REAL_CORE_ROOT']!.trim();
@@ -1243,7 +1243,7 @@ void main() {
     });
 
     final platformDirectory = Directory(
-      '${root.path}\\artifacts\\pokrov-core\\v1.0.3\\windows',
+      '${root.path}\\artifacts\\pokrov-core\\v1.1.0\\windows',
     )..createSync(recursive: true);
     File('${platformDirectory.path}\\pokrov-core.dll')
         .writeAsStringSync('stub');

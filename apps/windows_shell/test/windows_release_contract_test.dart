@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('windows release contract requires POKROV Core 1.0.3', () async {
+  test('windows release contract requires POKROV Core 1.1.0', () async {
     final releaseConfig = File('../../config/windows-release.seed.json');
     final runtimeConfig = File('../../config/runtime-artifacts.seed.json');
 
@@ -40,7 +40,7 @@ void main() {
     expect(runtime.containsKey('helper_binary'), isFalse);
     expect(runtime['service_binary'], 'pokrov_service.exe');
     expect(runtime['core_binary'], 'pokrov-core.dll');
-    expect(runtime['release_tag'], 'v1.0.3');
+    expect(runtime['release_tag'], 'v1.1.0');
     expect(runtime['desktop_abi'], 2);
     final crashProfile = runtime['crash_profile'] as Map<String, dynamic>;
     expect(crashProfile['format'], 'POKROV_WINDOWS_CRASH_V1');
@@ -58,10 +58,11 @@ void main() {
     final assets = core['assets'] as Map<String, dynamic>;
     final windows = assets['windows'] as Map<String, dynamic>;
     expect(windows.containsKey('helper'), isFalse);
-    expect(core['release_tag'], 'v1.0.3');
-    expect(core['activation_state'], 'active');
+    expect(core['release_tag'], 'v1.1.0');
+    expect(core['release_tag_created'], isFalse);
+    expect(core['activation_state'], 'active_pre_candidate_local');
     expect((core['desktop_abi'] as Map<String, dynamic>)['version'], 2);
-    expect(windows['sync_policy'], 'pokrov_release');
+    expect(windows['sync_policy'], 'exact_pre_candidate_build');
     expect(
       (windows['runtime_dependencies'] as List<dynamic>).cast<String>(),
       contains('libcronet.dll'),

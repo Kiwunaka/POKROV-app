@@ -72,7 +72,7 @@
   "blocking_dependencies": [
     "global Android and Windows cutover remains blocked because Windows trusted signing is not complete",
     "iOS production connectivity still requires on-device packet-tunnel proof plus reviewed entitlements",
-    "the universal POKROV Core 1.0.3 macOS dylib still requires a macOS build and ABI probe",
+    "the universal POKROV Core 1.1.0 macOS dylib still requires a macOS build and ABI probe",
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
@@ -111,7 +111,7 @@
     "flutter analyze passes for apps/windows_shell",
     "shared runtime and widget tests pass",
     "flutter build windows --release succeeds",
-    "local release bundle includes POKROV Core 1.0.3 and libcronet.dll",
+    "local release bundle includes the exact POKROV Core 1.1.0 pre-candidate DLL and pinned libcronet.dll",
     "trusted signing certificate and timestamping path are provided for a later trusted build",
     "outside-store EXE path stays first-layer for this stable-direct wave while MSIX/ZIP remain operator/store artifacts"
   ],

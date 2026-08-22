@@ -1,30 +1,80 @@
 {
   "core": {
     "repository": "Kiwunaka/POKROV-core",
-    "version": "1.0.3",
-    "release_tag": "v1.0.3",
-    "source_commit": "69a74545101708e56183c92e31f2b4c7b2509884",
+    "version": "1.1.0",
+    "release_tag": "v1.1.0",
+    "release_tag_created": false,
+    "source_commit": "fcb3c8bbc6efdeed284417369aacb522722ebfa2",
     "android_package": "space.pokrov.core",
     "sing_box_version": "1.13.0",
     "sing_dependency": "v0.8.0-beta.12",
-    "go_toolchain": "go1.25.12",
+    "go_toolchain": "go1.25.13",
     "artifact_provenance": {
-      "status": "clean_reproducible_release",
+      "status": "clean_reproducible_pre_candidate_local",
       "vcs_stamp": "disabled_for_reproducible_release_artifacts",
-      "source_identity": "annotated_release_tag_and_github_release_commit",
-      "release_url": "https://github.com/Kiwunaka/pokrov-core/releases/tag/v1.0.3",
-      "reproducible_build": {
+      "source_identity": "clean_git_commit_without_release_tag_or_publication",
+      "release_url": null,
+      "evidence_ceiling": "PRE_CANDIDATE_LOCAL",
+      "candidate_created": false,
+      "promotion_authorized": false,
+      "artifact_evidence": {
         "android": {
-          "size": 106861671,
-          "sha256": "6e6f3b688fe415c9392e19aa4f8660885316897cfc369cf8c3ff3d01100ee14f"
+          "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
+          "tree_sha256": "78cbf8dddd6ce2c3311a2ec2167c803ec122a6973efe50d955f26ec1d07c3b13",
+          "evidence_sha256": "743ac8b5f68a0c779bf6d4043fce9dc45fdcecc7cd610e3b40285aacdd974efc",
+          "abis": [
+            "armeabi-v7a",
+            "arm64-v8a",
+            "x86",
+            "x86_64"
+          ]
         },
         "windows": {
-          "size": 55134208,
-          "sha256": "7cc83854fc4022b759e9de3d0942b90a24c859cfd51e3231d04e7c7a6b7d5054"
+          "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
+          "tree_sha256": "a293a83e1efbd653b7a623b3c832df93f4985a57a50bb693cf4aef75dcfe3b4b",
+          "evidence_sha256": "917bad838ed91ccf86544a543fe9e7c8daa3d9e54f8e788006f6ec219f16f17a",
+          "required_exports": 15,
+          "proxy_only_start_stop_cycles": 100,
+          "proxy_only_result": "PASS_LOCAL"
+        },
+        "sbom": [
+          {
+            "name": "pokrov-core.cdx.json",
+            "sha256": "18707e43f557d80aceecb112d4907c1295e8a27583af1bf2243d45cf63ba38a0"
+          },
+          {
+            "name": "sing-box.cdx.json",
+            "sha256": "28925d34046ac0f0a7edec40a032938fcbc59c18bd47b9d5d69b6688ebf6637d"
+          }
+        ]
+      },
+      "reproducible_build": {
+        "android": {
+          "size": 107317530,
+          "sha256": "26a7b9ebcf05065b33cc40848147a66db5172a9655cb9c77a839fa685145bf93"
+        },
+        "windows": {
+          "size": 55352320,
+          "sha256": "10ee475d04417c4317221a85ca4b043a7489294d654fc4ce7a64ec56dcdcdbff"
         },
         "libcronet_sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
       },
-      "promotion_rule": "accept_exact_v1.0.3_release_artifacts"
+      "promotion_rule": "exact_bytes_require_candidate_signing_manual_gates_and_publication"
+    },
+    "retained_public_release": {
+      "version": "1.0.3",
+      "release_tag": "v1.0.3",
+      "source_commit": "69a74545101708e56183c92e31f2b4c7b2509884",
+      "release_url": "https://github.com/Kiwunaka/pokrov-core/releases/tag/v1.0.3",
+      "android": {
+        "size": 106861671,
+        "sha256": "6e6f3b688fe415c9392e19aa4f8660885316897cfc369cf8c3ff3d01100ee14f"
+      },
+      "windows": {
+        "size": 55134208,
+        "sha256": "7cc83854fc4022b759e9de3d0942b90a24c859cfd51e3231d04e7c7a6b7d5054"
+      },
+      "libcronet_sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
     },
     "development_target": {
       "required_for_product": "1.2.0",
@@ -32,9 +82,9 @@
       "release_tag": "v1.1.0",
       "state": "PRE_CANDIDATE_LOCAL",
       "candidate_created": false,
-      "artifact_state": "pending"
+      "artifact_state": "exact_local_replacement_bound"
     },
-    "activation_state": "active",
+    "activation_state": "active_pre_candidate_local",
     "desktop_abi": {
       "name": "pokrov-core",
       "version": 2,
@@ -59,7 +109,7 @@
         "callback_symbol": "pokrovCoreSetEventCallback",
         "context_symbol": "pokrovCoreSetEventContext",
         "retained_v1_0_3_artifact_mode": "legacy_without_structured_events",
-        "exact_replacement_artifact": "pending"
+        "exact_replacement_artifact": "bound_pre_candidate_local"
       },
       "lifecycle_events": [
         "initialization",
@@ -76,11 +126,11 @@
     "assets": {
       "android": {
         "entry": "pokrov-core.aar",
-        "size": 106861671,
-        "sha256": "6e6f3b688fe415c9392e19aa4f8660885316897cfc369cf8c3ff3d01100ee14f",
-        "sync_policy": "pokrov_release",
+        "size": 107317530,
+        "sha256": "26a7b9ebcf05065b33cc40848147a66db5172a9655cb9c77a839fa685145bf93",
+        "sync_policy": "exact_pre_candidate_build",
         "sync_destination": "apps/android_shell/android/app/libs",
-        "platform_state": "active_local_build_pending_device_proof"
+        "platform_state": "active_pre_candidate_local_pending_device_and_signing_proof"
       },
       "ios": {
         "entry": "PokrovCore.xcframework",
@@ -100,8 +150,8 @@
       },
       "windows": {
         "entry": "pokrov-core.dll",
-        "size": 55134208,
-        "sha256": "7cc83854fc4022b759e9de3d0942b90a24c859cfd51e3231d04e7c7a6b7d5054",
+        "size": 55352320,
+        "sha256": "10ee475d04417c4317221a85ca4b043a7489294d654fc4ce7a64ec56dcdcdbff",
         "runtime_dependencies": [
           "libcronet.dll"
         ],
@@ -111,9 +161,9 @@
         "runtime_dependency_sha256": {
           "libcronet.dll": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
         },
-        "sync_policy": "pokrov_release",
+        "sync_policy": "exact_pre_candidate_build",
         "sync_destination": "apps/windows_shell/windows/runner/resources/runtime",
-        "platform_state": "active_local_build_raw_start_and_abi_probe_passed"
+        "platform_state": "active_pre_candidate_local_reproducible_abi_and_proxy_backtest_passed"
       }
     }
   }
