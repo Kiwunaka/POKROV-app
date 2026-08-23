@@ -6389,9 +6389,13 @@ class AppFirstRuntimeBootstrapper
         if (remaining <= Duration.zero) {
           return;
         }
+        final probeBudget = _shorterDuration(
+          smartConnectProbeTimeout,
+          remaining,
+        );
         try {
           final rttMs = await probe(node).timeout(
-            _shorterDuration(smartConnectProbeTimeout, remaining),
+            probeBudget,
           );
           if (rttMs == null || rttMs < 1 || rttMs > 60000) {
             continue;
@@ -6403,6 +6407,10 @@ class AppFirstRuntimeBootstrapper
             backendPenalty: node.rankHint.backendPenalty,
             rank: node.rank,
           );
+        } on TimeoutException {
+          if (probeBudget == remaining) {
+            return;
+          }
         } on Object {
           // One unavailable candidate must not hold up the profile.
         }

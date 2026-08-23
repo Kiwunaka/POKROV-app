@@ -249,7 +249,7 @@ Shortlist rules:
 - premium users probe up to `SMART_CONNECT_SHORTLIST_LIMIT` eligible non-free nodes, default `8`
 - expired users receive no node shortlist; legacy free states never fall back to premium nodes
 - shortlist eligibility rejects disabled, draining, unhealthy, stale, dataplane-down, saturated, high-loss/retransmit, overloaded, and transport-incompatible nodes while capacity-aware selection is enabled
-- the client performs best-effort TCP RTT probes for shortlist items with an internal probe endpoint, then calls `POST /api/client/nodes/select` with `mode=auto` for automatic choice or `mode=manual` for saved location choice
+- the client performs best-effort TCP RTT probes for shortlist items with an internal probe endpoint, bounded concurrency and one global deadline; a worker that consumes the remaining global budget stops without starting another probe, then the client calls `POST /api/client/nodes/select` with `mode=auto` for automatic choice or `mode=manual` for saved location choice
 - after a selected node is accepted, the client may refetch `GET /api/client/profile/managed?selected_node_code=...` before materializing the runtime config
 - the default `20%` stickiness threshold prevents unnecessary node flapping
 - `POST /api/client/nodes/latency-samples` remains compatibility telemetry for install-scoped RTT evidence and does not replace `/api/client/nodes/select`
