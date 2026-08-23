@@ -26,6 +26,7 @@ jobs:
           repository: Kiwunaka/portal
           ref: master
           path: platform
+          ssh-key: ${{ secrets.POKROV_RELEASE_PLATFORM_DEPLOY_KEY }}
           persist-credentials: false
 
       - name: Checkout Core promotion line
