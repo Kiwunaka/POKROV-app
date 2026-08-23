@@ -49,19 +49,32 @@
     "reason": "The Windows runtime requires an authenticated SCM service installed by the machine-wide setup program."
   },
   "signing": {
-    "status": "unsigned_direct_warning",
+    "status": "MISSING",
+    "blocker_code": "MISSING_TRUSTED_WINDOWS_SIGNATURE",
+    "required_for_candidate": true,
+    "contract": "AUTHENTICODE_SHA256_RFC3161_HTTPS_V1",
+    "certificate_source": "Windows certificate store selected by exact SHA-1 thumbprint",
+    "required_signed_files": [
+      "pokrov_windows.exe",
+      "pokrov_service.exe",
+      "pokrov-windows-x64-{version}-setup.exe",
+      "unins???.exe"
+    ],
     "user_warning": "Windows may show a Microsoft Defender SmartScreen or unknown-publisher warning because this direct-download build is not trusted-signed yet.",
     "expected_inputs": [
-      "trusted Windows code-signing certificate",
-      "timestamping service URL",
-      "installer or MSIX packaging identity"
+      "POKROV_WINDOWS_SIGNING_CERTIFICATE_THUMBPRINT",
+      "POKROV_WINDOWS_SIGNING_EXPECTED_SUBJECT",
+      "POKROV_WINDOWS_SIGNING_TIMESTAMP_URL",
+      "POKROV_WINDOWS_SIGNING_STORE_LOCATION (CurrentUser or LocalMachine)",
+      "POKROV_SIGNTOOL_PATH (optional when SignTool.exe is discoverable)"
     ]
   },
   "safe_claims": [
     "The ordinary Windows UI uses the authenticated POKROVService runtime lane and does not load POKROV Core directly.",
     "The local pre-candidate build bundles the exact POKROV Core 1.1.0 replacement bytes, its pinned libcronet.dll dependency, and pokrov_service.exe in one machine-wide installation directory.",
     "The installer performs the one-time administrative SCM registration; the ordinary UI does not receive privileged file, path, or shell execution.",
-    "Local packaging produces an unsigned direct-download Inno Setup installer with the SmartScreen warning above; a portable ZIP is not a supported runtime artifact."
+    "Local packaging may produce an unsigned direct-download Inno Setup installer with the SmartScreen warning above; it remains ineligible for candidate promotion until UI, service, installer and embedded uninstaller pass the trusted Authenticode contract.",
+    "Trusted signing accepts no PFX path or password: the private key remains in the selected Windows certificate store and only public certificate and timestamp evidence enters the manifest."
   ],
   "blocked_on": []
 }

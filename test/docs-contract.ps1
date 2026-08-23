@@ -1332,6 +1332,7 @@ $runtime = [IO.File]::ReadAllText((Join-Path $root 'config\runtime-profile.seed.
 $windowsRelease = [IO.File]::ReadAllText((Join-Path $root 'config\windows-release.seed.json')) | ConvertFrom-Json
 $androidGradle = [IO.File]::ReadAllText((Join-Path $root 'apps\android_shell\android\app\build.gradle'))
 $androidProductionBuild = [IO.File]::ReadAllText((Join-Path $root 'scripts\build-android-production.ps1'))
+$windowsProductionBuild = [IO.File]::ReadAllText((Join-Path $root 'scripts\build-windows-release.ps1'))
 $workspaceTests = [IO.File]::ReadAllText((Join-Path $root 'scripts\run-tests.ps1'))
 
 if ($product.client_version_line -ne $release.latest_repo_backed_release.version) {
@@ -1399,6 +1400,51 @@ foreach ($requiredFlavorTestTask in @(
 )) {
   if (-not $workspaceTests.Contains($requiredFlavorTestTask)) {
     $errors += "Workspace test gate lacks Android flavor task: $requiredFlavorTestTask"
+  }
+}
+
+if ($windowsRelease.signing.status -ne 'MISSING' -or
+    $windowsRelease.signing.blocker_code -ne 'MISSING_TRUSTED_WINDOWS_SIGNATURE' -or
+    $windowsRelease.signing.required_for_candidate -ne $true -or
+    $windowsRelease.signing.contract -ne 'AUTHENTICODE_SHA256_RFC3161_HTTPS_V1') {
+  $errors += 'Windows release seed does not preserve the fail-closed trusted-signing contract'
+}
+foreach ($requiredWindowsSignedFile in @(
+  'pokrov_windows.exe',
+  'pokrov_service.exe',
+  'pokrov-windows-x64-{version}-setup.exe',
+  'unins???.exe'
+)) {
+  if (@($windowsRelease.signing.required_signed_files) -notcontains $requiredWindowsSignedFile) {
+    $errors += "Windows signing contract lacks required signed file: $requiredWindowsSignedFile"
+  }
+}
+foreach ($requiredWindowsSigningMarker in @(
+  'RequireTrustedWindowsSigning',
+  'POKROV_WINDOWS_SIGNING_CERTIFICATE_THUMBPRINT',
+  'POKROV_WINDOWS_SIGNING_EXPECTED_SUBJECT',
+  'POKROV_WINDOWS_SIGNING_TIMESTAMP_URL',
+  'Self-signed certificates cannot satisfy trusted Windows signing.',
+  'Get-AuthenticodeSignature',
+  'TimeStamperCertificate',
+  'SignTool=POKROV',
+  'SignedUninstaller=yes',
+  'SignedUninstallerDir=',
+  '/SPOKROV=',
+  '"PASS"',
+  'MISSING_TRUSTED_WINDOWS_SIGNATURE'
+)) {
+  if (-not $windowsProductionBuild.Contains($requiredWindowsSigningMarker)) {
+    $errors += "Windows production builder lacks fail-closed signing marker: $requiredWindowsSigningMarker"
+  }
+}
+foreach ($forbiddenWindowsSigningMarker in @(
+  'PFX_PASSWORD',
+  'SIGNING_PASSWORD',
+  'SecureStringToBSTR'
+)) {
+  if ($windowsProductionBuild.Contains($forbiddenWindowsSigningMarker)) {
+    $errors += "Windows production builder must not accept private-key password material: $forbiddenWindowsSigningMarker"
   }
 }
 

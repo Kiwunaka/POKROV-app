@@ -11,7 +11,20 @@ param(
   [string]$EmergencySigningKeyId = $env:POKROV_EMERGENCY_SIGNING_KEY_ID,
   [string]$EmergencySigningPublicKey = $env:POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64,
   [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
-  [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64
+  [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64,
+  [switch]$RequireTrustedWindowsSigning,
+  [string]$WindowsSigningCertificateThumbprint = $env:POKROV_WINDOWS_SIGNING_CERTIFICATE_THUMBPRINT,
+  [string]$WindowsSigningExpectedSubject = $env:POKROV_WINDOWS_SIGNING_EXPECTED_SUBJECT,
+  [string]$WindowsSigningTimestampUrl = $env:POKROV_WINDOWS_SIGNING_TIMESTAMP_URL,
+  [ValidateSet("CurrentUser", "LocalMachine")]
+  [string]$WindowsSigningStoreLocation = $(
+    if ($env:POKROV_WINDOWS_SIGNING_STORE_LOCATION) {
+      $env:POKROV_WINDOWS_SIGNING_STORE_LOCATION
+    } else {
+      "CurrentUser"
+    }
+  ),
+  [string]$SignToolPath = $env:POKROV_SIGNTOOL_PATH
 )
 
 $ErrorActionPreference = "Stop"
@@ -22,6 +35,10 @@ $EmergencySigningKeyId = [string]$EmergencySigningKeyId
 $EmergencySigningPublicKey = [string]$EmergencySigningPublicKey
 $SupportSigningKeyId = [string]$SupportSigningKeyId
 $SupportSigningPublicKey = [string]$SupportSigningPublicKey
+$WindowsSigningCertificateThumbprint = ([string]$WindowsSigningCertificateThumbprint).Replace(" ", "").ToUpperInvariant()
+$WindowsSigningExpectedSubject = ([string]$WindowsSigningExpectedSubject).Trim()
+$WindowsSigningTimestampUrl = ([string]$WindowsSigningTimestampUrl).Trim()
+$SignToolPath = ([string]$SignToolPath).Trim()
 if ($EmergencySigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$') {
   throw "A canonical POKROV emergency signing key id is required for a production build."
 }
@@ -32,6 +49,29 @@ if (($SupportSigningKeyId -or $SupportSigningPublicKey) -and
     ($SupportSigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$' -or
      $SupportSigningPublicKey -notmatch '^[A-Za-z0-9_-]{43}$')) {
   throw "Support bundle signing inputs must be an explicit key-id and 32-byte base64url public-key pair."
+}
+
+$trustedWindowsSigningRequested = [bool]$RequireTrustedWindowsSigning -or
+  [bool]$WindowsSigningCertificateThumbprint -or
+  [bool]$WindowsSigningExpectedSubject -or
+  [bool]$WindowsSigningTimestampUrl -or
+  [bool]$SignToolPath
+
+if ($trustedWindowsSigningRequested) {
+  if ($WindowsSigningCertificateThumbprint -notmatch '^[A-F0-9]{40}$') {
+    throw "Trusted Windows signing requires a 40-hex certificate-store thumbprint."
+  }
+  if ([string]::IsNullOrWhiteSpace($WindowsSigningExpectedSubject)) {
+    throw "Trusted Windows signing requires the exact expected certificate subject."
+  }
+  $timestampUri = $null
+  if (-not [Uri]::TryCreate($WindowsSigningTimestampUrl, [UriKind]::Absolute, [ref]$timestampUri) -or
+      $timestampUri.Scheme -ne 'https') {
+    throw "Trusted Windows signing requires an absolute HTTPS RFC3161 timestamp URL."
+  }
+  if ($SkipInstaller) {
+    throw "Trusted Windows signing requires the exact installer; -SkipInstaller is not allowed."
+  }
 }
 
 function Invoke-External {
@@ -124,11 +164,201 @@ function Write-Utf8File {
   [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
 }
 
+function Get-CertificateSha256 {
+  param(
+    [Parameter(Mandatory = $true)]
+    [Security.Cryptography.X509Certificates.X509Certificate2]$Certificate
+  )
+
+  $sha256 = [Security.Cryptography.SHA256]::Create()
+  try {
+    return ([BitConverter]::ToString($sha256.ComputeHash($Certificate.RawData))).Replace("-", "")
+  } finally {
+    $sha256.Dispose()
+  }
+}
+
+function Resolve-SignTool {
+  param([string]$ExplicitPath)
+
+  if ($ExplicitPath) {
+    if (-not (Test-Path -LiteralPath $ExplicitPath -PathType Leaf)) {
+      throw "Configured SignTool was not found: $ExplicitPath"
+    }
+    return (Resolve-Path -LiteralPath $ExplicitPath).Path
+  }
+
+  $pathCommand = Get-Command "signtool.exe" -ErrorAction SilentlyContinue
+  if ($pathCommand) {
+    return $pathCommand.Source
+  }
+
+  $kitsRoot = if (${env:ProgramFiles(x86)}) {
+    Join-Path ${env:ProgramFiles(x86)} "Windows Kits\10\bin"
+  } else {
+    $null
+  }
+  if ($kitsRoot -and (Test-Path -LiteralPath $kitsRoot)) {
+    $kitCandidates = @(Get-ChildItem -LiteralPath $kitsRoot -Filter "signtool.exe" -File -Recurse -ErrorAction SilentlyContinue |
+      Where-Object { $_.Directory.Name -eq "x64" } |
+      Sort-Object FullName -Descending)
+    if ($kitCandidates.Count -gt 0) {
+      return $kitCandidates[0].FullName
+    }
+  }
+
+  throw "SignTool.exe is required for trusted Windows signing. Install the Windows SDK or set POKROV_SIGNTOOL_PATH."
+}
+
+function Resolve-TrustedWindowsSigningContext {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Thumbprint,
+    [Parameter(Mandatory = $true)]
+    [string]$ExpectedSubject,
+    [Parameter(Mandatory = $true)]
+    [string]$TimestampUrl,
+    [Parameter(Mandatory = $true)]
+    [ValidateSet("CurrentUser", "LocalMachine")]
+    [string]$StoreLocation,
+    [string]$ExplicitSignToolPath
+  )
+
+  $certificatePath = "Cert:\$StoreLocation\My\$Thumbprint"
+  $certificate = Get-Item -LiteralPath $certificatePath -ErrorAction SilentlyContinue
+  if (-not $certificate) {
+    throw "Windows signing certificate was not found in $StoreLocation/My for thumbprint $Thumbprint."
+  }
+  if (-not $certificate.HasPrivateKey) {
+    throw "Windows signing certificate $Thumbprint has no accessible private key."
+  }
+  if ($certificate.Subject -cne $ExpectedSubject) {
+    throw "Windows signing certificate subject mismatch. Expected '$ExpectedSubject', got '$($certificate.Subject)'."
+  }
+  if ($certificate.Subject -ceq $certificate.Issuer) {
+    throw "Self-signed certificates cannot satisfy trusted Windows signing."
+  }
+  $codeSigningEku = @($certificate.EnhancedKeyUsageList | Where-Object {
+      $_.ObjectId.Value -eq "1.3.6.1.5.5.7.3.3"
+    })
+  if ($codeSigningEku.Count -eq 0) {
+    throw "Windows signing certificate lacks the Code Signing EKU."
+  }
+  $now = Get-Date
+  if ($now -lt $certificate.NotBefore -or $now -gt $certificate.NotAfter) {
+    throw "Windows signing certificate is outside its validity period."
+  }
+
+  $chain = New-Object Security.Cryptography.X509Certificates.X509Chain
+  try {
+    $chain.ChainPolicy.RevocationMode = [Security.Cryptography.X509Certificates.X509RevocationMode]::Online
+    $chain.ChainPolicy.RevocationFlag = [Security.Cryptography.X509Certificates.X509RevocationFlag]::EntireChain
+    $chain.ChainPolicy.VerificationFlags = [Security.Cryptography.X509Certificates.X509VerificationFlags]::NoFlag
+    $chain.ChainPolicy.UrlRetrievalTimeout = [TimeSpan]::FromSeconds(20)
+    if (-not $chain.Build($certificate)) {
+      $chainErrors = @($chain.ChainStatus | ForEach-Object { $_.Status.ToString() }) -join ", "
+      throw "Windows signing certificate chain is not trusted: $chainErrors"
+    }
+  } finally {
+    $chain.Dispose()
+  }
+
+  return [ordered]@{
+    certificate = $certificate
+    signtool_path = Resolve-SignTool -ExplicitPath $ExplicitSignToolPath
+    store_location = $StoreLocation
+    timestamp_url = $TimestampUrl
+  }
+}
+
+function Get-TrustedAuthenticodeEvidence {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Path,
+    [Parameter(Mandatory = $true)]
+    [Collections.IDictionary]$SigningContext
+  )
+
+  $signature = Get-AuthenticodeSignature -LiteralPath $Path
+  $certificate = $SigningContext.certificate
+  if ($signature.Status -ne [System.Management.Automation.SignatureStatus]::Valid) {
+    throw "Authenticode verification failed for $Path with status $($signature.Status)."
+  }
+  if (-not $signature.SignerCertificate -or
+      $signature.SignerCertificate.Thumbprint -cne $certificate.Thumbprint -or
+      $signature.SignerCertificate.Subject -cne $certificate.Subject) {
+    throw "Authenticode signer identity mismatch for $Path."
+  }
+  if (-not $signature.TimeStamperCertificate) {
+    throw "Authenticode signature has no verifiable RFC3161 timestamp for $Path."
+  }
+
+  return [ordered]@{
+    file_name = [IO.Path]::GetFileName($Path)
+    sha256 = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
+    signature_status = $signature.Status.ToString()
+    signer_subject = $signature.SignerCertificate.Subject
+    signer_thumbprint_sha1 = $signature.SignerCertificate.Thumbprint
+    signer_certificate_sha256 = Get-CertificateSha256 -Certificate $signature.SignerCertificate
+    timestamp_signer_subject = $signature.TimeStamperCertificate.Subject
+    timestamp_signer_thumbprint_sha1 = $signature.TimeStamperCertificate.Thumbprint
+    timestamp_signer_certificate_sha256 = Get-CertificateSha256 -Certificate $signature.TimeStamperCertificate
+  }
+}
+
+function Invoke-TrustedAuthenticodeSigning {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Path,
+    [Parameter(Mandatory = $true)]
+    [Collections.IDictionary]$SigningContext,
+    [Parameter(Mandatory = $true)]
+    [string]$WorkingDirectory
+  )
+
+  $arguments = @(
+    "sign",
+    "/v",
+    "/s", "My",
+    "/sha1", $SigningContext.certificate.Thumbprint,
+    "/fd", "SHA256",
+    "/tr", $SigningContext.timestamp_url,
+    "/td", "SHA256"
+  )
+  if ($SigningContext.store_location -eq "LocalMachine") {
+    $arguments += "/sm"
+  }
+  $arguments += $Path
+  Invoke-External -FilePath $SigningContext.signtool_path -Arguments $arguments -WorkingDirectory $WorkingDirectory
+  return Get-TrustedAuthenticodeEvidence -Path $Path -SigningContext $SigningContext
+}
+
 $root = Split-Path -Parent $PSScriptRoot
 $windowsReleaseConfigPath = Join-Path $root "config\\windows-release.seed.json"
 $runtimeArtifactsConfigPath = Join-Path $root "config\\runtime-artifacts.seed.json"
 $windowsReleaseConfig = Get-Content -Raw -LiteralPath $windowsReleaseConfigPath | ConvertFrom-Json
 $runtimeArtifactsConfig = Get-Content -Raw -LiteralPath $runtimeArtifactsConfigPath | ConvertFrom-Json
+$expectedSignedFiles = @(
+  [string]$windowsReleaseConfig.binary_name,
+  [string]$windowsReleaseConfig.runtime.service_binary,
+  [string]$windowsReleaseConfig.installer_name_template,
+  "unins???.exe"
+)
+$configuredSignedFiles = @($windowsReleaseConfig.signing.required_signed_files | ForEach-Object { [string]$_ })
+$signedFileContractDifference = @(Compare-Object -ReferenceObject $expectedSignedFiles -DifferenceObject $configuredSignedFiles)
+if ($windowsReleaseConfig.signing.required_for_candidate -ne $true -or
+    $signedFileContractDifference.Count -ne 0) {
+  throw "Windows signing seed must require the exact UI, service and installer targets."
+}
+$trustedWindowsSigningContext = $null
+if ($trustedWindowsSigningRequested) {
+  $trustedWindowsSigningContext = Resolve-TrustedWindowsSigningContext `
+    -Thumbprint $WindowsSigningCertificateThumbprint `
+    -ExpectedSubject $WindowsSigningExpectedSubject `
+    -TimestampUrl $WindowsSigningTimestampUrl `
+    -StoreLocation $WindowsSigningStoreLocation `
+    -ExplicitSignToolPath $SignToolPath
+}
 if (($windowsReleaseConfig.PSObject.Properties.Name -contains "portable_zip") -and
     -not [bool]$windowsReleaseConfig.portable_zip.supported) {
   $SkipZip = $true
@@ -263,6 +493,20 @@ if (Test-Path -LiteralPath $stagedBundleDirectory) {
 New-Item -ItemType Directory -Force -Path $stagedBundleDirectory | Out-Null
 Copy-Item -Recurse -Force -Path (Join-Path $releaseOutputDirectory "*") -Destination $stagedBundleDirectory
 
+$trustedSigningEvidence = @()
+if ($trustedWindowsSigningContext) {
+  foreach ($signedBinaryName in @(
+      $windowsReleaseConfig.binary_name,
+      $windowsReleaseConfig.runtime.service_binary
+    )) {
+    $signedBinaryPath = Join-Path $stagedBundleDirectory $signedBinaryName
+    $trustedSigningEvidence += Invoke-TrustedAuthenticodeSigning `
+      -Path $signedBinaryPath `
+      -SigningContext $trustedWindowsSigningContext `
+      -WorkingDirectory $artifactRoot
+  }
+}
+
 if (-not $SkipZip) {
   if (Test-Path -LiteralPath $zipPath) {
     Remove-Item -Force -LiteralPath $zipPath
@@ -286,6 +530,27 @@ if (-not $SkipInstaller) {
   $issPath = Join-Path $artifactRoot ($installerName + ".iss")
   $installerOutputName = [System.IO.Path]::GetFileNameWithoutExtension($installerName)
   $setupIconPath = Join-Path $appDirectory "windows\runner\resources\app_icon.ico"
+  $innoSigningDirectives = "SignedUninstaller=no"
+  $innoArguments = @("/Qp")
+  $signedUninstallerDirectory = $null
+  if ($trustedWindowsSigningContext) {
+    $signedUninstallerDirectory = Join-Path $artifactRoot "signed-uninstaller"
+    New-Item -ItemType Directory -Force -Path $signedUninstallerDirectory | Out-Null
+    Get-ChildItem -LiteralPath $signedUninstallerDirectory -Filter "unins*.exe" -File -ErrorAction SilentlyContinue |
+      Remove-Item -Force
+
+    $innoSigningDirectives = @"
+SignTool=POKROV
+SignedUninstaller=yes
+SignedUninstallerDir=$signedUninstallerDirectory
+"@
+    $innoStoreFlag = if ($trustedWindowsSigningContext.store_location -eq "LocalMachine") { " /sm" } else { "" }
+    $innoSignToolCommand = '$q' + $trustedWindowsSigningContext.signtool_path +
+      '$q sign /v /s My /sha1 ' + $trustedWindowsSigningContext.certificate.Thumbprint +
+      $innoStoreFlag + ' /fd SHA256 /tr ' + $trustedWindowsSigningContext.timestamp_url +
+      ' /td SHA256 $f'
+    $innoArguments += "/SPOKROV=$innoSignToolCommand"
+  }
   $iss = @"
 #pragma code_page 65001
 [Setup]
@@ -309,6 +574,7 @@ UninstallDisplayIcon={app}\$($windowsReleaseConfig.binary_name)
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+$innoSigningDirectives
 CloseApplications=yes
 RestartApplications=no
 AppMutex=POKROV.Windows.Shell
@@ -412,14 +678,52 @@ end;
   if (Test-Path -LiteralPath $installerPath) {
     Remove-Item -Force -LiteralPath $installerPath
   }
-  $innoProcess = Start-Process -FilePath $iscc -ArgumentList @("/Qp", $issPath) -NoNewWindow -Wait -PassThru
-  if ($innoProcess.ExitCode -ne 0) {
-    throw "ISCC.exe failed with exit code $($innoProcess.ExitCode)"
-  }
+  $innoArguments += $issPath
+  Invoke-External -FilePath $iscc -Arguments $innoArguments -WorkingDirectory $artifactRoot
   if (-not (Test-Path -LiteralPath $installerPath)) {
     throw "ISCC.exe did not produce installer: $installerPath"
   }
+  if ($trustedWindowsSigningContext) {
+    $installerSigningEvidence = Get-TrustedAuthenticodeEvidence `
+      -Path $installerPath `
+      -SigningContext $trustedWindowsSigningContext
+    $installerSigningEvidence["target_role"] = "installer"
+    $trustedSigningEvidence += $installerSigningEvidence
+
+    $signedUninstallers = @(Get-ChildItem -LiteralPath $signedUninstallerDirectory -Filter "unins*.exe" -File)
+    if ($signedUninstallers.Count -ne 1) {
+      throw "Inno Setup must produce exactly one signed uninstaller evidence file; found $($signedUninstallers.Count)."
+    }
+    $uninstallerSigningEvidence = Get-TrustedAuthenticodeEvidence `
+      -Path $signedUninstallers[0].FullName `
+      -SigningContext $trustedWindowsSigningContext
+    $uninstallerSigningEvidence["target_role"] = "embedded_uninstaller"
+    $trustedSigningEvidence += $uninstallerSigningEvidence
+  }
   $installerSha256 = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash
+}
+
+$trustedSigningStatus = if ($trustedWindowsSigningContext) {
+  "PASS"
+} else {
+  "MISSING"
+}
+$trustedSigningManifest = [ordered]@{
+  status = $trustedSigningStatus
+  contract = [string]$windowsReleaseConfig.signing.contract
+  blocker_code = if ($trustedWindowsSigningContext) { $null } else { "MISSING_TRUSTED_WINDOWS_SIGNATURE" }
+  required_for_candidate = [bool]$windowsReleaseConfig.signing.required_for_candidate
+  requested = [bool]$trustedWindowsSigningRequested
+  certificate_store_location = if ($trustedWindowsSigningContext) { $trustedWindowsSigningContext.store_location } else { $null }
+  expected_subject = if ($trustedWindowsSigningContext) { $trustedWindowsSigningContext.certificate.Subject } else { $null }
+  signer_thumbprint_sha1 = if ($trustedWindowsSigningContext) { $trustedWindowsSigningContext.certificate.Thumbprint } else { $null }
+  signer_certificate_sha256 = if ($trustedWindowsSigningContext) {
+    Get-CertificateSha256 -Certificate $trustedWindowsSigningContext.certificate
+  } else {
+    $null
+  }
+  timestamp_url = if ($trustedWindowsSigningContext) { $trustedWindowsSigningContext.timestamp_url } else { $null }
+  targets = @($trustedSigningEvidence)
 }
 
 $manifest = [ordered]@{
@@ -432,6 +736,7 @@ $manifest = [ordered]@{
   zip_path = if ($SkipZip) { $null } else { $zipPath }
   installer_path = if ($SkipInstaller) { $null } else { $installerPath }
   installer_sha256 = $installerSha256
+  signing = $trustedSigningManifest
   executable = [ordered]@{
     file_name = $windowsReleaseConfig.binary_name
     file_description = $versionInfo.FileDescription
