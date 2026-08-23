@@ -11,7 +11,7 @@
       "release_version": "1.1.6",
       "handoff_schema_version": 1,
       "handoff_path": "pokrov-app/1.1.6+20260819/release-handoff.json",
-      "handoff_sha256": "477a2314b0eb447fe4e0131ab4fc9aa66891eea25a2969afb2e4dedabf0f251c",
+      "handoff_sha256": "563dd47835e017363eac63b33d66bdfeb9b41881168d4a14808f1daf48d3569f",
       "eligibility": "ROLLBACK_ELIGIBLE",
       "platforms": [
         "android",

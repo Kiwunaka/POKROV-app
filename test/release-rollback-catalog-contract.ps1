@@ -8,6 +8,15 @@ $root = Split-Path -Parent $PSScriptRoot
 $script = Join-Path $root "scripts\set-release-stable-pointer.ps1"
 $catalogPath = Join-Path $root "config\release-rollback-catalog.seed.json"
 $releaseSeedPath = Join-Path $root "config\release-handoff.seed.json"
+$retainedPointerPath = "artifacts/releases/release-handoff.json"
+$retainedTargetPath = "artifacts/releases/pokrov-app/1.1.6+20260819/release-handoff.json"
+
+foreach ($relativePath in @($retainedPointerPath, $retainedTargetPath)) {
+  $attribute = (& git -C $root check-attr binary -- $relativePath 2>&1 | Out-String).Trim()
+  if ($LASTEXITCODE -ne 0 -or $attribute -notmatch ': binary: set$') {
+    throw "Exact-byte rollback handoff must be binary in Git: $relativePath"
+  }
+}
 $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) `
   ("pokrov-release-pointer-{0}" -f [guid]::NewGuid().ToString("N"))
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
