@@ -7,8 +7,9 @@ $runnerPath = Join-Path $root "scripts\run-tests.ps1"
 $bootstrapPath = Join-Path $root "scripts\bootstrap-workspace.ps1"
 $observabilityValidatorPath = Join-Path $root "scripts\validate-observability-contracts.ps1"
 $handoffGeneratorPath = Join-Path $root "scripts\new-release-handoff-v2.ps1"
+$presentationBoundaryPath = Join-Path $root "test\client-presentation-boundary.ps1"
 
-foreach ($path in @($runnerPath, $bootstrapPath, $observabilityValidatorPath, $handoffGeneratorPath)) {
+foreach ($path in @($runnerPath, $bootstrapPath, $observabilityValidatorPath, $handoffGeneratorPath, $presentationBoundaryPath)) {
   if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
     throw "Standard client test source is missing: $path"
   }
@@ -18,6 +19,7 @@ $runner = [IO.File]::ReadAllText($runnerPath).Replace("`r`n", "`n")
 $bootstrap = [IO.File]::ReadAllText($bootstrapPath).Replace("`r`n", "`n")
 $observabilityValidator = [IO.File]::ReadAllText($observabilityValidatorPath).Replace("`r`n", "`n")
 $handoffGenerator = [IO.File]::ReadAllText($handoffGeneratorPath).Replace("`r`n", "`n")
+$presentationBoundary = [IO.File]::ReadAllText($presentationBoundaryPath).Replace("`r`n", "`n")
 
 $requiredPackages = @(
   "packages\\core_domain",
@@ -69,6 +71,13 @@ foreach ($scriptSource in @($observabilityValidator, $handoffGenerator)) {
   if (-not $scriptSource.Contains("Get-Command python")) {
     throw "Cross-platform client validation must resolve Python from PATH."
   }
+}
+
+if ($presentationBoundary.Contains("rg.exe")) {
+  throw "Cross-platform presentation validation must not hard-code rg.exe."
+}
+if (-not $presentationBoundary.Contains("Get-Command rg")) {
+  throw "Cross-platform presentation validation must resolve ripgrep from PATH."
 }
 
 Write-Output "PASS: standard client gate analyzes testless modules, tests all test-bearing modules and both Android flavors, and resolves Gradle and Python tools on Windows/Linux."

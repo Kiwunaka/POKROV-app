@@ -4,6 +4,7 @@ param()
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $errors = [System.Collections.Generic.List[string]]::new()
+$rgCommand = Get-Command rg -ErrorAction Stop
 
 function Read-RepoText([string]$RelativePath) {
   $path = Join-Path $root $RelativePath
@@ -213,7 +214,7 @@ if ($partCount -gt 29) {
 }
 
 $directHaptics = @(
-  & rg.exe -n "HapticFeedback\." (Join-Path $root "packages\app_shell\lib\src")
+  & $rgCommand.Source -n "HapticFeedback\." (Join-Path $root "packages\app_shell\lib\src")
 )
 if ($LASTEXITCODE -gt 1) {
   throw "rg failed while checking direct haptic calls."
