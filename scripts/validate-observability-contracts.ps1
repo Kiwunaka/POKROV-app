@@ -112,7 +112,8 @@ if (-not [string]::IsNullOrWhiteSpace($PlatformRoot)) {
   if (-not (Test-Path -LiteralPath $platformValidator -PathType Leaf)) {
     throw "Platform observability validator is missing."
   }
-  & python.exe -B $platformValidator
+  $pythonCommand = Get-Command python -CommandType Application -ErrorAction Stop | Select-Object -First 1
+  & $pythonCommand.Source -B $platformValidator
   if ($LASTEXITCODE -ne 0) {
     throw "Platform observability contracts failed validation."
   }

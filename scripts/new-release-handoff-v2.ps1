@@ -360,7 +360,8 @@ if (-not (Test-Path -LiteralPath $validator -PathType Leaf)) {
 
 try {
   [IO.File]::WriteAllText($temporaryPath, $json, $utf8NoBom)
-  & python.exe -B $validator --metadata-file $temporaryPath
+  $pythonCommand = Get-Command python -CommandType Application -ErrorAction Stop | Select-Object -First 1
+  & $pythonCommand.Source -B $validator --metadata-file $temporaryPath
   if ($LASTEXITCODE -ne 0) {
     throw "Platform release-handoff validator rejected generated metadata."
   }
