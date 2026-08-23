@@ -15,16 +15,18 @@ $EmergencySigningKeyId = [string]$EmergencySigningKeyId
 $EmergencySigningPublicKey = [string]$EmergencySigningPublicKey
 $SupportSigningKeyId = [string]$SupportSigningKeyId
 $SupportSigningPublicKey = [string]$SupportSigningPublicKey
+. (Join-Path $PSScriptRoot 'support-signing-pin.ps1')
+$supportSigningPin = Resolve-PokrovSupportSigningPin `
+  -RepositoryRoot (Split-Path -Parent $PSScriptRoot) `
+  -ProvidedKeyId $SupportSigningKeyId `
+  -ProvidedPublicKeyB64Url $SupportSigningPublicKey
+$SupportSigningKeyId = $supportSigningPin.key_id
+$SupportSigningPublicKey = $supportSigningPin.public_key_b64url
 if ($EmergencySigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$') {
   throw "A canonical POKROV emergency signing key id is required for a production build."
 }
 if ($EmergencySigningPublicKey -notmatch '^[A-Za-z0-9_-]{43}$') {
   throw "A 32-byte base64url POKROV emergency signing public key is required for a production build."
-}
-if (($SupportSigningKeyId -or $SupportSigningPublicKey) -and
-    ($SupportSigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$' -or
-     $SupportSigningPublicKey -notmatch '^[A-Za-z0-9_-]{43}$')) {
-  throw "Support bundle signing inputs must be an explicit key-id and 32-byte base64url public-key pair."
 }
 $sha256 = [Security.Cryptography.SHA256]::Create()
 try {

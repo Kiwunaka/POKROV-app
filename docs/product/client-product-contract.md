@@ -698,10 +698,13 @@ Release continuity rules:
   outside-store stable-direct lane with a SmartScreen/unknown-publisher warning;
   this is not a trusted-signing or reputation claim
 - signed release builds inject updater and source metadata through the documented `PORTAL_RELEASE_*` environment variables
-- signed release builds that enable encrypted support delivery inject the
-  public `POKROV_SUPPORT_SIGNING_KEY_ID` and
-  `POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64` pair together. Blank values disable
-  the encrypted-send action; no development or generated pin is accepted
+- `config/support-signing.seed.json` is the sole client source owner for the
+  active Ed25519 support-mode verification pin. Production Android/Windows
+  packaging always injects that exact key ID/public key pair; explicit
+  `POKROV_SUPPORT_SIGNING_KEY_ID` and
+  `POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64` overrides must match the tracked pin
+  byte-for-byte or the build fails before Flutter. Ordinary development runs
+  still have no implicit or generated pin
 - the shared runtime identity is `pokrovClientVersion`; release builds pass
   `--dart-define=POKROV_APP_VERSION=<host pubspec version without +build>` so
   provisioning, update checks, diagnostics, and visible version text match the

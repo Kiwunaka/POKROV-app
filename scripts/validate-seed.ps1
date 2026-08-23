@@ -69,6 +69,7 @@ $requiredFiles = @(
   "config\\runtime-profile.seed.json",
   "config\\runtime-artifacts.seed.json",
   "config\\observability-contracts.seed.json",
+  "config\\support-signing.seed.json",
   "config\\windows-release.seed.json",
   "config\\cutover-readiness.seed.json",
   "config\\release-handoff.seed.json",
@@ -144,6 +145,7 @@ $requiredFiles = @(
   "scripts\\configure-android-production-signing.ps1",
   "scripts\\build-android-production.ps1",
   "scripts\\build-windows-release.ps1",
+  "scripts\\support-signing-pin.ps1",
   "scripts\\check-client-version-parity.ps1",
   "scripts\\check-release-source-logging.ps1",
   "scripts\\new-release-handoff-v2.ps1",
@@ -159,6 +161,7 @@ $requiredFiles = @(
   "test\\release-rollback-catalog-contract.ps1",
   "test\\release-source-logging-contract.ps1",
   "test\\release-v2-ci-contract.ps1",
+  "test\\support-signing-pin-contract.ps1",
   "test\\repository-hygiene-contract.ps1",
   "test\\run-tests-contract.ps1",
   "test\\fixtures\\release-handoff-v2\\synthetic-candidate-input.json",
@@ -181,6 +184,7 @@ $jsonFiles = @(
   "config\\runtime-profile.seed.json",
   "config\\runtime-artifacts.seed.json",
   "config\\observability-contracts.seed.json",
+  "config\\support-signing.seed.json",
   "config\\windows-release.seed.json",
   "config\\cutover-readiness.seed.json",
   "config\\release-handoff.seed.json",
@@ -602,6 +606,20 @@ if (Test-Path -LiteralPath $windowsReleaseConfigPath -PathType Leaf) {
     if (@($windowsReleaseConfig.required_files) -notcontains $requiredPath) {
       $manifestErrors.Add("config\\windows-release.seed.json must list required build file '$requiredPath'")
     }
+  }
+}
+
+$supportSigningConfigPath = Join-Path $root "config\\support-signing.seed.json"
+if (Test-Path -LiteralPath $supportSigningConfigPath -PathType Leaf) {
+  try {
+    . (Join-Path $root "scripts\\support-signing-pin.ps1")
+    $supportSigningPin = Resolve-PokrovSupportSigningPin -RepositoryRoot $root -ProvidedKeyId '' -ProvidedPublicKeyB64Url ''
+    if ($supportSigningPin.key_id -ne 'pokrov-support-2026-08' -or
+        $supportSigningPin.public_key_sha256 -ne '44aed43310eaf5442b3493cbe566b5f0f620a5660bb84a6bd028832114f48845') {
+      $manifestErrors.Add("config\\support-signing.seed.json does not resolve to the active 1.2.0 support signing identity")
+    }
+  } catch {
+    $manifestErrors.Add("config\\support-signing.seed.json failed canonical pin validation: $($_.Exception.Message)")
   }
 }
 

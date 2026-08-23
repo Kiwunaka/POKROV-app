@@ -119,6 +119,36 @@ void main() {
     }
   });
 
+  test('production shells bind one tracked support signing pin', () async {
+    final seed = jsonDecode(
+      await File('../../config/support-signing.seed.json').readAsString(),
+    ) as Map<String, dynamic>;
+    final helper = await File('../../scripts/support-signing-pin.ps1')
+        .readAsString();
+    final windows =
+        await File('../../scripts/build-windows-release.ps1').readAsString();
+    final android =
+        await File('../../scripts/build-android-production.ps1').readAsString();
+
+    expect(seed['schema_version'], 1);
+    expect(seed['algorithm'], 'Ed25519');
+    expect(seed['purpose'], 'support-mode-policy-v2');
+    expect(seed['status'], 'active');
+    expect(seed['key_id'], 'pokrov-support-2026-08');
+    expect(
+      seed['public_key_sha256'],
+      '44aed43310eaf5442b3493cbe566b5f0f620a5660bb84a6bd028832114f48845',
+    );
+    expect(helper, contains('overrides must exactly match'));
+    expect(helper, contains('SHA-256 does not match its seed'));
+    for (final script in <String>[windows, android]) {
+      expect(script, contains('support-signing-pin.ps1'));
+      expect(script, contains('Resolve-PokrovSupportSigningPin'));
+      expect(script, contains('POKROV_SUPPORT_SIGNING_KEY_ID'));
+      expect(script, contains('POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64'));
+    }
+  });
+
   test('windows setup registers bounded POKROV continuation protocol',
       () async {
     final buildScript = File('../../scripts/build-windows-release.ps1');

@@ -21,6 +21,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Active pre-candidate Core | POKROV Core `1.1.0`, desktop ABI `2`, exact local bytes bound |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Portable ZIP | Unsupported for the service-first runtime |
+| Support-mode signing public pin | `PASS_SOURCE_CONTROL` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`; no new EXE built |
 | Trusted signing | `MISSING` |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
@@ -43,6 +44,7 @@ still belongs to the exact-candidate gate below.
 | Clean client/Core revisions | `BLOCKED` |
 | Exact Core DLL and dependency identity | `PASS_LOCAL` — final-bound DLL `ef9672b3…5040`, Cronet `8ef1f8bb…a6f7`, two byte-identical builds and 15 exports |
 | Machine-wide setup package | `PASS_LOCAL` — exact unsigned `1.2.0+30` setup SHA-256 `fd1de727…0899` assembled and checksum-bound; not promotable |
+| Exact EXE support signing pin | `MISSING` — tracked pin exists, replacement setup bytes do not |
 | Service install/start and UI authentication | `MANUAL_OWNER_TEST` |
 | Trusted code signing and timestamp | `BLOCKED_BY_ACCESS` — fail-closed tooling is ready; no trusted Code Signing identity is installed/configured |
 | Clean-host TUN/DNS/egress | `MANUAL_OWNER_TEST` |

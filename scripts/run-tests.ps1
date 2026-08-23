@@ -13,6 +13,11 @@ if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 
+& (Join-Path $root "test\support-signing-pin-contract.ps1")
+if ($LASTEXITCODE -ne 0) {
+  exit $LASTEXITCODE
+}
+
 function Invoke-WorkspaceFlutterGate {
   param(
     [Parameter(Mandatory = $true)]
