@@ -73,11 +73,11 @@ foreach ($scriptSource in @($observabilityValidator, $handoffGenerator)) {
   }
 }
 
-if ($presentationBoundary.Contains("rg.exe")) {
-  throw "Cross-platform presentation validation must not hard-code rg.exe."
+if ($presentationBoundary.Contains("Get-Command rg") -or $presentationBoundary.Contains("rg.exe")) {
+  throw "Cross-platform presentation validation must not depend on external ripgrep."
 }
-if (-not $presentationBoundary.Contains("Get-Command rg")) {
-  throw "Cross-platform presentation validation must resolve ripgrep from PATH."
+if (-not $presentationBoundary.Contains("Select-String -Pattern")) {
+  throw "Cross-platform presentation validation must use built-in PowerShell search."
 }
 
 Write-Output "PASS: standard client gate analyzes testless modules, tests all test-bearing modules and both Android flavors, and resolves Gradle and Python tools on Windows/Linux."

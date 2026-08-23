@@ -4,7 +4,6 @@ param()
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $errors = [System.Collections.Generic.List[string]]::new()
-$rgCommand = Get-Command rg -ErrorAction Stop
 
 function Read-RepoText([string]$RelativePath) {
   $path = Join-Path $root $RelativePath
@@ -214,16 +213,12 @@ if ($partCount -gt 29) {
 }
 
 $directHaptics = @(
-  & $rgCommand.Source -n "HapticFeedback\." (Join-Path $root "packages\app_shell\lib\src")
+  Get-ChildItem -LiteralPath (Join-Path $root "packages\app_shell\lib\src") -Recurse -File -Filter "*.dart" |
+    Select-String -Pattern "HapticFeedback\."
 )
-if ($LASTEXITCODE -gt 1) {
-  throw "rg failed while checking direct haptic calls."
-}
-$unexpectedHaptics = @(
-  $directHaptics | Where-Object {
-    $_ -notmatch "src[\\/]shared[\\/]pokrov_haptics\.dart:"
-  }
-)
+$unexpectedHaptics = @($directHaptics | Where-Object {
+  $_.Path -notmatch "src[\\/]shared[\\/]pokrov_haptics\.dart$"
+})
 foreach ($match in $unexpectedHaptics) {
   $errors.Add("Direct haptic call must use PokrovHaptics: $match")
 }
