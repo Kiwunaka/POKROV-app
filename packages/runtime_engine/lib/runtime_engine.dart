@@ -13,6 +13,7 @@ import 'package:pokrov_core_domain/core_domain.dart';
 
 enum RuntimeLane {
   desktopFfi,
+  windowsService,
   mobileArtifact,
 }
 
@@ -34,6 +35,44 @@ enum RuntimeDiagnosticState {
   unknown,
   healthy,
   degraded,
+}
+
+enum RuntimeLifecycleEventType {
+  initialization('initialization'),
+  profile('profile'),
+  coreStart('core_start'),
+  tun('tun'),
+  routes('routes'),
+  dns('dns'),
+  egress('egress'),
+  recovery('recovery'),
+  stop('stop');
+
+  const RuntimeLifecycleEventType(this.wireName);
+
+  final String wireName;
+}
+
+enum RuntimeLifecycleProbe {
+  injected('injected'),
+  mixedProxy('mixed_proxy'),
+  windowsSystemProxy('windows_system_proxy'),
+  windowsTun('windows_tun'),
+  competingVpn('competing_vpn');
+
+  const RuntimeLifecycleProbe(this.wireName);
+
+  final String wireName;
+}
+
+enum RuntimeStopReason {
+  requested('requested'),
+  completed('completed'),
+  coreRejected('core_rejected');
+
+  const RuntimeStopReason(this.wireName);
+
+  final String wireName;
 }
 
 class RuntimeSnapshot {
@@ -95,9 +134,10 @@ class RuntimeSnapshot {
   final int? excludePackageCount;
   final bool connectionPending;
 
-  /// Android owns a selected-outbound Core probe after its TUN is established.
-  /// A running service alone is not proof that user traffic can leave through
-  /// the selected location.
+  /// The host may advertise whether a selected-outbound Core probe is an
+  /// explicit lifecycle requirement. Consumer health is stricter: every
+  /// release target must still provide current DNS and egress proof before it
+  /// can be presented as cleanly connected.
   bool get requiresCoreEgressValidation =>
       coreEgressValidationRequired ?? hostPlatform == HostPlatform.android;
 
@@ -115,13 +155,18 @@ class RuntimeSnapshot {
 
   bool get isCleanlyHealthy =>
       phase == RuntimePhase.running &&
-      !hasDegradedHostDiagnostics &&
-      (!requiresCoreEgressValidation || coreEgressValidated == true);
+      hostHealth == RuntimeHostHealth.healthy &&
+      dnsState == RuntimeDiagnosticState.healthy &&
+      uplinkState == RuntimeDiagnosticState.healthy &&
+      dnsReady != false &&
+      coreEgressValidated == true;
 
   String get laneLabel {
     switch (lane) {
       case RuntimeLane.desktopFfi:
         return 'Локальный runtime';
+      case RuntimeLane.windowsService:
+        return 'Системная служба Windows';
       case RuntimeLane.mobileArtifact:
         return 'Системный runtime';
     }
@@ -138,11 +183,15 @@ class RuntimeSnapshot {
       case RuntimePhase.configStaged:
         return 'Настройки готовы';
       case RuntimePhase.running:
-        return hasDegradedHostDiagnostics
-            ? 'Подключено с предупреждением'
-            : isCoreEgressValidationPending
-                ? 'Проверяем выход через VPN'
-                : 'Подключено';
+        if (isCleanlyHealthy) {
+          return 'Подключено';
+        }
+        if (hasDegradedHostDiagnostics ||
+            dnsReady == false ||
+            coreEgressValidated == false) {
+          return 'Подключено с предупреждением';
+        }
+        return 'Проверяем выход через VPN';
     }
   }
 
@@ -172,11 +221,30 @@ class RuntimeSnapshot {
   }
 }
 
+enum RuntimeTrafficCounterState {
+  unavailable,
+  warming,
+  available,
+  reset,
+  overflow;
+
+  static RuntimeTrafficCounterState fromWire(Object? value) {
+    final normalized = value?.toString().trim().toLowerCase();
+    return RuntimeTrafficCounterState.values.firstWhere(
+      (state) => state.name == normalized,
+      orElse: () => RuntimeTrafficCounterState.unavailable,
+    );
+  }
+}
+
 class RuntimeLiveStats {
   const RuntimeLiveStats({
     required this.available,
+    this.counterState = RuntimeTrafficCounterState.unavailable,
     this.uplinkBps,
     this.downlinkBps,
+    this.uplinkTotalBytes,
+    this.downlinkTotalBytes,
     this.latencyMs,
     this.since,
     this.serverCode = '',
@@ -186,8 +254,11 @@ class RuntimeLiveStats {
 
   const RuntimeLiveStats.unavailable()
       : available = false,
+        counterState = RuntimeTrafficCounterState.unavailable,
         uplinkBps = null,
         downlinkBps = null,
+        uplinkTotalBytes = null,
+        downlinkTotalBytes = null,
         latencyMs = null,
         since = null,
         serverCode = '',
@@ -195,8 +266,11 @@ class RuntimeLiveStats {
         protocol = '';
 
   final bool available;
+  final RuntimeTrafficCounterState counterState;
   final int? uplinkBps;
   final int? downlinkBps;
+  final int? uplinkTotalBytes;
+  final int? downlinkTotalBytes;
   final int? latencyMs;
   final DateTime? since;
   final String serverCode;
@@ -210,9 +284,18 @@ class RuntimeLiveStats {
     }
     return RuntimeLiveStats(
       available: _runtimeBool(map['available']),
+      counterState: RuntimeTrafficCounterState.fromWire(
+        map['counterState'] ?? map['counter_state'],
+      ),
       uplinkBps: _runtimeNullableInt(map['uplinkBps'] ?? map['uplink_bps']),
       downlinkBps:
           _runtimeNullableInt(map['downlinkBps'] ?? map['downlink_bps']),
+      uplinkTotalBytes: _runtimeNullableInt(
+        map['uplinkTotalBytes'] ?? map['uplink_total_bytes'],
+      ),
+      downlinkTotalBytes: _runtimeNullableInt(
+        map['downlinkTotalBytes'] ?? map['downlink_total_bytes'],
+      ),
       latencyMs: _runtimeNullableInt(map['latencyMs'] ?? map['latency_ms']),
       since: _runtimeDateTime(map['since']),
       serverCode: _publicRuntimeNodeCode(
@@ -324,6 +407,7 @@ const _publicRuntimeFailureKinds = <String>{
   'emergency_endpoint_unreachable',
   'profile_staging_failed',
   'config_apply_failed',
+  'vpn_permission_denied',
   'notification_permission_denied',
   'resolver_response_error',
   'resolver_callback_error',
@@ -473,6 +557,8 @@ String _publicRuntimeMessage({
       return 'POKROV не смог подготовить настройки подключения.';
     case 'config_apply_failed':
       return 'POKROV не смог применить настройки подключения.';
+    case 'vpn_permission_denied':
+      return 'Android не получил разрешение на VPN. Нажмите «Разрешить VPN» и подтвердите системный запрос.';
     case 'notification_permission_denied':
       return 'Системное уведомление POKROV скрыто в настройках Android.';
     case 'resolver_response_error':
@@ -1051,13 +1137,15 @@ PokrovRuntimeEngine createRuntimeEngine({
 }) {
   switch (hostPlatform) {
     case HostPlatform.windows:
+      return MobileArtifactRuntimeEngine(
+        hostPlatform: hostPlatform,
+        assetRootOverride: assetRootOverride,
+        runtimeLane: RuntimeLane.windowsService,
+      );
     case HostPlatform.macos:
       return DesktopRuntimeEngine(
         hostPlatform: hostPlatform,
         assetRootOverride: assetRootOverride,
-        competingVpnProbe: hostPlatform == HostPlatform.windows
-            ? _defaultWindowsCompetingVpnProbe
-            : null,
       );
     case HostPlatform.android:
     case HostPlatform.ios:
@@ -1115,7 +1203,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   static const _runtimeJournalFileName = 'pokrov-runtime-events.jsonl';
   static const _runtimeJournalMaxBytes = 128 * 1024;
   static const _runtimeJournalRetainedLines = 300;
-  static const defaultCoreTag = 'v1.0.3';
+  static const defaultCoreTag = 'v1.1.0';
   static const _missingArtifactMessage =
       'Модуль подключения не найден в этой сборке. Обновите приложение или проверьте сборку.';
 
@@ -1178,7 +1266,10 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     try {
       final directories = _directories ?? await _resolveDirectories();
       _directories = directories;
-      await _appendRuntimeEvent(event: 'initialize', outcome: 'started');
+      await _appendRuntimeEvent(
+        event: RuntimeLifecycleEventType.initialization,
+        outcome: 'started',
+      );
       _statusPort ??= ReceivePort('pokrov runtime status');
       _bindings ??= _bindingsLoader(artifacts.coreBinary!.path);
       final error = _bindings!.setup(
@@ -1193,7 +1284,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         _lastFailureKind = 'runtime_initialization_failed';
         _message = 'Не удалось подготовить подключение.';
         await _appendRuntimeEvent(
-          event: 'initialize',
+          event: RuntimeLifecycleEventType.initialization,
           outcome: 'failed',
           failureKind: _lastFailureKind,
         );
@@ -1206,14 +1297,17 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         _phase = RuntimePhase.initialized;
         _lastFailureKind = null;
         _message = 'Подготовка подключения завершена.';
-        await _appendRuntimeEvent(event: 'initialize', outcome: 'ready');
+        await _appendRuntimeEvent(
+          event: RuntimeLifecycleEventType.initialization,
+          outcome: 'ready',
+        );
       }
     } catch (_) {
       _phase = RuntimePhase.artifactReady;
       _lastFailureKind = 'runtime_initialization_failed';
       _message = 'Не удалось загрузить модуль подключения.';
       await _appendRuntimeEvent(
-        event: 'initialize',
+        event: RuntimeLifecycleEventType.initialization,
         outcome: 'failed',
         failureKind: _lastFailureKind,
       );
@@ -1233,10 +1327,13 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   ) async {
     _desktopVerificationPassed = false;
     final before = await initialize();
-    await _appendRuntimeEvent(event: 'profile_stage', outcome: 'started');
+    await _appendRuntimeEvent(
+      event: RuntimeLifecycleEventType.profile,
+      outcome: 'started',
+    );
     if (!before.canInitialize || _bindings == null || _directories == null) {
       await _appendRuntimeEvent(
-        event: 'profile_stage',
+        event: RuntimeLifecycleEventType.profile,
         outcome: 'blocked',
         failureKind: _lastFailureKind,
       );
@@ -1249,7 +1346,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       _message =
           'POKROV Core нужен уже собранный sing-box профиль. Обновите приложение или профиль доступа.';
       await _appendRuntimeEvent(
-        event: 'profile_stage',
+        event: RuntimeLifecycleEventType.profile,
         outcome: 'failed',
         failureKind: _lastFailureKind,
       );
@@ -1276,7 +1373,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       _lastFailureKind = 'profile_staging_failed';
       _message = 'Профиль доступа не прошел проверку.';
       await _appendRuntimeEvent(
-        event: 'profile_stage',
+        event: RuntimeLifecycleEventType.profile,
         outcome: 'failed',
         failureKind: _lastFailureKind,
       );
@@ -1293,7 +1390,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       _lastFailureKind = 'profile_staging_failed';
       _message = 'POKROV не смог защитить файл профиля.';
       await _appendRuntimeEvent(
-        event: 'profile_stage',
+        event: RuntimeLifecycleEventType.profile,
         outcome: 'failed',
         failureKind: _lastFailureKind,
       );
@@ -1309,7 +1406,10 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     _phase = RuntimePhase.configStaged;
     _lastFailureKind = null;
     _message = 'Настройки POKROV готовы.';
-    await _appendRuntimeEvent(event: 'profile_stage', outcome: 'ready');
+    await _appendRuntimeEvent(
+      event: RuntimeLifecycleEventType.profile,
+      outcome: 'ready',
+    );
     return snapshot();
   }
 
@@ -1322,7 +1422,10 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     final before = await snapshot();
     if (!before.canConnect || _bindings == null || _stagedPayload == null) {
       _message = 'POKROV ждет подготовленные настройки и готовый runtime.';
-      await _appendRuntimeEvent(event: 'connect', outcome: 'blocked');
+      await _appendRuntimeEvent(
+        event: RuntimeLifecycleEventType.tun,
+        outcome: 'blocked',
+      );
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
         canInitialize: before.canInitialize,
@@ -1339,9 +1442,10 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         failureKind: _lastFailureKind,
       );
       await _appendRuntimeEvent(
-        event: 'windows_vpn_preflight',
+        event: RuntimeLifecycleEventType.routes,
         outcome: 'blocked',
         failureKind: _lastFailureKind,
+        probe: RuntimeLifecycleProbe.competingVpn,
       );
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
@@ -1350,7 +1454,10 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       );
     }
 
-    await _appendRuntimeEvent(event: 'core_start', outcome: 'started');
+    await _appendRuntimeEvent(
+      event: RuntimeLifecycleEventType.coreStart,
+      outcome: 'started',
+    );
     final error = _bindings!.start(
       configPath: _stagedConfigPath!,
       disableMemoryLimit: _stagedPayload!.disableMemoryLimit,
@@ -1363,7 +1470,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
         failureKind: _lastFailureKind,
       );
       await _appendRuntimeEvent(
-        event: 'core_start',
+        event: RuntimeLifecycleEventType.coreStart,
         outcome: 'failed',
         failureKind: _lastFailureKind,
       );
@@ -1374,7 +1481,10 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       );
     }
 
-    await _appendRuntimeEvent(event: 'core_start', outcome: 'ready');
+    await _appendRuntimeEvent(
+      event: RuntimeLifecycleEventType.coreStart,
+      outcome: 'ready',
+    );
     final probeFailure = await _verifyStartedRuntime();
     if (probeFailure != null) {
       _bindings!.stop();
@@ -1382,7 +1492,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       _lastFailureKind = probeFailure.kind;
       _message = probeFailure.message;
       await _appendRuntimeEvent(
-        event: 'connect',
+        event: RuntimeLifecycleEventType.tun,
         outcome: 'failed',
         failureKind: _lastFailureKind,
       );
@@ -1398,7 +1508,10 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     _desktopVerificationPassed = true;
     _runningSince ??= DateTime.now().toUtc();
     _message = 'POKROV включен.';
-    await _appendRuntimeEvent(event: 'connect', outcome: 'running');
+    await _appendRuntimeEvent(
+      event: RuntimeLifecycleEventType.tun,
+      outcome: 'running',
+    );
     return snapshot();
   }
 
@@ -1407,11 +1520,20 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     if (injectedProbe != null) {
       final error = await injectedProbe();
       await _appendRuntimeEvent(
-        event: 'connectivity_probe',
+        event: RuntimeLifecycleEventType.egress,
         outcome: error == null ? 'passed' : 'failed',
         failureKind: error == null ? null : 'core_egress_probe_failed',
         attempt: 1,
+        probe: RuntimeLifecycleProbe.injected,
       );
+      if (error == null) {
+        await _appendRuntimeEvent(
+          event: RuntimeLifecycleEventType.dns,
+          outcome: 'passed',
+          attempt: 1,
+          probe: RuntimeLifecycleProbe.injected,
+        );
+      }
       return error == null
           ? null
           : const _DesktopProbeFailure(
@@ -1427,6 +1549,14 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     String? lastError;
     if (mixedProxyPort != null || _mixedProxyProbe != null) {
       for (var attempt = 0; attempt < attempts; attempt += 1) {
+        if (attempt > 0) {
+          await _appendRuntimeEvent(
+            event: RuntimeLifecycleEventType.recovery,
+            outcome: 'retrying',
+            attempt: attempt + 1,
+            probe: RuntimeLifecycleProbe.mixedProxy,
+          );
+        }
         await Future<void>.delayed(
           Duration(milliseconds: attempt == 0 ? 900 : 1500),
         );
@@ -1436,12 +1566,19 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
               timeout: const Duration(seconds: 6),
             ));
         await _appendRuntimeEvent(
-          event: 'mixed_proxy_probe',
+          event: RuntimeLifecycleEventType.egress,
           outcome: lastError == null ? 'passed' : 'failed',
           failureKind: lastError == null ? null : 'core_egress_probe_failed',
           attempt: attempt + 1,
+          probe: RuntimeLifecycleProbe.mixedProxy,
         );
         if (lastError == null) {
+          await _appendRuntimeEvent(
+            event: RuntimeLifecycleEventType.dns,
+            outcome: 'passed',
+            attempt: attempt + 1,
+            probe: RuntimeLifecycleProbe.mixedProxy,
+          );
           break;
         }
       }
@@ -1458,12 +1595,21 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     }
     if (await _stagedUsesWindowsSystemProxy()) {
       await _appendRuntimeEvent(
-        event: 'windows_system_proxy',
+        event: RuntimeLifecycleEventType.routes,
         outcome: 'ready',
+        probe: RuntimeLifecycleProbe.windowsSystemProxy,
       );
       return null;
     }
     for (var attempt = 0; attempt < attempts; attempt += 1) {
+      if (attempt > 0) {
+        await _appendRuntimeEvent(
+          event: RuntimeLifecycleEventType.recovery,
+          outcome: 'retrying',
+          attempt: attempt + 1,
+          probe: RuntimeLifecycleProbe.windowsTun,
+        );
+      }
       await Future<void>.delayed(
         Duration(milliseconds: attempt == 0 ? 750 : 1500),
       );
@@ -1474,13 +1620,26 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
             forceDirect: true,
           ));
       await _appendRuntimeEvent(
-        event: 'windows_tun_probe',
+        event: RuntimeLifecycleEventType.egress,
         outcome: lastError == null ? 'passed' : 'failed',
         failureKind:
             lastError == null ? null : 'desktop_tun_egress_probe_failed',
         attempt: attempt + 1,
+        probe: RuntimeLifecycleProbe.windowsTun,
       );
       if (lastError == null) {
+        await _appendRuntimeEvent(
+          event: RuntimeLifecycleEventType.routes,
+          outcome: 'passed',
+          attempt: attempt + 1,
+          probe: RuntimeLifecycleProbe.windowsTun,
+        );
+        await _appendRuntimeEvent(
+          event: RuntimeLifecycleEventType.dns,
+          outcome: 'passed',
+          attempt: attempt + 1,
+          probe: RuntimeLifecycleProbe.windowsTun,
+        );
         return null;
       }
     }
@@ -1601,10 +1760,12 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   }
 
   Future<void> _appendRuntimeEvent({
-    required String event,
+    required RuntimeLifecycleEventType event,
     required String outcome,
     String? failureKind,
     int? attempt,
+    RuntimeLifecycleProbe? probe,
+    RuntimeStopReason? stopReason,
   }) async {
     final directories = _directories;
     if (directories == null) {
@@ -1617,12 +1778,14 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       final entry = <String, Object?>{
         'at': DateTime.now().toUtc().toIso8601String(),
         'platform': hostPlatform.name,
-        'event': event,
+        'event': event.wireName,
         'outcome': outcome,
         'phase': _phase.name,
+        if (probe != null) 'probe': probe.wireName,
         if (attempt != null) 'attempt': attempt,
         if (failureKind != null && failureKind.isNotEmpty)
           'failure_kind': failureKind,
+        if (stopReason != null) 'stop_reason': stopReason.wireName,
       };
       await file.writeAsString(
         '${jsonEncode(entry)}\n',
@@ -1653,15 +1816,20 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
       return snapshot();
     }
 
-    await _appendRuntimeEvent(event: 'disconnect', outcome: 'started');
+    await _appendRuntimeEvent(
+      event: RuntimeLifecycleEventType.stop,
+      outcome: 'started',
+      stopReason: RuntimeStopReason.requested,
+    );
     final error = _bindings!.stop();
     if (error.isNotEmpty) {
       _lastFailureKind = 'runtime_stop_failed';
       _message = 'POKROV не смог отключиться.';
       await _appendRuntimeEvent(
-        event: 'disconnect',
+        event: RuntimeLifecycleEventType.stop,
         outcome: 'failed',
         failureKind: _lastFailureKind,
+        stopReason: RuntimeStopReason.coreRejected,
       );
       return _snapshotPreservingCurrentMessage(
         phase: _phase,
@@ -1677,7 +1845,11 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     _lastFailureKind = null;
     _desktopVerificationPassed = false;
     _message = 'POKROV отключен.';
-    await _appendRuntimeEvent(event: 'disconnect', outcome: 'stopped');
+    await _appendRuntimeEvent(
+      event: RuntimeLifecycleEventType.stop,
+      outcome: 'stopped',
+      stopReason: RuntimeStopReason.completed,
+    );
     return _snapshotPreservingCurrentMessage(
       phase: _phase,
       canInitialize: artifacts.coreBinary != null,
@@ -1908,29 +2080,6 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   }
 }
 
-Future<bool> _defaultWindowsCompetingVpnProbe() async {
-  try {
-    final result = await Process.run(
-      'powershell.exe',
-      const [
-        '-NoProfile',
-        '-NonInteractive',
-        '-Command',
-        r"@(Get-NetRoute -AddressFamily IPv4 -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | Where-Object { $_.InterfaceAlias -match '^(tun\d*|hiddify)$' }).Count",
-      ],
-      runInShell: false,
-    ).timeout(const Duration(seconds: 3));
-    if (result.exitCode != 0) {
-      return false;
-    }
-    final count = int.tryParse(result.stdout.toString().trim());
-    return count != null && count > 0;
-  } on Object {
-    // An unavailable route inventory must not block normal connection.
-    return false;
-  }
-}
-
 String _desktopStartFailureKind(String error) {
   final normalized = error.toLowerCase();
   if ((normalized.contains('bind') || normalized.contains('listen')) &&
@@ -2052,6 +2201,11 @@ Future<bool> _desktopLoopbackPortAvailable(int port) async {
 }
 
 const _pokrovWarpEndpointTag = 'pokrov-warp';
+const _pokrovAwg2ContractId = 'pokrov.awg2.endpoint.v1';
+const _pokrovAwg2ContractSha256 =
+    '3beb57eccd8d5e15ce7466496208fe1945f353b3417be58644911d1ded125a83';
+final _pokrovAwg2GenerationPattern =
+    RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$');
 
 String _materializePokrovCoreConfig(
   String configPayload,
@@ -2065,6 +2219,7 @@ String _materializePokrovCoreConfig(
   final config = decoded.map<String, Object?>(
     (key, value) => MapEntry(key.toString(), value),
   );
+  _validateAwg2TransportContract(config);
   final runtimeVariantProbe = preserveAndroidHostMetadata
       ? Map<String, Object?>.from(
           _runtimeObjectMap(
@@ -2206,6 +2361,32 @@ String _materializePokrovCoreConfig(
   config['experimental'] = experimental;
 
   return const JsonEncoder.withIndent('  ').convert(config);
+}
+
+void _validateAwg2TransportContract(Map<String, Object?> config) {
+  final awgEndpoints = _runtimeMapList(config['endpoints'])
+      .where(
+          (endpoint) => _runtimeText(endpoint['type']).toLowerCase() == 'awg')
+      .toList(growable: false);
+  if (awgEndpoints.isEmpty) {
+    return;
+  }
+
+  final contract = _runtimeObjectMap(
+    _runtimeObjectMap(config['_meta'])['transport_contract'],
+  );
+  final generation = _runtimeText(contract['generation']);
+  final contractIsCurrent = awgEndpoints.length == 1 &&
+      _runtimeText(contract['id']) == _pokrovAwg2ContractId &&
+      _runtimeText(contract['sha256']).toLowerCase() ==
+          _pokrovAwg2ContractSha256 &&
+      _runtimeText(contract['profile']) == 'awg2_lab' &&
+      _runtimeText(contract['state']) == 'enabled' &&
+      _pokrovAwg2GenerationPattern.hasMatch(generation) &&
+      awgEndpoints.single['useIntegratedTun'] == false;
+  if (!contractIsCurrent) {
+    throw const FormatException('AWG2 transport contract is invalid');
+  }
 }
 
 void _pinDnsHijackBeforeBypasses(Map<String, Object?> config) {
@@ -2371,10 +2552,12 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
   MobileArtifactRuntimeEngine({
     required this.hostPlatform,
     this.assetRootOverride,
+    this.runtimeLane = RuntimeLane.mobileArtifact,
   });
 
   final HostPlatform hostPlatform;
   final String? assetRootOverride;
+  final RuntimeLane runtimeLane;
   ManagedProfilePayload? _stagedPayload;
 
   static const defaultCoreTag = DesktopRuntimeEngine.defaultCoreTag;
@@ -2387,10 +2570,29 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       return hostSnapshot;
     }
 
+    if (hostPlatform == HostPlatform.windows) {
+      return RuntimeSnapshot(
+        hostPlatform: hostPlatform,
+        lane: runtimeLane,
+        phase: RuntimePhase.artifactMissing,
+        artifactDirectory: null,
+        coreBinaryPath: null,
+        helperBinaryPath: null,
+        stagedConfigPath: null,
+        supportsLiveConnect: false,
+        canInitialize: false,
+        canConnect: false,
+        message: _publicRuntimeMessage(
+          phase: RuntimePhase.artifactMissing,
+          hostBridgeUnavailable: true,
+        ),
+      );
+    }
+
     final artifacts = await _resolveArtifacts();
     return RuntimeSnapshot(
       hostPlatform: hostPlatform,
-      lane: RuntimeLane.mobileArtifact,
+      lane: runtimeLane,
       phase: artifacts.coreArtifact != null
           ? RuntimePhase.artifactReady
           : RuntimePhase.artifactMissing,
@@ -2423,7 +2625,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     final configPayload = _materializePokrovCoreConfig(
       payload.configPayload,
       payload.warpPolicy,
-      preserveAndroidHostMetadata: true,
+      preserveAndroidHostMetadata: hostPlatform == HostPlatform.android,
     );
     _stagedPayload = payload;
     final resolvedCode = payload.resolvedNodeCode.trim().toLowerCase();
@@ -2496,7 +2698,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     final configPayload = _materializePokrovCoreConfig(
       staged.configPayload,
       nextPolicy,
-      preserveAndroidHostMetadata: true,
+      preserveAndroidHostMetadata: hostPlatform == HostPlatform.android,
     );
     final response = await _invokeHostMap(
       'runtimeEngine.applyWarp',
@@ -2534,7 +2736,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     String method, {
     Map<String, Object?>? arguments,
   }) async {
-    if (!hostPlatform.isMobileRuntimeBridgeTarget) {
+    if (!hostPlatform.isRuntimeBridgeTarget) {
       return null;
     }
 
@@ -2554,7 +2756,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     String method, {
     Map<String, Object?>? arguments,
   }) async {
-    if (!hostPlatform.isMobileRuntimeBridgeTarget) {
+    if (!hostPlatform.isRuntimeBridgeTarget) {
       return null;
     }
 
@@ -2579,7 +2781,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       }
       return RuntimeSnapshot(
         hostPlatform: hostPlatform,
-        lane: RuntimeLane.mobileArtifact,
+        lane: runtimeLane,
         phase: RuntimePhase.artifactMissing,
         artifactDirectory: null,
         coreBinaryPath: null,
@@ -2786,7 +2988,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     );
     return RuntimeSnapshot(
       hostPlatform: hostPlatform,
-      lane: RuntimeLane.mobileArtifact,
+      lane: runtimeLane,
       phase: phase,
       artifactDirectory: response['artifactDirectory'] as String?,
       coreBinaryPath: response['coreBinaryPath'] as String?,
@@ -3158,8 +3360,10 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
 }
 
 extension on HostPlatform {
-  bool get isMobileRuntimeBridgeTarget =>
-      this == HostPlatform.android || this == HostPlatform.ios;
+  bool get isRuntimeBridgeTarget =>
+      this == HostPlatform.windows ||
+      this == HostPlatform.android ||
+      this == HostPlatform.ios;
 }
 
 typedef _RuntimeDirectories = ({
@@ -3210,6 +3414,142 @@ abstract interface class DesktopRuntimeBindings {
   String stop();
 }
 
+enum CoreRuntimeCompatibilityMode { legacyAbi2, negotiated }
+
+class CoreRuntimeCapabilityContract {
+  const CoreRuntimeCapabilityContract({
+    required this.schemaVersion,
+    required this.desktopAbi,
+    required this.eventAbi,
+    required this.capabilities,
+    required this.lifecycleEvents,
+  });
+
+  factory CoreRuntimeCapabilityContract.parse(String encoded) {
+    final decoded = jsonDecode(encoded);
+    if (decoded is! Map) {
+      throw const FormatException(
+          'Core capability descriptor must be an object.');
+    }
+    final json = Map<String, dynamic>.from(decoded);
+    return CoreRuntimeCapabilityContract(
+      schemaVersion: _requiredInt(json, 'schema_version'),
+      desktopAbi: _requiredInt(json, 'desktop_abi'),
+      eventAbi: _requiredInt(json, 'event_abi'),
+      capabilities: _requiredStringSet(json, 'capabilities'),
+      lifecycleEvents: _requiredStringSet(json, 'lifecycle_events'),
+    );
+  }
+
+  final int schemaVersion;
+  final int desktopAbi;
+  final int eventAbi;
+  final Set<String> capabilities;
+  final Set<String> lifecycleEvents;
+
+  static int _requiredInt(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value is! int) {
+      throw FormatException('Core capability field $key must be an integer.');
+    }
+    return value;
+  }
+
+  static Set<String> _requiredStringSet(
+    Map<String, dynamic> json,
+    String key,
+  ) {
+    final value = json[key];
+    if (value is! List || value.any((item) => item is! String)) {
+      throw FormatException(
+          'Core capability field $key must be a string list.');
+    }
+    final values = value.cast<String>().toSet();
+    if (values.length != value.length) {
+      throw FormatException('Core capability field $key contains duplicates.');
+    }
+    return Set<String>.unmodifiable(values);
+  }
+}
+
+class CoreRuntimeCompatibilityDecision {
+  const CoreRuntimeCompatibilityDecision({
+    required this.mode,
+    this.contract,
+  });
+
+  final CoreRuntimeCompatibilityMode mode;
+  final CoreRuntimeCapabilityContract? contract;
+}
+
+class CoreRuntimeCompatibility {
+  const CoreRuntimeCompatibility._();
+
+  static const supportedDesktopAbi = 2;
+  static const supportedCapabilitySchema = 1;
+  static const supportedEventAbi = 1;
+  static const supportedCapabilities = <String>{
+    'bounded_stop_reason',
+    'core_start_stop',
+    'materialized_profile',
+    'secure_profile_file',
+    'structured_operational_events',
+    'typed_lifecycle_events',
+  };
+  static const legacyCapabilities = <String>{
+    'bounded_stop_reason',
+    'core_start_stop',
+    'materialized_profile',
+    'secure_profile_file',
+    'typed_lifecycle_events',
+  };
+  static const supportedLifecycleEvents = <String>{
+    'initialization',
+    'profile',
+    'core_start',
+    'tun',
+    'routes',
+    'dns',
+    'egress',
+    'recovery',
+    'stop',
+  };
+
+  static CoreRuntimeCompatibilityDecision negotiate({
+    required int desktopAbi,
+    String? descriptorJson,
+  }) {
+    if (desktopAbi != supportedDesktopAbi) {
+      throw UnsupportedError(
+          'Unsupported POKROV Core desktop ABI: $desktopAbi');
+    }
+    if (descriptorJson == null) {
+      return const CoreRuntimeCompatibilityDecision(
+        mode: CoreRuntimeCompatibilityMode.legacyAbi2,
+      );
+    }
+
+    final contract = CoreRuntimeCapabilityContract.parse(descriptorJson);
+    if (contract.schemaVersion != supportedCapabilitySchema ||
+        contract.desktopAbi != desktopAbi ||
+        contract.eventAbi != supportedEventAbi ||
+        !(_sameSet(contract.capabilities, supportedCapabilities) ||
+            _sameSet(contract.capabilities, legacyCapabilities)) ||
+        !_sameSet(contract.lifecycleEvents, supportedLifecycleEvents)) {
+      throw UnsupportedError(
+        'Unsupported POKROV Core capability or lifecycle event contract.',
+      );
+    }
+    return CoreRuntimeCompatibilityDecision(
+      mode: CoreRuntimeCompatibilityMode.negotiated,
+      contract: contract,
+    );
+  }
+
+  static bool _sameSet(Set<String> left, Set<String> right) =>
+      left.length == right.length && left.containsAll(right);
+}
+
 class _PokrovCoreBindingsLoader {
   static DesktopRuntimeBindings load(String libraryPath) {
     final dynamicLibrary = DynamicLibrary.open(libraryPath);
@@ -3220,9 +3560,15 @@ class _PokrovCoreBindingsLoader {
         'The POKROV Core ABI marker is missing.',
       );
     }
-    if (pokrovCoreAbi != _PokrovCoreBindings.supportedAbiVersion) {
+    final descriptorJson = _pokrovCoreCapabilitiesJson(dynamicLibrary);
+    try {
+      CoreRuntimeCompatibility.negotiate(
+        desktopAbi: pokrovCoreAbi,
+        descriptorJson: descriptorJson,
+      );
+    } on FormatException {
       throw UnsupportedError(
-        'Unsupported POKROV Core desktop ABI: $pokrovCoreAbi',
+        'The POKROV Core capability descriptor is malformed.',
       );
     }
     return _PokrovCoreBindings.load(dynamicLibrary);
@@ -3236,6 +3582,38 @@ class _PokrovCoreBindingsLoader {
       return version();
     } on ArgumentError {
       return null;
+    }
+  }
+
+  static String? _pokrovCoreCapabilitiesJson(
+    DynamicLibrary dynamicLibrary,
+  ) {
+    late final Pointer<Char> Function() capabilities;
+    try {
+      capabilities = dynamicLibrary.lookupFunction<Pointer<Char> Function(),
+          Pointer<Char> Function()>('pokrovCoreCapabilities');
+    } on ArgumentError {
+      return null;
+    }
+
+    late final void Function(Pointer<Char>) freeString;
+    try {
+      freeString = dynamicLibrary.lookupFunction<Void Function(Pointer<Char>),
+          void Function(Pointer<Char>)>('freeString');
+    } on ArgumentError {
+      throw UnsupportedError(
+        'The POKROV Core descriptor has no compatible string release symbol.',
+      );
+    }
+
+    final pointer = capabilities();
+    if (pointer == nullptr) {
+      throw UnsupportedError('The POKROV Core capability descriptor is empty.');
+    }
+    try {
+      return pointer.cast<Utf8>().toDartString();
+    } finally {
+      freeString(pointer);
     }
   }
 }
@@ -3261,8 +3639,6 @@ class _PokrovCoreBindings implements DesktopRuntimeBindings {
         _stop = stop,
         _secureFile = secureFile,
         _freeString = freeString;
-
-  static const supportedAbiVersion = 2;
 
   final Pointer<Char> Function(
     Pointer<Char>,

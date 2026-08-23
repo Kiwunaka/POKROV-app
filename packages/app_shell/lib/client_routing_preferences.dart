@@ -12,7 +12,7 @@ enum PokrovRouteMatchType { domain, ip, subnet }
 
 enum PokrovDnsPreset { automatic, cloudflare, google, adguard, custom }
 
-enum PokrovWindowsConnectionMode { vpn, systemProxy }
+enum PokrovWindowsConnectionMode { vpn }
 
 enum PokrovTunStack { system, mixed, gvisor }
 
@@ -54,17 +54,10 @@ extension PokrovDnsPresetPresentation on PokrovDnsPreset {
 
 extension PokrovWindowsConnectionModePresentation
     on PokrovWindowsConnectionMode {
-  String get title => switch (this) {
-        PokrovWindowsConnectionMode.vpn => 'VPN для всего устройства',
-        PokrovWindowsConnectionMode.systemProxy => 'Системный прокси',
-      };
+  String get title => 'VPN через службу POKROV';
 
-  String get summary => switch (this) {
-        PokrovWindowsConnectionMode.vpn =>
-          'Защищает TCP и UDP через системный TUN. Нужны права администратора.',
-        PokrovWindowsConnectionMode.systemProxy =>
-          'Режим совместимости для программ, которые используют прокси Windows. UDP и часть приложений могут идти напрямую.',
-      };
+  String get summary =>
+      'Защищает TCP и UDP через TUN. Приложение остаётся без повышенных прав; системную часть выполняет установленная служба.';
 }
 
 extension PokrovTunStackPresentation on PokrovTunStack {
@@ -214,10 +207,10 @@ class PokrovRoutingPreferences {
         .toSet()
         .take(20)
         .toList(growable: false);
-    final windowsConnectionMode = PokrovWindowsConnectionMode.values.firstWhere(
-      (item) => item.name == _routingText(json['windowsConnectionMode']),
-      orElse: () => PokrovWindowsConnectionMode.vpn,
-    );
+    // `systemProxy` was a pre-service compatibility mode. A LocalSystem Core
+    // cannot safely own a per-user WinINET proxy, so old persisted values are
+    // deliberately migrated to the authenticated service/TUN lane.
+    const windowsConnectionMode = PokrovWindowsConnectionMode.vpn;
     final tunStack = PokrovTunStack.values.firstWhere(
       (item) => item.name == _routingText(json['tunStack']),
       orElse: () => PokrovTunStack.system,
@@ -413,20 +406,10 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     final mixedInbound = inbounds
         .where((inbound) => _routingText(inbound['type']) == 'mixed')
         .firstOrNull;
-    if (preferences.windowsConnectionMode ==
-        PokrovWindowsConnectionMode.systemProxy) {
-      if (mixedInbound != null) {
-        inbounds.removeWhere(
-          (inbound) => _routingText(inbound['type']) == 'tun',
-        );
-        mixedInbound['set_system_proxy'] = true;
-      }
-    } else {
-      mixedInbound?.remove('set_system_proxy');
-      for (final inbound in inbounds) {
-        if (_routingText(inbound['type']) == 'tun') {
-          inbound['stack'] = preferences.tunStack.name;
-        }
+    mixedInbound?.remove('set_system_proxy');
+    for (final inbound in inbounds) {
+      if (_routingText(inbound['type']) == 'tun') {
+        inbound['stack'] = preferences.tunStack.name;
       }
     }
     config['inbounds'] = inbounds;

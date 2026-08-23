@@ -1,0 +1,404 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:pokrov_app_shell/app_shell.dart';
+import 'package:pokrov_core_domain/core_domain.dart';
+import 'package:pokrov_observability_contracts/observability_contracts.dart';
+import 'package:pokrov_observability_runtime/observability_runtime.dart';
+import 'package:pokrov_runtime_engine/runtime_engine.dart';
+import 'package:pokrov_support_bundle/support_bundle.dart';
+
+void main() {
+  final now = DateTime.utc(2026, 8, 22, 12);
+
+  test('verified runtime exposes four current proofs and stable message keys',
+      () {
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.allExceptRu,
+      snapshot: _snapshot(),
+      statusLabel: 'Защищено',
+      warpState: 'disabled',
+      now: now,
+      checkedAtUtc: now,
+      appVersion: '1.2.0',
+      buildNumber: '30',
+      releaseChannel: 'store',
+      candidateLabel: 'pokrov-1.2.0-test',
+      encryptedDeliveryAvailable: true,
+    );
+
+    expect(report.summaryKey, PokrovDiagnosticMessageKey.verified);
+    expect(
+      report.summaryKey.wireKey,
+      'diagnostics.summary.verified',
+    );
+    expect(
+      report.causalKey.wireKey,
+      'diagnostics.causal.proofs_complete',
+    );
+    expect(report.checkedAtUtc, now);
+    expect(report.problemBookId, isNull);
+    expect(report.errorCode, isNull);
+    expect(report.safeActionKeys, isEmpty);
+    expect(report.evidence.map((item) => item.key),
+        <String>['tunnel', 'routes', 'dns', 'egress']);
+    expect(
+      report.evidence.map((item) => item.state),
+      everyElement(PokrovDiagnosticEvidenceState.confirmed),
+    );
+  });
+
+  test('degraded DNS maps only to evidence and a supported problem-book rule',
+      () {
+    const rawHostSummary =
+        'resolver failed at private-host.example with raw provider detail';
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+      snapshot: _snapshot(
+        hostHealth: RuntimeHostHealth.degraded,
+        dnsState: RuntimeDiagnosticState.degraded,
+        dnsReady: false,
+        coreEgressValidated: null,
+        hostDiagnosticsSummary: rawHostSummary,
+      ),
+      statusLabel: 'Нужно внимание',
+      warpState: 'unavailable',
+      now: now,
+      appVersion: '1.2.0',
+      buildNumber: '30',
+      releaseChannel: 'stable',
+      candidateLabel: 'pokrov-1.2.0-test',
+      encryptedDeliveryAvailable: false,
+    );
+
+    expect(report.summaryKey, PokrovDiagnosticMessageKey.attention);
+    expect(report.causalKey, PokrovDiagnosticMessageKey.evidenceGap);
+    expect(report.errorCode, 'DNS-002');
+    expect(report.problemBookId, 'PB-05');
+    expect(
+      report.safeActionKeys,
+      <String>['retry_verification', 'rotate_node', 'send_bundle'],
+    );
+    expect(
+      report.evidence.singleWhere((item) => item.key == 'dns').state,
+      PokrovDiagnosticEvidenceState.attention,
+    );
+    expect(
+      <String?>[
+        report.statusLabel,
+        report.summaryKey.wireKey,
+        report.causalKey.wireKey,
+        report.errorCode,
+        report.problemBookId,
+      ].join(' '),
+      isNot(contains(rawHostSummary)),
+    );
+  });
+
+  test('summary package preview remains bounded and category-only', () {
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.selectedApps,
+      snapshot: _snapshot(),
+      statusLabel: 'Защищено',
+      warpState: 'enabled',
+      now: now,
+      appVersion: '1.2.0',
+      buildNumber: '30',
+      releaseChannel: 'direct',
+      candidateLabel: 'pokrov-1.2.0-test',
+      encryptedDeliveryAvailable: true,
+    );
+    final preview = report.preparedBundle.preview;
+
+    expect(preview.profile.name, 'summary');
+    expect(preview.files, isNotEmpty);
+    expect(preview.totalPlaintextBytes, greaterThan(0));
+    expect(preview.totalPlaintextBytes, lessThanOrEqualTo(256 * 1024));
+    expect(
+      preview.categories.map((category) => category.name),
+      <String>['build', 'network', 'redaction'],
+    );
+    expect(
+      preview.files.every((file) => file.path.endsWith('.json')),
+      isTrue,
+    );
+  });
+
+  test('safe message keys resolve in Russian and English without raw details',
+      () {
+    expect(
+      PokrovDiagnosticMessages.resolve(
+        PokrovDiagnosticMessageKey.evidenceGap,
+        languageCode: 'ru',
+      ),
+      'Одна или несколько обязательных проверок не подтверждены.',
+    );
+    expect(
+      PokrovDiagnosticMessages.resolve(
+        PokrovDiagnosticMessageKey.evidenceGap,
+        languageCode: 'en-US',
+      ),
+      'One or more required checks are not verified.',
+    );
+  });
+
+  test('phase timeline is bounded to closed events and marks reconnects', () {
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+      snapshot: _snapshot(),
+      statusLabel: 'Защищено',
+      warpState: 'disabled',
+      now: now,
+      appVersion: '1.2.0',
+      buildNumber: '30',
+      releaseChannel: 'stable',
+      candidateLabel: 'pokrov-1.2.0-test',
+      encryptedDeliveryAvailable: true,
+      timelineBreadcrumbs: <OperationalBreadcrumb>[
+        _breadcrumb(
+          name: 'app.connection.intent.received',
+          generation: 1,
+          sequence: 1,
+          outcome: ObservabilityOutcome.started,
+        ),
+        _breadcrumb(
+          name: 'app.connection.profile.started',
+          generation: 1,
+          sequence: 2,
+          outcome: ObservabilityOutcome.started,
+        ),
+        _breadcrumb(
+          name: 'app.connection.profile.finished',
+          generation: 1,
+          sequence: 3,
+          outcome: ObservabilityOutcome.succeeded,
+        ),
+        _breadcrumb(
+          name: 'app.connection.private-host.example',
+          generation: 1,
+          sequence: 4,
+          outcome: ObservabilityOutcome.failed,
+        ),
+        _breadcrumb(
+          name: 'app.connection.rollback.started',
+          generation: 2,
+          sequence: 1,
+          outcome: ObservabilityOutcome.started,
+        ),
+        _breadcrumb(
+          name: 'app.connection.rollback.finished',
+          generation: 2,
+          sequence: 2,
+          outcome: ObservabilityOutcome.succeeded,
+        ),
+        _breadcrumb(
+          name: 'app.connection.dns.finished',
+          generation: 2,
+          sequence: 3,
+          outcome: ObservabilityOutcome.failed,
+          errorCode: 'DNS-002',
+        ),
+      ],
+    );
+
+    expect(report.timelineAttempts, hasLength(2));
+    expect(report.timelineAttempts.first.isReconnect, isFalse);
+    expect(report.timelineAttempts.first.entries, hasLength(2));
+    expect(
+      report.timelineAttempts.first.entries.last.state,
+      PokrovDiagnosticTimelineState.confirmed,
+    );
+    expect(report.timelineAttempts.last.isReconnect, isTrue);
+    expect(
+      report.timelineAttempts.last.entries.map((entry) => entry.phaseKey),
+      <String>['rollback', 'dns'],
+    );
+    expect(report.timelineAttempts.last.entries.last.errorCode, 'DNS-002');
+    expect(
+      report.timelineAttempts
+          .expand((attempt) => attempt.entries)
+          .map((entry) => entry.label)
+          .join(' '),
+      isNot(contains('private-host')),
+    );
+  });
+
+  testWidgets('screen renders catalog rule and sanitized safe actions',
+      (tester) async {
+    const rawHostSummary = 'private resolver/provider detail';
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.allExceptRu,
+      snapshot: _snapshot(
+        hostHealth: RuntimeHostHealth.degraded,
+        dnsState: RuntimeDiagnosticState.degraded,
+        dnsReady: false,
+        hostDiagnosticsSummary: rawHostSummary,
+      ),
+      statusLabel: 'Нужно внимание',
+      warpState: 'disabled',
+      now: now,
+      checkedAtUtc: now,
+      appVersion: '1.2.0',
+      buildNumber: '30',
+      releaseChannel: 'direct',
+      candidateLabel: 'pokrov-1.2.0-test',
+      encryptedDeliveryAvailable: false,
+      timelineBreadcrumbs: <OperationalBreadcrumb>[
+        _breadcrumb(
+          name: 'app.connection.dns.finished',
+          generation: 2,
+          sequence: 1,
+          outcome: ObservabilityOutcome.failed,
+          errorCode: 'DNS-002',
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PokrovDiagnosticsScreen(
+          initialReport: report,
+          onRefresh: () async => report,
+          onOpenProtection: () {},
+          onOpenSupport: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byKey(const ValueKey('diagnostics-scroll')),
+      const Offset(0, -360),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('diagnostics-problem-book')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('diagnostics-safe-actions')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Правило PB-05 · DNS-002'), findsOneWidget);
+    expect(find.textContaining(rawHostSummary), findsNothing);
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('diagnostics-timeline')),
+      120,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('diagnostics-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(
+      find.byKey(const ValueKey('diagnostics-timeline-2-dns')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('encrypted export cancellation never claims a file was saved',
+      (tester) async {
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.allExceptRu,
+      snapshot: _snapshot(),
+      statusLabel: 'Нужно внимание',
+      warpState: 'disabled',
+      now: now,
+      checkedAtUtc: now,
+      appVersion: '1.2.0',
+      buildNumber: '30',
+      releaseChannel: 'direct',
+      candidateLabel: 'pokrov-1.2.0-test',
+      encryptedDeliveryAvailable: true,
+    );
+    PreparedSupportBundle? exported;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PokrovDiagnosticsScreen(
+          initialReport: report,
+          onRefresh: () async => report,
+          onOpenProtection: () {},
+          onOpenSupport: () {},
+          onExportBundle: (prepared) async {
+            exported = prepared;
+            return SupportBundleExportResult(
+              state: SupportBundleExportState.cancelled,
+              fileName: prepared.preview.diagnosticId + '.pokrov-support',
+            );
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('diagnostics-export-bundle')),
+      180,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('diagnostics-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey('diagnostics-export-bundle')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(exported, same(report.preparedBundle));
+    expect(find.text('Экспорт отменен. Файл не создан.'), findsOneWidget);
+    expect(find.textContaining('Зашифрованный пакет сохранен:'), findsNothing);
+  });
+}
+
+OperationalBreadcrumb _breadcrumb({
+  required String name,
+  required int generation,
+  required int sequence,
+  required ObservabilityOutcome outcome,
+  String? errorCode,
+}) =>
+    OperationalBreadcrumb(
+      eventId: 'event-$generation-$sequence',
+      occurredAtUtc: DateTime.utc(2026, 8, 22, 12, 0, sequence),
+      name: name,
+      outcome: outcome,
+      errorCode: errorCode,
+      generation: generation,
+      sequence: sequence,
+    );
+
+RuntimeSnapshot _snapshot({
+  RuntimeHostHealth hostHealth = RuntimeHostHealth.healthy,
+  RuntimeDiagnosticState dnsState = RuntimeDiagnosticState.healthy,
+  RuntimeDiagnosticState uplinkState = RuntimeDiagnosticState.healthy,
+  bool? dnsReady = true,
+  bool? coreEgressValidated = true,
+  String? hostDiagnosticsSummary,
+}) =>
+    RuntimeSnapshot(
+      hostPlatform: HostPlatform.android,
+      lane: RuntimeLane.mobileArtifact,
+      phase: RuntimePhase.running,
+      artifactDirectory: '/host/runtime',
+      coreBinaryPath: '/host/runtime/pokrov-core',
+      helperBinaryPath: null,
+      stagedConfigPath: '/host/runtime/profile.json',
+      supportsLiveConnect: true,
+      canInitialize: true,
+      canConnect: true,
+      message: 'Safe public runtime message.',
+      hostHealth: hostHealth,
+      dnsState: dnsState,
+      uplinkState: uplinkState,
+      hostDiagnosticsSummary: hostDiagnosticsSummary,
+      dnsReady: dnsReady,
+      coreEgressValidated: coreEgressValidated,
+      coreEgressValidationRequired: true,
+    );

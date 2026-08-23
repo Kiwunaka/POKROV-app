@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "channel": "stable",
+  "artifact_root": "../artifacts/releases",
+  "stable_pointer": {
+    "path": "release-handoff.json"
+  },
+  "rollback_targets": [
+    {
+      "release_id": "1.1.6+20260819",
+      "release_version": "1.1.6",
+      "handoff_schema_version": 1,
+      "handoff_path": "pokrov-app/1.1.6+20260819/release-handoff.json",
+      "handoff_sha256": "563dd47835e017363eac63b33d66bdfeb9b41881168d4a14808f1daf48d3569f",
+      "eligibility": "ROLLBACK_ELIGIBLE",
+      "platforms": [
+        "android",
+        "windows"
+      ]
+    }
+  ],
+  "mutation_policy": {
+    "atomic_replace_required": true,
+    "optimistic_lock_required": true,
+    "backup_required": true,
+    "same_byte_target_required": true,
+    "exact_candidate_gate_required": true
+  }
+}

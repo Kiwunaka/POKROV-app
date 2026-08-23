@@ -550,6 +550,58 @@ class AndroidRuntimeStateTest {
         assertEquals("POKROV подключен на этом устройстве.", snapshot["message"])
     }
 
+    @Test
+    fun tunnelTrafficStats_areSessionScopedAndRejectLateGenerations() {
+        setPrivateField(
+            "environment",
+            AndroidRuntimeEnvironment(
+                artifactDirectory = "artifacts",
+                coreBinaryPath = "libpokrov-core.so",
+                baseDirectory = File("build/test/base"),
+                workingDirectory = File("build/test/working"),
+                tempDirectory = File("build/test/temp"),
+                configDirectory = File("build/test/config"),
+            ),
+        )
+        setPrivateField("phase", AndroidRuntimePhase.RUNNING)
+        AndroidRuntimeState.beginTunnelTrafficSession(10L)
+        AndroidRuntimeState.updateTunnelTraffic(
+            10L,
+            AndroidTunnelTrafficSnapshot(
+                state = AndroidTunnelTrafficSampleState.AVAILABLE,
+                uplinkBps = 1_024L,
+                downlinkBps = 2_048L,
+                uplinkTotalBytes = 4_096L,
+                downlinkTotalBytes = 8_192L,
+            ),
+        )
+
+        var stats = AndroidRuntimeState.liveStats()
+        assertEquals(true, stats["available"])
+        assertEquals("available", stats["counterState"])
+        assertEquals(1_024L, stats["uplinkBps"])
+        assertEquals(8_192L, stats["downlinkTotalBytes"])
+
+        AndroidRuntimeState.updateTunnelTraffic(
+            9L,
+            AndroidTunnelTrafficSnapshot(
+                state = AndroidTunnelTrafficSampleState.AVAILABLE,
+                uplinkBps = 99_999L,
+                downlinkBps = 99_999L,
+            ),
+        )
+        AndroidRuntimeState.endTunnelTrafficSession(9L)
+        stats = AndroidRuntimeState.liveStats()
+        assertEquals(1_024L, stats["uplinkBps"])
+
+        AndroidRuntimeState.markStopped(stopReason = "test", message = "stopped")
+        stats = AndroidRuntimeState.liveStats()
+        assertEquals(false, stats["available"])
+        assertEquals("unavailable", stats["counterState"])
+        assertNull(stats["uplinkBps"])
+        assertNull(stats["downlinkTotalBytes"])
+    }
+
     private fun resetState() {
         setPrivateField("environment", null)
         setPrivateField("phase", AndroidRuntimePhase.ARTIFACT_MISSING)
@@ -573,6 +625,15 @@ class AndroidRuntimeStateTest {
         setPrivateField("excludePackageCount", 0)
         setPrivateField("systemNotificationWarning", false)
         setPrivateField("connectionPending", false)
+        setPrivateField("tunnelTrafficGeneration", 0L)
+        setPrivateField(
+            "tunnelTrafficState",
+            AndroidTunnelTrafficSampleState.UNAVAILABLE,
+        )
+        setPrivateField("tunnelUplinkBps", null)
+        setPrivateField("tunnelDownlinkBps", null)
+        setPrivateField("tunnelUplinkTotalBytes", null)
+        setPrivateField("tunnelDownlinkTotalBytes", null)
     }
 
     private fun setPrivateField(name: String, value: Any?) {

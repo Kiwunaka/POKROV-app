@@ -12,6 +12,7 @@
   "manifest_name_template": "pokrov-windows-x64-{version}.manifest.json",
   "required_files": [
     "pokrov_windows.exe",
+    "pokrov_service.exe",
     "flutter_windows.dll",
     "pokrov-core.dll",
     "libcronet.dll",
@@ -26,13 +27,26 @@
   },
   "runtime": {
     "platform": "windows",
+    "service_binary": "pokrov_service.exe",
     "artifact_directory": "apps/windows_shell/windows/runner/resources/runtime",
     "core_binary": "pokrov-core.dll",
     "runtime_dependencies": [
       "libcronet.dll"
     ],
-    "release_tag": "v1.0.3",
-    "desktop_abi": 2
+    "release_tag": "v1.1.0",
+    "desktop_abi": 2,
+    "crash_profile": {
+      "format": "POKROV_WINDOWS_CRASH_V1",
+      "mode": "stack_only",
+      "max_frames": 32,
+      "full_memory_dump_default": false,
+      "ui_storage": "per_user_private",
+      "service_storage": "protected_service_private"
+    }
+  },
+  "portable_zip": {
+    "supported": false,
+    "reason": "The Windows runtime requires an authenticated SCM service installed by the machine-wide setup program."
   },
   "signing": {
     "status": "unsigned_direct_warning",
@@ -44,10 +58,10 @@
     ]
   },
   "safe_claims": [
-    "The Windows shell uses the desktop FFI runtime lane.",
-    "The local release build bundles POKROV Core 1.0.3 and its pinned libcronet.dll dependency next to the Flutter runner.",
-    "Windows requests elevation only when a system TUN connection is started and does not report a successful VPN connection when elevation is unavailable.",
-    "Local packaging uses an Inno Setup per-user wizard with install-directory, desktop-shortcut, and autostart choices, plus an unsigned direct-download installer EXE and portable ZIP with the SmartScreen warning above."
+    "The ordinary Windows UI uses the authenticated POKROVService runtime lane and does not load POKROV Core directly.",
+    "The local pre-candidate build bundles the exact POKROV Core 1.1.0 replacement bytes, its pinned libcronet.dll dependency, and pokrov_service.exe in one machine-wide installation directory.",
+    "The installer performs the one-time administrative SCM registration; the ordinary UI does not receive privileged file, path, or shell execution.",
+    "Local packaging produces an unsigned direct-download Inno Setup installer with the SmartScreen warning above; a portable ZIP is not a supported runtime artifact."
   ],
   "blocked_on": []
 }

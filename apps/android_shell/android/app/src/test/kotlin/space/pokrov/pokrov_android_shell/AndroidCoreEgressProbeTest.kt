@@ -141,26 +141,30 @@ class AndroidCoreEgressProbeTest {
     }
 
     @Test
-    fun recognizesEndpointResultsFromCommandLogAndPlatformDebugChannel() {
+    fun recognizesEndpointResultsOnlyFromStructuredCoreEvents() {
         assertEquals(
             AndroidCoreEgressProbeResult.HEALTHY,
-            AndroidCoreEgressProbe.endpointResultFromMessage(
-                "selected endpoint URL test succeeded",
-            ),
-        )
-        assertEquals(
-            AndroidCoreEgressProbeResult.HEALTHY,
-            AndroidCoreEgressProbe.endpointResultFromMessage(
-                "selected_endpoint_url_test:healthy",
+            AndroidCoreEgressProbe.endpointResultFromOperationalEvent(
+                name = "core.egress.probe",
+                outcome = "succeeded",
+                errorCode = null,
             ),
         )
         assertEquals(
             AndroidCoreEgressProbeResult.FAILED,
-            AndroidCoreEgressProbe.endpointResultFromMessage(
-                "selected_endpoint_url_test:endpoint_initialization_http_rejected",
+            AndroidCoreEgressProbe.endpointResultFromOperationalEvent(
+                name = "core.egress.probe",
+                outcome = "failed",
+                errorCode = "EGRESS-001",
             ),
         )
-        assertNull(AndroidCoreEgressProbe.endpointResultFromMessage("unrelated"))
+        assertNull(
+            AndroidCoreEgressProbe.endpointResultFromOperationalEvent(
+                name = "core.egress.probe",
+                outcome = "failed",
+                errorCode = "RAW-001",
+            ),
+        )
     }
 
     @Test

@@ -1,4 +1,6 @@
-part of pokrov_app_shell;
+import 'dart:async';
+
+import 'package:flutter/services.dart';
 
 /// Tiered, try/catch-guarded haptic feedback for the POKROV shell.
 ///

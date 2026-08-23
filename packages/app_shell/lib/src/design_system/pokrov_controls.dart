@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'pokrov_motion.dart';
 import 'pokrov_palette.dart';
+import '../shared/pokrov_haptics.dart';
 
 Widget pokrovFadeSlideTransition(Widget child, Animation<double> animation) {
   final curved = CurvedAnimation(
@@ -406,7 +406,7 @@ class PokrovTelegramBonusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final (title, detail, action) = switch (state) {
       PokrovTelegramBonusState.available => (
-          '+5 дней за Telegram',
+          'Бонус за Telegram',
           'Подпишитесь на канал и заберите бонус.',
           'Получить',
         ),
@@ -444,9 +444,9 @@ class PokrovTelegramBonusCard extends StatelessWidget {
   }
 }
 
-/// The iOS system switch (real Cupertino widget on every platform), themed
-/// with the shared `status_green` on-track per the pokrov-clear control
-/// canon. A selection tick fires on toggle so the control feels physical.
+/// Platform-native switch behavior with the shared `status_green` on-track.
+/// Apple hosts use Cupertino physics; Android and Windows use Material input,
+/// focus and pointer behavior. One guarded selection tick fires on toggle.
 class PokrovSwitch extends StatelessWidget {
   const PokrovSwitch({
     required this.value,
@@ -461,15 +461,23 @@ class PokrovSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = PokrovPalette.of(context);
     final onChanged = this.onChanged;
-    return CupertinoSwitch(
+    final guardedOnChanged = onChanged == null
+        ? null
+        : (bool next) {
+            PokrovHaptics.tap();
+            onChanged(next);
+          };
+    if (pokrovUsesCupertinoInteraction(Theme.of(context).platform)) {
+      return CupertinoSwitch(
+        value: value,
+        activeTrackColor: tokens.connectedGreen,
+        onChanged: guardedOnChanged,
+      );
+    }
+    return Switch(
       value: value,
       activeTrackColor: tokens.connectedGreen,
-      onChanged: onChanged == null
-          ? null
-          : (next) {
-              HapticFeedback.selectionClick();
-              onChanged(next);
-            },
+      onChanged: guardedOnChanged,
     );
   }
 }

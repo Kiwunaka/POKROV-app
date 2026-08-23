@@ -11,13 +11,11 @@ class _WindowsConnectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final usesTun =
-        preferences.windowsConnectionMode == PokrovWindowsConnectionMode.vpn;
     return _SectionCard(
       key: const ValueKey('rules-windows-connection'),
       title: 'Подключение Windows',
       lines: const [
-        'VPN защищает всё устройство. Системный прокси — запасной режим совместимости.',
+        'Приложение работает без повышенных прав. TUN и Core принадлежат защищённой службе POKROV.',
       ],
       child: Column(
         children: [
@@ -26,28 +24,21 @@ class _WindowsConnectionCard extends StatelessWidget {
             icon: Icons.vpn_lock_outlined,
             title: 'Режим подключения',
             value: preferences.windowsConnectionMode.title,
+            valueIsAction: false,
+          ),
+          const _SettingsRowDivider(),
+          _SettingsRow(
+            key: const ValueKey('rules-windows-tun-stack'),
+            icon: Icons.memory_rounded,
+            title: 'Сетевой стек VPN',
+            value: preferences.tunStack.title,
             valueIsAction: true,
-            onTap: () => _showWindowsConnectionModeSheet(
+            onTap: () => _showWindowsTunStackSheet(
               context,
               preferences: preferences,
               onChanged: onChanged,
             ),
           ),
-          if (usesTun) ...[
-            const _SettingsRowDivider(),
-            _SettingsRow(
-              key: const ValueKey('rules-windows-tun-stack'),
-              icon: Icons.memory_rounded,
-              title: 'Сетевой стек VPN',
-              value: preferences.tunStack.title,
-              valueIsAction: true,
-              onTap: () => _showWindowsTunStackSheet(
-                context,
-                preferences: preferences,
-                onChanged: onChanged,
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -1059,63 +1050,6 @@ Future<void> _showDnsPresetSheet(
   );
   if (result != null) {
     onChanged(result);
-  }
-}
-
-Future<void> _showWindowsConnectionModeSheet(
-  BuildContext context, {
-  required PokrovRoutingPreferences preferences,
-  required ValueChanged<PokrovRoutingPreferences> onChanged,
-}) async {
-  final result = await showModalBottomSheet<PokrovWindowsConnectionMode>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
-    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
-    builder: (sheetContext) {
-      final p = PokrovPalette.of(sheetContext);
-      return SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(22, 4, 22, 22),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Как подключать Windows',
-                style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
-                      color: p.ink,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Оставьте VPN для обычной работы. Системный прокси помогает при конфликте TUN, но защищает не все программы.',
-                style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
-                      color: p.muted,
-                    ),
-              ),
-              const SizedBox(height: 12),
-              for (final mode in PokrovWindowsConnectionMode.values)
-                ListTile(
-                  key: ValueKey('rules-windows-mode-${mode.name}'),
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(mode.title),
-                  subtitle: Text(mode.summary),
-                  trailing: preferences.windowsConnectionMode == mode
-                      ? Icon(Icons.check_rounded, color: p.accent)
-                      : null,
-                  onTap: () => Navigator.of(sheetContext).pop(mode),
-                ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
-  if (result != null) {
-    onChanged(preferences.copyWith(windowsConnectionMode: result));
   }
 }
 

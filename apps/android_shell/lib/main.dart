@@ -19,11 +19,19 @@ Future<void> main() async {
   } catch (_) {
     // Unsupported device or emulator - the default mode is fine.
   }
+  final bootstrapper = AppFirstRuntimeBootstrapper();
+  final observability = await PokrovClientObservability.start(
+    hostPlatform: HostPlatform.android,
+    releaseHealthService: bootstrapper,
+  );
+  installPokrovCrashHandlers(observability);
   final acquisitionLinks = PokrovAndroidAcquisitionLinks();
   final initialAcquisitionUri = await acquisitionLinks.start();
   runApp(
     PokrovSeedApp(
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+      observability: observability,
       initialAcquisitionUri: initialAcquisitionUri,
       acquisitionUriStream: acquisitionLinks.stream,
     ),

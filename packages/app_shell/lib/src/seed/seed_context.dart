@@ -247,8 +247,8 @@ SeedAppContext buildSeedAppContext({
           PermissionRequirement.vpnProfile,
           PermissionRequirement.backgroundStart,
         ],
-        defaultCore: RuntimeCore.singBox,
-        advancedFallbackCore: RuntimeCore.xray,
+        defaultCore: PlatformProductFacts.defaultRuntimeCore,
+        advancedFallbackCore: PlatformProductFacts.advancedFallbackCore,
         supportsSelectedAppsMode: true,
       ),
     HostPlatform.ios => const PlatformBootstrapContract(
@@ -257,8 +257,8 @@ SeedAppContext buildSeedAppContext({
           PermissionRequirement.notifications,
           PermissionRequirement.vpnProfile,
         ],
-        defaultCore: RuntimeCore.singBox,
-        advancedFallbackCore: RuntimeCore.xray,
+        defaultCore: PlatformProductFacts.defaultRuntimeCore,
+        advancedFallbackCore: PlatformProductFacts.advancedFallbackCore,
         supportsSelectedAppsMode: false,
       ),
     HostPlatform.macos => const PlatformBootstrapContract(
@@ -287,19 +287,13 @@ SeedAppContext buildSeedAppContext({
     hostPlatform: hostPlatform,
     accessLane: AccessLane.trialPremium,
     scope: const ProgramScope(
-      publicReleaseTargets: [
-        ClientPlatform.android,
-        ClientPlatform.windows,
-      ],
-      readinessOnlyTargets: [
-        ClientPlatform.ios,
-        ClientPlatform.macos,
-      ],
+      publicReleaseTargets: PlatformProductFacts.publicReleaseTargets,
+      readinessOnlyTargets: PlatformProductFacts.readinessOnlyTargets,
     ),
     runtimeProfile: RuntimeProfile(
-      defaultCore: RuntimeCore.singBox,
-      advancedFallbackCore: RuntimeCore.xray,
-      defaultRouteMode: RouteMode.allExceptRu,
+      defaultCore: PlatformProductFacts.defaultRuntimeCore,
+      advancedFallbackCore: PlatformProductFacts.advancedFallbackCore,
+      defaultRouteMode: PlatformProductFacts.defaultRouteMode,
       supportedRouteModes: [
         RouteMode.allExceptRu,
         RouteMode.fullTunnel,
@@ -311,8 +305,8 @@ SeedAppContext buildSeedAppContext({
             _selectedAppsEnforcementReady)
           RouteMode.excludedApps,
       ],
-      trialDays: 5,
-      telegramBonusDays: 5,
+      trialDays: PlatformProductFacts.trialDays,
+      telegramBonusDays: PlatformProductFacts.telegramRewardDays,
       freeTier: const FreeTierPolicy(
         enabled: false,
         trafficGb: 0,
@@ -326,14 +320,14 @@ SeedAppContext buildSeedAppContext({
     ),
     bootstrapContract: bootstrapContract,
     supportSnapshot: const SupportSnapshot(
-      supportBot: '@pokrov_supportbot',
-      feedbackBot: '@pokrov_feedbackbot',
-      publicChannel: '@pokrov_vpn',
-      supportEmail: 'support@pokrov.space',
+      supportBot: PlatformProductFacts.supportBot,
+      feedbackBot: PlatformProductFacts.feedbackBot,
+      publicChannel: PlatformProductFacts.publicChannel,
+      supportEmail: PlatformProductFacts.supportEmail,
       safeNotes:
           'Поддержка видит только версию приложения, платформу, режим и статус подключения.',
-      recommendedRouteMode: RouteMode.allExceptRu,
-      channelBonusDays: 5,
+      recommendedRouteMode: PlatformProductFacts.defaultRouteMode,
+      channelBonusDays: PlatformProductFacts.telegramRewardDays,
     ),
     rulesPresetContract: _seedRulesPresetContractFor(hostPlatform),
     locations: const [

@@ -174,6 +174,8 @@ internal object AndroidRuntimeSafety {
             "POKROV не смог подготовить настройки подключения."
         "config_apply_failed" ->
             "POKROV не смог применить настройки подключения."
+        "vpn_permission_denied" ->
+            "Android не получил разрешение на VPN. Нажмите «Разрешить VPN» и подтвердите системный запрос."
         "notification_permission_denied" ->
             "Системное уведомление POKROV скрыто в настройках Android."
         "resolver_response_error",

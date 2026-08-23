@@ -1,44 +1,136 @@
 {
   "core": {
     "repository": "Kiwunaka/POKROV-core",
-    "release_tag": "v1.0.3",
-    "source_commit": "69a74545101708e56183c92e31f2b4c7b2509884",
+    "version": "1.1.0",
+    "release_tag": "v1.1.0",
+    "release_tag_created": false,
+    "source_commit": "bdbd97fae35103e705f55908caebf75b4a9ff72f",
+    "android_package": "space.pokrov.core",
     "sing_box_version": "1.13.0",
     "sing_dependency": "v0.8.0-beta.12",
-    "go_toolchain": "go1.25.12",
+    "go_toolchain": "go1.25.13",
     "artifact_provenance": {
-      "status": "clean_reproducible_release",
+      "status": "clean_reproducible_pre_candidate_local",
       "vcs_stamp": "disabled_for_reproducible_release_artifacts",
-      "source_identity": "annotated_release_tag_and_github_release_commit",
-      "release_url": "https://github.com/Kiwunaka/pokrov-core/releases/tag/v1.0.3",
-      "reproducible_build": {
+      "source_identity": "clean_git_commit_without_release_tag_or_publication",
+      "release_url": null,
+      "evidence_ceiling": "PRE_CANDIDATE_LOCAL",
+      "candidate_created": false,
+      "promotion_authorized": false,
+      "artifact_evidence": {
         "android": {
-          "size": 106861671,
-          "sha256": "6e6f3b688fe415c9392e19aa4f8660885316897cfc369cf8c3ff3d01100ee14f"
+          "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
+          "tree_sha256": "565266016cf823b30a36645c37156a8ba69d3f0fd55f8b22df665c321bcfcc90",
+          "evidence_sha256": "412494af3e1f7d4cf763a7c800d38af4115f90c606a344edbaff0de6150e309d",
+          "abis": [
+            "armeabi-v7a",
+            "arm64-v8a",
+            "x86",
+            "x86_64"
+          ]
         },
         "windows": {
-          "size": 55134208,
-          "sha256": "7cc83854fc4022b759e9de3d0942b90a24c859cfd51e3231d04e7c7a6b7d5054"
+          "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
+          "tree_sha256": "32089d0e133703433f43e4e8041f45fdf931e937bfb9ca10f2a72725a5c24d9f",
+          "evidence_sha256": "929f7d375bbc93f1f09028e7edebe192dc663dfb28c2d4f71e4c09492a103a5c",
+          "required_exports": 15,
+          "proxy_only_start_stop_cycles": 100,
+          "proxy_only_result": "PASS_LOCAL"
+        },
+        "sbom": [
+          {
+            "name": "pokrov-core.cdx.json",
+            "sha256": "18707e43f557d80aceecb112d4907c1295e8a27583af1bf2243d45cf63ba38a0"
+          },
+          {
+            "name": "sing-box.cdx.json",
+            "sha256": "28925d34046ac0f0a7edec40a032938fcbc59c18bd47b9d5d69b6688ebf6637d"
+          }
+        ]
+      },
+      "reproducible_build": {
+        "android": {
+          "size": 107314335,
+          "sha256": "83a5bd740774a2a16117f0c242c3ada4bcbb22a65255c3ee008a751e681c06f0"
+        },
+        "windows": {
+          "size": 55352320,
+          "sha256": "ef9672b3ba9983012bfa78abd2e4cd8ef5ef65d8e4b6a49ff89f8c4d0d575040"
         },
         "libcronet_sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
       },
-      "promotion_rule": "accept_exact_v1.0.3_release_artifacts"
+      "promotion_rule": "exact_bytes_require_candidate_signing_manual_gates_and_publication"
     },
-    "activation_state": "active",
+    "retained_public_release": {
+      "version": "1.0.3",
+      "release_tag": "v1.0.3",
+      "source_commit": "69a74545101708e56183c92e31f2b4c7b2509884",
+      "release_url": "https://github.com/Kiwunaka/pokrov-core/releases/tag/v1.0.3",
+      "android": {
+        "size": 106861671,
+        "sha256": "6e6f3b688fe415c9392e19aa4f8660885316897cfc369cf8c3ff3d01100ee14f"
+      },
+      "windows": {
+        "size": 55134208,
+        "sha256": "7cc83854fc4022b759e9de3d0942b90a24c859cfd51e3231d04e7c7a6b7d5054"
+      },
+      "libcronet_sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+    },
+    "development_target": {
+      "required_for_product": "1.2.0",
+      "version": "1.1.0",
+      "release_tag": "v1.1.0",
+      "state": "PRE_CANDIDATE_LOCAL",
+      "candidate_created": false,
+      "artifact_state": "exact_local_replacement_bound"
+    },
+    "activation_state": "active_pre_candidate_local",
     "desktop_abi": {
       "name": "pokrov-core",
       "version": 2,
       "required_symbol": "pokrovCoreAbiVersion",
-      "secure_file_symbol": "pokrovSecureFile"
+      "secure_file_symbol": "pokrovSecureFile",
+      "optional_capabilities_symbol": "pokrovCoreCapabilities",
+      "capability_schema": 1,
+      "event_abi": 1,
+      "legacy_without_capabilities_symbol": [
+        2
+      ],
+      "required_capabilities": [
+        "bounded_stop_reason",
+        "core_start_stop",
+        "materialized_profile",
+        "secure_profile_file",
+        "structured_operational_events",
+        "typed_lifecycle_events"
+      ],
+      "structured_events": {
+        "required_for_release": "1.2.0",
+        "callback_symbol": "pokrovCoreSetEventCallback",
+        "context_symbol": "pokrovCoreSetEventContext",
+        "retained_v1_0_3_artifact_mode": "legacy_without_structured_events",
+        "exact_replacement_artifact": "bound_pre_candidate_local"
+      },
+      "lifecycle_events": [
+        "initialization",
+        "profile",
+        "core_start",
+        "tun",
+        "routes",
+        "dns",
+        "egress",
+        "recovery",
+        "stop"
+      ]
     },
     "assets": {
       "android": {
         "entry": "pokrov-core.aar",
-        "size": 106861671,
-        "sha256": "6e6f3b688fe415c9392e19aa4f8660885316897cfc369cf8c3ff3d01100ee14f",
-        "sync_policy": "pokrov_release",
+        "size": 107314335,
+        "sha256": "83a5bd740774a2a16117f0c242c3ada4bcbb22a65255c3ee008a751e681c06f0",
+        "sync_policy": "exact_pre_candidate_build",
         "sync_destination": "apps/android_shell/android/app/libs",
-        "platform_state": "active_local_build_pending_device_proof"
+        "platform_state": "active_pre_candidate_local_pending_device_and_signing_proof"
       },
       "ios": {
         "entry": "PokrovCore.xcframework",
@@ -58,8 +150,8 @@
       },
       "windows": {
         "entry": "pokrov-core.dll",
-        "size": 55134208,
-        "sha256": "7cc83854fc4022b759e9de3d0942b90a24c859cfd51e3231d04e7c7a6b7d5054",
+        "size": 55352320,
+        "sha256": "ef9672b3ba9983012bfa78abd2e4cd8ef5ef65d8e4b6a49ff89f8c4d0d575040",
         "runtime_dependencies": [
           "libcronet.dll"
         ],
@@ -69,9 +161,9 @@
         "runtime_dependency_sha256": {
           "libcronet.dll": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
         },
-        "sync_policy": "pokrov_release",
+        "sync_policy": "exact_pre_candidate_build",
         "sync_destination": "apps/windows_shell/windows/runner/resources/runtime",
-        "platform_state": "active_local_build_raw_start_and_abi_probe_passed"
+        "platform_state": "active_pre_candidate_local_reproducible_abi_and_proxy_backtest_passed"
       }
     }
   }

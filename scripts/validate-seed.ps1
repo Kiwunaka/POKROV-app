@@ -1,3 +1,10 @@
+[CmdletBinding()]
+param(
+  [string]$PlatformRoot,
+  [string]$CoreRoot
+)
+
+$ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 
 $requiredDirectories = @(
@@ -14,10 +21,24 @@ $requiredDirectories = @(
   "packages\\app_shell",
   "packages\\app_shell\\lib",
   "packages\\app_shell\\test",
+  "packages\\app_shell\\test\\fixtures",
   "packages\\core_domain",
   "packages\\core_domain\\lib",
   "packages\\platform_contracts",
   "packages\\platform_contracts\\lib",
+  "packages\\observability_contracts",
+  "packages\\observability_contracts\\lib",
+  "packages\\observability_contracts\\test",
+  "packages\\observability_runtime",
+  "packages\\observability_runtime\\lib",
+  "packages\\observability_runtime\\test",
+  "packages\\observability_runtime\\tool",
+  "packages\\diagnostics_collectors",
+  "packages\\diagnostics_collectors\\lib",
+  "packages\\diagnostics_collectors\\test",
+  "packages\\support_bundle",
+  "packages\\support_bundle\\lib",
+  "packages\\support_bundle\\test",
   "packages\\runtime_engine",
   "packages\\runtime_engine\\lib",
   "packages\\runtime_engine\\test",
@@ -47,15 +68,20 @@ $requiredFiles = @(
   "config\\platform-matrix.seed.json",
   "config\\runtime-profile.seed.json",
   "config\\runtime-artifacts.seed.json",
+  "config\\observability-contracts.seed.json",
   "config\\windows-release.seed.json",
   "config\\cutover-readiness.seed.json",
   "config\\release-handoff.seed.json",
+  "config\\release-rollback-catalog.seed.json",
+  "config\\state-migrations.v1.json",
   "config\\templates\\local.env.example",
   "config\\templates\\device-overrides.seed.json",
   "docs\\README.md",
   "docs\\architecture\\folder-structure.md",
   "docs\\architecture\\package-boundaries.md",
   "docs\\architecture\\bootstrap-workflow.md",
+  "docs\\architecture\\persisted-state-contract.md",
+  "docs\\architecture\\platform-privilege-runtime-contract.md",
   "docs\\decisions\\2026-07-23-pokrov-core-1.0.0-activation.md",
   "docs\\decisions\\2026-04-18-karing-vs-clean-room-gate.md",
   "docs\\operations\\windows-release-readiness.md",
@@ -83,10 +109,30 @@ $requiredFiles = @(
   "packages\\platform_contracts\\README.md",
   "packages\\platform_contracts\\pubspec.yaml",
   "packages\\platform_contracts\\lib\\platform_contracts.dart",
+  "packages\\observability_contracts\\README.md",
+  "packages\\observability_contracts\\pubspec.yaml",
+  "packages\\observability_contracts\\lib\\observability_contracts.dart",
+  "packages\\observability_contracts\\test\\observability_contracts_test.dart",
+  "packages\\observability_runtime\\README.md",
+  "packages\\observability_runtime\\pubspec.yaml",
+  "packages\\observability_runtime\\lib\\observability_runtime.dart",
+  "packages\\observability_runtime\\test\\observability_runtime_test.dart",
+  "packages\\observability_runtime\\test\\fault_chaos_contract_test.dart",
+  "packages\\observability_runtime\\test\\overhead_contract_test.dart",
+  "packages\\observability_runtime\\tool\\runtime_overhead_benchmark.dart",
+  "packages\\diagnostics_collectors\\README.md",
+  "packages\\diagnostics_collectors\\pubspec.yaml",
+  "packages\\diagnostics_collectors\\lib\\diagnostics_collectors.dart",
+  "packages\\diagnostics_collectors\\test\\diagnostics_collectors_test.dart",
+  "packages\\support_bundle\\README.md",
+  "packages\\support_bundle\\pubspec.yaml",
+  "packages\\support_bundle\\lib\\support_bundle.dart",
+  "packages\\support_bundle\\test\\support_bundle_test.dart",
   "packages\\runtime_engine\\README.md",
   "packages\\runtime_engine\\pubspec.yaml",
   "packages\\runtime_engine\\lib\\runtime_engine.dart",
   "packages\\runtime_engine\\test\\runtime_engine_test.dart",
+  "packages\\app_shell\\lib\\src\\seed\\platform_product_facts.g.dart",
   "packages\\support_context\\README.md",
   "packages\\support_context\\pubspec.yaml",
   "packages\\support_context\\lib\\support_context.dart",
@@ -99,13 +145,34 @@ $requiredFiles = @(
   "scripts\\build-android-production.ps1",
   "scripts\\build-windows-release.ps1",
   "scripts\\check-client-version-parity.ps1",
+  "scripts\\check-release-source-logging.ps1",
+  "scripts\\new-release-handoff-v2.ps1",
+  "scripts\\set-release-stable-pointer.ps1",
+  "scripts\\validate-observability-contracts.ps1",
   "scripts\\sync-pokrov-core-runtime.ps1",
   "scripts\\run-tests.ps1",
   "scripts\\validate-seed.ps1",
   "test\\README.md",
   "test\\docs-contract.ps1",
+  "test\\client-presentation-boundary.ps1",
+  "test\\release-handoff-v2-contract.ps1",
+  "test\\release-rollback-catalog-contract.ps1",
+  "test\\release-source-logging-contract.ps1",
+  "test\\release-v2-ci-contract.ps1",
+  "test\\repository-hygiene-contract.ps1",
+  "test\\run-tests-contract.ps1",
+  "test\\fixtures\\release-handoff-v2\\synthetic-candidate-input.json",
   "test\\seed-layout.ps1",
-  "packages\\app_shell\\test\\pokrov_seed_app_test.dart"
+  "packages\\app_shell\\test\\pokrov_seed_app_test.dart",
+  "packages\\app_shell\\test\\first_session_coordinator_test.dart",
+  "packages\\app_shell\\test\\account_session_coordinator_test.dart",
+  "packages\\app_shell\\test\\diagnostics_coordinator_test.dart",
+  "packages\\app_shell\\test\\fixtures\\app-first-session-v0.json",
+  "packages\\app_shell\\test\\fixtures\\secure-session-v0.txt",
+  "packages\\app_shell\\test\\fixtures\\routing-preferences-v0.json",
+  "packages\\app_shell\\test\\state_migration_contract_test.dart",
+  "packages\\app_shell\\test\\fixtures\\client-experience-v0.json",
+  "apps\\android_shell\\android\\app\\src\\test\\resources\\runtime-profile-v0.properties"
 )
 
 $jsonFiles = @(
@@ -113,10 +180,17 @@ $jsonFiles = @(
   "config\\platform-matrix.seed.json",
   "config\\runtime-profile.seed.json",
   "config\\runtime-artifacts.seed.json",
+  "config\\observability-contracts.seed.json",
   "config\\windows-release.seed.json",
   "config\\cutover-readiness.seed.json",
   "config\\release-handoff.seed.json",
-  "config\\templates\\device-overrides.seed.json"
+  "config\\release-rollback-catalog.seed.json",
+  "config\\state-migrations.v1.json",
+  "config\\templates\\device-overrides.seed.json",
+  "test\\fixtures\\release-handoff-v2\\synthetic-candidate-input.json",
+  "packages\\app_shell\\test\\fixtures\\app-first-session-v0.json",
+  "packages\\app_shell\\test\\fixtures\\routing-preferences-v0.json",
+  "packages\\app_shell\\test\\fixtures\\client-experience-v0.json"
 )
 
 $missing = [System.Collections.Generic.List[string]]::new()
@@ -152,6 +226,71 @@ foreach ($relativePath in $jsonFiles) {
       Get-Content -Raw -LiteralPath $fullPath | ConvertFrom-Json | Out-Null
     } catch {
       $invalidJson.Add($relativePath)
+    }
+  }
+}
+
+$stateMigrationsPath = Join-Path $root "config\\state-migrations.v1.json"
+if (Test-Path -LiteralPath $stateMigrationsPath -PathType Leaf) {
+  $stateMigrations = Get-Content -Raw -LiteralPath $stateMigrationsPath | ConvertFrom-Json
+  if ($stateMigrations.contract_id -ne "pokrov.client-state-migrations.v1" -or
+      [int]$stateMigrations.schema_version -ne 1 -or
+      $stateMigrations.state -ne "PRE_CANDIDATE_LOCAL" -or
+      $stateMigrations.source_product_range -ne ">=1.1.0 <1.2.0" -or
+      $stateMigrations.target.product_version -ne "1.2.0" -or
+      [int]$stateMigrations.target.android_windows_build_number -ne 30 -or
+      -not [bool]$stateMigrations.fixture_policy.production_data_forbidden -or
+      -not [bool]$stateMigrations.fixture_policy.fixture_hash_required) {
+    $manifestErrors.Add("config\\state-migrations.v1.json must bind the PRE_CANDIDATE_LOCAL 1.1.x to 1.2.0+30 migration authority")
+  }
+
+  $migrations = @($stateMigrations.migrations)
+  if ($migrations.Count -ne 5 -or
+      @($migrations.id | Sort-Object -Unique).Count -ne 5 -or
+      @($migrations.fixture | Sort-Object -Unique).Count -ne 5) {
+    $manifestErrors.Add("state migration contract must define five unique fixture-bound migrations")
+  }
+  foreach ($migration in $migrations) {
+    $fixtureRelative = [string]$migration.fixture
+    $testRelative = [string]$migration.test_file
+    $fixturePath = Join-Path $root $fixtureRelative
+    $testPath = Join-Path $root $testRelative
+    if ([string]::IsNullOrWhiteSpace([string]$migration.id) -or
+        [string]::IsNullOrWhiteSpace([string]$migration.owner) -or
+        [string]::IsNullOrWhiteSpace([string]$migration.source_schema) -or
+        [string]::IsNullOrWhiteSpace([string]$migration.target_schema) -or
+        [string]::IsNullOrWhiteSpace([string]$migration.migration_behavior) -or
+        [string]::IsNullOrWhiteSpace([string]$migration.rollback_policy) -or
+        @($migration.platforms).Count -eq 0) {
+      $manifestErrors.Add("state migration '$($migration.id)' is missing owner/schema/behavior/rollback metadata")
+      continue
+    }
+    if (-not (Test-Path -LiteralPath $fixturePath -PathType Leaf)) {
+      $manifestErrors.Add("state migration '$($migration.id)' fixture is missing: $fixtureRelative")
+    } else {
+      $actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $fixturePath).Hash.ToLowerInvariant()
+      if ($actualHash -ne [string]$migration.fixture_sha256) {
+        $manifestErrors.Add("state migration '$($migration.id)' fixture SHA-256 drifted")
+      }
+    }
+    if (-not (Test-Path -LiteralPath $testPath -PathType Leaf) -or
+        (Get-Content -Raw -LiteralPath $testPath) -notlike "*$([string]$migration.test_name)*") {
+      $manifestErrors.Add("state migration '$($migration.id)' named regression is missing")
+    }
+  }
+
+  $nonMigrating = @($stateMigrations.non_migrating_state)
+  if ($nonMigrating.Count -ne 2 -or
+      @($nonMigrating.id | Sort-Object -Unique).Count -ne 2 -or
+      @($nonMigrating.id) -notcontains "android_update_cache" -or
+      @($nonMigrating.id) -notcontains "windows_runtime_recovery_journal") {
+    $manifestErrors.Add("state migration contract must explicitly inventory update cache and Windows recovery journal")
+  }
+  foreach ($state in $nonMigrating) {
+    if ([string]::IsNullOrWhiteSpace([string]$state.owner) -or
+        [string]::IsNullOrWhiteSpace([string]$state.policy) -or
+        -not (Test-Path -LiteralPath (Join-Path $root ([string]$state.test_file)) -PathType Leaf)) {
+      $manifestErrors.Add("non-migrating state '$($state.id)' is missing owner/policy/test evidence")
     }
   }
 }
@@ -274,19 +413,29 @@ $runtimeArtifactsPath = Join-Path $root "config\\runtime-artifacts.seed.json"
 if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   $runtimeArtifacts = Get-Content -Raw -LiteralPath $runtimeArtifactsPath | ConvertFrom-Json
 
-  if ($runtimeArtifacts.core.release_tag -ne "v1.0.3") {
-    $manifestErrors.Add("config\\runtime-artifacts.seed.json must pin POKROV Core v1.0.3")
+  if ($runtimeArtifacts.core.release_tag -ne "v1.1.0" -or
+      $runtimeArtifacts.core.release_tag_created -ne $false) {
+    $manifestErrors.Add("config\\runtime-artifacts.seed.json must bind untagged POKROV Core v1.1.0 pre-candidate bytes")
   }
 
-  if ($runtimeArtifacts.core.activation_state -ne "active") {
-    $manifestErrors.Add("config\\runtime-artifacts.seed.json must label POKROV Core v1.0.3 as active")
+  if ($runtimeArtifacts.core.version -ne "1.1.0" -or
+      $runtimeArtifacts.core.release_tag -ne "v$($runtimeArtifacts.core.version)") {
+    $manifestErrors.Add("runtime artifact contract must align the POKROV Core version and release tag")
+  }
+
+  if ($runtimeArtifacts.core.android_package -ne "space.pokrov.core") {
+    $manifestErrors.Add("runtime artifact contract must pin Android package space.pokrov.core")
+  }
+
+  if ($runtimeArtifacts.core.activation_state -ne "active_pre_candidate_local") {
+    $manifestErrors.Add("config\\runtime-artifacts.seed.json must keep POKROV Core v1.1.0 active only for the pre-candidate local lane")
   }
 
   if ($runtimeArtifacts.core.repository -ne "Kiwunaka/POKROV-core") {
     $manifestErrors.Add("config\\runtime-artifacts.seed.json must use Kiwunaka/POKROV-core")
   }
 
-  if ($runtimeArtifacts.core.source_commit -ne "69a74545101708e56183c92e31f2b4c7b2509884") {
+  if ($runtimeArtifacts.core.source_commit -ne "bdbd97fae35103e705f55908caebf75b4a9ff72f") {
     $manifestErrors.Add("config\\runtime-artifacts.seed.json must pin the exact POKROV Core source commit")
   }
   if ($runtimeArtifacts.core.sing_dependency -ne "v0.8.0-beta.12") {
@@ -295,27 +444,89 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   if ($runtimeArtifacts.core.sing_box_version -ne "1.13.0") {
     $manifestErrors.Add("runtime artifact contract must pin embedded sing-box 1.13.0")
   }
-  if ($runtimeArtifacts.core.go_toolchain -ne "go1.25.12") {
-    $manifestErrors.Add("runtime artifact contract must pin Go 1.25.12")
+  if ($runtimeArtifacts.core.go_toolchain -ne "go1.25.13") {
+    $manifestErrors.Add("runtime artifact contract must pin Go 1.25.13")
   }
   $artifactProvenance = $runtimeArtifacts.core.artifact_provenance
-  if ($artifactProvenance.status -ne "clean_reproducible_release" -or
+  if ($artifactProvenance.status -ne "clean_reproducible_pre_candidate_local" -or
       $artifactProvenance.vcs_stamp -ne "disabled_for_reproducible_release_artifacts" -or
-      $artifactProvenance.source_identity -ne "annotated_release_tag_and_github_release_commit" -or
-      $artifactProvenance.release_url -ne "https://github.com/Kiwunaka/pokrov-core/releases/tag/v1.0.3" -or
-      [int64]$artifactProvenance.reproducible_build.android.size -ne 106861671 -or
-      $artifactProvenance.reproducible_build.android.sha256 -ne "6e6f3b688fe415c9392e19aa4f8660885316897cfc369cf8c3ff3d01100ee14f" -or
-      [int64]$artifactProvenance.reproducible_build.windows.size -ne 55134208 -or
-      $artifactProvenance.reproducible_build.windows.sha256 -ne "7cc83854fc4022b759e9de3d0942b90a24c859cfd51e3231d04e7c7a6b7d5054" -or
+      $artifactProvenance.source_identity -ne "clean_git_commit_without_release_tag_or_publication" -or
+      $null -ne $artifactProvenance.release_url -or
+      $artifactProvenance.evidence_ceiling -ne "PRE_CANDIDATE_LOCAL" -or
+      $artifactProvenance.candidate_created -ne $false -or
+      $artifactProvenance.promotion_authorized -ne $false -or
+      [int64]$artifactProvenance.reproducible_build.android.size -ne 107314335 -or
+      $artifactProvenance.reproducible_build.android.sha256 -ne "83a5bd740774a2a16117f0c242c3ada4bcbb22a65255c3ee008a751e681c06f0" -or
+      [int64]$artifactProvenance.reproducible_build.windows.size -ne 55352320 -or
+      $artifactProvenance.reproducible_build.windows.sha256 -ne "ef9672b3ba9983012bfa78abd2e4cd8ef5ef65d8e4b6a49ff89f8c4d0d575040" -or
       $artifactProvenance.reproducible_build.libcronet_sha256 -ne "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7" -or
-      $artifactProvenance.promotion_rule -ne "accept_exact_v1.0.3_release_artifacts") {
-    $manifestErrors.Add("runtime artifact contract must pin the clean reproducible POKROV Core v1.0.3 release")
+      $artifactProvenance.promotion_rule -ne "exact_bytes_require_candidate_signing_manual_gates_and_publication") {
+    $manifestErrors.Add("runtime artifact contract must pin the clean reproducible POKROV Core v1.1.0 pre-candidate build without claiming a tag or publication")
+  }
+  $artifactEvidence = $artifactProvenance.artifact_evidence
+  if ($artifactEvidence.android.result -ne "PASS_BYTE_IDENTICAL_TWO_BUILDS" -or
+      $artifactEvidence.android.tree_sha256 -ne "565266016cf823b30a36645c37156a8ba69d3f0fd55f8b22df665c321bcfcc90" -or
+      $artifactEvidence.android.evidence_sha256 -ne "412494af3e1f7d4cf763a7c800d38af4115f90c606a344edbaff0de6150e309d" -or
+      (@($artifactEvidence.android.abis) -join ',') -ne 'armeabi-v7a,arm64-v8a,x86,x86_64' -or
+      $artifactEvidence.windows.result -ne "PASS_BYTE_IDENTICAL_TWO_BUILDS" -or
+      $artifactEvidence.windows.tree_sha256 -ne "32089d0e133703433f43e4e8041f45fdf931e937bfb9ca10f2a72725a5c24d9f" -or
+      $artifactEvidence.windows.evidence_sha256 -ne "929f7d375bbc93f1f09028e7edebe192dc663dfb28c2d4f71e4c09492a103a5c" -or
+      [int]$artifactEvidence.windows.required_exports -ne 15 -or
+      [int]$artifactEvidence.windows.proxy_only_start_stop_cycles -ne 100 -or
+      $artifactEvidence.windows.proxy_only_result -ne "PASS_LOCAL") {
+    $manifestErrors.Add("runtime artifact contract must bind the exact Core 1.1.0 reproducibility, ABI and Windows proxy-only evidence")
+  }
+  $sbomEvidence = @($artifactEvidence.sbom)
+  if ($sbomEvidence.Count -ne 2 -or
+      $sbomEvidence[0].name -ne 'pokrov-core.cdx.json' -or
+      $sbomEvidence[0].sha256 -ne '18707e43f557d80aceecb112d4907c1295e8a27583af1bf2243d45cf63ba38a0' -or
+      $sbomEvidence[1].name -ne 'sing-box.cdx.json' -or
+      $sbomEvidence[1].sha256 -ne '28925d34046ac0f0a7edec40a032938fcbc59c18bd47b9d5d69b6688ebf6637d') {
+    $manifestErrors.Add("runtime artifact contract must bind both exact Core 1.1.0 SBOM identities")
+  }
+  $retainedCore = $runtimeArtifacts.core.retained_public_release
+  if ($retainedCore.version -ne '1.0.3' -or
+      $retainedCore.release_tag -ne 'v1.0.3' -or
+      $retainedCore.source_commit -ne '69a74545101708e56183c92e31f2b4c7b2509884' -or
+      $retainedCore.release_url -ne 'https://github.com/Kiwunaka/pokrov-core/releases/tag/v1.0.3' -or
+      [int64]$retainedCore.android.size -ne 106861671 -or
+      $retainedCore.android.sha256 -ne '6e6f3b688fe415c9392e19aa4f8660885316897cfc369cf8c3ff3d01100ee14f' -or
+      [int64]$retainedCore.windows.size -ne 55134208 -or
+      $retainedCore.windows.sha256 -ne '7cc83854fc4022b759e9de3d0942b90a24c859cfd51e3231d04e7c7a6b7d5054' -or
+      $retainedCore.libcronet_sha256 -ne '8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7') {
+    $manifestErrors.Add("runtime artifact contract must retain the exact public Core 1.0.3 rollback identity separately")
+  }
+  $coreTarget = $runtimeArtifacts.core.development_target
+  if ($coreTarget.required_for_product -ne "1.2.0" -or
+      $coreTarget.version -ne "1.1.0" -or
+      $coreTarget.release_tag -ne "v1.1.0" -or
+      $coreTarget.state -ne "PRE_CANDIDATE_LOCAL" -or
+      $coreTarget.candidate_created -ne $false -or
+      $coreTarget.artifact_state -ne "exact_local_replacement_bound") {
+    $manifestErrors.Add("runtime artifact contract must bind the exact Core 1.1.0 local replacement without claiming a candidate")
   }
   if ($runtimeArtifacts.core.desktop_abi.name -ne "pokrov-core" -or
       [int]$runtimeArtifacts.core.desktop_abi.version -ne 2 -or
       $runtimeArtifacts.core.desktop_abi.required_symbol -ne "pokrovCoreAbiVersion" -or
-      $runtimeArtifacts.core.desktop_abi.secure_file_symbol -ne "pokrovSecureFile") {
+      $runtimeArtifacts.core.desktop_abi.secure_file_symbol -ne "pokrovSecureFile" -or
+      $runtimeArtifacts.core.desktop_abi.optional_capabilities_symbol -ne "pokrovCoreCapabilities" -or
+      [int]$runtimeArtifacts.core.desktop_abi.capability_schema -ne 1 -or
+      [int]$runtimeArtifacts.core.desktop_abi.event_abi -ne 1 -or
+      (@($runtimeArtifacts.core.desktop_abi.legacy_without_capabilities_symbol) -join ',') -ne '2' -or
+      (@($runtimeArtifacts.core.desktop_abi.required_capabilities) -join ',') -ne
+        'bounded_stop_reason,core_start_stop,materialized_profile,secure_profile_file,structured_operational_events,typed_lifecycle_events' -or
+      (@($runtimeArtifacts.core.desktop_abi.lifecycle_events) -join ',') -ne
+        'initialization,profile,core_start,tun,routes,dns,egress,recovery,stop') {
     $manifestErrors.Add("config\\runtime-artifacts.seed.json must keep the POKROV Core desktop ABI 2 contract")
+  }
+  $structuredEvents = $runtimeArtifacts.core.desktop_abi.structured_events
+  if ($structuredEvents.required_for_release -ne '1.2.0' -or
+      $structuredEvents.callback_symbol -ne 'pokrovCoreSetEventCallback' -or
+      $structuredEvents.context_symbol -ne 'pokrovCoreSetEventContext' -or
+      $structuredEvents.retained_v1_0_3_artifact_mode -ne
+        'legacy_without_structured_events' -or
+      $structuredEvents.exact_replacement_artifact -ne 'bound_pre_candidate_local') {
+    $manifestErrors.Add("config\runtime-artifacts.seed.json must keep the honest Core structured-event cutover state")
   }
 
   foreach ($target in @("android", "ios", "macos", "windows")) {
@@ -331,21 +542,21 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
 
   $androidRuntime = $runtimeArtifacts.core.assets.android
   if ($androidRuntime.entry -ne "pokrov-core.aar" -or
-      $androidRuntime.sync_policy -ne "pokrov_release" -or
-      [int64]$androidRuntime.size -ne 106861671 -or
-      $androidRuntime.sha256 -ne "6e6f3b688fe415c9392e19aa4f8660885316897cfc369cf8c3ff3d01100ee14f") {
-    $manifestErrors.Add("runtime artifact contract must pin the POKROV Core 1.0.3 Android AAR")
+      $androidRuntime.sync_policy -ne "exact_pre_candidate_build" -or
+      [int64]$androidRuntime.size -ne 107314335 -or
+      $androidRuntime.sha256 -ne "83a5bd740774a2a16117f0c242c3ada4bcbb22a65255c3ee008a751e681c06f0") {
+    $manifestErrors.Add("runtime artifact contract must pin the POKROV Core 1.1.0 Android AAR")
   }
 
   $windowsRuntime = $runtimeArtifacts.core.assets.windows
   if ($windowsRuntime.entry -ne "pokrov-core.dll" -or
-      $windowsRuntime.sync_policy -ne "pokrov_release" -or
-      [int64]$windowsRuntime.size -ne 55134208 -or
-      $windowsRuntime.sha256 -ne "7cc83854fc4022b759e9de3d0942b90a24c859cfd51e3231d04e7c7a6b7d5054" -or
+      $windowsRuntime.sync_policy -ne "exact_pre_candidate_build" -or
+      [int64]$windowsRuntime.size -ne 55352320 -or
+      $windowsRuntime.sha256 -ne "ef9672b3ba9983012bfa78abd2e4cd8ef5ef65d8e4b6a49ff89f8c4d0d575040" -or
       @($windowsRuntime.runtime_dependencies) -notcontains "libcronet.dll" -or
       [int64]$windowsRuntime.runtime_dependency_size.'libcronet.dll' -ne 8596992 -or
       $windowsRuntime.runtime_dependency_sha256.'libcronet.dll' -ne "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7") {
-    $manifestErrors.Add("config\\runtime-artifacts.seed.json must pin the POKROV Core 1.0.3 Windows DLL and libcronet.dll")
+    $manifestErrors.Add("config\\runtime-artifacts.seed.json must pin the POKROV Core 1.1.0 Windows DLL and retained libcronet.dll")
   }
 
   foreach ($target in @("ios", "macos")) {
@@ -376,13 +587,18 @@ if (Test-Path -LiteralPath $windowsReleaseConfigPath -PathType Leaf) {
   }
 
   if ($windowsReleaseConfig.runtime.core_binary -ne "pokrov-core.dll" -or
-      $windowsReleaseConfig.runtime.release_tag -ne "v1.0.3" -or
+      $windowsReleaseConfig.runtime.service_binary -ne "pokrov_service.exe" -or
+      $windowsReleaseConfig.runtime.release_tag -ne "v1.1.0" -or
       [int]$windowsReleaseConfig.runtime.desktop_abi -ne 2 -or
       @($windowsReleaseConfig.runtime.runtime_dependencies) -notcontains "libcronet.dll") {
-    $manifestErrors.Add("config\\windows-release.seed.json must keep the POKROV Core 1.0.3 ABI 2 runtime contract")
+    $manifestErrors.Add("config\\windows-release.seed.json must keep the POKROV Core 1.1.0 ABI 2 pre-candidate runtime contract")
   }
 
-  foreach ($requiredPath in @("pokrov_windows.exe", "pokrov-core.dll", "libcronet.dll", "data/app.so")) {
+  if ([bool]$windowsReleaseConfig.portable_zip.supported) {
+    $manifestErrors.Add("config\windows-release.seed.json must not claim a portable ZIP while Windows requires SCM service installation")
+  }
+
+  foreach ($requiredPath in @("pokrov_windows.exe", "pokrov_service.exe", "pokrov-core.dll", "libcronet.dll", "data/app.so")) {
     if (@($windowsReleaseConfig.required_files) -notcontains $requiredPath) {
       $manifestErrors.Add("config\\windows-release.seed.json must list required build file '$requiredPath'")
     }
@@ -446,13 +662,204 @@ if ($missing.Count -gt 0 -or $invalidJson.Count -gt 0 -or $manifestErrors.Count 
   exit 1
 }
 
+if ([string]::IsNullOrWhiteSpace($CoreRoot)) {
+  if (-not [string]::IsNullOrWhiteSpace($env:POKROV_CORE_ROOT)) {
+    $CoreRoot = $env:POKROV_CORE_ROOT
+  } else {
+    $CoreRoot = Join-Path (Split-Path -Parent $root) "POKROV-core"
+  }
+}
+
 try {
-  & (Join-Path $root "scripts\\check-client-version-parity.ps1")
+  & (Join-Path $root "scripts\\check-client-version-parity.ps1") -CoreRoot $CoreRoot
   if (-not $?) {
     throw "Client version parity returned an unsuccessful PowerShell status."
   }
 } catch {
   throw "Client version parity failed during seed validation: $($_.Exception.Message)"
+}
+
+if ([string]::IsNullOrWhiteSpace($PlatformRoot)) {
+  if (-not [string]::IsNullOrWhiteSpace($env:POKROV_PLATFORM_ROOT)) {
+    $PlatformRoot = $env:POKROV_PLATFORM_ROOT
+  } else {
+    $PlatformRoot = Join-Path (Split-Path -Parent $root) "VPN"
+  }
+}
+
+try {
+  $pythonCommand = Get-Command python -ErrorAction SilentlyContinue
+  if (-not $pythonCommand) {
+    throw "Python is required for the cross-repository product-facts projection check."
+  }
+  $sharedFactsSync = Join-Path $PlatformRoot "scripts\\sync_shared_surface_facts.py"
+  if (-not (Test-Path -LiteralPath $sharedFactsSync -PathType Leaf)) {
+    throw "Missing platform shared-facts synchronizer."
+  }
+  & $pythonCommand.Source -B $sharedFactsSync `
+    --target-lane pokrov-app `
+    --pokrov-app-root $root `
+    --check
+  if ($LASTEXITCODE -ne 0) {
+    throw "Platform shared-facts projection check failed."
+  }
+  $seedContextSource = [IO.File]::ReadAllText(
+    (Join-Path $root "packages\\app_shell\\lib\\src\\seed\\seed_context.dart")
+  )
+  foreach ($requiredProjectionConsumer in @(
+    "PlatformProductFacts.publicReleaseTargets",
+    "PlatformProductFacts.defaultRuntimeCore",
+    "PlatformProductFacts.trialDays",
+    "PlatformProductFacts.telegramRewardDays",
+    "PlatformProductFacts.supportBot"
+  )) {
+    if (-not $seedContextSource.Contains($requiredProjectionConsumer)) {
+      throw "Client runtime seed does not consume generated platform fact: $requiredProjectionConsumer"
+    }
+  }
+  Write-Host "Cross-repository product facts projection OK." -ForegroundColor Green
+} catch {
+  throw "Cross-repository product facts failed during seed validation: $($_.Exception.Message)"
+}
+
+try {
+  $releaseHandoff = Get-Content -Raw -LiteralPath `
+    (Join-Path $root "config\release-handoff.seed.json") | ConvertFrom-Json
+  $publicRelease = $releaseHandoff.latest_repo_backed_release
+  $developmentTarget = $releaseHandoff.release_truth.development_target
+  $publicUniversalArtifacts = @(
+    $publicRelease.artifacts | Where-Object {
+      $_.platform -eq 'android' -and $_.kind -eq 'apk' -and $_.abi -eq 'universal'
+    }
+  )
+  if ($publicUniversalArtifacts.Count -ne 1) {
+    throw "Release handoff must contain exactly one retained public universal Android artifact."
+  }
+  $publicPackageLine = "$($publicRelease.version)+$($publicUniversalArtifacts[0].version_code)"
+  $requiredVersionFacts = @(
+    "v$($publicRelease.version)",
+    $publicPackageLine,
+    $developmentTarget.package_version,
+    $developmentTarget.state,
+    "candidate_created=$($developmentTarget.candidate_created.ToString().ToLowerInvariant())",
+    "config/release-handoff.seed.json"
+  )
+  $platformVersionOwnerPaths = @(
+    "docs\operations\deployment-and-access.md",
+    "docs\operations\publishing-and-signing-guide.md",
+    "docs\developer\developer-guide.md",
+    "docs\developer\repository-map.md"
+  )
+  foreach ($relativePath in $platformVersionOwnerPaths) {
+    $ownerPath = Join-Path $PlatformRoot $relativePath
+    if (-not (Test-Path -LiteralPath $ownerPath -PathType Leaf)) {
+      throw "Missing platform version owner: $relativePath"
+    }
+    $ownerText = [IO.File]::ReadAllText($ownerPath)
+    foreach ($fact in $requiredVersionFacts) {
+      if (-not $ownerText.Contains($fact)) {
+        throw "Platform version owner $relativePath lacks handoff-derived fact: $fact"
+      }
+    }
+    foreach ($staleVersion in @('v1.0.10', 'v1.0.13')) {
+      if ($ownerText.Contains($staleVersion)) {
+        throw "Platform version owner $relativePath retains stale active version: $staleVersion"
+      }
+    }
+  }
+  Write-Host (
+    "Cross-repository version truth OK: public={0} package={1} target={2} state={3} candidate={4}" -f `
+      $publicRelease.version,
+      $publicPackageLine,
+      $developmentTarget.package_version,
+      $developmentTarget.state,
+      $developmentTarget.candidate_created
+  ) -ForegroundColor Green
+} catch {
+  throw "Cross-repository version truth failed during seed validation: $($_.Exception.Message)"
+}
+
+try {
+  & (Join-Path $root "scripts\\validate-observability-contracts.ps1") `
+    -PlatformRoot $PlatformRoot -CoreRoot $CoreRoot
+  if (-not $?) {
+    throw "Observability contract parity returned an unsuccessful PowerShell status."
+  }
+} catch {
+  throw "Observability contract parity failed during seed validation: $($_.Exception.Message)"
+}
+
+try {
+  & (Join-Path $root "test\\release-source-logging-contract.ps1")
+  if (-not $?) {
+    throw "Release source logging contract returned an unsuccessful PowerShell status."
+  }
+} catch {
+  throw "Release source logging contract failed during seed validation: $($_.Exception.Message)"
+}
+
+try {
+  & (Join-Path $root "test\\release-handoff-v2-contract.ps1") `
+    -PlatformRoot $PlatformRoot -CoreRoot $CoreRoot
+  if (-not $?) {
+    throw "Release-handoff v2 client contract returned an unsuccessful PowerShell status."
+  }
+} catch {
+  throw "Release-handoff v2 client contract failed during seed validation: $($_.Exception.Message)"
+}
+
+try {
+  & (Join-Path $root "test\\release-rollback-catalog-contract.ps1")
+  if (-not $?) {
+    throw "Release rollback catalog contract returned an unsuccessful PowerShell status."
+  }
+} catch {
+  throw "Release rollback catalog contract failed during seed validation: $($_.Exception.Message)"
+}
+
+try {
+  & (Join-Path $root "test\\release-v2-ci-contract.ps1")
+  if (-not $?) {
+    throw "Release-v2 CI contract returned an unsuccessful PowerShell status."
+  }
+} catch {
+  throw "Release-v2 CI contract failed during seed validation: $($_.Exception.Message)"
+}
+
+try {
+  & (Join-Path $root "test\\repository-hygiene-contract.ps1")
+  if (-not $?) {
+    throw "Repository hygiene contract returned an unsuccessful PowerShell status."
+  }
+} catch {
+  throw "Repository hygiene contract failed during seed validation: $($_.Exception.Message)"
+}
+
+try {
+  & (Join-Path $root "test\\run-tests-contract.ps1")
+  if (-not $?) {
+    throw "Standard client test-runner contract returned an unsuccessful PowerShell status."
+  }
+} catch {
+  throw "Standard client test-runner contract failed during seed validation: $($_.Exception.Message)"
+}
+
+try {
+  & (Join-Path $root "test\\client-presentation-boundary.ps1")
+  if (-not $?) {
+    throw "Client presentation boundary returned an unsuccessful PowerShell status."
+  }
+} catch {
+  throw "Client presentation boundary failed during seed validation: $($_.Exception.Message)"
+}
+
+try {
+  & (Join-Path $root "test\\client-performance-collector-contract.ps1")
+  if (-not $?) {
+    throw "Client performance collector contract returned an unsuccessful PowerShell status."
+  }
+} catch {
+  throw "Client performance collector contract failed during seed validation: $($_.Exception.Message)"
 }
 
 try {

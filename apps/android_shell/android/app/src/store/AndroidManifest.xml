@@ -1,0 +1,3 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Store builds deliberately inherit no direct-APK permission or provider. -->
+</manifest>

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
+import 'package:path/path.dart' as p;
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:tray_manager/tray_manager.dart';
@@ -18,46 +19,43 @@ const Size pokrovWindowsMinimumSize = Size(700, 640);
 Future<void> main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
+  final startHidden = pokrovWindowsShouldStartHidden(arguments);
   final shellController = PokrovShellController();
   final acquisitionLinks = PokrovWindowsAcquisitionLinks();
   final initialAcquisitionUri = await acquisitionLinks.start();
+  final bootstrapper = AppFirstRuntimeBootstrapper();
+  final observability = await PokrovClientObservability.start(
+    hostPlatform: HostPlatform.windows,
+    releaseHealthService: bootstrapper,
+  );
+  installPokrovCrashHandlers(observability);
   await _PokrovWindowsTray.install(shellController);
   if (Platform.isWindows) {
     // Tray-first lifecycle: the ✕ button hides to tray, the VPN keeps
     // running, and only the tray «Выход» actually quits.
     await windowManager.setPreventClose(true);
-    await windowManager.waitUntilReadyToShow(
-      const WindowOptions(
-        size: _pokrovWindowSize,
-        minimumSize: pokrovWindowsMinimumSize,
-        center: true,
-      ),
-      () async {
+    const options = WindowOptions(
+      size: _pokrovWindowSize,
+      minimumSize: pokrovWindowsMinimumSize,
+      center: true,
+    );
+    await windowManager.waitUntilReadyToShow(options, () async {
+      if (startHidden) {
+        await windowManager.hide();
+      } else {
         await windowManager.show();
         await windowManager.focus();
-      },
-    );
+      }
+    });
   }
   runApp(
     PokrovSeedApp(
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      bootstrapper: bootstrapper,
+      observability: observability,
       shellController: shellController,
       initialAcquisitionUri: initialAcquisitionUri,
       acquisitionUriStream: acquisitionLinks.stream,
-      windowsTunnelAuthorizer: () async {
-        final result = await requestPokrovWindowsTunnelAuthorization(
-          HostPlatform.windows,
-        );
-        if (result == PokrovWindowsTunnelAuthorization.relaunching) {
-          unawaited(
-            Future<void>.delayed(const Duration(milliseconds: 250), () async {
-              await _PokrovWindowsTray.shutdownForRelaunch();
-              exit(0);
-            }),
-          );
-        }
-        return result;
-      },
       windowsShellPreferencesReader: () =>
           readPokrovWindowsShellPreferences(HostPlatform.windows),
       windowsShellPreferencesUpdater: (preferences) =>
@@ -67,34 +65,25 @@ Future<void> main(List<String> arguments) async {
       ),
     ),
   );
-  if (pokrovWindowsShouldAutoConnect(arguments)) {
-    _connectWhenReady(shellController);
-  }
 }
 
 @visibleForTesting
-bool pokrovWindowsShouldAutoConnect(Iterable<String> arguments) =>
-    arguments.any((argument) => argument.trim() == '--connect');
+bool pokrovWindowsShouldStartHidden(Iterable<String> arguments) {
+  var startup = false;
+  var acquisition = false;
+  for (final argument in arguments) {
+    final normalized = argument.trim();
+    startup = startup || normalized == '--startup';
+    acquisition =
+        acquisition || normalized.startsWith('pokrov://acquisition/continue?');
+  }
+  return startup && !acquisition;
+}
 
 @visibleForTesting
 String pokrovWindowsTrayIconPath({String? executablePath}) {
-  final executable = File(executablePath ?? Platform.resolvedExecutable);
-  return '${executable.parent.path}${Platform.pathSeparator}pokrov_tray.ico';
-}
-
-void _connectWhenReady(PokrovShellController controller) {
-  var started = false;
-  late VoidCallback listener;
-  listener = () {
-    if (started || !controller.canToggle) {
-      return;
-    }
-    started = true;
-    controller.removeListener(listener);
-    unawaited(controller.toggleConnection());
-  };
-  controller.addListener(listener);
-  listener();
+  final executable = executablePath ?? Platform.resolvedExecutable;
+  return p.windows.join(p.windows.dirname(executable), 'pokrov_tray.ico');
 }
 
 @visibleForTesting
@@ -182,8 +171,6 @@ final class _PokrovWindowsTray with TrayListener, WindowListener {
     await trayManager.setIcon(pokrovWindowsTrayIconPath());
     await _instance._applyControllerState();
   }
-
-  static Future<void> shutdownForRelaunch() => _instance._destroyTray();
 
   void _scheduleMenuUpdate() {
     _menuUpdate = _menuUpdate.then((_) => _applyControllerState()).catchError(

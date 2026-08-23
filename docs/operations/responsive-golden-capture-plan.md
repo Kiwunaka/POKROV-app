@@ -1,10 +1,13 @@
 # Responsive Golden Capture Plan
 
-Last updated: 2026-06-05
+Last updated: 2026-08-22
 
-This is the capture plan for the POKROV `1.0.0-beta` client shell before a
-downloadable Android/Windows refresh. It complements widget responsive tests;
-it does not replace manual device/runtime proof.
+Registry class: `ACTIVE_EXECUTION`.
+
+This is the current capture gate for the POKROV `1.2.0+30`
+`PRE_CANDIDATE_LOCAL` Android/Windows line. It complements widget responsive
+tests; it does not replace exact-candidate device/runtime proof. A retained
+release or an older capture cannot close this gate.
 
 ## Width Matrix
 
@@ -44,5 +47,16 @@ Capture the app shell at these widths:
 ## Current Local Status
 
 - Widget width matrix: implemented in `pokrov_seed_app_test.dart`.
-- Automated screenshot/golden export: planned for the release-evidence slice.
+- Critical 200% text-scale paths: locally proved for first session, Home,
+  Locations and Support in `pokrov_seed_app_test.dart`.
+- Automated widget goldens: tracked for idle light, first route-scope dark,
+  verified dark and degraded light at `390 x 844`; exact Windows and Ubuntu
+  baselines are separate because host rasterization differs. The test disables
+  animation, clears inherited image-cache state once before the matrix and
+  compares all four files without update mode in the normal suite.
 - Android/Windows real artifact captures: `MANUAL_OWNER_TEST`.
+
+## Retained History
+
+The superseded beta-target wording is preserved in
+[2026-08-22-responsive-golden-capture-plan-snapshot.md](history/2026-08-22-responsive-golden-capture-plan-snapshot.md).

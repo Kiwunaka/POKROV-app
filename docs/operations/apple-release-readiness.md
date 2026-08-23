@@ -1,8 +1,12 @@
 # Apple Release Readiness
 
-Last updated: 2026-07-22
+Last updated: 2026-08-22
 
-This document is the concrete Apple release-prep checklist for the next-client lane.
+Registry class: `ACTIVE_EXECUTION`.
+
+This document is the current Apple release-prep checklist for the POKROV
+`1.2.0` line. Apple publication is `NOT_REQUESTED` for the current release and
+the source lane remains readiness-only.
 
 Current truth:
 
@@ -74,7 +78,7 @@ Still missing before macOS release:
 
 - Apple Developer team assignment
 - chosen distribution path: Developer ID direct or Mac App Store first
-- Go 1.25.12/Xcode build and ABI probe of POKROV Core 1.0.3 from the core repository
+- Go 1.25.13/Xcode build and ABI probe of POKROV Core 1.1.0 from the exact clean core revision
 - exact-dylib connect, WARP, route-mode, sleep/wake, network-change, DNS/leak, and teardown proof
 - signed archive or exported `.app`
 - notarization submission, success result, and stapled artifact

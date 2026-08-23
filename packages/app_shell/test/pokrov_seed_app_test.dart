@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'dart:ui' show PointerDeviceKind;
 
-import 'package:flutter/cupertino.dart'
-    show CupertinoActivityIndicator, CupertinoSwitch;
+import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
+import 'package:pokrov_support_bundle/support_bundle.dart';
 
 const _materializedRuntimeConfig =
     '{"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}';
@@ -124,6 +125,7 @@ class _FakeBootstrapper
         AppFirstBonusActionService,
         AppFirstWarpActionService,
         AppFirstReleaseActionService,
+        AppFirstFirstSessionEventService,
         AppFirstAcquisitionService,
         AppFirstNodePreferenceService,
         AppFirstClientDataService {
@@ -149,6 +151,7 @@ class _FakeBootstrapper
     this.locationsCatalogFailure,
     this.notificationsFailure,
     this.managedProfileFailure,
+    this.acquisitionFailure = false,
     this.managedProfileResolver,
     this.nodePreferenceGate,
   })  : cabinetHandoff = cabinetHandoff ??
@@ -284,6 +287,7 @@ class _FakeBootstrapper
   final String? locationsCatalogFailure;
   final String? notificationsFailure;
   final BootstrapFailure? managedProfileFailure;
+  final bool acquisitionFailure;
   Future<void>? nodePreferenceGate;
   BootstrapFailure? nodePreferenceFailure;
   int calls = 0;
@@ -343,6 +347,21 @@ class _FakeBootstrapper
   Set<String> lastExcludedNodeCodes = const <String>{};
   final List<Set<String>> excludedNodeCodeRequests = <Set<String>>[];
   final List<String> acquisitionHandoffs = <String>[];
+  final List<String> firstSessionEvents = <String>[];
+
+  @override
+  Future<void> reportFirstSessionEvent({
+    required HostPlatform hostPlatform,
+    required String eventName,
+    required String stage,
+    required String result,
+    String errorCode = '',
+    bool? retryable,
+  }) async {
+    firstSessionEvents.add(
+      '${hostPlatform.name}:$eventName:$stage:$result:$errorCode:${retryable ?? ''}',
+    );
+  }
 
   @override
   Future<void> consumeAcquisitionHandoff({
@@ -350,6 +369,9 @@ class _FakeBootstrapper
     required String handle,
     required String purpose,
   }) async {
+    if (acquisitionFailure) {
+      throw StateError('expired acquisition handoff');
+    }
     acquisitionHandoffs.add('${hostPlatform.name}:$purpose:$handle');
   }
 
@@ -821,6 +843,63 @@ class _FakeSupportTicketService implements SupportTicketService {
   }
 }
 
+class _FakeEncryptedSupportTicketService extends _FakeSupportTicketService
+    implements SupportBundleTransferService {
+  _FakeEncryptedSupportTicketService(super.receipt);
+
+  int bundleCalls = 0;
+  HostPlatform? lastBundleHostPlatform;
+  String? lastBundleCaseSummary;
+  int? lastBundleTicketId;
+  PreparedSupportBundle? lastPreparedBundle;
+
+  @override
+  bool get supportBundleEncryptionConfigured => true;
+
+  @override
+  Future<SupportModeActivation> redeemSupportMode({
+    required HostPlatform hostPlatform,
+    required String activationCode,
+    required String appVersion,
+    required String buildNumber,
+  }) =>
+      throw const SupportBundleTransferFailure(
+        'support_mode_unavailable',
+        'not configured in this fixture',
+      );
+
+  @override
+  Future<SupportBundleExportResult> exportSupportBundle({
+    required HostPlatform hostPlatform,
+    required PreparedSupportBundle prepared,
+  }) async =>
+      SupportBundleExportResult(
+        state: SupportBundleExportState.exported,
+        fileName: '${prepared.preview.diagnosticId}.pokrov-support',
+      );
+
+  @override
+  Future<SupportBundleDeliveryResult> deliverSupportBundle({
+    required HostPlatform hostPlatform,
+    required PreparedSupportBundle prepared,
+    required String caseSummary,
+    int? ticketId,
+  }) async {
+    bundleCalls += 1;
+    lastBundleHostPlatform = hostPlatform;
+    lastBundleCaseSummary = caseSummary;
+    lastBundleTicketId = ticketId;
+    lastPreparedBundle = prepared;
+    return SupportBundleDeliveryResult(
+      state: SupportBundleDeliveryState.offlineEncrypted,
+      diagnosticId: prepared.preview.diagnosticId,
+      outboxReference: 'encrypted-outbox.pokrov-support',
+      ticketId: ticketId ?? receipt.ticketId,
+      failureCode: 'upload_deferred',
+    );
+  }
+}
+
 class _FakeFirstLaunchStore implements PokrovFirstLaunchStore {
   _FakeFirstLaunchStore({this.completed = false});
 
@@ -839,6 +918,28 @@ class _FakeFirstLaunchStore implements PokrovFirstLaunchStore {
     markCalls += 1;
     completed = true;
   }
+}
+
+class _FixedThemeModeStore extends PokrovFileThemeModeStore {
+  const _FixedThemeModeStore(this.mode);
+
+  final ThemeMode mode;
+
+  @override
+  Future<ThemeMode> read() async => mode;
+
+  @override
+  Future<void> write(ThemeMode mode) async {}
+}
+
+class _CompletedConnectHintStore extends PokrovFileConnectHintStore {
+  const _CompletedConnectHintStore();
+
+  @override
+  Future<bool> isCompleted() async => true;
+
+  @override
+  Future<void> markCompleted() async {}
 }
 
 class _FakeClientExperienceStore implements PokrovClientExperienceStore {
@@ -1086,6 +1187,7 @@ void _installReadyRuntimeBridgeMock({
   bool failAllEmergencyConnects = false,
   bool failAfterConnect = false,
   bool failApplyWarp = false,
+  bool retainHealthyConnectedSnapshot = false,
 }) {
   const channel = MethodChannel('space.pokrov/runtime_engine');
   final messenger =
@@ -1136,6 +1238,25 @@ void _installReadyRuntimeBridgeMock({
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': true,
+            'hostHealth': 'healthy',
+            'dnsState': 'healthy',
+            'uplinkState': 'healthy',
+            'core_egress_validated': true,
+            'message': 'Android runtime service is running.',
+          };
+        }
+        if (retainHealthyConnectedSnapshot && connected) {
+          return <String, Object?>{
+            'phase': 'running',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+            'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': true,
+            'hostHealth': 'healthy',
+            'dnsState': 'healthy',
+            'uplinkState': 'healthy',
             'core_egress_validated': true,
             'message': 'Android runtime service is running.',
           };
@@ -1216,7 +1337,11 @@ void _installReadyRuntimeBridgeMock({
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': true,
-          'core_egress_validated': failAfterConnect ? null : true,
+          'hostHealth': 'healthy',
+          'dnsState': 'healthy',
+          'uplinkState': 'healthy',
+          'core_egress_validated':
+              failAfterConnect || reportDegradedAfterConnect ? null : true,
           'message': 'Runtime service is running.',
         };
       case 'runtimeEngine.disconnect':
@@ -1413,6 +1538,72 @@ void main() {
     expect(bootstrapper.acquisitionHandoffs, <String>[
       'android:android_install:$handle',
     ]);
+  });
+
+  testWidgets('acquisition confirmation never hides trial or restore choices',
+      (tester) async {
+    const handle = 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC';
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'acquisition-choice-test',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        initialAcquisitionUri: Uri.parse(
+          'pokrov://acquisition/continue?handle=$handle&purpose=android_install',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('first-launch-acquisition-linked')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('first-launch-new-user')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('first-launch-returning-user')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('expired acquisition leaves normal access paths usable',
+      (tester) async {
+    const handle = 'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD';
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'acquisition-failure-test',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      acquisitionFailure: true,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        initialAcquisitionUri: Uri.parse(
+          'pokrov://acquisition/continue?handle=$handle&purpose=android_install',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('first-launch-acquisition-failed')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('first-launch-new-user')));
+    await tester.pumpAndSettle();
+    expect(
+        find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
   });
 
   testWidgets(
@@ -1614,6 +1805,62 @@ void main() {
     );
   });
 
+  testWidgets('trial selection provisions account data and reports one journey',
+      (tester) async {
+    final store = _FakeFirstLaunchStore();
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'first-session-events',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+    );
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.subscriptionCalls, 0,
+        reason: 'account provisioning waits for the access choice');
+    await tester.tap(find.byKey(const ValueKey('first-launch-new-user')));
+    await tester.pumpAndSettle();
+
+    expect(
+      bootstrapper.firstSessionEvents.map((event) => event.split(':')[1]),
+      <String>[
+        'app_first_open',
+        'trial_start_selected',
+        'first_home_seen',
+      ],
+    );
+    expect(bootstrapper.subscriptionCalls, greaterThanOrEqualTo(1));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      bootstrapper.firstSessionEvents
+          .where((event) => event.contains(':app_first_open:')),
+      hasLength(1),
+    );
+    expect(
+      bootstrapper.firstSessionEvents
+          .where((event) => event.contains(':first_home_seen:')),
+      hasLength(1),
+    );
+  });
+
   testWidgets('completed first launch skips the startup choice screen',
       (tester) async {
     final store = _FakeFirstLaunchStore(completed: true);
@@ -1669,6 +1916,37 @@ void main() {
     expect(find.text('Продолжить'), findsOneWidget);
     expect(find.text('Получить код в боте'), findsOneWidget);
     expect(find.text('Открыть кабинет'), findsOneWidget);
+  });
+
+  testWidgets('first-session actions remain reachable at 200 percent text',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(360, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final returning = find.byKey(const ValueKey('first-launch-returning-user'));
+    await tester.ensureVisible(returning);
+    expect(returning, findsOneWidget);
+    expect(tester.takeException(), isNull, reason: 'access choice at 200%');
+    await tester.tap(returning);
+    await tester.pumpAndSettle();
+
+    final redeem = find.byKey(const ValueKey('first-launch-restore-redeem'));
+    await tester.ensureVisible(redeem);
+    expect(redeem, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('first-launch-restore-code-field')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull, reason: 'restore step at 200%');
   });
 
   testWidgets('restore step focuses the code field and back returns to choice',
@@ -1861,6 +2139,14 @@ void main() {
     expect(
       find.byKey(const ValueKey('primary-connect-action')),
       findsOneWidget,
+    );
+    expect(
+      bootstrapper.firstSessionEvents.map((event) => event.split(':')[1]),
+      containsAllInOrder(<String>[
+        'app_first_open',
+        'existing_access_selected',
+        'first_home_seen',
+      ]),
     );
   });
 
@@ -2158,6 +2444,113 @@ void main() {
     await tester.tap(dismissPromo);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('home-admin-promo-card')), findsNothing);
+  });
+
+  testWidgets('home renders exact ready winback commercial terms',
+      (tester) async {
+    const summary = AppFirstBonusSummary(
+      referralCount: 0,
+      referralCode: 'POKROV',
+      referralBonusDays: 10,
+      streakMonths: 0,
+      lastWheelSpin: '',
+      channelBonusPremiumDays: 5,
+      channelBonusClaimedAt: '',
+      openingBonusPremiumDays: 5,
+      openingBonusClaimed: true,
+      channelUsername: 'pokrov_vpn',
+      tierKey: 'starter',
+      tierPercent: 0,
+      paidReferrals: 0,
+      nextTierKey: '',
+      nextTierAt: 0,
+      promoSlots: AppFirstPromoSlots(
+        surface: 'app',
+        accessState: 'expired_or_blocked',
+        remoteAvailable: true,
+        fallbackBehavior: 'contextual_only_when_remote_unavailable',
+        mode: 'whitelist_slots',
+        slots: <AppFirstPromoSlot>[
+          AppFirstPromoSlot(
+            slotId: 'app.home.banner',
+            contentId: 'winback_offer',
+            enabled: true,
+            title: 'Верните защиту',
+            body: 'Три месяца по персональной цене.',
+            ctaLabel: 'Вернуться',
+            ctaHref:
+                'https://pay.pokrov.space/checkout/?checkout_ticket=ticket',
+            placement: 'home_banner',
+            dismissible: false,
+            wholeCardClickable: false,
+            endsAt: '2099-08-25T18:30:00Z',
+            countdownMode: 'ends_at',
+            pilotId: 'release_1_2_winback_paid_7_30d',
+            pilotRevision: '2026-08-22.1',
+            pilotContractSha256:
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            commercialRevision: '2026-08-21.1',
+            campaignId: 'cmp_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+            offerId: 'off_cccccccccccccccccccccccccccccccc',
+            creativeId: 'crv_dddddddddddddddddddddddddddddddd',
+            variant: 'a',
+            assignmentId: 'asg_eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+            impressionId: 'imp_ffffffffffffffffffffffffffffffff',
+            clickId: 'clk_11111111111111111111111111111111',
+            offerState: 'ready',
+            reasonCode: 'ready',
+            planCode: '3_months',
+            currency: 'RUB',
+            basePriceRub: 669,
+            finalPriceRub: 602,
+            benefitPercent: 10,
+            remainingQuotaLowerBound: 12,
+            termsUrl: 'https://pokrov.space/offer/',
+            kind: 'first_party_winback',
+            goal: 'winback_paid_access',
+          ),
+        ],
+      ),
+    );
+    final opened = <Uri>[];
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'test-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      bonusSummary: summary,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        handoffLauncher: (uri) async {
+          opened.add(uri);
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('home-admin-promo-card')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('home-admin-promo-price')), findsOneWidget);
+    expect(find.text('669 ₽ → 602 ₽'), findsOneWidget);
+    expect(
+      find.textContaining('доступно не более 12'),
+      findsOneWidget,
+    );
+    final terms = find.byKey(const ValueKey('home-admin-promo-terms'));
+    expect(terms, findsOneWidget);
+    await tester.ensureVisible(terms);
+    await tester.pumpAndSettle();
+    await tester.tap(terms);
+    await tester.pumpAndSettle();
+    expect(opened, <Uri>[Uri.parse('https://pokrov.space/offer/')]);
   });
 
   testWidgets('home admin promotion ignores unsafe CTA schemes',
@@ -2490,6 +2883,8 @@ void main() {
     expect(bootstrapper.lastClientAppsChannel, 'stable');
     expect(find.byKey(const ValueKey('client-update-prompt')), findsOneWidget);
     expect(find.text('Небольшие исправления бета-версии.'), findsOneWidget);
+    expect(find.text('Свежая версия: 1.0.1-beta.'), findsOneWidget);
+    expect(find.text('Официальный канал POKROV · 121 КБ'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('client-update-download')));
     await tester.pump();
@@ -2599,6 +2994,10 @@ void main() {
 
     expect(find.byType(BottomSheet), findsOneWidget);
     expect(find.text('Состояние защиты'), findsOneWidget);
+    expect(find.byKey(const ValueKey('protection-summary')), findsOneWidget);
+    expect(find.text('Туннель'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('protection-details-toggle')));
+    await tester.pumpAndSettle();
     expect(find.text('Туннель'), findsOneWidget);
     expect(find.text('Адреса сайтов'), findsOneWidget);
     expect(find.text('Выход через VPN'), findsOneWidget);
@@ -2651,6 +3050,8 @@ void main() {
     await tester.tap(
       find.byKey(const ValueKey('home-connection-details-action')),
     );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('protection-details-toggle')));
     await tester.pumpAndSettle();
 
     expect(
@@ -2759,6 +3160,8 @@ void main() {
       find.byKey(const ValueKey('home-connection-details-action')),
     );
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('protection-details-toggle')));
+    await tester.pumpAndSettle();
     expect(find.text('Требует внимания'), findsOneWidget);
     expect(find.text('Готов'), findsOneWidget);
     expect(find.text('Не подтверждён'), findsOneWidget);
@@ -2770,6 +3173,12 @@ void main() {
     expect(repairAction, findsOneWidget);
     expect(tester.getRect(repairAction).bottom, lessThanOrEqualTo(844));
     await tester.tap(repairAction);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('protection-repair-confirmation')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('protection-repair-confirm')));
     await tester.pumpAndSettle();
 
     expect(
@@ -2826,6 +3235,107 @@ void main() {
     expect(launched.single, Uri.parse('https://docs.example/start'));
   });
 
+  testWidgets('repair warns before disconnect and exposes three-step progress',
+      (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final disconnectResult = Completer<Object?>();
+    var phase = 'running';
+    var healthy = false;
+    Map<String, Object?> snapshot({bool healthy = false}) => <String, Object?>{
+          'phase': phase,
+          'artifactDirectory': '/host/runtime',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+          'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'hostHealth': healthy ? 'healthy' : 'degraded',
+          'dnsState': healthy ? 'healthy' : 'unknown',
+          'uplinkState': healthy ? 'healthy' : 'unknown',
+          'dns_ready': healthy,
+          'core_egress_validated': healthy,
+          'core_egress_validation_required': false,
+          'message': healthy ? 'Protected.' : 'Needs repair.',
+        };
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      switch (call.method) {
+        case 'runtimeEngine.snapshot':
+          return snapshot(healthy: healthy);
+        case 'runtimeEngine.disconnect':
+          return disconnectResult.future;
+        case 'runtimeEngine.stageManagedProfile':
+          phase = 'configStaged';
+          return snapshot();
+        case 'runtimeEngine.connect':
+          phase = 'running';
+          healthy = true;
+          return snapshot(healthy: healthy);
+        case 'runtimeEngine.liveStats':
+          return <String, Object?>{'available': false};
+      }
+      return null;
+    });
+    addTearDown(() {
+      if (!disconnectResult.isCompleted) {
+        phase = 'initialized';
+        disconnectResult.complete(snapshot());
+      }
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: _FakeBootstrapper(
+          const ManagedProfilePayload(
+            profileName: 'repair-progress',
+            configPayload: _materializedRuntimeConfig,
+            materializedForRuntime: true,
+          ),
+        ),
+        protectionProbe: (_) async => const PokrovHttpsProbeResult.healthy(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await tester.tap(
+      find.byKey(const ValueKey('home-connection-details-action')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('protection-repair-action')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Интернет может пропасть на несколько секунд'),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('protection-repair-confirm')));
+    await tester.pump();
+    expect(
+      find.byKey(const ValueKey('protection-repair-progress')),
+      findsOneWidget,
+    );
+    expect(find.text('1. Останавливаем старое соединение'), findsOneWidget);
+    expect(find.text('2. Обновляем профиль'), findsOneWidget);
+    expect(find.text('3. Проверяем защиту'), findsOneWidget);
+
+    phase = 'initialized';
+    disconnectResult.complete(snapshot());
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('protection-repair-progress')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('protection-repair-outcome')),
+      findsOneWidget,
+    );
+    expect(find.text('Защита восстановлена'), findsOneWidget);
+  });
+
   testWidgets(
       'repair profile failure keeps the sheet on the fresh stopped snapshot',
       (tester) async {
@@ -2877,7 +3387,11 @@ void main() {
       find.byKey(const ValueKey('home-connection-details-action')),
     );
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('protection-details-toggle')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('protection-repair-action')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('protection-repair-confirm')));
     await tester.pumpAndSettle();
 
     expect(find.text('Отключён'), findsOneWidget);
@@ -2886,6 +3400,10 @@ void main() {
       find.text(
         'Восстановление не завершилось. Показано состояние после остановки туннеля.',
       ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('protection-repair-support')),
       findsOneWidget,
     );
   });
@@ -2992,12 +3510,13 @@ void main() {
     expect(find.textContaining('пробного доступа'), findsNothing);
   });
 
-  testWidgets('Android system surface settings persist notification choices',
+  testWidgets('Android notification sheet keeps details inside the app',
       (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     Map<Object?, Object?>? savedArguments;
+    var notificationSettingsCalls = 0;
     messenger.setMockMethodCallHandler(channel, (call) async {
       switch (call.method) {
         case 'runtimeEngine.systemSurfacePreferences':
@@ -3010,6 +3529,7 @@ void main() {
           savedArguments = call.arguments as Map<Object?, Object?>?;
           return call.arguments;
         case 'runtimeEngine.openNotificationSettings':
+          notificationSettingsCalls += 1;
           return true;
         default:
           return null;
@@ -3044,16 +3564,32 @@ void main() {
       find.byKey(const ValueKey('profile-system-surfaces-sheet')),
       findsOneWidget,
     );
-    final speedToggle = find.descendant(
-      of: find.byKey(const ValueKey('system-surface-speed-toggle')),
-      matching: find.byType(CupertinoSwitch),
+    expect(find.text('Приватный статус'), findsOneWidget);
+    expect(
+      find.textContaining('только внутри разблокированного POKROV'),
+      findsOneWidget,
     );
-    await tester.tap(speedToggle);
+    expect(
+      find.byKey(const ValueKey('system-surface-country-toggle')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('system-surface-speed-toggle')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('system-surface-route-toggle')),
+      findsNothing,
+    );
+    await tester.tap(
+      find.byKey(
+        const ValueKey('system-surface-notification-settings-action'),
+      ),
+    );
     await tester.pumpAndSettle();
 
-    expect(savedArguments?['showSpeed'], isFalse);
-    expect(savedArguments?['showCountry'], isTrue);
-    expect(savedArguments?['showRouteMode'], isTrue);
+    expect(notificationSettingsCalls, 1);
+    expect(savedArguments, isNull);
   });
 
   testWidgets(
@@ -3238,6 +3774,51 @@ void main() {
       Brightness.light,
     );
     semantics.dispose();
+  });
+
+  testWidgets('profile legal rows open generated platform URLs',
+      (tester) async {
+    final opened = <Uri>[];
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        handoffLauncher: (uri) async {
+          opened.add(uri);
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-profile');
+
+    final offerAction = find.byKey(const ValueKey('profile-offer-action'));
+    await tester.ensureVisible(offerAction);
+    await tester.pumpAndSettle();
+    await tester.tap(offerAction);
+    await tester.pump();
+
+    final privacyAction = find.byKey(const ValueKey('profile-privacy-action'));
+    await tester.ensureVisible(privacyAction);
+    await tester.pumpAndSettle();
+    await tester.tap(privacyAction);
+    await tester.pump();
+
+    final releasesAction =
+        find.byKey(const ValueKey('profile-releases-action'));
+    await tester.ensureVisible(releasesAction);
+    await tester.pumpAndSettle();
+    await tester.tap(releasesAction);
+    await tester.pump();
+
+    expect(
+      opened,
+      <Uri>[
+        Uri.parse('https://pokrov.space/offer/'),
+        Uri.parse('https://pokrov.space/privacy/'),
+        Uri.parse('https://github.com/Kiwunaka/pokrov/releases'),
+      ],
+    );
   });
 
   testWidgets('profile first layer stays compact and hides advanced controls',
@@ -3799,6 +4380,7 @@ void main() {
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
       ),
     );
     await tester.pump();
@@ -4652,86 +5234,6 @@ void main() {
         findsWidgets);
   });
 
-  testWidgets('windows TUN onboarding offers the honest no-admin fallback',
-      (tester) async {
-    Future<PokrovWindowsTunnelConnectChoice?>? choice;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () {
-              choice = showPokrovWindowsTunnelPermissionSheet(
-                context,
-                permissionFailed: false,
-              );
-            },
-            child: const Text('open'),
-          ),
-        ),
-      ),
-    );
-    await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
-
-    expect(
-      find.byKey(const ValueKey('windows-tunnel-permission-sheet')),
-      findsOneWidget,
-    );
-    expect(find.text('Для полного VPN нужны права'), findsOneWidget);
-    expect(find.textContaining('системный прокси'), findsOneWidget);
-
-    await tester.tap(
-      find.byKey(const ValueKey('windows-tunnel-use-system-proxy')),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      await choice,
-      PokrovWindowsTunnelConnectChoice.systemProxy,
-    );
-    expect(
-      find.byKey(const ValueKey('windows-tunnel-permission-sheet')),
-      findsNothing,
-    );
-  });
-
-  testWidgets('windows rejected UAC returns to the proxy fallback choice',
-      (tester) async {
-    Future<PokrovWindowsTunnelConnectChoice?>? choice;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () {
-              choice = showPokrovWindowsTunnelPermissionSheet(
-                context,
-                permissionFailed: true,
-              );
-            },
-            child: const Text('open'),
-          ),
-        ),
-      ),
-    );
-    await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Не получилось включить полный VPN'), findsOneWidget);
-    expect(find.text('Повторить запрос Windows'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('windows-tunnel-use-system-proxy')),
-      findsOneWidget,
-    );
-    await tester.tap(
-      find.byKey(const ValueKey('windows-tunnel-use-administrator')),
-    );
-    await tester.pumpAndSettle();
-    expect(
-      await choice,
-      PokrovWindowsTunnelConnectChoice.administrator,
-    );
-  });
-
   testWidgets('windows shell hides unavailable enhanced protection',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(960, 640));
@@ -4843,7 +5345,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byKey(const ValueKey('windows-close-to-tray-toggle')),
-        matching: find.byType(CupertinoSwitch),
+        matching: find.byType(Switch),
       ),
     );
     await tester.pumpAndSettle();
@@ -5516,6 +6018,21 @@ void main() {
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          clipboardText =
+              (call.arguments as Map<Object?, Object?>)['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null),
+    );
     final opened = <Uri>[];
     final appContext = buildSeedAppContext(hostPlatform: HostPlatform.windows);
     final supportTicketService = _FakeSupportTicketService(
@@ -5601,14 +6118,28 @@ void main() {
     expect(find.byKey(const ValueKey('support-diagnostics-preview')),
         findsOneWidget);
     expect(find.textContaining(appContext.hostPlatform.label), findsWidgets);
-    expect(find.text('Что отправим'), findsOneWidget);
+    expect(find.text('Предпросмотр диагностики'), findsOneWidget);
+    expect(find.text('Код поддержки'), findsOneWidget);
+    expect(find.text('Файлы пакета'), findsOneWidget);
+    expect(find.text('build/identity.json'), findsOneWidget);
+    expect(find.text('network/summary.json'), findsOneWidget);
+    expect(find.text('redaction/report.json'), findsOneWidget);
     expect(find.text('Россия напрямую'), findsWidgets);
-    expect(find.textContaining('статус VPN'), findsOneWidget);
+    expect(find.text('Статус VPN'), findsOneWidget);
     expect(find.textContaining('Сырые'), findsNothing);
     expect(find.textContaining('config'), findsNothing);
     expect(find.textContaining('конфиг'), findsNothing);
     expect(find.textContaining('адреса серверов'), findsNothing);
     expect(find.textContaining('://'), findsNothing);
+    final copyCode =
+        find.byKey(const ValueKey('support-diagnostics-copy-code'));
+    expect(copyCode, findsOneWidget);
+    await tester.ensureVisible(copyCode);
+    await tester.tap(copyCode);
+    await tester.pumpAndSettle();
+    expect(clipboardText, startsWith('PSD1-'));
+    expect(clipboardText, hasLength(24));
+    expect(find.text('Код поддержки скопирован.'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('support-diagnostics-close')));
     await tester.pumpAndSettle();
@@ -5847,12 +6378,57 @@ void main() {
     expect(find.byKey(const ValueKey('support-diagnostics-preview')),
         findsOneWidget);
     expect(
-      find.textContaining('Прикрепим только краткую безопасную сводку'),
+      find.textContaining(
+        'Код диагностики и показанная краткая сводка остаются доступны без загрузки',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('support-diagnostics-copy-code')),
       findsOneWidget,
     );
     expect(cancel.hitTestable(), findsOneWidget);
     expect(attach.hitTestable(), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('configured support key exposes encrypted offline delivery',
+      (tester) async {
+    final supportTicketService = _FakeEncryptedSupportTicketService(
+      const SupportTicketReceipt(
+        ticketId: 902,
+        statusTitle: 'Open',
+        messageCount: 1,
+      ),
+    );
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        supportTicketService: supportTicketService,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _openSupportChatFromProfile(tester);
+    await tester.tap(find.byKey(const ValueKey('support-attach-diagnostics')));
+    await tester.pumpAndSettle();
+
+    final encrypted =
+        find.byKey(const ValueKey('support-diagnostics-send-encrypted'));
+    await tester.ensureVisible(encrypted);
+    expect(encrypted.hitTestable(), findsOneWidget);
+    expect(
+      find.textContaining('При обрыве сети сохранится только зашифрованный'),
+      findsOneWidget,
+    );
+
+    await tester.tap(encrypted);
+    await tester.pumpAndSettle();
+    expect(supportTicketService.bundleCalls, 1);
+    expect(
+      find.textContaining('Зашифрованный пакет сохранен на устройстве'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('support chat keeps optional actions out of the conversation',
@@ -6016,11 +6592,11 @@ void main() {
     expect(tester.widget<TextField>(composer).controller?.text, isEmpty);
   });
 
-  testWidgets('support AI entry preserves its purpose at large text',
+  testWidgets('support AI entry preserves its purpose at 200 percent text',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(
       tester.platformDispatcher.clearTextScaleFactorTestValue,
     );
@@ -6038,7 +6614,7 @@ void main() {
       find.byKey(const ValueKey('support-ai-first-description')),
     );
     expect(description.maxLines, isNull);
-    expect(tester.takeException(), isNull);
+    expect(tester.takeException(), isNull, reason: 'support at 200%');
   });
 
   testWidgets(
@@ -6696,6 +7272,66 @@ void main() {
     expect(find.text('Поддержка ответила'), findsOneWidget);
   });
 
+  testWidgets('support polling stops while the app is in background',
+      (tester) async {
+    _installReadyRuntimeBridgeMock();
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'support-polling-lifecycle',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+    );
+    final thread = _supportThread(
+      id: 891,
+      status: 'open',
+      statusTitle: 'Open',
+      messages: <SupportTicketMessage>[
+        _supportMessage(
+          id: 1,
+          ticketId: 891,
+          senderRole: 'user',
+          body: 'Need help',
+        ),
+      ],
+    );
+    final service = _FakeSupportTicketService(
+      const SupportTicketReceipt(
+        ticketId: 891,
+        statusTitle: 'Open',
+        messageCount: 1,
+      ),
+      tickets: <SupportTicketThread>[thread],
+      loadedThread: thread,
+    );
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        supportTicketService: service,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _openSupportChatFromProfile(tester);
+    expect(service.getCalls, 1);
+
+    tester.binding.handleAppLifecycleStateChanged(
+      AppLifecycleState.paused,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 15));
+    await tester.pumpAndSettle();
+    expect(service.getCalls, 1);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+  });
+
   testWidgets('support chat shows offline lifecycle hint after poll failure',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(760, 800));
@@ -7006,6 +7642,25 @@ void main() {
       'private.example',
     );
 
+    final changeSummary = find.byKey(const ValueKey('rules-change-summary'));
+    await tester.dragUntilVisible(
+      changeSummary,
+      find.byType(Scrollable).first,
+      const Offset(0, -320),
+    );
+    await tester.pumpAndSettle();
+    expect(changeSummary, findsOneWidget);
+    expect(
+      find.textContaining('DNS и локальная сеть'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('готовые маршруты'), findsOneWidget);
+    expect(find.textContaining('свои правила'), findsOneWidget);
+    expect(find.text('Сохранить изменения'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('rules-apply-changes')));
+    await tester.pumpAndSettle();
+    expect(changeSummary, findsNothing);
+
     await tester.dragUntilVisible(
       find.byKey(const ValueKey('rules-route-explainer')),
       find.byType(Scrollable).first,
@@ -7027,7 +7682,79 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('Windows advanced settings persist proxy mode and TUN stack',
+  testWidgets('expert rules use one apply operation and one reconnect',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 980));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final runtimeCalls = <String>[];
+    _installReadyRuntimeBridgeMock(
+      calls: runtimeCalls,
+      retainHealthyConnectedSnapshot: true,
+    );
+    final store = _FakeClientExperienceStore();
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: _FakeBootstrapper(
+          const ManagedProfilePayload(
+            profileName: 'rules-apply-test',
+            configPayload: '{}',
+            materializedForRuntime: true,
+          ),
+        ),
+        clientExperienceStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    runtimeCalls.clear();
+
+    await _tapNav(tester, 'nav-rules');
+    await _openAdvancedRules(tester);
+    final dnsCard = find.byKey(const ValueKey('rules-dns-lan'));
+    await tester.dragUntilVisible(
+      dnsCard,
+      find.byType(Scrollable).first,
+      const Offset(0, -240),
+    );
+    await tester.tap(find.byKey(const ValueKey('rules-ad-block-toggle')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('rules-lan-toggle')));
+    await tester.pumpAndSettle();
+
+    expect(
+      runtimeCalls.where((call) => call == 'runtimeEngine.disconnect'),
+      isEmpty,
+    );
+    final apply = find.byKey(const ValueKey('rules-apply-changes'));
+    await tester.dragUntilVisible(
+      apply,
+      find.byType(Scrollable).first,
+      const Offset(0, -340),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Применить и переподключить'), findsOneWidget);
+    await tester.tap(apply);
+    await tester.pumpAndSettle();
+
+    expect(
+      runtimeCalls.where((call) => call == 'runtimeEngine.disconnect'),
+      hasLength(1),
+    );
+    expect(
+      runtimeCalls.where((call) => call == 'runtimeEngine.connect'),
+      hasLength(1),
+    );
+    expect(
+      find.text('Правила подключения применены.'),
+      findsWidgets,
+    );
+  });
+
+  testWidgets('Windows advanced settings retain service VPN and TUN stack',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -7069,21 +7796,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(store.state.routingPreferences.tunStack, PokrovTunStack.mixed);
 
-    await tester.tap(
-      find.byKey(const ValueKey('rules-windows-connection-mode')),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(
-      find.byKey(const ValueKey('rules-windows-mode-systemProxy')),
-    );
-    await tester.pumpAndSettle();
     expect(
       store.state.routingPreferences.windowsConnectionMode,
-      PokrovWindowsConnectionMode.systemProxy,
+      PokrovWindowsConnectionMode.vpn,
     );
     expect(
       find.byKey(const ValueKey('rules-windows-tun-stack')),
-      findsNothing,
+      findsOneWidget,
     );
   });
 
@@ -7289,7 +8008,7 @@ void main() {
       PokrovSeedApp(
         // The shell-controller gate is shared. Android's test bridge makes
         // the runtime independently ready so this regression isolates the
-        // delayed preference restore that broke Windows --connect handoff.
+        // delayed preference restore that broke Windows tray handoff.
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         shellController: controller,
         firstLaunchStore: _FakeFirstLaunchStore(completed: true),
@@ -7841,6 +8560,7 @@ void main() {
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        protectionProbe: (_) async => const PokrovHttpsProbeResult.healthy(),
       ),
     );
     await tester.pumpAndSettle();
@@ -7858,14 +8578,81 @@ void main() {
     await tester.tap(advanced);
     await tester.pumpAndSettle();
 
+    expect(find.byKey(const ValueKey('diagnostics-screen')), findsOneWidget);
+    expect(find.byKey(const ValueKey('diagnostics-summary')), findsOneWidget);
+    expect(find.byKey(const ValueKey('diagnostics-freshness')), findsOneWidget);
     expect(
-      find.byKey(const ValueKey('profile-advanced-settings-sheet')),
+      find.byKey(const ValueKey('diagnostics-evidence-tunnel')),
       findsOneWidget,
     );
-    expect(find.byKey(const ValueKey('advanced-app-version')), findsOneWidget);
-    expect(find.byKey(const ValueKey('advanced-channel')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('diagnostics-evidence-dns')),
+      findsOneWidget,
+    );
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey('diagnostics-bundle-categories')),
+      find.byKey(const ValueKey('diagnostics-scroll')),
+      const Offset(0, -260),
+    );
+    expect(
+      find.byKey(const ValueKey('diagnostics-redaction-count')),
+      findsOneWidget,
+    );
     expect(find.byType(Checkbox), findsNothing);
-    expect(find.byType(FilledButton), findsNothing);
+  });
+
+  testWidgets('diagnostics creates a case with one encrypted bundle action',
+      (tester) async {
+    final service = _FakeEncryptedSupportTicketService(
+      const SupportTicketReceipt(
+        ticketId: 1204,
+        statusTitle: 'Open',
+        messageCount: 1,
+      ),
+    );
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        supportTicketService: service,
+        protectionProbe: (_) async => const PokrovHttpsProbeResult.healthy(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-profile');
+
+    final diagnostics =
+        find.byKey(const ValueKey('profile-diagnostics-action'));
+    await tester.dragUntilVisible(
+      diagnostics,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+      maxIteration: 12,
+    );
+    await tester.pumpAndSettle();
+    expect(diagnostics.hitTestable(), findsOneWidget);
+    await tester.tap(diagnostics);
+    await tester.pumpAndSettle();
+
+    final create = find.byKey(const ValueKey('diagnostics-create-case-bundle'));
+    await tester.dragUntilVisible(
+      create,
+      find.byKey(const ValueKey('diagnostics-scroll')),
+      const Offset(0, -320),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(create);
+    await tester.pumpAndSettle();
+
+    expect(service.bundleCalls, 1);
+    expect(service.lastBundleHostPlatform, HostPlatform.android);
+    expect(service.lastBundleTicketId, isNull,
+        reason: 'null asks the transfer service to create the case first');
+    expect(service.lastBundleCaseSummary, contains(pokrovClientVersion));
+    expect(service.lastPreparedBundle?.preview.profile.name, 'summary');
+    final delivery = find.byKey(const ValueKey('diagnostics-delivery-result'));
+    await tester.ensureVisible(delivery);
+    expect(find.textContaining('Обращение #1204 создано'), findsOneWidget);
   });
 
   testWidgets(
@@ -8193,6 +8980,9 @@ void main() {
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': phase == 'configStaged' || phase == 'running',
+          if (phase == 'running') 'hostHealth': 'healthy',
+          if (phase == 'running') 'dnsState': 'healthy',
+          if (phase == 'running') 'uplinkState': 'healthy',
           if (phase == 'running' || egressValidated != null)
             'core_egress_validated': egressValidated,
           if (failureKind != null) 'last_failure_kind': failureKind,
@@ -9355,11 +10145,11 @@ void main() {
     expect(runtimeCalls, isNot(contains('runtimeEngine.connect')));
   });
 
-  testWidgets('locations stay readable on a narrow Android viewport',
+  testWidgets('locations stay readable at 200 percent on narrow Android',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(
       tester.platformDispatcher.clearTextScaleFactorTestValue,
     );
@@ -9426,7 +10216,11 @@ void main() {
     final city = find.byKey(
       const ValueKey('locations-catalog-city-de-fra-01'),
     );
-    await tester.ensureVisible(city);
+    await tester.scrollUntilVisible(
+      city,
+      220,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.pumpAndSettle();
     expect(city, findsOneWidget);
     expect(
@@ -10160,6 +10954,98 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('first-connect-route-scope-sheet')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('long connect exposes the current stage and details after 10s',
+      (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final connectResult = Completer<Object?>();
+    var connectCalls = 0;
+    const staged = <String, Object?>{
+      'phase': 'configStaged',
+      'artifactDirectory': '/host/runtime',
+      'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+      'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+      'supportsLiveConnect': true,
+      'canInitialize': true,
+      'canConnect': true,
+      'message': 'Managed profile staged.',
+    };
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      switch (call.method) {
+        case 'runtimeEngine.snapshot':
+          return staged;
+        case 'runtimeEngine.stageManagedProfile':
+          return staged;
+        case 'runtimeEngine.connect':
+          connectCalls += 1;
+          return connectResult.future;
+      }
+      return null;
+    });
+    addTearDown(() {
+      if (!connectResult.isCompleted) {
+        connectResult.complete(staged);
+      }
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: _FakeBootstrapper(
+          const ManagedProfilePayload(
+            profileName: 'slow-connect',
+            configPayload: _materializedRuntimeConfig,
+            materializedForRuntime: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
+    final scope =
+        find.byKey(const ValueKey('first-connect-scope-whole-device'));
+    await tester.tap(scope);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(connectCalls, 1);
+    expect(
+      find.byKey(const ValueKey('home-slow-connection-notice')),
+      findsNothing,
+    );
+
+    await tester.pump(const Duration(seconds: 10));
+
+    expect(
+      find.byKey(const ValueKey('home-slow-connection-notice')),
+      findsOneWidget,
+    );
+    expect(find.text('Подключение занимает больше времени'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('home-slow-connection-details')),
+      findsOneWidget,
+    );
+
+    connectResult.complete(<String, Object?>{
+      ...staged,
+      'phase': 'running',
+      'core_egress_validated': true,
+      'hostHealth': 'healthy',
+      'dnsState': 'healthy',
+      'uplinkState': 'healthy',
+      'message': 'Runtime service is running.',
+    });
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('home-slow-connection-notice')),
       findsNothing,
     );
   });
@@ -11110,9 +11996,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await _tapNav(tester, 'nav-profile');
-    // Signature-arc refresh: the stock Material indicator is replaced by the
-    // product's own connect-arc control; at rest the sliver has zero extent,
-    // so the finder must not skip offstage.
+    // Android follows native Material pull-to-refresh on clamped scroll.
     final profileIndicator = find.byKey(
       const ValueKey('profile-refresh-indicator'),
       skipOffstage: false,
@@ -11120,7 +12004,7 @@ void main() {
     expect(profileIndicator, findsOneWidget);
     expect(
       find.byType(RefreshIndicator),
-      findsNothing,
+      findsOneWidget,
     );
 
     final summaryCallsBefore = bootstrapper.bonusSummaryCalls;
@@ -11206,6 +12090,8 @@ void main() {
     );
     await tester.ensureVisible(launcher);
     expect(launcher, findsOneWidget);
+    expect(find.text('Восстановить связь'), findsOneWidget);
+    expect(find.textContaining('Резервный режим'), findsOneWidget);
     await tester.tap(launcher);
     await tester.pumpAndSettle();
 
@@ -11677,6 +12563,117 @@ void main() {
     );
   });
 
+  testWidgets('connection CTA and live status have one semantic source',
+      (tester) async {
+    final semantics = tester.ensureSemantics();
+    _installReadyRuntimeBridgeMock();
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: _FakeBootstrapper(
+          const ManagedProfilePayload(
+            profileName: 'semantics-profile',
+            configPayload: _materializedRuntimeConfig,
+            materializedForRuntime: true,
+          ),
+        ),
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        connectHintStore: const _CompletedConnectHintStore(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    var action = tester.getSemantics(find.bySemanticsLabel('Подключить'));
+    var status = tester.getSemantics(
+      find.bySemanticsLabel(
+        'Статус защиты: Не защищено. Открыть подробности',
+      ),
+    );
+    expect(action.label, 'Подключить');
+    expect(action.flagsCollection.isButton, isTrue);
+    expect(status.label, 'Статус защиты: Не защищено. Открыть подробности');
+    expect(status.flagsCollection.isLiveRegion, isTrue);
+    expect(status.flagsCollection.isButton, isTrue);
+
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+
+    action = tester.getSemantics(find.bySemanticsLabel('Отключить'));
+    status = tester.getSemantics(
+      find.bySemanticsLabel(
+        'Статус защиты: Подключено. Открыть подробности',
+      ),
+    );
+    expect(action.label, 'Отключить');
+    expect(status.label, 'Статус защиты: Подключено. Открыть подробности');
+    expect(status.flagsCollection.isLiveRegion, isTrue);
+    semantics.dispose();
+  });
+
+  testWidgets('matches deterministic critical-state goldens', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+
+    const variants = <({String name, ThemeMode theme, String state})>[
+      (name: 'home-idle-light', theme: ThemeMode.light, state: 'idle'),
+      (name: 'route-scope-dark', theme: ThemeMode.dark, state: 'scope'),
+      (name: 'home-verified-dark', theme: ThemeMode.dark, state: 'verified'),
+      (name: 'home-degraded-light', theme: ThemeMode.light, state: 'degraded'),
+    ];
+    final goldenDirectory = Platform.isLinux ? 'goldens/linux' : 'goldens';
+
+    PaintingBinding.instance.imageCache
+      ..clear()
+      ..clearLiveImages();
+    for (final variant in variants) {
+      _installReadyRuntimeBridgeMock(
+        reportDegradedAfterConnect: variant.state == 'degraded',
+      );
+      await tester.pumpWidget(
+        PokrovSeedApp(
+          appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+          bootstrapper: _FakeBootstrapper(
+            ManagedProfilePayload(
+              profileName: 'golden-${variant.name}',
+              configPayload: _materializedRuntimeConfig,
+              materializedForRuntime: true,
+            ),
+          ),
+          firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+          themeModeStore: _FixedThemeModeStore(variant.theme),
+          connectHintStore: const _CompletedConnectHintStore(),
+          clientExperienceStore: _FakeClientExperienceStore(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      if (variant.state != 'idle') {
+        await tester.tap(
+          find.byKey(const ValueKey('primary-connect-action')),
+        );
+        await tester.pumpAndSettle();
+        if (variant.state != 'scope') {
+          await _confirmFirstRouteScopeIfPresent(tester);
+          await tester.pumpAndSettle();
+        }
+      }
+
+      expect(tester.takeException(), isNull, reason: variant.name);
+      await expectLater(
+        find.byType(Scaffold).first,
+        matchesGoldenFile('$goldenDirectory/${variant.name}.png'),
+      );
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    }
+  });
+
   test('builds seed app context for public and readiness-only host lanes', () {
     for (final platform in HostPlatform.values) {
       final appContext = buildSeedAppContext(hostPlatform: platform);
@@ -11698,6 +12695,13 @@ void main() {
         ]),
       );
       expect(appContext.runtimeProfile.freeTier.enabled, isFalse);
+      expect(appContext.runtimeProfile.trialDays, 5);
+      expect(appContext.runtimeProfile.telegramBonusDays, 5);
+      expect(appContext.runtimeProfile.defaultCore, RuntimeCore.singBox);
+      expect(appContext.runtimeProfile.defaultRouteMode, RouteMode.allExceptRu);
+      expect(appContext.supportSnapshot.supportBot, '@pokrov_supportbot');
+      expect(appContext.supportSnapshot.feedbackBot, '@pokrov_feedbackbot');
+      expect(appContext.supportSnapshot.channelBonusDays, 5);
       expect(appContext.runtimeProfile.freeTier.speedMbps, 0);
       expect(appContext.redeemHint, isEmpty);
       expect(appContext.locations, hasLength(1));

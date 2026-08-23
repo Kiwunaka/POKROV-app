@@ -4,7 +4,6 @@ import android.net.DnsResolver
 import android.os.Build
 import android.os.CancellationSignal
 import android.system.ErrnoException
-import android.util.Log
 import androidx.annotation.RequiresApi
 import space.pokrov.core.libbox.ExchangeContext
 import space.pokrov.core.libbox.LocalDNSTransport
@@ -58,7 +57,6 @@ internal object AndroidLocalResolver : LocalDNSTransport {
                     AndroidRuntimeState.markDnsOperational()
                     ctx.rawSuccess(answer)
                 } else {
-                    reportResult(AndroidResolverPolicy.RESPONSE_ERROR)
                     ctx.errorCode(rcode)
                 }
                 latch.countDown()
@@ -98,10 +96,6 @@ internal object AndroidLocalResolver : LocalDNSTransport {
             queryFamily = queryFamily,
             runtimeToken = runtimeToken,
         )
-        Log.i(
-            LOG_TAG,
-            "Resolver lookup family=$queryFamily",
-        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val signal = CancellationSignal()
             val latch = CountDownLatch(1)
@@ -120,7 +114,6 @@ internal object AndroidLocalResolver : LocalDNSTransport {
                         AndroidRuntimeState.markDnsOperational()
                         ctx.success(answer.mapNotNull { it.hostAddress }.joinToString("\n"))
                     } else {
-                        reportResult(AndroidResolverPolicy.RESPONSE_ERROR)
                         ctx.errorCode(rcode)
                     }
                     latch.countDown()
@@ -174,10 +167,6 @@ internal object AndroidLocalResolver : LocalDNSTransport {
         val answer = try {
             defaultNetwork.getAllByName(domain)
         } catch (_: UnknownHostException) {
-            Log.w(
-                LOG_TAG,
-                "Resolver legacy lookup failed family=$queryFamily kind=resolver_nxdomain",
-            )
             ctx.errorCode(RCODE_NXDOMAIN)
             return
         }
@@ -223,10 +212,6 @@ internal object AndroidLocalResolver : LocalDNSTransport {
         return try {
             AndroidDefaultNetworkMonitor.require()
         } catch (error: IllegalStateException) {
-            Log.w(
-                LOG_TAG,
-                "Resolver cannot start family=$queryFamily kind=default_network_unavailable",
-            )
             AndroidRuntimeState.recordFailureKind("default_network_unavailable")
             AndroidRuntimeState.markDegraded(
                 failureKind = "default_network_unavailable",
@@ -253,12 +238,7 @@ internal object AndroidLocalResolver : LocalDNSTransport {
         }
     }
 
-    private fun reportResult(kind: String) {
-        Log.w(LOG_TAG, "Resolver result=$kind")
-    }
-
     private fun reportTransportFailure(kind: String, runtimeToken: Any?) {
-        reportResult(kind)
         val outcome = when (kind) {
             AndroidResolverPolicy.CALLBACK_ERROR -> AndroidResolverPolicy.RuntimeOutcome.CALLBACK_ERROR
             AndroidResolverPolicy.TIMEOUT,
@@ -273,5 +253,4 @@ internal object AndroidLocalResolver : LocalDNSTransport {
         }
     }
 
-    private const val LOG_TAG = "PokrovResolver"
 }

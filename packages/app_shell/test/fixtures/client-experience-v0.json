@@ -1,0 +1,20 @@
+{
+  "favoriteNodeCodes": ["nl-fixture-01"],
+  "recentNodeCodes": ["nl-fixture-01"],
+  "preferredNodeCode": "nl-fixture-01",
+  "preferredVariantId": "direct",
+  "selectedAppIds": ["org.example.fixture", "pokrov.exe"],
+  "routingPreferences": {
+    "purposeRoutes": [],
+    "dnsPreset": "automatic",
+    "allowLan": true,
+    "windowsConnectionMode": "tun",
+    "tunStack": "mixed",
+    "overrides": []
+  },
+  "firstRouteScopeConfirmed": true,
+  "firstRouteScopeMode": "allExceptRu",
+  "emergencyManualLimitedNetwork": false,
+  "emergencyChainMode": "reserve_foreign",
+  "emergencyAutomaticRoute": true
+}

@@ -1,5 +1,7 @@
 part of pokrov_app_shell;
 
+const _clientExperienceStateVersion = 1;
+
 enum PokrovProtectionEventTone { success, warning, error, neutral }
 
 class PokrovProtectionEvent {
@@ -223,6 +225,7 @@ class PokrovClientExperienceState {
   }
 
   factory PokrovClientExperienceState.fromJson(Map<String, dynamic> json) {
+    _clientExperienceVersion(json);
     final favorites =
         _experienceNodeCodes(json['favoriteNodeCodes'], limit: 50);
     final recents = _experienceNodeCodes(json['recentNodeCodes'], limit: 12);
@@ -293,7 +296,7 @@ class PokrovClientExperienceState {
   }
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'version': 1,
+        'version': _clientExperienceStateVersion,
         'favoriteNodeCodes': favoriteNodeCodes.take(50).toList(growable: false),
         'recentNodeCodes': recentNodeCodes.take(12).toList(growable: false),
         'protectionEvents': protectionEvents
@@ -407,9 +410,18 @@ class PokrovFileClientExperienceStore implements PokrovClientExperienceStore {
       if (decoded is! Map) {
         return const PokrovClientExperienceState.empty();
       }
-      return PokrovClientExperienceState.fromJson(
-        decoded.map((key, value) => MapEntry(key.toString(), value)),
+      final json = decoded.map(
+        (key, value) => MapEntry(key.toString(), value),
       );
+      final sourceVersion = _clientExperienceVersion(json);
+      final state = PokrovClientExperienceState.fromJson(json);
+      if (sourceVersion == 0) {
+        // Legacy state was unversioned. The rewrite is best-effort and
+        // idempotent; a failure must not discard otherwise valid convenience
+        // state or block VPN control.
+        await write(state);
+      }
+      return state;
     } on Object {
       return const PokrovClientExperienceState.empty();
     }
@@ -424,6 +436,19 @@ class PokrovFileClientExperienceStore implements PokrovClientExperienceStore {
       // Local convenience state is best-effort and never blocks VPN control.
     }
   }
+}
+
+int _clientExperienceVersion(Map<String, dynamic> json) {
+  if (!json.containsKey('version')) {
+    return 0;
+  }
+  final version = json['version'];
+  if (version is int && version == _clientExperienceStateVersion) {
+    return version;
+  }
+  throw const FormatException(
+    'Unsupported POKROV client experience state version.',
+  );
 }
 
 String _boundedExperienceText(Object? value, {required int maxLength}) {

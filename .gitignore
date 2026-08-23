@@ -18,11 +18,15 @@ build/
 dist/
 coverage/
 .tmp/
+packages/app_shell/test/failures/
 outputs/
 
 # Runtime artifact cache
 artifacts/pokrov-core/
 !artifacts/README.md
+
+# Local candidate assembly; signed publication belongs to the separate release index
+artifacts/candidate-staging/
 
 # Seed-local config outputs
 config/local/*

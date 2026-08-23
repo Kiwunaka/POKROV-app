@@ -170,50 +170,31 @@ ClientLocationsCatalog applyPokrovDeviceLatencies(
 }
 
 class PokrovSystemSurfacePreferences {
-  const PokrovSystemSurfacePreferences({
-    this.showCountry = true,
-    this.showSpeed = true,
-    this.showRouteMode = true,
-  });
+  const PokrovSystemSurfacePreferences();
 
-  final bool showCountry;
-  final bool showSpeed;
-  final bool showRouteMode;
+  bool get showCountry => false;
+  bool get showSpeed => false;
+  bool get showRouteMode => false;
 
   PokrovSystemSurfacePreferences copyWith({
     bool? showCountry,
     bool? showSpeed,
     bool? showRouteMode,
   }) {
-    return PokrovSystemSurfacePreferences(
-      showCountry: showCountry ?? this.showCountry,
-      showSpeed: showSpeed ?? this.showSpeed,
-      showRouteMode: showRouteMode ?? this.showRouteMode,
-    );
+    return const PokrovSystemSurfacePreferences();
   }
 
   factory PokrovSystemSurfacePreferences.fromMap(Map<String, Object?>? value) {
-    return PokrovSystemSurfacePreferences(
-      showCountry: value?['showCountry'] != false,
-      showSpeed: value?['showSpeed'] != false,
-      showRouteMode: value?['showRouteMode'] != false,
-    );
+    return const PokrovSystemSurfacePreferences();
   }
 
-  Map<String, Object?> toMap() => <String, Object?>{
-        'showCountry': showCountry,
-        'showSpeed': showSpeed,
-        'showRouteMode': showRouteMode,
+  Map<String, Object?> toMap() => const <String, Object?>{
+        'showCountry': false,
+        'showSpeed': false,
+        'showRouteMode': false,
       };
 
-  String get summary {
-    final enabled = <String>[
-      if (showCountry) 'страна',
-      if (showSpeed) 'скорость',
-      if (showRouteMode) 'режим',
-    ];
-    return enabled.isEmpty ? 'Только статус' : enabled.join(' · ');
-  }
+  String get summary => 'Приватный статус';
 }
 
 class PokrovWindowsShellPreferences {
@@ -257,14 +238,84 @@ class PokrovWindowsShellPreferences {
 
 enum PokrovWindowsTunnelAuthorization {
   allowed,
-  relaunching,
   denied,
   unavailable,
 }
 
+enum PokrovWindowsServiceState {
+  unavailable,
+  serverUntrusted,
+  protocolIncompatible,
+  serviceBootstrap,
+  serviceReady,
+}
+
+class PokrovWindowsServiceStatus {
+  const PokrovWindowsServiceStatus({
+    required this.state,
+    required this.available,
+    required this.trusted,
+    required this.compatible,
+    required this.runtimeReady,
+  });
+
+  const PokrovWindowsServiceStatus.unavailable()
+      : state = PokrovWindowsServiceState.unavailable,
+        available = false,
+        trusted = false,
+        compatible = false,
+        runtimeReady = false;
+
+  final PokrovWindowsServiceState state;
+  final bool available;
+  final bool trusted;
+  final bool compatible;
+  final bool runtimeReady;
+
+  factory PokrovWindowsServiceStatus.fromMap(Map<String, Object?>? value) {
+    final available = value?['available'];
+    final trusted = value?['trusted'];
+    final compatible = value?['compatible'];
+    final runtimeReady = value?['runtimeReady'];
+    if (available is! bool ||
+        trusted is! bool ||
+        compatible is! bool ||
+        runtimeReady is! bool) {
+      return const PokrovWindowsServiceStatus.unavailable();
+    }
+
+    final state = switch (value?['state']) {
+      'unavailable'
+          when !available && !trusted && !compatible && !runtimeReady =>
+        PokrovWindowsServiceState.unavailable,
+      'server_untrusted'
+          when available && !trusted && !compatible && !runtimeReady =>
+        PokrovWindowsServiceState.serverUntrusted,
+      'protocol_incompatible'
+          when available && trusted && !compatible && !runtimeReady =>
+        PokrovWindowsServiceState.protocolIncompatible,
+      'service_bootstrap'
+          when available && trusted && compatible && !runtimeReady =>
+        PokrovWindowsServiceState.serviceBootstrap,
+      'service_ready' when available && trusted && compatible && runtimeReady =>
+        PokrovWindowsServiceState.serviceReady,
+      _ => PokrovWindowsServiceState.unavailable,
+    };
+    if (state == PokrovWindowsServiceState.unavailable) {
+      return const PokrovWindowsServiceStatus.unavailable();
+    }
+    return PokrovWindowsServiceStatus(
+      state: state,
+      available: available,
+      trusted: trusted,
+      compatible: compatible,
+      runtimeReady: runtimeReady,
+    );
+  }
+}
+
 typedef PokrovWindowsTunnelAuthorizer = Future<PokrovWindowsTunnelAuthorization>
     Function();
-typedef PokrovWindowsElevationChecker = Future<bool?> Function();
 typedef PokrovWindowsShellPreferencesReader
     = Future<PokrovWindowsShellPreferences> Function();
 typedef PokrovWindowsShellPreferencesUpdater
@@ -333,18 +384,20 @@ const MethodChannel _pokrovRuntimeSystemChannel =
 const MethodChannel _pokrovWindowsShellChannel =
     MethodChannel('space.pokrov/windows-shell');
 
-Future<bool?> readPokrovWindowsProcessElevated(
+Future<PokrovWindowsServiceStatus> readPokrovWindowsServiceStatus(
   HostPlatform hostPlatform,
 ) async {
   if (hostPlatform != HostPlatform.windows) {
-    return true;
+    return const PokrovWindowsServiceStatus.unavailable();
   }
   try {
-    return await _pokrovWindowsShellChannel.invokeMethod<bool>('isElevated');
+    final value = await _pokrovWindowsShellChannel
+        .invokeMapMethod<String, Object?>('readServiceStatus');
+    return PokrovWindowsServiceStatus.fromMap(value);
   } on PlatformException {
-    return null;
+    return const PokrovWindowsServiceStatus.unavailable();
   } on MissingPluginException {
-    return null;
+    return const PokrovWindowsServiceStatus.unavailable();
   }
 }
 
@@ -353,22 +406,17 @@ Future<PokrovWindowsTunnelAuthorization>
   if (hostPlatform != HostPlatform.windows) {
     return PokrovWindowsTunnelAuthorization.allowed;
   }
-  try {
-    if (await readPokrovWindowsProcessElevated(hostPlatform) == true) {
-      return PokrovWindowsTunnelAuthorization.allowed;
-    }
-    final relaunched = await _pokrovWindowsShellChannel.invokeMethod<bool>(
-          'relaunchElevated',
-        ) ??
-        false;
-    return relaunched
-        ? PokrovWindowsTunnelAuthorization.relaunching
-        : PokrovWindowsTunnelAuthorization.denied;
-  } on PlatformException {
-    return PokrovWindowsTunnelAuthorization.denied;
-  } on MissingPluginException {
-    return PokrovWindowsTunnelAuthorization.unavailable;
-  }
+  final status = await readPokrovWindowsServiceStatus(hostPlatform);
+  return switch (status.state) {
+    PokrovWindowsServiceState.serviceBootstrap ||
+    PokrovWindowsServiceState.serviceReady =>
+      PokrovWindowsTunnelAuthorization.allowed,
+    PokrovWindowsServiceState.serverUntrusted ||
+    PokrovWindowsServiceState.protocolIncompatible =>
+      PokrovWindowsTunnelAuthorization.denied,
+    PokrovWindowsServiceState.unavailable =>
+      PokrovWindowsTunnelAuthorization.unavailable,
+  };
 }
 
 Future<PokrovWindowsShellPreferences> readPokrovWindowsShellPreferences(
@@ -423,9 +471,12 @@ Future<PokrovClientUpdateInstallStatus> installPokrovClientUpdate(
       'url': update.url,
       'sha256': update.sha256.trim().toLowerCase(),
       'size': update.size,
+      'channel': update.channel.trim().toLowerCase(),
+      'version': update.latestVersion.trim(),
     });
     return switch ((value?['status'] as String? ?? '').trim()) {
       'installer_opened' => PokrovClientUpdateInstallStatus.installerOpened,
+      'store_opened' => PokrovClientUpdateInstallStatus.storeOpened,
       'permission_required' =>
         PokrovClientUpdateInstallStatus.permissionRequired,
       'unsupported' => PokrovClientUpdateInstallStatus.unsupported,

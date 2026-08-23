@@ -76,6 +76,7 @@ class AndroidHostSecurityContractTest {
             "profile_staging_failed",
             "config_apply_failed",
             "core_egress_probe_unavailable",
+            "vpn_permission_denied",
             "notification_permission_denied",
             "resolver_response_error",
             "resolver_callback_error",
@@ -259,7 +260,9 @@ class AndroidHostSecurityContractTest {
         val stateSource = source("AndroidRuntimeState.kt")
 
         assertTrue(bridgeSource.contains("clearPendingConnect(pending)\n        return AndroidRuntimeState.snapshot()"))
-        assertTrue(serviceSource.contains("commandServer = nextServer\n            startupPhase = \"start_command_server\"\n            nextServer.start()"))
+        assertTrue(serviceSource.contains("commandServer = nextServer"))
+        assertTrue(serviceSource.contains("AndroidCoreOperationalEvents.beginRun("))
+        assertTrue(serviceSource.contains("nextServer.start()"))
         assertTrue(serviceSource.contains("cleanupFailedStartup()"))
         assertTrue(serviceSource.contains("runCatching { commandServer?.closeService() }"))
         assertTrue(serviceSource.contains("runCatching { commandServer?.close() }"))
@@ -278,8 +281,10 @@ class AndroidHostSecurityContractTest {
         assertTrue(serviceSource.contains("reportDnsTransportFailure(token: Any, failureKind: String)"))
         assertTrue(serviceSource.contains("AndroidRuntimeState.markDnsTransportFailure(failureKind, failureMessage)"))
         assertTrue(serviceSource.contains("runCatching { commandServer?.resetNetwork() }"))
-        assertTrue(serviceSource.contains("keeping fail-closed tunnel active during recovery"))
+        assertTrue(serviceSource.contains("Keep the TUN up (which remains fail-closed)"))
         assertFalse(serviceSource.contains("Android DNS transport failed; stopping runtime."))
+        assertFalse(resolverSource.contains("android.util.Log"))
+        assertFalse(serviceSource.contains("Log."))
     }
 
     @Test
@@ -303,7 +308,10 @@ class AndroidHostSecurityContractTest {
     fun runtimeReplacementReleasesDnsCallbackBeforeOldResourcesClose() {
         val serviceSource = source("PokrovRuntimeVpnService.kt")
 
-        assertTrue(serviceSource.contains("healthGeneration.incrementAndGet()\n        releaseDnsFailureToken()\n        runCatching { activeTun?.close() }"))
+        assertTrue(serviceSource.contains("val session = replaceRuntimeSession()"))
+        assertTrue(serviceSource.contains("cancelRuntimeSession()"))
+        assertTrue(serviceSource.contains("releaseDnsFailureToken()"))
+        assertTrue(serviceSource.contains("runCatching { activeTun?.close() }"))
         assertTrue(serviceSource.contains("val dnsFailureToken = dnsFailureTokenGate.activate()"))
         assertTrue(serviceSource.contains("!dnsFailureTokenGate.owns(token)"))
     }
@@ -313,8 +321,11 @@ class AndroidHostSecurityContractTest {
         val serviceSource = source("PokrovRuntimeVpnService.kt")
 
         assertTrue(serviceSource.contains("lifecycleActive.set(false)"))
+        assertTrue(serviceSource.contains("session.onCancel { mainHandler.removeCallbacks(watchdog) }"))
+        assertTrue(serviceSource.contains("session.execute {"))
+        assertTrue(serviceSource.contains("ownsRuntimeSession(session)"))
         assertTrue(serviceSource.contains("AndroidRuntimeDispatchPolicy.dispatch("))
-        assertTrue(serviceSource.contains("lifecycleActive.get() && healthGeneration.get() == generation"))
+        assertTrue(serviceSource.contains("healthGeneration.get() == generation"))
     }
 
     @Test
@@ -336,7 +347,112 @@ class AndroidHostSecurityContractTest {
         assertTrue(bridgeSource.contains(".take(80)"))
     }
 
+    @Test
+    fun foregroundNotificationIsPrivateAndTunMtuFailsClosed() {
+        val serviceSource = source("PokrovRuntimeVpnService.kt")
+        val preferencesSource = source("AndroidSystemSurfacePreferences.kt")
+
+        assertTrue(serviceSource.contains("Notification.VISIBILITY_PRIVATE"))
+        assertTrue(serviceSource.contains("NotificationCompat.VISIBILITY_PRIVATE"))
+        assertFalse(serviceSource.contains("VISIBILITY_PUBLIC"))
+        assertFalse(serviceSource.contains("TrafficStats"))
+        assertTrue(serviceSource.contains("AndroidTunMtuPolicy.select("))
+        assertTrue(serviceSource.contains("activePlatformInterfaceMtu()"))
+        assertFalse(serviceSource.contains(".put(\"mtu\", 9000)"))
+        assertTrue(preferencesSource.contains("val showCountry: Boolean = false"))
+        assertTrue(preferencesSource.contains("val showSpeed: Boolean = false"))
+        assertTrue(preferencesSource.contains("val showRouteMode: Boolean = false"))
+        assertTrue(preferencesSource.contains(".putBoolean(KEY_SHOW_COUNTRY, false)"))
+    }
+
+    @Test
+    fun sessionScopeOwnsCoreTrafficAndAllFormerRawBridgeJobs() {
+        val serviceSource = source("PokrovRuntimeVpnService.kt")
+        val bridgeSource = source("RuntimeHostBridge.kt")
+        val trafficSource = source("AndroidTunnelTraffic.kt")
+        val activitySource = source("MainActivity.kt")
+        val installerSource = sourceAt(
+            "src/direct/kotlin/space/pokrov/pokrov_android_shell/" +
+                "AndroidClientUpdateInstaller.kt",
+        )
+
+        assertTrue(serviceSource.contains("AndroidLifecycleTaskScope("))
+        assertTrue(serviceSource.contains("AndroidRuntimeState.beginTunnelTrafficSession(scope.generation)"))
+        assertTrue(serviceSource.contains("AndroidRuntimeState.endTunnelTrafficSession(scope.generation)"))
+        assertTrue(serviceSource.contains("startTunnelTrafficMonitor(session)"))
+        assertTrue(serviceSource.contains("override fun onDestroy()"))
+        assertTrue(serviceSource.contains("cancelRuntimeSession()"))
+        assertFalse(serviceSource.contains("healthExecutor"))
+
+        assertTrue(trafficSource.contains("addCommand(Libbox.CommandStatus)"))
+        assertTrue(trafficSource.contains("status.getUplinkTotal()"))
+        assertTrue(trafficSource.contains("status.getDownlinkTotal()"))
+        assertFalse(trafficSource.contains("TrafficStats"))
+
+        assertTrue(bridgeSource.contains("private val hostTaskScope = AndroidLifecycleTaskScope("))
+        assertTrue(bridgeSource.contains("hostTaskScope.close()"))
+        assertTrue(bridgeSource.contains("shouldContinue = hostTaskScope::isActive"))
+        assertFalse(
+            bridgeSource.lineSequence().any { line ->
+                line.trimStart().startsWith("Thread {")
+            },
+        )
+        assertTrue(activitySource.contains("runtimeHostBridge?.close()"))
+        assertTrue(installerSource.contains("requireActive(shouldContinue)"))
+    }
+
+    @Test
+    fun operationalJournalIsPrivateBoundedAndWiredToClosedAndroidProducers() {
+        val journalSource = source("AndroidOperationalJournal.kt")
+        val serviceSource = source("PokrovRuntimeVpnService.kt")
+        val bridgeSource = source("RuntimeHostBridge.kt")
+        val monitorSource = source("AndroidDefaultNetworkMonitor.kt")
+        val installerSource = sourceAt(
+            "src/direct/kotlin/space/pokrov/pokrov_android_shell/" +
+                "AndroidClientUpdateInstaller.kt",
+        )
+
+        assertTrue(journalSource.contains("context.applicationContext.noBackupFilesDir"))
+        assertTrue(journalSource.contains("ArrayBlockingQueue(256)"))
+        assertTrue(journalSource.contains("DEFAULT_MAX_FILE_BYTES = 256L * 1024L"))
+        assertTrue(journalSource.contains("android-operational-v1.previous.jsonl"))
+        assertFalse(journalSource.contains("val message:"))
+        assertFalse(journalSource.contains("val url:"))
+        assertFalse(journalSource.contains("val profile:"))
+        assertFalse(journalSource.contains("val token:"))
+        assertTrue(serviceSource.contains("AndroidOperationalOutcome.TUN_ESTABLISHED"))
+        assertTrue(bridgeSource.contains("AndroidOperationalEvent.VPN_PERMISSION"))
+        assertTrue(monitorSource.contains("AndroidOperationalEvent.NETWORK_CALLBACK"))
+        assertTrue(journalSource.contains("AndroidOperationalEvent.DOZE"))
+        assertTrue(journalSource.contains("AndroidOperationalEvent.APP_STANDBY"))
+        assertTrue(journalSource.contains("AndroidOperationalEvent.MAIN_THREAD_WATCHDOG"))
+        assertTrue(installerSource.contains("AndroidOperationalEvent.UPDATER_IDENTITY"))
+    }
+
+    @Test
+    fun supportExportUsesSystemDocumentPickerAndAcceptsOnlyEncryptedEnvelope() {
+        val activitySource = source("MainActivity.kt")
+
+        assertTrue(activitySource.contains("space.pokrov/support-export"))
+        assertTrue(activitySource.contains("saveEncryptedBundle"))
+        assertTrue(activitySource.contains("Intent.ACTION_CREATE_DOCUMENT"))
+        assertTrue(activitySource.contains("application/vnd.pokrov.support-bundle+json"))
+        assertTrue(activitySource.contains("isEncryptedSupportEnvelope(bytes"))
+        assertTrue(activitySource.contains("X25519-HKDF-SHA256-AES-256-GCM"))
+        assertTrue(activitySource.contains("SUPPORT_EXPORT_NAME"))
+        assertTrue(activitySource.contains("output.write(pending.bytes)"))
+        assertTrue(activitySource.contains("pending.bytes.fill(0)"))
+        assertFalse(activitySource.contains("connection_state\""))
+        assertFalse(activitySource.contains("files\""))
+    }
+
     private fun source(fileName: String): String {
-        return File("src/main/kotlin/space/pokrov/pokrov_android_shell/$fileName").readText()
+        return sourceAt("src/main/kotlin/space/pokrov/pokrov_android_shell/$fileName")
+    }
+
+    private fun sourceAt(relativePath: String): String {
+        return File(relativePath)
+            .readText()
+            .replace("\r\n", "\n")
     }
 }

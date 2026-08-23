@@ -14,7 +14,6 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
 import android.util.Base64
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
@@ -63,6 +62,11 @@ internal class PendingRuntimeConnectGate {
 class RuntimeHostBridge(
     private val activity: Activity,
 ) : MethodChannel.MethodCallHandler {
+    private val hostTaskScope = AndroidLifecycleTaskScope(
+        generation = 1L,
+        threadNamePrefix = "pokrov-host",
+        parallelism = 4,
+    )
     private var handledDebugPath: String? = null
     private val pendingConnectLock = Any()
     private val pendingConnectGate = PendingRuntimeConnectGate()
@@ -71,9 +75,19 @@ class RuntimeHostBridge(
     @Volatile
     private var updateDownloadInProgress = false
     @Volatile
-    private var pendingVerifiedUpdate: File? = null
+    private var pendingVerifiedUpdate: AndroidVerifiedClientUpdate? = null
     @Volatile
     private var updateDownloadProgress = AndroidClientUpdateProgress.idle()
+
+    init {
+        AndroidOperationalRuntime.start(activity)
+    }
+
+    fun close() {
+        invalidatePendingConnect()
+        hostTaskScope.close()
+        updateDownloadInProgress = false
+    }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
@@ -97,7 +111,7 @@ class RuntimeHostBridge(
             METHOD_SYSTEM_SURFACE_PREFERENCES ->
                 result.success(AndroidSystemSurfacePreferencesStore.load(activity).toMap())
             METHOD_UPDATE_SYSTEM_SURFACE_PREFERENCES ->
-                result.success(updateSystemSurfacePreferences(call))
+                result.success(updateSystemSurfacePreferences())
             METHOD_OPEN_NOTIFICATION_SETTINGS -> result.success(openNotificationSettings())
             METHOD_OPEN_IN_APP_WEB_SURFACE -> result.success(openInAppWebSurface(call))
             METHOD_CLIENT_UPDATE_PROGRESS -> result.success(updateDownloadProgress.toMap())
@@ -107,14 +121,14 @@ class RuntimeHostBridge(
     }
 
     fun resumePendingUpdateInstall() {
-        val apk = pendingVerifiedUpdate ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            !activity.packageManager.canRequestPackageInstalls()
-        ) {
+        val update = pendingVerifiedUpdate ?: return
+        if (!AndroidClientUpdateInstaller.canResumePendingInstall(activity)) {
             return
         }
-        val status = AndroidClientUpdateInstaller.openInstaller(activity, apk)
+        val status = AndroidClientUpdateInstaller.openInstaller(activity, update)
+        recordUpdateHandoff(status)
         if (status == AndroidClientUpdateInstaller.STATUS_INSTALLER_OPENED ||
+            status == AndroidClientUpdateInstaller.STATUS_STORE_OPENED ||
             status == AndroidClientUpdateInstaller.STATUS_FAILED
         ) {
             pendingVerifiedUpdate = null
@@ -126,6 +140,8 @@ class RuntimeHostBridge(
             url = call.argument<String>("url"),
             sha256 = call.argument<String>("sha256"),
             size = call.argument<Number>("size"),
+            channel = call.argument<String>("channel"),
+            version = call.argument<String>("version"),
         )
         if (request == null) {
             result.success(mapOf("status" to AndroidClientUpdateInstaller.STATUS_FAILED))
@@ -143,26 +159,38 @@ class RuntimeHostBridge(
                 totalBytes = request.size,
             )
         }
-        Thread {
-            val apk = runCatching {
-                AndroidClientUpdateInstaller.downloadVerified(activity, request) { progress ->
-                    updateDownloadProgress = progress
-                }
+        val accepted = hostTaskScope.execute {
+            val update = runCatching {
+                AndroidClientUpdateInstaller.downloadVerified(
+                    activity = activity,
+                    request = request,
+                    onProgress = { progress ->
+                        if (hostTaskScope.isActive()) {
+                            updateDownloadProgress = progress
+                        }
+                    },
+                    shouldContinue = hostTaskScope::isActive,
+                )
             }.getOrNull()
             activity.runOnUiThread {
-                val status = if (apk == null) {
+                if (!hostTaskScope.isActive()) {
+                    return@runOnUiThread
+                }
+                val status = if (update == null) {
                     AndroidClientUpdateInstaller.STATUS_FAILED
                 } else {
+                    val verifiedBytes = if (update.apk == null) 0L else request.size
                     updateDownloadProgress = AndroidClientUpdateProgress(
                         phase = "installing",
-                        downloadedBytes = request.size,
+                        downloadedBytes = verifiedBytes,
                         totalBytes = request.size,
                     )
-                    AndroidClientUpdateInstaller.openInstaller(activity, apk)
+                    AndroidClientUpdateInstaller.openInstaller(activity, update)
                 }
+                recordUpdateHandoff(status)
                 pendingVerifiedUpdate = if (
                     status == AndroidClientUpdateInstaller.STATUS_PERMISSION_REQUIRED
-                ) apk else null
+                ) update else null
                 updateDownloadInProgress = false
                 if (status == AndroidClientUpdateInstaller.STATUS_FAILED) {
                     updateDownloadProgress = AndroidClientUpdateProgress(
@@ -173,10 +201,16 @@ class RuntimeHostBridge(
                 }
                 result.success(mapOf("status" to status))
             }
-        }.apply {
-            name = "pokrov-client-update"
-            isDaemon = true
-            start()
+        }
+        if (!accepted) {
+            updateDownloadInProgress = false
+            updateDownloadProgress = AndroidClientUpdateProgress(
+                phase = "failed",
+                downloadedBytes = 0L,
+                totalBytes = request.size,
+            )
+            recordUpdateHandoff(AndroidClientUpdateInstaller.STATUS_FAILED)
+            result.success(mapOf("status" to AndroidClientUpdateInstaller.STATUS_FAILED))
         }
     }
 
@@ -197,6 +231,10 @@ class RuntimeHostBridge(
         }
 
         if (resultCode == Activity.RESULT_OK) {
+            AndroidOperationalJournal.record(
+                AndroidOperationalEvent.VPN_PERMISSION,
+                AndroidOperationalOutcome.GRANTED,
+            )
             if (pending.configPath != AndroidRuntimeState.stagedConfigPath()) {
                 clearPendingConnect(pending)
                 AndroidRuntimeState.markFailure(
@@ -225,6 +263,10 @@ class RuntimeHostBridge(
         }
 
         clearPendingConnect(pending)
+        AndroidOperationalJournal.record(
+            AndroidOperationalEvent.VPN_PERMISSION,
+            AndroidOperationalOutcome.DENIED,
+        )
         AndroidRuntimeState.markFailure(
             kind = "vpn_permission_denied",
             message = "Разрешение отклонено, поэтому POKROV не смог подключиться на этом устройстве.",
@@ -247,8 +289,16 @@ class RuntimeHostBridge(
         }
         val granted = grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED
         if (granted) {
+            AndroidOperationalJournal.record(
+                AndroidOperationalEvent.NOTIFICATION_PERMISSION,
+                AndroidOperationalOutcome.GRANTED,
+            )
             AndroidRuntimeState.clearSystemNotificationWarning()
         } else {
+            AndroidOperationalJournal.record(
+                AndroidOperationalEvent.NOTIFICATION_PERMISSION,
+                AndroidOperationalOutcome.DENIED,
+            )
             AndroidRuntimeState.markSystemNotificationWarning()
         }
         connect(checkNotificationPermission = false, pendingRequest = pending)
@@ -374,12 +424,6 @@ class RuntimeHostBridge(
                     "POKROV Core requires a materialized sing-box profile.",
                 )
             }
-            val finalTarget = AndroidCoreEgressProbe.finalTarget(configPayload)
-            Log.i(
-                LOG_TAG,
-                "Android managed profile stage finalTargetKind=" +
-                    (finalTarget?.kind?.name?.lowercase() ?: "none"),
-            )
             writePrivateConfig(finalPath, configPayload)
             AndroidRuntimeState.markProfileStaged(finalPath.absolutePath)
             AndroidRuntimeProfileStore.save(
@@ -449,6 +493,10 @@ class RuntimeHostBridge(
                     if (!setNotificationPermissionRequest(pending)) {
                         return AndroidRuntimeState.snapshot()
                     }
+                    AndroidOperationalJournal.record(
+                        AndroidOperationalEvent.NOTIFICATION_PERMISSION,
+                        AndroidOperationalOutcome.REQUIRED,
+                    )
                     AndroidNotificationPermissionStore.markAsked(activity)
                     activity.runOnUiThread {
                         ActivityCompat.requestPermissions(
@@ -459,17 +507,31 @@ class RuntimeHostBridge(
                     }
                     return AndroidRuntimeState.snapshot()
                 }
-                AndroidNotificationPermissionAction.CONTINUE_WITH_WARNING ->
+                AndroidNotificationPermissionAction.CONTINUE_WITH_WARNING -> {
+                    AndroidOperationalJournal.recordRateLimited(
+                        AndroidOperationalEvent.NOTIFICATION_PERMISSION,
+                        AndroidOperationalOutcome.DENIED,
+                    )
                     AndroidRuntimeState.markSystemNotificationWarning()
+                }
                 AndroidNotificationPermissionAction.WAIT_FOR_RESULT ->
                     return AndroidRuntimeState.snapshot()
-                AndroidNotificationPermissionAction.CONTINUE ->
+                AndroidNotificationPermissionAction.CONTINUE -> {
+                    AndroidOperationalJournal.recordRateLimited(
+                        AndroidOperationalEvent.NOTIFICATION_PERMISSION,
+                        AndroidOperationalOutcome.ALREADY_GRANTED,
+                    )
                     AndroidRuntimeState.clearSystemNotificationWarning()
+                }
             }
         }
 
         val prepareIntent = VpnService.prepare(activity)
         if (prepareIntent != null) {
+            AndroidOperationalJournal.record(
+                AndroidOperationalEvent.VPN_PERMISSION,
+                AndroidOperationalOutcome.REQUIRED,
+            )
             AndroidRuntimeState.markPermissionRequested()
             if (!setVpnPermissionRequest(pending)) {
                 return AndroidRuntimeState.snapshot()
@@ -479,6 +541,10 @@ class RuntimeHostBridge(
             }
             return AndroidRuntimeState.snapshot()
         }
+        AndroidOperationalJournal.recordRateLimited(
+            AndroidOperationalEvent.VPN_PERMISSION,
+            AndroidOperationalOutcome.ALREADY_GRANTED,
+        )
 
         runCatching {
             PokrovRuntimeVpnService.start(activity, stagedConfigPath, routeMode)
@@ -762,6 +828,22 @@ class RuntimeHostBridge(
     private fun clearPendingConnect(pending: PendingRuntimeConnect) =
         pendingConnectGate.completeDispatch(pending)
 
+    private fun recordUpdateHandoff(status: String) {
+        val outcome = when (status) {
+            AndroidClientUpdateInstaller.STATUS_INSTALLER_OPENED ->
+                AndroidOperationalOutcome.INSTALLER_OPENED
+            AndroidClientUpdateInstaller.STATUS_STORE_OPENED ->
+                AndroidOperationalOutcome.STORE_OPENED
+            AndroidClientUpdateInstaller.STATUS_PERMISSION_REQUIRED ->
+                AndroidOperationalOutcome.PERMISSION_REQUIRED
+            else -> AndroidOperationalOutcome.FAILED
+        }
+        AndroidOperationalJournal.record(
+            AndroidOperationalEvent.UPDATER_HANDOFF,
+            outcome,
+        )
+    }
+
     private fun wifiPermissionName(): String =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.NEARBY_WIFI_DEVICES
@@ -786,16 +868,10 @@ class RuntimeHostBridge(
         }
     }
 
-    private fun updateSystemSurfacePreferences(call: MethodCall): Map<String, Boolean> {
-        val current = AndroidSystemSurfacePreferencesStore.load(activity)
-        val updated = current.copy(
-            showCountry = call.argument<Boolean>("showCountry") ?: current.showCountry,
-            showSpeed = call.argument<Boolean>("showSpeed") ?: current.showSpeed,
-            showRouteMode = call.argument<Boolean>("showRouteMode") ?: current.showRouteMode,
-        )
-        AndroidSystemSurfacePreferencesStore.save(activity, updated)
+    private fun updateSystemSurfacePreferences(): Map<String, Boolean> {
+        AndroidSystemSurfacePreferencesStore.save(activity)
         PokrovRuntimeVpnService.refreshNotification(activity)
-        return updated.toMap()
+        return AndroidSystemSurfacePreferencesStore.load(activity).toMap()
     }
 
     private fun openNotificationSettings(): Boolean = runCatching {
@@ -825,17 +901,8 @@ class RuntimeHostBridge(
             result.success(emptyMap<String, Int>())
             return
         }
-        Thread {
-            val measurements = runCatching {
-                AndroidNodeLatencyProbe.measure(activity, targets)
-            }.getOrDefault(emptyMap())
-            activity.runOnUiThread {
-                result.success(measurements)
-            }
-        }.apply {
-            name = "pokrov-node-latency"
-            isDaemon = true
-            start()
+        executeHostTask(result, emptyMap<String, Int>()) {
+            AndroidNodeLatencyProbe.measure(activity, targets)
         }
     }
 
@@ -851,43 +918,53 @@ class RuntimeHostBridge(
             }
         val expectedFile = File(environment.configDirectory, "managed-profile.json")
         val stagedPath = AndroidRuntimeState.stagedConfigPath().orEmpty()
-        Thread {
-            val snapshot = runCatching {
-                // A terminal egress failure deliberately clears the reusable
-                // staged path. The canonical private file may still be read to
-                // match a short-lived exact-catalog status cache; probe() cannot
-                // stage or reactivate it and returns unavailable on a mismatch.
-                val stagedFile = if (stagedPath.isBlank()) expectedFile else File(stagedPath)
-                if (
-                    !stagedFile.isFile ||
-                    stagedFile.canonicalPath != expectedFile.canonicalPath ||
-                    stagedFile.length() !in 1..MAX_VARIANT_PROBE_CONFIG_BYTES
-                ) {
-                    return@runCatching AndroidVariantAvailabilityProbe.probe("", requestedVariantId)
-                }
-                AndroidVariantAvailabilityProbe.probe(
-                    stagedFile.readText(Charsets.UTF_8),
+        executeHostTask(
+            result,
+            AndroidVariantAvailabilityProbe.probe("", requestedVariantId),
+        ) {
+            // A terminal egress failure deliberately clears the reusable
+            // staged path. The canonical private file may still be read to
+            // match a short-lived exact-catalog status cache; probe() cannot
+            // stage or reactivate it and returns unavailable on a mismatch.
+            val stagedFile = if (stagedPath.isBlank()) expectedFile else File(stagedPath)
+            if (
+                !stagedFile.isFile ||
+                stagedFile.canonicalPath != expectedFile.canonicalPath ||
+                stagedFile.length() !in 1..MAX_VARIANT_PROBE_CONFIG_BYTES
+            ) {
+                return@executeHostTask AndroidVariantAvailabilityProbe.probe(
+                    "",
                     requestedVariantId,
                 )
-            }.getOrElse {
-                AndroidVariantAvailabilityProbe.probe("", requestedVariantId)
             }
-            activity.runOnUiThread { result.success(snapshot) }
-        }.apply {
-            name = "pokrov-location-variant-probe"
-            isDaemon = true
-            start()
+            AndroidVariantAvailabilityProbe.probe(
+                stagedFile.readText(Charsets.UTF_8),
+                requestedVariantId,
+            )
         }
     }
 
     private fun listInstalledApps(result: MethodChannel.Result) {
-        Thread {
-            val apps = runCatching { installedLauncherApps() }.getOrDefault(emptyList())
-            activity.runOnUiThread { result.success(apps) }
-        }.apply {
-            name = "pokrov-installed-apps"
-            isDaemon = true
-            start()
+        executeHostTask(result, emptyList<Map<String, String>>()) {
+            installedLauncherApps()
+        }
+    }
+
+    private fun <T> executeHostTask(
+        result: MethodChannel.Result,
+        fallback: T,
+        task: () -> T,
+    ) {
+        val accepted = hostTaskScope.execute {
+            val value = runCatching(task).getOrDefault(fallback)
+            activity.runOnUiThread {
+                if (hostTaskScope.isActive()) {
+                    result.success(value)
+                }
+            }
+        }
+        if (!accepted) {
+            result.success(fallback)
         }
     }
 
@@ -963,7 +1040,6 @@ class RuntimeHostBridge(
         }.getOrNull()
 
     companion object {
-        private const val LOG_TAG = "PokrovRuntimeBridge"
         private const val MAX_INSTALLED_APP_ICONS = 80
         private const val MAX_VARIANT_PROBE_CONFIG_BYTES = 4L * 1024L * 1024L
         const val CHANNEL_NAME = "space.pokrov/runtime_engine"

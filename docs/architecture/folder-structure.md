@@ -30,6 +30,8 @@ This scaffold separates future work by purpose instead of by current implementat
 - `app_shell`: first-run shell, tab model, navigation, and session shell ownership
 - `core_domain`: access state, route mode, device context, managed-profile metadata, and smart-connect model boundaries
 - `platform_contracts`: engine selection, permissions, platform services, and connect lifecycle contracts
+- `observability_contracts`: exact platform-owned event/error identities and contract hashes
+- `observability_runtime`: typed privacy-safe event dispatch and bounded local retention
 - `support_context`: safe diagnostics, escalation metadata, and support handoff payloads
 
 ## App Shell Module Layout

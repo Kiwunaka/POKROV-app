@@ -52,6 +52,17 @@
     "@pokrov_supportbot",
     "support@pokrov.space"
   ],
+  "platform_authority": {
+    "product_facts_contract": "shared/product-facts.json",
+    "product_facts_sha256": "2c135eeee91adaca52bc35b103ce5839e7f670e557ff7b55970c4375a2916f54",
+    "commercial_contract": "shared/commercial-contract.json",
+    "commercial_revision": "2026-08-21.1",
+    "commercial_contract_sha256": "22b7ef26908c23c2bb53322dec959a3bc050a20a6c6d2feff9f78708b45e23cd",
+    "tariff_catalog_contract": "shared/tariff-catalog.json",
+    "tariff_catalog_sha256": "0e5acae30601854cee4c44c33af84e84bbdcd24d2788a7da1463bb3ee4a40d43",
+    "public_urls_contract": "shared/public-urls.json",
+    "public_urls_sha256": "022f7ba577714bdc0bffd3cc00254309af346ef0c8fc62fe9c52e40d72a0de67"
+  },
   "apple_publication": {
     "credentials_in_repo": false,
     "ios_distribution": "testflight_then_app_store_placeholder",

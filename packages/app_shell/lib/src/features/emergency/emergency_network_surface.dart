@@ -34,7 +34,7 @@ class _EmergencyNetworkLauncherCard extends StatelessWidget {
     final p = PokrovPalette.of(context);
     return Semantics(
       button: true,
-      label: 'Открыть режим белых списков',
+      label: 'Восстановить связь через резервный режим',
       child: Material(
         color: p.reward.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
@@ -64,7 +64,7 @@ class _EmergencyNetworkLauncherCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Режим белых списков',
+                        'Восстановить связь',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: p.ink,
@@ -72,7 +72,7 @@ class _EmergencyNetworkLauncherCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Когда открываются только отдельные сайты',
+                        'Резервный режим, если открываются только отдельные сайты',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: p.muted,
                             ),

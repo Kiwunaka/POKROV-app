@@ -97,6 +97,13 @@ internal object AndroidRuntimeState {
     private var excludePackageCount: Int = 0
     private var systemNotificationWarning: Boolean = false
     private var connectionPending: Boolean = false
+    private var tunnelTrafficGeneration: Long = 0L
+    private var tunnelTrafficState: AndroidTunnelTrafficSampleState =
+        AndroidTunnelTrafficSampleState.UNAVAILABLE
+    private var tunnelUplinkBps: Long? = null
+    private var tunnelDownlinkBps: Long? = null
+    private var tunnelUplinkTotalBytes: Long? = null
+    private var tunnelDownlinkTotalBytes: Long? = null
 
     @Synchronized
     fun resolveEnvironment(context: Context): AndroidRuntimeEnvironment? {
@@ -113,6 +120,7 @@ internal object AndroidRuntimeState {
             phase = AndroidRuntimePhase.ARTIFACT_MISSING
             stagedConfigPath = null
             runningSince = null
+            invalidateTunnelTrafficSession()
             lastMessage = "В этой сборке для Android нет модуля подключения."
             dnsReady = false
             defaultNetworkInterface = null
@@ -229,6 +237,7 @@ internal object AndroidRuntimeState {
         connectionPending = true
         vpnValidated = null
         coreEgressValidated = null
+        invalidateTunnelTrafficSession()
     }
 
     @Synchronized
@@ -284,6 +293,7 @@ internal object AndroidRuntimeState {
         runningSince = null
         vpnValidated = null
         coreEgressValidated = null
+        invalidateTunnelTrafficSession()
         lastMessage = message
     }
 
@@ -299,8 +309,10 @@ internal object AndroidRuntimeState {
             else -> AndroidRuntimePhase.ARTIFACT_MISSING
         }
         lastStopReason = stopReason
+        runningSince = null
         vpnValidated = null
         coreEgressValidated = null
+        invalidateTunnelTrafficSession()
         if (message == "POKROV отключен на этом устройстве." && shouldPreserveFailureMessage()) {
             return
         }
@@ -326,6 +338,7 @@ internal object AndroidRuntimeState {
         runningSince = null
         vpnValidated = null
         coreEgressValidated = false
+        invalidateTunnelTrafficSession()
         lastMessage = message
     }
 
@@ -337,6 +350,8 @@ internal object AndroidRuntimeState {
     @Synchronized
     fun markFailure(kind: String, message: String) {
         connectionPending = false
+        runningSince = null
+        invalidateTunnelTrafficSession()
         if (environment == null) {
             phase = AndroidRuntimePhase.ARTIFACT_MISSING
         } else if (stagedConfigPath != null) {
@@ -476,19 +491,68 @@ internal object AndroidRuntimeState {
     }
 
     @Synchronized
+    fun beginTunnelTrafficSession(generation: Long) {
+        tunnelTrafficGeneration = generation
+        clearTunnelTrafficValues()
+    }
+
+    @Synchronized
+    fun updateTunnelTraffic(
+        generation: Long,
+        snapshot: AndroidTunnelTrafficSnapshot,
+    ) {
+        if (generation != tunnelTrafficGeneration) {
+            return
+        }
+        tunnelTrafficState = snapshot.state
+        tunnelUplinkBps = snapshot.uplinkBps
+        tunnelDownlinkBps = snapshot.downlinkBps
+        tunnelUplinkTotalBytes = snapshot.uplinkTotalBytes
+        tunnelDownlinkTotalBytes = snapshot.downlinkTotalBytes
+    }
+
+    @Synchronized
+    fun endTunnelTrafficSession(generation: Long? = null) {
+        if (generation != null && generation != tunnelTrafficGeneration) {
+            return
+        }
+        tunnelTrafficGeneration += 1L
+        clearTunnelTrafficValues()
+    }
+
+    private fun clearTunnelTrafficValues() {
+        tunnelTrafficState = AndroidTunnelTrafficSampleState.UNAVAILABLE
+        tunnelUplinkBps = null
+        tunnelDownlinkBps = null
+        tunnelUplinkTotalBytes = null
+        tunnelDownlinkTotalBytes = null
+    }
+
+    private fun invalidateTunnelTrafficSession() {
+        tunnelTrafficGeneration += 1L
+        clearTunnelTrafficValues()
+    }
+
+    @Synchronized
     fun stagedConfigPath(): String? = stagedConfigPath
 
     @Synchronized
     fun liveStats(): Map<String, Any?> {
+        val trafficAvailable = phase == AndroidRuntimePhase.RUNNING &&
+            tunnelTrafficState != AndroidTunnelTrafficSampleState.UNAVAILABLE
         return mapOf(
-            "available" to (phase == AndroidRuntimePhase.RUNNING),
-            "uplinkBps" to null,
-            "downlinkBps" to null,
+            "available" to trafficAvailable,
+            "counterState" to tunnelTrafficState.wireValue,
+            "uplinkBps" to tunnelUplinkBps,
+            "downlinkBps" to tunnelDownlinkBps,
+            "uplinkTotalBytes" to tunnelUplinkTotalBytes,
+            "downlinkTotalBytes" to tunnelDownlinkTotalBytes,
             "latencyMs" to null,
             "since" to runningSince,
             "serverCode" to "",
             "serverCountry" to "",
             "protocol" to if (stagedConfigPath.isNullOrBlank()) "" else "sing-box",
+            "coreOperationalEvents" to AndroidCoreOperationalEvents.snapshot(),
         )
     }
 

@@ -10,8 +10,10 @@ The root [AGENTS.md](AGENTS.md) is the short Codex operating contract.
 ## Current Product Truth
 
 - Client strategy: `consumer-first` and `app-first`.
-- Public outside-store beta surfaces: Android and Windows.
-- Current public beta line: `1.0.0-beta`.
+- Public outside-store stable surfaces: Android and Windows.
+- Retained public line: `1.1.6` (`1.1.6+29`).
+- Development target: `1.2.0+30`, state `PRE_CANDIDATE_LOCAL`, candidate not
+  created.
 - Apple surfaces: readiness, packaging, signing, and device-proof work only.
 - Default runtime: `sing-box`; `xray` is an advanced compatibility fallback.
 - Default device-wide rule: `All except RU`; `Full tunnel` remains available.
@@ -27,17 +29,26 @@ The root [AGENTS.md](AGENTS.md) is the short Codex operating contract.
 ## Release Truth
 
 `config/release-handoff.seed.json` is the machine-readable owner for the latest
-repo-backed beta handoff. It retains the observed public `Kiwunaka/pokrov`
+repo-backed public handoff and the current development target. It retains the
+observed public `Kiwunaka/pokrov`
 GitHub Release, candidate hashes, download evidence, and manual gates without
 turning old evidence into approval for a later candidate.
 
-The retained `1.0.0-beta` publication is evidence for that exact artifact set.
-New public promotion and runtime sync are blocked until exact-candidate signing
-evidence is recorded. Android production signing is fail-closed by default;
-debug signing requires an explicit non-public smoke opt-in. The handoff does
-not prove:
+`config/release-rollback-catalog.seed.json` owns the stable pointer location and
+the exact versioned handoffs eligible for rollback. The pointer helper is
+read-only unless `-Apply` is explicit, requires the expected current release,
+creates an exact backup outside retained history, and records a receipt. Local
+fixture reversal is not an exact-candidate rollback drill or mutation authority.
 
-- stable `1.0.0`;
+The retained `1.1.6` publication is evidence for that exact artifact set. The
+working `1.2.0+30` line is not a candidate. New public promotion and runtime
+sync are blocked until clean exact revisions, the public release-index
+revision, exact Core replacement artifacts, strict-v2 metadata, and required
+candidate evidence exist. Android production signing is fail-closed by
+default; debug signing requires an explicit non-public smoke opt-in. The
+handoff does not prove:
+
+- a `1.2.0` candidate or stable publication;
 - Play, Microsoft Store, WinGet, TestFlight, App Store, or notarized delivery;
 - production Android signing or trusted Windows signing and reputation;
 - a fresh physical-device, clean-VM, or real-user pass for a later candidate;
@@ -48,7 +59,10 @@ Generated host outputs under `apps/**/build/`, local materializations under
 `config/local/`, and other generated `build/**` trees are disposable local
 verification output. They never override the release handoff or candidate
 evidence. Retained bundles under `artifacts/releases/**` are evidence and must
-not be edited during ordinary development or documentation work.
+not be edited during ordinary development or documentation work. Local
+candidate assembly belongs under ignored `artifacts/candidate-staging/**`; the
+signed public release index is a separate repository and is never mirrored as
+client source truth.
 
 ## Authority Boundaries
 
@@ -77,13 +91,17 @@ in the same coordinated change. Do not copy a second source of truth here.
   materialization.
 - `packages/core_domain/`: client domain values.
 - `packages/platform_contracts/`: host boundary contracts.
+- `packages/observability_contracts/`: checked platform event/error identities.
+- `packages/observability_runtime/`: privacy-safe local event dispatch and bounded retention.
 - `packages/support_context/`: redacted support context.
 - `config/`: machine-readable product, runtime, platform, cutover, and release
   contracts.
 - `docs/`: canonical docs, active execution state, evidence, and history.
 - `scripts/`: local validation, runtime sync, packaging, and release checks.
 - `test/`: repository-level contract and layout checks.
-- `artifacts/releases/`: retained release lineage and exact-candidate evidence.
+- `artifacts/releases/`: frozen historical lineage/evidence, not a candidate
+  destination or public release index.
+- `artifacts/candidate-staging/`: ignored local candidate assembly.
 
 ## Quick Validation
 

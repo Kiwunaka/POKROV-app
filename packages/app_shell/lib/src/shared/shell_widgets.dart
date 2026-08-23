@@ -128,26 +128,37 @@ class _StatusPill extends StatelessWidget {
 
 class _ConnectOrbButton extends StatefulWidget {
   const _ConnectOrbButton({
-    required this.actionLabel,
-    required this.enabled,
-    required this.running,
-    required this.degraded,
+    required this.presentation,
     required this.error,
-    required this.busy,
     required this.onPressed,
     this.status,
     this.desktopSize = false,
   });
 
-  final String actionLabel;
-  final bool enabled;
-  final bool running;
-  final bool degraded;
+  final ConnectionPresentation presentation;
   final bool error;
-  final bool busy;
   final Future<void> Function()? onPressed;
   final Widget? status;
   final bool desktopSize;
+
+  String get actionLabel => presentation.primaryActionLabel;
+  bool get enabled =>
+      presentation.primaryActionEnabled ||
+      presentation.discMotionBusy ||
+      presentation.showsTunnelActive;
+  bool get running => presentation.showsConnectedVisual;
+  bool get degraded => presentation.isDegraded;
+  bool get busy => presentation.discMotionBusy;
+  PokrovConnectDiscPhase get phase => switch (presentation.discPhase) {
+        ConnectionDiscPhase.idle => PokrovConnectDiscPhase.idle,
+        ConnectionDiscPhase.preparing => PokrovConnectDiscPhase.preparing,
+        ConnectionDiscPhase.connecting => PokrovConnectDiscPhase.connecting,
+        ConnectionDiscPhase.connected => PokrovConnectDiscPhase.connected,
+        ConnectionDiscPhase.disconnecting =>
+          PokrovConnectDiscPhase.disconnecting,
+        ConnectionDiscPhase.reconnecting => PokrovConnectDiscPhase.reconnecting,
+        ConnectionDiscPhase.error => PokrovConnectDiscPhase.error,
+      };
 
   @override
   State<_ConnectOrbButton> createState() => _ConnectOrbButtonState();
@@ -204,7 +215,8 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
         oldWidget.running != widget.running ||
         oldWidget.degraded != widget.degraded ||
         oldWidget.error != widget.error ||
-        oldWidget.busy != widget.busy) {
+        oldWidget.busy != widget.busy ||
+        oldWidget.phase != widget.phase) {
       // Must run before the sweep reset: the landing captures the current
       // sweep angle so the arc lands from wherever it points right now.
       _handlePhaseChange(oldWidget);
@@ -215,24 +227,12 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     _syncControllers();
   }
 
-  /// Arc Handoff + Soft Release choreography and the shell's whole phase
-  /// haptic budget: one success at landing, a quiet tap at rest. Errors keep
-  /// their haptic in the snack layer — the disc never buzzes for trouble.
+  /// Arc Handoff + Soft Release choreography and the shell's outcome haptic
+  /// budget. The action owns its single tap; only a proved connected landing
+  /// adds success. Errors keep their one outcome haptic in the snack layer.
   void _handlePhaseChange(_ConnectOrbButton oldWidget) {
-    final oldPhase = PokrovConnectDiscState.resolve(
-      enabled: oldWidget.enabled,
-      running: oldWidget.running,
-      degraded: oldWidget.degraded,
-      error: oldWidget.error,
-      busy: oldWidget.busy,
-    ).phase;
-    final newPhase = PokrovConnectDiscState.resolve(
-      enabled: widget.enabled,
-      running: widget.running,
-      degraded: widget.degraded,
-      error: widget.error,
-      busy: widget.busy,
-    ).phase;
+    final oldPhase = oldWidget.phase;
+    final newPhase = widget.phase;
     if (newPhase == oldPhase) {
       return;
     }
@@ -249,7 +249,13 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
       } else {
         _settleController.forward(from: 0);
       }
-      PokrovHaptics.success();
+      if (ConnectionHapticCoordinator.outcome(
+            oldWidget.presentation.experience.phase,
+            widget.presentation.experience.phase,
+          ) ==
+          ConnectionHapticIntent.success) {
+        PokrovHaptics.success();
+      }
       return;
     }
     if (oldPhase == PokrovConnectDiscPhase.connected) {
@@ -259,14 +265,9 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
       } else {
         _settleController.reverse();
       }
-      if (newPhase == PokrovConnectDiscPhase.idle) {
-        PokrovHaptics.tap();
-      }
       return;
     }
     if (newPhase == PokrovConnectDiscPhase.idle) {
-      // Landing at rest is an exhale, deliberately quieter than connect.
-      PokrovHaptics.tap();
       if (!_settleController.isAnimating) {
         _settleController.value = 0;
       }
@@ -282,12 +283,13 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     super.dispose();
   }
 
-  PokrovConnectDiscState get _discState => PokrovConnectDiscState.resolve(
+  PokrovConnectDiscState get _discState => PokrovConnectDiscState.explicit(
         enabled: widget.enabled,
-        running: widget.running,
-        degraded: widget.degraded,
-        error: widget.error,
-        busy: _effectiveBusy,
+        phase: _optimisticBusy
+            ? widget.running
+                ? PokrovConnectDiscPhase.disconnecting
+                : PokrovConnectDiscPhase.connecting
+            : widget.phase,
       );
 
   bool get _effectiveBusy => widget.busy || _optimisticBusy;
@@ -296,8 +298,10 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     if (widget.onPressed == null || _optimisticBusy) {
       return;
     }
-    Feedback.forTap(context);
-    PokrovHaptics.tap();
+    if (ConnectionHapticCoordinator.action(widget.presentation) ==
+        ConnectionHapticIntent.tap) {
+      PokrovHaptics.tap();
+    }
     setState(() {
       _optimisticBusy = true;
     });
@@ -423,8 +427,9 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     return Semantics(
       key: const ValueKey('primary-connect-action'),
       button: true,
-      enabled: widget.enabled,
-      label: widget.actionLabel,
+      enabled: widget.onPressed != null,
+      label: widget.presentation.semanticLabel,
+      excludeSemantics: true,
       child: FocusableActionDetector(
         key: const ValueKey('primary-connect-focusable'),
         enabled: widget.enabled && widget.onPressed != null,
@@ -741,6 +746,7 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
 
     return Semantics(
       key: const ValueKey('primary-connect-action'),
+      container: true,
       button: true,
       enabled: widget.enabled,
       label: widget.actionLabel,
@@ -879,26 +885,28 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
                           ),
                         ),
                         const SizedBox(height: 14),
-                        AnimatedSwitcher(
-                          key: const ValueKey('connect-disc-label'),
-                          duration: motion.duration(_MotionTokens.short),
-                          transitionBuilder: _fadeSlideTransition,
-                          child: FittedBox(
-                            key: ValueKey(widget.actionLabel),
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              widget.actionLabel,
-                              maxLines: 1,
-                              softWrap: false,
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineSmall
-                                  ?.copyWith(
-                                    color: p.ink,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.35,
-                                  ),
+                        ExcludeSemantics(
+                          child: AnimatedSwitcher(
+                            key: const ValueKey('connect-disc-label'),
+                            duration: motion.duration(_MotionTokens.short),
+                            transitionBuilder: _fadeSlideTransition,
+                            child: FittedBox(
+                              key: ValueKey(widget.actionLabel),
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                widget.actionLabel,
+                                maxLines: 1,
+                                softWrap: false,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(
+                                      color: p.ink,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.35,
+                                    ),
+                              ),
                             ),
                           ),
                         ),

@@ -9,7 +9,9 @@ param(
   [switch]$OfflinePubGet,
   [string]$CoreRoot,
   [string]$EmergencySigningKeyId = $env:POKROV_EMERGENCY_SIGNING_KEY_ID,
-  [string]$EmergencySigningPublicKey = $env:POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64
+  [string]$EmergencySigningPublicKey = $env:POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64,
+  [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
+  [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,11 +20,18 @@ $ErrorActionPreference = "Stop"
 
 $EmergencySigningKeyId = [string]$EmergencySigningKeyId
 $EmergencySigningPublicKey = [string]$EmergencySigningPublicKey
+$SupportSigningKeyId = [string]$SupportSigningKeyId
+$SupportSigningPublicKey = [string]$SupportSigningPublicKey
 if ($EmergencySigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$') {
   throw "A canonical POKROV emergency signing key id is required for a production build."
 }
 if ($EmergencySigningPublicKey -notmatch '^[A-Za-z0-9_-]{43}$') {
   throw "A 32-byte base64url POKROV emergency signing public key is required for a production build."
+}
+if (($SupportSigningKeyId -or $SupportSigningPublicKey) -and
+    ($SupportSigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$' -or
+     $SupportSigningPublicKey -notmatch '^[A-Za-z0-9_-]{43}$')) {
+  throw "Support bundle signing inputs must be an explicit key-id and 32-byte base64url public-key pair."
 }
 
 function Invoke-External {
@@ -120,7 +129,10 @@ $windowsReleaseConfigPath = Join-Path $root "config\\windows-release.seed.json"
 $runtimeArtifactsConfigPath = Join-Path $root "config\\runtime-artifacts.seed.json"
 $windowsReleaseConfig = Get-Content -Raw -LiteralPath $windowsReleaseConfigPath | ConvertFrom-Json
 $runtimeArtifactsConfig = Get-Content -Raw -LiteralPath $runtimeArtifactsConfigPath | ConvertFrom-Json
-
+if (($windowsReleaseConfig.PSObject.Properties.Name -contains "portable_zip") -and
+    -not [bool]$windowsReleaseConfig.portable_zip.supported) {
+  $SkipZip = $true
+}
 $appDirectory = Join-Path $root "apps\\windows_shell"
 $pubspecPath = Join-Path $appDirectory "pubspec.yaml"
 $version = Resolve-VersionFromPubspec -PubspecPath $pubspecPath
@@ -188,7 +200,9 @@ if (-not $SkipBuild) {
     "--release",
     "--dart-define=POKROV_APP_VERSION=$version",
     "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
-    "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey"
+    "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey",
+    "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
+    "--dart-define=POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64=$SupportSigningPublicKey"
   ) -WorkingDirectory $appDirectory
 }
 
@@ -281,11 +295,11 @@ AppVersion=$version
 AppPublisher=POKROV
 AppPublisherURL=https://pokrov.space/
 AppSupportURL=https://pokrov.space/support/
-DefaultDirName={localappdata}\Programs\POKROV
+DefaultDirName={autopf}\POKROV
 DefaultGroupName=POKROV
 DisableDirPage=no
 DisableProgramGroupPage=no
-PrivilegesRequired=lowest
+PrivilegesRequired=admin
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=$artifactRoot
@@ -304,7 +318,6 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Создать ярлык на рабочем столе"; GroupDescription: "Ярлыки:"; Flags: unchecked
-Name: "autostart"; Description: "Запускать POKROV вместе с Windows"; GroupDescription: "Запуск:"; Flags: unchecked
 
 [Files]
 Source: "$stagedBundleDirectory\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -314,14 +327,86 @@ Name: "{group}\POKROV"; Filename: "{app}\$($windowsReleaseConfig.binary_name)"; 
 Name: "{autodesktop}\POKROV"; Filename: "{app}\$($windowsReleaseConfig.binary_name)"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Registry]
-Root: HKCU; Subkey: "Software\Classes\pokrov"; ValueType: string; ValueName: ""; ValueData: "URL:POKROV acquisition continuation"; Flags: uninsdeletekey
-Root: HKCU; Subkey: "Software\Classes\pokrov"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
-Root: HKCU; Subkey: "Software\Classes\pokrov\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\$($windowsReleaseConfig.binary_name),0"
-Root: HKCU; Subkey: "Software\Classes\pokrov\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\$($windowsReleaseConfig.binary_name)"" ""%1"""
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "POKROV"; ValueData: """{app}\$($windowsReleaseConfig.binary_name)"""; Tasks: autostart; Flags: uninsdeletevalue
+Root: HKLM64; Subkey: "Software\space.pokrov\POKROV\Service"; ValueType: string; ValueName: "InstallOwnerSid"; ValueData: "{code:GetInstallOwnerSid}"; Flags: uninsdeletekey
 
 [Run]
-Filename: "{app}\$($windowsReleaseConfig.binary_name)"; WorkingDir: "{app}"; Description: "Запустить POKROV"; Flags: nowait postinstall skipifsilent
+Filename: "{sys}\sc.exe"; Parameters: "create POKROVService binPath= """"{app}\pokrov_service.exe"""" start= auto DisplayName= ""POKROV Service"""; Flags: runhidden waituntilterminated; Check: not ServiceExists
+Filename: "{sys}\sc.exe"; Parameters: "config POKROVService binPath= """"{app}\pokrov_service.exe"""" start= auto DisplayName= ""POKROV Service"""; Flags: runhidden waituntilterminated; Check: ServiceExists
+Filename: "{sys}\sc.exe"; Parameters: "description POKROVService ""POKROV privileged runtime service"""; Flags: runhidden waituntilterminated
+Filename: "{sys}\sc.exe"; Parameters: "failure POKROVService reset= 86400 actions= restart/5000/restart/15000/""/0"; Flags: runhidden waituntilterminated
+Filename: "{sys}\sc.exe"; Parameters: "start POKROVService"; Flags: runhidden waituntilterminated
+Filename: "{app}\$($windowsReleaseConfig.binary_name)"; WorkingDir: "{app}"; Description: "Запустить POKROV"; Flags: nowait postinstall skipifsilent runasoriginaluser
+
+[UninstallRun]
+Filename: "{sys}\sc.exe"; Parameters: "stop POKROVService"; Flags: runhidden waituntilterminated; RunOnceId: "StopPOKROVService"
+Filename: "{sys}\sc.exe"; Parameters: "delete POKROVService"; Flags: runhidden waituntilterminated; RunOnceId: "DeletePOKROVService"
+
+[Code]
+var
+  InstallOwnerSid: String;
+
+function IsSidCharacter(Value: Char): Boolean;
+begin
+  Result := ((Value >= '0') and (Value <= '9')) or (Value = '-');
+end;
+
+function ExtractOwnerSid(const Value: String): String;
+var
+  StartAt: Integer;
+  EndAt: Integer;
+begin
+  Result := '';
+  StartAt := Pos('S-1-5-21-', Value);
+  if StartAt = 0 then
+    exit;
+  EndAt := StartAt + Length('S-1-5-21-');
+  while (EndAt <= Length(Value)) and IsSidCharacter(Value[EndAt]) do
+    EndAt := EndAt + 1;
+  Result := Copy(Value, StartAt, EndAt - StartAt);
+  if (Length(Result) < 16) or (Length(Result) > 184) then
+    Result := '';
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  SidFile: String;
+  SidLines: TArrayOfString;
+  CommandLine: String;
+  ResultCode: Integer;
+begin
+  Result := '';
+  SidFile := ExpandConstant('{tmp}\pokrov-install-owner.sid');
+  DeleteFile(SidFile);
+  CommandLine := '/C ""' + ExpandConstant('{sys}\whoami.exe') +
+    '" /user /fo csv /nh > "' + SidFile + '""';
+  if not ExecAsOriginalUser(ExpandConstant('{sys}\cmd.exe'), CommandLine, '',
+      SW_HIDE, ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) or
+      not LoadStringsFromFile(SidFile, SidLines) or
+      (GetArrayLength(SidLines) = 0) then
+  begin
+    Result := 'Не удалось определить владельца установки POKROV.';
+    exit;
+  end;
+  InstallOwnerSid := ExtractOwnerSid(SidLines[0]);
+  if InstallOwnerSid = '' then
+  begin
+    Result := 'Windows вернула некорректный SID владельца установки POKROV.';
+    exit;
+  end;
+  Exec(ExpandConstant('{sys}\net.exe'), 'stop POKROVService /y', '', SW_HIDE,
+    ewWaitUntilTerminated, ResultCode);
+end;
+
+function GetInstallOwnerSid(Param: String): String;
+begin
+  Result := InstallOwnerSid;
+end;
+
+function ServiceExists(): Boolean;
+begin
+  Result := RegKeyExists(HKLM64,
+    'SYSTEM\CurrentControlSet\Services\POKROVService');
+end;
 "@
   Write-Utf8BomFile -Path $issPath -Content $iss
   if (Test-Path -LiteralPath $installerPath) {

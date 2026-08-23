@@ -13,16 +13,19 @@ if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 
-function Invoke-WorkspaceFlutterTests {
+function Invoke-WorkspaceFlutterGate {
   param(
     [Parameter(Mandatory = $true)]
     [string]$RelativePath
   )
 
-  Write-Host "Running flutter test in $RelativePath" -ForegroundColor Cyan
-  Push-Location (Join-Path $root $RelativePath)
+  $modulePath = Join-Path $root $RelativePath
+  $hasTests = Test-Path -LiteralPath (Join-Path $modulePath "test") -PathType Container
+  $flutterCommand = if ($hasTests) { "test" } else { "analyze" }
+  Write-Host "Running flutter $flutterCommand in $RelativePath" -ForegroundColor Cyan
+  Push-Location $modulePath
   try {
-    flutter test
+    flutter $flutterCommand
     if ($LASTEXITCODE -ne 0) {
       exit $LASTEXITCODE
     }
@@ -33,11 +36,20 @@ function Invoke-WorkspaceFlutterTests {
 
 function Invoke-AndroidGradleUnitTests {
   $androidProjectPath = Join-Path $root "apps\android_shell\android"
-  $gradleWrapper = Join-Path $androidProjectPath "gradlew.bat"
+  $gradleWrapperName = if ($IsWindows) { "gradlew.bat" } else { "gradlew" }
+  $gradleWrapper = Join-Path $androidProjectPath $gradleWrapperName
 
   if (-not (Test-Path $gradleWrapper)) {
     Write-Error "Android Gradle wrapper not found at $gradleWrapper"
     exit 1
+  }
+
+  if (-not $IsWindows) {
+    & chmod +x $gradleWrapper
+    if ($LASTEXITCODE -ne 0) {
+      Write-Error "Failed to mark Android Gradle wrapper executable: $gradleWrapper"
+      exit $LASTEXITCODE
+    }
   }
 
   Write-Host "Running Android Gradle unit tests in apps\android_shell" -ForegroundColor Cyan
@@ -47,7 +59,7 @@ function Invoke-AndroidGradleUnitTests {
     # also runs unit tests shipped by Flutter plugins (for example
     # video_player_android) and can fail inside their own Jetifier/test
     # classpath without compiling or exercising any POKROV source.
-    & $gradleWrapper :app:testDebugUnitTest
+    & $gradleWrapper :app:testDirectDebugUnitTest :app:testStoreDebugUnitTest
     if ($LASTEXITCODE -ne 0) {
       exit $LASTEXITCODE
     }
@@ -57,6 +69,13 @@ function Invoke-AndroidGradleUnitTests {
 }
 
 $flutterTestPackages = @(
+  "packages\\core_domain",
+  "packages\\platform_contracts",
+  "packages\\observability_contracts",
+  "packages\\observability_runtime",
+  "packages\\diagnostics_collectors",
+  "packages\\support_bundle",
+  "packages\\support_context",
   "packages\\app_shell",
   "packages\\runtime_engine",
   "apps\\android_shell",
@@ -64,7 +83,7 @@ $flutterTestPackages = @(
 )
 
 foreach ($relativePath in $flutterTestPackages) {
-  Invoke-WorkspaceFlutterTests -RelativePath $relativePath
+  Invoke-WorkspaceFlutterGate -RelativePath $relativePath
 }
 
 Invoke-AndroidGradleUnitTests

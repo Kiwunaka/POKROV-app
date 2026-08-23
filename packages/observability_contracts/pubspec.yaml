@@ -1,0 +1,11 @@
+name: pokrov_observability_contracts
+description: Versioned operational observability and error-code snapshots for POKROV clients.
+publish_to: none
+version: 1.0.0
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

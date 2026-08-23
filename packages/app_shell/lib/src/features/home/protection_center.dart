@@ -58,6 +58,7 @@ class _ProtectionCenterData {
     required this.httpsProbe,
     required this.history,
     required this.shortcuts,
+    required this.checkedAt,
   });
 
   final RuntimeSnapshot? snapshot;
@@ -65,6 +66,7 @@ class _ProtectionCenterData {
   final PokrovHttpsProbeResult httpsProbe;
   final List<PokrovProtectionEvent> history;
   final List<PokrovPostConnectShortcut> shortcuts;
+  final DateTime? checkedAt;
 }
 
 enum _ProtectionCheckTone { success, warning, danger, unknown }
@@ -93,105 +95,192 @@ class _ProtectionCenterSheet extends StatefulWidget {
     required this.onAddShortcut,
     required this.onRemoveShortcut,
     required this.onOpenShortcut,
+    required this.onOpenSupport,
   });
 
   final _ProtectionCenterData initialData;
   final Future<_ProtectionCenterData> Function() onRefresh;
-  final Future<_ProtectionCenterData> Function() onRepair;
+  final Future<_ProtectionCenterData> Function(
+    ValueChanged<_ProtectionRepairStep> onStep,
+  ) onRepair;
   final String? Function(String label, String href) onAddShortcut;
   final ValueChanged<String> onRemoveShortcut;
   final Future<bool> Function(PokrovPostConnectShortcut) onOpenShortcut;
+  final VoidCallback onOpenSupport;
 
   @override
   State<_ProtectionCenterSheet> createState() => _ProtectionCenterSheetState();
 }
 
-class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
-  late _ProtectionCenterData _data = widget.initialData;
+enum _ProtectionRepairStep {
+  stopOldConnection,
+  refreshProfile,
+  verifyProtection,
+}
+
+enum _ProtectionRepairOutcome { succeeded, needsSupport }
+
+class _ProtectionCenterController extends ChangeNotifier {
+  _ProtectionCenterController({
+    required _ProtectionCenterData initialData,
+    required Future<_ProtectionCenterData> Function() onRefresh,
+    required Future<_ProtectionCenterData> Function(
+      ValueChanged<_ProtectionRepairStep> onStep,
+    ) onRepair,
+  })  : _data = initialData,
+        _onRefresh = onRefresh,
+        _onRepair = onRepair;
+
+  final Future<_ProtectionCenterData> Function() _onRefresh;
+  final Future<_ProtectionCenterData> Function(
+    ValueChanged<_ProtectionRepairStep> onStep,
+  ) _onRepair;
+
+  _ProtectionCenterData _data;
   bool _refreshing = true;
   bool _repairing = false;
+  bool _detailsExpanded = false;
   String? _error;
+  _ProtectionRepairStep? _repairStep;
+  _ProtectionRepairOutcome? _repairOutcome;
+  bool _disposed = false;
+
+  _ProtectionCenterData get data => _data;
+  bool get refreshing => _refreshing;
+  bool get repairing => _repairing;
+  bool get detailsExpanded => _detailsExpanded;
+  String? get error => _error;
+  _ProtectionRepairStep? get repairStep => _repairStep;
+  _ProtectionRepairOutcome? get repairOutcome => _repairOutcome;
+
+  void toggleDetails() {
+    _detailsExpanded = !_detailsExpanded;
+    _notify();
+  }
+
+  void showError(String message) {
+    _error = message;
+    _notify();
+  }
+
+  Future<void> refresh() async {
+    _refreshing = true;
+    _notify();
+    try {
+      _data = await _onRefresh();
+      _error = null;
+    } on _ProtectionRepairBusy {
+      _error = 'POKROV уже выполняет действие. Дождитесь завершения.';
+    } on Object {
+      _error = 'Не удалось обновить проверки.';
+    } finally {
+      _refreshing = false;
+      _notify();
+    }
+  }
+
+  Future<void> repair() async {
+    if (_repairing || _refreshing) {
+      return;
+    }
+    _repairing = true;
+    _repairStep = _ProtectionRepairStep.stopOldConnection;
+    _repairOutcome = null;
+    _error = null;
+    _notify();
+    try {
+      _data = await _onRepair((step) {
+        _repairStep = step;
+        _notify();
+      });
+      _repairOutcome = _data.snapshot?.isCleanlyHealthy ?? false
+          ? _ProtectionRepairOutcome.succeeded
+          : _ProtectionRepairOutcome.needsSupport;
+    } on _ProtectionRepairFailed catch (failure) {
+      _data = failure.data;
+      _repairOutcome = _ProtectionRepairOutcome.needsSupport;
+      _error =
+          'Восстановление не завершилось. Показано состояние после остановки туннеля.';
+    } on Object {
+      _repairOutcome = _ProtectionRepairOutcome.needsSupport;
+      _error =
+          'Восстановление не завершилось. Не удалось получить свежие проверки.';
+    } finally {
+      _repairing = false;
+      _repairStep = null;
+      _notify();
+    }
+  }
+
+  void _notify() {
+    if (!_disposed) {
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+}
+
+class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
+  late final _ProtectionCenterController _controller;
 
   @override
   void initState() {
     super.initState();
-    unawaited(_refresh());
+    _controller = _ProtectionCenterController(
+      initialData: widget.initialData,
+      onRefresh: widget.onRefresh,
+      onRepair: widget.onRepair,
+    )..addListener(_onControllerChanged);
+    unawaited(_controller.refresh());
   }
 
-  Future<void> _refresh() async {
-    if (!_refreshing) {
-      setState(() {
-        _refreshing = true;
-      });
-    }
-    try {
-      final next = await widget.onRefresh();
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _data = next;
-        _error = null;
-      });
-    } on _ProtectionRepairBusy {
-      if (mounted) {
-        setState(() {
-          _error = 'POKROV уже выполняет действие. Дождитесь завершения.';
-        });
-      }
-    } on Object {
-      if (mounted) {
-        setState(() {
-          _error = 'Не удалось обновить проверки.';
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _refreshing = false;
-        });
-      }
+  void _onControllerChanged() {
+    if (mounted) {
+      setState(() {});
     }
   }
 
-  Future<void> _repair() async {
-    if (_repairing || _refreshing) {
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_onControllerChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  Future<void> _confirmRepair() async {
+    if (_controller.repairing || _controller.refreshing) {
       return;
     }
     PokrovHaptics.tap();
-    setState(() {
-      _repairing = true;
-      _error = null;
-    });
-    try {
-      final next = await widget.onRepair();
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _data = next;
-      });
-    } on _ProtectionRepairFailed catch (failure) {
-      if (mounted) {
-        setState(() {
-          _data = failure.data;
-          _error =
-              'Восстановление не завершилось. Показано состояние после остановки туннеля.';
-        });
-      }
-    } on Object {
-      if (mounted) {
-        setState(() {
-          _error =
-              'Восстановление не завершилось. Не удалось получить свежие проверки.';
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _repairing = false;
-        });
-      }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        key: const ValueKey('protection-repair-confirmation'),
+        title: const Text('Проверить и восстановить?'),
+        content: const Text(
+          'POKROV переподключит защиту. Интернет может пропасть на несколько секунд. Локация и правила сохранятся.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            key: const ValueKey('protection-repair-confirm'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Переподключить'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await _controller.repair();
     }
   }
 
@@ -242,32 +331,30 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
     }
     final error = widget.onAddShortcut(label, href);
     if (error != null) {
-      setState(() {
-        _error = error;
-      });
+      _controller.showError(error);
       return;
     }
-    await _refresh();
+    await _controller.refresh();
   }
 
   Future<void> _removeShortcut(String id) async {
     widget.onRemoveShortcut(id);
-    await _refresh();
+    await _controller.refresh();
   }
 
   Future<void> _openShortcut(PokrovPostConnectShortcut shortcut) async {
     final opened = await widget.onOpenShortcut(shortcut);
     if (!opened && mounted) {
-      setState(() {
-        _error = 'Не удалось открыть ярлык.';
-      });
+      _controller.showError('Не удалось открыть ярлык.');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    final checks = _protectionChecks(_data);
+    final data = _controller.data;
+    final checks = _protectionChecks(data);
+    final summary = _protectionSummary(data, checks);
     return SafeArea(
       top: false,
       child: FractionallySizedBox(
@@ -288,8 +375,10 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
                   IconButton(
                     key: const ValueKey('protection-refresh-action'),
                     tooltip: 'Обновить проверки',
-                    onPressed: _refreshing || _repairing ? null : _refresh,
-                    icon: _refreshing
+                    onPressed: _controller.refreshing || _controller.repairing
+                        ? null
+                        : _controller.refresh,
+                    icon: _controller.refreshing
                         ? const SizedBox.square(
                             dimension: 20,
                             child: CupertinoActivityIndicator(radius: 9),
@@ -307,19 +396,23 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
                     ),
               ),
               const SizedBox(height: 16),
+              _ProtectionSummaryCard(summary: summary),
+              const SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
                   key: const ValueKey('protection-repair-action'),
-                  onPressed: _refreshing || _repairing ? null : _repair,
-                  icon: _repairing
+                  onPressed: _controller.refreshing || _controller.repairing
+                      ? null
+                      : _confirmRepair,
+                  icon: _controller.repairing
                       ? const SizedBox.square(
                           dimension: 18,
                           child: CupertinoActivityIndicator(radius: 8),
                         )
                       : const Icon(Icons.build_circle_outlined),
                   label: Text(
-                    _repairing
+                    _controller.repairing
                         ? 'Восстанавливаем…'
                         : 'Проверить и восстановить',
                   ),
@@ -333,44 +426,81 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
                       height: 1.35,
                     ),
               ),
+              if (_controller.repairing) ...[
+                const SizedBox(height: 12),
+                _ProtectionRepairProgress(current: _controller.repairStep),
+              ],
+              if (_controller.repairOutcome != null) ...[
+                const SizedBox(height: 12),
+                _ProtectionRepairOutcomeCard(
+                  outcome: _controller.repairOutcome!,
+                  onOpenSupport: widget.onOpenSupport,
+                ),
+              ],
               const SizedBox(height: 16),
-              Container(
-                key: const ValueKey('protection-checks-group'),
-                decoration: BoxDecoration(
-                  color: p.surface,
-                  borderRadius: PokrovRadii.card,
-                  border: Border.all(color: p.line),
+              OutlinedButton.icon(
+                key: const ValueKey('protection-details-toggle'),
+                onPressed: _controller.toggleDetails,
+                icon: Icon(
+                  _controller.detailsExpanded
+                      ? Icons.expand_less_rounded
+                      : Icons.expand_more_rounded,
                 ),
-                child: Column(
-                  children: [
-                    for (final (index, check) in checks.indexed) ...[
-                      _ProtectionCheckRow(check: check),
-                      if (index != checks.length - 1)
-                        Divider(height: 1, indent: 56, color: p.line),
+                label: Text(
+                  _controller.detailsExpanded
+                      ? 'Скрыть детали'
+                      : 'Показать детали',
+                ),
+              ),
+              if (_controller.detailsExpanded) ...[
+                const SizedBox(height: 12),
+                _ProtectionDetailsMeta(data: data),
+                const SizedBox(height: 12),
+                Container(
+                  key: const ValueKey('protection-checks-group'),
+                  decoration: BoxDecoration(
+                    color: p.surface,
+                    borderRadius: PokrovRadii.card,
+                    border: Border.all(color: p.line),
+                  ),
+                  child: Column(
+                    children: [
+                      for (final (index, check) in checks.indexed) ...[
+                        _ProtectionCheckRow(check: check),
+                        if (index != checks.length - 1)
+                          Divider(height: 1, indent: 56, color: p.line),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              if (_data.liveStats.available) ...[
+                if (data.liveStats.available) ...[
+                  const SizedBox(height: 14),
+                  _ProtectionLiveStatsCard(stats: data.liveStats),
+                ],
                 const SizedBox(height: 14),
-                _ProtectionLiveStatsCard(stats: _data.liveStats),
+                _PostConnectShortcutsCard(
+                  shortcuts: data.shortcuts,
+                  connected: data.snapshot?.phase == RuntimePhase.running,
+                  onAdd: _addShortcut,
+                  onRemove: _removeShortcut,
+                  onOpen: _openShortcut,
+                ),
+                if (data.history.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  _ProtectionHistoryCard(events: data.history),
+                ],
+                const SizedBox(height: 10),
+                TextButton.icon(
+                  key: const ValueKey('protection-open-support'),
+                  onPressed: widget.onOpenSupport,
+                  icon: const Icon(Icons.support_agent_rounded),
+                  label: const Text('Поддержка и диагностика'),
+                ),
               ],
-              const SizedBox(height: 14),
-              _PostConnectShortcutsCard(
-                shortcuts: _data.shortcuts,
-                connected: _data.snapshot?.phase == RuntimePhase.running,
-                onAdd: _addShortcut,
-                onRemove: _removeShortcut,
-                onOpen: _openShortcut,
-              ),
-              if (_data.history.isNotEmpty) ...[
-                const SizedBox(height: 14),
-                _ProtectionHistoryCard(events: _data.history),
-              ],
-              if (_error != null) ...[
+              if (_controller.error != null) ...[
                 const SizedBox(height: 12),
                 Text(
-                  _error!,
+                  _controller.error!,
                   key: const ValueKey('protection-center-error'),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: p.danger,
@@ -380,6 +510,245 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+enum _ProtectionSummaryTone { success, warning, neutral }
+
+class _ProtectionSummary {
+  const _ProtectionSummary({
+    required this.title,
+    required this.detail,
+    required this.tone,
+  });
+
+  final String title;
+  final String detail;
+  final _ProtectionSummaryTone tone;
+}
+
+_ProtectionSummary _protectionSummary(
+  _ProtectionCenterData data,
+  List<_ProtectionCheck> checks,
+) {
+  final snapshot = data.snapshot;
+  if (snapshot?.isCleanlyHealthy ?? false) {
+    return const _ProtectionSummary(
+      title: 'Защита работает',
+      detail: 'Туннель, DNS и выход через VPN подтверждены.',
+      tone: _ProtectionSummaryTone.success,
+    );
+  }
+  if (snapshot?.phase != RuntimePhase.running) {
+    return const _ProtectionSummary(
+      title: 'Защита выключена',
+      detail: 'Подключитесь, чтобы POKROV выполнил проверки.',
+      tone: _ProtectionSummaryTone.neutral,
+    );
+  }
+  final hasFailure = checks.any(
+    (check) =>
+        check.tone == _ProtectionCheckTone.danger ||
+        check.tone == _ProtectionCheckTone.warning,
+  );
+  return _ProtectionSummary(
+    title: hasFailure ? 'Защита требует внимания' : 'Проверяем защиту',
+    detail: hasFailure
+        ? 'Одна из проверок не подтверждена. Откройте детали или запустите восстановление.'
+        : 'Туннель запущен, ждём свежие результаты DNS и выхода через VPN.',
+    tone: hasFailure
+        ? _ProtectionSummaryTone.warning
+        : _ProtectionSummaryTone.neutral,
+  );
+}
+
+class _ProtectionSummaryCard extends StatelessWidget {
+  const _ProtectionSummaryCard({required this.summary});
+
+  final _ProtectionSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final color = switch (summary.tone) {
+      _ProtectionSummaryTone.success => p.success,
+      _ProtectionSummaryTone.warning => p.warning,
+      _ProtectionSummaryTone.neutral => p.muted,
+    };
+    return Semantics(
+      container: true,
+      label: '${summary.title}. ${summary.detail}',
+      child: Container(
+        key: const ValueKey('protection-summary'),
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.09),
+          borderRadius: PokrovRadii.card,
+          border: Border.all(color: color.withValues(alpha: 0.28)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              summary.title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(summary.detail),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProtectionRepairProgress extends StatelessWidget {
+  const _ProtectionRepairProgress({required this.current});
+
+  final _ProtectionRepairStep? current;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final currentIndex = current?.index ?? 0;
+    const labels = <String>[
+      'Останавливаем старое соединение',
+      'Обновляем профиль',
+      'Проверяем защиту',
+    ];
+    return Container(
+      key: const ValueKey('protection-repair-progress'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: PokrovRadii.card,
+        border: Border.all(color: p.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Восстановление', style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 10),
+          for (final (index, label) in labels.indexed)
+            Padding(
+              padding: EdgeInsets.only(top: index == 0 ? 0 : 8),
+              child: Row(
+                children: [
+                  Icon(
+                    index < currentIndex
+                        ? Icons.check_circle_rounded
+                        : index == currentIndex
+                            ? Icons.radio_button_checked_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                    color: index <= currentIndex ? p.accent : p.muted,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(child: Text('${index + 1}. $label')),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProtectionRepairOutcomeCard extends StatelessWidget {
+  const _ProtectionRepairOutcomeCard({
+    required this.outcome,
+    required this.onOpenSupport,
+  });
+
+  final _ProtectionRepairOutcome outcome;
+  final VoidCallback onOpenSupport;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final succeeded = outcome == _ProtectionRepairOutcome.succeeded;
+    final color = succeeded ? p.success : p.warning;
+    return Container(
+      key: const ValueKey('protection-repair-outcome'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.09),
+        borderRadius: PokrovRadii.card,
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            succeeded ? 'Защита восстановлена' : 'Нужна помощь',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            succeeded
+                ? 'Туннель, DNS и выход через VPN подтверждены.'
+                : 'Откройте поддержку: диагностические данные будут показаны перед отправкой.',
+          ),
+          if (!succeeded) ...[
+            const SizedBox(height: 8),
+            TextButton.icon(
+              key: const ValueKey('protection-repair-support'),
+              onPressed: onOpenSupport,
+              icon: const Icon(Icons.support_agent_rounded),
+              label: const Text('Открыть поддержку'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ProtectionDetailsMeta extends StatelessWidget {
+  const _ProtectionDetailsMeta({required this.data});
+
+  final _ProtectionCenterData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final location = <String>[
+      data.liveStats.serverCountry,
+      data.liveStats.serverCode,
+    ].where((value) => value.trim().isNotEmpty).join(' · ');
+    final checkedAt = data.checkedAt?.toLocal();
+    final checkedLabel = checkedAt == null
+        ? 'Ещё не обновлялась'
+        : '${checkedAt.hour.toString().padLeft(2, '0')}:${checkedAt.minute.toString().padLeft(2, '0')}';
+    return Container(
+      key: const ValueKey('protection-details-meta'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: p.surfaceMuted,
+        borderRadius: PokrovRadii.card,
+      ),
+      child: Wrap(
+        spacing: 24,
+        runSpacing: 8,
+        children: [
+          _ProtectionMetric(
+            label: 'Локация',
+            value: location.isEmpty ? 'Не определена' : location,
+          ),
+          _ProtectionMetric(label: 'Последняя проверка', value: checkedLabel),
+        ],
       ),
     );
   }

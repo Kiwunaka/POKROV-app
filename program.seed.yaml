@@ -73,6 +73,18 @@ tracks:
   - id: platform_contracts
     path: packages/platform_contracts
     status: runnable_seed_package
+  - id: observability_contracts
+    path: packages/observability_contracts
+    status: runnable_seed_package
+  - id: observability_runtime
+    path: packages/observability_runtime
+    status: runnable_seed_package
+  - id: diagnostics_collectors
+    path: packages/diagnostics_collectors
+    status: runnable_seed_package
+  - id: support_bundle
+    path: packages/support_bundle
+    status: runnable_seed_package
   - id: support_context
     path: packages/support_context
     status: runnable_seed_package

@@ -1,0 +1,98 @@
+{
+  "contract_id": "pokrov.client-state-migrations.v1",
+  "schema_version": 1,
+  "state": "PRE_CANDIDATE_LOCAL",
+  "source_product_range": ">=1.1.0 <1.2.0",
+  "target": {
+    "product_version": "1.2.0",
+    "android_windows_build_number": 30
+  },
+  "fixture_policy": {
+    "kind": "synthetic_supported_1.1.x_shape",
+    "production_data_forbidden": true,
+    "fixture_hash_required": true
+  },
+  "migrations": [
+    {
+      "id": "app_first_session_v0_to_v1",
+      "owner": "app_shell_bootstrap",
+      "platforms": ["android", "windows"],
+      "source_schema": "unversioned_1.1.x",
+      "target_schema": "schema_version_1",
+      "fixture": "packages/app_shell/test/fixtures/app-first-session-v0.json",
+      "fixture_sha256": "94677222fc2c51b7deaa36187b71d69fcf2ff1bd2f11d102f8518a3bb472515c",
+      "migration_behavior": "idempotent_atomic_rewrite_without_plaintext_session_token",
+      "rollback_policy": "recover_bak_or_preserve_original_on_failure",
+      "test_file": "packages/app_shell/test/app_first_runtime_bootstrap_test.dart",
+      "test_name": "migrates the unversioned bootstrap fixture exactly once"
+    },
+    {
+      "id": "secure_session_credential_v0_to_v1",
+      "owner": "app_shell_secure_storage",
+      "platforms": ["android", "windows"],
+      "source_schema": "raw_credential_1.1.x",
+      "target_schema": "credential_envelope_version_1",
+      "fixture": "packages/app_shell/test/fixtures/secure-session-v0.txt",
+      "fixture_sha256": "7043aa088b77f5e6eab2e81c23fda3fdc72d38c4b27c1ee5793c477e39664a6b",
+      "migration_behavior": "idempotent_secure_storage_envelope_rewrite",
+      "rollback_policy": "preserve_original_credential_on_write_failure",
+      "test_file": "packages/app_shell/test/app_first_runtime_bootstrap_test.dart",
+      "test_name": "secure session store migrates a legacy raw credential idempotently"
+    },
+    {
+      "id": "client_experience_v0_to_v1",
+      "owner": "app_shell_client_experience",
+      "platforms": ["android", "windows"],
+      "source_schema": "unversioned_1.1.x",
+      "target_schema": "version_1",
+      "fixture": "packages/app_shell/test/fixtures/client-experience-v0.json",
+      "fixture_sha256": "8b0b0bbe4d2bb08eb728b622f77d2c259ca445935caa5a8d9f95b0432474ebe1",
+      "migration_behavior": "idempotent_atomic_rewrite",
+      "rollback_policy": "reject_future_schema_without_overwrite",
+      "test_file": "packages/app_shell/test/client_experience_store_test.dart",
+      "test_name": "migrates unversioned client experience fixture exactly once"
+    },
+    {
+      "id": "routing_preferences_system_proxy_to_tun",
+      "owner": "app_shell_routing_preferences",
+      "platforms": ["windows"],
+      "source_schema": "windows_system_proxy_1.1.x",
+      "target_schema": "windows_service_tun_1.2.0",
+      "fixture": "packages/app_shell/test/fixtures/routing-preferences-v0.json",
+      "fixture_sha256": "32c2ab3a7af2dcea19267b3d62fde4e9ec79d43161b621375a0524bdfc15b76a",
+      "migration_behavior": "fail_closed_map_to_service_tun_without_system_proxy",
+      "rollback_policy": "retain_last_known_serialized_preferences_until_successful_write",
+      "test_file": "packages/app_shell/test/client_routing_preferences_test.dart",
+      "test_name": "legacy Windows system-proxy preference migrates to service TUN"
+    },
+    {
+      "id": "android_runtime_profile_v0_to_v1",
+      "owner": "android_runtime_profile_store",
+      "platforms": ["android"],
+      "source_schema": "unversioned_1.1.x_properties",
+      "target_schema": "schema_version_1",
+      "fixture": "apps/android_shell/android/app/src/test/resources/runtime-profile-v0.properties",
+      "fixture_sha256": "7ad757558732838fda240580d9cc7c1624e54b4071a30994a4ed8636be2fce36",
+      "migration_behavior": "idempotent_fail_closed_profile_rewrite",
+      "rollback_policy": "reject_future_or_malformed_schema_without_rewrite",
+      "test_file": "apps/android_shell/android/app/src/test/kotlin/space/pokrov/pokrov_android_shell/AndroidRuntimeProfileMigrationTest.kt",
+      "test_name": "legacyFixtureMigratesIdempotentlyToCurrentSchema"
+    }
+  ],
+  "non_migrating_state": [
+    {
+      "id": "android_update_cache",
+      "owner": "android_direct_updater",
+      "authoritative": false,
+      "policy": "discard_partial_or_invalid_cache_and_redownload_signed_artifact",
+      "test_file": "apps/android_shell/android/app/src/test/kotlin/space/pokrov/pokrov_android_shell/AndroidClientUpdateInstallerTest.kt"
+    },
+    {
+      "id": "windows_runtime_recovery_journal",
+      "owner": "windows_runtime_service",
+      "authoritative": true,
+      "policy": "finish_durable_rollback_before_accepting_new_runtime_transaction",
+      "test_file": "apps/windows_shell/windows/service/service_runtime_test.cpp"
+    }
+  ]
+}

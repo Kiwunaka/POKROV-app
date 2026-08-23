@@ -1,0 +1,17 @@
+name: pokrov_observability_runtime
+description: Bounded privacy-enforced local operational event pipeline for POKROV clients.
+publish_to: none
+version: 1.0.0
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  crypto: ^3.0.7
+  path: ^1.9.1
+  pokrov_observability_contracts:
+    path: ../observability_contracts
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

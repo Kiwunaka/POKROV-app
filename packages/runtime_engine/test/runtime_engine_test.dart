@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
@@ -14,6 +15,23 @@ void _expectNoSensitiveRuntimeDetail(String value) {
   expect(value, isNot(contains('203.0.113.17:443')));
   expect(value, isNot(contains('9f4a4b2c-7e10-4e9b-9df3-1a2b3c4d5e6f')));
   expect(value, isNot(contains('runtime-test-token')));
+}
+
+String _coreCapabilityDescriptor({
+  int schemaVersion = 1,
+  int desktopAbi = 2,
+  int eventAbi = 1,
+  Set<String> capabilities = CoreRuntimeCompatibility.supportedCapabilities,
+  Set<String> lifecycleEvents =
+      CoreRuntimeCompatibility.supportedLifecycleEvents,
+}) {
+  return jsonEncode(<String, Object?>{
+    'schema_version': schemaVersion,
+    'desktop_abi': desktopAbi,
+    'event_abi': eventAbi,
+    'capabilities': capabilities.toList()..sort(),
+    'lifecycle_events': lifecycleEvents.toList(),
+  });
 }
 
 class _FakeDesktopBindings implements DesktopRuntimeBindings {
@@ -88,12 +106,93 @@ RuntimeSnapshot _runningSnapshot({
     hostHealth: RuntimeHostHealth.healthy,
     dnsState: RuntimeDiagnosticState.healthy,
     uplinkState: RuntimeDiagnosticState.healthy,
+    dnsReady: true,
     coreEgressValidated: coreEgressValidated,
   );
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('desktop ABI 2 retains the released marker-only compatibility lane', () {
+    final decision = CoreRuntimeCompatibility.negotiate(
+      desktopAbi: 2,
+    );
+
+    expect(decision.mode, CoreRuntimeCompatibilityMode.legacyAbi2);
+    expect(decision.contract, isNull);
+  });
+
+  test('desktop ABI 2 negotiates the exact capability and event contract', () {
+    final decision = CoreRuntimeCompatibility.negotiate(
+      desktopAbi: 2,
+      descriptorJson: _coreCapabilityDescriptor(),
+    );
+
+    expect(decision.mode, CoreRuntimeCompatibilityMode.negotiated);
+    expect(decision.contract?.schemaVersion, 1);
+    expect(decision.contract?.eventAbi, 1);
+    expect(
+      decision.contract?.lifecycleEvents,
+      CoreRuntimeCompatibility.supportedLifecycleEvents,
+    );
+    expect(
+      RuntimeLifecycleEventType.values.map((event) => event.wireName).toSet(),
+      CoreRuntimeCompatibility.supportedLifecycleEvents,
+    );
+  });
+
+  test('desktop ABI negotiation fails closed on future contract versions', () {
+    expect(
+      () => CoreRuntimeCompatibility.negotiate(
+        desktopAbi: 3,
+        descriptorJson: _coreCapabilityDescriptor(desktopAbi: 3),
+      ),
+      throwsA(isA<UnsupportedError>()),
+    );
+    expect(
+      () => CoreRuntimeCompatibility.negotiate(
+        desktopAbi: 2,
+        descriptorJson: _coreCapabilityDescriptor(schemaVersion: 2),
+      ),
+      throwsA(isA<UnsupportedError>()),
+    );
+    expect(
+      () => CoreRuntimeCompatibility.negotiate(
+        desktopAbi: 2,
+        descriptorJson: _coreCapabilityDescriptor(eventAbi: 2),
+      ),
+      throwsA(isA<UnsupportedError>()),
+    );
+  });
+
+  test(
+      'desktop ABI negotiation rejects missing capabilities and unknown events',
+      () {
+    expect(
+      () => CoreRuntimeCompatibility.negotiate(
+        desktopAbi: 2,
+        descriptorJson: _coreCapabilityDescriptor(
+          capabilities: <String>{
+            ...CoreRuntimeCompatibility.supportedCapabilities,
+          }..remove('secure_profile_file'),
+        ),
+      ),
+      throwsA(isA<UnsupportedError>()),
+    );
+    expect(
+      () => CoreRuntimeCompatibility.negotiate(
+        desktopAbi: 2,
+        descriptorJson: _coreCapabilityDescriptor(
+          lifecycleEvents: <String>{
+            ...CoreRuntimeCompatibility.supportedLifecycleEvents,
+            'future_unknown_event',
+          },
+        ),
+      ),
+      throwsA(isA<UnsupportedError>()),
+    );
+  });
 
   test('parses the managed-profile free access contract conservatively', () {
     final pending = FreeProfileAccess.tryParse(
@@ -146,7 +245,7 @@ void main() {
     expect(unknown?.needsConservativePresentation, isTrue);
   });
 
-  test('Android clean health requires selected-outbound egress proof', () {
+  test('clean health requires DNS and selected-outbound egress proof', () {
     final pending = _runningSnapshot(
       hostPlatform: HostPlatform.android,
     );
@@ -158,7 +257,30 @@ void main() {
       hostPlatform: HostPlatform.android,
       coreEgressValidated: true,
     );
-    final windows = _runningSnapshot(hostPlatform: HostPlatform.windows);
+    final windows = _runningSnapshot(
+      hostPlatform: HostPlatform.windows,
+      coreEgressValidated: true,
+    );
+    final windowsWithoutProof =
+        _runningSnapshot(hostPlatform: HostPlatform.windows);
+    final explicitDnsFailure = RuntimeSnapshot(
+      hostPlatform: HostPlatform.windows,
+      lane: RuntimeLane.desktopFfi,
+      phase: RuntimePhase.running,
+      artifactDirectory: '/host/runtime',
+      coreBinaryPath: '/host/runtime/pokrov-core',
+      helperBinaryPath: null,
+      stagedConfigPath: '/host/runtime/pokrov-seed-runtime.json',
+      supportsLiveConnect: true,
+      canInitialize: true,
+      canConnect: true,
+      message: 'Runtime service is running.',
+      hostHealth: RuntimeHostHealth.healthy,
+      dnsState: RuntimeDiagnosticState.healthy,
+      uplinkState: RuntimeDiagnosticState.healthy,
+      dnsReady: false,
+      coreEgressValidated: true,
+    );
 
     expect(pending.isCoreEgressValidationPending, isTrue);
     expect(pending.hasDegradedHostDiagnostics, isFalse);
@@ -176,6 +298,10 @@ void main() {
     expect(windows.requiresCoreEgressValidation, isFalse);
     expect(windows.isCleanlyHealthy, isTrue);
     expect(windows.phaseLabel, 'Подключено');
+    expect(windowsWithoutProof.isCleanlyHealthy, isFalse);
+    expect(windowsWithoutProof.phaseLabel, 'Проверяем выход через VPN');
+    expect(explicitDnsFailure.isCleanlyHealthy, isFalse);
+    expect(explicitDnsFailure.phaseLabel, 'Подключено с предупреждением');
   });
 
   test('mobile lane reports artifact-missing without a synced core asset',
@@ -203,9 +329,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\android')
+    final platformDirectory = Directory(p.join(root.path, 'android'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.aar')
+    File(p.join(platformDirectory.path, 'pokrov-core.aar'))
         .writeAsStringSync('stub');
 
     final engine = createRuntimeEngine(
@@ -382,6 +508,224 @@ void main() {
     });
     expect(rules[1]['ip_is_private'], isTrue);
   });
+
+  test('mobile lane accepts only the current AWG2 lab contract', () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
+    Map<Object?, Object?>? stagedArguments;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.stageManagedProfile') {
+        stagedArguments = Map<Object?, Object?>.from(call.arguments as Map);
+        return <String, Object?>{
+          'phase': 'configStaged',
+          'artifactDirectory': '/host/runtime',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+          'stagedConfigPath': '/host/runtime/awg2.json',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'message': 'Managed profile staged on the host bridge.',
+        };
+      }
+      return null;
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.android);
+    await engine.stageManagedProfile(
+      ManagedProfilePayload(
+        profileName: 'awg2-lab',
+        configPayload: jsonEncode(<String, Object?>{
+          'endpoints': <Object?>[
+            <String, Object?>{
+              'type': 'awg',
+              'tag': 'awg2-lab',
+              'useIntegratedTun': false,
+            },
+          ],
+          'route': <String, Object?>{'final': 'awg2-lab'},
+          '_meta': <String, Object?>{
+            'transport_contract': <String, Object?>{
+              'id': 'pokrov.awg2.endpoint.v1',
+              'sha256':
+                  '3beb57eccd8d5e15ce7466496208fe1945f353b3417be58644911d1ded125a83',
+              'profile': 'awg2_lab',
+              'state': 'enabled',
+              'generation': 'awg2-lab-v1',
+            },
+          },
+        }),
+        materializedForRuntime: true,
+      ),
+    );
+
+    final stagedConfig =
+        jsonDecode(stagedArguments?['configPayload']! as String)
+            as Map<String, dynamic>;
+    expect(
+      (stagedConfig['endpoints'] as List<dynamic>).single,
+      containsPair('type', 'awg'),
+    );
+    expect(stagedConfig, isNot(contains('_meta')));
+  });
+
+  test('Android and Windows keep AWG2 inside existing outer route modes',
+      () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final staged = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.stageManagedProfile') {
+        final arguments = Map<Object?, Object?>.from(call.arguments as Map);
+        final config = jsonDecode(arguments['configPayload']! as String)
+            as Map<String, dynamic>;
+        final endpoint = (config['endpoints'] as List<dynamic>).single
+            as Map<String, dynamic>;
+        staged.add(
+          '${arguments['routeMode']}:${endpoint['type']}:${endpoint['useIntegratedTun']}',
+        );
+        return <String, Object?>{
+          'phase': 'configStaged',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'message': 'staged',
+        };
+      }
+      return null;
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+    final configPayload = jsonEncode(<String, Object?>{
+      'endpoints': <Object?>[
+        <String, Object?>{
+          'type': 'awg',
+          'tag': 'awg2-lab',
+          'useIntegratedTun': false,
+        },
+      ],
+      'route': <String, Object?>{'final': 'awg2-lab'},
+      '_meta': <String, Object?>{
+        'transport_contract': <String, Object?>{
+          'id': 'pokrov.awg2.endpoint.v1',
+          'sha256':
+              '3beb57eccd8d5e15ce7466496208fe1945f353b3417be58644911d1ded125a83',
+          'profile': 'awg2_lab',
+          'state': 'enabled',
+          'generation': 'awg2-lab-v1',
+        },
+      },
+    });
+
+    for (final platform in <HostPlatform>[
+      HostPlatform.android,
+      HostPlatform.windows,
+    ]) {
+      final engine = createRuntimeEngine(hostPlatform: platform);
+      for (final routeMode in <RouteMode>[
+        RouteMode.fullTunnel,
+        RouteMode.allExceptRu,
+        RouteMode.selectedApps,
+      ]) {
+        await engine.stageManagedProfile(
+          ManagedProfilePayload(
+            profileName: 'awg2-${platform.name}-${routeMode.name}',
+            configPayload: configPayload,
+            materializedForRuntime: true,
+            routeMode: routeMode,
+          ),
+        );
+      }
+    }
+
+    expect(staged, <String>[
+      'fullTunnel:awg:false',
+      'allExceptRu:awg:false',
+      'selectedApps:awg:false',
+      'fullTunnel:awg:false',
+      'allExceptRu:awg:false',
+      'selectedApps:awg:false',
+    ]);
+  });
+
+  for (final rejectedCase in <Map<String, Object?>>[
+    <String, Object?>{
+      'name': 'missing provenance',
+      'transport_contract': null,
+      'use_integrated_tun': false,
+    },
+    <String, Object?>{
+      'name': 'stale contract hash',
+      'transport_contract': <String, Object?>{
+        'id': 'pokrov.awg2.endpoint.v1',
+        'sha256': List<String>.filled(64, '0').join(),
+        'profile': 'awg2_lab',
+        'state': 'enabled',
+        'generation': 'awg2-lab-v1',
+      },
+      'use_integrated_tun': false,
+    },
+    <String, Object?>{
+      'name': 'integrated TUN ownership',
+      'transport_contract': <String, Object?>{
+        'id': 'pokrov.awg2.endpoint.v1',
+        'sha256':
+            '3beb57eccd8d5e15ce7466496208fe1945f353b3417be58644911d1ded125a83',
+        'profile': 'awg2_lab',
+        'state': 'enabled',
+        'generation': 'awg2-lab-v1',
+      },
+      'use_integrated_tun': true,
+    },
+  ]) {
+    test('mobile lane rejects AWG2 ${rejectedCase['name']}', () async {
+      const channel = MethodChannel('space.pokrov/runtime_engine');
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      var stageCalls = 0;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        if (call.method == 'runtimeEngine.stageManagedProfile') {
+          stageCalls += 1;
+        }
+        return null;
+      });
+      addTearDown(() {
+        messenger.setMockMethodCallHandler(channel, null);
+      });
+
+      final engine = createRuntimeEngine(hostPlatform: HostPlatform.android);
+      await expectLater(
+        engine.stageManagedProfile(
+          ManagedProfilePayload(
+            profileName: 'awg2-lab-rejected',
+            configPayload: jsonEncode(<String, Object?>{
+              'endpoints': <Object?>[
+                <String, Object?>{
+                  'type': 'awg',
+                  'tag': 'awg2-lab',
+                  'useIntegratedTun': rejectedCase['use_integrated_tun'],
+                },
+              ],
+              'route': <String, Object?>{'final': 'awg2-lab'},
+              if (rejectedCase['transport_contract'] != null)
+                '_meta': <String, Object?>{
+                  'transport_contract': rejectedCase['transport_contract'],
+                },
+            }),
+            materializedForRuntime: true,
+          ),
+        ),
+        throwsA(isA<FormatException>()),
+      );
+      expect(stageCalls, 0);
+    });
+  }
 
   test('mobile invalidation removes the reusable host profile before restaging',
       () async {
@@ -644,6 +988,36 @@ void main() {
     expect(snapshot.lastFailureKind, 'emergency_endpoint_unreachable');
   });
 
+  test('mobile lane preserves actionable VPN permission denial', () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.snapshot') {
+        return <String, Object?>{
+          'phase': 'configStaged',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'message': _sensitiveRuntimeDetail,
+          'last_failure_kind': 'vpn_permission_denied',
+        };
+      }
+      return null;
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    final snapshot =
+        await createRuntimeEngine(hostPlatform: HostPlatform.android)
+            .snapshot();
+
+    expect(snapshot.lastFailureKind, 'vpn_permission_denied');
+    expect(snapshot.message, contains('Разрешить VPN'));
+    _expectNoSensitiveRuntimeDetail(snapshot.message);
+  });
+
   test('mobile lane redacts PlatformException details after fallback fails',
       () async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
@@ -726,7 +1100,7 @@ void main() {
   });
 
   test(
-    'real Windows POKROV Core 1.0.3 survives 100 start-stop cycles',
+    'real Windows POKROV Core 1.1.0 survives 100 start-stop cycles',
     () async {
       final artifactRoot =
           Platform.environment['POKROV_REAL_CORE_ROOT']!.trim();
@@ -800,6 +1174,38 @@ void main() {
     timeout: const Timeout(Duration(minutes: 10)),
   );
 
+  test('windows factory uses the authenticated service bridge', () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final calls = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call.method);
+      return <String, Object?>{
+        'phase': 'artifactReady',
+        'helperBinaryPath': 'service://pokrov_service.exe',
+        'supportsLiveConnect': true,
+        'canInitialize': true,
+        'canConnect': false,
+        'coreEgressValidated': false,
+        'coreEgressValidationRequired': true,
+      };
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.windows);
+    final snapshot = await engine.snapshot();
+
+    expect(snapshot.lane, RuntimeLane.windowsService);
+    expect(snapshot.phase, RuntimePhase.artifactReady);
+    expect(snapshot.helperBinaryPath, 'service://pokrov_service.exe');
+    expect(snapshot.coreBinaryPath, isNull);
+    expect(snapshot.canInitialize, isTrue);
+    expect(snapshot.coreEgressValidated, isFalse);
+    expect(snapshot.isCleanlyHealthy, isFalse);
+    expect(calls, ['runtimeEngine.snapshot']);
+  });
+
   test('desktop lane does not silently activate a foreign runtime artifact',
       () async {
     final root = await Directory.systemTemp.createTemp('pokrov-runtime-test-');
@@ -809,12 +1215,12 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\foreign-core.dll')
+    File(p.join(platformDirectory.path, 'foreign-core.dll'))
         .writeAsStringSync('stub');
 
-    final engine = createRuntimeEngine(
+    final engine = DesktopRuntimeEngine(
       hostPlatform: HostPlatform.windows,
       assetRootOverride: root.path,
     );
@@ -838,12 +1244,12 @@ void main() {
     });
 
     final platformDirectory = Directory(
-      '${root.path}\\artifacts\\pokrov-core\\v1.0.3\\windows',
+      p.join(root.path, 'artifacts', 'pokrov-core', 'v1.1.0', 'windows'),
     )..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
 
-    final engine = createRuntimeEngine(
+    final engine = DesktopRuntimeEngine(
       hostPlatform: HostPlatform.windows,
       assetRootOverride: root.path,
     );
@@ -866,12 +1272,12 @@ void main() {
     });
 
     final executableDirectory = Directory(
-      '${root.path}\\Pokrov.app\\Contents\\MacOS',
+      p.join(root.path, 'Pokrov.app', 'Contents', 'MacOS'),
     )..createSync(recursive: true);
     final runtimeDirectory = Directory(
-      '${root.path}\\Pokrov.app\\Contents\\Frameworks\\Runtime',
+      p.join(root.path, 'Pokrov.app', 'Contents', 'Frameworks', 'Runtime'),
     )..createSync(recursive: true);
-    File('${runtimeDirectory.path}\\pokrov-core.dylib')
+    File(p.join(runtimeDirectory.path, 'pokrov-core.dylib'))
         .writeAsStringSync('stub');
 
     final engine = createRuntimeEngine(
@@ -897,9 +1303,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -926,13 +1332,13 @@ void main() {
     expect(await stagedFile.readAsString(), contains('"inbounds"'));
     expect(
       Directory(
-        '${stagedFile.parent.parent.parent.path}\\data',
+        p.join(stagedFile.parent.parent.parent.path, 'data'),
       ).existsSync(),
       isTrue,
     );
     expect(
       Directory(
-        '${stagedFile.parent.parent.path}\\data',
+        p.join(stagedFile.parent.parent.path, 'data'),
       ).existsSync(),
       isTrue,
     );
@@ -946,9 +1352,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -985,9 +1391,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1033,9 +1439,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1065,9 +1471,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1126,9 +1532,9 @@ void main() {
         await root.delete(recursive: true);
       }
     });
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1193,9 +1599,9 @@ void main() {
         await root.delete(recursive: true);
       }
     });
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1249,9 +1655,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -1303,9 +1709,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1361,9 +1767,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -1410,9 +1816,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -1459,9 +1865,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(setupResult: _sensitiveRuntimeDetail);
 
@@ -1490,9 +1896,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(startResult: _sensitiveRuntimeDetail);
 
@@ -1531,9 +1937,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -1567,9 +1973,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(
       secureFileResult: _sensitiveRuntimeDetail,
@@ -1609,9 +2015,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(stopResult: _sensitiveRuntimeDetail);
 
@@ -1650,9 +2056,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1693,9 +2099,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     var mixedProbeCalls = 0;
@@ -1744,8 +2150,10 @@ void main() {
     );
     expect(await journal.exists(), isTrue);
     final journalText = await journal.readAsString();
-    expect(journalText, contains('"event":"mixed_proxy_probe"'));
-    expect(journalText, contains('"event":"windows_tun_probe"'));
+    expect(journalText, contains('"event":"egress"'));
+    expect(journalText, contains('"probe":"mixed_proxy"'));
+    expect(journalText, contains('"probe":"windows_tun"'));
+    expect(journalText, contains('"event":"recovery"'));
     expect(journalText, contains('"attempt":3'));
     expect(
       journalText,
@@ -1765,9 +2173,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     var systemProbeCalls = 0;
@@ -1782,7 +2190,7 @@ void main() {
       bindingsLoader: (_) => bindings,
     );
 
-    await engine.stageManagedProfile(
+    final staged = await engine.stageManagedProfile(
       const ManagedProfilePayload(
         profileName: 'windows-tun-probe-late-success',
         configPayload:
@@ -1811,6 +2219,26 @@ void main() {
     expect(stopped.dnsState, RuntimeDiagnosticState.unknown);
     expect(stopped.uplinkState, RuntimeDiagnosticState.unknown);
     expect(stopped.coreEgressValidated, isNull);
+    final journal = File(
+      '${File(staged.stagedConfigPath!).parent.parent.path}'
+      '${Platform.pathSeparator}pokrov-runtime-events.jsonl',
+    );
+    final journalText = await journal.readAsString();
+    for (final event in <String>[
+      'initialization',
+      'profile',
+      'core_start',
+      'tun',
+      'routes',
+      'dns',
+      'egress',
+      'recovery',
+      'stop',
+    ]) {
+      expect(journalText, contains('"event":"$event"'));
+    }
+    expect(journalText, contains('"stop_reason":"completed"'));
+    _expectNoSensitiveRuntimeDetail(journalText);
   });
 
   test('desktop lane classifies Windows TUN startup failures', () async {
@@ -1823,9 +2251,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(
       startResult: 'start inbound/tun: create Wintun adapter failed',
@@ -1862,9 +2290,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1901,9 +2329,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1939,9 +2367,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     var mixedProbeCalls = 0;
@@ -1995,9 +2423,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -2049,9 +2477,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -2110,9 +2538,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -2166,9 +2594,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -2216,9 +2644,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -2313,8 +2741,11 @@ void main() {
         case 'runtimeEngine.liveStats':
           return <String, Object?>{
             'available': true,
+            'counterState': 'available',
             'uplinkBps': 10,
             'downlinkBps': 20,
+            'uplinkTotalBytes': 1000,
+            'downlinkTotalBytes': 2000,
             'latencyMs': 38,
             'since': '2026-06-22T10:00:00Z',
             'serverCode': 'nl-ams-01',
@@ -2350,12 +2781,34 @@ void main() {
     expect(applied.applied, isTrue);
     expect(applied.effectiveAt, 'now');
     expect(stats.available, isTrue);
+    expect(stats.counterState, RuntimeTrafficCounterState.available);
     expect(stats.downlinkBps, 20);
+    expect(stats.uplinkTotalBytes, 1000);
+    expect(stats.downlinkTotalBytes, 2000);
     expect(stats.serverCode, 'nl-ams-01');
     expect(stats.serverCountry, 'NL');
     expect(stats.protocol, 'sing-box');
     expect(token.token, 'push-token');
     expect(token.provider, 'fcm');
+  });
+
+  test('live stats expose explicit reset and reject unknown counter states',
+      () {
+    final reset = RuntimeLiveStats.fromMap(<String, Object?>{
+      'available': true,
+      'counter_state': 'reset',
+      'uplink_total_bytes': 42,
+      'downlink_total_bytes': 84,
+    });
+    final unknown = RuntimeLiveStats.fromMap(<String, Object?>{
+      'available': false,
+      'counterState': 'future_state',
+    });
+
+    expect(reset.counterState, RuntimeTrafficCounterState.reset);
+    expect(reset.uplinkTotalBytes, 42);
+    expect(reset.downlinkTotalBytes, 84);
+    expect(unknown.counterState, RuntimeTrafficCounterState.unavailable);
   });
 
   test('mobile live stats retain only allowlisted public labels', () async {

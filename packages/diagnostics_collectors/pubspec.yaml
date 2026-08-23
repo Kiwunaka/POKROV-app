@@ -1,0 +1,15 @@
+name: pokrov_diagnostics_collectors
+description: Typed bounded diagnostic collectors with no arbitrary filesystem access.
+publish_to: none
+version: 1.0.0
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  pokrov_observability_contracts:
+    path: ../observability_contracts
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

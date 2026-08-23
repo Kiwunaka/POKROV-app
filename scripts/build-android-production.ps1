@@ -3,7 +3,9 @@ param(
   [string]$SigningDirectory = (Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "POKROV\android-signing"),
   [string]$ApiBaseUrl = "https://api.pokrov.space",
   [string]$EmergencySigningKeyId = $env:POKROV_EMERGENCY_SIGNING_KEY_ID,
-  [string]$EmergencySigningPublicKey = $env:POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64
+  [string]$EmergencySigningPublicKey = $env:POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64,
+  [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
+  [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64
 )
 
 $ErrorActionPreference = "Stop"
@@ -11,11 +13,18 @@ Set-StrictMode -Version Latest
 
 $EmergencySigningKeyId = [string]$EmergencySigningKeyId
 $EmergencySigningPublicKey = [string]$EmergencySigningPublicKey
+$SupportSigningKeyId = [string]$SupportSigningKeyId
+$SupportSigningPublicKey = [string]$SupportSigningPublicKey
 if ($EmergencySigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$') {
   throw "A canonical POKROV emergency signing key id is required for a production build."
 }
 if ($EmergencySigningPublicKey -notmatch '^[A-Za-z0-9_-]{43}$') {
   throw "A 32-byte base64url POKROV emergency signing public key is required for a production build."
+}
+if (($SupportSigningKeyId -or $SupportSigningPublicKey) -and
+    ($SupportSigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$' -or
+     $SupportSigningPublicKey -notmatch '^[A-Za-z0-9_-]{43}$')) {
+  throw "Support bundle signing inputs must be an explicit key-id and 32-byte base64url public-key pair."
 }
 $sha256 = [Security.Cryptography.SHA256]::Create()
 try {
@@ -114,10 +123,13 @@ try {
       "build",
       "apk",
       "--release",
+      "--flavor", "direct",
       "--dart-define=POKROV_API_BASE_URL=$ApiBaseUrl",
       "--dart-define=POKROV_APP_VERSION=$declaredVersionName",
       "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
-      "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey"
+      "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey",
+      "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
+      "--dart-define=POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64=$SupportSigningPublicKey"
     )
     & flutter @universalBuildArguments
     if ($LASTEXITCODE -ne 0) {
@@ -128,12 +140,15 @@ try {
       "build",
       "apk",
       "--release",
+      "--flavor", "direct",
       "--split-per-abi",
       "--target-platform", "android-arm,android-arm64,android-x64",
       "--dart-define=POKROV_API_BASE_URL=$ApiBaseUrl",
       "--dart-define=POKROV_APP_VERSION=$declaredVersionName",
       "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
-      "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey"
+      "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey",
+      "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
+      "--dart-define=POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64=$SupportSigningPublicKey"
     )
     & flutter @splitBuildArguments
     if ($LASTEXITCODE -ne 0) {
@@ -156,19 +171,19 @@ $aapt = Resolve-AndroidBuildTool -FileName "aapt.exe"
 $outputDirectory = Join-Path $androidRoot "build\app\outputs\flutter-apk"
 $artifacts = @(
   [ordered]@{
-    path = Join-Path $outputDirectory "app-release.apk"
+    path = Join-Path $outputDirectory "app-direct-release.apk"
     abi = "universal"
   },
   [ordered]@{
-    path = Join-Path $outputDirectory "app-arm64-v8a-release.apk"
+    path = Join-Path $outputDirectory "app-arm64-v8a-direct-release.apk"
     abi = "arm64-v8a"
   },
   [ordered]@{
-    path = Join-Path $outputDirectory "app-armeabi-v7a-release.apk"
+    path = Join-Path $outputDirectory "app-armeabi-v7a-direct-release.apk"
     abi = "armeabi-v7a"
   },
   [ordered]@{
-    path = Join-Path $outputDirectory "app-x86_64-release.apk"
+    path = Join-Path $outputDirectory "app-x86_64-direct-release.apk"
     abi = "x86_64"
   }
 )

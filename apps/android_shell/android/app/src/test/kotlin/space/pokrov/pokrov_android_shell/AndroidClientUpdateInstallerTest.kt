@@ -42,6 +42,28 @@ class AndroidClientUpdateInstallerTest {
                 10L,
             ),
         )
+        assertNull(
+            AndroidClientUpdateInstaller.validateRequest(
+                "https://github.com/Kiwunaka/pokrov/releases/download/v1/${"a".repeat(2_048)}.apk",
+                "a".repeat(64),
+                10L,
+            ),
+        )
+        assertNull(
+            AndroidClientUpdateInstaller.validateRequest(
+                valid!!.url,
+                valid.sha256,
+                AndroidClientUpdateRequestPolicy.MAX_APK_BYTES + 1L,
+            ),
+        )
+        assertNull(
+            AndroidClientUpdateInstaller.validateRequest(
+                valid.url,
+                valid.sha256,
+                valid.size,
+                version = "1.${"2".repeat(65)}.0",
+            ),
+        )
     }
 
     @Test
@@ -115,5 +137,34 @@ class AndroidClientUpdateInstallerTest {
         assertEquals(1_024L, payload["total_bytes"])
         assertFalse(payload.containsKey("url"))
         assertFalse(payload.containsKey("sha256"))
+    }
+
+    @Test
+    fun verifierStopsBeforeReadingWhenParentScopeIsCancelled() {
+        val directory = Files.createTempDirectory("pokrov-update-cancel-test-").toFile()
+        try {
+            val file = File(directory, "update.apk").apply { writeText("cancelled") }
+            val request = AndroidClientUpdateRequest(
+                url = "https://github.com/Kiwunaka/pokrov/releases/download/v1/pokrov.apk",
+                sha256 = "0".repeat(64),
+                size = file.length(),
+            )
+            var cancelled = false
+
+            try {
+                AndroidClientUpdateInstaller.verifyFile(
+                    file = file,
+                    request = request,
+                    shouldContinue = { false },
+                )
+            } catch (error: IllegalStateException) {
+                cancelled = true
+                assertEquals("update_cancelled", error.message)
+            }
+
+            assertTrue(cancelled)
+        } finally {
+            directory.deleteRecursively()
+        }
     }
 }

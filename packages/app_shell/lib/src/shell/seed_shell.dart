@@ -5,7 +5,9 @@ class PokrovSeedApp extends StatefulWidget {
     super.key,
     required this.appContext,
     this.bootstrapper,
+    this.observability,
     this.supportTicketService,
+    this.supportModeController,
     this.handoffLauncher,
     this.clientUpdateInstaller,
     this.clientUpdateProgressReader,
@@ -20,7 +22,6 @@ class PokrovSeedApp extends StatefulWidget {
     this.wifiPermissionRequester,
     this.vpnSettingsLauncher,
     this.nodeLatencyProbe,
-    this.windowsElevationChecker,
     this.windowsTunnelAuthorizer,
     this.windowsShellPreferencesReader,
     this.windowsShellPreferencesUpdater,
@@ -30,7 +31,9 @@ class PokrovSeedApp extends StatefulWidget {
 
   final SeedAppContext appContext;
   final ManagedProfileBootstrapper? bootstrapper;
+  final PokrovClientObservability? observability;
   final SupportTicketService? supportTicketService;
+  final PokrovSupportModeController? supportModeController;
   final ExternalHandoffLauncher? handoffLauncher;
   final PokrovClientUpdateInstaller? clientUpdateInstaller;
   final PokrovClientUpdateProgressReader? clientUpdateProgressReader;
@@ -45,7 +48,6 @@ class PokrovSeedApp extends StatefulWidget {
   final PokrovWifiPermissionRequester? wifiPermissionRequester;
   final PokrovVpnSettingsLauncher? vpnSettingsLauncher;
   final PokrovNodeLatencyProbe? nodeLatencyProbe;
-  final PokrovWindowsElevationChecker? windowsElevationChecker;
   final PokrovWindowsTunnelAuthorizer? windowsTunnelAuthorizer;
   final PokrovWindowsShellPreferencesReader? windowsShellPreferencesReader;
   final PokrovWindowsShellPreferencesUpdater? windowsShellPreferencesUpdater;
@@ -104,7 +106,9 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
       home: PokrovSeedShell(
         appContext: widget.appContext,
         bootstrapper: widget.bootstrapper,
+        observability: widget.observability,
         supportTicketService: widget.supportTicketService,
+        supportModeController: widget.supportModeController,
         handoffLauncher: widget.handoffLauncher,
         clientUpdateInstaller: widget.clientUpdateInstaller,
         clientUpdateProgressReader: widget.clientUpdateProgressReader,
@@ -118,7 +122,6 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
         wifiPermissionRequester: widget.wifiPermissionRequester,
         vpnSettingsLauncher: widget.vpnSettingsLauncher,
         nodeLatencyProbe: widget.nodeLatencyProbe,
-        windowsElevationChecker: widget.windowsElevationChecker,
         windowsTunnelAuthorizer: widget.windowsTunnelAuthorizer,
         windowsShellPreferencesReader: widget.windowsShellPreferencesReader,
         windowsShellPreferencesUpdater: widget.windowsShellPreferencesUpdater,
@@ -171,25 +174,11 @@ ThemeData _buildPokrovTheme({
     extensions: [isDark ? PokrovPalette.dark : PokrovPalette.light],
     scaffoldBackgroundColor: Colors.transparent,
     canvasColor: tokens.canvas,
-    // iPhone feel: no Material ripple - press feedback comes from scale
-    // (PokrovPressable) plus a quiet highlight, like UIKit cell presses.
-    // iPhone feel: no visible Material ripple - press feedback comes from
-    // scale (PokrovPressable) plus a quiet UIKit-style highlight. A transparent
-    // splash (instead of NoSplash.splashFactory) keeps flutter_test happy:
-    // NoSplash leaves a raw pending timer after drag-heavy interactions.
+    // The shared press surface keeps brand feedback quiet. Native scroll,
+    // route, switch, pointer and keyboard behavior remain platform-adaptive.
     splashColor: Colors.transparent,
     highlightColor: tokens.ink.withValues(alpha: 0.05),
-    // Cupertino push (slide-from-right with parallax) on every platform.
-    pageTransitionsTheme: const PageTransitionsTheme(
-      builders: {
-        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.windows: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.linux: CupertinoPageTransitionsBuilder(),
-      },
-    ),
-    // Cupertino push (slide-from-right with parallax) on every platform.
+    pageTransitionsTheme: pokrovAdaptivePageTransitionsTheme(),
     textTheme: textTheme,
     iconTheme: IconThemeData(color: tokens.ink, size: 22),
     dividerTheme: DividerThemeData(color: tokens.line, thickness: 1, space: 1),
@@ -460,7 +449,9 @@ class PokrovSeedShell extends StatefulWidget {
     super.key,
     required this.appContext,
     this.bootstrapper,
+    this.observability,
     this.supportTicketService,
+    this.supportModeController,
     this.handoffLauncher,
     this.clientUpdateInstaller,
     this.clientUpdateProgressReader,
@@ -476,7 +467,6 @@ class PokrovSeedShell extends StatefulWidget {
     this.wifiPermissionRequester,
     this.vpnSettingsLauncher,
     this.nodeLatencyProbe,
-    this.windowsElevationChecker,
     this.windowsTunnelAuthorizer,
     this.windowsShellPreferencesReader,
     this.windowsShellPreferencesUpdater,
@@ -486,7 +476,9 @@ class PokrovSeedShell extends StatefulWidget {
 
   final SeedAppContext appContext;
   final ManagedProfileBootstrapper? bootstrapper;
+  final PokrovClientObservability? observability;
   final SupportTicketService? supportTicketService;
+  final PokrovSupportModeController? supportModeController;
   final ExternalHandoffLauncher? handoffLauncher;
   final PokrovClientUpdateInstaller? clientUpdateInstaller;
   final PokrovClientUpdateProgressReader? clientUpdateProgressReader;
@@ -502,7 +494,6 @@ class PokrovSeedShell extends StatefulWidget {
   final PokrovWifiPermissionRequester? wifiPermissionRequester;
   final PokrovVpnSettingsLauncher? vpnSettingsLauncher;
   final PokrovNodeLatencyProbe? nodeLatencyProbe;
-  final PokrovWindowsElevationChecker? windowsElevationChecker;
   final PokrovWindowsTunnelAuthorizer? windowsTunnelAuthorizer;
   final PokrovWindowsShellPreferencesReader? windowsShellPreferencesReader;
   final PokrovWindowsShellPreferencesUpdater? windowsShellPreferencesUpdater;
@@ -532,12 +523,15 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   int _selectedIndex = 0;
   late RouteMode _selectedRouteMode;
   late final PokrovRuntimeEngine _runtimeEngine;
+  late final ConnectionCoordinator _connectionCoordinator;
+  late final DiagnosticsCoordinator _diagnosticsCoordinator;
   late final ManagedProfileBootstrapper _bootstrapper;
-  late final AppFirstAccountActionService? _accountActionService;
+  late final AccountSessionCoordinator _accountSessionCoordinator;
   late final AppFirstBonusActionService? _bonusActionService;
   late final AppFirstWarpActionService? _warpActionService;
   late final AppFirstReleaseActionService? _releaseActionService;
   late final AppFirstExperienceService? _experienceService;
+  late final AppFirstFirstSessionEventService? _firstSessionEventService;
   late final AppFirstAcquisitionService? _acquisitionService;
   late final AppFirstQuestEventService? _questEventService;
   late final AppFirstPromoEventService? _promoEventService;
@@ -545,7 +539,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   late final AppFirstClientDataService? _clientDataService;
   late final AppFirstEmergencyNetworkService? _emergencyNetworkService;
   late final SupportTicketService _supportTicketService;
-  late final PokrovFirstLaunchStore _firstLaunchStore;
+  late final PokrovSupportModeController _supportModeController;
+  late final bool _ownsSupportModeController;
+  late final FirstSessionCoordinator _firstSessionCoordinator;
+  late final Future<void> _firstSessionLoadFuture;
   late final PokrovClientExperienceStore _clientExperienceStore;
   PokrovClientExperienceState _clientExperience =
       const PokrovClientExperienceState.empty();
@@ -556,19 +553,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   bool _notificationsUsingCache = false;
   final TextEditingController _firstLaunchRestoreCodeController =
       TextEditingController();
-  RuntimeSnapshot? _runtimeSnapshot;
-  bool _runtimeBusy = false;
-  bool _runtimeResumeRefreshPending = false;
-  Timer? _postConnectHealthTimer;
-  int _postConnectHealthGeneration = 0;
-  int? _postConnectHealthPollInFlight;
-  // Direction of the current busy transition so the UI can honestly say
-  // «Отключаем...» instead of pretending every busy state is a connect.
-  bool _runtimeDisconnecting = false;
-  DateTime? _connectionAttemptStartedAt;
-  int _connectionAttemptNumber = 0;
   bool _emergencyRuntimeActive = false;
-  bool _firstLaunchBusy = false;
   bool _managedProfileDirty = true;
   int _managedProfileRevision = 0;
   int _quickSettingsInvalidationRequestedRevision = 0;
@@ -584,14 +569,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   // one-time pulse never flashes for returning users while the read is
   // in flight.
   bool _connectHintDismissed = true;
-  _FirstLaunchStep _firstLaunchStep = _FirstLaunchStep.choice;
-
-  /// Welcome Handover plays only for user-driven gate exits; the silent
-  /// boot resolve for returning users stays an instant removal so the gate
-  /// never ghost-fades over their home screen.
-  bool _firstLaunchExitAnimated = false;
   String? _runtimeHeadline;
-  FreeProfileAccess? _freeProfileAccess;
   String _telegramBonusStatus = 'Получить код';
   bool _telegramBonusBusy = false;
   bool _telegramLinkVerificationPending = false;
@@ -633,7 +611,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   bool _nodePreferenceBusy = false;
   bool _locationsCatalogBusy = false;
   String? _locationsCatalogError;
-  ClientSubscriptionInfo? _subscriptionInfo;
   PokrovSystemSurfacePreferences _systemSurfacePreferences =
       const PokrovSystemSurfacePreferences();
   PokrovWindowsShellPreferences _windowsShellPreferences =
@@ -641,11 +618,44 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   ClientNotificationInbox? _notificationsInbox;
   bool _notificationsBusy = false;
   int _notificationsUnread = 0;
-  bool _clientUpdateCheckBusy = false;
-  bool _clientUpdatePromptVisible = false;
-  String _lastPromptedUpdateKey = '';
+  final ClientUpdateCoordinator _clientUpdateCoordinator =
+      ClientUpdateCoordinator();
+  bool _clientLifecycleOpenReported = false;
   StreamSubscription<Uri>? _acquisitionUriSubscription;
-  final Set<String> _processedAcquisitionHandles = <String>{};
+
+  RuntimeSnapshot? get _runtimeSnapshot => _connectionCoordinator.snapshot;
+  set _runtimeSnapshot(RuntimeSnapshot? value) =>
+      _connectionCoordinator.updateSnapshot(value);
+
+  bool get _runtimeBusy => _connectionCoordinator.actionInFlight;
+  set _runtimeBusy(bool value) =>
+      _connectionCoordinator.updateActionInFlight(value);
+
+  ConnectionTransitionIntent get _runtimeIntent =>
+      _connectionCoordinator.intent;
+  set _runtimeIntent(ConnectionTransitionIntent value) =>
+      _connectionCoordinator.updateIntent(value);
+
+  set _connectionAttemptStartedAt(DateTime? value) =>
+      _connectionCoordinator.updateAttemptStartedAt(value);
+
+  int get _connectionAttemptNumber => _connectionCoordinator.attemptNumber;
+
+  _FirstLaunchStep get _firstLaunchStep =>
+      _firstSessionCoordinator._stepForView;
+  bool get _firstLaunchBusy => _firstSessionCoordinator.busy;
+  bool get _firstLaunchExitAnimated => _firstSessionCoordinator.exitAnimated;
+
+  AppFirstAccountActionService? get _accountActionService =>
+      _accountSessionCoordinator.accountActions;
+  FreeProfileAccess? get _freeProfileAccess =>
+      _accountSessionCoordinator.freeProfileAccess;
+  set _freeProfileAccess(FreeProfileAccess? value) =>
+      _accountSessionCoordinator.updateFreeProfileAccess(value);
+  ClientSubscriptionInfo? get _subscriptionInfo =>
+      _accountSessionCoordinator.subscriptionInfo;
+  set _subscriptionInfo(ClientSubscriptionInfo? value) =>
+      _accountSessionCoordinator.updateSubscriptionInfo(value);
 
   @override
   void initState() {
@@ -655,9 +665,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _runtimeEngine = createRuntimeEngine(
       hostPlatform: widget.appContext.hostPlatform,
     );
+    _connectionCoordinator = ConnectionCoordinator(
+      primaryConnectEnabled: _canPrimaryConnect,
+      actionTimeout: widget.runtimeActionTimeout,
+    );
+    _diagnosticsCoordinator = DiagnosticsCoordinator();
     widget.shellController?._attach(
       toggle: _toggleRuntime,
-      isConnected: () => _runtimeSnapshot?.phase == RuntimePhase.running,
+      isConnected: () => _connectionPresentation.isVerified,
       isBusy: () => _runtimeBusy,
       canToggle: () =>
           _clientExperienceLoaded &&
@@ -671,9 +686,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           deviceNameResolver: resolvePokrovDeviceName,
         );
     _bootstrapper = bootstrapper;
-    _accountActionService = bootstrapper is AppFirstAccountActionService
-        ? bootstrapper as AppFirstAccountActionService
-        : null;
+    _accountSessionCoordinator = AccountSessionCoordinator(
+      accountActions: bootstrapper is AppFirstAccountActionService
+          ? bootstrapper as AppFirstAccountActionService
+          : null,
+    );
     _bonusActionService = bootstrapper is AppFirstBonusActionService
         ? bootstrapper as AppFirstBonusActionService
         : null;
@@ -685,6 +702,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         : null;
     _experienceService = bootstrapper is AppFirstExperienceService
         ? bootstrapper as AppFirstExperienceService
+        : null;
+    _firstSessionEventService = bootstrapper is AppFirstFirstSessionEventService
+        ? bootstrapper as AppFirstFirstSessionEventService
         : null;
     _acquisitionService = bootstrapper is AppFirstAcquisitionService
         ? bootstrapper as AppFirstAcquisitionService
@@ -706,8 +726,24 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         : null;
     _supportTicketService = widget.supportTicketService ??
         AppFirstSupportTicketService(apiBaseUrl: widget.appContext.apiBaseUrl);
-    _firstLaunchStore =
-        widget.firstLaunchStore ?? const PokrovFileFirstLaunchStore();
+    _ownsSupportModeController = widget.supportModeController == null;
+    _supportModeController = widget.supportModeController ??
+        PokrovSupportModeController(
+          signingPublicKeysById: pokrovSupportSigningKeyId.isNotEmpty &&
+                  pokrovSupportSigningPublicKeyB64.isNotEmpty
+              ? <String, String>{
+                  pokrovSupportSigningKeyId: pokrovSupportSigningPublicKeyB64,
+                }
+              : const <String, String>{},
+          platform: widget.appContext.hostPlatform.name,
+          appVersion: pokrovClientVersion,
+          buildNumber: pokrovClientBuildNumber,
+        );
+    _supportModeController.addListener(_onSupportModeChanged);
+    unawaited(_supportModeController.initialize());
+    _firstSessionCoordinator = FirstSessionCoordinator(
+      store: widget.firstLaunchStore ?? const PokrovFileFirstLaunchStore(),
+    );
     _clientExperienceStore = widget.clientExperienceStore;
     final acquisitionUriStream = widget.acquisitionUriStream;
     if (acquisitionUriStream != null) {
@@ -716,21 +752,27 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         onError: (_) {},
       );
     }
-    unawaited(_loadFirstLaunchState());
+    _firstSessionLoadFuture = _loadFirstLaunchState();
     unawaited(_loadConnectHintState());
     unawaited(_restoreClientExperience());
     _refreshRuntimeSnapshot();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.observability?.markUiReady();
       final initialAcquisitionUri = widget.initialAcquisitionUri;
       if (initialAcquisitionUri != null) {
         unawaited(_consumeAcquisitionUri(initialAcquisitionUri));
       }
       unawaited(_checkForClientUpdate());
-      unawaited(_refreshAccountSummary());
+      unawaited(_refreshAccountSummaryAfterFirstSessionLoad());
       unawaited(_loadSystemSurfacePreferences());
       unawaited(_loadWindowsShellPreferences());
-      unawaited(_reportClientLifecycle('app_opened'));
     });
+  }
+
+  void _onSupportModeChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _consumeAcquisitionUri(Uri uri) async {
@@ -739,21 +781,57 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       uri,
       hostPlatform: widget.appContext.hostPlatform,
     );
-    if (service == null ||
-        handoff == null ||
-        !_processedAcquisitionHandles.add(handoff.handle)) {
+    if (service == null || handoff == null) {
+      if (mounted && _firstSessionCoordinator.rejectInvalidAcquisition()) {
+        setState(() {});
+      }
       return;
     }
+    if (!_firstSessionCoordinator.beginAcquisition(handoff.handle)) {
+      return;
+    }
+    if (mounted) {
+      setState(() {});
+    }
+    var succeeded = false;
     try {
       await service.consumeAcquisitionHandoff(
         hostPlatform: widget.appContext.hostPlatform,
         handle: handoff.handle,
         purpose: handoff.purpose,
       );
+      succeeded = true;
     } catch (_) {
       // Attribution is best-effort and must never block onboarding, access,
       // or normal app use. The server validates expiry, purpose and replay.
+    } finally {
+      _firstSessionCoordinator.finishAcquisition(succeeded: succeeded);
+      if (mounted) {
+        setState(() {});
+      }
+      unawaited(
+        _reportEstablishedFirstSession(
+          eventName: succeeded
+              ? 'acquisition_handoff_received'
+              : 'acquisition_handoff_failed',
+          stage: 'acquisition_handoff',
+          result: succeeded ? 'received' : 'failure',
+          errorCode: succeeded ? '' : 'acquisition_handoff_failed',
+          retryable: !succeeded,
+          includeHome: false,
+        ),
+      );
     }
+  }
+
+  Future<void> _refreshAccountSummaryAfterFirstSessionLoad() async {
+    await _firstSessionLoadFuture;
+    if (!mounted || !_firstSessionCoordinator.isReady) {
+      return;
+    }
+    await _reportClientOpenOnce();
+    await _reportEstablishedFirstSession(includeHome: true);
+    await _refreshAccountSummary();
   }
 
   Future<void> _refreshAccountSummary() async {
@@ -845,6 +923,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _notificationsUsingCache = true;
         }
       });
+      _recordAndroidSelectedAppCount();
       unawaited(_refreshNotifications());
     } catch (_) {
       // Local convenience state may be missing or unreadable after an update.
@@ -952,7 +1031,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   void _selectRouteMode(RouteMode mode) {
     // Same selection tick as the theme and location picks — one class of
     // interaction, one haptic.
-    HapticFeedback.selectionClick();
+    PokrovHaptics.tap();
     final wasConnected = _runtimeSnapshot?.phase == RuntimePhase.running;
     setState(() {
       _selectedRouteMode = mode;
@@ -976,7 +1055,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   void _setRoutingPreferences(PokrovRoutingPreferences preferences) {
-    HapticFeedback.selectionClick();
+    PokrovHaptics.tap();
     setState(() {
       _clientExperience = _clientExperience.copyWith(
         routingPreferences: preferences,
@@ -988,9 +1067,38 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     });
     _invalidateQuickSettingsProfile();
     _queueClientExperienceWrite();
-    if (preferences.pauseOnTrustedWifi) {
-      unawaited(_pauseRunningTunnelOnTrustedWifi());
+  }
+
+  void _applyRoutingPreferences(PokrovRoutingPreferences preferences) {
+    final wasConnected = _runtimeSnapshot?.phase == RuntimePhase.running;
+    if (!wasConnected) {
+      setState(() {
+        _runtimeHeadline =
+            'Правила сохранены. Они применятся при следующем подключении.';
+      });
+      showPokrovSnack(
+        context,
+        'Правила сохранены. Подключите POKROV, чтобы применить.',
+        tone: PokrovSnackTone.success,
+      );
+      return;
     }
+    unawaited(_applyRoutingPreferencesToRunningTunnel(preferences));
+  }
+
+  Future<void> _applyRoutingPreferencesToRunningTunnel(
+    PokrovRoutingPreferences preferences,
+  ) async {
+    if (preferences.pauseOnTrustedWifi) {
+      await _pauseRunningTunnelOnTrustedWifi();
+    }
+    if (!mounted || _runtimeSnapshot?.phase != RuntimePhase.running) {
+      return;
+    }
+    await _reconnectAfterManagedProfileChange(
+      progressMessage: 'Применяем правила подключения…',
+      successMessage: 'Правила подключения применены.',
+    );
   }
 
   Future<void> _setPreferredLocation(
@@ -1246,7 +1354,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     setState(() {
       _runtimeBusy = true;
-      _runtimeDisconnecting = _runtimeSnapshot?.phase == RuntimePhase.running;
+      _runtimeIntent = _runtimeSnapshot?.phase == RuntimePhase.running
+          ? ConnectionTransitionIntent.reconnect
+          : ConnectionTransitionIntent.connect;
       _runtimeHeadline = 'Готовим экстренный маршрут…';
     });
     try {
@@ -1421,7 +1531,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (mounted) {
         setState(() {
           _runtimeBusy = false;
-          _runtimeDisconnecting = false;
+          _runtimeIntent = ConnectionTransitionIntent.none;
         });
       }
     }
@@ -1462,6 +1572,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         selectedAppIds: List<String>.unmodifiable(_selectedAppIds),
       );
     });
+    _recordAndroidSelectedAppCount();
     _invalidateQuickSettingsProfile();
     _queueClientExperienceWrite();
     if (wasConnected && !_selectedAppsRouteNeedsSelection) {
@@ -1502,7 +1613,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return;
     }
     final wasConnected = _runtimeSnapshot?.phase == RuntimePhase.running;
-    HapticFeedback.selectionClick();
+    PokrovHaptics.tap();
     setState(() {
       _selectedRouteMode = mode;
       _selectedAppIds
@@ -1519,6 +1630,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           ? 'RU-приложения пойдут напрямую, остальные — через VPN.'
           : 'Только выбранные RU-приложения пойдут через VPN.';
     });
+    _recordAndroidSelectedAppCount();
     _invalidateQuickSettingsProfile();
     _queueClientExperienceWrite();
     if (wasConnected) {
@@ -1586,6 +1698,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         selectedAppIds: List<String>.unmodifiable(_selectedAppIds),
       );
     });
+    _recordAndroidSelectedAppCount();
     _invalidateQuickSettingsProfile();
     _queueClientExperienceWrite();
     if (wasConnected && !_selectedAppsRouteNeedsSelection) {
@@ -1596,6 +1709,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         ),
       );
     }
+  }
+
+  void _recordAndroidSelectedAppCount() {
+    widget.observability?.recordAndroidRoutingAppCount(_selectedAppIds.length);
   }
 
   Future<bool> _reconnectAfterManagedProfileChange({
@@ -1739,10 +1856,15 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (service == null) {
       return false;
     }
+    final observability = widget.observability;
+    observability?.recordAuthRequestStarted();
+    observability?.recordEntitlementRefreshStarted();
     try {
       final info = await service.fetchClientSubscription(
         hostPlatform: widget.appContext.hostPlatform,
       );
+      observability?.recordAuthRequestFinished();
+      observability?.recordEntitlementRefreshFinished();
       if (!mounted) {
         return false;
       }
@@ -1771,7 +1893,25 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         }
       }
       return true;
-    } on Object {
+    } on Object catch (error) {
+      final authCode = switch (error) {
+        BootstrapFailure failure
+            when failure.operationalErrorCode == 'API-004' =>
+          'AUTH-002',
+        BootstrapFailure failure
+            when failure.operationalErrorCode == 'API-005' =>
+          'AUTH-005',
+        BootstrapFailure failure => failure.operationalErrorCode,
+        _ => 'API-002',
+      };
+      final entitlementCode =
+          error is BootstrapFailure && (error.statusCode ?? 0) >= 500
+              ? 'API-007'
+              : 'ENT-001';
+      observability?.recordAuthRequestFinished(errorCode: authCode);
+      observability?.recordEntitlementRefreshFinished(
+        errorCode: entitlementCode,
+      );
       unawaited(_reportClientRuntimeError('subscription_refresh_failed'));
       if (mounted && showFailure) {
         showPokrovSnack(
@@ -1784,13 +1924,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  int? _connectionAttemptDurationMs() {
-    final startedAt = _connectionAttemptStartedAt;
-    if (startedAt == null) {
-      return null;
-    }
-    return DateTime.now().toUtc().difference(startedAt).inMilliseconds;
-  }
+  int? _connectionAttemptDurationMs() =>
+      _connectionCoordinator.attemptDurationMs;
 
   Future<void> _reportClientLifecycle(
     String phase, {
@@ -2043,14 +2178,32 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     unawaited(_acquisitionUriSubscription?.cancel());
     _acquisitionUriSubscription = null;
     WidgetsBinding.instance.removeObserver(this);
-    _cancelPostConnectHostHealthPolling();
+    _diagnosticsCoordinator.dispose();
+    _connectionCoordinator.dispose();
+    _supportModeController.removeListener(_onSupportModeChanged);
+    if (_ownsSupportModeController) {
+      _supportModeController.dispose();
+    }
     widget.shellController?._detach();
     _firstLaunchRestoreCodeController.dispose();
+    final observability = widget.observability;
+    if (observability != null) {
+      unawaited(observability.markCleanExit());
+      unawaited(observability.flush());
+    }
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      final observability = widget.observability;
+      if (observability != null) {
+        unawaited(observability.markCleanExit());
+        unawaited(observability.flush());
+      }
+      return;
+    }
     if (state == AppLifecycleState.resumed) {
       unawaited(_resumeRuntimeAndTrustedWifiChecks());
       unawaited(_checkForClientUpdate());
@@ -2062,10 +2215,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _resumeRuntimeAndTrustedWifiChecks() async {
-    if (_runtimeResumeRefreshPending) {
+    if (!_diagnosticsCoordinator.beginResumeRefresh()) {
       return;
     }
-    _runtimeResumeRefreshPending = true;
     try {
       // Android permission sheets can resume Flutter while the original connect
       // call is still settling. Wait for that call to finish, then read the
@@ -2098,9 +2250,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         });
         widget.shellController?.refresh();
       }
+      _finishAndroidVpnPermission(snapshot);
       await _pauseRunningTunnelOnTrustedWifi();
     } finally {
-      _runtimeResumeRefreshPending = false;
+      _diagnosticsCoordinator.finishResumeRefresh();
     }
   }
 
@@ -2197,78 +2350,25 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (widget.appContext.hostPlatform != HostPlatform.windows) {
       return true;
     }
-    if (_clientExperience.routingPreferences.windowsConnectionMode ==
-        PokrovWindowsConnectionMode.systemProxy) {
-      return true;
-    }
-    final elevationChecker = widget.windowsElevationChecker;
-    final elevated = elevationChecker != null
-        ? await elevationChecker()
-        : await readPokrovWindowsProcessElevated(
+    final authorizer = widget.windowsTunnelAuthorizer;
+    final result = authorizer != null
+        ? await authorizer()
+        : await requestPokrovWindowsTunnelAuthorization(
             widget.appContext.hostPlatform,
           );
     if (!mounted) {
       return false;
     }
-    if (elevated == true) {
+    if (result == PokrovWindowsTunnelAuthorization.allowed) {
       return true;
     }
-
-    var permissionFailed = false;
-    while (mounted) {
-      final choice = await showPokrovWindowsTunnelPermissionSheet(
-        context,
-        permissionFailed: permissionFailed,
-      );
-      if (!mounted || choice == null) {
-        return false;
-      }
-      if (choice == PokrovWindowsTunnelConnectChoice.systemProxy) {
-        final preferences = _clientExperience.routingPreferences.copyWith(
-          windowsConnectionMode: PokrovWindowsConnectionMode.systemProxy,
-        );
-        _setRoutingPreferences(preferences);
-        setState(() {
-          _runtimeHeadline =
-              'Включён системный прокси. POKROV подключится без прав администратора.';
-        });
-        showPokrovSnack(
-          context,
-          'Режим без администратора включён. Он работает только в приложениях, которые используют системный прокси Windows.',
-        );
-        return true;
-      }
-      if (choice == PokrovWindowsTunnelConnectChoice.cancel) {
-        setState(() {
-          _runtimeHeadline =
-              'Подключение отменено. Полный VPN требует подтверждения Windows.';
-        });
-        return false;
-      }
-
-      final authorizer = widget.windowsTunnelAuthorizer;
-      final result = authorizer != null
-          ? await authorizer()
-          : await requestPokrovWindowsTunnelAuthorization(
-              widget.appContext.hostPlatform,
-            );
-      if (!mounted) {
-        return false;
-      }
-      switch (result) {
-        case PokrovWindowsTunnelAuthorization.allowed:
-          return true;
-        case PokrovWindowsTunnelAuthorization.relaunching:
-          setState(() {
-            _runtimeHeadline =
-                'Подтвердите запрос Windows. POKROV продолжит подключение сам.';
-          });
-          return false;
-        case PokrovWindowsTunnelAuthorization.denied:
-        case PokrovWindowsTunnelAuthorization.unavailable:
-          permissionFailed = true;
-      }
-    }
+    final message = result == PokrovWindowsTunnelAuthorization.unavailable
+        ? 'Служба POKROV недоступна. Переустановите приложение или запустите восстановление.'
+        : 'Служба POKROV не прошла проверку подлинности или совместимости.';
+    setState(() {
+      _runtimeHeadline = message;
+    });
+    showPokrovSnack(context, message);
     return false;
   }
 
@@ -2315,7 +2415,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
     setState(() {
       _runtimeBusy = true;
-      _runtimeDisconnecting = true;
+      _runtimeIntent = ConnectionTransitionIntent.disconnect;
     });
     widget.shellController?.refresh();
     try {
@@ -2352,7 +2452,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (mounted) {
         setState(() {
           _runtimeBusy = false;
-          _runtimeDisconnecting = false;
+          _runtimeIntent = ConnectionTransitionIntent.none;
         });
       }
       widget.shellController?.refresh();
@@ -2425,178 +2525,49 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   Future<void> _checkForClientUpdate() async {
     final releaseActions = _releaseActionService;
-    if (releaseActions == null ||
-        _clientUpdateCheckBusy ||
-        _clientUpdatePromptVisible) {
+    if (releaseActions == null) {
       return;
     }
-    _clientUpdateCheckBusy = true;
-    try {
-      final metadata = await releaseActions.fetchClientApps(
+    await _clientUpdateCoordinator.checkAndPresent(
+      loadMetadata: () => releaseActions.fetchClientApps(
         hostPlatform: widget.appContext.hostPlatform,
         currentVersion: pokrovClientVersion,
         channel: 'stable',
-      );
-      if (!mounted || metadata.silentUpdate) {
-        return;
-      }
-      final update = metadata.updateFor(widget.appContext.hostPlatform);
-      final promptKey =
-          '${update.platform}:${update.latestVersion}:${update.updatePolicy}';
-      if (!update.shouldPrompt || promptKey == _lastPromptedUpdateKey) {
-        return;
-      }
-      unawaited(_reportClientLifecycle('update_available'));
-      _lastPromptedUpdateKey = promptKey;
-      await _showClientUpdatePrompt(update);
-    } catch (_) {
-      unawaited(
-        _reportClientLifecycle(
-          'failed',
-          errorCode: 'update_check_failed',
-          retryable: true,
-        ),
-      );
-      // Update checks are advisory; never block the app on startup.
-    } finally {
-      _clientUpdateCheckBusy = false;
-    }
-  }
-
-  Future<void> _showClientUpdatePrompt(ClientAppUpdateInfo update) async {
-    if (!mounted || _clientUpdatePromptVisible) {
-      return;
-    }
-    _clientUpdatePromptVisible = true;
-    final title =
-        update.isRequired ? 'Нужно обновить POKROV' : 'Доступно обновление';
-    final version = update.latestVersion.trim();
-    final notes = update.releaseNotes.trim();
-    try {
-      // House sheet language instead of a stock Material dialog: drag
-      // handle, rounded top, PokrovPressable primary action — the same
-      // pattern as the WARP and profile sheets.
-      await showModalBottomSheet<void>(
-        context: context,
-        // Honest affordances: a required update shows no drag handle and
-        // cannot be swiped away.
-        showDragHandle: !update.isRequired,
-        isScrollControlled: true,
-        isDismissible: !update.isRequired,
-        enableDrag: !update.isRequired,
-        sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        builder: (sheetContext) {
-          final p = PokrovPalette.of(sheetContext);
-          final theme = Theme.of(sheetContext);
-          return SafeArea(
-            top: false,
-            child: Container(
-              key: const ValueKey('client-update-prompt'),
-              width: double.infinity,
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.82,
-              ),
-              padding: EdgeInsets.fromLTRB(
-                22,
-                update.isRequired ? 22 : 6,
-                22,
-                26,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 46,
-                          height: 46,
-                          decoration: BoxDecoration(
-                            color: p.accent.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(
-                            Icons.system_update_alt_rounded,
-                            color: p.accent,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 13),
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: p.ink,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      version.isEmpty
-                          ? 'Установите свежую версию, чтобы получить исправления и актуальные правила.'
-                          : 'Свежая версия: $version.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: p.muted,
-                        height: 1.35,
-                      ),
-                    ),
-                    if (notes.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        notes,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: p.muted,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 18),
-                    SizedBox(
-                      width: double.infinity,
-                      child: PokrovPressable(
-                        child: FilledButton.icon(
-                          key: const ValueKey('client-update-download'),
-                          icon: const Icon(Icons.system_update_alt_rounded),
-                          label: const Text('Обновить'),
-                          onPressed: () {
-                            Navigator.of(sheetContext).pop();
-                            unawaited(_openClientUpdateDownload(update));
-                          },
-                        ),
-                      ),
-                    ),
-                    if (!update.isRequired) ...[
-                      const SizedBox(height: 10),
-                      Center(
-                        child: TextButton(
-                          key: const ValueKey('client-update-later'),
-                          onPressed: () => Navigator.of(sheetContext).pop(),
-                          child: const Text('Позже'),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      );
-    } finally {
-      _clientUpdatePromptVisible = false;
-    }
+      ),
+      hostPlatform: widget.appContext.hostPlatform,
+      isActive: () => mounted,
+      onUpdateAvailable: () {
+        unawaited(_reportClientLifecycle('update_available'));
+      },
+      presentUpdate: (update) {
+        if (!mounted) {
+          return Future<void>.value();
+        }
+        return showPokrovClientUpdatePrompt(
+          context: context,
+          update: update,
+          sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
+          onUpdate: () => unawaited(_openClientUpdateDownload(update)),
+        );
+      },
+      onFailure: (_, __) {
+        widget.observability?.recordUpdateCheckFailed();
+        unawaited(
+          _reportClientLifecycle(
+            'failed',
+            errorCode: 'update_check_failed',
+            retryable: true,
+          ),
+        );
+        // Update checks are advisory; never block the app on startup.
+      },
+    );
   }
 
   Future<void> _openClientUpdateDownload(ClientAppUpdateInfo update) async {
     final uri = update.trustedHandoffUri;
     if (uri == null) {
+      widget.observability?.recordUpdateCheckFailed();
       if (mounted) {
         showPokrovSnack(
           context,
@@ -2606,6 +2577,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       return;
     }
+    final updateChannel = widget.appContext.hostPlatform == HostPlatform.windows
+        ? PokrovOperationalUpdateChannel.windows
+        : PokrovOperationalUpdateChannel.direct;
+    widget.observability?.recordUpdateInstallStarted(
+      channel: updateChannel,
+    );
     if (widget.appContext.hostPlatform == HostPlatform.android) {
       unawaited(_reportClientLifecycle('update_download_started'));
       final installer = widget.clientUpdateInstaller ??
@@ -2653,57 +2630,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         barrierDismissible: false,
         builder: (dialogContext) {
           progressContext = dialogContext;
-          return AlertDialog(
-            key: const ValueKey('client-update-download-progress'),
-            title: const Text('Обновление POKROV'),
-            content: SizedBox(
-              width: 320,
-              child: ValueListenableBuilder<PokrovClientUpdateProgress>(
-                valueListenable: progress,
-                builder: (context, value, _) {
-                  final percent = value.percent;
-                  final label = switch (value.phase) {
-                    PokrovClientUpdateProgressPhase.downloading =>
-                      percent == null
-                          ? 'Скачиваем обновление…'
-                          : 'Скачано $percent%',
-                    PokrovClientUpdateProgressPhase.verifying =>
-                      'Проверяем размер и целостность файла…',
-                    PokrovClientUpdateProgressPhase.installing =>
-                      'Открываем установку…',
-                    PokrovClientUpdateProgressPhase.failed =>
-                      'Не удалось завершить загрузку.',
-                    PokrovClientUpdateProgressPhase.idle ||
-                    PokrovClientUpdateProgressPhase.preparing =>
-                      'Подготавливаем защищённую загрузку…',
-                  };
-                  final barValue =
-                      value.phase == PokrovClientUpdateProgressPhase.downloading
-                          ? value.fraction
-                          : value.phase ==
-                                  PokrovClientUpdateProgressPhase.installing
-                              ? 1.0
-                              : null;
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      LinearProgressIndicator(
-                        key: const ValueKey('client-update-progress-bar'),
-                        value: barValue,
-                        minHeight: 7,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        label,
-                        key: const ValueKey('client-update-progress-label'),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
+          return PokrovClientUpdateProgressDialog(
+            progress: progress,
           );
         },
       );
@@ -2739,13 +2667,30 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       progress.dispose();
       switch (status) {
         case PokrovClientUpdateInstallStatus.installerOpened:
+          widget.observability?.recordUpdateInstallFinished(
+            channel: updateChannel,
+          );
           unawaited(_reportClientLifecycle('update_installer_opened'));
           showPokrovSnack(
             context,
             'Обновление проверено. Подтвердите установку в системном окне.',
             tone: PokrovSnackTone.success,
           );
+        case PokrovClientUpdateInstallStatus.storeOpened:
+          widget.observability?.recordUpdateInstallFinished(
+            channel: PokrovOperationalUpdateChannel.store,
+          );
+          unawaited(_reportClientLifecycle('update_store_opened'));
+          showPokrovSnack(
+            context,
+            'Открыли страницу POKROV в магазине. Обновление установит магазин.',
+            tone: PokrovSnackTone.success,
+          );
         case PokrovClientUpdateInstallStatus.permissionRequired:
+          widget.observability?.recordUpdateInstallFinished(
+            channel: updateChannel,
+            failure: ClientUpdateFailure.androidPermission,
+          );
           unawaited(
             _reportClientLifecycle(
               'failed',
@@ -2759,6 +2704,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           );
         case PokrovClientUpdateInstallStatus.unsupported:
         case PokrovClientUpdateInstallStatus.failed:
+          widget.observability?.recordUpdateInstallFinished(
+            channel: updateChannel,
+            failure: ClientUpdateFailure.installer,
+          );
           unawaited(
             _reportClientLifecycle(
               'failed',
@@ -2775,6 +2724,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return;
     }
     final opened = await _launchExternalHandoff(uri);
+    widget.observability?.recordUpdateInstallFinished(
+      channel: updateChannel,
+      failure: opened ? null : ClientUpdateFailure.installer,
+    );
     if (!mounted || opened) {
       return;
     }
@@ -2813,7 +2766,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           return;
         }
       }
-      debugPrint('POKROV handoff open failed');
       showPokrovSnack(
         context,
         'Не удалось открыть страницу. Попробуйте еще раз.',
@@ -2901,7 +2853,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           isPairingCode ? 'pairing_claim_failed' : 'redeem_failed',
         ),
       );
-      debugPrint('POKROV code action failed: ${error.statusCode ?? 0}');
       if (!mounted) {
         return false;
       }
@@ -2911,13 +2862,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         tone: PokrovSnackTone.danger,
       );
       return false;
-    } catch (error) {
+    } on Object {
       unawaited(
         _reportClientRuntimeError(
           isPairingCode ? 'pairing_claim_failed' : 'redeem_failed',
         ),
       );
-      debugPrint('POKROV redeem code failed (${error.runtimeType})');
       if (!mounted) {
         return false;
       }
@@ -2991,8 +2941,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         return;
       }
       await _openSafeHandoff('cabinet', value);
-    } catch (error) {
-      debugPrint('POKROV cabinet handoff failed (${error.runtimeType})');
+    } on Object {
       if (!mounted) {
         return;
       }
@@ -3062,9 +3011,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (result.linked) {
         await _refreshSubscriptionInfo(showFailure: true);
       }
-    } catch (error) {
+    } on Object {
       unawaited(_reportClientRuntimeError('telegram_link_failed'));
-      debugPrint('POKROV telegram link failed (${error.runtimeType})');
       if (!mounted) {
         return;
       }
@@ -3150,8 +3098,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _telegramBonusCanClaim = status.claimRequired;
         _telegramBonusStatus = _telegramBonusStatusForStatus(status);
       });
-    } catch (error) {
-      debugPrint('POKROV telegram bonus check failed (${error.runtimeType})');
+    } on Object {
       if (!mounted) {
         return;
       }
@@ -3198,7 +3145,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         tone: PokrovSnackTone.success,
       );
     } catch (error) {
-      debugPrint('POKROV telegram bonus claim failed (${error.runtimeType})');
       if (!mounted) {
         return;
       }
@@ -3249,8 +3195,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _bonusSummary = summary;
         _bonusSummaryBusy = false;
       });
-    } catch (error) {
-      debugPrint('POKROV bonus summary refresh failed (${error.runtimeType})');
+    } on Object {
       if (!mounted) {
         return;
       }
@@ -3323,8 +3268,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       );
       return result;
     } catch (error) {
-      debugPrint(
-          'POKROV bonus reward failed ($actionName; ${error.runtimeType})');
       if (!mounted) {
         return null;
       }
@@ -3357,7 +3300,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return 'Сначала привяжите Telegram';
     }
     if (status.reason == 'active_paid_required') {
-      return 'Telegram +5 дней доступен без оплаты';
+      return _PlatformProductCopy.telegramRewardAvailableBeforePayment;
     }
     if (!status.subscriber) {
       return 'Подпишитесь и проверьте';
@@ -3398,37 +3341,31 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _loadFirstLaunchState() async {
-    var completed = false;
-    try {
-      completed = await _firstLaunchStore.isCompleted();
-    } catch (_) {
-      completed = false;
-    }
+    final completed = await _firstSessionCoordinator.loadPersistedCompletion();
     if (!mounted || !completed) {
       return;
     }
-    setState(() {
-      _firstLaunchStep = _FirstLaunchStep.ready;
-    });
+    setState(() {});
     widget.shellController?.refresh();
-  }
-
-  Future<void> _markFirstLaunchCompleted() async {
-    try {
-      await _firstLaunchStore.markCompleted();
-    } catch (_) {
-      // Local persistence is best-effort; access must not be blocked by it.
-    }
   }
 
   void _completeFirstLaunchAsNewUser() {
     PokrovHaptics.tap();
-    unawaited(_markFirstLaunchCompleted());
-    setState(() {
-      _firstLaunchExitAnimated = true;
-      _firstLaunchStep = _FirstLaunchStep.ready;
-    });
+    if (!_firstSessionCoordinator.selectTrial()) {
+      return;
+    }
+    unawaited(_firstSessionCoordinator.persistCompletion());
+    setState(() {});
     widget.shellController?.refresh();
+    unawaited(
+      _reportEstablishedFirstSession(
+        eventName: 'trial_start_selected',
+        stage: 'trial',
+        result: 'selected',
+        includeHome: true,
+        refreshAccount: true,
+      ),
+    );
   }
 
   Future<void> _loadConnectHintState() async {
@@ -3479,13 +3416,275 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           httpsProbe: const PokrovHttpsProbeResult.unknown(),
           history: _clientExperience.protectionEvents,
           shortcuts: _clientExperience.postConnectShortcuts,
+          checkedAt: null,
         ),
         onRefresh: _collectProtectionCenterData,
         onRepair: _repairAndCollectProtectionCenterData,
         onAddShortcut: _addPostConnectShortcut,
         onRemoveShortcut: _removePostConnectShortcut,
         onOpenShortcut: _openPostConnectShortcut,
+        onOpenSupport: () {
+          Navigator.of(context).pop();
+          unawaited(_showSupportHub());
+        },
       ),
+    );
+  }
+
+  PokrovDiagnosticsReport _buildDiagnosticsReport({
+    RuntimeSnapshot? snapshot,
+    DateTime? checkedAtUtc,
+  }) {
+    final diagnostics = _extendedProtectionDiagnostics();
+    final transferService = _supportBundleTransferService;
+    return PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: widget.appContext.hostPlatform,
+      routeMode: _selectedRouteMode,
+      snapshot: snapshot ?? _runtimeSnapshot,
+      statusLabel: _connectionPresentation.title,
+      warpState: _diagnosticWarpState(diagnostics),
+      now: DateTime.now().toUtc(),
+      appVersion: pokrovClientVersion,
+      buildNumber: pokrovClientBuildNumber,
+      releaseChannel: pokrovClientReleaseChannel,
+      candidateLabel: pokrovClientCandidateLabel,
+      encryptedDeliveryAvailable:
+          transferService?.supportBundleEncryptionConfigured ?? false,
+      timelineBreadcrumbs:
+          widget.observability?.connectionTimelineBreadcrumbs ?? const [],
+      checkedAtUtc: checkedAtUtc,
+      supportModePolicy: _supportModeController.activePolicy,
+    );
+  }
+
+  SupportBundleTransferService? get _supportBundleTransferService {
+    final service = _supportTicketService;
+    return service is SupportBundleTransferService
+        ? service as SupportBundleTransferService
+        : null;
+  }
+
+  String _diagnosticWarpState(Map<String, Object?> diagnostics) {
+    if (diagnostics['enhanced_protection_consent'] == true) {
+      return diagnostics['enhanced_protection_state'] == 'fallback'
+          ? 'fallback'
+          : 'enabled';
+    }
+    return diagnostics['enhanced_protection_available'] == true
+        ? 'disabled'
+        : 'unavailable';
+  }
+
+  Future<PokrovDiagnosticsReport> _refreshDiagnosticsReport() async {
+    final data = await _collectProtectionCenterData();
+    return _buildDiagnosticsReport(
+      snapshot: data.snapshot,
+      checkedAtUtc: data.checkedAt?.toUtc(),
+    );
+  }
+
+  void _openDiagnostics() {
+    PokrovHaptics.tap();
+    final transferService = _supportBundleTransferService;
+    unawaited(
+      Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (routeContext) {
+            void closeThen(VoidCallback action) {
+              Navigator.of(routeContext).pop();
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  action();
+                }
+              });
+            }
+
+            return PokrovDiagnosticsScreen(
+              initialReport: _buildDiagnosticsReport(),
+              onRefresh: _refreshDiagnosticsReport,
+              onOpenProtection: () => closeThen(_openProtectionCenter),
+              onOpenSupport: () => closeThen(() {
+                unawaited(_showSupportHub());
+              }),
+              onCreateCaseWithBundle: transferService == null ||
+                      !transferService.supportBundleEncryptionConfigured
+                  ? null
+                  : (prepared) => _deliverSupportBundleWithObservability(
+                        transferService,
+                        prepared,
+                        ticketId: null,
+                      ),
+              onExportBundle: transferService == null ||
+                      !transferService.supportBundleEncryptionConfigured
+                  ? null
+                  : (prepared) => _exportSupportBundle(
+                        transferService,
+                        prepared,
+                      ),
+              initialSupportMode: _supportModeController.view,
+              onActivateSupportMode: transferService == null ||
+                      !transferService.supportBundleEncryptionConfigured
+                  ? null
+                  : () => _activateTemporarySupportMode(transferService),
+              onDisableSupportMode: _supportModeController.disable,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<PokrovSupportModeView> _activateTemporarySupportMode(
+    SupportBundleTransferService service,
+  ) async {
+    final codeController = TextEditingController();
+    final activationCode = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Код режима поддержки'),
+        content: TextField(
+          key: const ValueKey('support-mode-code-field'),
+          controller: codeController,
+          autofocus: true,
+          autocorrect: false,
+          textCapitalization: TextCapitalization.characters,
+          maxLength: 14,
+          decoration: const InputDecoration(
+            hintText: 'PSM1-XXXX-XXXX',
+            helperText: 'Одноразовый код из обращения в поддержку',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            key: const ValueKey('support-mode-code-continue'),
+            onPressed: () {
+              final value = codeController.text.trim();
+              if (value.isNotEmpty) {
+                Navigator.of(dialogContext).pop(value);
+              }
+            },
+            child: const Text('Проверить'),
+          ),
+        ],
+      ),
+    );
+    codeController.dispose();
+    if (activationCode == null) {
+      return _supportModeController.view;
+    }
+    final activation = await service.redeemSupportMode(
+      hostPlatform: widget.appContext.hostPlatform,
+      activationCode: activationCode,
+      appVersion: pokrovClientVersion,
+      buildNumber: pokrovClientBuildNumber,
+    );
+    if (!mounted) {
+      return _supportModeController.view;
+    }
+    final policy = activation.policy;
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Разрешить временную диагностику?',
+                style: Theme.of(sheetContext).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'До ${policy.expiresAt.toLocal().toString().substring(11, 16)} · не больше ${policy.maximumBundles} пакетов · общий лимит ${policy.maximumTotalBytes} байт.',
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Категории: ${policy.allowedCategories.map((value) => value.name).join(', ')}.',
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Режим не запускает команды, не меняет VPN, маршруты или DNS, не читает пользовательские файлы и не скрывает индикатор. Каждый пакет всё равно проходит предпросмотр, очистку и шифрование.',
+              ),
+              const SizedBox(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(sheetContext).pop(false),
+                    child: const Text('Не включать'),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    key: const ValueKey('support-mode-confirm'),
+                    onPressed: () => Navigator.of(sheetContext).pop(true),
+                    child: const Text('Включить'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (confirmed != true) {
+      return _supportModeController.view;
+    }
+    await _supportModeController.activate(
+      activation,
+      userConfirmed: true,
+    );
+    return _supportModeController.view;
+  }
+
+  Future<SupportBundleDeliveryResult> _deliverSupportBundleWithObservability(
+    SupportBundleTransferService service,
+    PreparedSupportBundle prepared, {
+    int? ticketId,
+  }) async {
+    final observability = widget.observability;
+    if (prepared.preview.profile == SupportDiagnosticProfile.extended) {
+      await _supportModeController.registerBundle(prepared);
+    }
+    observability?.recordSupportBundleStarted();
+    try {
+      final result = await service.deliverSupportBundle(
+        hostPlatform: widget.appContext.hostPlatform,
+        prepared: prepared,
+        caseSummary:
+            'Диагностика POKROV $pokrovClientVersion; ${widget.appContext.hostPlatform.name}; режим ${_selectedRouteMode.name}.',
+        ticketId: ticketId,
+      );
+      observability?.recordSupportBundleFinished(prepared: prepared);
+      return result;
+    } on Object catch (error) {
+      observability?.recordSupportBundleFinished(
+        prepared: prepared,
+        errorCode: _supportBundleOperationalErrorCode(error),
+      );
+      rethrow;
+    }
+  }
+
+  Future<SupportBundleExportResult> _exportSupportBundle(
+    SupportBundleTransferService service,
+    PreparedSupportBundle prepared,
+  ) async {
+    if (prepared.preview.profile == SupportDiagnosticProfile.extended) {
+      await _supportModeController.registerBundle(prepared);
+    }
+    return service.exportSupportBundle(
+      hostPlatform: widget.appContext.hostPlatform,
+      prepared: prepared,
     );
   }
 
@@ -3511,12 +3710,17 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
     RuntimeLiveStats liveStats = const RuntimeLiveStats.unavailable();
     if (snapshot?.phase == RuntimePhase.running) {
+      widget.observability?.recordPerformanceSampleStarted();
       try {
         liveStats = await _withRuntimeActionTimeout(
           'protectionLiveStats',
           _runtimeEngine.liveStats,
         );
+        widget.observability?.recordPerformanceSampleFinished(
+          stats: liveStats,
+        );
       } on Object {
+        widget.observability?.recordPerformanceSampleFinished();
         // Live counters are optional host evidence, never a tunnel failure.
       }
     }
@@ -3537,12 +3741,15 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       httpsProbe: httpsProbe,
       history: _clientExperience.protectionEvents,
       shortcuts: _clientExperience.postConnectShortcuts,
+      checkedAt: DateTime.now(),
     );
   }
 
-  Future<_ProtectionCenterData> _repairAndCollectProtectionCenterData() async {
+  Future<_ProtectionCenterData> _repairAndCollectProtectionCenterData(
+    ValueChanged<_ProtectionRepairStep> onStep,
+  ) async {
     try {
-      await _repairRuntime();
+      await _repairRuntime(onStep: onStep);
       return _collectProtectionCenterData();
     } on _ProtectionRepairBusy {
       rethrow;
@@ -3554,7 +3761,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  Future<void> _repairRuntime() async {
+  Future<void> _repairRuntime({
+    ValueChanged<_ProtectionRepairStep>? onStep,
+  }) async {
     if (_runtimeBusy) {
       if (mounted) {
         setState(() {
@@ -3568,11 +3777,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
     setState(() {
       _runtimeBusy = true;
-      _runtimeDisconnecting = _runtimeSnapshot?.phase == RuntimePhase.running;
+      _runtimeIntent = ConnectionTransitionIntent.recover;
       _runtimeHeadline = 'Проверяем и восстанавливаем подключение…';
     });
 
     try {
+      onStep?.call(_ProtectionRepairStep.stopOldConnection);
       final knownSnapshot = _runtimeSnapshot;
       RuntimeSnapshot current = knownSnapshot ??
           await _withRuntimeActionTimeout(
@@ -3611,6 +3821,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
       // A repair always resolves the current account/node/routing contract.
       // Staging is idempotent on the host and the loop runs exactly once.
+      onStep?.call(_ProtectionRepairStep.refreshProfile);
       _managedProfileDirty = true;
       final managedProfile = await _resolveManagedProfile();
       current = await _withRuntimeActionTimeout(
@@ -3622,6 +3833,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _stagedNodeCode = _resolvedProfileNodeCode;
       _stagedVariantId = _resolvedProfileVariantId;
       _cachedProfileFallbackGate.markFreshProfileStaged();
+      onStep?.call(_ProtectionRepairStep.verifyProtection);
       current = await _withRuntimeActionTimeout(
         'repairConnect',
         _runtimeEngine.connect,
@@ -3717,7 +3929,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (mounted) {
         setState(() {
           _runtimeBusy = false;
-          _runtimeDisconnecting = false;
+          _runtimeIntent = ConnectionTransitionIntent.none;
         });
       }
     }
@@ -3726,38 +3938,114 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   void _openFirstLaunchRestore() {
     PokrovHaptics.tap();
     setState(() {
-      _firstLaunchStep = _FirstLaunchStep.restore;
+      _firstSessionCoordinator.selectExistingAccess();
     });
   }
 
   void _backToFirstLaunchChoice() {
     PokrovHaptics.tap();
     setState(() {
-      _firstLaunchStep = _FirstLaunchStep.choice;
+      _firstSessionCoordinator.backToChoice();
     });
   }
 
   Future<void> _redeemFirstLaunchRestoreCode() async {
-    if (_firstLaunchBusy) {
+    if (!_firstSessionCoordinator.beginRestore()) {
       return;
     }
-    setState(() {
-      _firstLaunchBusy = true;
-    });
+    setState(() {});
     final ok = await _redeemCodeInApp(_firstLaunchRestoreCodeController.text);
     if (!mounted) {
       return;
     }
     setState(() {
-      _firstLaunchBusy = false;
+      _firstSessionCoordinator.finishRestore(succeeded: ok);
       if (ok) {
-        unawaited(_markFirstLaunchCompleted());
-        // Restore success exits through the same handover as the new-user
-        // path — one gate, one choreography.
-        _firstLaunchExitAnimated = true;
-        _firstLaunchStep = _FirstLaunchStep.ready;
+        unawaited(_firstSessionCoordinator.persistCompletion());
       }
     });
+    if (ok) {
+      unawaited(
+        _reportEstablishedFirstSession(
+          eventName: 'existing_access_selected',
+          stage: 'restore',
+          result: 'selected',
+          includeHome: true,
+          refreshAccount: true,
+        ),
+      );
+    }
+  }
+
+  Future<void> _reportFirstSessionEvent(
+    String eventName, {
+    required String stage,
+    required String result,
+    String errorCode = '',
+    bool? retryable,
+  }) async {
+    final service = _firstSessionEventService;
+    if (service == null) {
+      return;
+    }
+    try {
+      await service.reportFirstSessionEvent(
+        hostPlatform: widget.appContext.hostPlatform,
+        eventName: eventName,
+        stage: stage,
+        result: result,
+        errorCode: errorCode,
+        retryable: retryable,
+      );
+    } on Object {
+      // First-session telemetry is best-effort and never gates access.
+    }
+  }
+
+  Future<void> _reportEstablishedFirstSession({
+    String? eventName,
+    String stage = 'app_open',
+    String result = 'seen',
+    String errorCode = '',
+    bool? retryable,
+    required bool includeHome,
+    bool refreshAccount = false,
+  }) async {
+    await _reportClientOpenOnce();
+    if (_firstSessionCoordinator.markAuthenticatedAppOpenSeen()) {
+      await _reportFirstSessionEvent(
+        'app_first_open',
+        stage: 'app_open',
+        result: 'shown',
+      );
+    }
+    if (eventName != null) {
+      await _reportFirstSessionEvent(
+        eventName,
+        stage: stage,
+        result: result,
+        errorCode: errorCode,
+        retryable: retryable,
+      );
+    }
+    if (includeHome && _firstSessionCoordinator.markFirstHomeSeen()) {
+      await _reportFirstSessionEvent(
+        'first_home_seen',
+        stage: 'home',
+        result: 'seen',
+      );
+    }
+    if (refreshAccount) {
+      await _refreshAccountSummary();
+    }
+  }
+
+  Future<void> _reportClientOpenOnce() async {
+    if (_clientLifecycleOpenReported) {
+      return;
+    }
+    _clientLifecycleOpenReported = true;
+    await _reportClientLifecycle('app_opened');
   }
 
   Future<void> _showSupportHub() {
@@ -3777,13 +4065,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           return _SupportChatScreen(
             appContext: widget.appContext,
             selectedRouteMode: _selectedRouteMode,
-            statusLabel: _consumerProtectionStatusLabel(
-              _runtimeSnapshot,
-              busy: _runtimeBusy,
-              disconnecting: _runtimeDisconnecting,
-            ),
+            statusLabel: _connectionPresentation.title,
+            runtimeSnapshot: _runtimeSnapshot,
             extraDiagnostics: _extendedProtectionDiagnostics(),
             supportTicketService: _supportTicketService,
+            observability: widget.observability,
             askAssistant:
                 _clientDataService == null ? null : _askSupportAssistant,
             onOpenHandoff: _showSeedHandoff,
@@ -3814,12 +4100,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         'app_version': pokrovClientVersion,
         'platform': widget.appContext.hostPlatform.name,
         'route_mode': _selectedRouteMode.name,
-        'connection_status': _consumerProtectionStatusLabel(
-          _runtimeSnapshot,
-          busy: _runtimeBusy,
-          disconnecting: _runtimeDisconnecting,
-        ),
-        'connection_active': _runtimeSnapshot?.phase == RuntimePhase.running,
+        'connection_status': _connectionPresentation.title,
+        'connection_active': _connectionPresentation.showsTunnelActive,
         'current_location_label': _homeLocationLabel,
         ..._extendedProtectionDiagnostics(),
       },
@@ -3944,20 +4226,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   Future<T> _withRuntimeActionTimeout<T>(
     String operation,
     Future<T> Function() action,
-  ) {
-    return action().timeout(
-      widget.runtimeActionTimeout,
-      onTimeout: () => throw TimeoutException(
-        'runtime action timed out: $operation',
-        widget.runtimeActionTimeout,
-      ),
-    );
-  }
+  ) =>
+      _connectionCoordinator.runWithTimeout(operation, action);
 
   Future<ManagedProfilePayload> _resolveManagedProfile({
     Duration? deadline,
     bool suppressWarpRuntime = false,
   }) async {
+    widget.observability?.enterProfilePhase();
     final resolveFuture = _bootstrapper.resolveManagedProfile(
       hostPlatform: widget.appContext.hostPlatform,
       routeMode: _selectedRouteMode,
@@ -4465,7 +4741,32 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     return completion.future;
   }
 
-  Future<void> _toggleRuntime({bool reconnectAfterDisconnect = false}) async {
+  Future<void> _toggleRuntime({bool reconnectAfterDisconnect = false}) {
+    final observability = widget.observability;
+    if (observability == null || _runtimeBusy) {
+      return _toggleRuntimeObserved(
+        reconnectAfterDisconnect: reconnectAfterDisconnect,
+      );
+    }
+    final beginsWithDisconnect =
+        _runtimeSnapshot?.phase == RuntimePhase.running;
+    return observability.runConnectionAction(
+      () async {
+        try {
+          await _toggleRuntimeObserved(
+            reconnectAfterDisconnect: reconnectAfterDisconnect,
+          );
+        } finally {
+          observability.observeConnection(_connectionExperience);
+        }
+      },
+      beginsWithDisconnect: beginsWithDisconnect,
+    );
+  }
+
+  Future<void> _toggleRuntimeObserved({
+    bool reconnectAfterDisconnect = false,
+  }) async {
     if (_runtimeBusy) {
       setState(() {
         _runtimeHeadline = 'POKROV уже обновляется. Подождите немного.';
@@ -4503,16 +4804,18 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return;
     }
 
+    final actionIntent = _runtimeSnapshot?.phase == RuntimePhase.running
+        ? reconnectAfterDisconnect
+            ? ConnectionTransitionIntent.reconnect
+            : ConnectionTransitionIntent.disconnect
+        : ConnectionTransitionIntent.connect;
     setState(() {
-      _runtimeBusy = true;
-      _runtimeDisconnecting = _runtimeSnapshot?.phase == RuntimePhase.running;
+      _connectionCoordinator.beginAction(
+        actionIntent,
+        recordAttempt: actionIntent == ConnectionTransitionIntent.connect,
+        onSlowStage: _handleSlowConnectionStage,
+      );
     });
-    if (!_runtimeDisconnecting) {
-      _connectionAttemptStartedAt = DateTime.now().toUtc();
-      _connectionAttemptNumber += 1;
-      unawaited(_reportClientLifecycle('connect_requested'));
-    }
-
     try {
       RuntimeSnapshot snapshot = _runtimeSnapshot ??
           await _withRuntimeActionTimeout('snapshot', _runtimeEngine.snapshot);
@@ -4521,11 +4824,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
 
       if (snapshot.phase == RuntimePhase.running) {
-        if (!_runtimeDisconnecting) {
+        if (_runtimeIntent == ConnectionTransitionIntent.connect) {
           // The pre-busy guess was made without a snapshot; fix the copy
           // before the disconnect actually starts.
           setState(() {
-            _runtimeDisconnecting = true;
+            _runtimeIntent = reconnectAfterDisconnect
+                ? ConnectionTransitionIntent.reconnect
+                : ConnectionTransitionIntent.disconnect;
           });
         }
         var current = await _withRuntimeActionTimeout(
@@ -4660,6 +4965,19 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
 
       if ((current.stagedConfigPath ?? '').isNotEmpty || current.canConnect) {
+        if (!await _authorizeAndroidVpnConnect()) {
+          return;
+        }
+        if (actionIntent == ConnectionTransitionIntent.connect) {
+          unawaited(_reportClientLifecycle('connect_requested'));
+          unawaited(
+            _reportFirstSessionEvent(
+              'connect_requested',
+              stage: 'connect',
+              result: 'started',
+            ),
+          );
+        }
         final warpRuntimeAttempted =
             _warpRuntimeConsent && _stagedProfileUsesWarp;
         _activeConnectUsedWarp = warpRuntimeAttempted;
@@ -4671,6 +4989,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         if (!mounted) {
           return;
         }
+        _finishAndroidVpnPermission(current);
         var warpFallbackUsed = false;
         if (current.phase != RuntimePhase.running && warpRuntimeAttempted) {
           final fallback = await _withRuntimeActionTimeout(
@@ -4812,14 +5131,102 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     } finally {
       if (mounted) {
         setState(() {
-          _runtimeBusy = false;
-          _runtimeDisconnecting = false;
+          _connectionCoordinator.finishAction();
         });
       }
       if (_runtimeSnapshot?.phase != RuntimePhase.running) {
-        _connectionAttemptStartedAt = null;
+        _connectionCoordinator.clearAttempt();
       }
       widget.shellController?.refresh();
+    }
+  }
+
+  void _handleSlowConnectionStage() {
+    if (!mounted || !_connectionCoordinator.slowStageVisible) {
+      return;
+    }
+    final presentation = _connectionCoordinator.presentation;
+    _recordProtectionEvent(
+      kind: 'connection_slow_stage',
+      title: 'Подключение занимает больше времени',
+      detail: '${presentation.title}. ${presentation.subtitle}',
+      tone: PokrovProtectionEventTone.warning,
+    );
+  }
+
+  Future<bool> _authorizeAndroidVpnConnect() async {
+    if (widget.appContext.hostPlatform != HostPlatform.android ||
+        (_connectHintDismissed &&
+            !_firstSessionCoordinator.vpnPermissionDenied)) {
+      return true;
+    }
+    final recovery = _firstSessionCoordinator.vpnPermissionDenied;
+    if (!_firstSessionCoordinator.beginVpnPermissionExplanation()) {
+      return false;
+    }
+    setState(() {});
+    unawaited(
+      _reportFirstSessionEvent(
+        'vpn_permission_explainer_shown',
+        stage: 'vpn_permission',
+        result: 'shown',
+      ),
+    );
+    final approved = await _showVpnPermissionExplainer(
+      context,
+      recovery: recovery,
+    );
+    if (!mounted) {
+      return false;
+    }
+    if (!approved) {
+      setState(() {
+        _firstSessionCoordinator.dismissVpnPermissionExplanation();
+      });
+      unawaited(
+        _reportFirstSessionEvent(
+          'vpn_permission_result',
+          stage: 'vpn_permission',
+          result: 'dismissed',
+          retryable: true,
+        ),
+      );
+      return false;
+    }
+    setState(() {
+      _firstSessionCoordinator.beginVpnPermissionRequest();
+    });
+    return true;
+  }
+
+  void _finishAndroidVpnPermission(RuntimeSnapshot snapshot) {
+    if (widget.appContext.hostPlatform != HostPlatform.android) {
+      return;
+    }
+    final denied = snapshot.lastFailureKind == 'vpn_permission_denied';
+    final granted = snapshot.phase == RuntimePhase.running;
+    final wasRequesting = _firstSessionCoordinator.vpnPermissionState ==
+        FirstSessionVpnPermissionState.requesting;
+    if (!denied &&
+        !granted &&
+        _firstSessionCoordinator.vpnPermissionState !=
+            FirstSessionVpnPermissionState.requesting) {
+      return;
+    }
+    _firstSessionCoordinator.finishVpnPermissionRequest(
+      granted: granted,
+      denied: denied,
+    );
+    if (denied || (granted && wasRequesting)) {
+      unawaited(
+        _reportFirstSessionEvent(
+          'vpn_permission_result',
+          stage: 'vpn_permission',
+          result: granted ? 'success' : 'failure',
+          errorCode: denied ? 'vpn_permission_denied' : '',
+          retryable: denied,
+        ),
+      );
     }
   }
 
@@ -4857,15 +5264,34 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   bool _isConnectionProven(RuntimeSnapshot snapshot) =>
-      snapshot.phase == RuntimePhase.running &&
-      (widget.appContext.hostPlatform != HostPlatform.android ||
-          snapshot.coreEgressValidated == true);
+      snapshot.isCleanlyHealthy;
+
+  ConnectionExperienceState get _connectionExperience =>
+      _connectionCoordinator.experience;
+
+  ConnectionPresentation get _connectionPresentation =>
+      _connectionCoordinator.presentation;
 
   void _finalizeProvenConnection(RuntimeSnapshot snapshot) {
     _automaticFailoverAttempts = 0;
     _automaticFailoverInFlight = false;
     _promoteStagedLocationAfterFreshConnect();
+    final firstVerifiedConnect = !_connectHintDismissed;
     _dismissConnectHint();
+    _firstSessionCoordinator.finishVpnPermissionRequest(
+      granted: true,
+      denied: false,
+    );
+    if (firstVerifiedConnect &&
+        _firstSessionCoordinator.markFirstVerifiedConnectSeen()) {
+      unawaited(
+        _reportFirstSessionEvent(
+          'first_verified_connect',
+          stage: 'connect',
+          result: 'success',
+        ),
+      );
+    }
     unawaited(_syncSuccessfulConnectionExperience(snapshot));
   }
 
@@ -4876,30 +5302,17 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         connectedSnapshot.coreEgressValidated == true) {
       return;
     }
-    _cancelPostConnectHostHealthPolling();
-    final generation = ++_postConnectHealthGeneration;
-    var pollsRemaining = _activeConnectUsedWarp ? 76 : 28;
     // A normal group probe settles in about 19 seconds. WARP receives one
     // bounded host retry, so keep observing it through the 55-second host
     // watchdog. A fail-closed stop that lands after a single refresh must not
     // leave the Home CTA green with no TUN behind it.
-    _postConnectHealthTimer = Timer.periodic(
-      const Duration(milliseconds: 750),
-      (timer) {
-        if (!mounted || generation != _postConnectHealthGeneration) {
-          timer.cancel();
-          return;
-        }
-        pollsRemaining -= 1;
-        if (pollsRemaining < 0) {
-          timer.cancel();
-          if (generation == _postConnectHealthGeneration) {
-            _postConnectHealthTimer = null;
-          }
-          return;
-        }
-        unawaited(_refreshPostConnectHostHealth(connectedSnapshot, generation));
-      },
+    _diagnosticsCoordinator.startHealthPolling(
+      interval: const Duration(milliseconds: 750),
+      pollCount: _activeConnectUsedWarp ? 76 : 28,
+      canContinue: () => mounted,
+      onPoll: (generation) => unawaited(
+        _refreshPostConnectHostHealth(connectedSnapshot, generation),
+      ),
     );
   }
 
@@ -4908,19 +5321,18 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     int generation,
   ) async {
     if (!mounted ||
-        generation != _postConnectHealthGeneration ||
+        !_diagnosticsCoordinator.isCurrentHealthGeneration(generation) ||
         _runtimeSnapshot?.phase != RuntimePhase.running ||
-        _postConnectHealthPollInFlight == generation) {
+        !_diagnosticsCoordinator.beginHealthPoll(generation)) {
       return;
     }
-    _postConnectHealthPollInFlight = generation;
     try {
       final refreshed = await _withRuntimeActionTimeout(
         'postConnectHealthSnapshot',
         _runtimeEngine.snapshot,
       );
       if (!mounted ||
-          generation != _postConnectHealthGeneration ||
+          !_diagnosticsCoordinator.isCurrentHealthGeneration(generation) ||
           _runtimeSnapshot?.phase != RuntimePhase.running) {
         return;
       }
@@ -5016,17 +5428,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     } on Object {
       // The host snapshot is advisory here; the normal refresh lane retries it.
     } finally {
-      if (_postConnectHealthPollInFlight == generation) {
-        _postConnectHealthPollInFlight = null;
-      }
+      _diagnosticsCoordinator.finishHealthPoll(generation);
     }
   }
 
-  void _cancelPostConnectHostHealthPolling() {
-    _postConnectHealthGeneration += 1;
-    _postConnectHealthTimer?.cancel();
-    _postConnectHealthTimer = null;
-  }
+  void _cancelPostConnectHostHealthPolling() =>
+      _diagnosticsCoordinator.stopHealthPolling();
 
   Future<void> _retryWithoutWarpAfterEgressFailure(
     RuntimeSnapshot warpFailure,
@@ -5037,7 +5444,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     setState(() {
       _runtimeBusy = true;
-      _runtimeDisconnecting = false;
+      _runtimeIntent = ConnectionTransitionIntent.reconnect;
     });
     try {
       final fallback = await _withRuntimeActionTimeout(
@@ -5148,7 +5555,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (mounted) {
         setState(() {
           _runtimeBusy = false;
-          _runtimeDisconnecting = false;
+          _runtimeIntent = ConnectionTransitionIntent.none;
         });
       }
     }
@@ -5481,8 +5888,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final activeVariant =
         normalizeClientLocationVariantId(_activeVariantId) ?? 'direct';
     if (_runtimeSnapshot?.phase == RuntimePhase.running) {
-      if (widget.appContext.hostPlatform == HostPlatform.android &&
-          _runtimeSnapshot?.coreEgressValidated != true) {
+      if (!_connectionPresentation.isVerified) {
         return 'Локация проверяется';
       }
       if (activeCode.isEmpty) {
@@ -5558,28 +5964,47 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final hasProvisionedAccess = !_managedProfileDirty ||
         (_runtimeSnapshot?.phase == RuntimePhase.running) ||
         ((_runtimeSnapshot?.stagedConfigPath ?? '').isNotEmpty);
+    final connectionPresentation = _connectionPresentation;
+    final observability = widget.observability;
+    if (observability != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          observability.observeConnection(_connectionExperience);
+        }
+      });
+    }
+    final protectionState = ProtectionViewState(
+      connection: connectionPresentation,
+      routeMode: _selectedRouteMode,
+      locationLabel: _homeLocationLabel,
+      emergencyRuntimeActive:
+          connectionPresentation.isVerified && _emergencyRuntimeActive,
+      emergencyChainMode: EmergencyChainMode.tryParse(
+            _clientExperience.emergencyChainMode,
+          ) ??
+          EmergencyChainMode.reserveForeign,
+      connectHintVisible: !_connectHintDismissed,
+      whitelistRecoverySuggested: _whitelistRecoverySuggested,
+      slowConnectionVisible: _connectionCoordinator.slowStageVisible,
+      vpnPermissionRecoveryVisible:
+          _firstSessionCoordinator.vpnPermissionDenied,
+      runtimeNotice: _runtimeHeadline,
+    );
+    final protectionIntents = ProtectionIntents(
+      toggleConnection: _toggleRuntimeFromHome,
+      openConnectionDetails: _openProtectionCenter,
+      openLocations: () => _selectTab(SeedTab.locations),
+      openRules: () => _selectTab(SeedTab.rules),
+      openRecovery: () {
+        unawaited(_openEmergencyNetwork());
+      },
+    );
     final sectionBuilders = <WidgetBuilder>[
       (context) => _QuickConnectSection(
             appContext: widget.appContext,
             freeProfileAccess: _freeProfileAccess,
-            selectedRouteMode: _selectedRouteMode,
-            locationLabel: _homeLocationLabel,
-            emergencyRuntimeActive:
-                (_runtimeSnapshot?.phase == RuntimePhase.running) &&
-                    (_runtimeSnapshot?.coreEgressValidationRequired == false ||
-                        (_emergencyRuntimeActive &&
-                            _runtimeSnapshot?.coreEgressValidationRequired !=
-                                true)),
-            emergencyChainMode: EmergencyChainMode.tryParse(
-                  _clientExperience.emergencyChainMode,
-                ) ??
-                EmergencyChainMode.reserveForeign,
-            runtimeSnapshot: _runtimeSnapshot,
-            runtimeHeadline: _runtimeHeadline,
-            runtimeBusy: _runtimeBusy,
-            runtimeDisconnecting: _runtimeDisconnecting,
-            primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
-            connectHintVisible: !_connectHintDismissed,
+            protectionState: protectionState,
+            protectionIntents: protectionIntents,
             revealHold: _firstLaunchStep != _FirstLaunchStep.ready,
             bonusSummary: _bonusSummary,
             subscriptionInfo: _subscriptionInfo,
@@ -5588,8 +6013,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             warpRuntimeConsent: _warpRuntimeConsent,
             warpRuntimeActive: _warpRuntimeIsActive,
             warpBusy: _warpPolicyBusy,
-            onToggleRuntime: _toggleRuntimeFromHome,
-            onOpenConnectionDetails: _openProtectionCenter,
             onTelegramBonus: _telegramBonusBusy
                 ? null
                 : () {
@@ -5599,8 +6022,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                       unawaited(_createTelegramLinkInApp());
                     }
                   },
-            onOpenLocations: () => _selectTab(SeedTab.locations),
-            onOpenRules: () => _selectTab(SeedTab.rules),
             onOpenWarp: _openWarpControl,
             onWarpConsentChanged: _setWarpRuntimeConsent,
             notificationsUnread: _notificationsUnread,
@@ -5608,10 +6029,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             onOpenProfile: () => _selectTab(SeedTab.profile),
             onOpenPromoHandoff: _showSeedHandoff,
             onPromoEvent: _reportPromoEvent,
-            showWhitelistRecovery: _whitelistRecoverySuggested,
-            onOpenWhitelistRecovery: () {
-              unawaited(_openEmergencyNetwork());
-            },
           ),
       (context) => _LocationsSection(
             appContext: widget.appContext,
@@ -5650,6 +6067,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             onSelectedAppRemoved: _removeSelectedAppId,
             onRuAppPresetApplied: _applyRuAppPreset,
             onRoutingPreferencesChanged: _setRoutingPreferences,
+            onRoutingPreferencesApply: _applyRoutingPreferences,
+            connectionActive: _runtimeSnapshot?.phase == RuntimePhase.running,
             onReadCurrentWifi: _readCurrentWifi,
             onRequestWifiPermission: _requestCurrentWifiPermission,
             onOpenVpnSettings: _openSystemVpnSettings,
@@ -5665,6 +6084,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             onOpenHandoff: _showSeedHandoff,
             onPromoEvent: _reportPromoEvent,
             onOpenSupportHub: _showSupportHub,
+            onOpenDiagnostics: _openDiagnostics,
             onCreateTelegramLink: _createTelegramLinkInApp,
             onCheckTelegramBonus: _checkTelegramBonusInApp,
             onClaimTelegramBonus: _claimTelegramBonusInApp,
@@ -5682,7 +6102,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             warpPolicy: _managedWarpPolicy,
             warpRuntimeConsent: _warpRuntimeConsent,
             warpBusy: _warpPolicyBusy,
-            runtimeSnapshot: _runtimeSnapshot,
+            connectionPresentation: connectionPresentation,
             runtimeHeadline: _runtimeHeadline,
             onOpenWarp: _openWarpControl,
             themeMode: widget.themeMode,
@@ -5734,6 +6154,19 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
               _selectTab(SeedTab.values[index]);
             },
           );
+    final supportModeView = _supportModeController.view;
+    final shellWithSupportMode = supportModeView.active
+        ? Column(
+            children: [
+              PokrovPersistentSupportModeBanner(
+                view: supportModeView,
+                onOpenDiagnostics: _openDiagnostics,
+                onDisable: () => unawaited(_supportModeController.disable()),
+              ),
+              Expanded(child: shell),
+            ],
+          )
+        : shell;
 
     // Edge-to-edge system chrome: transparent bars with icon brightness
     // following the active theme. Android reads this annotation; desktop
@@ -5776,7 +6209,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                   child: SafeArea(
                     child: Stack(
                       children: [
-                        Positioned.fill(child: shell),
+                        Positioned.fill(child: shellWithSupportMode),
                         // Welcome Handover: the gate leaves with a fade and a
                         // gentle 1.02 scale while the home reveal rises under
                         // it — onboarding hands over instead of hard-cutting.
@@ -5803,6 +6236,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                                 ? _FirstLaunchGate(
                                     appContext: widget.appContext,
                                     step: _firstLaunchStep,
+                                    acquisitionState: _firstSessionCoordinator
+                                        .acquisitionState,
                                     restoreCodeController:
                                         _firstLaunchRestoreCodeController,
                                     busy: _firstLaunchBusy,
@@ -5832,134 +6267,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       ),
     );
   }
-}
-
-enum PokrovWindowsTunnelConnectChoice { administrator, systemProxy, cancel }
-
-@visibleForTesting
-Future<PokrovWindowsTunnelConnectChoice?>
-    showPokrovWindowsTunnelPermissionSheet(
-  BuildContext context, {
-  required bool permissionFailed,
-}) {
-  return showModalBottomSheet<PokrovWindowsTunnelConnectChoice>(
-    context: context,
-    isDismissible: false,
-    enableDrag: false,
-    isScrollControlled: true,
-    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
-    builder: (sheetContext) {
-      final p = PokrovPalette.of(sheetContext);
-      final theme = Theme.of(sheetContext);
-      return PopScope(
-        canPop: false,
-        child: SafeArea(
-          top: false,
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: SingleChildScrollView(
-                key: const ValueKey('windows-tunnel-permission-sheet'),
-                padding: const EdgeInsets.fromLTRB(22, 22, 22, 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: p.accent.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(
-                            Icons.admin_panel_settings_rounded,
-                            color: p.accent,
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                permissionFailed
-                                    ? 'Не получилось включить полный VPN'
-                                    : 'Для полного VPN нужны права',
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  color: p.ink,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                permissionFailed
-                                    ? 'Можно повторить системный запрос или подключиться без прав администратора.'
-                                    : 'POKROV по умолчанию защищает всё устройство через VPN-туннель. Windows покажет системный запрос — нажмите «Да».',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: p.muted,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    FilledButton.icon(
-                      key: const ValueKey('windows-tunnel-use-administrator'),
-                      onPressed: () => Navigator.of(sheetContext).pop(
-                        PokrovWindowsTunnelConnectChoice.administrator,
-                      ),
-                      icon: const Icon(Icons.shield_rounded),
-                      label: Text(
-                        permissionFailed
-                            ? 'Повторить запрос Windows'
-                            : 'Включить полный VPN',
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    OutlinedButton.icon(
-                      key: const ValueKey('windows-tunnel-use-system-proxy'),
-                      onPressed: () => Navigator.of(sheetContext).pop(
-                        PokrovWindowsTunnelConnectChoice.systemProxy,
-                      ),
-                      icon: const Icon(Icons.language_rounded),
-                      label: const Text('Продолжить без администратора'),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Без прав включится системный прокси. Он подходит браузерам и совместимым приложениям, но не заменяет VPN для всего устройства. Режим можно изменить в «Правила → Дополнительно».',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: p.muted,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    TextButton(
-                      key: const ValueKey('windows-tunnel-cancel'),
-                      onPressed: () => Navigator.of(sheetContext).pop(
-                        PokrovWindowsTunnelConnectChoice.cancel,
-                      ),
-                      child: const Text('Не подключаться'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    },
-  );
 }
 
 /// The first live connection needs one consumer decision about device scope.
