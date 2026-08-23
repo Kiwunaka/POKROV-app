@@ -7,7 +7,7 @@ abstract final class PlatformProductFacts {
   static const productFactsSha256 =
       '2c135eeee91adaca52bc35b103ce5839e7f670e557ff7b55970c4375a2916f54';
   static const publicUrlsSha256 =
-      '9db38cc2ef5a2658fad53b5fb6ca90aed07ba02012a213ddb2e4765bb25c4c2c';
+      '022f7ba577714bdc0bffd3cc00254309af346ef0c8fc62fe9c52e40d72a0de67';
   static const commercialRevision = '2026-08-21.1';
   static const commercialContractSha256 =
       '22b7ef26908c23c2bb53322dec959a3bc050a20a6c6d2feff9f78708b45e23cd';

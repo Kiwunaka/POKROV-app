@@ -61,7 +61,7 @@
     "tariff_catalog_contract": "shared/tariff-catalog.json",
     "tariff_catalog_sha256": "0e5acae30601854cee4c44c33af84e84bbdcd24d2788a7da1463bb3ee4a40d43",
     "public_urls_contract": "shared/public-urls.json",
-    "public_urls_sha256": "9db38cc2ef5a2658fad53b5fb6ca90aed07ba02012a213ddb2e4765bb25c4c2c"
+    "public_urls_sha256": "022f7ba577714bdc0bffd3cc00254309af346ef0c8fc62fe9c52e40d72a0de67"
   },
   "apple_publication": {
     "credentials_in_repo": false,
