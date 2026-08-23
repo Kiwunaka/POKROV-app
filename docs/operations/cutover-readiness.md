@@ -43,8 +43,8 @@ signing, device, runtime and origin evidence cannot be reused for promotion.
 | Stable pointer and rollback catalog | `PASS_LOCAL` | Retained `1.1.6` pointer matches its exact versioned handoff; isolated A→B→A proves optimistic lock, atomic replace, backup, receipt and byte-identical reversal. |
 | Operational producer/privacy contract | `PASS_LOCAL` | Auth, entitlement, performance, support and Android count-only routing producers pass focused client/platform tests; exact-candidate runtime proof remains later. |
 | Temporary support mode and encrypted export | `PASS_LOCAL` | Signed exact-audience activation, explicit consent, persistent indicator, nonce/TTL/cumulative caps, no-upload short code and encrypted-only Android/Windows export pass local source/widget/unit contracts; exact-candidate physical host proof remains later. |
-| Clean frozen revisions | `BLOCKED` | Platform, client, Core and release-index trees are clean. |
-| Release index | `BLOCKED_BY_ACCESS` | Exact public index revision is available. |
+| Clean frozen revisions | `PASS_LOCAL_SOURCE_TUPLE` | Platform, client, Core and local release-index trees are clean; edits invalidate the tuple and no candidate is implied. |
+| Release index | `IMPLEMENTED_LOCAL_UNPUBLISHED` | Public `d0bf8e8…ed15` is legacy checksum-only. Local `f07654a…9eb7` adds strict manifest/signature/same-byte validation, but owner key, review/push, hosted workflow and public readback remain blocked. |
 | Core replacement | `PASS_LOCAL` | Exact reproducible `1.1.0` AAR/DLL identities are bound to clean Core revision `fcb3c8b…bfa2`; no tag, candidate, signing or publication is claimed. |
 | Candidate handoff | `MISSING` | One strict-v2 handoff binds exact revisions, artifacts and gates. |
 | Android artifact/signing | `MISSING` | Final APK identities and production signer match v2. |

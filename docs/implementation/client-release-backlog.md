@@ -44,8 +44,8 @@ signing, hosted-CI, deployed-runtime or promotion proof.
 
 | Order | Gate | State | Completion rule |
 |---:|---|---|---|
-| 1 | Clean platform, client and Core revisions | `BLOCKED` | All exact source revisions are clean and frozen. |
-| 2 | Public release-index revision | `BLOCKED_BY_ACCESS` | The index exists and its exact revision is bound into v2. |
+| 1 | Clean platform, client, Core and release-index revisions | `PASS_LOCAL_SOURCE_TUPLE` | All four local source revisions are clean; any later edit requires a new freeze. This is not candidate proof. |
+| 2 | Public release-index revision | `IMPLEMENTED_LOCAL_UNPUBLISHED` | Public baseline `d0bf8e8…ed15` is legacy checksum-only; local `f07654a…9eb7` implements strict schema/signature/same-byte validation but has no owner key, hosted run or public `origin/main` readback. |
 | 3 | POKROV Core `1.1.0` replacement artifact | `PASS_LOCAL` | Exact reproducible AAR/DLL identities match clean Core revision `fcb3c8b…bfa2`; candidate/signing/device proof remains later. |
 | 4 | Strict-v2 candidate metadata | `MISSING` | The clean client generator produces one validated handoff outside retained history. |
 | 5 | Android exact-candidate build and signer | `MISSING` | Every APK matches v2 size, digest, package, version and signer. |
