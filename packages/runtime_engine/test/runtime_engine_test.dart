@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
@@ -328,9 +329,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\android')
+    final platformDirectory = Directory(p.join(root.path, 'android'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.aar')
+    File(p.join(platformDirectory.path, 'pokrov-core.aar'))
         .writeAsStringSync('stub');
 
     final engine = createRuntimeEngine(
@@ -1214,9 +1215,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\foreign-core.dll')
+    File(p.join(platformDirectory.path, 'foreign-core.dll'))
         .writeAsStringSync('stub');
 
     final engine = DesktopRuntimeEngine(
@@ -1243,9 +1244,9 @@ void main() {
     });
 
     final platformDirectory = Directory(
-      '${root.path}\\artifacts\\pokrov-core\\v1.1.0\\windows',
+      p.join(root.path, 'artifacts', 'pokrov-core', 'v1.1.0', 'windows'),
     )..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
 
     final engine = DesktopRuntimeEngine(
@@ -1271,12 +1272,12 @@ void main() {
     });
 
     final executableDirectory = Directory(
-      '${root.path}\\Pokrov.app\\Contents\\MacOS',
+      p.join(root.path, 'Pokrov.app', 'Contents', 'MacOS'),
     )..createSync(recursive: true);
     final runtimeDirectory = Directory(
-      '${root.path}\\Pokrov.app\\Contents\\Frameworks\\Runtime',
+      p.join(root.path, 'Pokrov.app', 'Contents', 'Frameworks', 'Runtime'),
     )..createSync(recursive: true);
-    File('${runtimeDirectory.path}\\pokrov-core.dylib')
+    File(p.join(runtimeDirectory.path, 'pokrov-core.dylib'))
         .writeAsStringSync('stub');
 
     final engine = createRuntimeEngine(
@@ -1302,9 +1303,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -1331,13 +1332,13 @@ void main() {
     expect(await stagedFile.readAsString(), contains('"inbounds"'));
     expect(
       Directory(
-        '${stagedFile.parent.parent.parent.path}\\data',
+        p.join(stagedFile.parent.parent.parent.path, 'data'),
       ).existsSync(),
       isTrue,
     );
     expect(
       Directory(
-        '${stagedFile.parent.parent.path}\\data',
+        p.join(stagedFile.parent.parent.path, 'data'),
       ).existsSync(),
       isTrue,
     );
@@ -1351,9 +1352,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1390,9 +1391,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1438,9 +1439,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1470,9 +1471,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1531,9 +1532,9 @@ void main() {
         await root.delete(recursive: true);
       }
     });
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1598,9 +1599,9 @@ void main() {
         await root.delete(recursive: true);
       }
     });
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1654,9 +1655,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -1708,9 +1709,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -1766,9 +1767,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -1815,9 +1816,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -1864,9 +1865,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(setupResult: _sensitiveRuntimeDetail);
 
@@ -1895,9 +1896,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(startResult: _sensitiveRuntimeDetail);
 
@@ -1936,9 +1937,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -1972,9 +1973,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(
       secureFileResult: _sensitiveRuntimeDetail,
@@ -2014,9 +2015,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(stopResult: _sensitiveRuntimeDetail);
 
@@ -2055,9 +2056,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -2098,9 +2099,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     var mixedProbeCalls = 0;
@@ -2172,9 +2173,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     var systemProbeCalls = 0;
@@ -2250,9 +2251,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings(
       startResult: 'start inbound/tun: create Wintun adapter failed',
@@ -2289,9 +2290,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -2328,9 +2329,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     final engine = DesktopRuntimeEngine(
@@ -2366,9 +2367,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
     var mixedProbeCalls = 0;
@@ -2422,9 +2423,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -2476,9 +2477,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -2537,9 +2538,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -2593,9 +2594,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
@@ -2643,9 +2644,9 @@ void main() {
       }
     });
 
-    final platformDirectory = Directory('${root.path}\\windows')
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
       ..createSync(recursive: true);
-    File('${platformDirectory.path}\\pokrov-core.dll')
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
         .writeAsStringSync('stub');
     final bindings = _FakeDesktopBindings();
 
