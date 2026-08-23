@@ -49,7 +49,13 @@ This folder contains non-destructive client helpers.
 - `sync-pokrov-core-runtime.ps1` copies only the exact POKROV Core 1.1.0 Android and Windows pre-candidate identities from the clean separate Core checkout after verifying commit, version, sizes, and SHA-256 values.
 - `configure-android-production-signing.ps1` creates the one-time self-managed direct-APK signing identity outside the repository, stores its password with Windows DPAPI for the current user, exports only the public certificate, and refuses partial or existing-state overwrite.
 - `build-android-production.ps1` loads that local identity only into the current process, builds the universal direct APK plus smaller `arm64-v8a`, `armeabi-v7a`, and emulator-only `x86_64` APKs, rejects Android Debug signing, matches the signer fingerprint, and writes ignored candidate-local signing evidence beside every APK.
-- `build-windows-release.ps1` can sync that pinned Windows runtime, validate the client, build the unsigned Flutter bundle, and stage the local installer/ZIP manifest.
+- `build-windows-release.ps1` can sync that pinned Windows runtime, validate the
+  client and stage a local installer manifest. Unsigned output is explicitly
+  non-promotable. `-RequireTrustedWindowsSigning` selects one trusted Code
+  Signing identity from the Windows certificate store by exact thumbprint,
+  requires an HTTPS RFC3161 timestamp, signs and verifies the staged UI,
+  service, final installer and Inno embedded uninstaller, and writes only public
+  certificate/hash evidence. It accepts no PFX path or password.
 - `test/repository-hygiene-contract.ps1` rejects tracked temporary/build output,
   candidate binaries outside the three pinned runtime dependencies, and any
   1.2.0 candidate written into retained `artifacts/releases/`.
@@ -73,8 +79,9 @@ digest, and canonical observability hashes, then requires the platform offline
 validator to accept the result.
 Synthetic contract output is temporary evidence, not a release candidate.
 
-The Windows helper remains local and unsigned. It does not create a
-trusted-signed public release, MSIX, store submission, or deploy hook.
+The Windows helper does not publish a release, create an MSIX/store submission,
+or deploy. Trusted output still needs the exact-candidate clean-host, recovery,
+rollback and promotion gates; successful signing alone is not release proof.
 
 The Android signing key is a long-lived update identity. The scripts never put
 its private key or password in Git, but the operator must still export a secure

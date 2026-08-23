@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-08-22
+Last updated: 2026-08-24
 
 ## Document Status
 
@@ -41,16 +41,16 @@ still belongs to the exact-candidate gate below.
 | Check | Current state |
 |---|---|
 | Clean client/Core revisions | `BLOCKED` |
-| Exact Core DLL and dependency identity | `PASS_LOCAL` — DLL `10ee475d…dbff`, Cronet `8ef1f8bb…a6f7`, two byte-identical builds and 15 exports |
-| Machine-wide setup package | `MISSING` |
+| Exact Core DLL and dependency identity | `PASS_LOCAL` — final-bound DLL `ef9672b3…5040`, Cronet `8ef1f8bb…a6f7`, two byte-identical builds and 15 exports |
+| Machine-wide setup package | `PASS_LOCAL` — exact unsigned `1.2.0+30` setup SHA-256 `fd1de727…0899` assembled and checksum-bound; not promotable |
 | Service install/start and UI authentication | `MANUAL_OWNER_TEST` |
-| Trusted code signing and timestamp | `MANUAL_OWNER_TEST` |
+| Trusted code signing and timestamp | `BLOCKED_BY_ACCESS` — fail-closed tooling is ready; no trusted Code Signing identity is installed/configured |
 | Clean-host TUN/DNS/egress | `MANUAL_OWNER_TEST` |
 | Crash/reboot/sleep/SCM recovery | `MANUAL_OWNER_TEST` |
 | Route and DNS restoration | `MANUAL_OWNER_TEST` |
 | Uninstall while connected | `MANUAL_OWNER_TEST` |
 | SmartScreen/reputation observation | `MANUAL_OWNER_TEST` |
-| Strict-v2 size/SHA-256/source binding | `MISSING` |
+| Strict-v2 size/SHA-256/source binding | `PASS_LOCAL` — handoff SHA-256 `8d9a2d00…b806` retained in local pre-candidate staging; does not prove trusted signing |
 | Anonymous download and install | `NOT_RUN` |
 | Rollback drill | `NOT_RUN` |
 
@@ -73,8 +73,32 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-seed.ps1 `
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1
 ```
 
-Packaging remains local and unsigned until the owner provides trusted signing
-and authorizes exact-candidate release work.
+Unsigned packaging remains available for local verification, but its generated
+manifest records canonical status `MISSING` with blocker code
+`MISSING_TRUSTED_WINDOWS_SIGNATURE` and is ineligible for candidate promotion.
+
+Trusted candidate packaging is fail closed:
+
+```powershell
+$env:POKROV_WINDOWS_SIGNING_CERTIFICATE_THUMBPRINT = '<40-hex store thumbprint>'
+$env:POKROV_WINDOWS_SIGNING_EXPECTED_SUBJECT = '<exact certificate subject>'
+$env:POKROV_WINDOWS_SIGNING_TIMESTAMP_URL = 'https://<rfc3161-service>'
+$env:POKROV_WINDOWS_SIGNING_STORE_LOCATION = 'CurrentUser'
+
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 `
+  -RequireTrustedWindowsSigning
+```
+
+The helper accepts no PFX file or password. It resolves one non-self-signed,
+currently valid Code Signing certificate from `CurrentUser/My` or
+`LocalMachine/My`, requires a trusted chain, signs the staged UI and service
+before packaging, and passes the same signer to Inno Setup for both the final
+installer and its embedded uninstaller. It verifies the setup and Inno's signed
+uninstaller evidence file for the exact signer identity plus timestamp
+certificate with `Get-AuthenticodeSignature`. The public manifest records file
+hashes and certificate identities only. A missing tool, partial input,
+untrusted chain, signer mismatch, missing timestamp or unsigned target stops the
+build.
 
 ## Retained History
 

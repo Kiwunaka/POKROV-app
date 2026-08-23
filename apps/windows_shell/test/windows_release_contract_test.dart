@@ -30,7 +30,19 @@ void main() {
     expect(requiredFiles, isNot(contains('pokrov_windows_seed.exe')));
 
     final signing = releaseJson['signing'] as Map<String, dynamic>;
-    expect(signing['status'], 'unsigned_direct_warning');
+    expect(signing['status'], 'MISSING');
+    expect(signing['blocker_code'], 'MISSING_TRUSTED_WINDOWS_SIGNATURE');
+    expect(signing['required_for_candidate'], isTrue);
+    expect(signing['contract'], 'AUTHENTICODE_SHA256_RFC3161_HTTPS_V1');
+    expect(
+      signing['required_signed_files'],
+      containsAll(<String>[
+        'pokrov_windows.exe',
+        'pokrov_service.exe',
+        'pokrov-windows-x64-{version}-setup.exe',
+        'unins???.exe',
+      ]),
+    );
     expect(
       (signing['user_warning'] as String).toLowerCase(),
       contains('smartscreen'),
@@ -71,6 +83,40 @@ void main() {
       (releaseJson['portable_zip'] as Map<String, dynamic>)['supported'],
       isFalse,
     );
+  });
+
+  test('windows candidate signing is fail closed and secretless', () async {
+    final buildScript = File('../../scripts/build-windows-release.ps1');
+    final content = await buildScript.readAsString();
+
+    for (final requiredMarker in <String>[
+      'RequireTrustedWindowsSigning',
+      'POKROV_WINDOWS_SIGNING_CERTIFICATE_THUMBPRINT',
+      'POKROV_WINDOWS_SIGNING_EXPECTED_SUBJECT',
+      'POKROV_WINDOWS_SIGNING_TIMESTAMP_URL',
+      'Self-signed certificates cannot satisfy trusted Windows signing.',
+      '1.3.6.1.5.5.7.3.3',
+      '/fd", "SHA256',
+      r'/tr", $SigningContext.timestamp_url',
+      '/td", "SHA256',
+      'Get-AuthenticodeSignature',
+      'TimeStamperCertificate',
+      'SignTool=POKROV',
+      'SignedUninstaller=yes',
+      'SignedUninstallerDir=',
+      '/SPOKROV=',
+      '"PASS"',
+      'MISSING_TRUSTED_WINDOWS_SIGNATURE',
+    ]) {
+      expect(content, contains(requiredMarker));
+    }
+    for (final forbiddenMarker in <String>[
+      'PFX_PASSWORD',
+      'SIGNING_PASSWORD',
+      'SecureStringToBSTR',
+    ]) {
+      expect(content, isNot(contains(forbiddenMarker)));
+    }
   });
 
   test('windows setup registers bounded POKROV continuation protocol',
