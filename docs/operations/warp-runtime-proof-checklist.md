@@ -78,7 +78,7 @@ Current status: `MANUAL_OWNER_TEST` for exact `1.2.0` candidate bytes.
 - Client-local WARP materialization, enable/disable parity, desktop ABI 2 and
   Android host/JVM boundaries: implemented and locally tested.
 - The local pre-candidate client binds exact reproducible Core `1.1.0` AAR/DLL
-  bytes from clean source commit `fcb3c8bbc6efdeed284417369aacb522722ebfa2`.
+  bytes from verified `main` source commit `bdbd97fae35103e705f55908caebf75b4a9ff72f`.
   The retained public `1.0.3` identity remains rollback/history only.
 - Exact Android and Windows release-build WARP/uplink/teardown evidence:
   `MANUAL_OWNER_TEST`.

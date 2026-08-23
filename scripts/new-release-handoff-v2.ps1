@@ -71,6 +71,13 @@ function Get-Sha256Text {
   }
 }
 
+function Get-CanonicalTextSha256 {
+  param([Parameter(Mandatory = $true)][string]$Path)
+
+  $canonical = [IO.File]::ReadAllText($Path).Replace("`r`n", "`n").Replace("`r", "`n")
+  return Get-Sha256Text -Text $canonical
+}
+
 function Read-JsonFile {
   param([Parameter(Mandatory = $true)][string]$Path)
 
@@ -217,12 +224,12 @@ if ([string]$eventSchema.'x-pokrov-contract'.id -ne "observability-event" -or
 $contracts += [pscustomobject][ordered]@{
   id = "error-catalog"
   version = [string]$errorCatalog.catalog_version
-  sha256 = (Get-FileHash -LiteralPath $errorCatalogPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  sha256 = Get-CanonicalTextSha256 -Path $errorCatalogPath
 }
 $contracts += [pscustomobject][ordered]@{
   id = "observability-event"
   version = [string]$eventSchema.'x-pokrov-contract'.version
-  sha256 = (Get-FileHash -LiteralPath $eventSchemaPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  sha256 = Get-CanonicalTextSha256 -Path $eventSchemaPath
 }
 $contracts = @($contracts | Sort-Object id, version)
 

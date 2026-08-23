@@ -13,7 +13,7 @@ The client binds the separately versioned Core target as follows:
 - repository: `Kiwunaka/POKROV-core`;
 - version-derived target label: `v1.1.0`;
 - tag created: `false`;
-- clean source commit: `fcb3c8bbc6efdeed284417369aacb522722ebfa2`;
+- clean verified `main` source commit: `bdbd97fae35103e705f55908caebf75b4a9ff72f`;
 - source state: `PRE_CANDIDATE_LOCAL`;
 - candidate created: `false`;
 - desktop ABI: `2`;
@@ -27,14 +27,16 @@ The client binds the separately versioned Core target as follows:
 `config/runtime-artifacts.seed.json` is the machine-readable owner. It keeps
 the retained public Core `1.0.3` identity separate from the new local bytes.
 The retained release remains rollback/history truth and is not relabelled as
-`1.1.0`.
+`1.1.0`. Core PR `#2` was promoted through the explicit owner-solo control;
+independent review was not performed, and the final squash commit has a valid
+GitHub signature.
 
 ## Exact Artifact Contract
 
 | Platform | Artifact | Size | SHA-256 | Local result |
 | --- | --- | ---: | --- | --- |
-| Android | `pokrov-core.aar` | `107317530` | `26a7b9ebcf05065b33cc40848147a66db5172a9655cb9c77a839fa685145bf93` | two byte-identical builds; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present |
-| Windows x64 | `pokrov-core.dll` | `55352320` | `10ee475d04417c4317221a85ca4b043a7489294d654fc4ce7a64ec56dcdcdbff` | two byte-identical builds; 15 required exports present; proxy-only 100-cycle start/stop PASS |
+| Android | `pokrov-core.aar` | `107314335` | `83a5bd740774a2a16117f0c242c3ada4bcbb22a65255c3ee008a751e681c06f0` | two byte-identical Windows-host builds; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present |
+| Windows x64 | `pokrov-core.dll` | `55352320` | `ef9672b3ba9983012bfa78abd2e4cd8ef5ef65d8e4b6a49ff89f8c4d0d575040` | two byte-identical builds; 15 required exports present; proxy-only 100-cycle start/stop PASS |
 | Windows dependency | `libcronet.dll` | `8596992` | `8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7` | unchanged retained dependency |
 | iOS | `PokrovCore.xcframework` | — | — | `MANUAL_OWNER_TEST` |
 | macOS | `pokrov-core.dylib` | — | — | `MANUAL_OWNER_TEST` |
@@ -51,10 +53,10 @@ with VCS stamping disabled. Complete build trees matched byte-for-byte:
 
 | Evidence | SHA-256 |
 | --- | --- |
-| Android build tree | `78cbf8dddd6ce2c3311a2ec2167c803ec122a6973efe50d955f26ec1d07c3b13` |
-| Android evidence JSON | `743ac8b5f68a0c779bf6d4043fce9dc45fdcecc7cd610e3b40285aacdd974efc` |
-| Windows build tree | `a293a83e1efbd653b7a623b3c832df93f4985a57a50bb693cf4aef75dcfe3b4b` |
-| Windows evidence JSON | `917bad838ed91ccf86544a543fe9e7c8daa3d9e54f8e788006f6ec219f16f17a` |
+| Android build tree | `565266016cf823b30a36645c37156a8ba69d3f0fd55f8b22df665c321bcfcc90` |
+| Android evidence JSON | `412494af3e1f7d4cf763a7c800d38af4115f90c606a344edbaff0de6150e309d` |
+| Windows build tree | `32089d0e133703433f43e4e8041f45fdf931e937bfb9ca10f2a72725a5c24d9f` |
+| Windows evidence JSON | `929f7d375bbc93f1f09028e7edebe192dc663dfb28c2d4f71e4c09492a103a5c` |
 | `pokrov-core.cdx.json` | `18707e43f557d80aceecb112d4907c1295e8a27583af1bf2243d45cf63ba38a0` |
 | `sing-box.cdx.json` | `28925d34046ac0f0a7edec40a032938fcbc59c18bd47b9d5d69b6688ebf6637d` |
 
