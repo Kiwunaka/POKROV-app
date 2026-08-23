@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
+import 'package:path/path.dart' as p;
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:tray_manager/tray_manager.dart';
@@ -81,8 +82,8 @@ bool pokrovWindowsShouldStartHidden(Iterable<String> arguments) {
 
 @visibleForTesting
 String pokrovWindowsTrayIconPath({String? executablePath}) {
-  final executable = File(executablePath ?? Platform.resolvedExecutable);
-  return '${executable.parent.path}${Platform.pathSeparator}pokrov_tray.ico';
+  final executable = executablePath ?? Platform.resolvedExecutable;
+  return p.windows.join(p.windows.dirname(executable), 'pokrov_tray.ico');
 }
 
 @visibleForTesting
