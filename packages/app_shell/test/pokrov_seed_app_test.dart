@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'dart:ui' show PointerDeviceKind;
 
 import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
@@ -12624,6 +12625,7 @@ void main() {
       (name: 'home-verified-dark', theme: ThemeMode.dark, state: 'verified'),
       (name: 'home-degraded-light', theme: ThemeMode.light, state: 'degraded'),
     ];
+    final goldenDirectory = Platform.isLinux ? 'goldens/linux' : 'goldens';
 
     PaintingBinding.instance.imageCache
       ..clear()
@@ -12664,7 +12666,7 @@ void main() {
       expect(tester.takeException(), isNull, reason: variant.name);
       await expectLater(
         find.byType(Scaffold).first,
-        matchesGoldenFile('goldens/${variant.name}.png'),
+        matchesGoldenFile('$goldenDirectory/${variant.name}.png'),
       );
 
       await tester.pumpWidget(const SizedBox.shrink());
