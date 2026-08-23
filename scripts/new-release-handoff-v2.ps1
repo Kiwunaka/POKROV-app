@@ -147,14 +147,14 @@ if ($AllowDirtySynthetic) {
   }
 }
 
-$gitStatus = (& git.exe -C $root status --porcelain --untracked-files=all 2>&1 | Out-String).Trim()
+$gitStatus = (& git -C $root status --porcelain --untracked-files=all 2>&1 | Out-String).Trim()
 if ($LASTEXITCODE -ne 0) {
   throw "Could not inspect client worktree state."
 }
 if (-not [string]::IsNullOrWhiteSpace($gitStatus) -and -not $AllowDirtySynthetic) {
   throw "Client worktree must be clean before generating release metadata."
 }
-$revisionLines = @(& git.exe -C $root rev-parse HEAD 2>&1)
+$revisionLines = @(& git -C $root rev-parse HEAD 2>&1)
 $revisionExitCode = $LASTEXITCODE
 if ($revisionExitCode -ne 0 -or $revisionLines.Count -eq 0) {
   throw "Could not resolve the exact client Git revision."

@@ -97,7 +97,7 @@ function Assert-CoreAuthority {
   }
   $abiContractPath = Join-Path $resolvedCorePath ([string]$release.abi_contract).Replace('/', '\')
   $abiContract = Read-JsonFile $abiContractPath
-  $revisionLines = @(& git.exe -C $resolvedCorePath rev-parse HEAD 2>&1)
+  $revisionLines = @(& git -C $resolvedCorePath rev-parse HEAD 2>&1)
   $revisionExitCode = $LASTEXITCODE
   if ($revisionExitCode -ne 0 -or $revisionLines.Count -eq 0) {
     throw "Could not resolve the exact POKROV Core Git revision."
@@ -171,7 +171,7 @@ function Assert-CoreAuthority {
   $exactSourceIdentity =
     $revision -eq ([string]$RuntimeCore.source_commit).ToLowerInvariant() -and
     $release.go_toolchain -eq $RuntimeCore.go_toolchain
-  $dirtyLines = @(& git.exe -C $resolvedCorePath status --porcelain 2>&1)
+  $dirtyLines = @(& git -C $resolvedCorePath status --porcelain 2>&1)
   if ($LASTEXITCODE -ne 0) {
     throw "Could not inspect the POKROV Core checkout state."
   }
