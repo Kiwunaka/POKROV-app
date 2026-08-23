@@ -1,6 +1,6 @@
 # Android Release Audit
 
-Last updated: 2026-08-22
+Last updated: 2026-08-24
 
 ## Document Status
 
@@ -18,6 +18,7 @@ Older APK identities and device runs are retained separately as evidence.
 | Candidate created | `false` |
 | Package ID | `space.pokrov.pokrov_android_shell` |
 | Active pre-candidate Core package | POKROV Core `1.1.0` AAR, exact local bytes bound |
+| Support-mode signing public pin | `PASS_SOURCE_CONTROL` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`; no new APK built |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
 
@@ -36,6 +37,7 @@ These local contracts do not prove final APK bytes or physical behavior.
 | Clean client/Core revisions | `BLOCKED` |
 | Exact Core AAR identity | `PASS_LOCAL` — `26a7b9eb…bf93`, two byte-identical builds, four ABIs |
 | Strict-v2 Android artifact entries | `MISSING` |
+| Exact APK support signing pin | `MISSING` — tracked pin exists, replacement APK bytes do not |
 | Production signer and lineage | `MISSING` |
 | Package/version/ABI/min-SDK identity | `MISSING` |
 | SHA-256 and byte-size match | `MISSING` |

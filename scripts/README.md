@@ -60,13 +60,16 @@ This folder contains non-destructive client helpers.
   candidate binaries outside the three pinned runtime dependencies, and any
   1.2.0 candidate written into retained `artifacts/releases/`.
 
-Both release build scripts accept the public support-key verification pair
-`-SupportSigningKeyId` and `-SupportSigningPublicKeyB64`. Supply both or neither;
-partial configuration fails before build. They become the matching
+`config/support-signing.seed.json` owns the public support-mode verification
+pin. Both production build scripts resolve it through
+`support-signing-pin.ps1` and inject the matching
 `POKROV_SUPPORT_SIGNING_KEY_ID` and
-`POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64` Dart defines. These values are public
-verification material, not recipient private keys. Leaving them blank keeps
-encrypted bundle delivery disabled and preserves the short-summary support path.
+`POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64` Dart defines. Explicit
+`-SupportSigningKeyId` and `-SupportSigningPublicKeyB64` values must be supplied
+together and match the tracked pin exactly; partial or different input fails
+before Flutter. The pin is public verification material, never the server
+private key or support-code HMAC secret. Ordinary development builds do not
+load it implicitly.
 
 POKROV Core is built and released from the separate `POKROV-core` repository.
 The client repository does not apply core patches, fetch a mutable latest

@@ -54,6 +54,7 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | CANONICAL | RECONCILED | Current product/UI direction | `docs/design/2026-06-13-pokrov-product-ui-direction.md` |
 | EVIDENCE | RECONCILED | Completed motion/HIG implementation record | `docs/design/2026-07-13-agent-uiux-backlog.md` |
 | CANONICAL | RECONCILED | Machine product facts | `config/product-contract.seed.json` |
+| CANONICAL | RECONCILED | Support-mode signing public trust root | `config/support-signing.seed.json` |
 | CANONICAL | RECONCILED | Public/readiness platform scope | `config/platform-matrix.seed.json` |
 | CANONICAL | REVIEWED_NO_CHANGE | Runtime profile facts | `config/runtime-profile.seed.json` |
 | CANONICAL | RECONCILED | Cutover readiness facts | `config/cutover-readiness.seed.json` |

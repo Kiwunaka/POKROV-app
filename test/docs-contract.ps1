@@ -265,6 +265,7 @@ function New-ExpectedRegistryManifest {
     'CANONICAL|RECONCILED|Current product/UI direction|docs/design/2026-06-13-pokrov-product-ui-direction.md',
     'EVIDENCE|RECONCILED|Completed motion/HIG implementation record|docs/design/2026-07-13-agent-uiux-backlog.md',
     'CANONICAL|RECONCILED|Machine product facts|config/product-contract.seed.json',
+    'CANONICAL|RECONCILED|Support-mode signing public trust root|config/support-signing.seed.json',
     'CANONICAL|RECONCILED|Public/readiness platform scope|config/platform-matrix.seed.json',
     'CANONICAL|REVIEWED_NO_CHANGE|Runtime profile facts|config/runtime-profile.seed.json',
     'CANONICAL|RECONCILED|Cutover readiness facts|config/cutover-readiness.seed.json',
@@ -321,7 +322,7 @@ function New-ExpectedRegistryManifest {
       LogicalKey = $logicalKey
     })
   }
-  if ($manifest.Count -ne 52) { throw "Embedded registry manifest must contain 52 rows, got $($manifest.Count)" }
+  if ($manifest.Count -ne 53) { throw "Embedded registry manifest must contain 53 rows, got $($manifest.Count)" }
   return $manifest.ToArray()
 }
 
@@ -622,11 +623,11 @@ function Test-DocumentationRegistry {
       $expectedPathClasses.Add($relativePath, $expectedRow.Class)
     }
   }
-  if ($expectedPathClasses.Count -ne 63) {
-    throw "Embedded registry manifest must contain 63 concrete paths, got $($expectedPathClasses.Count)"
+  if ($expectedPathClasses.Count -ne 64) {
+    throw "Embedded registry manifest must contain 64 concrete paths, got $($expectedPathClasses.Count)"
   }
   if ($registryTable.Rows.Count -ne $expectedManifest.Count) {
-    [void]$Errors.Add("Document registry must match the exact 52-row manifest (actual rows: $($registryTable.Rows.Count))")
+    [void]$Errors.Add("Document registry must match the exact 53-row manifest (actual rows: $($registryTable.Rows.Count))")
   }
 
   $observedClasses = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
@@ -736,7 +737,7 @@ function Invoke-ClientDocsValidation {
 
   $errors = [System.Collections.Generic.List[string]]::new()
   $agents = ConvertFrom-StrictDocumentBytes -Bytes $AgentsBytes -Name 'AGENTS.md' -MaximumBytes 8192 -MaximumLines 120 -Errors $errors
-  $registry = ConvertFrom-StrictDocumentBytes -Bytes $RegistryBytes -Name 'docs/README.md' -MaximumBytes 12544 -MaximumLines 240 -Errors $errors
+  $registry = ConvertFrom-StrictDocumentBytes -Bytes $RegistryBytes -Name 'docs/README.md' -MaximumBytes 12800 -MaximumLines 240 -Errors $errors
 
   if ($null -ne $agents) {
     Test-AgentContract -Text $agents.Text -Errors $errors
@@ -1023,15 +1024,15 @@ POKROV-app/main
     $rows.RemoveAt($index)
     return 1
   }
-  Assert-ContractRejected -Name 'deleted registry row' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $deletedRowRegistry) -ExpectedErrorPattern 'exact 52-row manifest'
+  Assert-ContractRejected -Name 'deleted registry row' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $deletedRowRegistry) -ExpectedErrorPattern 'exact 53-row manifest'
 
-  $emptyRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 52 -Mutation {
+  $emptyRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 53 -Mutation {
     param($rows)
     $removed = $rows.Count
     $rows.Clear()
     return $removed
   }
-  Assert-ContractRejected -Name 'all registry rows deleted' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $emptyRegistry) -ExpectedErrorPattern 'exact 52-row manifest'
+  Assert-ContractRejected -Name 'all registry rows deleted' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $emptyRegistry) -ExpectedErrorPattern 'exact 53-row manifest'
 
   $invalidReviewRegistry = Set-RegistryRowCell -Text $registryText -Owner 'Client docs routing' -CellIndex 1 -Value 'APPROVED'
   Assert-ContractRejected -Name 'invalid review enum' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $invalidReviewRegistry) -ExpectedErrorPattern 'invalid review: APPROVED'
@@ -1078,7 +1079,7 @@ POKROV-app/main
     $rows.Insert($targetIndex + 1, [pscustomobject]@{ Cells = $secondCells })
     return 1
   }
-  Assert-ContractRejected -Name 'four-path registry row split' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $splitRegistry) -ExpectedErrorPattern 'exact 52-row manifest'
+  Assert-ContractRejected -Name 'four-path registry row split' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $splitRegistry) -ExpectedErrorPattern 'exact 53-row manifest'
 
   $wrongSectionAgents = Move-AgentLineBetweenSections -Text $agentsText -Marker 'Every task runs `git diff --check`' -SourceSection 'Verification And Documentation' -TargetSection 'Start Every Task'
   Assert-ContractRejected -Name 'verification marker moved to wrong section' -RepositoryRoot $RepositoryRoot -AgentsBytes (ConvertTo-Utf8Bytes $wrongSectionAgents) -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'belongs to Verification And Documentation'
@@ -1143,9 +1144,17 @@ if (-not (Test-Path -LiteralPath $attributesPath -PathType Leaf)) {
   $errors += '.gitattributes is required'
 } else {
   $attributeLines = [IO.File]::ReadAllLines($attributesPath)
+  $requiredLineEndingPaths = @(
+    'AGENTS.md',
+    'docs/README.md',
+    'packages/app_shell/test/fixtures/app-first-session-v0.json',
+    'packages/app_shell/test/fixtures/secure-session-v0.txt',
+    'packages/app_shell/test/fixtures/client-experience-v0.json',
+    'packages/app_shell/test/fixtures/routing-preferences-v0.json',
+    'apps/android_shell/android/app/src/test/resources/runtime-profile-v0.properties'
+  )
   $requiredLineEndingAttributes = @(
-    'AGENTS.md text eol=lf',
-    'docs/README.md text eol=lf'
+    $requiredLineEndingPaths | ForEach-Object { "$_ text eol=lf" }
   )
 
   foreach ($requiredAttribute in $requiredLineEndingAttributes) {
@@ -1160,20 +1169,21 @@ if (-not (Test-Path -LiteralPath $attributesPath -PathType Leaf)) {
     $lineEndingAttributeRules | Where-Object { $requiredLineEndingAttributes -cnotcontains $_ }
   )
   if ($unexpectedLineEndingAttributes.Count -gt 0) {
-    $errors += ".gitattributes must not define additional eol attributes beyond the two client contract files: $($unexpectedLineEndingAttributes -join ', ')"
+    $errors += ".gitattributes must not define additional eol attributes beyond the approved client contract and migration fixture files: $($unexpectedLineEndingAttributes -join ', ')"
   }
 
-  $effectiveAttributeOutput = @(& git -C $root check-attr text eol -- AGENTS.md docs/README.md 2>&1)
+  $effectiveAttributeOutput = @(& git -C $root check-attr text eol -- @requiredLineEndingPaths 2>&1)
   $effectiveAttributeExitCode = $LASTEXITCODE
   if ($effectiveAttributeExitCode -ne 0) {
     $errors += "git check-attr failed with exit $effectiveAttributeExitCode`: $($effectiveAttributeOutput -join ' | ')"
   } else {
     $effectiveAttributes = @{}
+    $escapedEffectivePaths = ($requiredLineEndingPaths | ForEach-Object { [regex]::Escape($_) }) -join '|'
     foreach ($outputLine in $effectiveAttributeOutput) {
       $line = $outputLine.ToString()
       $match = [regex]::Match(
         $line,
-        '^(?<path>AGENTS\.md|docs/README\.md): (?<attribute>text|eol): (?<value>\S+)$'
+        "^(?<path>$escapedEffectivePaths): (?<attribute>text|eol): (?<value>\S+)$"
       )
       if (-not $match.Success) {
         $errors += "git check-attr returned unexpected output: $line"
@@ -1188,11 +1198,10 @@ if (-not (Test-Path -LiteralPath $attributesPath -PathType Leaf)) {
       $effectiveAttributes[$key] = $match.Groups['value'].Value
     }
 
-    $requiredEffectiveAttributes = [ordered]@{
-      'AGENTS.md|text' = 'set'
-      'AGENTS.md|eol' = 'lf'
-      'docs/README.md|text' = 'set'
-      'docs/README.md|eol' = 'lf'
+    $requiredEffectiveAttributes = [ordered]@{}
+    foreach ($requiredLineEndingPath in $requiredLineEndingPaths) {
+      $requiredEffectiveAttributes["$requiredLineEndingPath|text"] = 'set'
+      $requiredEffectiveAttributes["$requiredLineEndingPath|eol"] = 'lf'
     }
     foreach ($key in $requiredEffectiveAttributes.Keys) {
       if (-not $effectiveAttributes.ContainsKey($key)) {
@@ -1329,11 +1338,37 @@ $platform = [IO.File]::ReadAllText((Join-Path $root 'config\platform-matrix.seed
 $release = [IO.File]::ReadAllText((Join-Path $root 'config\release-handoff.seed.json')) | ConvertFrom-Json
 $cutover = [IO.File]::ReadAllText((Join-Path $root 'config\cutover-readiness.seed.json')) | ConvertFrom-Json
 $runtime = [IO.File]::ReadAllText((Join-Path $root 'config\runtime-profile.seed.json')) | ConvertFrom-Json
+$supportSigning = [IO.File]::ReadAllText((Join-Path $root 'config\support-signing.seed.json')) | ConvertFrom-Json
 $windowsRelease = [IO.File]::ReadAllText((Join-Path $root 'config\windows-release.seed.json')) | ConvertFrom-Json
 $androidGradle = [IO.File]::ReadAllText((Join-Path $root 'apps\android_shell\android\app\build.gradle'))
 $androidProductionBuild = [IO.File]::ReadAllText((Join-Path $root 'scripts\build-android-production.ps1'))
 $windowsProductionBuild = [IO.File]::ReadAllText((Join-Path $root 'scripts\build-windows-release.ps1'))
 $workspaceTests = [IO.File]::ReadAllText((Join-Path $root 'scripts\run-tests.ps1'))
+
+if ([int]$supportSigning.schema_version -ne 1 -or
+    $supportSigning.algorithm -ne 'Ed25519' -or
+    $supportSigning.purpose -ne 'support-mode-policy-v2' -or
+    $supportSigning.status -ne 'active' -or
+    $supportSigning.key_id -ne 'pokrov-support-2026-08' -or
+    $supportSigning.public_key_b64url -ne 'sTi6tP7u_vBZq-zf8gR-6ocHjwZiCZSQ-h0-967J8eE' -or
+    $supportSigning.public_key_sha256 -ne '44aed43310eaf5442b3493cbe566b5f0f620a5660bb84a6bd028832114f48845') {
+  $errors += 'Support signing seed does not match the active public trust root'
+}
+foreach ($productionBuild in @($androidProductionBuild, $windowsProductionBuild)) {
+  foreach ($requiredSupportPinMarker in @(
+    'support-signing-pin.ps1',
+    'Resolve-PokrovSupportSigningPin',
+    'POKROV_SUPPORT_SIGNING_KEY_ID',
+    'POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64'
+  )) {
+    if (-not $productionBuild.Contains($requiredSupportPinMarker)) {
+      $errors += "Production build lacks support signing source-binding marker: $requiredSupportPinMarker"
+    }
+  }
+}
+if (-not $workspaceTests.Contains('test\support-signing-pin-contract.ps1')) {
+  $errors += 'Workspace standard gate does not run the support signing pin contract'
+}
 
 if ($product.client_version_line -ne $release.latest_repo_backed_release.version) {
   $errors += 'Product and release version lines disagree'

@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "algorithm": "Ed25519",
+  "purpose": "support-mode-policy-v2",
+  "status": "active",
+  "key_id": "pokrov-support-2026-08",
+  "public_key_b64url": "sTi6tP7u_vBZq-zf8gR-6ocHjwZiCZSQ-h0-967J8eE",
+  "public_key_sha256": "44aed43310eaf5442b3493cbe566b5f0f620a5660bb84a6bd028832114f48845"
+}
