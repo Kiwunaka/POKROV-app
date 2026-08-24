@@ -60,6 +60,14 @@
       "pokrov-windows-x64-{version}-setup.exe",
       "unins???.exe"
     ],
+    "readiness_probe": {
+      "script": "scripts/build-windows-release.ps1",
+      "switch": "-CheckTrustedWindowsSigningReadinessOnly",
+      "receipt_schema": "pokrov.windows-signing-readiness-receipt.v1",
+      "scope": "local_certificate_store_readiness",
+      "artifacts_signed": false,
+      "candidate_created": false
+    },
     "user_warning": "Windows may show a Microsoft Defender SmartScreen or unknown-publisher warning because this direct-download build is not trusted-signed yet.",
     "expected_inputs": [
       "POKROV_WINDOWS_SIGNING_CERTIFICATE_THUMBPRINT",

@@ -13,6 +13,7 @@ param(
   [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
   [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64,
   [switch]$RequireTrustedWindowsSigning,
+  [switch]$CheckTrustedWindowsSigningReadinessOnly,
   [string]$WindowsSigningCertificateThumbprint = $env:POKROV_WINDOWS_SIGNING_CERTIFICATE_THUMBPRINT,
   [string]$WindowsSigningExpectedSubject = $env:POKROV_WINDOWS_SIGNING_EXPECTED_SUBJECT,
   [string]$WindowsSigningTimestampUrl = $env:POKROV_WINDOWS_SIGNING_TIMESTAMP_URL,
@@ -29,7 +30,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-& (Join-Path $PSScriptRoot "check-client-version-parity.ps1")
+if (-not $CheckTrustedWindowsSigningReadinessOnly) {
+  & (Join-Path $PSScriptRoot "check-client-version-parity.ps1")
+}
 
 $EmergencySigningKeyId = [string]$EmergencySigningKeyId
 $EmergencySigningPublicKey = [string]$EmergencySigningPublicKey
@@ -39,20 +42,23 @@ $WindowsSigningCertificateThumbprint = ([string]$WindowsSigningCertificateThumbp
 $WindowsSigningExpectedSubject = ([string]$WindowsSigningExpectedSubject).Trim()
 $WindowsSigningTimestampUrl = ([string]$WindowsSigningTimestampUrl).Trim()
 $SignToolPath = ([string]$SignToolPath).Trim()
-. (Join-Path $PSScriptRoot 'support-signing-pin.ps1')
-$supportSigningPin = Resolve-PokrovSupportSigningPin `
-  -RepositoryRoot (Split-Path -Parent $PSScriptRoot) `
-  -ProvidedKeyId $SupportSigningKeyId `
-  -ProvidedPublicKeyB64Url $SupportSigningPublicKey
-$SupportSigningKeyId = $supportSigningPin.key_id
-$SupportSigningPublicKey = $supportSigningPin.public_key_b64url
-if ($EmergencySigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$') {
-  throw "A canonical POKROV emergency signing key id is required for a production build."
-}
-if ($EmergencySigningPublicKey -notmatch '^[A-Za-z0-9_-]{43}$') {
-  throw "A 32-byte base64url POKROV emergency signing public key is required for a production build."
+if (-not $CheckTrustedWindowsSigningReadinessOnly) {
+  . (Join-Path $PSScriptRoot 'support-signing-pin.ps1')
+  $supportSigningPin = Resolve-PokrovSupportSigningPin `
+    -RepositoryRoot (Split-Path -Parent $PSScriptRoot) `
+    -ProvidedKeyId $SupportSigningKeyId `
+    -ProvidedPublicKeyB64Url $SupportSigningPublicKey
+  $SupportSigningKeyId = $supportSigningPin.key_id
+  $SupportSigningPublicKey = $supportSigningPin.public_key_b64url
+  if ($EmergencySigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$') {
+    throw "A canonical POKROV emergency signing key id is required for a production build."
+  }
+  if ($EmergencySigningPublicKey -notmatch '^[A-Za-z0-9_-]{43}$') {
+    throw "A 32-byte base64url POKROV emergency signing public key is required for a production build."
+  }
 }
 $trustedWindowsSigningRequested = [bool]$RequireTrustedWindowsSigning -or
+  [bool]$CheckTrustedWindowsSigningReadinessOnly -or
   [bool]$WindowsSigningCertificateThumbprint -or
   [bool]$WindowsSigningExpectedSubject -or
   [bool]$WindowsSigningTimestampUrl -or
@@ -70,7 +76,7 @@ if ($trustedWindowsSigningRequested) {
       $timestampUri.Scheme -ne 'https') {
     throw "Trusted Windows signing requires an absolute HTTPS RFC3161 timestamp URL."
   }
-  if ($SkipInstaller) {
+  if ($SkipInstaller -and -not $CheckTrustedWindowsSigningReadinessOnly) {
     throw "Trusted Windows signing requires the exact installer; -SkipInstaller is not allowed."
   }
 }
@@ -231,7 +237,7 @@ function Resolve-TrustedWindowsSigningContext {
     throw "Windows signing certificate was not found in $StoreLocation/My for thumbprint $Thumbprint."
   }
   if (-not $certificate.HasPrivateKey) {
-    throw "Windows signing certificate $Thumbprint has no accessible private key."
+    throw "Windows signing certificate $Thumbprint has no associated private key."
   }
   if ($certificate.Subject -cne $ExpectedSubject) {
     throw "Windows signing certificate subject mismatch. Expected '$ExpectedSubject', got '$($certificate.Subject)'."
@@ -359,6 +365,36 @@ if ($trustedWindowsSigningRequested) {
     -TimestampUrl $WindowsSigningTimestampUrl `
     -StoreLocation $WindowsSigningStoreLocation `
     -ExplicitSignToolPath $SignToolPath
+}
+if ($CheckTrustedWindowsSigningReadinessOnly) {
+  $readinessReceipt = [ordered]@{
+    schema = "pokrov.windows-signing-readiness-receipt.v1"
+    status = "PASS"
+    scope = "local_certificate_store_readiness"
+    checked_at_utc = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
+    signing_contract = "AUTHENTICODE_SHA256_RFC3161_HTTPS_V1"
+    store_location = $trustedWindowsSigningContext.store_location
+    signer_subject = $trustedWindowsSigningContext.certificate.Subject
+    signer_thumbprint_sha1 = $trustedWindowsSigningContext.certificate.Thumbprint
+    signer_certificate_sha256 = Get-CertificateSha256 `
+      -Certificate $trustedWindowsSigningContext.certificate
+    certificate_not_before_utc = $trustedWindowsSigningContext.certificate.NotBefore.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+    certificate_not_after_utc = $trustedWindowsSigningContext.certificate.NotAfter.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+    code_signing_eku = $true
+    private_key_present = $true
+    self_signed = $false
+    chain_trusted = $true
+    chain_revocation_mode = "ONLINE_ENTIRE_CHAIN"
+    signtool_present = $true
+    timestamp_url = $trustedWindowsSigningContext.timestamp_url
+    pfx_path_or_password_accepted = $false
+    artifacts_signed = $false
+    candidate_created = $false
+    production_runtime_mutated = $false
+    private_key_value_exposed = $false
+  }
+  Write-Output ($readinessReceipt | ConvertTo-Json -Depth 4)
+  return
 }
 if (($windowsReleaseConfig.PSObject.Properties.Name -contains "portable_zip") -and
     -not [bool]$windowsReleaseConfig.portable_zip.supported) {

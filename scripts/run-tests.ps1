@@ -18,6 +18,11 @@ if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 
+& (Join-Path $root "test\windows-signing-readiness-contract.ps1")
+if ($LASTEXITCODE -ne 0) {
+  exit $LASTEXITCODE
+}
+
 function Invoke-WorkspaceFlutterGate {
   param(
     [Parameter(Mandatory = $true)]

@@ -88,8 +88,23 @@ $env:POKROV_WINDOWS_SIGNING_TIMESTAMP_URL = 'https://<rfc3161-service>'
 $env:POKROV_WINDOWS_SIGNING_STORE_LOCATION = 'CurrentUser'
 
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 `
+  -CheckTrustedWindowsSigningReadinessOnly
+
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 `
   -RequireTrustedWindowsSigning
 ```
+
+The readiness-only command stops before version/support-key validation, build,
+signing or packaging. It validates the exact certificate-store identity,
+private-key presence, exact subject, Code Signing EKU, validity, online
+trusted-chain result, HTTPS timestamp URL shape and SignTool availability. On
+success it prints a public
+`pokrov.windows-signing-readiness-receipt.v1` JSON receipt with exact public
+certificate identity plus `artifacts_signed=false`, `candidate_created=false`
+and `production_runtime_mutated=false`. It does not contact the timestamp
+service, sign bytes or prove candidate eligibility; the full build must still
+prove private-key usability, sign and verify every required target and RFC3161
+timestamp.
 
 The helper accepts no PFX file or password. It resolves one non-self-signed,
 currently valid Code Signing certificate from `CurrentUser/My` or

@@ -56,6 +56,11 @@ This folder contains non-destructive client helpers.
   requires an HTTPS RFC3161 timestamp, signs and verifies the staged UI,
   service, final installer and Inno embedded uninstaller, and writes only public
   certificate/hash evidence. It accepts no PFX path or password.
+  `-CheckTrustedWindowsSigningReadinessOnly` runs the same store, private-key
+  presence,
+  subject, EKU, validity, trusted-chain and SignTool checks before any build or
+  signing and emits only a public receipt with `artifacts_signed=false` and
+  `candidate_created=false`.
 - `test/repository-hygiene-contract.ps1` rejects tracked temporary/build output,
   candidate binaries outside the three pinned runtime dependencies, and any
   1.2.0 candidate written into retained `artifacts/releases/`.
