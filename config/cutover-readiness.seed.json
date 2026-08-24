@@ -1,8 +1,8 @@
 {
   "lane": "POKROV-app/main",
-  "status": "android_1_1_6_and_windows_1_1_6_public_stable_runtime_synced_global_cutover_blocked_on_windows_trust_and_native_apple_gates",
+  "status": "retained_1_1_6_public_1_2_0_pre_candidate_windows_unsigned_beta_owner_exception_recorded",
   "public_cutover_allowed": false,
-  "last_updated": "2026-08-22",
+  "last_updated": "2026-08-24",
   "latest_repo_backed_release": {
     "version": "1.1.6",
     "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.1.6",
@@ -58,25 +58,36 @@
     "distribution": "outside_store_unsigned_stable_direct",
     "public_approved": false,
     "required_user_warning": "Microsoft Defender SmartScreen or unknown-publisher warning is expected until trusted signing is complete.",
+    "working_target_owner_exception": {
+      "version": "1.2.0",
+      "channel": "outside_store_beta",
+      "signing_status": "SKIPPED_BY_OWNER",
+      "authorized_on": "2026-08-24",
+      "direct_download_only": true,
+      "trusted_claim_allowed": false,
+      "store_claim_allowed": false,
+      "smartscreen_warning_required": true
+    },
     "blocked_on": [
-      "trusted Windows signing PASS for the exact next public candidate",
-      "live install/connect/dashboard smoke from exact uploaded unsigned setup EXE",
+      "exact 1.2.0 unsigned-beta setup, manifest, SHA-256 and strict-v2 handoff do not exist yet",
+      "live clean-host install/connect/dashboard/TUN/DNS/egress/recovery smoke from the exact candidate setup EXE",
       "trusted signing and SmartScreen reputation for later broad distribution"
     ],
     "accepted_evidence": [
+      "owner authorized SKIPPED_BY_OWNER for trusted Windows signing on the exact 1.2.0 direct-download beta only; SmartScreen warning is mandatory",
       "unsigned publisher warning accepted by owner for the 1.1.6 outside-store stable-direct wave",
       "Windows 1.1.6 production setup, portable ZIP and manifest match exact public GitHub sizes and SHA-256",
       "local mixed-proxy verification and host-result UI transition pass; clean Hiddify-off TUN/DNS egress remains MANUAL_OWNER_TEST because this workstation session depends on Hiddify"
     ]
   },
   "blocking_dependencies": [
-    "global Android and Windows cutover remains blocked because Windows trusted signing is not complete",
+    "the 1.2.0 cutover remains blocked until exact Android and Windows artifacts, hosted gates and required manual proof exist; Windows trusted signing is owner-skipped only for the direct-download beta",
     "iOS production connectivity still requires on-device packet-tunnel proof plus reviewed entitlements",
     "the universal POKROV Core 1.1.0 macOS dylib still requires a macOS build and ABI probe",
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
     "TestFlight, App Store, notarization, and Gatekeeper evidence must be produced from a Mac",
     "store metadata, screenshots, privacy answers, and support contacts still need operator submission",
-    "Android and Windows 1.1.6 stable-direct artifacts are public, GitHub-digest verified, and synchronized into production; Windows trusted signing remains an owner gate"
+    "Android and Windows 1.1.6 stable-direct artifacts are public, GitHub-digest verified, and synchronized into production; Windows trusted signing remains mandatory before trusted, signed, Store or broad-stable claims"
   ],
   "repo_side_closed": [
     "P0-P6 beta implementation scope",
@@ -113,7 +124,7 @@
     "flutter build windows --release succeeds",
     "local release bundle includes the exact POKROV Core 1.1.0 pre-candidate DLL and pinned libcronet.dll",
     "trusted signing certificate and timestamping path are provided for a later trusted build",
-    "outside-store EXE path stays first-layer for this stable-direct wave while MSIX/ZIP remain operator/store artifacts"
+    "the exact 1.2.0 outside-store EXE may enter the owner-approved unsigned beta lane only with SKIPPED_BY_OWNER plus mandatory SmartScreen warning; MSIX/ZIP remain operator/store artifacts"
   ],
   "operator_required_evidence": {
     "ios": [

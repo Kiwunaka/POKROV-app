@@ -353,9 +353,28 @@ $expectedSignedFiles = @(
 )
 $configuredSignedFiles = @($windowsReleaseConfig.signing.required_signed_files | ForEach-Object { [string]$_ })
 $signedFileContractDifference = @(Compare-Object -ReferenceObject $expectedSignedFiles -DifferenceObject $configuredSignedFiles)
-if ($windowsReleaseConfig.signing.required_for_candidate -ne $true -or
-    $signedFileContractDifference.Count -ne 0) {
+if ($signedFileContractDifference.Count -ne 0) {
   throw "Windows signing seed must require the exact UI, service and installer targets."
+}
+$ownerUnsignedException = $windowsReleaseConfig.signing.owner_exception
+$ownerUnsignedExceptionActive =
+  $windowsReleaseConfig.signing.status -eq "SKIPPED_BY_OWNER" -and
+  $windowsReleaseConfig.signing.blocker_code -eq "OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_2_0" -and
+  $windowsReleaseConfig.signing.required_for_candidate -eq $false -and
+  $windowsReleaseConfig.signing.required_for_trusted_claim -eq $true -and
+  $windowsReleaseConfig.channel -eq "outside_store_beta" -and
+  $ownerUnsignedException.status -eq "SKIPPED_BY_OWNER" -and
+  $ownerUnsignedException.authorized_on -eq "2026-08-24" -and
+  $ownerUnsignedException.version_scope -eq "1.2.0" -and
+  $ownerUnsignedException.channel_scope -eq "outside_store_beta" -and
+  $ownerUnsignedException.distribution_scope -eq "direct_download_only" -and
+  $ownerUnsignedException.trusted_claim_allowed -eq $false -and
+  $ownerUnsignedException.store_claim_allowed -eq $false -and
+  $ownerUnsignedException.smartscreen_warning_required -eq $true -and
+  $ownerUnsignedException.expires_when_trusted_signing_is_available -eq $true
+if ($windowsReleaseConfig.signing.required_for_candidate -ne $true -and
+    -not $ownerUnsignedExceptionActive) {
+  throw "Unsigned Windows candidate policy is incomplete or outside the exact owner-approved 1.2.0 beta scope."
 }
 $trustedWindowsSigningContext = $null
 if ($trustedWindowsSigningRequested) {
@@ -403,6 +422,18 @@ if (($windowsReleaseConfig.PSObject.Properties.Name -contains "portable_zip") -a
 $appDirectory = Join-Path $root "apps\\windows_shell"
 $pubspecPath = Join-Path $appDirectory "pubspec.yaml"
 $version = Resolve-VersionFromPubspec -PubspecPath $pubspecPath
+if ($ownerUnsignedExceptionActive) {
+  $productVersion = ($version -split '\+', 2)[0]
+  $unsignedWarning = [string]$windowsReleaseConfig.signing.user_warning
+  if ($productVersion -ne [string]$ownerUnsignedException.version_scope) {
+    throw "The unsigned Windows owner exception does not cover product version $productVersion."
+  }
+  if ([string]::IsNullOrWhiteSpace($unsignedWarning) -or
+      ($unsignedWarning -notmatch 'SmartScreen') -or
+      ($unsignedWarning -notmatch 'unknown-publisher')) {
+    throw "The unsigned Windows beta requires the canonical SmartScreen and unknown-publisher warning."
+  }
+}
 
 $runtimeDirectory = Join-Path $root $windowsReleaseConfig.runtime.artifact_directory
 $runtimeRequiredFiles = @(
@@ -742,14 +773,23 @@ end;
 
 $trustedSigningStatus = if ($trustedWindowsSigningContext) {
   "PASS"
+} elseif ($ownerUnsignedExceptionActive) {
+  "SKIPPED_BY_OWNER"
 } else {
   "MISSING"
 }
 $trustedSigningManifest = [ordered]@{
   status = $trustedSigningStatus
   contract = [string]$windowsReleaseConfig.signing.contract
-  blocker_code = if ($trustedWindowsSigningContext) { $null } else { "MISSING_TRUSTED_WINDOWS_SIGNATURE" }
+  blocker_code = if ($trustedWindowsSigningContext) {
+    $null
+  } elseif ($ownerUnsignedExceptionActive) {
+    "OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_2_0"
+  } else {
+    "MISSING_TRUSTED_WINDOWS_SIGNATURE"
+  }
   required_for_candidate = [bool]$windowsReleaseConfig.signing.required_for_candidate
+  required_for_trusted_claim = [bool]$windowsReleaseConfig.signing.required_for_trusted_claim
   requested = [bool]$trustedWindowsSigningRequested
   certificate_store_location = if ($trustedWindowsSigningContext) { $trustedWindowsSigningContext.store_location } else { $null }
   expected_subject = if ($trustedWindowsSigningContext) { $trustedWindowsSigningContext.certificate.Subject } else { $null }
@@ -760,6 +800,22 @@ $trustedSigningManifest = [ordered]@{
     $null
   }
   timestamp_url = if ($trustedWindowsSigningContext) { $trustedWindowsSigningContext.timestamp_url } else { $null }
+  owner_exception = if ($ownerUnsignedExceptionActive -and -not $trustedWindowsSigningContext) {
+    [ordered]@{
+      status = [string]$ownerUnsignedException.status
+      authorized_on = [string]$ownerUnsignedException.authorized_on
+      version_scope = [string]$ownerUnsignedException.version_scope
+      channel_scope = [string]$ownerUnsignedException.channel_scope
+      distribution_scope = [string]$ownerUnsignedException.distribution_scope
+      trusted_claim_allowed = [bool]$ownerUnsignedException.trusted_claim_allowed
+      store_claim_allowed = [bool]$ownerUnsignedException.store_claim_allowed
+      smartscreen_warning_required = [bool]$ownerUnsignedException.smartscreen_warning_required
+      expires_when_trusted_signing_is_available = [bool]$ownerUnsignedException.expires_when_trusted_signing_is_available
+    }
+  } else {
+    $null
+  }
+  user_warning = if ($trustedWindowsSigningContext) { $null } else { [string]$windowsReleaseConfig.signing.user_warning }
   targets = @($trustedSigningEvidence)
 }
 

@@ -1,7 +1,7 @@
 {
   "display_name": "POKROV",
-  "channel": "outside_store_stable",
-  "artifact_status": "unsigned_direct",
+  "channel": "outside_store_beta",
+  "artifact_status": "unsigned_beta_direct",
   "public_approved": true,
   "binary_name": "pokrov_windows.exe",
   "bundle_root": "apps/windows_shell/build/windows/x64/runner/Release",
@@ -49,9 +49,10 @@
     "reason": "The Windows runtime requires an authenticated SCM service installed by the machine-wide setup program."
   },
   "signing": {
-    "status": "MISSING",
-    "blocker_code": "MISSING_TRUSTED_WINDOWS_SIGNATURE",
-    "required_for_candidate": true,
+    "status": "SKIPPED_BY_OWNER",
+    "blocker_code": "OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_2_0",
+    "required_for_candidate": false,
+    "required_for_trusted_claim": true,
     "contract": "AUTHENTICODE_SHA256_RFC3161_HTTPS_V1",
     "certificate_source": "Windows certificate store selected by exact SHA-1 thumbprint",
     "required_signed_files": [
@@ -68,6 +69,17 @@
       "artifacts_signed": false,
       "candidate_created": false
     },
+    "owner_exception": {
+      "status": "SKIPPED_BY_OWNER",
+      "authorized_on": "2026-08-24",
+      "version_scope": "1.2.0",
+      "channel_scope": "outside_store_beta",
+      "distribution_scope": "direct_download_only",
+      "trusted_claim_allowed": false,
+      "store_claim_allowed": false,
+      "smartscreen_warning_required": true,
+      "expires_when_trusted_signing_is_available": true
+    },
     "user_warning": "Windows may show a Microsoft Defender SmartScreen or unknown-publisher warning because this direct-download build is not trusted-signed yet.",
     "expected_inputs": [
       "POKROV_WINDOWS_SIGNING_CERTIFICATE_THUMBPRINT",
@@ -81,8 +93,11 @@
     "The ordinary Windows UI uses the authenticated POKROVService runtime lane and does not load POKROV Core directly.",
     "The local pre-candidate build bundles the exact POKROV Core 1.1.0 replacement bytes, its pinned libcronet.dll dependency, and pokrov_service.exe in one machine-wide installation directory.",
     "The installer performs the one-time administrative SCM registration; the ordinary UI does not receive privileged file, path, or shell execution.",
-    "Local packaging may produce an unsigned direct-download Inno Setup installer with the SmartScreen warning above; it remains ineligible for candidate promotion until UI, service, installer and embedded uninstaller pass the trusted Authenticode contract.",
+    "The exact 1.2.0 owner exception permits an unsigned direct-download beta candidate only when its manifest records SKIPPED_BY_OWNER and the SmartScreen warning above; it does not permit a trusted, signed, Store or broad-stable claim.",
     "Trusted signing accepts no PFX path or password: the private key remains in the selected Windows certificate store and only public certificate and timestamp evidence enters the manifest."
   ],
-  "blocked_on": []
+  "blocked_on": [
+    "trusted Windows signing remains required before any trusted, signed, Store or broad-stable Windows claim",
+    "exact-candidate clean-host install, TUN, DNS, egress, recovery and uninstall proof remains manual"
+  ]
 }
