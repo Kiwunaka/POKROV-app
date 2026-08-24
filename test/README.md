@@ -49,6 +49,9 @@ Current state:
   staging/public-index boundary and rejects tracked temp/build/candidate output
 - `release-source-logging-contract.ps1` proves the real release tree is free of
   raw Dart/Android/Windows logging and verifies four fail-closed fixtures
+- `windows-signing-readiness-contract.ps1` preserves the public readiness-only
+  receipt and proves partial timestamp input plus self-signed identities fail
+  closed without building or signing release artifacts
 - `scripts/validate-seed.ps1` validates required files and JSON seeds, then
   invokes Core parity, release-handoff v2, stable-pointer rollback, CI, and docs
   contracts
@@ -62,5 +65,6 @@ Suggested local commands:
 - `powershell -ExecutionPolicy Bypass -File .\\test\\release-rollback-catalog-contract.ps1`
 - `powershell -ExecutionPolicy Bypass -File .\\test\\release-v2-ci-contract.ps1`
 - `powershell -ExecutionPolicy Bypass -File .\\test\\repository-hygiene-contract.ps1`
+- `pwsh -NoProfile -File .\\test\\windows-signing-readiness-contract.ps1`
 - `powershell -ExecutionPolicy Bypass -File .\\scripts\\validate-seed.ps1`
 - `powershell -ExecutionPolicy Bypass -File .\\scripts\\run-tests.ps1`

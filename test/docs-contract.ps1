@@ -1444,6 +1444,14 @@ if ($windowsRelease.signing.status -ne 'MISSING' -or
     $windowsRelease.signing.contract -ne 'AUTHENTICODE_SHA256_RFC3161_HTTPS_V1') {
   $errors += 'Windows release seed does not preserve the fail-closed trusted-signing contract'
 }
+if ($windowsRelease.signing.readiness_probe.script -ne 'scripts/build-windows-release.ps1' -or
+    $windowsRelease.signing.readiness_probe.switch -ne '-CheckTrustedWindowsSigningReadinessOnly' -or
+    $windowsRelease.signing.readiness_probe.receipt_schema -ne 'pokrov.windows-signing-readiness-receipt.v1' -or
+    $windowsRelease.signing.readiness_probe.scope -ne 'local_certificate_store_readiness' -or
+    $windowsRelease.signing.readiness_probe.artifacts_signed -ne $false -or
+    $windowsRelease.signing.readiness_probe.candidate_created -ne $false) {
+  $errors += 'Windows release seed lacks the public readiness-only signing probe contract'
+}
 foreach ($requiredWindowsSignedFile in @(
   'pokrov_windows.exe',
   'pokrov_service.exe',
@@ -1456,6 +1464,10 @@ foreach ($requiredWindowsSignedFile in @(
 }
 foreach ($requiredWindowsSigningMarker in @(
   'RequireTrustedWindowsSigning',
+  'CheckTrustedWindowsSigningReadinessOnly',
+  'pokrov.windows-signing-readiness-receipt.v1',
+  'local_certificate_store_readiness',
+  'private_key_value_exposed',
   'POKROV_WINDOWS_SIGNING_CERTIFICATE_THUMBPRINT',
   'POKROV_WINDOWS_SIGNING_EXPECTED_SUBJECT',
   'POKROV_WINDOWS_SIGNING_TIMESTAMP_URL',
