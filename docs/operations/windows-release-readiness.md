@@ -22,7 +22,8 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Portable ZIP | Unsupported for the service-first runtime |
 | Support-mode signing public pin | `PASS_SOURCE_CONTROL` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`; no new EXE built |
-| Trusted signing | `MISSING` |
+| Trusted signing for `1.2.0` direct beta | `SKIPPED_BY_OWNER` on `2026-08-24`; warning required |
+| Trusted/signed/Store/broad-stable claim | `BLOCKED_BY_ACCESS`; trusted Authenticode still required |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
@@ -43,10 +44,10 @@ still belongs to the exact-candidate gate below.
 |---|---|
 | Clean client/Core revisions | `BLOCKED` |
 | Exact Core DLL and dependency identity | `PASS_LOCAL` — final-bound DLL `ef9672b3…5040`, Cronet `8ef1f8bb…a6f7`, two byte-identical builds and 15 exports |
-| Machine-wide setup package | `PASS_LOCAL` — exact unsigned `1.2.0+30` setup SHA-256 `fd1de727…0899` assembled and checksum-bound; not promotable |
+| Machine-wide setup package | `PASS_LOCAL` — earlier unsigned `1.2.0+30` setup SHA-256 `fd1de727…0899` assembled and checksum-bound; it predates the final source and must be rebuilt |
 | Exact EXE support signing pin | `MISSING` — tracked pin exists, replacement setup bytes do not |
 | Service install/start and UI authentication | `MANUAL_OWNER_TEST` |
-| Trusted code signing and timestamp | `BLOCKED_BY_ACCESS` — fail-closed tooling is ready; no trusted Code Signing identity is installed/configured |
+| Trusted code signing and timestamp | `SKIPPED_BY_OWNER` for the exact `1.2.0` direct-download beta only; fail-closed trusted tooling remains ready for the later signed lane |
 | Clean-host TUN/DNS/egress | `MANUAL_OWNER_TEST` |
 | Crash/reboot/sleep/SCM recovery | `MANUAL_OWNER_TEST` |
 | Route and DNS restoration | `MANUAL_OWNER_TEST` |
@@ -60,8 +61,10 @@ still belongs to the exact-candidate gate below.
 
 - The `1.2.0` source targets an unelevated UI and authenticated Windows service.
 - Local tests prove source contracts and isolated recovery logic only.
-- A trusted-signed, clean-host-verified `1.2.0` Windows candidate does not yet
-  exist.
+- No final-source, clean-host-verified `1.2.0` Windows candidate exists yet.
+- The owner authorizes one unsigned direct-download beta with the mandatory
+  SmartScreen/unknown-publisher warning. This is not trusted-signing evidence
+  and permits no signed, Store or broad-stable claim.
 - The retained unsigned `1.1.6` publication does not prove `1.2.0` trust,
   recovery or network behavior.
 
@@ -75,9 +78,13 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-seed.ps1 `
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1
 ```
 
-Unsigned packaging remains available for local verification, but its generated
-manifest records canonical status `MISSING` with blocker code
-`MISSING_TRUSTED_WINDOWS_SIGNATURE` and is ineligible for candidate promotion.
+Unsigned packaging for the exact `1.2.0` direct-download beta records
+`SKIPPED_BY_OWNER` with blocker code
+`OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_2_0`. Candidate assembly must retain
+the mandatory SmartScreen warning and may not claim trusted signing, Store
+availability or broad-stable Windows status. The exception expires when a
+trusted signer becomes available and does not apply to another version or
+channel.
 
 Trusted candidate packaging is fail closed:
 

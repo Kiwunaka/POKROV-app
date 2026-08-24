@@ -1,6 +1,6 @@
 # Cutover Readiness
 
-Last updated: 2026-08-22
+Last updated: 2026-08-24
 
 ## Document Status
 
@@ -29,7 +29,7 @@ contracts. Do not select the most optimistic status.
 | Target state | `PRE_CANDIDATE_LOCAL` |
 | Candidate created | `false` |
 | New public cutover | `BLOCKED` |
-| Public/store claim | Direct distribution only; Google Play `NOT_REQUESTED` |
+| Public/store claim | Android direct stable target; Windows direct unsigned beta with mandatory SmartScreen warning; stores `NOT_REQUESTED` |
 
 The existing `1.1.6` publication does not approve new `1.2.0` bytes. Its
 signing, device, runtime and origin evidence cannot be reused for promotion.
@@ -50,7 +50,7 @@ signing, device, runtime and origin evidence cannot be reused for promotion.
 | Android artifact/signing | `MISSING` | Final APK identities and production signer match v2. |
 | Android device proof | `MANUAL_OWNER_TEST` | Exact-candidate physical matrix passes. |
 | Android OEM limitations | `EXPLICIT_MANUAL_GATE` | PB-08 and `AND-BG-001/002/003` plus `AND-VPN-004` cover safe guidance; exact-candidate background, screen-off, lockscreen, notification, tile, permission-revoke and reconnect proof remains manual. |
-| Windows package/signing | `MISSING` | Final service-first setup and trusted signer match v2. |
+| Windows package/signing | `MISSING_ARTIFACT`; signing `SKIPPED_BY_OWNER` | Build the final service-first setup; strict-v2 must record the exact unsigned bytes, the `1.2.0` direct-beta-only exception and mandatory SmartScreen warning. |
 | Windows clean-host proof | `MANUAL_OWNER_TEST` | TUN/DNS/egress/recovery matrix passes on a clean host. |
 | Linux client | `NOT_SHIPPED_IN_1.2.0` | No Linux artifact, daemon, package, support matrix or release promise belongs to this candidate. |
 | Apple native release | `NOT_REQUESTED` | Apple remains readiness-only for this release. |
@@ -58,7 +58,7 @@ signing, device, runtime and origin evidence cannot be reused for promotion.
 | Hosted CI | `NOT_RUN` | Required checks pass on every frozen revision. |
 | Runtime sync | `NOT_AUTHORIZED` | Owner authorizes the exact metadata application. |
 | Exact-candidate rollback drill | `NOT_RUN` | Authorized portal and client-channel rollback use the same candidate identity; local fixture reversal is not runtime proof. |
-| Final go/no-go | `NO_GO` | Every required exact-candidate gate must be `PASS`. |
+| Final go/no-go | `NO_GO` | Every required exact-candidate gate must be `PASS`; the only accepted non-PASS is the explicit Windows trusted-signing `SKIPPED_BY_OWNER` for the `1.2.0` direct beta, which never becomes a trusted/stable signing claim. |
 
 ## Current Cutover Sequence
 
@@ -66,7 +66,7 @@ signing, device, runtime and origin evidence cannot be reused for promotion.
 2. Produce exact Core and client artifacts.
 3. Generate and validate strict-v2 metadata.
 4. Run hosted CI, Android device and Windows clean-host gates.
-5. Verify signing, SBOM, provenance, checksums and anonymous downloads.
+5. Verify Android signing, Windows `SKIPPED_BY_OWNER`, the mandatory SmartScreen warning, SBOM, provenance, checksums and anonymous downloads.
 6. Request runtime-sync authority and retain current-origin/brain-origin proof.
 7. Add the exact candidate and retained prior stable handoff to the rollback
    catalog, then run the authorized pointer/runtime rollback with retained

@@ -18,10 +18,10 @@ void main() {
 
     final requiredFiles =
         (releaseJson['required_files'] as List<dynamic>).cast<String>();
-    expect(releaseJson['channel'], 'outside_store_stable');
+    expect(releaseJson['channel'], 'outside_store_beta');
     expect(releaseJson['binary_name'], 'pokrov_windows.exe');
     expect(releaseJson['public_approved'], isTrue);
-    expect(releaseJson['artifact_status'], 'unsigned_direct');
+    expect(releaseJson['artifact_status'], 'unsigned_beta_direct');
     expect(requiredFiles, contains('pokrov-core.dll'));
     expect(requiredFiles, contains('libcronet.dll'));
     expect(requiredFiles, contains('pokrov_tray.ico'));
@@ -30,10 +30,24 @@ void main() {
     expect(requiredFiles, isNot(contains('pokrov_windows_seed.exe')));
 
     final signing = releaseJson['signing'] as Map<String, dynamic>;
-    expect(signing['status'], 'MISSING');
-    expect(signing['blocker_code'], 'MISSING_TRUSTED_WINDOWS_SIGNATURE');
-    expect(signing['required_for_candidate'], isTrue);
+    expect(signing['status'], 'SKIPPED_BY_OWNER');
+    expect(
+      signing['blocker_code'],
+      'OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_2_0',
+    );
+    expect(signing['required_for_candidate'], isFalse);
+    expect(signing['required_for_trusted_claim'], isTrue);
     expect(signing['contract'], 'AUTHENTICODE_SHA256_RFC3161_HTTPS_V1');
+    final ownerException =
+        signing['owner_exception'] as Map<String, dynamic>;
+    expect(ownerException['status'], 'SKIPPED_BY_OWNER');
+    expect(ownerException['authorized_on'], '2026-08-24');
+    expect(ownerException['version_scope'], '1.2.0');
+    expect(ownerException['channel_scope'], 'outside_store_beta');
+    expect(ownerException['distribution_scope'], 'direct_download_only');
+    expect(ownerException['trusted_claim_allowed'], isFalse);
+    expect(ownerException['store_claim_allowed'], isFalse);
+    expect(ownerException['smartscreen_warning_required'], isTrue);
     expect(
       signing['required_signed_files'],
       containsAll(<String>[

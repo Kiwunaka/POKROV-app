@@ -1438,11 +1438,26 @@ foreach ($requiredFlavorTestTask in @(
   }
 }
 
-if ($windowsRelease.signing.status -ne 'MISSING' -or
-    $windowsRelease.signing.blocker_code -ne 'MISSING_TRUSTED_WINDOWS_SIGNATURE' -or
-    $windowsRelease.signing.required_for_candidate -ne $true -or
+if ($windowsRelease.channel -ne 'outside_store_beta' -or
+    $windowsRelease.artifact_status -ne 'unsigned_beta_direct' -or
+    $windowsRelease.signing.status -ne 'SKIPPED_BY_OWNER' -or
+    $windowsRelease.signing.blocker_code -ne 'OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_2_0' -or
+    $windowsRelease.signing.required_for_candidate -ne $false -or
+    $windowsRelease.signing.required_for_trusted_claim -ne $true -or
     $windowsRelease.signing.contract -ne 'AUTHENTICODE_SHA256_RFC3161_HTTPS_V1') {
-  $errors += 'Windows release seed does not preserve the fail-closed trusted-signing contract'
+  $errors += 'Windows release seed does not preserve the exact unsigned-beta owner exception and trusted-claim boundary'
+}
+$windowsOwnerException = $windowsRelease.signing.owner_exception
+if ($windowsOwnerException.status -ne 'SKIPPED_BY_OWNER' -or
+    $windowsOwnerException.authorized_on -ne '2026-08-24' -or
+    $windowsOwnerException.version_scope -ne '1.2.0' -or
+    $windowsOwnerException.channel_scope -ne 'outside_store_beta' -or
+    $windowsOwnerException.distribution_scope -ne 'direct_download_only' -or
+    $windowsOwnerException.trusted_claim_allowed -ne $false -or
+    $windowsOwnerException.store_claim_allowed -ne $false -or
+    $windowsOwnerException.smartscreen_warning_required -ne $true -or
+    $windowsOwnerException.expires_when_trusted_signing_is_available -ne $true) {
+  $errors += 'Windows unsigned-beta owner exception is broader than the exact 1.2.0 direct-download scope'
 }
 if ($windowsRelease.signing.readiness_probe.script -ne 'scripts/build-windows-release.ps1' -or
     $windowsRelease.signing.readiness_probe.switch -ne '-CheckTrustedWindowsSigningReadinessOnly' -or
@@ -1479,7 +1494,11 @@ foreach ($requiredWindowsSigningMarker in @(
   'SignedUninstallerDir=',
   '/SPOKROV=',
   '"PASS"',
-  'MISSING_TRUSTED_WINDOWS_SIGNATURE'
+  'MISSING_TRUSTED_WINDOWS_SIGNATURE',
+  'OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_2_0',
+  'SKIPPED_BY_OWNER',
+  'smartscreen_warning_required',
+  'required_for_trusted_claim'
 )) {
   if (-not $windowsProductionBuild.Contains($requiredWindowsSigningMarker)) {
     $errors += "Windows production builder lacks fail-closed signing marker: $requiredWindowsSigningMarker"
