@@ -256,8 +256,9 @@ Product rules for that choice:
   the removed per-user system-proxy compatibility value is accepted only as
   migrated saved state and becomes `VPN/TUN`
 - experimental transport families remain backend-managed and absent from
-  consumer choices. The disabled owner-only `awg2_lab` path may enter the app
-  only through an authenticated, digest-bound managed profile; it never adds
+  consumer choices. The disabled owner-only `awg2_lab` and `awg31_lab` paths
+  may enter the app only through separate authenticated, digest-bound managed
+  profiles; AWG 3.1 is never inferred from an AWG2 profile. Neither path adds
   raw config import, QR onboarding, keys, endpoint IPs or protocol controls to
   the product UI.
 
@@ -597,7 +598,15 @@ refresh fails.
 Routing preferences are applied to the resolved sing-box profile before it is
 staged. They include:
 
-- purpose groups for Video, AI, Social, Games, and RU-direct;
+- purpose groups for Video, AI, Social, Games, and RU-direct. AI includes the
+  bounded ChatGPT/OpenAI and Gemini/Google AI service domains; Games includes
+  the bounded Xbox/Xbox Live/Game Pass service domains. These groups are
+  split-proxy rules through the active VPN outbound, not a promise that DNS
+  alone can bypass address-, TLS-, account-, or region-based restrictions;
+- the active VPN route target may be an outbound or a typed endpoint such as
+  AWG. If no VPN target can be resolved, routing preferences fail closed before
+  native staging; a direct-only profile cannot be reported as an applied
+  AI/Games VPN policy;
 - explicit domain, IP, and subnet overrides to VPN or direct;
 - Automatic, Cloudflare, Google, AdGuard, and validated custom DoH. The
   `Блокировать рекламу` toggle selects AdGuard's filtering DoH endpoint as the

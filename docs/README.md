@@ -1,6 +1,6 @@
 # POKROV App Documentation Router
 
-Use this index for task-relevant context. `POKROV-app/main` owns client implementation and release readiness. The platform repository owns backend behavior, public facts, delivery contracts, and cross-surface policy.
+Use this index for task-relevant context. `POKROV-app/main` owns client implementation and client release-readiness. The platform repository owns backend behavior, public facts, delivery contracts, and cross-surface policy.
 
 ## Authority Boundaries
 

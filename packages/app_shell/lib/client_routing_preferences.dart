@@ -27,9 +27,11 @@ extension PokrovPurposeRoutePresentation on PokrovPurposeRoute {
 
   String get summary => switch (this) {
         PokrovPurposeRoute.video => 'Стриминг и видеохостинги через VPN.',
-        PokrovPurposeRoute.ai => 'Популярные AI-сервисы через VPN.',
+        PokrovPurposeRoute.ai =>
+          'ChatGPT, Gemini и другие AI-сервисы через VPN.',
         PokrovPurposeRoute.social => 'Соцсети и сообщества через VPN.',
-        PokrovPurposeRoute.games => 'Магазины и игровые сообщества через VPN.',
+        PokrovPurposeRoute.games =>
+          'Xbox, магазины и игровые сообщества через VPN.',
         PokrovPurposeRoute.ruDirect => 'Российские домены и сервисы без VPN.',
       };
 }
@@ -335,11 +337,15 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   }
 
   final outbounds = _routingListOfMaps(config['outbounds']);
+  final endpoints = _routingListOfMaps(config['endpoints']);
   final route = _routingMap(config['route']);
   final directTag = _findOutboundByType(outbounds, 'direct');
-  final proxyTag = _resolveProxyTag(outbounds, route);
-  if (directTag.isEmpty || proxyTag.isEmpty) {
-    return payload;
+  final proxyTag = _resolveProxyTag(outbounds, endpoints, route);
+  if (directTag.isEmpty) {
+    throw const FormatException('Managed profile has no direct outbound');
+  }
+  if (proxyTag.isEmpty) {
+    throw const FormatException('Managed profile has no VPN route target');
   }
 
   final rules = _routingListOfMaps(route['rules']);
@@ -447,6 +453,12 @@ const Map<PokrovPurposeRoute, List<String>> _purposeDomains = {
   PokrovPurposeRoute.ai: <String>[
     'openai.com',
     'chatgpt.com',
+    'oaistatic.com',
+    'oaiusercontent.com',
+    'gemini.google.com',
+    'aistudio.google.com',
+    'ai.google.dev',
+    'generativelanguage.googleapis.com',
     'anthropic.com',
     'claude.ai',
     'perplexity.ai',
@@ -464,6 +476,9 @@ const Map<PokrovPurposeRoute, List<String>> _purposeDomains = {
     'epicgames.com',
     'playstation.com',
     'xbox.com',
+    'xboxlive.com',
+    'xboxservices.com',
+    'gamepass.com',
   ],
   PokrovPurposeRoute.ruDirect: <String>[
     'ru',
@@ -576,6 +591,7 @@ bool _ipInSubnet(String ipText, String subnetText) {
 
 String _resolveProxyTag(
   List<Map<String, dynamic>> outbounds,
+  List<Map<String, dynamic>> endpoints,
   Map<String, dynamic> route,
 ) {
   final finalTag = _routingText(route['final']);
@@ -585,6 +601,12 @@ String _resolveProxyTag(
   if (finalOutbound != null &&
       !_nonProxyTypes
           .contains(_routingText(finalOutbound['type']).toLowerCase())) {
+    return finalTag;
+  }
+  final finalEndpoint = endpoints
+      .where((item) => _routingText(item['tag']) == finalTag)
+      .firstOrNull;
+  if (finalEndpoint != null && _routingText(finalEndpoint['type']).isNotEmpty) {
     return finalTag;
   }
   for (final preferredType in const <String>['selector', 'urltest']) {

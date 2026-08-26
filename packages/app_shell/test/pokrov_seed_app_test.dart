@@ -3135,7 +3135,7 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'managed-from-api',
-        configPayload: '{}',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -7737,7 +7737,8 @@ void main() {
         bootstrapper: _FakeBootstrapper(
           const ManagedProfilePayload(
             profileName: 'rules-apply-test',
-            configPayload: '{}',
+            configPayload:
+                '{"outbounds":[{"type":"selector","tag":"proxy"},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
             materializedForRuntime: true,
           ),
         ),
@@ -7758,7 +7759,10 @@ void main() {
       find.byType(Scrollable).first,
       const Offset(0, -240),
     );
-    await tester.tap(find.byKey(const ValueKey('rules-ad-block-toggle')));
+    final adBlockToggle = find.byKey(const ValueKey('rules-ad-block-toggle'));
+    await tester.ensureVisible(adBlockToggle);
+    await tester.pumpAndSettle();
+    await tester.tap(adBlockToggle);
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('rules-lan-toggle')));
     await tester.pumpAndSettle();
@@ -10736,7 +10740,8 @@ void main() {
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'managed-from-api',
-        configPayload: '{}',
+        configPayload:
+            '{"outbounds":[{"type":"selector","tag":"proxy"},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
         materializedForRuntime: true,
         smartConnect: smartConnect,
       ),
@@ -10856,7 +10861,7 @@ void main() {
       const ManagedProfilePayload(
         profileName: 'managed-from-api',
         configPayload:
-            '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+            '{"outbounds":[{"type":"selector","tag":"proxy"},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
         materializedForRuntime: true,
       ),
     );
@@ -11320,7 +11325,7 @@ void main() {
           const ManagedProfilePayload(
             profileName: 'managed-from-api',
             configPayload:
-                '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+                '{"outbounds":[{"type":"selector","tag":"proxy"},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
             materializedForRuntime: true,
           ),
         ),
@@ -11517,7 +11522,7 @@ void main() {
           const ManagedProfilePayload(
             profileName: 'managed-from-api',
             configPayload:
-                '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+                '{"outbounds":[{"type":"selector","tag":"proxy"},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
             materializedForRuntime: true,
           ),
         ),
@@ -11548,7 +11553,7 @@ void main() {
       const ManagedProfilePayload(
         profileName: 'managed-from-api',
         configPayload:
-            '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+            '{"outbounds":[{"type":"selector","tag":"proxy"},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
         materializedForRuntime: true,
       ),
     );
@@ -11764,7 +11769,7 @@ void main() {
           const ManagedProfilePayload(
             profileName: 'managed-from-api',
             configPayload:
-                '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+                '{"outbounds":[{"type":"selector","tag":"proxy"},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
             materializedForRuntime: true,
           ),
         ),
@@ -11876,7 +11881,7 @@ void main() {
           const ManagedProfilePayload(
             profileName: 'managed-from-api',
             configPayload:
-                '{"outbounds":[{"type":"selector","tag":"proxy"}],"route":{"final":"proxy"}}',
+                '{"outbounds":[{"type":"selector","tag":"proxy"},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
             materializedForRuntime: true,
           ),
         ),
