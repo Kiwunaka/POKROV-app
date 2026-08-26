@@ -117,6 +117,73 @@ function Wait-ServiceState {
   return $false
 }
 
+function Get-SanitizedServiceFailureDiagnostics {
+  param(
+    [Parameter(Mandatory = $true)][string]$Name,
+    [Parameter(Mandatory = $true)][string]$RegistryPath,
+    [Parameter(Mandatory = $true)][string]$ExpectedBinaryPath,
+    [Parameter(Mandatory = $true)][string]$JournalPath,
+    [Parameter(Mandatory = $true)][datetime]$SinceUtc
+  )
+
+  $service = Get-CimInstance -ClassName Win32_Service -Filter "Name='$Name'" -ErrorAction SilentlyContinue
+  $ownerSid = $null
+  try {
+    $ownerSid = [string](Get-ItemProperty -LiteralPath $RegistryPath -Name InstallOwnerSid -ErrorAction Stop).InstallOwnerSid
+  } catch {
+    $ownerSid = $null
+  }
+  $currentSid = [string][Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+
+  $journalSummary = @()
+  if (Test-Path -LiteralPath $JournalPath -PathType Leaf) {
+    $journalSummary = @(
+      Get-Content -LiteralPath $JournalPath -ErrorAction SilentlyContinue |
+        Select-Object -Last 32 |
+        ForEach-Object {
+          $fields = @(([string]$_).Split('|'))
+          if ($fields.Count -ge 8 -and $fields[0] -eq 'POKROV_SERVICE_EVENT_V1') {
+            [ordered]@{
+              event = $fields[3]
+              outcome = $fields[4]
+              command = $fields[5]
+              status = $fields[6]
+            }
+          }
+        }
+    )
+  }
+
+  $scmEventIds = @(
+    Get-WinEvent -FilterHashtable @{
+      LogName = 'System'
+      ProviderName = 'Service Control Manager'
+      StartTime = $SinceUtc.ToLocalTime()
+    } -ErrorAction SilentlyContinue |
+      Where-Object { -not [string]::IsNullOrWhiteSpace($_.Message) -and $_.Message.Contains($Name) } |
+      ForEach-Object { [int]$_.Id } |
+      Sort-Object -Unique
+  )
+
+  return [ordered]@{
+    scm_record_present = $null -ne $service
+    scm_state = if ($null -ne $service) { [string]$service.State } else { 'Absent' }
+    scm_status = if ($null -ne $service) { [string]$service.Status } else { 'Absent' }
+    scm_start_mode = if ($null -ne $service) { [string]$service.StartMode } else { $null }
+    scm_exit_code = if ($null -ne $service) { [uint32]$service.ExitCode } else { $null }
+    service_specific_exit_code = if ($null -ne $service) { [uint32]$service.ServiceSpecificExitCode } else { $null }
+    process_running = $null -ne $service -and [uint32]$service.ProcessId -ne 0
+    binary_path_matches_expected = $null -ne $service -and
+      ([string]$service.PathName).Contains($ExpectedBinaryPath, [StringComparison]::OrdinalIgnoreCase)
+    owner_sid_present = -not [string]::IsNullOrWhiteSpace($ownerSid)
+    owner_sid_matches_runner = -not [string]::IsNullOrWhiteSpace($ownerSid) -and
+      $ownerSid -eq $currentSid
+    event_journal_present = Test-Path -LiteralPath $JournalPath -PathType Leaf
+    event_journal_summary = $journalSummary
+    scm_event_ids = $scmEventIds
+  }
+}
+
 function Write-Evidence {
   param(
     [Parameter(Mandatory = $true)][System.Collections.IDictionary]$Evidence,
@@ -192,9 +259,9 @@ $evidence = [ordered]@{
     "MANUAL_OWNER_TEST: uninstall while connected",
     "MANUAL_OWNER_TEST: interactive SmartScreen reputation observation"
   )
-  production_mutation_performed = false
-  public_release_created = false
-  stable_pointer_mutated = false
+  production_mutation_performed = $false
+  public_release_created = $false
+  stable_pointer_mutated = $false
 }
 
 if (-not $RunCleanHostSmoke) {
@@ -237,6 +304,7 @@ try {
   Add-Check -Checks $checks -Id "clean_host_baseline" -Status "PASS" -Detail "service, install directory, registry owner record, and POKROV/Wintun adapter were absent"
 
   $failureStage = "install"
+  $installStartedAtUtc = (Get-Date).ToUniversalTime()
   $installArguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- /LOG=`"$installerLog`""
   $install = Start-Process -FilePath $candidate -ArgumentList $installArguments -Wait -PassThru
   Assert-Gate -Condition ($install.ExitCode -eq 0) -Code "installer_exit_nonzero"
@@ -255,7 +323,16 @@ try {
   Add-Check -Checks $checks -Id "installed_file_identity" -Status "PASS" -Detail "all 8 manifest-bound installed files match size and SHA-256"
 
   $failureStage = "service_contract"
-  Assert-Gate -Condition (Wait-ServiceState -Name $serviceName -State "Running") -Code "service_not_running"
+  $serviceRunning = Wait-ServiceState -Name $serviceName -State "Running"
+  if (-not $serviceRunning) {
+    $evidence.service_failure_diagnostics = Get-SanitizedServiceFailureDiagnostics `
+      -Name $serviceName `
+      -RegistryPath $serviceRegistryPath `
+      -ExpectedBinaryPath (Join-Path $installRoot "pokrov_service.exe") `
+      -JournalPath $eventJournal `
+      -SinceUtc $installStartedAtUtc
+  }
+  Assert-Gate -Condition $serviceRunning -Code "service_not_running"
   $service = Get-CimInstance -ClassName Win32_Service -Filter "Name='$serviceName'"
   Assert-Gate -Condition ($null -ne $service) -Code "service_cim_missing"
   Assert-Gate -Condition ($service.StartMode -eq "Auto") -Code "service_start_mode_invalid"
