@@ -6,7 +6,10 @@ This folder contains non-destructive client helpers.
   release contracts, Core compatibility authority, release-handoff v2
   behavior, and the non-mutating cross-repository CI workflow. CI callers pass
   explicit `-PlatformRoot` and `-CoreRoot` values. Only a clean Core checkout
-  matching the exact 1.1.0 artifact commit and toolchain reports `PASS`.
+  matching the exact 1.1.0 artifact commit and toolchain reports `PASS`. The
+  client workflow may read a newer Core promotion-line checkout only to prove
+  its delta is confined to `.github/**`; it then materializes the exact bound
+  source commit in a detached worktree for validation.
 - `new-release-handoff-v2.ps1` generates strict candidate metadata from an
   explicit input plus client-owned version/Core facts, validates it with the
   platform validator, carries the version-matched release-note summary and URL,
@@ -61,6 +64,15 @@ This folder contains non-destructive client helpers.
   subject, EKU, validity, trusted-chain and SignTool checks before any build or
   signing and emits only a public receipt with `artifacts_signed=false` and
   `candidate_created=false`.
+- `test-windows-exact-candidate.ps1` hash-binds the private candidate.1 Windows
+  installer to `config/windows-clean-host-gate.candidate-1.json`. Validation
+  mode is non-mutating. The manual `Windows Exact Candidate Clean Host`
+  workflow downloads the same byte from a private draft release, requires a
+  fresh GitHub-hosted Windows runner, then checks install/service identity,
+  authenticated UI-to-service IPC, service restart, clean uninstall, and idle
+  route/DNS restoration. Its sanitized evidence explicitly leaves live TUN,
+  DNS capture, egress, recovery, connected uninstall, and SmartScreen as
+  `MANUAL_OWNER_TEST`.
 - `test/repository-hygiene-contract.ps1` rejects tracked temporary/build output,
   candidate binaries outside the three pinned runtime dependencies, and any
   1.2.0 candidate written into retained `artifacts/releases/`.
