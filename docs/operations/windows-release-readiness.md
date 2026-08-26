@@ -57,6 +57,16 @@ still belongs to the exact-candidate gate below.
 | Anonymous download and install | `NOT_RUN` |
 | Rollback drill | `NOT_RUN` |
 
+The private, manual `Windows Exact Candidate Clean Host` workflow is prepared
+for candidate.1 but remains `NOT_RUN`. It downloads only the manifest-bound
+installer from a private draft release and executes on a fresh GitHub-hosted
+Windows runner. A pass may advance machine-wide installation, service identity,
+authenticated UI/service IPC, idle restart, clean uninstall, and unchanged idle
+route/DNS fingerprints only. It cannot advance live TUN, DNS capture,
+authenticated egress, sleep/reboot/crash recovery, uninstall while connected,
+or interactive SmartScreen reputation checks; those remain
+`MANUAL_OWNER_TEST`.
+
 ## Safe Current Claims
 
 - The `1.2.0` source targets an unelevated UI and authenticated Windows service.

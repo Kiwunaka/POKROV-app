@@ -1,0 +1,43 @@
+name: Windows Exact Candidate Clean Host
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-windows-clean-host:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact gate contract
+        uses: actions/checkout@v6
+
+      - name: Download exact private candidate asset
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $gate = Get-Content -LiteralPath config/windows-clean-host-gate.candidate-1.json -Raw |
+            ConvertFrom-Json -Depth 20
+          New-Item -ItemType Directory -Path build/private-candidate -Force | Out-Null
+          gh release download $gate.private_ci_release_tag `
+            --repo $env:GITHUB_REPOSITORY `
+            --pattern $gate.artifact.file_name `
+            --dir build/private-candidate
+
+      - name: Install, exercise, and uninstall exact candidate
+        shell: pwsh
+        run: >-
+          ./scripts/test-windows-exact-candidate.ps1
+          -RunCleanHostSmoke
+
+      - name: Upload sanitized exact-candidate evidence
+        if: ${{ always() && hashFiles('build/evidence/windows-exact-candidate-clean-host.json') != '' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: windows-exact-candidate-clean-host-evidence
+          path: build/evidence/windows-exact-candidate-clean-host.json
+          if-no-files-found: error
+          retention-days: 14
