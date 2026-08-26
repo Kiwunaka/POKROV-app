@@ -100,10 +100,12 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - the current green repo/static gate snapshot is necessary but not sufficient for future candidates; the `2026-05-15` beta pack includes runtime handoff validation, paid/email evidence, and separate `current-origin`, `brain-origin`, and accepted-skip `RU-origin` handling
 - emulator or adb-only Android audits are valid preflight, not final release approval
 - `iOS` and `macOS` readiness work does not block the public Android+Windows ship, but it also does not expand the public promise
-- Linux is explicitly `NOT_SHIPPED_IN_1.2.0`. Transitive Flutter desktop
-  dependencies, compatibility-client instructions, dormant Linux error codes
-  and the PB-09 `notShipped` entry do not constitute an official Linux binary,
-  daemon, package, support matrix or availability promise.
+- Linux is a conditional, non-public `1.2.0` beta track. Current source has a
+  non-root Flutter host plus a systemd/polkit daemon foundation, but live Core
+  lifecycle, NetworkManager/resolved/nft rollback, signed packages and exact-VM
+  proof are still open. Until those gates close, the current candidate remains
+  `NOT_SHIPPED` for Linux; transitive Flutter dependencies, compiling source or
+  an unsigned UI-only package never become an availability promise.
 - Android OEM battery/background policy, VPN-permission behavior, notification
   delivery and cached Quick Settings state may stop or delay recovery despite
   the foreground-service contract. The app exposes bounded PB-08 recovery via

@@ -1,0 +1,11 @@
+[Unit]
+Description=POKROV Linux privileged runtime socket
+
+[Socket]
+ListenStream=/run/pokrov/pokrov-linuxd.sock
+SocketMode=0666
+DirectoryMode=0755
+RemoveOnStop=yes
+
+[Install]
+WantedBy=sockets.target

@@ -7,15 +7,20 @@
     "ios",
     "macos"
   ],
+  "conditional_beta_targets": [
+    "linux"
+  ],
   "host_shells": {
     "android": "apps/android_shell",
     "ios": "apps/ios_shell",
+    "linux": "apps/linux_shell",
     "macos": "apps/macos_shell",
     "windows": "apps/windows_shell"
   },
   "release_readiness": {
     "android": "direct_apk_1_1_6_public_stable_runtime_synced_exact_huawei_followup_manual",
     "ios": "readiness_only_store_blocked",
+    "linux": "conditional_beta_foundation_implemented_live_runtime_package_and_matrix_proof_open",
     "macos": "readiness_only_notarization_blocked",
     "windows": "outside_store_unsigned_1_1_6_public_stable_runtime_synced_new_promotion_blocked_pending_trusted_signing"
   },

@@ -12,6 +12,9 @@
     "ios",
     "macos"
   ],
+  "conditional_beta_scope": [
+    "linux"
+  ],
   "default_runtime_core": "sing-box",
   "advanced_fallback_core": "xray",
   "trial_days": 5,

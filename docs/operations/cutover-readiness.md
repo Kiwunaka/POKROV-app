@@ -53,7 +53,7 @@ signing, device, runtime and origin evidence cannot be reused for promotion.
 | Android OEM limitations | `EXPLICIT_MANUAL_GATE` | PB-08 and `AND-BG-001/002/003` plus `AND-VPN-004` cover safe guidance; exact-candidate background, screen-off, lockscreen, notification, tile, permission-revoke and reconnect proof remains manual. |
 | Windows package/signing | `MISSING_ARTIFACT`; signing `SKIPPED_BY_OWNER` | Build the final service-first setup; strict-v2 must record the exact unsigned bytes, the `1.2.0` direct-beta-only exception and mandatory SmartScreen warning. |
 | Windows clean-host proof | `MANUAL_OWNER_TEST` | TUN/DNS/egress/recovery matrix passes on a clean host. |
-| Linux client | `NOT_SHIPPED_IN_1.2.0` | No Linux artifact, daemon, package, support matrix or release promise belongs to this candidate. |
+| Linux client | `IMPLEMENTED_PARTIAL_SOURCE_ONLY` | Non-root Flutter host, typed bounded Unix IPC, `SO_PEERCRED`, polkit, hardened systemd units, one supported foundation matrix row and secret-free journald fields pass local source tests. Live Core/TUN, NetworkManager checkpoint, resolved/nft mutation and rollback, `.deb`/`.rpm`, signing and clean-VM proof remain open; no Linux artifact or public claim exists. |
 | Apple native release | `NOT_REQUESTED` | Apple remains readiness-only for this release. |
 | RU-origin proof | `NOT_REQUESTED` | Required only before an explicit RU-origin claim. |
 | Hosted CI | `NOT_RUN` | Required checks pass on every frozen revision. |

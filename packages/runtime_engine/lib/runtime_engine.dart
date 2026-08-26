@@ -1,5 +1,6 @@
 library pokrov_runtime_engine;
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
@@ -11,8 +12,11 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 
+part 'src/linux_daemon_runtime.dart';
+
 enum RuntimeLane {
   desktopFfi,
+  linuxDaemon,
   windowsService,
   mobileArtifact,
 }
@@ -165,6 +169,8 @@ class RuntimeSnapshot {
     switch (lane) {
       case RuntimeLane.desktopFfi:
         return 'Локальный runtime';
+      case RuntimeLane.linuxDaemon:
+        return 'Системная служба Linux';
       case RuntimeLane.windowsService:
         return 'Системная служба Windows';
       case RuntimeLane.mobileArtifact:
@@ -1147,6 +1153,8 @@ PokrovRuntimeEngine createRuntimeEngine({
         hostPlatform: hostPlatform,
         assetRootOverride: assetRootOverride,
       );
+    case HostPlatform.linux:
+      return LinuxDaemonRuntimeEngine();
     case HostPlatform.android:
     case HostPlatform.ios:
       return MobileArtifactRuntimeEngine(
@@ -1952,7 +1960,8 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     final coreFileNames = switch (hostPlatform) {
       HostPlatform.windows => const ['pokrov-core.dll'],
       HostPlatform.macos => const ['pokrov-core.dylib'],
-      HostPlatform.android || HostPlatform.ios => const <String>[],
+      HostPlatform.android || HostPlatform.ios || HostPlatform.linux =>
+        const <String>[],
     };
 
     for (final directory in candidateDirectories) {
@@ -1983,6 +1992,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   ) sync* {
     final platformSegment = switch (platform) {
       HostPlatform.windows => 'windows',
+      HostPlatform.linux => 'linux',
       HostPlatform.macos => 'macos',
       HostPlatform.android => 'android',
       HostPlatform.ios => 'ios',
@@ -3328,12 +3338,12 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     final platformSegment = switch (hostPlatform) {
       HostPlatform.android => 'android',
       HostPlatform.ios => 'ios',
-      HostPlatform.windows || HostPlatform.macos => '',
+      HostPlatform.windows || HostPlatform.linux || HostPlatform.macos => '',
     };
     final artifactName = switch (hostPlatform) {
       HostPlatform.android => 'pokrov-core.aar',
       HostPlatform.ios => 'PokrovCore.xcframework',
-      HostPlatform.windows || HostPlatform.macos => '',
+      HostPlatform.windows || HostPlatform.linux || HostPlatform.macos => '',
     };
 
     final candidateDirectories = <Directory>{

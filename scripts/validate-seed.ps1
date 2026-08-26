@@ -319,6 +319,12 @@ if (Test-Path -LiteralPath $platformMatrixPath -PathType Leaf) {
     $manifestErrors.Add("config\\platform-matrix.seed.json must keep readiness_only_targets limited to ios and macos for the Android+Windows public lane")
   }
 
+  if ((@($platformMatrix.conditional_beta_targets) -join ',') -ne 'linux' -or
+      $platformMatrix.host_shells.linux -ne 'apps/linux_shell' -or
+      $platformMatrix.release_readiness.linux -ne 'conditional_beta_foundation_implemented_live_runtime_package_and_matrix_proof_open') {
+    $manifestErrors.Add("config\\platform-matrix.seed.json must keep Linux as the conditional non-public beta foundation")
+  }
+
   foreach ($target in $expectedHostShells.Keys) {
     if ($platformMatrix.host_shells.$target -ne $expectedHostShells[$target]) {
       $manifestErrors.Add("config\\platform-matrix.seed.json must map '$target' to '$($expectedHostShells[$target])'")
@@ -344,6 +350,10 @@ if (Test-Path -LiteralPath $productContractPath -PathType Leaf) {
 
   if (@($productContract.readiness_only_scope).Count -ne $expectedReadinessOnlyTargets.Count) {
     $manifestErrors.Add("config\\product-contract.seed.json must keep readiness_only_scope limited to ios and macos for the Android+Windows public lane")
+  }
+
+  if ((@($productContract.conditional_beta_scope) -join ',') -ne 'linux') {
+    $manifestErrors.Add("config\\product-contract.seed.json must keep Linux in conditional_beta_scope")
   }
 
   if (@($productContract.public_routing_modes) -notcontains "selected_apps") {

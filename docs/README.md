@@ -64,6 +64,7 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | ACTIVE_EXECUTION | RECONCILED | Cutover checklist | `docs/operations/cutover-readiness.md` |
 | ACTIVE_EXECUTION | RECONCILED | Android readiness | `docs/operations/android-release-audit.md` |
 | ACTIVE_EXECUTION | RECONCILED | Windows readiness | `docs/operations/windows-release-readiness.md` |
+| ACTIVE_EXECUTION | RECONCILED | Conditional Linux beta foundation | `apps/linux_shell/README.md` |
 | ACTIVE_EXECUTION | RECONCILED | WARP runtime proof | `docs/operations/warp-runtime-proof-checklist.md` |
 | ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Responsive proof | `docs/operations/responsive-golden-capture-plan.md` |
 | ACTIVE_EXECUTION | REVIEWED_NO_CHANGE | Motion/performance proof | `docs/operations/client-motion-performance-checklist.md` |

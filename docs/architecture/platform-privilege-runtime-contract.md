@@ -308,7 +308,7 @@ observability owners. Platform work must not create a competing pipeline.
 
 ## Rollout state
 
-As of 2026-08-21:
+As of 2026-08-26:
 
 - Windows per-session singleton, typed UI activation and tray-only startup are
   locally proved under WO-005A;
@@ -345,6 +345,14 @@ As of 2026-08-21:
   power/standby, watchdog and direct-updater producers are locally proved by
   both flavor JVM suites. Exact-device file permissions, lifecycle delivery,
   ANR behavior and long-run rotation remain candidate/device gates;
-- Linux remains conditional and absent from public scope.
+- Linux remains conditional and absent from public scope. The source now has a
+  non-root Flutter host, a systemd socket-activated Go daemon, kernel peer
+  credentials, polkit authorization for every mutation, bounded typed IPC,
+  fixed private profile storage, a fail-closed Ubuntu 24.04 foundation matrix
+  and allowlisted native journald fields. `connect` intentionally returns
+  `linux_live_connect_unavailable` and `supports_live_connect=false` until the
+  Core lifecycle, NetworkManager checkpoint/rollback, resolved/nft
+  transactions, suspend recovery and exact signed package/VM matrices are
+  implemented and retained.
 
 These statements describe source progress, not a 1.2.0 candidate or release.
