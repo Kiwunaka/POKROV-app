@@ -5288,6 +5288,7 @@ void main() {
       required bool preferredRouteVariant,
       required bool directUnlisted,
       required bool nestedRouteVariant,
+      required bool hiddenUnreachableSelector,
     }) =>
         <String, Object?>{
           'provisioning': <String, Object?>{'status': 'ready', 'sync_ok': true},
@@ -5303,6 +5304,13 @@ void main() {
                 'code': 'ru-nested',
                 'probe': <String, Object?>{
                   'host': 'ru-nested.example.test',
+                  'port': 443,
+                },
+              },
+              <String, Object?>{
+                'code': 'ru-hidden',
+                'probe': <String, Object?>{
+                  'host': 'ru-hidden.example.test',
                   'port': 443,
                 },
               },
@@ -5367,6 +5375,8 @@ void main() {
                         if (!directUnlisted) 'ru-unlisted',
                         if (preferredRouteVariant)
                           '🇷🇺 Россия Spb · Белые списки',
+                        if (hiddenUnreachableSelector)
+                          '🇷🇺 Россия Hidden · Белые списки',
                         'bridge-ru-spb',
                       ],
                 'default': nestedRouteVariant ? '🇷🇺 Россия Nested' : 'de-ber',
@@ -5380,6 +5390,13 @@ void main() {
                     '🇷🇺 Россия Nested · Белые списки',
                   ],
                   'default': '🇷🇺 Россия Nested · Обычный',
+                },
+              if (hiddenUnreachableSelector)
+                <String, Object?>{
+                  'type': 'selector',
+                  'tag': 'POKROV торренты RU §hide§',
+                  'outbounds': <String>['🇷🇺 Россия Hidden'],
+                  'default': '🇷🇺 Россия Hidden',
                 },
               if (ambiguousFinalSelector)
                 <String, Object?>{
@@ -5427,6 +5444,29 @@ void main() {
                   'server': 'ru-nested.example.test',
                   'server_port': 443,
                   'detour': 'bridge-ru-spb',
+                },
+              if (hiddenUnreachableSelector)
+                <String, Object?>{
+                  'type': 'vless',
+                  'tag': '🇷🇺 Россия Hidden',
+                  'server': 'ru-hidden.example.test',
+                  'server_port': 443,
+                },
+              if (hiddenUnreachableSelector)
+                <String, Object?>{
+                  'type': 'vless',
+                  'tag': '🇷🇺 Россия Hidden · Белые списки',
+                  'server': 'ru-hidden.example.test',
+                  'server_port': 443,
+                  'detour': 'bridge-ru-hidden',
+                },
+              if (hiddenUnreachableSelector)
+                <String, Object?>{
+                  'type': 'vless',
+                  'tag': 'bridge-ru-hidden',
+                  'server': 'ru-hidden.example.test',
+                  'server_port': 443,
+                  'detour': '🇷🇺 Россия Hidden',
                 },
               if (preferredRouteVariant)
                 <String, Object?>{
@@ -5499,9 +5539,12 @@ void main() {
                   duplicateRuProxy: code == 'ru-duplicate',
                   ambiguousFinalSelector: code == 'selector-ambiguous',
                   preferredRouteVariant:
-                      code == 'ru-spb' || code == 'ru-nested',
+                      code == 'ru-spb' ||
+                      code == 'ru-nested' ||
+                      code == 'ru-hidden',
                   directUnlisted: code == 'ru-unlisted',
                   nestedRouteVariant: code == 'ru-nested',
+                  hiddenUnreachableSelector: code == 'ru-hidden',
                 ),
               ),
             );
@@ -5664,6 +5707,41 @@ void main() {
         .singleWhere((outbound) => outbound['tag'] == 'proxy');
     expect(insertedDirectSelector['default'], 'ru-unlisted');
     expect((insertedDirectSelector['outbounds'] as List).first, 'ru-unlisted');
+
+    final hiddenDirect = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.fullTunnel,
+      preferredNodeCode: 'ru-hidden',
+      preferredVariantId: 'direct',
+    );
+    final hiddenDirectSelector = ((jsonDecode(hiddenDirect.configPayload)
+            as Map<String, dynamic>)['outbounds'] as List)
+        .cast<Map>()
+        .singleWhere((outbound) => outbound['tag'] == 'proxy');
+    expect(hiddenDirectSelector['default'], '🇷🇺 Россия Hidden');
+    expect(
+      (hiddenDirectSelector['outbounds'] as List).first,
+      '🇷🇺 Россия Hidden',
+    );
+
+    final hiddenBridge = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.fullTunnel,
+      preferredNodeCode: 'ru-hidden',
+      preferredVariantId: 'mini',
+    );
+    final hiddenBridgeSelector = ((jsonDecode(hiddenBridge.configPayload)
+            as Map<String, dynamic>)['outbounds'] as List)
+        .cast<Map>()
+        .singleWhere((outbound) => outbound['tag'] == 'proxy');
+    expect(
+      hiddenBridgeSelector['default'],
+      '🇷🇺 Россия Hidden · Белые списки',
+    );
+    expect(
+      (hiddenBridgeSelector['outbounds'] as List).first,
+      '🇷🇺 Россия Hidden · Белые списки',
+    );
 
     final nestedDirect = await bootstrapper.resolveManagedProfile(
       hostPlatform: HostPlatform.android,

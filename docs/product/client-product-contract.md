@@ -318,10 +318,13 @@ After activation:
   the returned profile. The canonical identity is the shortlist item's
   `outbound_tag`; while older deployed servers omit that field, the client may
   use the raw node code, the deterministic legacy localized tag, or a unique
-  probe host/port match in that order. The resolved tag must still be a member
-  of the final selector. A mismatch, ambiguity, or stale cached profile must
-  show that the selected location is unavailable instead of connecting
-  through a different displayed location
+  probe host/port match in that order. A uniquely verified direct tag may be
+  inserted into the final selector when an unreachable internal selector also
+  references it; that hidden selector is not treated as a valid routing path.
+  Non-direct variants must remain exact members of the reachable selector.
+  A mismatch, ambiguity, or stale cached profile must show that the selected
+  location is unavailable instead of connecting through a different displayed
+  location
 - when a saved manual location becomes unavailable, `Locations` still lets the
   user explicitly return to `Автоматически` before the first successful
   connection; that action clears the device-local manual preference and the
