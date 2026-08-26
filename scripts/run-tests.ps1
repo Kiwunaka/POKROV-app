@@ -89,6 +89,7 @@ $flutterTestPackages = @(
   "packages\\app_shell",
   "packages\\runtime_engine",
   "apps\\android_shell",
+  "apps\\linux_shell",
   "apps\\windows_shell"
 )
 

@@ -1,0 +1,31 @@
+{
+  "schema": "pokrov-linux-support-matrix-v1",
+  "entries": [
+    {
+      "id": "ubuntu-24.04-amd64",
+      "distro_id": "ubuntu",
+      "version_id": "24.04",
+      "desktop": "exact_vm_session_proof_pending",
+      "architecture": "amd64",
+      "init": "systemd",
+      "network_manager": "NetworkManager",
+      "dns_manager": "systemd-resolved",
+      "firewall": "nftables",
+      "package": "deb",
+      "status": "foundation_supported"
+    },
+    {
+      "id": "fedora-workstation-amd64",
+      "distro_id": "fedora",
+      "version_id": "current",
+      "desktop": "gnome",
+      "architecture": "amd64",
+      "init": "systemd",
+      "network_manager": "NetworkManager",
+      "dns_manager": "systemd-resolved",
+      "firewall": "nftables",
+      "package": "rpm",
+      "status": "pending_package_and_runtime_proof"
+    }
+  ]
+}

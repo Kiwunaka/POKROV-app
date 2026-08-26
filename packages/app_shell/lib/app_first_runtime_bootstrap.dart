@@ -2385,7 +2385,8 @@ class ClientAppsMetadata {
     return switch (hostPlatform) {
       HostPlatform.android => android.update,
       HostPlatform.windows => windows.update,
-      HostPlatform.ios || HostPlatform.macos => ClientAppUpdateInfo.none,
+      HostPlatform.ios || HostPlatform.linux || HostPlatform.macos =>
+        ClientAppUpdateInfo.none,
     };
   }
 }
@@ -4538,6 +4539,7 @@ class AppFirstRuntimeBootstrapper
         HostPlatform.android => 'android',
         HostPlatform.windows => 'windows',
         HostPlatform.ios => 'ios',
+        HostPlatform.linux => 'linux',
         HostPlatform.macos => 'macos',
       };
       final androidAbi = hostPlatform == HostPlatform.android

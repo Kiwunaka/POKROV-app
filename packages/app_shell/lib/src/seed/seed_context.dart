@@ -198,6 +198,30 @@ RulesPresetContract _seedRulesPresetContractFor(HostPlatform hostPlatform) {
           ),
         ],
       ),
+    HostPlatform.linux => const RulesPresetContract(
+        rulesetVersion: _seedRulesetVersion,
+        packageCatalogVersion: _seedPackageCatalogVersion,
+        presets: [
+          RulesPresetStatus(
+            id: 'ru-region',
+            title: 'Сайты из России',
+            subtitle: 'Российские сайты и локальные адреса идут напрямую.',
+            state: RulesPresetState.enabled,
+          ),
+          RulesPresetStatus(
+            id: 'full-tunnel',
+            title: 'Весь трафик устройства',
+            subtitle: 'Весь трафик Linux идет через POKROV.',
+            state: RulesPresetState.enabled,
+          ),
+          RulesPresetStatus(
+            id: 'selected-apps',
+            title: 'Выбранные приложения',
+            subtitle: 'Для Linux beta этот режим закрыт до отдельного cgroup/nft proof.',
+            state: RulesPresetState.locked,
+          ),
+        ],
+      ),
   };
 }
 
@@ -266,6 +290,15 @@ SeedAppContext buildSeedAppContext({
         requiredPermissions: [
           PermissionRequirement.notifications,
           PermissionRequirement.vpnProfile,
+        ],
+        defaultCore: RuntimeCore.singBox,
+        advancedFallbackCore: RuntimeCore.xray,
+        supportsSelectedAppsMode: false,
+      ),
+    HostPlatform.linux => const PlatformBootstrapContract(
+        hostPlatform: HostPlatform.linux,
+        requiredPermissions: [
+          PermissionRequirement.systemServiceAuthorization,
         ],
         defaultCore: RuntimeCore.singBox,
         advancedFallbackCore: RuntimeCore.xray,

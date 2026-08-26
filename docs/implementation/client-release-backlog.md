@@ -1,6 +1,6 @@
 # POKROV Client Release Backlog
 
-Last updated: 2026-08-24
+Last updated: 2026-08-26
 
 ## Document Status
 
@@ -23,6 +23,7 @@ results belong in dated evidence and never become reusable release approval.
 | Support-mode signing public pin | `PASS_SOURCE_CONTROL` — tracked key `pokrov-support-2026-08`; private/HMAC values are secret-only and not deployed |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Windows trusted-signing decision | `SKIPPED_BY_OWNER` for the exact `1.2.0` direct-download beta; mandatory SmartScreen warning; no trusted/Store/broad-stable claim |
+| Conditional Linux beta | `IMPLEMENTED_PARTIAL_SOURCE_ONLY`; non-public and absent from the current candidate |
 
 `config/release-handoff.seed.json` owns the public release and development
 target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
@@ -37,6 +38,8 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
   package identity.
 - Android uses separate direct and store update authorities.
 - Windows uses the service-first privilege boundary in current source.
+- Linux has a non-root Flutter host and a fail-closed systemd/polkit daemon
+  foundation; live connect remains disabled until Core/network rollback proof.
 - Local observability, diagnostics and support-bundle contracts are present.
 - Production packaging is source-bound to one tracked support-mode public key
   and rejects partial or different overrides before Flutter.
@@ -51,19 +54,21 @@ signing, hosted-CI, deployed-runtime or promotion proof.
 | 1 | Clean platform, client, Core and release-index revisions | `REFREEZE_REQUIRED` | Current control heads are platform `36fe4a1…1fd0`, client `3cab149…13e1` before this support-pin change, Core `bdbd97f…72f` and release-index `7d5e402…66b2`; merge this pin, then freeze the replacement tuple. |
 | 2 | Public release-index revision | `PASS_SOURCE_CONTROL` | Public `main` `7d5e402…66b2` retains the trust root and deterministic secret-only signer; post-merge source-contract run `32668571694` passes. No signed candidate template exists. |
 | 3 | POKROV Core `1.1.0` replacement artifact | `PASS_LOCAL` | Core revision `bdbd97f…72f` produces the exact AAR/DLL identities already bound by source evidence; replacement candidate signing/device proof remains later. |
-| 4 | Strict-v2 candidate metadata | `MISSING` | Generate a new beta handoff after final-source Android/Windows artifact assembly; Windows signing must remain `SKIPPED_BY_OWNER`, never `PASS`. |
-| 5 | Android exact-candidate build and signer | `MISSING` | Rebuild with the tracked support pin; every APK must match v2 size, digest, package, version and production signer. |
-| 6 | Android physical-device matrix | `MANUAL_OWNER_TEST` | Huawei install, TUN/DNS/egress, WARP, per-app, handoff and endurance pass on exact bytes. |
-| 7 | Windows exact-candidate package | `MISSING` | Rebuild with the tracked support pin; machine-wide setup must contain the service, Core and required dependencies. |
-| 8 | Windows unsigned-beta warning and clean-host recovery | `OWNER_EXCEPTION_RECORDED; MANUAL_OWNER_TEST` | Retain the exact `1.2.0` direct-beta exception and SmartScreen warning, then run clean VM install/TUN/DNS/egress/crash/reboot/rollback on the exact unsigned setup. Trusted signing remains a later gate for trusted/Store/broad-stable claims. |
-| 9 | Hosted cross-repository CI | `PASS_SOURCE_CONTROLS` | Client main run `32668204355` and platform master runs `32669461958`/`32669461832` pass; repeat after this support-pin merge and again for the exact candidate. |
-| 10 | Runtime/public readback and rollback | `NOT_AUTHORIZED` | Catalog contains the exact candidate plus prior stable target; owner authorizes sync; pointer backup, receipt, manifest, API, downloads and rollback readback are retained. |
-| 11 | Promotion and go/no-go | `NOT_AUTHORIZED` | All required v2 gates are `PASS` for the same artifact bytes. |
+| 4 | Conditional Linux beta runtime and package | `IMPLEMENTED_PARTIAL_SOURCE_ONLY` | Add live Core lifecycle, NetworkManager checkpoint and route/DNS restore, resolved/nft transactions, suspend recovery, `.deb`/`.rpm` provenance and clean non-root VM proof before any Linux artifact enters the candidate. |
+| 5 | Strict-v2 candidate metadata | `MISSING` | Generate a new beta handoff after final-source platform artifact assembly; Windows signing must remain `SKIPPED_BY_OWNER`, never `PASS`. |
+| 6 | Android exact-candidate build and signer | `MISSING` | Rebuild with the tracked support pin; every APK must match v2 size, digest, package, version and production signer. |
+| 7 | Android physical-device matrix | `MANUAL_OWNER_TEST` | Huawei install, TUN/DNS/egress, WARP, per-app, handoff and endurance pass on exact bytes. |
+| 8 | Windows exact-candidate package | `MISSING` | Rebuild with the tracked support pin; machine-wide setup must contain the service, Core and required dependencies. |
+| 9 | Windows unsigned-beta warning and clean-host recovery | `OWNER_EXCEPTION_RECORDED; MANUAL_OWNER_TEST` | Retain the exact `1.2.0` direct-beta exception and SmartScreen warning, then run clean VM install/TUN/DNS/egress/crash/reboot/rollback on the exact unsigned setup. Trusted signing remains a later gate for trusted/Store/broad-stable claims. |
+| 10 | Hosted cross-repository CI | `PASS_SOURCE_CONTROLS` | Client main run `32668204355` and platform master runs `32669461958`/`32669461832` pass; repeat after this support-pin merge and again for the exact candidate. |
+| 11 | Runtime/public readback and rollback | `NOT_AUTHORIZED` | Catalog contains the exact candidate plus prior stable target; owner authorizes sync; pointer backup, receipt, manifest, API, downloads and rollback readback are retained. |
+| 12 | Promotion and go/no-go | `NOT_AUTHORIZED` | All required v2 gates are `PASS` for the same artifact bytes. |
 
 ## Next Action Order
 
 1. Merge and host-verify the tracked support signing pin.
-2. Freeze the replacement four-repository tuple and rebuild exact artifacts.
+2. Finish the conditional Linux live-runtime/package/VM slice, then freeze the
+   replacement four-repository tuple and rebuild exact artifacts.
 3. Generate strict-v2 beta metadata with Windows `SKIPPED_BY_OWNER` and run
    exact Android/Windows manual gates.
 4. Request separate authority for runtime support-key deployment, candidate

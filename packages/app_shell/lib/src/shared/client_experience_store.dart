@@ -354,7 +354,7 @@ String? normalizePokrovSelectedAppIdentifier(
   final valid = switch (hostPlatform) {
     HostPlatform.android => androidPackage.hasMatch(normalized),
     HostPlatform.windows => windowsExecutable.hasMatch(normalized),
-    HostPlatform.ios || HostPlatform.macos => false,
+    HostPlatform.ios || HostPlatform.linux || HostPlatform.macos => false,
     null => androidPackage.hasMatch(normalized) ||
         windowsExecutable.hasMatch(normalized),
   };
