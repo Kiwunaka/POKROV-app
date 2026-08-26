@@ -47,7 +47,34 @@ jobs:
           repository: Kiwunaka/pokrov-core
           ref: main
           path: POKROV-core
+          fetch-depth: 0
           persist-credentials: false
+
+      - name: Materialize bound Core source authority
+        shell: pwsh
+        run: |
+          $candidateRoot = Join-Path "${{ github.workspace }}" "POKROV-core"
+          $authorityRoot = Join-Path "${{ github.workspace }}" "POKROV-core-authority"
+          $seedPath = Join-Path "${{ github.workspace }}" "client/config/runtime-artifacts.seed.json"
+          $boundCore = (Get-Content -Raw -LiteralPath $seedPath | ConvertFrom-Json).core.source_commit
+          if ($boundCore -notmatch "^[0-9a-f]{40}$") {
+            throw "Client runtime seed does not contain a full Core source commit."
+          }
+
+          & git -C $candidateRoot cat-file -e "$boundCore^{commit}"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Bound Core source commit is unavailable in the promotion-line checkout."
+          }
+
+          & git -C $candidateRoot diff --quiet $boundCore HEAD -- . ":(exclude).github/**"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Core promotion line changed bound source outside .github while client/main still pins $boundCore."
+          }
+
+          & git -C $candidateRoot worktree add --detach $authorityRoot $boundCore
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to materialize the bound Core source authority."
+          }
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -73,7 +100,7 @@ jobs:
         run: >-
           ./scripts/validate-seed.ps1
           -PlatformRoot "${{ github.workspace }}/platform"
-          -CoreRoot "${{ github.workspace }}/POKROV-core"
+          -CoreRoot "${{ github.workspace }}/POKROV-core-authority"
 
       - name: Run client unit and Android flavor tests
         shell: pwsh

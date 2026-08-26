@@ -6,7 +6,10 @@ This folder contains non-destructive client helpers.
   release contracts, Core compatibility authority, release-handoff v2
   behavior, and the non-mutating cross-repository CI workflow. CI callers pass
   explicit `-PlatformRoot` and `-CoreRoot` values. Only a clean Core checkout
-  matching the exact 1.1.0 artifact commit and toolchain reports `PASS`.
+  matching the exact 1.1.0 artifact commit and toolchain reports `PASS`. The
+  client workflow may read a newer Core promotion-line checkout only to prove
+  its delta is confined to `.github/**`; it then materializes the exact bound
+  source commit in a detached worktree for validation.
 - `new-release-handoff-v2.ps1` generates strict candidate metadata from an
   explicit input plus client-owned version/Core facts, validates it with the
   platform validator, carries the version-matched release-note summary and URL,
