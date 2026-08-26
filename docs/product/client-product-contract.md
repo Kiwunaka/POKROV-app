@@ -678,6 +678,13 @@ Release continuity rules:
   opt-in lane and must never be returned as the stable candidate
 - update discovery uses anonymous `GET /api/public/client-apps` and must not
   create, refresh, or repair an account session merely to discover an update
+- Android update discovery reports the first supported native ABI and accepts
+  only the matching `arm64-v8a`, `armeabi-v7a`, or `x86_64` split APK. The
+  universal APK remains a manually chosen fresh-install fallback and is never
+  an automatic in-place update over an ABI split build
+- live subscription state overrides the packaged trial seed. An
+  `expiredOrBlocked` response is inactive access and must never retain the seed
+  trial label or trial day count
 - stable candidates use a strictly newer semantic version. Android and Windows
   `1.1.6+29` are the current public stable-direct release under
   `Kiwunaka/pokrov` tag `v1.1.6`. Both production build scripts fail before

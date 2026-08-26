@@ -8535,6 +8535,7 @@ void main() {
     final bootstrapper = AppFirstRuntimeBootstrapper(
       apiBaseUrl: 'http://127.0.0.1:${server.port}/',
       supportDirectoryResolver: () async => tempDirectory,
+      androidAbiResolver: (_) async => 'x86_64',
       maxRequestAttempts: 1,
     );
 
@@ -8547,6 +8548,7 @@ void main() {
     expect(metadata.android.update.channel, 'stable');
     expect(requestUri?.queryParameters['channel'], 'stable');
     expect(requestUri?.queryParameters['current_version'], '1.0.5');
+    expect(requestUri?.queryParameters['android_abi'], 'x86_64');
     expect(authorization, isNull);
     expect(starts, 0);
     expect(

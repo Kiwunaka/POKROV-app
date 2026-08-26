@@ -72,6 +72,41 @@ typedef AppFirstDeviceNameResolver = Future<String?> Function(
   HostPlatform hostPlatform,
 );
 
+typedef AppFirstAndroidAbiResolver = Future<String?> Function(
+  HostPlatform hostPlatform,
+);
+
+const MethodChannel _appFirstRuntimeEngineChannel = MethodChannel(
+  'space.pokrov/runtime_engine',
+);
+const _supportedAndroidUpdateAbis = <String>{
+  'arm64-v8a',
+  'armeabi-v7a',
+  'x86_64',
+};
+
+Future<String?> _resolveAndroidUpdateAbi(HostPlatform hostPlatform) async {
+  if (hostPlatform != HostPlatform.android) {
+    return null;
+  }
+  try {
+    final values = await _appFirstRuntimeEngineChannel.invokeListMethod<String>(
+      'runtimeEngine.supportedAbis',
+    );
+    for (final value in values ?? const <String>[]) {
+      final normalized = value.trim().toLowerCase();
+      if (_supportedAndroidUpdateAbis.contains(normalized)) {
+        return normalized;
+      }
+    }
+  } on PlatformException {
+    return null;
+  } on MissingPluginException {
+    return null;
+  }
+  return null;
+}
+
 typedef AppFirstStateFileWriter = Future<void> Function(
   File file,
   String contents,
@@ -2571,6 +2606,7 @@ class AppFirstRuntimeBootstrapper
     this.deviceNameResolver,
     AppFirstSessionSecretStore? sessionSecretStore,
     AppFirstStateFileWriter? stateFileWriter,
+    AppFirstAndroidAbiResolver? androidAbiResolver,
     EmergencyEnvelopeVerifier? emergencyEnvelopeVerifier,
     EmergencyNetworkStore? emergencyNetworkStore,
   })  : _supportDirectoryResolver =
@@ -2582,6 +2618,7 @@ class AppFirstRuntimeBootstrapper
         _sessionSecretStore =
             sessionSecretStore ?? FlutterSecureAppFirstSessionSecretStore(),
         _stateFileWriter = stateFileWriter ?? _writeAppFirstStateFileAtomically,
+        _androidAbiResolver = androidAbiResolver ?? _resolveAndroidUpdateAbi,
         _emergencyEnvelopeVerifier =
             emergencyEnvelopeVerifier ?? EmergencyEnvelopeVerifier.pinned(),
         _emergencyNetworkStore =
@@ -2604,6 +2641,7 @@ class AppFirstRuntimeBootstrapper
   final AppFirstDeviceNameResolver? deviceNameResolver;
   final AppFirstSessionSecretStore _sessionSecretStore;
   final AppFirstStateFileWriter _stateFileWriter;
+  final AppFirstAndroidAbiResolver _androidAbiResolver;
   final EmergencyEnvelopeVerifier _emergencyEnvelopeVerifier;
   final EmergencyNetworkStore _emergencyNetworkStore;
   final Map<String, Future<_StoredBootstrapState>> _initialStateFlights =
@@ -4502,11 +4540,17 @@ class AppFirstRuntimeBootstrapper
         HostPlatform.ios => 'ios',
         HostPlatform.macos => 'macos',
       };
+      final androidAbi = hostPlatform == HostPlatform.android
+          ? (await _androidAbiResolver(hostPlatform))?.trim().toLowerCase() ??
+              ''
+          : '';
       final query = Uri(
         queryParameters: <String, String>{
           'platform': platformLabel,
           'current_version': currentVersion.trim(),
           'channel': channel.trim().isEmpty ? 'stable' : channel.trim(),
+          if (_supportedAndroidUpdateAbis.contains(androidAbi))
+            'android_abi': androidAbi,
         },
       ).query;
       // Update discovery must work before sign-in, during an expired session,

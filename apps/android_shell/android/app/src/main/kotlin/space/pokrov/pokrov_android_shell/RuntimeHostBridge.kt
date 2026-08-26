@@ -101,6 +101,7 @@ class RuntimeHostBridge(
             METHOD_LIVE_STATS -> result.success(AndroidRuntimeState.liveStats())
             METHOD_PUSH_TOKEN -> result.success(pushToken())
             METHOD_DEVICE_NAME -> result.success(deviceName())
+            METHOD_SUPPORTED_ABIS -> result.success(supportedAbis())
             METHOD_LIST_INSTALLED_APPS -> listInstalledApps(result)
             METHOD_CURRENT_WIFI -> result.success(currentWifi())
             METHOD_MEASURE_NODE_LATENCIES -> measureNodeLatencies(call, result)
@@ -213,6 +214,12 @@ class RuntimeHostBridge(
             result.success(mapOf("status" to AndroidClientUpdateInstaller.STATUS_FAILED))
         }
     }
+
+    private fun supportedAbis(): List<String> =
+        Build.SUPPORTED_ABIS
+            .map { it.trim().lowercase() }
+            .filter { it in SUPPORTED_UPDATE_ABIS }
+            .distinct()
 
     private fun openInAppWebSurface(call: MethodCall): Boolean =
         PokrovInAppWebSurface.open(
@@ -1042,6 +1049,7 @@ class RuntimeHostBridge(
     companion object {
         private const val MAX_INSTALLED_APP_ICONS = 80
         private const val MAX_VARIANT_PROBE_CONFIG_BYTES = 4L * 1024L * 1024L
+        private val SUPPORTED_UPDATE_ABIS = setOf("arm64-v8a", "armeabi-v7a", "x86_64")
         const val CHANNEL_NAME = "space.pokrov/runtime_engine"
         const val REQUEST_VPN_PERMISSION = 14071
         const val EXTRA_DEBUG_RUNTIME_PATH = "space.pokrov.debug.RUNTIME_PATH"
@@ -1056,6 +1064,7 @@ class RuntimeHostBridge(
         private const val METHOD_LIVE_STATS = "runtimeEngine.liveStats"
         private const val METHOD_PUSH_TOKEN = "runtimeEngine.pushToken"
         private const val METHOD_DEVICE_NAME = "runtimeEngine.deviceName"
+        private const val METHOD_SUPPORTED_ABIS = "runtimeEngine.supportedAbis"
         private const val METHOD_LIST_INSTALLED_APPS = "runtimeEngine.listInstalledApps"
         private const val METHOD_CURRENT_WIFI = "runtimeEngine.currentWifi"
         private const val METHOD_MEASURE_NODE_LATENCIES =

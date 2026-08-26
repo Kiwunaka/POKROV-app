@@ -348,6 +348,16 @@ class AndroidHostSecurityContractTest {
     }
 
     @Test
+    fun updateDiscoveryReportsOnlySupportedSplitApkAbis() {
+        val bridgeSource = source("RuntimeHostBridge.kt")
+
+        assertTrue(bridgeSource.contains("METHOD_SUPPORTED_ABIS -> result.success(supportedAbis())"))
+        assertTrue(bridgeSource.contains("Build.SUPPORTED_ABIS"))
+        assertTrue(bridgeSource.contains("setOf(\"arm64-v8a\", \"armeabi-v7a\", \"x86_64\")"))
+        assertFalse(bridgeSource.contains("SUPPORTED_UPDATE_ABIS = setOf(\"universal\""))
+    }
+
+    @Test
     fun foregroundNotificationIsPrivateAndTunMtuFailsClosed() {
         val serviceSource = source("PokrovRuntimeVpnService.kt")
         val preferencesSource = source("AndroidSystemSurfacePreferences.kt")

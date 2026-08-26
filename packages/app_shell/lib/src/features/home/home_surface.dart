@@ -2466,6 +2466,7 @@ String _accessHomeSupportLabel(
     AccessLane.bonusPremium || AccessLane.paidUnlimited => 'Доступ активен',
     AccessLane.freeMonthly => 'Можно продлить до премиум-доступа',
     AccessLane.freeSoftMode => 'Продлите доступ, чтобы подключиться',
+    AccessLane.expiredOrBlocked => 'Продлите доступ, чтобы подключиться',
   };
 }
 

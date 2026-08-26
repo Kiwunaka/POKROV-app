@@ -7,6 +7,7 @@ String _accessPoolLabel(AccessLane lane) {
     AccessLane.paidUnlimited =>
       'Премиум-доступ',
     AccessLane.freeMonthly || AccessLane.freeSoftMode => 'Базовый доступ',
+    AccessLane.expiredOrBlocked => 'Доступ не активен',
   };
 }
 
@@ -36,6 +37,7 @@ String _accessMainLabel(
       liveDays > 0 ? '${ruDays(liveDays)} доступа' : 'Премиум активен',
     AccessLane.freeMonthly => 'Базовый режим',
     AccessLane.freeSoftMode => 'Лимит закончился',
+    AccessLane.expiredOrBlocked => 'Доступ не активен',
   };
 }
 
@@ -62,6 +64,7 @@ String _accessShortValue(
     AccessLane.paidUnlimited => liveDays > 0 ? ruDays(liveDays) : 'Премиум',
     AccessLane.freeMonthly => 'Базовый',
     AccessLane.freeSoftMode => 'Лимит',
+    AccessLane.expiredOrBlocked => 'Нет доступа',
   };
 }
 
@@ -87,7 +90,10 @@ int? _accessShortDays(
       liveDays > 0 ? liveDays : (claimed ? totalDays : baseDays),
     AccessLane.bonusPremium => liveDays > 0 ? liveDays : totalDays,
     AccessLane.paidUnlimited => liveDays > 0 ? liveDays : null,
-    AccessLane.freeMonthly || AccessLane.freeSoftMode => null,
+    AccessLane.freeMonthly ||
+    AccessLane.freeSoftMode ||
+    AccessLane.expiredOrBlocked =>
+      null,
   };
 }
 
@@ -101,6 +107,7 @@ AccessLane _effectiveAccessLane(
     'paidUnlimited' => AccessLane.paidUnlimited,
     'freeMonthly' => AccessLane.freeMonthly,
     'freeSoftMode' => AccessLane.freeSoftMode,
+    'expiredOrBlocked' => AccessLane.expiredOrBlocked,
     _ => appContext.accessLane,
   };
 }
