@@ -63,8 +63,14 @@ the private repository as a non-latest prerelease so the read-only workflow can
 download it. Run `33013112167` proved the exact installer identity, clean
 baseline, silent machine-wide install, and all eight installed file identities,
 then failed closed at `service_contract` with `service_not_running`; cleanup and
-sanitized evidence upload completed. A diagnostic rerun is pending. A future
-pass may advance service identity, authenticated UI/service IPC, idle restart,
+sanitized evidence upload completed. Diagnostic run `33013868113` showed that
+the owner registry value existed and matched the installer user while the SCM
+record, process, and service journal were all absent. This isolates the defect
+to unchecked, incorrectly quoted `sc create` packaging commands rather than a
+service-process crash. The builder now configures SCM from checked Inno code,
+uses one correctly quoted binary path, and aborts installation on every nonzero
+SCM result; replacement candidate proof is pending. A future pass may advance
+service identity, authenticated UI/service IPC, idle restart,
 clean uninstall, and unchanged idle route/DNS fingerprints only. It cannot
 advance live TUN, DNS capture,
 authenticated egress, sleep/reboot/crash recovery, uninstall while connected,

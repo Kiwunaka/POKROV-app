@@ -75,7 +75,10 @@ This folder contains non-destructive client helpers.
   DNS capture, egress, recovery, connected uninstall, and SmartScreen as
   `MANUAL_OWNER_TEST`. A failure retains only bounded SCM codes, owner-match
   booleans, event names/outcomes, and SCM event IDs; raw SID and event-message
-  content are never exported.
+content are never exported.
+- `build-windows-release.ps1` configures the machine-wide service from checked
+  Inno code. Every create/config/description/recovery/start command must return
+  zero; a newly created partial service is deleted before the installer aborts.
 - `test/repository-hygiene-contract.ps1` rejects tracked temporary/build output,
   candidate binaries outside the three pinned runtime dependencies, and any
   1.2.0 candidate written into retained `artifacts/releases/`.
