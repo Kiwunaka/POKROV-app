@@ -44,13 +44,13 @@ still belongs to the exact-candidate gate below.
 |---|---|
 | Clean client/Core revisions | `PASS_SOURCE_CONTROL` — client `e6c29d1…`, exact Core artifact source `344b317…`; client post-merge run `33015545269` passed |
 | Exact Core DLL and dependency identity | `PASS_LOCAL` — DLL `60fe3fad…3981`, Cronet `8ef1f8bb…a6f7`, exact bound Core source and 15 exports |
-| Machine-wide setup package | `READY_EXACT_CANDIDATE_2` — private unsigned setup SHA-256 `4226daa4…c412`, 28,893,114 bytes; clean-host execution pending |
+| Machine-wide setup package | `PASS_EXACT_CANDIDATE_2` — private run `33017409577` installed exact unsigned setup SHA-256 `4226daa4…c412`, 28,893,114 bytes; all eight installed files matched |
 | Exact EXE support signing pin | `PASS_EXACT_ARTIFACT` — candidate.2 supply evidence binds the active `pokrov-support-2026-08` public pin; no private support key was read or exported |
-| Service install/start and UI authentication | `PENDING_EXACT_CANDIDATE_2`; candidate.1 remains `FAIL_EXACT_CANDIDATE_1` history |
+| Service install/start and UI authentication | `PASS_EXACT_CANDIDATE_2` — exact LocalSystem service identity, install-owner binding, accepted authenticated IPC and status request; candidate.1 remains failed history |
 | Trusted code signing and timestamp | `SKIPPED_BY_OWNER` for the exact `1.2.0` direct-download beta only; fail-closed trusted tooling remains ready for the later signed lane |
 | Clean-host TUN/DNS/egress | `MANUAL_OWNER_TEST` |
 | Crash/reboot/sleep/SCM recovery | `MANUAL_OWNER_TEST` |
-| Route and DNS restoration | `MANUAL_OWNER_TEST` |
+| Route and DNS restoration | `PASS_EXACT_CANDIDATE_2_IDLE_ONLY` — clean-host route/DNS fingerprints remained unchanged after idle install/restart/uninstall; connected restoration remains `MANUAL_OWNER_TEST` |
 | Uninstall while connected | `MANUAL_OWNER_TEST` |
 | SmartScreen/reputation observation | `MANUAL_OWNER_TEST` |
 | Strict-v2 size/SHA-256/source binding | `PASS_SIGNED_CANDIDATE_2` — handoff `317fa2ab…2a10`, manifest `1697a1bc…e5e0`, signature `ebf259f1…8a82`; promotion is false |
@@ -68,13 +68,14 @@ record, process, and service journal were all absent. This isolates the defect
 to unchecked, incorrectly quoted `sc create` packaging commands rather than a
 service-process crash. The builder now configures SCM from checked Inno code,
 uses one correctly quoted binary path, and aborts installation on every nonzero
-SCM result. Candidate.2 now binds the replacement installer and all eight files
-to signed manifest `1697a1bc…e5e0`. Its carrier remains inside the private
+SCM result. Candidate.2 binds the replacement installer and all eight files to
+signed manifest `1697a1bc…e5e0`. Its carrier remains inside the private
 repository as a non-latest prerelease so the read-only workflow can download
-the exact bytes; clean-host execution is pending. A future pass may advance
-service identity, authenticated UI/service IPC, idle restart,
-clean uninstall, and unchanged idle route/DNS fingerprints only. It cannot
-advance live TUN, DNS capture,
+the exact bytes. Clean-host run `33017409577` passed exact identity, silent
+machine-wide install, LocalSystem service identity, authenticated UI/service
+IPC, SCM stop/restart, clean uninstall, and unchanged idle route/DNS
+fingerprints. The downloaded sanitized evidence SHA-256 is
+`e0832ed8…0770`. This run cannot advance live TUN, DNS capture,
 authenticated egress, sleep/reboot/crash recovery, uninstall while connected,
 or interactive SmartScreen reputation checks; those remain
 `MANUAL_OWNER_TEST`.
@@ -83,8 +84,8 @@ or interactive SmartScreen reputation checks; those remain
 
 - The `1.2.0` source targets an unelevated UI and authenticated Windows service.
 - Local tests prove source contracts and isolated recovery logic only.
-- A final-source, signed-manifest candidate.2 exists privately, but it is not
-  clean-host verified or promotion-authorized yet.
+- A final-source, signed-manifest candidate.2 exists privately and has passed
+  its bounded clean-host gate. It is not promotion-authorized.
 - The owner authorizes one unsigned direct-download beta with the mandatory
   SmartScreen/unknown-publisher warning. This is not trusted-signing evidence
   and permits no signed, Store or broad-stable claim.
