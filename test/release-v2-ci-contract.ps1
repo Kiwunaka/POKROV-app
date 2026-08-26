@@ -54,6 +54,35 @@ foreach ($forbiddenFragment in @("allow-missing-client-root", "release_orchestra
   }
 }
 
+$windowsWorkflowPath = Join-Path $root ".github\workflows\windows-exact-candidate.yml"
+if (-not (Test-Path -LiteralPath $windowsWorkflowPath -PathType Leaf)) {
+  throw "Windows exact-candidate CI workflow is missing: $windowsWorkflowPath"
+}
+
+$windowsWorkflow = [IO.File]::ReadAllText($windowsWorkflowPath).Replace("`r`n", "`n")
+foreach ($fragment in @(
+  'repos/$env:GITHUB_REPOSITORY/releases?per_page=100',
+  '$_.tag_name -eq $gate.private_ci_release_tag',
+  '$matchingReleases.Count -ne 1',
+  '$matchingReleases[0].draft',
+  '$matchingReleases[0].prerelease',
+  '$_.name -eq $gate.artifact.file_name',
+  '$matchingAssets.Count -ne 1',
+  'Accept = "application/octet-stream"',
+  'Invoke-WebRequest',
+  '-OutFile $destination',
+  './scripts/test-windows-exact-candidate.ps1',
+  '-RunCleanHostSmoke'
+)) {
+  if (-not $windowsWorkflow.Contains($fragment)) {
+    throw "Windows exact-candidate CI workflow is missing required fragment: $fragment"
+  }
+}
+
+if ($windowsWorkflow.Contains('gh release download')) {
+  throw "Windows exact-candidate CI workflow must not use the published-tag-only download path for its draft carrier."
+}
+
 $seedValidatorPath = Join-Path $root "scripts\validate-seed.ps1"
 $seedValidator = [IO.File]::ReadAllText($seedValidatorPath)
 foreach ($requiredVersionGateFragment in @(
@@ -81,4 +110,4 @@ foreach ($requiredRepositoryGateFragment in @(
   }
 }
 
-Write-Output "PASS: client release-v2 CI workflow is strict, cross-repository, non-mutating, and runs the standard client gate on Linux."
+Write-Output "PASS: client release-v2 CI is strict and the Windows exact-candidate workflow resolves one private draft asset fail closed."

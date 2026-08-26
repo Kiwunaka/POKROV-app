@@ -21,11 +21,42 @@ jobs:
         run: |
           $gate = Get-Content -LiteralPath config/windows-clean-host-gate.candidate-1.json -Raw |
             ConvertFrom-Json -Depth 20
+
+          # Draft releases are intentionally absent from the published-tag download API.
+          # Resolve the private carrier through the authenticated releases API while
+          # still requiring one exact tag and one exact asset name.
+          $releases = @(
+            gh api "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" |
+              ConvertFrom-Json -Depth 20
+          )
+          $matchingReleases = @(
+            $releases | Where-Object { $_.tag_name -eq $gate.private_ci_release_tag }
+          )
+          if ($matchingReleases.Count -ne 1) {
+            throw "Expected exactly one private candidate release for the configured tag."
+          }
+          if (-not $matchingReleases[0].draft -or -not $matchingReleases[0].prerelease) {
+            throw "The private candidate carrier must remain a draft prerelease."
+          }
+
+          $matchingAssets = @(
+            $matchingReleases[0].assets |
+              Where-Object { $_.name -eq $gate.artifact.file_name }
+          )
+          if ($matchingAssets.Count -ne 1) {
+            throw "Expected exactly one manifest-named private candidate asset."
+          }
+
           New-Item -ItemType Directory -Path build/private-candidate -Force | Out-Null
-          gh release download $gate.private_ci_release_tag `
-            --repo $env:GITHUB_REPOSITORY `
-            --pattern $gate.artifact.file_name `
-            --dir build/private-candidate
+          $destination = Join-Path build/private-candidate $gate.artifact.file_name
+          Invoke-WebRequest `
+            -Uri $matchingAssets[0].url `
+            -Headers @{
+              Authorization = "Bearer $env:GH_TOKEN"
+              Accept = "application/octet-stream"
+              "X-GitHub-Api-Version" = "2022-11-28"
+            } `
+            -OutFile $destination
 
       - name: Install, exercise, and uninstall exact candidate
         shell: pwsh

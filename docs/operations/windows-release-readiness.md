@@ -58,11 +58,15 @@ still belongs to the exact-candidate gate below.
 | Rollback drill | `NOT_RUN` |
 
 The private, manual `Windows Exact Candidate Clean Host` workflow is prepared
-for candidate.1 but remains `NOT_RUN`. It downloads only the manifest-bound
-installer from a private draft release and executes on a fresh GitHub-hosted
-Windows runner. A pass may advance machine-wide installation, service identity,
-authenticated UI/service IPC, idle restart, clean uninstall, and unchanged idle
-route/DNS fingerprints only. It cannot advance live TUN, DNS capture,
+for candidate.1. Its first dispatch was `BLOCKED_BY_ACCESS` before installer
+execution because the published-tag download command cannot resolve a draft
+release. The corrected workflow keeps the carrier private and draft, resolves
+exactly one authenticated release tag and asset name through the GitHub REST
+API, then leaves SHA-256 and size enforcement to the candidate gate. A rerun on
+the corrected exact head is pending. A pass may advance machine-wide
+installation, service identity, authenticated UI/service IPC, idle restart,
+clean uninstall, and unchanged idle route/DNS fingerprints only. It cannot
+advance live TUN, DNS capture,
 authenticated egress, sleep/reboot/crash recovery, uninstall while connected,
 or interactive SmartScreen reputation checks; those remain
 `MANUAL_OWNER_TEST`.
