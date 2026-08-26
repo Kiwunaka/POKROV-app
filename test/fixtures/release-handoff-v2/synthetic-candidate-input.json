@@ -17,7 +17,7 @@
     },
     "core": {
       "repository": "Kiwunaka/pokrov-core",
-      "revision": "3dd6259329720f54bc9c877302a1199ce9ddfeef"
+      "revision": "344b317a7a09eca7943a93866b193553538bd8f6"
     },
     "release_index": {
       "repository": "Kiwunaka/pokrov",

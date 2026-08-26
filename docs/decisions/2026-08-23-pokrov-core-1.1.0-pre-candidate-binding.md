@@ -14,7 +14,7 @@ The client binds the separately versioned Core target as follows:
 - repository: `Kiwunaka/POKROV-core`;
 - version-derived target label: `v1.1.0`;
 - tag created: `false`;
-- clean verified source commit: `3dd6259329720f54bc9c877302a1199ce9ddfeef`;
+- clean verified and GitHub-signed source commit: `344b317a7a09eca7943a93866b193553538bd8f6`;
 - source state: `PRE_CANDIDATE_LOCAL`;
 - candidate created: `false`;
 - desktop ABI: `2`;
