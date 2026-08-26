@@ -5988,6 +5988,11 @@ class AppFirstRuntimeBootstrapper
     final selector = finalOutbounds.single;
     final baseSelectedTag = _readText(matchingProxyOutbounds.single['tag']);
     final finalSelectorTargets = _readTagList(selector['outbounds']);
+    final normalizedVariant =
+        normalizeClientLocationVariantId(preferredVariantId);
+    if (normalizedVariant == null) {
+      throw const BootstrapFailure('Выбранный вариант подключения недоступен.');
+    }
     final nestedSelectors = outbounds.where((outbound) {
       return _readText(outbound['tag']) != finalTag &&
           _readText(outbound['type']).toLowerCase() == 'selector' &&
@@ -5996,20 +6001,12 @@ class AppFirstRuntimeBootstrapper
     if (nestedSelectors.length > 1) {
       throw const BootstrapFailure('Выбранная локация недоступна.');
     }
+    final usesNestedSelector = nestedSelectors.length == 1 &&
+        finalSelectorTargets.contains(_readText(nestedSelectors.single['tag']));
     final targetSelector =
-        nestedSelectors.isEmpty ? selector : nestedSelectors.single;
+        usesNestedSelector ? nestedSelectors.single : selector;
     final targetSelectorTag = _readText(targetSelector['tag']);
     final targetSelectorTargets = _readTagList(targetSelector['outbounds']);
-    if (nestedSelectors.isNotEmpty &&
-        (targetSelectorTag.isEmpty ||
-            !finalSelectorTargets.contains(targetSelectorTag))) {
-      throw const BootstrapFailure('Выбранная локация недоступна.');
-    }
-    final normalizedVariant =
-        normalizeClientLocationVariantId(preferredVariantId);
-    if (normalizedVariant == null) {
-      throw const BootstrapFailure('Выбранный вариант подключения недоступен.');
-    }
     final baseLocationTag = baseSelectedTag.endsWith(' · Обычный')
         ? baseSelectedTag.substring(
             0,
@@ -6063,9 +6060,9 @@ class AppFirstRuntimeBootstrapper
     ];
     targetSelector['default'] = selectedTag;
     final finalSelectedTag =
-        nestedSelectors.isEmpty ? selectedTag : targetSelectorTag;
+        usesNestedSelector ? targetSelectorTag : selectedTag;
     if (!finalSelectorTargets.contains(finalSelectedTag) &&
-        !(nestedSelectors.isEmpty &&
+        !(!usesNestedSelector &&
             allowDirectInsertion &&
             normalizedVariant == 'direct')) {
       throw const BootstrapFailure('Выбранный вариант подключения недоступен.');
