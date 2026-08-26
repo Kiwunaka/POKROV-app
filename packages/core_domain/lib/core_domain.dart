@@ -25,6 +25,7 @@ enum AccessLane {
   paidUnlimited,
   freeMonthly,
   freeSoftMode,
+  expiredOrBlocked,
 }
 
 enum RouteMode {
@@ -111,6 +112,8 @@ extension AccessLanePresentation on AccessLane {
         return 'Базовый режим';
       case AccessLane.freeSoftMode:
         return 'Лимит закончился';
+      case AccessLane.expiredOrBlocked:
+        return 'Доступ не активен';
     }
   }
 
@@ -126,6 +129,8 @@ extension AccessLanePresentation on AccessLane {
         return 'После полного доступа остается базовый режим: бесплатный узел и возобновляемый лимит.';
       case AccessLane.freeSoftMode:
         return 'Если месячный лимит закончился, приложение покажет продление и поддержку.';
+      case AccessLane.expiredOrBlocked:
+        return 'Продлите или активируйте доступ, чтобы снова подключиться.';
     }
   }
 }

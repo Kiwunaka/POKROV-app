@@ -3510,6 +3510,44 @@ void main() {
     expect(find.textContaining('пробного доступа'), findsNothing);
   });
 
+  testWidgets(
+      'expired subscription replaces seed trial copy across home and profile',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'expired-ui',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      subscriptionInfo: const ClientSubscriptionInfo(
+        lane: 'expiredOrBlocked',
+        expiresAt: '2026-07-22T00:00:00Z',
+        daysLeft: 0,
+        autoRenew: false,
+        renewUrl: null,
+        plans: <ClientSubscriptionPlan>[],
+        trafficPolicy: <String, Object?>{'kind': 'blocked'},
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+
+    expect(find.text('Продлить'), findsOneWidget);
+    expect(find.textContaining('пробного доступа'), findsNothing);
+
+    await _tapNav(tester, 'nav-profile');
+    await tester.pumpAndSettle();
+    expect(find.text('Доступ не активен'), findsWidgets);
+    expect(find.textContaining('пробного доступа'), findsNothing);
+  });
+
   testWidgets('Android notification sheet keeps details inside the app',
       (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
