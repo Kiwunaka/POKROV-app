@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-08-24
+Last updated: 2026-08-27
 
 ## Document Status
 
@@ -15,7 +15,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+30` |
-| Candidate created | `false` |
+| Candidate created | `SIGNED_CANDIDATE_2_PRIVATE_EVIDENCE_ONLY` — promotion remains unauthorized |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
 | Active pre-candidate Core | POKROV Core `1.1.0`, desktop ABI `2`, exact local bytes bound |
@@ -42,25 +42,24 @@ still belongs to the exact-candidate gate below.
 
 | Check | Current state |
 |---|---|
-| Clean client/Core revisions | `BLOCKED` |
-| Exact Core DLL and dependency identity | `PASS_LOCAL` — final-bound DLL `ef9672b3…5040`, Cronet `8ef1f8bb…a6f7`, two byte-identical builds and 15 exports |
-| Machine-wide setup package | `PASS_EXACT_CANDIDATE_1` — private run `33013112167` installed exact unsigned setup SHA-256 `730428bf…8de`; all eight manifest-bound installed files matched, but the candidate predates current source heads |
-| Exact EXE support signing pin | `MISSING` — tracked pin exists, replacement setup bytes do not |
-| Service install/start and UI authentication | `FAIL_EXACT_CANDIDATE_1` — SCM service did not remain running after clean install; authenticated IPC was not reached |
+| Clean client/Core revisions | `PASS_SOURCE_CONTROL` — client `e6c29d1…`, exact Core artifact source `344b317…`; client post-merge run `33015545269` passed |
+| Exact Core DLL and dependency identity | `PASS_LOCAL` — DLL `60fe3fad…3981`, Cronet `8ef1f8bb…a6f7`, exact bound Core source and 15 exports |
+| Machine-wide setup package | `READY_EXACT_CANDIDATE_2` — private unsigned setup SHA-256 `4226daa4…c412`, 28,893,114 bytes; clean-host execution pending |
+| Exact EXE support signing pin | `PASS_EXACT_ARTIFACT` — candidate.2 supply evidence binds the active `pokrov-support-2026-08` public pin; no private support key was read or exported |
+| Service install/start and UI authentication | `PENDING_EXACT_CANDIDATE_2`; candidate.1 remains `FAIL_EXACT_CANDIDATE_1` history |
 | Trusted code signing and timestamp | `SKIPPED_BY_OWNER` for the exact `1.2.0` direct-download beta only; fail-closed trusted tooling remains ready for the later signed lane |
 | Clean-host TUN/DNS/egress | `MANUAL_OWNER_TEST` |
 | Crash/reboot/sleep/SCM recovery | `MANUAL_OWNER_TEST` |
 | Route and DNS restoration | `MANUAL_OWNER_TEST` |
 | Uninstall while connected | `MANUAL_OWNER_TEST` |
 | SmartScreen/reputation observation | `MANUAL_OWNER_TEST` |
-| Strict-v2 size/SHA-256/source binding | `PASS_LOCAL` — handoff SHA-256 `8d9a2d00…b806` retained in local pre-candidate staging; does not prove trusted signing |
+| Strict-v2 size/SHA-256/source binding | `PASS_SIGNED_CANDIDATE_2` — handoff `317fa2ab…2a10`, manifest `1697a1bc…e5e0`, signature `ebf259f1…8a82`; promotion is false |
 | Anonymous download and install | `NOT_RUN` |
 | Rollback drill | `NOT_RUN` |
 
-The private, manual `Windows Exact Candidate Clean Host` workflow ran against
-candidate.1 on a fresh GitHub-hosted Windows runner. The carrier remains inside
-the private repository as a non-latest prerelease so the read-only workflow can
-download it. Run `33013112167` proved the exact installer identity, clean
+The private, manual `Windows Exact Candidate Clean Host` workflow first ran
+against candidate.1 on a fresh GitHub-hosted Windows runner. Run `33013112167`
+proved the exact installer identity, clean
 baseline, silent machine-wide install, and all eight installed file identities,
 then failed closed at `service_contract` with `service_not_running`; cleanup and
 sanitized evidence upload completed. Diagnostic run `33013868113` showed that
@@ -69,7 +68,10 @@ record, process, and service journal were all absent. This isolates the defect
 to unchecked, incorrectly quoted `sc create` packaging commands rather than a
 service-process crash. The builder now configures SCM from checked Inno code,
 uses one correctly quoted binary path, and aborts installation on every nonzero
-SCM result; replacement candidate proof is pending. A future pass may advance
+SCM result. Candidate.2 now binds the replacement installer and all eight files
+to signed manifest `1697a1bc…e5e0`. Its carrier remains inside the private
+repository as a non-latest prerelease so the read-only workflow can download
+the exact bytes; clean-host execution is pending. A future pass may advance
 service identity, authenticated UI/service IPC, idle restart,
 clean uninstall, and unchanged idle route/DNS fingerprints only. It cannot
 advance live TUN, DNS capture,
@@ -81,7 +83,8 @@ or interactive SmartScreen reputation checks; those remain
 
 - The `1.2.0` source targets an unelevated UI and authenticated Windows service.
 - Local tests prove source contracts and isolated recovery logic only.
-- No final-source, clean-host-verified `1.2.0` Windows candidate exists yet.
+- A final-source, signed-manifest candidate.2 exists privately, but it is not
+  clean-host verified or promotion-authorized yet.
 - The owner authorizes one unsigned direct-download beta with the mandatory
   SmartScreen/unknown-publisher warning. This is not trusted-signing evidence
   and permits no signed, Store or broad-stable claim.

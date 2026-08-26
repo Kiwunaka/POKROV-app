@@ -79,6 +79,53 @@ foreach ($forbiddenFragment in @('event_message', 'owner_sid_value', 'registry_o
   }
 }
 
+$windowsWorkflowPath = Join-Path $root ".github\workflows\windows-exact-candidate.yml"
+$windowsWorkflow = [IO.File]::ReadAllText($windowsWorkflowPath).Replace("`r`n", "`n")
+if (-not $windowsWorkflow.Contains("config/windows-clean-host-gate.candidate-2.json")) {
+  throw "Windows exact-candidate workflow is not pinned to candidate.2"
+}
+
+$candidateTwoInputPath = Join-Path $root "config\windows-clean-host-gate.candidate-2.json"
+if (-not (Test-Path -LiteralPath $candidateTwoInputPath -PathType Leaf)) {
+  throw "Windows candidate.2 clean-host input is missing: $candidateTwoInputPath"
+}
+
+$candidateTwoInput = [IO.File]::ReadAllText($candidateTwoInputPath) | ConvertFrom-Json -Depth 20
+$candidateTwoExpected = [ordered]@{
+  candidate_label = "pokrov-1.2.0-candidate.2"
+  candidate_manifest_sha256 = "1697a1bce4f72314aa1f60cd74a1711f9b8f7d70091c5757e98fbdc09b4ce5e0"
+  candidate_manifest_signature_sha256 = "ebf259f1a9d3c9d561e3f39123c12804a178da5f15efcb293aeab47d45308a82"
+  private_ci_release_tag = "pokrov-1.2.0-candidate.2-private-ci"
+}
+foreach ($entry in $candidateTwoExpected.GetEnumerator()) {
+  if ([string]$candidateTwoInput.($entry.Key) -ne [string]$entry.Value) {
+    throw "Windows candidate.2 input has wrong $($entry.Key)"
+  }
+}
+
+$candidateTwoSourceExpected = [ordered]@{
+  client = "e6c29d1201eded0d045a3e75f43beff8ae24bd8f"
+  core = "344b317a7a09eca7943a93866b193553538bd8f6"
+  platform = "c5f3fca5c55d6baa48b54af3bf756ef40cc0e6e1"
+  release_index = "4c6d46c10083e68dc5d2032c13f51c4e80a17049"
+}
+foreach ($entry in $candidateTwoSourceExpected.GetEnumerator()) {
+  if ([string]$candidateTwoInput.source_tuple.($entry.Key) -ne [string]$entry.Value) {
+    throw "Windows candidate.2 input has wrong source tuple member $($entry.Key)"
+  }
+}
+
+if (
+  [string]$candidateTwoInput.artifact.sha256 -ne "4226daa49975cb25dae5bec8cbcd26299648ee89f5dbff613f62d807be0ac412" -or
+  [int64]$candidateTwoInput.artifact.size_bytes -ne 28893114
+) {
+  throw "Windows candidate.2 input has wrong installer identity"
+}
+
+if (@($candidateTwoInput.installation.required_files).Count -ne 8) {
+  throw "Windows candidate.2 input does not bind all eight installed files"
+}
+
 $windowsBuilderPath = Join-Path $root "scripts\build-windows-release.ps1"
 $windowsBuilder = [IO.File]::ReadAllText($windowsBuilderPath).Replace("`r`n", "`n")
 foreach ($fragment in @(

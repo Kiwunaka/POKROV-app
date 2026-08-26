@@ -64,9 +64,10 @@ This folder contains non-destructive client helpers.
   subject, EKU, validity, trusted-chain and SignTool checks before any build or
   signing and emits only a public receipt with `artifacts_signed=false` and
   `candidate_created=false`.
-- `test-windows-exact-candidate.ps1` hash-binds the private candidate.1 Windows
-  installer to `config/windows-clean-host-gate.candidate-1.json`. Validation
-  mode is non-mutating. The manual `Windows Exact Candidate Clean Host`
+- `test-windows-exact-candidate.ps1` hash-binds the private candidate.2 Windows
+  installer to `config/windows-clean-host-gate.candidate-2.json`, its signed
+  manifest/signature identities, and the exact four-repository source tuple.
+  Validation mode is non-mutating. The manual `Windows Exact Candidate Clean Host`
   workflow downloads the same byte from a prerelease inside the private
   repository, requires a fresh GitHub-hosted Windows runner, then checks
   install/service identity,
