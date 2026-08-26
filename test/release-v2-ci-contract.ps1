@@ -54,6 +54,63 @@ foreach ($forbiddenFragment in @("allow-missing-client-root", "release_orchestra
   }
 }
 
+$windowsGatePath = Join-Path $root "scripts\test-windows-exact-candidate.ps1"
+$windowsGate = [IO.File]::ReadAllText($windowsGatePath).Replace("`r`n", "`n")
+foreach ($fragment in @(
+  'Get-SanitizedServiceFailureDiagnostics',
+  'scm_exit_code',
+  'service_specific_exit_code',
+  'owner_sid_matches_runner',
+  'event_journal_summary',
+  'scm_event_ids',
+  '$evidence.service_failure_diagnostics',
+  'production_mutation_performed = $false',
+  'public_release_created = $false',
+  'stable_pointer_mutated = $false'
+)) {
+  if (-not $windowsGate.Contains($fragment)) {
+    throw "Windows exact-candidate gate is missing sanitized failure evidence fragment: $fragment"
+  }
+}
+
+foreach ($forbiddenFragment in @('event_message', 'owner_sid_value', 'registry_owner_sid')) {
+  if ($windowsGate.Contains($forbiddenFragment)) {
+    throw "Windows exact-candidate gate contains forbidden raw diagnostic fragment: $forbiddenFragment"
+  }
+}
+
+$windowsBuilderPath = Join-Path $root "scripts\build-windows-release.ps1"
+$windowsBuilder = [IO.File]::ReadAllText($windowsBuilderPath).Replace("`r`n", "`n")
+foreach ($fragment in @(
+  'procedure CurStepChanged(CurStep: TSetupStep);',
+  'function ExecuteServiceCommand',
+  'procedure AbortServiceSetup',
+  'CreatedBySetup := not ServiceExists();',
+  'create POKROVService binPath= "',
+  'config POKROVService binPath= "',
+  'POKROV_SERVICE_CREATE_FAILED',
+  'POKROV_SERVICE_CONFIG_FAILED',
+  'POKROV_SERVICE_DESCRIPTION_FAILED',
+  'POKROV_SERVICE_RECOVERY_FAILED',
+  'POKROV_SERVICE_START_FAILED',
+  'RaiseException',
+  'ResultCode = 0'
+)) {
+  if (-not $windowsBuilder.Contains($fragment)) {
+    throw "Windows release builder lacks fail-closed SCM marker: $fragment"
+  }
+}
+
+foreach ($forbiddenFragment in @(
+  'Filename: "{sys}\sc.exe"; Parameters: "create POKROVService',
+  'Filename: "{sys}\sc.exe"; Parameters: "config POKROVService',
+  'Filename: "{sys}\sc.exe"; Parameters: "start POKROVService'
+)) {
+  if ($windowsBuilder.Contains($forbiddenFragment)) {
+    throw "Windows release builder contains unchecked Inno [Run] SCM command: $forbiddenFragment"
+  }
+}
+
 $seedValidatorPath = Join-Path $root "scripts\validate-seed.ps1"
 $seedValidator = [IO.File]::ReadAllText($seedValidatorPath)
 foreach ($requiredVersionGateFragment in @(
@@ -81,4 +138,4 @@ foreach ($requiredRepositoryGateFragment in @(
   }
 }
 
-Write-Output "PASS: client release-v2 CI workflow is strict, cross-repository, non-mutating, and runs the standard client gate on Linux."
+Write-Output "PASS: client release-v2 CI is strict and the Windows exact-candidate gate retains sanitized failure evidence."

@@ -664,11 +664,6 @@ Name: "{autodesktop}\POKROV"; Filename: "{app}\$($windowsReleaseConfig.binary_na
 Root: HKLM64; Subkey: "Software\space.pokrov\POKROV\Service"; ValueType: string; ValueName: "InstallOwnerSid"; ValueData: "{code:GetInstallOwnerSid}"; Flags: uninsdeletekey
 
 [Run]
-Filename: "{sys}\sc.exe"; Parameters: "create POKROVService binPath= """"{app}\pokrov_service.exe"""" start= auto DisplayName= ""POKROV Service"""; Flags: runhidden waituntilterminated; Check: not ServiceExists
-Filename: "{sys}\sc.exe"; Parameters: "config POKROVService binPath= """"{app}\pokrov_service.exe"""" start= auto DisplayName= ""POKROV Service"""; Flags: runhidden waituntilterminated; Check: ServiceExists
-Filename: "{sys}\sc.exe"; Parameters: "description POKROVService ""POKROV privileged runtime service"""; Flags: runhidden waituntilterminated
-Filename: "{sys}\sc.exe"; Parameters: "failure POKROVService reset= 86400 actions= restart/5000/restart/15000/""/0"; Flags: runhidden waituntilterminated
-Filename: "{sys}\sc.exe"; Parameters: "start POKROVService"; Flags: runhidden waituntilterminated
 Filename: "{app}\$($windowsReleaseConfig.binary_name)"; WorkingDir: "{app}"; Description: "Запустить POKROV"; Flags: nowait postinstall skipifsilent runasoriginaluser
 
 [UninstallRun]
@@ -740,6 +735,72 @@ function ServiceExists(): Boolean;
 begin
   Result := RegKeyExists(HKLM64,
     'SYSTEM\CurrentControlSet\Services\POKROVService');
+end;
+
+function ExecuteServiceCommand(const Parameters: String;
+  var ResultCode: Integer): Boolean;
+begin
+  ResultCode := -1;
+  Result := Exec(ExpandConstant('{sys}\sc.exe'), Parameters, '', SW_HIDE,
+    ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
+end;
+
+procedure AbortServiceSetup(const FailureCode: String;
+  const CreatedBySetup: Boolean; const ResultCode: Integer);
+var
+  CleanupCode: Integer;
+begin
+  if CreatedBySetup then
+  begin
+    Exec(ExpandConstant('{sys}\sc.exe'), 'stop POKROVService', '', SW_HIDE,
+      ewWaitUntilTerminated, CleanupCode);
+    Exec(ExpandConstant('{sys}\sc.exe'), 'delete POKROVService', '', SW_HIDE,
+      ewWaitUntilTerminated, CleanupCode);
+  end;
+  RaiseException(FailureCode + ' (SCM exit ' + IntToStr(ResultCode) + ').');
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  CreatedBySetup: Boolean;
+  ResultCode: Integer;
+  ServiceBinary: String;
+begin
+  if CurStep <> ssPostInstall then
+    exit;
+
+  CreatedBySetup := not ServiceExists();
+  ServiceBinary := ExpandConstant('{app}\pokrov_service.exe');
+  if CreatedBySetup then
+  begin
+    if not ExecuteServiceCommand(
+      'create POKROVService binPath= "' + ServiceBinary +
+      '" start= auto DisplayName= "POKROV Service"', ResultCode) then
+      AbortServiceSetup('POKROV_SERVICE_CREATE_FAILED', CreatedBySetup,
+        ResultCode);
+  end
+  else
+  begin
+    if not ExecuteServiceCommand(
+      'config POKROVService binPath= "' + ServiceBinary +
+      '" start= auto DisplayName= "POKROV Service"', ResultCode) then
+      AbortServiceSetup('POKROV_SERVICE_CONFIG_FAILED', CreatedBySetup,
+        ResultCode);
+  end;
+
+  if not ExecuteServiceCommand(
+    'description POKROVService "POKROV privileged runtime service"',
+    ResultCode) then
+    AbortServiceSetup('POKROV_SERVICE_DESCRIPTION_FAILED', CreatedBySetup,
+      ResultCode);
+  if not ExecuteServiceCommand(
+    'failure POKROVService reset= 86400 actions= restart/5000/restart/15000',
+    ResultCode) then
+    AbortServiceSetup('POKROV_SERVICE_RECOVERY_FAILED', CreatedBySetup,
+      ResultCode);
+  if not ExecuteServiceCommand('start POKROVService', ResultCode) then
+    AbortServiceSetup('POKROV_SERVICE_START_FAILED', CreatedBySetup,
+      ResultCode);
 end;
 "@
   Write-Utf8BomFile -Path $issPath -Content $iss

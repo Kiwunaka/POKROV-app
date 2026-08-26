@@ -44,9 +44,9 @@ still belongs to the exact-candidate gate below.
 |---|---|
 | Clean client/Core revisions | `BLOCKED` |
 | Exact Core DLL and dependency identity | `PASS_LOCAL` — final-bound DLL `ef9672b3…5040`, Cronet `8ef1f8bb…a6f7`, two byte-identical builds and 15 exports |
-| Machine-wide setup package | `PASS_LOCAL` — earlier unsigned `1.2.0+30` setup SHA-256 `fd1de727…0899` assembled and checksum-bound; it predates the final source and must be rebuilt |
+| Machine-wide setup package | `PASS_EXACT_CANDIDATE_1` — private run `33013112167` installed exact unsigned setup SHA-256 `730428bf…8de`; all eight manifest-bound installed files matched, but the candidate predates current source heads |
 | Exact EXE support signing pin | `MISSING` — tracked pin exists, replacement setup bytes do not |
-| Service install/start and UI authentication | `MANUAL_OWNER_TEST` |
+| Service install/start and UI authentication | `FAIL_EXACT_CANDIDATE_1` — SCM service did not remain running after clean install; authenticated IPC was not reached |
 | Trusted code signing and timestamp | `SKIPPED_BY_OWNER` for the exact `1.2.0` direct-download beta only; fail-closed trusted tooling remains ready for the later signed lane |
 | Clean-host TUN/DNS/egress | `MANUAL_OWNER_TEST` |
 | Crash/reboot/sleep/SCM recovery | `MANUAL_OWNER_TEST` |
@@ -57,12 +57,22 @@ still belongs to the exact-candidate gate below.
 | Anonymous download and install | `NOT_RUN` |
 | Rollback drill | `NOT_RUN` |
 
-The private, manual `Windows Exact Candidate Clean Host` workflow is prepared
-for candidate.1 but remains `NOT_RUN`. It downloads only the manifest-bound
-installer from a private draft release and executes on a fresh GitHub-hosted
-Windows runner. A pass may advance machine-wide installation, service identity,
-authenticated UI/service IPC, idle restart, clean uninstall, and unchanged idle
-route/DNS fingerprints only. It cannot advance live TUN, DNS capture,
+The private, manual `Windows Exact Candidate Clean Host` workflow ran against
+candidate.1 on a fresh GitHub-hosted Windows runner. The carrier remains inside
+the private repository as a non-latest prerelease so the read-only workflow can
+download it. Run `33013112167` proved the exact installer identity, clean
+baseline, silent machine-wide install, and all eight installed file identities,
+then failed closed at `service_contract` with `service_not_running`; cleanup and
+sanitized evidence upload completed. Diagnostic run `33013868113` showed that
+the owner registry value existed and matched the installer user while the SCM
+record, process, and service journal were all absent. This isolates the defect
+to unchecked, incorrectly quoted `sc create` packaging commands rather than a
+service-process crash. The builder now configures SCM from checked Inno code,
+uses one correctly quoted binary path, and aborts installation on every nonzero
+SCM result; replacement candidate proof is pending. A future pass may advance
+service identity, authenticated UI/service IPC, idle restart,
+clean uninstall, and unchanged idle route/DNS fingerprints only. It cannot
+advance live TUN, DNS capture,
 authenticated egress, sleep/reboot/crash recovery, uninstall while connected,
 or interactive SmartScreen reputation checks; those remain
 `MANUAL_OWNER_TEST`.
