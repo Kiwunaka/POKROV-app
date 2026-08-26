@@ -2203,8 +2203,11 @@ Future<bool> _desktopLoopbackPortAvailable(int port) async {
 const _pokrovWarpEndpointTag = 'pokrov-warp';
 const _pokrovAwg2ContractId = 'pokrov.awg2.endpoint.v1';
 const _pokrovAwg2ContractSha256 =
-    '3beb57eccd8d5e15ce7466496208fe1945f353b3417be58644911d1ded125a83';
-final _pokrovAwg2GenerationPattern =
+    'c473c411025825bfef5a76c64990c5c921e9658b3581210d3a86d72e454fdea8';
+const _pokrovAwg31ContractId = 'pokrov.awg31.endpoint.v1';
+const _pokrovAwg31ContractSha256 =
+    '1bb49b61549ba7c4a3c2d56df445e919ebb1ed12d42e04b0cb3c915d23240818';
+final _pokrovAwgGenerationPattern =
     RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$');
 
 String _materializePokrovCoreConfig(
@@ -2219,7 +2222,7 @@ String _materializePokrovCoreConfig(
   final config = decoded.map<String, Object?>(
     (key, value) => MapEntry(key.toString(), value),
   );
-  _validateAwg2TransportContract(config);
+  _validateAwgTransportContract(config);
   final runtimeVariantProbe = preserveAndroidHostMetadata
       ? Map<String, Object?>.from(
           _runtimeObjectMap(
@@ -2363,7 +2366,7 @@ String _materializePokrovCoreConfig(
   return const JsonEncoder.withIndent('  ').convert(config);
 }
 
-void _validateAwg2TransportContract(Map<String, Object?> config) {
+void _validateAwgTransportContract(Map<String, Object?> config) {
   final awgEndpoints = _runtimeMapList(config['endpoints'])
       .where(
           (endpoint) => _runtimeText(endpoint['type']).toLowerCase() == 'awg')
@@ -2376,16 +2379,35 @@ void _validateAwg2TransportContract(Map<String, Object?> config) {
     _runtimeObjectMap(config['_meta'])['transport_contract'],
   );
   final generation = _runtimeText(contract['generation']);
-  final contractIsCurrent = awgEndpoints.length == 1 &&
-      _runtimeText(contract['id']) == _pokrovAwg2ContractId &&
+  final contractId = _runtimeText(contract['id']);
+  final expectedContract = switch (contractId) {
+    _pokrovAwg2ContractId => (
+        sha256: _pokrovAwg2ContractSha256,
+        profile: 'awg2_lab',
+        endpointContractRequired: false,
+      ),
+    _pokrovAwg31ContractId => (
+        sha256: _pokrovAwg31ContractSha256,
+        profile: 'awg31_lab',
+        endpointContractRequired: true,
+      ),
+    _ => null,
+  };
+  final endpoint = awgEndpoints.length == 1 ? awgEndpoints.single : null;
+  final endpointContractId = _runtimeText(endpoint?['contract_id']);
+  final contractIsCurrent = endpoint != null &&
+      expectedContract != null &&
       _runtimeText(contract['sha256']).toLowerCase() ==
-          _pokrovAwg2ContractSha256 &&
-      _runtimeText(contract['profile']) == 'awg2_lab' &&
+          expectedContract.sha256 &&
+      _runtimeText(contract['profile']) == expectedContract.profile &&
       _runtimeText(contract['state']) == 'enabled' &&
-      _pokrovAwg2GenerationPattern.hasMatch(generation) &&
-      awgEndpoints.single['useIntegratedTun'] == false;
+      _pokrovAwgGenerationPattern.hasMatch(generation) &&
+      endpoint['useIntegratedTun'] == false &&
+      (expectedContract.endpointContractRequired
+          ? endpointContractId == contractId
+          : endpointContractId.isEmpty || endpointContractId == contractId);
   if (!contractIsCurrent) {
-    throw const FormatException('AWG2 transport contract is invalid');
+    throw const FormatException('AWG transport contract is invalid');
   }
 }
 

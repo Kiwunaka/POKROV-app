@@ -85,7 +85,7 @@ that candidate-specific release truth.
 
 Current blocking dependency:
 
-- the active local pre-candidate runtime is the clean reproducible POKROV Core `1.1.0` build at the verified `main` source commit `bdbd97fae35103e705f55908caebf75b4a9ff72f`; clients accept only the exact AAR/DLL identities pinned in `config/runtime-artifacts.seed.json`, while tag creation, signing and publication remain unclaimed
+- the active local pre-candidate runtime is the clean reproducible POKROV Core `1.1.0` build at signed source commit `344b317a7a09eca7943a93866b193553538bd8f6`; clients accept only the exact AAR/DLL identities pinned in `config/runtime-artifacts.seed.json`, while tag creation, candidate signing and publication remain separately evidenced
 - `Android` host now reaches a real service-backed connect lane: it can initialize POKROV Core, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
 - Android runtime discovery accepts either an extracted `nativeLibraryDir/libpokrov-core.so` or the ABI-matched `lib/<abi>/libpokrov-core.so` entry in the base/split APK. This is required on physical devices that install the release APK with native-library extraction disabled; Java still loads the packaged Core through the generated bindings
 - Android runtime materialization is intentionally `tun`-only in this lane; desktop loopback listener inbounds such as `mixed-in` and `dns-in` stay disabled for the mobile `VpnService` path
@@ -262,7 +262,7 @@ Current blocking dependency:
 
 POKROV Core is an independent repository and release line. The local client
 pre-candidate pins version `1.1.0` and clean commit
-`bdbd97fae35103e705f55908caebf75b4a9ff72f`. The version-derived `v1.1.0`
+`344b317a7a09eca7943a93866b193553538bd8f6`. The version-derived `v1.1.0`
 label is not a created Git tag or public release in this state. The retained
 public `v1.0.3` release remains a separate rollback/history identity.
 

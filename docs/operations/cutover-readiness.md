@@ -1,6 +1,6 @@
 # Cutover Readiness
 
-Last updated: 2026-08-24
+Last updated: 2026-08-26
 
 ## Document Status
 
@@ -43,9 +43,10 @@ signing, device, runtime and origin evidence cannot be reused for promotion.
 | Stable pointer and rollback catalog | `PASS_LOCAL` | Retained `1.1.6` pointer matches its exact versioned handoff; isolated A→B→A proves optimistic lock, atomic replace, backup, receipt and byte-identical reversal. |
 | Operational producer/privacy contract | `PASS_LOCAL` | Auth, entitlement, performance, support and Android count-only routing producers pass focused client/platform tests; exact-candidate runtime proof remains later. |
 | Temporary support mode and encrypted export | `PASS_LOCAL` | Signed exact-audience activation, explicit consent, persistent indicator, nonce/TTL/cumulative caps, no-upload short code and encrypted-only Android/Windows export pass local source/widget/unit contracts; exact-candidate physical host proof remains later. |
-| Clean frozen revisions | `PASS_LOCAL_SOURCE_TUPLE` | Platform, client, Core and local release-index trees are clean; edits invalidate the tuple and no candidate is implied. |
+| Clean frozen revisions | `INVALIDATED_BY_CHANGES` | The AWG 3.1 source-lab and selected-service changes invalidate the previously retained tuple. Freeze a new clean platform/client/Core/release-index tuple only after promotion; no candidate is implied. |
 | Release index | `IMPLEMENTED_LOCAL_UNPUBLISHED` | Public `d0bf8e8…ed15` is legacy checksum-only. Local `f07654a…9eb7` adds strict manifest/signature/same-byte validation, but owner key, review/push, hosted workflow and public readback remain blocked. |
-| Core replacement | `PASS_LOCAL` | Exact reproducible `1.1.0` AAR/DLL identities are bound to clean Core revision `fcb3c8b…bfa2`; no tag, candidate, signing or publication is claimed. |
+| Core replacement | `PASS_LOCAL` | Exact reproducible `1.1.0` AAR/DLL identities are bound to signed Core revision `344b317…8f6`; the refresh includes separate bounded AWG2 and default-off AWG 3.1 contracts. No tag, candidate signing or publication is claimed. |
+| Android LDPlayer source-lab rehearsal | `PASS_LOCAL_INSTALL_SETTINGS`; connect `BLOCKED_BACKEND_5XX` | Production-signed lab APK `1.2.0 (4031)`, SHA-256 `1ba37463c9549a6d5ba128850e1bf5825187fe185a621e9f8dc62c7cde1a4158`, installed byte-identically in LDPlayer 14. The installed x86_64 Core SHA-256 `f676e7e96f6e159e4da626ec51d94b438ef08fc2819e5d222b6253e51354980d` exposes the AWG2/AWG3.1 contract markers; AI/Games and configurable in-tunnel DoH settings persisted across restart. The live profile request returned 5xx, no `tun0` was created and the location catalog did not load. This is not an exact-candidate, real-AWG-server, physical-device, mobile-origin or production-connect pass. |
 | Candidate handoff | `MISSING` | One strict-v2 handoff binds exact revisions, artifacts and gates. |
 | Android artifact/signing | `MISSING` | Final APK identities and production signer match v2. |
 | Android device proof | `MANUAL_OWNER_TEST` | Exact-candidate physical matrix passes. |

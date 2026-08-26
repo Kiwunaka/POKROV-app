@@ -14,15 +14,17 @@ Current scope:
 - Core `1.1.0` is the exact reproducible `PRE_CANDIDATE_LOCAL` replacement
   bound for product `1.2.0`; it does not claim a tag, signed candidate or
   publication
-- a private `awg2_lab` boundary for Android and Windows: an `awg` endpoint is
-  accepted only with the exact `pokrov.awg2.endpoint.v1` ID/SHA, an enabled
-  generation marker and `useIntegratedTun=false`; host metadata is stripped
-  before Core sees the sing-box JSON
+- private, separate `awg2_lab` and `awg31_lab` boundaries for Android and
+  Windows: an `awg` endpoint is accepted only with the exact contract ID/SHA,
+  an enabled generation marker and `useIntegratedTun=false`; AWG 3.1 also
+  requires its explicit endpoint contract ID. Host metadata is stripped before
+  Core sees the sing-box JSON
 
 Current limits:
 
 - iOS still needs its complete built framework/device lane
 - Apple signing, notarization, and store submission stay outside this package
 - the package proves runtime wiring, not production rollout by itself
-- AWG2 source/host tests do not prove an exact AAR/DLL, physical device,
-  battery/thermal behavior or RU-origin reachability
+- AWG source/host tests do not prove an exact AAR/DLL, owned-server
+  interoperability, physical-device behavior, battery/thermal behavior or
+  mobile/RU-origin reachability

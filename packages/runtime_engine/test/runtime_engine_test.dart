@@ -552,7 +552,7 @@ void main() {
             'transport_contract': <String, Object?>{
               'id': 'pokrov.awg2.endpoint.v1',
               'sha256':
-                  '3beb57eccd8d5e15ce7466496208fe1945f353b3417be58644911d1ded125a83',
+                  'c473c411025825bfef5a76c64990c5c921e9658b3581210d3a86d72e454fdea8',
               'profile': 'awg2_lab',
               'state': 'enabled',
               'generation': 'awg2-lab-v1',
@@ -569,6 +569,69 @@ void main() {
     expect(
       (stagedConfig['endpoints'] as List<dynamic>).single,
       containsPair('type', 'awg'),
+    );
+    expect(stagedConfig, isNot(contains('_meta')));
+  });
+
+  test('mobile lane accepts the separate current AWG 3.1 lab contract',
+      () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
+    Map<Object?, Object?>? stagedArguments;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.stageManagedProfile') {
+        stagedArguments = Map<Object?, Object?>.from(call.arguments as Map);
+        return <String, Object?>{
+          'phase': 'configStaged',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'message': 'staged',
+        };
+      }
+      return null;
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.android);
+    await engine.stageManagedProfile(
+      ManagedProfilePayload(
+        profileName: 'awg31-lab',
+        configPayload: jsonEncode(<String, Object?>{
+          'endpoints': <Object?>[
+            <String, Object?>{
+              'type': 'awg',
+              'tag': 'awg31-lab',
+              'contract_id': 'pokrov.awg31.endpoint.v1',
+              'useIntegratedTun': false,
+            },
+          ],
+          'route': <String, Object?>{'final': 'awg31-lab'},
+          '_meta': <String, Object?>{
+            'transport_contract': <String, Object?>{
+              'id': 'pokrov.awg31.endpoint.v1',
+              'sha256':
+                  '1bb49b61549ba7c4a3c2d56df445e919ebb1ed12d42e04b0cb3c915d23240818',
+              'profile': 'awg31_lab',
+              'state': 'enabled',
+              'generation': 'awg31-lab-v1',
+            },
+          },
+        }),
+        materializedForRuntime: true,
+      ),
+    );
+
+    final stagedConfig =
+        jsonDecode(stagedArguments?['configPayload']! as String)
+            as Map<String, dynamic>;
+    expect(
+      (stagedConfig['endpoints'] as List<dynamic>).single,
+      containsPair('contract_id', 'pokrov.awg31.endpoint.v1'),
     );
     expect(stagedConfig, isNot(contains('_meta')));
   });
@@ -615,7 +678,7 @@ void main() {
         'transport_contract': <String, Object?>{
           'id': 'pokrov.awg2.endpoint.v1',
           'sha256':
-              '3beb57eccd8d5e15ce7466496208fe1945f353b3417be58644911d1ded125a83',
+              'c473c411025825bfef5a76c64990c5c921e9658b3581210d3a86d72e454fdea8',
           'profile': 'awg2_lab',
           'state': 'enabled',
           'generation': 'awg2-lab-v1',
@@ -676,12 +739,25 @@ void main() {
       'transport_contract': <String, Object?>{
         'id': 'pokrov.awg2.endpoint.v1',
         'sha256':
-            '3beb57eccd8d5e15ce7466496208fe1945f353b3417be58644911d1ded125a83',
+            'c473c411025825bfef5a76c64990c5c921e9658b3581210d3a86d72e454fdea8',
         'profile': 'awg2_lab',
         'state': 'enabled',
         'generation': 'awg2-lab-v1',
       },
       'use_integrated_tun': true,
+    },
+    <String, Object?>{
+      'name': 'AWG3.1 endpoint identity',
+      'transport_contract': <String, Object?>{
+        'id': 'pokrov.awg2.endpoint.v1',
+        'sha256':
+            'c473c411025825bfef5a76c64990c5c921e9658b3581210d3a86d72e454fdea8',
+        'profile': 'awg2_lab',
+        'state': 'enabled',
+        'generation': 'awg2-lab-v1',
+      },
+      'use_integrated_tun': false,
+      'endpoint_contract_id': 'pokrov.awg31.endpoint.v1',
     },
   ]) {
     test('mobile lane rejects AWG2 ${rejectedCase['name']}', () async {
@@ -710,6 +786,8 @@ void main() {
                   'type': 'awg',
                   'tag': 'awg2-lab',
                   'useIntegratedTun': rejectedCase['use_integrated_tun'],
+                  if (rejectedCase['endpoint_contract_id'] != null)
+                    'contract_id': rejectedCase['endpoint_contract_id'],
                 },
               ],
               'route': <String, Object?>{'final': 'awg2-lab'},
@@ -726,6 +804,55 @@ void main() {
       expect(stageCalls, 0);
     });
   }
+
+  test('mobile lane rejects AWG 3.1 without explicit endpoint contract id',
+      () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    var stageCalls = 0;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.stageManagedProfile') {
+        stageCalls += 1;
+      }
+      return null;
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.android);
+    await expectLater(
+      engine.stageManagedProfile(
+        ManagedProfilePayload(
+          profileName: 'awg31-lab-rejected',
+          configPayload: jsonEncode(<String, Object?>{
+            'endpoints': <Object?>[
+              <String, Object?>{
+                'type': 'awg',
+                'tag': 'awg31-lab',
+                'useIntegratedTun': false,
+              },
+            ],
+            'route': <String, Object?>{'final': 'awg31-lab'},
+            '_meta': <String, Object?>{
+              'transport_contract': <String, Object?>{
+                'id': 'pokrov.awg31.endpoint.v1',
+                'sha256':
+                    '1bb49b61549ba7c4a3c2d56df445e919ebb1ed12d42e04b0cb3c915d23240818',
+                'profile': 'awg31_lab',
+                'state': 'enabled',
+                'generation': 'awg31-lab-v1',
+              },
+            },
+          }),
+          materializedForRuntime: true,
+        ),
+      ),
+      throwsA(isA<FormatException>()),
+    );
+    expect(stageCalls, 0);
+  });
 
   test('mobile invalidation removes the reusable host profile before restaging',
       () async {

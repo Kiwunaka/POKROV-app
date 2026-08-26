@@ -131,6 +131,70 @@ void main() {
     expect(dnsServers.first['detour'], 'proxy');
   });
 
+  test('direct-only Windows profile fails closed before native staging', () {
+    final directOnly = ManagedProfilePayload(
+      profileName: 'direct-only',
+      configPayload: jsonEncode(<String, Object?>{
+        'inbounds': <Object?>[
+          <String, Object?>{'type': 'tun', 'tag': 'tun-in'},
+        ],
+        'outbounds': <Object?>[
+          <String, Object?>{'type': 'direct', 'tag': 'direct'},
+        ],
+        'route': <String, Object?>{'final': 'direct', 'rules': <Object?>[]},
+      }),
+      materializedForRuntime: true,
+    );
+
+    expect(
+      () => applyPokrovRoutingPreferences(
+        directOnly,
+        const PokrovRoutingPreferences.defaults().copyWith(
+          purposeRoutes: <PokrovPurposeRoute>{PokrovPurposeRoute.ai},
+        ),
+        hostPlatform: HostPlatform.windows,
+      ),
+      throwsA(isA<FormatException>()),
+    );
+  });
+
+  test('AWG endpoint is a valid VPN target for AI and DNS rules', () {
+    final awgProfile = ManagedProfilePayload(
+      profileName: 'awg31-routing',
+      configPayload: jsonEncode(<String, Object?>{
+        'dns': <String, Object?>{'servers': <Object?>[]},
+        'endpoints': <Object?>[
+          <String, Object?>{'type': 'awg', 'tag': 'awg31-lab'},
+        ],
+        'outbounds': <Object?>[
+          <String, Object?>{'type': 'direct', 'tag': 'direct'},
+          <String, Object?>{'type': 'dns', 'tag': 'dns-out'},
+        ],
+        'route': <String, Object?>{
+          'final': 'awg31-lab',
+          'rules': <Object?>[],
+        },
+      }),
+      materializedForRuntime: true,
+    );
+
+    final transformed = applyPokrovRoutingPreferences(
+      awgProfile,
+      const PokrovRoutingPreferences.defaults().copyWith(
+        purposeRoutes: <PokrovPurposeRoute>{PokrovPurposeRoute.ai},
+        dnsPreset: PokrovDnsPreset.cloudflare,
+      ),
+      hostPlatform: HostPlatform.android,
+    );
+    final config = _jsonMap(transformed.configPayload);
+    final rules = _maps(_map(config['route'])['rules']);
+    final servers = _maps(_map(config['dns'])['servers']);
+
+    expect(rules.first['outbound'], 'awg31-lab');
+    expect((rules.first['domain_suffix'] as List), contains('chatgpt.com'));
+    expect(servers.first['detour'], 'awg31-lab');
+  });
+
   test('AdGuard toggle stages the filtering DoH resolver through VPN', () {
     final transformed = applyPokrovRoutingPreferences(
       _profile(),
@@ -297,6 +361,30 @@ void main() {
     expect(privateDecision.reason, contains('Ваше правило'));
     expect(aiDecision.action, PokrovRouteAction.vpn);
     expect(aiDecision.reason, contains('AI-сервисы'));
+  });
+
+  test('AI and Games purpose routes cover Gemini and Xbox service domains', () {
+    final preferences = PokrovRoutingPreferences.defaults().copyWith(
+      purposeRoutes: const <PokrovPurposeRoute>{
+        PokrovPurposeRoute.ai,
+        PokrovPurposeRoute.games,
+      },
+    );
+
+    for (final destination in <String>[
+      'gemini.google.com',
+      'generativelanguage.googleapis.com',
+      'chat.openai.com',
+      'presence-heartbeat.xboxlive.com',
+      'catalog.gamepass.com',
+    ]) {
+      final decision = explainPokrovRouteDecision(
+        destination: destination,
+        preferences: preferences,
+        fallbackMode: RouteMode.allExceptRu,
+      );
+      expect(decision.action, PokrovRouteAction.vpn, reason: destination);
+    }
   });
 }
 

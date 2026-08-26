@@ -1,7 +1,8 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-Status: accepted on 2026-08-23 as the exact Android and Windows runtime bytes
-for the local POKROV `1.2.0+30` pre-candidate line.
+Status: refreshed on 2026-08-26 as the exact Android and Windows runtime bytes
+for the local POKROV `1.2.0+30` pre-candidate line with bounded AWG 2 and
+default-off AWG 3.1 lab support.
 
 This is not a Core release, client candidate, signing pass, publication or
 promotion decision. No `v1.1.0` Git tag or public Core release was created.
@@ -13,7 +14,7 @@ The client binds the separately versioned Core target as follows:
 - repository: `Kiwunaka/POKROV-core`;
 - version-derived target label: `v1.1.0`;
 - tag created: `false`;
-- clean verified `main` source commit: `bdbd97fae35103e705f55908caebf75b4a9ff72f`;
+- clean verified and GitHub-signed source commit: `344b317a7a09eca7943a93866b193553538bd8f6`;
 - source state: `PRE_CANDIDATE_LOCAL`;
 - candidate created: `false`;
 - desktop ABI: `2`;
@@ -27,16 +28,15 @@ The client binds the separately versioned Core target as follows:
 `config/runtime-artifacts.seed.json` is the machine-readable owner. It keeps
 the retained public Core `1.0.3` identity separate from the new local bytes.
 The retained release remains rollback/history truth and is not relabelled as
-`1.1.0`. Core PR `#2` was promoted through the explicit owner-solo control;
-independent review was not performed, and the final squash commit has a valid
-GitHub signature.
+`1.1.0`. Core PR `#2` records the earlier binding; this refresh remains on the
+scoped release branch until its own owner-solo promotion evidence is recorded.
 
 ## Exact Artifact Contract
 
 | Platform | Artifact | Size | SHA-256 | Local result |
 | --- | --- | ---: | --- | --- |
-| Android | `pokrov-core.aar` | `107314335` | `83a5bd740774a2a16117f0c242c3ada4bcbb22a65255c3ee008a751e681c06f0` | two byte-identical Windows-host builds; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present |
-| Windows x64 | `pokrov-core.dll` | `55352320` | `ef9672b3ba9983012bfa78abd2e4cd8ef5ef65d8e4b6a49ff89f8c4d0d575040` | two byte-identical builds; 15 required exports present; proxy-only 100-cycle start/stop PASS |
+| Android | `pokrov-core.aar` | `107388169` | `da3ea37834b688abac5c276f4ca9c2cdcc8e32b97edf5062913fc4f3fea6aba9` | two byte-identical Windows-host builds; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present |
+| Windows x64 | `pokrov-core.dll` | `55401472` | `60fe3fad7835ec4d00c1f7168bb0ba01dd6b7ca5d883583340e5e2a86b8b3981` | two byte-identical builds; 15 required exports present; exact-DLL proxy-only 100-cycle start/stop PASS |
 | Windows dependency | `libcronet.dll` | `8596992` | `8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7` | unchanged retained dependency |
 | iOS | `PokrovCore.xcframework` | — | — | `MANUAL_OWNER_TEST` |
 | macOS | `pokrov-core.dylib` | — | — | `MANUAL_OWNER_TEST` |
@@ -53,17 +53,19 @@ with VCS stamping disabled. Complete build trees matched byte-for-byte:
 
 | Evidence | SHA-256 |
 | --- | --- |
-| Android build tree | `565266016cf823b30a36645c37156a8ba69d3f0fd55f8b22df665c321bcfcc90` |
-| Android evidence JSON | `412494af3e1f7d4cf763a7c800d38af4115f90c606a344edbaff0de6150e309d` |
-| Windows build tree | `32089d0e133703433f43e4e8041f45fdf931e937bfb9ca10f2a72725a5c24d9f` |
-| Windows evidence JSON | `929f7d375bbc93f1f09028e7edebe192dc663dfb28c2d4f71e4c09492a103a5c` |
-| `pokrov-core.cdx.json` | `18707e43f557d80aceecb112d4907c1295e8a27583af1bf2243d45cf63ba38a0` |
-| `sing-box.cdx.json` | `28925d34046ac0f0a7edec40a032938fcbc59c18bd47b9d5d69b6688ebf6637d` |
+| Android build tree | `38a855e8e59d72966964168ea87394a1d98a892eeeac1feec23a13987fc3550c` |
+| Android evidence JSON | `5bbb3ef7082da83abf5d9823765257af3edcc36d4b13dd12d5ab1bb4d12db575` |
+| Windows build tree | `e12123eb9d6c7bd83a3c95ac4f864583219c37d6b98dfd283fc6f4deda099516` |
+| Windows evidence JSON | `0a4eab998c3a28b61949c4e5739b7c21e6301cd0ccde0084c9a325dc742438a6` |
+| `pokrov-core.cdx.json` | `8a3bc377285104a1cf9170e55fa25150a03e431582ef3f44d857d18241ec7a95` |
+| `sing-box.cdx.json` | `bc92db83e96ba285838a82a2887474ced36eece5b4a2f95aa0cdbb77764cec62` |
 
-The Windows build used the pinned MinGW-w64 `13.2.0` archive with SHA-256
-`a05578fab9068c678ce761e7b2e284d23fa7416a2f4f36349e05e506c944e2c7`.
-The local toolchain directory was added only to the build process `PATH`; no
-system compiler installation or persistent environment change was made.
+The Windows refresh used the local LLVM-MinGW `20260616` UCRT toolchain already
+present in the isolated build directory. The toolchain directory was passed
+only to the build process; no system compiler installation or persistent
+environment change was made. Final candidate provenance must additionally pin
+the compiler archive identity rather than promote this local statement to a
+supply-chain `PASS`.
 
 CycloneDX generation completed with declared warnings where local forks or
 standard-library modules had no detected license metadata. The SBOMs and their
