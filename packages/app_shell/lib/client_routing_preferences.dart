@@ -12,6 +12,8 @@ enum PokrovRouteMatchType { domain, ip, subnet }
 
 enum PokrovDnsPreset { automatic, cloudflare, google, adguard, custom }
 
+enum PokrovDnsTransport { vpn, direct }
+
 enum PokrovWindowsConnectionMode { vpn }
 
 enum PokrovTunStack { system, mixed, gvisor }
@@ -128,6 +130,7 @@ class PokrovRoutingPreferences {
     required this.purposeRoutes,
     required this.overrides,
     required this.dnsPreset,
+    required this.dnsTransport,
     required this.customDnsUrl,
     required this.allowLan,
     required this.trustedWifiNames,
@@ -140,6 +143,7 @@ class PokrovRoutingPreferences {
       : purposeRoutes = const <PokrovPurposeRoute>{},
         overrides = const <PokrovRouteOverride>[],
         dnsPreset = PokrovDnsPreset.automatic,
+        dnsTransport = PokrovDnsTransport.vpn,
         customDnsUrl = '',
         allowLan = true,
         trustedWifiNames = const <String>[],
@@ -150,6 +154,7 @@ class PokrovRoutingPreferences {
   final Set<PokrovPurposeRoute> purposeRoutes;
   final List<PokrovRouteOverride> overrides;
   final PokrovDnsPreset dnsPreset;
+  final PokrovDnsTransport dnsTransport;
   final String customDnsUrl;
   final bool allowLan;
   final List<String> trustedWifiNames;
@@ -161,6 +166,7 @@ class PokrovRoutingPreferences {
     Set<PokrovPurposeRoute>? purposeRoutes,
     List<PokrovRouteOverride>? overrides,
     PokrovDnsPreset? dnsPreset,
+    PokrovDnsTransport? dnsTransport,
     String? customDnsUrl,
     bool? allowLan,
     List<String>? trustedWifiNames,
@@ -172,6 +178,7 @@ class PokrovRoutingPreferences {
       purposeRoutes: purposeRoutes ?? this.purposeRoutes,
       overrides: overrides ?? this.overrides,
       dnsPreset: dnsPreset ?? this.dnsPreset,
+      dnsTransport: dnsTransport ?? this.dnsTransport,
       customDnsUrl: customDnsUrl ?? this.customDnsUrl,
       allowLan: allowLan ?? this.allowLan,
       trustedWifiNames: trustedWifiNames ?? this.trustedWifiNames,
@@ -201,6 +208,10 @@ class PokrovRoutingPreferences {
       (item) => item.name == _routingText(json['dnsPreset']),
       orElse: () => PokrovDnsPreset.automatic,
     );
+    final dnsTransport = PokrovDnsTransport.values.firstWhere(
+      (item) => item.name == _routingText(json['dnsTransport']),
+      orElse: () => PokrovDnsTransport.vpn,
+    );
     final customDns =
         _normalizeDnsUrl(_routingText(json['customDnsUrl'])) ?? '';
     final trustedWifi = _routingList(json['trustedWifiNames'])
@@ -223,6 +234,7 @@ class PokrovRoutingPreferences {
       dnsPreset: dnsPreset == PokrovDnsPreset.custom && customDns.isEmpty
           ? PokrovDnsPreset.automatic
           : dnsPreset,
+      dnsTransport: dnsTransport,
       customDnsUrl: customDns,
       allowLan: json['allowLan'] != false,
       trustedWifiNames: List<String>.unmodifiable(trustedWifi),
@@ -237,6 +249,7 @@ class PokrovRoutingPreferences {
         'purposeRoutes': purposeRoutes.map((item) => item.name).toList(),
         'overrides': overrides.take(40).map((item) => item.toJson()).toList(),
         'dnsPreset': dnsPreset.name,
+        'dnsTransport': dnsTransport.name,
         'customDnsUrl': customDnsUrl,
         'allowLan': allowLan,
         'trustedWifiNames': trustedWifiNames.take(20).toList(),
@@ -430,7 +443,9 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     servers.insert(0, <String, dynamic>{
       'tag': 'pokrov-user-dns',
       'address': dnsAddress,
-      'detour': proxyTag,
+      'detour': preferences.dnsTransport == PokrovDnsTransport.direct
+          ? directTag
+          : proxyTag,
     });
     dns
       ..['servers'] = servers

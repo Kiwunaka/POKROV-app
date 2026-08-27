@@ -619,6 +619,14 @@ staged. They include:
   final resolver through the active VPN outbound. This blocks requests to
   domains present in that DNS service's filtering policy; it does not promise
   removal of first-party, baked-in, or otherwise non-DNS in-app advertising;
+- a non-Automatic resolver may opt into the collapsed
+  `DNS напрямую · лаборатория` path. The default remains VPN. The opt-in
+  changes only that HTTPS DoH server's detour to the managed profile's direct
+  outbound; it never downgrades to plaintext DNS, changes the device's external
+  IP, or moves AI/Games application traffic off their VPN rules. It therefore
+  makes no promise to bypass IP-, TLS-, account-, or region-based restrictions.
+  With `Автоматически`, the stored preference is dormant and the signed server
+  profile remains DNS authority;
 - LAN direct access;
 - trusted Wi-Fi names with optional disconnect on an exact current-SSID match.
 

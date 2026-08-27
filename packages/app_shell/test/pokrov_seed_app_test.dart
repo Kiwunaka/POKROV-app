@@ -7643,7 +7643,20 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('rules-ad-block-toggle')));
     await tester.pumpAndSettle();
     expect(store.state.routingPreferences.dnsPreset, PokrovDnsPreset.adguard);
-    await tester.tap(find.byKey(const ValueKey('rules-lan-toggle')));
+    final directDnsToggle =
+        find.byKey(const ValueKey('rules-dns-direct-toggle'));
+    await tester.ensureVisible(directDnsToggle);
+    await tester.pumpAndSettle();
+    await tester.tap(directDnsToggle);
+    await tester.pumpAndSettle();
+    expect(
+      store.state.routingPreferences.dnsTransport,
+      PokrovDnsTransport.direct,
+    );
+    final lanToggle = find.byKey(const ValueKey('rules-lan-toggle'));
+    await tester.ensureVisible(lanToggle);
+    await tester.pumpAndSettle();
+    await tester.tap(lanToggle);
     await tester.pumpAndSettle();
     expect(store.state.routingPreferences.allowLan, isFalse);
 
@@ -7766,7 +7779,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(adBlockToggle);
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('rules-lan-toggle')));
+    final lanToggle = find.byKey(const ValueKey('rules-lan-toggle'));
+    await tester.ensureVisible(lanToggle);
+    await tester.pumpAndSettle();
+    await tester.tap(lanToggle);
     await tester.pumpAndSettle();
 
     expect(

@@ -208,8 +208,10 @@ class _DnsAndLanCard extends StatelessWidget {
     return _SectionCard(
       key: const ValueKey('rules-dns-lan'),
       title: 'Блокировка и DNS',
-      lines: const [
-        'Защитный DNS блокирует известные рекламные и трекинговые домены внутри VPN.',
+      lines: [
+        preferences.dnsTransport == PokrovDnsTransport.direct
+            ? 'DoH идёт напрямую. Внешний IP не меняется, доступ к сервисам не гарантируется.'
+            : 'Защитный DNS блокирует известные рекламные и трекинговые домены внутри VPN.',
       ],
       child: Column(
         children: [
@@ -239,6 +241,24 @@ class _DnsAndLanCard extends StatelessWidget {
               onChanged: onChanged,
             ),
           ),
+          if (preferences.dnsPreset != PokrovDnsPreset.automatic) ...[
+            const _SettingsRowDivider(),
+            _RoutingToggleRow(
+              key: const ValueKey('rules-dns-direct-toggle'),
+              title: 'DNS напрямую · лаборатория',
+              subtitle: preferences.dnsTransport == PokrovDnsTransport.direct
+                  ? 'Только зашифрованный DoH идёт без VPN. IP-адрес не меняется.'
+                  : 'DoH идёт через VPN. Надёжнее при сетевых блокировках.',
+              value: preferences.dnsTransport == PokrovDnsTransport.direct,
+              onChanged: (value) => onChanged(
+                preferences.copyWith(
+                  dnsTransport: value
+                      ? PokrovDnsTransport.direct
+                      : PokrovDnsTransport.vpn,
+                ),
+              ),
+            ),
+          ],
           const _SettingsRowDivider(),
           _RoutingToggleRow(
             key: const ValueKey('rules-lan-toggle'),
@@ -967,7 +987,7 @@ Future<void> _showDnsPresetSheet(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'DNS внутри туннеля',
+                  'Защищённый DNS',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: p.ink,
                         fontWeight: FontWeight.w700,
@@ -975,7 +995,7 @@ Future<void> _showDnsPresetSheet(
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Пресеты используют DNS-over-HTTPS. «Автоматически» сохраняет DNS профиля сервера.',
+                  'Пресеты используют DNS-over-HTTPS. «Автоматически» сохраняет DNS профиля сервера. Путь DoH можно изменить после выбора пресета.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: p.muted,
                       ),

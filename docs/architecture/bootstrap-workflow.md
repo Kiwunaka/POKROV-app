@@ -280,6 +280,13 @@ public `v1.0.3` release remains a separate rollback/history identity.
   validated fail-closed before setup.
 - Shared Dart materialization owns route modes and client-local WARP before the
   config crosses a host boundary.
+- Shared Dart materialization also owns the additive `dnsTransport` client
+  preference. Missing or unknown state resolves to `vpn`. For a selected DoH
+  preset, the opt-in `direct` value changes only the injected HTTPS resolver
+  detour to the profile's existing direct outbound; purpose routes such as AI
+  and Games continue through the active VPN/AWG target. `Automatic` injects
+  nothing, so the backend-managed DNS block remains authoritative. This is not
+  a second DNS owner or a standalone VPN-less resolver service.
 - `selectedApps` materialization requires a non-empty selection before any
   route-policy sync or profile fetch. Android receives the staged route-mode
   attestation separately and rejects an empty selected-app allow-list instead

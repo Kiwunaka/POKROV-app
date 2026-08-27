@@ -215,6 +215,45 @@ void main() {
     });
   });
 
+  test('direct DoH lab keeps AI traffic on VPN and only DNS on direct', () {
+    final transformed = applyPokrovRoutingPreferences(
+      _profile(),
+      const PokrovRoutingPreferences.defaults().copyWith(
+        purposeRoutes: <PokrovPurposeRoute>{PokrovPurposeRoute.ai},
+        dnsPreset: PokrovDnsPreset.google,
+        dnsTransport: PokrovDnsTransport.direct,
+      ),
+      hostPlatform: HostPlatform.android,
+    );
+    final config = _jsonMap(transformed.configPayload);
+    final rules = _maps(_map(config['route'])['rules']);
+    final dnsServers = _maps(_map(config['dns'])['servers']);
+
+    expect(
+      rules.firstWhere(
+        (rule) =>
+            (rule['domain_suffix'] as List<Object?>?)
+                    ?.contains('chatgpt.com') ==
+                true,
+      )['outbound'],
+      'proxy',
+    );
+    expect(dnsServers.first, <String, Object?>{
+      'tag': 'pokrov-user-dns',
+      'address': 'https://dns.google/dns-query',
+      'detour': 'direct',
+    });
+  });
+
+  test('missing DNS transport state keeps the safe VPN default', () {
+    final restored = PokrovRoutingPreferences.fromJson(<String, Object?>{
+      'dnsPreset': 'cloudflare',
+    });
+
+    expect(restored.dnsTransport, PokrovDnsTransport.vpn);
+    expect(restored.toJson()['dnsTransport'], 'vpn');
+  });
+
   test('Windows keeps DNS interception ahead of LAN and applies TUN stack', () {
     final override = PokrovRouteOverride.tryCreate(
       value: 'private.example',

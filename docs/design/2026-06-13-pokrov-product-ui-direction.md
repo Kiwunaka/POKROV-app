@@ -120,6 +120,10 @@ Expected first-layer behavior:
   behind the single `Дополнительно` disclosure in Rules. The supported Windows
   mode is named `VPN через службу POKROV`; `System`, `Mixed` and `gVisor`
   appear only after that deliberate expansion.
+- The direct-DoH laboratory toggle appears only after a non-Automatic DNS
+  preset is selected. Its copy must say that only encrypted DoH bypasses the
+  VPN, the external IP does not change, and access to blocked services is not
+  guaranteed. VPN remains the default resolver path.
 - Windows connect stays full-device VPN/TUN while the UI remains unelevated.
   Ordinary connection does not show UAC or offer a partial system-proxy path;
   an unavailable, untrusted or incompatible service produces one actionable

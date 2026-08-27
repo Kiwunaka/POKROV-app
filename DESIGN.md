@@ -109,6 +109,9 @@ Client tokens mirror the platform `shared/design-tokens.json` (`pokrov-clear`, `
   disclosure. Expert edits accumulate in one named change summary; an active
   tunnel is not restarted until the single `Применить и переподключить`
   action, and a stopped tunnel applies the saved draft on its next connect.
+  Direct DoH is an opt-in laboratory row shown only for a selected DoH preset;
+  its copy states that only resolver traffic is direct and the external IP is
+  unchanged. The default resolver path remains the VPN.
 - Profile groups access, account/devices, recovery, support, app settings and
   rewards as separate sections. Technical diagnostics stays under Support;
   routing changes stay in Rules instead of creating a second settings owner.
