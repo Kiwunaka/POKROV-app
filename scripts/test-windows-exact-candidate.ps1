@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [string]$CandidatePath = "build/private-candidate/pokrov-windows-setup-x64.exe",
-  [string]$GateInputPath = "config/windows-clean-host-gate.candidate-2.json",
+  [string]$GateInputPath = "config/windows-clean-host-gate.candidate-3.json",
   [string]$EvidencePath = "build/evidence/windows-exact-candidate-clean-host.json",
   [switch]$RunCleanHostSmoke
 )
@@ -206,13 +206,13 @@ Assert-Gate -Condition (Test-Path -LiteralPath $gateInputFile -PathType Leaf) -C
 
 $gateInput = Get-Content -LiteralPath $gateInputFile -Raw | ConvertFrom-Json -Depth 20
 Assert-Gate -Condition ($gateInput.schema -eq "pokrov.windows-clean-host-gate-input/v1") -Code "gate_input_schema_invalid"
-Assert-Gate -Condition ($gateInput.candidate_label -eq "pokrov-1.2.0-candidate.2") -Code "candidate_label_invalid"
-Assert-Gate -Condition ($gateInput.candidate_manifest_sha256 -eq "1697a1bce4f72314aa1f60cd74a1711f9b8f7d70091c5757e98fbdc09b4ce5e0") -Code "candidate_manifest_identity_invalid"
-Assert-Gate -Condition ($gateInput.candidate_manifest_signature_sha256 -eq "ebf259f1a9d3c9d561e3f39123c12804a178da5f15efcb293aeab47d45308a82") -Code "candidate_manifest_signature_identity_invalid"
-Assert-Gate -Condition ($gateInput.source_tuple.client -eq "e6c29d1201eded0d045a3e75f43beff8ae24bd8f") -Code "candidate_client_source_invalid"
+Assert-Gate -Condition ($gateInput.candidate_label -eq "pokrov-1.2.0-candidate.3") -Code "candidate_label_invalid"
+Assert-Gate -Condition ($gateInput.candidate_manifest_sha256 -eq "a2752b6a3b95faacf13a68edb708c560966a0f5eb8727e109d7f1603fdc81090") -Code "candidate_manifest_identity_invalid"
+Assert-Gate -Condition ($gateInput.candidate_manifest_signature_sha256 -eq "926f0b4667a58ba9cc5ace5c4e6c3c8129d1ec3d4d449b3f0831a8c527cd7121") -Code "candidate_manifest_signature_identity_invalid"
+Assert-Gate -Condition ($gateInput.source_tuple.client -eq "ac22825e857a313c9e4eba61030eb548d6346ead") -Code "candidate_client_source_invalid"
 Assert-Gate -Condition ($gateInput.source_tuple.core -eq "344b317a7a09eca7943a93866b193553538bd8f6") -Code "candidate_core_source_invalid"
-Assert-Gate -Condition ($gateInput.source_tuple.platform -eq "c5f3fca5c55d6baa48b54af3bf756ef40cc0e6e1") -Code "candidate_platform_source_invalid"
-Assert-Gate -Condition ($gateInput.source_tuple.release_index -eq "4c6d46c10083e68dc5d2032c13f51c4e80a17049") -Code "candidate_release_index_source_invalid"
+Assert-Gate -Condition ($gateInput.source_tuple.platform -eq "eafaca3e64c0619dea7f58fc9c430682b4520559") -Code "candidate_platform_source_invalid"
+Assert-Gate -Condition ($gateInput.source_tuple.release_index -eq "6a1afa95fe52da2d559ba7b1da88715cd0344bb2") -Code "candidate_release_index_source_invalid"
 
 $candidateSha256 = Get-Sha256 -Path $candidate
 $candidateSize = (Get-Item -LiteralPath $candidate).Length
@@ -226,7 +226,7 @@ $authenticode = Get-AuthenticodeSignature -LiteralPath $candidate
 Assert-Gate -Condition ([string]$authenticode.Status -eq "NotSigned") -Code "unexpected_authenticode_state"
 
 $checks = [System.Collections.Generic.List[object]]::new()
-Add-Check -Checks $checks -Id "exact_candidate_identity" -Status "PASS" -Detail "candidate.2 SHA-256, byte size, signed-manifest identity, and source tuple match the reviewed input"
+Add-Check -Checks $checks -Id "exact_candidate_identity" -Status "PASS" -Detail "candidate.3 SHA-256, byte size, signed-manifest identity, and source tuple match the reviewed input"
 Add-Check -Checks $checks -Id "unsigned_owner_exception" -Status "SKIPPED_BY_OWNER" -Detail "direct-download 1.2.0 beta only; SmartScreen warning remains mandatory"
 
 $evidence = [ordered]@{
@@ -290,8 +290,8 @@ $installRoot = Join-Path $env:ProgramFiles ([string]$gateInput.installation.dire
 $serviceRegistryPath = [string]$gateInput.installation.registry_path
 $runtimeRoot = Join-Path $env:ProgramData "POKROV\ServiceRuntime"
 $eventJournal = Join-Path $runtimeRoot "service-events.v1.log"
-$installerLog = Join-Path $env:RUNNER_TEMP "pokrov-candidate.2-install.log"
-$uninstallerLog = Join-Path $env:RUNNER_TEMP "pokrov-candidate.2-uninstall.log"
+$installerLog = Join-Path $env:RUNNER_TEMP "pokrov-candidate.3-install.log"
+$uninstallerLog = Join-Path $env:RUNNER_TEMP "pokrov-candidate.3-uninstall.log"
 $uiProcess = $null
 $installed = $false
 $uninstalled = $false

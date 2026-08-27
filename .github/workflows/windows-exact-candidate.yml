@@ -19,7 +19,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $gate = Get-Content -LiteralPath config/windows-clean-host-gate.candidate-2.json -Raw |
+          $gate = Get-Content -LiteralPath config/windows-clean-host-gate.candidate-3.json -Raw |
             ConvertFrom-Json -Depth 20
           New-Item -ItemType Directory -Path build/private-candidate -Force | Out-Null
           gh release download $gate.private_ci_release_tag `
