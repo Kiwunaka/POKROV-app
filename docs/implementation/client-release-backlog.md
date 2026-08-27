@@ -41,6 +41,12 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
 - Local observability, diagnostics and support-bundle contracts are present.
 - Production packaging is source-bound to one tracked support-mode public key
   and rejects partial or different overrides before Flutter.
+- The build-32 source adds an opt-in direct-DoH laboratory detour while keeping
+  VPN as the default and AI/Games application traffic on VPN/AWG. All 394
+  app-shell tests and analyzer pass locally.
+- A separate Core test-only commit exercises 25 AWG2 and 25 AWG3.1 real
+  userspace-device lifecycles against the same production Core tree bound by
+  `344b317…8f6`; live server interop remains a separate gate.
 - The clean replacement platform/client branches, exact Core source and
   release-index `main` pass the read-only cross-repository preflight as
   `READY_LOCAL_FREEZE`; no candidate or artifact claim is implied.
@@ -54,7 +60,7 @@ signing, hosted-CI, deployed-runtime or promotion proof.
 |---:|---|---|---|
 | 1 | Clean platform, client, Core and release-index revisions | `READY_LOCAL_FREEZE` | Clean scoped platform/client branches, Core `344b317…8f6` and release-index `32f560d…2d4a` pass the read-only preflight with zero blockers. Promotion and hosted checks remain separate. |
 | 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains signed candidate.3 evidence; manifest `a2752b6a…1090`, signature `926f0b46…7121`, promotion false. It does not bind the replacement source or `1.2.0+32`. |
-| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_ARTIFACTS` | Core source `344b317…8f6` binds AAR `da3ea378…aba9`, DLL `60fe3fad…3981` and Cronet `8ef1f8bb…a6f7`. |
+| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_ARTIFACTS; PASS_LOCAL_AWG_LIFECYCLE` | Core source `344b317…8f6` binds AAR `da3ea378…aba9`, DLL `60fe3fad…3981` and Cronet `8ef1f8bb…a6f7`. Test-only Core PR 5 exercises 25 AWG2 and 25 AWG3.1 userspace-device lifecycles against the unchanged production tree; server handshake/TUN/egress remains unproven. |
 | 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.3 metadata remains valid only for its exact older bytes. The replacement must bind build `32`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
 | 5 | Android exact-candidate build and signer | `MISSING_REPLACEMENT_ARTIFACTS` | Candidate.3 production-signed artifacts and LDPlayer persistence are supporting evidence only. Build `32` requires new exact APK/AAB identities and signer verification. |
 | 6 | Android physical-device matrix | `MANUAL_OWNER_TEST` | Huawei install, TUN/DNS/egress, WARP, per-app, handoff and endurance pass on exact bytes. |
