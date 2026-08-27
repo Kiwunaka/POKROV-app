@@ -41,24 +41,11 @@ jobs:
           ssh-key: ${{ secrets.POKROV_RELEASE_PLATFORM_DEPLOY_KEY }}
           persist-credentials: false
 
-      - name: Resolve exact Core artifact source
-        id: core-source
-        shell: pwsh
-        run: |
-          $runtime = [IO.File]::ReadAllText(
-            "${{ github.workspace }}/client/config/runtime-artifacts.seed.json"
-          ) | ConvertFrom-Json
-          $sourceCommit = [string]$runtime.core.source_commit
-          if ($sourceCommit -notmatch '^[0-9a-f]{40}$') {
-            throw "Client runtime contract does not contain an exact Core source commit."
-          }
-          "ref=$sourceCommit" >> $env:GITHUB_OUTPUT
-
-      - name: Checkout exact Core artifact source
+      - name: Checkout Core promotion line
         uses: actions/checkout@v4
         with:
           repository: Kiwunaka/pokrov-core
-          ref: ${{ steps.core-source.outputs.ref }}
+          ref: main
           path: POKROV-core
           fetch-depth: 0
           persist-credentials: false
