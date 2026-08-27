@@ -129,6 +129,14 @@ if (@($candidateTwoInput.installation.required_files).Count -ne 8) {
 $windowsBuilderPath = Join-Path $root "scripts\build-windows-release.ps1"
 $windowsBuilder = [IO.File]::ReadAllText($windowsBuilderPath).Replace("`r`n", "`n")
 foreach ($fragment in @(
+  '$versionParityArguments.CoreRoot = $CoreRoot',
+  '$validateSeedArguments.CoreRoot = $CoreRoot'
+)) {
+  if (-not $windowsBuilder.Contains($fragment)) {
+    throw "Windows release builder does not forward exact Core authority: $fragment"
+  }
+}
+foreach ($fragment in @(
   'procedure CurStepChanged(CurStep: TSetupStep);',
   'function ExecuteServiceCommand',
   'procedure AbortServiceSetup',

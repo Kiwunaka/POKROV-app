@@ -311,7 +311,7 @@ function New-ExpectedRegistryManifest {
   foreach ($encodedRow in $encodedRows) {
     $fields = $encodedRow -split '\|', 4
     if ($fields.Count -ne 4) { throw "Invalid embedded registry manifest row: $encodedRow" }
-    $paths = $(if ($fields[3] -ceq '<NO_LOCAL_OWNER>') { @() } else { [string[]]($fields[3] -split ';') })
+    $paths = @(if ($fields[3] -cne '<NO_LOCAL_OWNER>') { $fields[3] -split ';' })
     $logicalKey = $fields[0] + $separator + $fields[2]
     if (-not $logicalKeys.Add($logicalKey)) { throw "Duplicate embedded registry logical key: $logicalKey" }
     [void]$manifest.Add([pscustomobject]@{
