@@ -5664,6 +5664,10 @@ void main() {
         .singleWhere((outbound) => outbound['tag'] == 'pokrov-variant-probe');
     expect(variantProbeGroup['type'], 'urltest');
     expect(
+      variantProbeGroup['url'],
+      'https://api.pokrov.space/api/public/authenticated-egress-probe',
+    );
+    expect(
       variantProbeGroup['outbounds'],
       <String>[
         '🇷🇺 Россия Spb',

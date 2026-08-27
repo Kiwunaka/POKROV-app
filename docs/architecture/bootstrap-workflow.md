@@ -162,11 +162,14 @@ Current blocking dependency:
   `/api/client/locations`: `direct` is rendered as `Обычный`, while each
   currently available relay is rendered as a `Белые списки` choice without
   host, port, key, tag, or raw config. Device cache keeps the last non-empty
-  safe catalog across transient refresh failure; removed rollout ids are
-  cleared or explained instead of pretending a stale selection still applies
+  safe catalog across transient refresh failure. After a successful refresh,
+  a removed or disabled relay id on the still-selected city is reset to its
+  available `direct` variant, persisted, and applied through the normal
+  reconnect path instead of pretending a stale selection still applies
 - materialization creates one private `pokrov-variant-probe` URL-test group
-  containing the canonical selected outbound plus every exact, uniquely
-  resolvable white-list variant. `_meta.runtime_variant_probe` owns the
+  against the POKROV-owned authenticated-egress marker, containing the
+  canonical selected outbound plus every exact, uniquely resolvable white-list
+  variant. `_meta.runtime_variant_probe` owns the
   safe-ID-to-tag mapping inside the staged profile only. The Android host reads
   only the canonical managed-profile path, validates that mapping against the
   group, runs full or one-row refresh, and returns safe ID/status/latency/time/

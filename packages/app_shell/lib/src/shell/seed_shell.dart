@@ -1787,6 +1787,84 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
+  void _reconcilePreferredVariantAfterCatalogRefresh(
+    ClientLocationsCatalog catalog,
+  ) {
+    if (_nodePreferenceBusy) {
+      return;
+    }
+    final preferredCode = _preferredNodeCode.trim().toLowerCase();
+    final preferredVariant =
+        normalizeClientLocationVariantId(_preferredVariantId) ?? 'direct';
+    if (preferredCode.isEmpty || preferredVariant == 'direct') {
+      return;
+    }
+
+    ClientLocationCity? selectedCity;
+    for (final country in catalog.countries) {
+      for (final city in country.cities) {
+        if (city.code.trim().toLowerCase() == preferredCode) {
+          selectedCity = city;
+          break;
+        }
+      }
+      if (selectedCity != null) {
+        break;
+      }
+    }
+    if (selectedCity == null) {
+      return;
+    }
+    final variants = selectedCity.variants;
+    final selectedStillAvailable = variants.any(
+      (variant) =>
+          variant.id == preferredVariant && variant.available,
+    );
+    final directAvailable = variants.isEmpty ||
+        variants.any(
+          (variant) => variant.id == 'direct' && variant.available,
+        );
+    if (selectedStillAvailable || !directAvailable) {
+      return;
+    }
+
+    final wasConnected = _runtimeSnapshot?.phase == RuntimePhase.running;
+    setState(() {
+      _preferredVariantId = 'direct';
+      _stagedNodeCode = '';
+      _stagedVariantId = 'direct';
+      if (_activeNodeCode.trim().toLowerCase() == preferredCode &&
+          normalizeClientLocationVariantId(_activeVariantId) ==
+              preferredVariant) {
+        _activeNodeCode = '';
+        _activeVariantId = 'direct';
+      }
+      _managedProfileDirty = true;
+      _cachedProfileFallbackGate.markUserChange();
+      _runtimeHeadline = wasConnected
+          ? 'Вариант подключения изменился. Переподключаем POKROV…'
+          : 'Выбранный вариант больше недоступен. Используется «Обычный».';
+      _clientExperience = _clientExperience.copyWith(
+        preferredVariantId: 'direct',
+      );
+    });
+    _invalidateQuickSettingsProfile();
+    _queueClientExperienceWrite();
+    showPokrovSnack(
+      context,
+      'Выбранный вариант больше недоступен. Включён «Обычный».',
+      tone: PokrovSnackTone.info,
+    );
+    if (wasConnected) {
+      unawaited(
+        _reconnectAfterManagedProfileChange(
+          progressMessage: 'Обновляем вариант подключения…',
+          successMessage: 'Вариант подключения обновлён.',
+        ),
+      );
+    }
+  }
+
   Future<void> _refreshLocationsCatalog({bool measureDevice = false}) async {
     final service = _clientDataService;
     if (service == null || _locationsCatalogBusy) {
@@ -1825,6 +1903,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         );
       });
       _queueClientExperienceWrite();
+      _reconcilePreferredVariantAfterCatalogRefresh(catalog);
     } on BootstrapFailure catch (error) {
       if (!mounted) {
         return;

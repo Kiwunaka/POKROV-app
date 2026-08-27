@@ -128,17 +128,24 @@ class _LocationsSectionState extends State<_LocationsSection> {
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (context) => _LocationVariantSheet(
-        cityName: _locationCityDisplayName(entry.city, entry.country),
-        variants: variants,
-        selectedVariantId: entry.city.code.trim().toLowerCase() ==
-                widget.preferredNodeCode.trim().toLowerCase()
-            ? widget.preferredVariantId
-            : '',
-        runtimeProbeEnabled:
-            widget.appContext.hostPlatform == HostPlatform.android &&
-                entry.city.code.trim().toLowerCase() ==
-                    widget.preferredNodeCode.trim().toLowerCase(),
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.56,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => _LocationVariantSheet(
+          cityName: _locationCityDisplayName(entry.city, entry.country),
+          variants: variants,
+          selectedVariantId: entry.city.code.trim().toLowerCase() ==
+                  widget.preferredNodeCode.trim().toLowerCase()
+              ? widget.preferredVariantId
+              : '',
+          runtimeProbeEnabled:
+              widget.appContext.hostPlatform == HostPlatform.android &&
+                  entry.city.code.trim().toLowerCase() ==
+                      widget.preferredNodeCode.trim().toLowerCase(),
+          scrollController: scrollController,
+        ),
       ),
     );
     if (selected != null && mounted) {
@@ -635,12 +642,14 @@ class _LocationVariantSheet extends StatefulWidget {
     required this.cityName,
     required this.variants,
     required this.selectedVariantId,
+    required this.scrollController,
     this.runtimeProbeEnabled = false,
   });
 
   final String cityName;
   final List<ClientLocationVariant> variants;
   final String selectedVariantId;
+  final ScrollController scrollController;
   final bool runtimeProbeEnabled;
 
   @override
@@ -827,6 +836,7 @@ class _LocationVariantSheetState extends State<_LocationVariantSheet> {
       top: false,
       child: SingleChildScrollView(
         key: const ValueKey('location-variant-sheet-scroll'),
+        controller: widget.scrollController,
         padding: EdgeInsets.fromLTRB(
           20,
           0,
