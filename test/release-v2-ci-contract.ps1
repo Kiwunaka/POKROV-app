@@ -130,7 +130,9 @@ $windowsBuilderPath = Join-Path $root "scripts\build-windows-release.ps1"
 $windowsBuilder = [IO.File]::ReadAllText($windowsBuilderPath).Replace("`r`n", "`n")
 foreach ($fragment in @(
   '$versionParityArguments.CoreRoot = $CoreRoot',
-  '$validateSeedArguments.CoreRoot = $CoreRoot'
+  '$validateSeedArguments.CoreRoot = $CoreRoot',
+  '$runtimeMissingFiles = @(',
+  '$missingBuildFiles = @('
 )) {
   if (-not $windowsBuilder.Contains($fragment)) {
     throw "Windows release builder does not forward exact Core authority: $fragment"

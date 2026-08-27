@@ -461,7 +461,10 @@ if (-not $SkipValidateSeed) {
   }
 }
 
-if ($SyncRuntime -or (Test-RequiredFiles -BasePath $runtimeDirectory -RelativePaths $runtimeRequiredFiles).Count -gt 0) {
+$runtimeMissingFiles = @(
+  Test-RequiredFiles -BasePath $runtimeDirectory -RelativePaths $runtimeRequiredFiles
+)
+if ($SyncRuntime -or $runtimeMissingFiles.Count -gt 0) {
   $syncArguments = @{
     Platforms = @("windows")
   }
@@ -525,7 +528,9 @@ function Write-Utf8BomFile {
 }
 
 $releaseOutputDirectory = Join-Path $root $windowsReleaseConfig.bundle_root
-$missingBuildFiles = Test-RequiredFiles -BasePath $releaseOutputDirectory -RelativePaths $windowsReleaseConfig.required_files
+$missingBuildFiles = @(
+  Test-RequiredFiles -BasePath $releaseOutputDirectory -RelativePaths $windowsReleaseConfig.required_files
+)
 if ($missingBuildFiles.Count -gt 0) {
   throw "Missing expected Windows release outputs: $($missingBuildFiles -join ', ')"
 }
