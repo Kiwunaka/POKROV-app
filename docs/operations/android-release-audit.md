@@ -14,7 +14,7 @@ Older APK identities and device runs are retained separately as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
-| Working package target | `1.2.0+31` |
+| Working package target | `1.2.0+32` |
 | Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Package ID | `space.pokrov.pokrov_android_shell` |
 | Active candidate Core package | POKROV Core `1.1.0` AAR from exact source `344b317…8f6` |
@@ -33,7 +33,7 @@ These local contracts do not prove final APK bytes or physical behavior.
 ## Retained Candidate.3 Evidence And Replacement Gate
 
 The table keeps candidate.3 results only as exact evidence for its old bytes.
-The `1.2.0+31` replacement has no artifacts yet, so none of the artifact,
+The `1.2.0+32` replacement has no artifacts yet, so none of the artifact,
 emulator, device, network or origin rows below transfers to it.
 
 | Check | Current state |

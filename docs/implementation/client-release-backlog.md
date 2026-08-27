@@ -14,7 +14,7 @@ results belong in dated evidence and never become reusable release approval.
 | Fact | Current state |
 |---|---|
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
-| Working package target | `1.2.0+31` |
+| Working package target | `1.2.0+32` |
 | Working target state | `PRE_CANDIDATE_LOCAL` |
 | Candidate created | `false` |
 | Public cutover allowed for a new candidate | `false` |
@@ -29,7 +29,7 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
 
 ## Current Local Completion
 
-- Android and Windows package versions match `1.2.0+31`; app-shell reports the
+- Android and Windows package versions match `1.2.0+32`; app-shell reports the
   shared product version `1.2.0`.
 - Strict release-handoff v2 generation and client/Core parity pass locally.
 - The retained `1.1.6` stable pointer is hash-bound to its versioned rollback
@@ -53,12 +53,12 @@ signing, hosted-CI, deployed-runtime or promotion proof.
 | Order | Gate | State | Completion rule |
 |---:|---|---|---|
 | 1 | Clean platform, client, Core and release-index revisions | `READY_LOCAL_FREEZE` | Clean scoped platform/client branches, Core `344b317…8f6` and release-index `32f560d…2d4a` pass the read-only preflight with zero blockers. Promotion and hosted checks remain separate. |
-| 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains signed candidate.3 evidence; manifest `a2752b6a…1090`, signature `926f0b46…7121`, promotion false. It does not bind the replacement source or `1.2.0+31`. |
+| 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains signed candidate.3 evidence; manifest `a2752b6a…1090`, signature `926f0b46…7121`, promotion false. It does not bind the replacement source or `1.2.0+32`. |
 | 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_ARTIFACTS` | Core source `344b317…8f6` binds AAR `da3ea378…aba9`, DLL `60fe3fad…3981` and Cronet `8ef1f8bb…a6f7`. |
-| 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.3 metadata remains valid only for its exact older bytes. The replacement must bind build `31`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
-| 5 | Android exact-candidate build and signer | `MISSING_REPLACEMENT_ARTIFACTS` | Candidate.3 production-signed artifacts and LDPlayer persistence are supporting evidence only. Build `31` requires new exact APK/AAB identities and signer verification. |
+| 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.3 metadata remains valid only for its exact older bytes. The replacement must bind build `32`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
+| 5 | Android exact-candidate build and signer | `MISSING_REPLACEMENT_ARTIFACTS` | Candidate.3 production-signed artifacts and LDPlayer persistence are supporting evidence only. Build `32` requires new exact APK/AAB identities and signer verification. |
 | 6 | Android physical-device matrix | `MANUAL_OWNER_TEST` | Huawei install, TUN/DNS/egress, WARP, per-app, handoff and endurance pass on exact bytes. |
-| 7 | Windows exact-candidate package | `MISSING_REPLACEMENT_ARTIFACT` | Candidate.3 clean-host run `33033294889` is retained supporting evidence only. Build `31` requires a new setup identity and bounded clean-host run. |
+| 7 | Windows exact-candidate package | `MISSING_REPLACEMENT_ARTIFACT` | Candidate.3 clean-host run `33033294889` is retained supporting evidence only. Build `32` requires a new setup identity and bounded clean-host run. |
 | 8 | Windows unsigned-beta warning and clean-host recovery | `SKIPPED_BY_OWNER; REPLACEMENT_PROOF_MISSING` | The `1.2.0` direct-beta exception and warning remain applicable. Replacement live TUN/DNS/egress, recovery while connected and interactive SmartScreen are manual; trusted signing is still required for trusted/Store/broad-stable claims. |
 | 9 | Hosted cross-repository CI | `BLOCKED_BY_ACCESS_GITHUB_BILLING` | Candidate.3 source runs are retained. Replacement platform/client PR jobs currently stop before steps because of the GitHub account payment/spending limit; they are neither PASS nor code failures. |
 | 10 | Runtime/public readback and rollback | `NOT_AUTHORIZED` | Candidate.3 private evidence exists, but no replacement candidate, public assets, catalog pointer, anonymous readback or rollback drill exists. |
@@ -68,7 +68,7 @@ signing, hosted-CI, deployed-runtime or promotion proof.
 
 1. Freeze the replacement platform/client/Core/release-index source tuple and
    keep AWG 3.1 plus AI/Games/DoH contracts green on the exact client revision.
-2. Produce build `31` Android and Windows artifacts and a new signed strict-v2
+2. Produce build `32` Android and Windows artifacts and a new signed strict-v2
    manifest; do not reuse candidate.3 artifact evidence.
 3. Run LDPlayer rehearsal, then the physical-device/OEM and Windows clean-host
    network/recovery/SmartScreen matrices on the replacement bytes.

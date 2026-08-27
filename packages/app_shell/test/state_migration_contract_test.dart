@@ -102,7 +102,7 @@ void main() {
         await File(_path(root, 'apps/windows_shell/pubspec.yaml'))
             .readAsString();
     expect(appShellPubspec, contains('version: 1.2.0'));
-    expect(androidPubspec, contains('version: 1.2.0+31'));
-    expect(windowsPubspec, contains('version: 1.2.0+31'));
+    expect(androidPubspec, contains('version: 1.2.0+32'));
+    expect(windowsPubspec, contains('version: 1.2.0+32'));
   });
 }

@@ -25,7 +25,7 @@ contracts. Do not select the most optimistic status.
 |---|---|
 | Canonical lane | `POKROV-app/main` |
 | Retained public release | Android and Windows `1.1.6` |
-| New working target | `1.2.0+31` |
+| New working target | `1.2.0+32` |
 | Target state | `PRE_CANDIDATE_LOCAL` |
 | Candidate created | `false` |
 | New public cutover | `BLOCKED` |
@@ -38,13 +38,13 @@ signing, device, runtime and origin evidence cannot be reused for promotion.
 
 | Gate | State | Required evidence |
 |---|---|---|
-| Package/version parity | `PASS_LOCAL` | Android and Windows are `1.2.0+31`; the shared app-shell remains product version `1.2.0`. |
+| Package/version parity | `PASS_LOCAL` | Android and Windows are `1.2.0+32`; the shared app-shell remains product version `1.2.0`. |
 | Strict-v2 generator contract | `PASS_LOCAL` | Schema, generator and cross-repository parity tests pass. |
 | Stable pointer and rollback catalog | `PASS_LOCAL` | Retained `1.1.6` pointer matches its exact versioned handoff; isolated A→B→A proves optimistic lock, atomic replace, backup, receipt and byte-identical reversal. |
 | Operational producer/privacy contract | `PASS_LOCAL` | Auth, entitlement, performance, support and Android count-only routing producers pass focused client/platform tests; exact-candidate runtime proof remains later. |
 | Temporary support mode and encrypted export | `PASS_LOCAL` | Signed exact-audience activation, explicit consent, persistent indicator, nonce/TTL/cumulative caps, no-upload short code and encrypted-only Android/Windows export pass local source/widget/unit contracts; exact-candidate physical host proof remains later. |
 | Clean frozen revisions | `READY_LOCAL_FREEZE; PROMOTION_BLOCKED` | Clean scoped platform/client branches, exact Core `344b317…8f6` and release-index `32f560d…2d4a` pass read-only preflight with zero blockers. They are not promoted and no replacement candidate is implied. |
-| Release index | `PASS_PRE_CANDIDATE_CONTRACT; REPLACEMENT_MANIFEST_MISSING` | Release-index `main` retains signed candidate.3 evidence and the active signing contract. It has no manifest for build `31`; public readback and promotion remain blocked. |
+| Release index | `PASS_PRE_CANDIDATE_CONTRACT; REPLACEMENT_MANIFEST_MISSING` | Release-index `main` retains signed candidate.3 evidence and the active signing contract. It has no manifest for build `32`; public readback and promotion remain blocked. |
 | Core replacement | `PASS_LOCAL` | Exact reproducible `1.1.0` AAR/DLL identities are bound to signed Core revision `344b317…8f6`; the refresh includes separate bounded AWG2 and default-off AWG 3.1 contracts. No tag, candidate signing or publication is claimed. |
 | Android LDPlayer source-lab rehearsal | `PASS_LOCAL_INSTALL_SETTINGS`; connect `BLOCKED_BACKEND_5XX` | Production-signed lab APK `1.2.0 (4031)`, SHA-256 `1ba37463c9549a6d5ba128850e1bf5825187fe185a621e9f8dc62c7cde1a4158`, installed byte-identically in LDPlayer 14. The installed x86_64 Core SHA-256 `f676e7e96f6e159e4da626ec51d94b438ef08fc2819e5d222b6253e51354980d` exposes the AWG2/AWG3.1 contract markers; AI/Games and configurable in-tunnel DoH settings persisted across restart. The live profile request returned 5xx, no `tun0` was created and the location catalog did not load. This is not an exact-candidate, real-AWG-server, physical-device, mobile-origin or production-connect pass. |
 | Candidate handoff | `MISSING` | One strict-v2 handoff binds exact revisions, artifacts and gates. |
