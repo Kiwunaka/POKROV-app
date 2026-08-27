@@ -521,6 +521,12 @@ Support contract rules:
   states keep one lifecycle hint and one retry instead of duplicate notices
 - a failed ticket send keeps the draft and removes its unconfirmed optimistic
   bubble, so retry produces one user message after backend acceptance
+- an open ticket polls only while its screen is foregrounded. Active cadence is
+  8–10 seconds; after one minute without a ticket change it relaxes to 15–30
+  seconds. Returning from background triggers one immediate refresh. Transport
+  failures use bounded exponential backoff with jitter and retain the explicit
+  retry control. SSE/WebSocket remains conditional on measured polling failure
+  and is not part of the 1.2.0 support contract
 - the AI helper handles WARP, location, route-mode, and system-permission
   recovery before human escalation. A transport failure is shown as a retryable
   request failure, not as a fabricated or missing-answer response

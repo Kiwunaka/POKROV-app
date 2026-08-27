@@ -7362,12 +7362,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(service.getCalls, 1);
 
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump();
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    await tester.pump();
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
+    await tester.pumpAndSettle();
+    expect(service.getCalls, 2);
   });
 
   testWidgets('support chat shows offline lifecycle hint after poll failure',

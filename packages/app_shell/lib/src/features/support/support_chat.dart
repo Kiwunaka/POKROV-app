@@ -51,6 +51,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
   bool _threadClosed = false;
   bool _hasOperatorReply = false;
   int? _ticketId;
+  String _threadVersion = '';
   String? _threadError;
   String? _sendError;
   List<_SupportChatMessage> _messages = _supportGreetingMessages();
@@ -185,7 +186,10 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
     }
   }
 
-  void _applyThread(SupportTicketThread thread) {
+  bool _applyThread(SupportTicketThread thread) {
+    final nextVersion = _supportThreadVersion(thread);
+    final changed = _threadVersion.isNotEmpty && _threadVersion != nextVersion;
+    _threadVersion = nextVersion;
     _ticketId = thread.id;
     _threadClosed = thread.isClosed;
     final nextMessages = _messagesFromThread(thread);
@@ -195,6 +199,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
       (message) => message.role == _SupportChatRole.operator,
     );
     _threadRefreshFailed = false;
+    return changed;
   }
 
   void _syncThreadPolling() {
@@ -210,14 +215,16 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
     );
   }
 
-  Future<bool> _refreshActiveThread({bool pollingOwned = false}) async {
+  Future<SupportPollingResult> _refreshActiveThread({
+    bool pollingOwned = false,
+  }) async {
     final activeTicketId = _ticketId;
     if (activeTicketId == null ||
         _threadClosed ||
         _loadingThread ||
         _sending ||
         _refreshingThread) {
-      return true;
+      return SupportPollingResult.unchanged;
     }
     setState(() {
       _refreshingThread = true;
@@ -229,30 +236,36 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
         ticketId: activeTicketId,
       );
       if (!mounted) {
-        return false;
+        return SupportPollingResult.failed;
       }
+      var changed = false;
       setState(() {
         _refreshingThread = false;
         _threadError = null;
-        _applyThread(thread);
+        changed = _applyThread(thread);
       });
       _syncThreadPolling();
+      final result = changed
+          ? SupportPollingResult.changed
+          : SupportPollingResult.unchanged;
       if (!pollingOwned) {
-        _threadPolling.recordExternalResult(success: true);
+        _threadPolling.recordExternalResult(result: result);
       }
-      return true;
+      return result;
     } catch (_) {
       if (!mounted) {
-        return false;
+        return SupportPollingResult.failed;
       }
       setState(() {
         _refreshingThread = false;
         _threadRefreshFailed = true;
       });
       if (!pollingOwned) {
-        _threadPolling.recordExternalResult(success: false);
+        _threadPolling.recordExternalResult(
+          result: SupportPollingResult.failed,
+        );
       }
-      return false;
+      return SupportPollingResult.failed;
     }
   }
 
@@ -472,6 +485,33 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
       );
     }
     return messages;
+  }
+
+  String _supportThreadVersion(SupportTicketThread thread) {
+    final buffer = StringBuffer();
+
+    void writeField(Object value) {
+      final text = value.toString();
+      buffer
+        ..write(text.length)
+        ..write(':')
+        ..write(text);
+    }
+
+    writeField(thread.id);
+    writeField(thread.status);
+    writeField(thread.statusTitle);
+    writeField(thread.updatedAt);
+    writeField(thread.closedAt);
+    writeField(thread.lastMessagePreview);
+    for (final message in thread.messages) {
+      writeField(message.id);
+      writeField(message.senderRole);
+      writeField(message.body);
+      writeField(message.mediaType);
+      writeField(message.createdAt);
+    }
+    return buffer.toString();
   }
 
   _SupportChatRole _supportRoleFromSender(String senderRole) {
