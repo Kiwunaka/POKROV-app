@@ -1,10 +1,10 @@
 # WARP Runtime Proof Checklist
 
-Last updated: 2026-08-22
+Last updated: 2026-08-27
 
 Registry class: `ACTIVE_EXECUTION`.
 
-This is the current client evidence gate for WARP on the POKROV `1.2.0+30`
+This is the current client evidence gate for WARP on the POKROV `1.2.0+31`
 `PRE_CANDIDATE_LOCAL` Android/Windows line. Older device or runtime passes are
 supporting evidence only and cannot close the exact-candidate gate.
 

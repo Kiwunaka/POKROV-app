@@ -14,8 +14,8 @@ Older APK identities and device runs are retained separately as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
-| Working package target | `1.2.0+30` |
-| Candidate created | `SIGNED_CANDIDATE_3_PRIVATE_EVIDENCE_ONLY` — promotion remains unauthorized |
+| Working package target | `1.2.0+31` |
+| Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Package ID | `space.pokrov.pokrov_android_shell` |
 | Active candidate Core package | POKROV Core `1.1.0` AAR from exact source `344b317…8f6` |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
@@ -30,12 +30,16 @@ schema to two bounded files under the app-private no-backup directory. No raw
 message, URL, profile, token, endpoint or stack is accepted by that journal.
 These local contracts do not prove final APK bytes or physical behavior.
 
-## Exact-Candidate Gate
+## Retained Candidate.3 Evidence And Replacement Gate
+
+The table keeps candidate.3 results only as exact evidence for its old bytes.
+The `1.2.0+31` replacement has no artifacts yet, so none of the artifact,
+emulator, device, network or origin rows below transfers to it.
 
 | Check | Current state |
 |---|---|
 | Clean client/Core revisions | `PASS_SOURCE_CONTROL` — artifact source client `ac22825…ead`, Core `344b317…8f6`; client source run `33032033161` passed |
-| Exact Core AAR identity | `PASS_LOCAL` — `26a7b9eb…bf93`, two byte-identical builds, four ABIs |
+| Exact Core AAR identity | `PASS_LOCAL` — `da3ea378…aba9`, two byte-identical builds, four ABIs |
 | Strict-v2 Android artifact entries | `PASS_SIGNED_CANDIDATE_3` — manifest `a2752b6a…1090`, signature `926f0b46…7121`, promotion false |
 | Exact APK support signing pin | `PASS_EXACT_ARTIFACT` — candidate.3 supply evidence binds the active support public key; no private key was read or exported |
 | Production signer and lineage | `PASS_5_OF_5` — APK/AAB certificate SHA-256 `0a0602a7…2500` |

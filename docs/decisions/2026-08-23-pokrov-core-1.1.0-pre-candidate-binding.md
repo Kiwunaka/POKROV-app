@@ -1,7 +1,7 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-Status: refreshed on 2026-08-26 as the exact Android and Windows runtime bytes
-for the local POKROV `1.2.0+30` pre-candidate line with bounded AWG 2 and
+Status: refreshed on 2026-08-27 as the exact Android and Windows runtime bytes
+for the local POKROV `1.2.0+31` pre-candidate line with bounded AWG 2 and
 default-off AWG 3.1 lab support.
 
 This is not a Core release, client candidate, signing pass, publication or

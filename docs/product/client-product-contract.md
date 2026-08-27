@@ -711,7 +711,7 @@ Release continuity rules:
   SHA-256; the production catalog requires `1.1.6` for older clients. Exact
   Huawei and clean Windows network proof remain manual.
 - the active source target is separately recorded in the same canonical
-  release-handoff seed as `1.2.0+30`, state `PRE_CANDIDATE_LOCAL`, with
+  release-handoff seed as `1.2.0+31`, state `PRE_CANDIDATE_LOCAL`, with
   `candidate_created=false`. Android, Windows and app-shell source versions
   must match that target, while the historical `1.1.6` public record remains
   immutable and has `reuse_for_new_promotion=false`. This target is not a

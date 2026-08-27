@@ -1,6 +1,6 @@
 # Cutover Readiness
 
-Last updated: 2026-08-26
+Last updated: 2026-08-27
 
 ## Document Status
 
@@ -25,7 +25,7 @@ contracts. Do not select the most optimistic status.
 |---|---|
 | Canonical lane | `POKROV-app/main` |
 | Retained public release | Android and Windows `1.1.6` |
-| New working target | `1.2.0+30` |
+| New working target | `1.2.0+31` |
 | Target state | `PRE_CANDIDATE_LOCAL` |
 | Candidate created | `false` |
 | New public cutover | `BLOCKED` |
@@ -38,7 +38,7 @@ signing, device, runtime and origin evidence cannot be reused for promotion.
 
 | Gate | State | Required evidence |
 |---|---|---|
-| Package/version parity | `PASS_LOCAL` | Android, Windows and app-shell remain `1.2.0+30`. |
+| Package/version parity | `PASS_LOCAL` | Android and Windows are `1.2.0+31`; the shared app-shell remains product version `1.2.0`. |
 | Strict-v2 generator contract | `PASS_LOCAL` | Schema, generator and cross-repository parity tests pass. |
 | Stable pointer and rollback catalog | `PASS_LOCAL` | Retained `1.1.6` pointer matches its exact versioned handoff; isolated A→B→A proves optimistic lock, atomic replace, backup, receipt and byte-identical reversal. |
 | Operational producer/privacy contract | `PASS_LOCAL` | Auth, entitlement, performance, support and Android count-only routing producers pass focused client/platform tests; exact-candidate runtime proof remains later. |

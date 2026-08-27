@@ -14,8 +14,8 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
-| Working package target | `1.2.0+30` |
-| Candidate created | `SIGNED_CANDIDATE_3_PRIVATE_EVIDENCE_ONLY` — promotion remains unauthorized |
+| Working package target | `1.2.0+31` |
+| Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
 | Active candidate Core | POKROV Core `1.1.0`, desktop ABI `2`, exact source `344b317…8f6` bound |
@@ -38,7 +38,11 @@ current/previous files; paths, symbols, registers, exception text, heap and full
 memory dumps have no output field. The controlled-crash and recovery readback
 still belongs to the exact-candidate gate below.
 
-## Exact-Candidate Gate
+## Retained Candidate.3 Evidence And Replacement Gate
+
+The table keeps candidate.3 results only as exact evidence for its old bytes.
+The `1.2.0+31` replacement has no installer yet, so none of the package,
+clean-host, network or SmartScreen rows below transfers to it.
 
 | Check | Current state |
 |---|---|
