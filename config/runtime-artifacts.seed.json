@@ -4,24 +4,25 @@
     "version": "1.1.0",
     "release_tag": "v1.1.0",
     "release_tag_created": false,
-    "source_commit": "344b317a7a09eca7943a93866b193553538bd8f6",
+    "source_commit": "36895e918ea41395c6db2a5087aea208d21ac241",
     "android_package": "space.pokrov.core",
     "sing_box_version": "1.13.0",
     "sing_dependency": "v0.8.0-beta.12",
     "go_toolchain": "go1.25.13",
     "artifact_provenance": {
-      "status": "clean_reproducible_pre_candidate_local",
+      "status": "clean_mixed_platform_pre_candidate_local",
       "vcs_stamp": "disabled_for_reproducible_release_artifacts",
-      "source_identity": "clean_git_commit_without_release_tag_or_publication",
+      "source_identity": "exact_platform_commits_without_release_tag_or_publication",
       "release_url": null,
       "evidence_ceiling": "PRE_CANDIDATE_LOCAL",
       "candidate_created": false,
       "promotion_authorized": false,
       "artifact_evidence": {
         "android": {
-          "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "tree_sha256": "38a855e8e59d72966964168ea87394a1d98a892eeeac1feec23a13987fc3550c",
-          "evidence_sha256": "5bbb3ef7082da83abf5d9823765257af3edcc36d4b13dd12d5ab1bb4d12db575",
+          "result": "PASS_LOCAL_SINGLE_BUILD",
+          "source_commit": "36895e918ea41395c6db2a5087aea208d21ac241",
+          "tree_sha256": null,
+          "evidence_sha256": null,
           "abis": [
             "armeabi-v7a",
             "arm64-v8a",
@@ -31,6 +32,7 @@
         },
         "windows": {
           "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
+          "source_commit": "344b317a7a09eca7943a93866b193553538bd8f6",
           "tree_sha256": "e12123eb9d6c7bd83a3c95ac4f864583219c37d6b98dfd283fc6f4deda099516",
           "evidence_sha256": "0a4eab998c3a28b61949c4e5739b7c21e6301cd0ccde0084c9a325dc742438a6",
           "required_exports": 15,
@@ -50,16 +52,20 @@
       },
       "reproducible_build": {
         "android": {
-          "size": 107388169,
-          "sha256": "da3ea37834b688abac5c276f4ca9c2cdcc8e32b97edf5062913fc4f3fea6aba9"
+          "result": "PASS_LOCAL_SINGLE_BUILD",
+          "source_commit": "36895e918ea41395c6db2a5087aea208d21ac241",
+          "size": 107388365,
+          "sha256": "64fbfed2c81038cd409aded997d7a259cce1072de33a74d9cc65462cc75c1d54"
         },
         "windows": {
+          "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
+          "source_commit": "344b317a7a09eca7943a93866b193553538bd8f6",
           "size": 55401472,
           "sha256": "60fe3fad7835ec4d00c1f7168bb0ba01dd6b7ca5d883583340e5e2a86b8b3981"
         },
         "libcronet_sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
       },
-      "promotion_rule": "exact_bytes_require_candidate_signing_manual_gates_and_publication"
+      "promotion_rule": "exact_bytes_require_platform_source_convergence_candidate_signing_manual_gates_and_publication"
     },
     "retained_public_release": {
       "version": "1.0.3",
@@ -126,8 +132,9 @@
     "assets": {
       "android": {
         "entry": "pokrov-core.aar",
-        "size": 107388169,
-        "sha256": "da3ea37834b688abac5c276f4ca9c2cdcc8e32b97edf5062913fc4f3fea6aba9",
+        "source_commit": "36895e918ea41395c6db2a5087aea208d21ac241",
+        "size": 107388365,
+        "sha256": "64fbfed2c81038cd409aded997d7a259cce1072de33a74d9cc65462cc75c1d54",
         "sync_policy": "exact_pre_candidate_build",
         "sync_destination": "apps/android_shell/android/app/libs",
         "platform_state": "active_pre_candidate_local_pending_device_and_signing_proof"
@@ -150,6 +157,7 @@
       },
       "windows": {
         "entry": "pokrov-core.dll",
+        "source_commit": "344b317a7a09eca7943a93866b193553538bd8f6",
         "size": 55401472,
         "sha256": "60fe3fad7835ec4d00c1f7168bb0ba01dd6b7ca5d883583340e5e2a86b8b3981",
         "runtime_dependencies": [
