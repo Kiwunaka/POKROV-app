@@ -85,7 +85,7 @@ that candidate-specific release truth.
 
 Current blocking dependency:
 
-- the active local pre-candidate runtime has exact platform bindings: Android uses corrected Core commit `36895e918ea41395c6db2a5087aea208d21ac241`, while Windows temporarily retains exact bytes from `344b317a7a09eca7943a93866b193553538bd8f6`; promotion is blocked until the platform artifacts converge on one Core source
+- the active local pre-candidate runtime has exact platform bindings: Android uses corrected Core commit `f234bb689ab9d7ab979e9ff27c3703ee1b53c171`, which preserves the `egress` event subsystem and resolves AWG endpoint probe hostnames through the Core DNS router, while Windows temporarily retains exact bytes from `344b317a7a09eca7943a93866b193553538bd8f6`; promotion is blocked until the platform artifacts converge on one Core source
 - `Android` host now reaches a real service-backed connect lane: it can initialize POKROV Core, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
 - Android runtime discovery accepts either an extracted `nativeLibraryDir/libpokrov-core.so` or the ABI-matched `lib/<abi>/libpokrov-core.so` entry in the base/split APK. This is required on physical devices that install the release APK with native-library extraction disabled; Java still loads the packaged Core through the generated bindings
 - Android runtime materialization is intentionally `tun`-only in this lane; desktop loopback listener inbounds such as `mixed-in` and `dns-in` stay disabled for the mobile `VpnService` path
@@ -265,7 +265,7 @@ Current blocking dependency:
 
 POKROV Core is an independent repository and release line. The local client
 pre-candidate pins version `1.1.0`, Android commit
-`36895e918ea41395c6db2a5087aea208d21ac241`, and retained Windows commit
+`f234bb689ab9d7ab979e9ff27c3703ee1b53c171`, and retained Windows commit
 `344b317a7a09eca7943a93866b193553538bd8f6`. The version-derived `v1.1.0`
 label is not a created Git tag or public release in this state. Promotion is
 blocked until active platform artifacts converge on one Core source.

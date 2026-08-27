@@ -4,7 +4,7 @@
     "version": "1.1.0",
     "release_tag": "v1.1.0",
     "release_tag_created": false,
-    "source_commit": "36895e918ea41395c6db2a5087aea208d21ac241",
+    "source_commit": "f234bb689ab9d7ab979e9ff27c3703ee1b53c171",
     "android_package": "space.pokrov.core",
     "sing_box_version": "1.13.0",
     "sing_dependency": "v0.8.0-beta.12",
@@ -19,8 +19,8 @@
       "promotion_authorized": false,
       "artifact_evidence": {
         "android": {
-          "result": "PASS_LOCAL_SINGLE_BUILD",
-          "source_commit": "36895e918ea41395c6db2a5087aea208d21ac241",
+          "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
+          "source_commit": "f234bb689ab9d7ab979e9ff27c3703ee1b53c171",
           "tree_sha256": null,
           "evidence_sha256": null,
           "abis": [
@@ -52,10 +52,10 @@
       },
       "reproducible_build": {
         "android": {
-          "result": "PASS_LOCAL_SINGLE_BUILD",
-          "source_commit": "36895e918ea41395c6db2a5087aea208d21ac241",
-          "size": 107388365,
-          "sha256": "64fbfed2c81038cd409aded997d7a259cce1072de33a74d9cc65462cc75c1d54"
+          "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
+          "source_commit": "f234bb689ab9d7ab979e9ff27c3703ee1b53c171",
+          "size": 107392318,
+          "sha256": "ce11d3d78e617a879938645524e5a94614b7122fea2ad7dcf60addebc0cd51b8"
         },
         "windows": {
           "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
@@ -132,9 +132,9 @@
     "assets": {
       "android": {
         "entry": "pokrov-core.aar",
-        "source_commit": "36895e918ea41395c6db2a5087aea208d21ac241",
-        "size": 107388365,
-        "sha256": "64fbfed2c81038cd409aded997d7a259cce1072de33a74d9cc65462cc75c1d54",
+        "source_commit": "f234bb689ab9d7ab979e9ff27c3703ee1b53c171",
+        "size": 107392318,
+        "sha256": "ce11d3d78e617a879938645524e5a94614b7122fea2ad7dcf60addebc0cd51b8",
         "sync_policy": "exact_pre_candidate_build",
         "sync_destination": "apps/android_shell/android/app/libs",
         "platform_state": "active_pre_candidate_local_pending_device_and_signing_proof"

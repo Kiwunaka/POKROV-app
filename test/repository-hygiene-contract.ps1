@@ -115,7 +115,7 @@ foreach ($marker in @(
 }
 
 $rootReadme = [IO.File]::ReadAllText((Join-Path $root "README.md"))
-foreach ($fact in @("1.1.6", "1.2.0+35", "PRE_CANDIDATE_LOCAL", "artifacts/candidate-staging")) {
+foreach ($fact in @("1.1.6", "1.2.0+36", "PRE_CANDIDATE_LOCAL", "artifacts/candidate-staging")) {
   if (-not $rootReadme.Contains($fact)) {
     throw "Root README lacks current repository/release fact: $fact"
   }

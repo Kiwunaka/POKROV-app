@@ -1,8 +1,9 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
 Status: refreshed on 2026-08-27 as a mixed exact-platform pre-candidate binding
-for POKROV `1.2.0+35`. Android carries the Core egress-event correction needed
-by AWG endpoint proof; Windows retains the previous exact DLL until rebuilt.
+for POKROV `1.2.0+36`. Android carries the Core egress-event and AWG endpoint
+DNS corrections needed by live proof; Windows retains the previous exact DLL
+until rebuilt.
 
 This is not a Core release, client candidate, signing pass, publication or
 promotion decision. No `v1.1.0` Git tag or public Core release was created.
@@ -14,7 +15,7 @@ The client binds the separately versioned Core target as follows:
 - repository: `Kiwunaka/POKROV-core`;
 - version-derived target label: `v1.1.0`;
 - tag created: `false`;
-- Android source commit: `36895e918ea41395c6db2a5087aea208d21ac241`;
+- Android source commit: `f234bb689ab9d7ab979e9ff27c3703ee1b53c171`;
 - retained Windows source commit: `344b317a7a09eca7943a93866b193553538bd8f6`;
 - source state: `PRE_CANDIDATE_LOCAL`;
 - candidate created: `false`;
@@ -36,7 +37,7 @@ scoped release branch until its own owner-solo promotion evidence is recorded.
 
 | Platform | Artifact | Size | SHA-256 | Local result |
 | --- | --- | ---: | --- | --- |
-| Android | `pokrov-core.aar` | `107388365` | `64fbfed2c81038cd409aded997d7a259cce1072de33a74d9cc65462cc75c1d54` | one clean local build from `36895e9`; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present; second-build comparison pending |
+| Android | `pokrov-core.aar` | `107392318` | `ce11d3d78e617a879938645524e5a94614b7122fea2ad7dcf60addebc0cd51b8` | two byte-identical local builds from `f234bb6`; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present; focused AWG DNS regression tests and the full Core gate pass |
 | Windows x64 | `pokrov-core.dll` | `55401472` | `60fe3fad7835ec4d00c1f7168bb0ba01dd6b7ca5d883583340e5e2a86b8b3981` | retained exact bytes from `344b317`; two byte-identical builds; 15 required exports present; exact-DLL proxy-only 100-cycle start/stop PASS |
 | Windows dependency | `libcronet.dll` | `8596992` | `8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7` | unchanged retained dependency |
 | iOS | `PokrovCore.xcframework` | — | — | `MANUAL_OWNER_TEST` |
@@ -50,13 +51,13 @@ blocked until both active platform artifacts converge on one Core source.
 ## Reproducibility, SBOM And Provenance
 
 The retained Windows artifact keeps its earlier two-build reproducibility
-evidence. The corrected Android AAR currently has one clean local build; its
-second-build comparison and replacement SBOM are still pending:
+evidence. The corrected Android AAR also has two byte-identical local builds;
+replacement SBOM and packaged-client provenance remain pending:
 
-| Evidence | SHA-256 |
+| Evidence | Result / SHA-256 |
 | --- | --- |
-| Android build tree | `PENDING_SECOND_BUILD` |
-| Android evidence JSON | `PENDING_SECOND_BUILD` |
+| Android build comparison | `PASS_BYTE_IDENTICAL_TWO_BUILDS`; AAR SHA-256 `ce11d3d78e617a879938645524e5a94614b7122fea2ad7dcf60addebc0cd51b8` |
+| Android evidence JSON | `NOT_GENERATED_SEPARATELY` |
 | Windows build tree | `e12123eb9d6c7bd83a3c95ac4f864583219c37d6b98dfd283fc6f4deda099516` |
 | Windows evidence JSON | `0a4eab998c3a28b61949c4e5739b7c21e6301cd0ccde0084c9a325dc742438a6` |
 | `pokrov-core.cdx.json` | `8a3bc377285104a1cf9170e55fa25150a03e431582ef3f44d857d18241ec7a95` |
@@ -93,7 +94,7 @@ The strongest claim from this decision is
 
 Before these bytes may become a release candidate:
 
-1. rebuild Windows from `36895e9`, repeat Android, and prove byte-identical active artifacts from one Core source;
+1. rebuild Windows from `f234bb6` and prove byte-identical active artifacts from one Core source;
 2. inspect the resulting Android and Windows packages and bind their Core
    digests into strict-v2 metadata;
 3. run hosted CI on every frozen revision;

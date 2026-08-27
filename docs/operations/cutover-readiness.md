@@ -25,7 +25,7 @@ contracts. Do not select the most optimistic status.
 |---|---|
 | Canonical lane | `POKROV-app/main` |
 | Retained public release | Android and Windows `1.1.6` |
-| New working target | `1.2.0+35` |
+| New working target | `1.2.0+36` |
 | Target state | `PRE_CANDIDATE_LOCAL` |
 | Candidate created | `false` |
 | New public cutover | `BLOCKED` |
@@ -38,15 +38,15 @@ signing, device, runtime and origin evidence cannot be reused for promotion.
 
 | Gate | State | Required evidence |
 |---|---|---|
-| Package/version parity | `PASS_LOCAL` | Android and Windows are `1.2.0+35`; the shared app-shell remains product version `1.2.0`. |
+| Package/version parity | `PASS_LOCAL` | Android and Windows are `1.2.0+36`; the shared app-shell remains product version `1.2.0`. |
 | Strict-v2 generator contract | `PASS_LOCAL` | Schema, generator and cross-repository parity tests pass. |
 | Stable pointer and rollback catalog | `PASS_LOCAL` | Retained `1.1.6` pointer matches its exact versioned handoff; isolated A→B→A proves optimistic lock, atomic replace, backup, receipt and byte-identical reversal. |
 | Operational producer/privacy contract | `PASS_LOCAL` | Auth, entitlement, performance, support and Android count-only routing producers pass focused client/platform tests; exact-candidate runtime proof remains later. |
 | Temporary support mode and encrypted export | `PASS_LOCAL` | Signed exact-audience activation, explicit consent, persistent indicator, nonce/TTL/cumulative caps, no-upload short code and encrypted-only Android/Windows export pass local source/widget/unit contracts; exact-candidate physical host proof remains later. |
-| Clean frozen revisions | `READY_LOCAL_FREEZE; PROMOTION_BLOCKED` | Clean scoped platform/client branches, exact Core `344b317…8f6` and release-index `32f560d…2d4a` pass read-only preflight with zero blockers. They are not promoted and no replacement candidate is implied. |
-| Release index | `PASS_PRE_CANDIDATE_CONTRACT; REPLACEMENT_MANIFEST_MISSING` | Release-index `main` retains private signed candidate.4 evidence and the active signing contract. It has no manifest for build `33`; public readback and promotion remain blocked. |
-| Core replacement | `PASS_LOCAL` | Exact reproducible `1.1.0` AAR/DLL identities are bound to signed Core revision `344b317…8f6`; the refresh includes separate bounded AWG2 and default-off AWG 3.1 contracts. No tag, candidate signing or publication is claimed. |
-| AWG lifecycle and direct DoH lab | `PASS_LOCAL_SOURCE_AND_TEST; EXACT_ARTIFACT_INTEROP_PENDING` | Build 35 binds the managed-AWG profile fix, AWG endpoint egress-probe support, and Core commit `36895e9` which preserves the canonical `egress` subsystem on structured probe events. Build 34 achieved a real AWG3.1 handshake and bidirectional server bytes, then fail-closed because the prior Core AAR mislabeled that event as `core`. New exact build-35 egress, tunnel DNS, leak, AWG2, and direct DoH proof remain pending. |
+| Clean frozen revisions | `IN_PROGRESS_LOCAL_FREEZE; PROMOTION_BLOCKED` | Core `f234bb6…c171` is clean and pushed. Client build-36 binding and scoped platform AWG-lab scripts still require committed revisions and cross-repository preflight; release-index `32f560d…2d4a` remains unchanged. |
+| Release index | `PASS_PRE_CANDIDATE_CONTRACT; REPLACEMENT_MANIFEST_MISSING` | Release-index `main` retains private signed candidate.4 evidence and the active signing contract. It has no manifest for build `36`; public readback and promotion remain blocked. |
+| Core replacement | `PASS_MIXED_PLATFORM_LOCAL` | Android has two byte-identical `1.1.0` AAR builds from Core `f234bb6…c171`, including the AWG DNS fix; Windows retains exact DLL bytes from `344b317…8f6`. No tag, candidate signing, platform convergence or publication is claimed. |
+| AWG lifecycle and direct DoH lab | `PASS_LOCAL_SOURCE_AND_TEST; EXACT_ARTIFACT_INTEROP_PENDING` | Exact full AWG3.1, minimal AWG3.1 and AWG2 profiles on build 35 all reached TUN and a recent server handshake, then failed closed before any decrypted IP packet. The shared cause was the Core AWG endpoint leaving its DNS router uninitialized, so its hostname-based egress probe could not dial. Core `f234bb6` adds FQDN resolution for AWG dial/listen, two focused regression tests and a full green Core gate; exact build-36 AWG2/AWG3.1 egress, tunnel DNS, leak and direct DoH proof remain pending. |
 | Android LDPlayer source-lab rehearsal | `PASS_LOCAL_INSTALL_SETTINGS`; connect `BLOCKED_BACKEND_5XX` | Production-signed lab APK `1.2.0 (4031)`, SHA-256 `1ba37463c9549a6d5ba128850e1bf5825187fe185a621e9f8dc62c7cde1a4158`, installed byte-identically in LDPlayer 14. The installed x86_64 Core SHA-256 `f676e7e96f6e159e4da626ec51d94b438ef08fc2819e5d222b6253e51354980d` exposes the AWG2/AWG3.1 contract markers; AI/Games and configurable in-tunnel DoH settings persisted across restart. The live profile request returned 5xx, no `tun0` was created and the location catalog did not load. This is not an exact-candidate, real-AWG-server, physical-device, mobile-origin or production-connect pass. |
 | Candidate handoff | `MISSING` | One strict-v2 handoff binds exact revisions, artifacts and gates. |
 | Android artifact/signing | `MISSING` | Final APK identities and production signer match v2. |
