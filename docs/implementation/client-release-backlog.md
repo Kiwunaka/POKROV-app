@@ -1,6 +1,6 @@
 # POKROV Client Release Backlog
 
-Last updated: 2026-08-24
+Last updated: 2026-08-27
 
 ## Document Status
 
@@ -48,26 +48,28 @@ signing, hosted-CI, deployed-runtime or promotion proof.
 
 | Order | Gate | State | Completion rule |
 |---:|---|---|---|
-| 1 | Clean platform, client, Core and release-index revisions | `REFREEZE_REQUIRED` | Current control heads are platform `36fe4a1…1fd0`, client `3cab149…13e1` before this support-pin change, Core `bdbd97f…72f` and release-index `7d5e402…66b2`; merge this pin, then freeze the replacement tuple. |
-| 2 | Public release-index revision | `PASS_SOURCE_CONTROL` | Public `main` `7d5e402…66b2` retains the trust root and deterministic secret-only signer; post-merge source-contract run `32668571694` passes. No signed candidate template exists. |
-| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_LOCAL` | Core revision `bdbd97f…72f` produces the exact AAR/DLL identities already bound by source evidence; replacement candidate signing/device proof remains later. |
-| 4 | Strict-v2 candidate metadata | `MISSING` | Generate a new beta handoff after final-source Android/Windows artifact assembly; Windows signing must remain `SKIPPED_BY_OWNER`, never `PASS`. |
-| 5 | Android exact-candidate build and signer | `MISSING` | Rebuild with the tracked support pin; every APK must match v2 size, digest, package, version and production signer. |
+| 1 | Clean platform, client, Core and release-index revisions | `PASS_EXACT_TUPLE` | Candidate.3 binds platform `eafaca3…559`, artifact-source client `ac22825…ead`, Core `344b317…8f6` and signing release-index `6a1afa9…bb2`. Later workflow/evidence-only commits do not replace artifact source. |
+| 2 | Public release-index revision | `PASS_SIGNED_CANDIDATE_3_PRIVATE` | Release-index `main` retains signed candidate.3 and clean-host evidence; manifest `a2752b6a…1090`, signature `926f0b46…7121`, promotion false. No public `v1.2.0` release was created. |
+| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_ARTIFACTS` | Core source `344b317…8f6` binds AAR `da3ea378…aba9`, DLL `60fe3fad…3981` and Cronet `8ef1f8bb…a6f7`. |
+| 4 | Strict-v2 candidate metadata | `PASS_SIGNED_CANDIDATE_3` | Signed manifest binds the six exact artifacts, source tuple, contracts, SBOM and provenance; unsigned Windows remains `SKIPPED_BY_OWNER`, never trusted-signed. |
+| 5 | Android exact-candidate build and signer | `PASS_ARTIFACTS; PASS_EMULATOR_PREFLIGHT` | Five Android artifacts match v2 size/digest and production signer. Exact universal APK passed LDPlayer update/start/settings persistence; catalog/TUN is `BLOCKED_BY_ACCESS` on the expired emulator account. |
 | 6 | Android physical-device matrix | `MANUAL_OWNER_TEST` | Huawei install, TUN/DNS/egress, WARP, per-app, handoff and endurance pass on exact bytes. |
-| 7 | Windows exact-candidate package | `MISSING` | Rebuild with the tracked support pin; machine-wide setup must contain the service, Core and required dependencies. |
-| 8 | Windows unsigned-beta warning and clean-host recovery | `OWNER_EXCEPTION_RECORDED; MANUAL_OWNER_TEST` | Retain the exact `1.2.0` direct-beta exception and SmartScreen warning, then run clean VM install/TUN/DNS/egress/crash/reboot/rollback on the exact unsigned setup. Trusted signing remains a later gate for trusted/Store/broad-stable claims. |
-| 9 | Hosted cross-repository CI | `PASS_SOURCE_CONTROLS` | Client main run `32668204355` and platform master runs `32669461958`/`32669461832` pass; repeat after this support-pin merge and again for the exact candidate. |
-| 10 | Runtime/public readback and rollback | `NOT_AUTHORIZED` | Catalog contains the exact candidate plus prior stable target; owner authorizes sync; pointer backup, receipt, manifest, API, downloads and rollback readback are retained. |
+| 7 | Windows exact-candidate package | `PASS_EXACT_CANDIDATE_3_BOUNDED` | Run `33033294889` installed EXE `9962e3e8…8021`, matched all eight files, service/IPC/restart/uninstall and idle network restoration on clean Windows. Live network remains manual. |
+| 8 | Windows unsigned-beta warning and clean-host recovery | `SKIPPED_BY_OWNER; PASS_IDLE_CLEAN_HOST; MANUAL_OWNER_TEST` | Exact beta exception and warning are retained. Live TUN/DNS/egress, recovery while connected and interactive SmartScreen remain manual; trusted signing is still required for trusted/Store/broad-stable claims. |
+| 9 | Hosted cross-repository CI | `PASS_EXACT_SOURCES` | Platform runs `33029917507`/`33029917498`, client source run `33032033161`, gate-contract run `33032654414`, signing run `33032397754` and release-index source runs pass. |
+| 10 | Runtime/public readback and rollback | `NOT_AUTHORIZED` | Signed candidate.3 and private CI carrier exist, but public release assets, candidate catalog pointer, anonymous download readback and rollback drill have not been authorized or executed. |
 | 11 | Promotion and go/no-go | `NOT_AUTHORIZED` | All required v2 gates are `PASS` for the same artifact bytes. |
 
 ## Next Action Order
 
-1. Merge and host-verify the tracked support signing pin.
-2. Freeze the replacement four-repository tuple and rebuild exact artifacts.
-3. Generate strict-v2 beta metadata with Windows `SKIPPED_BY_OWNER` and run
-   exact Android/Windows manual gates.
-4. Request separate authority for runtime support-key deployment, candidate
-   publication, readback, rollback drill and promotion.
+1. Obtain a legitimate test entitlement and finish exact candidate.3 Android
+   catalog/TUN/DNS/egress checks, then run the physical-device/OEM matrix.
+2. Run the remaining Windows live-network, recovery and interactive
+   SmartScreen checks on the same EXE bytes.
+3. Complete current-origin, Brain-origin, payment, Operator OIDC/RBAC,
+   legal/commercial and rollback gates for the same candidate.
+4. Request separate authority for public same-byte candidate publication,
+   anonymous readback, rollback drill and promotion.
 5. Provision trusted Windows signing later before any signed, Store or
    broad-stable Windows claim.
 
