@@ -81,49 +81,67 @@ foreach ($forbiddenFragment in @('event_message', 'owner_sid_value', 'registry_o
 
 $windowsWorkflowPath = Join-Path $root ".github\workflows\windows-exact-candidate.yml"
 $windowsWorkflow = [IO.File]::ReadAllText($windowsWorkflowPath).Replace("`r`n", "`n")
-if (-not $windowsWorkflow.Contains("config/windows-clean-host-gate.candidate-2.json")) {
-  throw "Windows exact-candidate workflow is not pinned to candidate.2"
+if (-not $windowsWorkflow.Contains("config/windows-clean-host-gate.candidate-3.json")) {
+  throw "Windows exact-candidate workflow is not pinned to candidate.3"
 }
 
-$candidateTwoInputPath = Join-Path $root "config\windows-clean-host-gate.candidate-2.json"
-if (-not (Test-Path -LiteralPath $candidateTwoInputPath -PathType Leaf)) {
-  throw "Windows candidate.2 clean-host input is missing: $candidateTwoInputPath"
+$candidateThreeInputPath = Join-Path $root "config\windows-clean-host-gate.candidate-3.json"
+if (-not (Test-Path -LiteralPath $candidateThreeInputPath -PathType Leaf)) {
+  throw "Windows candidate.3 clean-host input is missing: $candidateThreeInputPath"
 }
 
-$candidateTwoInput = [IO.File]::ReadAllText($candidateTwoInputPath) | ConvertFrom-Json -Depth 20
-$candidateTwoExpected = [ordered]@{
-  candidate_label = "pokrov-1.2.0-candidate.2"
-  candidate_manifest_sha256 = "1697a1bce4f72314aa1f60cd74a1711f9b8f7d70091c5757e98fbdc09b4ce5e0"
-  candidate_manifest_signature_sha256 = "ebf259f1a9d3c9d561e3f39123c12804a178da5f15efcb293aeab47d45308a82"
-  private_ci_release_tag = "pokrov-1.2.0-candidate.2-private-ci"
+$candidateThreeInput = [IO.File]::ReadAllText($candidateThreeInputPath) | ConvertFrom-Json -Depth 20
+$candidateThreeExpected = [ordered]@{
+  candidate_label = "pokrov-1.2.0-candidate.3"
+  candidate_manifest_sha256 = "a2752b6a3b95faacf13a68edb708c560966a0f5eb8727e109d7f1603fdc81090"
+  candidate_manifest_signature_sha256 = "926f0b4667a58ba9cc5ace5c4e6c3c8129d1ec3d4d449b3f0831a8c527cd7121"
+  private_ci_release_tag = "pokrov-1.2.0-candidate.3-private-ci"
 }
-foreach ($entry in $candidateTwoExpected.GetEnumerator()) {
-  if ([string]$candidateTwoInput.($entry.Key) -ne [string]$entry.Value) {
-    throw "Windows candidate.2 input has wrong $($entry.Key)"
+foreach ($entry in $candidateThreeExpected.GetEnumerator()) {
+  if ([string]$candidateThreeInput.($entry.Key) -ne [string]$entry.Value) {
+    throw "Windows candidate.3 input has wrong $($entry.Key)"
   }
 }
 
-$candidateTwoSourceExpected = [ordered]@{
-  client = "e6c29d1201eded0d045a3e75f43beff8ae24bd8f"
+$candidateThreeSourceExpected = [ordered]@{
+  client = "ac22825e857a313c9e4eba61030eb548d6346ead"
   core = "344b317a7a09eca7943a93866b193553538bd8f6"
-  platform = "c5f3fca5c55d6baa48b54af3bf756ef40cc0e6e1"
-  release_index = "4c6d46c10083e68dc5d2032c13f51c4e80a17049"
+  platform = "eafaca3e64c0619dea7f58fc9c430682b4520559"
+  release_index = "6a1afa95fe52da2d559ba7b1da88715cd0344bb2"
 }
-foreach ($entry in $candidateTwoSourceExpected.GetEnumerator()) {
-  if ([string]$candidateTwoInput.source_tuple.($entry.Key) -ne [string]$entry.Value) {
-    throw "Windows candidate.2 input has wrong source tuple member $($entry.Key)"
+foreach ($entry in $candidateThreeSourceExpected.GetEnumerator()) {
+  if ([string]$candidateThreeInput.source_tuple.($entry.Key) -ne [string]$entry.Value) {
+    throw "Windows candidate.3 input has wrong source tuple member $($entry.Key)"
   }
 }
 
 if (
-  [string]$candidateTwoInput.artifact.sha256 -ne "4226daa49975cb25dae5bec8cbcd26299648ee89f5dbff613f62d807be0ac412" -or
-  [int64]$candidateTwoInput.artifact.size_bytes -ne 28893114
+  [string]$candidateThreeInput.artifact.sha256 -ne "9962e3e80947dae374619ed388fc08b7322bffda38202a42e5812597c7818021" -or
+  [int64]$candidateThreeInput.artifact.size_bytes -ne 28898240
 ) {
-  throw "Windows candidate.2 input has wrong installer identity"
+  throw "Windows candidate.3 input has wrong installer identity"
 }
 
-if (@($candidateTwoInput.installation.required_files).Count -ne 8) {
-  throw "Windows candidate.2 input does not bind all eight installed files"
+if (@($candidateThreeInput.installation.required_files).Count -ne 8) {
+  throw "Windows candidate.3 input does not bind all eight installed files"
+}
+
+$candidateThreeRequiredFiles = [ordered]@{
+  "pokrov_windows.exe" = "191488|fd5059c1e43b1a8e21ba8627911916f21bbda435529dff610b9219f38d3efdca"
+  "pokrov_service.exe" = "168960|0cb21283cf16648dcdba8c31d7660641550b1a5ff962ce2b80c3eb5f98ff7b04"
+  "flutter_windows.dll" = "18511872|1f4215e1072dd9e34f4565b74310e6771364e1470c7e92214bca64947bd012a1"
+  "pokrov-core.dll" = "55401472|60fe3fad7835ec4d00c1f7168bb0ba01dd6b7ca5d883583340e5e2a86b8b3981"
+  "libcronet.dll" = "8596992|8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+  "pokrov_tray.ico" = "110013|9eea4eff6f980edda2b9c61f3d86fa63e6349bed23bc83e09d5fbb3274d9575d"
+  "data/app.so" = "8881072|83d598b90f84275e9dfb5f411183d18dd926548524fb6cc2c1e1a22f5e34bd25"
+  "data/icudtl.dat" = "778864|c12537022ef818991a7bfed41a76d8d6ae962ffbc0e6511ac762a5d0845e7f7c"
+}
+foreach ($requiredFile in @($candidateThreeInput.installation.required_files)) {
+  $expectedIdentity = $candidateThreeRequiredFiles[[string]$requiredFile.path]
+  $actualIdentity = "$([int64]$requiredFile.size_bytes)|$([string]$requiredFile.sha256)"
+  if ([string]::IsNullOrWhiteSpace($expectedIdentity) -or $actualIdentity -ne $expectedIdentity) {
+    throw "Windows candidate.3 input has wrong installed-file identity for $($requiredFile.path)"
+  }
 }
 
 $windowsBuilderPath = Join-Path $root "scripts\build-windows-release.ps1"

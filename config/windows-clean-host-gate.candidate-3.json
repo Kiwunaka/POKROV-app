@@ -1,0 +1,71 @@
+{
+  "schema": "pokrov.windows-clean-host-gate-input/v1",
+  "candidate_label": "pokrov-1.2.0-candidate.3",
+  "candidate_manifest_sha256": "a2752b6a3b95faacf13a68edb708c560966a0f5eb8727e109d7f1603fdc81090",
+  "candidate_manifest_signature_sha256": "926f0b4667a58ba9cc5ace5c4e6c3c8129d1ec3d4d449b3f0831a8c527cd7121",
+  "private_ci_release_tag": "pokrov-1.2.0-candidate.3-private-ci",
+  "source_tuple": {
+    "client": "ac22825e857a313c9e4eba61030eb548d6346ead",
+    "core": "344b317a7a09eca7943a93866b193553538bd8f6",
+    "platform": "eafaca3e64c0619dea7f58fc9c430682b4520559",
+    "release_index": "6a1afa95fe52da2d559ba7b1da88715cd0344bb2"
+  },
+  "artifact": {
+    "file_name": "pokrov-windows-setup-x64.exe",
+    "sha256": "9962e3e80947dae374619ed388fc08b7322bffda38202a42e5812597c7818021",
+    "size_bytes": 28898240,
+    "version": "1.2.0+30",
+    "signing_status": "SKIPPED_BY_OWNER",
+    "owner_exception": "OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_2_0",
+    "smartscreen_warning_required": true
+  },
+  "installation": {
+    "directory": "POKROV",
+    "service_name": "POKROVService",
+    "display_name": "POKROV VPN",
+    "registry_path": "HKLM:\\Software\\space.pokrov\\POKROV\\Service",
+    "required_files": [
+      {
+        "path": "pokrov_windows.exe",
+        "size_bytes": 191488,
+        "sha256": "fd5059c1e43b1a8e21ba8627911916f21bbda435529dff610b9219f38d3efdca"
+      },
+      {
+        "path": "pokrov_service.exe",
+        "size_bytes": 168960,
+        "sha256": "0cb21283cf16648dcdba8c31d7660641550b1a5ff962ce2b80c3eb5f98ff7b04"
+      },
+      {
+        "path": "flutter_windows.dll",
+        "size_bytes": 18511872,
+        "sha256": "1f4215e1072dd9e34f4565b74310e6771364e1470c7e92214bca64947bd012a1"
+      },
+      {
+        "path": "pokrov-core.dll",
+        "size_bytes": 55401472,
+        "sha256": "60fe3fad7835ec4d00c1f7168bb0ba01dd6b7ca5d883583340e5e2a86b8b3981"
+      },
+      {
+        "path": "libcronet.dll",
+        "size_bytes": 8596992,
+        "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+      },
+      {
+        "path": "pokrov_tray.ico",
+        "size_bytes": 110013,
+        "sha256": "9eea4eff6f980edda2b9c61f3d86fa63e6349bed23bc83e09d5fbb3274d9575d"
+      },
+      {
+        "path": "data/app.so",
+        "size_bytes": 8881072,
+        "sha256": "83d598b90f84275e9dfb5f411183d18dd926548524fb6cc2c1e1a22f5e34bd25"
+      },
+      {
+        "path": "data/icudtl.dat",
+        "size_bytes": 778864,
+        "sha256": "c12537022ef818991a7bfed41a76d8d6ae962ffbc0e6511ac762a5d0845e7f7c"
+      }
+    ]
+  },
+  "evidence_ceiling": "EXACT_PRIVATE_CI_INSTALL_SERVICE_AUTHENTICATED_IPC_RESTART_UNINSTALL_AND_NO_IDLE_NETWORK_MUTATION_ONLY"
+}
