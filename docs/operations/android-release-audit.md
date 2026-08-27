@@ -1,6 +1,6 @@
 # Android Release Audit
 
-Last updated: 2026-08-24
+Last updated: 2026-08-27
 
 ## Document Status
 
@@ -15,10 +15,10 @@ Older APK identities and device runs are retained separately as evidence.
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
 | Working package target | `1.2.0+30` |
-| Candidate created | `false` |
+| Candidate created | `SIGNED_CANDIDATE_3_PRIVATE_EVIDENCE_ONLY` — promotion remains unauthorized |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Active pre-candidate Core package | POKROV Core `1.1.0` AAR, exact local bytes bound |
-| Support-mode signing public pin | `PASS_SOURCE_CONTROL` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`; no new APK built |
+| Active candidate Core package | POKROV Core `1.1.0` AAR from exact source `344b317…8f6` |
+| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
 
@@ -34,13 +34,15 @@ These local contracts do not prove final APK bytes or physical behavior.
 
 | Check | Current state |
 |---|---|
-| Clean client/Core revisions | `BLOCKED` |
+| Clean client/Core revisions | `PASS_SOURCE_CONTROL` — artifact source client `ac22825…ead`, Core `344b317…8f6`; client source run `33032033161` passed |
 | Exact Core AAR identity | `PASS_LOCAL` — `26a7b9eb…bf93`, two byte-identical builds, four ABIs |
-| Strict-v2 Android artifact entries | `MISSING` |
-| Exact APK support signing pin | `MISSING` — tracked pin exists, replacement APK bytes do not |
-| Production signer and lineage | `MISSING` |
-| Package/version/ABI/min-SDK identity | `MISSING` |
-| SHA-256 and byte-size match | `MISSING` |
+| Strict-v2 Android artifact entries | `PASS_SIGNED_CANDIDATE_3` — manifest `a2752b6a…1090`, signature `926f0b46…7121`, promotion false |
+| Exact APK support signing pin | `PASS_EXACT_ARTIFACT` — candidate.3 supply evidence binds the active support public key; no private key was read or exported |
+| Production signer and lineage | `PASS_5_OF_5` — APK/AAB certificate SHA-256 `0a0602a7…2500` |
+| Package/version/ABI/min-SDK identity | `PASS_EXACT_ARTIFACTS` — `1.2.0`, build `30`, min SDK `24`, universal plus three direct ABI APKs and store AAB |
+| SHA-256 and byte-size match | `PASS_EXACT_ARTIFACTS` — universal APK `f41c76eb…1c51`, `295051181` bytes; all five Android files match signed manifest |
+| LDPlayer upgrade/start/settings persistence | `PASS_EXACT_EMULATOR_PREFLIGHT` — Android 9/API 28, exact universal APK, AI/Games retained after force-stop/relaunch; no matching package fatal exception in bounded logcat |
+| LDPlayer catalog/TUN/DNS/egress | `BLOCKED_BY_ACCESS` — retained emulator account is expired and the app withholds the location catalog |
 | Private operational journal source contract | `PASS_LOCAL` |
 | Exact-device journal privacy/rotation/readback | `MANUAL_OWNER_TEST` |
 | Anonymous download | `NOT_RUN` |
@@ -56,6 +58,11 @@ These local contracts do not prove final APK bytes or physical behavior.
 
 Every manual check must name the exact APK SHA-256 and device. Emulator proof
 is preflight only and cannot clear a physical-device gate.
+
+Candidate.3 evidence is bounded to exact install/update, package identity,
+launch and settings persistence in LDPlayer. The earlier physical Beeline smoke
+proved corrected backend routes with a different client build; it does not
+clear candidate.3 physical-device, TUN, DNS, egress, OEM or RU-origin gates.
 
 ## Commands
 

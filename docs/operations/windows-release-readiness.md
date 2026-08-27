@@ -15,13 +15,13 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+30` |
-| Candidate created | `SIGNED_CANDIDATE_2_PRIVATE_EVIDENCE_ONLY` — promotion remains unauthorized |
+| Candidate created | `SIGNED_CANDIDATE_3_PRIVATE_EVIDENCE_ONLY` — promotion remains unauthorized |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active pre-candidate Core | POKROV Core `1.1.0`, desktop ABI `2`, exact local bytes bound |
+| Active candidate Core | POKROV Core `1.1.0`, desktop ABI `2`, exact source `344b317…8f6` bound |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Portable ZIP | Unsupported for the service-first runtime |
-| Support-mode signing public pin | `PASS_SOURCE_CONTROL` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`; no new EXE built |
+| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
 | Trusted signing for `1.2.0` direct beta | `SKIPPED_BY_OWNER` on `2026-08-24`; warning required |
 | Trusted/signed/Store/broad-stable claim | `BLOCKED_BY_ACCESS`; trusted Authenticode still required |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
@@ -42,18 +42,18 @@ still belongs to the exact-candidate gate below.
 
 | Check | Current state |
 |---|---|
-| Clean client/Core revisions | `PASS_SOURCE_CONTROL` — client `e6c29d1…`, exact Core artifact source `344b317…`; client post-merge run `33015545269` passed |
+| Clean client/Core revisions | `PASS_SOURCE_CONTROL` — artifact source client `ac22825…ead`, exact Core artifact source `344b317…8f6`; client source run `33032033161` passed |
 | Exact Core DLL and dependency identity | `PASS_LOCAL` — DLL `60fe3fad…3981`, Cronet `8ef1f8bb…a6f7`, exact bound Core source and 15 exports |
-| Machine-wide setup package | `PASS_EXACT_CANDIDATE_2` — private run `33017409577` installed exact unsigned setup SHA-256 `4226daa4…c412`, 28,893,114 bytes; all eight installed files matched |
-| Exact EXE support signing pin | `PASS_EXACT_ARTIFACT` — candidate.2 supply evidence binds the active `pokrov-support-2026-08` public pin; no private support key was read or exported |
-| Service install/start and UI authentication | `PASS_EXACT_CANDIDATE_2` — exact LocalSystem service identity, install-owner binding, accepted authenticated IPC and status request; candidate.1 remains failed history |
+| Machine-wide setup package | `PASS_EXACT_CANDIDATE_3` — private run `33033294889` installed exact unsigned setup SHA-256 `9962e3e8…8021`, 28,898,240 bytes; all eight installed files matched |
+| Exact EXE support signing pin | `PASS_EXACT_ARTIFACT` — candidate.3 supply evidence binds the active `pokrov-support-2026-08` public pin; no private support key was read or exported |
+| Service install/start and UI authentication | `PASS_EXACT_CANDIDATE_3` — exact LocalSystem service identity, install-owner binding, accepted authenticated IPC and status request; candidate.1 remains failed history |
 | Trusted code signing and timestamp | `SKIPPED_BY_OWNER` for the exact `1.2.0` direct-download beta only; fail-closed trusted tooling remains ready for the later signed lane |
 | Clean-host TUN/DNS/egress | `MANUAL_OWNER_TEST` |
 | Crash/reboot/sleep/SCM recovery | `MANUAL_OWNER_TEST` |
-| Route and DNS restoration | `PASS_EXACT_CANDIDATE_2_IDLE_ONLY` — clean-host route/DNS fingerprints remained unchanged after idle install/restart/uninstall; connected restoration remains `MANUAL_OWNER_TEST` |
+| Route and DNS restoration | `PASS_EXACT_CANDIDATE_3_IDLE_ONLY` — clean-host route/DNS fingerprints remained unchanged after idle install/restart/uninstall; connected restoration remains `MANUAL_OWNER_TEST` |
 | Uninstall while connected | `MANUAL_OWNER_TEST` |
 | SmartScreen/reputation observation | `MANUAL_OWNER_TEST` |
-| Strict-v2 size/SHA-256/source binding | `PASS_SIGNED_CANDIDATE_2` — handoff `317fa2ab…2a10`, manifest `1697a1bc…e5e0`, signature `ebf259f1…8a82`; promotion is false |
+| Strict-v2 size/SHA-256/source binding | `PASS_SIGNED_CANDIDATE_3` — handoff `eba6d4c2…72ee`, manifest `a2752b6a…1090`, signature `926f0b46…7121`; promotion is false |
 | Anonymous download and install | `NOT_RUN` |
 | Rollback drill | `NOT_RUN` |
 
@@ -80,11 +80,22 @@ authenticated egress, sleep/reboot/crash recovery, uninstall while connected,
 or interactive SmartScreen reputation checks; those remain
 `MANUAL_OWNER_TEST`.
 
+Candidate.3 binds the SPB/client correction and source-freeze build fixes to
+signed manifest `a2752b6a…1090`. Its private carrier targets exact artifact
+source `ac22825…ead`. Clean-host run `33033294889` downloaded the same EXE
+bytes and passed exact identity, silent machine-wide install, all eight
+installed-file identities, LocalSystem service identity, authenticated
+UI/service IPC, SCM stop/restart, clean uninstall and unchanged idle route/DNS
+fingerprints. The downloaded sanitized evidence SHA-256 is
+`494f0cd7…1c62`. Live TUN, DNS capture, authenticated egress,
+sleep/reboot/crash recovery, uninstall while connected and interactive
+SmartScreen observation remain `MANUAL_OWNER_TEST`.
+
 ## Safe Current Claims
 
 - The `1.2.0` source targets an unelevated UI and authenticated Windows service.
 - Local tests prove source contracts and isolated recovery logic only.
-- A final-source, signed-manifest candidate.2 exists privately and has passed
+- A final-source, signed-manifest candidate.3 exists privately and has passed
   its bounded clean-host gate. It is not promotion-authorized.
 - The owner authorizes one unsigned direct-download beta with the mandatory
   SmartScreen/unknown-publisher warning. This is not trusted-signing evidence
