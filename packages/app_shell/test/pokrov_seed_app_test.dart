@@ -9891,9 +9891,15 @@ void main() {
       findsOneWidget,
     );
 
+    final sheetScroll =
+        find.byKey(const ValueKey('location-variant-sheet-scroll'));
     final finalVariant = find.byKey(const ValueKey('location-variant-mini-3'));
-    await tester.ensureVisible(finalVariant);
+    final initialTop = tester.getTopLeft(finalVariant).dy;
+    await tester.drag(sheetScroll, const Offset(0, -240));
     await tester.pumpAndSettle();
+    await tester.drag(sheetScroll, const Offset(0, -240));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(finalVariant).dy, lessThan(initialTop));
     expect(tester.getBottomRight(finalVariant).dy, lessThanOrEqualTo(350));
 
     await tester.tap(finalVariant);
@@ -9901,6 +9907,90 @@ void main() {
     expect(bootstrapper.lastPreferredNodeCode, 'de-fra');
     expect(bootstrapper.lastPreferredVariantId, 'mini-3');
     expect(store.state.preferredVariantId, 'mini-3');
+  });
+
+  testWidgets('catalog refresh resets a removed preferred variant to direct',
+      (tester) async {
+    _installReadyRuntimeBridgeMock();
+    const catalog = ClientLocationsCatalog(
+      auto: ClientLocationAuto(enabled: true, currentCode: 'de-fra'),
+      countries: <ClientLocationCountry>[
+        ClientLocationCountry(
+          code: 'de',
+          country: 'Germany',
+          cities: <ClientLocationCity>[
+            ClientLocationCity(
+              code: 'de-fra',
+              city: 'Frankfurt',
+              healthScore: 0.95,
+              latencyMs: 31,
+              premium: true,
+              load: 0.24,
+              variants: <ClientLocationVariant>[
+                ClientLocationVariant(
+                  id: 'direct',
+                  label: 'Обычный',
+                  description: 'Прямое подключение',
+                  available: true,
+                ),
+                ClientLocationVariant(
+                  id: 'mini',
+                  label: 'Белые списки',
+                  description: 'Для ограниченных сетей',
+                  available: true,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+      freePoolCode: '',
+      profileRevision: 'variant-removed-rev',
+      transportProfile: 'ru_bridge_relay',
+      query: '',
+    );
+    final store = _FakeClientExperienceStore(
+      PokrovClientExperienceState.fromJson(<String, dynamic>{
+        'preferredNodeCode': 'de-fra',
+        'preferredVariantId': 'mini-3',
+        'firstRouteScopeConfirmed': true,
+        'firstRouteScopeMode': 'fullTunnel',
+      }),
+    );
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'removed-variant-profile',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      locationsCatalog: catalog,
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        clientExperienceStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-locations');
+    await tester.pumpAndSettle();
+
+    expect(store.state.preferredNodeCode, 'de-fra');
+    expect(store.state.preferredVariantId, 'direct');
+    final subtitle = find.byKey(
+      const ValueKey('locations-catalog-subtitle-de-fra'),
+    );
+    expect(tester.widget<Text>(subtitle).data, contains('Обычный'));
+
+    await _tapNav(tester, 'nav-protection');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
+    expect(bootstrapper.lastPreferredNodeCode, 'de-fra');
+    expect(bootstrapper.lastPreferredVariantId, 'direct');
   });
 
   testWidgets(

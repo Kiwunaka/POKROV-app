@@ -6134,7 +6134,7 @@ class AppFirstRuntimeBootstrapper
       'type': 'urltest',
       'tag': groupTag,
       'outbounds': uniqueTags.toList(growable: false),
-      'url': 'http://cp.cloudflare.com',
+      'url': _androidCoreEgressProbeUrl,
       'interval': '10m0s',
       'tolerance': 1,
       'interrupt_exist_connections': false,
