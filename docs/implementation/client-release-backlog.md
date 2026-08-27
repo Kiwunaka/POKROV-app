@@ -41,6 +41,9 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
 - Local observability, diagnostics and support-bundle contracts are present.
 - Production packaging is source-bound to one tracked support-mode public key
   and rejects partial or different overrides before Flutter.
+- The clean replacement platform/client branches, exact Core source and
+  release-index `main` pass the read-only cross-repository preflight as
+  `READY_LOCAL_FREEZE`; no candidate or artifact claim is implied.
 
 These are source and fixture results. They are not exact-candidate, device,
 signing, hosted-CI, deployed-runtime or promotion proof.
@@ -49,7 +52,7 @@ signing, hosted-CI, deployed-runtime or promotion proof.
 
 | Order | Gate | State | Completion rule |
 |---:|---|---|---|
-| 1 | Clean platform, client, Core and release-index revisions | `PREPARING_REPLACEMENT_TUPLE` | Candidate.3 retains platform `eafaca3…559`, artifact-source client `ac22825…ead`, Core `344b317…8f6` and signing release-index `6a1afa9…bb2`. The replacement source adds support polling and package build `31`; its final committed client revision is not frozen yet. |
+| 1 | Clean platform, client, Core and release-index revisions | `READY_LOCAL_FREEZE` | Clean scoped platform/client branches, Core `344b317…8f6` and release-index `32f560d…2d4a` pass the read-only preflight with zero blockers. Promotion and hosted checks remain separate. |
 | 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains signed candidate.3 evidence; manifest `a2752b6a…1090`, signature `926f0b46…7121`, promotion false. It does not bind the replacement source or `1.2.0+31`. |
 | 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_ARTIFACTS` | Core source `344b317…8f6` binds AAR `da3ea378…aba9`, DLL `60fe3fad…3981` and Cronet `8ef1f8bb…a6f7`. |
 | 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.3 metadata remains valid only for its exact older bytes. The replacement must bind build `31`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
