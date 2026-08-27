@@ -31,7 +31,11 @@ param(
 $ErrorActionPreference = "Stop"
 
 if (-not $CheckTrustedWindowsSigningReadinessOnly) {
-  & (Join-Path $PSScriptRoot "check-client-version-parity.ps1")
+  $versionParityArguments = @{}
+  if ($CoreRoot) {
+    $versionParityArguments.CoreRoot = $CoreRoot
+  }
+  & (Join-Path $PSScriptRoot "check-client-version-parity.ps1") @versionParityArguments
 }
 
 $EmergencySigningKeyId = [string]$EmergencySigningKeyId
@@ -447,7 +451,11 @@ if ($windowsReleaseConfig.runtime.PSObject.Properties.Name -contains "runtime_de
 }
 
 if (-not $SkipValidateSeed) {
-  & (Join-Path $PSScriptRoot "validate-seed.ps1")
+  $validateSeedArguments = @{}
+  if ($CoreRoot) {
+    $validateSeedArguments.CoreRoot = $CoreRoot
+  }
+  & (Join-Path $PSScriptRoot "validate-seed.ps1") @validateSeedArguments
   if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
   }
