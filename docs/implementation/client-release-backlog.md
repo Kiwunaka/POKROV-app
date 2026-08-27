@@ -14,7 +14,7 @@ results belong in dated evidence and never become reusable release approval.
 | Fact | Current state |
 |---|---|
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
-| Working package target | `1.2.0+32` |
+| Working package target | `1.2.0+33` |
 | Working target state | `PRE_CANDIDATE_LOCAL` |
 | Candidate created | `false` |
 | Public cutover allowed for a new candidate | `false` |
@@ -29,7 +29,7 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
 
 ## Current Local Completion
 
-- Android and Windows package versions match `1.2.0+32`; app-shell reports the
+- Android and Windows package versions match `1.2.0+33`; app-shell reports the
   shared product version `1.2.0`.
 - Strict release-handoff v2 generation and client/Core parity pass locally.
 - The retained `1.1.6` stable pointer is hash-bound to its versioned rollback
@@ -41,9 +41,12 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
 - Local observability, diagnostics and support-bundle contracts are present.
 - Production packaging is source-bound to one tracked support-mode public key
   and rejects partial or different overrides before Flutter.
-- The build-32 source adds an opt-in direct-DoH laboratory detour while keeping
-  VPN as the default and AI/Games application traffic on VPN/AWG. All 394
-  app-shell tests and analyzer pass locally.
+- The build-33 source carries forward the opt-in direct-DoH laboratory detour
+  and fixes managed AWG endpoint materialization without changing VPN-default
+  routing. The full workspace gate passes locally, including 395 app-shell and
+  62 runtime-engine tests, Android and Windows shell tests, and both Android
+  Gradle flavors. The optional exact Windows DLL backtest remains a separate
+  environment-bound check.
 - A separate Core test-only commit exercises 25 AWG2 and 25 AWG3.1 real
   userspace-device lifecycles against the same production Core tree bound by
   `344b317…8f6`; live server interop remains a separate gate.
@@ -59,10 +62,10 @@ signing, hosted-CI, deployed-runtime or promotion proof.
 | Order | Gate | State | Completion rule |
 |---:|---|---|---|
 | 1 | Clean platform, client, Core and release-index revisions | `READY_LOCAL_FREEZE` | Clean scoped platform/client branches, Core `344b317…8f6` and release-index `32f560d…2d4a` pass the read-only preflight with zero blockers. Promotion and hosted checks remain separate. |
-| 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains signed candidate.3 evidence; manifest `a2752b6a…1090`, signature `926f0b46…7121`, promotion false. It does not bind the replacement source or `1.2.0+32`. |
+| 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains private signed candidate.4 evidence with promotion false. It does not bind the replacement source or `1.2.0+33`. |
 | 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_ARTIFACTS; PASS_LOCAL_AWG_LIFECYCLE` | Core source `344b317…8f6` binds AAR `da3ea378…aba9`, DLL `60fe3fad…3981` and Cronet `8ef1f8bb…a6f7`. Test-only Core PR 5 exercises 25 AWG2 and 25 AWG3.1 userspace-device lifecycles against the unchanged production tree; server handshake/TUN/egress remains unproven. |
-| 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.3 metadata remains valid only for its exact older bytes. The replacement must bind build `32`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
-| 5 | Android exact-candidate build and signer | `MISSING_REPLACEMENT_ARTIFACTS` | Candidate.3 production-signed artifacts and LDPlayer persistence are supporting evidence only. Build `32` requires new exact APK/AAB identities and signer verification. |
+| 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.4 metadata remains valid only for its exact older bytes. The replacement must bind build `33`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
+| 5 | Android exact-candidate build and signer | `MISSING_REPLACEMENT_ARTIFACTS` | Candidate.4 production-signed artifacts and LDPlayer persistence are supporting evidence only; its live AWG profile failed in the client before tunnel start. Build `33` requires new exact APK/AAB identities and signer verification. |
 | 6 | Android physical-device matrix | `MANUAL_OWNER_TEST` | Huawei install, TUN/DNS/egress, WARP, per-app, handoff and endurance pass on exact bytes. |
 | 7 | Windows exact-candidate package | `MISSING_REPLACEMENT_ARTIFACT` | Candidate.3 clean-host run `33033294889` is retained supporting evidence only. Build `32` requires a new setup identity and bounded clean-host run. |
 | 8 | Windows unsigned-beta warning and clean-host recovery | `SKIPPED_BY_OWNER; REPLACEMENT_PROOF_MISSING` | The `1.2.0` direct-beta exception and warning remain applicable. Replacement live TUN/DNS/egress, recovery while connected and interactive SmartScreen are manual; trusted signing is still required for trusted/Store/broad-stable claims. |

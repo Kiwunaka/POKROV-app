@@ -5272,6 +5272,161 @@ void main() {
     expect(realityOutbound['tcp_fast_open'], false);
   });
 
+  test('materializes managed AWG2 and AWG31 endpoints for Android', () async {
+    const labs = <Map<String, String>>[
+      <String, String>{
+        'profile': 'awg2_lab',
+        'tag': 'pokrov-awg2-lab',
+        'contract_id': 'pokrov.awg2.endpoint.v1',
+        'contract_sha256':
+            'c473c411025825bfef5a76c64990c5c921e9658b3581210d3a86d72e454fdea8',
+      },
+      <String, String>{
+        'profile': 'awg31_lab',
+        'tag': 'pokrov-awg31-lab',
+        'contract_id': 'pokrov.awg31.endpoint.v1',
+        'contract_sha256':
+            '1bb49b61549ba7c4a3c2d56df445e919ebb1ed12d42e04b0cb3c915d23240818',
+      },
+    ];
+
+    for (final lab in labs) {
+      final tempDirectory = await Directory.systemTemp.createTemp(
+        'pokrov-bootstrap-${lab['profile']}-test-',
+      );
+      addTearDown(() async {
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(server.close);
+      unawaited(() async {
+        await for (final request in server) {
+          await utf8.decoder.bind(request).join();
+          switch (request.uri.path) {
+            case '/api/client/session/start-trial':
+              request.response
+                ..headers.contentType = ContentType.json
+                ..write(jsonEncode(<String, Object?>{
+                  'session': <String, Object?>{
+                    'session_token': 'awg-lab-session',
+                    'account_id': '127',
+                  },
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                    'managed_manifest': <String, Object?>{
+                      'url': '/api/client/profile/managed',
+                    },
+                  },
+                }));
+            case '/api/client/route-policy':
+              request.response
+                ..headers.contentType = ContentType.json
+                ..write(jsonEncode(<String, Object?>{'ok': true}));
+            case '/api/client/profile/managed':
+              request.response
+                ..headers.contentType = ContentType.json
+                ..write(jsonEncode(<String, Object?>{
+                  'provisioning': <String, Object?>{
+                    'status': 'ready',
+                    'sync_ok': true,
+                  },
+                  'profile_revision': 'rev-${lab['profile']}',
+                  'config_format': 'singbox-json',
+                  'config_payload': <String, Object?>{
+                    '_meta': <String, Object?>{
+                      'title': 'POKROV',
+                      'transport_contract': <String, Object?>{
+                        'id': lab['contract_id'],
+                        'sha256': lab['contract_sha256'],
+                        'profile': lab['profile'],
+                        'state': 'enabled',
+                        'generation': '${lab['profile']}-v1',
+                      },
+                    },
+                    'dns': <String, Object?>{
+                      'servers': <Object?>[
+                        <String, Object?>{
+                          'tag': 'bootstrap',
+                          'address': 'local',
+                        },
+                        <String, Object?>{
+                          'tag': 'lab-dns',
+                          'address': '8.8.8.8',
+                          'detour': lab['tag'],
+                        },
+                      ],
+                      'final': 'lab-dns',
+                    },
+                    'inbounds': <Object?>[],
+                    'endpoints': <Object?>[
+                      <String, Object?>{
+                        'type': 'awg',
+                        'tag': lab['tag'],
+                        'contract_id': lab['contract_id'],
+                        'useIntegratedTun': false,
+                      },
+                    ],
+                    'outbounds': <Object?>[
+                      <String, Object?>{'type': 'direct', 'tag': 'direct'},
+                      <String, Object?>{'type': 'block', 'tag': 'block'},
+                      <String, Object?>{'type': 'dns', 'tag': 'dns-out'},
+                    ],
+                    'route': <String, Object?>{
+                      'rules': <Object?>[
+                        <String, Object?>{
+                          'protocol': 'dns',
+                          'outbound': 'dns-out',
+                        },
+                      ],
+                      'final': lab['tag'],
+                    },
+                  },
+                }));
+            default:
+              request.response.statusCode = HttpStatus.notFound;
+          }
+          await request.response.close();
+        }
+      }());
+
+      final bootstrapper = AppFirstRuntimeBootstrapper(
+        apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+        supportDirectoryResolver: () async => tempDirectory,
+      );
+      final payload = await bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.android,
+        routeMode: RouteMode.fullTunnel,
+      );
+      final config = jsonDecode(payload.configPayload) as Map<String, dynamic>;
+      final endpoint =
+          (config['endpoints'] as List<dynamic>).single as Map<String, dynamic>;
+      final contract =
+          (config['_meta'] as Map<String, dynamic>)['transport_contract']
+              as Map<String, dynamic>;
+      final route = config['route'] as Map<String, dynamic>;
+      final outbounds =
+          (config['outbounds'] as List<dynamic>).cast<Map<String, dynamic>>();
+
+      expect(endpoint['type'], 'awg');
+      expect(endpoint['tag'], lab['tag']);
+      expect(endpoint['contract_id'], lab['contract_id']);
+      expect(contract['id'], lab['contract_id']);
+      expect(contract['profile'], lab['profile']);
+      expect(route['final'], lab['tag']);
+      expect(
+        outbounds.every(
+          (outbound) => const <String>{'direct', 'block', 'dns'}
+              .contains(outbound['type']),
+        ),
+        isTrue,
+      );
+    }
+  });
+
   test('materialization verifies an explicit Smart Connect location', () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-bootstrap-preferred-node-test-',
@@ -5538,8 +5693,7 @@ void main() {
                 managedResponse(
                   duplicateRuProxy: code == 'ru-duplicate',
                   ambiguousFinalSelector: code == 'selector-ambiguous',
-                  preferredRouteVariant:
-                      code == 'ru-spb' ||
+                  preferredRouteVariant: code == 'ru-spb' ||
                       code == 'ru-nested' ||
                       code == 'ru-hidden',
                   directUnlisted: code == 'ru-unlisted',

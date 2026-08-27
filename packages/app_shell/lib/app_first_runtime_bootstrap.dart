@@ -6617,7 +6617,15 @@ class AppFirstRuntimeBootstrapper
     required _ClientRuleSetCatalog clientRuleSetCatalog,
   }) {
     final outbounds = _readListOfMaps(baseConfig['outbounds']);
-    if (outbounds.isEmpty) {
+    final endpoints = _readListOfMaps(baseConfig['endpoints']);
+    final awgEndpointTags = endpoints
+        .where(
+          (endpoint) => _readText(endpoint['type']).toLowerCase() == 'awg',
+        )
+        .map((endpoint) => _readText(endpoint['tag']))
+        .where((tag) => tag.isNotEmpty)
+        .toList(growable: false);
+    if (outbounds.isEmpty && awgEndpointTags.isEmpty) {
       throw const BootstrapFailure(
         'The connection details for this device were incomplete.',
       );
@@ -6635,9 +6643,14 @@ class AppFirstRuntimeBootstrapper
         .map((outbound) => _readText(outbound['tag']))
         .where((tag) => tag.isNotEmpty)
         .toList(growable: false);
+    final transportPathTags = <String>{
+      ...proxyOutboundTags,
+      ...awgEndpointTags,
+    }.toList(growable: false);
     final selectorTag = _findOutboundTag(outbounds, 'selector');
     final urlTestTag = _findOutboundTag(outbounds, 'urltest');
     if (proxyOutboundTags.isEmpty &&
+        awgEndpointTags.isEmpty &&
         selectorTag == null &&
         urlTestTag == null) {
       throw const BootstrapFailure(
@@ -6674,7 +6687,8 @@ class AppFirstRuntimeBootstrapper
 
     final baseRoute = _readMap(baseConfig['route']);
     var finalOutboundTag = _readText(baseRoute['final']);
-    if (!existingTags.contains(finalOutboundTag) ||
+    if ((!existingTags.contains(finalOutboundTag) &&
+            !awgEndpointTags.contains(finalOutboundTag)) ||
         _isAuxiliaryTag(finalOutboundTag)) {
       finalOutboundTag = '';
     }
@@ -6682,7 +6696,7 @@ class AppFirstRuntimeBootstrapper
     if (hostPlatform == HostPlatform.android) {
       _normalizeAndroidOutboundChains(
         outbounds: outbounds,
-        proxyOutboundTags: proxyOutboundTags,
+        proxyOutboundTags: transportPathTags,
         routeMode: routeMode,
         directTag: directTag,
       );
@@ -6701,14 +6715,19 @@ class AppFirstRuntimeBootstrapper
         proxyOutboundTags: proxyOutboundTags,
       );
     }
+    if (finalOutboundTag.isEmpty && awgEndpointTags.length == 1) {
+      finalOutboundTag = awgEndpointTags.single;
+    }
     if (finalOutboundTag.isEmpty) {
-      finalOutboundTag = proxyOutboundTags.first;
+      throw const BootstrapFailure(
+        'The connection details for this device did not include a working connection path.',
+      );
     }
 
     if (hostPlatform == HostPlatform.android) {
       finalOutboundTag = _normalizeAndroidFinalOutboundTag(
         outbounds: outbounds,
-        proxyOutboundTags: proxyOutboundTags,
+        proxyOutboundTags: transportPathTags,
         routeMode: routeMode,
         directTag: directTag,
         currentFinalOutboundTag: finalOutboundTag,
@@ -6743,6 +6762,12 @@ class AppFirstRuntimeBootstrapper
       if (experimental.isNotEmpty) {
         runtimeConfig['experimental'] = experimental;
       }
+      _preserveManagedAwgRuntimeContract(
+        runtimeConfig: runtimeConfig,
+        baseConfig: baseConfig,
+        endpoints: endpoints,
+        awgEndpointTags: awgEndpointTags,
+      );
       return runtimeConfig;
     }
 
@@ -6776,7 +6801,34 @@ class AppFirstRuntimeBootstrapper
         clientRuleSetCatalog: clientRuleSetCatalog,
       ),
     };
+    _preserveManagedAwgRuntimeContract(
+      runtimeConfig: runtimeConfig,
+      baseConfig: baseConfig,
+      endpoints: endpoints,
+      awgEndpointTags: awgEndpointTags,
+    );
     return runtimeConfig;
+  }
+
+  void _preserveManagedAwgRuntimeContract({
+    required Map<String, dynamic> runtimeConfig,
+    required Map<String, dynamic> baseConfig,
+    required List<Map<String, dynamic>> endpoints,
+    required List<String> awgEndpointTags,
+  }) {
+    if (awgEndpointTags.isEmpty) {
+      return;
+    }
+    runtimeConfig['endpoints'] = endpoints;
+    final transportContract = _readMap(
+      _readMap(baseConfig['_meta'])['transport_contract'],
+    );
+    if (transportContract.isEmpty) {
+      return;
+    }
+    runtimeConfig['_meta'] = <String, dynamic>{
+      'transport_contract': Map<String, dynamic>.from(transportContract),
+    };
   }
 
   Map<String, dynamic> _buildAndroidDnsBlock({
