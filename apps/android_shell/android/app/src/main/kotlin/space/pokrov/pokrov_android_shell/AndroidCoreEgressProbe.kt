@@ -360,5 +360,5 @@ internal object AndroidCoreEgressProbe {
     private const val ENDPOINT_RESULT_TIMEOUT_MILLIS = 48_000L
     private val activeEndpointHandler = AtomicReference<ProbeHandler?>()
     private val SELECTABLE_TYPES = setOf("selector", "urltest")
-    private val PROBEABLE_ENDPOINT_TYPES = setOf("warp")
+    private val PROBEABLE_ENDPOINT_TYPES = setOf("warp", "awg")
 }

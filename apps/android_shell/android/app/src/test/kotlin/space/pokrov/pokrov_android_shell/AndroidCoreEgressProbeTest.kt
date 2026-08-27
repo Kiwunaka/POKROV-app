@@ -114,11 +114,27 @@ class AndroidCoreEgressProbeTest {
     }
 
     @Test
+    fun resolvesAwgFinalAsEndpointProbeTarget() {
+        assertEquals(
+            AndroidCoreEgressProbeTarget(
+                tag = "pokrov-awg31",
+                kind = AndroidCoreEgressProbeTargetKind.ENDPOINT,
+            ),
+            AndroidCoreEgressProbe.resolveFinalTarget(
+                finalTag = "pokrov-awg31",
+                outboundTypes = mapOf("direct" to "direct"),
+                endpointTypes = mapOf("pokrov-awg31" to "awg"),
+            ),
+        )
+    }
+
+    @Test
     fun acceptsOnlySelectableGroupTypes() {
         assertTrue(AndroidCoreEgressProbe.isSelectableGroupType("selector"))
         assertTrue(AndroidCoreEgressProbe.isSelectableGroupType(" URLTEST "))
         assertFalse(AndroidCoreEgressProbe.isSelectableGroupType("vless"))
         assertTrue(AndroidCoreEgressProbe.isProbeableEndpointType(" WARP "))
+        assertTrue(AndroidCoreEgressProbe.isProbeableEndpointType(" AWG "))
         assertFalse(AndroidCoreEgressProbe.isProbeableEndpointType("wireguard"))
     }
 

@@ -1376,10 +1376,10 @@ if ($product.client_version_line -ne $release.latest_repo_backed_release.version
 $developmentTarget = $release.release_truth.development_target
 if ($developmentTarget.product_version -ne '1.2.0' -or
     [int]$developmentTarget.platform_build -ne 33 -or
-    $developmentTarget.package_version -ne '1.2.0+33' -or
+    $developmentTarget.package_version -ne '1.2.0+34' -or
     $developmentTarget.state -ne 'PRE_CANDIDATE_LOCAL' -or
     $developmentTarget.candidate_created -ne $false) {
-  $errors += 'Release handoff development target must remain exact uncreated 1.2.0+33 pre-candidate truth'
+  $errors += 'Release handoff development target must remain exact uncreated 1.2.0+34 pre-candidate truth'
 }
 if ($cutover.latest_repo_backed_release.github_release -ne $release.latest_repo_backed_release.github_release) {
   $errors += 'Cutover and release-handoff URLs disagree'
@@ -1670,7 +1670,7 @@ foreach ($relativePath in $readinessSnapshots) {
   }
 }
 
-foreach ($currentFact in @('`1.1.6`', '`1.2.0+33`', '`PRE_CANDIDATE_LOCAL`', '| Candidate created | `false` |')) {
+foreach ($currentFact in @('`1.1.6`', '`1.2.0+34`', '`PRE_CANDIDATE_LOCAL`', '| Candidate created | `false` |')) {
   if (-not $backlog.Contains($currentFact)) {
     $errors += "Client backlog lacks current release fact: $currentFact"
   }

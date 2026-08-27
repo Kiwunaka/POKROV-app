@@ -15,8 +15,8 @@
     "google_play_state": "NOT_REQUESTED",
     "development_target": {
       "product_version": "1.2.0",
-      "platform_build": 33,
-      "package_version": "1.2.0+33",
+      "platform_build": 34,
+      "package_version": "1.2.0+34",
       "state": "PRE_CANDIDATE_LOCAL",
       "candidate_created": false
     },
