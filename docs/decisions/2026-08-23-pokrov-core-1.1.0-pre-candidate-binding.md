@@ -1,9 +1,9 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-Status: refreshed on 2026-08-28 as a mixed exact-platform pre-candidate binding
-for POKROV `1.2.0+4044`. Android carries the Core egress-event, AWG endpoint DNS
-and bounded outer-socket protection corrections; Windows retains the previous
-exact DLL until rebuilt.
+Status: refreshed on 2026-08-28 as a single-source Android/Windows
+pre-candidate binding for POKROV `1.2.0+4046`. Both active platform artifacts
+now carry the Core egress, AWG and default-off Hysteria2 corrections from one
+exact revision.
 
 This is not a Core release, client candidate, signing pass, publication or
 promotion decision. No `v1.1.0` Git tag or public Core release was created.
@@ -15,8 +15,7 @@ The client binds the separately versioned Core target as follows:
 - repository: `Kiwunaka/POKROV-core`;
 - version-derived target label: `v1.1.0`;
 - tag created: `false`;
-- Android source commit: `f44dbe89d6b89954032a1a798c2209d8c0aff90d`;
-- retained Windows source commit: `344b317a7a09eca7943a93866b193553538bd8f6`;
+- Android and Windows source commit: `e8eb7721fc6eaac6813d3a888ac90d0da1f541a1`;
 - source state: `PRE_CANDIDATE_LOCAL`;
 - candidate created: `false`;
 - desktop ABI: `2`;
@@ -37,31 +36,30 @@ scoped release branch until its own owner-solo promotion evidence is recorded.
 
 | Platform | Artifact | Size | SHA-256 | Local result |
 | --- | --- | ---: | --- | --- |
-| Android | `pokrov-core.aar` | `107394593` | `ca391059b6676de5a2cfbf582395fd7ab0b0b5979c8a0c40faaa7208b79178e5` | two byte-identical local builds from `f44dbe8`, also byte-identical to the prior `54e76bb` binding; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present; focused AWG/dialer tests and the full Core gate pass |
-| Windows x64 | `pokrov-core.dll` | `55401472` | `60fe3fad7835ec4d00c1f7168bb0ba01dd6b7ca5d883583340e5e2a86b8b3981` | retained exact bytes from `344b317`; two byte-identical builds; 15 required exports present; exact-DLL proxy-only 100-cycle start/stop PASS |
+| Android | `pokrov-core.aar` | `107390782` | `7c392883ee8a09c15e414a0e9d70a4d4d3cb259032e51c5481cd14a571950745` | two byte-identical local builds from `e8eb772`; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present |
+| Windows x64 | `pokrov-core.dll` | `55403008` | `73aacd2ccbb3414573284c0c2a253f29c6ed4a56ddf2ff8bb6cc9ae7ca371488` | two byte-identical local builds from `e8eb772`; 15 required exports present |
 | Windows dependency | `libcronet.dll` | `8596992` | `8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7` | unchanged retained dependency |
 | iOS | `PokrovCore.xcframework` | — | — | `MANUAL_OWNER_TEST` |
 | macOS | `pokrov-core.dylib` | — | — | `MANUAL_OWNER_TEST` |
 
 Android is bound by package `space.pokrov.core`, its exact source commit and AAR
-digest. Windows is bound separately by its retained source commit, desktop ABI
-`2`, exact DLL digest and exact Cronet dependency. Candidate promotion remains
-blocked until both active platform artifacts converge on one Core source.
+digest. Windows is bound by the same source commit, desktop ABI `2`, exact DLL
+digest and exact Cronet dependency. This closes the local platform-source
+convergence prerequisite; candidate and physical-platform gates remain open.
 
 ## Reproducibility, SBOM And Provenance
 
-The retained Windows artifact keeps its earlier two-build reproducibility
-evidence. The corrected Android AAR also has two byte-identical local builds;
-replacement SBOM and packaged-client provenance remain pending:
+Fresh Android and Windows two-build evidence and deterministic source SBOMs
+bind the same Core source. Packaged-client candidate provenance remains open:
 
 | Evidence | Result / SHA-256 |
 | --- | --- |
-| Android build comparison | `PASS_BYTE_IDENTICAL_TWO_BUILDS`; AAR SHA-256 `ca391059b6676de5a2cfbf582395fd7ab0b0b5979c8a0c40faaa7208b79178e5` |
-| Android evidence JSON | `NOT_GENERATED_SEPARATELY` |
-| Windows build tree | `e12123eb9d6c7bd83a3c95ac4f864583219c37d6b98dfd283fc6f4deda099516` |
-| Windows evidence JSON | `0a4eab998c3a28b61949c4e5739b7c21e6301cd0ccde0084c9a325dc742438a6` |
-| `pokrov-core.cdx.json` | `8a3bc377285104a1cf9170e55fa25150a03e431582ef3f44d857d18241ec7a95` |
-| `sing-box.cdx.json` | `bc92db83e96ba285838a82a2887474ced36eece5b4a2f95aa0cdbb77764cec62` |
+| Android build tree | `aafd5f0eb2a83f7c438affb32c946af17b77593e9e0f5105b7f7b1d293e2f8f3` |
+| Android evidence JSON | `37926b9c4101fd7b69580b7e184c764fc0e365be22dab6c87b7620bf855789eb` |
+| Windows build tree | `25405fd108405f56c08c5a24f88a2b45a6936ff14eae4f113b2e7e71f08eb78c` |
+| Windows evidence JSON | `4f5c33fd252dd21a52813cf227a2c4c2b4e0e228d9410dd3a40f651e83b773d5` |
+| `pokrov-core.cdx.json` | `d40547fa3ba28c84bf377e6cb8d174546ea75f41287028ca2e97931cd7ebfb9b` |
+| `sing-box.cdx.json` | `83bc11b4b90e267346647670f6ce4003d9586ed4519b7bca076e84c3127ce542` |
 
 The Windows refresh used the local LLVM-MinGW `20260616` UCRT toolchain already
 present in the isolated build directory. The toolchain directory was passed
@@ -78,9 +76,9 @@ still be resolved or explicitly accepted before promotion.
 ## Evidence Ceiling
 
 The strongest claim from this decision is
-`clean_mixed_platform_pre_candidate_local`:
+`clean_reproducible_pre_candidate_local`:
 
-- exact Android and Windows runtime bytes and their separate source commits are bound;
+- exact Android and Windows runtime bytes from one source commit are bound;
 - Android four-ABI presence and Windows ABI exports are proved locally;
 - the Windows proxy-only harness passed 100 start/stop cycles without changing
   system routes;
@@ -104,14 +102,13 @@ and moves the exception into the Core-owned AWG outer socket.
 
 Before these bytes may become a release candidate:
 
-1. rebuild Windows from `f44dbe8` and prove byte-identical active artifacts from one Core source;
-2. inspect the resulting Android and Windows packages and bind their Core
+1. inspect the resulting Android and Windows packages and bind their Core
    digests into strict-v2 metadata;
-3. run hosted CI on every frozen revision;
-4. complete exact-candidate Android physical-device and Windows clean-host
+2. run hosted CI on every frozen revision;
+3. complete exact-candidate Android physical-device and Windows clean-host
    TUN/DNS/egress/recovery gates;
-5. complete production signing, provenance review and public-index binding;
-6. keep publication, runtime synchronization and promotion blocked until the
+4. complete production signing, provenance review and public-index binding;
+5. keep publication, runtime synchronization and promotion blocked until the
    separately authorized go/no-go step.
 
 ## Rollback

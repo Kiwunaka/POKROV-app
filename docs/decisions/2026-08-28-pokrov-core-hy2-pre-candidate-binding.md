@@ -17,7 +17,7 @@ device-bound material, verified TLS with SNI and ALPN `h3`, one server port and
 bounded bandwidth. Raw `hysteria2://` and `hy2://` conversion, port hopping,
 insecure TLS, raw node-catalog material and a second TUN are rejected.
 
-## Exact Android Artifact
+## Exact Android And Windows Artifacts
 
 | Field | Value |
 | --- | --- |
@@ -27,8 +27,10 @@ insecure TLS, raw node-catalog material and a second TUN are rejected.
 | ABI set | `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` |
 | Reproducibility | `PASS_BYTE_IDENTICAL_TWO_BUILDS` |
 
-Windows still retains the exact pre-candidate DLL from
-`344b317a7a09eca7943a93866b193553538bd8f6`; platform-source convergence remains
-a promotion gate. Physical-device source/artifact launch evidence may prove
+Windows now binds the same Core commit through `pokrov-core.dll`, size
+`55403008`, SHA-256
+`73aacd2ccbb3414573284c0c2a253f29c6ed4a56ddf2ff8bb6cc9ae7ca371488`.
+Two builds are byte-identical and expose all 15 required ABI symbols. This
+closes local platform-source convergence only. Physical-device source/artifact launch evidence may prove
 default-off safety, but Hysteria2 connectivity remains `MANUAL_OWNER_TEST`
 until an owned exact server artifact and encrypted endpoint material exist.
