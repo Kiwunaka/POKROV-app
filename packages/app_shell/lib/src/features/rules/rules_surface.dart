@@ -270,6 +270,7 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
                 _draftPreferences.dnsTransport == PokrovDnsTransport.direct
             ? 1
             : 0) +
+        (_draftPreferences.externalSmartDnsEnabled ? 1 : 0) +
         (_draftPreferences.allowLan ? 0 : 1) +
         (widget.hostPlatform == HostPlatform.windows &&
                 _draftPreferences.tunStack != PokrovTunStack.system
@@ -379,6 +380,7 @@ bool _sameRoutingPreferences(
     left.dnsPreset == right.dnsPreset &&
     left.dnsTransport == right.dnsTransport &&
     left.customDnsUrl == right.customDnsUrl &&
+    left.externalSmartDnsEnabled == right.externalSmartDnsEnabled &&
     left.allowLan == right.allowLan &&
     listEquals(left.trustedWifiNames, right.trustedWifiNames) &&
     left.pauseOnTrustedWifi == right.pauseOnTrustedWifi &&
@@ -393,6 +395,7 @@ List<String> _routingPreferenceChangeLabels(
       if (applied.dnsPreset != draft.dnsPreset ||
           applied.dnsTransport != draft.dnsTransport ||
           applied.customDnsUrl != draft.customDnsUrl ||
+          applied.externalSmartDnsEnabled != draft.externalSmartDnsEnabled ||
           applied.allowLan != draft.allowLan)
         'DNS и локальная сеть',
       if (!setEquals(applied.purposeRoutes, draft.purposeRoutes))

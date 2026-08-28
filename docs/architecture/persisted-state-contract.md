@@ -30,6 +30,14 @@ unknown value decodes to `vpn`. Older clients ignore the field inside schema
 `1`, so the opt-in direct-DoH laboratory preference remains downgrade-safe
 without inventing a new state owner or migration route.
 
+The same object has an additive boolean `externalSmartDnsEnabled`. It restores
+as `true` only when the same decoded object contains a valid custom HTTPS DoH
+resolver, `dnsTransport: direct`, and at least one AI or Games purpose route.
+Every absent, malformed, downgraded or incomplete combination normalizes to
+`false`; native materialization independently rejects an invalid enabled
+combination. The field remains convenience policy inside schema `1`, never
+session, entitlement, resolver-account or server capability authority.
+
 ## Version Routing and Rollback
 
 Version fields must be integer values. The current client accepts only the

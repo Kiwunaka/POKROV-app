@@ -36,6 +36,11 @@ extension PokrovPurposeRoutePresentation on PokrovPurposeRoute {
           'Xbox, магазины и игровые сообщества через VPN.',
         PokrovPurposeRoute.ruDirect => 'Российские домены и сервисы без VPN.',
       };
+
+  bool get supportsExternalSmartDns => switch (this) {
+        PokrovPurposeRoute.ai || PokrovPurposeRoute.games => true,
+        _ => false,
+      };
 }
 
 extension PokrovDnsPresetPresentation on PokrovDnsPreset {
@@ -132,6 +137,7 @@ class PokrovRoutingPreferences {
     required this.dnsPreset,
     required this.dnsTransport,
     required this.customDnsUrl,
+    this.externalSmartDnsEnabled = false,
     required this.allowLan,
     required this.trustedWifiNames,
     required this.pauseOnTrustedWifi,
@@ -145,6 +151,7 @@ class PokrovRoutingPreferences {
         dnsPreset = PokrovDnsPreset.automatic,
         dnsTransport = PokrovDnsTransport.vpn,
         customDnsUrl = '',
+        externalSmartDnsEnabled = false,
         allowLan = true,
         trustedWifiNames = const <String>[],
         pauseOnTrustedWifi = false,
@@ -156,6 +163,7 @@ class PokrovRoutingPreferences {
   final PokrovDnsPreset dnsPreset;
   final PokrovDnsTransport dnsTransport;
   final String customDnsUrl;
+  final bool externalSmartDnsEnabled;
   final bool allowLan;
   final List<String> trustedWifiNames;
   final bool pauseOnTrustedWifi;
@@ -168,6 +176,7 @@ class PokrovRoutingPreferences {
     PokrovDnsPreset? dnsPreset,
     PokrovDnsTransport? dnsTransport,
     String? customDnsUrl,
+    bool? externalSmartDnsEnabled,
     bool? allowLan,
     List<String>? trustedWifiNames,
     bool? pauseOnTrustedWifi,
@@ -180,6 +189,8 @@ class PokrovRoutingPreferences {
       dnsPreset: dnsPreset ?? this.dnsPreset,
       dnsTransport: dnsTransport ?? this.dnsTransport,
       customDnsUrl: customDnsUrl ?? this.customDnsUrl,
+      externalSmartDnsEnabled:
+          externalSmartDnsEnabled ?? this.externalSmartDnsEnabled,
       allowLan: allowLan ?? this.allowLan,
       trustedWifiNames: trustedWifiNames ?? this.trustedWifiNames,
       pauseOnTrustedWifi: pauseOnTrustedWifi ?? this.pauseOnTrustedWifi,
@@ -228,14 +239,21 @@ class PokrovRoutingPreferences {
       (item) => item.name == _routingText(json['tunStack']),
       orElse: () => PokrovTunStack.system,
     );
+    final normalizedDnsPreset =
+        dnsPreset == PokrovDnsPreset.custom && customDns.isEmpty
+            ? PokrovDnsPreset.automatic
+            : dnsPreset;
+    final externalSmartDnsEnabled = json['externalSmartDnsEnabled'] == true &&
+        normalizedDnsPreset == PokrovDnsPreset.custom &&
+        dnsTransport == PokrovDnsTransport.direct &&
+        purposes.any((purpose) => purpose.supportsExternalSmartDns);
     return PokrovRoutingPreferences(
       purposeRoutes: Set<PokrovPurposeRoute>.unmodifiable(purposes),
       overrides: List<PokrovRouteOverride>.unmodifiable(overrides),
-      dnsPreset: dnsPreset == PokrovDnsPreset.custom && customDns.isEmpty
-          ? PokrovDnsPreset.automatic
-          : dnsPreset,
+      dnsPreset: normalizedDnsPreset,
       dnsTransport: dnsTransport,
       customDnsUrl: customDns,
+      externalSmartDnsEnabled: externalSmartDnsEnabled,
       allowLan: json['allowLan'] != false,
       trustedWifiNames: List<String>.unmodifiable(trustedWifi),
       pauseOnTrustedWifi:
@@ -251,6 +269,7 @@ class PokrovRoutingPreferences {
         'dnsPreset': dnsPreset.name,
         'dnsTransport': dnsTransport.name,
         'customDnsUrl': customDnsUrl,
+        'externalSmartDnsEnabled': externalSmartDnsEnabled,
         'allowLan': allowLan,
         'trustedWifiNames': trustedWifiNames.take(20).toList(),
         'pauseOnTrustedWifi': pauseOnTrustedWifi,
@@ -262,6 +281,17 @@ class PokrovRoutingPreferences {
         PokrovDnsPreset.custom => _normalizeDnsUrl(customDnsUrl),
         _ => dnsPreset.address,
       };
+
+  bool get canEnableExternalSmartDns =>
+      dnsPreset == PokrovDnsPreset.custom &&
+      effectiveDnsAddress != null &&
+      dnsTransport == PokrovDnsTransport.direct &&
+      purposeRoutes.any((purpose) => purpose.supportsExternalSmartDns);
+
+  bool routesPurposeThroughExternalSmartDns(PokrovPurposeRoute purpose) =>
+      externalSmartDnsEnabled &&
+      canEnableExternalSmartDns &&
+      purpose.supportsExternalSmartDns;
 }
 
 class PokrovRouteDecision {
@@ -299,10 +329,13 @@ PokrovRouteDecision explainPokrovRouteDecision({
         if (_purposeDomains[purpose]!.any(
           (suffix) => _domainMatches(normalized.$1, suffix),
         )) {
-          final direct = purpose == PokrovPurposeRoute.ruDirect;
+          final direct = purpose == PokrovPurposeRoute.ruDirect ||
+              preferences.routesPurposeThroughExternalSmartDns(purpose);
           return PokrovRouteDecision(
             action: direct ? PokrovRouteAction.direct : PokrovRouteAction.vpn,
-            reason: 'Сработал профиль «${purpose.title}».',
+            reason: preferences.routesPurposeThroughExternalSmartDns(purpose)
+                ? 'Лабораторный Smart DNS оставляет профиль «${purpose.title}» напрямую; внешний IP не скрывается.'
+                : 'Сработал профиль «${purpose.title}».',
             matchedValue: purpose.name,
           );
         }
@@ -360,6 +393,12 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   if (proxyTag.isEmpty) {
     throw const FormatException('Managed profile has no VPN route target');
   }
+  if (preferences.externalSmartDnsEnabled &&
+      !preferences.canEnableExternalSmartDns) {
+    throw const FormatException(
+      'External Smart DNS prerequisites are invalid',
+    );
+  }
 
   final rules = _routingListOfMaps(route['rules']);
   rules.removeWhere(
@@ -401,7 +440,10 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     }
     _appendUniqueRule(injected, <String, dynamic>{
       'domain_suffix': _purposeDomains[purpose],
-      'outbound': purpose == PokrovPurposeRoute.ruDirect ? directTag : proxyTag,
+      'outbound': purpose == PokrovPurposeRoute.ruDirect ||
+              preferences.routesPurposeThroughExternalSmartDns(purpose)
+          ? directTag
+          : proxyTag,
     });
   }
   if (preferences.allowLan) {

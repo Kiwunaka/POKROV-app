@@ -14,7 +14,7 @@ results belong in dated evidence and never become reusable release approval.
 | Fact | Current state |
 |---|---|
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
-| Working package target | `1.2.0+4045` |
+| Working package target | `1.2.0+4046` |
 | Working target state | `PRE_CANDIDATE_LOCAL` |
 | Candidate created | `false` |
 | Public cutover allowed for a new candidate | `false` |
@@ -29,7 +29,7 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
 
 ## Current Local Completion
 
-- Android and Windows package versions match `1.2.0+4045`; app-shell reports the
+- Android and Windows package versions match `1.2.0+4046`; app-shell reports the
   shared product version `1.2.0`.
 - Strict release-handoff v2 generation and client/Core parity pass locally.
 - The retained `1.1.6` stable pointer is hash-bound to its versioned rollback
@@ -81,6 +81,12 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
   no app-owned TUN exists. These corrections are source-only until the platform
   deploy and exact Android device proof; cross-repository preflight must be
   rerun on their committed revisions before `READY_LOCAL_FREEZE` can return.
+- Working source build 4046 adds an opt-in external Smart-DNS laboratory route.
+  It is accepted only with custom HTTPS DoH, direct DNS and an enabled AI or
+  Games purpose group. Selected AI/Games domain connections then use the
+  existing direct outbound; other groups keep VPN and explicit user rules keep
+  precedence. Local materialization, persistence and UI contracts pass, but no
+  4046 package, compatible owned resolver or live service-access proof exists.
 
 These results mix source, live-lab and explicitly identified pre-candidate
 physical evidence. None is exact replacement-candidate, hosted-CI, public
@@ -91,9 +97,9 @@ runtime, rollback or promotion proof.
 | Order | Gate | State | Completion rule |
 |---:|---|---|---|
 | 1 | Clean platform, client, Core and release-index revisions | `PASS_LOCAL_EXACT_CORRECTION_TUPLE; PROMOTION_BLOCKED_BY_ACTIONS_BILLING` | Exact clean platform `9383117…64c17`, client `f3d3310…174f` and Core `f44dbe8…f90d` pass the Node `22.14.0` aggregate `15/15`, including Flutter `400/400`, cabinet E2E `69/69` and static performance `9/9`. Report `57ca9352…f02ed` remains local-only with `candidate_proven=false`. Hosted PR checks remain zero-step billing failures; release-index `32f560d…2d4a` is unchanged. |
-| 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains private signed candidate.4 evidence with promotion false. It does not bind the replacement source or `1.2.0+4045`. |
+| 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains private signed candidate.4 evidence with promotion false. It does not bind the replacement source or `1.2.0+4046`. |
 | 3 | POKROV Core `1.1.0` replacement artifact | `PASS_MIXED_PLATFORM_LOCAL; PASS_LOCAL_AWG_LIFECYCLE; PASS_WORKING_ANDROID_HOST` | Android binds two byte-identical AAR builds from Core `f44dbe8…f90d`; those bytes also match the prior `54e76bb` build and include AWG hostname resolution and Android outer-socket protection. Working build 4044 proved control-plane reachability, socket protection, normal WARP and egress on the Huawei. Windows retains DLL `60fe3fad…3981` from `344b317…8f6` plus Cronet `8ef1f8bb…a6f7`. Platform-source convergence and exact-candidate host proof remain open. |
-| 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.4 metadata remains valid only for its exact older bytes. The replacement must bind build `4045`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
+| 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.4 metadata remains valid only for its exact older bytes. The replacement must bind build `4046`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
 | 5 | Android exact-candidate build and signer | `PASS_WORKING_4045_SIGNER; MISSING_REPLACEMENT_CANDIDATE` | Client `51f41c6…dfa7b` produced signer-verified arm64 `8e3c45d…7eddf` and x86_64 `0d76ee1…c786` APKs; both installed as `1.2.0+4045`. They are working artifacts without a strict-v2 manifest, not candidate bytes. |
 | 6 | Android physical-device matrix | `PASS_4045_DISCONNECTED_HOST_TRUTH; FAIL_4045_PREDEPLOY_ANDROID_ACTIVATION; FAIL_4045_LDPLAYER_SELECTED_OUTBOUND_EGRESS; MANUAL_OWNER_TEST` | Build 4045 starts honestly disconnected on Huawei and LDPlayer, closing the stale-running false-green regression. A physical control started the POKROV service but no Android VPN transport remained after about 25 seconds. LDPlayer separately reached canonical `core_egress_probe_failed`; the selected outbound failed internet proof and POKROV stopped VPN fail-closed. Neither control was AWG-bound, and cleanup left no POKROV service or transport. Deploy the authorized platform source, prove an app-owned TUN plus AWG2 handshake and egress, then AWG3.1; run Huawei TUN/DNS/egress, WARP, per-app, handoff and endurance on exact bytes. |
 | 7 | Windows exact-candidate package | `MISSING_REPLACEMENT_ARTIFACT` | Candidate.3 clean-host run `33033294889` is retained supporting evidence only. Build `36` requires a converged Core DLL, new setup identity and bounded clean-host run. |
@@ -104,13 +110,13 @@ runtime, rollback or promotion proof.
 
 ## Next Action Order
 
-1. Deploy the owned-AWG managed-profile correction, install build `4045`, and
+1. Deploy the owned-AWG managed-profile correction, build/install `4046`, and
    retain an app-owned TUN plus real AWG2 handshake and egress proof; then run
    AWG3.1 and the bounded direct-DoH checks.
 2. Freeze the replacement platform/client/Core/release-index source tuple and
    keep AWG2, AWG3.1 plus AI/Games/DoH contracts green on the exact client
    revision.
-3. Freeze build `4045` Android and Windows artifacts into a new signed strict-v2
+3. Freeze build `4046` Android and Windows artifacts into a new signed strict-v2
    manifest; do not reuse candidate.3 artifact evidence.
 4. Run LDPlayer rehearsal, then the physical-device/OEM and Windows clean-host
    network/recovery/SmartScreen matrices on the replacement bytes.

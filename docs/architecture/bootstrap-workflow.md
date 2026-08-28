@@ -295,6 +295,14 @@ blocked until active platform artifacts converge on one Core source.
   and Games continue through the active VPN/AWG target. `Automatic` injects
   nothing, so the backend-managed DNS block remains authoritative. This is not
   a second DNS owner or a standalone VPN-less resolver service.
+- The additive `externalSmartDnsEnabled` laboratory preference is stricter. It
+  can materialize only with a validated custom HTTPS DoH address, the direct
+  DNS detour and at least one AI/Games purpose route. The resolver and those
+  selected purpose-domain connections then use the existing direct outbound;
+  other groups keep the VPN/AWG target and explicit user rules retain higher
+  priority. Invalid combinations fail closed before native staging. This is a
+  client route-policy path for a compatible Smart-DNS resolver, not such a
+  resolver, not a second core and not evidence of VPN-free service access.
 - `selectedApps` materialization requires a non-empty selection before any
   route-policy sync or profile fetch. Android receives the staged route-mode
   attestation separately and rejects an empty selected-app allow-list instead

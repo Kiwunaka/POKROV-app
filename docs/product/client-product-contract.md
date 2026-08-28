@@ -635,6 +635,18 @@ staged. They include:
   makes no promise to bypass IP-, TLS-, account-, or region-based restrictions.
   With `Автоматически`, the stored preference is dormant and the signed server
   profile remains DNS authority;
+- an additional `Внешний Smart DNS · лаборатория` path is available only for
+  a validated custom HTTPS DoH resolver with direct DNS selected and at least
+  one enabled AI or Games purpose group. When explicitly enabled, the custom
+  DoH request and those selected purpose-domain connections use the profile's
+  existing direct outbound; all other purpose groups keep their normal VPN
+  target, and an explicit user rule still wins. The client does not terminate
+  TLS, inject certificates, add a second core, or claim that an arbitrary DoH
+  resolver can unblock a service. The user's ISP-visible IP is not hidden, an
+  Android VPN system surface may remain because sing-box still owns policy
+  routing, and successful service access requires a compatible external or
+  POKROV-owned Smart-DNS resolver plus separate live evidence. Invalid,
+  incomplete, downgraded, or future persisted state disables the lab mode;
 - LAN direct access;
 - trusted Wi-Fi names with optional disconnect on an exact current-SSID match.
 
@@ -727,7 +739,7 @@ Release continuity rules:
   SHA-256; the production catalog requires `1.1.6` for older clients. Exact
   Huawei and clean Windows network proof remain manual.
 - the active source target is separately recorded in the same canonical
-  release-handoff seed as `1.2.0+4045`, state `PRE_CANDIDATE_LOCAL`, with
+  release-handoff seed as `1.2.0+4046`, state `PRE_CANDIDATE_LOCAL`, with
   `candidate_created=false`. Android, Windows and app-shell source versions
   must match that target, while the historical `1.1.6` public record remains
   immutable and has `reuse_for_new_promotion=false`. This target is not a

@@ -7735,6 +7735,61 @@ void main() {
     semantics.dispose();
   });
 
+  testWidgets(
+      'external Smart DNS lab requires custom direct DoH and an eligible purpose',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 980));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final store = _FakeClientExperienceStore(
+      const PokrovClientExperienceState.empty().copyWith(
+        routingPreferences: const PokrovRoutingPreferences.defaults().copyWith(
+          purposeRoutes: const <PokrovPurposeRoute>{PokrovPurposeRoute.ai},
+          dnsPreset: PokrovDnsPreset.custom,
+          dnsTransport: PokrovDnsTransport.direct,
+          customDnsUrl: 'https://smart.example/dns-query',
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        clientExperienceStore: store,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-rules');
+    await _openAdvancedRules(tester);
+
+    final smartDnsToggle =
+        find.byKey(const ValueKey('rules-external-smart-dns-toggle'));
+    await tester.dragUntilVisible(
+      smartDnsToggle,
+      find.byType(Scrollable).first,
+      const Offset(0, -260),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(smartDnsToggle);
+    await tester.pumpAndSettle();
+    expect(store.state.routingPreferences.externalSmartDnsEnabled, isTrue);
+    expect(
+      find.textContaining('IP-адрес не скрывается'),
+      findsWidgets,
+    );
+
+    final purposeCard = find.byKey(const ValueKey('rules-purpose-routes'));
+    await tester.dragUntilVisible(
+      purposeCard,
+      find.byType(Scrollable).first,
+      const Offset(0, -320),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('rules-purpose-ai')));
+    await tester.pumpAndSettle();
+    expect(store.state.routingPreferences.externalSmartDnsEnabled, isFalse);
+  });
+
   testWidgets('expert rules use one apply operation and one reconnect',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(760, 980));

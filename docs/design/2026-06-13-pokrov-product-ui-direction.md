@@ -124,6 +124,12 @@ Expected first-layer behavior:
   preset is selected. Its copy must say that only encrypted DoH bypasses the
   VPN, the external IP does not change, and access to blocked services is not
   guaranteed. VPN remains the default resolver path.
+- `Внешний Smart DNS · лаборатория` appears only for a custom DoH resolver. It
+  stays disabled until direct DNS and at least one AI or Games purpose route
+  are selected. Enabled copy must say that selected connections go directly,
+  the IP is not hidden, a compatible Smart-DNS server is required, and the
+  control is not a successful-access claim. Removing the last eligible purpose
+  route, changing to a preset resolver or returning DNS to VPN disables it.
 - Windows connect stays full-device VPN/TUN while the UI remains unelevated.
   Ordinary connection does not show UAC or offer a partial system-proxy path;
   an unavailable, untrusted or incompatible service produces one actionable

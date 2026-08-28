@@ -233,8 +233,8 @@ void main() {
       rules.firstWhere(
         (rule) =>
             (rule['domain_suffix'] as List<Object?>?)
-                    ?.contains('chatgpt.com') ==
-                true,
+                ?.contains('chatgpt.com') ==
+            true,
       )['outbound'],
       'proxy',
     );
@@ -243,6 +243,104 @@ void main() {
       'address': 'https://dns.google/dns-query',
       'detour': 'direct',
     });
+  });
+
+  test(
+      'external Smart DNS lab routes selected AI and Games directly through custom DoH',
+      () {
+    final preferences = const PokrovRoutingPreferences.defaults().copyWith(
+      purposeRoutes: const <PokrovPurposeRoute>{
+        PokrovPurposeRoute.ai,
+        PokrovPurposeRoute.games,
+        PokrovPurposeRoute.video,
+      },
+      dnsPreset: PokrovDnsPreset.custom,
+      dnsTransport: PokrovDnsTransport.direct,
+      customDnsUrl: 'https://smart.example/dns-query',
+      externalSmartDnsEnabled: true,
+    );
+    final transformed = applyPokrovRoutingPreferences(
+      _profile(),
+      preferences,
+      hostPlatform: HostPlatform.android,
+    );
+    final config = _jsonMap(transformed.configPayload);
+    final rules = _maps(_map(config['route'])['rules']);
+    final dnsServers = _maps(_map(config['dns'])['servers']);
+
+    String outboundFor(String domain) => rules.firstWhere(
+          (rule) =>
+              (rule['domain_suffix'] as List<Object?>?)?.contains(domain) ==
+              true,
+        )['outbound'] as String;
+
+    expect(outboundFor('chatgpt.com'), 'direct');
+    expect(outboundFor('xbox.com'), 'direct');
+    expect(outboundFor('youtube.com'), 'proxy');
+    expect(dnsServers.first, <String, Object?>{
+      'tag': 'pokrov-user-dns',
+      'address': 'https://smart.example/dns-query',
+      'detour': 'direct',
+    });
+    expect(
+      explainPokrovRouteDecision(
+        destination: 'chatgpt.com',
+        preferences: preferences,
+        fallbackMode: RouteMode.fullTunnel,
+      ).action,
+      PokrovRouteAction.direct,
+    );
+  });
+
+  test('external Smart DNS state fails closed without exact prerequisites', () {
+    final invalid = const PokrovRoutingPreferences.defaults().copyWith(
+      purposeRoutes: const <PokrovPurposeRoute>{PokrovPurposeRoute.ai},
+      dnsPreset: PokrovDnsPreset.google,
+      dnsTransport: PokrovDnsTransport.direct,
+      externalSmartDnsEnabled: true,
+    );
+
+    expect(
+      () => applyPokrovRoutingPreferences(
+        _profile(),
+        invalid,
+        hostPlatform: HostPlatform.android,
+      ),
+      throwsA(isA<FormatException>()),
+    );
+    expect(
+      explainPokrovRouteDecision(
+        destination: 'chatgpt.com',
+        preferences: invalid,
+        fallbackMode: RouteMode.fullTunnel,
+      ).action,
+      PokrovRouteAction.vpn,
+    );
+
+    final sanitized = PokrovRoutingPreferences.fromJson(<String, Object?>{
+      'purposeRoutes': <String>['ai'],
+      'dnsPreset': 'google',
+      'dnsTransport': 'direct',
+      'externalSmartDnsEnabled': true,
+    });
+    expect(sanitized.externalSmartDnsEnabled, isFalse);
+  });
+
+  test('valid external Smart DNS preference survives persistence round-trip',
+      () {
+    final source = const PokrovRoutingPreferences.defaults().copyWith(
+      purposeRoutes: const <PokrovPurposeRoute>{PokrovPurposeRoute.games},
+      dnsPreset: PokrovDnsPreset.custom,
+      dnsTransport: PokrovDnsTransport.direct,
+      customDnsUrl: 'https://smart.example/dns-query',
+      externalSmartDnsEnabled: true,
+    );
+
+    final restored = PokrovRoutingPreferences.fromJson(source.toJson());
+
+    expect(restored.externalSmartDnsEnabled, isTrue);
+    expect(restored.canEnableExternalSmartDns, isTrue);
+    expect(restored.toJson()['externalSmartDnsEnabled'], isTrue);
   });
 
   test('missing DNS transport state keeps the safe VPN default', () {

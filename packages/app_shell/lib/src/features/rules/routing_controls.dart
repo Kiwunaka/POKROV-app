@@ -56,6 +56,7 @@ class _PurposeRoutingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final externalSmartDnsEnabled = preferences.externalSmartDnsEnabled;
     return _SectionCard(
       key: const ValueKey('rules-purpose-routes'),
       title: 'Готовые маршруты',
@@ -73,7 +74,11 @@ class _PurposeRoutingCard extends StatelessWidget {
                 'rules-purpose-${PokrovPurposeRoute.values[index].name}',
               ),
               title: PokrovPurposeRoute.values[index].title,
-              subtitle: PokrovPurposeRoute.values[index].summary,
+              subtitle: preferences.routesPurposeThroughExternalSmartDns(
+                PokrovPurposeRoute.values[index],
+              )
+                  ? '${PokrovPurposeRoute.values[index].title} идёт напрямую через внешний Smart DNS. IP-адрес не скрывается.'
+                  : PokrovPurposeRoute.values[index].summary,
               value: preferences.purposeRoutes.contains(
                 PokrovPurposeRoute.values[index],
               ),
@@ -86,7 +91,15 @@ class _PurposeRoutingCard extends StatelessWidget {
                 } else {
                   next.remove(PokrovPurposeRoute.values[index]);
                 }
-                onChanged(preferences.copyWith(purposeRoutes: next));
+                onChanged(
+                  preferences.copyWith(
+                    purposeRoutes: next,
+                    externalSmartDnsEnabled: externalSmartDnsEnabled &&
+                        next.any(
+                          (purpose) => purpose.supportsExternalSmartDns,
+                        ),
+                  ),
+                );
               },
             ),
           ],
@@ -205,13 +218,21 @@ class _DnsAndLanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final adBlockEnabled = preferences.dnsPreset == PokrovDnsPreset.adguard;
+    final hasSmartDnsPurpose = preferences.purposeRoutes.any(
+      (purpose) => purpose.supportsExternalSmartDns,
+    );
+    final canToggleExternalSmartDns =
+        preferences.dnsTransport == PokrovDnsTransport.direct &&
+            hasSmartDnsPurpose;
     return _SectionCard(
       key: const ValueKey('rules-dns-lan'),
       title: 'Блокировка и DNS',
       lines: [
-        preferences.dnsTransport == PokrovDnsTransport.direct
-            ? 'DoH идёт напрямую. Внешний IP не меняется, доступ к сервисам не гарантируется.'
-            : 'Защитный DNS блокирует известные рекламные и трекинговые домены внутри VPN.',
+        preferences.externalSmartDnsEnabled
+            ? 'Внешний Smart DNS направляет выбранные AI/Игры напрямую. IP-адрес не скрывается.'
+            : preferences.dnsTransport == PokrovDnsTransport.direct
+                ? 'DoH идёт напрямую. Внешний IP не меняется, доступ к сервисам не гарантируется.'
+                : 'Защитный DNS блокирует известные рекламные и трекинговые домены внутри VPN.',
       ],
       child: Column(
         children: [
@@ -225,6 +246,7 @@ class _DnsAndLanCard extends StatelessWidget {
               preferences.copyWith(
                 dnsPreset:
                     value ? PokrovDnsPreset.adguard : PokrovDnsPreset.automatic,
+                externalSmartDnsEnabled: false,
               ),
             ),
           ),
@@ -255,7 +277,28 @@ class _DnsAndLanCard extends StatelessWidget {
                   dnsTransport: value
                       ? PokrovDnsTransport.direct
                       : PokrovDnsTransport.vpn,
+                  externalSmartDnsEnabled:
+                      value && preferences.externalSmartDnsEnabled,
                 ),
+              ),
+            ),
+          ],
+          if (preferences.dnsPreset == PokrovDnsPreset.custom) ...[
+            const _SettingsRowDivider(),
+            _RoutingToggleRow(
+              key: const ValueKey('rules-external-smart-dns-toggle'),
+              title: 'Внешний Smart DNS · лаборатория',
+              subtitle: preferences.dnsTransport != PokrovDnsTransport.direct
+                  ? 'Сначала включите «DNS напрямую».'
+                  : !hasSmartDnsPurpose
+                      ? 'Сначала включите маршрут «AI-сервисы» или «Игры».'
+                      : preferences.externalSmartDnsEnabled
+                          ? 'Custom DoH и выбранные AI/Игры идут напрямую. Нужен совместимый Smart-DNS сервер; IP не скрывается.'
+                          : 'Использовать ответы custom DoH для прямого доступа выбранных AI/Игровых сервисов. Нужен совместимый сервер.',
+              value: preferences.externalSmartDnsEnabled,
+              enabled: canToggleExternalSmartDns,
+              onChanged: (value) => onChanged(
+                preferences.copyWith(externalSmartDnsEnabled: value),
               ),
             ),
           ],
@@ -626,27 +669,29 @@ class _RoutingToggleRow extends StatelessWidget {
     required this.subtitle,
     required this.value,
     required this.onChanged,
+    this.enabled = true,
   });
 
   final String title;
   final String subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
     return Semantics(
       container: true,
-      enabled: true,
+      enabled: enabled,
       label: title,
       hint: subtitle,
       toggled: value,
-      onTap: () => onChanged(!value),
+      onTap: enabled ? () => onChanged(!value) : null,
       child: ExcludeSemantics(
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => onChanged(!value),
+          onTap: enabled ? () => onChanged(!value) : null,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 9),
             child: Row(
@@ -674,7 +719,10 @@ class _RoutingToggleRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Switch.adaptive(value: value, onChanged: onChanged),
+                Switch.adaptive(
+                  value: value,
+                  onChanged: enabled ? onChanged : null,
+                ),
               ],
             ),
           ),
@@ -1020,6 +1068,7 @@ Future<void> _showDnsPresetSheet(
                         preferences.copyWith(
                           dnsPreset: preset,
                           customDnsUrl: '',
+                          externalSmartDnsEnabled: false,
                         ),
                       );
                     },

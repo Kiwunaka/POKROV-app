@@ -14,7 +14,7 @@ Older APK identities and device runs are retained separately as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
-| Working package target | `1.2.0+4045` |
+| Working package target | `1.2.0+4046` |
 | Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Package ID | `space.pokrov.pokrov_android_shell` |
 | Active candidate Core package | POKROV Core `1.1.0` AAR from exact source `f44dbe8…f90d`; bytes match the prior `54e76bb` build |
@@ -33,8 +33,9 @@ These local contracts do not prove final APK bytes or physical behavior.
 ## Retained Candidate.3 Evidence And Replacement Gate
 
 The table keeps candidate.3 results only as exact evidence for its old bytes.
-The `1.2.0+4045` replacement has production-signed working artifacts, but it
-has no strict-v2 replacement candidate and its network matrix is incomplete.
+The `1.2.0+4046` source replacement has no package artifact or strict-v2
+candidate. Production-signed build-4045 artifacts remain exact evidence only
+for their older bytes, and their network matrix is incomplete.
 None of the retained candidate.3 signing, runtime or promotion rows below
 transfers to the new bytes.
 
@@ -223,6 +224,24 @@ The later exact clean source tuple platform `9383117…64c17`, client
 aggregate `15/15`. Its report SHA-256 is `57ca9352…f02ed` and explicitly keeps
 `candidate_proven=false`; the installed APK bytes remain bound to runtime
 source `51f41c6…dfa7b` above.
+
+## Working Source 4046 External Smart-DNS Lab
+
+Build target `1.2.0+4046` adds source-only, opt-in routing for a compatible
+external Smart-DNS resolver. The preference can be enabled only when a custom
+HTTPS DoH URL, direct DNS transport and at least one AI or Games purpose route
+are all present. It sends that DoH traffic and selected AI/Games domain
+connections through the existing direct outbound, keeps other groups on VPN,
+and preserves explicit user-rule precedence. Invalid combinations normalize
+off when restored and fail closed before native staging if constructed
+directly. App-shell analysis is clean and `404/404` tests pass.
+
+This is `PASS_LOCAL_SOURCE_EXTERNAL_SMART_DNS_LAB`, not a package or access
+result. No build-4046 APK has been produced or installed; no compatible owned
+resolver, DNS answer, service connection, leak result or Android lifecycle has
+been proved. The Android VPN system surface may still be present because the
+existing sing-box TUN owns split-policy routing, even though selected remote
+connections use the direct outbound.
 
 ## Commands
 

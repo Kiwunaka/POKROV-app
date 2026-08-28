@@ -1,7 +1,7 @@
 name: pokrov_windows_shell
 description: Windows host for the POKROV client program.
 publish_to: none
-version: 1.2.0+4045
+version: 1.2.0+4046
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
