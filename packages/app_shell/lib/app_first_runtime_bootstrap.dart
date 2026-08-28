@@ -14,6 +14,7 @@ import 'package:pokrov_support_bundle/support_bundle.dart';
 
 import 'emergency_network_contract.dart';
 import 'src/emergency/emergency_network_store.dart';
+import 'src/observability/release_health_baseline.dart';
 
 /// Build identity shared by provisioning, update checks, and diagnostics.
 ///
@@ -545,6 +546,11 @@ abstract interface class AppFirstReleaseHealthService {
     required HostPlatform hostPlatform,
     required Map<String, Object?> batch,
     required String correlationId,
+  });
+
+  Future<ClientReleaseHealthBaseline> fetchReleaseHealthBaseline({
+    required HostPlatform hostPlatform,
+    required OperationalBuildIdentity build,
   });
 }
 
@@ -2700,6 +2706,51 @@ class AppFirstRuntimeBootstrapper
       return true;
     } on BootstrapFailure {
       return false;
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  @override
+  Future<ClientReleaseHealthBaseline> fetchReleaseHealthBaseline({
+    required HostPlatform hostPlatform,
+    required OperationalBuildIdentity build,
+  }) async {
+    final state = await _loadOrCreateState(hostPlatform);
+    if (!state.hasSession) {
+      return const ClientReleaseHealthBaseline.unavailable();
+    }
+    final parameters = <String, String>{
+      'app_version': build.appVersion,
+      'build_number': build.buildNumber,
+      'channel': build.channel,
+      'candidate_label': build.candidateLabel,
+      'git_revision': build.gitRevision,
+      if (build.coreAbi != null) 'core_abi': build.coreAbi.toString(),
+      'platform': build.platform,
+      'architecture': build.architecture,
+    };
+    final path = Uri(
+      path: '/api/client/observability/release-health/baseline',
+      queryParameters: parameters,
+    ).toString();
+    final client = _createHttpClient(hostPlatform);
+    try {
+      final response = await _requestJson(
+        method: 'GET',
+        path: path,
+        hostPlatform: hostPlatform,
+        client: client,
+        bearerToken: state.sessionToken,
+      );
+      return ClientReleaseHealthBaseline.parse(
+        response.cast<String, Object?>(),
+        expectedBuild: build,
+      );
+    } on BootstrapFailure {
+      return const ClientReleaseHealthBaseline.unavailable();
+    } on FormatException {
+      return const ClientReleaseHealthBaseline.unavailable();
     } finally {
       client.close(force: true);
     }

@@ -110,6 +110,21 @@ const pokrovClientArchitecture = String.fromEnvironment(
   defaultValue: 'unknown',
 );
 
+OperationalBuildIdentity pokrovCurrentBuildIdentity(
+  HostPlatform hostPlatform,
+) =>
+    OperationalBuildIdentity(
+      appVersion: pokrovClientVersion,
+      buildNumber: pokrovClientBuildNumber,
+      channel: pokrovClientReleaseChannel,
+      candidateLabel: pokrovClientCandidateLabel,
+      gitRevision: pokrovClientGitRevision,
+      coreVersion: null,
+      coreAbi: null,
+      platform: hostPlatform == HostPlatform.android ? 'android' : 'windows',
+      architecture: pokrovClientArchitecture,
+    );
+
 typedef PokrovObservabilityDirectoryResolver = Future<Directory> Function();
 
 enum PokrovOperationalUpdateChannel { direct, store, windows }
@@ -781,17 +796,7 @@ final class PokrovClientObservability {
   }
 
   static OperationalBuildIdentity _defaultBuild(HostPlatform hostPlatform) =>
-      OperationalBuildIdentity(
-        appVersion: pokrovClientVersion,
-        buildNumber: pokrovClientBuildNumber,
-        channel: pokrovClientReleaseChannel,
-        candidateLabel: pokrovClientCandidateLabel,
-        gitRevision: pokrovClientGitRevision,
-        coreVersion: null,
-        coreAbi: null,
-        platform: hostPlatform == HostPlatform.android ? 'android' : 'windows',
-        architecture: pokrovClientArchitecture,
-      );
+      pokrovCurrentBuildIdentity(hostPlatform);
 
   static OperationalTimelinePhase _timelinePhase(ConnectionStage stage) =>
       switch (stage) {

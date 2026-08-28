@@ -506,10 +506,12 @@ Support contract rules:
   retry; it must not fall back to plaintext ZIP, legacy chat attachment or raw
   diagnostic text. The separately labelled short summary remains available
   when the signed-key lane is not configured
-- the ordinary diagnostics screen emits a versioned `PSD1-*` support code that
-  expires after 14 days and contains only platform, route/connection class,
-  app/build and a short diagnostic hash prefix. Copying it uploads no file and
-  it is not account, device or installation identity
+- the ordinary diagnostics screen emits a versioned support code that expires
+  after 14 days and contains only platform, route/connection class, app/build
+  and a short diagnostic hash prefix. `PSD1-*` remains the stable compact form
+  for legacy one-byte build numbers; `PSD2-*` preserves the full release build
+  number when it is larger than 255. Copying either form uploads no file and it
+  is not account, device or installation identity
 - Android and Windows may manually export only the encrypted
   `.pokrov-support` envelope through the system document/save picker. Cancelling
   the picker creates no file and the UI must not claim success. Plaintext bundle
@@ -569,6 +571,20 @@ Consumer privacy rules:
 
 - normal consumer screens must not expose public IP, raw connection links, raw JSON/profile editors, sniffing terms, or low-level topology
 - route labels and support diagnostics should stay safe and human-readable
+- diagnostics may request the authenticated same-build release-health baseline
+  only for the exact app/build/channel/candidate/revision/core-ABI/platform/
+  architecture tuple and only through an already active app-first session. The
+  read must not create a trial or account identity
+- the baseline response is parsed as a closed band-only contract and is not
+  persisted. Account, device, installation, session, contributor hashes,
+  bucket indexes, exact counts and exact percentages are rejected rather than
+  displayed or retained
+- comparison stays hidden while the service is unavailable. Below the minimum
+  privacy cohort or sample floor, diagnostics may say only that more anonymous
+  data is needed. When available, it may describe coarse failure bands for the
+  same weekly build cohort but must not infer the cause of this device's state
+  from aggregate data; current local tunnel/routes/DNS/egress evidence remains
+  primary
 - public-facing copy should prefer plain user language over transport acronyms, raw profile terms, or operator jargon
 - Home and Profile may show `WARP` as the owner-approved feature label because
   the default runtime path is client-local Pokrov-core WARP. The UI must still

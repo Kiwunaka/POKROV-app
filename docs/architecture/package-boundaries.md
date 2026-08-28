@@ -55,9 +55,11 @@ Rules:
 | `support_context` | Support-safe snapshot shown in the placeholder UI |
 | `app_shell` | Runnable app-first shell aligned to `Protection / Locations / Rules / Profile`, with redeem and support handoff owned as Profile-level actions |
 
-The Support preview shows a bounded `PSD1-*` code, categories, virtual files,
-byte sizes and removal count before any bundle export. The short code carries
-no file or identity and can be decoded without upload. The existing
+The Support preview shows a bounded versioned `PSD1-*` or `PSD2-*` code,
+categories, virtual files, byte sizes and removal count before any bundle
+export. `PSD2-*` preserves release build numbers above 255 while the decoder
+continues to accept the stable `PSD1-*` form. The short code carries no file or
+identity and can be decoded without upload. The existing
 support-ticket attachment is explicitly a separate five-field safe summary.
 Full upload or manual export is exposed only when the release embeds an
 explicit signing pin and resolves a valid signed recipient; every destination

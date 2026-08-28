@@ -537,6 +537,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   late final AppFirstPromoEventService? _promoEventService;
   late final AppFirstNodePreferenceService? _nodePreferenceService;
   late final AppFirstClientDataService? _clientDataService;
+  late final AppFirstReleaseHealthService? _releaseHealthService;
   late final AppFirstEmergencyNetworkService? _emergencyNetworkService;
   late final SupportTicketService _supportTicketService;
   late final PokrovSupportModeController _supportModeController;
@@ -720,6 +721,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         : null;
     _clientDataService = bootstrapper is AppFirstClientDataService
         ? bootstrapper as AppFirstClientDataService
+        : null;
+    _releaseHealthService = bootstrapper is AppFirstReleaseHealthService
+        ? bootstrapper as AppFirstReleaseHealthService
         : null;
     _emergencyNetworkService = bootstrapper is AppFirstEmergencyNetworkService
         ? bootstrapper as AppFirstEmergencyNetworkService
@@ -3512,6 +3516,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   PokrovDiagnosticsReport _buildDiagnosticsReport({
     RuntimeSnapshot? snapshot,
     DateTime? checkedAtUtc,
+    ClientReleaseHealthBaseline releaseHealthBaseline =
+        const ClientReleaseHealthBaseline.unavailable(),
   }) {
     final diagnostics = _extendedProtectionDiagnostics();
     final transferService = _supportBundleTransferService;
@@ -3531,6 +3537,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       timelineBreadcrumbs:
           widget.observability?.connectionTimelineBreadcrumbs ?? const [],
       checkedAtUtc: checkedAtUtc,
+      releaseHealthBaseline: releaseHealthBaseline,
       supportModePolicy: _supportModeController.activePolicy,
     );
   }
@@ -3561,6 +3568,17 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     );
   }
 
+  Future<ClientReleaseHealthBaseline> _fetchReleaseHealthBaseline() async {
+    final service = _releaseHealthService;
+    if (service == null) {
+      return const ClientReleaseHealthBaseline.unavailable();
+    }
+    return service.fetchReleaseHealthBaseline(
+      hostPlatform: widget.appContext.hostPlatform,
+      build: pokrovCurrentBuildIdentity(widget.appContext.hostPlatform),
+    );
+  }
+
   void _openDiagnostics() {
     PokrovHaptics.tap();
     final transferService = _supportBundleTransferService;
@@ -3580,6 +3598,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             return PokrovDiagnosticsScreen(
               initialReport: _buildDiagnosticsReport(),
               onRefresh: _refreshDiagnosticsReport,
+              onReleaseHealthRefresh: _releaseHealthService == null
+                  ? null
+                  : _fetchReleaseHealthBaseline,
               onOpenProtection: () => closeThen(_openProtectionCenter),
               onOpenSupport: () => closeThen(() {
                 unawaited(_showSupportHub());

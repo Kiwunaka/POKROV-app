@@ -227,6 +227,73 @@ void main() {
     );
   });
 
+  test(
+      'release-health baseline is existing-session-only and exact-build scoped',
+      () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-obs-api-');
+    addTearDown(() => directory.delete(recursive: true));
+    final secrets = MemoryAppFirstSessionSecretStore();
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    HttpRequest? captured;
+    var requestCount = 0;
+    server.listen((request) async {
+      requestCount += 1;
+      captured = request;
+      request.response
+        ..statusCode = HttpStatus.ok
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode(_releaseHealthBaselinePayload()));
+      await request.response.close();
+    });
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://${server.address.host}:${server.port}',
+      supportDirectoryResolver: () async => directory,
+      sessionSecretStore: secrets,
+      maxRequestAttempts: 1,
+    );
+
+    final unavailable = await bootstrapper.fetchReleaseHealthBaseline(
+      hostPlatform: HostPlatform.android,
+      build: _build(),
+    );
+    expect(unavailable.state, ClientReleaseHealthBaselineState.unavailable);
+    expect(requestCount, 0, reason: 'baseline must not create a trial session');
+
+    final stateFile = File(
+      '${directory.path}${Platform.pathSeparator}'
+      'app-first-session-android.json',
+    );
+    final state = jsonDecode(await stateFile.readAsString()) as Map;
+    await secrets.writeSessionPair(
+      hostPlatform: HostPlatform.android,
+      installId: state['install_id'].toString(),
+      pair: const AppFirstSessionCredentials(
+        accessToken: 'test-session-token',
+        refreshToken: 'test-refresh-token',
+      ),
+    );
+
+    final baseline = await bootstrapper.fetchReleaseHealthBaseline(
+      hostPlatform: HostPlatform.android,
+      build: _build(),
+    );
+
+    expect(baseline.canCompare, isTrue);
+    expect(requestCount, 1);
+    expect(
+      captured!.uri.path,
+      '/api/client/observability/release-health/baseline',
+    );
+    expect(captured!.uri.queryParameters['build_number'], '30');
+    expect(captured!.uri.queryParameters['platform'], 'android');
+    expect(captured!.uri.queryParameters['core_abi'], '2');
+    expect(
+      captured!.headers.value(HttpHeaders.authorizationHeader),
+      'Bearer test-session-token',
+    );
+  });
+
   test('bootstrap failures expose stable closed portal codes', () {
     expect(
       const BootstrapFailure('safe', statusCode: 401).operationalErrorCode,
@@ -302,6 +369,46 @@ Map<String, Object?> _releaseHealthBatch(OperationalIdFactory ids) =>
       ],
     };
 
+Map<String, Object?> _releaseHealthBaselinePayload() => <String, Object?>{
+      'schema_version': 1,
+      'state': 'available',
+      'scope': <String, Object?>{
+        'app_version': '1.2.0',
+        'build_number': '30',
+        'channel': 'local',
+        'candidate_label': 'pokrov-1.2.0-local',
+        'git_revision': '0123456789abcdef0123456789abcdef01234567',
+        'core_abi': 2,
+        'platform': 'android',
+        'architecture': 'arm64-v8a',
+      },
+      'window': <String, Object?>{
+        'kind': 'utc_week',
+        'started_at': '2026-08-24T00:00:00Z',
+        'ends_at': '2026-08-31T00:00:00Z',
+      },
+      'privacy': <String, Object?>{
+        'minimum_contributors': 10,
+        'minimum_satisfied': true,
+        'contribution_cap_per_window': 64,
+      },
+      'baseline': <String, Object?>{
+        'overall': <String, Object?>{
+          'state': 'available',
+          'sample_band': '30_to_99',
+          'failure_rate_band': 'below_1_percent',
+        },
+        'families': <String, Object?>{
+          for (final family in <String>['crash', 'connect', 'update'])
+            family: <String, Object?>{
+              'state': 'available',
+              'sample_band': '30_to_99',
+              'failure_rate_band': 'below_1_percent',
+            },
+        },
+      },
+    };
+
 final class _ReleaseHealthCapture implements AppFirstReleaseHealthService {
   final List<Map<String, Object?>> batches = <Map<String, Object?>>[];
   final List<String> correlations = <String>[];
@@ -316,6 +423,13 @@ final class _ReleaseHealthCapture implements AppFirstReleaseHealthService {
     correlations.add(correlationId);
     return true;
   }
+
+  @override
+  Future<ClientReleaseHealthBaseline> fetchReleaseHealthBaseline({
+    required HostPlatform hostPlatform,
+    required OperationalBuildIdentity build,
+  }) async =>
+      const ClientReleaseHealthBaseline.unavailable();
 }
 
 DiagnosticSnapshot _diagnosticSnapshot() => DiagnosticSnapshot(
