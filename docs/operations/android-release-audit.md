@@ -202,7 +202,15 @@ egress, endurance or promotion:
   and ABI checks and matched the same configured production certificate;
 - after cold launch on both hosts, the app-owned VPN service was absent and the
   UI reported `Подключить` / `Не защищено`; the physical Wi-Fi state remained
-  disabled. This closes only the stale-running false-green regression.
+  disabled. This closes only the stale-running false-green regression;
+- a bounded physical connect control then started the POKROV VPN service but
+  produced no Android VPN transport after approximately `25` seconds. The UI
+  tree became unavailable before a post-connect label could be retained, so
+  DNS/HTTPS checks were not run and no connected-state claim is made. POKROV
+  was force-stopped, Android VPN transport read back absent, Hiddify was
+  foregrounded and Wi-Fi remained disabled. This is
+  `FAIL_4045_PREDEPLOY_ANDROID_ACTIVATION`, before the undeployed platform
+  managed-profile correction, not AWG cryptography or tunnel proof.
 
 ## Commands
 
