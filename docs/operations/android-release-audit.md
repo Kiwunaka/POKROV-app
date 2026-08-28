@@ -17,7 +17,7 @@ Older APK identities and device runs are retained separately as evidence.
 | Working package target | `1.2.0+4044` |
 | Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Active candidate Core package | POKROV Core `1.1.0` AAR from exact source `54e76bb…fa13` |
+| Active candidate Core package | POKROV Core `1.1.0` AAR from exact source `f44dbe8…f90d`; bytes match the prior `54e76bb` build |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
@@ -107,7 +107,7 @@ This exact pre-candidate is retained as failure evidence and is not reusable:
 - build 4042 globally enabled interface auto-detection when an AWG endpoint was
   present. That experiment is rejected because it changes ordinary Android
   route behavior. Builds 4043/4044 instead keep global auto-detection disabled
-  and bind Core `54e76bb…fa13`, which requests `VpnService.protect(fd)` only
+  and bind byte-identical Core source `f44dbe8…f90d`, which requests `VpnService.protect(fd)` only
   for the AWG outer socket.
 
 ## Rejected Working Build 4043 Evidence

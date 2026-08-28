@@ -15,7 +15,7 @@ The client binds the separately versioned Core target as follows:
 - repository: `Kiwunaka/POKROV-core`;
 - version-derived target label: `v1.1.0`;
 - tag created: `false`;
-- Android source commit: `54e76bbb61f79bd0eb0cdbddb71f52e12645fa13`;
+- Android source commit: `f44dbe89d6b89954032a1a798c2209d8c0aff90d`;
 - retained Windows source commit: `344b317a7a09eca7943a93866b193553538bd8f6`;
 - source state: `PRE_CANDIDATE_LOCAL`;
 - candidate created: `false`;
@@ -37,7 +37,7 @@ scoped release branch until its own owner-solo promotion evidence is recorded.
 
 | Platform | Artifact | Size | SHA-256 | Local result |
 | --- | --- | ---: | --- | --- |
-| Android | `pokrov-core.aar` | `107394593` | `ca391059b6676de5a2cfbf582395fd7ab0b0b5979c8a0c40faaa7208b79178e5` | two byte-identical local builds from `54e76bb`; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present; focused AWG/dialer tests and the full Core gate pass |
+| Android | `pokrov-core.aar` | `107394593` | `ca391059b6676de5a2cfbf582395fd7ab0b0b5979c8a0c40faaa7208b79178e5` | two byte-identical local builds from `f44dbe8`, also byte-identical to the prior `54e76bb` binding; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present; focused AWG/dialer tests and the full Core gate pass |
 | Windows x64 | `pokrov-core.dll` | `55401472` | `60fe3fad7835ec4d00c1f7168bb0ba01dd6b7ca5d883583340e5e2a86b8b3981` | retained exact bytes from `344b317`; two byte-identical builds; 15 required exports present; exact-DLL proxy-only 100-cycle start/stop PASS |
 | Windows dependency | `libcronet.dll` | `8596992` | `8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7` | unchanged retained dependency |
 | iOS | `PokrovCore.xcframework` | — | — | `MANUAL_OWNER_TEST` |
@@ -104,7 +104,7 @@ and moves the exception into the Core-owned AWG outer socket.
 
 Before these bytes may become a release candidate:
 
-1. rebuild Windows from `54e76bb` and prove byte-identical active artifacts from one Core source;
+1. rebuild Windows from `f44dbe8` and prove byte-identical active artifacts from one Core source;
 2. inspect the resulting Android and Windows packages and bind their Core
    digests into strict-v2 metadata;
 3. run hosted CI on every frozen revision;

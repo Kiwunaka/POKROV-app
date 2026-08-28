@@ -85,7 +85,7 @@ that candidate-specific release truth.
 
 Current blocking dependency:
 
-- the active local pre-candidate runtime has exact platform bindings: Android uses corrected Core commit `54e76bbb61f79bd0eb0cdbddb71f52e12645fa13`, which preserves the `egress` event subsystem, resolves AWG endpoint probe hostnames through the Core DNS router and protects only the AWG outer socket on Android, while Windows temporarily retains exact bytes from `344b317a7a09eca7943a93866b193553538bd8f6`; promotion is blocked until the platform artifacts converge on one Core source
+- the active local pre-candidate runtime has exact platform bindings: Android uses corrected Core commit `f44dbe89d6b89954032a1a798c2209d8c0aff90d`, which preserves the `egress` event subsystem, resolves AWG endpoint probe hostnames through the Core DNS router, protects only the AWG outer socket on Android and adds a test-only explicit owned-lab probe address; two rebuilds prove the AAR remains byte-identical to the prior `54e76bb` binding, while Windows temporarily retains exact bytes from `344b317a7a09eca7943a93866b193553538bd8f6`; promotion is blocked until the platform artifacts converge on one Core source
 - `Android` host now reaches a real service-backed connect lane: it can initialize POKROV Core, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
 - Android runtime discovery accepts either an extracted `nativeLibraryDir/libpokrov-core.so` or the ABI-matched `lib/<abi>/libpokrov-core.so` entry in the base/split APK. This is required on physical devices that install the release APK with native-library extraction disabled; Java still loads the packaged Core through the generated bindings
 - Android runtime materialization is intentionally `tun`-only in this lane; desktop loopback listener inbounds such as `mixed-in` and `dns-in` stay disabled for the mobile `VpnService` path
@@ -272,7 +272,7 @@ Current blocking dependency:
 
 POKROV Core is an independent repository and release line. The local client
 pre-candidate pins version `1.1.0`, Android commit
-`54e76bbb61f79bd0eb0cdbddb71f52e12645fa13`, and retained Windows commit
+`f44dbe89d6b89954032a1a798c2209d8c0aff90d`, and retained Windows commit
 `344b317a7a09eca7943a93866b193553538bd8f6`. The version-derived `v1.1.0`
 label is not a created Git tag or public release in this state. Promotion is
 blocked until active platform artifacts converge on one Core source.

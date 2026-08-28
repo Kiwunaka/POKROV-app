@@ -43,7 +43,7 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
   and rejects partial or different overrides before Flutter.
 - Build 4044 carries the opt-in direct-DoH laboratory detour and managed AWG
   endpoint materialization without changing VPN-default routing. Its Android
-  AAR binds Core `54e76bb…fa13`, whose AWG endpoint resolves probe hostnames,
+  AAR binds Core `f44dbe8…f90d`, whose AWG endpoint resolves probe hostnames,
   preserves the canonical `egress` event subsystem and requests Android
   platform protection only for its outer socket. It also selects the reachable
   owned app ingress through a JSON health preflight, with the canonical API
@@ -82,9 +82,9 @@ runtime, rollback or promotion proof.
 
 | Order | Gate | State | Completion rule |
 |---:|---|---|---|
-| 1 | Clean platform, client, Core and release-index revisions | `IN_PROGRESS_LOCAL_FREEZE; PROMOTION_BLOCKED` | Core `54e76bb…fa13` is clean and pushed. Client build-4044 binding and the scoped platform AWG-lab scripts must be committed and pass the cross-repository preflight; release-index `32f560d…2d4a` remains unchanged. |
+| 1 | Clean platform, client, Core and release-index revisions | `IN_PROGRESS_LOCAL_FREEZE; PROMOTION_BLOCKED_BY_ACTIONS_BILLING` | Core `f44dbe8…f90d`, platform `e5ef03a…11db` and client source `1d670b3…9f9` are clean and pushed. Platform PR 58 and client PR 33 have zero-step GitHub failures caused by account billing/spending limits; release-index `32f560d…2d4a` remains unchanged. |
 | 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains private signed candidate.4 evidence with promotion false. It does not bind the replacement source or `1.2.0+4044`. |
-| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_MIXED_PLATFORM_LOCAL; PASS_LOCAL_AWG_LIFECYCLE; PASS_WORKING_ANDROID_HOST` | Android binds two byte-identical AAR builds from Core `54e76bb…fa13`, including AWG hostname resolution and Android outer-socket protection; working build 4044 proved control-plane reachability, socket protection, normal WARP and egress on the Huawei. Windows retains DLL `60fe3fad…3981` from `344b317…8f6` plus Cronet `8ef1f8bb…a6f7`. Platform-source convergence and exact-candidate host proof remain open. |
+| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_MIXED_PLATFORM_LOCAL; PASS_LOCAL_AWG_LIFECYCLE; PASS_WORKING_ANDROID_HOST` | Android binds two byte-identical AAR builds from Core `f44dbe8…f90d`; those bytes also match the prior `54e76bb` build and include AWG hostname resolution and Android outer-socket protection. Working build 4044 proved control-plane reachability, socket protection, normal WARP and egress on the Huawei. Windows retains DLL `60fe3fad…3981` from `344b317…8f6` plus Cronet `8ef1f8bb…a6f7`. Platform-source convergence and exact-candidate host proof remain open. |
 | 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.4 metadata remains valid only for its exact older bytes. The replacement must bind build `4044`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
 | 5 | Android exact-candidate build and signer | `PASS_WORKING_4044_SIGNER; MISSING_REPLACEMENT_CANDIDATE` | Working APK `1.2.0+4044` is production-certificate matched at SHA-256 `7417191b…f04f`; its physical evidence is retained as pre-candidate proof only. A strict-v2 replacement manifest and final candidate bytes are still missing. |
 | 6 | Android physical-device matrix | `MANUAL_OWNER_TEST` | Huawei install, TUN/DNS/egress, WARP, per-app, handoff and endurance pass on exact bytes. |

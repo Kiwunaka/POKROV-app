@@ -4,7 +4,7 @@
     "version": "1.1.0",
     "release_tag": "v1.1.0",
     "release_tag_created": false,
-    "source_commit": "54e76bbb61f79bd0eb0cdbddb71f52e12645fa13",
+    "source_commit": "f44dbe89d6b89954032a1a798c2209d8c0aff90d",
     "android_package": "space.pokrov.core",
     "sing_box_version": "1.13.0",
     "sing_dependency": "v0.8.0-beta.12",
@@ -20,7 +20,7 @@
       "artifact_evidence": {
         "android": {
           "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "source_commit": "54e76bbb61f79bd0eb0cdbddb71f52e12645fa13",
+          "source_commit": "f44dbe89d6b89954032a1a798c2209d8c0aff90d",
           "tree_sha256": null,
           "evidence_sha256": null,
           "abis": [
@@ -53,7 +53,7 @@
       "reproducible_build": {
         "android": {
           "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "source_commit": "54e76bbb61f79bd0eb0cdbddb71f52e12645fa13",
+          "source_commit": "f44dbe89d6b89954032a1a798c2209d8c0aff90d",
           "size": 107394593,
           "sha256": "ca391059b6676de5a2cfbf582395fd7ab0b0b5979c8a0c40faaa7208b79178e5"
         },
@@ -132,7 +132,7 @@
     "assets": {
       "android": {
         "entry": "pokrov-core.aar",
-        "source_commit": "54e76bbb61f79bd0eb0cdbddb71f52e12645fa13",
+        "source_commit": "f44dbe89d6b89954032a1a798c2209d8c0aff90d",
         "size": 107394593,
         "sha256": "ca391059b6676de5a2cfbf582395fd7ab0b0b5979c8a0c40faaa7208b79178e5",
         "sync_policy": "exact_pre_candidate_build",
