@@ -55,6 +55,35 @@ void main() {
     expect(supported.single['firewall'], 'nftables');
     expect(pending.any((entry) => entry['distro_id'] == 'fedora'), isTrue);
   });
+
+  test('Linux network transaction events stay closed and fail-closed', () {
+    final journal = _text('daemon/internal/journal/journal.go');
+    final recorder = _text('daemon/internal/networktxn/recorder.go');
+    final service = _text('daemon/internal/service/service_linux.go');
+
+    for (final value in <String>[
+      'network_transaction',
+      'network_manager',
+      'resolved',
+      'nftables',
+      'checkpoint',
+      'apply',
+      'rollback',
+      'linux_network_checkpoint_failed',
+      'linux_network_apply_failed',
+      'linux_network_rollback_failed',
+    ]) {
+      expect(journal, contains(value), reason: value);
+    }
+    expect(recorder, contains('func (recorder Recorder) Checkpoint'));
+    expect(recorder, contains('func (recorder Recorder) Apply'));
+    expect(recorder, contains('func (recorder Recorder) Rollback'));
+    expect(recorder, isNot(contains('exec.Command')));
+    expect(recorder, isNot(contains('os/exec')));
+    expect(service, contains('recordUnavailableNetworkTransaction'));
+    expect(service, contains('networktxn.Unsupported'));
+    expect(service, contains('linux_live_connect_unavailable'));
+  });
 }
 
 Map<String, Object?> _json(String path) {

@@ -270,6 +270,17 @@ provides the same boundary. NetworkManager is the primary integration for its
 declared matrix; resolved, networkd and nft behavior is explicit and
 fail-closed for IPv4/IPv6.
 
+The daemon's network transaction observability contract is closed before live
+mutation is enabled. Each event names exactly one `network_manager`, `resolved`
+or `nftables` subsystem and one `checkpoint`, `apply` or `rollback` stage. The
+only results are pass, unavailable or stage-specific rejection. The envelope
+contains a bounded transaction ID, request correlation ID, generation and an
+allowlisted error code; it has no command, argument, path, interface, address,
+resolver, rule, destination or raw error field. A current `connect` attempt
+records `checkpoint/unavailable` for all three required owners and then returns
+`linux_live_connect_unavailable`. It does not manufacture apply/rollback success
+before those operations exist.
+
 A compiling Core or UI, an unsigned package, or an AppImage containing only UI
 does not prove VPN beta support. Public facts remain unchanged until the exact
 signed package passes install, upgrade, rollback, uninstall, non-root,
@@ -308,7 +319,7 @@ observability owners. Platform work must not create a competing pipeline.
 
 ## Rollout state
 
-As of 2026-08-26:
+As of 2026-08-28:
 
 - Windows per-session singleton, typed UI activation and tray-only startup are
   locally proved under WO-005A;
@@ -349,7 +360,10 @@ As of 2026-08-26:
   non-root Flutter host, a systemd socket-activated Go daemon, kernel peer
   credentials, polkit authorization for every mutation, bounded typed IPC,
   fixed private profile storage, a fail-closed Ubuntu 24.04 foundation matrix
-  and allowlisted native journald fields. `connect` intentionally returns
+  and allowlisted native journald fields. A typed NetworkManager/resolved/nft
+  transaction-event seam plus exact unavailable-preflight wiring now exposes
+  checkpoint/apply/rollback compatibility reasons without raw details.
+  `connect` intentionally returns
   `linux_live_connect_unavailable` and `supports_live_connect=false` until the
   Core lifecycle, NetworkManager checkpoint/rollback, resolved/nft
   transactions, suspend recovery and exact signed package/VM matrices are

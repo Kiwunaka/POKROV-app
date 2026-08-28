@@ -9,16 +9,21 @@ import (
 	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/auth"
 	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/host"
 	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/journal"
+	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/networktxn"
 	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/profile"
 	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/protocol"
 )
+
+type eventSink interface {
+	Write(journal.Event)
+}
 
 type Service struct {
 	mu         sync.Mutex
 	probe      host.Probe
 	profiles   *profile.Store
 	authorizer auth.Checker
-	events     *journal.Writer
+	events     eventSink
 	phase      string
 	generation uint64
 	lastStop   string
@@ -28,7 +33,7 @@ func New(
 	probe host.Probe,
 	profiles *profile.Store,
 	authorizer auth.Checker,
-	events *journal.Writer,
+	events eventSink,
 ) *Service {
 	phase := "artifact_missing"
 	if profiles.Exists() {
@@ -93,6 +98,7 @@ func (service *Service) Handle(peer auth.Peer, request protocol.Request) protoco
 		service.event("profile", "pass", request.RequestID, "")
 		return protocol.Success(request.RequestID, service.snapshot(service.probe.Run()))
 	case "connect":
+		service.recordUnavailableNetworkTransaction(request.RequestID)
 		service.event("connect", "unavailable", request.RequestID, "linux_live_connect_unavailable")
 		return protocol.Failure(
 			request.RequestID,
@@ -112,6 +118,28 @@ func (service *Service) Handle(peer auth.Peer, request protocol.Request) protoco
 		return protocol.Success(request.RequestID, snapshot)
 	default:
 		return protocol.Failure(request.RequestID, "linux_protocol_invalid", "runtime_error")
+	}
+}
+
+func (service *Service) recordUnavailableNetworkTransaction(correlationID string) {
+	if service.events == nil {
+		return
+	}
+	recorder, err := networktxn.New(
+		service.events,
+		correlationID,
+		correlationID,
+		service.generation,
+	)
+	if err != nil {
+		return
+	}
+	for _, subsystem := range []networktxn.Subsystem{
+		networktxn.NetworkManager,
+		networktxn.Resolved,
+		networktxn.Nftables,
+	} {
+		_ = recorder.Checkpoint(subsystem, networktxn.Unsupported)
 	}
 }
 

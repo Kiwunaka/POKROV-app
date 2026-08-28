@@ -10,6 +10,7 @@ import (
 
 	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/auth"
 	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/host"
+	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/journal"
 	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/profile"
 	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/protocol"
 )
@@ -30,7 +31,23 @@ func (denyingChecker) Check(string, string) bool {
 	return false
 }
 
+type memoryEvents struct {
+	events []journal.Event
+}
+
+func (events *memoryEvents) Write(event journal.Event) {
+	events.events = append(events.events, event)
+}
+
 func newReadyService(t *testing.T, checker auth.Checker) (*Service, *profile.Store) {
+	return newReadyServiceWithEvents(t, checker, nil)
+}
+
+func newReadyServiceWithEvents(
+	t *testing.T,
+	checker auth.Checker,
+	events eventSink,
+) (*Service, *profile.Store) {
 	t.Helper()
 	osRelease := filepath.Join(t.TempDir(), "os-release")
 	if err := os.WriteFile(osRelease, []byte("ID=ubuntu\nVERSION_ID=24.04\n"), 0o600); err != nil {
@@ -45,7 +62,7 @@ func newReadyService(t *testing.T, checker auth.Checker) (*Service, *profile.Sto
 		},
 		store,
 		checker,
-		nil,
+		events,
 	), store
 }
 
@@ -102,5 +119,43 @@ func TestRootCanStageButLiveConnectRemainsFailClosed(t *testing.T) {
 	})
 	if connect.OK || connect.ErrorCode != "linux_live_connect_unavailable" {
 		t.Fatalf("foundation advertised live connect: %#v", connect)
+	}
+}
+
+func TestUnavailableConnectEmitsClosedNetworkPreflightReasons(t *testing.T) {
+	events := &memoryEvents{}
+	service, _ := newReadyServiceWithEvents(t, nil, events)
+	root := auth.Peer{PID: 1, UID: 0, StartTime: 1}
+
+	if staged := service.Handle(root, stageRequest(t)); !staged.OK {
+		t.Fatalf("profile stage failed: %#v", staged)
+	}
+	connect := service.Handle(root, protocol.Request{
+		Protocol:  protocol.Version,
+		RequestID: "linux-connect-observed-1",
+		Action:    "connect",
+		Payload:   json.RawMessage("{}"),
+	})
+	if connect.OK || connect.ErrorCode != "linux_live_connect_unavailable" {
+		t.Fatalf("foundation advertised live connect: %#v", connect)
+	}
+
+	networkEvents := make([]journal.Event, 0, 3)
+	for _, event := range events.events {
+		if event.Name == "network_transaction" {
+			networkEvents = append(networkEvents, event)
+		}
+	}
+	if len(networkEvents) != 3 {
+		t.Fatalf("expected three network preflight events, got %#v", networkEvents)
+	}
+	wantSubsystems := []string{"network_manager", "resolved", "nftables"}
+	for index, event := range networkEvents {
+		if event.Subsystem != wantSubsystems[index] || event.Stage != "checkpoint" ||
+			event.Outcome != "unavailable" || event.ErrorCode != "linux_network_unsupported" ||
+			event.TransactionID != "linux-connect-observed-1" ||
+			event.CorrelationID != "linux-connect-observed-1" {
+			t.Fatalf("unexpected network event %d: %#v", index, event)
+		}
 	}
 }
