@@ -2207,8 +2207,13 @@ const _pokrovAwg2ContractSha256 =
 const _pokrovAwg31ContractId = 'pokrov.awg31.endpoint.v1';
 const _pokrovAwg31ContractSha256 =
     '1bb49b61549ba7c4a3c2d56df445e919ebb1ed12d42e04b0cb3c915d23240818';
+const _pokrovHy2ContractId = 'pokrov.hy2.outbound.v1';
+const _pokrovHy2ContractSha256 =
+    'c96b38e58ea33f838f23b80a65f3a9a264e932b7248f206798df9a0b8fa0fb98';
 final _pokrovAwgGenerationPattern =
     RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$');
+final _pokrovHy2HostPattern =
+    RegExp(r'^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$');
 
 String _materializePokrovCoreConfig(
   String configPayload,
@@ -2222,7 +2227,7 @@ String _materializePokrovCoreConfig(
   final config = decoded.map<String, Object?>(
     (key, value) => MapEntry(key.toString(), value),
   );
-  _validateAwgTransportContract(config);
+  _validateManagedTransportContract(config);
   final runtimeVariantProbe = preserveAndroidHostMetadata
       ? Map<String, Object?>.from(
           _runtimeObjectMap(
@@ -2366,6 +2371,11 @@ String _materializePokrovCoreConfig(
   return const JsonEncoder.withIndent('  ').convert(config);
 }
 
+void _validateManagedTransportContract(Map<String, Object?> config) {
+  _validateAwgTransportContract(config);
+  _validateHy2TransportContract(config);
+}
+
 void _validateAwgTransportContract(Map<String, Object?> config) {
   final awgEndpoints = _runtimeMapList(config['endpoints'])
       .where(
@@ -2408,6 +2418,92 @@ void _validateAwgTransportContract(Map<String, Object?> config) {
           : endpointContractId.isEmpty || endpointContractId == contractId);
   if (!contractIsCurrent) {
     throw const FormatException('AWG transport contract is invalid');
+  }
+}
+
+void _validateHy2TransportContract(Map<String, Object?> config) {
+  final hy2Outbounds = _runtimeMapList(config['outbounds'])
+      .where(
+        (outbound) =>
+            _runtimeText(outbound['type']).toLowerCase() == 'hysteria2',
+      )
+      .toList(growable: false);
+  if (hy2Outbounds.isEmpty) {
+    return;
+  }
+
+  final contract = _runtimeObjectMap(
+    _runtimeObjectMap(config['_meta'])['transport_contract'],
+  );
+  final outbound = hy2Outbounds.length == 1 ? hy2Outbounds.single : null;
+  final tag = _runtimeText(outbound?['tag']);
+  final server = _runtimeText(outbound?['server']);
+  final password = _runtimeText(outbound?['password']);
+  final upMbps = _runtimeNullableInt(outbound?['up_mbps']);
+  final downMbps = _runtimeNullableInt(outbound?['down_mbps']);
+  final serverPort = _runtimeNullableInt(outbound?['server_port']);
+  final tls = _runtimeObjectMap(outbound?['tls']);
+  final tlsFields = tls.keys.toSet();
+  final alpn = tls['alpn'];
+  final alpnIsH3 = alpn is List &&
+      alpn.length == 1 &&
+      _runtimeText(alpn.single).toLowerCase() == 'h3';
+  final obfsValue = outbound?['obfs'];
+  final obfs = _runtimeObjectMap(obfsValue);
+  final obfsValid = obfsValue == null ||
+      (obfs.keys.toSet().difference(const {'type', 'password'}).isEmpty &&
+          _runtimeText(obfs['type']).toLowerCase() == 'salamander' &&
+          _runtimeText(obfs['password']).length >= 16 &&
+          _runtimeText(obfs['password']).length <= 128);
+  final route = _runtimeObjectMap(config['route']);
+  final allowedOutboundFields = <String>{
+    'type',
+    'tag',
+    'server',
+    'server_port',
+    'password',
+    'up_mbps',
+    'down_mbps',
+    'obfs',
+    'tls',
+  };
+  final contractIsCurrent = outbound != null &&
+      _runtimeText(contract['id']) == _pokrovHy2ContractId &&
+      _runtimeText(contract['sha256']).toLowerCase() ==
+          _pokrovHy2ContractSha256 &&
+      _runtimeText(contract['profile']) == 'hy2_lab' &&
+      _runtimeText(contract['state']) == 'enabled' &&
+      _pokrovAwgGenerationPattern.hasMatch(
+        _runtimeText(contract['generation']),
+      ) &&
+      outbound.keys.toSet().difference(allowedOutboundFields).isEmpty &&
+      tag.isNotEmpty &&
+      route['final'] == tag &&
+      server.isNotEmpty &&
+      server.length <= 253 &&
+      _pokrovHy2HostPattern.hasMatch(server) &&
+      serverPort != null &&
+      serverPort >= 1 &&
+      serverPort <= 65535 &&
+      password.length >= 16 &&
+      password.length <= 128 &&
+      upMbps != null &&
+      upMbps >= 1 &&
+      upMbps <= 1000 &&
+      downMbps != null &&
+      downMbps >= 1 &&
+      downMbps <= 1000 &&
+      obfsValid &&
+      tlsFields.difference(
+          const {'enabled', 'server_name', 'insecure', 'alpn'}).isEmpty &&
+      tls['enabled'] == true &&
+      tls['insecure'] == false &&
+      _runtimeText(tls['server_name']).isNotEmpty &&
+      _runtimeText(tls['server_name']).length <= 253 &&
+      _pokrovHy2HostPattern.hasMatch(_runtimeText(tls['server_name'])) &&
+      alpnIsH3;
+  if (!contractIsCurrent) {
+    throw const FormatException('Hysteria2 transport contract is invalid');
   }
 }
 

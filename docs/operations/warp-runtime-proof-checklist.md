@@ -77,9 +77,9 @@ Current status: `MANUAL_OWNER_TEST` for exact `1.2.0` candidate bytes.
   implemented and locally tested.
 - Client-local WARP materialization, enable/disable parity, desktop ABI 2 and
   Android host/JVM boundaries: implemented and locally tested.
-- The local pre-candidate client binds the corrected Core `1.1.0` Android AAR
-  from `f44dbe89d6b89954032a1a798c2209d8c0aff90d`; its bytes match the prior
-  `54e76bbb61f79bd0eb0cdbddb71f52e12645fa13` build. Windows temporarily retains
+- The local pre-candidate client binds the Core `1.1.0` Android AAR from
+  `e8eb7721fc6eaac6813d3a888ac90d0da1f541a1`; two local rebuilds are
+  byte-identical. Windows temporarily retains
   exact DLL bytes from `344b317a7a09eca7943a93866b193553538bd8f6`.
   Platform-source convergence remains a promotion gate.
 - Exact Android and Windows release-build WARP/uplink/teardown evidence:
