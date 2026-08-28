@@ -68,8 +68,13 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
   Direct cellular DoH resolved all three bounded AI/Games queries, while the
   generated routes correctly kept application traffic on the VPN. After lab
   unbind and VPN-default DNS restore, ordinary WARP, IP egress and DNS+egress
-  passed on the same phone. Full exact-candidate tunnel DNS, leak, handoff and
-  OEM proof remain open.
+  passed on the same phone. A later explicit no-carrier readback selected AWG2
+  for exact physical and LDPlayer identities, but build 4044 on Wi-Fi and build
+  4043 on LDPlayer emitted no AWG traffic. LDPlayer additionally rejected the
+  selected Frankfurt location before tunnel start. The common managed-profile
+  activation/fallback path is therefore a pre-candidate failure; AWG3.1 was not
+  repeated above the same unmet AWG2 precondition. Full exact-candidate tunnel
+  DNS, leak, handoff and OEM proof remain open.
 - Core is clean and pushed. The build-4044 client binding and scoped platform
   AWG-lab scripts are still being frozen; cross-repository preflight must be
   rerun on their committed revisions before `READY_LOCAL_FREEZE` can return.
@@ -87,7 +92,7 @@ runtime, rollback or promotion proof.
 | 3 | POKROV Core `1.1.0` replacement artifact | `PASS_MIXED_PLATFORM_LOCAL; PASS_LOCAL_AWG_LIFECYCLE; PASS_WORKING_ANDROID_HOST` | Android binds two byte-identical AAR builds from Core `f44dbe8…f90d`; those bytes also match the prior `54e76bb` build and include AWG hostname resolution and Android outer-socket protection. Working build 4044 proved control-plane reachability, socket protection, normal WARP and egress on the Huawei. Windows retains DLL `60fe3fad…3981` from `344b317…8f6` plus Cronet `8ef1f8bb…a6f7`. Platform-source convergence and exact-candidate host proof remain open. |
 | 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.4 metadata remains valid only for its exact older bytes. The replacement must bind build `4044`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
 | 5 | Android exact-candidate build and signer | `PASS_WORKING_4044_SIGNER; MISSING_REPLACEMENT_CANDIDATE` | Working APK `1.2.0+4044` is production-certificate matched at SHA-256 `7417191b…f04f`; its physical evidence is retained as pre-candidate proof only. A strict-v2 replacement manifest and final candidate bytes are still missing. |
-| 6 | Android physical-device matrix | `MANUAL_OWNER_TEST` | Huawei install, TUN/DNS/egress, WARP, per-app, handoff and endurance pass on exact bytes. |
+| 6 | Android physical-device matrix | `FAIL_WORKING_AWG_ACTIVATION; MANUAL_OWNER_TEST` | Fix managed-profile activation/fallback, prove AWG2 then AWG3.1 on a returning origin, and run Huawei install, TUN/DNS/egress, WARP, per-app, handoff and endurance on exact bytes. |
 | 7 | Windows exact-candidate package | `MISSING_REPLACEMENT_ARTIFACT` | Candidate.3 clean-host run `33033294889` is retained supporting evidence only. Build `36` requires a converged Core DLL, new setup identity and bounded clean-host run. |
 | 8 | Windows unsigned-beta warning and clean-host recovery | `SKIPPED_BY_OWNER; REPLACEMENT_PROOF_MISSING` | The `1.2.0` direct-beta exception and warning remain applicable. Replacement live TUN/DNS/egress, recovery while connected and interactive SmartScreen are manual; trusted signing is still required for trusted/Store/broad-stable claims. |
 | 9 | Hosted cross-repository CI | `BLOCKED_BY_ACCESS_GITHUB_BILLING` | Candidate.3 source runs are retained. Replacement platform/client PR jobs currently stop before steps because of the GitHub account payment/spending limit; they are neither PASS nor code failures. |
@@ -96,18 +101,20 @@ runtime, rollback or promotion proof.
 
 ## Next Action Order
 
-1. Freeze the replacement platform/client/Core/release-index source tuple and
+1. Fix the Android managed-profile activation/fallback gap and retain a real
+   AWG2 handshake plus tunnel proof on the working source; then run AWG3.1.
+2. Freeze the replacement platform/client/Core/release-index source tuple and
    keep AWG2, AWG3.1 plus AI/Games/DoH contracts green on the exact client
    revision.
-2. Freeze build `4044` Android and Windows artifacts into a new signed strict-v2
+3. Freeze build `4044` Android and Windows artifacts into a new signed strict-v2
    manifest; do not reuse candidate.3 artifact evidence.
-3. Run LDPlayer rehearsal, then the physical-device/OEM and Windows clean-host
+4. Run LDPlayer rehearsal, then the physical-device/OEM and Windows clean-host
    network/recovery/SmartScreen matrices on the replacement bytes.
-4. Complete current-origin, Brain-origin, payment, Operator OIDC/RBAC,
+5. Complete current-origin, Brain-origin, payment, Operator OIDC/RBAC,
    legal/commercial and rollback gates for the same candidate.
-5. Request separate authority for public same-byte candidate publication,
+6. Request separate authority for public same-byte candidate publication,
    anonymous readback, rollback drill and promotion.
-6. Provision trusted Windows signing later before any signed, Store or
+7. Provision trusted Windows signing later before any signed, Store or
    broad-stable Windows claim.
 
 ## Retained History

@@ -152,6 +152,13 @@ APK. It is not strict-v2 candidate, promotion, OEM-matrix or RU-origin proof:
 - live AWG alignment v2 passed for both profiles across keys, peer identity,
   ports, tunnel addresses, S/H fields, header protection, content padding and
   randomized trailers. AWG3.1 remains a closed lab and is not release-ready;
+- a later explicit no-carrier policy readback selected AWG2 for the exact
+  physical and LDPlayer identities. Build 4044 on Wi-Fi returned to disconnected
+  state without Android VPN transport or AWG packets. Build 4043 on LDPlayer
+  first showed connected without Android VPN transport or AWG traffic, then
+  rejected the selected Frankfurt location before tunnel start. This is
+  `FAIL_WORKING_CLIENT_ACTIVATION`, before cryptography; AWG3.1 was not repeated
+  because AWG2 never reached the common cryptographic path;
 - with `DNS напрямую · лаборатория` enabled, the persisted preference and
   generated runtime both selected direct HTTPS DoH. Three bounded cellular DoH
   queries covering the AI and Games groups returned valid DNS responses. The
@@ -164,11 +171,14 @@ APK. It is not strict-v2 candidate, promotion, OEM-matrix or RU-origin proof:
   separate IP-egress and DNS+egress probes passed. The regenerated runtime had
   no AWG final endpoint, kept HTTPS DNS through the VPN and retained both
   purpose routes;
-- cleanup readback showed POKROV stopped, the temporary instrumentation package
-  absent, Wi-Fi enabled and Hiddify foreground. No temporary raw profile,
-  endpoint, identifier or phone screenshot was retained.
+- final cleanup readback showed both exact devices outside the AWG cohort and
+  both lab allowlists with ordinary fallback restored. POKROV was stopped on
+  the phone and LDPlayer, phone Wi-Fi was restored off, Hiddify was foreground,
+  and no temporary raw profile, endpoint, identifier or screenshot was retained.
 
-The final candidate still needs the full physical matrix: lifecycle,
+Before freezing the final candidate, the Android managed-profile
+activation/fallback path must prove AWG2 on a returning origin, followed by
+AWG3.1. The exact candidate then still needs the full physical matrix: lifecycle,
 permission revoke, sleep/resume, Wi-Fi/LTE handoff, per-app modes, DNS leak,
 blocked UDP 53, MTU, endurance, backup/privacy and OEM limitations.
 
