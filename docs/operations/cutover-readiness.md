@@ -25,7 +25,7 @@ contracts. Do not select the most optimistic status.
 |---|---|
 | Canonical lane | `POKROV-app/main` |
 | Retained public release | Android and Windows `1.1.6` |
-| New working target | `1.2.0+4044` |
+| New working target | `1.2.0+4045` |
 | Target state | `PRE_CANDIDATE_LOCAL` |
 | Candidate created | `false` |
 | New public cutover | `BLOCKED` |
@@ -38,13 +38,13 @@ signing, device, runtime and origin evidence cannot be reused for promotion.
 
 | Gate | State | Required evidence |
 |---|---|---|
-| Package/version parity | `PASS_LOCAL` | Android and Windows are `1.2.0+4044`; the shared app-shell remains product version `1.2.0`. |
+| Package/version parity | `PASS_LOCAL` | Android and Windows are `1.2.0+4045`; the shared app-shell remains product version `1.2.0`. |
 | Strict-v2 generator contract | `PASS_LOCAL` | Schema, generator and cross-repository parity tests pass. |
 | Stable pointer and rollback catalog | `PASS_LOCAL` | Retained `1.1.6` pointer matches its exact versioned handoff; isolated A→B→A proves optimistic lock, atomic replace, backup, receipt and byte-identical reversal. |
 | Operational producer/privacy contract | `PASS_LOCAL` | Auth, entitlement, performance, support and Android count-only routing producers pass focused client/platform tests; exact-candidate runtime proof remains later. |
 | Temporary support mode and encrypted export | `PASS_LOCAL` | Signed exact-audience activation, explicit consent, persistent indicator, nonce/TTL/cumulative caps, no-upload short code and encrypted-only Android/Windows export pass local source/widget/unit contracts; exact-candidate physical host proof remains later. |
 | Clean frozen revisions | `IN_PROGRESS_LOCAL_FREEZE; PROMOTION_BLOCKED_BY_ACTIONS_BILLING` | The locally gated runtime tuple is Core `f44dbe8…f90d`, platform `e5ef03a…11db` and client `c196dff…1f61`. Later platform AWG operations/evidence `39af0f1…9efe` and client evidence-doc `2eeee5f…e981` commits pass focused local contracts. Platform PR 58 and client PR 33 still fail before executing any step because private-repository Actions are billing-blocked; release-index `32f560d…2d4a` remains unchanged. |
-| Release index | `PASS_PRE_CANDIDATE_CONTRACT; REPLACEMENT_MANIFEST_MISSING` | Release-index `main` retains private signed candidate.4 evidence and the active signing contract. It has no manifest for build `4044`; public readback and promotion remain blocked. |
+| Release index | `PASS_PRE_CANDIDATE_CONTRACT; REPLACEMENT_MANIFEST_MISSING` | Release-index `main` retains private signed candidate.4 evidence and the active signing contract. It has no manifest for build `4045`; public readback and promotion remain blocked. |
 | Core replacement | `PASS_MIXED_PLATFORM_LOCAL` | Android has two byte-identical `1.1.0` AAR builds from Core `f44dbe8…f90d`, also byte-identical to the prior `54e76bb` AAR and including AWG DNS and Android outer-socket protection; Windows retains exact DLL bytes from `344b317…8f6`. No tag, candidate signing, platform convergence or publication is claimed. |
 | AWG lifecycle and direct DoH lab | `PASS_CURRENT_ORIGIN_CORE_SERVER; PASS_4044_CONTROL_PLANE; BLOCKED_BY_NETWORK_CURRENT_BEELINE_REVERSE_UDP; FAIL_WORKING_ANDROID_ACTIVATION; PASS_DIRECT_DOH_CELLULAR; EXACT_CANDIDATE_PENDING` | Live alignment v2 passes for AWG2 and randomized-trailer AWG3.1. Build 4044 reached both listeners from physical Beeline, but guarded plain-UDP controls proved that each server received and echoed 3/3 while the phone received 0/3. A later explicit no-carrier readback selected AWG2 for exact physical and LDPlayer identities, while build 4044 on Wi-Fi and build 4043 on LDPlayer emitted no AWG traffic; LDPlayer also rejected the selected Frankfurt location before tunnel start. That second boundary is client activation/fallback, before cryptography. Direct HTTPS DoH resolved all three bounded AI/Games queries; application traffic still uses the VPN target. |
 | Android LDPlayer/physical source-lab rehearsal | `PASS_4044_INSTALL_SIGNER; PASS_4044_NORMAL_WARP_EGRESS; BLOCKED_4044_AWG_REVERSE_UDP; FAIL_4044_WIFI_AWG_ACTIVATION; FAIL_4043_LDPLAYER_AWG_ACTIVATION; EXACT_CANDIDATE_PENDING` | Working APK `1.2.0+4044`, SHA-256 `7417191b9fab0469e2040ae535a5e51ca34821da9848e3af5a26aaf7a2f04f45`, matched the production certificate and installed on the Huawei. After lab unbind, WARP connected on Beeline and both IP and DNS+egress probes passed. The later no-carrier controls proved server-side AWG2 selection but not client activation: neither device produced AWG packets, the physical app returned disconnected without an Android VPN transport, and LDPlayer either connected a non-VPN fallback or rejected Frankfurt. These ad hoc bytes are not a strict-v2 candidate and do not clear the full physical matrix. |

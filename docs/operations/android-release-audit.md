@@ -14,7 +14,7 @@ Older APK identities and device runs are retained separately as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
-| Working package target | `1.2.0+4044` |
+| Working package target | `1.2.0+4045` |
 | Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Package ID | `space.pokrov.pokrov_android_shell` |
 | Active candidate Core package | POKROV Core `1.1.0` AAR from exact source `f44dbe8…f90d`; bytes match the prior `54e76bb` build |
@@ -33,7 +33,7 @@ These local contracts do not prove final APK bytes or physical behavior.
 ## Retained Candidate.3 Evidence And Replacement Gate
 
 The table keeps candidate.3 results only as exact evidence for its old bytes.
-The `1.2.0+4044` replacement is source-only until its production-signed working
+The `1.2.0+4045` replacement is source-only until its production-signed working
 artifacts and live checks complete; it has no strict-v2 replacement candidate. None of the retained candidate.3 signing,
 runtime or promotion rows below transfers to the new bytes.
 
@@ -176,9 +176,12 @@ APK. It is not strict-v2 candidate, promotion, OEM-matrix or RU-origin proof:
   the phone and LDPlayer, phone Wi-Fi was restored off, Hiddify was foreground,
   and no temporary raw profile, endpoint, identifier or screenshot was retained.
 
-Before freezing the final candidate, the Android managed-profile
-activation/fallback path must prove AWG2 on a returning origin, followed by
-AWG3.1. The exact candidate then still needs the full physical matrix: lifecycle,
+The working `1.2.0+4045` source demotes a stale Android `running` snapshot when
+the app-owned TUN is absent. The paired platform correction issues owned AWG lab
+profiles without applying the ordinary Smart Connect node shortlist first. Both
+corrections remain pre-deploy, pre-device evidence: before freezing the final
+candidate they must prove AWG2 on a returning origin, followed by AWG3.1. The
+exact candidate then still needs the full physical matrix: lifecycle,
 permission revoke, sleep/resume, Wi-Fi/LTE handoff, per-app modes, DNS leak,
 blocked UDP 53, MTU, endurance, backup/privacy and OEM limitations.
 

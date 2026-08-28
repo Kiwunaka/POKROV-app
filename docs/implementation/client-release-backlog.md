@@ -14,7 +14,7 @@ results belong in dated evidence and never become reusable release approval.
 | Fact | Current state |
 |---|---|
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
-| Working package target | `1.2.0+4044` |
+| Working package target | `1.2.0+4045` |
 | Working target state | `PRE_CANDIDATE_LOCAL` |
 | Candidate created | `false` |
 | Public cutover allowed for a new candidate | `false` |
@@ -29,7 +29,7 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
 
 ## Current Local Completion
 
-- Android and Windows package versions match `1.2.0+4044`; app-shell reports the
+- Android and Windows package versions match `1.2.0+4045`; app-shell reports the
   shared product version `1.2.0`.
 - Strict release-handoff v2 generation and client/Core parity pass locally.
 - The retained `1.1.6` stable pointer is hash-bound to its versioned rollback
@@ -41,7 +41,7 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
 - Local observability, diagnostics and support-bundle contracts are present.
 - Production packaging is source-bound to one tracked support-mode public key
   and rejects partial or different overrides before Flutter.
-- Build 4044 carries the opt-in direct-DoH laboratory detour and managed AWG
+- Build 4045 carries the opt-in direct-DoH laboratory detour and managed AWG
   endpoint materialization without changing VPN-default routing. Its Android
   AAR binds Core `f44dbe8…f90d`, whose AWG endpoint resolves probe hostnames,
   preserves the canonical `egress` event subsystem and requests Android
@@ -75,8 +75,11 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
   activation/fallback path is therefore a pre-candidate failure; AWG3.1 was not
   repeated above the same unmet AWG2 precondition. Full exact-candidate tunnel
   DNS, leak, handoff and OEM proof remain open.
-- Core is clean and pushed. The build-4044 client binding and scoped platform
-  AWG-lab scripts are still being frozen; cross-repository preflight must be
+- Core is clean and pushed. Platform head `42522fe…a3d9` now bypasses the
+  ordinary Smart Connect shortlist when issuing device-bound AWG2/AWG3.1 lab
+  material, while working build 4045 demotes stale Android `running` state when
+  no app-owned TUN exists. These corrections are source-only until the platform
+  deploy and exact Android device proof; cross-repository preflight must be
   rerun on their committed revisions before `READY_LOCAL_FREEZE` can return.
 
 These results mix source, live-lab and explicitly identified pre-candidate
@@ -88,11 +91,11 @@ runtime, rollback or promotion proof.
 | Order | Gate | State | Completion rule |
 |---:|---|---|---|
 | 1 | Clean platform, client, Core and release-index revisions | `IN_PROGRESS_LOCAL_FREEZE; PROMOTION_BLOCKED_BY_ACTIONS_BILLING` | The locally gated runtime tuple is Core `f44dbe8…f90d`, platform `e5ef03a…11db` and client `c196dff…1f61`. Platform AWG operations/evidence `39af0f1…9efe` and client evidence-doc `2eeee5f…e981` pass focused local contracts. Platform PR 58 and client PR 33 retain zero-step GitHub failures caused by account billing/spending limits; release-index `32f560d…2d4a` remains unchanged. |
-| 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains private signed candidate.4 evidence with promotion false. It does not bind the replacement source or `1.2.0+4044`. |
+| 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains private signed candidate.4 evidence with promotion false. It does not bind the replacement source or `1.2.0+4045`. |
 | 3 | POKROV Core `1.1.0` replacement artifact | `PASS_MIXED_PLATFORM_LOCAL; PASS_LOCAL_AWG_LIFECYCLE; PASS_WORKING_ANDROID_HOST` | Android binds two byte-identical AAR builds from Core `f44dbe8…f90d`; those bytes also match the prior `54e76bb` build and include AWG hostname resolution and Android outer-socket protection. Working build 4044 proved control-plane reachability, socket protection, normal WARP and egress on the Huawei. Windows retains DLL `60fe3fad…3981` from `344b317…8f6` plus Cronet `8ef1f8bb…a6f7`. Platform-source convergence and exact-candidate host proof remain open. |
-| 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.4 metadata remains valid only for its exact older bytes. The replacement must bind build `4044`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
+| 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.4 metadata remains valid only for its exact older bytes. The replacement must bind build `4045`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
 | 5 | Android exact-candidate build and signer | `PASS_WORKING_4044_SIGNER; MISSING_REPLACEMENT_CANDIDATE` | Working APK `1.2.0+4044` is production-certificate matched at SHA-256 `7417191b…f04f`; its physical evidence is retained as pre-candidate proof only. A strict-v2 replacement manifest and final candidate bytes are still missing. |
-| 6 | Android physical-device matrix | `FAIL_WORKING_AWG_ACTIVATION; MANUAL_OWNER_TEST` | Fix managed-profile activation/fallback, prove AWG2 then AWG3.1 on a returning origin, and run Huawei install, TUN/DNS/egress, WARP, per-app, handoff and endurance on exact bytes. |
+| 6 | Android physical-device matrix | `PASS_LOCAL_SOURCE_CORRECTION; MANUAL_OWNER_TEST` | Deploy the authorized platform source, install working build 4045, prove an app-owned TUN plus AWG2 handshake and egress, then AWG3.1; run Huawei TUN/DNS/egress, WARP, per-app, handoff and endurance on exact bytes. |
 | 7 | Windows exact-candidate package | `MISSING_REPLACEMENT_ARTIFACT` | Candidate.3 clean-host run `33033294889` is retained supporting evidence only. Build `36` requires a converged Core DLL, new setup identity and bounded clean-host run. |
 | 8 | Windows unsigned-beta warning and clean-host recovery | `SKIPPED_BY_OWNER; REPLACEMENT_PROOF_MISSING` | The `1.2.0` direct-beta exception and warning remain applicable. Replacement live TUN/DNS/egress, recovery while connected and interactive SmartScreen are manual; trusted signing is still required for trusted/Store/broad-stable claims. |
 | 9 | Hosted cross-repository CI | `BLOCKED_BY_ACCESS_GITHUB_BILLING` | Candidate.3 source runs are retained. Replacement platform/client PR jobs currently stop before steps because of the GitHub account payment/spending limit; they are neither PASS nor code failures. |
@@ -101,12 +104,13 @@ runtime, rollback or promotion proof.
 
 ## Next Action Order
 
-1. Fix the Android managed-profile activation/fallback gap and retain a real
-   AWG2 handshake plus tunnel proof on the working source; then run AWG3.1.
+1. Deploy the owned-AWG managed-profile correction, install build `4045`, and
+   retain an app-owned TUN plus real AWG2 handshake and egress proof; then run
+   AWG3.1 and the bounded direct-DoH checks.
 2. Freeze the replacement platform/client/Core/release-index source tuple and
    keep AWG2, AWG3.1 plus AI/Games/DoH contracts green on the exact client
    revision.
-3. Freeze build `4044` Android and Windows artifacts into a new signed strict-v2
+3. Freeze build `4045` Android and Windows artifacts into a new signed strict-v2
    manifest; do not reuse candidate.3 artifact evidence.
 4. Run LDPlayer rehearsal, then the physical-device/OEM and Windows clean-host
    network/recovery/SmartScreen matrices on the replacement bytes.
