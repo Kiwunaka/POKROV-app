@@ -268,6 +268,26 @@ matrix or origin proof exists. The Android VPN system surface may still be
 present because the existing sing-box TUN owns split-policy routing, even
 though selected remote connections use the direct outbound.
 
+## 2026-08-28 AWG Source And Host Contract Retest
+
+The current pre-candidate source tuple is platform
+`50c9d12254d39c6a007f273497dde49faa4f7b8d`, client
+`75e82b061cd3f127ae640733cfb4fc1a6aef2e62` and Core
+`e8eb7721fc6eaac6813d3a888ac90d0da1f541a1`. Exact AWG2 and AWG3.1
+contract-sync reports pass; their local report SHA-256 values are respectively
+`0caeaba4ea105a44c3610023c41935e21eccf2d1b45c07a50b8c20c6f8dfeb44`
+and `3a4c318a71044aec36d9f85c4443d680f691106267ac56d5afe751cbd2fe106f`.
+
+Focused local verification passes eight runtime-engine AWG tests, one managed
+AWG endpoint-materialization test, one AWG DNS/routing test, thirteen Android
+`directRelease` JVM egress-probe tests and thirty-one Core AWG tests. The
+operator-only `TestOwnedAWGLabAuthenticatedEgress` is explicitly skipped
+without live endpoint material. This result is
+`PASS_LOCAL_CURRENT_SOURCE_AND_ANDROID_HOST_CONTRACT`; it does not prove the
+Brain deploy, an app-owned TUN, AWG handshake/egress, physical-device behavior,
+Windows artifact convergence, current-origin reachability or exact-candidate
+readiness.
+
 ## Commands
 
 ```powershell

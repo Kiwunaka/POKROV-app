@@ -99,6 +99,12 @@ SmartScreen observation remain `MANUAL_OWNER_TEST`.
 
 - The `1.2.0` source targets an unelevated UI and authenticated Windows service.
 - Local tests prove source contracts and isolated recovery logic only.
+- Current platform `50c9d12…dde49`, client `75e82b0…e62` and Core
+  `e8eb772…41a1` pass AWG2/AWG3.1 contract sync, and the focused runtime-engine
+  lane proves AWG2 remains inside the existing Android and Windows route modes.
+  This is source-only: the retained Windows DLL still comes from `344b317…8f6`,
+  so no converged Windows artifact, live AWG interop or TUN/DNS/egress result is
+  claimed.
 - A final-source, signed-manifest candidate.3 exists privately and has passed
   its bounded clean-host gate. It is not promotion-authorized.
 - The owner authorizes one unsigned direct-download beta with the mandatory

@@ -97,6 +97,14 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
   platform operations `ca9eb41…7334` add the tested guarded
   PLAN/APPLY/ROLLBACK source contract. No dedicated-node PLAN, installed owned
   resolver/relay or live service-access proof exists.
+- A fresh AWG source/host-contract retest binds platform `50c9d12…dde49`,
+  client `75e82b0…e62` and Core `e8eb772…41a1`. AWG2 and AWG3.1 contract-sync
+  reports pass with digests `0caeaba4…eb44` and `3a4c318a…06f`; ten focused
+  Flutter tests, thirteen Android direct-release JVM tests and thirty-one Core
+  AWG tests pass. The operator-only live Core egress test remains skipped
+  without runtime material. This is local source/host contract evidence only:
+  Windows still lacks a converged Core artifact, and neither server deploy nor
+  device tunnel was run.
 
 These results mix source, live-lab and explicitly identified pre-candidate
 physical evidence. None is exact replacement-candidate, hosted-CI, public
