@@ -211,6 +211,12 @@ egress, endurance or promotion:
   foregrounded and Wi-Fi remained disabled. This is
   `FAIL_4045_PREDEPLOY_ANDROID_ACTIVATION`, before the undeployed platform
   managed-profile correction, not AWG cryptography or tunnel proof.
+- an independent LDPlayer connect control reached the canonical
+  `core_egress_probe_failed` state: POKROV did not confirm selected-outbound
+  internet, stopped the system VPN fail-closed and exposed the safe retry UI.
+  No VPN permission prompt, residual POKROV service or VPN transport remained
+  after exact cleanup. No AWG policy was bound, so this is
+  `FAIL_4045_LDPLAYER_SELECTED_OUTBOUND_EGRESS`, not AWG tunnel evidence.
 
 The later exact clean source tuple platform `9383117…64c17`, client
 `f3d3310…174f` and Core `f44dbe8…f90d` passes the bounded Node `22.14.0`
