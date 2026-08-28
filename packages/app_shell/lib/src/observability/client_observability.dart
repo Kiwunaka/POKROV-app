@@ -110,6 +110,21 @@ const pokrovClientArchitecture = String.fromEnvironment(
   defaultValue: 'unknown',
 );
 
+OperationalBuildIdentity pokrovCurrentBuildIdentity(
+  HostPlatform hostPlatform,
+) =>
+    OperationalBuildIdentity(
+      appVersion: pokrovClientVersion,
+      buildNumber: pokrovClientBuildNumber,
+      channel: pokrovClientReleaseChannel,
+      candidateLabel: pokrovClientCandidateLabel,
+      gitRevision: pokrovClientGitRevision,
+      coreVersion: null,
+      coreAbi: null,
+      platform: hostPlatform == HostPlatform.android ? 'android' : 'windows',
+      architecture: pokrovClientArchitecture,
+    );
+
 typedef PokrovObservabilityDirectoryResolver = Future<Directory> Function();
 
 enum PokrovOperationalUpdateChannel { direct, store, windows }
@@ -375,6 +390,23 @@ final class PokrovClientObservability {
     if (attempt != null && !attempt.isTerminal) {
       attempt.enter(OperationalTimelinePhase.profile);
     }
+  }
+
+  void recordConnectionFailure({
+    required ConnectionStage stage,
+    required String errorCode,
+    ObservabilityErrorOrigin errorOrigin = ObservabilityErrorOrigin.client,
+  }) {
+    final attempt = _attempt;
+    if (attempt == null || attempt.isTerminal) {
+      return;
+    }
+    attempt.enter(_timelinePhase(stage));
+    attempt.finish(
+      OperationalTerminalKind.failed,
+      errorCode: errorCode,
+      errorOrigin: errorOrigin,
+    );
   }
 
   void markUiReady() {
@@ -764,17 +796,7 @@ final class PokrovClientObservability {
   }
 
   static OperationalBuildIdentity _defaultBuild(HostPlatform hostPlatform) =>
-      OperationalBuildIdentity(
-        appVersion: pokrovClientVersion,
-        buildNumber: pokrovClientBuildNumber,
-        channel: pokrovClientReleaseChannel,
-        candidateLabel: pokrovClientCandidateLabel,
-        gitRevision: pokrovClientGitRevision,
-        coreVersion: null,
-        coreAbi: null,
-        platform: hostPlatform == HostPlatform.android ? 'android' : 'windows',
-        architecture: pokrovClientArchitecture,
-      );
+      pokrovCurrentBuildIdentity(hostPlatform);
 
   static OperationalTimelinePhase _timelinePhase(ConnectionStage stage) =>
       switch (stage) {

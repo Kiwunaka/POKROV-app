@@ -7,21 +7,37 @@ typedef SupportPollingTimerFactory = Timer Function(
 );
 
 typedef SupportPollingJitterSource = double Function();
+typedef SupportPollingClock = DateTime Function();
+
+enum SupportPollingResult {
+  changed,
+  unchanged,
+  failed,
+}
 
 final class SupportPollingPolicy {
   const SupportPollingPolicy({
-    this.baseInterval = const Duration(seconds: 10),
-    this.maximumInterval = const Duration(minutes: 2),
-    this.maximumJitter = const Duration(seconds: 2),
+    this.activeInterval = const Duration(seconds: 8),
+    this.activeMaximumJitter = const Duration(seconds: 2),
+    this.quietAfter = const Duration(minutes: 1),
+    this.quietInterval = const Duration(seconds: 15),
+    this.quietMaximumJitter = const Duration(seconds: 15),
+    this.failureMaximumInterval = const Duration(minutes: 2),
   });
 
-  final Duration baseInterval;
-  final Duration maximumInterval;
-  final Duration maximumJitter;
+  final Duration activeInterval;
+  final Duration activeMaximumJitter;
+  final Duration quietAfter;
+  final Duration quietInterval;
+  final Duration quietMaximumJitter;
+  final Duration failureMaximumInterval;
 
-  Duration delayAfterFailures(int consecutiveFailures, double jitterUnit) {
+  Duration nextDelay({
+    required int consecutiveFailures,
+    required Duration unchangedFor,
+    required double jitterUnit,
+  }) {
     final failures = consecutiveFailures.clamp(0, 8);
-    final exponentialMicros = baseInterval.inMicroseconds * (1 << failures);
     final boundedJitter = jitterUnit.isNaN
         ? 0.0
         : jitterUnit < 0
@@ -29,10 +45,21 @@ final class SupportPollingPolicy {
             : jitterUnit > 1
                 ? 1.0
                 : jitterUnit;
-    final jitterMicros = (maximumJitter.inMicroseconds * boundedJitter).round();
-    final delayMicros = (exponentialMicros + jitterMicros).clamp(
-      baseInterval.inMicroseconds,
-      maximumInterval.inMicroseconds,
+
+    if (failures == 0 && unchangedFor >= quietAfter) {
+      final quietJitterMicros =
+          (quietMaximumJitter.inMicroseconds * boundedJitter).round();
+      return Duration(
+        microseconds: quietInterval.inMicroseconds + quietJitterMicros,
+      );
+    }
+
+    final exponentialMicros = activeInterval.inMicroseconds * (1 << failures);
+    final activeJitterMicros =
+        (activeMaximumJitter.inMicroseconds * boundedJitter).round();
+    final delayMicros = (exponentialMicros + activeJitterMicros).clamp(
+      activeInterval.inMicroseconds,
+      failureMaximumInterval.inMicroseconds,
     );
     return Duration(microseconds: delayMicros);
   }
@@ -40,19 +67,22 @@ final class SupportPollingPolicy {
 
 final class SupportPollingCoordinator {
   SupportPollingCoordinator({
-    required Future<bool> Function() onPoll,
+    required Future<SupportPollingResult> Function() onPoll,
     SupportPollingPolicy policy = const SupportPollingPolicy(),
     SupportPollingTimerFactory? timerFactory,
     SupportPollingJitterSource? jitterSource,
+    SupportPollingClock? clock,
   })  : _onPoll = onPoll,
         _policy = policy,
         _timerFactory = timerFactory ?? _defaultTimerFactory,
-        _jitterSource = jitterSource ?? _randomJitter;
+        _jitterSource = jitterSource ?? _randomJitter,
+        _clock = clock ?? DateTime.now;
 
-  final Future<bool> Function() _onPoll;
+  final Future<SupportPollingResult> Function() _onPoll;
   final SupportPollingPolicy _policy;
   final SupportPollingTimerFactory _timerFactory;
   final SupportPollingJitterSource _jitterSource;
+  final SupportPollingClock _clock;
 
   Timer? _timer;
   bool _eligible = false;
@@ -60,6 +90,7 @@ final class SupportPollingCoordinator {
   bool _inFlight = false;
   bool _disposed = false;
   int _consecutiveFailures = 0;
+  DateTime? _unchangedSince;
 
   bool get isScheduled => _timer?.isActive ?? false;
   bool get isForeground => _foreground;
@@ -69,6 +100,7 @@ final class SupportPollingCoordinator {
     if (_disposed) {
       return;
     }
+    final resumed = !_foreground && foreground;
     final changed = _eligible != eligible || _foreground != foreground;
     _eligible = eligible;
     _foreground = foreground;
@@ -76,16 +108,21 @@ final class SupportPollingCoordinator {
       _cancelTimer();
       return;
     }
+    if (resumed) {
+      _cancelTimer();
+      unawaited(_pollOnce());
+      return;
+    }
     if (changed || !isScheduled) {
       _schedule();
     }
   }
 
-  void recordExternalResult({required bool success}) {
+  void recordExternalResult({required SupportPollingResult result}) {
     if (_disposed) {
       return;
     }
-    _record(success);
+    _record(result);
     _schedule();
   }
 
@@ -105,9 +142,10 @@ final class SupportPollingCoordinator {
     if (!_canPoll) {
       return;
     }
-    final delay = _policy.delayAfterFailures(
-      _consecutiveFailures,
-      _jitterSource(),
+    final delay = _policy.nextDelay(
+      consecutiveFailures: _consecutiveFailures,
+      unchangedFor: _unchangedFor,
+      jitterUnit: _jitterSource(),
     );
     _timer = _timerFactory(delay, () {
       _timer = null;
@@ -122,27 +160,41 @@ final class SupportPollingCoordinator {
       return;
     }
     _inFlight = true;
-    var success = false;
+    var result = SupportPollingResult.failed;
     try {
-      success = await _onPoll();
+      result = await _onPoll();
     } on Object {
-      success = false;
+      result = SupportPollingResult.failed;
     } finally {
       _inFlight = false;
     }
     if (_disposed) {
       return;
     }
-    _record(success);
+    _record(result);
     _schedule();
   }
 
-  void _record(bool success) {
-    if (success) {
-      _consecutiveFailures = 0;
-      return;
+  Duration get _unchangedFor {
+    final since = _unchangedSince;
+    if (since == null) {
+      return Duration.zero;
     }
-    _consecutiveFailures = (_consecutiveFailures + 1).clamp(0, 8);
+    final elapsed = _clock().difference(since);
+    return elapsed.isNegative ? Duration.zero : elapsed;
+  }
+
+  void _record(SupportPollingResult result) {
+    switch (result) {
+      case SupportPollingResult.changed:
+        _consecutiveFailures = 0;
+        _unchangedSince = null;
+      case SupportPollingResult.unchanged:
+        _consecutiveFailures = 0;
+        _unchangedSince ??= _clock();
+      case SupportPollingResult.failed:
+        _consecutiveFailures = (_consecutiveFailures + 1).clamp(0, 8);
+    }
   }
 
   void _cancelTimer() {

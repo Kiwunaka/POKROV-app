@@ -1,0 +1,41 @@
+{
+  "schema_version": "pokrov-smart-dns-policy-v1",
+  "state": "owner_lab_default_off",
+  "groups": {
+    "ai": [
+      "openai.com",
+      "chatgpt.com",
+      "oaistatic.com",
+      "oaiusercontent.com",
+      "gemini.google.com",
+      "aistudio.google.com",
+      "ai.google.dev",
+      "generativelanguage.googleapis.com",
+      "anthropic.com",
+      "claude.ai",
+      "perplexity.ai"
+    ],
+    "gaming_services": [
+      "steampowered.com",
+      "steamcommunity.com",
+      "epicgames.com",
+      "playstation.com",
+      "xbox.com",
+      "xboxlive.com",
+      "xboxservices.com",
+      "gamepass.com"
+    ]
+  },
+  "dns_answers": {
+    "a": "owned_proxy_ipv4",
+    "aaaa": "noerror_nodata",
+    "https": "noerror_nodata",
+    "svcb": "noerror_nodata",
+    "other": "noerror_nodata",
+    "outside_allowlist": "refused",
+    "ttl_seconds": 60
+  },
+  "matching": "exact_or_child_domain",
+  "application_tls": "opaque_passthrough",
+  "recursive_dns": false
+}

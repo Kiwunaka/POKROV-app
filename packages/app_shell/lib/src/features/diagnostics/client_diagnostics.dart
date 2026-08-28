@@ -9,6 +9,7 @@ import 'package:pokrov_observability_runtime/observability_runtime.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
+import '../../observability/release_health_baseline.dart';
 import 'support_mode.dart';
 
 enum PokrovDiagnosticMessageKey {
@@ -127,6 +128,8 @@ final class PokrovDiagnosticsReport {
     required this.encryptedDeliveryAvailable,
     required List<String> safeActionKeys,
     required List<PokrovDiagnosticTimelineAttempt> timelineAttempts,
+    this.releaseHealthBaseline =
+        const ClientReleaseHealthBaseline.unavailable(),
     this.problemBookId,
     this.errorCode,
   })  : evidence = List<PokrovDiagnosticEvidence>.unmodifiable(evidence),
@@ -145,10 +148,14 @@ final class PokrovDiagnosticsReport {
   final bool encryptedDeliveryAvailable;
   final List<String> safeActionKeys;
   final List<PokrovDiagnosticTimelineAttempt> timelineAttempts;
+  final ClientReleaseHealthBaseline releaseHealthBaseline;
   final String? problemBookId;
   final String? errorCode;
 
-  PokrovDiagnosticsReport copyWith({DateTime? checkedAtUtc}) =>
+  PokrovDiagnosticsReport copyWith({
+    DateTime? checkedAtUtc,
+    ClientReleaseHealthBaseline? releaseHealthBaseline,
+  }) =>
       PokrovDiagnosticsReport(
         statusLabel: statusLabel,
         summaryKey: summaryKey,
@@ -160,6 +167,8 @@ final class PokrovDiagnosticsReport {
         encryptedDeliveryAvailable: encryptedDeliveryAvailable,
         safeActionKeys: safeActionKeys,
         timelineAttempts: timelineAttempts,
+        releaseHealthBaseline:
+            releaseHealthBaseline ?? this.releaseHealthBaseline,
         problemBookId: problemBookId,
         errorCode: errorCode,
       );
@@ -181,6 +190,8 @@ abstract final class PokrovDiagnosticsPresenter {
     VerifiedSupportCollectionPolicy? supportModePolicy,
     List<OperationalBreadcrumb> timelineBreadcrumbs = const [],
     DateTime? checkedAtUtc,
+    ClientReleaseHealthBaseline releaseHealthBaseline =
+        const ClientReleaseHealthBaseline.unavailable(),
   }) {
     final evidence = <PokrovDiagnosticEvidence>[
       PokrovDiagnosticEvidence(
@@ -252,6 +263,7 @@ abstract final class PokrovDiagnosticsPresenter {
       encryptedDeliveryAvailable: encryptedDeliveryAvailable,
       safeActionKeys: problemBook?.safeActions ?? const <String>[],
       timelineAttempts: _timelineAttempts(timelineBreadcrumbs),
+      releaseHealthBaseline: releaseHealthBaseline,
       problemBookId: problemBook?.id,
       errorCode: errorCode,
     );
@@ -583,6 +595,7 @@ class PokrovDiagnosticsScreen extends StatefulWidget {
     required this.onRefresh,
     required this.onOpenProtection,
     required this.onOpenSupport,
+    this.onReleaseHealthRefresh,
     this.onCreateCaseWithBundle,
     this.onExportBundle,
     this.initialSupportMode = const PokrovSupportModeView.inactive(),
@@ -593,6 +606,7 @@ class PokrovDiagnosticsScreen extends StatefulWidget {
 
   final PokrovDiagnosticsReport initialReport;
   final Future<PokrovDiagnosticsReport> Function() onRefresh;
+  final Future<ClientReleaseHealthBaseline> Function()? onReleaseHealthRefresh;
   final VoidCallback onOpenProtection;
   final VoidCallback onOpenSupport;
   final Future<SupportBundleDeliveryResult> Function(PreparedSupportBundle)?
@@ -627,7 +641,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
     super.initState();
     _report = widget.initialReport;
     _supportMode = widget.initialSupportMode;
-    unawaited(_refresh());
+    unawaited(_refresh(includeReleaseHealth: false));
   }
 
   Future<void> _activateSupportMode() async {
@@ -684,7 +698,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
     await _refresh();
   }
 
-  Future<void> _refresh() async {
+  Future<void> _refresh({bool includeReleaseHealth = true}) async {
     if (_refreshing) {
       return;
     }
@@ -693,7 +707,13 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       _refreshError = null;
     });
     try {
-      final next = await widget.onRefresh();
+      var next = await widget.onRefresh();
+      final releaseHealthRefresh = widget.onReleaseHealthRefresh;
+      if (includeReleaseHealth && releaseHealthRefresh != null) {
+        next = next.copyWith(
+          releaseHealthBaseline: await releaseHealthRefresh(),
+        );
+      }
       if (!mounted) {
         return;
       }
@@ -801,7 +821,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
           IconButton(
             key: const ValueKey('diagnostics-refresh-action'),
             tooltip: 'Обновить проверку',
-            onPressed: _refreshing ? null : _refresh,
+            onPressed: _refreshing ? null : () => unawaited(_refresh()),
             icon: _refreshing
                 ? const SizedBox.square(
                     dimension: 18,
@@ -868,6 +888,22 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                 ],
               ),
             ),
+            if (_report.releaseHealthBaseline.state !=
+                ClientReleaseHealthBaselineState.unavailable) ...[
+              const SizedBox(height: 12),
+              Text('Как у этой же сборки', style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              _DiagnosticsCard(
+                key: const ValueKey('diagnostics-release-health-baseline'),
+                child: Text(
+                  _releaseHealthBaselineRu(_report),
+                  key: const ValueKey(
+                    'diagnostics-release-health-baseline-summary',
+                  ),
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             Text('Доказательства', style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
@@ -1333,6 +1369,31 @@ String _freshnessLabel(DateTime? checkedAtUtc) {
   final time =
       '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
   return 'Свежесть: проверено в $time';
+}
+
+String _releaseHealthBaselineRu(PokrovDiagnosticsReport report) {
+  final baseline = report.releaseHealthBaseline;
+  if (!baseline.canCompare) {
+    return 'Сравнение появится, когда накопится достаточная анонимная выборка этой же сборки.';
+  }
+  final local = report.summaryKey == PokrovDiagnosticMessageKey.verified
+      ? 'На этом устройстве обязательные проверки пройдены.'
+      : 'На этом устройстве одна или несколько проверок требуют внимания.';
+  final metric = baseline.data!.connect.isAvailable
+      ? baseline.data!.connect
+      : baseline.data!.overall;
+  final cohort = switch (metric.failureRateBand!) {
+    ClientReleaseHealthFailureRateBand.noneObserved ||
+    ClientReleaseHealthFailureRateBand.belowOnePercent =>
+      'У большинства устройств этой же сборки подключения проходят стабильно.',
+    ClientReleaseHealthFailureRateBand.oneToBelowFivePercent =>
+      'У этой же сборки встречаются редкие сбои подключения.',
+    ClientReleaseHealthFailureRateBand.fiveToBelowTwentyPercent =>
+      'У части устройств этой же сборки встречаются сбои подключения.',
+    ClientReleaseHealthFailureRateBand.twentyPercentOrMore =>
+      'У этой же сборки заметно больше сбоев подключения.',
+  };
+  return '$local $cohort Точные проценты и число устройств не показываются.';
 }
 
 IconData _summaryIcon(PokrovDiagnosticMessageKey key) => switch (key) {

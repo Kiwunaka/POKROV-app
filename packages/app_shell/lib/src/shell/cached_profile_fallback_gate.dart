@@ -1,5 +1,13 @@
 class CachedProfileFallbackGate {
+  static const maximumRefreshWait = Duration(seconds: 15);
+
   bool _blockedUntilFreshProfile = false;
+
+  static Duration refreshDeadline(Duration actionTimeout) {
+    return actionTimeout < maximumRefreshWait
+        ? actionTimeout
+        : maximumRefreshWait;
+  }
 
   bool canFallback({required bool cachedProfileAvailable}) {
     return cachedProfileAvailable && !_blockedUntilFreshProfile;

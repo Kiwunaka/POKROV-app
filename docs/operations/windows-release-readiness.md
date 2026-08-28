@@ -14,8 +14,8 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
-| Working package target | `1.2.0+30` |
-| Candidate created | `SIGNED_CANDIDATE_3_PRIVATE_EVIDENCE_ONLY` — promotion remains unauthorized |
+| Working package target | `1.2.0+4046` |
+| Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
 | Active candidate Core | POKROV Core `1.1.0`, desktop ABI `2`, exact source `344b317…8f6` bound |
@@ -38,7 +38,11 @@ current/previous files; paths, symbols, registers, exception text, heap and full
 memory dumps have no output field. The controlled-crash and recovery readback
 still belongs to the exact-candidate gate below.
 
-## Exact-Candidate Gate
+## Retained Candidate.3 Evidence And Replacement Gate
+
+The table keeps candidate.3 results only as exact evidence for its old bytes.
+The `1.2.0+4046` replacement has no installer yet, so none of the package,
+clean-host, network or SmartScreen rows below transfers to it.
 
 | Check | Current state |
 |---|---|
@@ -95,6 +99,18 @@ SmartScreen observation remain `MANUAL_OWNER_TEST`.
 
 - The `1.2.0` source targets an unelevated UI and authenticated Windows service.
 - Local tests prove source contracts and isolated recovery logic only.
+- Current platform `50c9d12…dde49`, client `75e82b0…e62` and Core
+  `e8eb772…41a1` pass AWG2/AWG3.1 contract sync, and the focused runtime-engine
+  lane proves AWG2 remains inside the existing Android and Windows route modes.
+  This is source-only: the retained Windows DLL still comes from `344b317…8f6`,
+  so no converged Windows artifact, live AWG interop or TUN/DNS/egress result is
+  claimed.
+- A separate current-origin Core-only probe from this Windows host emitted
+  outer packets for AWG2 and AWG3.1 but received no response. Concurrent
+  address-free AWG2 server capture saw both initiation and response-sized
+  packets, so that slice is
+  `BLOCKED_BY_NETWORK_CURRENT_WINDOWS_ORIGIN_REVERSE_UDP`. It did not load the
+  retained client DLL or exercise the Windows service, TUN, DNS or app.
 - A final-source, signed-manifest candidate.3 exists privately and has passed
   its bounded clean-host gate. It is not promotion-authorized.
 - The owner authorizes one unsigned direct-download beta with the mandatory

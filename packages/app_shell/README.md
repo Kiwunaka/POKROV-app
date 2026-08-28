@@ -15,6 +15,11 @@ Current seed contents:
 - `PokrovClientObservability`, the Android/Windows bootstrap, reducer-timeline,
   crash-marker and identity-free release-health adapter. It uses the existing
   app-first client for authenticated delivery without creating a session.
+- an authenticated, existing-session-only release-health baseline reader for
+  the exact current build. Diagnostics keeps the response in memory, accepts
+  only closed weekly sample/failure bands, hides comparison below the privacy
+  floor, and never stores or displays identity, bucket indexes, exact counts or
+  exact percentages.
 - an exact summary diagnostics preview with diagnostic ID, categories, virtual
   files, byte sizes and removal count. With an explicit Ed25519 public build
   pin, the shell verifies the signed recipient key set, persists only the

@@ -12,6 +12,8 @@ enum PokrovRouteMatchType { domain, ip, subnet }
 
 enum PokrovDnsPreset { automatic, cloudflare, google, adguard, custom }
 
+enum PokrovDnsTransport { vpn, direct }
+
 enum PokrovWindowsConnectionMode { vpn }
 
 enum PokrovTunStack { system, mixed, gvisor }
@@ -21,7 +23,7 @@ extension PokrovPurposeRoutePresentation on PokrovPurposeRoute {
         PokrovPurposeRoute.video => 'Видео',
         PokrovPurposeRoute.ai => 'AI-сервисы',
         PokrovPurposeRoute.social => 'Соцсети',
-        PokrovPurposeRoute.games => 'Игры',
+        PokrovPurposeRoute.games => 'Игровые сервисы',
         PokrovPurposeRoute.ruDirect => 'RU напрямую',
       };
 
@@ -33,6 +35,11 @@ extension PokrovPurposeRoutePresentation on PokrovPurposeRoute {
         PokrovPurposeRoute.games =>
           'Xbox, магазины и игровые сообщества через VPN.',
         PokrovPurposeRoute.ruDirect => 'Российские домены и сервисы без VPN.',
+      };
+
+  bool get supportsExternalSmartDns => switch (this) {
+        PokrovPurposeRoute.ai || PokrovPurposeRoute.games => true,
+        _ => false,
       };
 }
 
@@ -128,7 +135,9 @@ class PokrovRoutingPreferences {
     required this.purposeRoutes,
     required this.overrides,
     required this.dnsPreset,
+    required this.dnsTransport,
     required this.customDnsUrl,
+    this.externalSmartDnsEnabled = false,
     required this.allowLan,
     required this.trustedWifiNames,
     required this.pauseOnTrustedWifi,
@@ -140,7 +149,9 @@ class PokrovRoutingPreferences {
       : purposeRoutes = const <PokrovPurposeRoute>{},
         overrides = const <PokrovRouteOverride>[],
         dnsPreset = PokrovDnsPreset.automatic,
+        dnsTransport = PokrovDnsTransport.vpn,
         customDnsUrl = '',
+        externalSmartDnsEnabled = false,
         allowLan = true,
         trustedWifiNames = const <String>[],
         pauseOnTrustedWifi = false,
@@ -150,7 +161,9 @@ class PokrovRoutingPreferences {
   final Set<PokrovPurposeRoute> purposeRoutes;
   final List<PokrovRouteOverride> overrides;
   final PokrovDnsPreset dnsPreset;
+  final PokrovDnsTransport dnsTransport;
   final String customDnsUrl;
+  final bool externalSmartDnsEnabled;
   final bool allowLan;
   final List<String> trustedWifiNames;
   final bool pauseOnTrustedWifi;
@@ -161,7 +174,9 @@ class PokrovRoutingPreferences {
     Set<PokrovPurposeRoute>? purposeRoutes,
     List<PokrovRouteOverride>? overrides,
     PokrovDnsPreset? dnsPreset,
+    PokrovDnsTransport? dnsTransport,
     String? customDnsUrl,
+    bool? externalSmartDnsEnabled,
     bool? allowLan,
     List<String>? trustedWifiNames,
     bool? pauseOnTrustedWifi,
@@ -172,7 +187,10 @@ class PokrovRoutingPreferences {
       purposeRoutes: purposeRoutes ?? this.purposeRoutes,
       overrides: overrides ?? this.overrides,
       dnsPreset: dnsPreset ?? this.dnsPreset,
+      dnsTransport: dnsTransport ?? this.dnsTransport,
       customDnsUrl: customDnsUrl ?? this.customDnsUrl,
+      externalSmartDnsEnabled:
+          externalSmartDnsEnabled ?? this.externalSmartDnsEnabled,
       allowLan: allowLan ?? this.allowLan,
       trustedWifiNames: trustedWifiNames ?? this.trustedWifiNames,
       pauseOnTrustedWifi: pauseOnTrustedWifi ?? this.pauseOnTrustedWifi,
@@ -201,6 +219,10 @@ class PokrovRoutingPreferences {
       (item) => item.name == _routingText(json['dnsPreset']),
       orElse: () => PokrovDnsPreset.automatic,
     );
+    final dnsTransport = PokrovDnsTransport.values.firstWhere(
+      (item) => item.name == _routingText(json['dnsTransport']),
+      orElse: () => PokrovDnsTransport.vpn,
+    );
     final customDns =
         _normalizeDnsUrl(_routingText(json['customDnsUrl'])) ?? '';
     final trustedWifi = _routingList(json['trustedWifiNames'])
@@ -217,13 +239,22 @@ class PokrovRoutingPreferences {
       (item) => item.name == _routingText(json['tunStack']),
       orElse: () => PokrovTunStack.system,
     );
+    final normalizedDnsPreset =
+        dnsPreset == PokrovDnsPreset.custom && customDns.isEmpty
+            ? PokrovDnsPreset.automatic
+            : dnsPreset;
+    final externalSmartDnsEnabled = json['externalSmartDnsEnabled'] == true &&
+        normalizedDnsPreset == PokrovDnsPreset.custom &&
+        _isExternalSmartDnsUrl(customDns) &&
+        dnsTransport == PokrovDnsTransport.direct &&
+        purposes.any((purpose) => purpose.supportsExternalSmartDns);
     return PokrovRoutingPreferences(
       purposeRoutes: Set<PokrovPurposeRoute>.unmodifiable(purposes),
       overrides: List<PokrovRouteOverride>.unmodifiable(overrides),
-      dnsPreset: dnsPreset == PokrovDnsPreset.custom && customDns.isEmpty
-          ? PokrovDnsPreset.automatic
-          : dnsPreset,
+      dnsPreset: normalizedDnsPreset,
+      dnsTransport: dnsTransport,
       customDnsUrl: customDns,
+      externalSmartDnsEnabled: externalSmartDnsEnabled,
       allowLan: json['allowLan'] != false,
       trustedWifiNames: List<String>.unmodifiable(trustedWifi),
       pauseOnTrustedWifi:
@@ -237,7 +268,9 @@ class PokrovRoutingPreferences {
         'purposeRoutes': purposeRoutes.map((item) => item.name).toList(),
         'overrides': overrides.take(40).map((item) => item.toJson()).toList(),
         'dnsPreset': dnsPreset.name,
+        'dnsTransport': dnsTransport.name,
         'customDnsUrl': customDnsUrl,
+        'externalSmartDnsEnabled': externalSmartDnsEnabled,
         'allowLan': allowLan,
         'trustedWifiNames': trustedWifiNames.take(20).toList(),
         'pauseOnTrustedWifi': pauseOnTrustedWifi,
@@ -249,6 +282,17 @@ class PokrovRoutingPreferences {
         PokrovDnsPreset.custom => _normalizeDnsUrl(customDnsUrl),
         _ => dnsPreset.address,
       };
+
+  bool get canEnableExternalSmartDns =>
+      dnsPreset == PokrovDnsPreset.custom &&
+      _isExternalSmartDnsUrl(effectiveDnsAddress) &&
+      dnsTransport == PokrovDnsTransport.direct &&
+      purposeRoutes.any((purpose) => purpose.supportsExternalSmartDns);
+
+  bool routesPurposeThroughExternalSmartDns(PokrovPurposeRoute purpose) =>
+      externalSmartDnsEnabled &&
+      canEnableExternalSmartDns &&
+      purpose.supportsExternalSmartDns;
 }
 
 class PokrovRouteDecision {
@@ -286,10 +330,13 @@ PokrovRouteDecision explainPokrovRouteDecision({
         if (_purposeDomains[purpose]!.any(
           (suffix) => _domainMatches(normalized.$1, suffix),
         )) {
-          final direct = purpose == PokrovPurposeRoute.ruDirect;
+          final direct = purpose == PokrovPurposeRoute.ruDirect ||
+              preferences.routesPurposeThroughExternalSmartDns(purpose);
           return PokrovRouteDecision(
             action: direct ? PokrovRouteAction.direct : PokrovRouteAction.vpn,
-            reason: 'Сработал профиль «${purpose.title}».',
+            reason: preferences.routesPurposeThroughExternalSmartDns(purpose)
+                ? 'Лабораторный Smart DNS оставляет профиль «${purpose.title}» напрямую; внешний IP не скрывается.'
+                : 'Сработал профиль «${purpose.title}».',
             matchedValue: purpose.name,
           );
         }
@@ -347,6 +394,12 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   if (proxyTag.isEmpty) {
     throw const FormatException('Managed profile has no VPN route target');
   }
+  if (preferences.externalSmartDnsEnabled &&
+      !preferences.canEnableExternalSmartDns) {
+    throw const FormatException(
+      'External Smart DNS prerequisites are invalid',
+    );
+  }
 
   final rules = _routingListOfMaps(route['rules']);
   rules.removeWhere(
@@ -388,7 +441,10 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     }
     _appendUniqueRule(injected, <String, dynamic>{
       'domain_suffix': _purposeDomains[purpose],
-      'outbound': purpose == PokrovPurposeRoute.ruDirect ? directTag : proxyTag,
+      'outbound': purpose == PokrovPurposeRoute.ruDirect ||
+              preferences.routesPurposeThroughExternalSmartDns(purpose)
+          ? directTag
+          : proxyTag,
     });
   }
   if (preferences.allowLan) {
@@ -430,12 +486,31 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     servers.insert(0, <String, dynamic>{
       'tag': 'pokrov-user-dns',
       'address': dnsAddress,
-      'detour': proxyTag,
+      'detour': preferences.dnsTransport == PokrovDnsTransport.direct
+          ? directTag
+          : proxyTag,
     });
-    dns
-      ..['servers'] = servers
-      ..['final'] = 'pokrov-user-dns'
-      ..['independent_cache'] = true;
+    dns['servers'] = servers;
+    if (preferences.externalSmartDnsEnabled) {
+      final selectedDomains = <String>{
+        for (final purpose in preferences.purposeRoutes)
+          if (purpose.supportsExternalSmartDns) ..._purposeDomains[purpose]!,
+      }.toList()
+        ..sort();
+      final dnsRules = _routingListOfMaps(dns['rules'])
+        ..removeWhere(
+          (rule) => _routingText(rule['server']) == 'pokrov-user-dns',
+        );
+      dnsRules.insert(0, <String, dynamic>{
+        'domain_suffix': selectedDomains,
+        'action': 'route',
+        'server': 'pokrov-user-dns',
+      });
+      dns['rules'] = dnsRules;
+    } else {
+      dns['final'] = 'pokrov-user-dns';
+    }
+    dns['independent_cache'] = true;
     config['dns'] = dns;
   }
 
@@ -492,6 +567,9 @@ const Map<PokrovPurposeRoute, List<String>> _purposeDomains = {
   ],
 };
 
+List<String> pokrovPurposeDomains(PokrovPurposeRoute purpose) =>
+    List<String>.unmodifiable(_purposeDomains[purpose]!);
+
 (String, PokrovRouteMatchType)? _normalizeRouteMatch(String raw) {
   var value = raw.trim().toLowerCase();
   if (value.isEmpty || value.length > 253 || value.contains(RegExp(r'\s'))) {
@@ -540,6 +618,17 @@ String? _normalizeDnsUrl(String raw) {
     return null;
   }
   return uri.toString();
+}
+
+bool _isExternalSmartDnsUrl(String? raw) {
+  if (raw == null) return false;
+  final normalized = _normalizeDnsUrl(raw);
+  if (normalized == null) return false;
+  final uri = Uri.parse(normalized);
+  return uri.path == '/dns-query' &&
+      uri.query.isEmpty &&
+      uri.fragment.isEmpty &&
+      (!uri.hasPort || uri.port == 443);
 }
 
 bool _routeOverrideMatches(

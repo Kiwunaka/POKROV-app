@@ -14,6 +14,7 @@ import 'package:pokrov_support_bundle/support_bundle.dart';
 
 import 'emergency_network_contract.dart';
 import 'src/emergency/emergency_network_store.dart';
+import 'src/observability/release_health_baseline.dart';
 
 /// Build identity shared by provisioning, update checks, and diagnostics.
 ///
@@ -545,6 +546,11 @@ abstract interface class AppFirstReleaseHealthService {
     required HostPlatform hostPlatform,
     required Map<String, Object?> batch,
     required String correlationId,
+  });
+
+  Future<ClientReleaseHealthBaseline> fetchReleaseHealthBaseline({
+    required HostPlatform hostPlatform,
+    required OperationalBuildIdentity build,
   });
 }
 
@@ -2589,7 +2595,8 @@ class AppFirstRuntimeBootstrapper
         AppFirstClientDataService,
         AppFirstEmergencyNetworkService {
   AppFirstRuntimeBootstrapper({
-    this.apiBaseUrl = 'https://api.pokrov.space',
+    String apiBaseUrl = 'https://app.pokrov.space',
+    List<String>? apiFallbackBaseUrls,
     Future<Directory> Function()? supportDirectoryResolver,
     HttpClient Function()? httpClientFactory,
     Future<void> Function(Duration delay)? delayScheduler,
@@ -2609,7 +2616,12 @@ class AppFirstRuntimeBootstrapper
     AppFirstAndroidAbiResolver? androidAbiResolver,
     EmergencyEnvelopeVerifier? emergencyEnvelopeVerifier,
     EmergencyNetworkStore? emergencyNetworkStore,
-  })  : _supportDirectoryResolver =
+  })  : apiBaseUrl = _normalizeApiBaseUrl(apiBaseUrl),
+        _apiBaseUrls = _buildApiBaseUrls(
+          apiBaseUrl,
+          apiFallbackBaseUrls,
+        ),
+        _supportDirectoryResolver =
             supportDirectoryResolver ?? getApplicationSupportDirectory,
         _httpClientFactory = httpClientFactory ?? HttpClient.new,
         _delayScheduler = delayScheduler ?? Future<void>.delayed,
@@ -2625,6 +2637,7 @@ class AppFirstRuntimeBootstrapper
             emergencyNetworkStore ?? EncryptedEmergencyNetworkStore();
 
   final String apiBaseUrl;
+  final List<String> _apiBaseUrls;
   final Future<Directory> Function() _supportDirectoryResolver;
   final HttpClient Function() _httpClientFactory;
   final Future<void> Function(Duration delay) _delayScheduler;
@@ -2652,6 +2665,8 @@ class AppFirstRuntimeBootstrapper
       <String, Future<_StoredBootstrapState>>{};
   final Map<String, Future<void>> _emergencyOfflineCacheFlights =
       <String, Future<void>>{};
+  String? _activeApiBaseUrl;
+  Future<String>? _apiBaseUrlFlight;
 
   static const _defaultManagedManifestPath = '/api/client/profile/managed';
   // Current managed manifests are compact JSON and the checked-in rule-set
@@ -2660,6 +2675,10 @@ class AppFirstRuntimeBootstrapper
   static const _maxJsonResponseBytes = 8 * 1024 * 1024;
   static const _maxRuleSetResponseBytes = 32 * 1024 * 1024;
   static const _androidShellPackageName = 'space.pokrov.pokrov_android_shell';
+  static const _ownedApiHosts = <String>{
+    'app.pokrov.space',
+    'api.pokrov.space',
+  };
 
   @override
   Future<bool> submitReleaseHealthBatch({
@@ -2687,6 +2706,51 @@ class AppFirstRuntimeBootstrapper
       return true;
     } on BootstrapFailure {
       return false;
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  @override
+  Future<ClientReleaseHealthBaseline> fetchReleaseHealthBaseline({
+    required HostPlatform hostPlatform,
+    required OperationalBuildIdentity build,
+  }) async {
+    final state = await _loadOrCreateState(hostPlatform);
+    if (!state.hasSession) {
+      return const ClientReleaseHealthBaseline.unavailable();
+    }
+    final parameters = <String, String>{
+      'app_version': build.appVersion,
+      'build_number': build.buildNumber,
+      'channel': build.channel,
+      'candidate_label': build.candidateLabel,
+      'git_revision': build.gitRevision,
+      if (build.coreAbi != null) 'core_abi': build.coreAbi.toString(),
+      'platform': build.platform,
+      'architecture': build.architecture,
+    };
+    final path = Uri(
+      path: '/api/client/observability/release-health/baseline',
+      queryParameters: parameters,
+    ).toString();
+    final client = _createHttpClient(hostPlatform);
+    try {
+      final response = await _requestJson(
+        method: 'GET',
+        path: path,
+        hostPlatform: hostPlatform,
+        client: client,
+        bearerToken: state.sessionToken,
+      );
+      return ClientReleaseHealthBaseline.parse(
+        response.cast<String, Object?>(),
+        expectedBuild: build,
+      );
+    } on BootstrapFailure {
+      return const ClientReleaseHealthBaseline.unavailable();
+    } on FormatException {
+      return const ClientReleaseHealthBaseline.unavailable();
     } finally {
       client.close(force: true);
     }
@@ -6617,7 +6681,15 @@ class AppFirstRuntimeBootstrapper
     required _ClientRuleSetCatalog clientRuleSetCatalog,
   }) {
     final outbounds = _readListOfMaps(baseConfig['outbounds']);
-    if (outbounds.isEmpty) {
+    final endpoints = _readListOfMaps(baseConfig['endpoints']);
+    final awgEndpointTags = endpoints
+        .where(
+          (endpoint) => _readText(endpoint['type']).toLowerCase() == 'awg',
+        )
+        .map((endpoint) => _readText(endpoint['tag']))
+        .where((tag) => tag.isNotEmpty)
+        .toList(growable: false);
+    if (outbounds.isEmpty && awgEndpointTags.isEmpty) {
       throw const BootstrapFailure(
         'The connection details for this device were incomplete.',
       );
@@ -6635,9 +6707,14 @@ class AppFirstRuntimeBootstrapper
         .map((outbound) => _readText(outbound['tag']))
         .where((tag) => tag.isNotEmpty)
         .toList(growable: false);
+    final transportPathTags = <String>{
+      ...proxyOutboundTags,
+      ...awgEndpointTags,
+    }.toList(growable: false);
     final selectorTag = _findOutboundTag(outbounds, 'selector');
     final urlTestTag = _findOutboundTag(outbounds, 'urltest');
     if (proxyOutboundTags.isEmpty &&
+        awgEndpointTags.isEmpty &&
         selectorTag == null &&
         urlTestTag == null) {
       throw const BootstrapFailure(
@@ -6674,7 +6751,8 @@ class AppFirstRuntimeBootstrapper
 
     final baseRoute = _readMap(baseConfig['route']);
     var finalOutboundTag = _readText(baseRoute['final']);
-    if (!existingTags.contains(finalOutboundTag) ||
+    if ((!existingTags.contains(finalOutboundTag) &&
+            !awgEndpointTags.contains(finalOutboundTag)) ||
         _isAuxiliaryTag(finalOutboundTag)) {
       finalOutboundTag = '';
     }
@@ -6682,7 +6760,7 @@ class AppFirstRuntimeBootstrapper
     if (hostPlatform == HostPlatform.android) {
       _normalizeAndroidOutboundChains(
         outbounds: outbounds,
-        proxyOutboundTags: proxyOutboundTags,
+        proxyOutboundTags: transportPathTags,
         routeMode: routeMode,
         directTag: directTag,
       );
@@ -6701,14 +6779,19 @@ class AppFirstRuntimeBootstrapper
         proxyOutboundTags: proxyOutboundTags,
       );
     }
+    if (finalOutboundTag.isEmpty && awgEndpointTags.length == 1) {
+      finalOutboundTag = awgEndpointTags.single;
+    }
     if (finalOutboundTag.isEmpty) {
-      finalOutboundTag = proxyOutboundTags.first;
+      throw const BootstrapFailure(
+        'The connection details for this device did not include a working connection path.',
+      );
     }
 
     if (hostPlatform == HostPlatform.android) {
       finalOutboundTag = _normalizeAndroidFinalOutboundTag(
         outbounds: outbounds,
-        proxyOutboundTags: proxyOutboundTags,
+        proxyOutboundTags: transportPathTags,
         routeMode: routeMode,
         directTag: directTag,
         currentFinalOutboundTag: finalOutboundTag,
@@ -6743,6 +6826,12 @@ class AppFirstRuntimeBootstrapper
       if (experimental.isNotEmpty) {
         runtimeConfig['experimental'] = experimental;
       }
+      _preserveManagedAwgRuntimeContract(
+        runtimeConfig: runtimeConfig,
+        baseConfig: baseConfig,
+        endpoints: endpoints,
+        awgEndpointTags: awgEndpointTags,
+      );
       return runtimeConfig;
     }
 
@@ -6776,7 +6865,34 @@ class AppFirstRuntimeBootstrapper
         clientRuleSetCatalog: clientRuleSetCatalog,
       ),
     };
+    _preserveManagedAwgRuntimeContract(
+      runtimeConfig: runtimeConfig,
+      baseConfig: baseConfig,
+      endpoints: endpoints,
+      awgEndpointTags: awgEndpointTags,
+    );
     return runtimeConfig;
+  }
+
+  void _preserveManagedAwgRuntimeContract({
+    required Map<String, dynamic> runtimeConfig,
+    required Map<String, dynamic> baseConfig,
+    required List<Map<String, dynamic>> endpoints,
+    required List<String> awgEndpointTags,
+  }) {
+    if (awgEndpointTags.isEmpty) {
+      return;
+    }
+    runtimeConfig['endpoints'] = endpoints;
+    final transportContract = _readMap(
+      _readMap(baseConfig['_meta'])['transport_contract'],
+    );
+    if (transportContract.isEmpty) {
+      return;
+    }
+    runtimeConfig['_meta'] = <String, dynamic>{
+      'transport_contract': Map<String, dynamic>.from(transportContract),
+    };
   }
 
   Map<String, dynamic> _buildAndroidDnsBlock({
@@ -8617,12 +8733,17 @@ class AppFirstRuntimeBootstrapper
       throw ArgumentError('JSON body and raw body are mutually exclusive.');
     }
     BootstrapFailure? lastFailure;
-    final requestUri = Uri.parse(apiBaseUrl).resolve(path);
     final operation = '$method $path';
     final retryable = method.trim().toUpperCase() == 'GET';
     final attemptLimit = retryable ? maxRequestAttempts : 1;
     for (var attempt = 0; attempt < attemptLimit; attempt += 1) {
+      Uri? requestUri;
       try {
+        final selectedBaseUrl = await _resolveApiBaseUrl(
+          client: client,
+          hostPlatform: hostPlatform,
+        );
+        requestUri = Uri.parse(selectedBaseUrl).resolve(path);
         final request = await client.openUrl(
           method,
           requestUri,
@@ -8701,6 +8822,7 @@ class AppFirstRuntimeBootstrapper
           operationalCode: 'API-008',
         );
       } on SocketException {
+        _invalidateApiBaseUrl(requestUri);
         final failure = BootstrapFailure(
           'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
           operation: operation,
@@ -8711,6 +8833,7 @@ class AppFirstRuntimeBootstrapper
         }
         lastFailure = failure;
       } on HttpException {
+        _invalidateApiBaseUrl(requestUri);
         final failure = BootstrapFailure(
           'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
           operation: operation,
@@ -8721,6 +8844,7 @@ class AppFirstRuntimeBootstrapper
         }
         lastFailure = failure;
       } on HandshakeException {
+        _invalidateApiBaseUrl(requestUri);
         final failure = BootstrapFailure(
           'Не удалось безопасно подключиться к сервису. Проверьте дату, время и интернет.',
           operation: operation,
@@ -8731,6 +8855,7 @@ class AppFirstRuntimeBootstrapper
         }
         lastFailure = failure;
       } on TimeoutException {
+        _invalidateApiBaseUrl(requestUri);
         final failure = BootstrapFailure(
           'Сервис не ответил вовремя. Попробуйте ещё раз.',
           statusCode: HttpStatus.gatewayTimeout,
@@ -8751,6 +8876,179 @@ class AppFirstRuntimeBootstrapper
           'POKROV не смог связаться с сервисом подготовки.',
           operation: operation,
         );
+  }
+
+  Future<String> _resolveApiBaseUrl({
+    required HttpClient client,
+    required HostPlatform hostPlatform,
+  }) async {
+    if (_apiBaseUrls.length == 1) {
+      return _apiBaseUrls.single;
+    }
+    final active = _activeApiBaseUrl;
+    if (active != null) {
+      return active;
+    }
+    final existingFlight = _apiBaseUrlFlight;
+    if (existingFlight != null) {
+      return existingFlight;
+    }
+    final flight = _selectApiBaseUrl(
+      client: client,
+      hostPlatform: hostPlatform,
+    );
+    _apiBaseUrlFlight = flight;
+    try {
+      return await flight;
+    } finally {
+      if (identical(_apiBaseUrlFlight, flight)) {
+        _apiBaseUrlFlight = null;
+      }
+    }
+  }
+
+  Future<String> _selectApiBaseUrl({
+    required HttpClient client,
+    required HostPlatform hostPlatform,
+  }) async {
+    for (final candidate in _apiBaseUrls) {
+      try {
+        final request = await client.getUrl(
+          Uri.parse(candidate).resolve('/api/health'),
+        );
+        request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+        request.headers.set(
+          HttpHeaders.userAgentHeader,
+          _userAgent(hostPlatform),
+        );
+        request.headers.set(
+          _correlationIdHeader,
+          PortalCorrelationScope.currentOrCreate(),
+        );
+        final response = await request.close().timeout(requestTimeout);
+        final contentType = response.headers.contentType;
+        final bytes = await _readBoundedResponseBytes(
+          response,
+          maxBytes: 64 * 1024,
+          timeout: requestTimeout,
+        );
+        if (response.statusCode < 200 ||
+            response.statusCode >= 300 ||
+            contentType?.mimeType.toLowerCase() != 'application/json') {
+          continue;
+        }
+        final decoded = jsonDecode(utf8.decode(bytes, allowMalformed: true));
+        if (decoded is! Map) {
+          continue;
+        }
+        _activeApiBaseUrl = candidate;
+        return candidate;
+      } on Object catch (error) {
+        if (error is! SocketException &&
+            error is! HttpException &&
+            error is! HandshakeException &&
+            error is! TimeoutException &&
+            error is! FormatException &&
+            error is! BootstrapFailure) {
+          rethrow;
+        }
+      }
+    }
+    throw const BootstrapFailure(
+      'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
+      operationalCode: 'API-002',
+    );
+  }
+
+  void _invalidateApiBaseUrl(Uri? requestUri) {
+    final active = _activeApiBaseUrl;
+    if (active == null || requestUri == null) {
+      return;
+    }
+    final activeUri = Uri.parse(active);
+    if (activeUri.scheme == requestUri.scheme &&
+        activeUri.host == requestUri.host &&
+        activeUri.port == requestUri.port) {
+      _activeApiBaseUrl = null;
+    }
+  }
+
+  static String _normalizeApiBaseUrl(String rawValue) {
+    final value = rawValue.trim();
+    final uri = Uri.tryParse(value);
+    if (uri == null ||
+        !uri.hasScheme ||
+        uri.host.isEmpty ||
+        (uri.scheme != 'http' && uri.scheme != 'https') ||
+        uri.hasQuery ||
+        uri.hasFragment) {
+      throw ArgumentError.value(rawValue, 'apiBaseUrl', 'Invalid API URL.');
+    }
+    final normalizedPath = uri.path.isEmpty
+        ? '/'
+        : (uri.path.endsWith('/') ? uri.path : '${uri.path}/');
+    return uri.replace(path: normalizedPath).toString();
+  }
+
+  static List<String> _buildApiBaseUrls(
+    String rawPrimary,
+    List<String>? rawFallbacks,
+  ) {
+    final primary = _normalizeApiBaseUrl(rawPrimary);
+    final primaryUri = Uri.parse(primary);
+    final fallbacks = rawFallbacks ?? _implicitOwnedApiFallbacks(primaryUri);
+    final result = <String>[primary];
+    for (final rawFallback in fallbacks) {
+      final fallback = _normalizeApiBaseUrl(rawFallback);
+      if (result.contains(fallback)) {
+        continue;
+      }
+      final fallbackUri = Uri.parse(fallback);
+      if (!_isTrustedApiFallback(primaryUri, fallbackUri)) {
+        throw ArgumentError.value(
+          rawFallback,
+          'apiFallbackBaseUrls',
+          'API fallback must stay inside the owned API pair or loopback.',
+        );
+      }
+      result.add(fallback);
+    }
+    return List<String>.unmodifiable(result);
+  }
+
+  static List<String> _implicitOwnedApiFallbacks(Uri primary) {
+    if (primary.scheme != 'https' ||
+        primary.hasPort ||
+        primary.path != '/' ||
+        !_ownedApiHosts.contains(primary.host.toLowerCase())) {
+      return const <String>[];
+    }
+    return primary.host.toLowerCase() == 'app.pokrov.space'
+        ? const <String>['https://api.pokrov.space/']
+        : const <String>['https://app.pokrov.space/'];
+  }
+
+  static bool _isTrustedApiFallback(Uri primary, Uri fallback) {
+    final primaryHost = primary.host.toLowerCase();
+    final fallbackHost = fallback.host.toLowerCase();
+    final ownedPair = primary.scheme == 'https' &&
+        fallback.scheme == 'https' &&
+        !primary.hasPort &&
+        !fallback.hasPort &&
+        primary.path == '/' &&
+        fallback.path == '/' &&
+        _ownedApiHosts.contains(primaryHost) &&
+        _ownedApiHosts.contains(fallbackHost);
+    if (ownedPair) {
+      return true;
+    }
+    const loopbackHosts = <String>{'127.0.0.1', '::1', 'localhost'};
+    return primary.scheme == 'http' &&
+        fallback.scheme == 'http' &&
+        primary.path == '/' &&
+        fallback.path == '/' &&
+        loopbackHosts.contains(primaryHost) &&
+        loopbackHosts.contains(fallbackHost);
   }
 
   Future<List<int>> _readBoundedResponseBytes(
@@ -9477,7 +9775,7 @@ Map<String, String> _compiledSupportSigningKeys() {
 class AppFirstSupportTicketService
     implements SupportTicketService, SupportBundleTransferService {
   AppFirstSupportTicketService({
-    String apiBaseUrl = 'https://api.pokrov.space',
+    String apiBaseUrl = 'https://app.pokrov.space',
     Future<Directory> Function()? supportDirectoryResolver,
     HttpClient Function()? httpClientFactory,
     Future<void> Function(Duration delay)? delayScheduler,

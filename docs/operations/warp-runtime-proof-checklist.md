@@ -1,10 +1,10 @@
 # WARP Runtime Proof Checklist
 
-Last updated: 2026-08-22
+Last updated: 2026-08-27
 
 Registry class: `ACTIVE_EXECUTION`.
 
-This is the current client evidence gate for WARP on the POKROV `1.2.0+30`
+This is the current client evidence gate for WARP on the POKROV `1.2.0+4046`
 `PRE_CANDIDATE_LOCAL` Android/Windows line. Older device or runtime passes are
 supporting evidence only and cannot close the exact-candidate gate.
 
@@ -77,9 +77,10 @@ Current status: `MANUAL_OWNER_TEST` for exact `1.2.0` candidate bytes.
   implemented and locally tested.
 - Client-local WARP materialization, enable/disable parity, desktop ABI 2 and
   Android host/JVM boundaries: implemented and locally tested.
-- The local pre-candidate client binds exact reproducible Core `1.1.0` AAR/DLL
-  bytes from signed source commit `344b317a7a09eca7943a93866b193553538bd8f6`.
-  The retained public `1.0.3` identity remains rollback/history only.
+- The local pre-candidate client binds the Core `1.1.0` Android AAR and Windows
+  DLL from `e8eb7721fc6eaac6813d3a888ac90d0da1f541a1`; two local rebuilds per
+  platform are byte-identical. Local platform-source convergence passes;
+  candidate and live platform-runtime evidence remain separate gates.
 - Exact Android and Windows release-build WARP/uplink/teardown evidence:
   `MANUAL_OWNER_TEST`.
 

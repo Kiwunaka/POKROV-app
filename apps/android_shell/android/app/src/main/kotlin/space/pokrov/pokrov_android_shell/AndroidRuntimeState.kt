@@ -626,6 +626,12 @@ internal object AndroidRuntimeState {
         runningMessage: String?,
     ) {
         if (!tunEstablished) {
+            if (phase == AndroidRuntimePhase.RUNNING) {
+                markStopped(
+                    message = "POKROV отключен на этом устройстве.",
+                    stopReason = "service_destroyed",
+                )
+            }
             return
         }
         phase = AndroidRuntimePhase.RUNNING

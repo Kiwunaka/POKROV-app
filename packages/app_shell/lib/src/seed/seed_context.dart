@@ -2,7 +2,7 @@ part of pokrov_app_shell;
 
 const _apiBaseUrlOverride = String.fromEnvironment(
   'POKROV_API_BASE_URL',
-  defaultValue: 'https://api.pokrov.space/',
+  defaultValue: 'https://app.pokrov.space/',
 );
 const _checkoutUrlOverride = String.fromEnvironment(
   'POKROV_CHECKOUT_URL',
@@ -351,7 +351,7 @@ SeedAppContext buildSeedAppContext({
     ],
     apiBaseUrl: _normalizeSeedUrl(
       _apiBaseUrlOverride,
-      'https://api.pokrov.space/',
+      'https://app.pokrov.space/',
     ),
     checkoutUrl: _checkoutUrlOverride.trim().isEmpty
         ? 'https://pay.pokrov.space/checkout/?plan=1_month'
