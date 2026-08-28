@@ -96,6 +96,32 @@ void main() {
     );
   });
 
+  test('bounded AWG category appears only in the diagnostics evidence list',
+      () {
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.allExceptRu,
+      snapshot: _snapshot(
+        safeProtocolDiagnosticCode: 'handshake_retry',
+        safeProtocolDiagnosticOccurrence: 3,
+      ),
+      statusLabel: 'Проверяется',
+      warpState: 'disabled',
+      now: now,
+      appVersion: '1.2.0',
+      buildNumber: '4046',
+      releaseChannel: 'direct',
+      candidateLabel: 'pokrov-1.2.0-test',
+      encryptedDeliveryAvailable: true,
+    );
+
+    final protocol =
+        report.evidence.singleWhere((item) => item.key == 'protocol');
+    expect(protocol.label, 'AWG · handshake_retry · #3');
+    expect(protocol.state, PokrovDiagnosticEvidenceState.pending);
+    expect(report.summaryKey, PokrovDiagnosticMessageKey.verified);
+  });
+
   test('summary package preview remains bounded and category-only', () {
     final report = PokrovDiagnosticsPresenter.fromRuntime(
       hostPlatform: HostPlatform.android,
@@ -481,6 +507,8 @@ RuntimeSnapshot _snapshot({
   bool? dnsReady = true,
   bool? coreEgressValidated = true,
   String? hostDiagnosticsSummary,
+  String? safeProtocolDiagnosticCode,
+  int? safeProtocolDiagnosticOccurrence,
 }) =>
     RuntimeSnapshot(
       hostPlatform: HostPlatform.android,
@@ -501,4 +529,6 @@ RuntimeSnapshot _snapshot({
       dnsReady: dnsReady,
       coreEgressValidated: coreEgressValidated,
       coreEgressValidationRequired: true,
+      safeProtocolDiagnosticCode: safeProtocolDiagnosticCode,
+      safeProtocolDiagnosticOccurrence: safeProtocolDiagnosticOccurrence,
     );

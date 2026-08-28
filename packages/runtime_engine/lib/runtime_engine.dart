@@ -99,6 +99,8 @@ class RuntimeSnapshot {
     this.coreEgressValidationRequired,
     this.lastFailureKind,
     this.lastStopReason,
+    this.safeProtocolDiagnosticCode,
+    this.safeProtocolDiagnosticOccurrence,
     this.ipv4RouteCount,
     this.ipv6RouteCount,
     this.includePackageCount,
@@ -128,6 +130,8 @@ class RuntimeSnapshot {
   final bool? coreEgressValidationRequired;
   final String? lastFailureKind;
   final String? lastStopReason;
+  final String? safeProtocolDiagnosticCode;
+  final int? safeProtocolDiagnosticOccurrence;
   final int? ipv4RouteCount;
   final int? ipv6RouteCount;
   final int? includePackageCount;
@@ -427,6 +431,25 @@ const _publicRuntimeStopReasons = <String>{
   'core_egress_probe_unavailable',
   'desktop_tun_egress_probe_failed',
 };
+
+const _publicAwgSafeDiagnosticCodes = <String>{
+  'receive_unknown_type',
+  'receive_invalid_mac1',
+  'receive_invalid_response',
+  'receive_decode_response',
+  'receive_handshake_response',
+  'send_handshake_initiation',
+  'handshake_give_up',
+  'handshake_retry',
+  'receive_error',
+  'send_handshake_error',
+  'upstream_error',
+};
+
+String? _publicAwgSafeDiagnosticCode(Object? value) {
+  final normalized = _runtimeNullableText(value)?.toLowerCase();
+  return _publicAwgSafeDiagnosticCodes.contains(normalized) ? normalized : null;
+}
 
 String? _publicRuntimeFailureKind(Object? value) {
   final normalized = _runtimeNullableText(value)?.toLowerCase();
@@ -3003,6 +3026,32 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         ],
       ),
     );
+    final rawSafeProtocolDiagnosticOccurrence = _firstIntValue(
+      response,
+      hostDiagnostics,
+      const [
+        'safeProtocolDiagnosticOccurrence',
+        'safe_protocol_diagnostic_occurrence',
+      ],
+    );
+    final safeProtocolDiagnosticOccurrence =
+        rawSafeProtocolDiagnosticOccurrence != null &&
+                rawSafeProtocolDiagnosticOccurrence >= 1 &&
+                rawSafeProtocolDiagnosticOccurrence <= 4
+            ? rawSafeProtocolDiagnosticOccurrence
+            : null;
+    final safeProtocolDiagnosticCode = safeProtocolDiagnosticOccurrence == null
+        ? null
+        : _publicAwgSafeDiagnosticCode(
+            _firstNonEmptyString(
+              response,
+              hostDiagnostics,
+              const [
+                'safeProtocolDiagnosticCode',
+                'safe_protocol_diagnostic_code',
+              ],
+            ),
+          );
     final ipv4RouteCount = _firstIntValue(
       response,
       hostDiagnostics,
@@ -3130,6 +3179,10 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       coreEgressValidationRequired: coreEgressValidationRequired,
       lastFailureKind: lastFailureKind,
       lastStopReason: lastStopReason,
+      safeProtocolDiagnosticCode: safeProtocolDiagnosticCode,
+      safeProtocolDiagnosticOccurrence: safeProtocolDiagnosticCode == null
+          ? null
+          : safeProtocolDiagnosticOccurrence,
       ipv4RouteCount: ipv4RouteCount,
       ipv6RouteCount: ipv6RouteCount,
       includePackageCount: includePackageCount,

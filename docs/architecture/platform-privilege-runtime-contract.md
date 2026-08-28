@@ -302,6 +302,17 @@ main-thread watchdog and direct-updater identity/handoff are producers. Raw
 Core text, exception messages, URLs, profiles, credentials, network identity
 and stacks have no field in this journal.
 
+Release builds keep arbitrary Core debug callbacks disabled. The only native
+diagnostic allowed through that callback is the bounded AWG handshake contract:
+Core reconstructs `awg_safe_diag` from a closed category plus occurrence
+`1..4`, and Android independently requires the exact canonical form before
+placing that same category/count in the in-memory runtime snapshot. The value
+is visible only in the dedicated diagnostics evidence list, survives no process
+restart and clears at the next connection attempt. Prefixes, suffixes, unknown
+categories and upstream formatting arguments are dropped; the lane never
+carries endpoints, peer material, keys or raw messages and does not change
+runtime health by itself.
+
 The common envelope, error catalog, planted-secret gate, encrypted diagnostic
 bundle, ingest, support console, retention and alerts are separate
 observability owners. Platform work must not create a competing pipeline.

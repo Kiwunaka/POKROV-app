@@ -1128,6 +1128,8 @@ void main() {
             'default_network_index': 42,
             'dns_ready': true,
             'core_egress_validated': false,
+            'safe_protocol_diagnostic_code': 'handshake_retry',
+            'safe_protocol_diagnostic_occurrence': 3,
             'ipv4_route_count': 3,
             'ipv6_route_count': 1,
           };
@@ -1152,6 +1154,8 @@ void main() {
     expect(snapshot.ipv4RouteCount, 3);
     expect(snapshot.ipv6RouteCount, 1);
     expect(snapshot.lastFailureKind, isNull);
+    expect(snapshot.safeProtocolDiagnosticCode, 'handshake_retry');
+    expect(snapshot.safeProtocolDiagnosticOccurrence, 3);
     expect(snapshot.hasDegradedHostDiagnostics, isTrue);
     expect(snapshot.isCleanlyHealthy, isFalse);
     expect(snapshot.phaseLabel, 'Подключено с предупреждением');

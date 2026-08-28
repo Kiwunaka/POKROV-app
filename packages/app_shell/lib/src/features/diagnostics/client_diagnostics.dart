@@ -218,6 +218,20 @@ abstract final class PokrovDiagnosticsPresenter {
         state: _egressState(snapshot),
       ),
     ];
+    final protocolDiagnosticCode = snapshot?.safeProtocolDiagnosticCode ?? '';
+    final protocolDiagnosticOccurrence =
+        snapshot?.safeProtocolDiagnosticOccurrence;
+    if (protocolDiagnosticCode.isNotEmpty &&
+        protocolDiagnosticOccurrence != null) {
+      evidence.add(
+        PokrovDiagnosticEvidence(
+          key: 'protocol',
+          label:
+              'AWG · $protocolDiagnosticCode · #$protocolDiagnosticOccurrence',
+          state: PokrovDiagnosticEvidenceState.pending,
+        ),
+      );
+    }
     final summaryKey = _summaryKey(snapshot);
     final errorCode = _errorCode(snapshot);
     final problemBook = _problemBookFor(errorCode);

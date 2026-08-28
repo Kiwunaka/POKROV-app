@@ -1335,9 +1335,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
     }
 
-    override fun writeDebugMessage(_message: String) {
-        // Release operation discards arbitrary upstream lines. Contract-owned
-        // lifecycle and egress results arrive through OperationalEventHandler.
+    override fun writeDebugMessage(message: String) {
+        // Release operation discards arbitrary upstream lines. The sole
+        // exception is Core's bounded, closed AWG diagnostic contract, which
+        // is parsed again here before entering the safe runtime snapshot.
+        val diagnostic = AndroidRuntimeLogClassifier.parseAwgSafeDiagnostic(message) ?: return
+        AndroidRuntimeState.recordAwgSafeDiagnostic(diagnostic)
     }
 
     private fun consumeStrings(iterator: StringIterator?, block: (String) -> Unit) {

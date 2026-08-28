@@ -168,11 +168,12 @@ class AndroidHostSecurityContractTest {
     }
 
     @Test
-    fun androidRuntimeDiscardsArbitraryNativeDebugLines() {
+    fun androidRuntimeDiscardsArbitraryNativeDebugLinesAndEmitsOnlySafeAwgCodes() {
         val serviceSource = source("PokrovRuntimeVpnService.kt")
 
-        assertTrue(serviceSource.contains("override fun writeDebugMessage(_message: String)"))
-        assertTrue(serviceSource.contains("lifecycle and egress results arrive through OperationalEventHandler"))
+        assertTrue(serviceSource.contains("override fun writeDebugMessage(message: String)"))
+        assertTrue(serviceSource.contains("parseAwgSafeDiagnostic(message) ?: return"))
+        assertTrue(serviceSource.contains("AndroidRuntimeState.recordAwgSafeDiagnostic(diagnostic)"))
         assertFalse(serviceSource.contains("android.util.Log"))
         assertFalse(serviceSource.contains("Log."))
     }

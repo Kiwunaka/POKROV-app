@@ -2,6 +2,18 @@ package space.pokrov.pokrov_android_shell
 
 /** Maps sensitive native runtime messages to a fixed, non-sensitive category. */
 internal object AndroidRuntimeLogClassifier {
+    fun parseAwgSafeDiagnostic(message: String): AndroidAwgSafeDiagnostic? {
+        val match = AWG_SAFE_DIAGNOSTIC_PATTERN.matchEntire(message) ?: return null
+        val code = match.groupValues[1]
+        if (code !in AWG_SAFE_DIAGNOSTIC_CODES) {
+            return null
+        }
+        return AndroidAwgSafeDiagnostic(
+            code = code,
+            occurrence = match.groupValues[2].toInt(),
+        )
+    }
+
     fun classify(message: String): String? {
         val normalized = message.lowercase()
         return when {
@@ -119,6 +131,30 @@ internal object AndroidRuntimeLogClassifier {
             "invalid" in message ||
             "reset" in message ||
             "eof" in message
+
+    private val AWG_SAFE_DIAGNOSTIC_PATTERN =
+        Regex("awg_safe_diag code=([a-z_]+) occurrence=([1-4])")
+
+    private val AWG_SAFE_DIAGNOSTIC_CODES = setOf(
+        "receive_unknown_type",
+        "receive_invalid_mac1",
+        "receive_invalid_response",
+        "receive_decode_response",
+        "receive_handshake_response",
+        "send_handshake_initiation",
+        "handshake_give_up",
+        "handshake_retry",
+        "receive_error",
+        "send_handshake_error",
+        "upstream_error",
+    )
+}
+
+internal data class AndroidAwgSafeDiagnostic(
+    val code: String,
+    val occurrence: Int,
+) {
+    fun canonicalMessage(): String = "awg_safe_diag code=$code occurrence=$occurrence"
 }
 
 internal data class AndroidRuntimeLogEvent(

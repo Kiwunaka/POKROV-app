@@ -70,6 +70,24 @@ class AndroidRuntimeStateTest {
     }
 
     @Test
+    fun safeAwgDiagnosticIsSnapshotOnlyAndClearsForTheNextAttempt() {
+        AndroidRuntimeState.recordAwgSafeDiagnostic(
+            AndroidAwgSafeDiagnostic("handshake_retry", 3),
+        )
+
+        var snapshot = AndroidRuntimeState.snapshot()
+        assertEquals("handshake_retry", snapshot["safe_protocol_diagnostic_code"])
+        assertEquals(3, snapshot["safe_protocol_diagnostic_occurrence"])
+        assertEquals("unknown", snapshot["hostHealth"])
+        assertNull(snapshot["last_failure_kind"])
+
+        AndroidRuntimeState.markConnectionRequested()
+        snapshot = AndroidRuntimeState.snapshot()
+        assertNull(snapshot["safe_protocol_diagnostic_code"])
+        assertNull(snapshot["safe_protocol_diagnostic_occurrence"])
+    }
+
+    @Test
     fun markStopped_preservesSpecificFailureMessage_afterFailedStart() {
         setPrivateField(
             "environment",
@@ -651,6 +669,8 @@ class AndroidRuntimeStateTest {
         setPrivateField("coreEgressValidated", null)
         setPrivateField("lastFailureKind", null)
         setPrivateField("lastStopReason", null)
+        setPrivateField("awgSafeDiagnosticCode", null)
+        setPrivateField("awgSafeDiagnosticOccurrence", null)
         setPrivateField("ipv4RouteCount", 0)
         setPrivateField("ipv6RouteCount", 0)
         setPrivateField("includePackageCount", 0)
