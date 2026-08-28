@@ -5495,6 +5495,7 @@ void main() {
                     'sync_ok': true,
                   },
                   'profile_revision': 'rev-${lab['profile']}',
+                  'transport_profile': lab['profile'],
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
                     '_meta': <String, Object?>{
@@ -5560,6 +5561,7 @@ void main() {
       final payload = await bootstrapper.resolveManagedProfile(
         hostPlatform: HostPlatform.android,
         routeMode: RouteMode.fullTunnel,
+        preferredNodeCode: 'de-fra',
       );
       final config = jsonDecode(payload.configPayload) as Map<String, dynamic>;
       final endpoint =
@@ -5576,6 +5578,7 @@ void main() {
       expect(endpoint['contract_id'], lab['contract_id']);
       expect(contract['id'], lab['contract_id']);
       expect(contract['profile'], lab['profile']);
+      expect(payload.resolvedNodeCode, isEmpty);
       expect(route['final'], lab['tag']);
       expect(
         outbounds.every(

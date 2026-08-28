@@ -266,7 +266,10 @@ Product rules for that choice:
   may enter the app only through separate authenticated, digest-bound managed
   profiles; AWG 3.1 is never inferred from an AWG2 profile. Neither path adds
   raw config import, QR onboarding, keys, endpoint IPs or protocol controls to
-  the product UI.
+  the product UI. These owner-lab profiles do not participate in Smart
+  Connect: a previously saved manual location is ignored only while the
+  authenticated lab profile is materialized, so it cannot invalidate the
+  hidden transport or silently rewrite the user's ordinary location choice.
 
 ### Before trial activation
 

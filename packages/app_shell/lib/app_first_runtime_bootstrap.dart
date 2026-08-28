@@ -37,6 +37,11 @@ const _correlationIdHeader = 'X-Correlation-ID';
 const _androidCoreEgressProbeUrl =
     'https://api.pokrov.space/api/public/authenticated-egress-probe';
 const _smartConnectProfileRefreshTimeout = Duration(seconds: 6);
+const _ownedTransportLabProfiles = <String>{
+  'awg2_lab',
+  'awg31_lab',
+  'hy2_lab',
+};
 const _appFirstSessionCredentialsVersion = 1;
 const _appFirstBootstrapStateVersion = 1;
 final _platformErrorCodePattern = RegExp(r'^[a-z0-9_]{1,64}$');
@@ -5830,6 +5835,11 @@ class AppFirstRuntimeBootstrapper
     final smartConnect = SmartConnectProfile.tryParse(
       response['smart_connect'],
     );
+    final isOwnedTransportLab = _ownedTransportLabProfiles.contains(
+      _readText(response['transport_profile']).trim().toLowerCase(),
+    );
+    final effectivePreferredNode =
+        isOwnedTransportLab ? '' : normalizedPreferredNode;
     final clientRuleSetCatalog = await _ensureAllExceptRuRuleSetCatalog(
       hostPlatform: hostPlatform,
       routeMode: routeMode,
@@ -5847,9 +5857,9 @@ class AppFirstRuntimeBootstrapper
         hostPlatform: hostPlatform,
         routeMode: routeMode,
         selectedApps: selectedApps,
-        preferredNodeCode: normalizedPreferredNode,
+        preferredNodeCode: effectivePreferredNode,
         preferredVariantId:
-            normalizedPreferredNode.isEmpty ? 'direct' : preferredVariantId,
+            effectivePreferredNode.isEmpty ? 'direct' : preferredVariantId,
         smartConnect: smartConnect,
         supportContext: supportContext,
         clientRuleSetCatalog: clientRuleSetCatalog,
@@ -5857,7 +5867,7 @@ class AppFirstRuntimeBootstrapper
       materializedForRuntime: true,
       routeMode: routeMode,
       smartConnect: smartConnect,
-      resolvedNodeCode: normalizedPreferredNode,
+      resolvedNodeCode: effectivePreferredNode,
       warpPolicy: warpPolicy,
       freeProfileAccess: FreeProfileAccess.tryParse(
         access: response['access'],
