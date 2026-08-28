@@ -82,11 +82,14 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
   deploy and exact Android device proof; cross-repository preflight must be
   rerun on their committed revisions before `READY_LOCAL_FREEZE` can return.
 - Working source build 4046 adds an opt-in external Smart-DNS laboratory route.
-  It is accepted only with custom HTTPS DoH, direct DNS and an enabled AI or
-  Games purpose group. Selected AI/Games domain connections then use the
-  existing direct outbound; other groups keep VPN and explicit user rules keep
-  precedence. Local materialization, persistence and UI contracts pass, but no
-  4046 package, compatible owned resolver or live service-access proof exists.
+  It is accepted only with exact HTTPS port 443 `/dns-query` without a
+  query/fragment/token, direct DNS and an enabled AI or gaming-service group.
+  Only selected suffix DNS questions use that resolver while normal final DNS
+  stays unchanged; selected service connections use the existing direct
+  outbound, other groups keep VPN and explicit user rules keep precedence.
+  The client/platform policy bytes match and app-shell analyze plus `412/412`
+  tests pass. No corrected 4046 package, dedicated owned resolver/relay or live
+  service-access proof exists.
 
 These results mix source, live-lab and explicitly identified pre-candidate
 physical evidence. None is exact replacement-candidate, hosted-CI, public

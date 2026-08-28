@@ -653,16 +653,22 @@ staged. They include:
   profile remains DNS authority;
 - an additional `Внешний Smart DNS · лаборатория` path is available only for
   a validated custom HTTPS DoH resolver with direct DNS selected and at least
-  one enabled AI or Games purpose group. When explicitly enabled, the custom
-  DoH request and those selected purpose-domain connections use the profile's
-  existing direct outbound; all other purpose groups keep their normal VPN
-  target, and an explicit user rule still wins. The client does not terminate
-  TLS, inject certificates, add a second core, or claim that an arbitrary DoH
-  resolver can unblock a service. The user's ISP-visible IP is not hidden, an
-  Android VPN system surface may remain because sing-box still owns policy
-  routing, and successful service access requires a compatible external or
-  POKROV-owned Smart-DNS resolver plus separate live evidence. Invalid,
-  incomplete, downgraded, or future persisted state disables the lab mode;
+  one enabled AI or Games purpose group. The URL must use HTTPS on port `443`,
+  have the exact `/dns-query` path and contain neither query parameters nor a
+  fragment; persisted bearer tokens are forbidden. When explicitly enabled,
+  only DNS questions for the selected AI/Games suffixes are routed to that DoH
+  server. The profile's existing final resolver remains unchanged for every
+  other name. Connections to the selected purpose domains use the existing
+  direct outbound; all other purpose groups keep their normal VPN target, and
+  an explicit user rule still wins. The client does not terminate TLS, inject
+  certificates, add a second core, or claim that an arbitrary DoH resolver can
+  unblock a service. The user's ISP-visible IP is not hidden, an Android VPN
+  system surface may remain because sing-box still owns policy routing, and
+  successful service access requires a compatible external or POKROV-owned
+  selective resolver plus opaque TLS relay and separate live evidence. The
+  POKROV policy is allowlist-only and non-recursive: outside names are refused,
+  so it is not a general DNS service. Invalid, incomplete, downgraded, or future
+  persisted state disables the lab mode;
 - LAN direct access;
 - trusted Wi-Fi names with optional disconnect on an exact current-SSID match.
 

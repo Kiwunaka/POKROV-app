@@ -229,17 +229,23 @@ source `51f41c6…dfa7b` above.
 
 Build target `1.2.0+4046` adds source-only, opt-in routing for a compatible
 external Smart-DNS resolver. The preference can be enabled only when a custom
-HTTPS DoH URL, direct DNS transport and at least one AI or Games purpose route
-are all present. It sends that DoH traffic and selected AI/Games domain
-connections through the existing direct outbound, keeps other groups on VPN,
-and preserves explicit user-rule precedence. Invalid combinations normalize
-off when restored and fail closed before native staging if constructed
-directly. App-shell analysis is clean and `404/404` tests pass.
+HTTPS DoH URL, direct DNS transport and at least one AI or gaming-service
+purpose route are all present. The URL must use port 443 and exact
+`/dns-query`, with no query, fragment or persisted token. Only DNS questions
+for selected policy suffixes are sent to that server; the existing final DNS
+remains authoritative for every other name. Selected service connections use
+the existing direct outbound, other groups keep VPN and explicit user rules
+keep precedence. Invalid combinations normalize off when restored and fail
+closed before native staging if constructed directly. The platform and client
+policy copies are byte-identical at SHA-256
+`b6977f6f6a5ee48898116820d1db252b5b670cb7b86959c78f7bdbc7de90e0fa`.
+App-shell analysis is clean and `412/412` tests pass.
 
 This is `PASS_LOCAL_SOURCE_EXTERNAL_SMART_DNS_LAB`, not a package or access
-result. No build-4046 APK has been produced or installed; no compatible owned
-resolver, DNS answer, service connection, leak result or Android lifecycle has
-been proved. The Android VPN system surface may still be present because the
+result. No build-4046 APK has yet been produced or installed for this corrected
+source; the owned server is source-only/default-off and no compatible resolver,
+DNS answer, service connection, leak result or Android lifecycle has been
+proved. The Android VPN system surface may still be present because the
 existing sing-box TUN owns split-policy routing, even though selected remote
 connections use the direct outbound.
 

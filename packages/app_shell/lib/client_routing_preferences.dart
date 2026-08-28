@@ -23,7 +23,7 @@ extension PokrovPurposeRoutePresentation on PokrovPurposeRoute {
         PokrovPurposeRoute.video => 'Видео',
         PokrovPurposeRoute.ai => 'AI-сервисы',
         PokrovPurposeRoute.social => 'Соцсети',
-        PokrovPurposeRoute.games => 'Игры',
+        PokrovPurposeRoute.games => 'Игровые сервисы',
         PokrovPurposeRoute.ruDirect => 'RU напрямую',
       };
 
@@ -245,6 +245,7 @@ class PokrovRoutingPreferences {
             : dnsPreset;
     final externalSmartDnsEnabled = json['externalSmartDnsEnabled'] == true &&
         normalizedDnsPreset == PokrovDnsPreset.custom &&
+        _isExternalSmartDnsUrl(customDns) &&
         dnsTransport == PokrovDnsTransport.direct &&
         purposes.any((purpose) => purpose.supportsExternalSmartDns);
     return PokrovRoutingPreferences(
@@ -284,7 +285,7 @@ class PokrovRoutingPreferences {
 
   bool get canEnableExternalSmartDns =>
       dnsPreset == PokrovDnsPreset.custom &&
-      effectiveDnsAddress != null &&
+      _isExternalSmartDnsUrl(effectiveDnsAddress) &&
       dnsTransport == PokrovDnsTransport.direct &&
       purposeRoutes.any((purpose) => purpose.supportsExternalSmartDns);
 
@@ -489,10 +490,27 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
           ? directTag
           : proxyTag,
     });
-    dns
-      ..['servers'] = servers
-      ..['final'] = 'pokrov-user-dns'
-      ..['independent_cache'] = true;
+    dns['servers'] = servers;
+    if (preferences.externalSmartDnsEnabled) {
+      final selectedDomains = <String>{
+        for (final purpose in preferences.purposeRoutes)
+          if (purpose.supportsExternalSmartDns) ..._purposeDomains[purpose]!,
+      }.toList()
+        ..sort();
+      final dnsRules = _routingListOfMaps(dns['rules'])
+        ..removeWhere(
+          (rule) => _routingText(rule['server']) == 'pokrov-user-dns',
+        );
+      dnsRules.insert(0, <String, dynamic>{
+        'domain_suffix': selectedDomains,
+        'action': 'route',
+        'server': 'pokrov-user-dns',
+      });
+      dns['rules'] = dnsRules;
+    } else {
+      dns['final'] = 'pokrov-user-dns';
+    }
+    dns['independent_cache'] = true;
     config['dns'] = dns;
   }
 
@@ -549,6 +567,9 @@ const Map<PokrovPurposeRoute, List<String>> _purposeDomains = {
   ],
 };
 
+List<String> pokrovPurposeDomains(PokrovPurposeRoute purpose) =>
+    List<String>.unmodifiable(_purposeDomains[purpose]!);
+
 (String, PokrovRouteMatchType)? _normalizeRouteMatch(String raw) {
   var value = raw.trim().toLowerCase();
   if (value.isEmpty || value.length > 253 || value.contains(RegExp(r'\s'))) {
@@ -597,6 +618,17 @@ String? _normalizeDnsUrl(String raw) {
     return null;
   }
   return uri.toString();
+}
+
+bool _isExternalSmartDnsUrl(String? raw) {
+  if (raw == null) return false;
+  final normalized = _normalizeDnsUrl(raw);
+  if (normalized == null) return false;
+  final uri = Uri.parse(normalized);
+  return uri.path == '/dns-query' &&
+      uri.query.isEmpty &&
+      uri.fragment.isEmpty &&
+      (!uri.hasPort || uri.port == 443);
 }
 
 bool _routeOverrideMatches(

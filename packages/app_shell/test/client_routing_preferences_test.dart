@@ -266,7 +266,9 @@ void main() {
     );
     final config = _jsonMap(transformed.configPayload);
     final rules = _maps(_map(config['route'])['rules']);
-    final dnsServers = _maps(_map(config['dns'])['servers']);
+    final dns = _map(config['dns']);
+    final dnsServers = _maps(dns['servers']);
+    final dnsRules = _maps(dns['rules']);
 
     String outboundFor(String domain) => rules.firstWhere(
           (rule) =>
@@ -282,6 +284,14 @@ void main() {
       'address': 'https://smart.example/dns-query',
       'detour': 'direct',
     });
+    expect(dns['final'], 'profile-dns');
+    expect(dnsRules.first['action'], 'route');
+    expect(dnsRules.first['server'], 'pokrov-user-dns');
+    expect(
+      dnsRules.first['domain_suffix'],
+      allOf(contains('chatgpt.com'), contains('xbox.com'),
+          isNot(contains('youtube.com'))),
+    );
     expect(
       explainPokrovRouteDecision(
         destination: 'chatgpt.com',
@@ -324,6 +334,32 @@ void main() {
       'externalSmartDnsEnabled': true,
     });
     expect(sanitized.externalSmartDnsEnabled, isFalse);
+
+    for (final unsafeUrl in <String>[
+      'https://smart.example/dns-query?token=plaintext',
+      'https://smart.example/dns-query#credential',
+      'https://token@smart.example/dns-query',
+      'https://smart.example:8443/dns-query',
+      'https://smart.example/other-path',
+    ]) {
+      final unsafe = const PokrovRoutingPreferences.defaults().copyWith(
+        purposeRoutes: const <PokrovPurposeRoute>{PokrovPurposeRoute.ai},
+        dnsPreset: PokrovDnsPreset.custom,
+        dnsTransport: PokrovDnsTransport.direct,
+        customDnsUrl: unsafeUrl,
+        externalSmartDnsEnabled: true,
+      );
+      expect(unsafe.canEnableExternalSmartDns, isFalse, reason: unsafeUrl);
+      expect(
+        () => applyPokrovRoutingPreferences(
+          _profile(),
+          unsafe,
+          hostPlatform: HostPlatform.android,
+        ),
+        throwsA(isA<FormatException>()),
+        reason: unsafeUrl,
+      );
+    }
   });
 
   test('valid external Smart DNS preference survives persistence round-trip',
@@ -523,6 +559,37 @@ void main() {
       expect(decision.action, PokrovRouteAction.vpn, reason: destination);
     }
   });
+
+  test('client AI and gaming domains match the Smart DNS policy copy',
+      () async {
+    final policy = _jsonMap(
+      await _readRepositoryFile('config/smart-dns-policy.v1.json'),
+    );
+    final groups = _map(policy['groups']);
+
+    expect(
+      pokrovPurposeDomains(PokrovPurposeRoute.ai),
+      (groups['ai'] as List<Object?>).cast<String>(),
+    );
+    expect(
+      pokrovPurposeDomains(PokrovPurposeRoute.games),
+      (groups['gaming_services'] as List<Object?>).cast<String>(),
+    );
+    expect(policy['recursive_dns'], isFalse);
+  });
+}
+
+Future<String> _readRepositoryFile(String relativePath) async {
+  for (final path in <String>[
+    relativePath,
+    '../../$relativePath',
+  ]) {
+    final file = File(path);
+    if (await file.exists()) {
+      return file.readAsString();
+    }
+  }
+  throw FileSystemException('Repository file not found', relativePath);
 }
 
 ManagedProfilePayload _profile() => ManagedProfilePayload(

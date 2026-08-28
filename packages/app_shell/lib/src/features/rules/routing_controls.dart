@@ -229,7 +229,7 @@ class _DnsAndLanCard extends StatelessWidget {
       title: 'Блокировка и DNS',
       lines: [
         preferences.externalSmartDnsEnabled
-            ? 'Внешний Smart DNS направляет выбранные AI/Игры напрямую. IP-адрес не скрывается.'
+            ? 'Smart DNS меняет DNS только для выбранных AI/игровых сервисов и направляет их напрямую. IP-адрес не скрывается.'
             : preferences.dnsTransport == PokrovDnsTransport.direct
                 ? 'DoH идёт напрямую. Внешний IP не меняется, доступ к сервисам не гарантируется.'
                 : 'Защитный DNS блокирует известные рекламные и трекинговые домены внутри VPN.',
@@ -291,10 +291,10 @@ class _DnsAndLanCard extends StatelessWidget {
               subtitle: preferences.dnsTransport != PokrovDnsTransport.direct
                   ? 'Сначала включите «DNS напрямую».'
                   : !hasSmartDnsPurpose
-                      ? 'Сначала включите маршрут «AI-сервисы» или «Игры».'
+                      ? 'Сначала включите маршрут «AI-сервисы» или «Игровые сервисы».'
                       : preferences.externalSmartDnsEnabled
-                          ? 'Custom DoH и выбранные AI/Игры идут напрямую. Нужен совместимый Smart-DNS сервер; IP не скрывается.'
-                          : 'Использовать ответы custom DoH для прямого доступа выбранных AI/Игровых сервисов. Нужен совместимый сервер.',
+                          ? 'Только DNS выбранных AI/игровых сервисов идёт в custom DoH; сами сервисы — напрямую. Нужен совместимый сервер, IP не скрывается.'
+                          : 'Использовать custom DoH только для выбранных AI/игровых сервисов. URL должен оканчиваться на /dns-query и не содержать токен.',
               value: preferences.externalSmartDnsEnabled,
               enabled: canToggleExternalSmartDns,
               onChanged: (value) => onChanged(
