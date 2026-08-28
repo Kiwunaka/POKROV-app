@@ -212,6 +212,12 @@ egress, endurance or promotion:
   `FAIL_4045_PREDEPLOY_ANDROID_ACTIVATION`, before the undeployed platform
   managed-profile correction, not AWG cryptography or tunnel proof.
 
+The later exact clean source tuple platform `9383117…64c17`, client
+`f3d3310…174f` and Core `f44dbe8…f90d` passes the bounded Node `22.14.0`
+aggregate `15/15`. Its report SHA-256 is `57ca9352…f02ed` and explicitly keeps
+`candidate_proven=false`; the installed APK bytes remain bound to runtime
+source `51f41c6…dfa7b` above.
+
 ## Commands
 
 ```powershell
