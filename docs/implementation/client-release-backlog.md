@@ -81,15 +81,22 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
   no app-owned TUN exists. These corrections are source-only until the platform
   deploy and exact Android device proof; cross-repository preflight must be
   rerun on their committed revisions before `READY_LOCAL_FREEZE` can return.
-- Working source build 4046 adds an opt-in external Smart-DNS laboratory route.
+- Exact client source `75e82b0…e62` adds an opt-in external Smart-DNS
+  laboratory route.
   It is accepted only with exact HTTPS port 443 `/dns-query` without a
   query/fragment/token, direct DNS and an enabled AI or gaming-service group.
   Only selected suffix DNS questions use that resolver while normal final DNS
   stays unchanged; selected service connections use the existing direct
   outbound, other groups keep VPN and explicit user rules keep precedence.
   The client/platform policy bytes match and app-shell analyze plus `412/412`
-  tests pass. No corrected 4046 package, dedicated owned resolver/relay or live
-  service-access proof exists.
+  tests pass. Production-signed arm64/x86_64 working APKs were installed and
+  read back byte-identically on the Huawei and LDPlayer. LDPlayer passed the
+  prerequisite/default-off/enable/restore state machine; the phone passed the
+  exact-package/default-off gate without a setting change. Platform
+  `2d18fd7…f78a` produces a byte-reproducible verified server bundle, and the
+  platform operations `ca9eb41…7334` add the tested guarded
+  PLAN/APPLY/ROLLBACK source contract. No dedicated-node PLAN, installed owned
+  resolver/relay or live service-access proof exists.
 
 These results mix source, live-lab and explicitly identified pre-candidate
 physical evidence. None is exact replacement-candidate, hosted-CI, public
@@ -103,8 +110,8 @@ runtime, rollback or promotion proof.
 | 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains private signed candidate.4 evidence with promotion false. It does not bind the replacement source or `1.2.0+4046`. |
 | 3 | POKROV Core `1.1.0` replacement artifact | `PASS_MIXED_PLATFORM_LOCAL; PASS_LOCAL_AWG_LIFECYCLE; PASS_WORKING_ANDROID_HOST` | Android binds two byte-identical AAR builds from Core `f44dbe8…f90d`; those bytes also match the prior `54e76bb` build and include AWG hostname resolution and Android outer-socket protection. Working build 4044 proved control-plane reachability, socket protection, normal WARP and egress on the Huawei. Windows retains DLL `60fe3fad…3981` from `344b317…8f6` plus Cronet `8ef1f8bb…a6f7`. Platform-source convergence and exact-candidate host proof remain open. |
 | 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.4 metadata remains valid only for its exact older bytes. The replacement must bind build `4046`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
-| 5 | Android exact-candidate build and signer | `PASS_WORKING_4045_SIGNER; MISSING_REPLACEMENT_CANDIDATE` | Client `51f41c6…dfa7b` produced signer-verified arm64 `8e3c45d…7eddf` and x86_64 `0d76ee1…c786` APKs; both installed as `1.2.0+4045`. They are working artifacts without a strict-v2 manifest, not candidate bytes. |
-| 6 | Android physical-device matrix | `PASS_4045_DISCONNECTED_HOST_TRUTH; FAIL_4045_PREDEPLOY_ANDROID_ACTIVATION; FAIL_4045_LDPLAYER_SELECTED_OUTBOUND_EGRESS; MANUAL_OWNER_TEST` | Build 4045 starts honestly disconnected on Huawei and LDPlayer, closing the stale-running false-green regression. A physical control started the POKROV service but no Android VPN transport remained after about 25 seconds. LDPlayer separately reached canonical `core_egress_probe_failed`; the selected outbound failed internet proof and POKROV stopped VPN fail-closed. Neither control was AWG-bound, and cleanup left no POKROV service or transport. Deploy the authorized platform source, prove an app-owned TUN plus AWG2 handshake and egress, then AWG3.1; run Huawei TUN/DNS/egress, WARP, per-app, handoff and endurance on exact bytes. |
+| 5 | Android exact-candidate build and signer | `PASS_WORKING_4046_SIGNER; MISSING_REPLACEMENT_CANDIDATE` | Client `75e82b0…e62` produced signer-verified release/non-debuggable arm64 `c7e21ca…a6f9` and x86_64 `4beebad0…cd4b` APKs; both installed and read back byte-identically as `1.2.0+4046` with the production certificate. They are working artifacts without a strict-v2 manifest, not candidate bytes. |
+| 6 | Android physical-device matrix | `PASS_4046_SMART_DNS_DEVICE_STATE; PASS_4045_DISCONNECTED_HOST_TRUTH; FAIL_4045_PREDEPLOY_ANDROID_ACTIVATION; FAIL_4045_LDPLAYER_SELECTED_OUTBOUND_EGRESS; MANUAL_OWNER_TEST` | Build 4046 passes the external Smart-DNS prerequisite/default-off state on Huawei and the full default-off/enable/restore UI state machine on LDPlayer without starting a connection; cleanup left no POKROV service. This proves configuration only. Earlier build 4045 starts honestly disconnected on both hosts but fails its predeploy activation/selected-egress controls. Deploy the authorized platform source, prove an app-owned TUN plus AWG2 handshake and egress, then AWG3.1; run Huawei TUN/DNS/egress, WARP, per-app, handoff and endurance on exact candidate bytes. |
 | 7 | Windows exact-candidate package | `MISSING_REPLACEMENT_ARTIFACT` | Candidate.3 clean-host run `33033294889` is retained supporting evidence only. Build `36` requires a converged Core DLL, new setup identity and bounded clean-host run. |
 | 8 | Windows unsigned-beta warning and clean-host recovery | `SKIPPED_BY_OWNER; REPLACEMENT_PROOF_MISSING` | The `1.2.0` direct-beta exception and warning remain applicable. Replacement live TUN/DNS/egress, recovery while connected and interactive SmartScreen are manual; trusted signing is still required for trusted/Store/broad-stable claims. |
 | 9 | Hosted cross-repository CI | `BLOCKED_BY_ACCESS_GITHUB_BILLING` | Candidate.3 source runs are retained. Replacement platform/client PR jobs currently stop before steps because of the GitHub account payment/spending limit; they are neither PASS nor code failures. |
@@ -113,9 +120,9 @@ runtime, rollback or promotion proof.
 
 ## Next Action Order
 
-1. Deploy the owned-AWG managed-profile correction, build/install `4046`, and
-   retain an app-owned TUN plus real AWG2 handshake and egress proof; then run
-   AWG3.1 and the bounded direct-DoH checks.
+1. Deploy the owned-AWG managed-profile correction and use the installed
+   working `4046` to retain an app-owned TUN plus real AWG2 handshake and
+   egress proof; then run AWG3.1 and the bounded direct-DoH checks.
 2. Freeze the replacement platform/client/Core/release-index source tuple and
    keep AWG2, AWG3.1 plus AI/Games/DoH contracts green on the exact client
    revision.

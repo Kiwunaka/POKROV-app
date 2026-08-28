@@ -33,9 +33,10 @@ These local contracts do not prove final APK bytes or physical behavior.
 ## Retained Candidate.3 Evidence And Replacement Gate
 
 The table keeps candidate.3 results only as exact evidence for its old bytes.
-The `1.2.0+4046` source replacement has no package artifact or strict-v2
-candidate. Production-signed build-4045 artifacts remain exact evidence only
-for their older bytes, and their network matrix is incomplete.
+The `1.2.0+4046` source replacement now has production-signed working APKs and
+bounded two-device configuration-state proof, but no strict-v2 candidate.
+Production-signed build-4045 artifacts remain exact evidence only for their
+older bytes, and the replacement network matrix is incomplete.
 None of the retained candidate.3 signing, runtime or promotion rows below
 transfers to the new bytes.
 
@@ -225,9 +226,10 @@ aggregate `15/15`. Its report SHA-256 is `57ca9352…f02ed` and explicitly keeps
 `candidate_proven=false`; the installed APK bytes remain bound to runtime
 source `51f41c6…dfa7b` above.
 
-## Working Source 4046 External Smart-DNS Lab
+## Working Build 4046 External Smart-DNS Lab
 
-Build target `1.2.0+4046` adds source-only, opt-in routing for a compatible
+Exact client source `75e82b061cd3f127ae640733cfb4fc1a6aef2e62`
+adds opt-in routing for a compatible
 external Smart-DNS resolver. The preference can be enabled only when a custom
 HTTPS DoH URL, direct DNS transport and at least one AI or gaming-service
 purpose route are all present. The URL must use port 443 and exact
@@ -241,13 +243,30 @@ policy copies are byte-identical at SHA-256
 `b6977f6f6a5ee48898116820d1db252b5b670cb7b86959c78f7bdbc7de90e0fa`.
 App-shell analysis is clean and `412/412` tests pass.
 
-This is `PASS_LOCAL_SOURCE_EXTERNAL_SMART_DNS_LAB`, not a package or access
-result. No build-4046 APK has yet been produced or installed for this corrected
-source; the owned server is source-only/default-off and no compatible resolver,
-DNS answer, service connection, leak result or Android lifecycle has been
-proved. The Android VPN system surface may still be present because the
-existing sing-box TUN owns split-policy routing, even though selected remote
-connections use the direct outbound.
+Production packaging from that exact source produced release/non-debuggable
+working artifacts with certificate SHA-256
+`0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500`:
+
+| ABI | Size | APK SHA-256 | Readback |
+|---|---:|---|---|
+| arm64-v8a | `101346230` | `c7e21ca3aa5baff575e515d22937c1a6b431068afdd0dad5fb6955b966cea6f9` | exact bytes installed on Huawei `ADA_AL00U` |
+| x86_64 | `109930165` | `4beebad0f2efeef03b6c6a9ea7634c7c90515d5ec3f7bcdf4a8b74adcc83cd4b` | exact bytes installed on LDPlayer |
+
+Both devices read back package `space.pokrov.pokrov_android_shell`, version
+`1.2.0+4046`, and no running POKROV service after cleanup. LDPlayer proved the
+full prerequisite/default-off/enable/restore UI state machine without starting
+a connection and displayed the visible-IP/compatible-server warning. The
+physical phone proved the exact package and safe default-off prerequisite gate
+with its existing AdGuard/direct-DNS-off settings; no phone preference was
+changed and its prior Chrome foreground was restored.
+
+This is `PASS_WORKING_4046_SIGNER_AND_EXTERNAL_SMART_DNS_DEVICE_STATE`, not a
+resolver or access result. The owned server has a byte-reproducible local
+bundle from platform `2d18fd7…f78a` but remains uninstalled/default-off; no
+compatible live resolver, DNS answer, service connection, leak/lifecycle
+matrix or origin proof exists. The Android VPN system surface may still be
+present because the existing sing-box TUN owns split-policy routing, even
+though selected remote connections use the direct outbound.
 
 ## Commands
 
