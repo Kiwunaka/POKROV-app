@@ -105,6 +105,15 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
   without runtime material. This is local source/host contract evidence only:
   Windows still lacks a converged Core artifact, and neither server deploy nor
   device tunnel was run.
+- A separate exact-Core live interop from the current Windows origin emitted
+  outer packets for AWG2 and AWG3.1 but received no outer response. Concurrent
+  address-free AWG2 server capture counted `34` inbound and `8` outbound
+  packets, including `8` initiation and `8` response-sized packets, with no
+  handshake. AWG2 is therefore
+  `BLOCKED_BY_NETWORK_CURRENT_WINDOWS_ORIGIN_REVERSE_UDP`; AWG3.1 keeps the
+  narrower `FAIL_NO_OUTER_RESPONSE_CURRENT_WINDOWS_ORIGIN` because its server
+  capture was not repeated. This Core-only probe did not exercise the Windows
+  app, TUN or DNS and changed no rollout/device binding.
 
 These results mix source, live-lab and explicitly identified pre-candidate
 physical evidence. None is exact replacement-candidate, hosted-CI, public

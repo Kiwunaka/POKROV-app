@@ -105,6 +105,12 @@ SmartScreen observation remain `MANUAL_OWNER_TEST`.
   This is source-only: the retained Windows DLL still comes from `344b317…8f6`,
   so no converged Windows artifact, live AWG interop or TUN/DNS/egress result is
   claimed.
+- A separate current-origin Core-only probe from this Windows host emitted
+  outer packets for AWG2 and AWG3.1 but received no response. Concurrent
+  address-free AWG2 server capture saw both initiation and response-sized
+  packets, so that slice is
+  `BLOCKED_BY_NETWORK_CURRENT_WINDOWS_ORIGIN_REVERSE_UDP`. It did not load the
+  retained client DLL or exercise the Windows service, TUN, DNS or app.
 - A final-source, signed-manifest candidate.3 exists privately and has passed
   its bounded clean-host gate. It is not promotion-authorized.
 - The owner authorizes one unsigned direct-download beta with the mandatory
