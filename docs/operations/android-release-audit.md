@@ -33,9 +33,10 @@ These local contracts do not prove final APK bytes or physical behavior.
 ## Retained Candidate.3 Evidence And Replacement Gate
 
 The table keeps candidate.3 results only as exact evidence for its old bytes.
-The `1.2.0+4045` replacement is source-only until its production-signed working
-artifacts and live checks complete; it has no strict-v2 replacement candidate. None of the retained candidate.3 signing,
-runtime or promotion rows below transfers to the new bytes.
+The `1.2.0+4045` replacement has production-signed working artifacts, but it
+has no strict-v2 replacement candidate and its network matrix is incomplete.
+None of the retained candidate.3 signing, runtime or promotion rows below
+transfers to the new bytes.
 
 | Check | Current state |
 |---|---|
@@ -184,6 +185,24 @@ candidate they must prove AWG2 on a returning origin, followed by AWG3.1. The
 exact candidate then still needs the full physical matrix: lifecycle,
 permission revoke, sleep/resume, Wi-Fi/LTE handoff, per-app modes, DNS leak,
 blocked UDP 53, MTU, endurance, backup/privacy and OEM limitations.
+
+## Working Build 4045 Host-State Evidence
+
+This is bounded pre-candidate evidence for client source
+`51f41c646796e506d9d329ce54e8cc15fb7dfa7b`; it does not prove AWG, DNS,
+egress, endurance or promotion:
+
+- production-signed arm64 APK SHA-256
+  `8e3c45df8db2582f1a29a1f49776f45da5a0420391f584b892f66e4a7947eddf`,
+  size `101348662` bytes, installed as `1.2.0+4045` on the physical Huawei;
+- production-signed x86_64 APK SHA-256
+  `0d76ee15fb9b1519cb8f92940cce315fbe3a1b485aaa44625a8f75623f1cc786`,
+  size `109932885` bytes, installed as `1.2.0+4045` on LDPlayer;
+- both artifacts passed the production signer, package, version, non-debuggable
+  and ABI checks and matched the same configured production certificate;
+- after cold launch on both hosts, the app-owned VPN service was absent and the
+  UI reported `Подключить` / `Не защищено`; the physical Wi-Fi state remained
+  disabled. This closes only the stale-running false-green regression.
 
 ## Commands
 
