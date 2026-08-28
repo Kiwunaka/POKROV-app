@@ -120,6 +120,35 @@ void main() {
     expect(remote, isNot(contains('package_name')));
   });
 
+  test('caught connection failure remains failed instead of cancelled',
+      () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-obs-fail-');
+    addTearDown(() => directory.delete(recursive: true));
+    final observability = await PokrovClientObservability.start(
+      hostPlatform: HostPlatform.android,
+      directoryResolver: () async => directory,
+      buildIdentity: _build(),
+      idFactory: OperationalIdFactory(random: Random(103)),
+    );
+
+    await observability.runConnectionAction(
+      () async {
+        observability.recordConnectionFailure(
+          stage: ConnectionStage.profile,
+          errorCode: 'CONN-005',
+        );
+      },
+      beginsWithDisconnect: false,
+    );
+    await observability.flush();
+
+    final terminal = observability.dispatcher.breadcrumbs.snapshot().lastWhere(
+          (event) => event.name == 'app.connection.attempt.finished',
+        );
+    expect(terminal.outcome.wireValue, 'failed');
+    expect(terminal.errorCode, 'CONN-005');
+  });
+
   test('active app-first client emits correlation header and aggregate batch',
       () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-obs-api-');

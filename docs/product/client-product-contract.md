@@ -157,6 +157,12 @@ Daily shell state language is shared across Home and support diagnostics:
 must never be described as a connection attempt. First-layer refresh copy says
 that settings were updated without exposing the API hostname.
 
+The client control plane uses only the owned app/API origin pair. It selects an
+origin with an unauthenticated JSON health request before sending real work;
+arbitrary fallback hosts are rejected. Origin failover may retry idempotent
+reads, but it must never replay a pairing, redemption, settings, support,
+telemetry or other non-idempotent write after its send begins.
+
 Home uses the owner-selected `2026-08-13` composition: a compact brand/access
 top row, one centered circular connect action with a thin non-glowing border,
 in-control status and a finite hourglass busy state, then two quick controls,
@@ -719,7 +725,7 @@ Release continuity rules:
   SHA-256; the production catalog requires `1.1.6` for older clients. Exact
   Huawei and clean Windows network proof remain manual.
 - the active source target is separately recorded in the same canonical
-  release-handoff seed as `1.2.0+36`, state `PRE_CANDIDATE_LOCAL`, with
+  release-handoff seed as `1.2.0+4044`, state `PRE_CANDIDATE_LOCAL`, with
   `candidate_created=false`. Android, Windows and app-shell source versions
   must match that target, while the historical `1.1.6` public record remains
   immutable and has `reuse_for_new_promotion=false`. This target is not a

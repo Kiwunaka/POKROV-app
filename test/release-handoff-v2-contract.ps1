@@ -113,6 +113,9 @@ try {
   $androidBuildSource = [IO.File]::ReadAllText(
     (Join-Path $root "scripts\build-android-production.ps1")
   )
+  $androidGradleSource = [IO.File]::ReadAllText(
+    (Join-Path $root "apps\android_shell\android\app\build.gradle")
+  )
   $windowsBuildSource = [IO.File]::ReadAllText(
     (Join-Path $root "scripts\build-windows-release.ps1")
   )
@@ -127,13 +130,23 @@ try {
   )
   if (-not $androidBuildSource.Contains(
         '--dart-define=POKROV_APP_VERSION=$declaredVersionName') -or
+      -not $androidBuildSource.Contains(
+        'if ($versionCode -ne $declaredVersionCode)') -or
+      $androidBuildSource.Contains('"--split-per-abi"') -or
+      -not $androidBuildSource.Contains(
+        '--android-project-arg=pokrov.singleVersionSplitApks=true') -or
+      -not $androidGradleSource.Contains(
+        'gradleProperty("pokrov.singleVersionSplitApks")') -or
+      -not $androidGradleSource.Contains('universalApk = singleVersionSplitApks') -or
+      -not $androidBuildSource.Contains(
+        'A production APK native ABI set does not match its artifact label.') -or
       -not $windowsBuildSource.Contains(
         '--dart-define=POKROV_APP_VERSION=$version') -or
       -not $identitySource.Contains(
         "const pokrovClientVersion = String.fromEnvironment(") -or
       -not $profileSource.Contains("pokrovClientVersion") -or
       -not $navigationSource.Contains("pokrovClientVersion")) {
-    throw "Visible client version is not wired through the manifest-validated package identity."
+    throw "Client version is not wired through one manifest-validated package identity."
   }
   $android = @($generated.artifacts | Where-Object { $_.platform -eq "android" })[0]
   $windows = @($generated.artifacts | Where-Object { $_.platform -eq "windows" })[0]

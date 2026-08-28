@@ -1,9 +1,9 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-Status: refreshed on 2026-08-27 as a mixed exact-platform pre-candidate binding
-for POKROV `1.2.0+36`. Android carries the Core egress-event and AWG endpoint
-DNS corrections needed by live proof; Windows retains the previous exact DLL
-until rebuilt.
+Status: refreshed on 2026-08-28 as a mixed exact-platform pre-candidate binding
+for POKROV `1.2.0+4044`. Android carries the Core egress-event, AWG endpoint DNS
+and bounded outer-socket protection corrections; Windows retains the previous
+exact DLL until rebuilt.
 
 This is not a Core release, client candidate, signing pass, publication or
 promotion decision. No `v1.1.0` Git tag or public Core release was created.
@@ -15,7 +15,7 @@ The client binds the separately versioned Core target as follows:
 - repository: `Kiwunaka/POKROV-core`;
 - version-derived target label: `v1.1.0`;
 - tag created: `false`;
-- Android source commit: `f234bb689ab9d7ab979e9ff27c3703ee1b53c171`;
+- Android source commit: `54e76bbb61f79bd0eb0cdbddb71f52e12645fa13`;
 - retained Windows source commit: `344b317a7a09eca7943a93866b193553538bd8f6`;
 - source state: `PRE_CANDIDATE_LOCAL`;
 - candidate created: `false`;
@@ -37,7 +37,7 @@ scoped release branch until its own owner-solo promotion evidence is recorded.
 
 | Platform | Artifact | Size | SHA-256 | Local result |
 | --- | --- | ---: | --- | --- |
-| Android | `pokrov-core.aar` | `107392318` | `ce11d3d78e617a879938645524e5a94614b7122fea2ad7dcf60addebc0cd51b8` | two byte-identical local builds from `f234bb6`; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present; focused AWG DNS regression tests and the full Core gate pass |
+| Android | `pokrov-core.aar` | `107394593` | `ca391059b6676de5a2cfbf582395fd7ab0b0b5979c8a0c40faaa7208b79178e5` | two byte-identical local builds from `54e76bb`; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present; focused AWG/dialer tests and the full Core gate pass |
 | Windows x64 | `pokrov-core.dll` | `55401472` | `60fe3fad7835ec4d00c1f7168bb0ba01dd6b7ca5d883583340e5e2a86b8b3981` | retained exact bytes from `344b317`; two byte-identical builds; 15 required exports present; exact-DLL proxy-only 100-cycle start/stop PASS |
 | Windows dependency | `libcronet.dll` | `8596992` | `8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7` | unchanged retained dependency |
 | iOS | `PokrovCore.xcframework` | — | — | `MANUAL_OWNER_TEST` |
@@ -56,7 +56,7 @@ replacement SBOM and packaged-client provenance remain pending:
 
 | Evidence | Result / SHA-256 |
 | --- | --- |
-| Android build comparison | `PASS_BYTE_IDENTICAL_TWO_BUILDS`; AAR SHA-256 `ce11d3d78e617a879938645524e5a94614b7122fea2ad7dcf60addebc0cd51b8` |
+| Android build comparison | `PASS_BYTE_IDENTICAL_TWO_BUILDS`; AAR SHA-256 `ca391059b6676de5a2cfbf582395fd7ab0b0b5979c8a0c40faaa7208b79178e5` |
 | Android evidence JSON | `NOT_GENERATED_SEPARATELY` |
 | Windows build tree | `e12123eb9d6c7bd83a3c95ac4f864583219c37d6b98dfd283fc6f4deda099516` |
 | Windows evidence JSON | `0a4eab998c3a28b61949c4e5739b7c21e6301cd0ccde0084c9a325dc742438a6` |
@@ -90,11 +90,21 @@ The strongest claim from this decision is
 - no physical Android, clean Windows VM, Apple, current-origin, brain-origin or
   RU-origin gate is closed.
 
+## Superseded Android Binding Evidence
+
+The previous exact Android AAR from Core `f234bb6…c171`, size `107392318` and
+SHA-256 `ce11d3d…51b8`, remains retained evidence for builds 4041/4042. It is no
+longer the active binding. Production-signed build 4042 used that AAR with an
+app-side global interface-auto-detection experiment; LDPlayer failed at Core
+service start with no owned-server AWG packet. Build 4042 is rejected, not a
+candidate or pass. The active 4044 source keeps global auto-detection disabled
+and moves the exception into the Core-owned AWG outer socket.
+
 ## Remaining Candidate Gates
 
 Before these bytes may become a release candidate:
 
-1. rebuild Windows from `f234bb6` and prove byte-identical active artifacts from one Core source;
+1. rebuild Windows from `54e76bb` and prove byte-identical active artifacts from one Core source;
 2. inspect the resulting Android and Windows packages and bind their Core
    digests into strict-v2 metadata;
 3. run hosted CI on every frozen revision;

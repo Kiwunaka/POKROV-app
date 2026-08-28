@@ -7,6 +7,21 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 class AndroidOperationalJournalTest {
+    @Test
+    fun uplinkProtectionUsesClosedSafeOutcomes() {
+        val granted = record(
+            sequence = 1L,
+            event = AndroidOperationalEvent.UPLINK_SOCKET,
+            outcome = AndroidOperationalOutcome.GRANTED,
+            generation = 2L,
+        ).toJsonLine()
+
+        assertTrue(granted.contains("\"event\":\"uplink_socket\""))
+        assertTrue(granted.contains("\"outcome\":\"granted\""))
+        assertFalse(granted.contains("fd"))
+        assertFalse(granted.contains("address"))
+    }
+
     @get:Rule
     val temporaryFolder = TemporaryFolder()
 
@@ -36,6 +51,28 @@ class AndroidOperationalJournalTest {
             event = AndroidOperationalEvent.VPN_PERMISSION,
             outcome = AndroidOperationalOutcome.TUN_ESTABLISHED,
         )
+    }
+
+    @Test
+    fun coreEgressProbeUsesOnlyClosedDiagnosticOutcomes() {
+        listOf(
+            AndroidOperationalOutcome.REQUIRED,
+            AndroidOperationalOutcome.VERIFIED,
+            AndroidOperationalOutcome.FAILED,
+            AndroidOperationalOutcome.STALLED,
+        ).forEachIndexed { index, outcome ->
+            val line = record(
+                sequence = index + 1L,
+                event = AndroidOperationalEvent.CORE_EGRESS_PROBE,
+                outcome = outcome,
+                generation = 1L,
+            ).toJsonLine()
+
+            assertTrue(line.contains("\"event\":\"core_egress_probe\""))
+            assertFalse(line.contains("endpoint"))
+            assertFalse(line.contains("profile"))
+            assertFalse(line.contains("key"))
+        }
     }
 
     @Test(expected = IllegalArgumentException::class)

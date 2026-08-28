@@ -119,6 +119,7 @@ class AndroidCoreEgressProbeTest {
             AndroidCoreEgressProbeTarget(
                 tag = "pokrov-awg31",
                 kind = AndroidCoreEgressProbeTargetKind.ENDPOINT,
+                keepRuntimeOnFailure = true,
             ),
             AndroidCoreEgressProbe.resolveFinalTarget(
                 finalTag = "pokrov-awg31",

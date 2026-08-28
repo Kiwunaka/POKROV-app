@@ -47,6 +47,7 @@ internal enum class AndroidCoreEgressProbeTargetKind {
 internal data class AndroidCoreEgressProbeTarget(
     val tag: String,
     val kind: AndroidCoreEgressProbeTargetKind,
+    val keepRuntimeOnFailure: Boolean = false,
 )
 
 internal data class AndroidCoreEgressProbeSample(
@@ -124,6 +125,10 @@ internal object AndroidCoreEgressProbe {
             AndroidCoreEgressProbeTarget(
                 tag = finalTag,
                 kind = AndroidCoreEgressProbeTargetKind.ENDPOINT,
+                // Closed owner labs retain the Android TUN long enough to
+                // expose packet evidence. The TUN remains the fail-closed
+                // boundary while the UI reports degraded egress.
+                keepRuntimeOnFailure = endpointType.trim().equals("awg", ignoreCase = true),
             )
         } else {
             null

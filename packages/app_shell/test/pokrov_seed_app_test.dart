@@ -11702,6 +11702,17 @@ void main() {
             'canConnect': true,
             'message': 'Android runtime service is running.',
           };
+        case 'runtimeEngine.disconnect':
+          return <String, Object?>{
+            'phase': 'configStaged',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+            'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': true,
+            'message': 'Android runtime service stopped.',
+          };
       }
       return null;
     });
@@ -11738,6 +11749,21 @@ void main() {
         'runtimeEngine.stageManagedProfile',
         'runtimeEngine.connect',
       ]),
+    );
+
+    await tester.tap(connectAction);
+    await tester.pumpAndSettle();
+    await tester.tap(connectAction);
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.calls, 2);
+    expect(
+      calls.where((call) => call == 'runtimeEngine.stageManagedProfile'),
+      hasLength(2),
+    );
+    expect(
+      calls.where((call) => call == 'runtimeEngine.connect'),
+      hasLength(2),
     );
   });
 

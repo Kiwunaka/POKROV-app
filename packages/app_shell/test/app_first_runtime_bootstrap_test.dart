@@ -319,6 +319,166 @@ void main() {
     expect(selectSafeTunMtu(1500), 1500);
   });
 
+  test('default API origin is owned and arbitrary fallbacks are rejected', () {
+    expect(
+      AppFirstRuntimeBootstrapper().apiBaseUrl,
+      'https://app.pokrov.space/',
+    );
+    expect(
+      () => AppFirstRuntimeBootstrapper(
+        apiBaseUrl: 'https://app.pokrov.space/',
+        apiFallbackBaseUrls: const <String>['https://example.invalid/'],
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('API preflight rejects HTML and sends one POST to the healthy fallback',
+      () async {
+    final primary = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final fallback = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-api-fallback-test-',
+    );
+    addTearDown(() async {
+      await primary.close(force: true);
+      await fallback.close(force: true);
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    var primaryHealthCount = 0;
+    var primaryPostCount = 0;
+    var fallbackHealthCount = 0;
+    var fallbackPostCount = 0;
+    unawaited(() async {
+      await for (final request in primary) {
+        if (request.method == 'GET' && request.uri.path == '/api/health') {
+          primaryHealthCount += 1;
+          request.response
+            ..headers.contentType = ContentType.html
+            ..write('<html>not the API</html>');
+        } else {
+          primaryPostCount += 1;
+          request.response.statusCode = HttpStatus.internalServerError;
+        }
+        await request.response.close();
+      }
+    }());
+    unawaited(() async {
+      await for (final request in fallback) {
+        if (request.method == 'GET' && request.uri.path == '/api/health') {
+          fallbackHealthCount += 1;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'status': 'ok'}));
+        } else if (request.method == 'POST' &&
+            request.uri.path == '/api/client/device-pairing/claim') {
+          fallbackPostCount += 1;
+          await utf8.decoder.bind(request).join();
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{
+              'ok': true,
+              'canonical_account_id': 'fallback-account',
+              'session': <String, Object?>{
+                'access_token': 'fallback-access-token',
+                'refresh_token': 'fallback-refresh-token',
+              },
+            }));
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${primary.port}/',
+      apiFallbackBaseUrls: <String>[
+        'http://127.0.0.1:${fallback.port}/',
+      ],
+      supportDirectoryResolver: () async => tempDirectory,
+      maxRequestAttempts: 1,
+    );
+    final result = await bootstrapper.claimDevicePairingCode(
+      hostPlatform: HostPlatform.android,
+      code: 'ABCD1234',
+    );
+
+    expect(result.ok, isTrue);
+    expect(result.accountId, 'fallback-account');
+    expect(primaryHealthCount, 1);
+    expect(primaryPostCount, 0);
+    expect(fallbackHealthCount, 1);
+    expect(fallbackPostCount, 1);
+  });
+
+  test('non-idempotent API request is not replayed after transport failure',
+      () async {
+    final primary = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final fallback = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-api-no-post-replay-test-',
+    );
+    addTearDown(() async {
+      await primary.close(force: true);
+      await fallback.close(force: true);
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    var primaryHealthCount = 0;
+    var primaryPostCount = 0;
+    var fallbackRequestCount = 0;
+    unawaited(() async {
+      await for (final request in primary) {
+        if (request.method == 'GET' && request.uri.path == '/api/health') {
+          primaryHealthCount += 1;
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{'status': 'ok'}));
+          await request.response.close();
+          continue;
+        }
+        primaryPostCount += 1;
+        final socket = await request.response.detachSocket();
+        socket.destroy();
+      }
+    }());
+    unawaited(() async {
+      await for (final request in fallback) {
+        fallbackRequestCount += 1;
+        request.response
+          ..headers.contentType = ContentType.json
+          ..write(jsonEncode(<String, Object?>{'status': 'ok'}));
+        await request.response.close();
+      }
+    }());
+
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${primary.port}/',
+      apiFallbackBaseUrls: <String>[
+        'http://127.0.0.1:${fallback.port}/',
+      ],
+      supportDirectoryResolver: () async => tempDirectory,
+      maxRequestAttempts: 3,
+    );
+
+    await expectLater(
+      bootstrapper.claimDevicePairingCode(
+        hostPlatform: HostPlatform.android,
+        code: 'ABCD1234',
+      ),
+      throwsA(isA<BootstrapFailure>()),
+    );
+    expect(primaryHealthCount, 1);
+    expect(primaryPostCount, 1);
+    expect(fallbackRequestCount, 0);
+  });
+
   test('prewarmed emergency bundle connects without any control-plane request',
       () async {
     final tempDirectory = await Directory.systemTemp.createTemp(

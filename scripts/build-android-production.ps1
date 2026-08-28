@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [string]$SigningDirectory = (Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "POKROV\android-signing"),
-  [string]$ApiBaseUrl = "https://api.pokrov.space",
+  [string]$ApiBaseUrl = "https://app.pokrov.space",
   [string]$EmergencySigningKeyId = $env:POKROV_EMERGENCY_SIGNING_KEY_ID,
   [string]$EmergencySigningPublicKey = $env:POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64,
   [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
@@ -81,7 +81,13 @@ $versionMatch = [regex]::Match($pubspecText, "(?m)^version:\s*([^\s]+)\s*$")
 if (-not $versionMatch.Success) {
   throw "Could not read the Android package version from pubspec.yaml."
 }
-$declaredVersionName = $versionMatch.Groups[1].Value.Split("+", 2)[0]
+$declaredVersionParts = $versionMatch.Groups[1].Value.Split("+", 2)
+if ($declaredVersionParts.Count -ne 2 -or $declaredVersionParts[1] -notmatch '^[1-9][0-9]*$') {
+  throw "Android pubspec.yaml must declare a positive numeric build number."
+}
+$declaredVersionName = $declaredVersionParts[0]
+$declaredVersionCode = $declaredVersionParts[1]
+$outputDirectory = Join-Path $androidRoot "build\app\outputs\flutter-apk"
 $resolvedSigningDirectory = [System.IO.Path]::GetFullPath($SigningDirectory)
 $keystorePath = Join-Path $resolvedSigningDirectory "pokrov-production.p12"
 $secretPath = Join-Path $resolvedSigningDirectory "pokrov-production.password.dpapi"
@@ -121,30 +127,13 @@ try {
 
   Push-Location $androidRoot
   try {
-    $universalBuildArguments = @(
+    $commonBuildArguments = @(
       "build",
       "apk",
       "--release",
       "--flavor", "direct",
-      "--dart-define=POKROV_API_BASE_URL=$ApiBaseUrl",
-      "--dart-define=POKROV_APP_VERSION=$declaredVersionName",
-      "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
-      "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey",
-      "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
-      "--dart-define=POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64=$SupportSigningPublicKey"
-    )
-    & flutter @universalBuildArguments
-    if ($LASTEXITCODE -ne 0) {
-      throw "Flutter production universal APK build failed with exit code $LASTEXITCODE."
-    }
-
-    $splitBuildArguments = @(
-      "build",
-      "apk",
-      "--release",
-      "--flavor", "direct",
-      "--split-per-abi",
       "--target-platform", "android-arm,android-arm64,android-x64",
+      "--android-project-arg=pokrov.singleVersionSplitApks=true",
       "--dart-define=POKROV_API_BASE_URL=$ApiBaseUrl",
       "--dart-define=POKROV_APP_VERSION=$declaredVersionName",
       "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
@@ -152,9 +141,9 @@ try {
       "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
       "--dart-define=POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64=$SupportSigningPublicKey"
     )
-    & flutter @splitBuildArguments
+    & flutter @commonBuildArguments
     if ($LASTEXITCODE -ne 0) {
-      throw "Flutter production split APK build failed with exit code $LASTEXITCODE."
+      throw "Flutter production universal and ABI APK build failed with exit code $LASTEXITCODE."
     }
   } finally {
     Pop-Location
@@ -170,7 +159,6 @@ try {
 $apksigner = Resolve-AndroidBuildTool -FileName "apksigner.bat"
 $expectedFingerprint = ([string]$metadata.certificate_sha256).Replace(":", "").ToUpperInvariant()
 $aapt = Resolve-AndroidBuildTool -FileName "aapt.exe"
-$outputDirectory = Join-Path $androidRoot "build\app\outputs\flutter-apk"
 $artifacts = @(
   [ordered]@{
     path = Join-Path $outputDirectory "app-direct-release.apk"
@@ -234,11 +222,27 @@ foreach ($artifact in $artifacts) {
   $artifactPackage = $packageMatch.Groups[1].Value
   $versionCode = $packageMatch.Groups[2].Value
   $versionName = $packageMatch.Groups[3].Value
+  $nativeCodeMatch = [regex]::Match($badgingText, "(?m)^native-code:\s*(.+)$")
+  $nativeAbis = @(
+    [regex]::Matches($nativeCodeMatch.Groups[1].Value, "'([^']+)'") |
+      ForEach-Object { $_.Groups[1].Value }
+  )
   if ($artifactPackage -ne [string]$metadata.package_name) {
     throw "A production APK package does not match the configured signing identity."
   }
   if ($versionName -ne $declaredVersionName) {
     throw "A production APK version does not match apps/android_shell/pubspec.yaml."
+  }
+  if ($versionCode -ne $declaredVersionCode) {
+    throw "A production APK version code does not match apps/android_shell/pubspec.yaml."
+  }
+  $expectedNativeAbis = if ($artifact.abi -eq "universal") {
+    @("armeabi-v7a", "arm64-v8a", "x86_64")
+  } else {
+    @([string]$artifact.abi)
+  }
+  if (@(Compare-Object -ReferenceObject $expectedNativeAbis -DifferenceObject $nativeAbis).Count -ne 0) {
+    throw "A production APK native ABI set does not match its artifact label."
   }
 
   $apk = Get-Item -LiteralPath $apkPath

@@ -1817,8 +1817,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     final variants = selectedCity.variants;
     final selectedStillAvailable = variants.any(
-      (variant) =>
-          variant.id == preferredVariant && variant.available,
+      (variant) => variant.id == preferredVariant && variant.available,
     );
     final directAvailable = variants.isEmpty ||
         variants.any(
@@ -4417,10 +4416,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Duration get _cachedProfileRefreshDeadline {
-    const maximum = Duration(seconds: 5);
-    return widget.runtimeActionTimeout < maximum
-        ? widget.runtimeActionTimeout
-        : maximum;
+    return CachedProfileFallbackGate.refreshDeadline(
+      widget.runtimeActionTimeout,
+    );
   }
 
   bool _hasFreshCachedManagedProfile(String? path) {
@@ -4511,7 +4509,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!changed) {
         return snapshot;
       }
-      return _withRuntimeActionTimeout(
+      return await _withRuntimeActionTimeout(
         'migrateCachedAndroidProfile',
         () => _runtimeEngine.stageManagedProfile(
           basePayload,
@@ -4895,6 +4893,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         onSlowStage: _handleSlowConnectionStage,
       );
     });
+    var failureOperation = 'snapshot';
+    var failureStage = ConnectionStage.profile;
     try {
       RuntimeSnapshot snapshot = _runtimeSnapshot ??
           await _withRuntimeActionTimeout('snapshot', _runtimeEngine.snapshot);
@@ -4938,6 +4938,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         snapshot = current;
       }
 
+      failureOperation = 'trusted_wifi';
       if (await _blockConnectOnTrustedWifi()) {
         return;
       }
@@ -4952,6 +4953,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
       // A user-owned route, location, app, or WARP change clears the host
       // reusable profile first. Do not let a fresh stage race that clear.
+      failureOperation = 'profile_invalidation';
       final invalidated = await _waitForQuickSettingsInvalidation(
         _managedProfileRevision,
       );
@@ -4972,6 +4974,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
       if (current.canInitialize &&
           current.phase == RuntimePhase.artifactReady) {
+        failureOperation = 'core_initialize';
+        failureStage = ConnectionStage.coreStart;
         current = await _withRuntimeActionTimeout(
           'initialize',
           _runtimeEngine.initialize,
@@ -4992,13 +4996,20 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           .canFallback(cachedProfileAvailable: cachedProfileAvailable);
       if (cachedProfileAvailable &&
           widget.appContext.hostPlatform == HostPlatform.android) {
+        failureOperation = 'cached_profile_migration';
+        failureStage = ConnectionStage.profile;
         current = await _migrateCachedAndroidManagedProfile(current);
       }
 
-      final shouldRefreshManagedProfile =
-          _managedProfileDirty || (current.stagedConfigPath ?? '').isEmpty;
+      final shouldRefreshManagedProfile = _managedProfileDirty ||
+          (current.stagedConfigPath ?? '').isEmpty ||
+          (widget.appContext.hostPlatform == HostPlatform.android &&
+              (actionIntent == ConnectionTransitionIntent.connect ||
+                  actionIntent == ConnectionTransitionIntent.reconnect));
       if (shouldRefreshManagedProfile) {
         try {
+          failureOperation = 'managed_profile_refresh';
+          failureStage = ConnectionStage.profile;
           final managedProfile = await _resolveManagedProfile(
             deadline: cachedProfileFallbackAllowed
                 ? _cachedProfileRefreshDeadline
@@ -5044,6 +5055,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
 
       if ((current.stagedConfigPath ?? '').isNotEmpty || current.canConnect) {
+        failureOperation = 'vpn_permission';
+        failureStage = ConnectionStage.permission;
         if (!await _authorizeAndroidVpnConnect()) {
           return;
         }
@@ -5060,10 +5073,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         final warpRuntimeAttempted =
             _warpRuntimeConsent && _stagedProfileUsesWarp;
         _activeConnectUsedWarp = warpRuntimeAttempted;
+        failureOperation = 'core_connect';
+        failureStage = ConnectionStage.coreStart;
         current = await _withRuntimeActionTimeout(
           'connect',
           _runtimeEngine.connect,
         );
+        failureOperation = 'tunnel_settle';
+        failureStage = ConnectionStage.tunnel;
         current = await _settleRuntimeTransition(current);
         if (!mounted) {
           return;
@@ -5187,6 +5204,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         }
       }
     } on BootstrapFailure catch (error) {
+      widget.observability?.recordConnectionFailure(
+        stage: failureStage,
+        errorCode: error.operationalErrorCode,
+        errorOrigin: ObservabilityErrorOrigin.portal,
+      );
       if (!mounted) {
         return;
       }
@@ -5197,6 +5219,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       unawaited(_reportClientRuntimeError('connect_failed'));
       showPokrovSnack(context, error.message, tone: PokrovSnackTone.danger);
     } on Object catch (error) {
+      widget.observability?.recordConnectionFailure(
+        stage: failureStage,
+        errorCode: 'CONN-005',
+      );
       if (!mounted) {
         return;
       }
@@ -5205,6 +5231,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _runtimeHeadline = message;
         _whitelistRecoverySuggested = true;
       });
+      _recordProtectionEvent(
+        kind: 'connect_unexpected_$failureOperation',
+        title: 'Подключение не началось',
+        detail: 'Сбой остановил безопасный этап подключения.',
+        tone: PokrovProtectionEventTone.error,
+      );
       unawaited(_reportClientRuntimeError('connect_unexpected'));
       showPokrovSnack(context, message, tone: PokrovSnackTone.danger);
     } finally {

@@ -2,6 +2,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/src/shell/cached_profile_fallback_gate.dart';
 
 void main() {
+  test('cached profile refresh keeps a bounded mobile-network window', () {
+    expect(
+      CachedProfileFallbackGate.refreshDeadline(
+        const Duration(seconds: 18),
+      ),
+      const Duration(seconds: 15),
+    );
+    expect(
+      CachedProfileFallbackGate.refreshDeadline(
+        const Duration(seconds: 8),
+      ),
+      const Duration(seconds: 8),
+    );
+  });
+
   test('fresh cache is available until the user changes profile inputs', () {
     final gate = CachedProfileFallbackGate();
 

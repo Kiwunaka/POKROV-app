@@ -30,7 +30,9 @@ internal enum class AndroidOperationalEvent(val wireValue: String) {
     VPN_SERVICE("vpn_service"),
     VPN_PERMISSION("vpn_permission"),
     NOTIFICATION_PERMISSION("notification_permission"),
+    UPLINK_SOCKET("uplink_socket"),
     NETWORK_CALLBACK("network_callback"),
+    CORE_EGRESS_PROBE("core_egress_probe"),
     DOZE("doze"),
     APP_STANDBY("app_standby"),
     BACKGROUND_RESTRICTION("background_restriction"),
@@ -98,10 +100,20 @@ private val ANDROID_OPERATIONAL_OUTCOMES = mapOf(
         AndroidOperationalOutcome.GRANTED,
         AndroidOperationalOutcome.DENIED,
     ),
+    AndroidOperationalEvent.UPLINK_SOCKET to setOf(
+        AndroidOperationalOutcome.GRANTED,
+        AndroidOperationalOutcome.DENIED,
+    ),
     AndroidOperationalEvent.NETWORK_CALLBACK to setOf(
         AndroidOperationalOutcome.AVAILABLE,
         AndroidOperationalOutcome.CAPABILITIES_CHANGED,
         AndroidOperationalOutcome.LOST,
+    ),
+    AndroidOperationalEvent.CORE_EGRESS_PROBE to setOf(
+        AndroidOperationalOutcome.REQUIRED,
+        AndroidOperationalOutcome.VERIFIED,
+        AndroidOperationalOutcome.FAILED,
+        AndroidOperationalOutcome.STALLED,
     ),
     AndroidOperationalEvent.DOZE to setOf(
         AndroidOperationalOutcome.ACTIVE,

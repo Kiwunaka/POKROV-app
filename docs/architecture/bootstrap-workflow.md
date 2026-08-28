@@ -85,14 +85,21 @@ that candidate-specific release truth.
 
 Current blocking dependency:
 
-- the active local pre-candidate runtime has exact platform bindings: Android uses corrected Core commit `f234bb689ab9d7ab979e9ff27c3703ee1b53c171`, which preserves the `egress` event subsystem and resolves AWG endpoint probe hostnames through the Core DNS router, while Windows temporarily retains exact bytes from `344b317a7a09eca7943a93866b193553538bd8f6`; promotion is blocked until the platform artifacts converge on one Core source
+- the active local pre-candidate runtime has exact platform bindings: Android uses corrected Core commit `54e76bbb61f79bd0eb0cdbddb71f52e12645fa13`, which preserves the `egress` event subsystem, resolves AWG endpoint probe hostnames through the Core DNS router and protects only the AWG outer socket on Android, while Windows temporarily retains exact bytes from `344b317a7a09eca7943a93866b193553538bd8f6`; promotion is blocked until the platform artifacts converge on one Core source
 - `Android` host now reaches a real service-backed connect lane: it can initialize POKROV Core, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
 - Android runtime discovery accepts either an extracted `nativeLibraryDir/libpokrov-core.so` or the ABI-matched `lib/<abi>/libpokrov-core.so` entry in the base/split APK. This is required on physical devices that install the release APK with native-library extraction disabled; Java still loads the packaged Core through the generated bindings
 - Android runtime materialization is intentionally `tun`-only in this lane; desktop loopback listener inbounds such as `mixed-in` and `dns-in` stay disabled for the mobile `VpnService` path
 - Android runtime materialization now keeps backend-managed `dns` servers, selector choice, and route-rule semantics whenever they are already mobile-safe, instead of swapping the whole profile into a custom universal DNS lane
-- the Android bootstrap client uses the canonical `api.pokrov.space` hostname through the platform DNS/TLS transport; provider IPs are not baked into the client
-- the Android route block now forces `auto_detect_interface: false`, removes `override_android_vpn`, writes `tun.exclude_package` for `space.pokrov.pokrov_android_shell`, injects a route-level self-package bypass rule, and enforces the same package exclusion through `VpnService.Builder`; this preserves the physical uplink owner while `tun.auto_route` is active and avoids routing the core back into its own TUN
-- the Android host runtime retains default-network monitor hooks for DNS, uplink diagnostics, and network-change handling, while staged Android routes deliberately do not delegate outbound-interface selection to libbox auto-detection
+- the Android bootstrap client uses the owned `app.pokrov.space/api/*` ingress
+  as its primary control-plane origin and retains `api.pokrov.space` as the
+  bounded owned fallback; provider IPs are not baked into the client
+- when both owned origins are configured, the client first requires a 2xx JSON
+  response from `/api/health`, caches the selected origin for the process, and
+  only then sends the real request. The preflight carries no session or request
+  body. A non-idempotent request is sent once and is never replayed to the
+  second origin after a transport failure
+- the Android route block keeps `auto_detect_interface: false`, removes `override_android_vpn`, writes `tun.exclude_package` for `space.pokrov.pokrov_android_shell`, injects a route-level self-package bypass rule, and enforces the same package exclusion through `VpnService.Builder`; the Core AWG endpoint is the bounded exception and requests platform protection directly for its owned UDP socket without changing the global route policy
+- the Android host runtime retains default-network monitor hooks for DNS, uplink diagnostics, and network-change handling; ordinary staged routes do not delegate outbound-interface selection to libbox auto-detection, while a Core-requested AWG socket protection fails closed when Android rejects `protect(fd)`
 - the Android host runtime now registers a local DNS transport backed by Android `DnsResolver` and the current default network, which keeps the mobile lane off desktop-only loopback DNS stubs when `libbox` resolves staged profile dependencies
 - an active Android DNS transport callback failure or timeout is terminal and fail-closes the core, TUN, and foreground service with a safe host snapshot; ordinary DNS response codes and canceled or stale callbacks stay non-terminal
 - the Android default-network monitor now sticks to the callback-owned uplink after connect instead of re-sampling `ConnectivityManager.activeNetwork`, which keeps mobile DNS from accidentally treating the VPN network as its resolver uplink
@@ -265,7 +272,7 @@ Current blocking dependency:
 
 POKROV Core is an independent repository and release line. The local client
 pre-candidate pins version `1.1.0`, Android commit
-`f234bb689ab9d7ab979e9ff27c3703ee1b53c171`, and retained Windows commit
+`54e76bbb61f79bd0eb0cdbddb71f52e12645fa13`, and retained Windows commit
 `344b317a7a09eca7943a93866b193553538bd8f6`. The version-derived `v1.1.0`
 label is not a created Git tag or public release in this state. Promotion is
 blocked until active platform artifacts converge on one Core source.

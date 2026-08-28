@@ -377,6 +377,23 @@ final class PokrovClientObservability {
     }
   }
 
+  void recordConnectionFailure({
+    required ConnectionStage stage,
+    required String errorCode,
+    ObservabilityErrorOrigin errorOrigin = ObservabilityErrorOrigin.client,
+  }) {
+    final attempt = _attempt;
+    if (attempt == null || attempt.isTerminal) {
+      return;
+    }
+    attempt.enter(_timelinePhase(stage));
+    attempt.finish(
+      OperationalTerminalKind.failed,
+      errorCode: errorCode,
+      errorOrigin: errorOrigin,
+    );
+  }
+
   void markUiReady() {
     if (_uiReadyRecorded || _generation != 0) {
       return;

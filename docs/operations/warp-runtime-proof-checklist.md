@@ -4,7 +4,7 @@ Last updated: 2026-08-27
 
 Registry class: `ACTIVE_EXECUTION`.
 
-This is the current client evidence gate for WARP on the POKROV `1.2.0+36`
+This is the current client evidence gate for WARP on the POKROV `1.2.0+4044`
 `PRE_CANDIDATE_LOCAL` Android/Windows line. Older device or runtime passes are
 supporting evidence only and cannot close the exact-candidate gate.
 
@@ -78,7 +78,7 @@ Current status: `MANUAL_OWNER_TEST` for exact `1.2.0` candidate bytes.
 - Client-local WARP materialization, enable/disable parity, desktop ABI 2 and
   Android host/JVM boundaries: implemented and locally tested.
 - The local pre-candidate client binds the corrected Core `1.1.0` Android AAR
-  from `f234bb689ab9d7ab979e9ff27c3703ee1b53c171`; Windows temporarily retains
+  from `54e76bbb61f79bd0eb0cdbddb71f52e12645fa13`; Windows temporarily retains
   exact DLL bytes from `344b317a7a09eca7943a93866b193553538bd8f6`.
   Platform-source convergence remains a promotion gate.
 - Exact Android and Windows release-build WARP/uplink/teardown evidence:

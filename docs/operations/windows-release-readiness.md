@@ -14,7 +14,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
-| Working package target | `1.2.0+36` |
+| Working package target | `1.2.0+4044` |
 | Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
@@ -41,7 +41,7 @@ still belongs to the exact-candidate gate below.
 ## Retained Candidate.3 Evidence And Replacement Gate
 
 The table keeps candidate.3 results only as exact evidence for its old bytes.
-The `1.2.0+36` replacement has no installer yet, so none of the package,
+The `1.2.0+4044` replacement has no installer yet, so none of the package,
 clean-host, network or SmartScreen rows below transfers to it.
 
 | Check | Current state |

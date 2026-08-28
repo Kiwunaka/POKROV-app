@@ -95,6 +95,15 @@ void main() {
     final appShellPubspec =
         await File(_path(root, 'packages/app_shell/pubspec.yaml'))
             .readAsString();
+    final releaseHandoff = jsonDecode(
+      await File(_path(root, 'config/release-handoff.seed.json'))
+          .readAsString(),
+    ) as Map<String, dynamic>;
+    final releaseTruth =
+        releaseHandoff['release_truth'] as Map<String, dynamic>;
+    final targetBuild =
+        releaseTruth['development_target'] as Map<String, dynamic>;
+    final packageVersion = targetBuild['package_version'] as String;
     final androidPubspec =
         await File(_path(root, 'apps/android_shell/pubspec.yaml'))
             .readAsString();
@@ -102,7 +111,7 @@ void main() {
         await File(_path(root, 'apps/windows_shell/pubspec.yaml'))
             .readAsString();
     expect(appShellPubspec, contains('version: 1.2.0'));
-    expect(androidPubspec, contains('version: 1.2.0+35'));
-    expect(windowsPubspec, contains('version: 1.2.0+35'));
+    expect(androidPubspec, contains('version: $packageVersion'));
+    expect(windowsPubspec, contains('version: $packageVersion'));
   });
 }

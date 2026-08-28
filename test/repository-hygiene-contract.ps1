@@ -88,8 +88,12 @@ if ($trackedStaging.Count -gt 0) {
 
 $releaseHandoff = [IO.File]::ReadAllText($releaseHandoffPath) | ConvertFrom-Json
 $targetVersion = [string]$releaseHandoff.release_truth.development_target.product_version
+$targetPackageVersion = [string]$releaseHandoff.release_truth.development_target.package_version
 if ([string]::IsNullOrWhiteSpace($targetVersion)) {
   throw "Development target version is missing from the release handoff."
+}
+if ([string]::IsNullOrWhiteSpace($targetPackageVersion)) {
+  throw "Development target package version is missing from the release handoff."
 }
 $targetPattern = [regex]::Escape($targetVersion)
 $targetInRetainedHistory = @(
@@ -115,7 +119,7 @@ foreach ($marker in @(
 }
 
 $rootReadme = [IO.File]::ReadAllText((Join-Path $root "README.md"))
-foreach ($fact in @("1.1.6", "1.2.0+36", "PRE_CANDIDATE_LOCAL", "artifacts/candidate-staging")) {
+foreach ($fact in @("1.1.6", $targetPackageVersion, "PRE_CANDIDATE_LOCAL", "artifacts/candidate-staging")) {
   if (-not $rootReadme.Contains($fact)) {
     throw "Root README lacks current repository/release fact: $fact"
   }

@@ -4,7 +4,7 @@ Last updated: 2026-08-27
 
 Registry class: `ACTIVE_EXECUTION`.
 
-This is the current capture gate for the POKROV `1.2.0+36`
+This is the current capture gate for the POKROV `1.2.0+4044`
 `PRE_CANDIDATE_LOCAL` Android/Windows line. It complements widget responsive
 tests; it does not replace exact-candidate device/runtime proof. A retained
 release or an older capture cannot close this gate.
