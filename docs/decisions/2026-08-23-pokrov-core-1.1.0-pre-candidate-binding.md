@@ -1,9 +1,9 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-Status: refreshed on 2026-08-28 as a single-source Android/Windows
+Status: refreshed on 2026-08-29 as a single-source Android/Windows
 pre-candidate binding for POKROV `1.2.0+4046`. Both active platform artifacts
-now carry the Core egress, AWG and default-off Hysteria2 corrections from one
-exact revision.
+now carry the Core egress, AWG allocated-port binding and default-off
+Hysteria2 corrections from one exact revision.
 
 This is not a Core release, client candidate, signing pass, publication or
 promotion decision. No `v1.1.0` Git tag or public Core release was created.
@@ -15,7 +15,7 @@ The client binds the separately versioned Core target as follows:
 - repository: `Kiwunaka/POKROV-core`;
 - version-derived target label: `v1.1.0`;
 - tag created: `false`;
-- Android and Windows source commit: `e8eb7721fc6eaac6813d3a888ac90d0da1f541a1`;
+- Android and Windows source commit: `3c2b1147c1b42e39026231525c08558a50bc3d0f`;
 - source state: `PRE_CANDIDATE_LOCAL`;
 - candidate created: `false`;
 - desktop ABI: `2`;
@@ -36,8 +36,8 @@ scoped release branch until its own owner-solo promotion evidence is recorded.
 
 | Platform | Artifact | Size | SHA-256 | Local result |
 | --- | --- | ---: | --- | --- |
-| Android | `pokrov-core.aar` | `107390782` | `7c392883ee8a09c15e414a0e9d70a4d4d3cb259032e51c5481cd14a571950745` | two byte-identical local builds from `e8eb772`; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present |
-| Windows x64 | `pokrov-core.dll` | `55403008` | `73aacd2ccbb3414573284c0c2a253f29c6ed4a56ddf2ff8bb6cc9ae7ca371488` | two byte-identical local builds from `e8eb772`; 15 required exports present |
+| Android | `pokrov-core.aar` | `107408874` | `b42a548910b7369f64fcd484c5acf74180583d77299629ce4d2f9156fc598007` | two byte-identical local builds from `3c2b114`; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present |
+| Windows x64 | `pokrov-core.dll` | `55417856` | `58e329eaddb2dd1f40c1663b380a03a0c7c34c5a3e8506eb2c692611234ac082` | two byte-identical local builds from `3c2b114`; 15 required exports present; 100 proxy-only start/stop cycles pass |
 | Windows dependency | `libcronet.dll` | `8596992` | `8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7` | unchanged retained dependency |
 | iOS | `PokrovCore.xcframework` | — | — | `MANUAL_OWNER_TEST` |
 | macOS | `pokrov-core.dylib` | — | — | `MANUAL_OWNER_TEST` |
@@ -54,15 +54,15 @@ bind the same Core source. Packaged-client candidate provenance remains open:
 
 | Evidence | Result / SHA-256 |
 | --- | --- |
-| Android build tree | `aafd5f0eb2a83f7c438affb32c946af17b77593e9e0f5105b7f7b1d293e2f8f3` |
-| Android evidence JSON | `37926b9c4101fd7b69580b7e184c764fc0e365be22dab6c87b7620bf855789eb` |
-| Windows build tree | `25405fd108405f56c08c5a24f88a2b45a6936ff14eae4f113b2e7e71f08eb78c` |
-| Windows evidence JSON | `4f5c33fd252dd21a52813cf227a2c4c2b4e0e228d9410dd3a40f651e83b773d5` |
-| `pokrov-core.cdx.json` | `d40547fa3ba28c84bf377e6cb8d174546ea75f41287028ca2e97931cd7ebfb9b` |
-| `sing-box.cdx.json` | `83bc11b4b90e267346647670f6ce4003d9586ed4519b7bca076e84c3127ce542` |
+| Android build tree | `c0860173aa4a18d2e1864ecb8595ed809e38d6f394b781a6572299534e893d30` |
+| Android evidence JSON | `077e0dd9b1c0349ae065434e38b0110cc17ea547cd251623fcd743ed15ee39e5` |
+| Windows build tree | `25feb38570f049d4053f8632826fb8b2a254665db3b771a84878b7e013312dde` |
+| Windows evidence JSON | `98b984109a3df227262179d1c3cbf46c8f0abbde0049187fb83db088a444e9c6` |
+| `pokrov-core.cdx.json` | `d6847ac8ba97675d62b7021a8d2d89ce5dc6a38a58c0c1afb82321fca121d30a` |
+| `sing-box.cdx.json` | `338c18be688ee0892851b93e2a5c659b79660d868af4a1f0070a80d0fc23096b` |
 
-The Windows refresh used the local LLVM-MinGW `20260616` UCRT toolchain already
-present in the isolated build directory. The toolchain directory was passed
+The Windows refresh used the isolated portable MinGW-w64 GCC `13.2.0`
+toolchain already present in the build directory. The toolchain directory was passed
 only to the build process; no system compiler installation or persistent
 environment change was made. Final candidate provenance must additionally pin
 the compiler archive identity rather than promote this local statement to a
@@ -85,8 +85,13 @@ The strongest claim from this decision is
 - Windows TUN, DNS capture and leak protection were not exercised by that
   host-safe harness;
 - no artifact is signed, tagged, uploaded, published or promoted;
-- no physical Android, clean Windows VM, Apple, current-origin, brain-origin or
-  RU-origin gate is closed.
+- the production-signed replacement Android APK embeds the exact `3c2b114`
+  arm64 library and passed fresh AWG2 and AWG3.1 handshakes on one physical
+  Beeline path; this is `PASS_PHYSICAL_PRE_CANDIDATE`, not candidate proof;
+- exact current-origin Core interop passes AWG2 and AWG3.1 after the owned
+  server reply-source correction;
+- clean Windows VM, Windows app/service/TUN/DNS, Apple, brain-origin and
+  RU-origin gates remain open.
 
 ## Superseded Android Binding Evidence
 

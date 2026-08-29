@@ -1,6 +1,6 @@
 # Android Release Audit
 
-Last updated: 2026-08-28
+Last updated: 2026-08-29
 
 ## Document Status
 
@@ -17,7 +17,7 @@ Older APK identities and device runs are retained separately as evidence.
 | Working package target | `1.2.0+4046` |
 | Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Active candidate Core package | POKROV Core `1.1.0` AAR from exact source `f44dbe8…f90d`; bytes match the prior `54e76bb` build |
+| Active pre-candidate Core package | POKROV Core `1.1.0` AAR `b42a5489…8007` from exact source `3c2b114…d0f`; two builds are byte-identical and contain all four required ABIs |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
@@ -270,7 +270,7 @@ though selected remote connections use the direct outbound.
 
 ## 2026-08-28 AWG Source And Host Contract Retest
 
-The current pre-candidate source tuple is platform
+The then-current 2026-08-28 pre-candidate source tuple was platform
 `50c9d12254d39c6a007f273497dde49faa4f7b8d`, client
 `75e82b061cd3f127ae640733cfb4fc1a6aef2e62` and Core
 `e8eb7721fc6eaac6813d3a888ac90d0da1f541a1`. Exact AWG2 and AWG3.1
@@ -287,6 +287,39 @@ without live endpoint material. This result is
 Brain deploy, an app-owned TUN, AWG handshake/egress, physical-device behavior,
 Windows artifact convergence, current-origin reachability or exact-candidate
 readiness.
+
+## 2026-08-29 AWG Reply-Route Correction And Physical Retest
+
+The owned lab node is multi-addressed. Packet-level controls isolated the
+earlier reverse-UDP failure to reply-route source selection: ordinary replies
+left through the wrong public source, while ingress-pinned replies passed in
+both directions. A guarded, default-off server correction now installs one
+dedicated source-port rule and route table per allowlisted lab listener, plus a
+narrow final SNAT rule. PLAN/APPLY/readback, automatic rollback and service
+stop/start recreation pass. No cryptography, keys or protocol schema changed.
+
+The exact retest tuple is platform correction `f79974c…ee6`, client
+`7a633a8…bbb` and Core `3c2b114…d0f`. Two Android AAR builds are byte-identical
+at SHA-256 `b42a5489…8007`. The production-signed arm64 replacement APK is
+`1.2.0+4046`, `101357398` bytes, SHA-256
+`930aec975927c1c40a87440f62f67b25295a12920e85876adca297b715426058`.
+Its embedded arm64 Core library SHA-256
+`1e367113624721b3d95e3ff763a73cdc539f4b6dca8290f78dd4533f816c32e1`
+matches the same entry in the `3c2b114` AAR exactly.
+
+On the physical Beeline path, AWG2 completed a fresh authenticated handshake
+with bidirectional outer traffic and `3/3` inner packets each way. The closed
+AWG3.1 randomized-trailers profile also completed a fresh authenticated
+handshake, and a bounded owned-site browser slice produced `6` client-to-server
+and `7` server-to-client inner packets. Exact current-origin Core interop then
+passed both protocols again after a service stop/start cycle. Cleanup stopped
+POKROV, removed the lab binding and material, restored the normal device
+binding and returned the prior VPN app to foreground.
+
+This closes the earlier `BLOCKED_BY_NETWORK_CURRENT_ORIGIN` diagnosis as a
+server reply-routing defect and records `PASS_PHYSICAL_PRE_CANDIDATE` for both
+AWG2 and AWG3.1. It is not a strict-v2 candidate, full Android lifecycle/OEM
+matrix, broad protocol release decision or stable claim.
 
 ## Commands
 

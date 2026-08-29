@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-08-27
+Last updated: 2026-08-29
 
 ## Document Status
 
@@ -18,7 +18,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active candidate Core | POKROV Core `1.1.0`, desktop ABI `2`, exact source `344b317…8f6` bound |
+| Active pre-candidate Core | POKROV Core `1.1.0`, desktop ABI `2`, exact source `3c2b114…d0f`, DLL `58e329ea…c082` bound |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Portable ZIP | Unsupported for the service-first runtime |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
@@ -99,18 +99,16 @@ SmartScreen observation remain `MANUAL_OWNER_TEST`.
 
 - The `1.2.0` source targets an unelevated UI and authenticated Windows service.
 - Local tests prove source contracts and isolated recovery logic only.
-- Current platform `50c9d12…dde49`, client `75e82b0…e62` and Core
-  `e8eb772…41a1` pass AWG2/AWG3.1 contract sync, and the focused runtime-engine
-  lane proves AWG2 remains inside the existing Android and Windows route modes.
-  This is source-only: the retained Windows DLL still comes from `344b317…8f6`,
-  so no converged Windows artifact, live AWG interop or TUN/DNS/egress result is
-  claimed.
-- A separate current-origin Core-only probe from this Windows host emitted
-  outer packets for AWG2 and AWG3.1 but received no response. Concurrent
-  address-free AWG2 server capture saw both initiation and response-sized
-  packets, so that slice is
-  `BLOCKED_BY_NETWORK_CURRENT_WINDOWS_ORIGIN_REVERSE_UDP`. It did not load the
-  retained client DLL or exercise the Windows service, TUN, DNS or app.
+- Current platform correction `f79974c…ee6`, client `7a633a8…bbb` and Core
+  `3c2b114…d0f` preserve the AWG2/AWG3.1 contracts. The exact Windows DLL is
+  built twice byte-identically, exposes all 15 required symbols and passes 100
+  proxy-only start/stop cycles without changing system routes.
+- The earlier current-origin reverse-UDP block was isolated to wrong
+  reply-source selection on the multi-addressed owned server. After guarded
+  source-port policy routing and service-cycle readback, exact current-origin
+  Core interop passes both AWG2 and AWG3.1. This did not exercise the Windows
+  client app, SCM service, TUN, DNS capture or leak protection, so those rows
+  remain `MANUAL_OWNER_TEST`.
 - A final-source, signed-manifest candidate.3 exists privately and has passed
   its bounded clean-host gate. It is not promotion-authorized.
 - The owner authorizes one unsigned direct-download beta with the mandatory
