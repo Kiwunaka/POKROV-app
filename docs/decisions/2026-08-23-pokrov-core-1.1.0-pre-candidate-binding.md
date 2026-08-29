@@ -46,7 +46,8 @@ scoped release line until its own owner-solo promotion evidence is recorded.
 Android is bound by package `space.pokrov.core`, its exact source commit and AAR
 digest. Windows is bound by the same source commit, desktop ABI `2`, exact DLL
 digest and exact Cronet dependency. This closes the local platform-source
-convergence prerequisite; candidate and physical-platform gates remain open.
+convergence prerequisite. A later exact physical Android slice is recorded
+below; candidate and complete platform matrices remain open.
 
 ## Reproducibility, SBOM And Provenance
 
@@ -91,14 +92,20 @@ The strongest claim from this decision is
   system routes;
 - Windows TUN, DNS capture and leak protection were not exercised by that
   host-safe harness;
-- no artifact is signed, tagged, uploaded, published or promoted;
-- the earlier production-signed replacement Android APK embeds the superseded
-  `3c2b114` arm64 library and passed fresh AWG2 and AWG3.1 handshakes on one
-  physical Beeline path; this remains supporting protocol/server evidence and
-  does not prove the active `547f096` bytes;
-- earlier current-origin Core interop passed AWG2 and AWG3.1 after the owned
-  server reply-source correction; an exact `547f096` packaged-client/device
-  repeat remains open;
+- exact production-signed ARM64 APK `7d1d4093…58ee5`, size `101364310`, binds
+  client `064fcd0...` and Core `547f096...`, installs/readbacks byte-identically
+  as release/non-debuggable `1.2.0+4046` on physical Huawei/Android 12;
+- ordinary Frankfurt reaches verified green on that APK and Beeline path;
+- AWG2 and AWG3.1 each complete a fresh authenticated handshake and exchange
+  bidirectional TCP/UDP payload, while the Android selected-endpoint URL test
+  still fails `EGRESS-001`; transport/crypto passes but full egress verification
+  does not;
+- exact `547f096...` operator Core interop against the same owned material
+  passes authenticated TLS/HTTP for both profiles, narrowing the remaining
+  defect to the Android/Core endpoint-probe runtime path;
+- Core hosted CI run `33227157016` passes all five jobs; the client hosted run
+  for `064fcd0...` executes zero steps and remains `BLOCKED_BY_ACCESS`;
+- no artifact is tagged, uploaded, published or promoted;
 - clean Windows VM, Windows app/service/TUN/DNS, Apple, brain-origin and
   RU-origin gates remain open.
 
@@ -121,8 +128,9 @@ Before these bytes may become a release candidate:
 2. retain exact local gate evidence and record hosted CI as `PASS`,
    `BLOCKED_BY_ACCESS` or the owner-solo exception without converting a skip
    into a pass;
-3. complete exact-active-byte Android physical-device and Windows clean-host
-   TUN/DNS/egress/recovery gates;
+3. correct and prove the Android selected-endpoint `EGRESS-001` path without
+   weakening fail-closed verified state, then complete the remaining Android
+   physical-device and Windows clean-host TUN/DNS/egress/recovery gates;
 4. complete production signing, provenance review and public-index binding;
 5. keep publication, runtime synchronization and promotion blocked until the
    separately authorized go/no-go step.

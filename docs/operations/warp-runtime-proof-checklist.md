@@ -81,9 +81,11 @@ Current status: `MANUAL_OWNER_TEST` for exact `1.2.0` candidate bytes.
   DLL from security-fixed `547f09670fad1eeffa94897fb36b12ec5e7818cd`; two local rebuilds per
   platform are byte-identical, and the exact DLL passes 100 proxy-only
   start/stop cycles. Local platform-source convergence passes; candidate and
-  live WARP platform-runtime evidence remain separate gates. Physical proof
-  retained for the superseded `3c2b114` AAR is supporting only; the exact
-  `547f096` Android repeat remains `MANUAL_OWNER_TEST`.
+  the complete WARP platform-runtime matrix remain separate gates. Exact
+  production-signed `547f096` Android bytes reach verified ordinary Frankfurt
+  on one physical Beeline path; AWG2/AWG3.1 transport also passes there but
+  their selected-endpoint checks remain `EGRESS-001`. This bounded control does
+  not close WARP lifecycle, handoff, per-app, OEM or endurance proof.
 - Exact Android and Windows release-build WARP/uplink/teardown evidence:
   `MANUAL_OWNER_TEST`.
 

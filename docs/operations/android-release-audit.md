@@ -17,7 +17,7 @@ Older APK identities and device runs are retained separately as evidence.
 | Working package target | `1.2.0+4046` |
 | Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Active pre-candidate Core package | Security-fixed POKROV Core `1.1.0` AAR `7895b2f7…1a63` from exact source `547f096…8cd`; two builds are byte-identical and contain all four required ABIs; exact physical repeat is open |
+| Active pre-candidate Core package | Security-fixed POKROV Core `1.1.0` AAR `7895b2f7…1a63` from exact source `547f096…8cd`; two builds are byte-identical and contain all four required ABIs; exact physical transport repeat passed while AWG selected-endpoint egress remains failed |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
@@ -331,10 +331,33 @@ exact bytes.
 
 The preceding physical AWG2/AWG3.1 result remains valid supporting evidence
 for the owned server reply-route correction and the protocol path exercised by
-Core `3c2b114…d0f`. It does not transfer to the new AAR. A production-signed
-APK built from the frozen security-fixed client source must be installed and
-retested on the returned physical phone before any exact-active-byte or
-candidate device claim. Current status: `MANUAL_OWNER_TEST`.
+Core `3c2b114…d0f`. It does not transfer to the new AAR.
+
+## 2026-08-29 Exact Security-Fixed Physical Repeat
+
+Client `064fcd0…599` plus Core `547f096…8cd` produced production-signed,
+release/non-debuggable ARM64 APK `1.2.0+4046`, size `101364310`, SHA-256
+`7d1d409368fe8c14c0a5064e0104e10ab0d7c798ff96ca5a65e2b65af6958ee5`.
+It installed and read back byte-identically on physical Huawei/Android 12; its
+embedded ARM64 Core entry matches the bound AAR entry. Ordinary Frankfurt
+reached verified green on the same APK and Beeline path.
+
+AWG2 completed a fresh authenticated handshake and a bounded capture counted
+`70` client-to-server and `47` server-to-client inner packets, including `57`
+TCP payload packets and `5` UDP packets. AWG3.1 completed a fresh randomized-
+trailer handshake and counted `69`/`47` inner packets, `50` TCP payload packets
+split `25/25` between directions, and `8` UDP packets. Neither capture saw a
+TCP reset. Exact Core operator interop passed authenticated TLS/HTTP for both
+owned profiles.
+
+Android still reported `EGRESS-001` for both selected endpoints. The profile's
+IPv4-only DNS correction matches its IPv4-only routed prefix but did not change
+that result. Classification: `PASS_ACTIVE_CORE_AWG_TRANSPORT` plus
+`FAIL_ACTIVE_CORE_AWG_SELECTED_EGRESS`, not end-to-end or candidate PASS.
+
+Cleanup restored `default`, removed both lab materials and membership, stopped
+the POKROV VPN service and restored Wi-Fi. The full lifecycle/OEM/per-app/WARP,
+leak and exact-candidate matrix remains `MANUAL_OWNER_TEST`.
 
 ## Commands
 
