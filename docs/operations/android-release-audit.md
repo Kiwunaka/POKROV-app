@@ -17,7 +17,7 @@ Older APK identities and device runs are retained separately as evidence.
 | Working package target | `1.2.0+4046` |
 | Exact replacement candidate | `pokrov-1.2.0-candidate.8`; signed manifest `f0006cec…906f`, detached signature `5fcae067…24f6`, promotion false |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Exact candidate source | Client `3459438…f5c`, Core `a45d69e…665e`; ARM64 APK `9278c09f…572`, `101366934` bytes, production-signed and byte-identical to the installed package |
+| Exact candidate source | Client `3459438…f5c`, Core `a45d69e…665e`; ARM64 APK `9278c09f…572`, `101366934` bytes, and x86_64 APK `ec07ba17…2627`, `109952213` bytes, production-signed and byte-identical to their installed packages |
 | Active Core package | Security-fixed POKROV Core `1.1.0` AAR `ce82f54b…54dd`; two builds are byte-identical and contain all four required ABIs |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
@@ -47,10 +47,13 @@ working-build sections below remain history for their exact older bytes only.
 | Exact APK support signing pin | `PASS_EXACT_ARTIFACT` — candidate.8 supply evidence binds the active support public key; no private key was read or exported |
 | Production signer and lineage | `PASS_5_OF_5` — all candidate.8 APK/AAB entries pass signer verification |
 | Package/version/ABI identity | `PASS_EXACT_ARTIFACTS` — `1.2.0+4046`, universal plus three direct ABI APKs and store AAB |
-| SHA-256 and byte-size match | `PASS_EXACT_ARTIFACTS` — ARM64 APK `9278c09f…572`, `101366934` bytes; installed base APK is byte-identical |
-| LDPlayer install/start/settings | `PASS_EXACT_EMULATOR_INSTALL; RUNTIME_BLOCKED_CURRENT_ORIGIN` — exact x86_64 APK installed; ordinary and WARP-fallback egress both ended `EGRESS-001` on that emulator path |
+| SHA-256 and byte-size match | `PASS_EXACT_ARTIFACTS` — ARM64 APK `9278c09f…572`, `101366934` bytes, and x86_64 APK `ec07ba17…2627`, `109952213` bytes; both installed base APKs are byte-identical |
+| LDPlayer install/start/catalog | `PASS_EXACT_EMULATOR_REHEARSAL` — release/non-debuggable x86_64 APK `ec07ba17…2627` installed and read back byte-identically as `1.2.0+4046`; all seven active locations, including Saint Petersburg, are present after refresh |
+| LDPlayer ordinary control | `PASS_FAIL_CLOSED_CURRENT_ORIGIN` — the ordinary Frankfurt path formed a TUN but did not confirm protected egress; POKROV stopped Android VPN and showed the explicit unprotected retry state rather than false green |
+| LDPlayer AWG2/AWG3.1 | `PASS_AWG2_AWG31_TUN_DNS_SELECTED_EGRESS` — separate guarded owner-lab binds reached connected state only after app-confirmed tunnel, DNS and selected egress; server alignment and count-only outer-traffic evidence were retained without raw addresses |
+| LDPlayer final restore | `PASS_DEFAULT_OFF_CLEAN_RESTORE` — guarded restore selected `default` / `legacy_reality_fallback`, removed AWG2/AWG3.1 material and lab membership, left WARP off, no `tun0`, and the UI at `Не защищено` / `Подключить` |
 | Private operational journal source contract | `PASS_LOCAL` |
-| Exact-device diagnostics redaction | `PASS_BOUNDED_UI_REVIEW` — no endpoint, key, profile, subscription URL, token or address appeared in retained user-facing diagnostics; screenshots were not retained |
+| Exact-device diagnostics redaction | `PASS_BOUNDED_UI_REVIEW` — no endpoint, key, raw profile, subscription URL, token or address appeared in retained user-facing diagnostics; screenshots/UI-tree summaries are retained outside the repository by SHA-256 |
 | Anonymous download | `NOT_RUN` |
 | Huawei install and first launch | `PASS_EXACT_ARM64` |
 | Connect/disconnect and verified egress | `PASS_ORDINARY_AWG2_AWG31` — connected is shown only after tunnel, DNS and selected egress confirmation |
@@ -63,7 +66,10 @@ working-build sections below remain history for their exact older bytes only.
 | Store submission | `NOT_REQUESTED` |
 
 Every manual check must name the exact APK SHA-256 and device. Emulator proof
-is preflight only and cannot clear a physical-device gate.
+is preflight only and cannot clear a physical-device gate. The ordinary
+LDPlayer origin failure does not downgrade the AWG2/AWG3.1 results and the lab
+passes do not turn ordinary emulator egress into a pass; each profile keeps
+its observed outcome.
 
 The new physical result closes only the named candidate.8 rows. It does not
 prove active WARP carriage, external IPv6/leak behavior, blocked UDP 53,
