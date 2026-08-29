@@ -41,6 +41,31 @@ class AndroidRuntimeLogClassifierTest {
     }
 
     @Test
+    fun awgEndpointEgressDiagnosticAcceptsOnlyClosedCoreCategory() {
+        assertEquals(
+            AndroidAwgSafeDiagnostic("egress_probe_tls_certificate", 1),
+            AndroidRuntimeLogClassifier.parseAwgEgressProbeDiagnostic(
+                "selected endpoint URL test failed category=tls_certificate",
+            ),
+        )
+        assertEquals(
+            AndroidAwgSafeDiagnostic("egress_probe_endpoint_initialization_timeout", 1),
+            AndroidRuntimeLogClassifier.parseAwgEgressProbeDiagnostic(
+                "selected endpoint URL test failed category=endpoint_initialization_timeout",
+            ),
+        )
+
+        listOf(
+            "WARN selected endpoint URL test failed category=tls_certificate",
+            "selected endpoint URL test failed category=raw_secret",
+            "selected endpoint URL test failed category=tls_certificate endpoint=secret",
+            "selected endpoint URL test failed category=tls_certificate\n",
+        ).forEach { message ->
+            assertNull(AndroidRuntimeLogClassifier.parseAwgEgressProbeDiagnostic(message))
+        }
+    }
+
+    @Test
     fun realityFailureReturnsOnlyFixedCategory() {
         val raw = "outbound/vless: reality handshake failed for credential TEST-SECRET"
 

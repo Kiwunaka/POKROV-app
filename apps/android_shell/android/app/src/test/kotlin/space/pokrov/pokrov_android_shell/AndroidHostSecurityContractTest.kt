@@ -174,6 +174,9 @@ class AndroidHostSecurityContractTest {
         assertTrue(serviceSource.contains("override fun writeDebugMessage(message: String)"))
         assertTrue(serviceSource.contains("parseAwgSafeDiagnostic(message) ?: return"))
         assertTrue(serviceSource.contains("AndroidRuntimeState.recordAwgSafeDiagnostic(diagnostic)"))
+        val probeSource = source("AndroidCoreEgressProbe.kt")
+        assertTrue(probeSource.contains("parseAwgEgressProbeDiagnostic("))
+        assertTrue(probeSource.contains("captureSafeFailureCategory"))
         assertFalse(serviceSource.contains("android.util.Log"))
         assertFalse(serviceSource.contains("Log."))
     }
