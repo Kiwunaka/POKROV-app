@@ -19,6 +19,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
 | Active pre-candidate Core | POKROV Core `1.1.0`, desktop ABI `2`, exact source `3c2b114…d0f`, DLL `58e329ea…c082` bound |
+| Exact-source pre-candidate setup | `f12dc8da…e6fa`, `28928829` bytes, client source `75aabd9…562c`; unsigned owner exception, not a candidate |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Portable ZIP | Unsupported for the service-first runtime |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
@@ -41,8 +42,9 @@ still belongs to the exact-candidate gate below.
 ## Retained Candidate.3 Evidence And Replacement Gate
 
 The table keeps candidate.3 results only as exact evidence for its old bytes.
-The `1.2.0+4046` replacement has no installer yet, so none of the package,
-clean-host, network or SmartScreen rows below transfers to it.
+The `1.2.0+4046` replacement now has one exact-source local setup artifact, but
+no strict-v2 candidate or clean-host run. None of the older candidate.3
+clean-host, network or SmartScreen rows transfers to the new bytes.
 
 | Check | Current state |
 |---|---|
@@ -94,6 +96,31 @@ fingerprints. The downloaded sanitized evidence SHA-256 is
 `494f0cd7…1c62`. Live TUN, DNS capture, authenticated egress,
 sleep/reboot/crash recovery, uninstall while connected and interactive
 SmartScreen observation remain `MANUAL_OWNER_TEST`.
+
+## 2026-08-29 Exact-Source Pre-Candidate Setup
+
+Clean client source `75aabd9819b0e2dfd36efa3ddf7a8d7aa63a562c`
+binds clean Core `3c2b1147c1b42e39026231525c08558a50bc3d0f`. The
+release build synchronized the exact Core DLL, reused the already verified
+public update/support verification pins and produced:
+
+| Evidence | Exact value |
+|---|---|
+| Setup | `pokrov-windows-x64-1.2.0+4046-setup.exe` |
+| Size | `28928829` bytes |
+| SHA-256 | `f12dc8da726aa621834d630eca7b625388553dd131e7e71f7ff165724a26e6fa` |
+| Build manifest SHA-256 | `442597ca283dcb40cc4e9c3dde5a572f2cc780f6f0a0af62f62d36bcc7a32946` |
+| Core DLL in manifest | `58e329eaddb2dd1f40c1663b380a03a0c7c34c5a3e8506eb2c692611234ac082` |
+| Signing | `SKIPPED_BY_OWNER`; Authenticode `NotSigned` |
+
+The manifest retains blocker
+`OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_2_0`, requires the visible SmartScreen
+warning and forbids trusted, signed, Store or broad-stable claims. All eight
+required bundle files are hash-bound. Full client tests, seed/handoff
+contracts and the exact DLL 100-cycle proxy-only check pass. Installation,
+SCM/TUN/DNS/egress/recovery/uninstall and interactive SmartScreen observation
+remain `MANUAL_OWNER_TEST`. This is a retained local pre-candidate artifact,
+not candidate creation or promotion.
 
 ## Safe Current Claims
 

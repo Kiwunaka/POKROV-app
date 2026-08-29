@@ -56,7 +56,7 @@ signing, device, runtime and origin evidence cannot be reused for promotion.
 | Android artifact/signing | `PASS_WORKING_4046_SIGNER_AND_AWG_RETEST; MISSING_EXACT_CANDIDATE` | Production-signed arm64 replacement APK `930aec97…6058` from client `7a633a8…bbb` installs as `1.2.0+4046`, embeds the exact `3c2b114` Core library and passes the bounded physical AWG2/AWG3.1 retest. No strict-v2 candidate binds these bytes. |
 | Android device proof | `MANUAL_OWNER_TEST` | Exact-candidate physical matrix passes. |
 | Android OEM limitations | `EXPLICIT_MANUAL_GATE` | PB-08 and `AND-BG-001/002/003` plus `AND-VPN-004` cover safe guidance; exact-candidate background, screen-off, lockscreen, notification, tile, permission-revoke and reconnect proof remains manual. |
-| Windows package/signing | `MISSING_ARTIFACT`; signing `SKIPPED_BY_OWNER` | Build the final service-first setup; strict-v2 must record the exact unsigned bytes, the `1.2.0` direct-beta-only exception and mandatory SmartScreen warning. |
+| Windows package/signing | `PASS_PRE_CANDIDATE_ARTIFACT`; signing `SKIPPED_BY_OWNER` | Clean client `75aabd9…562c` plus Core `3c2b114…d0f` produced setup `f12dc8da…e6fa`, `28928829` bytes, with manifest `442597ca…2946`, all eight bundle files hash-bound and exact DLL `58e329ea…c082`. The owner exception and mandatory SmartScreen warning are recorded. No strict-v2 candidate or trusted-signing claim exists. |
 | Windows clean-host proof | `MANUAL_OWNER_TEST` | TUN/DNS/egress/recovery matrix passes on a clean host. |
 | Linux client | `NOT_SHIPPED_IN_1.2.0` | No Linux artifact, daemon, package, support matrix or release promise belongs to this candidate. |
 | Apple native release | `NOT_REQUESTED` | Apple remains readiness-only for this release. |
