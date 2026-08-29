@@ -17,7 +17,7 @@ Older APK identities and device runs are retained separately as evidence.
 | Working package target | `1.2.0+4046` |
 | Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Active pre-candidate Core package | POKROV Core `1.1.0` AAR `b42a5489…8007` from exact source `3c2b114…d0f`; two builds are byte-identical and contain all four required ABIs |
+| Active pre-candidate Core package | Security-fixed POKROV Core `1.1.0` AAR `7895b2f7…1a63` from exact source `547f096…8cd`; two builds are byte-identical and contain all four required ABIs; exact physical repeat is open |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
@@ -320,6 +320,21 @@ This closes the earlier `BLOCKED_BY_NETWORK_CURRENT_ORIGIN` diagnosis as a
 server reply-routing defect and records `PASS_PHYSICAL_PRE_CANDIDATE` for both
 AWG2 and AWG3.1. It is not a strict-v2 candidate, full Android lifecycle/OEM
 matrix, broad protocol release decision or stable claim.
+
+## 2026-08-29 Security-Fixed Core Refresh
+
+The active client binding now uses Core `547f096…8cd`, which updates the
+affected Go crypto dependency to its `GO-2026-6303` fixed line. Two Android
+builds produced byte-identical AAR `7895b2f7…1a63`, size `107414253`, with all
+four required ABIs. The client machine contract and bundled AAR bind those
+exact bytes.
+
+The preceding physical AWG2/AWG3.1 result remains valid supporting evidence
+for the owned server reply-route correction and the protocol path exercised by
+Core `3c2b114…d0f`. It does not transfer to the new AAR. A production-signed
+APK built from the frozen security-fixed client source must be installed and
+retested on the returned physical phone before any exact-active-byte or
+candidate device claim. Current status: `MANUAL_OWNER_TEST`.
 
 ## Commands
 

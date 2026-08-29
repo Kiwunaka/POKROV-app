@@ -1,6 +1,6 @@
 # POKROV Client Release Backlog
 
-Last updated: 2026-08-28
+Last updated: 2026-08-29
 
 ## Document Status
 
@@ -19,7 +19,7 @@ results belong in dated evidence and never become reusable release approval.
 | Candidate created | `false` |
 | Public cutover allowed for a new candidate | `false` |
 | Google Play | `NOT_REQUESTED` |
-| Active pre-candidate Core artifact | POKROV Core `1.1.0`, exact AAR/DLL identities bound |
+| Active pre-candidate Core artifact | Security-fixed POKROV Core `1.1.0` at `547f096…8cd`; exact reproducible AAR/DLL identities bound |
 | Support-mode signing public pin | `PASS_SOURCE_CONTROL` — tracked key `pokrov-support-2026-08`; private/HMAC values are secret-only and not deployed |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Windows trusted-signing decision | `SKIPPED_BY_OWNER` for the exact `1.2.0` direct-download beta; mandatory SmartScreen warning; no trusted/Store/broad-stable claim |
@@ -28,6 +28,24 @@ results belong in dated evidence and never become reusable release approval.
 target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
 
 ## Current Local Completion
+
+- Core `547f096…8cd` fixes reachable advisory `GO-2026-6303` by updating both
+  module roots to `golang.org/x/crypto v0.55.0` and the compatible dependency
+  closure. Module verification, focused tests, full Core tests, `go vet` and
+  root/embedded reachable-vulnerability scans pass locally.
+- Android AAR `7895b2f7…1a63`, size `107414253`, and Windows DLL
+  `6bf2243f…c45`, size `55424000`, are each byte-identical across two clean
+  builds from that source. The bundled artifacts and machine contract match.
+- The exact Windows DLL exposes all 15 required symbols and passes 100
+  proxy-only start/stop cycles. This does not prove SCM, TUN, DNS, leak,
+  recovery or clean-host behavior.
+- Physical AWG2/AWG3.1 proof on Beeline and current-origin Core interop remain
+  supporting evidence for the superseded `3c2b114` bytes and the owned-server
+  reply-route fix. The active `547f096` Android physical repeat is open.
+- The prior unsigned setup `f12dc8da…e6fa` also binds superseded Core bytes. A
+  new exact-source setup must be built and recorded before candidate assembly.
+
+## Retained Pre-Convergence Evidence
 
 - Android and Windows package versions match `1.2.0+4046`; app-shell reports the
   shared product version `1.2.0`.
@@ -123,30 +141,29 @@ runtime, rollback or promotion proof.
 
 | Order | Gate | State | Completion rule |
 |---:|---|---|---|
-| 1 | Clean platform, client, Core and release-index revisions | `PASS_LOCAL_EXACT_CORRECTION_TUPLE; PROMOTION_BLOCKED_BY_ACTIONS_BILLING` | Exact clean platform `9383117…64c17`, client `f3d3310…174f` and Core `f44dbe8…f90d` pass the Node `22.14.0` aggregate `15/15`, including Flutter `400/400`, cabinet E2E `69/69` and static performance `9/9`. Report `57ca9352…f02ed` remains local-only with `candidate_proven=false`. Hosted PR checks remain zero-step billing failures; release-index `32f560d…2d4a` is unchanged. |
+| 1 | Clean platform, client, Core and release-index revisions | `IN_PROGRESS_SECURITY_FIXED_TUPLE` | Platform `25eda3c…`, Core `547f096…8cd` and this client update must be committed, promoted through their owner-solo lanes and rerun through the exact aggregate gate. The previous `15/15` report predates the security-fixed Core and is supporting evidence only. |
 | 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains private signed candidate.4 evidence with promotion false. It does not bind the replacement source or `1.2.0+4046`. |
-| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_MIXED_PLATFORM_LOCAL; PASS_LOCAL_AWG_LIFECYCLE; PASS_WORKING_ANDROID_HOST` | Android binds two byte-identical AAR builds from Core `f44dbe8…f90d`; those bytes also match the prior `54e76bb` build and include AWG hostname resolution and Android outer-socket protection. Working build 4044 proved control-plane reachability, socket protection, normal WARP and egress on the Huawei. Windows retains DLL `60fe3fad…3981` from `344b317…8f6` plus Cronet `8ef1f8bb…a6f7`. Platform-source convergence and exact-candidate host proof remain open. |
+| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_SINGLE_SOURCE_LOCAL_SECURITY_FIXED` | Android and Windows bind reproducible artifacts from Core `547f096…8cd`: AAR `7895b2f7…1a63`, DLL `6bf2243f…c45`, unchanged Cronet `8ef1f8bb…a6f7`, exact SBOMs and zero reachable findings in both scanned module roots. Candidate packaging and platform proof remain open. |
 | 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.4 metadata remains valid only for its exact older bytes. The replacement must bind build `4046`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
-| 5 | Android exact-candidate build and signer | `PASS_WORKING_4046_SIGNER; MISSING_REPLACEMENT_CANDIDATE` | Client `75e82b0…e62` produced signer-verified release/non-debuggable arm64 `c7e21ca…a6f9` and x86_64 `4beebad0…cd4b` APKs; both installed and read back byte-identically as `1.2.0+4046` with the production certificate. They are working artifacts without a strict-v2 manifest, not candidate bytes. |
-| 6 | Android physical-device matrix | `PASS_4046_SMART_DNS_DEVICE_STATE; PASS_4045_DISCONNECTED_HOST_TRUTH; FAIL_4045_PREDEPLOY_ANDROID_ACTIVATION; FAIL_4045_LDPLAYER_SELECTED_OUTBOUND_EGRESS; MANUAL_OWNER_TEST` | Build 4046 passes the external Smart-DNS prerequisite/default-off state on Huawei and the full default-off/enable/restore UI state machine on LDPlayer without starting a connection; cleanup left no POKROV service. This proves configuration only. Earlier build 4045 starts honestly disconnected on both hosts but fails its predeploy activation/selected-egress controls. Deploy the authorized platform source, prove an app-owned TUN plus AWG2 handshake and egress, then AWG3.1; run Huawei TUN/DNS/egress, WARP, per-app, handoff and endurance on exact candidate bytes. |
-| 7 | Windows exact-candidate package | `MISSING_REPLACEMENT_ARTIFACT` | Candidate.3 clean-host run `33033294889` is retained supporting evidence only. Build `36` requires a converged Core DLL, new setup identity and bounded clean-host run. |
+| 5 | Android exact-candidate build and signer | `SECURITY_FIXED_APK_BUILD_OPEN` | Prior production-signed `1.2.0+4046` APKs bind superseded Core bytes. Build and signer verification must be repeated from the frozen client revision containing AAR `7895b2f7…1a63`; no strict-v2 candidate exists. |
+| 6 | Android physical-device matrix | `MANUAL_OWNER_TEST_ACTIVE_BYTES` | Prior physical Beeline AWG2/AWG3.1 proof closes the server reply-route diagnosis for Core `3c2b114`, not active Core `547f096`. Install the exact new production-signed APK, verify package/signer/Core identity, then repeat AWG2, AWG3.1, TUN/DNS/egress, WARP, per-app, handoff and endurance. |
+| 7 | Windows exact-candidate package | `SECURITY_FIXED_SETUP_BUILD_OPEN` | Candidate.3 and setup `f12dc8da…e6fa` are retained supporting evidence only. Build `4046` requires a new setup identity binding DLL `6bf2243f…c45`, then a bounded clean-host run. |
 | 8 | Windows unsigned-beta warning and clean-host recovery | `SKIPPED_BY_OWNER; REPLACEMENT_PROOF_MISSING` | The `1.2.0` direct-beta exception and warning remain applicable. Replacement live TUN/DNS/egress, recovery while connected and interactive SmartScreen are manual; trusted signing is still required for trusted/Store/broad-stable claims. |
-| 9 | Hosted cross-repository CI | `BLOCKED_BY_ACCESS_GITHUB_BILLING` | Candidate.3 source runs are retained. Replacement platform/client PR jobs currently stop before steps because of the GitHub account payment/spending limit; they are neither PASS nor code failures. |
+| 9 | Hosted cross-repository CI | `OWNER_SOLO_EXCEPTION; CORE_RERUN_PENDING` | Platform/client Actions stopped before all steps because of account billing/access and are neither PASS nor code failures. No purchase or protected-branch setup is required by owner decision. Core hosted CI should be rerun after client `main` pins `547f096`; every skip remains explicit. |
 | 10 | Runtime/public readback and rollback | `NOT_AUTHORIZED` | Candidate.3 private evidence exists, but no replacement candidate, public assets, catalog pointer, anonymous readback or rollback drill exists. |
 | 11 | Promotion and go/no-go | `NOT_AUTHORIZED` | All required v2 gates are `PASS` for the same artifact bytes. |
 
 ## Next Action Order
 
-1. Deploy the owned-AWG managed-profile correction and use the installed
-   working `4046` to retain an app-owned TUN plus real AWG2 handshake and
-   egress proof; then run AWG3.1 and the bounded direct-DoH checks.
-2. Freeze the replacement platform/client/Core/release-index source tuple and
-   keep AWG2, AWG3.1 plus AI/Games/DoH contracts green on the exact client
-   revision.
-3. Freeze build `4046` Android and Windows artifacts into a new signed strict-v2
+1. Commit and promote the security-fixed client/Core binding, then rerun the
+   exact local aggregate and available Core hosted gates.
+2. Build a new production-signed Android APK and unsigned Windows setup from
+   the frozen client revision; verify embedded Core identities and retain the
+   SmartScreen owner exception.
+3. Repeat physical AWG2/AWG3.1 plus the Android lifecycle matrix on the exact
+   new APK, and run the Windows clean-host matrix when an isolated host exists.
+4. Freeze build `4046` Android and Windows artifacts into a new signed strict-v2
    manifest; do not reuse candidate.3 artifact evidence.
-4. Run LDPlayer rehearsal, then the physical-device/OEM and Windows clean-host
-   network/recovery/SmartScreen matrices on the replacement bytes.
 5. Complete current-origin, Brain-origin, payment, Operator OIDC/RBAC,
    legal/commercial and rollback gates for the same candidate.
 6. Request separate authority for public same-byte candidate publication,

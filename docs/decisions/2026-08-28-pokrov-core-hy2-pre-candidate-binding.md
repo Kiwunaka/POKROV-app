@@ -6,7 +6,7 @@ tag, publication or promotion was created.
 ## Decision
 
 Android binds POKROV Core `1.1.0` commit
-`3c2b1147c1b42e39026231525c08558a50bc3d0f`. This additive source change keeps
+`547f09670fad1eeffa94897fb36b12ec5e7818cd`. This additive source change keeps
 the existing host-owned TUN architecture and embeds no second transport engine.
 It exposes Hysteria2 only through the managed `pokrov.hy2.outbound.v1` contract
 already implemented by pinned sing-box `1.13.0` with `with_quic`.
@@ -22,14 +22,14 @@ insecure TLS, raw node-catalog material and a second TUN are rejected.
 | Field | Value |
 | --- | --- |
 | Artifact | `pokrov-core.aar` |
-| Size | `107408874` bytes |
-| SHA-256 | `b42a548910b7369f64fcd484c5acf74180583d77299629ce4d2f9156fc598007` |
+| Size | `107414253` bytes |
+| SHA-256 | `7895b2f7d6e5fe00cc74d3ff85b961f4110b551eb2cf9860fba5e1337ef01a63` |
 | ABI set | `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` |
 | Reproducibility | `PASS_BYTE_IDENTICAL_TWO_BUILDS` |
 
 Windows now binds the same Core commit through `pokrov-core.dll`, size
-`55417856`, SHA-256
-`58e329eaddb2dd1f40c1663b380a03a0c7c34c5a3e8506eb2c692611234ac082`.
+`55424000`, SHA-256
+`6bf2243ffd907244bc70b1afdcc82a87c805fdc98804d4efd2bfaa1dc5a64c45`.
 Two builds are byte-identical and expose all 15 required ABI symbols. This
 closes local platform-source convergence only. Physical-device source/artifact launch evidence may prove
 default-off safety, but Hysteria2 connectivity remains `MANUAL_OWNER_TEST`

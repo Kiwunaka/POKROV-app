@@ -78,10 +78,12 @@ Current status: `MANUAL_OWNER_TEST` for exact `1.2.0` candidate bytes.
 - Client-local WARP materialization, enable/disable parity, desktop ABI 2 and
   Android host/JVM boundaries: implemented and locally tested.
 - The local pre-candidate client binds the Core `1.1.0` Android AAR and Windows
-  DLL from `3c2b1147c1b42e39026231525c08558a50bc3d0f`; two local rebuilds per
+  DLL from security-fixed `547f09670fad1eeffa94897fb36b12ec5e7818cd`; two local rebuilds per
   platform are byte-identical, and the exact DLL passes 100 proxy-only
   start/stop cycles. Local platform-source convergence passes; candidate and
-  live WARP platform-runtime evidence remain separate gates.
+  live WARP platform-runtime evidence remain separate gates. Physical proof
+  retained for the superseded `3c2b114` AAR is supporting only; the exact
+  `547f096` Android repeat remains `MANUAL_OWNER_TEST`.
 - Exact Android and Windows release-build WARP/uplink/teardown evidence:
   `MANUAL_OWNER_TEST`.
 

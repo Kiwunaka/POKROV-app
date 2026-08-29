@@ -18,8 +18,8 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active pre-candidate Core | POKROV Core `1.1.0`, desktop ABI `2`, exact source `3c2b114…d0f`, DLL `58e329ea…c082` bound |
-| Exact-source pre-candidate setup | `f12dc8da…e6fa`, `28928829` bytes, client source `75aabd9…562c`; unsigned owner exception, not a candidate |
+| Active pre-candidate Core | Security-fixed POKROV Core `1.1.0`, desktop ABI `2`, exact source `547f096…8cd`, DLL `6bf2243f…c45` bound |
+| Exact-source pre-candidate setup | `REBUILD_REQUIRED`; prior `f12dc8da…e6fa` setup binds superseded Core bytes and is supporting evidence only |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Portable ZIP | Unsupported for the service-first runtime |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
@@ -42,8 +42,8 @@ still belongs to the exact-candidate gate below.
 ## Retained Candidate.3 Evidence And Replacement Gate
 
 The table keeps candidate.3 results only as exact evidence for its old bytes.
-The `1.2.0+4046` replacement now has one exact-source local setup artifact, but
-no strict-v2 candidate or clean-host run. None of the older candidate.3
+The `1.2.0+4046` replacement has a security-fixed exact DLL binding, but its
+new setup artifact and clean-host run remain open. None of the older candidate.3
 clean-host, network or SmartScreen rows transfers to the new bytes.
 
 | Check | Current state |
@@ -97,7 +97,7 @@ fingerprints. The downloaded sanitized evidence SHA-256 is
 sleep/reboot/crash recovery, uninstall while connected and interactive
 SmartScreen observation remain `MANUAL_OWNER_TEST`.
 
-## 2026-08-29 Exact-Source Pre-Candidate Setup
+## Superseded 2026-08-29 Exact-Source Pre-Candidate Setup
 
 Clean client source `75aabd9819b0e2dfd36efa3ddf7a8d7aa63a562c`
 binds clean Core `3c2b1147c1b42e39026231525c08558a50bc3d0f`. The
@@ -119,15 +119,31 @@ warning and forbids trusted, signed, Store or broad-stable claims. All eight
 required bundle files are hash-bound. Full client tests, seed/handoff
 contracts and the exact DLL 100-cycle proxy-only check pass. Installation,
 SCM/TUN/DNS/egress/recovery/uninstall and interactive SmartScreen observation
-remain `MANUAL_OWNER_TEST`. This is a retained local pre-candidate artifact,
+remain `MANUAL_OWNER_TEST`. This retained artifact binds the superseded
+`3c2b114` DLL and cannot package or prove the active `547f096` runtime. It is
 not candidate creation or promotion.
+
+## 2026-08-29 Security-Fixed Runtime Binding
+
+The active client bundle now contains Core `547f096…8cd` DLL
+`6bf2243f…c45`, size `55424000`. Two Windows builds are byte-identical, all 15
+required ABI exports are present, and the exact bundled DLL passed 100
+proxy-only start/stop cycles without changing system routes. Root and embedded
+Core vulnerability scans report zero reachable findings after the
+`GO-2026-6303` dependency correction.
+
+This is `PASS_LOCAL_RUNTIME_BINDING`, not a packaged-client pass. A new
+unsigned setup must be built from the frozen client revision, hash-bound and
+recorded with `SKIPPED_BY_OWNER` plus the mandatory SmartScreen warning. Clean
+SCM/service/TUN/DNS/egress/recovery/uninstall and interactive SmartScreen proof
+remain `MANUAL_OWNER_TEST`.
 
 ## Safe Current Claims
 
 - The `1.2.0` source targets an unelevated UI and authenticated Windows service.
 - Local tests prove source contracts and isolated recovery logic only.
-- Current platform correction `f79974c…ee6`, client `7a633a8…bbb` and Core
-  `3c2b114…d0f` preserve the AWG2/AWG3.1 contracts. The exact Windows DLL is
+- Current platform correction `f79974c…ee6` and the active client/Core source
+  preserve the AWG2/AWG3.1 contracts. The exact `547f096` Windows DLL is
   built twice byte-identically, exposes all 15 required symbols and passes 100
   proxy-only start/stop cycles without changing system routes.
 - The earlier current-origin reverse-UDP block was isolated to wrong
