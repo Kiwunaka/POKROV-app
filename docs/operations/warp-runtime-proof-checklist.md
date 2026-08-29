@@ -89,6 +89,19 @@ Current status: `MANUAL_OWNER_TEST` for exact `1.2.0` candidate bytes.
   selected-endpoint state for both AWG2 and AWG3.1 on physical Beeline. This
   bounded control does not close WARP lifecycle, handoff, per-app, OEM or
   endurance proof.
+- Exact x86_64 production build `1.2.0+4046` on LDPlayer created TUN for a
+  WARP attempt and for its automatic ordinary fallback, but both paths failed
+  the required Core egress probe with terminal `EGRESS-001`. A separate
+  WARP-disabled ordinary control failed with the same code. The emulator was
+  restored to WARP off with no POKROV service or `tun0`. Classification:
+  `BLOCKED_BY_LDPLAYER_NETWORK_CURRENT_ORIGIN`; this is neither a WARP-specific
+  failure nor physical proof.
+- On the exact physical working build, the app service and TUN survived one
+  Wi-Fi/LTE/Wi-Fi sequence plus forced Doze and app standby. Network, Doze and
+  standby state were restored and the service/TUN were stopped. Protected
+  egress and the WARP terminal UI state were not observed through the secure
+  keyguard, so this remains partial host-lifecycle evidence. WARP preference
+  restoration and the complete physical WARP slice await owner unlock.
 - Exact Android and Windows release-build WARP/uplink/teardown evidence:
   `MANUAL_OWNER_TEST`.
 

@@ -391,6 +391,25 @@ SHA-256 is `2f340d98a5f9b7290954ef97f3cdd80a7af70d435630ef7db76a37d5ea8cab18`.
 Classification: `PASS_ACTIVE_CORE_AWG2_AWG31_SELECTED_EGRESS_PHYSICAL`, not a
 strict-v2 candidate, WARP/per-app/OEM/lifecycle/endurance or broad release PASS.
 
+## 2026-08-29 WARP And Host-Lifecycle Preflight
+
+The exact installed x86_64 production APK `1.2.0+4046`, size `109952213`,
+SHA-256 `3d95d82d8290150fadd13600b79eca26326792407532f571909d8df224df6fa4`,
+created the Android VPN transport for a WARP attempt and its automatic ordinary
+fallback in LDPlayer. Both failed the required Core egress probe. A separate
+WARP-disabled ordinary control failed with the same terminal `EGRESS-001`, so
+the bounded result is `BLOCKED_BY_LDPLAYER_NETWORK_CURRENT_ORIGIN`, not a
+WARP-specific regression. Cleanup restored WARP off and left no POKROV service
+or `tun0`.
+
+On the exact physical working APK, service and TUN continuity passed one
+Wi-Fi/LTE/Wi-Fi sequence, forced Doze and app standby. Final readback restored
+Wi-Fi, mobile enabled, active Doze state, app standby false and no POKROV
+service/TUN. The secure keyguard prevented protected-egress and terminal WARP
+UI readback, and WARP preference restoration still awaits owner unlock. This
+is partial host-lifecycle evidence only; WARP, per-app, Private-DNS/IPv6 leak,
+OEM, endurance and exact-candidate rows remain `MANUAL_OWNER_TEST`.
+
 ## Commands
 
 ```powershell
