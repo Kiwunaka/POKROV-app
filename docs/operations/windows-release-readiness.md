@@ -19,7 +19,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
 | Active pre-candidate Core | Security-fixed POKROV Core `1.1.0`, desktop ABI `2`, exact source `547f096…8cd`, DLL `6bf2243f…c45` bound |
-| Exact-source pre-candidate setup | `REBUILD_REQUIRED`; prior `f12dc8da…e6fa` setup binds superseded Core bytes and is supporting evidence only |
+| Exact-source pre-candidate setup | `6ef7899d…cbe9`, `28918848` bytes, client source `b4c9117…9f0`; unsigned owner exception, not a candidate |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Portable ZIP | Unsupported for the service-first runtime |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
@@ -42,8 +42,8 @@ still belongs to the exact-candidate gate below.
 ## Retained Candidate.3 Evidence And Replacement Gate
 
 The table keeps candidate.3 results only as exact evidence for its old bytes.
-The `1.2.0+4046` replacement has a security-fixed exact DLL binding, but its
-new setup artifact and clean-host run remain open. None of the older candidate.3
+The `1.2.0+4046` replacement has a security-fixed exact DLL and local setup
+binding, but its clean-host run remains open. None of the older candidate.3
 clean-host, network or SmartScreen rows transfers to the new bytes.
 
 | Check | Current state |
@@ -123,7 +123,7 @@ remain `MANUAL_OWNER_TEST`. This retained artifact binds the superseded
 `3c2b114` DLL and cannot package or prove the active `547f096` runtime. It is
 not candidate creation or promotion.
 
-## 2026-08-29 Security-Fixed Runtime Binding
+## 2026-08-29 Security-Fixed Exact-Source Setup
 
 The active client bundle now contains Core `547f096…8cd` DLL
 `6bf2243f…c45`, size `55424000`. Two Windows builds are byte-identical, all 15
@@ -132,9 +132,22 @@ proxy-only start/stop cycles without changing system routes. Root and embedded
 Core vulnerability scans report zero reachable findings after the
 `GO-2026-6303` dependency correction.
 
-This is `PASS_LOCAL_RUNTIME_BINDING`, not a packaged-client pass. A new
-unsigned setup must be built from the frozen client revision, hash-bound and
-recorded with `SKIPPED_BY_OWNER` plus the mandatory SmartScreen warning. Clean
+Clean client `b4c911773f2f7d8ae55a1ba0896abe700995d9f0` produced:
+
+| Evidence | Exact value |
+|---|---|
+| Setup | `pokrov-windows-x64-1.2.0+4046-setup.exe` |
+| Size | `28918848` bytes |
+| SHA-256 | `6ef7899d8d3817c57a1fa8f451f4bf8410daecadc0c51d33c04fa60be0b8cbe9` |
+| Build manifest SHA-256 | `8dced6056a8b6fc4eb2adc6ff501545a6b71c6cdf3fb3e8ab3d175726e4ff74b` |
+| Bundle tree SHA-256 | `4b6029bf6e9f91919706c69a65bb71219ac74ccbac37742578e7fb44d55b53b8` |
+| Retained evidence SHA-256 | `4a3bc7b9aca2882a62b991035657a8be05cc2215a1e1b4aec45b1549c549c730` |
+| Core DLL in manifest | `6bf2243ffd907244bc70b1afdcc82a87c805fdc98804d4efd2bfaa1dc5a64c45` |
+| Signing | `SKIPPED_BY_OWNER`; Authenticode `NotSigned` |
+
+The manifest hash-binds all eight required bundle files, and retained-copy
+readback has no missing, size or digest mismatch. This is
+`PASS_PRE_CANDIDATE_ARTIFACT`, not candidate or clean-host proof. Clean
 SCM/service/TUN/DNS/egress/recovery/uninstall and interactive SmartScreen proof
 remain `MANUAL_OWNER_TEST`.
 
@@ -146,6 +159,9 @@ remain `MANUAL_OWNER_TEST`.
   preserve the AWG2/AWG3.1 contracts. The exact `547f096` Windows DLL is
   built twice byte-identically, exposes all 15 required symbols and passes 100
   proxy-only start/stop cycles without changing system routes.
+- Exact-source setup `6ef7899d…cbe9` packages those DLL bytes and retains the
+  owner-approved unsigned-beta warning. It has not been installed or exercised
+  on a clean host.
 - The earlier current-origin reverse-UDP block was isolated to wrong
   reply-source selection on the multi-addressed owned server. After guarded
   source-port policy routing and service-cycle readback, exact current-origin

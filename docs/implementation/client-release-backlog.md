@@ -42,8 +42,10 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
 - Physical AWG2/AWG3.1 proof on Beeline and current-origin Core interop remain
   supporting evidence for the superseded `3c2b114` bytes and the owned-server
   reply-route fix. The active `547f096` Android physical repeat is open.
-- The prior unsigned setup `f12dc8da…e6fa` also binds superseded Core bytes. A
-  new exact-source setup must be built and recorded before candidate assembly.
+- Clean client `b4c9117…9f0` produced unsigned setup `6ef7899d…cbe9`, size
+  `28918848`, with manifest `8dced605…f74b`; all eight files match and the
+  embedded DLL is exact. Signing remains `SKIPPED_BY_OWNER` with mandatory
+  SmartScreen warning. Clean-host runtime proof is open.
 
 ## Retained Pre-Convergence Evidence
 
@@ -147,7 +149,7 @@ runtime, rollback or promotion proof.
 | 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.4 metadata remains valid only for its exact older bytes. The replacement must bind build `4046`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
 | 5 | Android exact-candidate build and signer | `SECURITY_FIXED_APK_BUILD_OPEN` | Prior production-signed `1.2.0+4046` APKs bind superseded Core bytes. Build and signer verification must be repeated from the frozen client revision containing AAR `7895b2f7…1a63`; no strict-v2 candidate exists. |
 | 6 | Android physical-device matrix | `MANUAL_OWNER_TEST_ACTIVE_BYTES` | Prior physical Beeline AWG2/AWG3.1 proof closes the server reply-route diagnosis for Core `3c2b114`, not active Core `547f096`. Install the exact new production-signed APK, verify package/signer/Core identity, then repeat AWG2, AWG3.1, TUN/DNS/egress, WARP, per-app, handoff and endurance. |
-| 7 | Windows exact-candidate package | `SECURITY_FIXED_SETUP_BUILD_OPEN` | Candidate.3 and setup `f12dc8da…e6fa` are retained supporting evidence only. Build `4046` requires a new setup identity binding DLL `6bf2243f…c45`, then a bounded clean-host run. |
+| 7 | Windows exact-candidate package | `PASS_PRE_CANDIDATE_ARTIFACT; CLEAN_HOST_OPEN` | Clean client `b4c9117…9f0` packages exact DLL `6bf2243f…c45` in unsigned setup `6ef7899d…cbe9`; manifest `8dced605…f74b` binds all eight files. This is not strict-v2 candidate or clean-host proof. |
 | 8 | Windows unsigned-beta warning and clean-host recovery | `SKIPPED_BY_OWNER; REPLACEMENT_PROOF_MISSING` | The `1.2.0` direct-beta exception and warning remain applicable. Replacement live TUN/DNS/egress, recovery while connected and interactive SmartScreen are manual; trusted signing is still required for trusted/Store/broad-stable claims. |
 | 9 | Hosted cross-repository CI | `OWNER_SOLO_EXCEPTION; CORE_RERUN_PENDING` | Platform/client Actions stopped before all steps because of account billing/access and are neither PASS nor code failures. No purchase or protected-branch setup is required by owner decision. Core hosted CI should be rerun after client `main` pins `547f096`; every skip remains explicit. |
 | 10 | Runtime/public readback and rollback | `NOT_AUTHORIZED` | Candidate.3 private evidence exists, but no replacement candidate, public assets, catalog pointer, anonymous readback or rollback drill exists. |
@@ -157,9 +159,9 @@ runtime, rollback or promotion proof.
 
 1. Commit and promote the security-fixed client/Core binding, then rerun the
    exact local aggregate and available Core hosted gates.
-2. Build a new production-signed Android APK and unsigned Windows setup from
-   the frozen client revision; verify embedded Core identities and retain the
-   SmartScreen owner exception.
+2. Build a new production-signed Android APK from the frozen client revision;
+   verify its embedded Core identity. The unsigned Windows setup is assembled
+   and now awaits strict-v2 binding plus clean-host proof.
 3. Repeat physical AWG2/AWG3.1 plus the Android lifecycle matrix on the exact
    new APK, and run the Windows clean-host matrix when an isolated host exists.
 4. Freeze build `4046` Android and Windows artifacts into a new signed strict-v2
