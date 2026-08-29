@@ -1,6 +1,6 @@
 # POKROV Client Release Backlog
 
-Last updated: 2026-08-29
+Last updated: 2026-08-30
 
 ## Document Status
 
@@ -15,7 +15,8 @@ results belong in dated evidence and never become reusable release approval.
 |---|---|
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
 | Working package target | `1.2.0+4046` |
-| Working target state | `PRE_CANDIDATE_LOCAL` |
+| Working source target state | `PRE_CANDIDATE_LOCAL` on continuing `main` |
+| Exact signed candidate | `pokrov-1.2.0-candidate.8`; private Actions artifact, promotion false |
 | Candidate created | `false` |
 | Public cutover allowed for a new candidate | `false` |
 | Google Play | `NOT_REQUESTED` |
@@ -24,8 +25,11 @@ results belong in dated evidence and never become reusable release approval.
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Windows trusted-signing decision | `SKIPPED_BY_OWNER` for the exact `1.2.0` direct-download beta; mandatory SmartScreen warning; no trusted/Store/broad-stable claim |
 
-`config/release-handoff.seed.json` owns the public release and development
-target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
+`config/release-handoff.seed.json` owns the public release and continuing
+development target. `config/cutover-readiness.seed.json` owns the cutover
+verdict. Exact candidate.8 identity comes only from the signed public
+release-index manifest/receipt; the client seed does not duplicate that
+candidate contract.
 
 ## Current Local Completion
 
@@ -56,6 +60,13 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
   defect, not the remaining Android device matrix or candidate gate.
 - Core hosted run `33227157016` passes all five jobs. The exact client hosted
   run contains zero executed steps and remains `BLOCKED_BY_ACCESS`, not PASS.
+- Exact candidate.8 x86_64 APK `ec07ba17…2627`, `109952213` bytes, installed
+  and read back byte-identically on LDPlayer as release/non-debuggable
+  `1.2.0+4046`. All seven locations were visible. The ordinary Frankfurt
+  control stopped fail-closed at the emulator-origin egress boundary; separate
+  guarded AWG2 and AWG3.1 binds each reached app-confirmed tunnel, DNS and
+  selected egress. Final guarded restore removed both lab materials and
+  membership and left the app disconnected with no TUN.
 - Clean client `b4c9117…9f0` produced unsigned setup `6ef7899d…cbe9`, size
   `28918848`, with manifest `8dced605…f74b`; all eight files match and the
   embedded DLL is exact. Signing remains `SKIPPED_BY_OWNER` with mandatory
@@ -161,13 +172,13 @@ runtime, rollback or promotion proof.
 | 2 | Public release-index revision | `PASS_SIGNED_CANDIDATE_8_MANIFEST` | Release-index signer and receipt workflows passed; manifest `f0006cec…906f`, signature `5fcae067…24f6`, receipt `4109bb34…1fc`. Promotion remains false. |
 | 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_CANDIDATE_ARTIFACTS` | Candidate.8 binds reproducible AAR `ce82f54b…54dd`, DLL `53b5e82a…4652`, unchanged Cronet `8ef1f8bb…a6f7`, exact SBOM/provenance and zero reachable findings in the scanned module roots. |
 | 4 | Strict-v2 candidate metadata | `PASS_SIGNED_CANDIDATE_8` | Strict-v2 handoff binds build `4046`, the exact four-source tuple, six artifacts, SBOM, provenance and Windows runtime manifest. |
-| 5 | Android exact-candidate build and signer | `PASS_EXACT_ARM64_INSTALL` | Production-signed, release/non-debuggable ARM64 APK `9278c09f…572`, `101366934` bytes, installed and read back byte-identically as `1.2.0+4046`. |
-| 6 | Android physical-device matrix | `PASS_ORDINARY_AWG2_AWG31_PER_APP_HANDOFF_LIFECYCLE_WARP_FALLBACK_PRIVATE_DNS; MATRIX_OPEN` | Exact candidate.8 passes ordinary and AWG selected egress, selected-app traffic/bypass, mobile/Wi-Fi handoff, screen-off, tile/notification lifecycle, forced Doze, app standby, strict Private DNS interaction and explicit WARP fallback/revoke. Active WARP traffic, external IPv6/leak, UDP 53/MTU, excluded-app mode, broader OEM coverage and 100-cycle/battery endurance remain open. |
+| 5 | Android exact-candidate build and signer | `PASS_EXACT_ARM64_AND_X86_64_INSTALL` | Production-signed, release/non-debuggable ARM64 APK `9278c09f…572`, `101366934` bytes, and x86_64 APK `ec07ba17…2627`, `109952213` bytes, installed and read back byte-identically as `1.2.0+4046`. |
+| 6 | Android device matrix | `PASS_PHYSICAL_ORDINARY_AWG2_AWG31_PER_APP_HANDOFF_LIFECYCLE_WARP_FALLBACK_PRIVATE_DNS; PASS_LDPLAYER_REHEARSAL; MATRIX_OPEN` | Exact candidate.8 passes physical ordinary/AWG selected egress and the named lifecycle rows. LDPlayer separately passes exact-byte install/catalog plus AWG2/AWG3.1 tunnel, DNS and selected egress; its ordinary control fails closed at the emulator-origin boundary. Active WARP traffic, external IPv6/leak, UDP 53/MTU, excluded-app mode, broader OEM coverage and 100-cycle/battery endurance remain open. |
 | 7 | Windows exact-candidate package | `PASS_CURRENT_HOST_CLEAN_APP_STATE; CLEAN_VM_LIVE_NETWORK_OPEN` | Candidate.8 setup `26ec26d8…4668` packages the exact runtime, passes all `8/8` installed-file identities and, on the owner Windows 11 host, passes install, LocalSystem service, authenticated IPC, restart, uninstall and unchanged idle route/DNS from an absent-POKROV baseline. This is not a clean OS/VM result. |
 | 8 | Windows unsigned-beta warning and clean-host recovery | `OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY; LIVE_RECOVERY_OPEN` | The direct-beta warning/SmartScreen exception is explicit. Authenticode is `NotSigned`; trusted/Store/broad-stable claims remain forbidden. Connected TUN/DNS/AWG/egress, sleep/reboot/crash recovery, connected uninstall, interactive SmartScreen and isolated Windows 10/11 proof remain manual. |
 | 9 | Hosted cross-repository CI | `RELEASE_INDEX_PASS; PLATFORM_CLIENT_SKIPPED_BY_OWNER` | Release-index source, signer and receipt runs execute real steps and pass. Platform/client private PR jobs stop before product steps under the no-purchase owner-solo exception; they remain skipped, not PASS. |
 | 10 | Runtime/public readback and rollback | `NOT_AUTHORIZED` | No tag, public candidate assets, stable catalog pointer, anonymous readback or post-public rollback drill exists. |
-| 11 | Promotion and go/no-go | `BLOCKED_GATE_F_4_OF_19` | Candidate.8 Gate F is `BLOCKED`: `4 PASS`, `15 non-PASS`, `0 FAIL`; Gate G, public release and stable pointer are not authorized. |
+| 11 | Promotion and go/no-go | `BLOCKED_GATE_F_6_OF_19` | Successor candidate.8 Gate F is `BLOCKED`: `6 PASS`, `13 non-PASS`, `0 FAIL`; the exact LDPlayer rehearsal adds one PASS without replacing physical Android. Gate G, public release and stable pointer are not authorized. |
 
 ## Next Action Order
 
