@@ -77,6 +77,8 @@ internal enum class AndroidRuntimePhase(val wireValue: String) {
 }
 
 internal object AndroidRuntimeState {
+    private const val EGRESS_PROBE_DIAGNOSTIC_PREFIX = "egress_probe_"
+
     private var environment: AndroidRuntimeEnvironment? = null
     private var phase: AndroidRuntimePhase = AndroidRuntimePhase.ARTIFACT_MISSING
     private var stagedConfigPath: String? = null
@@ -246,6 +248,12 @@ internal object AndroidRuntimeState {
 
     @Synchronized
     fun recordAwgSafeDiagnostic(diagnostic: AndroidAwgSafeDiagnostic) {
+        if (
+            awgSafeDiagnosticCode?.startsWith(EGRESS_PROBE_DIAGNOSTIC_PREFIX) == true &&
+            !diagnostic.code.startsWith(EGRESS_PROBE_DIAGNOSTIC_PREFIX)
+        ) {
+            return
+        }
         awgSafeDiagnosticCode = diagnostic.code
         awgSafeDiagnosticOccurrence = diagnostic.occurrence
     }

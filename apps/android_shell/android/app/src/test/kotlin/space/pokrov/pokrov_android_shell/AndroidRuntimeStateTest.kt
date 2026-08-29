@@ -74,10 +74,16 @@ class AndroidRuntimeStateTest {
         AndroidRuntimeState.recordAwgSafeDiagnostic(
             AndroidAwgSafeDiagnostic("handshake_retry", 3),
         )
+        AndroidRuntimeState.recordAwgSafeDiagnostic(
+            AndroidAwgSafeDiagnostic("egress_probe_tls_certificate", 1),
+        )
+        AndroidRuntimeState.recordAwgSafeDiagnostic(
+            AndroidAwgSafeDiagnostic("receive_handshake_response", 4),
+        )
 
         var snapshot = AndroidRuntimeState.snapshot()
-        assertEquals("handshake_retry", snapshot["safe_protocol_diagnostic_code"])
-        assertEquals(3, snapshot["safe_protocol_diagnostic_occurrence"])
+        assertEquals("egress_probe_tls_certificate", snapshot["safe_protocol_diagnostic_code"])
+        assertEquals(1, snapshot["safe_protocol_diagnostic_occurrence"])
         assertEquals("unknown", snapshot["hostHealth"])
         assertNull(snapshot["last_failure_kind"])
 

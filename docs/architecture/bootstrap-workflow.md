@@ -145,8 +145,10 @@ Current blocking dependency:
   `selected endpoint URL test failed category=<closed-category>` contract. The
   host discards the initial backlog and every arbitrary line, admits only the
   fixed Core category allowlist into the existing safe protocol-diagnostic
-  fields, and retains no raw log text. This diagnostic never overrides the
-  structured `core.egress.probe` result or weakens `EGRESS-001` fail-close
+  fields, and retains no raw log text. Once captured, the terminal egress
+  category takes precedence over later transport-retry categories until the
+  next connection attempt. It never overrides the structured
+  `core.egress.probe` result or weakens `EGRESS-001` fail-close
 - after Android reports `running`, the shared shell polls the host-owned egress result through a bounded 750 ms interval for the Core probe window; a terminal `core_egress_probe_failed` snapshot immediately replaces the protected UI with the normal disconnected/reconnect state, while a canceled or newer connect generation cannot be overwritten by an older poll
 - a terminal Android selected-outbound egress failure also invalidates the staged cached runtime profile and blocks that cache from offline fallback; the next connect must obtain and stage a fresh authorized manifest, while ordinary offline fallback remains bounded before any dataplane failure
 - the Android host performs that selected-outbound fail-close as one synchronous profile-reuse invalidation: it clears the persisted Quick Settings profile and drops the staged pointer while preserving the safe failure snapshot, so a backgrounded Flutter shell cannot let the tile restart the rejected configuration
