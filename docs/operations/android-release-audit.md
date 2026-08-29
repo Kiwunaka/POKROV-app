@@ -15,9 +15,10 @@ Older APK identities and device runs are retained separately as evidence.
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
 | Working package target | `1.2.0+4046` |
-| Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
+| Exact replacement candidate | `pokrov-1.2.0-candidate.8`; signed manifest `f0006cec…906f`, detached signature `5fcae067…24f6`, promotion false |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Active pre-candidate Core package | Security-fixed POKROV Core `1.1.0` AAR `ce82f54b…54dd` from exact source `a45d69e…665e`; two builds are byte-identical and contain all four required ABIs; exact corrected-source AWG2/AWG3.1 physical repeat passes on Beeline |
+| Exact candidate source | Client `3459438…f5c`, Core `a45d69e…665e`; ARM64 APK `9278c09f…572`, `101366934` bytes, production-signed and byte-identical to the installed package |
+| Active Core package | Security-fixed POKROV Core `1.1.0` AAR `ce82f54b…54dd`; two builds are byte-identical and contain all four required ABIs |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
@@ -30,47 +31,44 @@ schema to two bounded files under the app-private no-backup directory. No raw
 message, URL, profile, token, endpoint or stack is accepted by that journal.
 These local contracts do not prove final APK bytes or physical behavior.
 
-## Retained Candidate.3 Evidence And Replacement Gate
+## Exact Candidate.8 Gate
 
-The table keeps candidate.3 results only as exact evidence for its old bytes.
-The `1.2.0+4046` source replacement now has production-signed working APKs and
-bounded two-device configuration-state proof, but no strict-v2 candidate.
-Production-signed build-4045 artifacts remain exact evidence only for their
-older bytes, and the replacement network matrix is incomplete.
-None of the retained candidate.3 signing, runtime or promotion rows below
-transfers to the new bytes.
+Candidate.8 binds the exact platform/client/Core/release-index tuple, five
+production-signed Android artifacts and the unsigned-Windows direct-beta
+exception. Its signature and supply chain pass, but promotion remains false
+and the physical Android matrix is still incomplete. Candidate.3 and all
+working-build sections below remain history for their exact older bytes only.
 
 | Check | Current state |
 |---|---|
-| Clean client/Core revisions | `PASS_SOURCE_CONTROL` — artifact source client `ac22825…ead`, Core `344b317…8f6`; client source run `33032033161` passed |
-| Exact Core AAR identity | `PASS_LOCAL` — `da3ea378…aba9`, two byte-identical builds, four ABIs |
-| Strict-v2 Android artifact entries | `PASS_SIGNED_CANDIDATE_3` — manifest `a2752b6a…1090`, signature `926f0b46…7121`, promotion false |
-| Exact APK support signing pin | `PASS_EXACT_ARTIFACT` — candidate.3 supply evidence binds the active support public key; no private key was read or exported |
-| Production signer and lineage | `PASS_5_OF_5` — APK/AAB certificate SHA-256 `0a0602a7…2500` |
-| Package/version/ABI/min-SDK identity | `PASS_EXACT_ARTIFACTS` — `1.2.0`, build `30`, min SDK `24`, universal plus three direct ABI APKs and store AAB |
-| SHA-256 and byte-size match | `PASS_EXACT_ARTIFACTS` — universal APK `f41c76eb…1c51`, `295051181` bytes; all five Android files match signed manifest |
-| LDPlayer upgrade/start/settings persistence | `PASS_EXACT_EMULATOR_PREFLIGHT` — Android 9/API 28, exact universal APK, AI/Games retained after force-stop/relaunch; no matching package fatal exception in bounded logcat |
-| LDPlayer catalog/TUN/DNS/egress | `BLOCKED_BY_ACCESS` — retained emulator account is expired and the app withholds the location catalog |
+| Clean source tuple | `PASS_EXACT_CANDIDATE_8` — platform `241a83b…c39`, client `3459438…f5c`, Core `a45d69e…665e`, signed release-index source `b242e0a…a8` |
+| Exact Core AAR identity | `PASS_LOCAL` — `ce82f54b…54dd`, two byte-identical builds, four ABIs |
+| Strict-v2 Android artifact entries | `PASS_SIGNED_CANDIDATE_8` — manifest `f0006cec…906f`, signature `5fcae067…24f6`, receipt `4109bb34…1fc`, promotion false |
+| Exact APK support signing pin | `PASS_EXACT_ARTIFACT` — candidate.8 supply evidence binds the active support public key; no private key was read or exported |
+| Production signer and lineage | `PASS_5_OF_5` — all candidate.8 APK/AAB entries pass signer verification |
+| Package/version/ABI identity | `PASS_EXACT_ARTIFACTS` — `1.2.0+4046`, universal plus three direct ABI APKs and store AAB |
+| SHA-256 and byte-size match | `PASS_EXACT_ARTIFACTS` — ARM64 APK `9278c09f…572`, `101366934` bytes; installed base APK is byte-identical |
+| LDPlayer install/start/settings | `PASS_EXACT_EMULATOR_INSTALL; RUNTIME_BLOCKED_CURRENT_ORIGIN` — exact x86_64 APK installed; ordinary and WARP-fallback egress both ended `EGRESS-001` on that emulator path |
 | Private operational journal source contract | `PASS_LOCAL` |
-| Exact-device journal privacy/rotation/readback | `MANUAL_OWNER_TEST` |
+| Exact-device diagnostics redaction | `PASS_BOUNDED_UI_REVIEW` — no endpoint, key, profile, subscription URL, token or address appeared in retained user-facing diagnostics; screenshots were not retained |
 | Anonymous download | `NOT_RUN` |
-| Huawei install and first launch | `MANUAL_OWNER_TEST` |
-| Connect/disconnect and verified egress | `MANUAL_OWNER_TEST` |
-| Wi-Fi/LTE handoff and sleep/resume | `MANUAL_OWNER_TEST` |
-| Full/selected/excluded routing | `MANUAL_OWNER_TEST` |
-| DNS/blocked UDP 53/MTU matrix | `MANUAL_OWNER_TEST` |
-| WARP enable/fallback/restore | `MANUAL_OWNER_TEST` |
+| Huawei install and first launch | `PASS_EXACT_ARM64` |
+| Connect/disconnect and verified egress | `PASS_ORDINARY_AWG2_AWG31` — connected is shown only after tunnel, DNS and selected egress confirmation |
+| Wi-Fi/LTE handoff and sleep/resume | `PASS_ONE_PHYSICAL_DEVICE` — mobile/Wi-Fi/mobile/Wi-Fi, 15-second screen-off, forced Doze and app standby preserved the service and connected state |
+| Full/selected/excluded routing | `PASS_FULL_AND_SELECTED; EXCLUDED_MODE_OPEN` — Android VPN UID range matched only the selected YouTube package; selected traffic crossed TUN while an excluded control retained internet with zero TUN bytes |
+| DNS/blocked UDP 53/MTU matrix | `PASS_PRIVATE_DNS_INTERACTION; IPV6_BLOCKED_NO_UNDERLYING_IPV6; UDP53_AND_EXTERNAL_MTU_OPEN` |
+| WARP enable/fallback/restore | `PASS_EXACT_FALLBACK_PATH; ACTIVE_WARP_TRAFFIC_NOT_PROVEN` — every attempt returned to verified ordinary POKROV without loss of access; revoke and final WARP-off restore passed |
 | 100-cycle endurance and battery | `MANUAL_OWNER_TEST` |
-| Privacy, backup and exposed-port audit | `MANUAL_OWNER_TEST` |
+| Privacy, backup and exposed-port audit | `PASS_BOUNDED_DIAGNOSTICS_REDACTION; BACKUP_AND_EXPOSED_PORTS_OPEN` |
 | Store submission | `NOT_REQUESTED` |
 
 Every manual check must name the exact APK SHA-256 and device. Emulator proof
 is preflight only and cannot clear a physical-device gate.
 
-Candidate.3 evidence is bounded to exact install/update, package identity,
-launch and settings persistence in LDPlayer. The earlier physical Beeline smoke
-proved corrected backend routes with a different client build; it does not
-clear candidate.3 physical-device, TUN, DNS, egress, OEM or RU-origin gates.
+The new physical result closes only the named candidate.8 rows. It does not
+prove active WARP carriage, external IPv6/leak behavior, blocked UDP 53,
+excluded-app mode, a multi-OEM matrix, 100-cycle/battery endurance, store
+submission, public download or release promotion.
 
 ## Working Build 4041 Evidence
 
@@ -409,6 +407,68 @@ service/TUN. The secure keyguard prevented protected-egress and terminal WARP
 UI readback, and WARP preference restoration still awaits owner unlock. This
 is partial host-lifecycle evidence only; WARP, per-app, Private-DNS/IPv6 leak,
 OEM, endurance and exact-candidate rows remain `MANUAL_OWNER_TEST`.
+
+## 2026-08-29 Exact Candidate.8 Physical Matrix
+
+The production-signed ARM64 candidate.8 APK `1.2.0+4046`, size `101366934`,
+SHA-256 `9278c09fd8fa5768d3260cf796b4230db5acb0a092187aae00c441d717cfc572`,
+was already installed byte-identically on the unlocked physical Huawei/
+Android 12 device. The source tuple is client `3459438…f5c` and Core
+`a45d69e…665e`. No APK, profile, backend or server mutation occurred during
+this continuation.
+
+WARP consent and generation handling passed the exact fallback path. Across
+three observed attempts, including one unintended extra re-enable while
+returning from the details surface, the client never reported active WARP as
+proven. It moved through apply/next-connect state, then settled on
+`На паузе · обычный режим` after about 36 seconds. Each terminal generation
+kept the ordinary POKROV tunnel usable and the protection sheet confirmed
+tunnel, DNS and selected egress. Consent revoke cleared the local enabled
+state, and a WARP-disabled ordinary reconnect passed. Classification:
+`PASS_EXACT_WARP_FALLBACK_AND_RESTORE`; active WARP traffic is
+`NOT_PROVEN`.
+
+The same exact candidate then passed these bounded host checks:
+
+- mobile/Wi-Fi/mobile/Wi-Fi handoff retained `Подключено` on every leg;
+- a 15-second screen-off/background interval retained the VPN transport and
+  returned to `Подключено` after wake;
+- Quick Settings stop removed the service and start restored verified
+  connection; the notification `ОТКЛЮЧИТЬ` action also stopped the service and
+  returned the app to `Не защищено`;
+- forced deep Doze reached `IDLE` for ten seconds while the service remained
+  present, then restored `ACTIVE`; forced app standby reached `Idle=true` for
+  eight seconds while the service remained present, then restored
+  `Idle=false`. The UI still showed `Подключено` after both recoveries;
+- strict Android Private DNS interaction retained tunnel, DNS and egress
+  confirmation. The public test resolver name was not retained;
+- IPv4 worked both with and without the VPN on the same Wi-Fi path. IPv6
+  failed in both controls, so the result is
+  `BLOCKED_NO_UNDERLYING_IPV6`, not an IPv6 leak PASS or FAIL.
+
+Per-app routing passed with one ordinary installed test app. Android's active
+VPN UID range matched the selected app UID and excluded the POKROV host UID.
+The idle TUN delta was `0/0` bytes; launching the selected app produced
+`2391111` received and `2485252` transmitted TUN bytes. After the selected app
+was stopped, an excluded shell control retained internet access with `0/0`
+additional TUN bytes. This is `PASS_SELECTED_APP_TRAFFIC_AND_BYPASS`, not proof
+of the still-unrun excluded-app mode.
+
+The user-facing status and history surfaces exposed no endpoint hostname,
+address, key, raw profile, subscription URL or token. Device serial and raw
+runtime material were never retained, and all screenshots/UI dumps were
+deleted after deriving the sanitized facts.
+
+Final restoration selected `Всё устройство`, cleared the test-app selection,
+left WARP off, stopped POKROV, disabled Wi-Fi, kept mobile data enabled,
+restored Private DNS mode and its prior specifier, restored all three animation
+scales to `1.0`, preserved `stay_on_while_plugged_in=2`, returned Doze to
+`ACTIVE` and app standby to `Idle=false`.
+
+The remaining Android blockers are active WARP carriage, external IPv6/leak
+proof, blocked UDP 53 and external MTU checks, excluded-app mode, broader OEM
+coverage, 100-cycle/battery endurance, backup/exposed-port review and public/
+store delivery. This exact physical slice does not authorize promotion.
 
 ## Commands
 

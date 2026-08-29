@@ -157,29 +157,29 @@ runtime, rollback or promotion proof.
 
 | Order | Gate | State | Completion rule |
 |---:|---|---|---|
-| 1 | Clean platform, client, Core and release-index revisions | `IN_PROGRESS_SECURITY_FIXED_TUPLE` | Platform `25eda3c…`, Core `a45d69e…665e` and this client update must be committed, promoted through their owner-solo lanes and rerun through the exact aggregate gate. The previous `15/15` report predates the current Core and is supporting evidence only. |
-| 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains private signed candidate.4 evidence with promotion false. It does not bind the replacement source or `1.2.0+4046`. |
-| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_SINGLE_SOURCE_LOCAL_SECURITY_FIXED` | Android and Windows bind reproducible artifacts from Core `a45d69e…665e`: AAR `ce82f54b…54dd`, DLL `53b5e82a…4652`, unchanged Cronet `8ef1f8bb…a6f7`, exact SBOMs and zero reachable findings in both scanned module roots. Candidate packaging and platform proof remain open. |
-| 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.4 metadata remains valid only for its exact older bytes. The replacement must bind build `4046`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
-| 5 | Android exact-candidate build and signer | `PASS_PRODUCTION_SIGNED_PRE_CANDIDATE_ARTIFACT; CANDIDATE_MISSING` | Production-signed, release/non-debuggable ARM64 APK `b583205d…7296` from client `68779c4...` binds exact AAR `ce82f54b…54dd` and installs/readbacks byte-identically as `1.2.0+4046`; no strict-v2 candidate exists. |
-| 6 | Android physical-device matrix | `PASS_AWG2_AWG31_SELECTED_EGRESS; MATRIX_OPEN` | Exact current bytes on physical Beeline reach retained green state for AWG2/AWG3.1 without the prior DNS failure. Run WARP, per-app, handoff, OEM/lifecycle and endurance before candidate proof. |
-| 7 | Windows exact-candidate package | `CURRENT_PACKAGE_OPEN; CLEAN_HOST_OPEN` | Retained setup `6ef7899d…cbe9` packages superseded DLL `6bf2243f…c45`. Build a replacement from exact DLL `53b5e82a…4652`; it will still require clean-host proof and is not a candidate. |
-| 8 | Windows unsigned-beta warning and clean-host recovery | `SKIPPED_BY_OWNER; REPLACEMENT_PROOF_MISSING` | The `1.2.0` direct-beta exception and warning remain applicable. Replacement live TUN/DNS/egress, recovery while connected and interactive SmartScreen are manual; trusted signing is still required for trusted/Store/broad-stable claims. |
-| 9 | Hosted cross-repository CI | `CURRENT_CORE_LOCAL_PASS; CURRENT_HOSTED_OPEN; PLATFORM_CLIENT_BLOCKED_BY_ACCESS` | Core run `33227157016` passes all five jobs for superseded source `547f096`; current `a45d69e` hosted proof is open. Platform/client Actions stop before product steps under the owner-solo access policy and are neither PASS nor code failures. No purchase or protected-branch setup is required by owner decision; every non-run remains explicit. |
-| 10 | Runtime/public readback and rollback | `NOT_AUTHORIZED` | Candidate.3 private evidence exists, but no replacement candidate, public assets, catalog pointer, anonymous readback or rollback drill exists. |
-| 11 | Promotion and go/no-go | `NOT_AUTHORIZED` | All required v2 gates are `PASS` for the same artifact bytes. |
+| 1 | Clean platform, client, Core and release-index revisions | `PASS_EXACT_CANDIDATE_8_TUPLE` | Candidate.8 binds platform `241a83b…c39`, client `3459438…f5c`, Core `a45d69e…665e` and signed release-index source `b242e0a…a8`; exact local aggregate passes `15/15`. |
+| 2 | Public release-index revision | `PASS_SIGNED_CANDIDATE_8_MANIFEST` | Release-index signer and receipt workflows passed; manifest `f0006cec…906f`, signature `5fcae067…24f6`, receipt `4109bb34…1fc`. Promotion remains false. |
+| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_CANDIDATE_ARTIFACTS` | Candidate.8 binds reproducible AAR `ce82f54b…54dd`, DLL `53b5e82a…4652`, unchanged Cronet `8ef1f8bb…a6f7`, exact SBOM/provenance and zero reachable findings in the scanned module roots. |
+| 4 | Strict-v2 candidate metadata | `PASS_SIGNED_CANDIDATE_8` | Strict-v2 handoff binds build `4046`, the exact four-source tuple, six artifacts, SBOM, provenance and Windows runtime manifest. |
+| 5 | Android exact-candidate build and signer | `PASS_EXACT_ARM64_INSTALL` | Production-signed, release/non-debuggable ARM64 APK `9278c09f…572`, `101366934` bytes, installed and read back byte-identically as `1.2.0+4046`. |
+| 6 | Android physical-device matrix | `PASS_ORDINARY_AWG2_AWG31_PER_APP_HANDOFF_LIFECYCLE_WARP_FALLBACK_PRIVATE_DNS; MATRIX_OPEN` | Exact candidate.8 passes ordinary and AWG selected egress, selected-app traffic/bypass, mobile/Wi-Fi handoff, screen-off, tile/notification lifecycle, forced Doze, app standby, strict Private DNS interaction and explicit WARP fallback/revoke. Active WARP traffic, external IPv6/leak, UDP 53/MTU, excluded-app mode, broader OEM coverage and 100-cycle/battery endurance remain open. |
+| 7 | Windows exact-candidate package | `PASS_LOCAL_PACKAGE_AND_INTEGRITY; CLEAN_HOST_OPEN` | Candidate.8 setup `26ec26d8…4668` packages the exact runtime and passes all `8/8` integrity files; isolated Windows 10/11 install/service/IPC/TUN/DNS/AWG/recovery/uninstall proof is not run. |
+| 8 | Windows unsigned-beta warning and clean-host recovery | `OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY; LIVE_RECOVERY_OPEN` | The direct-beta warning/SmartScreen exception is explicit. Authenticode is `NotSigned`; trusted/Store/broad-stable claims remain forbidden, and isolated live recovery is manual. |
+| 9 | Hosted cross-repository CI | `RELEASE_INDEX_PASS; PLATFORM_CLIENT_SKIPPED_BY_OWNER` | Release-index source, signer and receipt runs execute real steps and pass. Platform/client private PR jobs stop before product steps under the no-purchase owner-solo exception; they remain skipped, not PASS. |
+| 10 | Runtime/public readback and rollback | `NOT_AUTHORIZED` | No tag, public candidate assets, stable catalog pointer, anonymous readback or post-public rollback drill exists. |
+| 11 | Promotion and go/no-go | `BLOCKED_GATE_F_4_OF_19` | Candidate.8 Gate F is `BLOCKED`: `4 PASS`, `15 non-PASS`, `0 FAIL`; Gate G, public release and stable pointer are not authorized. |
 
 ## Next Action Order
 
-1. Run the remaining Android lifecycle/OEM/WARP/per-app matrix and the Windows
-   live app/service/TUN/DNS/AWG clean-host matrix.
-2. Rerun the exact local aggregate after the endpoint correction; current Core
-   local gates pass, while hosted current-source proof and platform/client
-   access stops remain explicit.
-3. Freeze build `4046` Android and Windows artifacts into a new signed strict-v2
-   manifest; do not reuse candidate.3 artifact evidence.
-4. Complete current-origin, Brain-origin, payment, Operator OIDC/RBAC,
-   legal/commercial and rollback gates for the same candidate.
+1. Run the remaining Android active-WARP/IPv6/UDP53/MTU/excluded-app/OEM/
+   endurance rows and the Windows live app/service/TUN/DNS/AWG clean-host
+   matrix.
+2. Execute exact-candidate Brain-origin and RU-origin readback plus the owned
+   Smart DNS runtime/access/leak/lifecycle/rollback matrix.
+3. Complete payment, Operator OIDC/RBAC/action-intent, legal/commercial,
+   comparable performance and no-open-P0 attestations for the same candidate.
+4. Refresh Gate F only from those exact retained results; keep every skip,
+   inaccessible environment and unrun manual row non-PASS.
 5. Request separate authority for public same-byte candidate publication,
    anonymous readback, rollback drill and promotion.
 6. Provision trusted Windows signing later before any signed, Store or
