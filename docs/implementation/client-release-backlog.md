@@ -49,8 +49,11 @@ target. `config/cutover-readiness.seed.json` owns the current cutover verdict.
   remains `EGRESS-001`; this is transport PASS and end-to-end FAIL.
 - Later production-signed diagnostic client `f078625...` with the same Core
   retained exact terminal category `egress_probe_dns_lookup` for both profiles.
-  Corrected Core `a45d69e...` is bound locally; its production APK and physical
-  repeat are still open and are not being counted as PASS.
+  Corrected Core `a45d69e...` plus production-signed client `68779c4...` produces
+  ARM64 APK `b583205d…7296`, installs/readbacks exactly, and reaches retained
+  green selected-endpoint state for AWG2 and AWG3.1 on physical Beeline. The
+  same source passes both profiles in LDPlayer. This closes the common resolver
+  defect, not the remaining Android device matrix or candidate gate.
 - Core hosted run `33227157016` passes all five jobs. The exact client hosted
   run contains zero executed steps and remains `BLOCKED_BY_ACCESS`, not PASS.
 - Clean client `b4c9117…9f0` produced unsigned setup `6ef7899d…cbe9`, size
@@ -158,8 +161,8 @@ runtime, rollback or promotion proof.
 | 2 | Public release-index revision | `MISSING_REPLACEMENT_MANIFEST` | Release-index `main` retains private signed candidate.4 evidence with promotion false. It does not bind the replacement source or `1.2.0+4046`. |
 | 3 | POKROV Core `1.1.0` replacement artifact | `PASS_SINGLE_SOURCE_LOCAL_SECURITY_FIXED` | Android and Windows bind reproducible artifacts from Core `a45d69e…665e`: AAR `ce82f54b…54dd`, DLL `53b5e82a…4652`, unchanged Cronet `8ef1f8bb…a6f7`, exact SBOMs and zero reachable findings in both scanned module roots. Candidate packaging and platform proof remain open. |
 | 4 | Strict-v2 candidate metadata | `MISSING_REPLACEMENT_MANIFEST` | Candidate.4 metadata remains valid only for its exact older bytes. The replacement must bind build `4046`, the new source tuple, six new artifacts, contracts, SBOM and provenance. |
-| 5 | Android exact-candidate build and signer | `CURRENT_BUILD_OPEN; CANDIDATE_MISSING` | Prior production-signed APK evidence binds superseded Core `547f096`. Build and inspect a new release/non-debuggable ARM64 APK with exact AAR `ce82f54b…54dd`; no strict-v2 candidate exists. |
-| 6 | Android physical-device matrix | `PRIOR_TRANSPORT_PASS; CURRENT_REPEAT_OPEN; MATRIX_OPEN` | Prior exact bytes on physical Beeline proved AWG2/AWG3.1 transport but failed both endpoint checks at `egress_probe_dns_lookup`. Repeat both profiles with corrected Core `a45d69e`, then run WARP, per-app, handoff, OEM/lifecycle and endurance before candidate proof. |
+| 5 | Android exact-candidate build and signer | `PASS_PRODUCTION_SIGNED_PRE_CANDIDATE_ARTIFACT; CANDIDATE_MISSING` | Production-signed, release/non-debuggable ARM64 APK `b583205d…7296` from client `68779c4...` binds exact AAR `ce82f54b…54dd` and installs/readbacks byte-identically as `1.2.0+4046`; no strict-v2 candidate exists. |
+| 6 | Android physical-device matrix | `PASS_AWG2_AWG31_SELECTED_EGRESS; MATRIX_OPEN` | Exact current bytes on physical Beeline reach retained green state for AWG2/AWG3.1 without the prior DNS failure. Run WARP, per-app, handoff, OEM/lifecycle and endurance before candidate proof. |
 | 7 | Windows exact-candidate package | `CURRENT_PACKAGE_OPEN; CLEAN_HOST_OPEN` | Retained setup `6ef7899d…cbe9` packages superseded DLL `6bf2243f…c45`. Build a replacement from exact DLL `53b5e82a…4652`; it will still require clean-host proof and is not a candidate. |
 | 8 | Windows unsigned-beta warning and clean-host recovery | `SKIPPED_BY_OWNER; REPLACEMENT_PROOF_MISSING` | The `1.2.0` direct-beta exception and warning remain applicable. Replacement live TUN/DNS/egress, recovery while connected and interactive SmartScreen are manual; trusted signing is still required for trusted/Store/broad-stable claims. |
 | 9 | Hosted cross-repository CI | `CURRENT_CORE_LOCAL_PASS; CURRENT_HOSTED_OPEN; PLATFORM_CLIENT_BLOCKED_BY_ACCESS` | Core run `33227157016` passes all five jobs for superseded source `547f096`; current `a45d69e` hosted proof is open. Platform/client Actions stop before product steps under the owner-solo access policy and are neither PASS nor code failures. No purchase or protected-branch setup is required by owner decision; every non-run remains explicit. |
@@ -168,21 +171,18 @@ runtime, rollback or promotion proof.
 
 ## Next Action Order
 
-1. Build a production-signed APK with corrected Core `a45d69e...`, then repeat
-   AWG2/AWG3.1 on exact active bytes while retaining fail-closed verified-state
-   semantics.
-2. Run the remaining Android lifecycle/OEM/WARP/per-app matrix and the Windows
+1. Run the remaining Android lifecycle/OEM/WARP/per-app matrix and the Windows
    live app/service/TUN/DNS/AWG clean-host matrix.
-3. Rerun the exact local aggregate after the endpoint correction; current Core
+2. Rerun the exact local aggregate after the endpoint correction; current Core
    local gates pass, while hosted current-source proof and platform/client
    access stops remain explicit.
-4. Freeze build `4046` Android and Windows artifacts into a new signed strict-v2
+3. Freeze build `4046` Android and Windows artifacts into a new signed strict-v2
    manifest; do not reuse candidate.3 artifact evidence.
-5. Complete current-origin, Brain-origin, payment, Operator OIDC/RBAC,
+4. Complete current-origin, Brain-origin, payment, Operator OIDC/RBAC,
    legal/commercial and rollback gates for the same candidate.
-6. Request separate authority for public same-byte candidate publication,
+5. Request separate authority for public same-byte candidate publication,
    anonymous readback, rollback drill and promotion.
-7. Provision trusted Windows signing later before any signed, Store or
+6. Provision trusted Windows signing later before any signed, Store or
    broad-stable Windows claim.
 
 ## Retained History

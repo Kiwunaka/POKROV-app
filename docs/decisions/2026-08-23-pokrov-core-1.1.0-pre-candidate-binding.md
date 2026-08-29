@@ -112,9 +112,10 @@ The strongest claim from this decision is
 - later production-signed diagnostic client `f078625...` with the same
   `547f096...` Core retained the exact safe terminal category
   `egress_probe_dns_lookup` for both AWG2 and AWG3.1 on physical Beeline;
-- corrected Core `a45d69e...` is reproducibly bound for Android and Windows,
-  but its exact production APK physical repeat is still open and therefore is
-  not an Android PASS;
+- corrected Core `a45d69e...` is reproducibly bound for Android and Windows;
+  exact production-signed client `68779c4...` installs/readbacks byte-identically
+  and reaches retained green selected-endpoint state for AWG2 and AWG3.1 on
+  physical Beeline, with the prior DNS failure category absent;
 - Core hosted CI run `33227157016` passes all five jobs; the client hosted run
   for `064fcd0...` executes zero steps and remains `BLOCKED_BY_ACCESS`;
 - no artifact is tagged, uploaded, published or promoted;
@@ -140,10 +141,8 @@ Before these bytes may become a release candidate:
 2. retain exact local gate evidence and record hosted CI as `PASS`,
    `BLOCKED_BY_ACCESS` or the owner-solo exception without converting a skip
    into a pass;
-3. build and prove the corrected `a45d69e...` Android selected-endpoint path on
-   AWG2 and AWG3.1 without weakening fail-closed verified state, then complete
-   the remaining Android physical-device and Windows clean-host
-   TUN/DNS/egress/recovery gates;
+3. complete the remaining Android WARP/per-app/OEM/lifecycle/endurance and
+   Windows clean-host TUN/DNS/egress/recovery gates on exact current bytes;
 4. complete production signing, provenance review and public-index binding;
 5. keep publication, runtime synchronization and promotion blocked until the
    separately authorized go/no-go step.

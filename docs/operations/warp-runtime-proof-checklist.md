@@ -85,8 +85,10 @@ Current status: `MANUAL_OWNER_TEST` for exact `1.2.0` candidate bytes.
   production-signed `547f096` Android bytes reached verified ordinary Frankfurt
   on one physical Beeline path; AWG2/AWG3.1 transport also passed there but
   their selected-endpoint checks failed at `egress_probe_dns_lookup`. Corrected
-  `a45d69e` physical proof remains open. This bounded control does not close
-  WARP lifecycle, handoff, per-app, OEM or endurance proof.
+  `a45d69e` plus production-signed client `68779c4` now reaches retained green
+  selected-endpoint state for both AWG2 and AWG3.1 on physical Beeline. This
+  bounded control does not close WARP lifecycle, handoff, per-app, OEM or
+  endurance proof.
 - Exact Android and Windows release-build WARP/uplink/teardown evidence:
   `MANUAL_OWNER_TEST`.
 

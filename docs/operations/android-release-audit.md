@@ -17,7 +17,7 @@ Older APK identities and device runs are retained separately as evidence.
 | Working package target | `1.2.0+4046` |
 | Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Active pre-candidate Core package | Security-fixed POKROV Core `1.1.0` AAR `ce82f54b…54dd` from exact source `a45d69e…665e`; two builds are byte-identical and contain all four required ABIs; exact corrected-source physical repeat is open |
+| Active pre-candidate Core package | Security-fixed POKROV Core `1.1.0` AAR `ce82f54b…54dd` from exact source `a45d69e…665e`; two builds are byte-identical and contain all four required ABIs; exact corrected-source AWG2/AWG3.1 physical repeat passes on Beeline |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
@@ -373,8 +373,23 @@ Core `a45d69e…665e` corrects that boundary without changing the authenticated
 hostname, pinning a provider IP or weakening fail-close. Two Android builds
 produced byte-identical AAR `ce82f54b…54dd`, size `107425409`, with all four
 required ABIs; the client machine contract and bundled AAR bind those exact
-bytes. The corrected production APK and physical AWG2/AWG3.1 repeat remain
-open, so this source correction is not yet physical-device PASS.
+bytes.
+
+Client `68779c4…f21` produced production-signed, release/non-debuggable ARM64
+APK `1.2.0+4046`, size `101366934`, SHA-256
+`b583205db9e197c6de873264821319ef1108a2786f1ee5466501712568147296`.
+It installed and read back byte-identically on physical Huawei/Android 12 and
+embeds the ARM64 Core entry from the bound AAR. With Wi-Fi disabled and mobile
+Beeline active, both AWG2 and AWG3.1 independently reached green connected
+state and retained it beyond the egress-probe window; the former terminal
+`egress_probe_dns_lookup` category did not return. The same source also passed
+both profiles on the exact x86_64 production build in LDPlayer.
+
+Cleanup restored the device's default binding, stopped POKROV and restored the
+original Wi-Fi, mobile-data and foreground-app state. Sanitized local evidence
+SHA-256 is `2f340d98a5f9b7290954ef97f3cdd80a7af70d435630ef7db76a37d5ea8cab18`.
+Classification: `PASS_ACTIVE_CORE_AWG2_AWG31_SELECTED_EGRESS_PHYSICAL`, not a
+strict-v2 candidate, WARP/per-app/OEM/lifecycle/endurance or broad release PASS.
 
 ## Commands
 
