@@ -78,14 +78,15 @@ Current status: `MANUAL_OWNER_TEST` for exact `1.2.0` candidate bytes.
 - Client-local WARP materialization, enable/disable parity, desktop ABI 2 and
   Android host/JVM boundaries: implemented and locally tested.
 - The local pre-candidate client binds the Core `1.1.0` Android AAR and Windows
-  DLL from security-fixed `547f09670fad1eeffa94897fb36b12ec5e7818cd`; two local rebuilds per
+  DLL from security-fixed `a45d69e40ed7d892619a2b5c4592a527f630665e`; two local rebuilds per
   platform are byte-identical, and the exact DLL passes 100 proxy-only
   start/stop cycles. Local platform-source convergence passes; candidate and
-  the complete WARP platform-runtime matrix remain separate gates. Exact
-  production-signed `547f096` Android bytes reach verified ordinary Frankfurt
-  on one physical Beeline path; AWG2/AWG3.1 transport also passes there but
-  their selected-endpoint checks remain `EGRESS-001`. This bounded control does
-  not close WARP lifecycle, handoff, per-app, OEM or endurance proof.
+  the complete WARP platform-runtime matrix remain separate gates. Prior exact
+  production-signed `547f096` Android bytes reached verified ordinary Frankfurt
+  on one physical Beeline path; AWG2/AWG3.1 transport also passed there but
+  their selected-endpoint checks failed at `egress_probe_dns_lookup`. Corrected
+  `a45d69e` physical proof remains open. This bounded control does not close
+  WARP lifecycle, handoff, per-app, OEM or endurance proof.
 - Exact Android and Windows release-build WARP/uplink/teardown evidence:
   `MANUAL_OWNER_TEST`.
 

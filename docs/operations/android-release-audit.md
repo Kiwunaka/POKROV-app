@@ -17,7 +17,7 @@ Older APK identities and device runs are retained separately as evidence.
 | Working package target | `1.2.0+4046` |
 | Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Active pre-candidate Core package | Security-fixed POKROV Core `1.1.0` AAR `7895b2f7…1a63` from exact source `547f096…8cd`; two builds are byte-identical and contain all four required ABIs; exact physical transport repeat passed while AWG selected-endpoint egress remains failed |
+| Active pre-candidate Core package | Security-fixed POKROV Core `1.1.0` AAR `ce82f54b…54dd` from exact source `a45d69e…665e`; two builds are byte-identical and contain all four required ABIs; exact corrected-source physical repeat is open |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
@@ -321,9 +321,9 @@ server reply-routing defect and records `PASS_PHYSICAL_PRE_CANDIDATE` for both
 AWG2 and AWG3.1. It is not a strict-v2 candidate, full Android lifecycle/OEM
 matrix, broad protocol release decision or stable claim.
 
-## 2026-08-29 Security-Fixed Core Refresh
+## 2026-08-29 Previous Security-Fixed Core Refresh
 
-The active client binding now uses Core `547f096…8cd`, which updates the
+The previous client binding used Core `547f096…8cd`, which updates the
 affected Go crypto dependency to its `GO-2026-6303` fixed line. Two Android
 builds produced byte-identical AAR `7895b2f7…1a63`, size `107414253`, with all
 four required ABIs. The client machine contract and bundled AAR bind those
@@ -358,6 +358,23 @@ that result. Classification: `PASS_ACTIVE_CORE_AWG_TRANSPORT` plus
 Cleanup restored `default`, removed both lab materials and membership, stopped
 the POKROV VPN service and restored Wi-Fi. The full lifecycle/OEM/per-app/WARP,
 leak and exact-candidate matrix remains `MANUAL_OWNER_TEST`.
+
+## 2026-08-29 AWG Endpoint Resolver Correction
+
+Production-signed diagnostic client `f078625…b09` with Core `547f096…8cd`
+installed and read back exactly on the same physical device. AWG2 and AWG3.1
+both retained the exact terminal diagnostic `egress_probe_dns_lookup` at the
+first attempt. Because the two profiles use different tunneled resolver
+transports, the common failure was traced to the Core-owned AWG endpoint
+resolving its inner FQDN with empty query options instead of the configured
+Android default-network bootstrap resolver.
+
+Core `a45d69e…665e` corrects that boundary without changing the authenticated
+hostname, pinning a provider IP or weakening fail-close. Two Android builds
+produced byte-identical AAR `ce82f54b…54dd`, size `107425409`, with all four
+required ABIs; the client machine contract and bundled AAR bind those exact
+bytes. The corrected production APK and physical AWG2/AWG3.1 repeat remain
+open, so this source correction is not yet physical-device PASS.
 
 ## Commands
 

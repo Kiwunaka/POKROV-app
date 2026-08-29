@@ -439,7 +439,7 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
     $manifestErrors.Add("config\\runtime-artifacts.seed.json must use Kiwunaka/POKROV-core")
   }
 
-  if ($runtimeArtifacts.core.source_commit -ne "547f09670fad1eeffa94897fb36b12ec5e7818cd") {
+  if ($runtimeArtifacts.core.source_commit -ne "a45d69e40ed7d892619a2b5c4592a527f630665e") {
     $manifestErrors.Add("config\\runtime-artifacts.seed.json must pin the exact POKROV Core source commit")
   }
   if ($runtimeArtifacts.core.sing_dependency -ne "v0.8.0-beta.12") {
@@ -460,27 +460,27 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
       $artifactProvenance.candidate_created -ne $false -or
       $artifactProvenance.promotion_authorized -ne $false -or
       $artifactProvenance.reproducible_build.android.result -ne "PASS_BYTE_IDENTICAL_TWO_BUILDS" -or
-      $artifactProvenance.reproducible_build.android.source_commit -ne "547f09670fad1eeffa94897fb36b12ec5e7818cd" -or
-      [int64]$artifactProvenance.reproducible_build.android.size -ne 107414253 -or
-      $artifactProvenance.reproducible_build.android.sha256 -ne "7895b2f7d6e5fe00cc74d3ff85b961f4110b551eb2cf9860fba5e1337ef01a63" -or
+      $artifactProvenance.reproducible_build.android.source_commit -ne "a45d69e40ed7d892619a2b5c4592a527f630665e" -or
+      [int64]$artifactProvenance.reproducible_build.android.size -ne 107425409 -or
+      $artifactProvenance.reproducible_build.android.sha256 -ne "ce82f54b073645fbd7ea0cc7ba576597456627cb5d0c7d80926afaa1dba154dd" -or
       $artifactProvenance.reproducible_build.windows.result -ne "PASS_BYTE_IDENTICAL_TWO_BUILDS" -or
-      $artifactProvenance.reproducible_build.windows.source_commit -ne "547f09670fad1eeffa94897fb36b12ec5e7818cd" -or
-      [int64]$artifactProvenance.reproducible_build.windows.size -ne 55424000 -or
-      $artifactProvenance.reproducible_build.windows.sha256 -ne "6bf2243ffd907244bc70b1afdcc82a87c805fdc98804d4efd2bfaa1dc5a64c45" -or
+      $artifactProvenance.reproducible_build.windows.source_commit -ne "a45d69e40ed7d892619a2b5c4592a527f630665e" -or
+      [int64]$artifactProvenance.reproducible_build.windows.size -ne 55426048 -or
+      $artifactProvenance.reproducible_build.windows.sha256 -ne "53b5e82a9c7bc20055c0889a1c8fabb5137f52ad09d38b23cf86477184474652" -or
       $artifactProvenance.reproducible_build.libcronet_sha256 -ne "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7" -or
       $artifactProvenance.promotion_rule -ne "exact_bytes_require_platform_source_convergence_candidate_signing_manual_gates_and_publication") {
     $manifestErrors.Add("runtime artifact contract must pin the exact single-source POKROV Core v1.1.0 pre-candidate builds without claiming a tag or publication")
   }
   $artifactEvidence = $artifactProvenance.artifact_evidence
   if ($artifactEvidence.android.result -ne "PASS_BYTE_IDENTICAL_TWO_BUILDS" -or
-      $artifactEvidence.android.source_commit -ne "547f09670fad1eeffa94897fb36b12ec5e7818cd" -or
-      $artifactEvidence.android.tree_sha256 -ne "b4232070b36c698309e4b8887054306b65928e09e2fdb740592ff54d09b98650" -or
-      $artifactEvidence.android.evidence_sha256 -ne "c26c3b71a85cd7d5538930dc6eccc73820be928c10a9c353837f6a57cb974e5a" -or
+      $artifactEvidence.android.source_commit -ne "a45d69e40ed7d892619a2b5c4592a527f630665e" -or
+      $artifactEvidence.android.tree_sha256 -ne "eba55421ca55c42185d9ae910bf3c8ec49e6efed05b2247548936fecc2928abe" -or
+      $artifactEvidence.android.evidence_sha256 -ne "369d8894d592c231684a3aa847cb2a612ebf4ab507e1a6011bfe050f0715b1d1" -or
       (@($artifactEvidence.android.abis) -join ',') -ne 'armeabi-v7a,arm64-v8a,x86,x86_64' -or
       $artifactEvidence.windows.result -ne "PASS_BYTE_IDENTICAL_TWO_BUILDS" -or
-      $artifactEvidence.windows.source_commit -ne "547f09670fad1eeffa94897fb36b12ec5e7818cd" -or
-      $artifactEvidence.windows.tree_sha256 -ne "ce531a4b7b667973d570019214db17aefd7ffa6c1441834e37a966cce4e5d0bf" -or
-      $artifactEvidence.windows.evidence_sha256 -ne "f1dd3b4f03a2b2fb1f9bddc2c402dd681caedec448f913f883c20b4f9bc9e465" -or
+      $artifactEvidence.windows.source_commit -ne "a45d69e40ed7d892619a2b5c4592a527f630665e" -or
+      $artifactEvidence.windows.tree_sha256 -ne "f9d221b252396ea38d2a15272cdd1e26c0e59a09c6018235092d1f01c9281da5" -or
+      $artifactEvidence.windows.evidence_sha256 -ne "f9a3810fb6f795cd2fe493151a9fa52164feb4145761638c54005c870f24c7ae" -or
       [int]$artifactEvidence.windows.required_exports -ne 15 -or
       [int]$artifactEvidence.windows.proxy_only_start_stop_cycles -ne 100 -or
       $artifactEvidence.windows.proxy_only_result -ne "PASS_LOCAL") {
@@ -553,9 +553,9 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   $androidRuntime = $runtimeArtifacts.core.assets.android
   if ($androidRuntime.entry -ne "pokrov-core.aar" -or
       $androidRuntime.sync_policy -ne "exact_pre_candidate_build" -or
-      $androidRuntime.source_commit -ne "547f09670fad1eeffa94897fb36b12ec5e7818cd" -or
-      [int64]$androidRuntime.size -ne 107414253 -or
-      $androidRuntime.sha256 -ne "7895b2f7d6e5fe00cc74d3ff85b961f4110b551eb2cf9860fba5e1337ef01a63" -or
+      $androidRuntime.source_commit -ne "a45d69e40ed7d892619a2b5c4592a527f630665e" -or
+      [int64]$androidRuntime.size -ne 107425409 -or
+      $androidRuntime.sha256 -ne "ce82f54b073645fbd7ea0cc7ba576597456627cb5d0c7d80926afaa1dba154dd" -or
       $androidRuntime.platform_state -ne "active_pre_candidate_local_security_fixed_physical_repeat_open") {
     $manifestErrors.Add("runtime artifact contract must pin the POKROV Core 1.1.0 Android AAR")
   }
@@ -563,9 +563,9 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   $windowsRuntime = $runtimeArtifacts.core.assets.windows
   if ($windowsRuntime.entry -ne "pokrov-core.dll" -or
       $windowsRuntime.sync_policy -ne "exact_pre_candidate_build" -or
-      $windowsRuntime.source_commit -ne "547f09670fad1eeffa94897fb36b12ec5e7818cd" -or
-      [int64]$windowsRuntime.size -ne 55424000 -or
-      $windowsRuntime.sha256 -ne "6bf2243ffd907244bc70b1afdcc82a87c805fdc98804d4efd2bfaa1dc5a64c45" -or
+      $windowsRuntime.source_commit -ne "a45d69e40ed7d892619a2b5c4592a527f630665e" -or
+      [int64]$windowsRuntime.size -ne 55426048 -or
+      $windowsRuntime.sha256 -ne "53b5e82a9c7bc20055c0889a1c8fabb5137f52ad09d38b23cf86477184474652" -or
       $windowsRuntime.platform_state -ne "active_pre_candidate_local_security_fixed_reproducible_abi_proxy_recheck_passed" -or
       @($windowsRuntime.runtime_dependencies) -notcontains "libcronet.dll" -or
       [int64]$windowsRuntime.runtime_dependency_size.'libcronet.dll' -ne 8596992 -or

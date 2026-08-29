@@ -3,8 +3,8 @@
 Status: refreshed on 2026-08-29 as a security-fixed, single-source
 Android/Windows pre-candidate binding for POKROV `1.2.0+4046`. Both active
 platform artifacts now carry the Core egress, AWG allocated-port binding,
-default-off Hysteria2 lane and the `GO-2026-6303` dependency correction from
-one exact revision.
+default-resolver propagation for AWG endpoint FQDNs, default-off Hysteria2 lane
+and the `GO-2026-6303` dependency correction from one exact revision.
 
 This is not a Core release, client candidate, signing pass, publication or
 promotion decision. No `v1.1.0` Git tag or public Core release was created.
@@ -16,7 +16,7 @@ The client binds the separately versioned Core target as follows:
 - repository: `Kiwunaka/POKROV-core`;
 - version-derived target label: `v1.1.0`;
 - tag created: `false`;
-- Android and Windows source commit: `547f09670fad1eeffa94897fb36b12ec5e7818cd`;
+- Android and Windows source commit: `a45d69e40ed7d892619a2b5c4592a527f630665e`;
 - source state: `PRE_CANDIDATE_LOCAL`;
 - candidate created: `false`;
 - desktop ABI: `2`;
@@ -37,8 +37,8 @@ scoped release line until its own owner-solo promotion evidence is recorded.
 
 | Platform | Artifact | Size | SHA-256 | Local result |
 | --- | --- | ---: | --- | --- |
-| Android | `pokrov-core.aar` | `107414253` | `7895b2f7d6e5fe00cc74d3ff85b961f4110b551eb2cf9860fba5e1337ef01a63` | two byte-identical local builds from `547f096`; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present |
-| Windows x64 | `pokrov-core.dll` | `55424000` | `6bf2243ffd907244bc70b1afdcc82a87c805fdc98804d4efd2bfaa1dc5a64c45` | two byte-identical local builds from `547f096`; 15 required exports present; 100 proxy-only start/stop cycles pass |
+| Android | `pokrov-core.aar` | `107425409` | `ce82f54b073645fbd7ea0cc7ba576597456627cb5d0c7d80926afaa1dba154dd` | two byte-identical local builds from `a45d69e`; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present |
+| Windows x64 | `pokrov-core.dll` | `55426048` | `53b5e82a9c7bc20055c0889a1c8fabb5137f52ad09d38b23cf86477184474652` | two byte-identical local builds from `a45d69e`; 15 required exports present; 100 proxy-only start/stop cycles pass |
 | Windows dependency | `libcronet.dll` | `8596992` | `8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7` | unchanged retained dependency |
 | iOS | `PokrovCore.xcframework` | — | — | `MANUAL_OWNER_TEST` |
 | macOS | `pokrov-core.dylib` | — | — | `MANUAL_OWNER_TEST` |
@@ -56,10 +56,10 @@ bind the same Core source. Packaged-client candidate provenance remains open:
 
 | Evidence | Result / SHA-256 |
 | --- | --- |
-| Android build tree | `b4232070b36c698309e4b8887054306b65928e09e2fdb740592ff54d09b98650` |
-| Android evidence JSON | `c26c3b71a85cd7d5538930dc6eccc73820be928c10a9c353837f6a57cb974e5a` |
-| Windows build tree | `ce531a4b7b667973d570019214db17aefd7ffa6c1441834e37a966cce4e5d0bf` |
-| Windows evidence JSON | `f1dd3b4f03a2b2fb1f9bddc2c402dd681caedec448f913f883c20b4f9bc9e465` |
+| Android build tree | `eba55421ca55c42185d9ae910bf3c8ec49e6efed05b2247548936fecc2928abe` |
+| Android evidence JSON | `369d8894d592c231684a3aa847cb2a612ebf4ab507e1a6011bfe050f0715b1d1` |
+| Windows build tree | `f9d221b252396ea38d2a15272cdd1e26c0e59a09c6018235092d1f01c9281da5` |
+| Windows evidence JSON | `f9a3810fb6f795cd2fe493151a9fa52164feb4145761638c54005c870f24c7ae` |
 | `pokrov-core.cdx.json` | `13910fb7d84170f785370d78f93588c4c9db0c6fd4007566f83fae63c013d451` |
 | `sing-box.cdx.json` | `127b185ad24218f5e8eb11a47388237698a3b77826160dbe725261632af06d2e` |
 
@@ -80,6 +80,12 @@ version for `GO-2026-6303`, together with the minimum compatible Go module
 closure in both Core module roots. Root and embedded sing-box module
 verification, focused SSH/libbox/config tests, full Core tests, `go vet` and
 both reachable-vulnerability scans pass locally with zero reachable findings.
+
+The same source also makes the Core-owned AWG endpoint inherit the configured
+default domain-resolver transport and strategy when resolving its inner FQDN.
+This matches ordinary dialer behavior, preserves TLS authentication against the
+hostname, introduces no pinned provider IP, and keeps resolver/probe failure
+fail-closed. Focused AWG tests and the full Core suite pass locally.
 
 ## Evidence Ceiling
 
@@ -103,6 +109,12 @@ The strongest claim from this decision is
 - exact `547f096...` operator Core interop against the same owned material
   passes authenticated TLS/HTTP for both profiles, narrowing the remaining
   defect to the Android/Core endpoint-probe runtime path;
+- later production-signed diagnostic client `f078625...` with the same
+  `547f096...` Core retained the exact safe terminal category
+  `egress_probe_dns_lookup` for both AWG2 and AWG3.1 on physical Beeline;
+- corrected Core `a45d69e...` is reproducibly bound for Android and Windows,
+  but its exact production APK physical repeat is still open and therefore is
+  not an Android PASS;
 - Core hosted CI run `33227157016` passes all five jobs; the client hosted run
   for `064fcd0...` executes zero steps and remains `BLOCKED_BY_ACCESS`;
 - no artifact is tagged, uploaded, published or promoted;
@@ -128,9 +140,10 @@ Before these bytes may become a release candidate:
 2. retain exact local gate evidence and record hosted CI as `PASS`,
    `BLOCKED_BY_ACCESS` or the owner-solo exception without converting a skip
    into a pass;
-3. correct and prove the Android selected-endpoint `EGRESS-001` path without
-   weakening fail-closed verified state, then complete the remaining Android
-   physical-device and Windows clean-host TUN/DNS/egress/recovery gates;
+3. build and prove the corrected `a45d69e...` Android selected-endpoint path on
+   AWG2 and AWG3.1 without weakening fail-closed verified state, then complete
+   the remaining Android physical-device and Windows clean-host
+   TUN/DNS/egress/recovery gates;
 4. complete production signing, provenance review and public-index binding;
 5. keep publication, runtime synchronization and promotion blocked until the
    separately authorized go/no-go step.

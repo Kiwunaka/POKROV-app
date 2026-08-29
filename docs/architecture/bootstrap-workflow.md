@@ -85,7 +85,7 @@ that candidate-specific release truth.
 
 Current blocking dependency:
 
-- the active local pre-candidate runtime has exact single-source platform bindings: Android and Windows use security-fixed Core commit `547f09670fad1eeffa94897fb36b12ec5e7818cd`, retaining the egress, AWG, Android outer-socket and default-off provenance-bound `pokrov.hy2.outbound.v1` lanes while correcting AWG allocated-port binding and `GO-2026-6303`; raw Hysteria2 URI conversion stays disabled, and two local builds per platform produced byte-identical AAR/DLL trees
+- the active local pre-candidate runtime has exact single-source platform bindings: Android and Windows use security-fixed Core commit `a45d69e40ed7d892619a2b5c4592a527f630665e`, retaining the egress, AWG, Android outer-socket and default-off provenance-bound `pokrov.hy2.outbound.v1` lanes while correcting AWG allocated-port binding, `GO-2026-6303` and AWG endpoint use of the configured default bootstrap resolver; raw Hysteria2 URI conversion stays disabled, and two local builds per platform produced byte-identical AAR/DLL trees
 - `Android` host now reaches a real service-backed connect lane: it can initialize POKROV Core, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
 - Android runtime discovery accepts either an extracted `nativeLibraryDir/libpokrov-core.so` or the ABI-matched `lib/<abi>/libpokrov-core.so` entry in the base/split APK. This is required on physical devices that install the release APK with native-library extraction disabled; Java still loads the packaged Core through the generated bindings
 - Android runtime materialization is intentionally `tun`-only in this lane; desktop loopback listener inbounds such as `mixed-in` and `dns-in` stay disabled for the mobile `VpnService` path
@@ -101,6 +101,7 @@ Current blocking dependency:
 - the Android route block keeps `auto_detect_interface: false`, removes `override_android_vpn`, writes `tun.exclude_package` for `space.pokrov.pokrov_android_shell`, injects a route-level self-package bypass rule, and enforces the same package exclusion through `VpnService.Builder`; the Core AWG endpoint is the bounded exception and requests platform protection directly for its owned UDP socket without changing the global route policy
 - the Android host runtime retains default-network monitor hooks for DNS, uplink diagnostics, and network-change handling; ordinary staged routes do not delegate outbound-interface selection to libbox auto-detection, while a Core-requested AWG socket protection fails closed when Android rejects `protect(fd)`
 - the Android host runtime now registers a local DNS transport backed by Android `DnsResolver` and the current default network, which keeps the mobile lane off desktop-only loopback DNS stubs when `libbox` resolves staged profile dependencies
+- the Core-owned AWG endpoint resolves its inner FQDN with the route's explicit `default_domain_resolver` options, so Android uses that registered default-network transport instead of an empty resolver query; TLS verification still uses the authenticated hostname and any resolver or probe failure remains fail-closed
 - an active Android DNS transport callback failure or timeout is terminal and fail-closes the core, TUN, and foreground service with a safe host snapshot; ordinary DNS response codes and canceled or stale callbacks stay non-terminal
 - the Android default-network monitor now sticks to the callback-owned uplink after connect instead of re-sampling `ConnectivityManager.activeNetwork`, which keeps mobile DNS from accidentally treating the VPN network as its resolver uplink
 - the Android manifest must also declare `ACCESS_NETWORK_STATE` and `CHANGE_NETWORK_STATE`, otherwise the `ConnectivityManager`-backed default-interface monitor fails before runtime start
@@ -281,7 +282,7 @@ Current blocking dependency:
 
 POKROV Core is an independent repository and release line. The local client
 pre-candidate pins version `1.1.0` and one Android/Windows source commit,
-`547f09670fad1eeffa94897fb36b12ec5e7818cd`. The version-derived `v1.1.0`
+`a45d69e40ed7d892619a2b5c4592a527f630665e`. The version-derived `v1.1.0`
 label is not a created Git tag or public release in this state. Local source
 convergence is proved; candidate, signing and platform-runtime gates remain.
 

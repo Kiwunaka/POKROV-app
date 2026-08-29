@@ -18,8 +18,8 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Replacement candidate created | `false`; signed candidate.3 remains private evidence for its exact older bytes only |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active pre-candidate Core | Security-fixed POKROV Core `1.1.0`, desktop ABI `2`, exact source `547f096…8cd`, DLL `6bf2243f…c45` bound |
-| Exact-source pre-candidate setup | `6ef7899d…cbe9`, `28918848` bytes, client source `b4c9117…9f0`; unsigned owner exception, not a candidate |
+| Active pre-candidate Core | Security-fixed POKROV Core `1.1.0`, desktop ABI `2`, exact source `a45d69e…665e`, DLL `53b5e82a…4652` bound |
+| Retained previous-source setup | `6ef7899d…cbe9`, `28918848` bytes, client source `b4c9117…9f0`; unsigned owner exception, not a candidate |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Portable ZIP | Unsupported for the service-first runtime |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
@@ -125,12 +125,14 @@ not candidate creation or promotion.
 
 ## 2026-08-29 Security-Fixed Exact-Source Setup
 
-The active client bundle now contains Core `547f096…8cd` DLL
-`6bf2243f…c45`, size `55424000`. Two Windows builds are byte-identical, all 15
+The active client bundle now contains Core `a45d69e…665e` DLL
+`53b5e82a…4652`, size `55426048`. Two Windows builds are byte-identical, all 15
 required ABI exports are present, and the exact bundled DLL passed 100
 proxy-only start/stop cycles without changing system routes. Root and embedded
 Core vulnerability scans report zero reachable findings after the
-`GO-2026-6303` dependency correction.
+`GO-2026-6303` dependency correction. This source also makes the AWG endpoint
+honor the configured default domain resolver for its inner FQDN while retaining
+hostname-authenticated TLS and fail-close.
 
 Clean client `b4c911773f2f7d8ae55a1ba0896abe700995d9f0` produced:
 
@@ -156,12 +158,12 @@ remain `MANUAL_OWNER_TEST`.
 - The `1.2.0` source targets an unelevated UI and authenticated Windows service.
 - Local tests prove source contracts and isolated recovery logic only.
 - Current platform correction `f79974c…ee6` and the active client/Core source
-  preserve the AWG2/AWG3.1 contracts. The exact `547f096` Windows DLL is
+  preserve the AWG2/AWG3.1 contracts. The exact `a45d69e` Windows DLL is
   built twice byte-identically, exposes all 15 required symbols and passes 100
   proxy-only start/stop cycles without changing system routes.
-- Exact-source setup `6ef7899d…cbe9` packages those DLL bytes and retains the
-  owner-approved unsigned-beta warning. It has not been installed or exercised
-  on a clean host.
+- Retained setup `6ef7899d…cbe9` packages the superseded `547f096` DLL and
+  retains the owner-approved unsigned-beta warning. It has not been installed or exercised
+  on a clean host. A replacement setup for `a45d69e` is still open.
 - The earlier current-origin reverse-UDP block was isolated to wrong
   reply-source selection on the multi-addressed owned server. After guarded
   source-port policy routing and service-cycle readback, exact current-origin
