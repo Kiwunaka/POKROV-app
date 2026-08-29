@@ -3,7 +3,9 @@ param(
   [string]$CandidatePath = "build/private-candidate/pokrov-windows-setup-x64.exe",
   [string]$GateInputPath = "config/windows-clean-host-gate.candidate-3.json",
   [string]$EvidencePath = "build/evidence/windows-exact-candidate-clean-host.json",
-  [switch]$RunCleanHostSmoke
+  [switch]$RunCleanHostSmoke,
+  [switch]$RunOwnerCurrentHostSmoke,
+  [string]$OwnerCurrentHostConfirmation = ""
 )
 
 Set-StrictMode -Version Latest
@@ -200,19 +202,42 @@ function Write-Evidence {
 $candidate = Resolve-RepositoryPath -Path $CandidatePath
 $gateInputFile = Resolve-RepositoryPath -Path $GateInputPath
 $evidenceFile = Resolve-RepositoryPath -Path $EvidencePath
+$runSmoke = $RunCleanHostSmoke -or $RunOwnerCurrentHostSmoke
+
+Assert-Gate -Condition (-not ($RunCleanHostSmoke -and $RunOwnerCurrentHostSmoke)) -Code "smoke_mode_conflict"
 
 Assert-Gate -Condition (Test-Path -LiteralPath $candidate -PathType Leaf) -Code "candidate_missing"
 Assert-Gate -Condition (Test-Path -LiteralPath $gateInputFile -PathType Leaf) -Code "gate_input_missing"
 
 $gateInput = Get-Content -LiteralPath $gateInputFile -Raw | ConvertFrom-Json -Depth 20
 Assert-Gate -Condition ($gateInput.schema -eq "pokrov.windows-clean-host-gate-input/v1") -Code "gate_input_schema_invalid"
-Assert-Gate -Condition ($gateInput.candidate_label -eq "pokrov-1.2.0-candidate.3") -Code "candidate_label_invalid"
-Assert-Gate -Condition ($gateInput.candidate_manifest_sha256 -eq "a2752b6a3b95faacf13a68edb708c560966a0f5eb8727e109d7f1603fdc81090") -Code "candidate_manifest_identity_invalid"
-Assert-Gate -Condition ($gateInput.candidate_manifest_signature_sha256 -eq "926f0b4667a58ba9cc5ace5c4e6c3c8129d1ec3d4d449b3f0831a8c527cd7121") -Code "candidate_manifest_signature_identity_invalid"
-Assert-Gate -Condition ($gateInput.source_tuple.client -eq "ac22825e857a313c9e4eba61030eb548d6346ead") -Code "candidate_client_source_invalid"
-Assert-Gate -Condition ($gateInput.source_tuple.core -eq "344b317a7a09eca7943a93866b193553538bd8f6") -Code "candidate_core_source_invalid"
-Assert-Gate -Condition ($gateInput.source_tuple.platform -eq "eafaca3e64c0619dea7f58fc9c430682b4520559") -Code "candidate_platform_source_invalid"
-Assert-Gate -Condition ($gateInput.source_tuple.release_index -eq "6a1afa95fe52da2d559ba7b1da88715cd0344bb2") -Code "candidate_release_index_source_invalid"
+$knownCandidates = @{
+  "pokrov-1.2.0-candidate.3" = [ordered]@{
+    manifest = "a2752b6a3b95faacf13a68edb708c560966a0f5eb8727e109d7f1603fdc81090"
+    signature = "926f0b4667a58ba9cc5ace5c4e6c3c8129d1ec3d4d449b3f0831a8c527cd7121"
+    client = "ac22825e857a313c9e4eba61030eb548d6346ead"
+    core = "344b317a7a09eca7943a93866b193553538bd8f6"
+    platform = "eafaca3e64c0619dea7f58fc9c430682b4520559"
+    release_index = "6a1afa95fe52da2d559ba7b1da88715cd0344bb2"
+  }
+  "pokrov-1.2.0-candidate.8" = [ordered]@{
+    manifest = "f0006cec90c84e401e9920d9098102c7f50ab5ace5242e0d7683c3df709a6fbc"
+    signature = "5fcae0675ea45e79baf495859fd170661f5d6dd3a8535275acd4d62680d324f6"
+    client = "3459438f02bd774e722b1b858e7f7f16d57a9f5c"
+    core = "a45d69e40ed7d892619a2b5c4592a527f630665e"
+    platform = "241a83b4dca00799b39696a4ae0c3c97e087ec39"
+    release_index = "b242e0a3060b04f9b71641a0524bf251a75ce2a8"
+  }
+}
+$candidateLabel = [string]$gateInput.candidate_label
+Assert-Gate -Condition $knownCandidates.ContainsKey($candidateLabel) -Code "candidate_label_invalid"
+$knownCandidate = $knownCandidates[$candidateLabel]
+Assert-Gate -Condition ($gateInput.candidate_manifest_sha256 -eq $knownCandidate.manifest) -Code "candidate_manifest_identity_invalid"
+Assert-Gate -Condition ($gateInput.candidate_manifest_signature_sha256 -eq $knownCandidate.signature) -Code "candidate_manifest_signature_identity_invalid"
+Assert-Gate -Condition ($gateInput.source_tuple.client -eq $knownCandidate.client) -Code "candidate_client_source_invalid"
+Assert-Gate -Condition ($gateInput.source_tuple.core -eq $knownCandidate.core) -Code "candidate_core_source_invalid"
+Assert-Gate -Condition ($gateInput.source_tuple.platform -eq $knownCandidate.platform) -Code "candidate_platform_source_invalid"
+Assert-Gate -Condition ($gateInput.source_tuple.release_index -eq $knownCandidate.release_index) -Code "candidate_release_index_source_invalid"
 
 $candidateSha256 = Get-Sha256 -Path $candidate
 $candidateSize = (Get-Item -LiteralPath $candidate).Length
@@ -226,12 +251,12 @@ $authenticode = Get-AuthenticodeSignature -LiteralPath $candidate
 Assert-Gate -Condition ([string]$authenticode.Status -eq "NotSigned") -Code "unexpected_authenticode_state"
 
 $checks = [System.Collections.Generic.List[object]]::new()
-Add-Check -Checks $checks -Id "exact_candidate_identity" -Status "PASS" -Detail "candidate.3 SHA-256, byte size, signed-manifest identity, and source tuple match the reviewed input"
+Add-Check -Checks $checks -Id "exact_candidate_identity" -Status "PASS" -Detail "$candidateLabel SHA-256, byte size, signed-manifest identity, and source tuple match the reviewed input"
 Add-Check -Checks $checks -Id "unsigned_owner_exception" -Status "SKIPPED_BY_OWNER" -Detail "direct-download 1.2.0 beta only; SmartScreen warning remains mandatory"
 
 $evidence = [ordered]@{
   schema = "pokrov.windows-exact-candidate-clean-host-evidence/v1"
-  status = if ($RunCleanHostSmoke) { "RUNNING" } else { "PASS_VALIDATION_ONLY" }
+  status = if ($runSmoke) { "RUNNING" } else { "PASS_VALIDATION_ONLY" }
   recorded_at_utc = (Get-Date).ToUniversalTime().ToString("o")
   candidate_label = [string]$gateInput.candidate_label
   candidate_manifest_sha256 = [string]$gateInput.candidate_manifest_sha256
@@ -247,7 +272,8 @@ $evidence = [ordered]@{
     release_index = [string]$gateInput.source_tuple.release_index
   }
   runner = [ordered]@{
-    environment = if ($RunCleanHostSmoke) { "github-hosted" } else { "local_validation" }
+    environment = if ($RunCleanHostSmoke) { "github-hosted" } elseif ($RunOwnerCurrentHostSmoke) { "owner-current-host" } else { "local_validation" }
+    host_cleanliness_claim = if ($RunCleanHostSmoke) { "github_hosted_ephemeral_runner" } elseif ($RunOwnerCurrentHostSmoke) { "clean_app_state_only_not_clean_os_or_vm" } else { "not_observed" }
     os = if ($RunCleanHostSmoke) { [string]$env:RUNNER_OS } else { "Windows" }
     image_os = if ($RunCleanHostSmoke) { [string]$env:ImageOS } else { $null }
     image_version = if ($RunCleanHostSmoke) { [string]$env:ImageVersion } else { $null }
@@ -266,19 +292,26 @@ $evidence = [ordered]@{
     "MANUAL_OWNER_TEST: interactive SmartScreen reputation observation"
   )
   production_mutation_performed = $false
+  current_host_mutation_performed = $false
   public_release_created = $false
   stable_pointer_mutated = $false
 }
 
-if (-not $RunCleanHostSmoke) {
+if (-not $runSmoke) {
   Write-Evidence -Evidence $evidence -Path $evidenceFile
   Write-Host "Exact Windows candidate validation passed: $candidateSha256"
   exit 0
 }
 
-Assert-Gate -Condition ($env:GITHUB_ACTIONS -eq "true") -Code "clean_host_gate_requires_github_actions"
-Assert-Gate -Condition ($env:RUNNER_ENVIRONMENT -eq "github-hosted") -Code "clean_host_gate_requires_github_hosted_runner"
-Assert-Gate -Condition ($env:RUNNER_OS -eq "Windows") -Code "clean_host_gate_requires_windows"
+if ($RunCleanHostSmoke) {
+  Assert-Gate -Condition ($env:GITHUB_ACTIONS -eq "true") -Code "clean_host_gate_requires_github_actions"
+  Assert-Gate -Condition ($env:RUNNER_ENVIRONMENT -eq "github-hosted") -Code "clean_host_gate_requires_github_hosted_runner"
+  Assert-Gate -Condition ($env:RUNNER_OS -eq "Windows") -Code "clean_host_gate_requires_windows"
+} else {
+  Assert-Gate -Condition ($candidateLabel -eq "pokrov-1.2.0-candidate.8") -Code "owner_current_host_mode_candidate_scope_invalid"
+  Assert-Gate -Condition ($OwnerCurrentHostConfirmation -ceq "OWNER_AUTHORIZED_CURRENT_HOST_CANDIDATE8_SMOKE") -Code "owner_current_host_confirmation_invalid"
+  Assert-Gate -Condition ($env:GITHUB_ACTIONS -ne "true") -Code "owner_current_host_mode_rejects_github_actions"
+}
 
 $principal = [Security.Principal.WindowsPrincipal]::new(
   [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -290,8 +323,10 @@ $installRoot = Join-Path $env:ProgramFiles ([string]$gateInput.installation.dire
 $serviceRegistryPath = [string]$gateInput.installation.registry_path
 $runtimeRoot = Join-Path $env:ProgramData "POKROV\ServiceRuntime"
 $eventJournal = Join-Path $runtimeRoot "service-events.v1.log"
-$installerLog = Join-Path $env:RUNNER_TEMP "pokrov-candidate.3-install.log"
-$uninstallerLog = Join-Path $env:RUNNER_TEMP "pokrov-candidate.3-uninstall.log"
+$runnerTemp = if ([string]::IsNullOrWhiteSpace([string]$env:RUNNER_TEMP)) { [System.IO.Path]::GetTempPath() } else { [string]$env:RUNNER_TEMP }
+$safeCandidateLabel = $candidateLabel.Replace("pokrov-1.2.0-", "pokrov-")
+$installerLog = Join-Path $runnerTemp "$safeCandidateLabel-install.log"
+$uninstallerLog = Join-Path $runnerTemp "$safeCandidateLabel-uninstall.log"
 $uiProcess = $null
 $installed = $false
 $uninstalled = $false
@@ -299,6 +334,7 @@ $failureStage = $null
 $failure = $null
 $baselineNetwork = $null
 $afterNetwork = $null
+$currentHostMutationPerformed = $false
 
 try {
   $failureStage = "clean_baseline"
@@ -307,11 +343,16 @@ try {
   Assert-Gate -Condition (-not (Test-Path -LiteralPath $serviceRegistryPath)) -Code "baseline_service_registry_present"
   $baselineNetwork = Get-NetworkFingerprint
   Assert-Gate -Condition ($baselineNetwork.tunnel_adapter_count -eq 0) -Code "baseline_tunnel_adapter_present"
-  Add-Check -Checks $checks -Id "clean_host_baseline" -Status "PASS" -Detail "service, install directory, registry owner record, and POKROV/Wintun adapter were absent"
+  if ($RunCleanHostSmoke) {
+    Add-Check -Checks $checks -Id "clean_host_baseline" -Status "PASS" -Detail "service, install directory, registry owner record, and POKROV/Wintun adapter were absent on the ephemeral runner"
+  } else {
+    Add-Check -Checks $checks -Id "current_host_clean_app_state_baseline" -Status "PASS" -Detail "service, install directory, registry owner record, and POKROV/Wintun adapter were absent; this does not claim a clean OS or VM"
+  }
 
   $failureStage = "install"
   $installStartedAtUtc = (Get-Date).ToUniversalTime()
   $installArguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- /LOG=`"$installerLog`""
+  $currentHostMutationPerformed = $RunOwnerCurrentHostSmoke.IsPresent
   $install = Start-Process -FilePath $candidate -ArgumentList $installArguments -Wait -PassThru
   Assert-Gate -Condition ($install.ExitCode -eq 0) -Code "installer_exit_nonzero"
   $installed = $true
@@ -380,7 +421,13 @@ try {
   Assert-Gate -Condition (Wait-ServiceState -Name $serviceName -State "Stopped") -Code "service_stop_failed"
   Start-Service -Name $serviceName
   Assert-Gate -Condition (Wait-ServiceState -Name $serviceName -State "Running") -Code "service_restart_failed"
-  Add-Check -Checks $checks -Id "service_stop_restart" -Status "PASS" -Detail "SCM stop and restart completed on the clean runner"
+  Add-Check -Checks $checks -Id "service_stop_restart" -Status "PASS" -Detail $(
+    if ($RunCleanHostSmoke) {
+      "SCM stop and restart completed on the ephemeral runner"
+    } else {
+      "SCM stop and restart completed on the owner current host"
+    }
+  )
 
   $failureStage = "uninstall"
   $uninstaller = Join-Path $installRoot "unins000.exe"
@@ -431,10 +478,15 @@ if ($null -ne $failure) {
   $evidence.failure_stage = $failureStage
   $evidence.failure_code = [string]$failure.Exception.Message
 } else {
-  $evidence.status = "PASS_EXACT_PRIVATE_CI_INSTALL_SERVICE_IPC_RESTART_UNINSTALL_IDLE_NETWORK"
+  $evidence.status = if ($RunCleanHostSmoke) {
+    "PASS_EXACT_PRIVATE_CI_INSTALL_SERVICE_IPC_RESTART_UNINSTALL_IDLE_NETWORK"
+  } else {
+    "PASS_EXACT_CANDIDATE_CURRENT_HOST_CLEAN_APP_STATE_INSTALL_SERVICE_IPC_RESTART_UNINSTALL_IDLE_NETWORK"
+  }
   $evidence.failure_stage = $null
   $evidence.failure_code = $null
 }
+$evidence.current_host_mutation_performed = $currentHostMutationPerformed
 $evidence.recorded_at_utc = (Get-Date).ToUniversalTime().ToString("o")
 Write-Evidence -Evidence $evidence -Path $evidenceFile
 

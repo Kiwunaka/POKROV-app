@@ -64,6 +64,10 @@ foreach ($fragment in @(
   'event_journal_summary',
   'scm_event_ids',
   '$evidence.service_failure_diagnostics',
+  'RunOwnerCurrentHostSmoke',
+  'OWNER_AUTHORIZED_CURRENT_HOST_CANDIDATE8_SMOKE',
+  'clean_app_state_only_not_clean_os_or_vm',
+  'PASS_EXACT_CANDIDATE_CURRENT_HOST_CLEAN_APP_STATE_INSTALL_SERVICE_IPC_RESTART_UNINSTALL_IDLE_NETWORK',
   'production_mutation_performed = $false',
   'public_release_created = $false',
   'stable_pointer_mutated = $false'
@@ -141,6 +145,67 @@ foreach ($requiredFile in @($candidateThreeInput.installation.required_files)) {
   $actualIdentity = "$([int64]$requiredFile.size_bytes)|$([string]$requiredFile.sha256)"
   if ([string]::IsNullOrWhiteSpace($expectedIdentity) -or $actualIdentity -ne $expectedIdentity) {
     throw "Windows candidate.3 input has wrong installed-file identity for $($requiredFile.path)"
+  }
+}
+
+$candidateEightInputPath = Join-Path $root "config\windows-clean-host-gate.candidate-8.json"
+if (-not (Test-Path -LiteralPath $candidateEightInputPath -PathType Leaf)) {
+  throw "Windows candidate.8 current-host input is missing: $candidateEightInputPath"
+}
+
+$candidateEightInput = [IO.File]::ReadAllText($candidateEightInputPath) | ConvertFrom-Json -Depth 20
+$candidateEightExpected = [ordered]@{
+  candidate_label = "pokrov-1.2.0-candidate.8"
+  candidate_manifest_sha256 = "f0006cec90c84e401e9920d9098102c7f50ab5ace5242e0d7683c3df709a6fbc"
+  candidate_manifest_signature_sha256 = "5fcae0675ea45e79baf495859fd170661f5d6dd3a8535275acd4d62680d324f6"
+}
+foreach ($entry in $candidateEightExpected.GetEnumerator()) {
+  if ([string]$candidateEightInput.($entry.Key) -ne [string]$entry.Value) {
+    throw "Windows candidate.8 input has wrong $($entry.Key)"
+  }
+}
+if ($null -ne $candidateEightInput.private_ci_release_tag) {
+  throw "Windows candidate.8 input must not claim a private CI carrier"
+}
+
+$candidateEightSourceExpected = [ordered]@{
+  client = "3459438f02bd774e722b1b858e7f7f16d57a9f5c"
+  core = "a45d69e40ed7d892619a2b5c4592a527f630665e"
+  platform = "241a83b4dca00799b39696a4ae0c3c97e087ec39"
+  release_index = "b242e0a3060b04f9b71641a0524bf251a75ce2a8"
+}
+foreach ($entry in $candidateEightSourceExpected.GetEnumerator()) {
+  if ([string]$candidateEightInput.source_tuple.($entry.Key) -ne [string]$entry.Value) {
+    throw "Windows candidate.8 input has wrong source tuple member $($entry.Key)"
+  }
+}
+
+if (
+  [string]$candidateEightInput.artifact.sha256 -ne "26ec26d8989d61415f07cbf9707f336ebba0b947fa4ba0ee93d3078fa3984668" -or
+  [int64]$candidateEightInput.artifact.size_bytes -ne 28929376
+) {
+  throw "Windows candidate.8 input has wrong installer identity"
+}
+
+if (@($candidateEightInput.installation.required_files).Count -ne 8) {
+  throw "Windows candidate.8 input does not bind all eight installed files"
+}
+
+$candidateEightRequiredFiles = [ordered]@{
+  "pokrov_windows.exe" = "191488|83e8c88a061bd2849b5858a2693ce516bf1eb775f9a789c9ba03e8edca4f755f"
+  "pokrov_service.exe" = "168960|64e6d7b26d326147e8c30c8595fd719fe3c62a4186dc1a6bf121540eb8f4b2c2"
+  "flutter_windows.dll" = "18511872|1f4215e1072dd9e34f4565b74310e6771364e1470c7e92214bca64947bd012a1"
+  "pokrov-core.dll" = "55426048|53b5e82a9c7bc20055c0889a1c8fabb5137f52ad09d38b23cf86477184474652"
+  "libcronet.dll" = "8596992|8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+  "pokrov_tray.ico" = "110013|9eea4eff6f980edda2b9c61f3d86fa63e6349bed23bc83e09d5fbb3274d9575d"
+  "data/app.so" = "8913840|5af656624a95cc7e9c7ef5bdda9b45645aa1fad9e599672732df17beaa6f0a18"
+  "data/icudtl.dat" = "778864|c12537022ef818991a7bfed41a76d8d6ae962ffbc0e6511ac762a5d0845e7f7c"
+}
+foreach ($requiredFile in @($candidateEightInput.installation.required_files)) {
+  $expectedIdentity = $candidateEightRequiredFiles[[string]$requiredFile.path]
+  $actualIdentity = "$([int64]$requiredFile.size_bytes)|$([string]$requiredFile.sha256)"
+  if ([string]::IsNullOrWhiteSpace($expectedIdentity) -or $actualIdentity -ne $expectedIdentity) {
+    throw "Windows candidate.8 input has wrong installed-file identity for $($requiredFile.path)"
   }
 }
 
