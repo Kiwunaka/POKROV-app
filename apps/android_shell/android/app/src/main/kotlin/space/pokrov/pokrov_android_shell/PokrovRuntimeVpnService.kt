@@ -691,8 +691,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     }
 
     private fun updateRuntimeNotification() {
+        val runtimeSnapshot = AndroidRuntimeState.snapshot()
         val content = androidRuntimeNotificationContent(
-            AndroidRuntimeNotificationState.CONNECTED,
+            androidRuntimeNotificationStateForEgress(
+                validationRequired = activeCoreEgressProbeRequired,
+                validated = runtimeSnapshot["core_egress_validated"] as? Boolean,
+            ),
         )
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(
@@ -990,15 +994,6 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         )
         activeTileStartGeneration = null
         scheduleCoreEgressProbe(session, tunGeneration)
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(
-            NOTIFICATION_ID,
-            buildNotification(
-                androidRuntimeNotificationContent(
-                    AndroidRuntimeNotificationState.CONNECTED,
-                ),
-            ),
-        )
         return tun.fd
     }
 
@@ -1009,6 +1004,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         val content = activeConfigContent ?: return
         val variantConfigContent = activeVariantConfigContent
         AndroidRuntimeState.updateCoreEgressValidation(null)
+        updateRuntimeNotification()
         if (!activeCoreEgressProbeRequired) {
             return
         }
@@ -1181,6 +1177,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 failureKind = failureKind,
                 message = AndroidRuntimeSafety.publicFailureMessage(failureKind),
             )
+            updateRuntimeNotification()
             return
         }
         if (!AndroidCoreEgressFailClosedPolicy.shouldStopRuntime(
@@ -1194,6 +1191,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 AndroidRuntimeState.updateCoreEgressValidation(
                     probeResult == AndroidCoreEgressProbeResult.HEALTHY,
                 )
+                updateRuntimeNotification()
             }
             return
         }

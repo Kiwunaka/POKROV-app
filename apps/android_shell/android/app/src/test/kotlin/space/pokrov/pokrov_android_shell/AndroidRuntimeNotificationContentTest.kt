@@ -6,6 +6,38 @@ import org.junit.Test
 
 class AndroidRuntimeNotificationContentTest {
     @Test
+    fun egressValidationPreventsFalseGreenNotification() {
+        assertEquals(
+            AndroidRuntimeNotificationState.CONNECTING,
+            androidRuntimeNotificationStateForEgress(
+                validationRequired = true,
+                validated = null,
+            ),
+        )
+        assertEquals(
+            AndroidRuntimeNotificationState.FAILED,
+            androidRuntimeNotificationStateForEgress(
+                validationRequired = true,
+                validated = false,
+            ),
+        )
+        assertEquals(
+            AndroidRuntimeNotificationState.CONNECTED,
+            androidRuntimeNotificationStateForEgress(
+                validationRequired = true,
+                validated = true,
+            ),
+        )
+        assertEquals(
+            AndroidRuntimeNotificationState.CONNECTED,
+            androidRuntimeNotificationStateForEgress(
+                validationRequired = false,
+                validated = null,
+            ),
+        )
+    }
+
+    @Test
     fun everyRuntimeStateUsesOnlyGenericPrivacySafeText() {
         val expected = mapOf(
             AndroidRuntimeNotificationState.CONNECTING to "Защита подключается",

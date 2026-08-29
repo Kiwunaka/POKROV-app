@@ -222,6 +222,10 @@ applications, endpoint and speed are available only inside the authenticated
 app. Release 1.2.0 has no system-surface preference that can opt those details
 back into the notification; retained legacy `true` values are rewritten to the
 privacy-safe all-false state.
+When selected-egress validation is required, the notification remains in the
+connecting state until Core confirms DNS, transport and outbound reachability.
+An explicit failed validation renders the generic failure state; it must never
+publish the connected state merely because Android established the TUN.
 Traffic speed comes from the Core `CommandStatus` TUN totals and is converted
 with monotonic time into session rates. The bridge exposes explicit
 `unavailable`, `warming`, `available`, `reset` and `overflow` counter states;
