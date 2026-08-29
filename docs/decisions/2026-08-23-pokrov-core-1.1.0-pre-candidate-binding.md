@@ -116,6 +116,10 @@ The strongest claim from this decision is
   exact production-signed client `68779c4...` installs/readbacks byte-identically
   and reaches retained green selected-endpoint state for AWG2 and AWG3.1 on
   physical Beeline, with the prior DNS failure category absent;
+- clean client documentation head `f500728...` produces unsigned pre-candidate
+  Windows setup `81268d7e...723c`, whose eight-file manifest readback contains
+  exact DLL `53b5e82a...4652`; Windows Sandbox/Hyper-V is unavailable on the
+  build host, so no install or live TUN/DNS/AWG claim is made;
 - Core hosted CI run `33227157016` passes all five jobs; the client hosted run
   for `064fcd0...` executes zero steps and remains `BLOCKED_BY_ACCESS`;
 - no artifact is tagged, uploaded, published or promoted;

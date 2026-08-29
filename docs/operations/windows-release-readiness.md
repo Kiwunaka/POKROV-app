@@ -19,7 +19,8 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
 | Active pre-candidate Core | Security-fixed POKROV Core `1.1.0`, desktop ABI `2`, exact source `a45d69e…665e`, DLL `53b5e82a…4652` bound |
-| Retained previous-source setup | `6ef7899d…cbe9`, `28918848` bytes, client source `b4c9117…9f0`; unsigned owner exception, not a candidate |
+| Active pre-candidate setup | `81268d7e…723c`, `28932687` bytes, exact client/Core `f500728…/a45d69e…`; unsigned owner exception, not a candidate |
+| Retained previous-resolver setup | `6ef7899d…cbe9`, `28918848` bytes, client source `b4c9117…9f0`; immutable superseded evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Portable ZIP | Unsupported for the service-first runtime |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
@@ -153,6 +154,34 @@ readback has no missing, size or digest mismatch. This is
 SCM/service/TUN/DNS/egress/recovery/uninstall and interactive SmartScreen proof
 remain `MANUAL_OWNER_TEST`.
 
+## 2026-08-29 Active Resolver-Corrected Setup
+
+Clean client `f500728ce1fef54a32573263999652383cd86ad2` packages the exact
+resolver-corrected Core `a45d69e40ed7d892619a2b5c4592a527f630665e`.
+Seed, cross-repository, observability, source-logging, release-handoff,
+repository-hygiene, presentation and performance contracts passed before the
+Windows release build. Analyze/tests reuse the exact clean `15/15` aggregate
+for this source tuple; they were not relabelled as a new run.
+
+| Evidence | Exact value |
+|---|---|
+| Setup | `pokrov-windows-x64-1.2.0+4046-setup.exe` |
+| Size | `28932687` bytes |
+| SHA-256 | `81268d7e6db144c2944bde4be359e188b42b0bbad427d4f5a438510d9523723c` |
+| Build manifest SHA-256 | `d2a7a9001280fee45af669a81d8e8aa753b246faef3818405494affc563d4805` |
+| Bundle tree SHA-256 | `26e2e63b0c6d89bfe6c0b7078aa38cf77a13c676af73b69fa51b6e5bc729fbf7` |
+| Core DLL | `55426048` bytes; `53b5e82a9c7bc20055c0889a1c8fabb5137f52ad09d38b23cf86477184474652` |
+| Required-file readback | `8/8 PASS`; zero missing, size or digest mismatch |
+| Signing | `SKIPPED_BY_OWNER`; setup, UI and service are Authenticode `NotSigned` |
+
+The retained external evidence SHA-256 is
+`6e33ca7781d5bb20020776aec79beccaf4f2ff7eb087b14a3b86b2bde95f2733`.
+The build host has no available Windows Sandbox/Hyper-V isolation, so the setup
+was not installed and the main host network was not mutated. This closes the
+active-source packaging gap only. Clean-host SCM/service/TUN/DNS/AWG/egress,
+recovery, connected uninstall and interactive SmartScreen remain
+`MANUAL_OWNER_TEST`.
+
 ## Safe Current Claims
 
 - The `1.2.0` source targets an unelevated UI and authenticated Windows service.
@@ -161,9 +190,10 @@ remain `MANUAL_OWNER_TEST`.
   preserve the AWG2/AWG3.1 contracts. The exact `a45d69e` Windows DLL is
   built twice byte-identically, exposes all 15 required symbols and passes 100
   proxy-only start/stop cycles without changing system routes.
-- Retained setup `6ef7899d…cbe9` packages the superseded `547f096` DLL and
-  retains the owner-approved unsigned-beta warning. It has not been installed or exercised
-  on a clean host. A replacement setup for `a45d69e` is still open.
+- Active setup `81268d7e…723c` packages exact client/Core
+  `f500728…/a45d69e…`, retains the owner-approved unsigned-beta warning and
+  passes its eight-file manifest readback. It has not been installed or
+  exercised on a clean host.
 - The earlier current-origin reverse-UDP block was isolated to wrong
   reply-source selection on the multi-addressed owned server. After guarded
   source-port policy routing and service-cycle readback, exact current-origin
