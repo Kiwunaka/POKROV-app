@@ -91,10 +91,11 @@
   },
   "safe_claims": [
     "The ordinary Windows UI uses the authenticated POKROVService runtime lane and does not load POKROV Core directly.",
-    "The local pre-candidate build bundles the exact POKROV Core 1.1.0 replacement bytes, its pinned libcronet.dll dependency, and pokrov_service.exe in one machine-wide installation directory.",
+    "The exact candidate.8 setup bundles the pinned POKROV Core 1.1.0 bytes, libcronet.dll dependency, and pokrov_service.exe in one machine-wide installation directory.",
     "The installer performs the one-time administrative SCM registration; the ordinary UI does not receive privileged file, path, or shell execution.",
     "The exact 1.2.0 owner exception permits an unsigned direct-download beta candidate only when its manifest records SKIPPED_BY_OWNER and the SmartScreen warning above; it does not permit a trusted, signed, Store or broad-stable claim.",
-    "Trusted signing accepts no PFX path or password: the private key remains in the selected Windows certificate store and only public certificate and timestamp evidence enters the manifest."
+    "Trusted signing accepts no PFX path or password: the private key remains in the selected Windows certificate store and only public certificate and timestamp evidence enters the manifest.",
+    "Candidate.8 passed owner-current-host install, exact 8-file readback, LocalSystem service, authenticated IPC, restart, uninstall, and unchanged idle route/DNS from a clean POKROV app-state baseline; this is not clean-VM or connected-network proof."
   ],
   "blocked_on": [
     "trusted Windows signing remains required before any trusted, signed, Store or broad-stable Windows claim",
