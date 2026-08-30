@@ -15,10 +15,10 @@ Older APK identities and device runs are retained separately as evidence.
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
 | Working package target | `1.2.0+4047` |
-| Exact replacement candidate | `pokrov-1.2.0-candidate.8`; signed manifest `f0006cec…906f`, detached signature `5fcae067…24f6`, promotion false |
+| Exact replacement candidate | `pokrov-1.2.0-candidate.11`; signed manifest `22ea88cb…a29f`, detached signature `c1a4c3ce…912c`, promotion unauthorized |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Exact candidate source | Client `3459438…f5c`, Core `a45d69e…665e`; ARM64 APK `9278c09f…572`, `101366934` bytes, and x86_64 APK `ec07ba17…2627`, `109952213` bytes, production-signed and byte-identical to their installed packages |
-| Active pre-candidate Core package | Secret-safe POKROV Core `1.1.0` from `cd8f0f4…884d`, AAR `2a9677d9…c6a69`; two builds are byte-identical and contain all four required ABIs. Exact candidate.8/10 retains the older immutable AAR. |
+| Exact candidate source | Platform `01cf5de…fb1`, client `348de30…40b`, Core `cd8f0f4…884d`, signed release-index source `8c314a1…0c1`; universal APK `706c546e…e1a`, `295370161` bytes, and x86_64 APK `60863b1f…78a`, `109951989` bytes |
+| Exact candidate Core package | Secret-safe POKROV Core `1.1.0` from `cd8f0f4…884d`, AAR `2a9677d9…c6a69`; two builds are byte-identical and contain all four required ABIs |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
@@ -39,8 +39,35 @@ AWG2/AWG 3.1 lifecycle coverage. Two Android builds are byte-identical: AAR
 size `107419397`, SHA-256
 `2a9677d9e24ed7ef66d4e98f90e7033eb5450c9a2755f0fe6b8bba58036c6a69`,
 with all four required ABIs. The bytes are synchronized into the client source.
-No 4047 APK, signature, LDPlayer run or physical-phone result exists yet; the
-phone was unavailable during this source/artifact slice.
+Candidate.11 carries these exact Core bytes. Its production-signed universal
+APK is installed byte-identically on LDPlayer; the physical-phone row remains
+open for these exact bytes.
+
+## Exact Candidate.11 LDPlayer Gate
+
+Candidate.11 is an immutable signed internal candidate with six artifacts and
+`promotion_authorized=false`. LDPlayer 9 `emulator-5554`, Android 9/API 28,
+installed the production-signed universal APK byte-identically at SHA-256
+`706c546e4d1f1d5a5f476a10f21bd178aff412ffbc163b4a3d0557b4c9655e1a`.
+This is exact emulator/current-origin evidence, not physical-device, OEM,
+RU-origin, store or stable proof.
+
+| Check | Candidate.11 result |
+|---|---|
+| Supply identity | `PASS_EXACT_INTERNAL_CANDIDATE` — signed manifest `22ea88cb…a29f`, signature `c1a4c3ce…912c`, receipt `f78e61b0…15aa`, exact four-source tuple and six artifacts; publication and promotion remain unauthorized |
+| AWG 3.1 fresh profile | `PASS_LDPLAYER_CURRENT_ORIGIN_FRESH_PROFILE` — the staged runtime contained exactly the `pokrov-awg31-lab` typed AWG endpoint, Android TUN established, mandatory Core egress changed from required to verified, the app finished the attempt as succeeded, and a 60-second address-free inner capture counted bidirectional TCP payload |
+| AWG2 compatibility control | `PASS_LDPLAYER_CURRENT_ORIGIN_FRESH_PROFILE` — the independently fetched `pokrov-awg2-lab` profile established TUN and verified Core egress; address-free inner capture counted `63` packets, `37` from client and `25` to client, including bidirectional TCP payload |
+| Ordinary Auto restore | `PASS_LDPLAYER_CURRENT_ORIGIN_FRESH_PROFILE` — after guarded `default` bind and cache separation, the non-AWG VLESS/selector profile established TUN and verified Core egress |
+| Runtime-profile identity | `PASS_MANUAL_SAFE_READBACK; SUCCESSOR_VERIFIER_IMPLEMENTED` — the test inspected only normalized route/endpoint types and booleans, never raw config, address or key material. A successor source verifier now exits nonzero when a cached default profile is presented as AWG |
+| Automatic-node quarantine interaction | `FAIL_EXACT_CANDIDATE_11` — after an ordinary Auto node entered the bounded quarantine set, a later owner-lab retry stopped before profile staging with `Не удалось найти доступную автоматическую локацию.` The candidate incorrectly applied ordinary Smart Connect exclusions to the AWG/HY2 lab envelope |
+| Final cleanup | `PASS_DEFAULT_OFF_CLEAN_RESTORE` — the exact device was rebound to `default`, AWG material and lab membership were absent, test-created private profile backups were removed, the UI was disconnected and Android reported no connected VPN |
+
+The clean AWG2/AWG3.1 passes remain valid for their exact attempts, but the
+quarantine interaction makes candidate.11 non-promotable. Successor source
+sets `smartConnect=null` for `awg2_lab`, `awg31_lab` and `hy2_lab`, and skips
+the Smart Connect resolver when no eligible profile exists. That correction
+passes the complete `app_first_runtime_bootstrap_test.dart` file (`86/86`) and
+`flutter analyze`; it requires a new candidate and exact runtime repeat.
 
 ## Exact Candidate.8 Gate
 

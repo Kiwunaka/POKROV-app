@@ -5497,6 +5497,12 @@ void main() {
                   'profile_revision': 'rev-${lab['profile']}',
                   'transport_profile': lab['profile'],
                   'config_format': 'singbox-json',
+                  'smart_connect': <String, Object?>{
+                    'eligible': true,
+                    'shortlist': <Object?>[
+                      <String, Object?>{'code': 'de-fra'},
+                    ],
+                  },
                   'config_payload': <String, Object?>{
                     '_meta': <String, Object?>{
                       'title': 'POKROV',
@@ -5561,7 +5567,7 @@ void main() {
       final payload = await bootstrapper.resolveManagedProfile(
         hostPlatform: HostPlatform.android,
         routeMode: RouteMode.fullTunnel,
-        preferredNodeCode: 'de-fra',
+        excludedNodeCodes: const <String>{'de-fra'},
       );
       final config = jsonDecode(payload.configPayload) as Map<String, dynamic>;
       final endpoint =
@@ -5579,6 +5585,7 @@ void main() {
       expect(contract['id'], lab['contract_id']);
       expect(contract['profile'], lab['profile']);
       expect(payload.resolvedNodeCode, isEmpty);
+      expect(payload.smartConnect, isNull);
       expect(route['final'], lab['tag']);
       expect(
         outbounds.every(
