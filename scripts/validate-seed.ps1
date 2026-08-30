@@ -449,7 +449,7 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
     $manifestErrors.Add("config\\runtime-artifacts.seed.json must use Kiwunaka/POKROV-core")
   }
 
-  if ($runtimeArtifacts.core.source_commit -ne "344b317a7a09eca7943a93866b193553538bd8f6") {
+  if ($runtimeArtifacts.core.source_commit -ne "a45d69e40ed7d892619a2b5c4592a527f630665e") {
     $manifestErrors.Add("config\\runtime-artifacts.seed.json must pin the exact POKROV Core source commit")
   }
   if ($runtimeArtifacts.core.sing_dependency -ne "v0.8.0-beta.12") {
@@ -464,27 +464,33 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   $artifactProvenance = $runtimeArtifacts.core.artifact_provenance
   if ($artifactProvenance.status -ne "clean_reproducible_pre_candidate_local" -or
       $artifactProvenance.vcs_stamp -ne "disabled_for_reproducible_release_artifacts" -or
-      $artifactProvenance.source_identity -ne "clean_git_commit_without_release_tag_or_publication" -or
+      $artifactProvenance.source_identity -ne "exact_single_source_commit_without_release_tag_or_publication" -or
       $null -ne $artifactProvenance.release_url -or
       $artifactProvenance.evidence_ceiling -ne "PRE_CANDIDATE_LOCAL" -or
       $artifactProvenance.candidate_created -ne $false -or
       $artifactProvenance.promotion_authorized -ne $false -or
-      [int64]$artifactProvenance.reproducible_build.android.size -ne 107388169 -or
-      $artifactProvenance.reproducible_build.android.sha256 -ne "da3ea37834b688abac5c276f4ca9c2cdcc8e32b97edf5062913fc4f3fea6aba9" -or
-      [int64]$artifactProvenance.reproducible_build.windows.size -ne 55401472 -or
-      $artifactProvenance.reproducible_build.windows.sha256 -ne "60fe3fad7835ec4d00c1f7168bb0ba01dd6b7ca5d883583340e5e2a86b8b3981" -or
+      $artifactProvenance.reproducible_build.android.result -ne "PASS_BYTE_IDENTICAL_TWO_BUILDS" -or
+      $artifactProvenance.reproducible_build.android.source_commit -ne "a45d69e40ed7d892619a2b5c4592a527f630665e" -or
+      [int64]$artifactProvenance.reproducible_build.android.size -ne 107425409 -or
+      $artifactProvenance.reproducible_build.android.sha256 -ne "ce82f54b073645fbd7ea0cc7ba576597456627cb5d0c7d80926afaa1dba154dd" -or
+      $artifactProvenance.reproducible_build.windows.result -ne "PASS_BYTE_IDENTICAL_TWO_BUILDS" -or
+      $artifactProvenance.reproducible_build.windows.source_commit -ne "a45d69e40ed7d892619a2b5c4592a527f630665e" -or
+      [int64]$artifactProvenance.reproducible_build.windows.size -ne 55426048 -or
+      $artifactProvenance.reproducible_build.windows.sha256 -ne "53b5e82a9c7bc20055c0889a1c8fabb5137f52ad09d38b23cf86477184474652" -or
       $artifactProvenance.reproducible_build.libcronet_sha256 -ne "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7" -or
-      $artifactProvenance.promotion_rule -ne "exact_bytes_require_candidate_signing_manual_gates_and_publication") {
-    $manifestErrors.Add("runtime artifact contract must pin the clean reproducible POKROV Core v1.1.0 pre-candidate build without claiming a tag or publication")
+      $artifactProvenance.promotion_rule -ne "exact_bytes_require_platform_source_convergence_candidate_signing_manual_gates_and_publication") {
+    $manifestErrors.Add("runtime artifact contract must pin the exact single-source POKROV Core v1.1.0 pre-candidate builds without claiming a tag or publication")
   }
   $artifactEvidence = $artifactProvenance.artifact_evidence
   if ($artifactEvidence.android.result -ne "PASS_BYTE_IDENTICAL_TWO_BUILDS" -or
-      $artifactEvidence.android.tree_sha256 -ne "38a855e8e59d72966964168ea87394a1d98a892eeeac1feec23a13987fc3550c" -or
-      $artifactEvidence.android.evidence_sha256 -ne "5bbb3ef7082da83abf5d9823765257af3edcc36d4b13dd12d5ab1bb4d12db575" -or
+      $artifactEvidence.android.source_commit -ne "a45d69e40ed7d892619a2b5c4592a527f630665e" -or
+      $artifactEvidence.android.tree_sha256 -ne "eba55421ca55c42185d9ae910bf3c8ec49e6efed05b2247548936fecc2928abe" -or
+      $artifactEvidence.android.evidence_sha256 -ne "369d8894d592c231684a3aa847cb2a612ebf4ab507e1a6011bfe050f0715b1d1" -or
       (@($artifactEvidence.android.abis) -join ',') -ne 'armeabi-v7a,arm64-v8a,x86,x86_64' -or
       $artifactEvidence.windows.result -ne "PASS_BYTE_IDENTICAL_TWO_BUILDS" -or
-      $artifactEvidence.windows.tree_sha256 -ne "e12123eb9d6c7bd83a3c95ac4f864583219c37d6b98dfd283fc6f4deda099516" -or
-      $artifactEvidence.windows.evidence_sha256 -ne "0a4eab998c3a28b61949c4e5739b7c21e6301cd0ccde0084c9a325dc742438a6" -or
+      $artifactEvidence.windows.source_commit -ne "a45d69e40ed7d892619a2b5c4592a527f630665e" -or
+      $artifactEvidence.windows.tree_sha256 -ne "f9d221b252396ea38d2a15272cdd1e26c0e59a09c6018235092d1f01c9281da5" -or
+      $artifactEvidence.windows.evidence_sha256 -ne "f9a3810fb6f795cd2fe493151a9fa52164feb4145761638c54005c870f24c7ae" -or
       [int]$artifactEvidence.windows.required_exports -ne 15 -or
       [int]$artifactEvidence.windows.proxy_only_start_stop_cycles -ne 100 -or
       $artifactEvidence.windows.proxy_only_result -ne "PASS_LOCAL") {
@@ -493,9 +499,9 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   $sbomEvidence = @($artifactEvidence.sbom)
   if ($sbomEvidence.Count -ne 2 -or
       $sbomEvidence[0].name -ne 'pokrov-core.cdx.json' -or
-      $sbomEvidence[0].sha256 -ne '8a3bc377285104a1cf9170e55fa25150a03e431582ef3f44d857d18241ec7a95' -or
+      $sbomEvidence[0].sha256 -ne '13910fb7d84170f785370d78f93588c4c9db0c6fd4007566f83fae63c013d451' -or
       $sbomEvidence[1].name -ne 'sing-box.cdx.json' -or
-      $sbomEvidence[1].sha256 -ne 'bc92db83e96ba285838a82a2887474ced36eece5b4a2f95aa0cdbb77764cec62') {
+      $sbomEvidence[1].sha256 -ne '127b185ad24218f5e8eb11a47388237698a3b77826160dbe725261632af06d2e') {
     $manifestErrors.Add("runtime artifact contract must bind both exact Core 1.1.0 SBOM identities")
   }
   $retainedCore = $runtimeArtifacts.core.retained_public_release
@@ -557,16 +563,20 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   $androidRuntime = $runtimeArtifacts.core.assets.android
   if ($androidRuntime.entry -ne "pokrov-core.aar" -or
       $androidRuntime.sync_policy -ne "exact_pre_candidate_build" -or
-      [int64]$androidRuntime.size -ne 107388169 -or
-      $androidRuntime.sha256 -ne "da3ea37834b688abac5c276f4ca9c2cdcc8e32b97edf5062913fc4f3fea6aba9") {
+      $androidRuntime.source_commit -ne "a45d69e40ed7d892619a2b5c4592a527f630665e" -or
+      [int64]$androidRuntime.size -ne 107425409 -or
+      $androidRuntime.sha256 -ne "ce82f54b073645fbd7ea0cc7ba576597456627cb5d0c7d80926afaa1dba154dd" -or
+      $androidRuntime.platform_state -ne "active_pre_candidate_local_security_fixed_physical_repeat_open") {
     $manifestErrors.Add("runtime artifact contract must pin the POKROV Core 1.1.0 Android AAR")
   }
 
   $windowsRuntime = $runtimeArtifacts.core.assets.windows
   if ($windowsRuntime.entry -ne "pokrov-core.dll" -or
       $windowsRuntime.sync_policy -ne "exact_pre_candidate_build" -or
-      [int64]$windowsRuntime.size -ne 55401472 -or
-      $windowsRuntime.sha256 -ne "60fe3fad7835ec4d00c1f7168bb0ba01dd6b7ca5d883583340e5e2a86b8b3981" -or
+      $windowsRuntime.source_commit -ne "a45d69e40ed7d892619a2b5c4592a527f630665e" -or
+      [int64]$windowsRuntime.size -ne 55426048 -or
+      $windowsRuntime.sha256 -ne "53b5e82a9c7bc20055c0889a1c8fabb5137f52ad09d38b23cf86477184474652" -or
+      $windowsRuntime.platform_state -ne "active_pre_candidate_local_security_fixed_reproducible_abi_proxy_recheck_passed" -or
       @($windowsRuntime.runtime_dependencies) -notcontains "libcronet.dll" -or
       [int64]$windowsRuntime.runtime_dependency_size.'libcronet.dll' -ne 8596992 -or
       $windowsRuntime.runtime_dependency_sha256.'libcronet.dll' -ne "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7") {

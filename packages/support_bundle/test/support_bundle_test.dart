@@ -444,6 +444,31 @@ void main() {
     expect(decoded.expired, isFalse);
   });
 
+  test('extended diagnostic code preserves a release-sized build number', () {
+    final code = SupportDiagnosticCode.encode(
+      diagnosticId: 'diag-abcd0123456789abcdef0123',
+      platform: 'android',
+      routeMode: 'all_except_ru',
+      connectionState: 'verified',
+      appVersion: '1.2.0+4046',
+      generatedAt: DateTime.utc(2026, 8, 28),
+    );
+    final decoded = SupportDiagnosticCode.decode(
+      code.toLowerCase(),
+      now: DateTime.utc(2026, 8, 28),
+    );
+
+    expect(code, startsWith('PSD2-'));
+    expect(code.length, 30);
+    expect(decoded.platform, 'android');
+    expect(decoded.routeMode, 'all_except_ru');
+    expect(decoded.connectionState, 'verified');
+    expect(decoded.appVersion, '1.2.0');
+    expect(decoded.buildNumber, 4046);
+    expect(decoded.diagnosticHashPrefix, 'abcd');
+    expect(decoded.expired, isFalse);
+  });
+
   test('support mode usage enforces cumulative bytes, count and hard expiry',
       () async {
     final signing = Ed25519();

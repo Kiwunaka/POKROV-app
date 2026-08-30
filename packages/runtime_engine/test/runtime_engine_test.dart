@@ -636,6 +636,156 @@ void main() {
     expect(stagedConfig, isNot(contains('_meta')));
   });
 
+  test('mobile lane accepts the bounded current Hysteria2 lab contract',
+      () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
+    Map<Object?, Object?>? stagedArguments;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.stageManagedProfile') {
+        stagedArguments = Map<Object?, Object?>.from(call.arguments as Map);
+        return <String, Object?>{
+          'phase': 'configStaged',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'message': 'staged',
+        };
+      }
+      return null;
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.android);
+    await engine.stageManagedProfile(
+      ManagedProfilePayload(
+        profileName: 'hy2-lab',
+        configPayload: jsonEncode(<String, Object?>{
+          'outbounds': <Object?>[
+            <String, Object?>{
+              'type': 'hysteria2',
+              'tag': 'pokrov-hy2-lab',
+              'server': 'hy2.example.invalid',
+              'server_port': 443,
+              'password': 'synthetic-password',
+              'up_mbps': 10,
+              'down_mbps': 50,
+              'obfs': <String, Object?>{
+                'type': 'salamander',
+                'password': 'synthetic-obfs-password',
+              },
+              'tls': <String, Object?>{
+                'enabled': true,
+                'server_name': 'hy2.example.invalid',
+                'insecure': false,
+                'alpn': <String>['h3'],
+              },
+            },
+          ],
+          'route': <String, Object?>{'final': 'pokrov-hy2-lab'},
+          '_meta': <String, Object?>{
+            'transport_contract': <String, Object?>{
+              'id': 'pokrov.hy2.outbound.v1',
+              'sha256':
+                  'c96b38e58ea33f838f23b80a65f3a9a264e932b7248f206798df9a0b8fa0fb98',
+              'profile': 'hy2_lab',
+              'state': 'enabled',
+              'generation': 'hy2-lab-v1',
+            },
+          },
+        }),
+        materializedForRuntime: true,
+      ),
+    );
+
+    final stagedConfig =
+        jsonDecode(stagedArguments?['configPayload']! as String)
+            as Map<String, dynamic>;
+    expect(
+      (stagedConfig['outbounds'] as List<dynamic>).single,
+      containsPair('type', 'hysteria2'),
+    );
+    expect(stagedConfig, isNot(contains('_meta')));
+  });
+
+  for (final rejectedCase in <Map<String, Object?>>[
+    <String, Object?>{'name': 'missing provenance'},
+    <String, Object?>{
+      'name': 'stale hash',
+      'contract_hash': List<String>.filled(64, '0').join(),
+    },
+    <String, Object?>{'name': 'insecure TLS', 'tls_insecure': true},
+    <String, Object?>{
+      'name': 'port hopping',
+      'server_ports': <String>['443', '8443'],
+    },
+  ]) {
+    test('mobile lane rejects Hysteria2 ${rejectedCase['name']}', () async {
+      const channel = MethodChannel('space.pokrov/runtime_engine');
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      var stageCalls = 0;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        if (call.method == 'runtimeEngine.stageManagedProfile') {
+          stageCalls += 1;
+        }
+        return null;
+      });
+      addTearDown(() {
+        messenger.setMockMethodCallHandler(channel, null);
+      });
+
+      final engine = createRuntimeEngine(hostPlatform: HostPlatform.android);
+      await expectLater(
+        engine.stageManagedProfile(
+          ManagedProfilePayload(
+            profileName: 'hy2-lab-rejected',
+            configPayload: jsonEncode(<String, Object?>{
+              'outbounds': <Object?>[
+                <String, Object?>{
+                  'type': 'hysteria2',
+                  'tag': 'pokrov-hy2-lab',
+                  'server': 'hy2.example.invalid',
+                  'server_port': 443,
+                  if (rejectedCase['server_ports'] != null)
+                    'server_ports': rejectedCase['server_ports'],
+                  'password': 'synthetic-password',
+                  'up_mbps': 10,
+                  'down_mbps': 50,
+                  'tls': <String, Object?>{
+                    'enabled': true,
+                    'server_name': 'hy2.example.invalid',
+                    'insecure': rejectedCase['tls_insecure'] ?? false,
+                    'alpn': <String>['h3'],
+                  },
+                },
+              ],
+              'route': <String, Object?>{'final': 'pokrov-hy2-lab'},
+              if (rejectedCase['name'] != 'missing provenance')
+                '_meta': <String, Object?>{
+                  'transport_contract': <String, Object?>{
+                    'id': 'pokrov.hy2.outbound.v1',
+                    'sha256': rejectedCase['contract_hash'] ??
+                        'c96b38e58ea33f838f23b80a65f3a9a264e932b7248f206798df9a0b8fa0fb98',
+                    'profile': 'hy2_lab',
+                    'state': 'enabled',
+                    'generation': 'hy2-lab-v1',
+                  },
+                },
+            }),
+            materializedForRuntime: true,
+          ),
+        ),
+        throwsA(isA<FormatException>()),
+      );
+      expect(stageCalls, 0);
+    });
+  }
+
   test('Android and Windows keep AWG2 inside existing outer route modes',
       () async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
@@ -978,6 +1128,8 @@ void main() {
             'default_network_index': 42,
             'dns_ready': true,
             'core_egress_validated': false,
+            'safe_protocol_diagnostic_code': 'egress_probe_tls_certificate',
+            'safe_protocol_diagnostic_occurrence': 1,
             'ipv4_route_count': 3,
             'ipv6_route_count': 1,
           };
@@ -1002,6 +1154,8 @@ void main() {
     expect(snapshot.ipv4RouteCount, 3);
     expect(snapshot.ipv6RouteCount, 1);
     expect(snapshot.lastFailureKind, isNull);
+    expect(snapshot.safeProtocolDiagnosticCode, 'egress_probe_tls_certificate');
+    expect(snapshot.safeProtocolDiagnosticOccurrence, 1);
     expect(snapshot.hasDegradedHostDiagnostics, isTrue);
     expect(snapshot.isCleanlyHealthy, isFalse);
     expect(snapshot.phaseLabel, 'Подключено с предупреждением');

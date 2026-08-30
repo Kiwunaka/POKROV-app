@@ -96,6 +96,32 @@ void main() {
     );
   });
 
+  test('bounded AWG category appears only in the diagnostics evidence list',
+      () {
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.allExceptRu,
+      snapshot: _snapshot(
+        safeProtocolDiagnosticCode: 'handshake_retry',
+        safeProtocolDiagnosticOccurrence: 3,
+      ),
+      statusLabel: 'Проверяется',
+      warpState: 'disabled',
+      now: now,
+      appVersion: '1.2.0',
+      buildNumber: '4046',
+      releaseChannel: 'direct',
+      candidateLabel: 'pokrov-1.2.0-test',
+      encryptedDeliveryAvailable: true,
+    );
+
+    final protocol =
+        report.evidence.singleWhere((item) => item.key == 'protocol');
+    expect(protocol.label, 'AWG · handshake_retry · #3');
+    expect(protocol.state, PokrovDiagnosticEvidenceState.pending);
+    expect(report.summaryKey, PokrovDiagnosticMessageKey.verified);
+  });
+
   test('summary package preview remains bounded and category-only', () {
     final report = PokrovDiagnosticsPresenter.fromRuntime(
       hostPlatform: HostPlatform.android,
@@ -300,6 +326,50 @@ void main() {
     );
   });
 
+  testWidgets('screen shows same-build bands without exact cohort numbers',
+      (tester) async {
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.allExceptRu,
+      snapshot: _snapshot(),
+      statusLabel: 'Защищено',
+      warpState: 'disabled',
+      now: now,
+      checkedAtUtc: now,
+      appVersion: '1.2.0',
+      buildNumber: '4046',
+      releaseChannel: 'local',
+      candidateLabel: 'pokrov-1.2.0-local',
+      encryptedDeliveryAvailable: false,
+      releaseHealthBaseline: _availableBaseline(),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PokrovDiagnosticsScreen(
+          initialReport: report,
+          onRefresh: () async => report,
+          onOpenProtection: () {},
+          onOpenSupport: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('diagnostics-release-health-baseline')),
+      findsOneWidget,
+    );
+    final summary = tester.widget<Text>(
+      find.byKey(
+        const ValueKey('diagnostics-release-health-baseline-summary'),
+      ),
+    );
+    expect(summary.data, contains('этой же сборки'));
+    expect(summary.data, contains('Точные проценты'));
+    expect(summary.data, isNot(contains('%')));
+    expect(summary.data, isNot(contains('устройств:')));
+  });
+
   testWidgets('encrypted export cancellation never claims a file was saved',
       (tester) async {
     final report = PokrovDiagnosticsPresenter.fromRuntime(
@@ -357,6 +427,62 @@ void main() {
   });
 }
 
+ClientReleaseHealthBaseline _availableBaseline() {
+  final build = OperationalBuildIdentity(
+    appVersion: '1.2.0',
+    buildNumber: '4046',
+    channel: 'local',
+    candidateLabel: 'pokrov-1.2.0-local',
+    gitRevision: '0123456789abcdef0123456789abcdef01234567',
+    coreVersion: null,
+    coreAbi: null,
+    platform: 'android',
+    architecture: 'arm64-v8a',
+  );
+  return ClientReleaseHealthBaseline.parse(
+    <String, Object?>{
+      'schema_version': 1,
+      'state': 'available',
+      'scope': <String, Object?>{
+        'app_version': build.appVersion,
+        'build_number': build.buildNumber,
+        'channel': build.channel,
+        'candidate_label': build.candidateLabel,
+        'git_revision': build.gitRevision,
+        'core_abi': build.coreAbi,
+        'platform': build.platform,
+        'architecture': build.architecture,
+      },
+      'window': <String, Object?>{
+        'kind': 'utc_week',
+        'started_at': '2026-08-24T00:00:00Z',
+        'ends_at': '2026-08-31T00:00:00Z',
+      },
+      'privacy': <String, Object?>{
+        'minimum_contributors': 10,
+        'minimum_satisfied': true,
+        'contribution_cap_per_window': 64,
+      },
+      'baseline': <String, Object?>{
+        'overall': <String, Object?>{
+          'state': 'available',
+          'sample_band': '30_to_99',
+          'failure_rate_band': 'below_1_percent',
+        },
+        'families': <String, Object?>{
+          for (final family in <String>['crash', 'connect', 'update'])
+            family: <String, Object?>{
+              'state': 'available',
+              'sample_band': '30_to_99',
+              'failure_rate_band': 'below_1_percent',
+            },
+        },
+      },
+    },
+    expectedBuild: build,
+  );
+}
+
 OperationalBreadcrumb _breadcrumb({
   required String name,
   required int generation,
@@ -381,6 +507,8 @@ RuntimeSnapshot _snapshot({
   bool? dnsReady = true,
   bool? coreEgressValidated = true,
   String? hostDiagnosticsSummary,
+  String? safeProtocolDiagnosticCode,
+  int? safeProtocolDiagnosticOccurrence,
 }) =>
     RuntimeSnapshot(
       hostPlatform: HostPlatform.android,
@@ -401,4 +529,6 @@ RuntimeSnapshot _snapshot({
       dnsReady: dnsReady,
       coreEgressValidated: coreEgressValidated,
       coreEgressValidationRequired: true,
+      safeProtocolDiagnosticCode: safeProtocolDiagnosticCode,
+      safeProtocolDiagnosticOccurrence: safeProtocolDiagnosticOccurrence,
     );

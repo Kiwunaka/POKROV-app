@@ -121,6 +121,25 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     AndroidOperationalOutcome.START_REQUESTED,
                 )
                 serviceCommandGeneration.incrementAndGet()
+                try {
+                    // Context.startForegroundService() requires every start path,
+                    // including a fail-closed stale-profile path, to promote the
+                    // service before it may stop itself.
+                    beginForegroundRuntime()
+                } catch (_: Throwable) {
+                    AndroidOperationalJournal.record(
+                        AndroidOperationalEvent.VPN_SERVICE,
+                        AndroidOperationalOutcome.FAILED,
+                    )
+                    AndroidRuntimeState.markFailure(
+                        kind = "foreground_start_failed",
+                        message = AndroidRuntimeSafety.publicFailureMessage(
+                            "foreground_start_failed",
+                        ),
+                    )
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
                 val configPath = intent.getStringExtra(EXTRA_CONFIG_PATH)
                 val routeMode = intent.getStringExtra(EXTRA_ROUTE_MODE).orEmpty()
                 val tileGeneration = intent.getLongExtra(
@@ -153,7 +172,6 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     try {
                         markServiceStarting()
                         AndroidRuntimeState.markConnectionPending()
-                        beginForegroundRuntime()
                         runtimeExecutor.execute {
                             startRuntime(configPath, tileGeneration, routeMode)
                         }
@@ -310,8 +328,9 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             }
             val runtimeConfig = JSONObject(rawContent).apply { remove("_meta") }
             // This app package is excluded from its own VpnService TUN below.
-            // Keep Core interface auto-detection off: on Android it can select
-            // the VPN interface and loop the uplink back into the TUN.
+            // Keep Core interface auto-detection off: AWG requests platform
+            // socket protection directly, while ordinary transports must not
+            // select the VPN interface and loop back into the TUN.
             val route = runtimeConfig.optJSONObject("route") ?: JSONObject().also {
                 runtimeConfig.put("route", it)
             }
@@ -672,8 +691,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     }
 
     private fun updateRuntimeNotification() {
+        val runtimeSnapshot = AndroidRuntimeState.snapshot()
         val content = androidRuntimeNotificationContent(
-            AndroidRuntimeNotificationState.CONNECTED,
+            androidRuntimeNotificationStateForEgress(
+                validationRequired = activeCoreEgressProbeRequired,
+                validated = runtimeSnapshot["core_egress_validated"] as? Boolean,
+            ),
         )
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(
@@ -703,7 +726,19 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     }
 
     override fun autoDetectInterfaceControl(fd: Int) {
-        protect(fd)
+        val protected = protect(fd)
+        AndroidOperationalJournal.record(
+            AndroidOperationalEvent.UPLINK_SOCKET,
+            if (protected) {
+                AndroidOperationalOutcome.GRANTED
+            } else {
+                AndroidOperationalOutcome.DENIED
+            },
+            activeRuntimeSession?.generation,
+        )
+        if (!protected) {
+            error("android: failed to protect uplink socket")
+        }
     }
 
     override fun clearDNSCache() {
@@ -959,15 +994,6 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         )
         activeTileStartGeneration = null
         scheduleCoreEgressProbe(session, tunGeneration)
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(
-            NOTIFICATION_ID,
-            buildNotification(
-                androidRuntimeNotificationContent(
-                    AndroidRuntimeNotificationState.CONNECTED,
-                ),
-            ),
-        )
         return tun.fd
     }
 
@@ -978,9 +1004,15 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         val content = activeConfigContent ?: return
         val variantConfigContent = activeVariantConfigContent
         AndroidRuntimeState.updateCoreEgressValidation(null)
+        updateRuntimeNotification()
         if (!activeCoreEgressProbeRequired) {
             return
         }
+        AndroidOperationalJournal.record(
+            AndroidOperationalEvent.CORE_EGRESS_PROBE,
+            AndroidOperationalOutcome.REQUIRED,
+            generation,
+        )
         val target = AndroidCoreEgressProbe.finalTarget(content)
         if (target == null) {
             handleCoreEgressProbeResult(
@@ -1001,6 +1033,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 handleCoreEgressProbeResult(
                     probeResult = AndroidCoreEgressProbeResult.TIMED_OUT,
                     generation = generation,
+                    keepRuntimeOnFailure = target.keepRuntimeOnFailure,
                 )
             }
         }
@@ -1046,7 +1079,11 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                         ownsRuntimeSession(session) && healthGeneration.get() == generation
                     },
                 ) {
-                    handleCoreEgressProbeResult(probeResult = result, generation = generation)
+                    handleCoreEgressProbeResult(
+                        probeResult = result,
+                        generation = generation,
+                        keepRuntimeOnFailure = target.keepRuntimeOnFailure,
+                    )
                 }
             } catch (_: InterruptedException) {
                 Thread.currentThread().interrupt()
@@ -1061,6 +1098,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     handleCoreEgressProbeResult(
                         probeResult = AndroidCoreEgressProbeResult.UNAVAILABLE,
                         generation = generation,
+                        keepRuntimeOnFailure = target.keepRuntimeOnFailure,
                     )
                 }
             } finally {
@@ -1077,6 +1115,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 handleCoreEgressProbeResult(
                     probeResult = AndroidCoreEgressProbeResult.UNAVAILABLE,
                     generation = generation,
+                    keepRuntimeOnFailure = target.keepRuntimeOnFailure,
                 )
             }
         }
@@ -1107,11 +1146,40 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     private fun handleCoreEgressProbeResult(
         probeResult: AndroidCoreEgressProbeResult,
         generation: Long,
+        keepRuntimeOnFailure: Boolean = false,
     ) {
         if (!lifecycleActive.get()) {
             return
         }
         val activeGeneration = healthGeneration.get()
+        if (generation != activeGeneration || activeTun == null) {
+            return
+        }
+        AndroidOperationalJournal.record(
+            AndroidOperationalEvent.CORE_EGRESS_PROBE,
+            when (probeResult) {
+                AndroidCoreEgressProbeResult.HEALTHY -> AndroidOperationalOutcome.VERIFIED
+                AndroidCoreEgressProbeResult.FAILED -> AndroidOperationalOutcome.FAILED
+                AndroidCoreEgressProbeResult.UNAVAILABLE,
+                AndroidCoreEgressProbeResult.TIMED_OUT,
+                -> AndroidOperationalOutcome.STALLED
+            },
+            generation,
+        )
+        if (keepRuntimeOnFailure && probeResult != AndroidCoreEgressProbeResult.HEALTHY) {
+            val failureKind = if (probeResult == AndroidCoreEgressProbeResult.FAILED) {
+                "core_egress_probe_failed"
+            } else {
+                "core_egress_probe_unavailable"
+            }
+            AndroidRuntimeState.updateCoreEgressValidation(false)
+            AndroidRuntimeState.markDegraded(
+                failureKind = failureKind,
+                message = AndroidRuntimeSafety.publicFailureMessage(failureKind),
+            )
+            updateRuntimeNotification()
+            return
+        }
         if (!AndroidCoreEgressFailClosedPolicy.shouldStopRuntime(
                 probeResult = probeResult,
                 probeGeneration = generation,
@@ -1123,6 +1191,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 AndroidRuntimeState.updateCoreEgressValidation(
                     probeResult == AndroidCoreEgressProbeResult.HEALTHY,
                 )
+                updateRuntimeNotification()
             }
             return
         }
@@ -1264,9 +1333,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
     }
 
-    override fun writeDebugMessage(_message: String) {
-        // Release operation discards arbitrary upstream lines. Contract-owned
-        // lifecycle and egress results arrive through OperationalEventHandler.
+    override fun writeDebugMessage(message: String) {
+        // Release operation discards arbitrary upstream lines. The sole
+        // exception is Core's bounded, closed AWG diagnostic contract, which
+        // is parsed again here before entering the safe runtime snapshot.
+        val diagnostic = AndroidRuntimeLogClassifier.parseAwgSafeDiagnostic(message) ?: return
+        AndroidRuntimeState.recordAwgSafeDiagnostic(diagnostic)
     }
 
     private fun consumeStrings(iterator: StringIterator?, block: (String) -> Unit) {

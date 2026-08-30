@@ -1345,6 +1345,16 @@ $androidGradle = [IO.File]::ReadAllText((Join-Path $root 'apps\android_shell\and
 $androidProductionBuild = [IO.File]::ReadAllText((Join-Path $root 'scripts\build-android-production.ps1'))
 $windowsProductionBuild = [IO.File]::ReadAllText((Join-Path $root 'scripts\build-windows-release.ps1'))
 $workspaceTests = [IO.File]::ReadAllText((Join-Path $root 'scripts\run-tests.ps1'))
+$androidPubspec = [IO.File]::ReadAllText((Join-Path $root 'apps\android_shell\pubspec.yaml'))
+$androidVersionMatch = [regex]::Match($androidPubspec, '(?m)^version:\s*([^+\s]+)\+(\d+)\s*$')
+if (-not $androidVersionMatch.Success) {
+  $errors += 'Android pubspec lacks a parseable product+build version'
+}
+$androidPackageVersion = if ($androidVersionMatch.Success) {
+  '{0}+{1}' -f $androidVersionMatch.Groups[1].Value, $androidVersionMatch.Groups[2].Value
+} else {
+  '<invalid-android-version>'
+}
 
 if ([int]$supportSigning.schema_version -ne 1 -or
     $supportSigning.algorithm -ne 'Ed25519' -or
@@ -1375,12 +1385,13 @@ if ($product.client_version_line -ne $release.latest_repo_backed_release.version
   $errors += 'Product and release version lines disagree'
 }
 $developmentTarget = $release.release_truth.development_target
-if ($developmentTarget.product_version -ne '1.2.0' -or
-    [int]$developmentTarget.platform_build -ne 30 -or
-    $developmentTarget.package_version -ne '1.2.0+30' -or
+if (-not $androidVersionMatch.Success -or
+    $developmentTarget.product_version -ne $androidVersionMatch.Groups[1].Value -or
+    [int]$developmentTarget.platform_build -ne [int]$androidVersionMatch.Groups[2].Value -or
+    $developmentTarget.package_version -ne $androidPackageVersion -or
     $developmentTarget.state -ne 'PRE_CANDIDATE_LOCAL' -or
     $developmentTarget.candidate_created -ne $false) {
-  $errors += 'Release handoff development target must remain exact uncreated 1.2.0+30 pre-candidate truth'
+  $errors += 'Release handoff development target must match Android pubspec and remain exact uncreated pre-candidate truth'
 }
 if ($cutover.latest_repo_backed_release.github_release -ne $release.latest_repo_backed_release.github_release) {
   $errors += 'Cutover and release-handoff URLs disagree'
@@ -1695,7 +1706,7 @@ foreach ($relativePath in $readinessSnapshots) {
   }
 }
 
-foreach ($currentFact in @('`1.1.6`', '`1.2.0+30`', '`PRE_CANDIDATE_LOCAL`', '| Candidate created | `false` |')) {
+foreach ($currentFact in @('`1.1.6`', "``$androidPackageVersion``", '`PRE_CANDIDATE_LOCAL`', '| Candidate created | `false` |')) {
   if (-not $backlog.Contains($currentFact)) {
     $errors += "Client backlog lacks current release fact: $currentFact"
   }

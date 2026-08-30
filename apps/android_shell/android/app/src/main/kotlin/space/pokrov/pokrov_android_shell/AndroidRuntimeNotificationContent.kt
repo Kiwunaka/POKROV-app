@@ -12,6 +12,16 @@ internal data class AndroidRuntimeNotificationContent(
     val text: String,
 )
 
+internal fun androidRuntimeNotificationStateForEgress(
+    validationRequired: Boolean,
+    validated: Boolean?,
+): AndroidRuntimeNotificationState = when {
+    !validationRequired -> AndroidRuntimeNotificationState.CONNECTED
+    validated == true -> AndroidRuntimeNotificationState.CONNECTED
+    validated == false -> AndroidRuntimeNotificationState.FAILED
+    else -> AndroidRuntimeNotificationState.CONNECTING
+}
+
 internal fun androidRuntimeNotificationContent(
     state: AndroidRuntimeNotificationState,
 ): AndroidRuntimeNotificationContent = AndroidRuntimeNotificationContent(

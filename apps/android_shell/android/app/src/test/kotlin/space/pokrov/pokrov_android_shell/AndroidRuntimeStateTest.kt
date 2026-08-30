@@ -70,6 +70,30 @@ class AndroidRuntimeStateTest {
     }
 
     @Test
+    fun safeAwgDiagnosticIsSnapshotOnlyAndClearsForTheNextAttempt() {
+        AndroidRuntimeState.recordAwgSafeDiagnostic(
+            AndroidAwgSafeDiagnostic("handshake_retry", 3),
+        )
+        AndroidRuntimeState.recordAwgSafeDiagnostic(
+            AndroidAwgSafeDiagnostic("egress_probe_tls_certificate", 1),
+        )
+        AndroidRuntimeState.recordAwgSafeDiagnostic(
+            AndroidAwgSafeDiagnostic("receive_handshake_response", 4),
+        )
+
+        var snapshot = AndroidRuntimeState.snapshot()
+        assertEquals("egress_probe_tls_certificate", snapshot["safe_protocol_diagnostic_code"])
+        assertEquals(1, snapshot["safe_protocol_diagnostic_occurrence"])
+        assertEquals("unknown", snapshot["hostHealth"])
+        assertNull(snapshot["last_failure_kind"])
+
+        AndroidRuntimeState.markConnectionRequested()
+        snapshot = AndroidRuntimeState.snapshot()
+        assertNull(snapshot["safe_protocol_diagnostic_code"])
+        assertNull(snapshot["safe_protocol_diagnostic_occurrence"])
+    }
+
+    @Test
     fun markStopped_preservesSpecificFailureMessage_afterFailedStart() {
         setPrivateField(
             "environment",
@@ -392,6 +416,38 @@ class AndroidRuntimeStateTest {
     }
 
     @Test
+    fun reconcileActiveRuntime_demotesStaleRunningSnapshotWithoutTun() {
+        setPrivateField(
+            "environment",
+            AndroidRuntimeEnvironment(
+                artifactDirectory = "artifacts",
+                coreBinaryPath = "libpokrov-core.so",
+                baseDirectory = File("build/test/base"),
+                workingDirectory = File("build/test/working"),
+                tempDirectory = File("build/test/temp"),
+                configDirectory = File("build/test/config"),
+            ),
+        )
+        setPrivateField("phase", AndroidRuntimePhase.RUNNING)
+        setPrivateField("stagedConfigPath", "/tmp/pokrov-runtime.json")
+        setPrivateField("runningSince", "2026-08-28T12:00:00Z")
+        setPrivateField("vpnValidated", true)
+        setPrivateField("coreEgressValidated", true)
+
+        AndroidRuntimeState.reconcileActiveRuntime(
+            tunEstablished = false,
+            runningMessage = "POKROV включен на этом устройстве.",
+        )
+        val snapshot = AndroidRuntimeState.snapshot()
+
+        assertEquals("configStaged", snapshot["phase"])
+        assertEquals("service_destroyed", snapshot["last_stop_reason"])
+        assertEquals(null, snapshot["core_egress_validated"])
+        assertEquals("POKROV отключен на этом устройстве.", snapshot["message"])
+        assertEquals(false, AndroidRuntimeState.liveStats()["available"])
+    }
+
+    @Test
     fun pendingConnection_remainsObservableUntilRuntimeResolvesIt() {
         setPrivateField(
             "environment",
@@ -619,6 +675,8 @@ class AndroidRuntimeStateTest {
         setPrivateField("coreEgressValidated", null)
         setPrivateField("lastFailureKind", null)
         setPrivateField("lastStopReason", null)
+        setPrivateField("awgSafeDiagnosticCode", null)
+        setPrivateField("awgSafeDiagnosticOccurrence", null)
         setPrivateField("ipv4RouteCount", 0)
         setPrivateField("ipv6RouteCount", 0)
         setPrivateField("includePackageCount", 0)

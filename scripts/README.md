@@ -64,19 +64,22 @@ This folder contains non-destructive client helpers.
   subject, EKU, validity, trusted-chain and SignTool checks before any build or
   signing and emits only a public receipt with `artifacts_signed=false` and
   `candidate_created=false`.
-- `test-windows-exact-candidate.ps1` hash-binds the private candidate.3 Windows
-  installer to `config/windows-clean-host-gate.candidate-3.json`, its signed
-  manifest/signature identities, and the exact four-repository source tuple.
-  Validation mode is non-mutating. The manual `Windows Exact Candidate Clean Host`
-  workflow downloads the same byte from a prerelease inside the private
-  repository, requires a fresh GitHub-hosted Windows runner, then checks
-  install/service identity,
-  authenticated UI-to-service IPC, service restart, clean uninstall, and idle
-  route/DNS restoration. Its sanitized evidence explicitly leaves live TUN,
+- `test-windows-exact-candidate.ps1` hash-binds the retained private
+  candidate.3 and current candidate.8 Windows installers to their separate
+  reviewed inputs, signed manifest/signature identities, exact four-repository
+  source tuples and eight installed-file identities. Validation mode is
+  non-mutating. The manual `Windows Exact Candidate Clean Host` workflow keeps
+  candidate.3 pinned to its private prerelease and fresh GitHub-hosted Windows
+  runner. Candidate.8 additionally permits only the explicit owner-authorized
+  current-host mode with an exact confirmation token; that mode labels its
+  baseline `clean_app_state_only_not_clean_os_or_vm` and cannot emit a clean-VM
+  claim. Both smoke modes check install/service identity, authenticated
+  UI-to-service IPC, service restart, clean uninstall, and idle
+  route/DNS restoration. Sanitized evidence explicitly leaves live TUN,
   DNS capture, egress, recovery, connected uninstall, and SmartScreen as
   `MANUAL_OWNER_TEST`. A failure retains only bounded SCM codes, owner-match
   booleans, event names/outcomes, and SCM event IDs; raw SID and event-message
-content are never exported.
+  content are never exported.
 - `build-windows-release.ps1` configures the machine-wide service from checked
   Inno code. Every create/config/description/recovery/start command must return
   zero; a newly created partial service is deleted before the installer aborts.

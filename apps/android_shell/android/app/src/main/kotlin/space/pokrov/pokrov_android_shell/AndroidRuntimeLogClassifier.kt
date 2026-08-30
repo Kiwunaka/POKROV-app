@@ -2,6 +2,30 @@ package space.pokrov.pokrov_android_shell
 
 /** Maps sensitive native runtime messages to a fixed, non-sensitive category. */
 internal object AndroidRuntimeLogClassifier {
+    fun parseAwgSafeDiagnostic(message: String): AndroidAwgSafeDiagnostic? {
+        val match = AWG_SAFE_DIAGNOSTIC_PATTERN.matchEntire(message) ?: return null
+        val code = match.groupValues[1]
+        if (code !in AWG_SAFE_DIAGNOSTIC_CODES) {
+            return null
+        }
+        return AndroidAwgSafeDiagnostic(
+            code = code,
+            occurrence = match.groupValues[2].toInt(),
+        )
+    }
+
+    fun parseAwgEgressProbeDiagnostic(message: String): AndroidAwgSafeDiagnostic? {
+        val match = AWG_EGRESS_PROBE_PATTERN.matchEntire(message) ?: return null
+        val category = match.groupValues[1]
+        if (category !in AWG_EGRESS_PROBE_CATEGORIES) {
+            return null
+        }
+        return AndroidAwgSafeDiagnostic(
+            code = "egress_probe_$category",
+            occurrence = 1,
+        )
+    }
+
     fun classify(message: String): String? {
         val normalized = message.lowercase()
         return when {
@@ -119,6 +143,60 @@ internal object AndroidRuntimeLogClassifier {
             "invalid" in message ||
             "reset" in message ||
             "eof" in message
+
+    private val AWG_SAFE_DIAGNOSTIC_PATTERN =
+        Regex("awg_safe_diag code=([a-z_]+) occurrence=([1-4])")
+    private val AWG_EGRESS_PROBE_PATTERN =
+        Regex("selected endpoint URL test failed category=([a-z_]+)")
+
+    private val AWG_SAFE_DIAGNOSTIC_CODES = setOf(
+        "receive_unknown_type",
+        "receive_invalid_mac1",
+        "receive_invalid_response",
+        "receive_decode_response",
+        "receive_handshake_response",
+        "send_handshake_initiation",
+        "handshake_give_up",
+        "handshake_retry",
+        "receive_error",
+        "send_handshake_error",
+        "upstream_error",
+    )
+
+    private val AWG_EGRESS_PROBE_CATEGORIES = setOf(
+        "dns_lookup",
+        "tls_certificate",
+        "reality_handshake",
+        "authentication_rejected",
+        "http_rejected",
+        "connection_refused",
+        "connection_reset",
+        "network_unreachable",
+        "io_timeout",
+        "deadline_exceeded",
+        "context_canceled",
+        "transport_failure",
+        "endpoint_initialization_dns_lookup",
+        "endpoint_initialization_tls_certificate",
+        "endpoint_initialization_reality_handshake",
+        "endpoint_initialization_authentication_rejected",
+        "endpoint_initialization_http_rejected",
+        "endpoint_initialization_connection_refused",
+        "endpoint_initialization_connection_reset",
+        "endpoint_initialization_network_unreachable",
+        "endpoint_initialization_io_timeout",
+        "endpoint_initialization_deadline_exceeded",
+        "endpoint_initialization_context_canceled",
+        "endpoint_initialization_transport_failure",
+        "endpoint_initialization_timeout",
+    )
+}
+
+internal data class AndroidAwgSafeDiagnostic(
+    val code: String,
+    val occurrence: Int,
+) {
+    fun canonicalMessage(): String = "awg_safe_diag code=$code occurrence=$occurrence"
 }
 
 internal data class AndroidRuntimeLogEvent(

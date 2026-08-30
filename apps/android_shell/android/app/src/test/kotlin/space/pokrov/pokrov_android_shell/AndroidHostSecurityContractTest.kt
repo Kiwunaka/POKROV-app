@@ -163,7 +163,22 @@ class AndroidHostSecurityContractTest {
 
         assertTrue(serviceSource.contains("route.put(\"auto_detect_interface\", false)"))
         assertTrue(serviceSource.contains("override fun autoDetectInterfaceControl(fd: Int)"))
-        assertTrue(serviceSource.contains("protect(fd)"))
+        assertTrue(serviceSource.contains("val protected = protect(fd)"))
+        assertTrue(serviceSource.contains("AndroidOperationalEvent.UPLINK_SOCKET"))
+    }
+
+    @Test
+    fun androidRuntimeDiscardsArbitraryNativeDebugLinesAndEmitsOnlySafeAwgCodes() {
+        val serviceSource = source("PokrovRuntimeVpnService.kt")
+
+        assertTrue(serviceSource.contains("override fun writeDebugMessage(message: String)"))
+        assertTrue(serviceSource.contains("parseAwgSafeDiagnostic(message) ?: return"))
+        assertTrue(serviceSource.contains("AndroidRuntimeState.recordAwgSafeDiagnostic(diagnostic)"))
+        val probeSource = source("AndroidCoreEgressProbe.kt")
+        assertTrue(probeSource.contains("parseAwgEgressProbeDiagnostic("))
+        assertTrue(probeSource.contains("captureSafeFailureCategory"))
+        assertFalse(serviceSource.contains("android.util.Log"))
+        assertFalse(serviceSource.contains("Log."))
     }
 
     @Test
@@ -326,6 +341,16 @@ class AndroidHostSecurityContractTest {
         assertTrue(serviceSource.contains("ownsRuntimeSession(session)"))
         assertTrue(serviceSource.contains("AndroidRuntimeDispatchPolicy.dispatch("))
         assertTrue(serviceSource.contains("healthGeneration.get() == generation"))
+
+        val probeStart = serviceSource.indexOf("private fun scheduleCoreEgressProbe(")
+        val requiredEvent = serviceSource.indexOf(
+            "AndroidOperationalOutcome.REQUIRED,\n            generation,",
+            probeStart,
+        )
+        val probeResult = serviceSource.indexOf("private fun handleCoreEgressProbeResult(")
+        assertTrue(probeStart >= 0)
+        assertTrue(requiredEvent > probeStart)
+        assertTrue(probeResult > requiredEvent)
     }
 
     @Test
@@ -363,6 +388,13 @@ class AndroidHostSecurityContractTest {
         val preferencesSource = source("AndroidSystemSurfacePreferences.kt")
 
         assertTrue(serviceSource.contains("Notification.VISIBILITY_PRIVATE"))
+
+        val startAction = serviceSource.indexOf("ACTION_START ->")
+        val foregroundStart = serviceSource.indexOf("beginForegroundRuntime()", startAction)
+        val missingConfigGuard = serviceSource.indexOf("if (configPath.isNullOrBlank())", startAction)
+        assertTrue(startAction >= 0)
+        assertTrue(foregroundStart > startAction)
+        assertTrue(missingConfigGuard > foregroundStart)
         assertTrue(serviceSource.contains("NotificationCompat.VISIBILITY_PRIVATE"))
         assertFalse(serviceSource.contains("VISIBILITY_PUBLIC"))
         assertFalse(serviceSource.contains("TrafficStats"))

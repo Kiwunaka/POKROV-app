@@ -1,12 +1,12 @@
 # WARP Runtime Proof Checklist
 
-Last updated: 2026-08-22
+Last updated: 2026-08-29
 
 Registry class: `ACTIVE_EXECUTION`.
 
-This is the current client evidence gate for WARP on the POKROV `1.2.0+30`
-`PRE_CANDIDATE_LOCAL` Android/Windows line. Older device or runtime passes are
-supporting evidence only and cannot close the exact-candidate gate.
+This is the current client evidence gate for WARP on signed
+`pokrov-1.2.0-candidate.8`, app `1.2.0+4046`. Older device or runtime passes
+are supporting evidence only and cannot close the exact-candidate gate.
 
 The client UI may use the owner-approved labels `WARP`,
 `Расширенная защита`, or `Расширенная приватность`. Public copy must not claim
@@ -54,7 +54,11 @@ passes for exact promoted bytes.
 6. Revoke consent, reconnect and prove the local enabled state is cleared.
 7. Inspect support diagnostics and retained media for the redaction rules.
 
-Current status: `MANUAL_OWNER_TEST` for exact `1.2.0` candidate bytes.
+Current status:
+`PASS_EXACT_CANDIDATE_FALLBACK_PATH; ACTIVE_WARP_TRAFFIC_NOT_PROVEN` on one
+physical Android device. The defined fallback path, baseline usability,
+handoff/lifecycle, revoke and redaction steps passed; this is not an active
+WARP-carriage claim or broad release approval.
 
 ## Windows Exact-Candidate Gate
 
@@ -77,10 +81,38 @@ Current status: `MANUAL_OWNER_TEST` for exact `1.2.0` candidate bytes.
   implemented and locally tested.
 - Client-local WARP materialization, enable/disable parity, desktop ABI 2 and
   Android host/JVM boundaries: implemented and locally tested.
-- The local pre-candidate client binds exact reproducible Core `1.1.0` AAR/DLL
-  bytes from signed source commit `344b317a7a09eca7943a93866b193553538bd8f6`.
-  The retained public `1.0.3` identity remains rollback/history only.
-- Exact Android and Windows release-build WARP/uplink/teardown evidence:
+- Candidate.8 binds the Core `1.1.0` Android AAR and Windows
+  DLL from security-fixed `a45d69e40ed7d892619a2b5c4592a527f630665e`; two local rebuilds per
+  platform are byte-identical, and the exact DLL passes 100 proxy-only
+  start/stop cycles. The exact signed manifest and six-artifact supply chain
+  pass; public promotion and the complete WARP platform-runtime matrix remain
+  separate gates. Prior exact
+  production-signed `547f096` Android bytes reached verified ordinary Frankfurt
+  on one physical Beeline path; AWG2/AWG3.1 transport also passed there but
+  their selected-endpoint checks failed at `egress_probe_dns_lookup`. Corrected
+  `a45d69e` plus production-signed client `68779c4` now reaches retained green
+  selected-endpoint state for both AWG2 and AWG3.1 on physical Beeline. This
+  bounded control did not close WARP lifecycle, handoff, per-app, OEM or
+  endurance proof before candidate.8.
+- Exact x86_64 production build `1.2.0+4046` on LDPlayer created TUN for a
+  WARP attempt and for its automatic ordinary fallback, but both paths failed
+  the required Core egress probe with terminal `EGRESS-001`. A separate
+  WARP-disabled ordinary control failed with the same code. The emulator was
+  restored to WARP off with no POKROV service or `tun0`. Classification:
+  `BLOCKED_BY_LDPLAYER_NETWORK_CURRENT_ORIGIN`; this is neither a WARP-specific
+  failure nor physical proof.
+- On exact candidate.8 ARM64 bytes, three observed WARP attempts consistently
+  reached the explicit paused/ordinary fallback after the WARP check did not
+  pass. Every terminal generation retained app-confirmed tunnel, DNS and
+  selected egress. Mobile/Wi-Fi/mobile/Wi-Fi, screen-off, forced deep Doze,
+  app standby, Quick Settings stop/start and notification disconnect passed;
+  revoke cleared consent and the final ordinary control passed with WARP off.
+  Diagnostics were redaction-safe and device state was restored. This closes
+  the checklist's fallback path on one physical Android device, while active
+  WARP traffic remains `NOT_PROVEN`.
+- Exact Android release-build WARP fallback/uplink/teardown evidence:
+  `PASS_EXACT_CANDIDATE_FALLBACK_PATH`.
+- Exact Windows release-build WARP/uplink/teardown evidence:
   `MANUAL_OWNER_TEST`.
 
 ## Retained History

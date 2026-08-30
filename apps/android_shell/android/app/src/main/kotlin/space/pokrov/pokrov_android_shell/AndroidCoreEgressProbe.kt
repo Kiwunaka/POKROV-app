@@ -47,6 +47,8 @@ internal enum class AndroidCoreEgressProbeTargetKind {
 internal data class AndroidCoreEgressProbeTarget(
     val tag: String,
     val kind: AndroidCoreEgressProbeTargetKind,
+    val keepRuntimeOnFailure: Boolean = false,
+    val captureSafeFailureCategory: Boolean = false,
 )
 
 internal data class AndroidCoreEgressProbeSample(
@@ -124,6 +126,14 @@ internal object AndroidCoreEgressProbe {
             AndroidCoreEgressProbeTarget(
                 tag = finalTag,
                 kind = AndroidCoreEgressProbeTargetKind.ENDPOINT,
+                // Closed owner labs retain the Android TUN long enough to
+                // expose packet evidence. The TUN remains the fail-closed
+                // boundary while the UI reports degraded egress.
+                keepRuntimeOnFailure = endpointType.trim().equals("awg", ignoreCase = true),
+                captureSafeFailureCategory = endpointType.trim().equals(
+                    "awg",
+                    ignoreCase = true,
+                ),
             )
         } else {
             null
@@ -142,9 +152,13 @@ internal object AndroidCoreEgressProbe {
         val handler = ProbeHandler(target)
         val options = CommandClientOptions().apply {
             addCommand(Libbox.CommandGroup)
+            if (target.captureSafeFailureCategory) {
+                addCommand(Libbox.CommandLog)
+            }
         }
         val client = Libbox.newCommandClient(handler, options)
         var endpointHandlerRegistered = false
+        var safeFailureCaptureReady = false
         return try {
             client.connect()
             if (target.kind == AndroidCoreEgressProbeTargetKind.GROUP) {
@@ -155,14 +169,23 @@ internal object AndroidCoreEgressProbe {
                     ?: return AndroidCoreEgressProbeResult.UNAVAILABLE
                 client.urlTest(testGroupTag)
             } else {
-                handler.armEndpoint()
+                safeFailureCaptureReady =
+                    target.captureSafeFailureCategory && handler.awaitInitialLogBatch()
+                handler.armEndpoint(safeFailureCaptureReady)
                 if (!activeEndpointHandler.compareAndSet(null, handler)) {
                     return AndroidCoreEgressProbeResult.UNAVAILABLE
                 }
                 endpointHandlerRegistered = true
                 client.urlTest(target.tag)
             }
-            handler.awaitResult()
+            val result = handler.awaitResult()
+            if (
+                result == AndroidCoreEgressProbeResult.FAILED &&
+                safeFailureCaptureReady
+            ) {
+                handler.awaitSafeFailureCategory()
+            }
+            result
         } catch (_: Throwable) {
             AndroidCoreEgressProbeResult.UNAVAILABLE
         } finally {
@@ -229,14 +252,24 @@ internal object AndroidCoreEgressProbe {
     ) : CommandClientHandler {
         private val lock = Any()
         private val initialLatch = CountDownLatch(1)
+        private val initialLogBatchLatch = CountDownLatch(1)
+        private val safeFailureCategoryLatch = CountDownLatch(1)
         private val resultLatch = CountDownLatch(1)
         private var currentSelection: AndroidCoreEgressProbeSelection? = null
         private var baseline: AndroidCoreEgressProbeSelection? = null
         private var armed = false
+        private var safeFailureCaptureArmed = false
         private var result: AndroidCoreEgressProbeResult? = null
 
         fun awaitInitial(): Boolean =
             initialLatch.await(INITIAL_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+
+        fun awaitInitialLogBatch(): Boolean =
+            initialLogBatchLatch.await(INITIAL_LOG_BATCH_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+
+        fun awaitSafeFailureCategory() {
+            safeFailureCategoryLatch.await(SAFE_FAILURE_CATEGORY_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+        }
 
         fun armGroup(): String? =
             synchronized(lock) {
@@ -246,9 +279,10 @@ internal object AndroidCoreEgressProbe {
                 selection.groupTag
             }
 
-        fun armEndpoint() {
+        fun armEndpoint(captureSafeFailureCategory: Boolean) {
             synchronized(lock) {
                 armed = true
+                safeFailureCaptureArmed = captureSafeFailureCategory
             }
         }
 
@@ -320,7 +354,24 @@ internal object AndroidCoreEgressProbe {
         override fun setDefaultLogLevel(level: Int) = Unit
         override fun updateClashMode(newMode: String) = Unit
         override fun writeConnectionEvents(events: ConnectionEvents) = Unit
-        override fun writeLogs(logs: LogIterator) = Unit
+        override fun writeLogs(logs: LogIterator) {
+            if (!target.captureSafeFailureCategory) {
+                return
+            }
+            val armedForCurrentProbe = synchronized(lock) { safeFailureCaptureArmed }
+            while (logs.hasNext()) {
+                val message = logs.next().message
+                if (!armedForCurrentProbe) {
+                    continue
+                }
+                val diagnostic = AndroidRuntimeLogClassifier.parseAwgEgressProbeDiagnostic(
+                    message,
+                ) ?: continue
+                AndroidRuntimeState.recordAwgSafeDiagnostic(diagnostic)
+                safeFailureCategoryLatch.countDown()
+            }
+            initialLogBatchLatch.countDown()
+        }
         override fun writeStatus(status: StatusMessage) = Unit
 
         private fun acceptEndpointResult(event: AndroidCoreOperationalEventRecord) {
@@ -351,6 +402,8 @@ internal object AndroidCoreEgressProbe {
     // POKROV Core stores failed URL tests with sing-box's uint16 max sentinel.
     private const val URL_TEST_TIMEOUT_DELAY = 65_535
     private const val INITIAL_TIMEOUT_MILLIS = 2_500L
+    private const val INITIAL_LOG_BATCH_TIMEOUT_MILLIS = 2_500L
+    private const val SAFE_FAILURE_CATEGORY_TIMEOUT_MILLIS = 750L
     // POKROV Core's HTTP URL-test timeout is 15 seconds. The host must wait
     // through that terminal sample instead of misclassifying a slow failure as
     // an early command-channel failure.
@@ -360,5 +413,5 @@ internal object AndroidCoreEgressProbe {
     private const val ENDPOINT_RESULT_TIMEOUT_MILLIS = 48_000L
     private val activeEndpointHandler = AtomicReference<ProbeHandler?>()
     private val SELECTABLE_TYPES = setOf("selector", "urltest")
-    private val PROBEABLE_ENDPOINT_TYPES = setOf("warp")
+    private val PROBEABLE_ENDPOINT_TYPES = setOf("warp", "awg")
 }

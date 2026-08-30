@@ -85,15 +85,23 @@ that candidate-specific release truth.
 
 Current blocking dependency:
 
-- the active local pre-candidate runtime is the clean reproducible POKROV Core `1.1.0` build at signed source commit `344b317a7a09eca7943a93866b193553538bd8f6`; clients accept only the exact AAR/DLL identities pinned in `config/runtime-artifacts.seed.json`, while tag creation, candidate signing and publication remain separately evidenced
+- the active local pre-candidate runtime has exact single-source platform bindings: Android and Windows use security-fixed Core commit `a45d69e40ed7d892619a2b5c4592a527f630665e`, retaining the egress, AWG, Android outer-socket and default-off provenance-bound `pokrov.hy2.outbound.v1` lanes while correcting AWG allocated-port binding, `GO-2026-6303` and AWG endpoint use of the configured default bootstrap resolver; raw Hysteria2 URI conversion stays disabled, and two local builds per platform produced byte-identical AAR/DLL trees
 - `Android` host now reaches a real service-backed connect lane: it can initialize POKROV Core, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
 - Android runtime discovery accepts either an extracted `nativeLibraryDir/libpokrov-core.so` or the ABI-matched `lib/<abi>/libpokrov-core.so` entry in the base/split APK. This is required on physical devices that install the release APK with native-library extraction disabled; Java still loads the packaged Core through the generated bindings
 - Android runtime materialization is intentionally `tun`-only in this lane; desktop loopback listener inbounds such as `mixed-in` and `dns-in` stay disabled for the mobile `VpnService` path
 - Android runtime materialization now keeps backend-managed `dns` servers, selector choice, and route-rule semantics whenever they are already mobile-safe, instead of swapping the whole profile into a custom universal DNS lane
-- the Android bootstrap client uses the canonical `api.pokrov.space` hostname through the platform DNS/TLS transport; provider IPs are not baked into the client
-- the Android route block now forces `auto_detect_interface: false`, removes `override_android_vpn`, writes `tun.exclude_package` for `space.pokrov.pokrov_android_shell`, injects a route-level self-package bypass rule, and enforces the same package exclusion through `VpnService.Builder`; this preserves the physical uplink owner while `tun.auto_route` is active and avoids routing the core back into its own TUN
-- the Android host runtime retains default-network monitor hooks for DNS, uplink diagnostics, and network-change handling, while staged Android routes deliberately do not delegate outbound-interface selection to libbox auto-detection
+- the Android bootstrap client uses the owned `app.pokrov.space/api/*` ingress
+  as its primary control-plane origin and retains `api.pokrov.space` as the
+  bounded owned fallback; provider IPs are not baked into the client
+- when both owned origins are configured, the client first requires a 2xx JSON
+  response from `/api/health`, caches the selected origin for the process, and
+  only then sends the real request. The preflight carries no session or request
+  body. A non-idempotent request is sent once and is never replayed to the
+  second origin after a transport failure
+- the Android route block keeps `auto_detect_interface: false`, removes `override_android_vpn`, writes `tun.exclude_package` for `space.pokrov.pokrov_android_shell`, injects a route-level self-package bypass rule, and enforces the same package exclusion through `VpnService.Builder`; the Core AWG endpoint is the bounded exception and requests platform protection directly for its owned UDP socket without changing the global route policy
+- the Android host runtime retains default-network monitor hooks for DNS, uplink diagnostics, and network-change handling; ordinary staged routes do not delegate outbound-interface selection to libbox auto-detection, while a Core-requested AWG socket protection fails closed when Android rejects `protect(fd)`
 - the Android host runtime now registers a local DNS transport backed by Android `DnsResolver` and the current default network, which keeps the mobile lane off desktop-only loopback DNS stubs when `libbox` resolves staged profile dependencies
+- the Core-owned AWG endpoint resolves its inner FQDN with the route's explicit `default_domain_resolver` options, so Android uses that registered default-network transport instead of an empty resolver query; TLS verification still uses the authenticated hostname and any resolver or probe failure remains fail-closed
 - an active Android DNS transport callback failure or timeout is terminal and fail-closes the core, TUN, and foreground service with a safe host snapshot; ordinary DNS response codes and canceled or stale callbacks stay non-terminal
 - the Android default-network monitor now sticks to the callback-owned uplink after connect instead of re-sampling `ConnectivityManager.activeNetwork`, which keeps mobile DNS from accidentally treating the VPN network as its resolver uplink
 - the Android manifest must also declare `ACCESS_NETWORK_STATE` and `CHANGE_NETWORK_STATE`, otherwise the `ConnectivityManager`-backed default-interface monitor fails before runtime start
@@ -133,6 +141,15 @@ Current blocking dependency:
 - the Android diagnostics story is now support/internal rather than first-layer UI: local smoke-profile staging and raw runtime controls stay out of the consumer shell while the physical-device gate remains separate
 - the Android full-tunnel guarantee in this lane is also stronger: the mobile path stays `tun`-first, desktop loopback listeners remain stripped, backend-managed mobile-safe `dns` and `route` semantics stay intact, Android route ownership flags plus the self-package bypass remain present, and only address families present in the staged profile receive default routes
 - the shared shell now treats Android `running` as cleanly healthy only when post-establish uplink/bootstrap-DNS prerequisites and the core URL test for the selected outbound are healthy; the core timeout sentinel (`65535`) is failure, not positive latency, and Android `NET_CAPABILITY_VALIDATED` remains supporting evidence because emulator/network stacks can retain it after selected-outbound egress fails
+- for closed AWG endpoint probes only, Android also subscribes to the Core log
+  stream long enough to accept the exact bounded
+  `selected endpoint URL test failed category=<closed-category>` contract. The
+  host discards the initial backlog and every arbitrary line, admits only the
+  fixed Core category allowlist into the existing safe protocol-diagnostic
+  fields, and retains no raw log text. Once captured, the terminal egress
+  category takes precedence over later transport-retry categories until the
+  next connection attempt. It never overrides the structured
+  `core.egress.probe` result or weakens `EGRESS-001` fail-close
 - after Android reports `running`, the shared shell polls the host-owned egress result through a bounded 750 ms interval for the Core probe window; a terminal `core_egress_probe_failed` snapshot immediately replaces the protected UI with the normal disconnected/reconnect state, while a canceled or newer connect generation cannot be overwritten by an older poll
 - a terminal Android selected-outbound egress failure also invalidates the staged cached runtime profile and blocks that cache from offline fallback; the next connect must obtain and stage a fresh authorized manifest, while ordinary offline fallback remains bounded before any dataplane failure
 - the Android host performs that selected-outbound fail-close as one synchronous profile-reuse invalidation: it clears the persisted Quick Settings profile and drops the staged pointer while preserving the safe failure snapshot, so a backgrounded Flutter shell cannot let the tile restart the rejected configuration
@@ -142,7 +159,7 @@ Current blocking dependency:
   no newer start owns the service, so changing an emergency reserve cannot be
   torn down by the previous connection's delayed cleanup
 - the Android Quick Settings tile uses Android active-tile mode, reconciles both the live TUN and the app-owned VPN-service presence before choosing start or stop, publishes only the resulting on/off state, and explicitly requests a new SystemUI listen after committed runtime transitions; the notification remains the owner of country, route and speed details
-- the shared shell now refreshes Android runtime truth again on foreground resume, and keeps polling a host-owned pending-connect signal through Android notification/VPN consent even when no lifecycle resume reaches Flutter; the host bridge reconciles a live TUN back to `running` so a relaunch does not leave the button lane stuck on a stale staged snapshot as easily
+- the shared shell now refreshes Android runtime truth again on foreground resume, and keeps polling a host-owned pending-connect signal through Android notification/VPN consent even when no lifecycle resume reaches Flutter; the host bridge reconciles a live TUN back to `running` and demotes a stale `running` snapshot when the app-owned TUN is absent, so a relaunch or interrupted service cannot leave the button lane falsely connected
 - the shared shell now treats `Connect with sing-box` as a one-tap lane on supported hosts: it auto-initializes the runtime, syncs a live app-first managed profile from the platform API, stages that profile, and then requests live connect instead of forcing manual `initialize -> stage -> connect`
 - Smart Connect promotes the selected direct outbound inside that authorized profile by canonical `outbound_tag` (with bounded compatibility mapping for older manifests); a second exact managed-profile fetch is a six-second fallback only when local identity cannot be proven, not part of the normal connect path
 - an explicit manual location variant is materialized from the exact managed
@@ -264,10 +281,10 @@ Current blocking dependency:
 ## POKROV Core 1.1.0 Pre-Candidate Binding
 
 POKROV Core is an independent repository and release line. The local client
-pre-candidate pins version `1.1.0` and clean commit
-`344b317a7a09eca7943a93866b193553538bd8f6`. The version-derived `v1.1.0`
-label is not a created Git tag or public release in this state. The retained
-public `v1.0.3` release remains a separate rollback/history identity.
+pre-candidate pins version `1.1.0` and one Android/Windows source commit,
+`a45d69e40ed7d892619a2b5c4592a527f630665e`. The version-derived `v1.1.0`
+label is not a created Git tag or public release in this state. Local source
+convergence is proved; candidate, signing and platform-runtime gates remain.
 
 - Android package namespace: `space.pokrov.core`.
 - Android artifact: `pokrov-core.aar`.
@@ -280,6 +297,21 @@ public `v1.0.3` release remains a separate rollback/history identity.
   validated fail-closed before setup.
 - Shared Dart materialization owns route modes and client-local WARP before the
   config crosses a host boundary.
+- Shared Dart materialization also owns the additive `dnsTransport` client
+  preference. Missing or unknown state resolves to `vpn`. For a selected DoH
+  preset, the opt-in `direct` value changes only the injected HTTPS resolver
+  detour to the profile's existing direct outbound; purpose routes such as AI
+  and Games continue through the active VPN/AWG target. `Automatic` injects
+  nothing, so the backend-managed DNS block remains authoritative. This is not
+  a second DNS owner or a standalone VPN-less resolver service.
+- The additive `externalSmartDnsEnabled` laboratory preference is stricter. It
+  can materialize only with a validated custom HTTPS DoH address, the direct
+  DNS detour and at least one AI/Games purpose route. The resolver and those
+  selected purpose-domain connections then use the existing direct outbound;
+  other groups keep the VPN/AWG target and explicit user rules retain higher
+  priority. Invalid combinations fail closed before native staging. This is a
+  client route-policy path for a compatible Smart-DNS resolver, not such a
+  resolver, not a second core and not evidence of VPN-free service access.
 - `selectedApps` materialization requires a non-empty selection before any
   route-policy sync or profile fetch. Android receives the staged route-mode
   attestation separately and rejects an empty selected-app allow-list instead

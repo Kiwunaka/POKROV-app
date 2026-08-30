@@ -183,6 +183,7 @@ void main() {
       routingPreferences: PokrovRoutingPreferences.defaults().copyWith(
         purposeRoutes: const <PokrovPurposeRoute>{PokrovPurposeRoute.video},
         dnsPreset: PokrovDnsPreset.cloudflare,
+        dnsTransport: PokrovDnsTransport.direct,
         allowLan: false,
         windowsConnectionMode: PokrovWindowsConnectionMode.vpn,
         tunStack: PokrovTunStack.mixed,
@@ -230,6 +231,10 @@ void main() {
       contains(PokrovPurposeRoute.video),
     );
     expect(restored.routingPreferences.dnsPreset, PokrovDnsPreset.cloudflare);
+    expect(
+      restored.routingPreferences.dnsTransport,
+      PokrovDnsTransport.direct,
+    );
     expect(restored.routingPreferences.allowLan, isFalse);
     expect(
       restored.routingPreferences.windowsConnectionMode,

@@ -77,6 +77,8 @@ internal enum class AndroidRuntimePhase(val wireValue: String) {
 }
 
 internal object AndroidRuntimeState {
+    private const val EGRESS_PROBE_DIAGNOSTIC_PREFIX = "egress_probe_"
+
     private var environment: AndroidRuntimeEnvironment? = null
     private var phase: AndroidRuntimePhase = AndroidRuntimePhase.ARTIFACT_MISSING
     private var stagedConfigPath: String? = null
@@ -91,6 +93,8 @@ internal object AndroidRuntimeState {
     private var coreEgressValidationRequired: Boolean = true
     private var lastFailureKind: String? = null
     private var lastStopReason: String? = null
+    private var awgSafeDiagnosticCode: String? = null
+    private var awgSafeDiagnosticOccurrence: Int? = null
     private var ipv4RouteCount: Int = 0
     private var ipv6RouteCount: Int = 0
     private var includePackageCount: Int = 0
@@ -237,7 +241,21 @@ internal object AndroidRuntimeState {
         connectionPending = true
         vpnValidated = null
         coreEgressValidated = null
+        awgSafeDiagnosticCode = null
+        awgSafeDiagnosticOccurrence = null
         invalidateTunnelTrafficSession()
+    }
+
+    @Synchronized
+    fun recordAwgSafeDiagnostic(diagnostic: AndroidAwgSafeDiagnostic) {
+        if (
+            awgSafeDiagnosticCode?.startsWith(EGRESS_PROBE_DIAGNOSTIC_PREFIX) == true &&
+            !diagnostic.code.startsWith(EGRESS_PROBE_DIAGNOSTIC_PREFIX)
+        ) {
+            return
+        }
+        awgSafeDiagnosticCode = diagnostic.code
+        awgSafeDiagnosticOccurrence = diagnostic.occurrence
     }
 
     @Synchronized
@@ -582,6 +600,8 @@ internal object AndroidRuntimeState {
             "core_egress_validation_required" to coreEgressValidationRequired,
             "last_failure_kind" to lastFailureKind,
             "last_stop_reason" to lastStopReason,
+            "safe_protocol_diagnostic_code" to awgSafeDiagnosticCode,
+            "safe_protocol_diagnostic_occurrence" to awgSafeDiagnosticOccurrence,
             "ipv4_route_count" to ipv4RouteCount,
             "ipv6_route_count" to ipv6RouteCount,
             "include_package_count" to includePackageCount,
@@ -609,6 +629,8 @@ internal object AndroidRuntimeState {
             "core_egress_validated" to coreEgressValidated,
             "last_failure_kind" to lastFailureKind,
             "last_stop_reason" to lastStopReason,
+            "safe_protocol_diagnostic_code" to awgSafeDiagnosticCode,
+            "safe_protocol_diagnostic_occurrence" to awgSafeDiagnosticOccurrence,
             "ipv4_route_count" to ipv4RouteCount,
             "ipv6_route_count" to ipv6RouteCount,
             "include_package_count" to includePackageCount,
@@ -626,6 +648,12 @@ internal object AndroidRuntimeState {
         runningMessage: String?,
     ) {
         if (!tunEstablished) {
+            if (phase == AndroidRuntimePhase.RUNNING) {
+                markStopped(
+                    message = "POKROV отключен на этом устройстве.",
+                    stopReason = "service_destroyed",
+                )
+            }
             return
         }
         phase = AndroidRuntimePhase.RUNNING

@@ -159,6 +159,12 @@ Daily shell state language is shared across Home and support diagnostics:
 must never be described as a connection attempt. First-layer refresh copy says
 that settings were updated without exposing the API hostname.
 
+The client control plane uses only the owned app/API origin pair. It selects an
+origin with an unauthenticated JSON health request before sending real work;
+arbitrary fallback hosts are rejected. Origin failover may retry idempotent
+reads, but it must never replay a pairing, redemption, settings, support,
+telemetry or other non-idempotent write after its send begins.
+
 Home uses the owner-selected `2026-08-13` composition: a compact brand/access
 top row, one centered circular connect action with a thin non-glowing border,
 in-control status and a finite hourglass busy state, then two quick controls,
@@ -262,7 +268,10 @@ Product rules for that choice:
   may enter the app only through separate authenticated, digest-bound managed
   profiles; AWG 3.1 is never inferred from an AWG2 profile. Neither path adds
   raw config import, QR onboarding, keys, endpoint IPs or protocol controls to
-  the product UI.
+  the product UI. These owner-lab profiles do not participate in Smart
+  Connect: a previously saved manual location is ignored only while the
+  authenticated lab profile is materialized, so it cannot invalidate the
+  hidden transport or silently rewrite the user's ordinary location choice.
 
 ### Before trial activation
 
@@ -502,10 +511,12 @@ Support contract rules:
   retry; it must not fall back to plaintext ZIP, legacy chat attachment or raw
   diagnostic text. The separately labelled short summary remains available
   when the signed-key lane is not configured
-- the ordinary diagnostics screen emits a versioned `PSD1-*` support code that
-  expires after 14 days and contains only platform, route/connection class,
-  app/build and a short diagnostic hash prefix. Copying it uploads no file and
-  it is not account, device or installation identity
+- the ordinary diagnostics screen emits a versioned support code that expires
+  after 14 days and contains only platform, route/connection class, app/build
+  and a short diagnostic hash prefix. `PSD1-*` remains the stable compact form
+  for legacy one-byte build numbers; `PSD2-*` preserves the full release build
+  number when it is larger than 255. Copying either form uploads no file and it
+  is not account, device or installation identity
 - Android and Windows may manually export only the encrypted
   `.pokrov-support` envelope through the system document/save picker. Cancelling
   the picker creates no file and the UI must not claim success. Plaintext bundle
@@ -523,6 +534,12 @@ Support contract rules:
   states keep one lifecycle hint and one retry instead of duplicate notices
 - a failed ticket send keeps the draft and removes its unconfirmed optimistic
   bubble, so retry produces one user message after backend acceptance
+- an open ticket polls only while its screen is foregrounded. Active cadence is
+  8–10 seconds; after one minute without a ticket change it relaxes to 15–30
+  seconds. Returning from background triggers one immediate refresh. Transport
+  failures use bounded exponential backoff with jitter and retain the explicit
+  retry control. SSE/WebSocket remains conditional on measured polling failure
+  and is not part of the 1.2.0 support contract
 - the AI helper handles WARP, location, route-mode, and system-permission
   recovery before human escalation. A transport failure is shown as a retryable
   request failure, not as a fabricated or missing-answer response
@@ -559,6 +576,20 @@ Consumer privacy rules:
 
 - normal consumer screens must not expose public IP, raw connection links, raw JSON/profile editors, sniffing terms, or low-level topology
 - route labels and support diagnostics should stay safe and human-readable
+- diagnostics may request the authenticated same-build release-health baseline
+  only for the exact app/build/channel/candidate/revision/core-ABI/platform/
+  architecture tuple and only through an already active app-first session. The
+  read must not create a trial or account identity
+- the baseline response is parsed as a closed band-only contract and is not
+  persisted. Account, device, installation, session, contributor hashes,
+  bucket indexes, exact counts and exact percentages are rejected rather than
+  displayed or retained
+- comparison stays hidden while the service is unavailable. Below the minimum
+  privacy cohort or sample floor, diagnostics may say only that more anonymous
+  data is needed. When available, it may describe coarse failure bands for the
+  same weekly build cohort but must not infer the cause of this device's state
+  from aggregate data; current local tunnel/routes/DNS/egress evidence remains
+  primary
 - public-facing copy should prefer plain user language over transport acronyms, raw profile terms, or operator jargon
 - Home and Profile may show `WARP` as the owner-approved feature label because
   the default runtime path is client-local Pokrov-core WARP. The UI must still
@@ -574,7 +605,9 @@ Consumer privacy rules:
 The Android and Windows client now treats protection as several independent,
 observable checks instead of one decorative connected badge:
 
-- tunnel lifecycle comes from the runtime snapshot;
+- tunnel lifecycle comes from the runtime snapshot, but Android `running`
+  remains valid only while the app-owned TUN is established; a refreshed host
+  snapshot must demote stale `running` state when that TUN is absent;
 - bootstrap DNS readiness comes from runtime-owned diagnostics and is labelled
   separately; it must not claim that application DNS inside the VPN works;
 - selected-outbound egress health, including the user-facing VPN internet check,
@@ -615,6 +648,32 @@ staged. They include:
   final resolver through the active VPN outbound. This blocks requests to
   domains present in that DNS service's filtering policy; it does not promise
   removal of first-party, baked-in, or otherwise non-DNS in-app advertising;
+- a non-Automatic resolver may opt into the collapsed
+  `DNS напрямую · лаборатория` path. The default remains VPN. The opt-in
+  changes only that HTTPS DoH server's detour to the managed profile's direct
+  outbound; it never downgrades to plaintext DNS, changes the device's external
+  IP, or moves AI/Games application traffic off their VPN rules. It therefore
+  makes no promise to bypass IP-, TLS-, account-, or region-based restrictions.
+  With `Автоматически`, the stored preference is dormant and the signed server
+  profile remains DNS authority;
+- an additional `Внешний Smart DNS · лаборатория` path is available only for
+  a validated custom HTTPS DoH resolver with direct DNS selected and at least
+  one enabled AI or Games purpose group. The URL must use HTTPS on port `443`,
+  have the exact `/dns-query` path and contain neither query parameters nor a
+  fragment; persisted bearer tokens are forbidden. When explicitly enabled,
+  only DNS questions for the selected AI/Games suffixes are routed to that DoH
+  server. The profile's existing final resolver remains unchanged for every
+  other name. Connections to the selected purpose domains use the existing
+  direct outbound; all other purpose groups keep their normal VPN target, and
+  an explicit user rule still wins. The client does not terminate TLS, inject
+  certificates, add a second core, or claim that an arbitrary DoH resolver can
+  unblock a service. The user's ISP-visible IP is not hidden, an Android VPN
+  system surface may remain because sing-box still owns policy routing, and
+  successful service access requires a compatible external or POKROV-owned
+  selective resolver plus opaque TLS relay and separate live evidence. The
+  POKROV policy is allowlist-only and non-recursive: outside names are refused,
+  so it is not a general DNS service. Invalid, incomplete, downgraded, or future
+  persisted state disables the lab mode;
 - LAN direct access;
 - trusted Wi-Fi names with optional disconnect on an exact current-SSID match.
 
@@ -707,7 +766,7 @@ Release continuity rules:
   SHA-256; the production catalog requires `1.1.6` for older clients. Exact
   Huawei and clean Windows network proof remain manual.
 - the active source target is separately recorded in the same canonical
-  release-handoff seed as `1.2.0+30`, state `PRE_CANDIDATE_LOCAL`, with
+  release-handoff seed as `1.2.0+4046`, state `PRE_CANDIDATE_LOCAL`, with
   `candidate_created=false`. Android, Windows and app-shell source versions
   must match that target, while the historical `1.1.6` public record remains
   immutable and has `reuse_for_new_promotion=false`. This target is not a

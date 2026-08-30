@@ -200,10 +200,13 @@ abstract final class SupportDiagnosticCode {
       throw const SupportBundleFailure('support_diagnostic_code_invalid');
     }
     final versionParts = <int>[
-      for (var index = 1; index <= 4; index++)
+      for (var index = 1; index <= 3; index++)
         int.tryParse(version.group(index)!) ?? -1,
     ];
-    if (versionParts.any((value) => value < 0 || value > 255)) {
+    final buildNumber = int.tryParse(version.group(4)!) ?? -1;
+    if (versionParts.any((value) => value < 0 || value > 255) ||
+        buildNumber < 0 ||
+        buildNumber > 0x7fffffff) {
       throw const SupportBundleFailure('support_diagnostic_code_invalid');
     }
     final issued = DateTime.utc(
@@ -216,18 +219,32 @@ abstract final class SupportDiagnosticCode {
       throw const SupportBundleFailure('support_diagnostic_code_invalid');
     }
     final hash = id.group(1)!;
+    final legacy = buildNumber <= 0xff;
     final raw = <int>[
       (platformIndex << 5) | (routeIndex << 3) | stateIndex,
       (days >> 8) & 0xff,
       days & 0xff,
       ...versionParts,
+      if (legacy)
+        buildNumber
+      else ...<int>[
+        (buildNumber >> 24) & 0xff,
+        (buildNumber >> 16) & 0xff,
+        (buildNumber >> 8) & 0xff,
+        buildNumber & 0xff,
+      ],
       int.parse(hash.substring(0, 2), radix: 16),
       int.parse(hash.substring(2, 4), radix: 16),
     ];
     raw.add(_crc8(raw));
     final body = _encodeCrockford(raw);
-    return 'PSD1-${body.substring(0, 4)}-${body.substring(4, 8)}-'
-        '${body.substring(8, 12)}-${body.substring(12, 16)}';
+    if (legacy) {
+      return 'PSD1-${body.substring(0, 4)}-${body.substring(4, 8)}-'
+          '${body.substring(8, 12)}-${body.substring(12, 16)}';
+    }
+    return 'PSD2-${body.substring(0, 4)}-${body.substring(4, 8)}-'
+        '${body.substring(8, 12)}-${body.substring(12, 16)}-'
+        '${body.substring(16, 21)}';
   }
 
   static SupportDiagnosticCodeFacts decode(
@@ -235,11 +252,17 @@ abstract final class SupportDiagnosticCode {
     required DateTime now,
   }) {
     final rawCode = value.toUpperCase().replaceAll(RegExp(r'[\s-]+'), '');
-    if (!RegExp(r'^PSD1[0-9A-HJKMNPQRSTVWXYZ]{16}$').hasMatch(rawCode)) {
+    final legacy =
+        RegExp(r'^PSD1[0-9A-HJKMNPQRSTVWXYZ]{16}$').hasMatch(rawCode);
+    final extended =
+        RegExp(r'^PSD2[0-9A-HJKMNPQRSTVWXYZ]{21}$').hasMatch(rawCode);
+    if (!legacy && !extended) {
       throw const SupportBundleFailure('support_diagnostic_code_invalid');
     }
     final packed = _decodeCrockford(rawCode.substring(4));
-    if (packed.length != 10 || _crc8(packed.sublist(0, 9)) != packed[9]) {
+    final expectedLength = legacy ? 10 : 13;
+    if (packed.length != expectedLength ||
+        _crc8(packed.sublist(0, expectedLength - 1)) != packed.last) {
       throw const SupportBundleFailure('support_diagnostic_code_invalid');
     }
     final facts = packed[0];
@@ -258,14 +281,19 @@ abstract final class SupportDiagnosticCode {
       now.toUtc().month,
       now.toUtc().day,
     );
+    final buildNumber = legacy
+        ? packed[6]
+        : (packed[6] << 24) | (packed[7] << 16) | (packed[8] << 8) | packed[9];
+    final hashIndex = legacy ? 7 : 10;
     return SupportDiagnosticCodeFacts(
       platform: const <String>['android', 'windows'][platformIndex],
       routeMode: _routeModes[routeIndex],
       connectionState: _connectionStates[stateIndex],
       appVersion: '${packed[3]}.${packed[4]}.${packed[5]}',
-      buildNumber: packed[6],
-      diagnosticHashPrefix: '${packed[7].toRadixString(16).padLeft(2, '0')}'
-          '${packed[8].toRadixString(16).padLeft(2, '0')}',
+      buildNumber: buildNumber,
+      diagnosticHashPrefix:
+          '${packed[hashIndex].toRadixString(16).padLeft(2, '0')}'
+          '${packed[hashIndex + 1].toRadixString(16).padLeft(2, '0')}',
       issuedOn: issuedOn,
       expiresOn: expiresOn,
       expired: current.isAfter(expiresOn),

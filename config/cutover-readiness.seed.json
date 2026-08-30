@@ -1,8 +1,8 @@
 {
   "lane": "POKROV-app/main",
-  "status": "retained_1_1_6_public_1_2_0_pre_candidate_windows_unsigned_beta_owner_exception_recorded",
+  "status": "retained_1_1_6_public_candidate8_signed_private_gate_f_blocked_windows_unsigned_beta_owner_exception_recorded",
   "public_cutover_allowed": false,
-  "last_updated": "2026-08-24",
+  "last_updated": "2026-08-30",
   "latest_repo_backed_release": {
     "version": "1.1.6",
     "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.1.6",
@@ -11,6 +11,48 @@
     "anonymous_download_smoke": "PASS_ALL_EIGHT_1_1_6_PUBLIC_ASSETS_RANGE_GET_206_AND_GITHUB_SIZE_DIGEST",
     "authenticated_github_release_smoke": "PASS_EXACT_1_1_6_EIGHT_ASSET_GITHUB_DIGEST",
     "live_app_session_download_smoke": "PASS_1_1_6_REQUIRED_UPDATE_FOR_1_1_5_AND_NONE_FOR_1_1_6_ANDROID_WINDOWS_EXACT_METADATA"
+  },
+  "exact_replacement_candidate": {
+    "id": "pokrov-1.2.0-candidate.8",
+    "version_name": "1.2.0",
+    "platform_build": 4046,
+    "state": "SIGNED_PRIVATE_ACTIONS_ARTIFACT_PROMOTION_FALSE",
+    "promotion_authorized": false,
+    "public_release_created": false,
+    "store_object_created": false,
+    "stable_pointer_mutated": false,
+    "sources": {
+      "platform": "241a83b4dca00799b39696a4ae0c3c97e087ec39",
+      "client": "3459438f02bd774e722b1b858e7f7f16d57a9f5c",
+      "core": "a45d69e40ed7d892619a2b5c4592a527f630665e",
+      "release_index": "b242e0a3060b04f9b71641a0524bf251a75ce2a8"
+    },
+    "signed_contract": {
+      "manifest_sha256": "f0006cec90c84e401e9920d9098102c7f50ab5ace5242e0d7683c3df709a6fbc",
+      "signature_sha256": "5fcae0675ea45e79baf495859fd170661f5d6dd3a8535275acd4d62680d324f6",
+      "receipt_sha256": "4109bb3417b32a780604300055f5308acf7dc810e7ea9c547075e1da41cc21fc"
+    },
+    "android_x86_64": {
+      "sha256": "ec07ba17e9a5c697fcf46ccd193970fa3666eeeb3b9e345876aa8ee1d45a2627",
+      "size_bytes": 109952213,
+      "ldplayer_rehearsal": "PASS_EXACT_BYTES_CATALOG_AWG2_AWG31_AND_CLEAN_RESTORE",
+      "ordinary_current_origin": "PASS_FAIL_CLOSED_EGRESS_NOT_CONFIRMED"
+    },
+    "windows_setup": {
+      "sha256": "26ec26d8989d61415f07cbf9707f336ebba0b947fa4ba0ee93d3078fa3984668",
+      "size_bytes": 28929376,
+      "signing": "SKIPPED_BY_OWNER_DIRECT_BETA_ONLY",
+      "current_host_smoke": "PASS_INSTALL_SERVICE_AUTHENTICATED_IPC_RESTART_UNINSTALL_IDLE_NETWORK_RESTORE",
+      "clean_vm_live_network": "MANUAL_OWNER_TEST"
+    },
+    "gate_f": {
+      "decision": "BLOCKED",
+      "required": 19,
+      "pass": 6,
+      "non_pass": 13,
+      "fail": 0,
+      "gate_g_authorized": false
+    }
   },
   "release_rollback": {
     "catalog": "config/release-rollback-catalog.seed.json",
@@ -69,8 +111,7 @@
       "smartscreen_warning_required": true
     },
     "blocked_on": [
-      "exact 1.2.0 unsigned-beta setup, manifest, SHA-256 and strict-v2 handoff do not exist yet",
-      "live clean-host install/connect/dashboard/TUN/DNS/egress/recovery smoke from the exact candidate setup EXE",
+      "live clean-VM connect/dashboard/TUN/DNS/egress/recovery smoke from exact candidate.8 setup EXE",
       "trusted signing and SmartScreen reputation for later broad distribution"
     ],
     "accepted_evidence": [
@@ -81,7 +122,7 @@
     ]
   },
   "blocking_dependencies": [
-    "the 1.2.0 cutover remains blocked until exact Android and Windows artifacts, hosted gates and required manual proof exist; Windows trusted signing is owner-skipped only for the direct-download beta",
+    "candidate.8 Gate F remains BLOCKED until the 13 non-PASS exact-candidate/manual rows are proved; Windows trusted signing is owner-skipped only for the direct-download beta",
     "iOS production connectivity still requires on-device packet-tunnel proof plus reviewed entitlements",
     "the universal POKROV Core 1.1.0 macOS dylib still requires a macOS build and ABI probe",
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
