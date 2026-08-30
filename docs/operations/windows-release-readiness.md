@@ -14,16 +14,17 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
-| Working package target | `1.2.0+4048` |
-| Exact replacement candidate | `pokrov-1.2.0-candidate.8`; signed manifest `f0006cec…906f`, detached signature `5fcae067…24f6`, promotion false |
+| Working package target | `1.2.0+4049` |
+| Exact replacement candidate | `pokrov-1.2.0-candidate.12`, app `1.2.0+4048`; signed manifest `22ba8bb1…ab98`, detached signature `c2ad2655…1b32`, promotion false and rejected for an Android warm-restart lifecycle correction |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active pre-candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`, reproducible DLL `f284fa88…8204` bound; exact candidate.8/10 remains on the older immutable Core |
+| Active pre-candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`, reproducible DLL `f284fa88…8204`; the same Core bytes are bound into candidate.12 |
+| Exact candidate.12 setup | `ebbe06f5…89c99c`, `28931263` bytes, exact client/Core `5b1aa02…/cd8f0f4…`; unsigned owner exception, no transferred live-network or clean-VM claim |
 | Exact candidate.8 setup | `26ec26d8…4668`, `28929376` bytes, exact client/Core `3459438…/a45d69e…`; unsigned owner exception |
 | Retained previous-resolver setup | `6ef7899d…cbe9`, `28918848` bytes, client source `b4c9117…9f0`; immutable superseded evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Portable ZIP | Unsupported for the service-first runtime |
-| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.8 supply evidence |
+| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.12 supply evidence |
 | Trusted signing for `1.2.0` direct beta | `SKIPPED_BY_OWNER` on `2026-08-24`; warning required |
 | Trusted/signed/Store/broad-stable claim | `BLOCKED_BY_ACCESS`; trusted Authenticode still required |
 | Candidate.8 current-host smoke | `PASS_EXACT_CANDIDATE_CURRENT_HOST_CLEAN_APP_STATE` — exact install, 8/8 files, LocalSystem service, authenticated IPC, restart, uninstall and unchanged idle route/DNS |
@@ -34,7 +35,7 @@ The ordinary UI does not load Core, run elevated or use a system-proxy
 fallback. The service owns Core, managed state and recovery. Green state
 requires the authenticated egress proof.
 
-## Working Build 4048 Core Refresh
+## Working Build 4049 Core Refresh
 
 The continuing source line pins Core `cd8f0f4169d570d693992a959d81d17c2c44884d`
 after removing legacy raw-settings/error logging and retaining explicit
@@ -43,7 +44,7 @@ size `55426048`, SHA-256
 `f284fa8841f1a45271874a7a05ed6093fb0e3efbdd03e00001edd046be708204`,
 with all 15 ABI exports; pinned Cronet remains `8ef1f8bb…a6f7`. The exact DLL
 also passes the host-safe 100-cycle proxy start/stop harness. These results are
-`PASS_LOCAL_PRE_CANDIDATE`; no 4048 installer, clean-VM TUN/DNS/egress run,
+`PASS_LOCAL_PRE_CANDIDATE`; no 4049 installer, clean-VM TUN/DNS/egress run,
 trusted signature or SmartScreen reputation is claimed.
 
 Local source and fault-injection tests alone cover IPC, journal, network
