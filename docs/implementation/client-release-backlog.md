@@ -173,7 +173,7 @@ runtime, rollback or promotion proof.
 | 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_CANDIDATE_ARTIFACTS` | Candidate.8 binds reproducible AAR `ce82f54b…54dd`, DLL `53b5e82a…4652`, unchanged Cronet `8ef1f8bb…a6f7`, exact SBOM/provenance and zero reachable findings in the scanned module roots. |
 | 4 | Strict-v2 candidate metadata | `PASS_SIGNED_CANDIDATE_8` | Strict-v2 handoff binds build `4046`, the exact four-source tuple, six artifacts, SBOM, provenance and Windows runtime manifest. |
 | 5 | Android exact-candidate build and signer | `PASS_EXACT_ARM64_AND_X86_64_INSTALL` | Production-signed, release/non-debuggable ARM64 APK `9278c09f…572`, `101366934` bytes, and x86_64 APK `ec07ba17…2627`, `109952213` bytes, installed and read back byte-identically as `1.2.0+4046`. |
-| 6 | Android device matrix | `PASS_PHYSICAL_ORDINARY_AWG2_AWG31_PER_APP_HANDOFF_LIFECYCLE_WARP_FALLBACK_PRIVATE_DNS; PASS_LDPLAYER_REHEARSAL; MATRIX_OPEN` | Exact candidate.8 passes physical ordinary/AWG selected egress and the named lifecycle rows. LDPlayer separately passes exact-byte install/catalog plus AWG2/AWG3.1 tunnel, DNS and selected egress; its ordinary control fails closed at the emulator-origin boundary. Active WARP traffic, external IPv6/leak, UDP 53/MTU, excluded-app mode, broader OEM coverage and 100-cycle/battery endurance remain open. |
+| 6 | Android device matrix | `PASS_PHYSICAL_ORDINARY_AWG2_AWG31_SELECTED_AND_EXCLUDED_APP_HANDOFF_LIFECYCLE_WARP_FALLBACK_PRIVATE_DNS; PASS_LDPLAYER_REHEARSAL; MATRIX_OPEN` | Exact candidate.8 passes physical ordinary/AWG selected egress, selected-app and inverse excluded-app traffic/bypass, and the named lifecycle rows. LDPlayer separately passes exact-byte install/catalog plus AWG2/AWG3.1 tunnel, DNS and selected egress; its ordinary control fails closed at the emulator-origin boundary. Active WARP traffic, external IPv6/leak, UDP 53/MTU, broader OEM coverage and 100-cycle/battery endurance remain open. |
 | 7 | Windows exact-candidate package | `PASS_CURRENT_HOST_CLEAN_APP_STATE; CLEAN_VM_LIVE_NETWORK_OPEN` | Candidate.8 setup `26ec26d8…4668` packages the exact runtime, passes all `8/8` installed-file identities and, on the owner Windows 11 host, passes install, LocalSystem service, authenticated IPC, restart, uninstall and unchanged idle route/DNS from an absent-POKROV baseline. This is not a clean OS/VM result. |
 | 8 | Windows unsigned-beta warning and clean-host recovery | `OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY; LIVE_RECOVERY_OPEN` | The direct-beta warning/SmartScreen exception is explicit. Authenticode is `NotSigned`; trusted/Store/broad-stable claims remain forbidden. Connected TUN/DNS/AWG/egress, sleep/reboot/crash recovery, connected uninstall, interactive SmartScreen and isolated Windows 10/11 proof remain manual. |
 | 9 | Hosted cross-repository CI | `RELEASE_INDEX_PASS; PLATFORM_CLIENT_SKIPPED_BY_OWNER` | Release-index source, signer and receipt runs execute real steps and pass. Platform/client private PR jobs stop before product steps under the no-purchase owner-solo exception; they remain skipped, not PASS. |
@@ -182,9 +182,8 @@ runtime, rollback or promotion proof.
 
 ## Next Action Order
 
-1. Run the remaining Android active-WARP/IPv6/UDP53/MTU/excluded-app/OEM/
-   endurance rows and the Windows live app/service/TUN/DNS/AWG clean-host
-   matrix.
+1. Run the remaining Android active-WARP/IPv6/UDP53/MTU/OEM/endurance rows
+   and the Windows live app/service/TUN/DNS/AWG clean-host matrix.
 2. Execute exact-candidate Brain-origin and RU-origin readback plus the owned
    Smart DNS runtime/access/leak/lifecycle/rollback matrix.
 3. Complete payment, Operator OIDC/RBAC/action-intent, legal/commercial,

@@ -1,6 +1,6 @@
 # Android Release Audit
 
-Last updated: 2026-08-29
+Last updated: 2026-08-30
 
 ## Document Status
 
@@ -58,7 +58,7 @@ working-build sections below remain history for their exact older bytes only.
 | Huawei install and first launch | `PASS_EXACT_ARM64` |
 | Connect/disconnect and verified egress | `PASS_ORDINARY_AWG2_AWG31` — connected is shown only after tunnel, DNS and selected egress confirmation |
 | Wi-Fi/LTE handoff and sleep/resume | `PASS_ONE_PHYSICAL_DEVICE` — mobile/Wi-Fi/mobile/Wi-Fi, 15-second screen-off, forced Doze and app standby preserved the service and connected state |
-| Full/selected/excluded routing | `PASS_FULL_AND_SELECTED; EXCLUDED_MODE_OPEN` — Android VPN UID range matched only the selected YouTube package; selected traffic crossed TUN while an excluded control retained internet with zero TUN bytes |
+| Full/selected/excluded routing | `PASS_FULL_SELECTED_AND_EXCLUDED_EXACT_CANDIDATE` — selected-app mode keeps only the chosen app in the VPN range and proves TUN traffic plus excluded control bypass. The later excluded-app slice proves the inverse with the same redacted control app: it first crosses TUN while included, then leaves the VPN UID ranges, loads a public benign page directly and adds only bounded background TUN traffic |
 | DNS/blocked UDP 53/MTU matrix | `PASS_PRIVATE_DNS_INTERACTION; IPV6_BLOCKED_NO_UNDERLYING_IPV6; UDP53_AND_EXTERNAL_MTU_OPEN` |
 | WARP enable/fallback/restore | `PASS_EXACT_FALLBACK_PATH; ACTIVE_WARP_TRAFFIC_NOT_PROVEN` — every attempt returned to verified ordinary POKROV without loss of access; revoke and final WARP-off restore passed |
 | 100-cycle endurance and battery | `MANUAL_OWNER_TEST` |
@@ -71,9 +71,9 @@ LDPlayer origin failure does not downgrade the AWG2/AWG3.1 results and the lab
 passes do not turn ordinary emulator egress into a pass; each profile keeps
 its observed outcome.
 
-The new physical result closes only the named candidate.8 rows. It does not
-prove active WARP carriage, external IPv6/leak behavior, blocked UDP 53,
-excluded-app mode, a multi-OEM matrix, 100-cycle/battery endurance, store
+The current physical results close only the named candidate.8 rows. They do
+not prove active WARP carriage, external IPv6/leak behavior, blocked UDP 53,
+external MTU, a multi-OEM matrix, 100-cycle/battery endurance, store
 submission, public download or release promotion.
 
 ## Working Build 4041 Evidence
@@ -457,8 +457,8 @@ VPN UID range matched the selected app UID and excluded the POKROV host UID.
 The idle TUN delta was `0/0` bytes; launching the selected app produced
 `2391111` received and `2485252` transmitted TUN bytes. After the selected app
 was stopped, an excluded shell control retained internet access with `0/0`
-additional TUN bytes. This is `PASS_SELECTED_APP_TRAFFIC_AND_BYPASS`, not proof
-of the still-unrun excluded-app mode.
+additional TUN bytes. This is `PASS_SELECTED_APP_TRAFFIC_AND_BYPASS`; the
+separate inverse excluded-app mode is proved by the 2026-08-30 slice below.
 
 The user-facing status and history surfaces exposed no endpoint hostname,
 address, key, raw profile, subscription URL or token. Device serial and raw
@@ -472,9 +472,45 @@ scales to `1.0`, preserved `stay_on_while_plugged_in=2`, returned Doze to
 `ACTIVE` and app standby to `Idle=false`.
 
 The remaining Android blockers are active WARP carriage, external IPv6/leak
-proof, blocked UDP 53 and external MTU checks, excluded-app mode, broader OEM
-coverage, 100-cycle/battery endurance, backup/exposed-port review and public/
-store delivery. This exact physical slice does not authorize promotion.
+proof, blocked UDP 53 and external MTU checks, broader OEM coverage,
+100-cycle/battery endurance, backup/exposed-port review and public/store
+delivery. This exact physical slice does not authorize promotion.
+
+## 2026-08-30 Exact Candidate.8 Excluded-App Mode
+
+The installed physical ARM64 package was re-read before this slice: size
+`101366934`, SHA-256
+`9278c09fd8fa5768d3260cf796b4230db5acb0a092187aae00c441d717cfc572`,
+release/non-debuggable `1.2.0+4046`, valid APK signature and the exact
+production-certificate digest. The temporary pulled APK was deleted.
+
+On the redacted owner Wi-Fi, the ordinary foreign profile reached the app's
+proof-driven connected state in `Кроме выбранных`. The same redacted control
+app provided the before/after differential:
+
+- while included, its UID was inside the Android VPN UID ranges and a
+  ten-second page-load window added `380962` received and `379884` transmitted
+  TUN bytes;
+- after explicit exclusion and the app-managed reconnect, its UID was absent
+  from the VPN ranges while the POKROV host UID remained excluded;
+- the excluded control loaded a separate public benign page, while the
+  twelve-second window added only `776/776` TUN bytes, below the bounded
+  `10000`-byte background threshold. A six-second idle control had added
+  `208/208` bytes.
+
+This is `PASS_EXACT_CANDIDATE_EXCLUDED_APP_TRAFFIC_AND_BYPASS`. It proves one
+physical Android implementation of the inverse per-app mode, not broad OEM,
+external leak, UDP53, MTU or endurance behavior. A preliminary terminal UI
+probe whose marker was not created is explicitly discarded and contributes no
+network result.
+
+Cleanup disconnected POKROV, removed both temporary app selections, restored
+`Всё устройство`, WARP off, zero TUN, Wi-Fi off, mobile data on and Private DNS
+off, deleted all temporary APK/marker/screenshot/UI files and returned Hiddify
+to the foreground. No device identifier, UID range, app identity, network
+identifier, terminal history or runtime material is retained. Sanitized
+evidence SHA-256 is
+`2d8f57bfe9ba99285c691c39ece6428836ea6cf4e5065c91e26f4a6fa77a19c8`.
 
 ## Commands
 
