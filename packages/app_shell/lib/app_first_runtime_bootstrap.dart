@@ -2847,7 +2847,8 @@ class AppFirstRuntimeBootstrapper
             preferredVariantId: preferredVariantId,
             client: client,
           );
-          if (preferredNodeCode.trim().isEmpty) {
+          if (preferredNodeCode.trim().isEmpty &&
+              manifest.payload.smartConnect != null) {
             final deadline = DateTime.now().add(smartConnectTelemetryDeadline);
             final smartConnect = manifest.payload.smartConnect;
             final resolution = await _resolveSmartConnectNode(
@@ -5840,6 +5841,7 @@ class AppFirstRuntimeBootstrapper
     final isOwnedTransportLab = _ownedTransportLabProfiles.contains(
       _readText(response['transport_profile']).trim().toLowerCase(),
     );
+    final effectiveSmartConnect = isOwnedTransportLab ? null : smartConnect;
     final effectivePreferredNode =
         isOwnedTransportLab ? '' : normalizedPreferredNode;
     final clientRuleSetCatalog = await _ensureAllExceptRuRuleSetCatalog(
@@ -5862,13 +5864,13 @@ class AppFirstRuntimeBootstrapper
         preferredNodeCode: effectivePreferredNode,
         preferredVariantId:
             effectivePreferredNode.isEmpty ? 'direct' : preferredVariantId,
-        smartConnect: smartConnect,
+        smartConnect: effectiveSmartConnect,
         supportContext: supportContext,
         clientRuleSetCatalog: clientRuleSetCatalog,
       ),
       materializedForRuntime: true,
       routeMode: routeMode,
-      smartConnect: smartConnect,
+      smartConnect: effectiveSmartConnect,
       resolvedNodeCode: effectivePreferredNode,
       warpPolicy: warpPolicy,
       freeProfileAccess: FreeProfileAccess.tryParse(
