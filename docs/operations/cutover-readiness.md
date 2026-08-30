@@ -25,7 +25,7 @@ contracts. Do not select the most optimistic status.
 |---|---|
 | Canonical lane | `POKROV-app/main` |
 | Retained public release | Android and Windows `1.1.6` |
-| New working target | `1.2.0+4046` |
+| New working target | `1.2.0+4047` |
 | Continuing source target | `PRE_CANDIDATE_LOCAL` on `POKROV-app/main` |
 | Exact signed candidate | `pokrov-1.2.0-candidate.10`; private Actions artifact, promotion false |
 | Candidate created | `true`; public release/store/stable pointer remain absent |
@@ -34,7 +34,8 @@ contracts. Do not select the most optimistic status.
 
 The existing `1.1.6` publication does not approve new `1.2.0` bytes. Its
 signing, device, runtime and origin evidence cannot be reused for promotion.
-The continuing client seed describes the development line; exact candidate.10
+The continuing client seed now describes the `1.2.0+4047` development line
+with Core `cd8f0f4…884d`; exact candidate.10
 identity is read from the signed release-index contract recorded by
 `config/cutover-readiness.seed.json`, not duplicated into the development
 handoff seed.
@@ -43,14 +44,14 @@ handoff seed.
 
 | Gate | State | Required evidence |
 |---|---|---|
-| Package/version parity | `PASS_LOCAL` | Android and Windows are `1.2.0+4046`; the shared app-shell remains product version `1.2.0`. |
+| Package/version parity | `PASS_LOCAL_PRE_CANDIDATE` | Android and Windows development targets are `1.2.0+4047`; the shared app-shell remains product version `1.2.0`. Exact candidate.10 remains immutable at `1.2.0+4046`. |
 | Strict-v2 generator contract | `PASS_LOCAL` | Schema, generator and cross-repository parity tests pass. |
 | Stable pointer and rollback catalog | `PASS_LOCAL` | Retained `1.1.6` pointer matches its exact versioned handoff; isolated A→B→A proves optimistic lock, atomic replace, backup, receipt and byte-identical reversal. |
 | Operational producer/privacy contract | `PASS_LOCAL` | Auth, entitlement, performance, support and Android count-only routing producers pass focused client/platform tests; exact-candidate runtime proof remains later. |
 | Temporary support mode and encrypted export | `PASS_LOCAL` | Signed exact-audience activation, explicit consent, persistent indicator, nonce/TTL/cumulative caps, no-upload short code and encrypted-only Android/Windows export pass local source/widget/unit contracts; exact-candidate physical host proof remains later. |
 | Clean frozen revisions | `PASS_EXACT_CANDIDATE_10_TUPLE` | Signed candidate.10 binds platform `209b8f4…720`, client `3459438…f5c`, Core `a45d69e…665e` and release-index source `fc00b26…317`. Later documentation and Linux source commits do not change that immutable tuple. GitHub plan purchases and branch protection remain outside the owner-solo lane. |
 | Release index | `PASS_SIGNED_CANDIDATE_10_CONTRACT` | The signed manifest, detached signature, keyring, source tuple and all `19/19` evidence pointers validate. Promotion is false and no tag/public assets/stable switch exists. |
-| Core replacement | `PASS_EXACT_CANDIDATE_ARTIFACTS` | Candidate.10 binds Core `a45d69e…665e`, reproducible AAR `ce82f54b…54dd`, DLL `53b5e82a…4652`, unchanged Cronet `8ef1f8bb…a6f7`, SBOM/provenance and zero reachable findings in the scanned module roots. |
+| Core replacement | `PASS_EXACT_CANDIDATE_10_ARTIFACTS; SUCCESSOR_PRE_CANDIDATE_LOCAL` | Candidate.10 remains bound to Core `a45d69e…665e`. The successor development line binds secret-safe Core `cd8f0f4…884d`, reproducible AAR `2a9677d9…c6a69`, DLL `f284fa88…8204`, unchanged Cronet `8ef1f8bb…a6f7` and refreshed SBOM/provenance; it has no transferred candidate/device/VM claim. |
 | AWG lifecycle and direct DoH lab | `PASS_EXACT_CANDIDATE_10_LDPLAYER_AWG2_AWG31; PHYSICAL_MANUAL; SMART_DNS_LIVE_OPEN` | Exact candidate.10 LDPlayer reaches app-confirmed tunnel, DNS and selected egress for AWG2 and AWG3.1 and restores cleanly. Candidate.8 physical results remain history and do not transfer. The Smart-DNS client configuration persists on the exact APK, but live DoH/service access is not run. |
 | AWG current Windows-origin Core probe | `PASS_EXACT_DLL_IDENTITY_AND_CURRENT_HOST_SERVICE; LIVE_NETWORK_OPEN` | Candidate.10 contains exact Core `53b5e82a…4652`; installed `8/8` runtime files, LocalSystem service, authenticated IPC, restart, uninstall and unchanged idle route/DNS pass on the owner Windows 11 host. No connected app/TUN/DNS/AWG/egress or clean-VM result is claimed. |
 | External Smart-DNS lab | `PASS_LOCAL_SOURCE_ARTIFACT_AND_EXACT_CLIENT_STATE; AUTHORITATIVE_DNS_0_OF_4` | Exact client configuration, strict policy, byte-identical server bundle and guarded PLAN/APPLY/ROLLBACK tooling are ready. The foreign frontend transport and rollback path pass, but all four delegated Timeweb servers still return `NXDOMAIN` for `dns.pokrov.space`. Certificate, resolver material, server/frontend route APPLY and ChatGPT/Gemini/Xbox access remain `NOT_RUN`. |

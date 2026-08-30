@@ -14,13 +14,13 @@ results belong in dated evidence and never become reusable release approval.
 | Fact | Current state |
 |---|---|
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
-| Working package target | `1.2.0+4046` |
+| Working package target | `1.2.0+4047` |
 | Working source target state | `PRE_CANDIDATE_LOCAL` on continuing `main` |
 | Exact signed candidate | `pokrov-1.2.0-candidate.10`; private Actions artifact, promotion false |
 | Candidate created | `false` |
 | Public cutover allowed for a new candidate | `false` |
 | Google Play | `NOT_REQUESTED` |
-| Active pre-candidate Core artifact | Security-fixed POKROV Core `1.1.0` at `a45d69e…665e`; exact reproducible AAR/DLL identities bound |
+| Active pre-candidate Core artifact | Secret-safe POKROV Core `1.1.0` at `cd8f0f4…884d`; exact reproducible AAR/DLL identities and refreshed SBOMs bound. Exact candidate.10 remains on immutable `a45d69e…665e`. |
 | Support-mode signing public pin | `PASS_SOURCE_CONTROL` — tracked key `pokrov-support-2026-08`; private/HMAC values are secret-only and not deployed |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Windows trusted-signing decision | `SKIPPED_BY_OWNER` for the exact `1.2.0` direct-download beta; mandatory SmartScreen warning; no trusted/Store/broad-stable claim |
@@ -36,15 +36,16 @@ separate immutable release-index evidence and is not recreated by this branch.
 
 ## Current Local Completion
 
-- Core `a45d69e…665e` retains the `GO-2026-6303` dependency correction and
+- Core `cd8f0f4…884d` retains the `GO-2026-6303` dependency correction and
   makes the Core-owned AWG endpoint use the configured default domain-resolver
   transport and strategy for its inner FQDN. Hostname-authenticated TLS and
-  fail-close remain unchanged. Both module roots retain
+  fail-close remain unchanged. It also removes legacy raw-settings/error
+  logging and retains explicit AWG2/AWG 3.1 start/close coverage. Both module roots retain
   `golang.org/x/crypto v0.55.0` and the compatible dependency
   closure. Module verification, focused tests, full Core tests, `go vet` and
   root/embedded reachable-vulnerability scans pass locally.
-- Android AAR `ce82f54b…54dd`, size `107425409`, and Windows DLL
-  `53b5e82a…4652`, size `55426048`, are each byte-identical across two clean
+- Android AAR `2a9677d9…c6a69`, size `107419397`, and Windows DLL
+  `f284fa88…8204`, size `55426048`, are each byte-identical across two clean
   builds from that source. The bundled artifacts and machine contract match.
 - The exact Windows DLL exposes all 15 required symbols and passes 100
   proxy-only start/stop cycles. This does not prove SCM, TUN, DNS, leak,
@@ -77,7 +78,7 @@ separate immutable release-index evidence and is not recreated by this branch.
 
 ## Retained Pre-Convergence Evidence
 
-- Android and Windows package versions match `1.2.0+4046`; app-shell reports the
+- Android and Windows development package versions match `1.2.0+4047`; app-shell reports the
   shared product version `1.2.0`.
 - Strict release-handoff v2 generation and client/Core parity pass locally.
 - The retained `1.1.6` stable pointer is hash-bound to its versioned rollback
