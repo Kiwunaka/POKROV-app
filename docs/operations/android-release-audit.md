@@ -14,7 +14,7 @@ Older APK identities and device runs are retained separately as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
-| Working package target | `1.2.0+4048` |
+| Working package target | `1.2.0+4049` |
 | Exact replacement candidate | `pokrov-1.2.0-candidate.12`; signed manifest `22ba8bb1…ab98`, detached signature `c2ad2655…1b32`, promotion unauthorized; rejected for warm-restart lifecycle correction |
 | Package ID | `space.pokrov.pokrov_android_shell` |
 | Exact candidate source | Platform `9e873eb…8dc`, client `5b1aa02…195`, Core `cd8f0f4…884d`, signed release-index source `13cb67d…de`; universal APK `d3ee5cd2…5a3`, `295370161` bytes, and x86_64 APK `e7f74fb2…dd3c`, `109951989` bytes |
@@ -31,7 +31,7 @@ schema to two bounded files under the app-private no-backup directory. No raw
 message, URL, profile, token, endpoint or stack is accepted by that journal.
 These local contracts do not prove final APK bytes or physical behavior.
 
-## Working Build 4048 Core Refresh
+## Working Build 4049 Core Refresh
 
 The continuing source line pins Core `cd8f0f4169d570d693992a959d81d17c2c44884d`
 after removing legacy raw-settings/error logging and retaining explicit
@@ -45,7 +45,8 @@ for these exact bytes.
 
 ## Exact Candidate.12 LDPlayer Gate
 
-Candidate.12 is an immutable signed internal candidate with six artifacts and
+Candidate.12 is an immutable signed internal candidate for app `1.2.0+4048`
+with six artifacts and
 `promotion_authorized=false`. LDPlayer 9 `emulator-5554`, Android 9/API 28,
 installed the production-signed x86_64 APK byte-identically at SHA-256
 `e7f74fb22e981c1765642e9197c785b7242827db26b2a623f42ab122dadddd3c`.

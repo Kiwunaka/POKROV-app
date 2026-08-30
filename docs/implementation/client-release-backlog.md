@@ -14,13 +14,13 @@ results belong in dated evidence and never become reusable release approval.
 | Fact | Current state |
 |---|---|
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
-| Working package target | `1.2.0+4048` |
+| Working package target | `1.2.0+4049` |
 | Working source target state | `PRE_CANDIDATE_LOCAL` on continuing `main` |
-| Exact signed candidate | `pokrov-1.2.0-candidate.11`; private Actions artifact, promotion unauthorized |
+| Exact signed candidate | `pokrov-1.2.0-candidate.12`, app `1.2.0+4048`; private internal candidate, promotion unauthorized and rejected for the warm-restart lifecycle correction |
 | Candidate created | `false` |
 | Public cutover allowed for a new candidate | `false` |
 | Google Play | `NOT_REQUESTED` |
-| Exact candidate Core artifact | Secret-safe POKROV Core `1.1.0` at `cd8f0f4…884d`; exact reproducible AAR/DLL identities and refreshed SBOMs are bound into candidate.11 |
+| Exact candidate Core artifact | Secret-safe POKROV Core `1.1.0` at `cd8f0f4…884d`; exact reproducible AAR/DLL identities and refreshed SBOMs are bound into candidate.12 |
 | Support-mode signing public pin | `PASS_SOURCE_CONTROL` — tracked key `pokrov-support-2026-08`; private/HMAC values are secret-only and not deployed |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Windows trusted-signing decision | `SKIPPED_BY_OWNER` for the exact `1.2.0` direct-download beta; mandatory SmartScreen warning; no trusted/Store/broad-stable claim |
@@ -28,10 +28,10 @@ results belong in dated evidence and never become reusable release approval.
 
 `config/release-handoff.seed.json` owns the public release and continuing
 development target. `config/cutover-readiness.seed.json` owns the cutover
-verdict. Exact candidate.11 identity comes only from the signed internal
+verdict. Exact candidate.12 identity comes only from the signed internal
 release-index manifest/receipt; the client seed does not duplicate that
 candidate contract. The seed's `false` applies to the continuing `main` target.
-Candidate.11 remains unpublished and unpromoted; its source tuple is immutable
+Candidate.12 remains unpublished and unpromoted; its source tuple is immutable
 and is not recreated by this branch.
 
 ## Current Local Completion
@@ -81,6 +81,14 @@ and is not recreated by this branch.
   Successor source removes Smart Connect from AWG2/AWG3.1/HY2 lab envelopes;
   `86/86` bootstrap tests and `flutter analyze` pass. Candidate.11 remains
   immutable and requires replacement plus exact-device replay.
+- Exact candidate.12 x86_64 APK `e7f74fb2…dd3c`, `109951989` bytes, is
+  production-signed and installed byte-identically on LDPlayer as
+  `1.2.0+4048`. Fresh AWG3.1 and cold-process AWG2 each reached verified
+  egress, and ordinary Auto failed over from a fail-closed VLESS leaf to a
+  verified successor. The warm AWG3.1 to AWG2 service restart rejected the new
+  Core run's restarted event sequence, so candidate.12 remains immutable and
+  non-promotable. Successor source fixes that lifecycle fence and requires a
+  new signed candidate plus an exact warm-switch replay.
 - Clean client `b4c9117…9f0` produced unsigned setup `6ef7899d…cbe9`, size
   `28918848`, with manifest `8dced605…f74b`; all eight files match and the
   embedded DLL is exact. Signing remains `SKIPPED_BY_OWNER` with mandatory
@@ -88,7 +96,7 @@ and is not recreated by this branch.
 
 ## Retained Pre-Convergence Evidence
 
-- Android and Windows development package versions match `1.2.0+4048`; app-shell reports the
+- Android and Windows development package versions match `1.2.0+4049`; app-shell reports the
   shared product version `1.2.0`.
 - Strict release-handoff v2 generation and client/Core parity pass locally.
 - The retained `1.1.6` stable pointer is hash-bound to its versioned rollback
