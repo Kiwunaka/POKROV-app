@@ -1651,7 +1651,8 @@ Future<List<_SelectedAppCandidate>> _loadSelectedAppCandidates(
         ...await _loadWindowsProcessCandidates(),
         ...await _loadWindowsExecutableCandidates(),
       ],
-    HostPlatform.ios || HostPlatform.macos => const <_SelectedAppCandidate>[],
+    HostPlatform.ios || HostPlatform.linux || HostPlatform.macos =>
+      const <_SelectedAppCandidate>[],
   };
   return _mergeSelectedAppCandidates(
     <_SelectedAppCandidate>[
@@ -1908,6 +1909,7 @@ List<_SelectedAppCandidate> _suggestedSelectedAppCandidates(
         ),
       ];
     case HostPlatform.ios:
+    case HostPlatform.linux:
     case HostPlatform.macos:
       return const <_SelectedAppCandidate>[];
   }

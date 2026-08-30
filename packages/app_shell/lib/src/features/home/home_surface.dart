@@ -55,7 +55,7 @@ class _QuickConnectSection extends StatelessWidget {
     final presentation = protection.connection;
     final snapshot = presentation.experience.snapshot;
     final isDesktop = switch (appContext.hostPlatform) {
-      HostPlatform.windows || HostPlatform.macos => true,
+      HostPlatform.windows || HostPlatform.linux || HostPlatform.macos => true,
       HostPlatform.android || HostPlatform.ios => false,
     };
     final statusColor = switch (presentation.tone) {

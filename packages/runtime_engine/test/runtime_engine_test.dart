@@ -3135,4 +3135,138 @@ void main() {
       _expectNoSensitiveRuntimeDetail(value);
     }
   });
+
+  test('Linux daemon snapshot stays fail closed while mapping safe host facts',
+      () async {
+    final transport = _FakeLinuxDaemonTransport((request) {
+      return <String, Object?>{
+        'protocol': pokrovLinuxDaemonProtocol,
+        'request_id': request['request_id'],
+        'ok': true,
+        'snapshot': <String, Object?>{
+          'phase': 'initialized',
+          'supports_live_connect': false,
+          'can_initialize': true,
+          'can_connect': false,
+          'message_code': 'ready',
+          'host_health': 'healthy',
+          'dns_state': 'unknown',
+          'uplink_state': 'unknown',
+          'host_stack': <String, Object?>{
+            'systemd': true,
+            'network_manager': true,
+            'resolved': true,
+            'nftables': true,
+            'core_artifact': true,
+          },
+        },
+      };
+    });
+    final engine = LinuxDaemonRuntimeEngine(transport: transport);
+
+    final snapshot = await engine.snapshot();
+
+    expect(snapshot.hostPlatform, HostPlatform.linux);
+    expect(snapshot.lane, RuntimeLane.linuxDaemon);
+    expect(snapshot.phase, RuntimePhase.initialized);
+    expect(snapshot.supportsLiveConnect, isFalse);
+    expect(snapshot.canConnect, isFalse);
+    expect(snapshot.coreBinaryPath, isNull);
+    expect(snapshot.hostDiagnosticsSummary, contains('NetworkManager готов'));
+    expect(snapshot.isCleanlyHealthy, isFalse);
+  });
+
+  test('Linux profile staging is bounded and never echoes config in snapshot',
+      () async {
+    late Map<String, Object?> captured;
+    final transport = _FakeLinuxDaemonTransport((request) {
+      captured = request;
+      return <String, Object?>{
+        'protocol': pokrovLinuxDaemonProtocol,
+        'request_id': request['request_id'],
+        'ok': true,
+        'snapshot': <String, Object?>{
+          'phase': 'config_staged',
+          'supports_live_connect': false,
+          'can_initialize': true,
+          'can_connect': false,
+          'message_code': 'profile_staged',
+          'host_health': 'healthy',
+          'dns_state': 'unknown',
+          'uplink_state': 'unknown',
+          'host_stack': <String, Object?>{},
+        },
+      };
+    });
+    final engine = LinuxDaemonRuntimeEngine(transport: transport);
+
+    final snapshot = await engine.stageManagedProfile(
+      const ManagedProfilePayload(
+        profileName: 'pokrov-test',
+        configPayload: '{"dns":{},"inbounds":[],"outbounds":[],"route":{}}',
+        materializedForRuntime: true,
+      ),
+    );
+
+    final payload = Map<String, Object?>.from(captured['payload']! as Map);
+    expect(captured['action'], 'stage_profile');
+    expect(payload['profile_name'], 'pokrov-test');
+    expect(payload['config_payload'], contains('"outbounds"'));
+    expect(snapshot.phase, RuntimePhase.configStaged);
+    expect(snapshot.stagedConfigPath, isNull);
+    expect(snapshot.message, isNot(contains('outbounds')));
+  });
+
+  test('Linux daemon rejects mismatched response identity and arbitrary copy',
+      () async {
+    final mismatch = LinuxDaemonRuntimeEngine(
+      transport: _FakeLinuxDaemonTransport((request) {
+        return <String, Object?>{
+          'protocol': pokrovLinuxDaemonProtocol,
+          'request_id': 'different-request',
+          'ok': true,
+          'snapshot': <String, Object?>{},
+        };
+      }),
+    );
+    final hostile = LinuxDaemonRuntimeEngine(
+      transport: _FakeLinuxDaemonTransport((request) {
+        return <String, Object?>{
+          'protocol': pokrovLinuxDaemonProtocol,
+          'request_id': request['request_id'],
+          'ok': true,
+          'snapshot': <String, Object?>{
+            'phase': 'artifact_missing',
+            'supports_live_connect': false,
+            'can_initialize': false,
+            'can_connect': false,
+            'message_code': _sensitiveRuntimeDetail,
+            'host_health': 'degraded',
+            'dns_state': 'unknown',
+            'uplink_state': 'unknown',
+            'last_failure_kind': _sensitiveRuntimeDetail,
+            'host_stack': <String, Object?>{},
+          },
+        };
+      }),
+    );
+
+    final mismatchSnapshot = await mismatch.snapshot();
+    final hostileSnapshot = await hostile.snapshot();
+
+    expect(mismatchSnapshot.lastFailureKind, 'linux_daemon_unavailable');
+    expect(hostileSnapshot.lastFailureKind, isNull);
+    _expectNoSensitiveRuntimeDetail(hostileSnapshot.message);
+  });
+}
+
+final class _FakeLinuxDaemonTransport implements LinuxDaemonTransport {
+  _FakeLinuxDaemonTransport(this.handler);
+
+  final Map<String, Object?> Function(Map<String, Object?> request) handler;
+
+  @override
+  Future<Map<String, Object?>> invoke(Map<String, Object?> request) async {
+    return handler(request);
+  }
 }

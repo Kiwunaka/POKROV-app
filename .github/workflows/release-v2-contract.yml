@@ -87,6 +87,12 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.13"
+          cache-dependency-path: client/apps/linux_shell/daemon/go.mod
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -106,3 +112,16 @@ jobs:
         shell: pwsh
         working-directory: client
         run: ./scripts/run-tests.ps1
+
+      - name: Validate conditional Linux daemon foundation
+        shell: bash
+        working-directory: client/apps/linux_shell/daemon
+        run: |
+          unformatted="$(gofmt -l $(find . -type f -name '*.go'))"
+          if [ -n "$unformatted" ]; then
+            echo "$unformatted"
+            exit 1
+          fi
+          go test ./...
+          go vet ./...
+          go build -trimpath -o "$RUNNER_TEMP/pokrov-linuxd" ./cmd/pokrov-linuxd

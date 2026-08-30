@@ -275,6 +275,7 @@ function New-ExpectedRegistryManifest {
     'ACTIVE_EXECUTION|RECONCILED|Cutover checklist|docs/operations/cutover-readiness.md',
     'ACTIVE_EXECUTION|RECONCILED|Android readiness|docs/operations/android-release-audit.md',
     'ACTIVE_EXECUTION|RECONCILED|Windows readiness|docs/operations/windows-release-readiness.md',
+    'ACTIVE_EXECUTION|RECONCILED|Conditional Linux beta foundation|apps/linux_shell/README.md',
     'ACTIVE_EXECUTION|RECONCILED|WARP runtime proof|docs/operations/warp-runtime-proof-checklist.md',
     'ACTIVE_EXECUTION|REVIEWED_NO_CHANGE|Responsive proof|docs/operations/responsive-golden-capture-plan.md',
     'ACTIVE_EXECUTION|REVIEWED_NO_CHANGE|Motion/performance proof|docs/operations/client-motion-performance-checklist.md',
@@ -322,7 +323,7 @@ function New-ExpectedRegistryManifest {
       LogicalKey = $logicalKey
     })
   }
-  if ($manifest.Count -ne 53) { throw "Embedded registry manifest must contain 53 rows, got $($manifest.Count)" }
+  if ($manifest.Count -ne 54) { throw "Embedded registry manifest must contain 54 rows, got $($manifest.Count)" }
   return $manifest.ToArray()
 }
 
@@ -623,11 +624,11 @@ function Test-DocumentationRegistry {
       $expectedPathClasses.Add($relativePath, $expectedRow.Class)
     }
   }
-  if ($expectedPathClasses.Count -ne 64) {
-    throw "Embedded registry manifest must contain 64 concrete paths, got $($expectedPathClasses.Count)"
+  if ($expectedPathClasses.Count -ne 65) {
+    throw "Embedded registry manifest must contain 65 concrete paths, got $($expectedPathClasses.Count)"
   }
   if ($registryTable.Rows.Count -ne $expectedManifest.Count) {
-    [void]$Errors.Add("Document registry must match the exact 53-row manifest (actual rows: $($registryTable.Rows.Count))")
+    [void]$Errors.Add("Document registry must match the exact 54-row manifest (actual rows: $($registryTable.Rows.Count))")
   }
 
   $observedClasses = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
@@ -1024,15 +1025,15 @@ POKROV-app/main
     $rows.RemoveAt($index)
     return 1
   }
-  Assert-ContractRejected -Name 'deleted registry row' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $deletedRowRegistry) -ExpectedErrorPattern 'exact 53-row manifest'
+  Assert-ContractRejected -Name 'deleted registry row' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $deletedRowRegistry) -ExpectedErrorPattern 'exact 54-row manifest'
 
-  $emptyRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 53 -Mutation {
+  $emptyRegistry = Edit-MarkdownTableRows -Text $registryText -Header $registryHeader -ExpectedMutationCount 54 -Mutation {
     param($rows)
     $removed = $rows.Count
     $rows.Clear()
     return $removed
   }
-  Assert-ContractRejected -Name 'all registry rows deleted' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $emptyRegistry) -ExpectedErrorPattern 'exact 53-row manifest'
+  Assert-ContractRejected -Name 'all registry rows deleted' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $emptyRegistry) -ExpectedErrorPattern 'exact 54-row manifest'
 
   $invalidReviewRegistry = Set-RegistryRowCell -Text $registryText -Owner 'Client docs routing' -CellIndex 1 -Value 'APPROVED'
   Assert-ContractRejected -Name 'invalid review enum' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $invalidReviewRegistry) -ExpectedErrorPattern 'invalid review: APPROVED'
@@ -1079,7 +1080,7 @@ POKROV-app/main
     $rows.Insert($targetIndex + 1, [pscustomobject]@{ Cells = $secondCells })
     return 1
   }
-  Assert-ContractRejected -Name 'four-path registry row split' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $splitRegistry) -ExpectedErrorPattern 'exact 53-row manifest'
+  Assert-ContractRejected -Name 'four-path registry row split' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $splitRegistry) -ExpectedErrorPattern 'exact 54-row manifest'
 
   $wrongSectionAgents = Move-AgentLineBetweenSections -Text $agentsText -Marker 'Every task runs `git diff --check`' -SourceSection 'Verification And Documentation' -TargetSection 'Start Every Task'
   Assert-ContractRejected -Name 'verification marker moved to wrong section' -RepositoryRoot $RepositoryRoot -AgentsBytes (ConvertTo-Utf8Bytes $wrongSectionAgents) -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'belongs to Verification And Documentation'
@@ -1548,6 +1549,30 @@ $windowsApprovedArtifacts = @($windowsArtifacts | Where-Object { $_.public_appro
 foreach ($requiredPublicTarget in @('android', 'windows')) {
   if (@($platform.public_release_targets) -notcontains $requiredPublicTarget) {
     $errors += "Platform matrix lacks public release target: $requiredPublicTarget"
+  }
+}
+
+if ((@($platform.conditional_beta_targets) -join ',') -ne 'linux' -or
+    $platform.host_shells.linux -ne 'apps/linux_shell' -or
+    $platform.release_readiness.linux -ne 'conditional_beta_foundation_implemented_live_runtime_package_and_matrix_proof_open' -or
+    (@($product.conditional_beta_scope) -join ',') -ne 'linux') {
+  $errors += 'Product/platform contracts do not preserve Linux as the conditional non-public beta foundation'
+}
+
+$linuxReadmePath = Join-Path $root 'apps\linux_shell\README.md'
+if (-not (Test-Path -LiteralPath $linuxReadmePath -PathType Leaf)) {
+  $errors += 'Conditional Linux beta owner README is missing'
+} else {
+  $linuxReadme = [IO.File]::ReadAllText($linuxReadmePath)
+  foreach ($requiredLinuxBoundary in @(
+    'IMPLEMENTED_PARTIAL',
+    'supports_live_connect=false',
+    'linux_live_connect_unavailable',
+    'No Linux artifact or availability promise'
+  )) {
+    if (-not $linuxReadme.Contains($requiredLinuxBoundary)) {
+      $errors += "Conditional Linux beta owner lacks fail-closed boundary: $requiredLinuxBoundary"
+    }
   }
 }
 

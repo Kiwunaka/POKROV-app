@@ -128,6 +128,7 @@ $workspacePackages = @(
   "packages\\app_shell",
   "apps\\android_shell",
   "apps\\ios_shell",
+  "apps\\linux_shell",
   "apps\\macos_shell",
   "apps\\windows_shell"
 )

@@ -1,0 +1,13 @@
+{
+  "schema": "pokrov-linux-install-layout-v1",
+  "ui": "/usr/bin/pokrov",
+  "daemon": "/usr/lib/pokrov/pokrov-linuxd",
+  "core": "/usr/lib/pokrov/pokrov-core",
+  "socket_unit": "/usr/lib/systemd/system/pokrov-linuxd.socket",
+  "service_unit": "/usr/lib/systemd/system/pokrov-linuxd.service",
+  "polkit_policy": "/usr/share/polkit-1/actions/space.pokrov.linux.policy",
+  "state_root": "/var/lib/pokrov",
+  "runtime_socket": "/run/pokrov/pokrov-linuxd.sock",
+  "ui_user": "non-root",
+  "daemon_user": "root"
+}

@@ -6264,7 +6264,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     ];
 
     final isDesktopShell = switch (widget.appContext.hostPlatform) {
-      HostPlatform.windows || HostPlatform.macos => true,
+      HostPlatform.windows || HostPlatform.linux || HostPlatform.macos => true,
       HostPlatform.android || HostPlatform.ios => false,
     };
 

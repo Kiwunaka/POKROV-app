@@ -34,12 +34,20 @@ $requiredFragments = @(
   "actions/setup-java@v4",
   "distribution: temurin",
   'java-version: "17"',
+  "actions/setup-go@v5",
+  'go-version: "1.25.13"',
+  "client/apps/linux_shell/daemon/go.mod",
   "subosito/flutter-action@v2",
   'flutter-version: "3.38.5"',
   "./scripts/validate-seed.ps1",
   "-PlatformRoot",
   "-CoreRoot",
-  "./scripts/run-tests.ps1"
+  "./scripts/run-tests.ps1",
+  "Validate conditional Linux daemon foundation",
+  'gofmt -l $(find . -type f -name ''*.go'')',
+  "go test ./...",
+  "go vet ./...",
+  "go build -trimpath"
 )
 
 foreach ($fragment in $requiredFragments) {

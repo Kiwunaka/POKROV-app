@@ -7,6 +7,7 @@ enum PermissionRequirement {
   vpnProfile,
   backgroundStart,
   elevatedSession,
+  systemServiceAuthorization,
 }
 
 class PlatformBootstrapContract {
@@ -39,6 +40,8 @@ extension PermissionRequirementPresentation on PermissionRequirement {
         return 'Запуск в фоне';
       case PermissionRequirement.elevatedSession:
         return 'Права Windows';
+      case PermissionRequirement.systemServiceAuthorization:
+        return 'Доступ к системной службе Linux';
     }
   }
 }

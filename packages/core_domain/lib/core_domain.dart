@@ -3,6 +3,7 @@ library pokrov_core_domain;
 enum HostPlatform {
   android,
   ios,
+  linux,
   macos,
   windows,
 }
@@ -10,6 +11,7 @@ enum HostPlatform {
 enum ClientPlatform {
   android,
   ios,
+  linux,
   macos,
   windows,
 }
@@ -54,6 +56,8 @@ extension HostPlatformPresentation on HostPlatform {
         return 'Android';
       case HostPlatform.ios:
         return 'iOS';
+      case HostPlatform.linux:
+        return 'Linux';
       case HostPlatform.macos:
         return 'macOS';
       case HostPlatform.windows:
@@ -67,6 +71,7 @@ extension HostPlatformPresentation on HostPlatform {
       case HostPlatform.windows:
         return true;
       case HostPlatform.ios:
+      case HostPlatform.linux:
       case HostPlatform.macos:
         return false;
     }
@@ -80,6 +85,8 @@ extension ClientPlatformPresentation on ClientPlatform {
         return 'Android';
       case ClientPlatform.ios:
         return 'iOS';
+      case ClientPlatform.linux:
+        return 'Linux';
       case ClientPlatform.macos:
         return 'macOS';
       case ClientPlatform.windows:

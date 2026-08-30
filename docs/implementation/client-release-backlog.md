@@ -16,7 +16,7 @@ results belong in dated evidence and never become reusable release approval.
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
 | Working package target | `1.2.0+4046` |
 | Working source target state | `PRE_CANDIDATE_LOCAL` on continuing `main` |
-| Exact signed candidate | `pokrov-1.2.0-candidate.8`; private Actions artifact, promotion false |
+| Exact signed candidate | `pokrov-1.2.0-candidate.10`; private Actions artifact, promotion false |
 | Candidate created | `false` |
 | Public cutover allowed for a new candidate | `false` |
 | Google Play | `NOT_REQUESTED` |
@@ -24,12 +24,15 @@ results belong in dated evidence and never become reusable release approval.
 | Support-mode signing public pin | `PASS_SOURCE_CONTROL` — tracked key `pokrov-support-2026-08`; private/HMAC values are secret-only and not deployed |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Windows trusted-signing decision | `SKIPPED_BY_OWNER` for the exact `1.2.0` direct-download beta; mandatory SmartScreen warning; no trusted/Store/broad-stable claim |
+| Conditional Linux beta | `IMPLEMENTED_PARTIAL_SOURCE_ONLY`; non-public and absent from the current candidate |
 
 `config/release-handoff.seed.json` owns the public release and continuing
 development target. `config/cutover-readiness.seed.json` owns the cutover
-verdict. Exact candidate.8 identity comes only from the signed public
+verdict. Exact candidate.10 identity comes only from the signed public
 release-index manifest/receipt; the client seed does not duplicate that
 candidate contract.
+This `false` applies to the continuing `main` target. Signed candidate.10 is
+separate immutable release-index evidence and is not recreated by this branch.
 
 ## Current Local Completion
 
@@ -60,7 +63,7 @@ candidate contract.
   defect, not the remaining Android device matrix or candidate gate.
 - Core hosted run `33227157016` passes all five jobs. The exact client hosted
   run contains zero executed steps and remains `BLOCKED_BY_ACCESS`, not PASS.
-- Exact candidate.8 x86_64 APK `ec07ba17…2627`, `109952213` bytes, installed
+- Exact candidate.10 x86_64 APK `ec07ba17…2627`, `109952213` bytes, installed
   and read back byte-identically on LDPlayer as release/non-debuggable
   `1.2.0+4046`. All seven locations were visible. The ordinary Frankfurt
   control stopped fail-closed at the emulator-origin egress boundary; separate
@@ -83,6 +86,8 @@ candidate contract.
   package identity.
 - Android uses separate direct and store update authorities.
 - Windows uses the service-first privilege boundary in current source.
+- Linux has a non-root Flutter host and a fail-closed systemd/polkit daemon
+  foundation; live connect remains disabled until Core/network rollback proof.
 - Local observability, diagnostics and support-bundle contracts are present.
 - Production packaging is source-bound to one tracked support-mode public key
   and rejects partial or different overrides before Flutter.
@@ -168,31 +173,37 @@ runtime, rollback or promotion proof.
 
 | Order | Gate | State | Completion rule |
 |---:|---|---|---|
-| 1 | Clean platform, client, Core and release-index revisions | `PASS_EXACT_CANDIDATE_8_TUPLE` | Candidate.8 binds platform `241a83b…c39`, client `3459438…f5c`, Core `a45d69e…665e` and signed release-index source `b242e0a…a8`; exact local aggregate passes `15/15`. |
-| 2 | Public release-index revision | `PASS_SIGNED_CANDIDATE_8_MANIFEST` | Release-index signer and receipt workflows passed; manifest `f0006cec…906f`, signature `5fcae067…24f6`, receipt `4109bb34…1fc`. Promotion remains false. |
-| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_CANDIDATE_ARTIFACTS` | Candidate.8 binds reproducible AAR `ce82f54b…54dd`, DLL `53b5e82a…4652`, unchanged Cronet `8ef1f8bb…a6f7`, exact SBOM/provenance and zero reachable findings in the scanned module roots. |
-| 4 | Strict-v2 candidate metadata | `PASS_SIGNED_CANDIDATE_8` | Strict-v2 handoff binds build `4046`, the exact four-source tuple, six artifacts, SBOM, provenance and Windows runtime manifest. |
-| 5 | Android exact-candidate build and signer | `PASS_EXACT_ARM64_AND_X86_64_INSTALL` | Production-signed, release/non-debuggable ARM64 APK `9278c09f…572`, `101366934` bytes, and x86_64 APK `ec07ba17…2627`, `109952213` bytes, installed and read back byte-identically as `1.2.0+4046`. |
-| 6 | Android device matrix | `PASS_PHYSICAL_ORDINARY_AWG2_AWG31_SELECTED_AND_EXCLUDED_APP_HANDOFF_LIFECYCLE_WARP_FALLBACK_PRIVATE_DNS; PASS_LDPLAYER_REHEARSAL; MATRIX_OPEN` | Exact candidate.8 passes physical ordinary/AWG selected egress, selected-app and inverse excluded-app traffic/bypass, and the named lifecycle rows. LDPlayer separately passes exact-byte install/catalog plus AWG2/AWG3.1 tunnel, DNS and selected egress; its ordinary control fails closed at the emulator-origin boundary. Active WARP traffic, external IPv6/leak, UDP 53/MTU, broader OEM coverage and 100-cycle/battery endurance remain open. |
-| 7 | Windows exact-candidate package | `PASS_CURRENT_HOST_CLEAN_APP_STATE; CLEAN_VM_LIVE_NETWORK_OPEN` | Candidate.8 setup `26ec26d8…4668` packages the exact runtime, passes all `8/8` installed-file identities and, on the owner Windows 11 host, passes install, LocalSystem service, authenticated IPC, restart, uninstall and unchanged idle route/DNS from an absent-POKROV baseline. This is not a clean OS/VM result. |
-| 8 | Windows unsigned-beta warning and clean-host recovery | `OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY; LIVE_RECOVERY_OPEN` | The direct-beta warning/SmartScreen exception is explicit. Authenticode is `NotSigned`; trusted/Store/broad-stable claims remain forbidden. Connected TUN/DNS/AWG/egress, sleep/reboot/crash recovery, connected uninstall, interactive SmartScreen and isolated Windows 10/11 proof remain manual. |
-| 9 | Hosted cross-repository CI | `RELEASE_INDEX_PASS; PLATFORM_CLIENT_SKIPPED_BY_OWNER` | Release-index source, signer and receipt runs execute real steps and pass. Platform/client private PR jobs stop before product steps under the no-purchase owner-solo exception; they remain skipped, not PASS. |
-| 10 | Runtime/public readback and rollback | `NOT_AUTHORIZED` | No tag, public candidate assets, stable catalog pointer, anonymous readback or post-public rollback drill exists. |
-| 11 | Promotion and go/no-go | `BLOCKED_GATE_F_6_OF_19` | Successor candidate.8 Gate F is `BLOCKED`: `6 PASS`, `13 non-PASS`, `0 FAIL`; the exact LDPlayer rehearsal adds one PASS without replacing physical Android. Gate G, public release and stable pointer are not authorized. |
+| 1 | Clean platform, client, Core and release-index revisions | `PASS_EXACT_CANDIDATE_10_TUPLE` | Candidate.10 binds platform `209b8f4…720`, client `3459438…f5c`, Core `a45d69e…665e` and signed release-index source `fc00b26…317`. Later documentation and Linux source work do not replace that immutable tuple. |
+| 2 | Public release-index revision | `PASS_SIGNED_CANDIDATE_10_MANIFEST` | The signed candidate.10 manifest, detached signature, keyring, source tuple and all `19/19` evidence pointers validate. Promotion remains false. |
+| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_CANDIDATE_ARTIFACTS` | Candidate.10 retains reproducible AAR `ce82f54b…54dd`, DLL `53b5e82a…4652`, unchanged Cronet `8ef1f8bb…a6f7`, exact SBOM/provenance and zero reachable findings in the scanned module roots. |
+| 4 | Conditional Linux beta runtime and package | `IMPLEMENTED_PARTIAL_SOURCE_ONLY; NOT_IN_CANDIDATE_10` | The current source branch contains the non-root Flutter host plus fail-closed systemd/socket/polkit daemon foundation and typed network-transaction seam. Live Core/TUN, NetworkManager/resolved/nft mutation and rollback, signed packages and clean-VM proof remain absent. Candidate.10 and public facts exclude Linux. |
+| 5 | Strict-v2 candidate metadata | `PASS_SIGNED_CANDIDATE_10` | Strict-v2 handoff binds build `4046`, the exact four-source tuple, six artifacts, SBOM, provenance and Windows runtime manifest. |
+| 6 | Android exact-candidate build and signer | `PASS_EXACT_ARM64_AND_X86_64_INSTALL` | Production-signed, release/non-debuggable ARM64 APK `9278c09f…572`, `101366934` bytes, and x86_64 APK `ec07ba17…2627`, `109952213` bytes, install and read back byte-identically as `1.2.0+4046`. |
+| 7 | Android device matrix | `PASS_CANDIDATE_10_LDPLAYER_AWG2_AWG31; PHYSICAL_MANUAL; MATRIX_OPEN` | Exact candidate.10 LDPlayer AWG2/AWG3.1 tunnel, DNS, selected egress, routes and clean restore pass. Candidate.8 physical results are retained history and do not transfer into candidate.10. Physical Android, active WARP traffic, external IPv6/leak, UDP 53/MTU, broader OEM coverage and endurance remain open. |
+| 8 | Windows exact-candidate package | `PASS_EXACT_PACKAGE_IDENTITY; CLEAN_VM_LIVE_NETWORK_OPEN` | Candidate.10 carries the same exact setup/runtime bytes already proven for install, `8/8` file identity, LocalSystem service, authenticated IPC, restart, uninstall and unchanged idle route/DNS on the owner Windows 11 host. Connected TUN/DNS/AWG/egress and clean Windows 10/11 proof remain manual. |
+| 9 | Windows unsigned-beta warning and clean-host recovery | `OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY; LIVE_RECOVERY_OPEN` | The direct-beta warning/SmartScreen exception is explicit. Authenticode is `NotSigned`; trusted/Store/broad-stable claims remain forbidden. Connected recovery, sleep/reboot/crash, connected uninstall and interactive SmartScreen remain manual. |
+| 10 | Hosted cross-repository CI | `CORE_AND_RELEASE_INDEX_PASS; PLATFORM_CLIENT_SKIPPED_BY_OWNER` | Exact Core and release-index jobs execute real steps and pass. Platform/client private jobs stop before product steps under the no-purchase owner-solo exception; they remain skipped, not PASS. |
+| 11 | Runtime/public readback and rollback | `NOT_AUTHORIZED` | No tag, public candidate assets, stable catalog pointer, anonymous readback or post-public rollback drill exists. |
+| 12 | Promotion and go/no-go | `NO_GO_GATE_F_6_PASS_13_NONPASS_1_FAIL` | Candidate.10 Gate F validates all pointers but remains `NO_GO`; current RU-origin is `FAIL 9/11`. Gate G, public release and stable pointer are not authorized. |
 
 ## Next Action Order
 
-1. Run the remaining Android active-WARP/IPv6/UDP53/MTU/OEM/endurance rows
-   and the Windows live app/service/TUN/DNS/AWG clean-host matrix.
-2. Execute exact-candidate Brain-origin and RU-origin readback plus the owned
-   Smart DNS runtime/access/leak/lifecycle/rollback matrix.
-3. Complete payment, Operator OIDC/RBAC/action-intent, legal/commercial,
-   comparable performance and no-open-P0 attestations for the same candidate.
-4. Refresh Gate F only from those exact retained results; keep every skip,
-   inaccessible environment and unrun manual row non-PASS.
-5. Request separate authority for public same-byte candidate publication,
+1. Publish `dns.pokrov.space` on all four delegated servers, then run the
+   guarded Smart-DNS certificate/runtime/server/frontend sequence and actual
+   ChatGPT/Gemini/Xbox access, attribution, leak, lifecycle and rollback proof.
+2. Pursue new RU route/provider evidence for the bounded NL and RU-SPB path
+   failures without repeating unchanged probes.
+3. Run exact candidate.10 physical Android and clean Windows live-network,
+   recovery and endurance matrices. Finish Linux live Core/TUN ownership,
+   NetworkManager/resolved/nft rollback, packaging and VM proof only on a
+   successor tuple if Linux is approved for shipment.
+4. Complete payment, Operator OIDC/RBAC/action-intent, legal/commercial,
+   comparable performance and no-open-P0 attestations for candidate.10.
+5. Refresh Gate F only from exact retained results; every skip, inaccessible
+   environment and unrun manual row remains non-PASS.
+6. Request separate authority for public same-byte candidate publication,
    anonymous readback, rollback drill and promotion.
-6. Provision trusted Windows signing later before any signed, Store or
+7. Provision trusted Windows signing later before any signed, Store or
    broad-stable Windows claim.
 
 ## Retained History
