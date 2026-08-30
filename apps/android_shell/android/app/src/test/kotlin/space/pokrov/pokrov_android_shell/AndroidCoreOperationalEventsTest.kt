@@ -25,6 +25,24 @@ class AndroidCoreOperationalEventsTest {
     }
 
     @Test
+    fun acceptsRestartedSequenceForNewRunAtSameServiceGeneration() {
+        val fence = AndroidCoreOperationalEventFence(capacity = 4)
+        val firstRunId = "018f4f2a-6d58-4c11-8c27-4fb77bd28c15"
+        val secondRunId = "028f4f2a-6d58-4c11-8c27-4fb77bd28c15"
+        val firstAttempt = "57ba1c00-f8a9-4b76-a3dc-d44a6d7cff33"
+        val secondAttempt = "a69dc69d-fd10-474f-8c63-4bf8b224c184"
+
+        assertTrue(fence.activate(firstRunId, firstAttempt, 1))
+        assertTrue(fence.accept(record(firstRunId, firstAttempt, 1, 1)))
+        assertTrue(fence.accept(record(firstRunId, firstAttempt, 1, 2)))
+
+        assertTrue(fence.activate(secondRunId, secondAttempt, 1))
+        assertFalse(fence.accept(record(firstRunId, firstAttempt, 1, 3)))
+        assertTrue(fence.accept(record(secondRunId, secondAttempt, 1, 1)))
+        assertEquals(listOf(1L, 2L, 1L), fence.snapshot().map { it.sequence })
+    }
+
+    @Test
     fun boundsBreadcrumbsAndRejectsStaleGenerationActivation() {
         val fence = AndroidCoreOperationalEventFence(capacity = 2)
         val runId = "018f4f2a-6d58-4c11-8c27-4fb77bd28c15"

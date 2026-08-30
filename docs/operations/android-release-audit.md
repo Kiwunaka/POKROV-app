@@ -15,9 +15,9 @@ Older APK identities and device runs are retained separately as evidence.
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
 | Working package target | `1.2.0+4048` |
-| Exact replacement candidate | `pokrov-1.2.0-candidate.11`; signed manifest `22ea88cb…a29f`, detached signature `c1a4c3ce…912c`, promotion unauthorized |
+| Exact replacement candidate | `pokrov-1.2.0-candidate.12`; signed manifest `22ba8bb1…ab98`, detached signature `c2ad2655…1b32`, promotion unauthorized; rejected for warm-restart lifecycle correction |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Exact candidate source | Platform `01cf5de…fb1`, client `348de30…40b`, Core `cd8f0f4…884d`, signed release-index source `8c314a1…0c1`; universal APK `706c546e…e1a`, `295370161` bytes, and x86_64 APK `60863b1f…78a`, `109951989` bytes |
+| Exact candidate source | Platform `9e873eb…8dc`, client `5b1aa02…195`, Core `cd8f0f4…884d`, signed release-index source `13cb67d…de`; universal APK `d3ee5cd2…5a3`, `295370161` bytes, and x86_64 APK `e7f74fb2…dd3c`, `109951989` bytes |
 | Exact candidate Core package | Secret-safe POKROV Core `1.1.0` from `cd8f0f4…884d`, AAR `2a9677d9…c6a69`; two builds are byte-identical and contain all four required ABIs |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
@@ -39,9 +39,38 @@ AWG2/AWG 3.1 lifecycle coverage. Two Android builds are byte-identical: AAR
 size `107419397`, SHA-256
 `2a9677d9e24ed7ef66d4e98f90e7033eb5450c9a2755f0fe6b8bba58036c6a69`,
 with all four required ABIs. The bytes are synchronized into the client source.
-Candidate.11 carries these exact Core bytes. Its production-signed universal
-APK is installed byte-identically on LDPlayer; the physical-phone row remains
-open for these exact bytes.
+Candidate.12 carries these exact Core bytes. Its production-signed x86_64 APK
+is installed byte-identically on LDPlayer; the physical-phone row remains open
+for these exact bytes.
+
+## Exact Candidate.12 LDPlayer Gate
+
+Candidate.12 is an immutable signed internal candidate with six artifacts and
+`promotion_authorized=false`. LDPlayer 9 `emulator-5554`, Android 9/API 28,
+installed the production-signed x86_64 APK byte-identically at SHA-256
+`e7f74fb22e981c1765642e9197c785b7242827db26b2a623f42ab122dadddd3c`.
+The physical phone was visible to ADB but no command addressed it. This is
+exact emulator/current-origin evidence only.
+
+| Check | Candidate.12 result |
+|---|---|
+| Supply identity | `PASS_EXACT_INTERNAL_CANDIDATE` — signed manifest `22ba8bb1…ab98`, detached signature `c2ad2655…1b32`, receipt `1144f7ac…7444`, exact four-source tuple, six artifacts, SBOM and provenance; publication and promotion remain unauthorized |
+| AWG 3.1 fresh profile | `PASS_LDPLAYER_CURRENT_ORIGIN_FRESH_PROFILE` — safe runtime readback found exactly one typed AWG endpoint and the AWG 3.1 final route; Android TUN, DNS, mandatory Core egress and selected exit passed, while a 60-second address-free inner capture counted bidirectional TCP payload |
+| AWG2 warm switch | `FAIL_EXACT_CANDIDATE_12_WARM_SERVICE_RESTART_EVENT_FENCE` — after the successful AWG 3.1 run, AWG2 established TUN, DNS and routes with bidirectional inner traffic, but two mandatory egress probes ended `stalled`; the app did not claim full protection |
+| AWG2 cold control | `PASS_LDPLAYER_CURRENT_ORIGIN_COLD_PROCESS` — after a process restart, the same exact APK, server material and typed AWG2 profile reached terminal Core egress `verified` and retained green tunnel, DNS, exit and route state beyond one minute |
+| Exact Core/server differential | `PASS_CURRENT_ORIGIN_CORE_INTEROP_AND_ALIGNMENT` — candidate Core `cd8f0f4…884d` passes AWG2 authenticated interop from current origin and both owned profiles pass all `11/11` secret-free live alignment checks; no server or cryptography change is indicated |
+| Ordinary Auto restore | `PASS_LDPLAYER_CURRENT_ORIGIN_AUTOMATIC_FAILOVER` — the first VLESS leaf failed mandatory egress and stopped fail-closed; the automatic successor established TUN and terminal egress `verified`, with UI-confirmed DNS, exit and routes |
+| Final cleanup | `PASS_DEFAULT_OFF_CLEAN_RESTORE` — guarded readback selected `default` / `legacy_reality_fallback`, removed AWG2/AWG3.1 material and lab membership, and left the UI disconnected with no connected POKROV VPN |
+
+The warm-switch failure is a client lifecycle defect. A newly created
+`VpnService` can restart its local session generation at `1` and Core restarts
+its event sequence for a new `run_id`, while the process-wide Android event
+fence retained the preceding run's `lastSequence`. Valid egress events from
+the new run were therefore rejected as stale. Successor source resets the
+sequence fence when the run identity changes while preserving monotonic
+filtering between attempts inside one run. Focused direct/store JVM regression
+tests pass. Candidate.12 remains immutable and requires a new signed candidate
+plus an exact warm AWG 3.1 -> AWG2 replay without a process restart.
 
 ## Exact Candidate.11 LDPlayer Gate
 
