@@ -14,7 +14,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
-| Working package target | `1.2.0+4047` |
+| Working package target | `1.2.0+4048` |
 | Exact replacement candidate | `pokrov-1.2.0-candidate.8`; signed manifest `f0006cec…906f`, detached signature `5fcae067…24f6`, promotion false |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
@@ -34,7 +34,7 @@ The ordinary UI does not load Core, run elevated or use a system-proxy
 fallback. The service owns Core, managed state and recovery. Green state
 requires the authenticated egress proof.
 
-## Working Build 4047 Core Refresh
+## Working Build 4048 Core Refresh
 
 The continuing source line pins Core `cd8f0f4169d570d693992a959d81d17c2c44884d`
 after removing legacy raw-settings/error logging and retaining explicit
@@ -43,7 +43,7 @@ size `55426048`, SHA-256
 `f284fa8841f1a45271874a7a05ed6093fb0e3efbdd03e00001edd046be708204`,
 with all 15 ABI exports; pinned Cronet remains `8ef1f8bb…a6f7`. The exact DLL
 also passes the host-safe 100-cycle proxy start/stop harness. These results are
-`PASS_LOCAL_PRE_CANDIDATE`; no 4047 installer, clean-VM TUN/DNS/egress run,
+`PASS_LOCAL_PRE_CANDIDATE`; no 4048 installer, clean-VM TUN/DNS/egress run,
 trusted signature or SmartScreen reputation is claimed.
 
 Local source and fault-injection tests alone cover IPC, journal, network

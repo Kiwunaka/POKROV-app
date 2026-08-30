@@ -14,7 +14,7 @@ results belong in dated evidence and never become reusable release approval.
 | Fact | Current state |
 |---|---|
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
-| Working package target | `1.2.0+4047` |
+| Working package target | `1.2.0+4048` |
 | Working source target state | `PRE_CANDIDATE_LOCAL` on continuing `main` |
 | Exact signed candidate | `pokrov-1.2.0-candidate.11`; private Actions artifact, promotion unauthorized |
 | Candidate created | `false` |
@@ -88,7 +88,7 @@ and is not recreated by this branch.
 
 ## Retained Pre-Convergence Evidence
 
-- Android and Windows development package versions match `1.2.0+4047`; app-shell reports the
+- Android and Windows development package versions match `1.2.0+4048`; app-shell reports the
   shared product version `1.2.0`.
 - Strict release-handoff v2 generation and client/Core parity pass locally.
 - The retained `1.1.6` stable pointer is hash-bound to its versioned rollback
