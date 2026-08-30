@@ -111,7 +111,7 @@
       "smartscreen_warning_required": true
     },
     "blocked_on": [
-      "live clean-VM connect/dashboard/TUN/DNS/egress/recovery smoke from exact candidate.8 setup EXE",
+      "live clean-VM connect/dashboard/TUN/DNS/egress/recovery smoke from the current exact candidate setup EXE",
       "trusted signing and SmartScreen reputation for later broad distribution"
     ],
     "accepted_evidence": [
