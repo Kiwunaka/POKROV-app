@@ -56,7 +56,7 @@ internal class AndroidCoreOperationalEventFence(
         ) {
             return false
         }
-        if (generation > activeGeneration) {
+        if (generation > activeGeneration || runId != activeRunId) {
             lastSequence = 0L
         }
         activeRunId = runId
