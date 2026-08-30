@@ -15,11 +15,11 @@ Older APK identities and device runs are retained separately as evidence.
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
 | Working package target | `1.2.0+4049` |
-| Exact replacement candidate | `pokrov-1.2.0-candidate.12`; signed manifest `22ba8bb1…ab98`, detached signature `c2ad2655…1b32`, promotion unauthorized; rejected for warm-restart lifecycle correction |
+| Exact replacement candidate | `pokrov-1.2.0-candidate.13`; signed manifest `b8a10cf8…190c`, detached signature `ede7844c…0e4d`, promotion unauthorized; bounded LDPlayer warm lifecycle passes |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Exact candidate source | Platform `9e873eb…8dc`, client `5b1aa02…195`, Core `cd8f0f4…884d`, signed release-index source `13cb67d…de`; universal APK `d3ee5cd2…5a3`, `295370161` bytes, and x86_64 APK `e7f74fb2…dd3c`, `109951989` bytes |
+| Exact candidate source | Platform `7d983c0…e8d`, client `ce2581d…168`, Core `cd8f0f4…884d`, signed release-index source `440f3be…c94`; universal APK `96071264…09d4`, `295370161` bytes, and x86_64 APK `73c43e21…f5ff`, `109951989` bytes |
 | Exact candidate Core package | Secret-safe POKROV Core `1.1.0` from `cd8f0f4…884d`, AAR `2a9677d9…c6a69`; two builds are byte-identical and contain all four required ABIs |
-| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
+| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`, with candidate.13 support-signing evidence `6feecaeb…ad50` |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
 
@@ -39,9 +39,36 @@ AWG2/AWG 3.1 lifecycle coverage. Two Android builds are byte-identical: AAR
 size `107419397`, SHA-256
 `2a9677d9e24ed7ef66d4e98f90e7033eb5450c9a2755f0fe6b8bba58036c6a69`,
 with all four required ABIs. The bytes are synchronized into the client source.
-Candidate.12 carries these exact Core bytes. Its production-signed x86_64 APK
+Candidate.13 carries these exact Core bytes. Its production-signed x86_64 APK
 is installed byte-identically on LDPlayer; the physical-phone row remains open
 for these exact bytes.
+
+## Exact Candidate.13 LDPlayer Gate
+
+Candidate.13 is an immutable signed internal candidate for app `1.2.0+4049`
+with six artifacts, `ACTIONS_ARTIFACT_ONLY` and
+`promotion_authorized=false`. Its production-signed x86_64 APK installs
+byte-identically at SHA-256
+`73c43e21dfc984c474941e14800c551f9545fe423b8f11458f6d41b8cb9af5ff`.
+The physical phone was not addressed; this is exact emulator/current-origin
+evidence only.
+
+| Check | Candidate.13 result |
+|---|---|
+| Supply identity | `PASS_EXACT_INTERNAL_CANDIDATE` — manifest `b8a10cf8…190c`, signature `ede7844c…0e4d`, receipt `fc3b1319…b295`, exact source tuple, six artifacts, SBOM and provenance; no tag, public asset, Store object or promotion |
+| AWG 3.1 | `PASS_EXACT_CANDIDATE_LDPLAYER_BOUNDED` — exact control-plane selection and normalized runtime-profile match; tunnel, managed DNS and authenticated VPN egress are green |
+| Warm AWG2 after AWG 3.1 | `PASS_EXACT_CANDIDATE_LDPLAYER_BOUNDED` — normal VPN teardown/recreate in the same application process accepts the new Core run, matches AWG2 and reaches green tunnel/DNS/egress without `force-stop` |
+| Warm default/Auto after AWG2 | `PASS_EXACT_CANDIDATE_LDPLAYER_BOUNDED` — ordinary non-AWG profile contains `33` VLESS outbounds and reaches independent green tunnel/DNS/egress in the same process |
+| Lifecycle fence | `PASS_EXACT_SOURCE_AND_RUNTIME` — a changed `runId` resets the sequence fence even when local service generation is reused; delayed callbacks from the previous run remain rejected |
+| Emulator transport observation | `RECOVERED_ENVIRONMENT_OBSERVATION` — two short exact-serial ADB reconnects occurred during VPN teardown polling; immediate readback recovered with the unchanged app process and requested disconnected state |
+| Final cleanup | `PASS_DEFAULT_OFF_CLEAN_RESTORE` — `default` selected, app disconnected, lab binding/material absent, and no active VPN service or tunnel interface |
+
+Gate F is not generated. Its current validator requires an exact physical
+Android install binding to candidate.13's ARM64 APK `9bcdbe00…cc74`; no such
+binding exists in this slice. The honest status is
+`NOT_RUN_MISSING_EXACT_ARM64_INSTALL_BINDING`. Physical modem/OEM/Doze/WARP,
+per-app, Private DNS, external IPv6/leak and endurance remain
+`MANUAL_OWNER_TEST`. Candidate.12 below is retained rejected history.
 
 ## Exact Candidate.12 LDPlayer Gate
 
