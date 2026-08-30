@@ -14,7 +14,7 @@ Older APK identities and device runs are retained separately as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
-| Working package target | `1.2.0+4047` |
+| Working package target | `1.2.0+4048` |
 | Exact replacement candidate | `pokrov-1.2.0-candidate.11`; signed manifest `22ea88cb…a29f`, detached signature `c1a4c3ce…912c`, promotion unauthorized |
 | Package ID | `space.pokrov.pokrov_android_shell` |
 | Exact candidate source | Platform `01cf5de…fb1`, client `348de30…40b`, Core `cd8f0f4…884d`, signed release-index source `8c314a1…0c1`; universal APK `706c546e…e1a`, `295370161` bytes, and x86_64 APK `60863b1f…78a`, `109951989` bytes |
@@ -31,7 +31,7 @@ schema to two bounded files under the app-private no-backup directory. No raw
 message, URL, profile, token, endpoint or stack is accepted by that journal.
 These local contracts do not prove final APK bytes or physical behavior.
 
-## Working Build 4047 Core Refresh
+## Working Build 4048 Core Refresh
 
 The continuing source line pins Core `cd8f0f4169d570d693992a959d81d17c2c44884d`
 after removing legacy raw-settings/error logging and retaining explicit

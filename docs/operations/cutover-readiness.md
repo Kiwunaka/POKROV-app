@@ -25,7 +25,7 @@ contracts. Do not select the most optimistic status.
 |---|---|
 | Canonical lane | `POKROV-app/main` |
 | Retained public release | Android and Windows `1.1.6` |
-| New working target | `1.2.0+4047` |
+| New working target | `1.2.0+4048` |
 | Continuing source target | `PRE_CANDIDATE_LOCAL` on `POKROV-app/main` |
 | Exact signed candidate | `pokrov-1.2.0-candidate.10`; private Actions artifact, promotion false |
 | Candidate created | `true`; public release/store/stable pointer remain absent |
@@ -34,7 +34,7 @@ contracts. Do not select the most optimistic status.
 
 The existing `1.1.6` publication does not approve new `1.2.0` bytes. Its
 signing, device, runtime and origin evidence cannot be reused for promotion.
-The continuing client seed now describes the `1.2.0+4047` development line
+The continuing client seed now describes the `1.2.0+4048` development line
 with Core `cd8f0f4…884d`; exact candidate.10
 identity is read from the signed release-index contract recorded by
 `config/cutover-readiness.seed.json`, not duplicated into the development
@@ -44,7 +44,7 @@ handoff seed.
 
 | Gate | State | Required evidence |
 |---|---|---|
-| Package/version parity | `PASS_LOCAL_PRE_CANDIDATE` | Android and Windows development targets are `1.2.0+4047`; the shared app-shell remains product version `1.2.0`. Exact candidate.10 remains immutable at `1.2.0+4046`. |
+| Package/version parity | `PASS_LOCAL_PRE_CANDIDATE` | Android and Windows development targets are `1.2.0+4048`; the shared app-shell remains product version `1.2.0`. Exact candidate.10 remains immutable at `1.2.0+4046`. |
 | Strict-v2 generator contract | `PASS_LOCAL` | Schema, generator and cross-repository parity tests pass. |
 | Stable pointer and rollback catalog | `PASS_LOCAL` | Retained `1.1.6` pointer matches its exact versioned handoff; isolated A→B→A proves optimistic lock, atomic replace, backup, receipt and byte-identical reversal. |
 | Operational producer/privacy contract | `PASS_LOCAL` | Auth, entitlement, performance, support and Android count-only routing producers pass focused client/platform tests; exact-candidate runtime proof remains later. |
