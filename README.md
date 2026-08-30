@@ -12,7 +12,7 @@ The root [AGENTS.md](AGENTS.md) is the short Codex operating contract.
 - Client strategy: `consumer-first` and `app-first`.
 - Public outside-store stable surfaces: Android and Windows.
 - Retained public line: `1.1.6` (`1.1.6+29`).
-- Development target: `1.2.0+4046`, state `PRE_CANDIDATE_LOCAL`, replacement
+- Development target: `1.2.0+4047`, state `PRE_CANDIDATE_LOCAL`, replacement
   candidate not created.
 - Apple surfaces: readiness, packaging, signing, and device-proof work only.
 - Default runtime: `sing-box`; `xray` is an advanced compatibility fallback.
@@ -41,7 +41,7 @@ creates an exact backup outside retained history, and records a receipt. Local
 fixture reversal is not an exact-candidate rollback drill or mutation authority.
 
 The retained `1.1.6` publication is evidence for that exact artifact set. The
-working `1.2.0+4046` line is not a candidate. New public promotion and runtime
+working `1.2.0+4047` line is not a candidate. New public promotion and runtime
 sync are blocked until clean exact revisions, the public release-index
 revision, exact Core replacement artifacts, strict-v2 metadata, and required
 candidate evidence exist. Android production signing is fail-closed by

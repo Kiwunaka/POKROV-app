@@ -1,10 +1,12 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-Status: refreshed on 2026-08-29 as a security-fixed, single-source
-Android/Windows pre-candidate binding for POKROV `1.2.0+4046`. Both active
-platform artifacts now carry the Core egress, AWG allocated-port binding,
-default-resolver propagation for AWG endpoint FQDNs, default-off Hysteria2 lane
-and the `GO-2026-6303` dependency correction from one exact revision.
+Status: refreshed on 2026-08-30 as a security-fixed, single-source
+Android/Windows pre-candidate binding for POKROV `1.2.0+4047`. Both active
+platform artifacts carry the Core egress, AWG allocated-port binding,
+default-resolver propagation for AWG endpoint FQDNs, default-off Hysteria2 lane,
+the `GO-2026-6303` dependency correction and the secret-safe legacy logging
+boundary from one exact revision. AWG2 and AWG 3.1 also retain an explicit
+start/close lifecycle test on the same source.
 
 This is not a Core release, client candidate, signing pass, publication or
 promotion decision. No `v1.1.0` Git tag or public Core release was created.
@@ -16,7 +18,7 @@ The client binds the separately versioned Core target as follows:
 - repository: `Kiwunaka/POKROV-core`;
 - version-derived target label: `v1.1.0`;
 - tag created: `false`;
-- Android and Windows source commit: `a45d69e40ed7d892619a2b5c4592a527f630665e`;
+- Android and Windows source commit: `cd8f0f4169d570d693992a959d81d17c2c44884d`;
 - source state: `PRE_CANDIDATE_LOCAL`;
 - candidate created: `false`;
 - desktop ABI: `2`;
@@ -37,8 +39,8 @@ scoped release line until its own owner-solo promotion evidence is recorded.
 
 | Platform | Artifact | Size | SHA-256 | Local result |
 | --- | --- | ---: | --- | --- |
-| Android | `pokrov-core.aar` | `107425409` | `ce82f54b073645fbd7ea0cc7ba576597456627cb5d0c7d80926afaa1dba154dd` | two byte-identical local builds from `a45d69e`; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present |
-| Windows x64 | `pokrov-core.dll` | `55426048` | `53b5e82a9c7bc20055c0889a1c8fabb5137f52ad09d38b23cf86477184474652` | two byte-identical local builds from `a45d69e`; 15 required exports present; 100 proxy-only start/stop cycles pass |
+| Android | `pokrov-core.aar` | `107419397` | `2a9677d9e24ed7ef66d4e98f90e7033eb5450c9a2755f0fe6b8bba58036c6a69` | two byte-identical local builds from `cd8f0f4`; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present |
+| Windows x64 | `pokrov-core.dll` | `55426048` | `f284fa8841f1a45271874a7a05ed6093fb0e3efbdd03e00001edd046be708204` | two byte-identical local builds from `cd8f0f4`; 15 required exports present; 100 proxy-only start/stop cycles pass |
 | Windows dependency | `libcronet.dll` | `8596992` | `8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7` | unchanged retained dependency |
 | iOS | `PokrovCore.xcframework` | — | — | `MANUAL_OWNER_TEST` |
 | macOS | `pokrov-core.dylib` | — | — | `MANUAL_OWNER_TEST` |
@@ -56,12 +58,12 @@ bind the same Core source. Packaged-client candidate provenance remains open:
 
 | Evidence | Result / SHA-256 |
 | --- | --- |
-| Android build tree | `eba55421ca55c42185d9ae910bf3c8ec49e6efed05b2247548936fecc2928abe` |
-| Android evidence JSON | `369d8894d592c231684a3aa847cb2a612ebf4ab507e1a6011bfe050f0715b1d1` |
-| Windows build tree | `f9d221b252396ea38d2a15272cdd1e26c0e59a09c6018235092d1f01c9281da5` |
-| Windows evidence JSON | `f9a3810fb6f795cd2fe493151a9fa52164feb4145761638c54005c870f24c7ae` |
-| `pokrov-core.cdx.json` | `13910fb7d84170f785370d78f93588c4c9db0c6fd4007566f83fae63c013d451` |
-| `sing-box.cdx.json` | `127b185ad24218f5e8eb11a47388237698a3b77826160dbe725261632af06d2e` |
+| Android build tree | `881567c8bbeb1ac093f69dc72643fdcd1d22369bc488367900c5c62f19c14922` |
+| Android evidence JSON | `0c737c9086905167bc2e0f524aefe00925f5f8a17b10c162ac647e6ac297cd22` |
+| Windows build tree | `8678bae1cea86bf992bc1299661ee5d620130f8e8506dff3a4074e07bf7d53ca` |
+| Windows evidence JSON | `bdbde9aee7a05ba1ace6bbc2c031caf3ab393110570201414516360ad186dd8a` |
+| `pokrov-core.cdx.json` | `cc8d93fc6b602b3d1c080b4f3d32367b231536a54c9bfa71272b0e1bd055e88e` |
+| `sing-box.cdx.json` | `04c0972025e3ade1e74294cf7adb5cb79e616ea03899bc131aadc1bb30d6ce51` |
 
 The Windows refresh used the isolated portable MinGW-w64 GCC `13.2.0`
 toolchain already present in the build directory. The toolchain directory was passed
@@ -86,6 +88,14 @@ default domain-resolver transport and strategy when resolving its inner FQDN.
 This matches ordinary dialer behavior, preserves TLS authentication against the
 hostname, introduces no pinned provider IP, and keeps resolver/probe failure
 fail-closed. Focused AWG tests and the full Core suite pass locally.
+
+The `cd8f0f4` refresh removes a legacy debug call that could format the stored
+`PokrovSettingsJson` value, whose historical schema may contain WARP key or
+token material. It also stops the desktop FFI from mirroring arbitrary raw
+errors into the process logger and removes a whole settings-table debug call.
+The local caller-owned ABI error return is unchanged, while the Windows host
+continues to map it to fixed public failure categories. The observability
+contract check now rejects reintroduction of those three raw-log paths.
 
 ## Evidence Ceiling
 
@@ -116,6 +126,10 @@ The strongest claim from this decision is
   exact production-signed client `68779c4...` installs/readbacks byte-identically
   and reaches retained green selected-endpoint state for AWG2 and AWG3.1 on
   physical Beeline, with the prior DNS failure category absent;
+- successor Core `cd8f0f4...` is reproducibly bound for Android and Windows,
+  passes the full local Core suite and the exact DLL's 100-cycle proxy-only
+  harness, but has no transferred phone, emulator, signed package or clean-VM
+  claim; those remain new-candidate gates for `1.2.0+4047`;
 - clean client documentation head `f500728...` produces unsigned pre-candidate
   Windows setup `81268d7e...723c`, whose eight-file manifest readback contains
   exact DLL `53b5e82a...4652`; Windows Sandbox/Hyper-V is unavailable on the

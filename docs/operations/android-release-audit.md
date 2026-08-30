@@ -14,11 +14,11 @@ Older APK identities and device runs are retained separately as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
-| Working package target | `1.2.0+4046` |
+| Working package target | `1.2.0+4047` |
 | Exact replacement candidate | `pokrov-1.2.0-candidate.8`; signed manifest `f0006cec…906f`, detached signature `5fcae067…24f6`, promotion false |
 | Package ID | `space.pokrov.pokrov_android_shell` |
 | Exact candidate source | Client `3459438…f5c`, Core `a45d69e…665e`; ARM64 APK `9278c09f…572`, `101366934` bytes, and x86_64 APK `ec07ba17…2627`, `109952213` bytes, production-signed and byte-identical to their installed packages |
-| Active Core package | Security-fixed POKROV Core `1.1.0` AAR `ce82f54b…54dd`; two builds are byte-identical and contain all four required ABIs |
+| Active pre-candidate Core package | Secret-safe POKROV Core `1.1.0` from `cd8f0f4…884d`, AAR `2a9677d9…c6a69`; two builds are byte-identical and contain all four required ABIs. Exact candidate.8/10 retains the older immutable AAR. |
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — `pokrov-support-2026-08`, SHA-256 `44aed433…8845`, bound by candidate.3 supply evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
@@ -30,6 +30,17 @@ watchdog and direct-updater identity breadcrumbs are written through a closed
 schema to two bounded files under the app-private no-backup directory. No raw
 message, URL, profile, token, endpoint or stack is accepted by that journal.
 These local contracts do not prove final APK bytes or physical behavior.
+
+## Working Build 4047 Core Refresh
+
+The continuing source line pins Core `cd8f0f4169d570d693992a959d81d17c2c44884d`
+after removing legacy raw-settings/error logging and retaining explicit
+AWG2/AWG 3.1 lifecycle coverage. Two Android builds are byte-identical: AAR
+size `107419397`, SHA-256
+`2a9677d9e24ed7ef66d4e98f90e7033eb5450c9a2755f0fe6b8bba58036c6a69`,
+with all four required ABIs. The bytes are synchronized into the client source.
+No 4047 APK, signature, LDPlayer run or physical-phone result exists yet; the
+phone was unavailable during this source/artifact slice.
 
 ## Exact Candidate.8 Gate
 
