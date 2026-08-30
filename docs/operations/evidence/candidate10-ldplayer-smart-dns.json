@@ -1,0 +1,107 @@
+{
+  "schema": "pokrov.candidate10-ldplayer-smart-dns-ui-evidence/v1",
+  "recorded_at_utc": "2026-08-30T06:51:37Z",
+  "candidate": {
+    "id": "pokrov-1.2.0-candidate.10",
+    "client_source": "3459438f02bd774e722b1b858e7f7f16d57a9f5c",
+    "package": "space.pokrov.pokrov_android_shell",
+    "version_name": "1.2.0",
+    "version_code": 4046,
+    "installed_apk_sha256": "ec07ba17e9a5c697fcf46ccd193970fa3666eeeb3b9e345876aa8ee1d45a2627",
+    "candidate10_apk_byte_match": true
+  },
+  "environment": {
+    "kind": "LDPlayer Android emulator",
+    "serial": "emulator-5554",
+    "physical_device_used": false,
+    "physical_device_status": "MANUAL_OWNER_TEST_DEVICE_UNAVAILABLE"
+  },
+  "initial_state": {
+    "dns_preset": "automatic",
+    "advanced_configured_count": 2,
+    "connected_vpn": false,
+    "tun_interface_present": false,
+    "app_crash_buffer_entries": 0
+  },
+  "ui_flow": {
+    "status": "PASS_CONFIG_AND_PERSISTENCE_ONLY",
+    "path": [
+      "Rules",
+      "Rare settings",
+      "DNS",
+      "Custom DoH",
+      "Direct DoH laboratory",
+      "External Smart DNS laboratory"
+    ],
+    "custom_doh_hostname": "dns.pokrov.space",
+    "custom_doh_path": "/dns-query",
+    "direct_doh_enabled": true,
+    "external_smart_dns_enabled": true,
+    "selected_purposes": [
+      "AI services",
+      "Gaming services"
+    ],
+    "ui_warns_external_ip_not_hidden": true,
+    "force_stop_relaunch_persistence": "PASS",
+    "app_crash_buffer_entries": 0
+  },
+  "live_access": {
+    "connection_attempted": false,
+    "doh_request_attempted": false,
+    "chatgpt_access": "NOT_RUN",
+    "gemini_access": "NOT_RUN",
+    "xbox_access": "NOT_RUN",
+    "reason": "BLOCKED_AUTHORITATIVE_DNS_0_OF_4_AND_SERVER_APPLY_NOT_RUN"
+  },
+  "cleanup": {
+    "status": "PASS",
+    "dns_preset": "automatic",
+    "custom_doh_url_cleared": true,
+    "dns_transport": "vpn",
+    "external_smart_dns_enabled": false,
+    "advanced_configured_count": 2,
+    "connected_vpn": false,
+    "tun_interface_present": false,
+    "app_force_stopped": true,
+    "device_temp_artifacts_remaining": 0
+  },
+  "artifacts": [
+    {
+      "path": "ui-current.xml",
+      "sha256": "37c4f9191735af736934bdfc30295ded8ff4173d5563f4f5b39830f568aff6cf"
+    },
+    {
+      "path": "ui-smart-dns-enabled.xml",
+      "sha256": "b7a8cdd056b433e93ee4548d7f2ed77c481fd9818cd618a8003a5bdb79bbf7f0"
+    },
+    {
+      "path": "ui-after-relaunch-smart-dns.xml",
+      "sha256": "eaac2c7b60fae85064bbb2d054a7bf7736e194d92cbb8eade39ed191ca8a92dc"
+    },
+    {
+      "path": "ui-after-relaunch-purposes.xml",
+      "sha256": "25cb79034af2802a396761a6701b76a043c6b9656d812a8850cf974b5918bded"
+    },
+    {
+      "path": "ui-restored-final-bottom.xml",
+      "sha256": "ec1ddf9d88ec818ef1772615994d30d4ad5465238b3dcd3ae5ae137e41f7ac01"
+    },
+    {
+      "path": "ui-restored-final-advanced.xml",
+      "sha256": "4a4dfc9116739157ac3906fc043d0f881aba373d5cd9832a79a756f14a1da339"
+    },
+    {
+      "path": "pokrov-smart-dns-enabled.png",
+      "sha256": "11f1fd50bc1b1c112fc999986f7b6f502a797e24f0933496fff4ddda7414b601"
+    },
+    {
+      "path": "pokrov-after-relaunch-purposes.png",
+      "sha256": "806c6515fbc87ee42b46cb8c146a5bfb9b70f6bc3f2251fb35524c1c5b774671"
+    },
+    {
+      "path": "pokrov-restored-automatic.png",
+      "sha256": "b9f9a652f8155685b0678c43ff6d607fbf58bb0f6ed7cf0cc08a415a1e60c4b1"
+    }
+  ],
+  "evidence_ceiling": "PASS_EXACT_CANDIDATE10_LDPLAYER_SMART_DNS_CONFIG_PERSISTENCE_AND_CLEANUP; LIVE_DOH_AND_SERVICE_ACCESS_NOT_RUN"
+}

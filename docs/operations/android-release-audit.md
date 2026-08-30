@@ -512,6 +512,43 @@ identifier, terminal history or runtime material is retained. Sanitized
 evidence SHA-256 is
 `2d8f57bfe9ba99285c691c39ece6428836ea6cf4e5065c91e26f4a6fa77a19c8`.
 
+## 2026-08-30 Exact Platform Candidate.10 Smart-DNS LDPlayer Replay
+
+The signed platform candidate.10 binds client source
+`3459438f02bd774e722b1b858e7f7f16d57a9f5c` and the x86_64 production APK
+already installed in LDPlayer. Fresh device-side SHA-256 readback is
+`ec07ba17e9a5c697fcf46ccd193970fa3666eeeb3b9e345876aa8ee1d45a2627`,
+exactly matching the retained candidate.10 APK. Package readback remains
+release `1.2.0+4046`. The physical phone was unavailable and untouched.
+
+The initial emulator state had no connected Android VPN, no `tun` interface,
+`DNS Автоматически` and `Настроено: 2`. Through the user-visible
+`Правила -> Редкие настройки -> DNS` path, the exact APK accepted the
+allowlisted `dns.pokrov.space/dns-query` custom DoH endpoint, direct-DoH lab
+mode and the external Smart-DNS lab mode. The existing `AI-сервисы` and
+`Игровые сервисы` purposes both rendered as selected and explicitly warned
+that service traffic is direct and the external IP is not hidden.
+
+Custom DoH, direct transport, external Smart DNS and both purpose selections
+survived an app force-stop and relaunch. The crash buffer stayed empty. This
+proves exact-candidate UI prerequisites, persistence and fail-closed product
+copy only. No connection, DoH request, ChatGPT, Gemini or Xbox access test ran:
+the hostname was still absent from all four authoritative DNS servers and the
+owned resolver/server APPLY had not run.
+
+Cleanup selected `DNS Автоматически`, cleared the custom URL and external
+Smart-DNS state, reset DNS transport to VPN through the visible preset path,
+returned to `Настроено: 2`, and verified no connected VPN or `tun` interface.
+POKROV was force-stopped and all emulator-side temporary capture files were
+removed. Classification is
+`PASS_EXACT_CANDIDATE10_LDPLAYER_SMART_DNS_CONFIG_PERSISTENCE_AND_CLEANUP`;
+live resolver/service access and physical Android remain non-PASS.
+
+The normalized tracked record is
+[`candidate10-ldplayer-smart-dns.json`](evidence/candidate10-ldplayer-smart-dns.json).
+Its external evidence copy SHA-256 is
+`f1dd9f7dc8e4f549ee993f26c037e06cd97e16a76c8a7fda0ff3a8964c2e3ea2`.
+
 ## Commands
 
 ```powershell
