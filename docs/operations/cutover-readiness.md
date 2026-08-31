@@ -1,6 +1,6 @@
 # Cutover Readiness
 
-Last updated: 2026-08-30
+Last updated: 2026-09-01
 
 ## Document Status
 
@@ -27,7 +27,7 @@ contracts. Do not select the most optimistic status.
 | Retained public release | Android and Windows `1.1.6` |
 | New working target | `1.2.0+4049` |
 | Continuing source target | `PRE_CANDIDATE_LOCAL` on `POKROV-app/main` |
-| Exact signed candidate | `pokrov-1.2.0-candidate.13`, app `1.2.0+4049`; private internal candidate, artifact-only and promotion false |
+| Exact signed candidate | `pokrov-1.2.0-candidate.16`, app `1.2.0+4049`; private internal candidate, artifact-only and promotion false |
 | Replacement candidate for working target | Signed release-index `true`; source seed remains `false`; public release/store/stable pointer remain absent |
 | New public cutover | `BLOCKED` |
 | Public/store claim | Android direct stable target; Windows direct unsigned beta with mandatory SmartScreen warning; stores `NOT_REQUESTED` |
@@ -36,41 +36,43 @@ The existing `1.1.6` publication does not approve new `1.2.0` bytes. Its
 signing, device, runtime and origin evidence cannot be reused for promotion.
 The continuing client seed describes the `1.2.0+4049` development line with
 Core `cd8f0f4…884d`. Separately generated strict-v2 metadata and the signed
-public-index receipt own immutable private candidate.13; the seed does not
-duplicate that candidate contract. Candidate.13 passes bounded LDPlayer
-AWG 3.1 -> AWG2 -> default/Auto lifecycle evidence, but Gate F is not generated
-without its exact physical ARM64 install binding. Older Gate F/device/Windows
-results remain history and do not authorize candidate.13.
+public-index receipt own immutable private candidate.16; the seed does not
+duplicate that candidate contract. Candidate.16 passes the ordinary LDPlayer
+path. Both exact AWG profiles activate and form TUN/DNS/routes but fail
+authenticated egress without false green. Its exact physical ARM64 install
+binding now passes, while physical runtime and the rest of the release matrix
+remain open. Older Gate F/device/Windows results remain history and do not
+authorize candidate.16.
 
 ## Current 1.2.0 Gate Matrix
 
 | Gate | State | Required evidence |
 |---|---|---|
-| Package/version parity | `PASS_EXACT_CANDIDATE_13` | Android and Windows candidate targets are `1.2.0+4049`; the shared app-shell remains product version `1.2.0`. |
+| Package/version parity | `PASS_EXACT_CANDIDATE_16` | Android and Windows candidate targets are `1.2.0+4049`; the shared app-shell remains product version `1.2.0`. |
 | Strict-v2 generator contract | `PASS_LOCAL` | Schema, generator and cross-repository parity tests pass. |
 | Stable pointer and rollback catalog | `PASS_LOCAL` | Retained `1.1.6` pointer matches its exact versioned handoff; isolated A→B→A proves optimistic lock, atomic replace, backup, receipt and byte-identical reversal. |
 | Operational producer/privacy contract | `PASS_LOCAL` | Auth, entitlement, performance, support and Android count-only routing producers pass focused client/platform tests; exact-candidate runtime proof remains later. |
 | Temporary support mode and encrypted export | `PASS_LOCAL` | Signed exact-audience activation, explicit consent, persistent indicator, nonce/TTL/cumulative caps, no-upload short code and encrypted-only Android/Windows export pass local source/widget/unit contracts; exact-candidate physical host proof remains later. |
-| Clean frozen revisions | `PASS_EXACT_CANDIDATE_13_TUPLE` | Signed candidate.13 binds platform `7d983c0…e8d`, client `ce2581d…168`, Core `cd8f0f4…884d`, signed release-index source `440f3be…c94` and receipt source `289e887…de8f`. GitHub plan purchases and branch protection remain outside the owner-solo lane. |
-| Release index | `PASS_SIGNED_CANDIDATE_13_CONTRACT` | Manifest `b8a10cf8…190c`, detached signature `ede7844c…0e4d`, receipt `fc3b1319…b295`, keyring and six artifact identities validate. Promotion is false and no tag/public assets/stable switch exists. |
-| Core replacement | `PASS_EXACT_CANDIDATE_13_ARTIFACTS` | Candidate.13 binds secret-safe Core `cd8f0f4…884d`, reproducible AAR `2a9677d9…c6a69`, DLL `f284fa88…8204`, unchanged Cronet `8ef1f8bb…a6f7` and refreshed SBOM/provenance. |
-| AWG lifecycle and direct DoH lab | `PASS_EXACT_CANDIDATE_13_LDPLAYER_WARM_LIFECYCLE; PHYSICAL_MANUAL; SMART_DNS_LIVE_OPEN` | Exact candidate.13 LDPlayer passes AWG 3.1, warm AWG2 and warm default/Auto in one app process with runtime-profile identity, tunnel, managed DNS, authenticated egress and clean restore. Physical Android remains manual. Smart-DNS live service/access is still open. |
-| AWG current Windows-origin Core probe | `CANDIDATE_13_PACKAGE_IDENTITY_PASS; LIVE_HOST_MANUAL` | Candidate.13 contains exact Core DLL `f284fa88…8204` and an `8/8` runtime manifest. Older current-host install/service evidence belongs to different bytes; candidate.13 install, IPC, connected TUN/DNS/AWG/egress, recovery, uninstall and clean-VM proof are manual. |
-| External Smart-DNS lab | `PASS_LOCAL_SOURCE_ARTIFACT_AND_EXACT_CLIENT_STATE; AUTHORITATIVE_DNS_0_OF_4` | Exact client configuration, strict policy, byte-identical server bundle and guarded PLAN/APPLY/ROLLBACK tooling are ready. The foreign frontend transport and rollback path pass, but all four delegated Timeweb servers still return `NXDOMAIN` for `dns.pokrov.space`. Certificate, resolver material, server/frontend route APPLY and ChatGPT/Gemini/Xbox access remain `NOT_RUN`. |
-| Candidate.13 LDPlayer rehearsal | `PASS_EXACT_BYTES_AWG31_AWG2_DEFAULT_WARM_LIFECYCLE_CLEAN_RESTORE` | Exact x86_64 APK `73c43e21…f5ff`, `109951989` bytes, is release/non-debuggable and byte-identical after install. AWG 3.1 -> AWG2 -> ordinary Auto passes in one process. Cleanup restores default/no-lab/no-VPN state. This does not replace physical proof. |
-| Candidate handoff | `PASS_SIGNED_PRIVATE_CANDIDATE_13` | Strict-v2 handoff binds build `4049`, exact four-source tuple, six artifacts, SBOM, provenance and Windows runtime manifest; output is artifact-only and promotion remains false. |
-| Android artifact/signing | `PASS_EXACT_CANDIDATE_13_SIGNING; X86_64_INSTALL_PASS; ARM64_INSTALL_OPEN` | Production-signed release/non-debuggable ARM64 `9bcdbe00…cc74` and x86_64 `73c43e21…f5ff` bind the exact candidate Core. The x86_64 install reads back byte-identically; exact ARM64 physical install remains manual. |
-| Android device proof | `PASS_CANDIDATE_13_LDPLAYER; PHYSICAL_MANUAL; MATRIX_OPEN` | Exact candidate.13 LDPlayer warm lifecycle and clean restore pass. Physical Android, active WARP carriage, external IPv6/leak, UDP53/MTU, multi-OEM and endurance remain open; older physical proof does not transfer. |
-| Android OEM limitations | `MANUAL_OWNER_TEST` | Candidate.13 background, screen-off, tile/notification, permission revoke, Doze/standby and broader OEM/endurance coverage remain manual. |
-| Windows package/signing | `PASS_EXACT_CANDIDATE_13_PACKAGE_IDENTITY`; signing `SKIPPED_BY_OWNER` | Setup `0afaf6e1…276c`, `28932793` bytes, and `8/8` manifest identity pass. The unsigned direct-beta SmartScreen exception does not permit trusted/Store/broad-stable claims; exact host runtime remains manual. |
-| Windows clean-host proof | `MANUAL_OWNER_TEST` | Connected TUN/DNS/AWG/egress, recovery, connected uninstall and Windows 10/11 clean-VM matrix remain unrun. |
-| Linux client | `IMPLEMENTED_PARTIAL_SOURCE_ONLY; NOT_IN_CANDIDATE_13` | The non-root Flutter host, typed bounded Unix IPC, `SO_PEERCRED`, polkit, hardened systemd units, supported foundation matrix, secret-free journald envelope and typed transaction seam exist. Live Core/TUN, NetworkManager/resolved/nft mutation and rollback, packages, signing and clean-VM proof remain open. No Linux artifact or 1.2.0 availability claim exists. |
+| Clean frozen revisions | `PASS_EXACT_CANDIDATE_16_TUPLE` | Signed candidate.16 binds platform `719e23d…e3e3`, client `75ba7e7…6722`, Core `cd8f0f4…884d`, signed release-index source `54cfa03…f20c` and receipt source `f321a8c…cfaa`. GitHub plan purchases and protected private-branch controls remain outside the owner-solo lane. |
+| Release index | `PASS_SIGNED_CANDIDATE_16_CONTRACT` | Manifest `ae1906e6…ffe6`, detached signature `f5df6357…07a9`, receipt `1231ab69…2de4`, keyring and six artifact identities validate. Promotion is false and no tag/public assets/stable switch exists. |
+| Core replacement | `PASS_EXACT_CANDIDATE_16_ARTIFACTS` | Candidate.16 binds secret-safe Core `cd8f0f4…884d`, reproducible AAR `2a9677d9…c6a69`, DLL `f284fa88…8204`, unchanged Cronet `8ef1f8bb…a6f7` and refreshed SBOM/provenance. |
+| AWG lifecycle | `EXACT_PROFILE_ACTIVATION_PASS; AWG31_EGRESS_FAIL; AWG2_EGRESS_FAIL` | Exact candidate.16 LDPlayer activates each requested AWG profile, creates TUN, managed DNS and routes, then fails authenticated selected egress without false green and removes the VPN. Final ordinary default reconnect/disconnect passes. The physical exact install is present but no physical runtime ran. |
+| AWG current Windows-origin Core probe | `CANDIDATE_16_PACKAGE_AND_IDLE_HOST_PASS; LIVE_NETWORK_MANUAL` | Candidate.16 contains exact Core DLL `f284fa88…8204`. Current-host setup, `8/8` files, service/owner binding, authenticated IPC, restart, uninstall and idle route/DNS restoration pass. Connected TUN/DNS/AWG/egress, recovery and clean-VM proof remain manual. |
+| External Smart-DNS lab | `PASS_LIVE_SERVER_ROLLBACK_AND_THREE_ORIGINS; CLIENT_DEFAULT_OFF` | `dns.pokrov.space` is authoritative, the owned `it` frontend/backend and certificate are live, receipt-bound rollback/re-apply passes, and bounded DoH plus ChatGPT/Gemini/Xbox TLS/SNI checks pass from current, Brain and RU origins. This server work postdates candidate.16; client selection remains disabled and no device/session/leak/load claim transfers. |
+| Candidate.16 LDPlayer rehearsal | `PASS_EXACT_DEFAULT; AWG31_AND_AWG2_EGRESS_FAIL; CLEAN_RESTORE` | Exact x86_64 APK `73c43e21…f5ff`, `109951989` bytes, is byte-identical after install. Ordinary default traffic passes. Both lab profiles form TUN/DNS/routes but fail authenticated egress and clean up without false green. |
+| Candidate handoff | `PASS_SIGNED_PRIVATE_CANDIDATE_16` | Strict-v2 handoff `e604410e…2ac3` binds build `4049`, exact four-source tuple, six artifacts, SBOM, provenance and Windows runtime manifest; output is artifact-only and promotion remains false. |
+| Android artifact/signing | `PASS_EXACT_CANDIDATE_16_SIGNING; X86_64_AND_ARM64_INSTALL_PASS` | Production-signed release/non-debuggable ARM64 `9bcdbe00…cc74` and x86_64 `73c43e21…f5ff` bind the exact candidate Core. Both installed base APKs read back byte-identically; the physical app was not launched. |
+| Android device proof | `PASS_CANDIDATE_16_DEFAULT_LDPLAYER_AND_PHYSICAL_INSTALL; RUNTIME_MATRIX_OPEN` | Ordinary LDPlayer traffic passes and physical ARM64 install identity passes. Physical default/AWG/WARP/per-app/handoff, external IPv6/leak, UDP53/MTU, multi-OEM and endurance remain open; older physical proof does not transfer. |
+| Android OEM limitations | `MANUAL_OWNER_TEST` | Candidate.16 background, screen-off, tile/notification, permission revoke, Doze/standby and broader OEM/endurance coverage remain manual. |
+| Windows package/signing | `PASS_EXACT_CANDIDATE_16_CURRENT_HOST_IDLE_SLICE`; signing `SKIPPED_BY_OWNER` | Setup `0afaf6e1…276c`, `28932793` bytes, `8/8` install identity, service/IPC/restart/uninstall and idle restoration pass. The unsigned direct-beta SmartScreen exception does not permit trusted/Store/broad-stable claims. |
+| Windows clean-host proof | `CURRENT_HOST_IDLE_PASS; CONNECTED_CLEAN_VM_MANUAL` | Connected TUN/DNS/AWG/egress, recovery, connected uninstall, interactive SmartScreen and Windows 10/11 clean-VM matrix remain unrun. |
+| Linux client | `IMPLEMENTED_PARTIAL_SOURCE_ONLY; NOT_IN_CANDIDATE_16` | The non-root Flutter host, typed bounded Unix IPC, `SO_PEERCRED`, polkit, hardened systemd units, supported foundation matrix, secret-free journald envelope and typed transaction seam exist. Live Core/TUN, NetworkManager/resolved/nft mutation and rollback, packages, signing and clean-VM proof remain open. No Linux artifact or 1.2.0 availability claim exists. |
 | Apple native release | `NOT_REQUESTED` | Apple remains readiness-only for this release. |
-| RU-origin proof | `MANUAL_OWNER_TEST` | Direct terminal-only Raspberry Pi evidence is supporting reachability, not the canonical exact-candidate RU contour or client proof. |
-| Hosted CI | `CORE_EXACT_COMMIT_AND_RELEASE_INDEX_PASS; PLATFORM_CLIENT_SKIPPED_BY_OWNER` | Exact Core commit checks and candidate.13 release-index signer execute and pass. Private platform/client jobs stop before product steps under the owner-solo/no-purchase lane and remain non-PASS. |
-| Runtime sync | `NOT_REQUESTED; LDPLAYER_EGRESS_PASS; PHYSICAL_AND_WINDOWS_LIVE_OPEN` | Candidate.13 runtime metadata was not synced to production. Exact LDPlayer AWG 3.1/AWG2/default egress passes; physical Android and Windows live network remain open. |
-| Exact-candidate rollback drill | `NOT_RUN` | Authorized portal and client-channel rollback use the same candidate identity; local fixture reversal is not runtime proof. |
-| Final go/no-go | `GATE_F_NOT_RUN_MISSING_EXACT_ARM64_INSTALL_BINDING` | Candidate.13 Gate F is not generated because its required exact physical ARM64 install binding is absent. Current/Brain/RU origin refresh and remaining manual rows are non-PASS. Gate G, public release, store object and stable pointer are unauthorized. The Windows signing exception never becomes a trusted signing PASS. |
+| RU-origin proof | `CANDIDATE_16_BUNDLE_AND_PLAN_PASS; ENVIRONMENT_INCOMPLETE` | The exact candidate.16 ten-member RU bundle reproduces and the owned-Pi no-mutation install PLAN passes. Four installed source files differ, runtime material/archive are absent, timers inactive and runner state failed; no RU run/upload/heartbeat/admin readback exists. |
+| Hosted CI | `CORE_EXACT_COMMIT_AND_RELEASE_INDEX_PASS; PLATFORM_CLIENT_BLOCKED_BY_BILLING` | Exact Core commit checks and candidate.16 release-index signer execute and pass. Platform/client jobs with empty runner and `steps=[]` remain `HOSTED_CHECK_BLOCKED_BY_BILLING` under the owner-solo lane, not PASS. |
+| Runtime sync | `PLATFORM_READINESS_CORRECTION_DEPLOYED; CANDIDATE_METADATA_NOT_PROMOTED` | The bounded managed-profile readiness correction is live on Brain. Candidate.16 remains private and artifact-only. LDPlayer ordinary egress passes; labs fail selected egress; physical Android and Windows connected network remain open. |
+| Exact-candidate rollback drill | `PASS_ISOLATED_LOCAL_REVERSAL; LIVE_RUNTIME_OPEN` | Candidate.16 passes disposable portal/client `1.1.6 -> candidate.16 -> 1.1.6` reversal with byte-identical restoration. Live pointer/kill rollback plus current/Brain readback and health remain open. |
+| Final go/no-go | `GATE_F_REGENERATION_READY_ARM64_BINDING_PASS_LAB_EGRESS_FAIL` | Candidate.16 exact physical ARM64 install binding now passes. Gate F has not been regenerated and cannot be GO while both current AWG lab egress checks, physical runtime, connected Windows, current/Brain/RU and other manual rows remain non-PASS. Gate G, public release, store object and stable pointer are unauthorized. The Windows signing exception never becomes a trusted signing PASS. |
 
 ## Current Cutover Sequence
 

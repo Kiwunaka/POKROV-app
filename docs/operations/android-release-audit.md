@@ -1,6 +1,6 @@
 # Android Release Audit
 
-Last updated: 2026-08-30
+Last updated: 2026-09-01
 
 ## Document Status
 
@@ -15,11 +15,11 @@ Older APK identities and device runs are retained separately as evidence.
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
 | Working package target | `1.2.0+4049` |
-| Exact replacement candidate | `pokrov-1.2.0-candidate.13`; signed manifest `b8a10cf8…190c`, detached signature `ede7844c…0e4d`, promotion unauthorized; bounded LDPlayer warm lifecycle passes |
+| Exact replacement candidate | `pokrov-1.2.0-candidate.16`; signed manifest `ae1906e6…ffe6`, detached signature `f5df6357…07a9`, promotion unauthorized; default LDPlayer path passes, both exact AWG profiles fail authenticated egress after TUN/DNS/routes, physical ARM64 install identity passes |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Exact candidate source | Platform `7d983c0…e8d`, client `ce2581d…168`, Core `cd8f0f4…884d`, signed release-index source `440f3be…c94`; universal APK `96071264…09d4`, `295370161` bytes, and x86_64 APK `73c43e21…f5ff`, `109951989` bytes |
+| Exact candidate source | Platform `719e23d…e3e3`, client `75ba7e7…6722`, Core `cd8f0f4…884d`, signed release-index source `54cfa03…f20c`; ARM64 APK `9bcdbe00…cc74`, `101366678` bytes, universal APK `96071264…09d4`, `295370161` bytes, and x86_64 APK `73c43e21…f5ff`, `109951989` bytes |
 | Exact candidate Core package | Secret-safe POKROV Core `1.1.0` from `cd8f0f4…884d`, AAR `2a9677d9…c6a69`; two builds are byte-identical and contain all four required ABIs |
-| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`, with candidate.13 support-signing evidence `6feecaeb…ad50` |
+| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`; candidate.16 signed supply retains the exact support trust root |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
 
@@ -39,11 +39,31 @@ AWG2/AWG 3.1 lifecycle coverage. Two Android builds are byte-identical: AAR
 size `107419397`, SHA-256
 `2a9677d9e24ed7ef66d4e98f90e7033eb5450c9a2755f0fe6b8bba58036c6a69`,
 with all four required ABIs. The bytes are synchronized into the client source.
-Candidate.13 carries these exact Core bytes. Its production-signed x86_64 APK
-is installed byte-identically on LDPlayer; the physical-phone row remains open
-for these exact bytes.
+Candidate.16 carries these exact Core bytes. Its production-signed x86_64 APK
+is installed byte-identically on LDPlayer and its production-signed ARM64 APK
+is installed byte-identically on the owner's physical Android 12 device.
 
-## Exact Candidate.13 LDPlayer Gate
+## Exact Candidate.16 Physical Install Binding
+
+The production-signed ARM64 APK from immutable candidate.16 is installed as an
+ADB package update without launching the app or taking screen control. The
+pre-install state had no POKROV process and no `tun0`. Exact post-install
+readback reports `1.2.0+4049`, `101366678` bytes and SHA-256
+`9bcdbe00fe8f8ed029894a65d531614f4fb912dda27e5fb1bb088c5b7516cc74`,
+byte-identical to the signed candidate artifact. The post-install state still
+has no POKROV process and no `tun0`.
+
+This closes only the required exact physical ARM64 install binding. No app
+launch, VPN permission, profile fetch, TUN, DNS, egress, AWG, WARP, per-app,
+handoff, Private DNS, leak, MTU, Doze, endurance or Store check ran. Gate F is
+not reported as PASS; candidate.16's two LDPlayer AWG egress results remain
+non-PASS and the full physical matrix remains `MANUAL_OWNER_TEST`.
+
+Normalized evidence is
+[`candidate16-physical-android-install.json`](evidence/candidate16-physical-android-install.json),
+SHA-256 `8a7af4360debd2f33bd0b0a0af4e745e7a9c86f6f7092d9c66e9740e7d7b80ea`.
+
+## Retained Exact Candidate.13 LDPlayer Gate
 
 Candidate.13 is an immutable signed internal candidate for app `1.2.0+4049`
 with six artifacts, `ACTIONS_ARTIFACT_ONLY` and
