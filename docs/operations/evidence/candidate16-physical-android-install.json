@@ -1,0 +1,62 @@
+{
+  "schema": "pokrov.android-exact-candidate-physical-install/v1",
+  "observed_at_utc": "2026-08-31T21:44:40.6194068Z",
+  "status": "PASS_EXACT_CANDIDATE16_ARM64_PHYSICAL_INSTALL_READBACK",
+  "candidate": {
+    "label": "pokrov-1.2.0-candidate.16",
+    "version": "1.2.0+4049",
+    "platform_commit": "719e23dc49407beb9ae30d98d17d4b73d18ae37c",
+    "client_commit": "75ba7e721cfee486f7189edd51de97aba2746722",
+    "core_commit": "cd8f0f4169d570d693992a959d81d17c2c44884d",
+    "release_index_commit": "54cfa03502ffafa5e4fb230a2cbdb0c0572c429f"
+  },
+  "artifact": {
+    "name": "pokrov-android-arm64-v8a.apk",
+    "size_bytes": 101366678,
+    "sha256": "9bcdbe00fe8f8ed029894a65d531614f4fb912dda27e5fb1bb088c5b7516cc74",
+    "signed_manifest_sha256": "ae1906e68df755b1e0ce6a77d6ede8256f923e72fe11da57f1cae89a82c4ffe6"
+  },
+  "device": {
+    "class": "owner_physical_android_12_arm64",
+    "adb_authorized": true,
+    "raw_identifier_retained": false
+  },
+  "pre_install": {
+    "pokrov_process": "absent",
+    "tun0": "absent"
+  },
+  "install": {
+    "method": "adb_package_update_without_app_launch",
+    "legacy_no_streaming_attempt": "NOT_APPLIED_UNSUPPORTED_OPTION",
+    "standard_update_result": "PASS_BY_EXACT_POST_INSTALL_READBACK"
+  },
+  "readback": {
+    "version_name": "1.2.0",
+    "version_code": 4049,
+    "installed_base_size_bytes": 101366678,
+    "installed_base_sha256": "9bcdbe00fe8f8ed029894a65d531614f4fb912dda27e5fb1bb088c5b7516cc74",
+    "matches_signed_candidate_arm64": true
+  },
+  "post_install": {
+    "app_launched": false,
+    "pokrov_process": "absent",
+    "tun0": "absent",
+    "network_test_run": false,
+    "screen_control_used": false
+  },
+  "evidence_ceiling": "EXACT_CANDIDATE16_ARM64_PHYSICAL_INSTALL_IDENTITY_ONLY",
+  "remaining_manual_checks": [
+    "physical default profile TUN DNS authenticated egress and cleanup",
+    "physical AWG2 and AWG3.1 after owned DE health is trusted",
+    "WARP, per-app, Private DNS, external leak, UDP53 and MTU",
+    "handoff, sleep, Doze, OEM and endurance",
+    "Store delivery and promotion"
+  ],
+  "release_effect": {
+    "gate_f_prerequisite_arm64_install_closed": true,
+    "gate_f_passed": false,
+    "gate_g_authorized": false,
+    "public_release_created": false,
+    "stable_pointer_mutated": false
+  }
+}
