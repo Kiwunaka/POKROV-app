@@ -228,6 +228,14 @@ $knownCandidates = @{
     platform = "241a83b4dca00799b39696a4ae0c3c97e087ec39"
     release_index = "b242e0a3060b04f9b71641a0524bf251a75ce2a8"
   }
+  "pokrov-1.2.0-candidate.16" = [ordered]@{
+    manifest = "ae1906e68df755b1e0ce6a77d6ede8256f923e72fe11da57f1cae89a82c4ffe6"
+    signature = "f5df63578d56db84a48eac1c68f1192e81462e8b407b1b6ff877c2b415507a9a"
+    client = "75ba7e721cfee486f7189edd51de97aba2746722"
+    core = "cd8f0f4169d570d693992a959d81d17c2c44884d"
+    platform = "719e23dc49407beb9ae30d98d17d4b73d18ae37c"
+    release_index = "54cfa03502ffafa5e4fb230a2cbdb0c0572c429f"
+  }
 }
 $candidateLabel = [string]$gateInput.candidate_label
 Assert-Gate -Condition $knownCandidates.ContainsKey($candidateLabel) -Code "candidate_label_invalid"
@@ -308,8 +316,12 @@ if ($RunCleanHostSmoke) {
   Assert-Gate -Condition ($env:RUNNER_ENVIRONMENT -eq "github-hosted") -Code "clean_host_gate_requires_github_hosted_runner"
   Assert-Gate -Condition ($env:RUNNER_OS -eq "Windows") -Code "clean_host_gate_requires_windows"
 } else {
-  Assert-Gate -Condition ($candidateLabel -eq "pokrov-1.2.0-candidate.8") -Code "owner_current_host_mode_candidate_scope_invalid"
-  Assert-Gate -Condition ($OwnerCurrentHostConfirmation -ceq "OWNER_AUTHORIZED_CURRENT_HOST_CANDIDATE8_SMOKE") -Code "owner_current_host_confirmation_invalid"
+  $currentHostConfirmations = @{
+    "pokrov-1.2.0-candidate.8" = "OWNER_AUTHORIZED_CURRENT_HOST_CANDIDATE8_SMOKE"
+    "pokrov-1.2.0-candidate.16" = "OWNER_AUTHORIZED_CURRENT_HOST_CANDIDATE16_SMOKE"
+  }
+  Assert-Gate -Condition $currentHostConfirmations.ContainsKey($candidateLabel) -Code "owner_current_host_mode_candidate_scope_invalid"
+  Assert-Gate -Condition ($OwnerCurrentHostConfirmation -ceq $currentHostConfirmations[$candidateLabel]) -Code "owner_current_host_confirmation_invalid"
   Assert-Gate -Condition ($env:GITHUB_ACTIONS -ne "true") -Code "owner_current_host_mode_rejects_github_actions"
 }
 

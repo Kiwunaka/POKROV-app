@@ -74,6 +74,7 @@ foreach ($fragment in @(
   '$evidence.service_failure_diagnostics',
   'RunOwnerCurrentHostSmoke',
   'OWNER_AUTHORIZED_CURRENT_HOST_CANDIDATE8_SMOKE',
+  'OWNER_AUTHORIZED_CURRENT_HOST_CANDIDATE16_SMOKE',
   'clean_app_state_only_not_clean_os_or_vm',
   'PASS_EXACT_CANDIDATE_CURRENT_HOST_CLEAN_APP_STATE_INSTALL_SERVICE_IPC_RESTART_UNINSTALL_IDLE_NETWORK',
   'production_mutation_performed = $false',
@@ -214,6 +215,67 @@ foreach ($requiredFile in @($candidateEightInput.installation.required_files)) {
   $actualIdentity = "$([int64]$requiredFile.size_bytes)|$([string]$requiredFile.sha256)"
   if ([string]::IsNullOrWhiteSpace($expectedIdentity) -or $actualIdentity -ne $expectedIdentity) {
     throw "Windows candidate.8 input has wrong installed-file identity for $($requiredFile.path)"
+  }
+}
+
+$candidateSixteenInputPath = Join-Path $root "config\windows-clean-host-gate.candidate-16.json"
+if (-not (Test-Path -LiteralPath $candidateSixteenInputPath -PathType Leaf)) {
+  throw "Windows candidate.16 current-host input is missing: $candidateSixteenInputPath"
+}
+
+$candidateSixteenInput = [IO.File]::ReadAllText($candidateSixteenInputPath) | ConvertFrom-Json -Depth 20
+$candidateSixteenExpected = [ordered]@{
+  candidate_label = "pokrov-1.2.0-candidate.16"
+  candidate_manifest_sha256 = "ae1906e68df755b1e0ce6a77d6ede8256f923e72fe11da57f1cae89a82c4ffe6"
+  candidate_manifest_signature_sha256 = "f5df63578d56db84a48eac1c68f1192e81462e8b407b1b6ff877c2b415507a9a"
+}
+foreach ($entry in $candidateSixteenExpected.GetEnumerator()) {
+  if ([string]$candidateSixteenInput.($entry.Key) -ne [string]$entry.Value) {
+    throw "Windows candidate.16 input has wrong $($entry.Key)"
+  }
+}
+if ($null -ne $candidateSixteenInput.private_ci_release_tag) {
+  throw "Windows candidate.16 input must not claim a private CI carrier"
+}
+
+$candidateSixteenSourceExpected = [ordered]@{
+  client = "75ba7e721cfee486f7189edd51de97aba2746722"
+  core = "cd8f0f4169d570d693992a959d81d17c2c44884d"
+  platform = "719e23dc49407beb9ae30d98d17d4b73d18ae37c"
+  release_index = "54cfa03502ffafa5e4fb230a2cbdb0c0572c429f"
+}
+foreach ($entry in $candidateSixteenSourceExpected.GetEnumerator()) {
+  if ([string]$candidateSixteenInput.source_tuple.($entry.Key) -ne [string]$entry.Value) {
+    throw "Windows candidate.16 input has wrong source tuple member $($entry.Key)"
+  }
+}
+
+if (
+  [string]$candidateSixteenInput.artifact.sha256 -ne "0afaf6e1d73a7e72762d945557f48793646a9bdbf12bb8ca2e843d4b94df276c" -or
+  [int64]$candidateSixteenInput.artifact.size_bytes -ne 28932793
+) {
+  throw "Windows candidate.16 input has wrong installer identity"
+}
+
+if (@($candidateSixteenInput.installation.required_files).Count -ne 8) {
+  throw "Windows candidate.16 input does not bind all eight installed files"
+}
+
+$candidateSixteenRequiredFiles = [ordered]@{
+  "pokrov_windows.exe" = "191488|322684678534cd09cba2cb284317b4f49a4e6a5909605aa0c4b138a7aa11f985"
+  "pokrov_service.exe" = "168960|d6e4efd71d7fb13ae523a4fcaeb5da076270f47009cdcb105202afef4fb49510"
+  "flutter_windows.dll" = "18511872|1f4215e1072dd9e34f4565b74310e6771364e1470c7e92214bca64947bd012a1"
+  "pokrov-core.dll" = "55426048|f284fa8841f1a45271874a7a05ed6093fb0e3efbdd03e00001edd046be708204"
+  "libcronet.dll" = "8596992|8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+  "pokrov_tray.ico" = "110013|9eea4eff6f980edda2b9c61f3d86fa63e6349bed23bc83e09d5fbb3274d9575d"
+  "data/app.so" = "8930224|26b9cb836331e15be38247407be0eecf14b468f9f0a329ef0156f25b5f59f364"
+  "data/icudtl.dat" = "778864|c12537022ef818991a7bfed41a76d8d6ae962ffbc0e6511ac762a5d0845e7f7c"
+}
+foreach ($requiredFile in @($candidateSixteenInput.installation.required_files)) {
+  $expectedIdentity = $candidateSixteenRequiredFiles[[string]$requiredFile.path]
+  $actualIdentity = "$([int64]$requiredFile.size_bytes)|$([string]$requiredFile.sha256)"
+  if ([string]::IsNullOrWhiteSpace($expectedIdentity) -or $actualIdentity -ne $expectedIdentity) {
+    throw "Windows candidate.16 input has wrong installed-file identity for $($requiredFile.path)"
   }
 }
 
