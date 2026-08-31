@@ -64,7 +64,13 @@
     "tariff_catalog_contract": "shared/tariff-catalog.json",
     "tariff_catalog_sha256": "0e5acae30601854cee4c44c33af84e84bbdcd24d2788a7da1463bb3ee4a40d43",
     "public_urls_contract": "shared/public-urls.json",
-    "public_urls_sha256": "022f7ba577714bdc0bffd3cc00254309af346ef0c8fc62fe9c52e40d72a0de67"
+    "public_urls_sha256": "022f7ba577714bdc0bffd3cc00254309af346ef0c8fc62fe9c52e40d72a0de67",
+    "copy_catalog_contract": "copy/catalog.ru.json",
+    "copy_catalog_version": "2026-07-23-competitor-style-v2",
+    "copy_catalog_sha256": "af380ebeee676cc4186a313110cda969c61ab897620b4093e7fee2c73f50d35d",
+    "marketing_governance_contract": "shared/contracts/marketing/marketing-governance.v1.json",
+    "marketing_governance_revision": "2026-08-22.1",
+    "marketing_governance_contract_sha256": "934e1af78e98ca03edcd1bb73ae7259a801248fe73c5f3297d4528fbf1a1312a"
   },
   "apple_publication": {
     "credentials_in_repo": false,

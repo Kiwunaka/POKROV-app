@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-08-22
+Last updated: 2026-08-31
 
 ## Document Status
 
@@ -33,9 +33,13 @@ tariff-catalog and commercial-contract digests plus the commercial revision.
 from the same owners and supplies runtime trial, Telegram reward, platform
 routing, legal, official-release and support constants. Consumer fallback copy is assembled
 in `src/shared/platform_product_copy.dart`; account-specific values still come
-from server responses. `validate-seed.ps1`
+from server responses. `docs/generated/platform-copy-contract.md` maps every
+platform copy namespace, the active-client `app.*` review baseline and the
+authority boundary. It is generated reference evidence, not runtime copy or a
+new source of truth. `validate-seed.ps1`
 runs the platform synchronizer in read-only `--check` mode and fails on any
-seed, digest, generated-Dart, product-copy hardcode or runtime-consumer drift. Prices, promo terms,
+seed, digest, generated-document, generated-Dart, product-copy hardcode or
+runtime-consumer drift. Prices, promo terms,
 referral account state and payment outcomes remain server response authority;
 the generated projection does not make the client a commercial authority.
 
