@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-08-30
+Last updated: 2026-08-31
 
 ## Document Status
 
@@ -15,21 +15,21 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+4049` |
-| Exact replacement candidate | `pokrov-1.2.0-candidate.13`, app `1.2.0+4049`; signed manifest `b8a10cf8…190c`, detached signature `ede7844c…0e4d`, promotion false |
+| Exact replacement candidate | `pokrov-1.2.0-candidate.16`, app `1.2.0+4049`; signed manifest `ae1906e6…ffe6`, detached signature `f5df6357…07a9a`, promotion false |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`, reproducible DLL `f284fa88…8204`; the same Core bytes are bound into candidate.13 |
-| Exact candidate.13 setup | `0afaf6e1…276c`, `28932793` bytes, exact client/Core `ce2581d…/cd8f0f4…`; `8/8` runtime manifest, unsigned owner exception, no transferred install/live-network/clean-VM claim |
+| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`, reproducible DLL `f284fa88…8204`; the same Core bytes are bound into candidate.16 |
+| Exact candidate.16 setup | `0afaf6e1…276c`, `28932793` bytes; signed tuple client/Core/platform/index `75ba7e7…/cd8f0f4…/719e23d…/54cfa03…`; actual artifact build source `ce2581d…`; `8/8` runtime manifest and unsigned owner exception |
 | Retained candidate.12 setup | `ebbe06f5…89c99c`, `28931263` bytes, exact client/Core `5b1aa02…/cd8f0f4…`; immutable rejected predecessor |
 | Exact candidate.8 setup | `26ec26d8…4668`, `28929376` bytes, exact client/Core `3459438…/a45d69e…`; unsigned owner exception |
 | Retained previous-resolver setup | `6ef7899d…cbe9`, `28918848` bytes, client source `b4c9117…9f0`; immutable superseded evidence |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Portable ZIP | Unsupported for the service-first runtime |
-| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`, with candidate.13 support-signing evidence `6feecaeb…ad50` |
+| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`, carried by the unchanged candidate.16 artifact set |
 | Trusted signing for `1.2.0` direct beta | `SKIPPED_BY_OWNER` on `2026-08-24`; warning required |
 | Trusted/signed/Store/broad-stable claim | `BLOCKED_BY_ACCESS`; trusted Authenticode still required |
-| Candidate.8 current-host smoke | `PASS_EXACT_CANDIDATE_CURRENT_HOST_CLEAN_APP_STATE` — exact install, 8/8 files, LocalSystem service, authenticated IPC, restart, uninstall and unchanged idle route/DNS |
-| Candidate.8 clean VM/live network | `MANUAL_OWNER_TEST` — current-host smoke is not a clean Windows 10/11 VM and did not connect TUN/DNS/AWG traffic |
+| Candidate.16 current-host smoke | `PASS_EXACT_CANDIDATE_CURRENT_HOST_CLEAN_APP_STATE` — exact install, 8/8 files, LocalSystem service, authenticated IPC, restart, uninstall and unchanged idle route/DNS |
+| Candidate.16 clean VM/live network | `MANUAL_OWNER_TEST`; current-host connected attempt stopped fail-closed at account readiness before TUN/DNS/egress |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
@@ -45,21 +45,61 @@ size `55426048`, SHA-256
 `f284fa8841f1a45271874a7a05ed6093fb0e3efbdd03e00001edd046be708204`,
 with all 15 ABI exports; pinned Cronet remains `8ef1f8bb…a6f7`. The exact DLL
 also passes the host-safe 100-cycle proxy start/stop harness. These results are
-bound into signed private candidate.13. Its exact setup SHA-256 is
+bound into signed private candidate.16. Its exact setup SHA-256 is
 `0afaf6e1d73a7e72762d945557f48793646a9bdbf12bb8ca2e843d4b94df276c`,
 size `28932793`, and its runtime manifest matches all `8/8` required files.
-This is package identity only: no candidate.13 install/service/IPC,
-clean-VM TUN/DNS/egress/recovery/uninstall, trusted signature or SmartScreen
-reputation is claimed.
+Candidate.16 now also has exact current-host install/service/IPC/restart/
+uninstall evidence below. It still has no clean-VM TUN/DNS/egress/recovery,
+trusted signature or SmartScreen reputation proof.
 
 Local source and fault-injection tests alone cover IPC, journal, network
-snapshot and rollback logic without installation. The separate candidate.8
+snapshot and rollback logic without installation. The separate candidate.16
 current-host smoke below performed and then removed a bounded installation.
 The native crash filter writes only exception code plus at most 32 allowlisted
 module-relative frame offsets. UI and service use separate protected
 current/previous files; paths, symbols, registers, exception text, heap and full
 memory dumps have no output field. The controlled-crash and recovery readback
 still belongs to the exact-candidate gate below.
+
+## Candidate.16 Current-Host Evidence
+
+`config/windows-clean-host-gate.candidate-16.json` binds exact setup
+`0afaf6e1…276c` to signed manifest `ae1906e6…ffe6`, signature
+`f5df6357…07a9a`, client `75ba7e7…6722`, Core `cd8f0f4…884d`, platform
+`719e23d…e37c`, release-index `54cfa03…429f`, and all eight installed files.
+The file is Authenticode `NotSigned` under the owner exception for the `1.2.0`
+direct beta; the SmartScreen/unknown-publisher warning remains mandatory.
+
+From a clean POKROV app-state baseline on the owner Windows 11 host, the
+elevated exact-candidate smoke passed:
+
+- silent machine-wide install and exact `8/8` installed-file readback;
+- automatic LocalSystem service identity and install-owner binding;
+- authenticated installed UI-to-service IPC plus status request;
+- SCM stop/restart;
+- clean uninstall of service, files and owner registry state;
+- byte-identical pre/post idle route and DNS fingerprints with zero residual
+  POKROV/Wintun adapters.
+
+Sanitized evidence SHA-256 is
+`42d39bf86801ac5d4af50be1a32fa4172b69bc13025a19ab26970a956d1e0db1`.
+The post-check independently confirmed no service, UI process, install
+directory, owner registry record or POKROV/Wintun adapter remained.
+
+A separate connected attempt did not advance the network gate. The installed
+UI reported `Пока недоступно` and required account preparation before it would
+enable connection, so no TUN, DNS or egress probe was run. The attempt was
+aborted and rolled back; sanitized failure evidence SHA-256 is
+`0193b11d8b914643f3e27bc2dcadbdd81d529b9162c8664e92afb729f1916e32`.
+Its cleanup confirms route/DNS restoration and zero installed residue. This is
+`FAIL_CURRENT_HOST_ACCOUNT_READINESS`, not a product-wide account failure and
+not clean-VM or connected-network proof.
+
+Evidence ceiling:
+`EXACT_CANDIDATE_CURRENT_HOST_CLEAN_APP_STATE_INSTALL_SERVICE_AUTHENTICATED_IPC_RESTART_UNINSTALL_AND_NO_IDLE_NETWORK_MUTATION_ONLY`.
+Live TUN, DNS capture, authenticated egress, AWG2/AWG3.1, sleep/reboot/crash
+recovery, connected uninstall and interactive SmartScreen remain
+`MANUAL_OWNER_TEST`.
 
 ## Candidate.8 Current-Host Evidence
 
@@ -100,7 +140,7 @@ uninstall or interactive SmartScreen behavior.
 ## Retained Candidate.3 Evidence
 
 The table keeps candidate.3 results only as exact evidence for its old bytes.
-None of its clean-host, network or SmartScreen rows transfers to candidate.8.
+None of its clean-host, network or SmartScreen rows transfers to candidate.16.
 
 | Check | Current state |
 |---|---|
@@ -241,24 +281,25 @@ recovery, connected uninstall and interactive SmartScreen remain
 
 - The `1.2.0` source targets an unelevated UI and authenticated Windows service.
 - Local tests prove source contracts and isolated recovery logic only.
-- Current platform correction `f79974c…ee6` and the active client/Core source
-  preserve the AWG2/AWG3.1 contracts. The exact `a45d69e` Windows DLL is
+- Current platform source `719e23d…e37c` and the active client/Core source
+  preserve the AWG2/AWG3.1 contracts. The exact `cd8f0f4` Windows DLL is
   built twice byte-identically, exposes all 15 required symbols and passes 100
   proxy-only start/stop cycles without changing system routes.
-- Candidate.8 setup `26ec26d8…4668` packages exact client/Core
-  `3459438…/a45d69e…`, retains the owner-approved unsigned-beta warning and
+- Candidate.16 setup `0afaf6e1…276c` binds the signed source tuple and exact
+  `cd8f0f4` Core bytes, retains the owner-approved unsigned-beta warning and
   passes its eight-file manifest readback. The owner current-host smoke passed
   install/service/authenticated IPC/restart/uninstall and unchanged idle
   route/DNS from a clean POKROV app-state baseline. It is not clean-VM or live
-  network proof.
+  network proof. The attempted connected run stopped at current-host account
+  readiness and was rolled back without residue.
 - The earlier current-origin reverse-UDP block was isolated to wrong
   reply-source selection on the multi-addressed owned server. After guarded
   source-port policy routing and service-cycle readback, exact current-origin
   Core interop passes both AWG2 and AWG3.1. This did not exercise the Windows
   client app, SCM service, TUN, DNS capture or leak protection, so those rows
   remain `MANUAL_OWNER_TEST`.
-- Signed-manifest candidate.8 exists with promotion false. Candidate.3 remains
-  retained history for its own older bytes only.
+- Signed-manifest candidate.16 exists with promotion false. Candidate.8 and
+  candidate.3 remain retained history for their own older bytes only.
 - The owner authorizes one unsigned direct-download beta with the mandatory
   SmartScreen/unknown-publisher warning. This is not trusted-signing evidence
   and permits no signed, Store or broad-stable claim.

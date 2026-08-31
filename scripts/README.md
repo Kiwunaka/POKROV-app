@@ -64,14 +64,15 @@ This folder contains non-destructive client helpers.
   subject, EKU, validity, trusted-chain and SignTool checks before any build or
   signing and emits only a public receipt with `artifacts_signed=false` and
   `candidate_created=false`.
-- `test-windows-exact-candidate.ps1` hash-binds the retained private
-  candidate.3 and current candidate.8 Windows installers to their separate
+- `test-windows-exact-candidate.ps1` hash-binds the retained candidate.3 and
+  candidate.8 installers plus current candidate.16 to their separate
   reviewed inputs, signed manifest/signature identities, exact four-repository
   source tuples and eight installed-file identities. Validation mode is
   non-mutating. The manual `Windows Exact Candidate Clean Host` workflow keeps
   candidate.3 pinned to its private prerelease and fresh GitHub-hosted Windows
-  runner. Candidate.8 additionally permits only the explicit owner-authorized
-  current-host mode with an exact confirmation token; that mode labels its
+  runner. Candidate.8 and candidate.16 additionally permit only their explicit
+  owner-authorized current-host modes with distinct confirmation tokens. Each
+  current-host mode labels its
   baseline `clean_app_state_only_not_clean_os_or_vm` and cannot emit a clean-VM
   claim. Both smoke modes check install/service identity, authenticated
   UI-to-service IPC, service restart, clean uninstall, and idle
