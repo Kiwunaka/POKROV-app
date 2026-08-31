@@ -41,8 +41,9 @@ duplicate that candidate contract. Candidate.16 passes the ordinary LDPlayer
 path. Both exact AWG profiles activate and form TUN/DNS/routes but fail
 authenticated egress without false green. Its exact physical ARM64 install
 binding now passes, while physical runtime and the rest of the release matrix
-remain open. Older Gate F/device/Windows results remain history and do not
-authorize candidate.16.
+remain open. Candidate.16 Gate F validates all `19/19` pointers and returns
+`NO_GO 2/17/2` with zero validation errors. Older Gate F/device/Windows results
+remain history and do not authorize candidate.16.
 
 ## Current 1.2.0 Gate Matrix
 
@@ -72,7 +73,7 @@ authorize candidate.16.
 | Hosted CI | `CORE_EXACT_COMMIT_AND_RELEASE_INDEX_PASS; PLATFORM_CLIENT_BLOCKED_BY_BILLING` | Exact Core commit checks and candidate.16 release-index signer execute and pass. Platform/client jobs with empty runner and `steps=[]` remain `HOSTED_CHECK_BLOCKED_BY_BILLING` under the owner-solo lane, not PASS. |
 | Runtime sync | `PLATFORM_READINESS_CORRECTION_DEPLOYED; CANDIDATE_METADATA_NOT_PROMOTED` | The bounded managed-profile readiness correction is live on Brain. Candidate.16 remains private and artifact-only. LDPlayer ordinary egress passes; labs fail selected egress; physical Android and Windows connected network remain open. |
 | Exact-candidate rollback drill | `PASS_ISOLATED_LOCAL_REVERSAL; LIVE_RUNTIME_OPEN` | Candidate.16 passes disposable portal/client `1.1.6 -> candidate.16 -> 1.1.6` reversal with byte-identical restoration. Live pointer/kill rollback plus current/Brain readback and health remain open. |
-| Final go/no-go | `GATE_F_REGENERATION_READY_ARM64_BINDING_PASS_LAB_EGRESS_FAIL` | Candidate.16 exact physical ARM64 install binding now passes. Gate F has not been regenerated and cannot be GO while both current AWG lab egress checks, physical runtime, connected Windows, current/Brain/RU and other manual rows remain non-PASS. Gate G, public release, store object and stable pointer are unauthorized. The Windows signing exception never becomes a trusted signing PASS. |
+| Final go/no-go | `GATE_F_NO_GO_2_PASS_17_NON_PASS_2_FAIL` | Candidate.16 exact physical ARM64 install binding passes. Gate F validates the signed tuple and all `19/19` pointers, then returns `NO_GO` with zero validation errors. The exact AWG LDPlayer rehearsal and authenticated egress are the two FAIL rows; physical runtime, connected Windows, current/Brain/RU and other manual rows remain non-PASS. Gate G, public release, store object and stable pointer are unauthorized. The Windows signing exception never becomes a trusted signing PASS. |
 
 ## Current Cutover Sequence
 
