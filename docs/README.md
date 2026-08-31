@@ -1,6 +1,6 @@
 # POKROV App Documentation Router
 
-Use this index for task-relevant context. `POKROV-app/main` owns client implementation and client release-readiness. The platform repository owns backend behavior, public facts, delivery contracts, and cross-surface policy.
+`POKROV-app/main` owns client code and release readiness. The platform owns backend behavior and shared cross-surface contracts.
 
 ## Authority Boundaries
 
@@ -54,6 +54,7 @@ Review values are `RECONCILED`, `REVIEWED_NO_CHANGE`, `PENDING_COLLISION_REVIEW`
 | CANONICAL | RECONCILED | Current product/UI direction | `docs/design/2026-06-13-pokrov-product-ui-direction.md` |
 | EVIDENCE | RECONCILED | Completed motion/HIG implementation record | `docs/design/2026-07-13-agent-uiux-backlog.md` |
 | CANONICAL | RECONCILED | Machine product facts | `config/product-contract.seed.json` |
+| EVIDENCE | RECONCILED | Generated platform copy authority projection | `docs/generated/platform-copy-contract.md` |
 | CANONICAL | RECONCILED | Support-mode signing public trust root | `config/support-signing.seed.json` |
 | CANONICAL | RECONCILED | Public/readiness platform scope | `config/platform-matrix.seed.json` |
 | CANONICAL | REVIEWED_NO_CHANGE | Runtime profile facts | `config/runtime-profile.seed.json` |
