@@ -106,9 +106,10 @@ and is not recreated by this branch. Candidate.12 remains rejected history.
   setup `0afaf6e1…276c`, `28932793` bytes, remains `NotSigned` /
   `SKIPPED_BY_OWNER` for direct beta only. Exact current-host Windows
   install/service/IPC/restart/uninstall and idle-network restoration pass;
-  connected network/recovery remains manual. Gate F has not been regenerated;
-  the former missing-ARM64 prerequisite is closed, while current AWG egress and
-  the remaining manual rows stay non-PASS.
+  connected network/recovery remains manual. Gate F now validates all `19/19`
+  checks and returns `NO_GO 2/17/2` with zero validation errors. The former
+  missing-ARM64 prerequisite is closed, while current AWG egress and the
+  remaining manual rows stay non-PASS.
 - VLESS/Reality remains the baseline. AWG 3.1 is the preferred closed UDP lab
   transport and AWG2 its rollback. XHTTP is post-1.2.0 TLS/CDN reserve work;
   Hysteria2 stays default-off and advances only after a bounded lab shows a
@@ -227,7 +228,7 @@ runtime, rollback or promotion proof.
 | 9 | Windows unsigned-beta warning and clean-host recovery | `OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY; LIVE_RECOVERY_OPEN` | The direct-beta warning/SmartScreen exception is explicit. Authenticode is `NotSigned`; trusted/Store/broad-stable claims remain forbidden. Connected recovery, sleep/reboot/crash, connected uninstall and interactive SmartScreen remain manual. |
 | 10 | Hosted cross-repository CI | `CORE_EXACT_COMMIT_AND_RELEASE_INDEX_PASS; PLATFORM_CLIENT_BLOCKED_BY_BILLING` | Exact Core commit checks and candidate.16 release-index signer execute real steps and pass. Platform/client jobs that expose `steps=[]` remain `HOSTED_CHECK_BLOCKED_BY_BILLING` under the owner-solo exception, not PASS. |
 | 11 | Runtime/public readback and rollback | `PASS_ISOLATED_LOCAL_REVERSAL; LIVE_NOT_AUTHORIZED` | Candidate.16 passes disposable portal and client `1.1.6 -> candidate.16 -> 1.1.6` reversal. No tag, public assets, live stable-pointer switch, anonymous public readback or runtime kill rollback exists. |
-| 12 | Promotion and go/no-go | `GATE_F_REGENERATION_READY_ARM64_BINDING_PASS_LAB_EGRESS_FAIL` | Candidate.16 exact ARM64 install binding now passes. Gate F has not yet been regenerated and cannot be GO while both current AWG lab egress results and current/Brain/RU plus other manual rows remain non-PASS. Gate G, public release and stable pointer are not authorized. |
+| 12 | Promotion and go/no-go | `GATE_F_NO_GO_2_PASS_17_NON_PASS_2_FAIL` | Candidate.16 exact ARM64 install binding passes. Gate F validates the signed tuple and all `19/19` pointers, then returns `NO_GO` with zero validation errors. The exact AWG LDPlayer rehearsal and authenticated egress are the two FAIL rows; physical runtime, connected Windows, current/Brain/RU and the other manual rows remain non-PASS. Gate G, public release and stable pointer are not authorized. |
 
 ## Next Action Order
 
@@ -242,8 +243,8 @@ runtime, rollback or promotion proof.
    successor tuple if Linux is approved for shipment.
 4. Complete payment, Operator OIDC/RBAC/action-intent, legal/commercial,
    comparable performance and no-open-P0 attestations for candidate.16.
-5. Refresh Gate F only from exact retained results; every skip, inaccessible
-   environment and unrun manual row remains non-PASS.
+5. Regenerate Gate F only after exact retained evidence changes; every skip,
+   inaccessible environment and unrun manual row remains non-PASS.
 6. Request separate authority for public same-byte candidate publication,
    anonymous readback, rollback drill and promotion.
 7. Provision trusted Windows signing later before any signed, Store or

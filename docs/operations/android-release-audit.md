@@ -55,9 +55,11 @@ has no POKROV process and no `tun0`.
 
 This closes only the required exact physical ARM64 install binding. No app
 launch, VPN permission, profile fetch, TUN, DNS, egress, AWG, WARP, per-app,
-handoff, Private DNS, leak, MTU, Doze, endurance or Store check ran. Gate F is
-not reported as PASS; candidate.16's two LDPlayer AWG egress results remain
-non-PASS and the full physical matrix remains `MANUAL_OWNER_TEST`.
+handoff, Private DNS, leak, MTU, Doze, endurance or Store check ran. Gate F
+validates the signed tuple and all `19/19` pointers, then returns
+`NO_GO 2/17/2` with zero validation errors. Candidate.16's two LDPlayer AWG
+egress results are the explicit FAIL boundary and the full physical matrix
+remains `MANUAL_OWNER_TEST`.
 
 Normalized evidence is
 [`candidate16-physical-android-install.json`](evidence/candidate16-physical-android-install.json),
