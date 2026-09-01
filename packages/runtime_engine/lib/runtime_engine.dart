@@ -2803,6 +2803,9 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       payload.warpPolicy,
       preserveAndroidHostMetadata: hostPlatform == HostPlatform.android,
     );
+    final serviceProfileBundle = hostPlatform == HostPlatform.windows
+        ? await _buildWindowsServiceProfileBundle(configPayload)
+        : null;
     _stagedPayload = payload;
     final resolvedCode = payload.resolvedNodeCode.trim().toLowerCase();
     SmartConnectNode? displayNode;
@@ -2823,6 +2826,8 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       arguments: <String, Object?>{
         'profileName': payload.profileName,
         'configPayload': configPayload,
+        if (serviceProfileBundle != null)
+          'serviceProfileBundle': serviceProfileBundle,
         'disableMemoryLimit': payload.disableMemoryLimit,
         'materializedForRuntime': true,
         'quickSettingsEligible': payload.quickSettingsEligible,
@@ -2876,11 +2881,16 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       nextPolicy,
       preserveAndroidHostMetadata: hostPlatform == HostPlatform.android,
     );
+    final serviceProfileBundle = hostPlatform == HostPlatform.windows
+        ? await _buildWindowsServiceProfileBundle(configPayload)
+        : null;
     final response = await _invokeHostMap(
       'runtimeEngine.applyWarp',
       arguments: <String, Object?>{
         'enabled': enabled,
         'configPayload': configPayload,
+        if (serviceProfileBundle != null)
+          'serviceProfileBundle': serviceProfileBundle,
       },
     );
     final result = response == null
@@ -3563,6 +3573,95 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       coreArtifact: null,
     );
   }
+}
+
+const _windowsServiceProfileBundleHeader = 'POKROV_PROFILE_BUNDLE_V1';
+const _windowsServiceProfileJsonMarker = 'POKROV_PROFILE_JSON';
+const _windowsServiceRuleSetSlotMarker = '__POKROV_RULE_SET_SLOT__';
+const _windowsServiceMaximumRuleSets = 8;
+const _windowsServiceMaximumRuleSetBytes = 128 * 1024;
+const _windowsServiceMaximumRuleSetTotalBytes = 160 * 1024;
+const _windowsServiceMaximumStageBodyBytes = 256 * 1024;
+
+Future<String?> _buildWindowsServiceProfileBundle(
+  String configPayload,
+) async {
+  final decoded = jsonDecode(configPayload);
+  if (decoded is! Map) {
+    throw const FormatException('Windows managed profile must be an object.');
+  }
+  final config = decoded.map<String, Object?>(
+    (key, value) => MapEntry(key.toString(), value),
+  );
+  final route = Map<String, Object?>.from(
+    _runtimeObjectMap(config['route']),
+  );
+  final rawDefinitions = route['rule_set'];
+  if (rawDefinitions is! List) {
+    return null;
+  }
+
+  final definitions = <Object?>[];
+  final assets = <({String name, List<int> bytes})>[];
+  var totalBytes = 0;
+  for (final rawDefinition in rawDefinitions) {
+    final definition = Map<String, Object?>.from(
+      _runtimeObjectMap(rawDefinition),
+    );
+    final isLocal = _runtimeText(definition['type']).toLowerCase() == 'local';
+    if (!isLocal) {
+      definitions.add(rawDefinition);
+      continue;
+    }
+    if (_runtimeText(definition['format']).toLowerCase() != 'binary' ||
+        _runtimeText(definition['path']).isEmpty ||
+        assets.length >= _windowsServiceMaximumRuleSets) {
+      throw const FormatException(
+        'Windows local rule-set bundle is invalid.',
+      );
+    }
+    final bytes = await File(_runtimeText(definition['path'])).readAsBytes();
+    if (bytes.isEmpty || bytes.length > _windowsServiceMaximumRuleSetBytes) {
+      throw const FormatException(
+        'Windows local rule-set asset is outside the bounded size.',
+      );
+    }
+    totalBytes += bytes.length;
+    if (totalBytes > _windowsServiceMaximumRuleSetTotalBytes) {
+      throw const FormatException(
+        'Windows local rule-set bundle is outside the bounded size.',
+      );
+    }
+    final name = 'ruleset-${assets.length}.srs';
+    definition['path'] =
+        'data/rule-set/$_windowsServiceRuleSetSlotMarker/$name';
+    definitions.add(definition);
+    assets.add((name: name, bytes: bytes));
+  }
+  if (assets.isEmpty) {
+    return null;
+  }
+
+  route['rule_set'] = definitions;
+  config['route'] = route;
+  final buffer = StringBuffer()
+    ..writeln(_windowsServiceProfileBundleHeader)
+    ..writeln(assets.length);
+  for (final asset in assets) {
+    buffer
+      ..writeln(asset.name)
+      ..writeln(base64Encode(asset.bytes));
+  }
+  buffer
+    ..writeln(_windowsServiceProfileJsonMarker)
+    ..write(jsonEncode(config));
+  final bundle = buffer.toString();
+  if (utf8.encode(bundle).length > _windowsServiceMaximumStageBodyBytes - 2) {
+    throw const FormatException(
+      'Windows managed profile bundle is outside the IPC bound.',
+    );
+  }
+  return bundle;
 }
 
 extension on HostPlatform {

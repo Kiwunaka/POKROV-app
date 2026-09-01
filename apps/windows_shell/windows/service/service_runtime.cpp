@@ -17,6 +17,7 @@
 #include <mutex>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace pokrov::service {
 namespace {
@@ -42,12 +43,168 @@ constexpr char kLegacyCoreCapabilities[] =
     "\"recovery\",\"stop\"]}";
 constexpr wchar_t kPrivateRuntimeSddl[] =
     L"D:P(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)";
+constexpr char kProfileBundleHeader[] = "POKROV_PROFILE_BUNDLE_V1";
+constexpr char kProfileBundleJsonMarker[] = "POKROV_PROFILE_JSON";
+constexpr char kRuleSetSlotMarker[] = "__POKROV_RULE_SET_SLOT__";
+constexpr std::size_t kMaximumBundledRuleSets = 8;
+constexpr std::size_t kMaximumBundledRuleSetBytes = 128 * 1024;
+constexpr std::size_t kMaximumBundledRuleSetTotalBytes = 160 * 1024;
+
+struct ParsedProfileBundle {
+  std::string profile;
+  std::vector<std::vector<std::uint8_t>> rule_sets;
+};
 
 std::wstring AppendPath(const std::wstring& base, const wchar_t* child) {
   if (base.empty()) {
     return L"";
   }
   return base + (base.back() == L'\\' ? L"" : L"\\") + child;
+}
+
+std::wstring AppendPath(const std::wstring& base,
+                        const std::wstring& child) {
+  return AppendPath(base, child.c_str());
+}
+
+bool ReadBundleLine(const std::string& value, std::size_t* offset,
+                    std::string* line) {
+  if (offset == nullptr || line == nullptr || *offset >= value.size()) {
+    return false;
+  }
+  const auto end = value.find('\n', *offset);
+  if (end == std::string::npos || end == *offset ||
+      value.find('\r', *offset) < end) {
+    return false;
+  }
+  *line = value.substr(*offset, end - *offset);
+  *offset = end + 1;
+  return true;
+}
+
+int Base64Value(char value) {
+  if (value >= 'A' && value <= 'Z') {
+    return value - 'A';
+  }
+  if (value >= 'a' && value <= 'z') {
+    return value - 'a' + 26;
+  }
+  if (value >= '0' && value <= '9') {
+    return value - '0' + 52;
+  }
+  if (value == '+') {
+    return 62;
+  }
+  if (value == '/') {
+    return 63;
+  }
+  return -1;
+}
+
+bool DecodeBase64(const std::string& encoded,
+                  std::vector<std::uint8_t>* decoded) {
+  if (decoded == nullptr || encoded.empty() || encoded.size() % 4 != 0 ||
+      encoded.size() > ((kMaximumBundledRuleSetBytes + 2) / 3) * 4) {
+    return false;
+  }
+  decoded->clear();
+  decoded->reserve((encoded.size() / 4) * 3);
+  for (std::size_t offset = 0; offset < encoded.size(); offset += 4) {
+    const bool last = offset + 4 == encoded.size();
+    const bool pad2 = encoded[offset + 2] == '=';
+    const bool pad3 = encoded[offset + 3] == '=';
+    const int a = Base64Value(encoded[offset]);
+    const int b = Base64Value(encoded[offset + 1]);
+    const int c = pad2 ? 0 : Base64Value(encoded[offset + 2]);
+    const int d = pad3 ? 0 : Base64Value(encoded[offset + 3]);
+    if (a < 0 || b < 0 || c < 0 || d < 0 ||
+        (!last && (pad2 || pad3)) || (pad2 && !pad3) ||
+        (pad2 && (b & 0x0f) != 0) ||
+        (!pad2 && pad3 && (c & 0x03) != 0)) {
+      decoded->clear();
+      return false;
+    }
+    decoded->push_back(static_cast<std::uint8_t>((a << 2) | (b >> 4)));
+    if (!pad2) {
+      decoded->push_back(
+          static_cast<std::uint8_t>(((b & 0x0f) << 4) | (c >> 2)));
+    }
+    if (!pad3) {
+      decoded->push_back(
+          static_cast<std::uint8_t>(((c & 0x03) << 6) | d));
+    }
+  }
+  return !decoded->empty() &&
+         decoded->size() <= kMaximumBundledRuleSetBytes;
+}
+
+std::size_t CountOccurrences(const std::string& value,
+                             const char* needle) {
+  std::size_t count = 0;
+  std::size_t offset = 0;
+  const std::size_t length = std::char_traits<char>::length(needle);
+  while ((offset = value.find(needle, offset)) != std::string::npos) {
+    ++count;
+    offset += length;
+  }
+  return count;
+}
+
+void ReplaceAll(std::string* value, const char* needle,
+                const char* replacement) {
+  std::size_t offset = 0;
+  const std::size_t needle_length = std::char_traits<char>::length(needle);
+  const std::size_t replacement_length =
+      std::char_traits<char>::length(replacement);
+  while ((offset = value->find(needle, offset)) != std::string::npos) {
+    value->replace(offset, needle_length, replacement);
+    offset += replacement_length;
+  }
+}
+
+bool ParseProfilePayload(const std::string& value,
+                         ParsedProfileBundle* output) {
+  if (output == nullptr) {
+    return false;
+  }
+  output->profile.clear();
+  output->rule_sets.clear();
+  if (value.rfind(std::string(kProfileBundleHeader) + "\n", 0) != 0) {
+    output->profile = value;
+    return true;
+  }
+
+  std::size_t offset = std::char_traits<char>::length(kProfileBundleHeader) + 1;
+  std::string line;
+  if (!ReadBundleLine(value, &offset, &line) || line.size() > 1 ||
+      line[0] < '1' || line[0] > '8') {
+    return false;
+  }
+  const std::size_t count = static_cast<std::size_t>(line[0] - '0');
+  std::size_t total_bytes = 0;
+  for (std::size_t index = 0; index < count; ++index) {
+    std::string name;
+    std::string encoded;
+    const std::string expected =
+        "ruleset-" + std::to_string(index) + ".srs";
+    if (!ReadBundleLine(value, &offset, &name) || name != expected ||
+        !ReadBundleLine(value, &offset, &encoded)) {
+      return false;
+    }
+    std::vector<std::uint8_t> decoded;
+    if (!DecodeBase64(encoded, &decoded) ||
+        total_bytes + decoded.size() > kMaximumBundledRuleSetTotalBytes) {
+      return false;
+    }
+    total_bytes += decoded.size();
+    output->rule_sets.push_back(std::move(decoded));
+  }
+  if (!ReadBundleLine(value, &offset, &line) ||
+      line != kProfileBundleJsonMarker || offset >= value.size()) {
+    return false;
+  }
+  output->profile = value.substr(offset);
+  return CountOccurrences(output->profile, kRuleSetSlotMarker) == count;
 }
 
 std::wstring CurrentExecutableDirectory() {
@@ -657,24 +814,61 @@ RuntimeResult RuntimeHost::StageProfile(const std::string& body) {
                 ServiceEventOutcome::kFailed);
     return Fail(Status::kInvalid, "profile_request_invalid");
   }
-  const std::string profile = body.substr(2);
+  ParsedProfileBundle bundle;
+  if (!ParseProfilePayload(body.substr(2), &bundle)) {
+    RecordEvent(ServiceEvent::kRuntimeProfileStage,
+                ServiceEventOutcome::kFailed);
+    return Fail(Status::kInvalid, "profile_payload_invalid");
+  }
+  std::string profile = std::move(bundle.profile);
+  const int staged_rule_set_slot = bundle.rule_sets.empty()
+                                       ? 0
+                                       : (bundled_rule_set_slot_ == 1 ? 2 : 1);
+  std::vector<std::wstring> staged_rule_set_paths;
+  if (staged_rule_set_slot != 0) {
+    ReplaceAll(&profile, kRuleSetSlotMarker,
+               staged_rule_set_slot == 1 ? "profile-a" : "profile-b");
+  }
   if (!IsValidUtf8JsonObject(profile)) {
     RecordEvent(ServiceEvent::kRuntimeProfileStage,
                 ServiceEventOutcome::kFailed);
     return Fail(Status::kInvalid, "profile_payload_invalid");
   }
+  if (staged_rule_set_slot != 0 &&
+      !WriteBundledRuleSets(staged_rule_set_slot, bundle.rule_sets,
+                            &staged_rule_set_paths)) {
+    RecordEvent(ServiceEvent::kRuntimeProfileStage,
+                ServiceEventOutcome::kFailed);
+    return Fail(Status::kNotReady, "profile_write_failed");
+  }
+  for (const auto& path : staged_rule_set_paths) {
+    if (!core_->SecureFile(path).empty()) {
+      CleanupBundledRuleSets(staged_rule_set_slot);
+      RecordEvent(ServiceEvent::kRuntimeProfileStage,
+                  ServiceEventOutcome::kFailed);
+      return Fail(Status::kNotReady, "profile_security_failed");
+    }
+  }
   if (!WriteProfileAtomically(profile)) {
+    CleanupBundledRuleSets(staged_rule_set_slot);
     RecordEvent(ServiceEvent::kRuntimeProfileStage,
                 ServiceEventOutcome::kFailed);
     return Fail(Status::kNotReady, "profile_write_failed");
   }
   if (!core_->SecureFile(profile_path_).empty()) {
     ::DeleteFileW(profile_path_.c_str());
+    CleanupBundledRuleSets(staged_rule_set_slot);
     RecordEvent(ServiceEvent::kRuntimeProfileStage,
                 ServiceEventOutcome::kFailed);
     return Fail(Status::kNotReady, "profile_security_failed");
   }
   disable_memory_limit_ = body[0] == '1';
+  const int previous_rule_set_slot = bundled_rule_set_slot_;
+  bundled_rule_set_slot_ = staged_rule_set_slot;
+  if (previous_rule_set_slot != 0 &&
+      previous_rule_set_slot != bundled_rule_set_slot_) {
+    CleanupBundledRuleSets(previous_rule_set_slot);
+  }
   profile_staged_ = true;
   phase_ = Phase::kConfigStaged;
   failure_.clear();
@@ -693,6 +887,8 @@ RuntimeResult RuntimeHost::InvalidateProfile() {
   if (!profile_path_.empty()) {
     ::DeleteFileW(profile_path_.c_str());
   }
+  CleanupBundledRuleSets(bundled_rule_set_slot_);
+  bundled_rule_set_slot_ = 0;
   profile_staged_ = false;
   disable_memory_limit_ = false;
   phase_ = initialized_ ? Phase::kInitialized : Phase::kArtifactReady;
@@ -1047,6 +1243,81 @@ bool RuntimeHost::WriteProfileAtomically(const std::string& profile) {
     return false;
   }
   return true;
+}
+
+bool RuntimeHost::WriteBundledRuleSets(
+    int slot, const std::vector<std::vector<std::uint8_t>>& rule_sets,
+    std::vector<std::wstring>* written_paths) {
+  if ((slot != 1 && slot != 2) || written_paths == nullptr ||
+      rule_sets.empty() || rule_sets.size() > kMaximumBundledRuleSets) {
+    return false;
+  }
+  written_paths->clear();
+  const auto data_root = AppendPath(directories_.working, L"data");
+  const auto rule_set_root = AppendPath(data_root, L"rule-set");
+  const auto slot_root =
+      AppendPath(rule_set_root, slot == 1 ? L"profile-a" : L"profile-b");
+  if (!EnsureDirectory(rule_set_root) || !EnsureDirectory(slot_root) ||
+      (secure_storage_ &&
+       (!ProtectDirectory(rule_set_root) || !ProtectDirectory(slot_root)))) {
+    return false;
+  }
+
+  CleanupBundledRuleSets(slot);
+  if (!EnsureDirectory(slot_root) ||
+      (secure_storage_ && !ProtectDirectory(slot_root))) {
+    return false;
+  }
+  for (std::size_t index = 0; index < rule_sets.size(); ++index) {
+    const auto& bytes = rule_sets[index];
+    if (bytes.empty() || bytes.size() > kMaximumBundledRuleSetBytes) {
+      CleanupBundledRuleSets(slot);
+      return false;
+    }
+    const std::wstring name =
+        L"ruleset-" + std::to_wstring(index) + L".srs";
+    const auto path = AppendPath(slot_root, name);
+    const auto pending = path + L".pending";
+    HANDLE file = ::CreateFileW(pending.c_str(), GENERIC_WRITE, 0, nullptr,
+                                CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (file == INVALID_HANDLE_VALUE) {
+      CleanupBundledRuleSets(slot);
+      return false;
+    }
+    DWORD written = 0;
+    const bool success =
+        ::WriteFile(file, bytes.data(), static_cast<DWORD>(bytes.size()),
+                    &written, nullptr) != FALSE &&
+        written == bytes.size() && ::FlushFileBuffers(file) != FALSE;
+    ::CloseHandle(file);
+    if (!success ||
+        ::MoveFileExW(pending.c_str(), path.c_str(),
+                      MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) ==
+            FALSE) {
+      ::DeleteFileW(pending.c_str());
+      CleanupBundledRuleSets(slot);
+      return false;
+    }
+    written_paths->push_back(path);
+  }
+  return true;
+}
+
+void RuntimeHost::CleanupBundledRuleSets(int slot) {
+  if (slot != 1 && slot != 2) {
+    return;
+  }
+  const auto slot_root = AppendPath(
+      AppendPath(AppendPath(directories_.working, L"data"), L"rule-set"),
+      slot == 1 ? L"profile-a" : L"profile-b");
+  for (std::size_t index = 0; index < kMaximumBundledRuleSets; ++index) {
+    const std::wstring name =
+        L"ruleset-" + std::to_wstring(index) + L".srs";
+    const auto path = AppendPath(slot_root, name);
+    ::DeleteFileW((path + L".pending").c_str());
+    ::DeleteFileW(path.c_str());
+  }
+  ::RemoveDirectoryW(slot_root.c_str());
 }
 
 std::unique_ptr<CoreRuntime> CreateInstalledCoreRuntime() {

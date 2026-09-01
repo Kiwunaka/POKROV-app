@@ -15,11 +15,11 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+4049` |
-| Latest signed candidate | `pokrov-1.2.0-candidate.18`, app `1.2.0+4049`; setup `21dca69a…f2d3`, signed manifest `d6862382…9a56`, detached signature `a5584da6…6324`, promotion false; immutable `NO_GO` after the non-elevated UI/service failure below |
-| Current promotable candidate | None. The non-elevated UI correction below is source-built diagnostic evidence only and requires a new exact candidate. |
+| Latest signed candidate | `pokrov-1.2.0-candidate.19`, app `1.2.0+4049`; setup `0782152d…f8ff`, signed release index `bb789707…6a87`, detached signature `1d39b7bb…e38`, promotion false; immutable `NO_GO` after the local rule-set service-boundary failure below |
+| Current promotable candidate | None. The bounded rule-set materialization correction is source proof only and requires a new exact candidate. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`, reproducible DLL `f284fa88…8204`; the same Core bytes are bound into candidate.17 and the corrected pre-candidate |
+| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`, reproducible DLL `f284fa88…8204`; the same Core bytes are bound into candidate.17, candidate.18 and candidate.19 |
 | Exact candidate.17 setup | `0afaf6e1…276c`, `28932793` bytes; signed tuple client/Core/platform/index `977c6ed…/cd8f0f4…/d6898e6…/2df538c…`; `8/8` runtime manifest and unsigned owner exception; rejected because clean Windows lacks the unbundled VC runtime and setup incorrectly returned success after service-start failure |
 | Corrected Windows pre-candidate | Setup `301d72fc…3ddc`, `29135238` bytes; manifest `4c9afeb4…f93a`; client `977c6ed…` plus reviewed diff `379a87fc…6f6f`; `11/11` files, app-local Microsoft VC143 runtime, transactional service failure, automatic cleanup and 1.1.6 per-user migration |
 | Retained candidate.16 setup | `0afaf6e1…276c`, `28932793` bytes; older signed tuple `75ba7e7…/cd8f0f4…/719e23d…/54cfa03…`; immutable predecessor evidence only |
@@ -35,6 +35,8 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Corrected pre-candidate clean Windows VM | `PASS_EXACT_PRE_CANDIDATE_CURRENT_HOST_CLEAN_APP_STATE` — exact install, 11/11 files, LocalSystem service, authenticated IPC, restart, uninstall and unchanged idle route/DNS; this is not candidate.18 or live connected-network proof |
 | Candidate.18 non-elevated UI | `FAIL_EXACT_CANDIDATE18_WINDOWS11_VM_NON_ELEVATED_IPC`: install and 11/11 identity passed, but the ordinary UI could not read the protected LocalSystem process token, closed the pipe as untrusted and the service stopped with Win32 code `5` |
 | Source correction A/B | `PASS_DIAGNOSTIC_SOURCE_UI_ON_CANDIDATE18_INSTALL`: SCM PID/state/path/account binding kept the ordinary UI and service alive and recorded accepted IPC plus status; this is not exact-candidate proof |
+| Candidate.19 clean Windows VM | `FAIL_EXACT_CANDIDATE19_WINDOWS11_VM_CORE_005`: exact setup identity, LocalSystem service, ordinary-user authenticated IPC, fresh-profile authorization, entitlement and profile staging passed; Core rejected service-relocated local rule-set paths, and the service completed rollback without reporting connected |
+| Rule-set source correction | `PASS_LOCAL_SOURCE`: the Windows client packages bounded local binary rule sets, the service validates and stages exact bytes in protected A/B generations, and malformed or oversized input fails closed; this is not candidate.20 or live-network proof |
 | Public 1.1.6 migration | `PASS_PRE_CANDIDATE_VM` — exact per-user 1.1.6 install was removed only after the new machine-wide service started; new uninstall record existed, old directory/key disappeared, final uninstall left no service, app directory or owner registry residue |
 | Clean VM live network | `MANUAL_OWNER_TEST`; TUN/DNS/AWG/egress and recovery were not exercised by the packaging correction smoke |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
@@ -42,6 +44,57 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 The ordinary UI does not load Core, run elevated or use a system-proxy
 fallback. The service owns Core, managed state and recovery. Green state
 requires the authenticated egress proof.
+
+## Candidate.19 Local Rule-Set Rejection And Source Correction
+
+Candidate.19 binds client `10f5516648fd40d6c94eb7a7ca0d05be161d393c`,
+Core `cd8f0f4169d570d693992a959d81d17c2c44884d`, platform
+`d6898e63c5c9ab7dd267b9d5150b54196f99d967` and release-index source
+`43fc20fd25342f314554a89ef75e1122f00aee01`. Its exact Windows setup is
+`29129601` bytes with SHA-256
+`0782152d3a992b1b6320043b9b8ccedb2944b76dcbf939bf7a6ebdad9759f8ff`.
+The signed release index SHA-256 is
+`bb78970700d8dc51b6b31caabb76a9b4ca6c94da2f8eef82f1c99ab61b5e6a87`;
+its detached-signature SHA-256 is
+`1d39b7bb7b20481bd165348abc1321ccd9ef4131021505c4054a8c22f6c24e38`.
+
+On the clean Windows 11 VM, the exact candidate installed, the automatic
+LocalSystem service stayed running, the ordinary UI authenticated through the
+SCM-bound IPC path, and a fresh client profile completed authorization and
+entitlement. Profile staging and the connect request reached the service, but
+Core returned `CORE-005`; the service stopped the attempted runtime, completed
+rollback and did not report a connected state.
+
+The sanitized Core-start diagnostic isolates the cause. Candidate.19 writes
+absolute local rule-set paths under the ordinary user's AppData into the
+managed profile. The service moves that profile into its protected ProgramData
+working root without moving the referenced `.srs` files. Core consequently
+resolves a path shaped as the service working directory followed by the
+original absolute AppData path and rejects it. This is a client-to-service
+materialization defect, not evidence of a server-node, DNS, Germany, SPB or
+Core-binary failure.
+
+Sanitized evidence is retained outside the repository:
+
+- service event sequence:
+  `E:\POKROV-tools\temp\candidate19-service-events-safe-v2.json`, SHA-256
+  `c5ae94aca1d451a4bf2489cd71f438b07f3582a2978260b3b075779b390a70d0`;
+- managed-profile shape:
+  `E:\POKROV-tools\temp\candidate19-managed-profile-shape.json`, SHA-256
+  `3f6a288590cf3e637468bea9302179a9211a5ae43cc582a857a190669389ccf4`;
+- one-shot sanitized Core-start result:
+  `E:\POKROV-tools\temp\candidate19-core-start-diagnostic-safe.json`, SHA-256
+  `cafd6a7c4beafa09b3d46473279e8b00357bd04176e26274d4027bfed6d829c2`.
+
+The source correction adds a Windows-only bounded bundle. The ordinary client
+reads materialized local binary rule sets, removes caller-local paths from the
+service payload and sends canonical sequential assets. The service validates
+the framing, count, names, base64 and size limits, writes exact bytes into a
+protected alternate generation, binds the profile to service-relative paths
+and removes the superseded generation only after the new profile is staged.
+Candidate.19 remains immutable `NO_GO`; the correction must merge and receive a
+new candidate identity before clean-VM TUN, DNS, egress and rollback evidence
+can be credited.
 
 ## Candidate.18 Non-Elevated UI Rejection And Source Correction
 
@@ -390,17 +443,18 @@ recovery, connected uninstall and interactive SmartScreen remain
   and passes clean-VM install/service/authenticated IPC/restart/uninstall plus
   public 1.1.6 per-user-to-machine migration. Candidate.18 bound the later
   `21dca69a…f2d3` setup but is also rejected by the exact non-elevated IPC
-  failure above. The SCM-based source correction passes only a diagnostic A/B
-  and has no new exact-candidate or live TUN/DNS/AWG/egress proof.
+  failure above. Candidate.19 proves the SCM correction but is rejected by the
+  exact local rule-set service-boundary failure. The bounded rule-set source
+  correction has no new exact-candidate or live TUN/DNS/AWG/egress proof.
 - The earlier current-origin reverse-UDP block was isolated to wrong
   reply-source selection on the multi-addressed owned server. After guarded
   source-port policy routing and service-cycle readback, exact current-origin
   Core interop passes both AWG2 and AWG3.1. This did not exercise the Windows
   client app, SCM service, TUN, DNS capture or leak protection, so those rows
   remain `MANUAL_OWNER_TEST`.
-- Signed-manifest candidate.18 exists with promotion false and a Windows
-  `NO_GO`. Candidate.17, candidate.16, candidate.8 and candidate.3 remain
-  retained history for their own older bytes only.
+- Signed-manifest candidate.19 exists with promotion false and a Windows
+  `NO_GO`. Candidate.18, candidate.17, candidate.16, candidate.8 and candidate.3
+  remain retained history for their own older bytes only.
 - The owner authorizes one unsigned direct-download beta with the mandatory
   SmartScreen/unknown-publisher warning. This is not trusted-signing evidence
   and permits no signed, Store or broad-stable claim.

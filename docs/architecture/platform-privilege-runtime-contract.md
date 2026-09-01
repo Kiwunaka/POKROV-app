@@ -129,8 +129,18 @@ The current WO-005B1/005B2/005C source implements:
   `pokrov-core.dll`, negotiates desktop ABI 2 and the optional exact capability
   descriptor, and owns Core setup/start/stop after the UI disconnects;
 - fixed `%ProgramData%\POKROV\ServiceRuntime` storage protected for System and
-  Administrators through a protected inheritable DACL, with bounded profile bytes written through
-  `managed-profile.pending` and atomically promoted to `managed-profile.json`;
+  Administrators through a protected inheritable DACL, with bounded profile
+  bytes written through `managed-profile.pending` and atomically promoted to
+  `managed-profile.json`;
+- a Windows-only `POKROV_PROFILE_BUNDLE_V1` handoff for materialized local
+  binary rule sets. The unelevated client reads the user-owned `.srs` inputs,
+  replaces their profile paths with service-relative slot paths and sends at
+  most eight assets, 128 KiB each and 160 KiB total, inside the existing
+  256 KiB IPC frame. The service accepts only canonical sequential names and
+  base64, requires one slot marker per asset, writes the exact bytes into
+  protected `working\data\rule-set\profile-{a,b}` generations, secures every
+  file and binds the staged profile to the newly completed generation. The
+  privileged service never opens a caller-selected source path;
 - service-side selected-outbound proof over WinHTTP with proxy bypass. A green
   runtime requires HTTPS `204` plus the exact
   `X-Pokrov-Egress-Probe: pokrov-authenticated-egress-v1` marker. Failure stops
@@ -358,10 +368,14 @@ As of 2026-09-01:
   journal and future journal;
 - exact candidate.18 clean-VM installation and installed-file identity are
   proved, but its ordinary UI fails the LocalSystem process-token query and
-  stops the service. The SCM-bound source correction passes a matched
-  non-elevated diagnostic A/B only; a new exact candidate, live route/DNS
-  mutation and restoration, crash/reboot, connected uninstall, trusted
-  signing and clean-VM traffic/DNS remain unproved;
+  stops the service. Candidate.19 proves the SCM-bound correction, ordinary
+  UI authentication and entitlement, then fails Core start with `CORE-005`
+  because its managed profile still points at local rule-set files under the
+  user's AppData while Core resolves them from the service working directory.
+  Candidate.19 is immutable `NO_GO`. The bounded service-owned rule-set bundle
+  is source-proved only; a new exact candidate plus live route/DNS mutation and
+  restoration, crash/reboot, connected uninstall, trusted signing and clean-VM
+  traffic/DNS remain unproved;
 - Android notification privacy and safe MTU policy are locally proved by
   Android JVM/source-contract tests plus managed-profile and widget tests;
   physical OEM/lockscreen and exact-candidate behavior remain unproved;

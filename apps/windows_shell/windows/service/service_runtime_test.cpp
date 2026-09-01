@@ -212,12 +212,95 @@ void RemoveTestRoot(const std::wstring& root) {
   ::DeleteFileW(path(L"working\\configs\\managed-profile.pending").c_str());
   ::DeleteFileW(path(L"recovery-journal.v1").c_str());
   ::DeleteFileW(path(L"recovery-journal.pending").c_str());
+  for (const wchar_t* slot : {L"profile-a", L"profile-b"}) {
+    for (int index = 0; index < 8; ++index) {
+      const auto asset = path(
+          (std::wstring(L"working\\data\\rule-set\\") + slot +
+           L"\\ruleset-" + std::to_wstring(index) + L".srs")
+              .c_str());
+      ::DeleteFileW((asset + L".pending").c_str());
+      ::DeleteFileW(asset.c_str());
+    }
+    ::RemoveDirectoryW(
+        path((std::wstring(L"working\\data\\rule-set\\") + slot).c_str())
+            .c_str());
+  }
+  ::RemoveDirectoryW(path(L"working\\data\\rule-set").c_str());
   ::RemoveDirectoryW(path(L"working\\configs").c_str());
   ::RemoveDirectoryW(path(L"working\\data").c_str());
   ::RemoveDirectoryW(path(L"working").c_str());
   ::RemoveDirectoryW(path(L"temp").c_str());
   ::RemoveDirectoryW(path(L"data").c_str());
   ::RemoveDirectoryW(root.c_str());
+}
+
+std::string ReadTextFile(const std::wstring& path);
+
+void TestBundledRuleSetsAreStagedInsideProtectedWorkingDirectory() {
+  using namespace pokrov::service;
+  const auto root = CreateTestRoot();
+  Expect(!root.empty(), "bundle test runtime root was not created");
+  if (root.empty()) {
+    return;
+  }
+
+  auto fake = std::make_unique<FakeCoreRuntime>();
+  auto* core = fake.get();
+  RuntimeHost host(std::move(fake), std::make_unique<FakeEgressProbe>(),
+                   std::make_unique<FakeRecovery>(), root, false);
+  Expect(host.Initialize().status == Status::kOk,
+         "bundle test runtime initialization failed");
+  const std::string profile =
+      "{\"route\":{\"rule_set\":[{\"type\":\"local\","
+      "\"format\":\"binary\",\"path\":\"data/rule-set/"
+      "__POKROV_RULE_SET_SLOT__/ruleset-0.srs\"}]}}";
+  const std::string first_bundle =
+      "0\nPOKROV_PROFILE_BUNDLE_V1\n1\nruleset-0.srs\nAQID\n"
+      "POKROV_PROFILE_JSON\n" +
+      profile;
+  const auto first = host.StageProfile(first_bundle);
+  Expect(first.status == Status::kOk,
+         "bounded rule-set bundle was rejected");
+  const auto first_asset =
+      root + L"\\working\\data\\rule-set\\profile-a\\ruleset-0.srs";
+  const auto staged_profile =
+      root + L"\\working\\configs\\managed-profile.json";
+  Expect(ReadTextFile(first_asset) == std::string("\x01\x02\x03", 3),
+         "bundled rule-set bytes were not written exactly");
+  Expect(ReadTextFile(staged_profile).find("profile-a/ruleset-0.srs") !=
+             std::string::npos &&
+             ReadTextFile(staged_profile).find(
+                 "__POKROV_RULE_SET_SLOT__") == std::string::npos,
+         "staged profile did not bind the service-owned rule-set slot");
+  Expect(core->secure_calls == 2,
+         "bundle asset and profile were not both secured");
+
+  const std::string second_bundle =
+      "0\nPOKROV_PROFILE_BUNDLE_V1\n1\nruleset-0.srs\nBAUG\n"
+      "POKROV_PROFILE_JSON\n" +
+      profile;
+  const auto second = host.StageProfile(second_bundle);
+  const auto second_asset =
+      root + L"\\working\\data\\rule-set\\profile-b\\ruleset-0.srs";
+  Expect(second.status == Status::kOk &&
+             ReadTextFile(second_asset) == std::string("\x04\x05\x06", 3),
+         "second rule-set generation was not staged independently");
+  Expect(::GetFileAttributesW(first_asset.c_str()) == INVALID_FILE_ATTRIBUTES,
+         "superseded rule-set generation was retained");
+
+  const auto before_rejection = ReadTextFile(staged_profile);
+  const auto malformed = host.StageProfile(
+      "0\nPOKROV_PROFILE_BUNDLE_V1\n1\nruleset-0.srs\nnot-base64\n"
+      "POKROV_PROFILE_JSON\n{}");
+  Expect(malformed.status == Status::kInvalid &&
+             ReadTextFile(staged_profile) == before_rejection,
+         "malformed bundle changed the active staged profile");
+
+  Expect(host.InvalidateProfile().status == Status::kOk,
+         "bundled profile invalidation failed");
+  Expect(::GetFileAttributesW(second_asset.c_str()) == INVALID_FILE_ATTRIBUTES,
+         "profile invalidation retained bundled rule-set bytes");
+  RemoveTestRoot(root);
 }
 
 bool WriteTextFile(const std::wstring& path, const std::string& content) {
@@ -752,6 +835,7 @@ void TestCoreOperationalEventFenceRejectsLateAndUnsafeCallbacks() {
 
 int main() {
   TestRuntimeLifecycle();
+  TestBundledRuleSetsAreStagedInsideProtectedWorkingDirectory();
   TestCoreErrorsAreSanitized();
   TestEgressFailureStopsCoreAndIsSanitized();
   TestPendingRecoveryStopsCoreBeforeRuntimeReady();

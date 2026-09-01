@@ -371,6 +371,8 @@ bool FlutterWindow::OnCreate() {
         if (call.method_name() == "runtimeEngine.stageManagedProfile") {
           const auto* arguments = MapArguments(call);
           const auto* profile = StringArgument(arguments, "configPayload");
+          const auto* service_profile_bundle =
+              StringArgument(arguments, "serviceProfileBundle");
           const auto* disable_memory_limit =
               BoolArgument(arguments, "disableMemoryLimit");
           const auto* materialized =
@@ -381,8 +383,11 @@ bool FlutterWindow::OnCreate() {
                           "A materialized managed profile is required.");
             return;
           }
+          const std::string& service_profile =
+              service_profile_bundle == nullptr ? *profile
+                                                : *service_profile_bundle;
           const std::string body =
-              (*disable_memory_limit ? "1\n" : "0\n") + *profile;
+              (*disable_memory_limit ? "1\n" : "0\n") + service_profile;
           result->Success(RuntimeSnapshotValue(
               pokrov::service::InvokeInstalledService(Command::kStageProfile,
                                                        body)));
@@ -409,12 +414,17 @@ bool FlutterWindow::OnCreate() {
         if (call.method_name() == "runtimeEngine.applyWarp") {
           const auto* arguments = MapArguments(call);
           const auto* profile = StringArgument(arguments, "configPayload");
+          const auto* service_profile_bundle =
+              StringArgument(arguments, "serviceProfileBundle");
           if (profile == nullptr) {
             result->Error("invalid_arguments", "A managed profile is required.");
             return;
           }
           const auto snapshot = pokrov::service::InvokeInstalledService(
-              Command::kStageProfile, "0\n" + *profile);
+              Command::kStageProfile,
+              "0\n" + (service_profile_bundle == nullptr
+                            ? *profile
+                            : *service_profile_bundle));
           flutter::EncodableMap values;
           values[flutter::EncodableValue("applied")] =
               flutter::EncodableValue(snapshot.command_accepted);
