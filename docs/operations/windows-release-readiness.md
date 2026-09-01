@@ -15,8 +15,8 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+4049` |
-| Latest signed candidate | `pokrov-1.2.0-candidate.17`, app `1.2.0+4049`; signed manifest `bea4774f…db1e`, detached signature `e58419f3…5717`, promotion false; immutable `NO_GO` after clean-VM Windows failure |
-| Current promotable candidate | None. Candidate.18 has not been assembled; the Windows correction below is still a source-bound pre-candidate. |
+| Latest signed candidate | `pokrov-1.2.0-candidate.18`, app `1.2.0+4049`; setup `21dca69a…f2d3`, signed manifest `d6862382…9a56`, detached signature `a5584da6…6324`, promotion false; immutable `NO_GO` after the non-elevated UI/service failure below |
+| Current promotable candidate | None. The non-elevated UI correction below is source-built diagnostic evidence only and requires a new exact candidate. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
 | Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`, reproducible DLL `f284fa88…8204`; the same Core bytes are bound into candidate.17 and the corrected pre-candidate |
@@ -33,6 +33,8 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Trusted/signed/Store/broad-stable claim | `BLOCKED_BY_ACCESS`; trusted Authenticode still required |
 | Candidate.17 clean Windows VM | `FAIL`; missing `msvcp140.dll`, `vcruntime140.dll` and `vcruntime140_1.dll` prevented service start, while setup incorrectly exited `0`. Candidate.17 remains rejected history. |
 | Corrected pre-candidate clean Windows VM | `PASS_EXACT_PRE_CANDIDATE_CURRENT_HOST_CLEAN_APP_STATE` — exact install, 11/11 files, LocalSystem service, authenticated IPC, restart, uninstall and unchanged idle route/DNS; this is not candidate.18 or live connected-network proof |
+| Candidate.18 non-elevated UI | `FAIL_EXACT_CANDIDATE18_WINDOWS11_VM_NON_ELEVATED_IPC`: install and 11/11 identity passed, but the ordinary UI could not read the protected LocalSystem process token, closed the pipe as untrusted and the service stopped with Win32 code `5` |
+| Source correction A/B | `PASS_DIAGNOSTIC_SOURCE_UI_ON_CANDIDATE18_INSTALL`: SCM PID/state/path/account binding kept the ordinary UI and service alive and recorded accepted IPC plus status; this is not exact-candidate proof |
 | Public 1.1.6 migration | `PASS_PRE_CANDIDATE_VM` — exact per-user 1.1.6 install was removed only after the new machine-wide service started; new uninstall record existed, old directory/key disappeared, final uninstall left no service, app directory or owner registry residue |
 | Clean VM live network | `MANUAL_OWNER_TEST`; TUN/DNS/AWG/egress and recovery were not exercised by the packaging correction smoke |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
@@ -40,6 +42,39 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 The ordinary UI does not load Core, run elevated or use a system-proxy
 fallback. The service owns Core, managed state and recovery. Green state
 requires the authenticated egress proof.
+
+## Candidate.18 Non-Elevated UI Rejection And Source Correction
+
+Candidate.18 binds client `820ca101…ca5`, Core `cd8f0f41…884d`, platform
+`d6898e63…967` and release-index source `5dc25bdd…759`. Its exact setup SHA-256
+is `21dca69a4cffe9648bf9788c1279606896c798b32617dd88fa0d9c1e9c1bf2d3`.
+The clean Windows 11 VM installed it successfully, matched all `11/11`
+manifest files and registered the automatic LocalSystem service for the
+correct installation owner.
+
+The exact candidate still fails the required ordinary-user boundary. In a
+matched interactive launch without UAC, candidate.18 UI
+`d67ea5dc…855d` opened the service pipe and then attempted to read the
+LocalSystem process token. Windows denied that query, the UI classified the
+server as untrusted and closed the connection, and the service stopped with
+Win32 exit code `5`. Sanitized reproduction evidence is retained outside the
+repository at
+`E:\POKROV-tools\temp\candidate18-non-elevated-ipc\candidate18-old-ui-repro.json`,
+SHA-256 `4042ad57…fba8`.
+
+The source correction authenticates the pipe PID against the running
+`POKROVService` SCM record, exact sibling binary path and LocalSystem start
+account. Those SCM queries are available to the ordinary UI and preserve the
+same fail-closed identity checks without reading the protected process token.
+A matched A/B using source-built UI `02bae8b2…639b` over the unchanged
+candidate.18 installation kept the service `Running` with exit code `0` and
+recorded `ipc_session_accepted` plus a status request. Sanitized diagnostic
+evidence SHA-256 is `6cf2d905…b1f`.
+
+This A/B proves the cause and source correction only. Candidate.18 remains
+immutable `NO_GO`; the correction must merge, rebuild, receive a new signed
+candidate identity and repeat the non-elevated install/IPC, TUN/DNS/egress and
+rollback gates before promotion.
 
 ## Candidate.17 Rejection And Corrected Pre-Candidate
 
@@ -90,9 +125,10 @@ for these exact pre-candidate bytes. The migration run additionally starts from
 the exact public 1.1.6 setup and proves removal of its per-user directory and
 HKCU uninstall record before final cleanup. Evidence is retained outside the
 repository under
-`E:\POKROV-tools\temp\candidate18-winvm-harness-v3`. Candidate.18, its signed
-release index and exact hosted replay do not exist yet; these results must be
-repeated or bound to the merged exact source before candidate assembly.
+`E:\POKROV-tools\temp\candidate18-winvm-harness-v3`. Candidate.18 later bound
+the same setup bytes and passed exact hosted replay, but the newly executed
+ordinary-user A/B above supersedes its elevated-UI IPC pass and rejects the
+candidate.
 
 ## Retained Build 4049 Core And Candidate.16/17 Evidence
 
@@ -352,17 +388,19 @@ recovery, connected uninstall and interactive SmartScreen remain
   required VC runtime and could falsely return success after service failure.
   The corrected pre-candidate setup `301d72fc…3ddc` has an eleven-file manifest
   and passes clean-VM install/service/authenticated IPC/restart/uninstall plus
-  public 1.1.6 per-user-to-machine migration. It is not candidate.18 and has no
-  live TUN/DNS/AWG/egress proof.
+  public 1.1.6 per-user-to-machine migration. Candidate.18 bound the later
+  `21dca69a…f2d3` setup but is also rejected by the exact non-elevated IPC
+  failure above. The SCM-based source correction passes only a diagnostic A/B
+  and has no new exact-candidate or live TUN/DNS/AWG/egress proof.
 - The earlier current-origin reverse-UDP block was isolated to wrong
   reply-source selection on the multi-addressed owned server. After guarded
   source-port policy routing and service-cycle readback, exact current-origin
   Core interop passes both AWG2 and AWG3.1. This did not exercise the Windows
   client app, SCM service, TUN, DNS capture or leak protection, so those rows
   remain `MANUAL_OWNER_TEST`.
-- Signed-manifest candidate.17 exists with promotion false and a Windows
-  `NO_GO`. Candidate.16, candidate.8 and candidate.3 remain retained history
-  for their own older bytes only.
+- Signed-manifest candidate.18 exists with promotion false and a Windows
+  `NO_GO`. Candidate.17, candidate.16, candidate.8 and candidate.3 remain
+  retained history for their own older bytes only.
 - The owner authorizes one unsigned direct-download beta with the mandatory
   SmartScreen/unknown-publisher warning. This is not trusted-signing evidence
   and permits no signed, Store or broad-stable claim.

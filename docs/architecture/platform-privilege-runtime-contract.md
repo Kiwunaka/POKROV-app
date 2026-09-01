@@ -121,8 +121,10 @@ The current WO-005B1/005B2/005C source implements:
   set that fails closed instead of evicting old nonces;
 - allowlisted status, initialization, profile staging/invalidation, connect,
   disconnect, cancel, recover and sanitized-state command identifiers;
-- UI-side server authentication by exact pipe-server PID, LocalSystem token and
-  sibling installed `pokrov_service.exe` identity;
+- UI-side server authentication by exact pipe-server PID bound to the running
+  `POKROVService` SCM record, its LocalSystem start account and the sibling
+  installed `pokrov_service.exe` path. This query is available to the ordinary
+  user UI and does not require reading the protected LocalSystem process token;
 - a persistent service runtime owner that loads only the sibling
   `pokrov-core.dll`, negotiates desktop ABI 2 and the optional exact capability
   descriptor, and owns Core setup/start/stop after the UI disconnects;
@@ -334,7 +336,7 @@ observability owners. Platform work must not create a competing pipeline.
 
 ## Rollout state
 
-As of 2026-08-28:
+As of 2026-09-01:
 
 - Windows per-session singleton, typed UI activation and tray-only startup are
   locally proved under WO-005A;
@@ -354,9 +356,12 @@ As of 2026-08-28:
   for every persisted connect stage, Core-stop failure, network-restore
   failure, journal-completion failure, repeated disconnect, restart, partial
   journal and future journal;
-- SCM installation, a real service crash/reboot, live route/DNS mutation and
-  restoration, uninstall while connected, clean-VM traffic/DNS, trusted
-  signing and exact 1.2.0 candidate evidence remain unproved;
+- exact candidate.18 clean-VM installation and installed-file identity are
+  proved, but its ordinary UI fails the LocalSystem process-token query and
+  stops the service. The SCM-bound source correction passes a matched
+  non-elevated diagnostic A/B only; a new exact candidate, live route/DNS
+  mutation and restoration, crash/reboot, connected uninstall, trusted
+  signing and clean-VM traffic/DNS remain unproved;
 - Android notification privacy and safe MTU policy are locally proved by
   Android JVM/source-contract tests plus managed-profile and widget tests;
   physical OEM/lockscreen and exact-candidate behavior remain unproved;

@@ -17,6 +17,9 @@
 namespace pokrov::service {
 namespace {
 
+constexpr wchar_t kProductionServiceName[] = L"POKROVService";
+constexpr wchar_t kLocalSystemServiceAccount[] = L"LocalSystem";
+
 std::uint64_t UnixTimeMilliseconds() {
   FILETIME file_time{};
   ::GetSystemTimeAsFileTime(&file_time);
@@ -91,52 +94,84 @@ std::wstring CurrentExecutableDirectory() {
                                          : path.substr(0, separator + 1);
 }
 
+std::wstring ServiceBinaryPath(const wchar_t* configured_path) {
+  if (configured_path == nullptr) {
+    return L"";
+  }
+  std::wstring path(configured_path);
+  if (path.size() >= 2 && path.front() == L'"' && path.back() == L'"') {
+    path = path.substr(1, path.size() - 2);
+  }
+  return path;
+}
+
+bool IsExpectedRegisteredService(ULONG server_process_id,
+                                 const std::wstring& expected_path) {
+  // An ordinary UI cannot query the LocalSystem process token. Bind the pipe
+  // PID to the protected SCM record instead of requiring process elevation.
+  SC_HANDLE manager =
+      ::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT);
+  if (manager == nullptr) {
+    return false;
+  }
+  SC_HANDLE service = ::OpenServiceW(
+      manager, kProductionServiceName,
+      SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG);
+  if (service == nullptr) {
+    ::CloseServiceHandle(manager);
+    return false;
+  }
+
+  SERVICE_STATUS_PROCESS status{};
+  DWORD bytes_needed = 0;
+  const bool status_valid =
+      ::QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO,
+                             reinterpret_cast<BYTE*>(&status), sizeof(status),
+                             &bytes_needed) != FALSE;
+
+  bytes_needed = 0;
+  ::QueryServiceConfigW(service, nullptr, 0, &bytes_needed);
+  const bool config_size_valid =
+      ::GetLastError() == ERROR_INSUFFICIENT_BUFFER &&
+      bytes_needed >= sizeof(QUERY_SERVICE_CONFIGW);
+  std::vector<std::uint8_t> config_bytes(
+      config_size_valid ? bytes_needed : 0);
+  auto* config = config_bytes.empty()
+                     ? nullptr
+                     : reinterpret_cast<QUERY_SERVICE_CONFIGW*>(
+                           config_bytes.data());
+  const bool config_valid =
+      config != nullptr &&
+      ::QueryServiceConfigW(service, config, bytes_needed, &bytes_needed) !=
+          FALSE;
+
+  const bool expected =
+      status_valid && config_valid && status.dwCurrentState == SERVICE_RUNNING &&
+      status.dwProcessId == static_cast<DWORD>(server_process_id) &&
+      status.dwServiceType == SERVICE_WIN32_OWN_PROCESS &&
+      config->dwServiceType == SERVICE_WIN32_OWN_PROCESS &&
+      ::CompareStringOrdinal(ServiceBinaryPath(config->lpBinaryPathName).c_str(),
+                             -1, expected_path.c_str(), -1, TRUE) ==
+          CSTR_EQUAL &&
+      config->lpServiceStartName != nullptr &&
+      ::CompareStringOrdinal(config->lpServiceStartName, -1,
+                             kLocalSystemServiceAccount, -1, TRUE) ==
+          CSTR_EQUAL;
+  ::CloseServiceHandle(service);
+  ::CloseServiceHandle(manager);
+  return expected;
+}
+
 bool IsExpectedServer(HANDLE pipe) {
   ULONG server_process_id = 0;
   if (!::GetNamedPipeServerProcessId(pipe, &server_process_id) ||
       server_process_id == 0) {
     return false;
   }
-  HANDLE process =
-      ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE,
-                    static_cast<DWORD>(server_process_id));
-  if (process == nullptr) {
-    return false;
-  }
-
-  std::wstring image_path(32768, L'\0');
-  DWORD image_length = static_cast<DWORD>(image_path.size());
-  const bool has_path =
-      ::QueryFullProcessImageNameW(process, 0, image_path.data(),
-                                   &image_length) != FALSE;
-  image_path.resize(has_path ? image_length : 0);
-
-  HANDLE token = nullptr;
-  bool is_system = false;
-  if (::OpenProcessToken(process, TOKEN_QUERY, &token)) {
-    DWORD required = 0;
-    ::GetTokenInformation(token, TokenUser, nullptr, 0, &required);
-    std::vector<std::uint8_t> buffer(required);
-    if (required > 0 &&
-        ::GetTokenInformation(token, TokenUser, buffer.data(), required,
-                              &required)) {
-      const auto* user = reinterpret_cast<const TOKEN_USER*>(buffer.data());
-      BYTE system_sid[SECURITY_MAX_SID_SIZE]{};
-      DWORD system_sid_size = sizeof(system_sid);
-      is_system =
-          ::CreateWellKnownSid(WinLocalSystemSid, nullptr, system_sid,
-                               &system_sid_size) != FALSE &&
-          ::EqualSid(user->User.Sid, system_sid) != FALSE;
-    }
-    ::CloseHandle(token);
-  }
-  ::CloseHandle(process);
-
   const auto expected_path =
       CurrentExecutableDirectory() + L"pokrov_service.exe";
-  return is_system && !expected_path.empty() && !image_path.empty() &&
-         ::CompareStringOrdinal(expected_path.c_str(), -1, image_path.c_str(),
-                                -1, TRUE) == CSTR_EQUAL;
+  return !expected_path.empty() &&
+         IsExpectedRegisteredService(server_process_id, expected_path);
 }
 
 struct ExchangeResult {
