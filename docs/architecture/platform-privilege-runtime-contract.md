@@ -372,10 +372,14 @@ As of 2026-09-01:
   UI authentication and entitlement, then fails Core start with `CORE-005`
   because its managed profile still points at local rule-set files under the
   user's AppData while Core resolves them from the service working directory.
-  Candidate.19 is immutable `NO_GO`. The bounded service-owned rule-set bundle
-  is source-proved only; a new exact candidate plus live route/DNS mutation and
-  restoration, crash/reboot, connected uninstall, trusted signing and clean-VM
-  traffic/DNS remain unproved;
+  Candidate.19 is immutable `NO_GO`. Exact candidate.20 setup
+  `330b87cb…587f` proves the bounded service-owned rule-set bundle on an
+  isolated Windows 11 VM: four service-relative assets, ordinary UI to
+  LocalSystem service, default connect, TUN, DNS, authenticated egress,
+  disconnect restoration, clean uninstall and public-1.1.6 migration. This
+  closes only that exact Windows 11 `WIN-003` slice; Windows 10, AWG 3.1/AWG2,
+  crash/reboot, connected uninstall, IPv6/leak, interactive SmartScreen and
+  trusted signing remain unproved;
 - Android notification privacy and safe MTU policy are locally proved by
   Android JVM/source-contract tests plus managed-profile and widget tests;
   physical OEM/lockscreen and exact-candidate behavior remain unproved;
