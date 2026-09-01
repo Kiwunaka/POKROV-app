@@ -297,6 +297,41 @@ records `checkpoint/unavailable` for all three required owners and then returns
 `linux_live_connect_unavailable`. It does not manufacture apply/rollback success
 before those operations exist.
 
+The source also contains a dormant system transaction implementation behind
+that event seam. It accepts only an internal typed plan: a daemon-owned
+`pokrov*` tunnel interface, one non-zero Core routing mark and one to four
+validated IP resolver addresses. None of those values can arrive as a raw
+command or shell fragment through IPC. The transaction order is fixed:
+
+1. create a NetworkManager D-Bus checkpoint covering all devices, with a
+   bounded automatic rollback timeout and new-device/connection plus internal
+   DNS tracking;
+2. verify the owned resolved link and absence of the dedicated
+   `inet pokrov` nftables table;
+3. apply per-link DNS, `~.` routing and default-route ownership through
+   `resolvectl`;
+4. validate and atomically apply only the generated `inet pokrov` output table,
+   allowing loopback, the owned tunnel, the Core routing mark and required
+   DHCP/IPv6 link control while dropping other output;
+5. destroy the NetworkManager checkpoint only after the other participants
+   have applied successfully.
+
+Checkpoint and apply failures trigger reverse rollback. Every dirty owner is
+attempted even when an earlier rollback fails, and only failed owners remain
+eligible for an explicit recovery retry. Resolved rollback uses per-link
+`revert`; nftables rollback deletes only `inet pokrov` and never flushes or
+restores a global ruleset; NetworkManager rollback uses only the bounded object
+path returned by its checkpoint call. Native commands are fixed absolute
+paths, run without a shell, have per-call deadlines and bounded stdout, and
+discard stderr. The host probe now requires the system-bus client used by this
+implementation.
+
+This engine is source-only and deliberately not wired into `connect`: the
+current Core does not yet provide the exact Linux tunnel/mark/DNS lifecycle
+plan, and there is no durable restart/suspend recovery or clean Ubuntu 24.04
+runtime proof. Therefore no command in this implementation runs in the current
+product path and the unavailable preflight behavior above remains authoritative.
+
 Every mutating request also emits one closed authorization decision before any
 profile or network write. The backend is exactly `peer_credential` for the
 root service peer or `polkit_dbus` for the non-root `pkcheck` path. The latter
@@ -419,11 +454,15 @@ As of 2026-09-01:
   one closed authorization decision for each mutation without peer identity or
   diagnostic text. A typed NetworkManager/resolved/nft transaction-event seam
   plus exact unavailable-preflight wiring exposes checkpoint/apply/rollback
-  compatibility reasons without raw details.
+  compatibility reasons without raw details. A dormant typed transaction
+  engine now implements the fixed D-Bus checkpoint, per-link resolved change,
+  dedicated atomic nft table and reverse recovery order with injected source
+  faults; it is not connected to the product path and has no native runtime
+  evidence.
   `connect` intentionally returns
   `linux_live_connect_unavailable` and `supports_live_connect=false` until the
-  Core lifecycle, NetworkManager checkpoint/rollback, resolved/nft
-  transactions, suspend recovery and exact signed package/VM matrices are
-  implemented and retained.
+  Core lifecycle supplies the exact internal network plan, the transaction is
+  durably integrated, and suspend recovery plus exact signed package/VM
+  matrices are implemented and retained.
 
 These statements describe source progress, not a 1.2.0 candidate or release.

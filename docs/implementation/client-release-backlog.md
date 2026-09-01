@@ -147,9 +147,11 @@ by this branch. Candidate.12 remains rejected history.
 - Android uses separate direct and store update authorities.
 - Windows uses the service-first privilege boundary in current source.
 - Linux has a non-root Flutter host and a fail-closed systemd/polkit daemon
-  foundation. Each mutation now has a closed peer-credential/polkit-D-Bus
-  authorization trace without peer identity or raw diagnostics; live connect
-  remains disabled until Core/network rollback proof.
+  foundation. Each mutation has a closed peer-credential/polkit-D-Bus
+  authorization trace without peer identity or raw diagnostics. A dormant
+  typed NetworkManager/resolved/nft transaction engine and reverse fault
+  recovery exist in source, but live connect remains disabled until the exact
+  Core/TUN plan, durable integration and native rollback proof exist.
 - Local observability, diagnostics and support-bundle contracts are present.
 - Production packaging is source-bound to one tracked support-mode public key
   and rejects partial or different overrides before Flutter.
@@ -238,7 +240,7 @@ runtime, rollback or promotion proof.
 | 1 | Clean platform, client, Core and release-index revisions | `PASS_EXACT_CANDIDATE_17_TUPLE` | Candidate.17 binds platform `d6898e6…967`, client `977c6ed…108`, Core `cd8f0f4…884d` and signed release-index source `2df538c…b17`. |
 | 2 | Public release-index revision | `PASS_SIGNED_CANDIDATE_17_MANIFEST` | Manifest `bea4774f…db1e`, detached signature `e58419f3…5717`, receipt `bec4c0cc…0ba1`, keyring and six exact artifacts validate. Output is artifact-only and promotion remains false. |
 | 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_CANDIDATE_17_ARTIFACTS` | Candidate.17 binds reproducible AAR `2a9677d9…c6a69`, DLL `f284fa88…8204`, unchanged Cronet `8ef1f8bb…a6f7`, refreshed SBOM/provenance and exact Core source `cd8f0f4…884d`. |
-| 4 | Conditional Linux beta runtime and package | `IMPLEMENTED_PARTIAL_SOURCE_ONLY; NOT_IN_CURRENT_CANDIDATE` | The current source contains the non-root Flutter host plus fail-closed systemd/socket/polkit daemon foundation, a closed authorization trace for the peer-credential/polkit-D-Bus decision, and the typed network-transaction seam. Live Core/TUN, NetworkManager/resolved/nft mutation and rollback, signed packages and clean-VM proof remain absent. Current candidate and public facts exclude Linux. |
+| 4 | Conditional Linux beta runtime and package | `IMPLEMENTED_PARTIAL_SOURCE_ONLY; NOT_IN_CURRENT_CANDIDATE` | The current source contains the non-root Flutter host plus fail-closed systemd/socket/polkit daemon foundation, a closed authorization trace, and a dormant typed transaction engine for a real NetworkManager D-Bus checkpoint, per-link resolved settings, one dedicated atomic nft table and reverse rollback with injected faults. It is not wired to `connect`; the exact Core/TUN plan, durable recovery, native mutation/restoration, signed packages and clean-VM proof remain absent. Current candidate and public facts exclude Linux. |
 | 5 | Strict-v2 candidate metadata | `PASS_SIGNED_CANDIDATE_17` | Strict-v2 handoff `a7349fc1…8427` binds build `4049`, exact four-source tuple, six artifacts, SBOM, provenance and the rejected `8/8` Windows runtime manifest. |
 | 6 | Android exact-candidate build and signer | `PASS_EXACT_ARTIFACT_SIGNING; X86_64_AND_ARM64_INSTALL_IDENTITY_PASS` | Candidate.17 carries the same production-signed release/non-debuggable ARM64 APK `9bcdbe00…cc74`, `101366678` bytes, and x86_64 APK `73c43e21…f5ff`, `109951989` bytes. Retained installed base APKs read back byte-identically as `1.2.0+4049`; physical runtime remains open. |
 | 7 | Android device matrix | `PASS_CANDIDATE_17_BYTE_IDENTICAL_DEFAULT_LDPLAYER_AND_PHYSICAL_INSTALL; LAB_EGRESS_FAIL; MATRIX_OPEN` | Candidate.17 reuses the exact rehearsed candidate.16 Android bytes. Default LDPlayer traffic and physical ARM64 install identity remain byte-bound evidence. AWG 3.1/AWG2 selected egress, physical runtime, WARP, external IPv6/leak, UDP 53/MTU, broader OEM coverage and endurance remain open or failed as recorded. |
@@ -256,9 +258,10 @@ runtime, rollback or promotion proof.
    candidate.18 with promotion false, and run the exact hosted tuple replay.
 3. Run candidate.18 physical Android and clean Windows live-network, recovery
    and endurance matrices without host-screen takeover; keep current/Brain/RU
-   origins separate. Finish Linux live Core/TUN ownership,
-   NetworkManager/resolved/nft rollback, packaging and VM proof only on a
-   successor tuple if Linux is approved for shipment.
+   origins separate. Bind Linux Core/TUN ownership to the typed transaction,
+   add durable restart/suspend recovery, and run native mutation/restoration,
+   packaging and VM proof only on a successor tuple if Linux is approved for
+   shipment.
 4. Complete payment, Operator OIDC/RBAC/action-intent, legal/commercial,
    comparable performance and no-open-P0 attestations for candidate.18.
 5. Regenerate Gate F only after exact retained evidence changes; every skip,

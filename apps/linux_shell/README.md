@@ -33,12 +33,20 @@ Current source status is `IMPLEMENTED_PARTIAL`:
   `checkpoint/unavailable` preflight events, one per required network owner,
   before the existing `linux_live_connect_unavailable` result. It does not emit
   synthetic `apply` or `rollback` success;
+- a dormant typed transaction engine now implements a fixed NetworkManager
+  system-D-Bus checkpoint, per-link resolved DNS/default-route settings and one
+  atomic `inet pokrov` nftables output table. It accepts only a `pokrov*`
+  interface, non-zero Core routing mark and validated IP resolvers, runs fixed
+  absolute commands without a shell, and rolls dirty owners back in reverse
+  order while retaining any failed owner for retry. The nft participant never
+  flushes or restores the host ruleset;
 - Ubuntu 24.04 LTS amd64 with the required system stack is the only
   foundation-supported host row; exact desktop-session VM proof remains open;
 - Fedora Workstation remains a package/runtime-proof backlog row;
-- live Core lifecycle and the actual NetworkManager checkpoint/rollback plus
-  resolved/nft mutations are not yet implemented. Suspend/recovery, package
-  signing and VM proof also remain open;
+- live Core lifecycle does not yet supply or invoke that transaction plan, so
+  no new network command is reachable from `connect`. Durable restart/suspend
+  recovery, native Ubuntu 24.04 mutation/restoration evidence, package signing
+  and VM proof also remain open;
 - therefore the daemon returns `supports_live_connect=false` and rejects
   `connect` with `linux_live_connect_unavailable`.
 
