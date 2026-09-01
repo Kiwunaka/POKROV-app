@@ -1,8 +1,8 @@
 {
   "lane": "POKROV-app/main",
-  "status": "retained_1_1_6_public_candidate8_signed_private_gate_f_blocked_windows_unsigned_beta_owner_exception_recorded",
+  "status": "retained_1_1_6_public_candidate20_signed_private_gate_f_not_run_windows11_default_pass_android_and_live_gates_open",
   "public_cutover_allowed": false,
-  "last_updated": "2026-08-30",
+  "last_updated": "2026-09-01",
   "latest_repo_backed_release": {
     "version": "1.1.6",
     "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.1.6",
@@ -13,43 +13,55 @@
     "live_app_session_download_smoke": "PASS_1_1_6_REQUIRED_UPDATE_FOR_1_1_5_AND_NONE_FOR_1_1_6_ANDROID_WINDOWS_EXACT_METADATA"
   },
   "exact_replacement_candidate": {
-    "id": "pokrov-1.2.0-candidate.8",
+    "id": "pokrov-1.2.0-candidate.20",
     "version_name": "1.2.0",
-    "platform_build": 4046,
+    "platform_build": 4049,
     "state": "SIGNED_PRIVATE_ACTIONS_ARTIFACT_PROMOTION_FALSE",
     "promotion_authorized": false,
     "public_release_created": false,
     "store_object_created": false,
     "stable_pointer_mutated": false,
     "sources": {
-      "platform": "241a83b4dca00799b39696a4ae0c3c97e087ec39",
-      "client": "3459438f02bd774e722b1b858e7f7f16d57a9f5c",
-      "core": "a45d69e40ed7d892619a2b5c4592a527f630665e",
-      "release_index": "b242e0a3060b04f9b71641a0524bf251a75ce2a8"
+      "platform": "d6898e63c5c9ab7dd267b9d5150b54196f99d967",
+      "client": "8ab9815ab98f111140c0c8ce4e289555652d56e8",
+      "core": "cd8f0f4169d570d693992a959d81d17c2c44884d",
+      "release_index": "61ad0b0e0780775b8f95f1a567e94d75d198a483"
     },
     "signed_contract": {
-      "manifest_sha256": "f0006cec90c84e401e9920d9098102c7f50ab5ace5242e0d7683c3df709a6fbc",
-      "signature_sha256": "5fcae0675ea45e79baf495859fd170661f5d6dd3a8535275acd4d62680d324f6",
-      "receipt_sha256": "4109bb3417b32a780604300055f5308acf7dc810e7ea9c547075e1da41cc21fc"
+      "manifest_sha256": "046d331274da76ba524f824debb17c4abc080657456c41099246589cc3c1770a",
+      "signature_sha256": "f5e81d310fa18b464421afe4c0da010e3b9c112c9affba64e7d1631b4f6890ea",
+      "receipt_sha256": "47429c2cb3b77520257bb63e7a41652d3744e0a4f710589bf4c20eec289b9479"
+    },
+    "android_arm64": {
+      "sha256": "8dfca42e13eb4d64c9d627f377d8a201ad2a74fa0ca64c11e45c914d9a89056c",
+      "size_bytes": 101366678,
+      "signing": "PASS",
+      "install_identity": "NOT_RUN",
+      "physical_runtime": "NOT_RUN"
     },
     "android_x86_64": {
-      "sha256": "ec07ba17e9a5c697fcf46ccd193970fa3666eeeb3b9e345876aa8ee1d45a2627",
-      "size_bytes": 109952213,
-      "ldplayer_rehearsal": "PASS_EXACT_BYTES_CATALOG_AWG2_AWG31_AND_CLEAN_RESTORE",
-      "ordinary_current_origin": "PASS_FAIL_CLOSED_EGRESS_NOT_CONFIRMED"
+      "sha256": "d8ae790d93a956e31c40778b769f7af69e6658d1e10f346d68096e7e764264b1",
+      "size_bytes": 109951989,
+      "signing": "PASS",
+      "ldplayer_rehearsal": "NOT_RUN_EXACT_CANDIDATE20_HOST_TUN_NETWORK_CREDIT_EXCLUDED",
+      "ordinary_current_origin": "NOT_RUN"
     },
     "windows_setup": {
-      "sha256": "26ec26d8989d61415f07cbf9707f336ebba0b947fa4ba0ee93d3078fa3984668",
-      "size_bytes": 28929376,
+      "sha256": "330b87cb074a04f43cb7004e4c03cdd0c692b54397acbc223f25dd6e0be8587f",
+      "size_bytes": 29140987,
       "signing": "SKIPPED_BY_OWNER_DIRECT_BETA_ONLY",
-      "current_host_smoke": "PASS_INSTALL_SERVICE_AUTHENTICATED_IPC_RESTART_UNINSTALL_IDLE_NETWORK_RESTORE",
-      "clean_vm_live_network": "MANUAL_OWNER_TEST"
+      "environment": "ISOLATED_WINDOWS_11_VM",
+      "current_host_smoke": "PASS_EXACT_WINDOWS11_VM_INSTALL_11_OF_11_SERVICE_AUTHENTICATED_IPC_DEFAULT_TUN_DNS_EGRESS_ROLLBACK_UNINSTALL_AND_1_1_6_MIGRATION",
+      "clean_vm_live_network": "PASS_EXACT_CANDIDATE20_WINDOWS11_DEFAULT_PATH_ONLY",
+      "proof_ceiling": "DOES_NOT_COVER_WINDOWS10_AWG_SLEEP_REBOOT_CRASH_CONNECTED_UNINSTALL_IPV6_LEAK_SMARTSCREEN_OR_TRUSTED_SIGNING"
     },
     "gate_f": {
-      "decision": "BLOCKED",
+      "decision": "NOT_RUN",
+      "evidence_generation": "NOT_REGENERATED_FOR_CANDIDATE20",
+      "counts_authoritative": false,
       "required": 19,
-      "pass": 6,
-      "non_pass": 13,
+      "pass": 0,
+      "non_pass": 19,
       "fail": 0,
       "gate_g_authorized": false
     }
@@ -111,18 +123,18 @@
       "smartscreen_warning_required": true
     },
     "blocked_on": [
-      "live clean-VM connect/dashboard/TUN/DNS/egress/recovery smoke from the current exact candidate setup EXE",
+      "Windows 10, AWG 3.1/AWG2, sleep/reboot/crash recovery, connected uninstall, IPv6/leak and interactive SmartScreen proof for exact candidate.20",
       "trusted signing and SmartScreen reputation for later broad distribution"
     ],
     "accepted_evidence": [
       "owner authorized SKIPPED_BY_OWNER for trusted Windows signing on the exact 1.2.0 direct-download beta only; SmartScreen warning is mandatory",
       "unsigned publisher warning accepted by owner for the 1.1.6 outside-store stable-direct wave",
       "Windows 1.1.6 production setup, portable ZIP and manifest match exact public GitHub sizes and SHA-256",
-      "local mixed-proxy verification and host-result UI transition pass; clean Hiddify-off TUN/DNS egress remains MANUAL_OWNER_TEST because this workstation session depends on Hiddify"
+      "exact candidate.20 Windows 11 VM default connect proves ordinary UI, LocalSystem service, authenticated IPC, TUN, managed DNS, authenticated DE egress, disconnect rollback, clean uninstall and public 1.1.6 migration"
     ]
   },
   "blocking_dependencies": [
-    "candidate.8 Gate F remains BLOCKED until the 13 non-PASS exact-candidate/manual rows are proved; Windows trusted signing is owner-skipped only for the direct-download beta",
+    "candidate.20 Gate F remains NOT_RUN until exact installed Android identity, physical Android runtime, remaining Windows lifecycle/protocol, named-origin, provider, Operator, legal, performance and rollback rows are proved; Windows trusted signing is owner-skipped only for the direct-download beta",
     "iOS production connectivity still requires on-device packet-tunnel proof plus reviewed entitlements",
     "the universal POKROV Core 1.1.0 macOS dylib still requires a macOS build and ABI probe",
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
