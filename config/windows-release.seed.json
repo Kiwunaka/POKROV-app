@@ -16,6 +16,9 @@
     "flutter_windows.dll",
     "pokrov-core.dll",
     "libcronet.dll",
+    "msvcp140.dll",
+    "vcruntime140.dll",
+    "vcruntime140_1.dll",
     "pokrov_tray.ico",
     "data/app.so",
     "data/icudtl.dat"
@@ -43,6 +46,23 @@
       "ui_storage": "per_user_private",
       "service_storage": "protected_service_private"
     }
+  },
+  "app_local_msvc_runtime": {
+    "deployment": "app_local",
+    "architecture": "x64",
+    "toolset_directory": "Microsoft.VC143.CRT",
+    "required_files": [
+      "msvcp140.dll",
+      "vcruntime140.dll",
+      "vcruntime140_1.dll"
+    ]
+  },
+  "legacy_per_user_migration": {
+    "app_id": "{A8EE9193-93A9-4B13-A7AD-8441D98A48E1}",
+    "uninstall_registry_root": "HKCU",
+    "install_directory": "{localappdata}\\Programs\\POKROV",
+    "policy": "remove_after_new_service_started",
+    "failure_mode": "fail_closed"
   },
   "portable_zip": {
     "supported": false,
@@ -91,7 +111,7 @@
   },
   "safe_claims": [
     "The ordinary Windows UI uses the authenticated POKROVService runtime lane and does not load POKROV Core directly.",
-    "This exact setup bundles the pinned POKROV Core 1.1.0 bytes, libcronet.dll dependency, and pokrov_service.exe in one machine-wide installation directory.",
+    "This exact setup bundles the pinned POKROV Core 1.1.0 bytes, libcronet.dll dependency, the required x64 Microsoft VC143 runtime DLLs, and pokrov_service.exe in one machine-wide installation directory.",
     "The installer performs the one-time administrative SCM registration; the ordinary UI does not receive privileged file, path, or shell execution.",
     "The exact 1.2.0 owner exception permits an unsigned direct-download beta candidate only when its manifest records SKIPPED_BY_OWNER and the SmartScreen warning above; it does not permit a trusted, signed, Store or broad-stable claim.",
     "Trusted signing accepts no PFX path or password: the private key remains in the selected Windows certificate store and only public certificate and timestamp evidence enters the manifest.",

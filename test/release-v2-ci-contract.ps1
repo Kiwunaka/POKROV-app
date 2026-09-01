@@ -301,7 +301,8 @@ foreach ($fragment in @(
   }
 }
 foreach ($fragment in @(
-  'procedure CurStepChanged(CurStep: TSetupStep);',
+  'AfterInstall: InstallAndStartService',
+  'procedure InstallAndStartService;',
   'function ExecuteServiceCommand',
   'procedure AbortServiceSetup',
   'CreatedBySetup := not ServiceExists();',
@@ -309,15 +310,39 @@ foreach ($fragment in @(
   'config POKROVService binPath= "',
   'POKROV_SERVICE_CREATE_FAILED',
   'POKROV_SERVICE_CONFIG_FAILED',
+  'POKROV_SERVICE_OWNER_BINDING_FAILED',
   'POKROV_SERVICE_DESCRIPTION_FAILED',
   'POKROV_SERVICE_RECOVERY_FAILED',
   'POKROV_SERVICE_START_FAILED',
   'RaiseException',
+  'function GetCustomSetupExitCode: Integer;',
+  'SetupFailureExitCode := 4;',
+  'procedure DeinitializeSetup;',
+  'POKROV_SERVICE_FAILURE_UNINSTALL_CLEANUP_FAILED',
+  'procedure MigrateLegacyPerUserInstall',
+  'POKROV_LEGACY_PER_USER_MIGRATION_COMPLETE',
+  'POKROV_LEGACY_PER_USER_UNINSTALL_FAILED',
+  'POKROV_LEGACY_PER_USER_RESIDUAL_FOUND',
   'ResultCode = 0'
 )) {
   if (-not $windowsBuilder.Contains($fragment)) {
     throw "Windows release builder lacks fail-closed SCM marker: $fragment"
   }
+}
+
+foreach ($fragment in @(
+  'POKROV_MSVC_RUNTIME_DIRECTORY',
+  'Microsoft.VisualStudio.Component.VC.Redist.14.Latest',
+  '$appLocalMsvcRuntimeFiles',
+  '$appLocalMsvcRuntimeEvidence'
+)) {
+  if (-not $windowsBuilder.Contains($fragment)) {
+    throw "Windows release builder lacks app-local Microsoft VC runtime marker: $fragment"
+  }
+}
+
+if ($windowsBuilder.Contains('CurStep <> ssPostInstall')) {
+  throw 'Windows release builder defers fail-closed SCM validation until after the transactional install phase.'
 }
 
 foreach ($forbiddenFragment in @(

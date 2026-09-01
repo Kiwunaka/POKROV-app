@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-08-31
+Last updated: 2026-09-01
 
 ## Document Status
 
@@ -15,11 +15,14 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+4049` |
-| Exact replacement candidate | `pokrov-1.2.0-candidate.16`, app `1.2.0+4049`; signed manifest `ae1906e6…ffe6`, detached signature `f5df6357…07a9a`, promotion false |
+| Latest signed candidate | `pokrov-1.2.0-candidate.17`, app `1.2.0+4049`; signed manifest `bea4774f…db1e`, detached signature `e58419f3…5717`, promotion false; immutable `NO_GO` after clean-VM Windows failure |
+| Current promotable candidate | None. Candidate.18 has not been assembled; the Windows correction below is still a source-bound pre-candidate. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`, reproducible DLL `f284fa88…8204`; the same Core bytes are bound into candidate.16 |
-| Exact candidate.16 setup | `0afaf6e1…276c`, `28932793` bytes; signed tuple client/Core/platform/index `75ba7e7…/cd8f0f4…/719e23d…/54cfa03…`; actual artifact build source `ce2581d…`; `8/8` runtime manifest and unsigned owner exception |
+| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`, reproducible DLL `f284fa88…8204`; the same Core bytes are bound into candidate.17 and the corrected pre-candidate |
+| Exact candidate.17 setup | `0afaf6e1…276c`, `28932793` bytes; signed tuple client/Core/platform/index `977c6ed…/cd8f0f4…/d6898e6…/2df538c…`; `8/8` runtime manifest and unsigned owner exception; rejected because clean Windows lacks the unbundled VC runtime and setup incorrectly returned success after service-start failure |
+| Corrected Windows pre-candidate | Setup `301d72fc…3ddc`, `29135238` bytes; manifest `4c9afeb4…f93a`; client `977c6ed…` plus reviewed diff `379a87fc…6f6f`; `11/11` files, app-local Microsoft VC143 runtime, transactional service failure, automatic cleanup and 1.1.6 per-user migration |
+| Retained candidate.16 setup | `0afaf6e1…276c`, `28932793` bytes; older signed tuple `75ba7e7…/cd8f0f4…/719e23d…/54cfa03…`; immutable predecessor evidence only |
 | Retained candidate.12 setup | `ebbe06f5…89c99c`, `28931263` bytes, exact client/Core `5b1aa02…/cd8f0f4…`; immutable rejected predecessor |
 | Exact candidate.8 setup | `26ec26d8…4668`, `28929376` bytes, exact client/Core `3459438…/a45d69e…`; unsigned owner exception |
 | Retained previous-resolver setup | `6ef7899d…cbe9`, `28918848` bytes, client source `b4c9117…9f0`; immutable superseded evidence |
@@ -28,15 +31,70 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`, carried by the unchanged candidate.16 artifact set |
 | Trusted signing for `1.2.0` direct beta | `SKIPPED_BY_OWNER` on `2026-08-24`; warning required |
 | Trusted/signed/Store/broad-stable claim | `BLOCKED_BY_ACCESS`; trusted Authenticode still required |
-| Candidate.16 current-host smoke | `PASS_EXACT_CANDIDATE_CURRENT_HOST_CLEAN_APP_STATE` — exact install, 8/8 files, LocalSystem service, authenticated IPC, restart, uninstall and unchanged idle route/DNS |
-| Candidate.16 clean VM/live network | `MANUAL_OWNER_TEST`; current-host connected attempt stopped fail-closed at account readiness before TUN/DNS/egress |
+| Candidate.17 clean Windows VM | `FAIL`; missing `msvcp140.dll`, `vcruntime140.dll` and `vcruntime140_1.dll` prevented service start, while setup incorrectly exited `0`. Candidate.17 remains rejected history. |
+| Corrected pre-candidate clean Windows VM | `PASS_EXACT_PRE_CANDIDATE_CURRENT_HOST_CLEAN_APP_STATE` — exact install, 11/11 files, LocalSystem service, authenticated IPC, restart, uninstall and unchanged idle route/DNS; this is not candidate.18 or live connected-network proof |
+| Public 1.1.6 migration | `PASS_PRE_CANDIDATE_VM` — exact per-user 1.1.6 install was removed only after the new machine-wide service started; new uninstall record existed, old directory/key disappeared, final uninstall left no service, app directory or owner registry residue |
+| Clean VM live network | `MANUAL_OWNER_TEST`; TUN/DNS/AWG/egress and recovery were not exercised by the packaging correction smoke |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
 fallback. The service owns Core, managed state and recovery. Green state
 requires the authenticated egress proof.
 
-## Working Build 4049 Core Refresh
+## Candidate.17 Rejection And Corrected Pre-Candidate
+
+Candidate.17 passed its signed supply contract and hosted exact-source replay,
+but a Windows 11 VM without developer tooling exposed a release-blocking
+packaging defect. `pokrov_service.exe` imports `msvcp140.dll`,
+`vcruntime140.dll` and `vcruntime140_1.dll`; candidate.17 did not ship them and
+the clean VM did not have them. SCM therefore could not start the service. The
+same run also proved that the installer could report exit code `0` after the
+service failure. Candidate.17 is immutable rejected evidence and cannot be
+promoted.
+
+The current source-bound correction does three things:
+
+- resolves the official x64 `Microsoft.VC143.CRT`, requires a valid Microsoft
+  Authenticode signature on each of the three DLLs, copies them app-local and
+  binds them into the release manifest;
+- registers and starts the service as the final `[Files]` action, returns
+  setup exit code `4` on failure and automatically removes partial service,
+  files and owner-registry state;
+- detects the retained public 1.1.6 per-user install under
+  `{localappdata}\Programs\POKROV` and removes it only after the new
+  machine-wide service has started successfully. Missing or residual legacy
+  uninstall state fails closed.
+
+Exact pre-candidate evidence:
+
+| Evidence | Exact value |
+|---|---|
+| Setup | `pokrov-windows-x64-1.2.0+4049-setup.exe` |
+| Setup size | `29135238` bytes |
+| Setup SHA-256 | `301d72fc01fe32e4add5ff0e546d2923138c9e1005834deb361f3aa817603ddc` |
+| Build manifest SHA-256 | `4c9afeb47044ee74fda87574c0775f399f4ecc3e73c6437ef4f0a48a1109f93a` |
+| Source identity | client `977c6edd21d4746d5b1b8770d031734df46ad108` plus diff `379a87fce3f8f9b52dc509ee94897ec579c9da3306f0cf62e11195d571946f6f`; Core `cd8f0f4169d570d693992a959d81d17c2c44884d`; platform `d6898e63c5c9ab7dd267b9d5150b54196f99d967` |
+| Required-file readback | `11/11 PASS`, including the three Microsoft VC143 runtime DLLs |
+| Clean Windows VM smoke | `PASS_EXACT_CANDIDATE_CURRENT_HOST_CLEAN_APP_STATE_INSTALL_SERVICE_IPC_RESTART_UNINSTALL_IDLE_NETWORK` |
+| Clean Windows VM evidence SHA-256 | `6e7f8d65c59314e768c5b1e7fdae67f1cdc73fbbc447a0da0cf0a5f34506d75b` |
+| 1.1.6 migration | `PASS_PUBLIC_1_1_6_PER_USER_TO_1_2_0_MACHINE_MIGRATION_AND_CLEAN_UNINSTALL` |
+| Migration evidence SHA-256 | `6e83f0900db2db073202fab99f5518a898d8e965f3bc1cb23d7f9a3a4412e588` |
+| Forced missing-runtime fixture | setup exit `4`; service, install directory and owner registry absent after automatic cleanup |
+| Diagnostic fixture SHA-256 | `00a4e72a38e38e5ed596834ebda93ea04c98dc07881a34442d380f3fa66a4c0f`; diagnostic only, never a release artifact |
+| Diagnostic result SHA-256 | `4aacef1c4105cbf0d95896fd81dd7675327c969be4b4a8ab03ae0d63ecc36c78` |
+| Signing | `SKIPPED_BY_OWNER`; mandatory SmartScreen/unknown-publisher warning |
+
+The clean-VM smoke proves installation, exact installed identities, service,
+authenticated IPC, stop/restart, clean uninstall and unchanged idle route/DNS
+for these exact pre-candidate bytes. The migration run additionally starts from
+the exact public 1.1.6 setup and proves removal of its per-user directory and
+HKCU uninstall record before final cleanup. Evidence is retained outside the
+repository under
+`E:\POKROV-tools\temp\candidate18-winvm-harness-v3`. Candidate.18, its signed
+release index and exact hosted replay do not exist yet; these results must be
+repeated or bound to the merged exact source before candidate assembly.
+
+## Retained Build 4049 Core And Candidate.16/17 Evidence
 
 The continuing source line pins Core `cd8f0f4169d570d693992a959d81d17c2c44884d`
 after removing legacy raw-settings/error logging and retaining explicit
@@ -44,13 +102,16 @@ AWG2/AWG 3.1 lifecycle coverage. Two Windows builds are byte-identical: DLL
 size `55426048`, SHA-256
 `f284fa8841f1a45271874a7a05ed6093fb0e3efbdd03e00001edd046be708204`,
 with all 15 ABI exports; pinned Cronet remains `8ef1f8bb…a6f7`. The exact DLL
-also passes the host-safe 100-cycle proxy start/stop harness. These results are
-bound into signed private candidate.16. Its exact setup SHA-256 is
+also passes the host-safe 100-cycle proxy start/stop harness. These Core results
+are retained in signed candidate.16 and candidate.17. Candidate.17's exact
+setup SHA-256 is
 `0afaf6e1d73a7e72762d945557f48793646a9bdbf12bb8ca2e843d4b94df276c`,
 size `28932793`, and its runtime manifest matches all `8/8` required files.
-Candidate.16 now also has exact current-host install/service/IPC/restart/
-uninstall evidence below. It still has no clean-VM TUN/DNS/egress/recovery,
-trusted signature or SmartScreen reputation proof.
+That manifest was incomplete because it omitted the three VC runtime DLLs;
+candidate.17 is rejected despite its passing source and supply checks. The
+candidate.16 current-host install/service/IPC/restart/uninstall evidence below
+remains valid only for those old bytes and that host. It does not override the
+candidate.17 clean-VM failure or transfer to the corrected pre-candidate.
 
 Local source and fault-injection tests alone cover IPC, journal, network
 snapshot and rollback logic without installation. The separate candidate.16
@@ -280,26 +341,28 @@ recovery, connected uninstall and interactive SmartScreen remain
 ## Safe Current Claims
 
 - The `1.2.0` source targets an unelevated UI and authenticated Windows service.
-- Local tests prove source contracts and isolated recovery logic only.
-- Current platform source `719e23d…e37c` and the active client/Core source
+- Local tests prove source contracts and isolated recovery logic. The exact
+  corrected pre-candidate additionally has the bounded clean-VM and 1.1.6
+  migration evidence stated above; it has no live connected-network proof.
+- Current platform source `d6898e6…967` and the active client/Core source
   preserve the AWG2/AWG3.1 contracts. The exact `cd8f0f4` Windows DLL is
   built twice byte-identically, exposes all 15 required symbols and passes 100
   proxy-only start/stop cycles without changing system routes.
-- Candidate.16 setup `0afaf6e1…276c` binds the signed source tuple and exact
-  `cd8f0f4` Core bytes, retains the owner-approved unsigned-beta warning and
-  passes its eight-file manifest readback. The owner current-host smoke passed
-  install/service/authenticated IPC/restart/uninstall and unchanged idle
-  route/DNS from a clean POKROV app-state baseline. It is not clean-VM or live
-  network proof. The attempted connected run stopped at current-host account
-  readiness and was rolled back without residue.
+- Candidate.17 remains signed but rejected: its eight-file setup omits the
+  required VC runtime and could falsely return success after service failure.
+  The corrected pre-candidate setup `301d72fc…3ddc` has an eleven-file manifest
+  and passes clean-VM install/service/authenticated IPC/restart/uninstall plus
+  public 1.1.6 per-user-to-machine migration. It is not candidate.18 and has no
+  live TUN/DNS/AWG/egress proof.
 - The earlier current-origin reverse-UDP block was isolated to wrong
   reply-source selection on the multi-addressed owned server. After guarded
   source-port policy routing and service-cycle readback, exact current-origin
   Core interop passes both AWG2 and AWG3.1. This did not exercise the Windows
   client app, SCM service, TUN, DNS capture or leak protection, so those rows
   remain `MANUAL_OWNER_TEST`.
-- Signed-manifest candidate.16 exists with promotion false. Candidate.8 and
-  candidate.3 remain retained history for their own older bytes only.
+- Signed-manifest candidate.17 exists with promotion false and a Windows
+  `NO_GO`. Candidate.16, candidate.8 and candidate.3 remain retained history
+  for their own older bytes only.
 - The owner authorizes one unsigned direct-download beta with the mandatory
   SmartScreen/unknown-publisher warning. This is not trusted-signing evidence
   and permits no signed, Store or broad-stable claim.
@@ -315,6 +378,11 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-seed.ps1 `
 
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1
 ```
+
+The builder normally discovers the latest installed official x64
+`Microsoft.VC143.CRT` through `vswhere.exe`. A controlled build environment may
+set `POKROV_MSVC_RUNTIME_DIRECTORY` to the exact runtime directory; all required
+DLLs still must exist and carry valid Microsoft Authenticode signatures.
 
 Unsigned packaging for the exact `1.2.0` direct-download beta records
 `SKIPPED_BY_OWNER` with blocker code
