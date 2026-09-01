@@ -1,8 +1,10 @@
 #ifndef POKROV_SERVICE_SERVICE_RUNTIME_H_
 #define POKROV_SERVICE_SERVICE_RUNTIME_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "service_protocol.h"
 #include "service_recovery.h"
@@ -84,6 +86,10 @@ class RuntimeHost {
   std::string SnapshotBody() const;
   bool PrepareDirectories();
   bool WriteProfileAtomically(const std::string& profile);
+  bool WriteBundledRuleSets(
+      int slot, const std::vector<std::vector<std::uint8_t>>& rule_sets,
+      std::vector<std::wstring>* written_paths);
+  void CleanupBundledRuleSets(int slot);
   std::string RecoverPendingRuntime();
   std::string RollbackRuntime();
   void RecordEvent(ServiceEvent event, ServiceEventOutcome outcome);
@@ -99,6 +105,7 @@ class RuntimeHost {
   bool initialized_ = false;
   bool profile_staged_ = false;
   bool disable_memory_limit_ = false;
+  int bundled_rule_set_slot_ = 0;
   bool core_egress_validated_ = false;
   Phase phase_ = Phase::kArtifactMissing;
   std::string failure_ = "core_not_initialized";

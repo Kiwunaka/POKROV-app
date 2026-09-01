@@ -1487,6 +1487,150 @@ void main() {
     expect(calls, ['runtimeEngine.snapshot']);
   });
 
+  test('windows service stages local rule sets through a bounded bundle',
+      () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    Map<Object?, Object?>? stagedArguments;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.stageManagedProfile') {
+        stagedArguments = Map<Object?, Object?>.from(call.arguments as Map);
+        return <String, Object?>{
+          'phase': 'configStaged',
+          'helperBinaryPath': 'service://pokrov_service.exe',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'coreEgressValidated': false,
+          'coreEgressValidationRequired': true,
+        };
+      }
+      return null;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-windows-ruleset-bundle-test-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+    final ruleSet = File(p.join(root.path, 'ru-ip-country.srs'));
+    await ruleSet.writeAsBytes(const <int>[1, 2, 3, 4], flush: true);
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.windows);
+
+    final snapshot = await engine.stageManagedProfile(
+      ManagedProfilePayload(
+        profileName: 'windows-ruleset-bundle',
+        configPayload: jsonEncode(<String, Object?>{
+          'inbounds': <Object?>[
+            <String, Object?>{'type': 'tun', 'tag': 'tun-in'},
+          ],
+          'outbounds': <Object?>[
+            <String, Object?>{'type': 'direct', 'tag': 'direct'},
+          ],
+          'route': <String, Object?>{
+            'rule_set': <Object?>[
+              <String, Object?>{
+                'type': 'local',
+                'tag': 'pokrov-ru-ip-country',
+                'format': 'binary',
+                'path': ruleSet.path,
+              },
+            ],
+            'rules': <Object?>[
+              <String, Object?>{
+                'rule_set': <String>['pokrov-ru-ip-country'],
+                'outbound': 'direct',
+              },
+            ],
+            'final': 'direct',
+          },
+        }),
+        materializedForRuntime: true,
+      ),
+    );
+
+    expect(snapshot.phase, RuntimePhase.configStaged);
+    final bundle = stagedArguments?['serviceProfileBundle'] as String?;
+    expect(bundle, isNotNull);
+    final marker = bundle!.indexOf('POKROV_PROFILE_JSON\n');
+    expect(marker, greaterThan(0));
+    final header = bundle.substring(0, marker).split('\n');
+    expect(header.take(4).toList(), <String>[
+      'POKROV_PROFILE_BUNDLE_V1',
+      '1',
+      'ruleset-0.srs',
+      'AQIDBA==',
+    ]);
+    final stagedConfig = jsonDecode(
+      bundle.substring(marker + 'POKROV_PROFILE_JSON\n'.length),
+    ) as Map<String, dynamic>;
+    final definition = ((stagedConfig['route'] as Map<String, dynamic>)[
+            'rule_set'] as List)
+        .single as Map<String, dynamic>;
+    expect(
+      definition['path'],
+      'data/rule-set/__POKROV_RULE_SET_SLOT__/ruleset-0.srs',
+    );
+    expect(bundle, isNot(contains(ruleSet.path)));
+  });
+
+  test('windows service rejects an oversized local rule set', () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    var stageCalls = 0;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.stageManagedProfile') {
+        stageCalls += 1;
+      }
+      return null;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    final root = await Directory.systemTemp.createTemp(
+      'pokrov-windows-ruleset-bound-test-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+    final ruleSet = File(p.join(root.path, 'oversized.srs'));
+    await ruleSet.writeAsBytes(
+      List<int>.filled(128 * 1024 + 1, 1),
+      flush: true,
+    );
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.windows);
+
+    await expectLater(
+      engine.stageManagedProfile(
+        ManagedProfilePayload(
+          profileName: 'windows-oversized-ruleset',
+          configPayload: jsonEncode(<String, Object?>{
+            'route': <String, Object?>{
+              'rule_set': <Object?>[
+                <String, Object?>{
+                  'type': 'local',
+                  'tag': 'oversized',
+                  'format': 'binary',
+                  'path': ruleSet.path,
+                },
+              ],
+            },
+          }),
+          materializedForRuntime: true,
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(stageCalls, 0);
+  });
+
   test('desktop lane does not silently activate a foreign runtime artifact',
       () async {
     final root = await Directory.systemTemp.createTemp('pokrov-runtime-test-');
