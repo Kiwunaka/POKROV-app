@@ -85,7 +85,7 @@ func (probe Probe) Run() Result {
 	arch := runtime.GOARCH
 	stack := protocol.HostStack{
 		Systemd:        commands.Active("systemd-journald.service"),
-		NetworkManager: commands.Active("NetworkManager.service") && commands.Available("nmcli"),
+		NetworkManager: commands.Active("NetworkManager.service") && commands.Available("busctl"),
 		Resolved:       commands.Active("systemd-resolved.service") && commands.Available("resolvectl"),
 		Nftables:       commands.Available("nft"),
 		CoreArtifact:   secureRootArtifact(corePath),

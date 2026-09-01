@@ -35,7 +35,7 @@ func TestProbeRequiresExactFoundationMatrixAndHostStack(t *testing.T) {
 				"systemd-resolved.service": true,
 			},
 			available: map[string]bool{
-				"nmcli":      true,
+				"busctl":     true,
 				"resolvectl": true,
 				"nft":        true,
 			},
