@@ -14,10 +14,19 @@ $requiredFragments = @(
   "pull_request:`n",
   "push:`n",
   "      - main`n",
+  "workflow_dispatch:`n",
+  "      client_ref:`n",
+  "      platform_ref:`n",
+  "      core_ref:`n",
+  "Validate exact replay refs",
+  'if: github.event_name == ''workflow_dispatch''',
+  'if [[ ! "$ref" =~ ^[0-9a-f]{40}$ ]]',
+  "Manual exact replay requires three lowercase full commit SHAs.",
+  "ref: `${{ github.event_name == 'workflow_dispatch' && inputs.client_ref || github.sha }}",
   "repository: Kiwunaka/portal",
-  "ref: master",
+  "ref: `${{ github.event_name == 'workflow_dispatch' && inputs.platform_ref || 'master' }}",
   "repository: Kiwunaka/pokrov-core",
-  "ref: main",
+  "ref: `${{ github.event_name == 'workflow_dispatch' && inputs.core_ref || 'main' }}",
   "fetch-depth: 0",
   "Materialize bound Core source authority",
   "client/config/runtime-artifacts.seed.json",
@@ -56,7 +65,7 @@ foreach ($fragment in $requiredFragments) {
   }
 }
 
-foreach ($forbiddenFragment in @("allow-missing-client-root", "release_orchestrator.py", "deploy")) {
+foreach ($forbiddenFragment in @("allow-missing-client-root", "release_orchestrator.py", "deploy", "accept-new")) {
   if ($workflow.Contains($forbiddenFragment)) {
     throw "Release-v2 CI workflow contains forbidden mutation or skip fragment: $forbiddenFragment"
   }

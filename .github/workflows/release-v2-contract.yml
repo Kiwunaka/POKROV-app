@@ -6,6 +6,19 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      client_ref:
+        description: Exact 40-character client commit for a retained-candidate replay
+        required: true
+        type: string
+      platform_ref:
+        description: Exact 40-character platform commit for the same candidate
+        required: true
+        type: string
+      core_ref:
+        description: Exact 40-character Core commit for the same candidate
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -26,9 +39,25 @@ jobs:
           sudo apt-get clean
           df -h /
 
+      - name: Validate exact replay refs
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          CLIENT_REF: ${{ inputs.client_ref }}
+          PLATFORM_REF: ${{ inputs.platform_ref }}
+          CORE_REF: ${{ inputs.core_ref }}
+        run: |
+          for ref in "$CLIENT_REF" "$PLATFORM_REF" "$CORE_REF"; do
+            if [[ ! "$ref" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "Manual exact replay requires three lowercase full commit SHAs."
+              exit 1
+            fi
+          done
+
       - name: Checkout client candidate
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.client_ref || github.sha }}
           path: client
           lfs: true
 
@@ -36,7 +65,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Kiwunaka/portal
-          ref: master
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.platform_ref || 'master' }}
           path: platform
           ssh-key: ${{ secrets.POKROV_RELEASE_PLATFORM_DEPLOY_KEY }}
           persist-credentials: false
@@ -45,7 +74,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Kiwunaka/pokrov-core
-          ref: main
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.core_ref || 'main' }}
           path: POKROV-core
           fetch-depth: 0
           persist-credentials: false

@@ -80,7 +80,10 @@ remain history and do not authorize candidate.16.
 1. Freeze clean revisions and the release index.
 2. Produce exact Core and client artifacts.
 3. Generate and validate strict-v2 metadata.
-4. Run hosted CI, Android device and Windows clean-host gates.
+4. Run hosted CI, Android device and Windows clean-host gates. A retained
+   candidate must use the manual release-v2 replay with exact full client,
+   platform and Core commit SHAs; a run mixing the candidate with current
+   promotion lines is drift evidence, not an exact-candidate PASS.
 5. Verify Android signing, Windows `SKIPPED_BY_OWNER`, the mandatory SmartScreen warning, SBOM, provenance, checksums and anonymous downloads.
 6. Request runtime-sync authority and retain current-origin/brain-origin proof.
 7. Add the exact candidate and retained prior stable handoff to the rollback

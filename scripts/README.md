@@ -84,6 +84,11 @@ This folder contains non-destructive client helpers.
 - `build-windows-release.ps1` configures the machine-wide service from checked
   Inno code. Every create/config/description/recovery/start command must return
   zero; a newly created partial service is deleted before the installer aborts.
+- `Release v2 Contract` keeps its ordinary PR/push behavior against the active
+  promotion lines. Its manual dispatch is the retained-candidate replay lane:
+  it requires exact lowercase 40-character client, platform and Core commits,
+  checks out that full tuple and rejects branch names, tags and shortened SHAs.
+  The replay changes no release pointer or artifact.
 - `test/repository-hygiene-contract.ps1` rejects tracked temporary/build output,
   candidate binaries outside the three pinned runtime dependencies, and any
   1.2.0 candidate written into retained `artifacts/releases/`.
