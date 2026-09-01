@@ -15,11 +15,12 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+4049` |
-| Latest signed candidate | `pokrov-1.2.0-candidate.19`, app `1.2.0+4049`; setup `0782152d…f8ff`, signed release index `bb789707…6a87`, detached signature `1d39b7bb…e38`, promotion false; immutable `NO_GO` after the local rule-set service-boundary failure below |
-| Current promotable candidate | None. The bounded rule-set materialization correction is source proof only and requires a new exact candidate. |
+| Latest signed candidate | `pokrov-1.2.0-candidate.20`, app `1.2.0+4049`; setup `330b87cb…587f`, signed release index `046d3312…770a`, detached signature `f5e81d31…90ea`, promotion false; exact Windows 11 default-path `WIN-003` pass with the bounded proof ceiling below |
+| Current promotable candidate | None for stable promotion. Candidate.20 is the current signed Actions-only direct-beta candidate; physical Android and the remaining Windows/external gates stay non-PASS. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`, reproducible DLL `f284fa88…8204`; the same Core bytes are bound into candidate.17, candidate.18 and candidate.19 |
+| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`, reproducible DLL `f284fa88…8204`; the same Core bytes are bound into candidate.17 through candidate.20 |
+| Exact candidate.20 setup | `330b87cb…587f`, `29140987` bytes; manifest `57687e95…bd7`, `11/11` files; signed tuple client/Core/platform/index `8ab9815…/cd8f0f4…/d6898e6…/61ad0b0…`; unsigned owner exception |
 | Exact candidate.17 setup | `0afaf6e1…276c`, `28932793` bytes; signed tuple client/Core/platform/index `977c6ed…/cd8f0f4…/d6898e6…/2df538c…`; `8/8` runtime manifest and unsigned owner exception; rejected because clean Windows lacks the unbundled VC runtime and setup incorrectly returned success after service-start failure |
 | Corrected Windows pre-candidate | Setup `301d72fc…3ddc`, `29135238` bytes; manifest `4c9afeb4…f93a`; client `977c6ed…` plus reviewed diff `379a87fc…6f6f`; `11/11` files, app-local Microsoft VC143 runtime, transactional service failure, automatic cleanup and 1.1.6 per-user migration |
 | Retained candidate.16 setup | `0afaf6e1…276c`, `28932793` bytes; older signed tuple `75ba7e7…/cd8f0f4…/719e23d…/54cfa03…`; immutable predecessor evidence only |
@@ -36,14 +37,66 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Candidate.18 non-elevated UI | `FAIL_EXACT_CANDIDATE18_WINDOWS11_VM_NON_ELEVATED_IPC`: install and 11/11 identity passed, but the ordinary UI could not read the protected LocalSystem process token, closed the pipe as untrusted and the service stopped with Win32 code `5` |
 | Source correction A/B | `PASS_DIAGNOSTIC_SOURCE_UI_ON_CANDIDATE18_INSTALL`: SCM PID/state/path/account binding kept the ordinary UI and service alive and recorded accepted IPC plus status; this is not exact-candidate proof |
 | Candidate.19 clean Windows VM | `FAIL_EXACT_CANDIDATE19_WINDOWS11_VM_CORE_005`: exact setup identity, LocalSystem service, ordinary-user authenticated IPC, fresh-profile authorization, entitlement and profile staging passed; Core rejected service-relocated local rule-set paths, and the service completed rollback without reporting connected |
-| Rule-set source correction | `PASS_LOCAL_SOURCE`: the Windows client packages bounded local binary rule sets, the service validates and stages exact bytes in protected A/B generations, and malformed or oversized input fails closed; this is not candidate.20 or live-network proof |
-| Public 1.1.6 migration | `PASS_PRE_CANDIDATE_VM` — exact per-user 1.1.6 install was removed only after the new machine-wide service started; new uninstall record existed, old directory/key disappeared, final uninstall left no service, app directory or owner registry residue |
-| Clean VM live network | `MANUAL_OWNER_TEST`; TUN/DNS/AWG/egress and recovery were not exercised by the packaging correction smoke |
+| Candidate.20 Windows 11 VM | `PASS_EXACT_CANDIDATE20_WINDOWS11_VM_DEFAULT_CONNECT_DISCONNECT_MIGRATION`: machine install, 11/11 identity, ordinary UI, LocalSystem service, four service-owned rule sets, default Germany connect, TUN, DNS, authenticated egress, rollback, clean uninstall and public-1.1.6 migration |
+| Rule-set materialization | `PASS_EXACT_CANDIDATE20`: four exact `.srs` files were staged only under the protected service-relative `data/rule-set/profile-a` slot; no AppData path or unresolved slot marker remained |
+| Public 1.1.6 migration | `PASS_EXACT_CANDIDATE20_VM` — exact per-user 1.1.6 install was replaced by the candidate.20 machine/service package; final uninstall left no service, app directory or owner registry residue |
+| `WIN-003` default-path gate | `PASS` for exact candidate.20 on isolated Windows 11: TUN, DNS, authenticated DE egress and disconnect rollback. This does not transfer to Windows 10, AWG, reboot/crash or connected uninstall. |
+| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; Windows 10, AWG 3.1/AWG2, sleep/reboot/crash, connected uninstall, leak/IPv6 and interactive SmartScreen remain separate exact-byte gates |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
 fallback. The service owns Core, managed state and recovery. Green state
 requires the authenticated egress proof.
+
+## Candidate.20 Exact Windows 11 Default-Path Proof
+
+Candidate.20 binds client `8ab9815ab98f111140c0c8ce4e289555652d56e8`,
+Core `cd8f0f4169d570d693992a959d81d17c2c44884d`, platform
+`d6898e63c5c9ab7dd267b9d5150b54196f99d967` and exact signed release-index
+source `61ad0b0e0780775b8f95f1a567e94d75d198a483`. Its Windows setup is
+`29140987` bytes with SHA-256
+`330b87cb074a04f43cb7004e4c03cdd0c692b54397acbc223f25dd6e0be8587f`;
+the eleven-file manifest SHA-256 is
+`57687e95bd3368e43d71025c5d607a60456abfcaf869cf37c6bf84ff297afbd7`.
+The signed release index SHA-256 is
+`046d331274da76ba524f824debb17c4abc080657456c41099246589cc3c1770a`;
+its detached-signature SHA-256 is
+`f5e81d310fa18b464421afe4c0da010e3b9c112c9affba64e7d1631b4f6890ea`.
+
+The isolated Windows 11 VM first removed candidate.19 machine state, then
+installed the exact candidate.20 setup. The ordinary UI stayed non-elevated;
+the automatic LocalSystem service authenticated it, staged the profile and
+materialized four rule sets under its protected A/B slot. The selected default
+Germany exit reached green only after the service authenticated external
+egress. The active `sing-tun` adapter carried the default route and DNS
+`172.19.0.2`. Disconnect stopped Core and removed the tunnel route, DNS and
+adapter while restoring the original Ethernet route and DNS. Clean uninstall
+and the exact public-1.1.6 per-user-to-machine migration both passed.
+
+The VM retained an already authorized user-level app state after candidate.19
+was removed; it is therefore not claimed as a fresh user profile. Candidate.19
+service, installation root and owner registry were absent before candidate.20
+installation, so the machine-install/service boundary was clean. The aggregate
+contains 24 true checks and no raw profile, connection material or open egress
+IP.
+
+Sanitized evidence is retained outside the repository:
+
+- aggregate Windows foundation:
+  `E:\POKROV-tools\temp\candidate20-winvm-evidence\candidate20-windows-foundation.json`,
+  SHA-256 `525987f45ceb88197745b0e738fc2ccb4b5aaf969ad5253c22ad2a2091678d04`;
+- service-owned rule-set materialization:
+  `E:\POKROV-tools\temp\candidate20-winvm-evidence\candidate20-ruleset-materialization-safe.json`,
+  SHA-256 `9873b108afc1bc2e19e7d41d39a903140f3f02349fd749eab43c3d1cd350df6a`;
+- public-1.1.6 migration summary:
+  `E:\POKROV-tools\temp\candidate20-winvm-evidence\candidate20-migration-run-summary.json`,
+  SHA-256 `7506a74494772ec556f53222d289cf3d4b0d54a7296edfcb338b442946f91ebc`.
+
+This closes the exact Windows 11 default-path `WIN-003` slice only. Windows 10,
+AWG 3.1/AWG2 through the app/service boundary, sleep/reboot/crash, connected
+uninstall, IPv6/leak, interactive SmartScreen and trusted Authenticode remain
+non-PASS. Candidate.20 also does not prove physical Android, store or stable
+promotion.
 
 ## Candidate.19 Local Rule-Set Rejection And Source Correction
 
@@ -92,9 +145,8 @@ service payload and sends canonical sequential assets. The service validates
 the framing, count, names, base64 and size limits, writes exact bytes into a
 protected alternate generation, binds the profile to service-relative paths
 and removes the superseded generation only after the new profile is staged.
-Candidate.19 remains immutable `NO_GO`; the correction must merge and receive a
-new candidate identity before clean-VM TUN, DNS, egress and rollback evidence
-can be credited.
+Candidate.19 remains immutable `NO_GO`. Candidate.20 is the rebuilt successor
+and receives only the bounded exact Windows 11 proof stated above.
 
 ## Candidate.18 Non-Elevated UI Rejection And Source Correction
 
@@ -430,9 +482,10 @@ recovery, connected uninstall and interactive SmartScreen remain
 ## Safe Current Claims
 
 - The `1.2.0` source targets an unelevated UI and authenticated Windows service.
-- Local tests prove source contracts and isolated recovery logic. The exact
-  corrected pre-candidate additionally has the bounded clean-VM and 1.1.6
-  migration evidence stated above; it has no live connected-network proof.
+- Local tests prove source contracts and isolated recovery logic. Exact
+  candidate.20 additionally passes the bounded Windows 11 default connect,
+  TUN, DNS, authenticated egress, disconnect rollback, clean uninstall and
+  public-1.1.6 migration slice stated above.
 - Current platform source `d6898e6…967` and the active client/Core source
   preserve the AWG2/AWG3.1 contracts. The exact `cd8f0f4` Windows DLL is
   built twice byte-identically, exposes all 15 required symbols and passes 100
@@ -444,17 +497,19 @@ recovery, connected uninstall and interactive SmartScreen remain
   public 1.1.6 per-user-to-machine migration. Candidate.18 bound the later
   `21dca69a…f2d3` setup but is also rejected by the exact non-elevated IPC
   failure above. Candidate.19 proves the SCM correction but is rejected by the
-  exact local rule-set service-boundary failure. The bounded rule-set source
-  correction has no new exact-candidate or live TUN/DNS/AWG/egress proof.
+  exact local rule-set service-boundary failure. Candidate.20 proves the
+  bounded service-owned rule-set correction and the default TUN/DNS/egress/
+  rollback path; non-default protocols and recovery remain open.
 - The earlier current-origin reverse-UDP block was isolated to wrong
   reply-source selection on the multi-addressed owned server. After guarded
   source-port policy routing and service-cycle readback, exact current-origin
   Core interop passes both AWG2 and AWG3.1. This did not exercise the Windows
   client app, SCM service, TUN, DNS capture or leak protection, so those rows
   remain `MANUAL_OWNER_TEST`.
-- Signed-manifest candidate.19 exists with promotion false and a Windows
-  `NO_GO`. Candidate.18, candidate.17, candidate.16, candidate.8 and candidate.3
-  remain retained history for their own older bytes only.
+- Signed-manifest candidate.20 exists with promotion false and the bounded
+  Windows 11 PASS ceiling above. Candidate.19 is immutable Windows `NO_GO`;
+  candidate.18, candidate.17, candidate.16, candidate.8 and candidate.3 remain
+  retained history for their own older bytes only.
 - The owner authorizes one unsigned direct-download beta with the mandatory
   SmartScreen/unknown-publisher warning. This is not trusted-signing evidence
   and permits no signed, Store or broad-stable claim.
