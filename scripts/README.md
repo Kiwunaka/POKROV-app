@@ -64,8 +64,8 @@ This folder contains non-destructive client helpers.
   subject, EKU, validity, trusted-chain and SignTool checks before any build or
   signing and emits only a public receipt with `artifacts_signed=false` and
   `candidate_created=false`.
-- `test-windows-exact-candidate.ps1` hash-binds the retained candidate.3 and
-  candidate.8 installers plus current candidate.16 to their separate
+- `test-windows-exact-candidate.ps1` hash-binds retained candidate.3,
+  candidate.8 and candidate.16 installers to their separate
   reviewed inputs, signed manifest/signature identities, exact four-repository
   source tuples and eight installed-file identities. Validation mode is
   non-mutating. The manual `Windows Exact Candidate Clean Host` workflow keeps

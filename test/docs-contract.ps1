@@ -1394,6 +1394,29 @@ if (-not $androidVersionMatch.Success -or
     $developmentTarget.candidate_created -ne $false) {
   $errors += 'Release handoff development target must match Android pubspec and remain exact uncreated pre-candidate truth'
 }
+$currentCandidate = $cutover.exact_replacement_candidate
+if ([string]::IsNullOrWhiteSpace([string]$currentCandidate.id) -or
+    [string]$currentCandidate.id -notmatch '^pokrov-1\.2\.0-candidate\.\d+$' -or
+    [string]$currentCandidate.version_name -ne [string]$developmentTarget.product_version -or
+    [int]$currentCandidate.platform_build -ne [int]$developmentTarget.platform_build -or
+    $currentCandidate.promotion_authorized -ne $false -or
+    $currentCandidate.public_release_created -ne $false -or
+    $currentCandidate.store_object_created -ne $false -or
+    $currentCandidate.stable_pointer_mutated -ne $false) {
+  $errors += 'Cutover seed current candidate must match the working version/build and retain all no-promotion boundaries'
+}
+foreach ($currentCandidateOwner in @(
+  'docs\implementation\client-release-backlog.md',
+  'docs\operations\android-release-audit.md',
+  'docs\operations\cutover-readiness.md',
+  'docs\operations\windows-release-readiness.md'
+)) {
+  $ownerText = [IO.File]::ReadAllText((Join-Path $root $currentCandidateOwner))
+  $ownerHead = (($ownerText -split "\r?\n") | Select-Object -First 45) -join "`n"
+  if (-not $ownerHead.Contains([string]$currentCandidate.id)) {
+    $errors += "$currentCandidateOwner current header does not name cutover candidate $($currentCandidate.id)"
+  }
+}
 if ($cutover.latest_repo_backed_release.github_release -ne $release.latest_repo_backed_release.github_release) {
   $errors += 'Cutover and release-handoff URLs disagree'
 }
