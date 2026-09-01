@@ -51,12 +51,40 @@ func PeerFrom(connection *net.UnixConn) (Peer, error) {
 }
 
 type Checker interface {
-	Check(actionID, process string) bool
+	Check(actionID, process string) Decision
 }
 
 type PolkitChecker struct{}
 
-func (PolkitChecker) Check(actionID, process string) bool {
+type Backend string
+
+const (
+	BackendPeerCredential Backend = "peer_credential"
+	BackendPolkitDBus     Backend = "polkit_dbus"
+)
+
+type Decision string
+
+const (
+	DecisionAuthorized       Decision = "authorized"
+	DecisionDenied           Decision = "denied"
+	DecisionAgentUnavailable Decision = "agent_unavailable"
+	DecisionDismissed        Decision = "dismissed"
+	DecisionTimeout          Decision = "timeout"
+	DecisionUnavailable      Decision = "unavailable"
+	DecisionInvalidSubject   Decision = "invalid_subject"
+)
+
+type Result struct {
+	Backend  Backend
+	Decision Decision
+}
+
+func (result Result) Authorized() bool {
+	return result.Decision == DecisionAuthorized
+}
+
+func (PolkitChecker) Check(actionID, process string) Decision {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	command := exec.CommandContext(
@@ -68,21 +96,56 @@ func (PolkitChecker) Check(actionID, process string) bool {
 	)
 	command.Stdout = nil
 	command.Stderr = nil
-	return command.Run() == nil
+	err := command.Run()
+	if err == nil {
+		return DecisionAuthorized
+	}
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		return DecisionTimeout
+	}
+	var exitError *exec.ExitError
+	if !errors.As(err, &exitError) {
+		return DecisionUnavailable
+	}
+	return decisionFromExitCode(exitError.ExitCode())
 }
 
-func Authorized(peer Peer, checker Checker) bool {
+func decisionFromExitCode(exitCode int) Decision {
+	switch exitCode {
+	case 0:
+		return DecisionAuthorized
+	case 1:
+		return DecisionDenied
+	case 2:
+		return DecisionAgentUnavailable
+	case 3:
+		return DecisionDismissed
+	default:
+		return DecisionUnavailable
+	}
+}
+
+func Authorize(peer Peer, checker Checker) Result {
 	if peer.PID <= 0 || peer.StartTime == 0 {
-		return false
+		return Result{
+			Backend:  BackendPeerCredential,
+			Decision: DecisionInvalidSubject,
+		}
 	}
 	if peer.UID == 0 {
-		return true
+		return Result{
+			Backend:  BackendPeerCredential,
+			Decision: DecisionAuthorized,
+		}
 	}
 	if checker == nil {
 		checker = PolkitChecker{}
 	}
 	process := fmt.Sprintf("%d,%d,%d", peer.PID, peer.StartTime, peer.UID)
-	return checker.Check(ManageActionID, process)
+	return Result{
+		Backend:  BackendPolkitDBus,
+		Decision: checker.Check(ManageActionID, process),
+	}
 }
 
 func processStartTime(pid int) (uint64, error) {

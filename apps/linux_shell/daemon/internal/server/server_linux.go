@@ -17,16 +17,18 @@ import (
 )
 
 type Server struct {
-	Service     *service.Service
-	IdleTimeout time.Duration
-	concurrency chan struct{}
+	Service      *service.Service
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	concurrency  chan struct{}
 }
 
 func New(service *service.Service) *Server {
 	return &Server{
-		Service:     service,
-		IdleTimeout: 12 * time.Second,
-		concurrency: make(chan struct{}, 32),
+		Service:      service,
+		ReadTimeout:  12 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		concurrency:  make(chan struct{}, 32),
 	}
 }
 
@@ -53,7 +55,7 @@ func (server *Server) Serve(listener *net.UnixListener) error {
 
 func (server *Server) serveConnection(connection *net.UnixConn) {
 	defer connection.Close()
-	_ = connection.SetDeadline(time.Now().Add(server.IdleTimeout))
+	_ = connection.SetReadDeadline(time.Now().Add(server.ReadTimeout))
 	peer, err := auth.PeerFrom(connection)
 	if err != nil {
 		server.writeResponse(connection, protocol.Failure("invalid", "linux_protocol_invalid", "runtime_error"))
@@ -94,6 +96,7 @@ func decodeRequest(line []byte) (protocol.Request, error) {
 }
 
 func (server *Server) writeResponse(connection *net.UnixConn, response protocol.Response) {
+	_ = connection.SetWriteDeadline(time.Now().Add(server.WriteTimeout))
 	encoded, err := json.Marshal(response)
 	if err != nil || len(encoded) > 64*1024 {
 		encoded, _ = json.Marshal(protocol.Failure("invalid", "linux_runtime_error", "runtime_error"))
