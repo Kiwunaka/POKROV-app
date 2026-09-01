@@ -1,8 +1,8 @@
 {
   "lane": "POKROV-app/main",
-  "status": "retained_1_1_6_public_candidate20_signed_private_gate_f_not_run_windows11_default_pass_android_and_live_gates_open",
+  "status": "retained_1_1_6_public_candidate20_signed_private_no_go_service_restart_recovery",
   "public_cutover_allowed": false,
-  "last_updated": "2026-09-01",
+  "last_updated": "2026-09-02",
   "latest_repo_backed_release": {
     "version": "1.1.6",
     "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.1.6",
@@ -16,7 +16,7 @@
     "id": "pokrov-1.2.0-candidate.20",
     "version_name": "1.2.0",
     "platform_build": 4049,
-    "state": "SIGNED_PRIVATE_ACTIONS_ARTIFACT_PROMOTION_FALSE",
+    "state": "SIGNED_PRIVATE_ACTIONS_ARTIFACT_NO_GO_SERVICE_RESTART_RECOVERY",
     "promotion_authorized": false,
     "public_release_created": false,
     "store_object_created": false,
@@ -53,11 +53,13 @@
       "environment": "ISOLATED_WINDOWS_11_VM",
       "current_host_smoke": "PASS_EXACT_WINDOWS11_VM_INSTALL_11_OF_11_SERVICE_AUTHENTICATED_IPC_DEFAULT_TUN_DNS_EGRESS_ROLLBACK_UNINSTALL_AND_1_1_6_MIGRATION",
       "clean_vm_live_network": "PASS_EXACT_CANDIDATE20_WINDOWS11_DEFAULT_PATH_ONLY",
-      "proof_ceiling": "DOES_NOT_COVER_WINDOWS10_AWG_SLEEP_REBOOT_CRASH_CONNECTED_UNINSTALL_IPV6_LEAK_SMARTSCREEN_OR_TRUSTED_SIGNING"
+      "connected_reboot": "PASS_EXACT_CANDIDATE20_PRESHUTDOWN_ROLLBACK_BASELINE_RESTORE_AND_RECONNECT",
+      "forced_service_restart_recovery": "FAIL_EXACT_CANDIDATE20_DURABLE_JOURNAL_REMAINS_COMMITTED_AFTER_SCM_RESTART",
+      "proof_ceiling": "CANDIDATE20_NO_GO_PROCESS_OWNED_TUN_DISAPPEARANCE_DOES_NOT_PROVE_DURABLE_RECOVERY"
     },
     "gate_f": {
-      "decision": "NOT_RUN",
-      "evidence_generation": "NOT_REGENERATED_FOR_CANDIDATE20",
+      "decision": "NO_GO_WINDOWS_SERVICE_RESTART_RECOVERY",
+      "evidence_generation": "NOT_REGENERATED_CANDIDATE20_ALREADY_REJECTED",
       "counts_authoritative": false,
       "required": 19,
       "pass": 0,
@@ -123,18 +125,20 @@
       "smartscreen_warning_required": true
     },
     "blocked_on": [
-      "Windows 10, AWG 3.1/AWG2, sleep/reboot/crash recovery, connected uninstall, IPv6/leak and interactive SmartScreen proof for exact candidate.20",
+      "candidate.20 is rejected because durable recovery does not resume after SCM restarts the service; candidate.21 exact setup and replay are required before the remaining Windows matrix",
+      "Windows 10, AWG 3.1/AWG2, sleep/resume, connected uninstall, IPv6/leak and interactive SmartScreen proof for the successor candidate",
       "trusted signing and SmartScreen reputation for later broad distribution"
     ],
     "accepted_evidence": [
       "owner authorized SKIPPED_BY_OWNER for trusted Windows signing on the exact 1.2.0 direct-download beta only; SmartScreen warning is mandatory",
       "unsigned publisher warning accepted by owner for the 1.1.6 outside-store stable-direct wave",
       "Windows 1.1.6 production setup, portable ZIP and manifest match exact public GitHub sizes and SHA-256",
-      "exact candidate.20 Windows 11 VM default connect proves ordinary UI, LocalSystem service, authenticated IPC, TUN, managed DNS, authenticated DE egress, disconnect rollback, clean uninstall and public 1.1.6 migration"
+      "exact candidate.20 Windows 11 VM default connect proves ordinary UI, LocalSystem service, authenticated IPC, TUN, managed DNS, authenticated DE egress, disconnect rollback, clean uninstall and public 1.1.6 migration",
+      "exact candidate.20 connected reboot restores the baseline and reconnects, but forced service termination leaves the durable journal committed after SCM restart and rejects the candidate"
     ]
   },
   "blocking_dependencies": [
-    "candidate.20 Gate F remains NOT_RUN until exact installed Android identity, physical Android runtime, remaining Windows lifecycle/protocol, named-origin, provider, Operator, legal, performance and rollback rows are proved; Windows trusted signing is owner-skipped only for the direct-download beta",
+    "candidate.20 is immutable NO_GO after the exact Windows service-restart recovery failure; candidate.21 must be built from corrected source and receive independent exact evidence before any new cutover decision",
     "iOS production connectivity still requires on-device packet-tunnel proof plus reviewed entitlements",
     "the universal POKROV Core 1.1.0 macOS dylib still requires a macOS build and ABI probe",
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
