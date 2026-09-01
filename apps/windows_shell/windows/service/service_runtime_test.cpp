@@ -527,6 +527,97 @@ void TestPendingRecoveryStopsCoreBeforeRuntimeReady() {
   RemoveTestRoot(root);
 }
 
+void TestStartupRecoveryIsEagerOnlyWhenJournalIsPending() {
+  using namespace pokrov::service;
+  const auto clean_root = CreateTestRoot();
+  if (clean_root.empty()) {
+    Expect(false, "clean startup recovery test root was not created");
+    return;
+  }
+  auto clean_core = std::make_unique<FakeCoreRuntime>();
+  auto* clean_core_state = clean_core.get();
+  auto clean_recovery = std::make_unique<FakeRecovery>();
+  auto* clean_recovery_state = clean_recovery.get();
+  RuntimeHost clean_host(
+      std::move(clean_core), std::make_unique<FakeEgressProbe>(),
+      std::move(clean_recovery), clean_root, false);
+
+  const auto clean_result = clean_host.RecoverOnStartup();
+
+  Expect(clean_result.status == Status::kOk &&
+             Contains(clean_result, "phase=artifact_ready") &&
+             clean_core_state->initialize_calls == 0 &&
+             clean_recovery_state->begin_rollback_calls == 0,
+         "clean service startup initialized Core or recovery eagerly");
+  RemoveTestRoot(clean_root);
+
+  const auto pending_root = CreateTestRoot();
+  if (pending_root.empty()) {
+    Expect(false, "pending startup recovery test root was not created");
+    return;
+  }
+  auto pending_core = std::make_unique<FakeCoreRuntime>();
+  auto* pending_core_state = pending_core.get();
+  auto pending_recovery = std::make_unique<FakeRecovery>();
+  auto* pending_recovery_state = pending_recovery.get();
+  pending_recovery->requires_recovery = true;
+  RuntimeHost pending_host(
+      std::move(pending_core), std::make_unique<FakeEgressProbe>(),
+      std::move(pending_recovery), pending_root, false);
+
+  const auto pending_result = pending_host.RecoverOnStartup();
+
+  Expect(pending_result.status == Status::kOk &&
+             Contains(pending_result, "phase=initialized") &&
+             pending_core_state->initialize_calls == 1 &&
+             pending_core_state->stop_calls == 1 &&
+             pending_recovery_state->begin_rollback_calls == 1 &&
+             pending_recovery_state->restore_network_calls == 1 &&
+             pending_recovery_state->complete_rollback_calls == 1 &&
+             !pending_recovery_state->requires_recovery,
+         "pending service startup did not finish recovery before IPC");
+  RemoveTestRoot(pending_root);
+}
+
+void TestFailedStartupRecoveryRemainsRetryable() {
+  using namespace pokrov::service;
+  const auto root = CreateTestRoot();
+  if (root.empty()) {
+    Expect(false, "retryable startup recovery test root was not created");
+    return;
+  }
+  auto core = std::make_unique<FakeCoreRuntime>();
+  auto* core_state = core.get();
+  auto recovery = std::make_unique<FakeRecovery>();
+  auto* recovery_state = recovery.get();
+  recovery->requires_recovery = true;
+  recovery->restore_error = "recovery_network_restore_failed";
+  RuntimeHost host(std::move(core), std::make_unique<FakeEgressProbe>(),
+                   std::move(recovery), root, false);
+
+  const auto failed = host.RecoverOnStartup();
+
+  Expect(failed.status == Status::kNotReady &&
+             Contains(failed, "phase=recovery_required") &&
+             Contains(failed, "core_ready=1") &&
+             Contains(failed, "failure=recovery_network_restore_failed") &&
+             core_state->initialize_calls == 1 &&
+             recovery_state->requires_recovery,
+         "failed startup recovery did not remain initialized and closed");
+
+  recovery_state->restore_error.clear();
+  const auto retried = host.Disconnect();
+
+  Expect(retried.status == Status::kOk &&
+             Contains(retried, "phase=initialized") &&
+             !recovery_state->requires_recovery &&
+             recovery_state->begin_rollback_calls == 2 &&
+             recovery_state->restore_network_calls == 2 &&
+             recovery_state->complete_rollback_calls == 1,
+         "failed startup recovery could not be retried through disconnect");
+  RemoveTestRoot(root);
+}
+
 void TestConnectFaultsRollbackEveryPersistedStage() {
   using namespace pokrov::service;
   const std::vector<RecoveryStage> stages = {
@@ -839,6 +930,8 @@ int main() {
   TestCoreErrorsAreSanitized();
   TestEgressFailureStopsCoreAndIsSanitized();
   TestPendingRecoveryStopsCoreBeforeRuntimeReady();
+  TestStartupRecoveryIsEagerOnlyWhenJournalIsPending();
+  TestFailedStartupRecoveryRemainsRetryable();
   TestConnectFaultsRollbackEveryPersistedStage();
   TestSnapshotCaptureFailureDoesNotStartCore();
   TestRollbackFailuresStayClosedAndCanRetry();

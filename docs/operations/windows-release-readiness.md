@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-09-01
+Last updated: 2026-09-02
 
 ## Document Status
 
@@ -15,8 +15,8 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+4049` |
-| Latest signed candidate | `pokrov-1.2.0-candidate.20`, app `1.2.0+4049`; setup `330b87cb…587f`, signed release index `046d3312…770a`, detached signature `f5e81d31…90ea`, promotion false; exact Windows 11 default-path `WIN-003` pass with the bounded proof ceiling below |
-| Current promotable candidate | None for stable promotion. Candidate.20 is the current signed Actions-only direct-beta candidate; physical Android and the remaining Windows/external gates stay non-PASS. |
+| Latest signed candidate | `pokrov-1.2.0-candidate.20`, app `1.2.0+4049`; setup `330b87cb…587f`, signed release index `046d3312…770a`, detached signature `f5e81d31…90ea`, promotion false; immutable `NO_GO` after the exact service-restart recovery failure below |
+| Current promotable candidate | None. Candidate.20 is rejected; the candidate.21 startup-recovery source correction has local proof only and is not an exact candidate. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
 | Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`, reproducible DLL `f284fa88…8204`; the same Core bytes are bound into candidate.17 through candidate.20 |
@@ -37,16 +37,48 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Candidate.18 non-elevated UI | `FAIL_EXACT_CANDIDATE18_WINDOWS11_VM_NON_ELEVATED_IPC`: install and 11/11 identity passed, but the ordinary UI could not read the protected LocalSystem process token, closed the pipe as untrusted and the service stopped with Win32 code `5` |
 | Source correction A/B | `PASS_DIAGNOSTIC_SOURCE_UI_ON_CANDIDATE18_INSTALL`: SCM PID/state/path/account binding kept the ordinary UI and service alive and recorded accepted IPC plus status; this is not exact-candidate proof |
 | Candidate.19 clean Windows VM | `FAIL_EXACT_CANDIDATE19_WINDOWS11_VM_CORE_005`: exact setup identity, LocalSystem service, ordinary-user authenticated IPC, fresh-profile authorization, entitlement and profile staging passed; Core rejected service-relocated local rule-set paths, and the service completed rollback without reporting connected |
-| Candidate.20 Windows 11 VM | `PASS_EXACT_CANDIDATE20_WINDOWS11_VM_DEFAULT_CONNECT_DISCONNECT_MIGRATION`: machine install, 11/11 identity, ordinary UI, LocalSystem service, four service-owned rule sets, default Germany connect, TUN, DNS, authenticated egress, rollback, clean uninstall and public-1.1.6 migration |
+| Candidate.20 Windows 11 VM | `NO_GO_EXACT_CANDIDATE20_SERVICE_RESTART_RECOVERY`: default connect/disconnect/migration and connected reboot pass, but a forced service termination leaves the journal at `committed` after SCM restart and the UI unavailable |
 | Rule-set materialization | `PASS_EXACT_CANDIDATE20`: four exact `.srs` files were staged only under the protected service-relative `data/rule-set/profile-a` slot; no AppData path or unresolved slot marker remained |
 | Public 1.1.6 migration | `PASS_EXACT_CANDIDATE20_VM` — exact per-user 1.1.6 install was replaced by the candidate.20 machine/service package; final uninstall left no service, app directory or owner registry residue |
-| `WIN-003` default-path gate | `PASS` for exact candidate.20 on isolated Windows 11: TUN, DNS, authenticated DE egress and disconnect rollback. This does not transfer to Windows 10, AWG, reboot/crash or connected uninstall. |
-| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; Windows 10, AWG 3.1/AWG2, sleep/reboot/crash, connected uninstall, leak/IPv6 and interactive SmartScreen remain separate exact-byte gates |
+| `WIN-003` default-path gate | `PASS` for exact candidate.20 on isolated Windows 11: TUN, DNS, authenticated DE egress and disconnect rollback. This bounded slice does not override the candidate-level recovery `NO_GO`. |
+| Candidate.21 source correction | `PASS_LOCAL_SOURCE`: the service checks pending recovery before its first IPC client; clean startup remains lazy and failed startup recovery stays fail-closed and retryable. Exact setup/VM proof is not yet present. |
+| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; a successor must repeat service-restart recovery, then Windows 10, AWG 3.1/AWG2, sleep/resume, connected uninstall, leak/IPv6 and interactive SmartScreen remain separate exact-byte gates |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
 fallback. The service owns Core, managed state and recovery. Green state
 requires the authenticated egress proof.
+
+## Candidate.20 Reboot Pass And Service-Restart NO_GO
+
+The exact candidate.20 setup was installed again from a residue-free machine
+baseline and matched all `11/11` manifest files. The default path reached the
+same authenticated Germany egress as the earlier proof. A connected Windows
+reboot recorded preshutdown rollback, restored the exact baseline route, DNS and
+egress after boot, and allowed a fresh reconnect to the same selected egress.
+
+A separate connected forced termination of `POKROVService` then exposed the
+release blocker. SCM restarted the LocalSystem service and Windows removed the
+process-owned tunnel state, so route, DNS and egress happened to return to the
+baseline. The durable recovery journal nevertheless remained at `committed`,
+the restarted service emitted no startup rollback sequence and the UI reported
+the runtime unavailable. Candidate.20 therefore does not satisfy the contract
+that service restart resumes durable rollback and is immutable `NO_GO`.
+
+Sanitized evidence is retained outside the repository:
+
+- reboot restoration: `E:\POKROV-tools\temp\candidate20-winvm-evidence\candidate20-network-restored-reboot-matrix-20260902.json`, SHA-256 `da811db3b973f06d9848a6d28c991e703deb44c49c5efc22a629c94936623612`;
+- service-restart network restoration: `E:\POKROV-tools\temp\candidate20-winvm-evidence\candidate20-network-restored-service-crash-20260902.json`, SHA-256 `d0b39fbafa0712a13ca4fec52e24834f0deb4c2618ab44e23e514101dcf0a746`;
+- retained committed recovery stage: `E:\POKROV-tools\temp\candidate20-winvm-evidence\candidate20-recovery-stage-safe-service-crash-20260902.json`, SHA-256 `5bb0263e60b78f97713c2d794f5c0cd5d4288cc4c8f4d67a709cea5637c28e1d`.
+
+The candidate.21 source correction invokes pending recovery when the service
+runtime is constructed, before it creates its first IPC instance. A clean
+journal still avoids eager Core initialization. If startup recovery fails, the
+runtime remains initialized in `recovery_required`, rejects a new connection
+and permits an explicit disconnect/recovery retry. Focused native recovery
+tests, all Windows service native test executables, `flutter analyze` and all
+23 Flutter tests pass locally. This is source proof only until a newly built
+exact setup reproduces the connected service-restart matrix in the VM.
 
 ## Candidate.20 Exact Windows 11 Default-Path Proof
 
@@ -92,8 +124,9 @@ Sanitized evidence is retained outside the repository:
   `E:\POKROV-tools\temp\candidate20-winvm-evidence\candidate20-migration-run-summary.json`,
   SHA-256 `7506a74494772ec556f53222d289cf3d4b0d54a7296edfcb338b442946f91ebc`.
 
-This closes the exact Windows 11 default-path `WIN-003` slice only. Windows 10,
-AWG 3.1/AWG2 through the app/service boundary, sleep/reboot/crash, connected
+This closes the exact Windows 11 default-path `WIN-003` slice only. The later
+service-restart result above rejects candidate.20 as a whole. Windows 10,
+AWG 3.1/AWG2 through the app/service boundary, sleep/resume, connected
 uninstall, IPv6/leak, interactive SmartScreen and trusted Authenticode remain
 non-PASS. Candidate.20 also does not prove physical Android, store or stable
 promotion.
