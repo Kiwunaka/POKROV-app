@@ -370,8 +370,14 @@ void main() {
     expect(serverContent, contains('RecordIpcRequest'));
     expect(serverContent, contains('RecordIpcResponse'));
     expect(clientContent, contains('GetNamedPipeServerProcessId'));
-    expect(clientContent, contains('QueryFullProcessImageNameW'));
-    expect(clientContent, contains('WinLocalSystemSid'));
+    expect(clientContent, contains('OpenSCManagerW'));
+    expect(clientContent, contains('OpenServiceW'));
+    expect(clientContent, contains('QueryServiceStatusEx'));
+    expect(clientContent, contains('QueryServiceConfigW'));
+    expect(clientContent, contains('SERVICE_RUNNING'));
+    expect(clientContent, contains('SERVICE_WIN32_OWN_PROCESS'));
+    expect(clientContent, contains('LocalSystem'));
+    expect(clientContent, isNot(contains('OpenProcessToken')));
     expect(clientContent, contains('pokrov_service.exe'));
     expect(windowContent, contains('readServiceStatus'));
     expect(windowContent, contains('runtimeReady'));
