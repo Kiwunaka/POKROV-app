@@ -1,6 +1,6 @@
 # Platform Privilege And Runtime Contract
 
-Last updated: 2026-08-22
+Last updated: 2026-09-01
 
 This document owns the client-side trust, privilege and lifecycle boundaries
 for Windows, Android and the conditional Linux beta lane. It defines intended
@@ -297,6 +297,23 @@ records `checkpoint/unavailable` for all three required owners and then returns
 `linux_live_connect_unavailable`. It does not manufacture apply/rollback success
 before those operations exist.
 
+Every mutating request also emits one closed authorization decision before any
+profile or network write. The backend is exactly `peer_credential` for the
+root service peer or `polkit_dbus` for the non-root `pkcheck` path. The latter
+is the documented wrapper over polkit's system-bus authorization interface.
+Exit results are reduced to allowlisted pass/denied/unavailable/reject outcomes
+and fixed error codes for denial, absent authentication agent, dismissed
+prompt, timeout, unavailable authority or invalid subject. PID, UID, process
+tuple, action details, stdout/stderr and raw D-Bus errors have no event field.
+The caller still receives one generic fail-closed authorization error.
+
+The socket uses separate budgets: twelve seconds to receive the bounded request
+frame, up to sixty seconds for the interactive polkit decision, then five
+seconds to write the bounded response. An expired input deadline is never
+reused for the response, so a completed authorization cannot mutate state and
+then silently lose its result solely because the prompt outlived the frame
+read window.
+
 A compiling Core or UI, an unsigned package, or an AppImage containing only UI
 does not prove VPN beta support. Public facts remain unchanged until the exact
 signed package passes install, upgrade, rollback, uninstall, non-root,
@@ -398,9 +415,11 @@ As of 2026-09-01:
   non-root Flutter host, a systemd socket-activated Go daemon, kernel peer
   credentials, polkit authorization for every mutation, bounded typed IPC,
   fixed private profile storage, a fail-closed Ubuntu 24.04 foundation matrix
-  and allowlisted native journald fields. A typed NetworkManager/resolved/nft
-  transaction-event seam plus exact unavailable-preflight wiring now exposes
-  checkpoint/apply/rollback compatibility reasons without raw details.
+  and allowlisted native journald fields. The polkit D-Bus wrapper now exposes
+  one closed authorization decision for each mutation without peer identity or
+  diagnostic text. A typed NetworkManager/resolved/nft transaction-event seam
+  plus exact unavailable-preflight wiring exposes checkpoint/apply/rollback
+  compatibility reasons without raw details.
   `connect` intentionally returns
   `linux_live_connect_unavailable` and `supports_live_connect=false` until the
   Core lifecycle, NetworkManager checkpoint/rollback, resolved/nft

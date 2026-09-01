@@ -15,6 +15,15 @@ Current source status is `IMPLEMENTED_PARTIAL`:
 
 - the non-root UI host, typed protocol, peer identity, polkit action, systemd
   units, fail-closed host matrix and secret-free journald envelope exist;
+- every mutation now records one bounded authorization decision. Root peer
+  credentials and the `pkcheck` wrapper over polkit D-Bus are distinct closed
+  backends; allow, deny, missing agent, dismissed prompt, timeout and service
+  failure map to allowlisted outcomes/error codes. PID, UID, process tuple,
+  action details and diagnostic text have no journal field, while the IPC
+  response remains the generic fail-closed authorization error;
+- request-frame read, interactive authorization and response-write deadlines
+  are separate, so a valid polkit prompt may outlive the input window without
+  turning a completed mutation into a lost response;
 - the daemon has a closed NetworkManager/resolved/nft transaction-event seam
   for `checkpoint`, `apply` and `rollback`. It accepts only typed
   subsystem/result values and emits transaction/correlation IDs, generation,

@@ -27,8 +27,16 @@ func (readyCommands) Available(string) bool {
 
 type denyingChecker struct{}
 
-func (denyingChecker) Check(string, string) bool {
-	return false
+func (denyingChecker) Check(string, string) auth.Decision {
+	return auth.DecisionDenied
+}
+
+type fixedChecker struct {
+	decision auth.Decision
+}
+
+func (checker fixedChecker) Check(string, string) auth.Decision {
+	return checker.decision
 }
 
 type memoryEvents struct {
@@ -158,4 +166,101 @@ func TestUnavailableConnectEmitsClosedNetworkPreflightReasons(t *testing.T) {
 			t.Fatalf("unexpected network event %d: %#v", index, event)
 		}
 	}
+}
+
+func TestMutationAuthorizationEmitsBoundedPolkitDBusDecision(t *testing.T) {
+	tests := []struct {
+		name      string
+		decision  auth.Decision
+		outcome   string
+		errorCode string
+		allowed   bool
+	}{
+		{
+			name: "allowed", decision: auth.DecisionAuthorized,
+			outcome: "pass", allowed: true,
+		},
+		{
+			name: "denied", decision: auth.DecisionDenied,
+			outcome: "denied", errorCode: "linux_authorization_denied",
+		},
+		{
+			name: "no agent", decision: auth.DecisionAgentUnavailable,
+			outcome: "unavailable", errorCode: "linux_authorization_agent_unavailable",
+		},
+		{
+			name: "dismissed", decision: auth.DecisionDismissed,
+			outcome: "denied", errorCode: "linux_authorization_dismissed",
+		},
+		{
+			name: "timeout", decision: auth.DecisionTimeout,
+			outcome: "unavailable", errorCode: "linux_authorization_timeout",
+		},
+		{
+			name: "service unavailable", decision: auth.DecisionUnavailable,
+			outcome: "unavailable", errorCode: "linux_authorization_unavailable",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			events := &memoryEvents{}
+			service, store := newReadyServiceWithEvents(
+				t,
+				fixedChecker{decision: test.decision},
+				events,
+			)
+			response := service.Handle(
+				auth.Peer{PID: 123, UID: 1000, StartTime: 456},
+				stageRequest(t),
+			)
+			if response.OK != test.allowed {
+				t.Fatalf("unexpected authorization response: %#v", response)
+			}
+			if !test.allowed && response.ErrorCode != "linux_authorization_denied" {
+				t.Fatalf("authorization detail escaped the generic IPC error: %#v", response)
+			}
+			if store.Exists() != test.allowed {
+				t.Fatalf("profile mutation mismatch: allowed=%t exists=%t", test.allowed, store.Exists())
+			}
+
+			authorizationEvents := make([]journal.Event, 0, 1)
+			for _, event := range events.events {
+				if event.Name == "authorization" {
+					authorizationEvents = append(authorizationEvents, event)
+				}
+			}
+			if len(authorizationEvents) != 1 {
+				t.Fatalf("expected one authorization event, got %#v", authorizationEvents)
+			}
+			event := authorizationEvents[0]
+			if event.AuthorizationBackend != "polkit_dbus" ||
+				event.Outcome != test.outcome || event.ErrorCode != test.errorCode ||
+				event.CorrelationID != "linux-stage-1" {
+				t.Fatalf("unexpected authorization event: %#v", event)
+			}
+		})
+	}
+}
+
+func TestRootMutationAuthorizationTraceUsesPeerCredential(t *testing.T) {
+	events := &memoryEvents{}
+	service, _ := newReadyServiceWithEvents(t, nil, events)
+	response := service.Handle(
+		auth.Peer{PID: 1, UID: 0, StartTime: 1},
+		stageRequest(t),
+	)
+	if !response.OK {
+		t.Fatalf("root mutation failed: %#v", response)
+	}
+	for _, event := range events.events {
+		if event.Name == "authorization" {
+			if event.AuthorizationBackend != "peer_credential" ||
+				event.Outcome != "pass" || event.ErrorCode != "" {
+				t.Fatalf("unexpected root authorization event: %#v", event)
+			}
+			return
+		}
+	}
+	t.Fatal("root authorization event was not emitted")
 }

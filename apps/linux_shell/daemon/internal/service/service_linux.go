@@ -72,8 +72,10 @@ func (service *Service) Handle(peer auth.Peer, request protocol.Request) protoco
 		return protocol.StatsSuccess(request.RequestID, protocol.Stats{Available: false})
 	}
 
-	if !auth.Authorized(peer, service.authorizer) {
+	authorization := auth.Authorize(peer, service.authorizer)
+	if !authorization.Authorized() {
 		service.mu.Lock()
+		service.authorizationEvent(request.RequestID, authorization)
 		service.event("request", "denied", request.RequestID, "linux_authorization_denied")
 		service.mu.Unlock()
 		return protocol.Failure(
@@ -85,6 +87,7 @@ func (service *Service) Handle(peer auth.Peer, request protocol.Request) protoco
 
 	service.mu.Lock()
 	defer service.mu.Unlock()
+	service.authorizationEvent(request.RequestID, authorization)
 
 	switch request.Action {
 	case "stage_profile":
@@ -212,5 +215,39 @@ func (service *Service) event(name, outcome, correlationID, errorCode string) {
 		CorrelationID: correlationID,
 		ErrorCode:     errorCode,
 		Generation:    service.generation,
+	})
+}
+
+func (service *Service) authorizationEvent(correlationID string, result auth.Result) {
+	if service.events == nil {
+		return
+	}
+	outcome := "unavailable"
+	errorCode := "linux_authorization_unavailable"
+	switch result.Decision {
+	case auth.DecisionAuthorized:
+		outcome = "pass"
+		errorCode = ""
+	case auth.DecisionDenied:
+		outcome = "denied"
+		errorCode = "linux_authorization_denied"
+	case auth.DecisionAgentUnavailable:
+		errorCode = "linux_authorization_agent_unavailable"
+	case auth.DecisionDismissed:
+		outcome = "denied"
+		errorCode = "linux_authorization_dismissed"
+	case auth.DecisionTimeout:
+		errorCode = "linux_authorization_timeout"
+	case auth.DecisionInvalidSubject:
+		outcome = "reject"
+		errorCode = "linux_authorization_invalid_subject"
+	}
+	service.events.Write(journal.Event{
+		Name:                 "authorization",
+		Outcome:              outcome,
+		CorrelationID:        correlationID,
+		ErrorCode:            errorCode,
+		Generation:           service.generation,
+		AuthorizationBackend: string(result.Backend),
 	})
 }

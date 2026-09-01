@@ -84,6 +84,40 @@ void main() {
     expect(service, contains('networktxn.Unsupported'));
     expect(service, contains('linux_live_connect_unavailable'));
   });
+
+  test('Linux polkit D-Bus decisions use a closed authorization trace', () {
+    final auth = _text('daemon/internal/auth/peer_linux.go');
+    final journal = _text('daemon/internal/journal/journal.go');
+    final service = _text('daemon/internal/service/service_linux.go');
+
+    for (final value in <String>[
+      'polkit_dbus',
+      'peer_credential',
+      'DecisionAuthorized',
+      'DecisionDenied',
+      'DecisionAgentUnavailable',
+      'DecisionDismissed',
+      'DecisionTimeout',
+      'DecisionUnavailable',
+    ]) {
+      expect(auth, contains(value), reason: value);
+    }
+    for (final value in <String>[
+      'authorization',
+      'POKROV_AUTHORIZATION_BACKEND',
+      'linux_authorization_denied',
+      'linux_authorization_agent_unavailable',
+      'linux_authorization_dismissed',
+      'linux_authorization_timeout',
+      'linux_authorization_unavailable',
+    ]) {
+      expect(journal, contains(value), reason: value);
+    }
+    expect(service, contains('authorizationEvent'));
+    expect(journal, isNot(contains('POKROV_PEER_PID')));
+    expect(journal, isNot(contains('POKROV_PEER_UID')));
+    expect(journal, isNot(contains('POKROV_RAW_ERROR')));
+  });
 }
 
 Map<String, Object?> _json(String path) {

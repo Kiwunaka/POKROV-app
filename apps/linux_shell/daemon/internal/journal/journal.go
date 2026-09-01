@@ -17,14 +17,19 @@ var (
 	events            = map[string]struct{}{
 		"daemon_start": {}, "request": {}, "host_probe": {}, "profile": {},
 		"connect": {}, "disconnect": {}, "recovery": {},
-		"network_transaction": {},
+		"authorization": {}, "network_transaction": {},
 	}
 	outcomes = map[string]struct{}{
 		"started": {}, "pass": {}, "reject": {}, "denied": {}, "unavailable": {},
 	}
 	errorCodes = map[string]struct{}{
 		"": {}, "linux_authorization_denied": {}, "linux_host_unsupported": {},
-		"linux_live_connect_unavailable": {}, "linux_profile_invalid": {},
+		"linux_authorization_agent_unavailable": {},
+		"linux_authorization_dismissed":         {},
+		"linux_authorization_invalid_subject":   {},
+		"linux_authorization_timeout":           {},
+		"linux_authorization_unavailable":       {},
+		"linux_live_connect_unavailable":        {}, "linux_profile_invalid": {},
 		"linux_protocol_invalid": {}, "linux_runtime_error": {},
 		"linux_network_unsupported": {}, "linux_network_checkpoint_failed": {},
 		"linux_network_apply_failed": {}, "linux_network_rollback_failed": {},
@@ -35,17 +40,21 @@ var (
 	networkStages = map[string]struct{}{
 		"checkpoint": {}, "apply": {}, "rollback": {},
 	}
+	authorizationBackends = map[string]struct{}{
+		"peer_credential": {}, "polkit_dbus": {},
+	}
 )
 
 type Event struct {
-	Name          string
-	Outcome       string
-	CorrelationID string
-	ErrorCode     string
-	Generation    uint64
-	TransactionID string
-	Subsystem     string
-	Stage         string
+	Name                 string
+	Outcome              string
+	CorrelationID        string
+	ErrorCode            string
+	Generation           uint64
+	TransactionID        string
+	Subsystem            string
+	Stage                string
+	AuthorizationBackend string
 }
 
 type Writer struct {
@@ -98,6 +107,11 @@ func nativePayload(event Event) ([]byte, bool) {
 			"POKROV_NETWORK_STAGE="+event.Stage,
 		)
 	}
+	if event.Name == "authorization" {
+		fields = append(fields,
+			"POKROV_AUTHORIZATION_BACKEND="+event.AuthorizationBackend,
+		)
+	}
 	return []byte(strings.Join(fields, "\n") + "\n"), true
 }
 
@@ -114,19 +128,54 @@ func validEvent(event Event) bool {
 	if !ValidIdentifier(event.CorrelationID) {
 		return false
 	}
-	if event.Name != "network_transaction" {
-		return event.TransactionID == "" && event.Subsystem == "" && event.Stage == ""
+	switch event.Name {
+	case "network_transaction":
+		if event.AuthorizationBackend != "" || !ValidIdentifier(event.TransactionID) {
+			return false
+		}
+		if _, ok := networkSubsystems[event.Subsystem]; !ok {
+			return false
+		}
+		if _, ok := networkStages[event.Stage]; !ok {
+			return false
+		}
+		return validNetworkResult(event)
+	case "authorization":
+		if event.TransactionID != "" || event.Subsystem != "" || event.Stage != "" {
+			return false
+		}
+		if _, ok := authorizationBackends[event.AuthorizationBackend]; !ok {
+			return false
+		}
+		return validAuthorizationResult(event)
+	default:
+		return event.TransactionID == "" && event.Subsystem == "" &&
+			event.Stage == "" && event.AuthorizationBackend == ""
 	}
-	if !ValidIdentifier(event.TransactionID) {
+}
+
+func validAuthorizationResult(event Event) bool {
+	if event.AuthorizationBackend == "peer_credential" {
+		return (event.Outcome == "pass" && event.ErrorCode == "") ||
+			(event.Outcome == "reject" &&
+				event.ErrorCode == "linux_authorization_invalid_subject")
+	}
+	if event.AuthorizationBackend != "polkit_dbus" {
 		return false
 	}
-	if _, ok := networkSubsystems[event.Subsystem]; !ok {
+	switch event.Outcome {
+	case "pass":
+		return event.ErrorCode == ""
+	case "denied":
+		return event.ErrorCode == "linux_authorization_denied" ||
+			event.ErrorCode == "linux_authorization_dismissed"
+	case "unavailable":
+		return event.ErrorCode == "linux_authorization_agent_unavailable" ||
+			event.ErrorCode == "linux_authorization_timeout" ||
+			event.ErrorCode == "linux_authorization_unavailable"
+	default:
 		return false
 	}
-	if _, ok := networkStages[event.Stage]; !ok {
-		return false
-	}
-	return validNetworkResult(event)
 }
 
 func validNetworkResult(event Event) bool {
@@ -165,6 +214,9 @@ func (writer *Writer) writeFallback(event Event) {
 		record["transaction_id"] = event.TransactionID
 		record["network_subsystem"] = event.Subsystem
 		record["network_stage"] = event.Stage
+	}
+	if event.Name == "authorization" {
+		record["authorization_backend"] = event.AuthorizationBackend
 	}
 	encoded, err := json.Marshal(record)
 	if err != nil || len(encoded) > 1024 {
