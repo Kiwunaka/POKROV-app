@@ -25,7 +25,8 @@ param(
       "CurrentUser"
     }
   ),
-  [string]$SignToolPath = $env:POKROV_SIGNTOOL_PATH
+  [string]$SignToolPath = $env:POKROV_SIGNTOOL_PATH,
+  [string]$MsvcRuntimeDirectory = $env:POKROV_MSVC_RUNTIME_DIRECTORY
 )
 
 $ErrorActionPreference = "Stop"
@@ -46,6 +47,7 @@ $WindowsSigningCertificateThumbprint = ([string]$WindowsSigningCertificateThumbp
 $WindowsSigningExpectedSubject = ([string]$WindowsSigningExpectedSubject).Trim()
 $WindowsSigningTimestampUrl = ([string]$WindowsSigningTimestampUrl).Trim()
 $SignToolPath = ([string]$SignToolPath).Trim()
+$MsvcRuntimeDirectory = ([string]$MsvcRuntimeDirectory).Trim()
 if (-not $CheckTrustedWindowsSigningReadinessOnly) {
   . (Join-Path $PSScriptRoot 'support-signing-pin.ps1')
   $supportSigningPin = Resolve-PokrovSupportSigningPin `
@@ -140,6 +142,56 @@ function Test-RequiredFiles {
   }
 
   return $missing
+}
+
+function Resolve-AppLocalMsvcRuntimeDirectory {
+  param(
+    [string]$RequestedDirectory,
+    [Parameter(Mandatory = $true)]
+    [string]$ToolsetDirectory
+  )
+
+  if (-not [string]::IsNullOrWhiteSpace($RequestedDirectory)) {
+    $resolved = Resolve-Path -LiteralPath $RequestedDirectory -ErrorAction Stop
+    if (-not (Test-Path -LiteralPath $resolved.Path -PathType Container)) {
+      throw "POKROV_MSVC_RUNTIME_DIRECTORY must identify a directory."
+    }
+    return $resolved.Path
+  }
+
+  $vswhereCandidates = @(
+    (Get-Command "vswhere.exe" -ErrorAction SilentlyContinue |
+      Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue),
+    (Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe")
+  ) | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) } |
+    Select-Object -Unique
+  $vswhere = $vswhereCandidates | Select-Object -First 1
+  if (-not $vswhere) {
+    throw "vswhere.exe is required to locate the official x64 Microsoft VC runtime. Set POKROV_MSVC_RUNTIME_DIRECTORY explicitly when Visual Studio is installed elsewhere."
+  }
+
+  $visualStudioRoot = & $vswhere -latest -products "*" `
+    -requires Microsoft.VisualStudio.Component.VC.Redist.14.Latest `
+    -property installationPath
+  if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($visualStudioRoot)) {
+    throw "Visual Studio with Microsoft.VisualStudio.Component.VC.Redist.14.Latest is required for the Windows release package."
+  }
+
+  $redistRoot = Join-Path ([string]$visualStudioRoot).Trim() "VC\Redist\MSVC"
+  $runtimeDirectories = @(
+    Get-ChildItem -LiteralPath $redistRoot -Directory -ErrorAction SilentlyContinue |
+      Where-Object { $_.Name -match '^\d+\.\d+\.\d+$' } |
+      Sort-Object { [version]$_.Name } -Descending |
+      ForEach-Object {
+        Join-Path $_.FullName "x64\$ToolsetDirectory"
+      } |
+      Where-Object { Test-Path -LiteralPath $_ -PathType Container }
+  )
+  $runtimeDirectory = $runtimeDirectories | Select-Object -First 1
+  if (-not $runtimeDirectory) {
+    throw "Could not locate the official x64 $ToolsetDirectory runtime under $redistRoot."
+  }
+  return $runtimeDirectory
 }
 
 function New-ReleaseManifestFileList {
@@ -477,6 +529,48 @@ if ($SyncRuntime -or $runtimeMissingFiles.Count -gt 0) {
   }
 }
 
+$appLocalMsvcRuntimeFiles = @($windowsReleaseConfig.app_local_msvc_runtime.required_files)
+if ($appLocalMsvcRuntimeFiles.Count -eq 0) {
+  throw "Windows release config must declare app-local Microsoft VC runtime files."
+}
+$duplicateMsvcRuntimeFiles = @(
+  $appLocalMsvcRuntimeFiles |
+    Group-Object |
+    Where-Object Count -gt 1 |
+    Select-Object -ExpandProperty Name
+)
+if ($duplicateMsvcRuntimeFiles.Count -gt 0) {
+  throw "Windows release config contains duplicate app-local Microsoft VC runtime files: $($duplicateMsvcRuntimeFiles -join ', ')"
+}
+foreach ($runtimeFile in $appLocalMsvcRuntimeFiles) {
+  if (@($windowsReleaseConfig.required_files) -notcontains $runtimeFile) {
+    throw "App-local Microsoft VC runtime file is absent from required_files: $runtimeFile"
+  }
+}
+$appLocalMsvcRuntimeDirectory = Resolve-AppLocalMsvcRuntimeDirectory `
+  -RequestedDirectory $MsvcRuntimeDirectory `
+  -ToolsetDirectory ([string]$windowsReleaseConfig.app_local_msvc_runtime.toolset_directory)
+$missingMsvcRuntimeFiles = @(
+  Test-RequiredFiles -BasePath $appLocalMsvcRuntimeDirectory -RelativePaths $appLocalMsvcRuntimeFiles
+)
+if ($missingMsvcRuntimeFiles.Count -gt 0) {
+  throw "Missing expected app-local Microsoft VC runtime files: $($missingMsvcRuntimeFiles -join ', ')"
+}
+$appLocalMsvcRuntimeEvidence = foreach ($runtimeFile in $appLocalMsvcRuntimeFiles) {
+  $runtimePath = Join-Path $appLocalMsvcRuntimeDirectory $runtimeFile
+  $signature = Get-AuthenticodeSignature -FilePath $runtimePath
+  if ($signature.Status -ne [System.Management.Automation.SignatureStatus]::Valid -or
+      -not $signature.SignerCertificate -or
+      $signature.SignerCertificate.Subject -notmatch '(?i)Microsoft') {
+    throw "App-local Microsoft VC runtime file is not validly Microsoft-signed: $runtimeFile"
+  }
+  [ordered]@{
+    path = $runtimeFile
+    product_version = [string](Get-Item -LiteralPath $runtimePath).VersionInfo.ProductVersion
+    sha256 = (Get-FileHash -LiteralPath $runtimePath -Algorithm SHA256).Hash
+  }
+}
+
 if (-not $SkipTests) {
   $runTestsArgs = @()
   if ($OfflinePubGet) {
@@ -528,8 +622,12 @@ function Write-Utf8BomFile {
 }
 
 $releaseOutputDirectory = Join-Path $root $windowsReleaseConfig.bundle_root
+$buildRequiredFiles = @(
+  @($windowsReleaseConfig.required_files) |
+    Where-Object { $appLocalMsvcRuntimeFiles -notcontains $_ }
+)
 $missingBuildFiles = @(
-  Test-RequiredFiles -BasePath $releaseOutputDirectory -RelativePaths $windowsReleaseConfig.required_files
+  Test-RequiredFiles -BasePath $releaseOutputDirectory -RelativePaths $buildRequiredFiles
 )
 if ($missingBuildFiles.Count -gt 0) {
   throw "Missing expected Windows release outputs: $($missingBuildFiles -join ', ')"
@@ -573,6 +671,16 @@ if (Test-Path -LiteralPath $stagedBundleDirectory) {
 
 New-Item -ItemType Directory -Force -Path $stagedBundleDirectory | Out-Null
 Copy-Item -Recurse -Force -Path (Join-Path $releaseOutputDirectory "*") -Destination $stagedBundleDirectory
+foreach ($runtimeFile in $appLocalMsvcRuntimeFiles) {
+  Copy-Item -Force -LiteralPath (Join-Path $appLocalMsvcRuntimeDirectory $runtimeFile) `
+    -Destination (Join-Path $stagedBundleDirectory $runtimeFile)
+}
+$missingStagedFiles = @(
+  Test-RequiredFiles -BasePath $stagedBundleDirectory -RelativePaths $windowsReleaseConfig.required_files
+)
+if ($missingStagedFiles.Count -gt 0) {
+  throw "Missing expected staged Windows release outputs: $($missingStagedFiles -join ', ')"
+}
 
 $trustedSigningEvidence = @()
 if ($trustedWindowsSigningContext) {
@@ -667,7 +775,8 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "desktopicon"; Description: "Создать ярлык на рабочем столе"; GroupDescription: "Ярлыки:"; Flags: unchecked
 
 [Files]
-Source: "$stagedBundleDirectory\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "$stagedBundleDirectory\*"; Excludes: "\$($windowsReleaseConfig.runtime.service_binary)"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "$stagedBundleDirectory\$($windowsReleaseConfig.runtime.service_binary)"; DestDir: "{app}"; Flags: ignoreversion; AfterInstall: InstallAndStartService
 
 [Icons]
 Name: "{group}\POKROV"; Filename: "{app}\$($windowsReleaseConfig.binary_name)"; WorkingDir: "{app}"
@@ -686,6 +795,13 @@ Filename: "{sys}\sc.exe"; Parameters: "delete POKROVService"; Flags: runhidden w
 [Code]
 var
   InstallOwnerSid: String;
+  SetupFailureExitCode: Integer;
+  InstallOwnerRegistryKeyExisted: Boolean;
+  InstallOwnerRegistryValueExisted: Boolean;
+  InstallOwnerPreviousSid: String;
+  LegacyPerUserInstallDetected: Boolean;
+  LegacyPerUserInstallDirectory: String;
+  LegacyPerUserUninstaller: String;
 
 function IsSidCharacter(Value: Char): Boolean;
 begin
@@ -717,6 +833,21 @@ var
   ResultCode: Integer;
 begin
   Result := '';
+  LegacyPerUserInstallDirectory :=
+    ExpandConstant('{localappdata}\Programs\POKROV');
+  LegacyPerUserUninstaller :=
+    AddBackslash(LegacyPerUserInstallDirectory) + 'unins000.exe';
+  LegacyPerUserInstallDetected := RegKeyExists(HKCU,
+    'Software\Microsoft\Windows\CurrentVersion\Uninstall\' +
+    '{A8EE9193-93A9-4B13-A7AD-8441D98A48E1}_is1');
+  if LegacyPerUserInstallDetected and
+      not FileExists(LegacyPerUserUninstaller) then
+  begin
+    Result := 'Старая пользовательская установка POKROV повреждена: ' +
+      'не найден её деинсталлятор. Удалите POKROV 1.1.6 вручную и ' +
+      'повторите установку.';
+    exit;
+  end;
   SidFile := ExpandConstant('{tmp}\pokrov-install-owner.sid');
   DeleteFile(SidFile);
   CommandLine := '/C ""' + ExpandConstant('{sys}\whoami.exe') +
@@ -763,6 +894,7 @@ procedure AbortServiceSetup(const FailureCode: String;
 var
   CleanupCode: Integer;
 begin
+  SetupFailureExitCode := 4;
   if CreatedBySetup then
   begin
     Exec(ExpandConstant('{sys}\sc.exe'), 'stop POKROVService', '', SW_HIDE,
@@ -770,19 +902,86 @@ begin
     Exec(ExpandConstant('{sys}\sc.exe'), 'delete POKROVService', '', SW_HIDE,
       ewWaitUntilTerminated, CleanupCode);
   end;
+  if InstallOwnerRegistryValueExisted then
+    RegWriteStringValue(HKLM64,
+      'Software\space.pokrov\POKROV\Service', 'InstallOwnerSid',
+      InstallOwnerPreviousSid)
+  else if InstallOwnerRegistryKeyExisted then
+    RegDeleteValue(HKLM64, 'Software\space.pokrov\POKROV\Service',
+      'InstallOwnerSid')
+  else
+    RegDeleteKeyIncludingSubkeys(HKLM64,
+      'Software\space.pokrov\POKROV\Service');
   RaiseException(FailureCode + ' (SCM exit ' + IntToStr(ResultCode) + ').');
 end;
 
-procedure CurStepChanged(CurStep: TSetupStep);
+procedure MigrateLegacyPerUserInstall(const CreatedBySetup: Boolean);
+var
+  ResultCode: Integer;
+  LegacyBinary: String;
+  LegacyUninstallRegistryKey: String;
+begin
+  if not LegacyPerUserInstallDetected then
+    exit;
+  LegacyBinary := AddBackslash(LegacyPerUserInstallDirectory) +
+    'pokrov_windows.exe';
+  LegacyUninstallRegistryKey :=
+    'Software\Microsoft\Windows\CurrentVersion\Uninstall\' +
+    '{A8EE9193-93A9-4B13-A7AD-8441D98A48E1}_is1';
+  if not Exec(LegacyPerUserUninstaller,
+      '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART', '', SW_HIDE,
+      ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
+    AbortServiceSetup('POKROV_LEGACY_PER_USER_UNINSTALL_FAILED',
+      CreatedBySetup, ResultCode);
+  if RegKeyExists(HKCU, LegacyUninstallRegistryKey) or
+      FileExists(LegacyBinary) then
+    AbortServiceSetup('POKROV_LEGACY_PER_USER_RESIDUAL_FOUND',
+      CreatedBySetup, -1);
+  Log('POKROV_LEGACY_PER_USER_MIGRATION_COMPLETE');
+end;
+
+function GetCustomSetupExitCode: Integer;
+begin
+  Result := SetupFailureExitCode;
+end;
+
+procedure DeinitializeSetup;
+var
+  CleanupCode: Integer;
+  UninstallerPath: String;
+begin
+  if SetupFailureExitCode = 0 then
+    exit;
+  UninstallerPath := ExpandConstant('{uninstallexe}');
+  if FileExists(UninstallerPath) then
+  begin
+    if not Exec(UninstallerPath,
+        '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART', '', SW_HIDE,
+        ewWaitUntilTerminated, CleanupCode) or (CleanupCode <> 0) then
+      Log('POKROV_SERVICE_FAILURE_UNINSTALL_CLEANUP_FAILED exit=' +
+        IntToStr(CleanupCode));
+  end
+  else
+    Log('POKROV_SERVICE_FAILURE_UNINSTALLER_MISSING');
+end;
+
+procedure InstallAndStartService;
 var
   CreatedBySetup: Boolean;
   ResultCode: Integer;
   ServiceBinary: String;
 begin
-  if CurStep <> ssPostInstall then
-    exit;
-
   CreatedBySetup := not ServiceExists();
+  InstallOwnerRegistryKeyExisted := RegKeyExists(HKLM64,
+    'Software\space.pokrov\POKROV\Service');
+  InstallOwnerRegistryValueExisted := RegQueryStringValue(HKLM64,
+    'Software\space.pokrov\POKROV\Service', 'InstallOwnerSid',
+    InstallOwnerPreviousSid);
+  if not RegWriteStringValue(HKLM64,
+      'Software\space.pokrov\POKROV\Service', 'InstallOwnerSid',
+      InstallOwnerSid) then
+    AbortServiceSetup('POKROV_SERVICE_OWNER_BINDING_FAILED', CreatedBySetup,
+      -1);
   ServiceBinary := ExpandConstant('{app}\pokrov_service.exe');
   if CreatedBySetup then
   begin
@@ -814,6 +1013,7 @@ begin
   if not ExecuteServiceCommand('start POKROVService', ResultCode) then
     AbortServiceSetup('POKROV_SERVICE_START_FAILED', CreatedBySetup,
       ResultCode);
+  MigrateLegacyPerUserInstall(CreatedBySetup);
 end;
 "@
   Write-Utf8BomFile -Path $issPath -Content $iss
@@ -904,6 +1104,12 @@ $manifest = [ordered]@{
   installer_path = if ($SkipInstaller) { $null } else { $installerPath }
   installer_sha256 = $installerSha256
   signing = $trustedSigningManifest
+  app_local_msvc_runtime = [ordered]@{
+    deployment = [string]$windowsReleaseConfig.app_local_msvc_runtime.deployment
+    architecture = [string]$windowsReleaseConfig.app_local_msvc_runtime.architecture
+    toolset_directory = [string]$windowsReleaseConfig.app_local_msvc_runtime.toolset_directory
+    files = @($appLocalMsvcRuntimeEvidence)
+  }
   executable = [ordered]@{
     file_name = $windowsReleaseConfig.binary_name
     file_description = $versionInfo.FileDescription

@@ -27,7 +27,39 @@ void main() {
     expect(requiredFiles, contains('pokrov_tray.ico'));
     expect(requiredFiles, contains('pokrov_windows.exe'));
     expect(requiredFiles, contains('pokrov_service.exe'));
+    expect(
+      requiredFiles,
+      containsAll(<String>[
+        'msvcp140.dll',
+        'vcruntime140.dll',
+        'vcruntime140_1.dll',
+      ]),
+    );
     expect(requiredFiles, isNot(contains('pokrov_windows_seed.exe')));
+
+    final appLocalMsvcRuntime =
+        releaseJson['app_local_msvc_runtime'] as Map<String, dynamic>;
+    expect(appLocalMsvcRuntime['deployment'], 'app_local');
+    expect(appLocalMsvcRuntime['architecture'], 'x64');
+    expect(appLocalMsvcRuntime['toolset_directory'], 'Microsoft.VC143.CRT');
+    expect(
+      (appLocalMsvcRuntime['required_files'] as List<dynamic>).cast<String>(),
+      <String>[
+        'msvcp140.dll',
+        'vcruntime140.dll',
+        'vcruntime140_1.dll',
+      ],
+    );
+
+    final legacyMigration =
+        releaseJson['legacy_per_user_migration'] as Map<String, dynamic>;
+    expect(legacyMigration['uninstall_registry_root'], 'HKCU');
+    expect(
+      legacyMigration['install_directory'],
+      r'{localappdata}\Programs\POKROV',
+    );
+    expect(legacyMigration['policy'], 'remove_after_new_service_started');
+    expect(legacyMigration['failure_mode'], 'fail_closed');
 
     final signing = releaseJson['signing'] as Map<String, dynamic>;
     expect(signing['status'], 'SKIPPED_BY_OWNER');
@@ -192,6 +224,34 @@ void main() {
     expect(scriptContent, contains('InstallOwnerSid'));
     expect(scriptContent, contains('ExecAsOriginalUser'));
     expect(scriptContent, contains('create POKROVService'));
+    expect(scriptContent, contains('AfterInstall: InstallAndStartService'));
+    expect(scriptContent, contains('procedure InstallAndStartService'));
+    expect(scriptContent, isNot(contains('CurStep <> ssPostInstall')));
+    expect(scriptContent, contains('GetCustomSetupExitCode'));
+    expect(scriptContent, contains('SetupFailureExitCode := 4'));
+    expect(scriptContent, contains('procedure DeinitializeSetup'));
+    expect(
+      scriptContent,
+      contains('POKROV_SERVICE_FAILURE_UNINSTALL_CLEANUP_FAILED'),
+    );
+    expect(scriptContent, contains('POKROV_MSVC_RUNTIME_DIRECTORY'));
+    expect(
+      scriptContent,
+      contains('Microsoft.VisualStudio.Component.VC.Redist.14.Latest'),
+    );
+    expect(scriptContent, contains('procedure MigrateLegacyPerUserInstall'));
+    expect(
+      scriptContent,
+      contains('POKROV_LEGACY_PER_USER_MIGRATION_COMPLETE'),
+    );
+    expect(
+      scriptContent,
+      contains('POKROV_LEGACY_PER_USER_UNINSTALL_FAILED'),
+    );
+    expect(
+      scriptContent,
+      contains('POKROV_LEGACY_PER_USER_RESIDUAL_FOUND'),
+    );
     expect(scriptContent, contains('portable_zip.supported'));
     expect(windowContent, contains('Software\\\\Classes\\\\pokrov'));
     expect(windowContent, contains('URL Protocol'));
