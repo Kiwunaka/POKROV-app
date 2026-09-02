@@ -14,16 +14,16 @@ results belong in dated evidence and never become reusable release approval.
 | Fact | Current state |
 |---|---|
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
-| Working package target | `1.2.0+4051` |
-| Working source target state | `PRE_CANDIDATE_LOCAL` successor of merged client `8cf428f…8886`; exact candidate source freeze remains pending |
-| Latest exact candidate | `pokrov-1.2.0-candidate.21`, app `1.2.0+4050`; signed supply and bounded Windows 11 results are retained, but the exact source contains a service-availability defect and is immutable `NO_GO` |
+| Working package target | `1.2.0+4052` |
+| Working source target state | `PRE_CANDIDATE_LOCAL` successor of exact client `0aad6bbb…afed`; exact candidate source freeze remains pending |
+| Latest exact candidate | `pokrov-1.2.0-candidate.22`, app `1.2.0+4051`; signed supply plus Windows 11 default/recovery/Smart-DNS/AWG results are retained, but connected uninstall leaves the running UI and 13 loaded binaries, so it is immutable `NO_GO` |
 | Candidate created | `false` |
-| Private candidate created | `true` for candidate.21 in the separate creation/cutover contract; the source seed remains pre-candidate by design |
-| Candidate-created scope | Candidate.21 binds exact platform/client/Core revisions plus release-index signing source `cae911e…` and does not absorb later `main` commits. The build-4051 successor has not been created. |
-| Signed candidate contract | `PASS_ACTIONS_ARTIFACT_ONLY`: handoff `07e0009c…`, SBOM `c01234bf…`, provenance `b6e63ae0…`, manifest/signature/receipt `ce0b8586…` / `ef474e6e…` / `aaa027cc…`; promotion false and no public assets. |
+| Private candidate created | `true` for candidate.22 in the separate creation/cutover contract; the source seed remains pre-candidate by design |
+| Candidate-created scope | Candidate.22 binds platform `d16087d…`, client `0aad6bbb…`, Core `cd8f0f4…` and release-index source `d45b5035…`; it does not absorb the later uninstall correction. The build-4052 successor has not been created. |
+| Signed candidate contract | `PASS_ACTIONS_ARTIFACT_ONLY`: handoff `6fd9cb56…`, SBOM `be462e77…`, provenance `13bf8799…`, manifest/signature/receipt `81c56e9f…` / `b230a442…` / `65123519…`; promotion false and no public assets. |
 | Public cutover allowed for a new candidate | `false` |
 | Google Play | `NOT_REQUESTED` |
-| Exact candidate Core artifact | POKROV Core `1.1.0` at `cd8f0f4…884d`; candidate.21 six private artifacts and refreshed signed SBOM/provenance bind the reviewed Core source |
+| Exact candidate Core artifact | POKROV Core `1.1.0` at `cd8f0f4…884d`; candidate.22 six private artifacts and refreshed signed SBOM/provenance bind the reviewed Core source |
 | Support-mode signing public pin | `PASS_SOURCE_CONTROL` — tracked key `pokrov-support-2026-08`; private/HMAC values are secret-only and not deployed |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Windows trusted-signing decision | `SKIPPED_BY_OWNER` for the exact `1.2.0` direct-download beta; mandatory SmartScreen warning; no trusted/Store/broad-stable claim |
@@ -31,12 +31,13 @@ results belong in dated evidence and never become reusable release approval.
 
 `config/release-handoff.seed.json` owns the public release and continuing
 development target. `config/cutover-readiness.seed.json` owns the current
-candidate and cutover verdict. Exact candidate.21 identity comes from the
+candidate and cutover verdict. Exact candidate.22 identity comes from the
 private creation manifest, signed strict-v2 contract and cutover seed; the
 release-handoff seed's `candidate_created=false` applies only to continuing
-`main`. Candidate.21 is unpublished, unpromoted and immutable `NO_GO` because
-its production service loop can terminate after a rejected pre-hello client
-session. Candidate.20, candidates 17–19 and candidate.12 remain rejected
+`main`. Candidate.22 is unpublished, unpromoted and immutable `NO_GO` because
+its connected uninstaller restores the network and removes the service but
+leaves the live UI plus 13 loaded binaries. Candidate.21, candidate.20,
+candidates 17–19 and candidate.12 remain rejected
 history for their own bytes.
 
 ## Current Local Completion
@@ -146,12 +147,18 @@ history for their own bytes.
   startup recovery fail-closed and retryable. Its six exact build-4050 private
   artifacts, signed supply and bounded Windows 11 upgrade/default runtime pass;
   fresh in-place service-restart recovery remains open.
-- Working build-4051 successor source isolates a rejected pipe session from service
+- Candidate.22 exact build-4051 source isolates a rejected pipe session from service
   availability. A pre-hello, unauthorized or malformed client no longer ends
   the production SCM loop. The focused Flutter contract passes `7/7`, the
   complete Windows debug bundle builds and all six native service executables
   pass, including rejected-first/valid-second session recovery. Candidate.21
-  remains immutable; exact-package/VM credit requires a successor candidate.
+  remains immutable; candidate.22 receives exact Windows recovery credit.
+- Working build-4052 successor source terminates the machine-wide Windows UI,
+  waits for the SCM service to stop and removes the app directory only when it
+  is empty. Exact local setup `9aa6b0fd…3152` reaches one TUN in the Windows 11
+  VM, then connected uninstall removes UI/service/TUN/files/registry/app root
+  and restores RU egress. This is pre-candidate proof only; candidate.23 must
+  be rebuilt from merged source and replay the same matrix.
 - VLESS/Reality remains the baseline. AWG 3.1 is the preferred closed UDP lab
   transport and AWG2 its rollback. XHTTP is post-1.2.0 TLS/CDN reserve work;
   Hysteria2 stays default-off and advances only after a bounded lab shows a
@@ -163,7 +170,7 @@ history for their own bytes.
 
 ## Retained Pre-Convergence Evidence
 
-- Android and Windows development package versions match `1.2.0+4051`; app-shell reports the
+- Android and Windows development package versions match `1.2.0+4052`; app-shell reports the
   shared product version `1.2.0`.
 - Strict release-handoff v2 generation and client/Core parity pass locally.
 - The retained `1.1.6` stable pointer is hash-bound to its versioned rollback
@@ -263,27 +270,26 @@ runtime, rollback or promotion proof.
 
 | Order | Gate | State | Completion rule |
 |---:|---|---|---|
-| 1 | Clean platform, client, Core and release-index revisions | `PASS_EXACT_CANDIDATE_20_TUPLE` | Candidate.20 binds platform `d6898e6…967`, client `8ab9815…6e8`, Core `cd8f0f4…884d` and signed release-index source `61ad0b0…483`. |
-| 2 | Public release-index revision | `PASS_SIGNED_CANDIDATE_20_MANIFEST` | Manifest `046d3312…770a`, detached signature `f5e81d31…90ea`, receipt `47429c2c…9479`, keyring and six exact artifacts validate. Output is artifact-only and promotion remains false. |
-| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_CANDIDATE_20_ARTIFACTS` | Candidate.20 binds reproducible AAR `2a9677d9…c6a69`, DLL `f284fa88…8204`, unchanged Cronet `8ef1f8bb…a6f7`, 352-component SBOM, six-subject provenance and exact Core source `cd8f0f4…884d`. |
+| 1 | Clean platform, client, Core and release-index revisions | `PASS_EXACT_CANDIDATE_22_TUPLE` | Candidate.22 binds platform `d16087d…eedc`, client `0aad6bbb…afed`, Core `cd8f0f4…884d` and signed release-index source `d45b5035…8230`. |
+| 2 | Public release-index revision | `PASS_SIGNED_CANDIDATE_22_MANIFEST` | Manifest `81c56e9f…7d59`, detached signature `b230a442…a387`, receipt `65123519…2124`, keyring and six exact artifacts validate. Output is artifact-only and promotion remains false. |
+| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_CANDIDATE_22_ARTIFACTS` | Candidate.22 binds reproducible AAR `2a9677d9…c6a69`, DLL `f284fa88…8204`, unchanged Cronet `8ef1f8bb…a6f7`, refreshed SBOM/provenance and exact Core source `cd8f0f4…884d`. |
 | 4 | Conditional Linux beta runtime and package | `IMPLEMENTED_PARTIAL_SOURCE_ONLY; NOT_IN_CURRENT_CANDIDATE` | The current source contains the non-root Flutter host plus fail-closed systemd/socket/polkit daemon foundation, a closed authorization trace, and a dormant typed transaction engine for a real NetworkManager D-Bus checkpoint, per-link resolved settings, one dedicated atomic nft table and reverse rollback with injected faults. It is not wired to `connect`; the exact Core/TUN plan, durable recovery, native mutation/restoration, signed packages and clean-VM proof remain absent. Current candidate and public facts exclude Linux. |
-| 5 | Strict-v2 candidate metadata | `PASS_SIGNED_CANDIDATE_20` | Handoff `a8720ce0…081d` binds build `4049`, exact four-source tuple, six artifacts, SBOM, provenance and the `11/11` Windows runtime manifest. |
-| 6 | Android exact-candidate build and signer | `PASS_EXACT_CANDIDATE_20_ARTIFACT_SIGNING; INSTALL_IDENTITY_OPEN` | Five Android artifacts are production-signed. ARM64 APK `8dfca42e…056c`, `101366678` bytes, and x86_64 APK `d8ae790d…264b1`, `109951989` bytes, still require exact installed-byte readback. |
-| 7 | Android device matrix | `NOT_RUN_EXACT_CANDIDATE_20` | LDPlayer install/launch and physical Wi-Fi/Beeline default, AWG, WARP, per-app, handoff, IPv6/leak, UDP53/MTU, OEM and endurance proof remain open. Host-tunneled emulator networking is excluded. |
-| 8 | Windows exact-candidate package | `FAIL_EXACT_CANDIDATE_20_SERVICE_RESTART_RECOVERY` | Setup `330b87cb…587f` passes `11/11`, service/IPC, default TUN/DNS/DE egress, disconnect restoration, connected reboot, clean uninstall and public-1.1.6 migration. Forced service termination leaves the durable journal committed after SCM restart, so candidate.20 is rejected. |
-| 9 | Windows unsigned-beta warning and clean-host recovery | `OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY; CANDIDATE_20_RECOVERY_FAIL` | The direct-beta warning/SmartScreen exception is explicit. Authenticode is `NotSigned`; trusted/Store/broad-stable claims remain forbidden. Candidate.21 source correction needs an exact rebuilt setup and connected service-restart replay before the remaining matrix. |
-| 10 | Hosted cross-repository CI | `PASS_EXACT_CANDIDATE_20_REPLAY_AND_INDEX_SIGNING` | Exact hosted tuple replay `33511744299` and signed release-index run `33509003189` execute real steps and pass. This does not replace device/live gates. |
-| 11 | Runtime/public readback and rollback | `CANDIDATE_20_NOT_RUN; LIVE_NOT_AUTHORIZED` | Older disposable reversal evidence does not approve candidate.20. No tag, public assets, live stable-pointer switch, anonymous public readback or runtime kill rollback exists. |
-| 12 | Promotion and go/no-go | `NO_GO_EXACT_CANDIDATE_20` | Candidate.20 remains private and immutable after the Windows recovery failure. Gate G, public release and stable pointer are unauthorized. A successor must be cut from corrected source and receive its own exact evidence. |
+| 5 | Strict-v2 candidate metadata | `PASS_SIGNED_CANDIDATE_22` | Handoff `6fd9cb56…e566` binds build `4051`, exact four-source tuple, six artifacts, SBOM, provenance and the `11/11` Windows runtime manifest. |
+| 6 | Android exact-candidate build and signer | `PASS_EXACT_CANDIDATE_22_ARTIFACT_SIGNING; INSTALL_IDENTITY_OPEN` | Five Android artifacts are production-signed. ARM64 APK `77bfcaa2…6bf4`, `101366674` bytes, and x86_64 APK `31962adc…c181`, `109951985` bytes, still require exact installed-byte readback. |
+| 7 | Android device matrix | `NOT_RUN_EXACT_CANDIDATE_22` | LDPlayer install/launch and physical Wi-Fi/Beeline default, AWG, WARP, per-app, handoff, IPv6/leak, UDP53/MTU, OEM and endurance proof remain open. Host-tunneled emulator networking is excluded. |
+| 8 | Windows exact-candidate package | `FAIL_EXACT_CANDIDATE_22_CONNECTED_UNINSTALL_RESIDUAL_BINARIES` | Setup `effc6a8e…f409` passes `11/11`, service/IPC, default TUN/DNS/DE egress, service-restart/reboot recovery, Smart DNS and packaged AWG3.1/AWG2. Connected uninstall restores RU egress, removes the service and tunnel, but leaves the UI plus 13 loaded binaries, so candidate.22 is rejected. |
+| 9 | Windows unsigned-beta warning and clean-host recovery | `OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY; CANDIDATE_22_UNINSTALL_FAIL; BUILD4052_PREFLIGHT_PASS` | The direct-beta warning/SmartScreen exception is explicit. Authenticode is `NotSigned`; trusted/Store/broad-stable claims remain forbidden. Exact local build-4052 connected uninstall passes; immutable candidate.23 replay remains required. |
+| 10 | Hosted cross-repository CI | `PASS_EXACT_CANDIDATE_22_ATTACHED_CHECKS_10_OF_10` | Ten exact attached checks pass across platform, client, Core and release-index source, including signer run `33656388958`. This does not replace device/live gates. |
+| 11 | Runtime/public readback and rollback | `CANDIDATE_22_NOT_RUN; LIVE_NOT_AUTHORIZED` | Older disposable reversal evidence does not approve candidate.22. No tag, public assets, live stable-pointer switch, anonymous public readback or runtime rollback exists. |
+| 12 | Promotion and go/no-go | `NO_GO_EXACT_CANDIDATE_22` | Candidate.22 remains private and immutable after the connected-uninstall failure. Gate G, public release and stable pointer are unauthorized. A successor must be cut from corrected source and receive its own exact evidence. |
 
 ## Next Action Order
 
-1. Promote the build `4051` release-prep contract, then create exact
-   candidate.22 from the merged startup-recovery and pipe-session-resilience
-   source tuple.
+1. Merge the build `4052` Windows uninstall correction, then create exact
+   candidate.23 without rewriting candidate.22.
 2. Install and hash-bind the successor Windows setup in the isolated VM. Prove
-   the connected forced-service-restart journal cleanup and reconnect before
-   spending time on the broader matrix.
+   connected uninstall closes the UI, removes all installed files and restores
+   the ordinary network before spending time on the broader matrix.
 3. Run the successor Windows 10, AWG 3.1/AWG2, sleep/resume,
    connected-uninstall, IPv6/leak and interactive SmartScreen matrix only in
    the isolated VM; keep the main host network untouched.
