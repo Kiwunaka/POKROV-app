@@ -15,11 +15,13 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+4050` |
-| Latest signed candidate | `pokrov-1.2.0-candidate.20`, app `1.2.0+4049`; setup `330b87cb…587f`, signed release index `046d3312…770a`, detached signature `f5e81d31…90ea`, promotion false; immutable `NO_GO` after the exact service-restart recovery failure below |
-| Current promotable candidate | None. Candidate.20 is rejected; the candidate.21 startup-recovery source correction has local proof only and is not an exact candidate. |
+| Current exact candidate | `pokrov-1.2.0-candidate.21`, app `1.2.0+4050`; local private, six artifacts, promotion false; bounded Windows 11 upgrade/default runtime PASS |
+| Latest signed-index predecessor | Candidate.20 setup `330b87cb…587f`, signed index `046d3312…770a`; immutable `NO_GO` after the service-restart recovery failure below |
+| Current promotable candidate | None. Candidate.21 exists but lacks signed-index supply, Android/origin/rollback/aggregate gates and is not public. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`, reproducible DLL `f284fa88…8204`; the same Core bytes are bound into candidate.17 through candidate.20 |
+| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`; candidate.21 carries the same reviewed Core source in its exact private setup |
+| Exact candidate.21 setup | `87f90be1…dff3`, `29143633` bytes; manifest `665f77f0…2919`, `11/11` files; tuple client/Core/platform `1e164586…/cd8f0f4…/e2608130…`; unsigned owner exception |
 | Exact candidate.20 setup | `330b87cb…587f`, `29140987` bytes; manifest `57687e95…bd7`, `11/11` files; signed tuple client/Core/platform/index `8ab9815…/cd8f0f4…/d6898e6…/61ad0b0…`; unsigned owner exception |
 | Exact candidate.17 setup | `0afaf6e1…276c`, `28932793` bytes; signed tuple client/Core/platform/index `977c6ed…/cd8f0f4…/d6898e6…/2df538c…`; `8/8` runtime manifest and unsigned owner exception; rejected because clean Windows lacks the unbundled VC runtime and setup incorrectly returned success after service-start failure |
 | Corrected Windows pre-candidate | Setup `301d72fc…3ddc`, `29135238` bytes; manifest `4c9afeb4…f93a`; client `977c6ed…` plus reviewed diff `379a87fc…6f6f`; `11/11` files, app-local Microsoft VC143 runtime, transactional service failure, automatic cleanup and 1.1.6 per-user migration |
@@ -38,16 +40,48 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Source correction A/B | `PASS_DIAGNOSTIC_SOURCE_UI_ON_CANDIDATE18_INSTALL`: SCM PID/state/path/account binding kept the ordinary UI and service alive and recorded accepted IPC plus status; this is not exact-candidate proof |
 | Candidate.19 clean Windows VM | `FAIL_EXACT_CANDIDATE19_WINDOWS11_VM_CORE_005`: exact setup identity, LocalSystem service, ordinary-user authenticated IPC, fresh-profile authorization, entitlement and profile staging passed; Core rejected service-relocated local rule-set paths, and the service completed rollback without reporting connected |
 | Candidate.20 Windows 11 VM | `NO_GO_EXACT_CANDIDATE20_SERVICE_RESTART_RECOVERY`: default connect/disconnect/migration and connected reboot pass, but a forced service termination leaves the journal at `committed` after SCM restart and the UI unavailable |
-| Rule-set materialization | `PASS_EXACT_CANDIDATE20`: four exact `.srs` files were staged only under the protected service-relative `data/rule-set/profile-a` slot; no AppData path or unresolved slot marker remained |
+| Candidate.21 Windows 11 VM | `PASS_EXACT_CANDIDATE21_UPGRADE_DEFAULT_RUNTIME`: upgrade startup recovery reaches `clean`; ordinary UI/LocalSystem service, default TUN/route/DNS/DE egress and exact RU baseline restoration pass |
+| Rule-set materialization | `PASS_RETAINED_CANDIDATE20_AND_BOUND_CANDIDATE21_SOURCE`: four exact `.srs` files remain service-owned; candidate.21 exact installed identity is `11/11` |
 | Public 1.1.6 migration | `PASS_EXACT_CANDIDATE20_VM` — exact per-user 1.1.6 install was replaced by the candidate.20 machine/service package; final uninstall left no service, app directory or owner registry residue |
-| `WIN-003` default-path gate | `PASS` for exact candidate.20 on isolated Windows 11: TUN, DNS, authenticated DE egress and disconnect rollback. This bounded slice does not override the candidate-level recovery `NO_GO`. |
-| Candidate.21 source correction | `PASS_LOCAL_SOURCE`: the service checks pending recovery before its first IPC client; clean startup remains lazy and failed startup recovery stays fail-closed and retryable. Exact setup/VM proof is not yet present. |
-| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; a successor must repeat service-restart recovery, then Windows 10, AWG 3.1/AWG2, sleep/resume, connected uninstall, leak/IPv6 and interactive SmartScreen remain separate exact-byte gates |
+| `WIN-003` default-path gate | `PASS` for exact candidate.21 on isolated Windows 11: `sing-tun`, route/DNS change, authenticated DE egress and exact RU baseline restoration after disconnect. |
+| Candidate.21 startup correction | `PASS_EXACT_UPGRADE_RECOVERY`: the installed service resumes candidate.20's retained committed journal before serving IPC and returns it to `clean`. Fresh in-place candidate.21 termination/SCM restart remains open. |
+| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; fresh in-place service-restart recovery/reconnect, then Windows 10, AWG 3.1/AWG2, sleep/resume, connected reboot/uninstall, leak/IPv6 and interactive SmartScreen remain separate exact-byte gates |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
 fallback. The service owns Core, managed state and recovery. Green state
 requires the authenticated egress proof.
+
+## Candidate.21 Private Upgrade And Default-Path PASS
+
+Candidate.21 binds platform `e2608130e85d9a0f8fa4b920f46cf3d7679332c3`,
+client `1e164586d741484b5ae8fb2ee267ef5dd813cadb` and Core
+`cd8f0f4169d570d693992a959d81d17c2c44884d`. Exact setup
+`87f90be11a927c271c84e8042f17e052ee1070a1ac4923fa3949d6e19c00dff3`
+is `29143633` bytes; its `11/11` manifest SHA-256 is
+`665f77f096a54b9fe5ec375149ebadae4e0871165dcba8f19c3fe6fbf6be2919`.
+
+The isolated Windows 11 VM began with candidate.20's exact committed recovery
+journal. Installing candidate.21 returned `0`, validated all required files,
+left the automatic LocalSystem service running, executed startup recovery to
+`clean` and removed pending network state. The exact non-elevated check then
+proved an ordinary-user UI, installed identity and the same running service.
+
+The visible default path reached Germany with `sing-tun`, a distinct DE
+egress and changed route/DNS fingerprints. Disconnect removed the tunnel and
+returned egress country/hash, route/DNS fingerprints, default-route count,
+DNS-interface count and active-adapter count exactly to the RU baseline.
+Sanitized evidence SHA-256 values are
+`45a1349a…a960` (upgrade recovery), `453b1fa0…60dc` (ordinary UI/service),
+`e7e7686a…03d3` (baseline), `44da58ed…9cf9` (connected) and
+`bf46957d…0049` (restored).
+
+This replaces the current `WIN-003` default-path proof and proves upgrade-time
+recovery from the predecessor failure state. It does not prove a fresh
+in-place candidate.21 forced termination followed by SCM restart, Windows 10,
+AWG2/AWG3.1, sleep/resume, connected reboot/uninstall, IPv6/leak, interactive
+SmartScreen or trusted signing. Candidate.21 is private local only and lacks a
+signed release index, public assets and promotion.
 
 ## Candidate.20 Reboot Pass And Service-Restart NO_GO
 
@@ -71,14 +105,13 @@ Sanitized evidence is retained outside the repository:
 - service-restart network restoration: `E:\POKROV-tools\temp\candidate20-winvm-evidence\candidate20-network-restored-service-crash-20260902.json`, SHA-256 `d0b39fbafa0712a13ca4fec52e24834f0deb4c2618ab44e23e514101dcf0a746`;
 - retained committed recovery stage: `E:\POKROV-tools\temp\candidate20-winvm-evidence\candidate20-recovery-stage-safe-service-crash-20260902.json`, SHA-256 `5bb0263e60b78f97713c2d794f5c0cd5d4288cc4c8f4d67a709cea5637c28e1d`.
 
-The candidate.21 source correction invokes pending recovery when the service
-runtime is constructed, before it creates its first IPC instance. A clean
-journal still avoids eager Core initialization. If startup recovery fails, the
-runtime remains initialized in `recovery_required`, rejects a new connection
-and permits an explicit disconnect/recovery retry. Focused native recovery
-tests, all Windows service native test executables, `flutter analyze` and all
-23 Flutter tests pass locally. This is source proof only until a newly built
-exact setup reproduces the connected service-restart matrix in the VM.
+The candidate.21 correction invokes pending recovery when the service runtime
+is constructed, before it creates its first IPC instance. A clean journal still
+avoids eager Core initialization. If startup recovery fails, the runtime stays
+in `recovery_required`, rejects a new connection and permits an explicit
+disconnect/recovery retry. The exact upgrade result above replaces the earlier
+source-only claim, but the fresh in-place connected service-restart matrix is
+still required.
 
 ## Candidate.20 Exact Windows 11 Default-Path Proof
 
