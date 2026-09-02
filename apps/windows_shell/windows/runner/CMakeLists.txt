@@ -9,6 +9,7 @@ project(runner LANGUAGES CXX)
 add_executable(${BINARY_NAME} WIN32
   "activation_protocol.cpp"
   "../service/service_client.cpp"
+  "../service/service_pipe_client.cpp"
   "flutter_window.cpp"
   "main.cpp"
   "utils.cpp"

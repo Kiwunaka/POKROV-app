@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "last_updated": "2026-09-02",
+  "last_updated": "2026-09-03",
   "purpose": "stable client-owned handoff source for current public release metadata",
   "repo": {
     "name": "POKROV-app",
@@ -15,8 +15,8 @@
     "google_play_state": "NOT_REQUESTED",
     "development_target": {
       "product_version": "1.2.0",
-      "platform_build": 4052,
-      "package_version": "1.2.0+4052",
+      "platform_build": 4053,
+      "package_version": "1.2.0+4053",
       "state": "PRE_CANDIDATE_LOCAL",
       "candidate_created": false
     },

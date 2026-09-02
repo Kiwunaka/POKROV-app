@@ -98,4 +98,12 @@ if(BUILD_TESTING)
     COMMAND pokrov_service_integration_test)
   set_tests_properties(pokrov_service_integration PROPERTIES
     CONFIGURATIONS Debug)
+
+  add_executable(pokrov_service_pipe_client_test
+    "service_pipe_client.cpp"
+    "service_pipe_client_test.cpp"
+  )
+  apply_standard_settings(pokrov_service_pipe_client_test)
+  add_test(NAME pokrov_service_pipe_client
+    COMMAND pokrov_service_pipe_client_test)
 endif()

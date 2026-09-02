@@ -1,0 +1,39 @@
+{
+  "schema": "pokrov.windows-candidate-pipe-contention-evidence/v1",
+  "recorded_at": "2026-09-03",
+  "exact_candidate": {
+    "id": "pokrov-1.2.0-candidate.23",
+    "package_version": "1.2.0+4052",
+    "client_source": "df9ed85bb0e7fd7bf1e1c43d033825212c2f6354",
+    "windows_setup_sha256": "ded8c4479e3f890a14298e30291693b8499ea78960813862e649354a597fa291",
+    "windows_manifest_sha256": "f92c007da3132e34a0d92856fde998c12654e99e4a286f77a57a3902811fb877",
+    "installed_file_identity": "PASS_11_OF_11",
+    "environment": "Windows 11 VirtualBox isolated headless"
+  },
+  "candidate_observation": {
+    "initial_connection": "PASS_AUTHENTICATED_DE_EGRESS",
+    "later_ui_request": "FAIL_CORE_001_WHILE_SERVICE_RUNNING",
+    "concurrent_status_attempts": 32,
+    "concurrent_status_accepted": 0,
+    "service_state_after": "Running",
+    "release_decision": "NO_GO"
+  },
+  "pre_candidate_correction": {
+    "working_package_version": "1.2.0+4053",
+    "behavior": "bounded retry after observing a busy serial pipe instance",
+    "native_concurrency_test": "PASS_32_OF_32_DEBUG_AND_RELEASE",
+    "diagnostic_status_attempts": 32,
+    "diagnostic_status_accepted": 32,
+    "service_state_after": "Running",
+    "egress_country_after": "DE",
+    "release_credit": "PRE_CANDIDATE_FIX_VALIDATION_ONLY"
+  },
+  "retained_evidence_sha256": {
+    "network_baseline": "ca14f61d471961f72ed34a3c35c08955dac88973812850957271a6770f5ed4fe",
+    "connected_cli": "5e95e0acb97468585ef661b052f1ba86fd775adec7099587de5dfc503dd91b7a",
+    "candidate_concurrency": "911cd7e6e1034be9a48ae05d5ea6ba80637334094f2ee65e6f46a967ed22c8fe",
+    "corrected_client_concurrency": "b845d7c781d274d6f08de952a29460fb86e6ac2a27b8f33ea3f3b98f3cb30b6b"
+  },
+  "connection_material_retained": false,
+  "promotion_authorized": false
+}

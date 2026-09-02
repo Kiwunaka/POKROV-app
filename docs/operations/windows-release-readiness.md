@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-09-02
+Last updated: 2026-09-03
 
 ## Document Status
 
@@ -14,13 +14,14 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
-| Working package target | `1.2.0+4052` |
-| Latest exact candidate | `pokrov-1.2.0-candidate.22`, app `1.2.0+4051`; signed private and immutable `NO_GO`; bounded Windows 11 default/recovery/Smart-DNS/AWG PASS evidence remains retained |
-| Retained signed-index predecessor | Candidate.21 setup `87f90be1…dff3`, signed index `ce0b8586…3dc6`; immutable `NO_GO` after the rejected-session service-availability defect |
-| Current promotable candidate | None. Candidate.22 connected uninstall restores the network and removes the service but leaves the running UI and 13 loaded binaries. Build-4052 contains the correction and passes an exact local VM preflight, but it is not candidate.23. |
+| Working package target | `1.2.0+4053` |
+| Latest exact candidate | `pokrov-1.2.0-candidate.23`, app `1.2.0+4052`; signed private and immutable `NO_GO` after the ordinary client reports `CORE-001` while the SCM service is running and concurrent trusted status requests fail |
+| Retained signed-index predecessor | Candidate.22 setup `effc6a8e…f409`; immutable `NO_GO` after connected uninstall leaves the UI and 13 loaded binaries |
+| Current promotable candidate | None. Candidate.23 packages the connected-uninstall correction, but its exact installed client does not tolerate contention on the serial service pipe. The bounded-retry correction is pre-candidate only. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`; candidate.22 carries the same reviewed Core source in its exact private setup |
+| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`; candidate.23 carries the same reviewed Core source in its exact private setup |
+| Exact candidate.23 setup | `ded8c447…291`, `29146140` bytes; manifest `f92c007d…877`, `11/11` files; tuple client/Core/platform `df9ed85…/cd8f0f4…/5ba4dba…`; Windows signing `SKIPPED_BY_OWNER` |
 | Exact candidate.22 setup | `effc6a8e…f409`, `29137688` bytes; manifest `fbf08cf5…c527`, `11/11` files; tuple client/Core/platform/index `0aad6bbb…/cd8f0f4…/d16087d…/d45b503…`; signed release-index `81c56e9f…7d59`; unsigned Windows owner exception |
 | Exact candidate.21 setup | `87f90be1…dff3`, `29143633` bytes; manifest `665f77f0…2919`, `11/11` files; tuple client/Core/platform/index `1e164586…/cd8f0f4…/e2608130…/cae911e…`; signed release-index `ce0b8586…3dc6`; unsigned Windows owner exception |
 | Exact candidate.20 setup | `330b87cb…587f`, `29140987` bytes; manifest `57687e95…bd7`, `11/11` files; signed tuple client/Core/platform/index `8ab9815…/cd8f0f4…/d6898e6…/61ad0b0…`; unsigned owner exception |
@@ -48,13 +49,44 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Candidate.21 startup correction | `PASS_EXACT_UPGRADE_RECOVERY`: the installed service resumes candidate.20's retained committed journal before serving IPC and returns it to `clean`. Fresh in-place candidate.21 termination/SCM restart remains open. |
 | Post-candidate.21 pipe-session resilience | `PASS_EXACT_CANDIDATE22`: production rejects a pre-hello, unauthorized or malformed client session without terminating the SCM service; the exact candidate.22 VM proves rejected-first/valid-second continuity. |
 | Candidate.22 connected uninstall | `FAIL_EXACT_CANDIDATE22_RESIDUAL_UI_AND_13_BINARIES`; uninstaller exit `0`, service/tunnel removal and RU egress restoration pass, but the UI process and loaded installation files remain |
-| Post-candidate.22 uninstall correction | `PASS_EXACT_PRE_CANDIDATE4052_CONNECTED_UNINSTALL_VM`; local setup `9aa6b0fd…3152` terminates the UI, waits for service stop, removes every installed file and the empty app directory, clears service/registry/TUN state and restores RU egress. Exact candidate.23 proof remains required. |
+| Post-candidate.22 uninstall correction | `PASS_EXACT_PRE_CANDIDATE4052_CONNECTED_UNINSTALL_VM`; local setup `9aa6b0fd…3152` terminates the UI, waits for service stop, removes every installed file and the empty app directory, clears service/registry/TUN state and restores RU egress. Candidate.23 packages the source correction, but its exact connected-uninstall replay remains `NOT_RUN`. |
+| Candidate.23 serial-pipe contention | `FAIL_EXACT_CANDIDATE23_CORE001_SERVICE_RUNNING`; the exact client fails a later request while the service remains connected and running. A source-exact diagnostic client reproduces `0/32` accepted simultaneous status requests. |
+| Post-candidate.23 pipe correction | `PASS_PRE_CANDIDATE_PIPE_RETRY`; Debug and Release builds pass, eight native tests pass, and the corrected diagnostic client reaches `32/32` accepted trusted requests against the unchanged exact candidate.23 service. This is not successor-candidate credit. |
 | Remaining Windows network matrix | `MANUAL_OWNER_TEST`; Windows 10, exact-candidate connected-uninstall replay, leak/IPv6 and interactive SmartScreen remain separate exact-byte gates. VirtualBox exposes no guest sleep or IPv6 path. |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
 fallback. The service owns Core, managed state and recovery. Green state
 requires the authenticated egress proof.
+
+## Candidate.23 Pipe-Contention NO_GO And Source Correction
+
+Candidate.23 binds platform `5ba4dba3db0f900466d2f36d84d981a0a9c9fe68`,
+client `df9ed85bb0e7fd7bf1e1c43d033825212c2f6354` and Core
+`cd8f0f4169d570d693992a959d81d17c2c44884d`. Exact setup
+`ded8c4479e3f890a14298e30291693b8499ea78960813862e649354a597fa291`
+validates all `11/11` required files and initially reaches the authenticated
+connected state with DE egress. After a disconnect, a later ordinary UI request
+reports `CORE-001` although `POKROVService` remains `Running` and a single
+trusted CLI status request succeeds.
+
+The same source client, compiled as a secret-safe status-only diagnostic,
+reproduces the race with `0/32` simultaneous requests accepted by the running
+service. The service intentionally processes one pipe session at a time. The
+candidate client waited only 250 ms and did not retry when several waiters woke
+for one free instance or while the service replaced the serial instance.
+Candidate.23 is therefore immutable `NO_GO`; its connected-uninstall replay and
+the broader remaining matrix cannot promote those bytes.
+
+Successor source keeps immediate failure when the service pipe is genuinely
+absent, but after observing a busy instance retries the two transient states for
+at most five seconds. The focused 32-client native test passes in Debug and
+Release. Against the unchanged installed candidate.23 service, the corrected
+diagnostic client reaches `32/32` available, trusted and accepted requests and
+leaves the service connected with DE egress. This is
+`PASS_PRE_CANDIDATE_PIPE_RETRY`, not candidate.24 credit.
+The normalized secret-safe record is
+[`candidate23-windows-pipe-contention.json`](evidence/candidate23-windows-pipe-contention.json).
 
 ## Candidate.22 Connected-Uninstall NO_GO And Source Correction
 

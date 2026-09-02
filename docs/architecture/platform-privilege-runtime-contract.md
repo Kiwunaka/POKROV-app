@@ -125,6 +125,10 @@ The current WO-005B1/005B2/005C source implements:
   `POKROVService` SCM record, its LocalSystem start account and the sibling
   installed `pokrov_service.exe` path. This query is available to the ordinary
   user UI and does not require reading the protected LocalSystem process token;
+- bounded UI-side pipe acquisition. A genuinely absent service pipe fails
+  immediately. After observing an existing but busy pipe, the client retries
+  both another waiter's `CreateFileW` race and the short gap while the serial
+  service replaces its pipe instance, for at most five seconds;
 - a persistent service runtime owner that loads only the sibling
   `pokrov-core.dll`, negotiates desktop ABI 2 and the optional exact capability
   descriptor, and owns Core setup/start/stop after the UI disconnects;
@@ -181,7 +185,9 @@ authorization or sends an invalid frame is rejected and recorded without
 terminating the SCM service or discarding the owned runtime. Only the SCM stop
 event ends the production loop. Debug tests retain a bounded client limit so a
 rejected first session followed by a valid session is exercised without
-exposing a release entrypoint.
+exposing a release entrypoint. A separate native concurrency test opens 32
+clients against one serial pipe instance and requires every bounded retry to
+reach the server.
 
 ### Windows network transaction target
 
@@ -409,7 +415,7 @@ observability owners. Platform work must not create a competing pipeline.
 
 ## Rollout state
 
-As of 2026-09-02:
+As of 2026-09-03:
 
 - Windows per-session singleton, typed UI activation and tray-only startup are
   locally proved under WO-005A;
@@ -421,7 +427,7 @@ As of 2026-09-02:
   `RuntimeLane.windowsService`; full-process elevation and the per-user system
   proxy compatibility path are absent. A legacy persisted `systemProxy` value
   migrates to the service/TUN lane;
-- local proof consists of native Debug build, seven CTests, Flutter tests,
+- local proof consists of native Debug build, eight CTests, Flutter tests,
   static analysis, release bundle validation and unsigned Inno syntax/package
   generation;
 - WO-005C source now has a durable versioned journal, exact `POKROV` adapter
@@ -445,6 +451,13 @@ As of 2026-09-02:
   service. Candidate.20 is therefore immutable `NO_GO`. Successor source now
   invokes pending recovery before the first IPC client and keeps a failed
   startup recovery retryable; exact successor VM proof is still required;
+- exact candidate.23 build `4052` installs as `11/11` and initially reaches its
+  authenticated connected state, but a subsequent UI request can report
+  `CORE-001` while the SCM service remains running. Thirty-two simultaneous
+  trusted status clients reproduce the single-instance pipe race with `0/32`
+  accepted requests. The bounded client retry passes `32/32` against that same
+  installed service and the native concurrency test, but is pre-candidate
+  source evidence only. Candidate.23 is immutable `NO_GO`;
 - Android notification privacy and safe MTU policy are locally proved by
   Android JVM/source-contract tests plus managed-profile and widget tests;
   physical OEM/lockscreen and exact-candidate behavior remain unproved;
