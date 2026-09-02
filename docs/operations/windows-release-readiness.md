@@ -15,13 +15,13 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+4050` |
-| Current exact candidate | `pokrov-1.2.0-candidate.21`, app `1.2.0+4050`; local private, six artifacts, promotion false; bounded Windows 11 upgrade/default runtime PASS |
-| Latest signed-index predecessor | Candidate.20 setup `330b87cb…587f`, signed index `046d3312…770a`; immutable `NO_GO` after the service-restart recovery failure below |
-| Current promotable candidate | None. Candidate.21 exists but lacks signed-index supply, Android/origin/rollback/aggregate gates and is not public. |
+| Current exact candidate | `pokrov-1.2.0-candidate.21`, app `1.2.0+4050`; signed private, six artifacts, promotion false; bounded Windows 11 upgrade/default runtime PASS |
+| Retained signed-index predecessor | Candidate.20 setup `330b87cb…587f`, signed index `046d3312…770a`; immutable `NO_GO` after the service-restart recovery failure below |
+| Current promotable candidate | None. Candidate.21 signed supply exists, but Android/origin/rollback/aggregate gates remain open and no public assets exist. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
 | Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`; candidate.21 carries the same reviewed Core source in its exact private setup |
-| Exact candidate.21 setup | `87f90be1…dff3`, `29143633` bytes; manifest `665f77f0…2919`, `11/11` files; tuple client/Core/platform `1e164586…/cd8f0f4…/e2608130…`; unsigned owner exception |
+| Exact candidate.21 setup | `87f90be1…dff3`, `29143633` bytes; manifest `665f77f0…2919`, `11/11` files; tuple client/Core/platform/index `1e164586…/cd8f0f4…/e2608130…/cae911e…`; signed release-index `ce0b8586…3dc6`; unsigned Windows owner exception |
 | Exact candidate.20 setup | `330b87cb…587f`, `29140987` bytes; manifest `57687e95…bd7`, `11/11` files; signed tuple client/Core/platform/index `8ab9815…/cd8f0f4…/d6898e6…/61ad0b0…`; unsigned owner exception |
 | Exact candidate.17 setup | `0afaf6e1…276c`, `28932793` bytes; signed tuple client/Core/platform/index `977c6ed…/cd8f0f4…/d6898e6…/2df538c…`; `8/8` runtime manifest and unsigned owner exception; rejected because clean Windows lacks the unbundled VC runtime and setup incorrectly returned success after service-start failure |
 | Corrected Windows pre-candidate | Setup `301d72fc…3ddc`, `29135238` bytes; manifest `4c9afeb4…f93a`; client `977c6ed…` plus reviewed diff `379a87fc…6f6f`; `11/11` files, app-local Microsoft VC143 runtime, transactional service failure, automatic cleanup and 1.1.6 per-user migration |
@@ -80,8 +80,8 @@ This replaces the current `WIN-003` default-path proof and proves upgrade-time
 recovery from the predecessor failure state. It does not prove a fresh
 in-place candidate.21 forced termination followed by SCM restart, Windows 10,
 AWG2/AWG3.1, sleep/resume, connected reboot/uninstall, IPv6/leak, interactive
-SmartScreen or trusted signing. Candidate.21 is private local only and lacks a
-signed release index, public assets and promotion.
+SmartScreen or trusted signing. Candidate.21 has a validated private signed
+release index but no public assets or promotion.
 
 ## Candidate.20 Reboot Pass And Service-Restart NO_GO
 
