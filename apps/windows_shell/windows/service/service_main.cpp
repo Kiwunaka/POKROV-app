@@ -1,8 +1,9 @@
 #include <windows.h>
 
+#include <cstddef>
 #include <cstdint>
-#include <string>
 #include <memory>
+#include <string>
 
 #include "service_events.h"
 #include "service_runtime.h"
@@ -134,7 +135,7 @@ void WINAPI ServiceMain(DWORD, wchar_t**) {
   }
   const DWORD result = pokrov::service::RunPipeServer(
       pokrov::service::kProductionPipeName, owner_sid, service_stop_event,
-      false, service_events);
+      0, service_events);
   ::CloseHandle(service_stop_event);
   service_stop_event = nullptr;
   if (service_events != nullptr) {
@@ -150,19 +151,27 @@ void WINAPI ServiceMain(DWORD, wchar_t**) {
 }
 
 #ifdef _DEBUG
-bool IsDebugTestMode(int argument_count, wchar_t** arguments) {
+std::size_t DebugTestClientLimit(int argument_count, wchar_t** arguments) {
   if (argument_count != 3 ||
-      std::wstring(arguments[1]) != L"--test-once" ||
       std::wstring(arguments[2]).rfind(pokrov::service::kTestPipePrefix, 0) !=
           0) {
-    return false;
+    return 0;
   }
   wchar_t enabled[8]{};
-  return ::GetEnvironmentVariableW(L"POKROV_SERVICE_TEST_MODE", enabled,
-                                   static_cast<DWORD>(sizeof(enabled) /
-                                                      sizeof(enabled[0]))) >
-             0 &&
-         std::wstring(enabled) == L"1";
+  if (::GetEnvironmentVariableW(L"POKROV_SERVICE_TEST_MODE", enabled,
+                                static_cast<DWORD>(sizeof(enabled) /
+                                                   sizeof(enabled[0]))) == 0 ||
+      std::wstring(enabled) != L"1") {
+    return 0;
+  }
+  const std::wstring mode(arguments[1]);
+  if (mode == L"--test-once") {
+    return 1;
+  }
+  if (mode == L"--test-reject-then-serve") {
+    return 2;
+  }
+  return 0;
 }
 #endif
 
@@ -170,7 +179,9 @@ bool IsDebugTestMode(int argument_count, wchar_t** arguments) {
 
 int wmain(int argument_count, wchar_t** arguments) {
 #ifdef _DEBUG
-  if (IsDebugTestMode(argument_count, arguments)) {
+  const std::size_t test_client_limit =
+      DebugTestClientLimit(argument_count, arguments);
+  if (test_client_limit != 0) {
     const auto owner_sid = pokrov::service::CurrentProcessUserSid();
     HANDLE stop_event = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
     if (owner_sid.empty()) {
@@ -183,7 +194,7 @@ int wmain(int argument_count, wchar_t** arguments) {
       return static_cast<int>(::GetLastError());
     }
     const DWORD result = pokrov::service::RunPipeServer(
-        arguments[2], owner_sid, stop_event, true);
+        arguments[2], owner_sid, stop_event, test_client_limit);
     ::CloseHandle(stop_event);
     return static_cast<int>(result);
   }

@@ -286,7 +286,7 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
 
 DWORD RunPipeServer(const std::wstring& pipe_name,
                     const std::wstring& owner_sid, HANDLE stop_event,
-                    bool stop_after_one_client, ServiceEventSink* events) {
+                    std::size_t test_client_limit, ServiceEventSink* events) {
   if (pipe_name.rfind(L"\\\\.\\pipe\\POKROV.Service.", 0) != 0 ||
       owner_sid.empty() || stop_event == nullptr) {
     return ERROR_INVALID_PARAMETER;
@@ -305,6 +305,7 @@ DWORD RunPipeServer(const std::wstring& pipe_name,
                       CreateRuntimeRecovery(runtime_root), runtime_root, true,
                       events);
   runtime.RecoverOnStartup();
+  std::size_t processed_client_count = 0;
   do {
     const HANDLE pipe = ::CreateNamedPipeW(
         pipe_name.c_str(), PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
@@ -331,18 +332,30 @@ DWORD RunPipeServer(const std::wstring& pipe_name,
     ::FlushFileBuffers(pipe);
     ::DisconnectNamedPipe(pipe);
     ::CloseHandle(pipe);
+    if (::WaitForSingleObject(stop_event, 0) == WAIT_OBJECT_0) {
+      break;
+    }
+    ++processed_client_count;
     if (authorized && events != nullptr) {
       events->Record(ServiceEvent::kIpcSessionClosed,
                      ServiceEventOutcome::kSucceeded);
     }
     if (!authorized) {
-      return ERROR_ACCESS_DENIED;
+      if (test_client_limit != 0 &&
+          processed_client_count >= test_client_limit) {
+        return ERROR_ACCESS_DENIED;
+      }
+      continue;
     }
-    if (!processed &&
-        ::WaitForSingleObject(stop_event, 0) != WAIT_OBJECT_0) {
-      return ERROR_INVALID_DATA;
+    if (!processed) {
+      if (test_client_limit != 0 &&
+          processed_client_count >= test_client_limit) {
+        return ERROR_INVALID_DATA;
+      }
+      continue;
     }
-    if (stop_after_one_client) {
+    if (test_client_limit != 0 &&
+        processed_client_count >= test_client_limit) {
       return ERROR_SUCCESS;
     }
   } while (::WaitForSingleObject(stop_event, 0) != WAIT_OBJECT_0);

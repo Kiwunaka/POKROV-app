@@ -3,6 +3,7 @@
 
 #include <windows.h>
 
+#include <cstddef>
 #include <string>
 
 namespace pokrov::service {
@@ -15,7 +16,7 @@ constexpr wchar_t kTestPipePrefix[] =
 
 DWORD RunPipeServer(const std::wstring& pipe_name,
                     const std::wstring& owner_sid, HANDLE stop_event,
-                    bool stop_after_one_client,
+                    std::size_t test_client_limit,
                     ServiceEventSink* events = nullptr);
 
 }  // namespace pokrov::service
