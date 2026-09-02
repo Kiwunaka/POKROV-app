@@ -175,6 +175,14 @@ SCM service. This is source/build/package-syntax evidence only: no current
 1.2.0 service installation, clean-VM runtime, signing or exact-candidate proof
 exists.
 
+The production pipe loop isolates client-session failure from service
+availability. A caller that disconnects before `hello`, fails caller
+authorization or sends an invalid frame is rejected and recorded without
+terminating the SCM service or discarding the owned runtime. Only the SCM stop
+event ends the production loop. Debug tests retain a bounded client limit so a
+rejected first session followed by a valid session is exercised without
+exposing a release entrypoint.
+
 ### Windows network transaction target
 
 The service owns an atomic recovery journal and these stages:

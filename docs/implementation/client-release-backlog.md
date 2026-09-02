@@ -140,13 +140,17 @@ history for their own bytes.
   `committed` after SCM restart and the UI unavailable. Candidate.20 is
   immutable `NO_GO`; process-owned tunnel disappearance is not proof that the
   service resumed rollback.
-- Merged candidate.21 startup-recovery source checks the durable journal before the
-  first IPC client, preserves lazy Core initialization for a clean journal and
-  leaves failed startup recovery fail-closed and retryable. Focused native
-  recovery tests, all Windows service native test executables, Flutter static
-  analysis and all 23 Flutter tests pass locally; hosted run `33572910856`
-  also passes. Build `4050` package construction and the same connected
-  service-restart VM replay remain open.
+- Candidate.21 checks the durable journal before the first IPC client,
+  preserves lazy Core initialization for a clean journal and leaves failed
+  startup recovery fail-closed and retryable. Its six exact build-4050 private
+  artifacts, signed supply and bounded Windows 11 upgrade/default runtime pass;
+  fresh in-place service-restart recovery remains open.
+- Current successor source also isolates a rejected pipe session from service
+  availability. A pre-hello, unauthorized or malformed client no longer ends
+  the production SCM loop. The focused Flutter contract passes `7/7`, the
+  complete Windows debug bundle builds and all six native service executables
+  pass, including rejected-first/valid-second session recovery. Candidate.21
+  remains immutable; exact-package/VM credit requires a successor candidate.
 - VLESS/Reality remains the baseline. AWG 3.1 is the preferred closed UDP lab
   transport and AWG2 its rollback. XHTTP is post-1.2.0 TLS/CDN reserve work;
   Hysteria2 stays default-off and advances only after a bounded lab shows a

@@ -45,6 +45,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Public 1.1.6 migration | `PASS_EXACT_CANDIDATE20_VM` — exact per-user 1.1.6 install was replaced by the candidate.20 machine/service package; final uninstall left no service, app directory or owner registry residue |
 | `WIN-003` default-path gate | `PASS` for exact candidate.21 on isolated Windows 11: `sing-tun`, route/DNS change, authenticated DE egress and exact RU baseline restoration after disconnect. |
 | Candidate.21 startup correction | `PASS_EXACT_UPGRADE_RECOVERY`: the installed service resumes candidate.20's retained committed journal before serving IPC and returns it to `clean`. Fresh in-place candidate.21 termination/SCM restart remains open. |
+| Post-candidate.21 pipe-session resilience | `PASS_LOCAL_SOURCE`: production now rejects a pre-hello, unauthorized or malformed client session without terminating the SCM service; the native two-session regression proves a rejected first connection is followed by a valid authenticated session. Candidate.21 bytes are unchanged, so exact-package/VM credit requires a successor candidate. |
 | Remaining Windows network matrix | `MANUAL_OWNER_TEST`; fresh in-place service-restart recovery/reconnect, then Windows 10, AWG 3.1/AWG2, sleep/resume, connected reboot/uninstall, leak/IPv6 and interactive SmartScreen remain separate exact-byte gates |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
@@ -82,6 +83,14 @@ in-place candidate.21 forced termination followed by SCM restart, Windows 10,
 AWG2/AWG3.1, sleep/resume, connected reboot/uninstall, IPv6/leak, interactive
 SmartScreen or trusted signing. Candidate.21 has a validated private signed
 release index but no public assets or promotion.
+
+Current main additionally keeps the production service alive after a client
+opens the protected pipe but disconnects before `hello`, fails caller
+authorization or sends an invalid frame. The focused Flutter contract passes
+`7/7`; the complete debug Windows bundle builds, and all six native service
+executables pass, including a two-session test that rejects the first
+connection and serves the second. This is local successor-source proof only;
+it does not rewrite candidate.21 or close its VM gate.
 
 ## Candidate.20 Reboot Pass And Service-Restart NO_GO
 

@@ -122,7 +122,8 @@ int wmain() {
          "test mode environment was unavailable");
 
   std::wstring command =
-      L"\"" + service_path + L"\" --test-once \"" + pipe_name + L"\"";
+      L"\"" + service_path + L"\" --test-reject-then-serve \"" +
+      pipe_name + L"\"";
   STARTUPINFOW startup{};
   startup.cb = sizeof(startup);
   PROCESS_INFORMATION process{};
@@ -132,6 +133,18 @@ int wmain() {
   Expect(started != FALSE, "service test process did not start");
   if (!started) {
     return 1;
+  }
+
+  HANDLE rejected_pipe = INVALID_HANDLE_VALUE;
+  if (WaitForPipe(pipe_name)) {
+    rejected_pipe = ::CreateFileW(pipe_name.c_str(),
+                                  GENERIC_READ | GENERIC_WRITE, 0, nullptr,
+                                  OPEN_EXISTING, 0, nullptr);
+  }
+  Expect(rejected_pipe != INVALID_HANDLE_VALUE,
+         "pre-hello client could not open secured pipe");
+  if (rejected_pipe != INVALID_HANDLE_VALUE) {
+    ::CloseHandle(rejected_pipe);
   }
 
   HANDLE pipe = INVALID_HANDLE_VALUE;

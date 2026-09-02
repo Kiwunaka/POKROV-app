@@ -367,6 +367,8 @@ void main() {
     expect(securityContent, contains('ImpersonateNamedPipeClient'));
     expect(serverContent, contains('operation_replay'));
     expect(serverContent, contains('session_nonce_capacity'));
+    expect(serverContent, contains('processed_client_count'));
+    expect(serverContent, contains('continue;'));
     expect(serverContent, contains('RecordIpcRequest'));
     expect(serverContent, contains('RecordIpcResponse'));
     expect(clientContent, contains('GetNamedPipeServerProcessId'));
@@ -417,6 +419,7 @@ void main() {
     expect(eventsTestContent,
         contains('event journal retained forbidden runtime material'));
     expect(integrationContent, contains('Status::kReplay'));
+    expect(integrationContent, contains('--test-reject-then-serve'));
   });
 
   test('windows native crash profile is bounded and stack-only', () async {
