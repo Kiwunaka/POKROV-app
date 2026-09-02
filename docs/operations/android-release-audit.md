@@ -14,8 +14,8 @@ Older APK identities and device runs are retained separately as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
-| Working package target | `1.2.0+4050` |
-| Exact replacement candidate | `pokrov-1.2.0-candidate.21`, build `4050`; signed private, promotion unauthorized, exact Android install/runtime `NOT_RUN`; candidate.20 is immutable signed `NO_GO` history |
+| Working package target | `1.2.0+4051` |
+| Latest exact candidate | `pokrov-1.2.0-candidate.21`, build `4050`; signed private and immutable `NO_GO` because its Windows service lacks the merged rejected-session availability correction; exact Android install/runtime remains `NOT_RUN` |
 | Package ID | `space.pokrov.pokrov_android_shell` |
 | Exact candidate source | Platform `e2608130…32c3`, client `1e164586…cadb`, Core `cd8f0f4…884d`; ARM64 APK `d5dd9905…693c`, `101366678` bytes, universal APK `396e8aca…1578`, `295370161` bytes, and x86_64 APK `fc6da2ca…51e5`, `109951989` bytes |
 | Exact candidate Core package | Secret-safe POKROV Core `1.1.0` from `cd8f0f4…884d`, AAR `2a9677d9…c6a69`; two builds are byte-identical and contain all four required ABIs |
@@ -50,14 +50,14 @@ checks until an isolated network environment is used. Physical Android must
 first hash-bind the installed base APK to ARM64 artifact
 `d5dd9905…693c`, then retain Wi-Fi and Beeline default/lab/runtime evidence.
 
-Gate F is not run for candidate.21. PB-14 currently fails closed at
-the missing exact installed Android identity boundary; this is an unmet gate,
-not a candidate defect. Gate G, public assets, Store submission and stable
-promotion remain unauthorized.
+Candidate.21's digest-bound Gate F snapshot is `BLOCKED 5/14/0`. Its missing
+exact installed Android identity remains an unmet gate, while the independent
+Windows service availability defect makes the candidate `NO_GO`. Gate G,
+public assets, Store submission and stable promotion remain unauthorized.
 
-## Working Build 4050 Recovery Successor
+## Working Build 4051 Service-Availability Successor
 
-The continuing build `4050` source line pins Core `cd8f0f4169d570d693992a959d81d17c2c44884d`
+The continuing build `4051` source line pins Core `cd8f0f4169d570d693992a959d81d17c2c44884d`
 after removing legacy raw-settings/error logging and retaining explicit
 AWG2/AWG 3.1 lifecycle coverage. Two Android builds are byte-identical: AAR
 size `107419397`, SHA-256

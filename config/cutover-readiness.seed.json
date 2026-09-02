@@ -1,6 +1,6 @@
 {
   "lane": "POKROV-app/main",
-  "status": "retained_1_1_6_public_candidate21_signed_private_windows_upgrade_default_pass_promotion_blocked",
+  "status": "retained_1_1_6_public_candidate21_signed_private_no_go_service_availability_successor_4051_pre_candidate",
   "public_cutover_allowed": false,
   "last_updated": "2026-09-02",
   "latest_repo_backed_release": {
@@ -16,7 +16,7 @@
     "id": "pokrov-1.2.0-candidate.21",
     "version_name": "1.2.0",
     "platform_build": 4050,
-    "state": "SIGNED_PRIVATE_WINDOWS11_UPGRADE_DEFAULT_RUNTIME_PASS_PROMOTION_BLOCKED",
+    "state": "SIGNED_PRIVATE_NO_GO_PREHELLO_REJECTED_SESSION_SERVICE_AVAILABILITY",
     "promotion_authorized": false,
     "public_release_created": false,
     "store_object_created": false,
@@ -75,12 +75,12 @@
       "proof_ceiling": "WINDOWS11_UPGRADE_RECOVERY_AND_DEFAULT_CONNECT_DISCONNECT_ONLY"
     },
     "gate_f": {
-      "decision": "NOT_RUN",
-      "evidence_generation": "NOT_RUN_CANDIDATE21_AGGREGATE_INCOMPLETE",
-      "counts_authoritative": false,
+      "decision": "BLOCKED_5_PASS_14_NON_PASS_0_FAIL_THEN_NO_GO_SOURCE_DEFECT",
+      "evidence_generation": "PASS_EXACT_CANDIDATE21_DIGEST_BOUND_GATE_F",
+      "counts_authoritative": true,
       "required": 19,
-      "pass": 0,
-      "non_pass": 19,
+      "pass": 5,
+      "non_pass": 14,
       "fail": 0,
       "gate_g_authorized": false
     }
@@ -150,8 +150,9 @@
       "smartscreen_warning_required": true
     },
     "blocked_on": [
-      "fresh in-place candidate.21 forced service termination and SCM restart recovery plus reconnect",
-      "Windows 10, AWG 3.1/AWG2, sleep/resume, connected reboot, connected uninstall, IPv6/leak and interactive SmartScreen proof for candidate.21",
+      "build and install an exact build-4051 successor carrying the rejected-session service-availability correction",
+      "fresh in-place successor forced service termination and SCM restart recovery plus reconnect",
+      "Windows 10, AWG 3.1/AWG2, sleep/resume, connected reboot, connected uninstall, IPv6/leak and interactive SmartScreen proof for the successor",
       "trusted signing and SmartScreen reputation for later broad distribution"
     ],
     "accepted_evidence": [
@@ -160,11 +161,12 @@
       "Windows 1.1.6 production setup, portable ZIP and manifest match exact public GitHub sizes and SHA-256",
       "exact candidate.20 Windows 11 VM default connect proves ordinary UI, LocalSystem service, authenticated IPC, TUN, managed DNS, authenticated DE egress, disconnect rollback, clean uninstall and public 1.1.6 migration",
       "exact candidate.20 connected reboot restores the baseline and reconnects, but forced service termination leaves the durable journal committed after SCM restart and rejects the candidate",
-      "exact private candidate.21 setup upgrades from the retained committed journal to clean, validates 11 of 11 files, starts the ordinary UI and LocalSystem service, reaches Germany through sing-tun and restores egress, route, DNS and adapter fingerprints to the RU baseline after disconnect"
+      "exact private candidate.21 setup upgrades from the retained committed journal to clean, validates 11 of 11 files, starts the ordinary UI and LocalSystem service, reaches Germany through sing-tun and restores egress, route, DNS and adapter fingerprints to the RU baseline after disconnect",
+      "candidate.21 exact source contains a production service-loop availability defect for pre-hello or otherwise rejected client sessions; the correction exists only on later client main"
     ]
   },
   "blocking_dependencies": [
-    "candidate.21 signed-index supply is ready, but exact Android runtime, fresh in-place Windows service-restart recovery, named-origin proof, guarded rollback and the final aggregate decision remain open",
+    "candidate.21 is immutable NO_GO; the corrected build-4051 successor has not been built, signed, installed or candidate-bound",
     "iOS production connectivity still requires on-device packet-tunnel proof plus reviewed entitlements",
     "the universal POKROV Core 1.1.0 macOS dylib still requires a macOS build and ABI probe",
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",

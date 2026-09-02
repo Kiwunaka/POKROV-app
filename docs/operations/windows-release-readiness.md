@@ -14,10 +14,10 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
-| Working package target | `1.2.0+4050` |
-| Current exact candidate | `pokrov-1.2.0-candidate.21`, app `1.2.0+4050`; signed private, six artifacts, promotion false; bounded Windows 11 upgrade/default runtime PASS |
+| Working package target | `1.2.0+4051` |
+| Latest exact candidate | `pokrov-1.2.0-candidate.21`, app `1.2.0+4050`; signed private and immutable `NO_GO`; bounded Windows 11 upgrade/default runtime PASS remains retained evidence |
 | Retained signed-index predecessor | Candidate.20 setup `330b87cb…587f`, signed index `046d3312…770a`; immutable `NO_GO` after the service-restart recovery failure below |
-| Current promotable candidate | None. Candidate.21 signed supply exists, but Android/origin/rollback/aggregate gates remain open and no public assets exist. |
+| Current promotable candidate | None. Candidate.21 contains the pre-hello/rejected-session service-availability defect; the corrected build-4051 successor is not yet an exact candidate. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
 | Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`; candidate.21 carries the same reviewed Core source in its exact private setup |
@@ -45,7 +45,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Public 1.1.6 migration | `PASS_EXACT_CANDIDATE20_VM` — exact per-user 1.1.6 install was replaced by the candidate.20 machine/service package; final uninstall left no service, app directory or owner registry residue |
 | `WIN-003` default-path gate | `PASS` for exact candidate.21 on isolated Windows 11: `sing-tun`, route/DNS change, authenticated DE egress and exact RU baseline restoration after disconnect. |
 | Candidate.21 startup correction | `PASS_EXACT_UPGRADE_RECOVERY`: the installed service resumes candidate.20's retained committed journal before serving IPC and returns it to `clean`. Fresh in-place candidate.21 termination/SCM restart remains open. |
-| Post-candidate.21 pipe-session resilience | `PASS_LOCAL_SOURCE`: production now rejects a pre-hello, unauthorized or malformed client session without terminating the SCM service; the native two-session regression proves a rejected first connection is followed by a valid authenticated session. Candidate.21 bytes are unchanged, so exact-package/VM credit requires a successor candidate. |
+| Post-candidate.21 pipe-session resilience | `PASS_LOCAL_SOURCE`: production now rejects a pre-hello, unauthorized or malformed client session without terminating the SCM service; the native two-session regression proves a rejected first connection is followed by a valid authenticated session. Candidate.21 bytes are unchanged and `NO_GO`, so exact-package/VM credit requires a successor candidate. |
 | Remaining Windows network matrix | `MANUAL_OWNER_TEST`; fresh in-place service-restart recovery/reconnect, then Windows 10, AWG 3.1/AWG2, sleep/resume, connected reboot/uninstall, leak/IPv6 and interactive SmartScreen remain separate exact-byte gates |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
@@ -84,13 +84,15 @@ AWG2/AWG3.1, sleep/resume, connected reboot/uninstall, IPv6/leak, interactive
 SmartScreen or trusted signing. Candidate.21 has a validated private signed
 release index but no public assets or promotion.
 
-Current main additionally keeps the production service alive after a client
+Current main keeps the production service alive after a client
 opens the protected pipe but disconnects before `hello`, fails caller
 authorization or sends an invalid frame. The focused Flutter contract passes
 `7/7`; the complete debug Windows bundle builds, and all six native service
 executables pass, including a two-session test that rejects the first
 connection and serves the second. This is local successor-source proof only;
-it does not rewrite candidate.21 or close its VM gate.
+it does not rewrite candidate.21. The presence of the old production loop in
+candidate.21 is sufficient to reject those bytes; a build-4051 successor must
+carry the correction before any VM result can receive exact-package credit.
 
 ## Candidate.20 Reboot Pass And Service-Restart NO_GO
 
