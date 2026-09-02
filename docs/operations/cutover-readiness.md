@@ -25,7 +25,7 @@ contracts. Do not select the most optimistic status.
 |---|---|
 | Canonical lane | `POKROV-app/main` |
 | Retained public release | Android and Windows `1.1.6` |
-| New working target | `1.2.0+4049` |
+| New working target | `1.2.0+4050` |
 | Continuing source target | `PRE_CANDIDATE_LOCAL` on `POKROV-app/main` |
 | Exact signed candidate | `pokrov-1.2.0-candidate.20`, app `1.2.0+4049`; private immutable `NO_GO`, promotion false, after the exact Windows service-restart recovery failure below |
 | Candidate/current-main boundary | Candidate.20 remains the latest exact candidate but is rejected. Later client `main` commits do not alter or receive credit for its exact bytes. |
@@ -34,7 +34,7 @@ contracts. Do not select the most optimistic status.
 
 The existing `1.1.6` publication does not approve new `1.2.0` bytes. Its
 signing, device, runtime and origin evidence cannot be reused for promotion.
-The continuing client seed describes the `1.2.0+4049` development line with
+The continuing client seed describes the `1.2.0+4050` development line with
 Core `cd8f0f4…884d`; its `candidate_created=false` describes continuing `main`,
 not the separate signed candidate contract. `config/cutover-readiness.seed.json`
 now binds immutable private candidate.20: platform `d6898e6…967`, client
@@ -52,7 +52,7 @@ failure history and transfer no release credit.
 
 | Gate | State | Required evidence |
 |---|---|---|
-| Package/version parity | `PASS_EXACT_CANDIDATE_20` | Android and Windows candidate targets are `1.2.0+4049`; the shared app-shell remains product version `1.2.0`. |
+| Development package/version parity | `PASS_PRE_CANDIDATE_4050` | Android and Windows source targets are `1.2.0+4050`; the shared app-shell remains product version `1.2.0`. Rejected candidate.20 retains its exact build `4049` identity. |
 | Strict-v2 generator contract | `PASS_LOCAL` | Schema, generator and cross-repository parity tests pass. |
 | Stable pointer and rollback catalog | `PASS_LOCAL` | Retained `1.1.6` pointer matches its exact versioned handoff; isolated A→B→A proves optimistic lock, atomic replace, backup, receipt and byte-identical reversal. |
 | Operational producer/privacy contract | `PASS_LOCAL` | Auth, entitlement, performance, support and Android count-only routing producers pass focused client/platform tests; exact-candidate runtime proof remains later. |
@@ -80,7 +80,7 @@ failure history and transfer no release credit.
 
 ## Current Cutover Sequence
 
-1. Merge the candidate.21 startup-recovery correction into clean client `main`.
+1. Promote the build `4050` release-prep contract into clean client `main`.
 2. Freeze clean revisions and produce a new exact six-artifact successor.
 3. Generate and validate strict-v2 metadata.
 4. Prove connected forced-service-restart cleanup and reconnect on the isolated

@@ -12,10 +12,11 @@ The root [AGENTS.md](AGENTS.md) is the short Codex operating contract.
 - Client strategy: `consumer-first` and `app-first`.
 - Public outside-store stable surfaces: Android and Windows.
 - Retained public line: `1.1.6` (`1.1.6+29`).
-- Development seed: `1.2.0+4049`, state `PRE_CANDIDATE_LOCAL`,
-  `candidate_created=false`. Separately generated strict-v2 metadata and the
-  signed public-index receipt own private `pokrov-1.2.0-candidate.13`; it is
-  artifact-only, unpublished and not authorized for promotion.
+- Development seed: `1.2.0+4050`, state `PRE_CANDIDATE_LOCAL`,
+  `candidate_created=false`. The latest exact private candidate is immutable
+  `pokrov-1.2.0-candidate.20`, build `4049`; it is unpublished, rejected after
+  the Windows service-restart recovery failure and not authorized for
+  promotion.
 - Apple surfaces: readiness, packaging, signing, and device-proof work only.
 - Default runtime: `sing-box`; `xray` is an advanced compatibility fallback.
 - Default device-wide rule: `All except RU`; `Full tunnel` remains available.
@@ -43,18 +44,17 @@ creates an exact backup outside retained history, and records a receipt. Local
 fixture reversal is not an exact-candidate rollback drill or mutation authority.
 
 The retained `1.1.6` publication is evidence for that exact artifact set. The
-working seed remains pre-candidate source truth, while private candidate.13
-binds exact build-4049 bytes through strict-v2 metadata and a signed
-public-index receipt. Its bounded LDPlayer AWG 3.1 -> AWG2 -> default/Auto
-lifecycle passes, but physical Android, clean Windows, origin/provider and
-promotion gates remain open. Android production signing is fail-closed by
-default; debug signing requires an explicit non-public smoke opt-in. The
-handoff does not prove:
+working seed remains pre-candidate source truth for build `4050`. Private
+candidate.20 binds exact build-4049 bytes through strict-v2 metadata and a
+signed public-index receipt, but its durable Windows recovery failure makes it
+immutable `NO_GO`. Android production signing is fail-closed by default; debug
+signing requires an explicit non-public smoke opt-in. The handoff does not
+prove:
 
 - a public or stable `1.2.0` publication;
 - Play, Microsoft Store, WinGet, TestFlight, App Store, or notarized delivery;
 - trusted Windows signing and reputation;
-- a physical-device, clean-VM, or real-user pass for candidate.13;
+- a physical-device or real-user pass for candidate.20, or any exact candidate.21 artifact;
 - production WARP behavior on Android or Windows;
 - RU-origin readiness.
 

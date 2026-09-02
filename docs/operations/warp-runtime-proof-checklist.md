@@ -1,12 +1,12 @@
 # WARP Runtime Proof Checklist
 
-Last updated: 2026-08-30
+Last updated: 2026-09-02
 
 Registry class: `ACTIVE_EXECUTION`.
 
 This is the current client evidence gate for WARP on signed
 `pokrov-1.2.0-candidate.10`, app `1.2.0+4046`. The successor
-`1.2.0+4049`/Core `cd8f0f4…884d` line is pre-candidate only. Older device or runtime passes
+`1.2.0+4050`/Core `cd8f0f4…884d` line is pre-candidate only. Older device or runtime passes
 are supporting evidence only and cannot close the exact-candidate gate.
 
 The client UI may use the owner-approved labels `WARP`,
@@ -95,7 +95,7 @@ Current status: `MANUAL_OWNER_TEST` for exact `1.2.0` candidate bytes.
   selected-endpoint state for both AWG2 and AWG3.1 on physical Beeline. This
   bounded control did not close WARP lifecycle, handoff, per-app, OEM or
   endurance proof before candidate.8.
-- The successor `1.2.0+4049` line binds secret-safe Core `cd8f0f4…884d`.
+- The successor `1.2.0+4050` line binds secret-safe Core `cd8f0f4…884d`.
   Android AAR `2a9677d9…c6a69` and Windows DLL `f284fa88…8204` each reproduce
   byte-for-byte across two builds; the DLL passes 100 proxy-only start/stop
   cycles. This is `PASS_LOCAL_PRE_CANDIDATE`, not transferred WARP, device,

@@ -1395,15 +1395,23 @@ if (-not $androidVersionMatch.Success -or
   $errors += 'Release handoff development target must match Android pubspec and remain exact uncreated pre-candidate truth'
 }
 $currentCandidate = $cutover.exact_replacement_candidate
+$currentCandidateBuild = [int]$currentCandidate.platform_build
+$developmentBuild = [int]$developmentTarget.platform_build
+$candidateMatchesDevelopment = $currentCandidateBuild -eq $developmentBuild
+$retainedRejectedCandidatePrecedesDevelopment =
+  $currentCandidateBuild -lt $developmentBuild -and
+  [string]$currentCandidate.state -match 'NO_GO' -and
+  [string]$cutover.status -match 'no_go'
 if ([string]::IsNullOrWhiteSpace([string]$currentCandidate.id) -or
     [string]$currentCandidate.id -notmatch '^pokrov-1\.2\.0-candidate\.\d+$' -or
     [string]$currentCandidate.version_name -ne [string]$developmentTarget.product_version -or
-    [int]$currentCandidate.platform_build -ne [int]$developmentTarget.platform_build -or
+    (-not $candidateMatchesDevelopment -and
+      -not $retainedRejectedCandidatePrecedesDevelopment) -or
     $currentCandidate.promotion_authorized -ne $false -or
     $currentCandidate.public_release_created -ne $false -or
     $currentCandidate.store_object_created -ne $false -or
     $currentCandidate.stable_pointer_mutated -ne $false) {
-  $errors += 'Cutover seed current candidate must match the working version/build and retain all no-promotion boundaries'
+  $errors += 'Cutover seed must bind either the working build or an older rejected candidate and retain all no-promotion boundaries'
 }
 foreach ($currentCandidateOwner in @(
   'docs\implementation\client-release-backlog.md',

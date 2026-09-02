@@ -1,6 +1,6 @@
 # Android Release Audit
 
-Last updated: 2026-09-01
+Last updated: 2026-09-02
 
 ## Document Status
 
@@ -14,8 +14,8 @@ Older APK identities and device runs are retained separately as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
-| Working package target | `1.2.0+4049` |
-| Exact replacement candidate | `pokrov-1.2.0-candidate.20`; signed manifest `046d3312…770a`, detached signature `f5e81d31…90ea`, promotion unauthorized; all five Android artifacts are signed, exact candidate.20 install/runtime is `NOT_RUN` |
+| Working package target | `1.2.0+4050` |
+| Exact replacement candidate | `pokrov-1.2.0-candidate.20`, build `4049`; signed manifest `046d3312…770a`, detached signature `f5e81d31…90ea`, promotion unauthorized and immutable `NO_GO` after the Windows recovery failure; exact Android install/runtime is `NOT_RUN` |
 | Package ID | `space.pokrov.pokrov_android_shell` |
 | Exact candidate source | Platform `d6898e6…967`, client `8ab9815…6e8`, Core `cd8f0f4…884d`, signed release-index source `61ad0b0…483`; ARM64 APK `8dfca42e…056c`, `101366678` bytes, universal APK `927270b3…48a8`, `295370161` bytes, and x86_64 APK `d8ae790d…264b1`, `109951989` bytes |
 | Exact candidate Core package | Secret-safe POKROV Core `1.1.0` from `cd8f0f4…884d`, AAR `2a9677d9…c6a69`; two builds are byte-identical and contain all four required ABIs |
@@ -52,16 +52,17 @@ the missing exact installed Android identity boundary; this is an unmet gate,
 not a candidate defect. Gate G, public assets, Store submission and stable
 promotion remain unauthorized.
 
-## Working Build 4049 Core Refresh
+## Working Build 4050 Recovery Successor
 
-The continuing source line pins Core `cd8f0f4169d570d693992a959d81d17c2c44884d`
+The continuing build `4050` source line pins Core `cd8f0f4169d570d693992a959d81d17c2c44884d`
 after removing legacy raw-settings/error logging and retaining explicit
 AWG2/AWG 3.1 lifecycle coverage. Two Android builds are byte-identical: AAR
 size `107419397`, SHA-256
 `2a9677d9e24ed7ef66d4e98f90e7033eb5450c9a2755f0fe6b8bba58036c6a69`,
 with all four required ABIs. The bytes are synchronized into the client source.
-Candidate.20 carries these exact Core bytes. Its five Android artifacts are
-production-signed, but no exact candidate.20 APK is installed or runtime-tested.
+Candidate.20 carries these exact Core bytes in retained build `4049`. Its five
+Android artifacts are production-signed, but no exact candidate.20 APK is
+installed or runtime-tested.
 The candidate.16 installs below remain retained evidence for older bytes only.
 
 ## Exact Candidate.16 Physical Install Binding
