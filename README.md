@@ -13,10 +13,11 @@ The root [AGENTS.md](AGENTS.md) is the short Codex operating contract.
 - Public outside-store stable surfaces: Android and Windows.
 - Retained public line: `1.1.6` (`1.1.6+29`).
 - Development seed: `1.2.0+4050`, state `PRE_CANDIDATE_LOCAL`,
-  `candidate_created=false`. The latest exact private candidate is immutable
-  `pokrov-1.2.0-candidate.20`, build `4049`; it is unpublished, rejected after
-  the Windows service-restart recovery failure and not authorized for
-  promotion.
+  `candidate_created=false`. The current exact private candidate is signed
+  `pokrov-1.2.0-candidate.21`, build `4050`; its bounded Windows 11
+  upgrade/default runtime passes, but it is unpublished and not authorized for
+  promotion. Candidate.20 is rejected signed history after its Windows
+  service-restart recovery failure.
 - Apple surfaces: readiness, packaging, signing, and device-proof work only.
 - Default runtime: `sing-box`; `xray` is an advanced compatibility fallback.
 - Default device-wide rule: `All except RU`; `Full tunnel` remains available.
@@ -45,16 +46,18 @@ fixture reversal is not an exact-candidate rollback drill or mutation authority.
 
 The retained `1.1.6` publication is evidence for that exact artifact set. The
 working seed remains pre-candidate source truth for build `4050`. Private
-candidate.20 binds exact build-4049 bytes through strict-v2 metadata and a
-signed public-index receipt, but its durable Windows recovery failure makes it
-immutable `NO_GO`. Android production signing is fail-closed by default; debug
-signing requires an explicit non-public smoke opt-in. The handoff does not
-prove:
+candidate.21 binds exact build-4050 bytes through strict-v2 handoff
+`07e0009c…55e9`, refreshed SBOM/provenance and signed public-index
+manifest/signature/receipt `ce0b8586…3dc6` / `ef474e6e…7a58` /
+`aaa027cc…926f`; output is Actions-artifact-only with promotion false.
+Candidate.20 remains immutable `NO_GO` history. Android production signing is
+fail-closed by default; debug signing requires an explicit non-public smoke
+opt-in. The handoff does not prove:
 
 - a public or stable `1.2.0` publication;
 - Play, Microsoft Store, WinGet, TestFlight, App Store, or notarized delivery;
 - trusted Windows signing and reputation;
-- a physical-device or real-user pass for candidate.20, or any exact candidate.21 artifact;
+- a physical-device or real-user pass for exact candidate.21;
 - production WARP behavior on Android or Windows;
 - RU-origin readiness.
 

@@ -1,6 +1,6 @@
 {
   "lane": "POKROV-app/main",
-  "status": "retained_1_1_6_public_candidate21_private_windows_upgrade_default_pass_promotion_blocked",
+  "status": "retained_1_1_6_public_candidate21_signed_private_windows_upgrade_default_pass_promotion_blocked",
   "public_cutover_allowed": false,
   "last_updated": "2026-09-02",
   "latest_repo_backed_release": {
@@ -16,7 +16,7 @@
     "id": "pokrov-1.2.0-candidate.21",
     "version_name": "1.2.0",
     "platform_build": 4050,
-    "state": "PRIVATE_LOCAL_WINDOWS11_UPGRADE_DEFAULT_RUNTIME_PASS_SIGNED_SUPPLY_NOT_CREATED",
+    "state": "SIGNED_PRIVATE_WINDOWS11_UPGRADE_DEFAULT_RUNTIME_PASS_PROMOTION_BLOCKED",
     "promotion_authorized": false,
     "public_release_created": false,
     "store_object_created": false,
@@ -25,12 +25,26 @@
       "platform": "e2608130e85d9a0f8fa4b920f46cf3d7679332c3",
       "client": "1e164586d741484b5ae8fb2ee267ef5dd813cadb",
       "core": "cd8f0f4169d570d693992a959d81d17c2c44884d",
-      "release_index": "NOT_CREATED"
+      "release_index": "cae911e506d95eb72c1364b847992e30cbf9baf9",
+      "release_index_receipt_main": "3b75446b88c04e0b2cc6712c6193b64195cadf3a"
     },
     "signed_contract": {
-      "status": "NOT_CREATED",
-      "strict_v2_handoff": "NOT_CREATED",
-      "sbom_provenance_refresh": "NOT_CREATED"
+      "status": "PASS_ACTIONS_ARTIFACT_ONLY",
+      "strict_v2_handoff_sha256": "07e0009c8d773402e25f2ab8cb823bafab738026439b8c60f5d509629b7955e9",
+      "sbom_provenance_refresh": "PASS_EXACT_CANDIDATE21",
+      "sbom_sha256": "c01234bf303b516764da9046fa08208b31126255355e68ca25b1f54180082738",
+      "provenance_sha256": "b6e63ae0708f23932de4e07039b3c99c8be892a779df6135450ea6717f1ad4ad",
+      "supply_validation_sha256": "9b9a68ef53e594ecb4cdb0549962a7c8a6f480a92e7129bae800e388a34f2118",
+      "manifest_sha256": "ce0b8586d4d9b5b625bbcd2c93b03fd783f89b4958a7fd79e58ef65b52c3dc6b",
+      "signature_sha256": "ef474e6e1e147093b8b15c3cdc29bd35b5779249854a63ef7d6535d2588c7a58",
+      "receipt_sha256": "aaa027cc5d71fd567c6f3c0b8a9e3b0e965a67760fd02d1769eb3d54062926f8",
+      "signing_key_id": "pokrov-release-2026-01",
+      "signer_run_id": 33586752995,
+      "signer_conclusion": "success",
+      "actions_artifact_id": 9830338475,
+      "actions_artifact_digest": "sha256:9bd2ac5e7e69722c143ec1a50fc7e24564396f6fec647f21a6a2a84188823568",
+      "actions_artifact_expires_at": "2026-09-16T03:22:09Z",
+      "promotion_authorized": false
     },
     "private_creation_manifest_sha256": "c79eb481c3ce0402edaf72c2a5083027481b5a8bc34511c1a694cb972f5331d6",
     "android_arm64": {
@@ -150,7 +164,7 @@
     ]
   },
   "blocking_dependencies": [
-    "candidate.21 lacks signed-index supply, exact Android runtime, fresh in-place Windows service-restart recovery, named-origin proof, guarded rollback and the final aggregate decision",
+    "candidate.21 signed-index supply is ready, but exact Android runtime, fresh in-place Windows service-restart recovery, named-origin proof, guarded rollback and the final aggregate decision remain open",
     "iOS production connectivity still requires on-device packet-tunnel proof plus reviewed entitlements",
     "the universal POKROV Core 1.1.0 macOS dylib still requires a macOS build and ABI probe",
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
@@ -166,6 +180,7 @@
     "Android build-tool future-support warning closed with Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0",
     "release-note guardrails recorded; post-announcement monitoring remains operator work",
     "POKROV 1.1.6 exact eight-asset GitHub digest, anonymous range-download verification, production handoff and authenticated/anonymous catalog checks PASS",
+    "candidate.21 strict-v2 handoff, refreshed SBOM/provenance and signed private release-index manifest validate from exact release-index source cae911e; output is ACTIONS_ARTIFACT_ONLY with promotion false",
     "Android 1.1.6 split APKs are production-signed; exact Huawei and clean Windows TUN/DNS remain manual"
   ],
   "ios_release_gates": [

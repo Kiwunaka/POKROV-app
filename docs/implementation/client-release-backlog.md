@@ -16,14 +16,14 @@ results belong in dated evidence and never become reusable release approval.
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
 | Working package target | `1.2.0+4050` |
 | Working source target state | `PRE_CANDIDATE_LOCAL` on exact client `1e164586…cadb`; the source seed remains distinct from candidate authority |
-| Current exact candidate | `pokrov-1.2.0-candidate.21`, app `1.2.0+4050`; six local private artifacts, bounded Windows 11 upgrade/default runtime PASS, promotion unauthorized |
+| Current exact candidate | `pokrov-1.2.0-candidate.21`, app `1.2.0+4050`; six signed-private artifacts, strict-v2/SBOM/provenance PASS, bounded Windows 11 upgrade/default runtime PASS, promotion unauthorized |
 | Candidate created | `false` |
 | Private candidate created | `true` for candidate.21 in the separate creation/cutover contract; the source seed remains pre-candidate by design |
-| Candidate-created scope | Candidate.21 binds exact platform/client/Core revisions and does not absorb later `main` commits. Candidate.20 remains the latest signed-index snapshot but is immutable `NO_GO`. |
-| Signed candidate contract | Candidate.21 strict-v2 handoff, refreshed SBOM/provenance and signed public-index receipt are not created; candidate.20 signed supply is predecessor history only. |
+| Candidate-created scope | Candidate.21 binds exact platform/client/Core revisions plus release-index signing source `cae911e…` and does not absorb later `main` commits. Candidate.20 is immutable signed `NO_GO` history. |
+| Signed candidate contract | `PASS_ACTIONS_ARTIFACT_ONLY`: handoff `07e0009c…`, SBOM `c01234bf…`, provenance `b6e63ae0…`, manifest/signature/receipt `ce0b8586…` / `ef474e6e…` / `aaa027cc…`; promotion false and no public assets. |
 | Public cutover allowed for a new candidate | `false` |
 | Google Play | `NOT_REQUESTED` |
-| Exact candidate Core artifact | POKROV Core `1.1.0` at `cd8f0f4…884d`; candidate.21 six private artifacts bind the reviewed Core source, while refreshed signed SBOM/provenance remain open |
+| Exact candidate Core artifact | POKROV Core `1.1.0` at `cd8f0f4…884d`; candidate.21 six private artifacts and refreshed signed SBOM/provenance bind the reviewed Core source |
 | Support-mode signing public pin | `PASS_SOURCE_CONTROL` — tracked key `pokrov-support-2026-08`; private/HMAC values are secret-only and not deployed |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Windows trusted-signing decision | `SKIPPED_BY_OWNER` for the exact `1.2.0` direct-download beta; mandatory SmartScreen warning; no trusted/Store/broad-stable claim |
@@ -32,11 +32,11 @@ results belong in dated evidence and never become reusable release approval.
 `config/release-handoff.seed.json` owns the public release and continuing
 development target. `config/cutover-readiness.seed.json` owns the current
 candidate and cutover verdict. Exact candidate.21 identity comes from the
-private creation manifest and cutover seed; the release-handoff seed's
-`candidate_created=false` applies only to continuing `main`. Candidate.21 is
-unpublished and unpromoted. Candidate.20 remains the latest signed-index
-snapshot and immutable `NO_GO`; candidates 17–19 and candidate.12 remain
-rejected history for their own bytes.
+private creation manifest, signed strict-v2 contract and cutover seed; the
+release-handoff seed's `candidate_created=false` applies only to continuing
+`main`. Candidate.21 is unpublished and unpromoted. Candidate.20 is immutable
+signed `NO_GO` history; candidates 17–19 and candidate.12 remain rejected
+history for their own bytes.
 
 ## Current Local Completion
 

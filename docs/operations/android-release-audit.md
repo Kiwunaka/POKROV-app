@@ -15,11 +15,11 @@ Older APK identities and device runs are retained separately as evidence.
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
 | Working package target | `1.2.0+4050` |
-| Exact replacement candidate | `pokrov-1.2.0-candidate.21`, build `4050`; local private, promotion unauthorized, exact Android install/runtime `NOT_RUN`; candidate.20 is the latest signed-index predecessor and immutable `NO_GO` |
+| Exact replacement candidate | `pokrov-1.2.0-candidate.21`, build `4050`; signed private, promotion unauthorized, exact Android install/runtime `NOT_RUN`; candidate.20 is immutable signed `NO_GO` history |
 | Package ID | `space.pokrov.pokrov_android_shell` |
 | Exact candidate source | Platform `e2608130…32c3`, client `1e164586…cadb`, Core `cd8f0f4…884d`; ARM64 APK `d5dd9905…693c`, `101366678` bytes, universal APK `396e8aca…1578`, `295370161` bytes, and x86_64 APK `fc6da2ca…51e5`, `109951989` bytes |
 | Exact candidate Core package | Secret-safe POKROV Core `1.1.0` from `cd8f0f4…884d`, AAR `2a9677d9…c6a69`; two builds are byte-identical and contain all four required ABIs |
-| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`; candidate.21 private artifact scan retains the source-bound trust root, while signed supply refresh remains open |
+| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`; candidate.21 signed supply and private artifact scan retain the source-bound trust root |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
 
@@ -35,9 +35,11 @@ These local contracts do not prove final APK bytes or physical behavior.
 
 Candidate.21 is local private with `promotion_authorized=false`. Its ARM64,
 ARMv7, universal and x86_64 APKs plus market AAB pass production-certificate
-identity and private creation binding. Its strict-v2 handoff, refreshed
-SBOM/provenance and signed release index are not created. Exact candidate.21
-LDPlayer install/launch and physical ARM64 install/runtime have not run. Older
+identity and private creation binding. Strict-v2 handoff `07e0009c…55e9`,
+refreshed SBOM/provenance and signed manifest/signature/receipt
+`ce0b8586…3dc6` / `ef474e6e…7a58` / `aaa027cc…926f` validate from exact
+release-index source `cae911e…`. Exact candidate.21 LDPlayer install/launch
+and physical ARM64 install/runtime have not run. Older
 candidate install, AWG, WARP, handoff, Doze, routing and endurance results do
 not transfer.
 
@@ -62,8 +64,8 @@ size `107419397`, SHA-256
 `2a9677d9e24ed7ef66d4e98f90e7033eb5450c9a2755f0fe6b8bba58036c6a69`,
 with all four required ABIs. The bytes are synchronized into the client source.
 Candidate.21 carries these exact Core bytes in build `4050`. Its five Android
-artifacts retain the production certificate lineage, but no exact candidate.21
-APK is installed or runtime-tested and signed-index supply remains open.
+artifacts retain the production certificate lineage and signed-index supply,
+but no exact candidate.21 APK is installed or runtime-tested.
 The candidate.16 installs below remain retained evidence for older bytes only.
 
 ## Exact Candidate.16 Physical Install Binding
