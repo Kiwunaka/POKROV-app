@@ -760,6 +760,13 @@ RuntimeResult RuntimeHost::Snapshot() const {
   return RuntimeResult{Status::kOk, SnapshotBody()};
 }
 
+RuntimeResult RuntimeHost::RecoverOnStartup() {
+  if (recovery_ == nullptr || !recovery_->RequiresRecovery()) {
+    return Snapshot();
+  }
+  return Initialize();
+}
+
 RuntimeResult RuntimeHost::Initialize() {
   if (initialized_) {
     return Snapshot();
@@ -782,14 +789,17 @@ RuntimeResult RuntimeHost::Initialize() {
                 ServiceEventOutcome::kFailed);
     return Fail(Status::kNotReady, error.c_str());
   }
+  initialized_ = true;
+  phase_ = Phase::kInitialized;
   const auto recovery_error = RecoverPendingRuntime();
   if (!recovery_error.empty()) {
+    phase_ = Phase::kRecoveryRequired;
+    RecordEvent(ServiceEvent::kRuntimeRecoveryRequired,
+                ServiceEventOutcome::kFailed);
     RecordEvent(ServiceEvent::kRuntimeInitialize,
                 ServiceEventOutcome::kFailed);
     return Fail(Status::kNotReady, recovery_error.c_str());
   }
-  initialized_ = true;
-  phase_ = Phase::kInitialized;
   failure_.clear();
   RecordEvent(ServiceEvent::kRuntimeInitialize,
               ServiceEventOutcome::kSucceeded);

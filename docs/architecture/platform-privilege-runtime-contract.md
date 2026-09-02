@@ -203,11 +203,14 @@ firewall policy uses a dynamic WFP session, so it is released with the service
 process and has no persistent firewall identifier to restore. The journal does
 not duplicate unchanged global proxy or firewall state.
 
-Failure, service restart or reboot resumes the same idempotent rollback. A
-failed Core stop or network restore leaves `recovery_required`, disables a new
-connect and permits a repeated disconnect/recovery attempt. A corrupted,
-partial or future journal is preserved and fails closed; it is not silently
-erased while POKROV-owned network state may remain.
+Failure, service restart or reboot resumes the same idempotent rollback. Before
+the Windows service accepts its first IPC client, it checks the durable journal
+and eagerly initializes Core only when pending recovery exists. A clean journal
+preserves lazy Core initialization. A failed Core stop or network restore leaves
+the initialized runtime in `recovery_required`, disables a new connect and
+permits a repeated disconnect/recovery attempt. A corrupted, partial or future
+journal is preserved and fails closed; it is not silently erased while
+POKROV-owned network state may remain.
 
 The boot marker is derived from system FILETIME minus Windows uptime, so a
 service restart in the same OS boot retains the same opaque boot correlation;
@@ -398,7 +401,7 @@ observability owners. Platform work must not create a competing pipeline.
 
 ## Rollout state
 
-As of 2026-09-01:
+As of 2026-09-02:
 
 - Windows per-session singleton, typed UI activation and tray-only startup are
   locally proved under WO-005A;
@@ -428,10 +431,12 @@ As of 2026-09-01:
   `330b87cb…587f` proves the bounded service-owned rule-set bundle on an
   isolated Windows 11 VM: four service-relative assets, ordinary UI to
   LocalSystem service, default connect, TUN, DNS, authenticated egress,
-  disconnect restoration, clean uninstall and public-1.1.6 migration. This
-  closes only that exact Windows 11 `WIN-003` slice; Windows 10, AWG 3.1/AWG2,
-  crash/reboot, connected uninstall, IPv6/leak, interactive SmartScreen and
-  trusted signing remain unproved;
+  disconnect restoration, clean uninstall and public-1.1.6 migration. A later
+  connected reboot restores the baseline and reconnects, but a forced service
+  termination leaves the durable journal at `committed` after SCM restarts the
+  service. Candidate.20 is therefore immutable `NO_GO`. Successor source now
+  invokes pending recovery before the first IPC client and keeps a failed
+  startup recovery retryable; exact successor VM proof is still required;
 - Android notification privacy and safe MTU policy are locally proved by
   Android JVM/source-contract tests plus managed-profile and widget tests;
   physical OEM/lockscreen and exact-candidate behavior remain unproved;

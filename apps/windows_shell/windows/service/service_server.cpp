@@ -304,6 +304,7 @@ DWORD RunPipeServer(const std::wstring& pipe_name,
                       CreateAuthenticatedEgressProbe(),
                       CreateRuntimeRecovery(runtime_root), runtime_root, true,
                       events);
+  runtime.RecoverOnStartup();
   do {
     const HANDLE pipe = ::CreateNamedPipeW(
         pipe_name.c_str(), PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,

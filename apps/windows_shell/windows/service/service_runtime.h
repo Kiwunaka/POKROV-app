@@ -65,6 +65,7 @@ class RuntimeHost {
   ~RuntimeHost();
 
   RuntimeResult Snapshot() const;
+  RuntimeResult RecoverOnStartup();
   RuntimeResult Initialize();
   RuntimeResult StageProfile(const std::string& body);
   RuntimeResult InvalidateProfile();

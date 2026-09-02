@@ -1,6 +1,6 @@
 # POKROV Client Release Backlog
 
-Last updated: 2026-09-01
+Last updated: 2026-09-02
 
 ## Document Status
 
@@ -15,8 +15,8 @@ results belong in dated evidence and never become reusable release approval.
 |---|---|
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
 | Working package target | `1.2.0+4049` |
-| Working source target state | `PRE_CANDIDATE_LOCAL` on continuing `main` |
-| Exact signed candidate | `pokrov-1.2.0-candidate.20`, app `1.2.0+4049`; private immutable candidate, `ACTIONS_ARTIFACT_ONLY`, promotion unauthorized; bounded Windows 11 default-path proof passes |
+| Working source target state | `PRE_CANDIDATE_LOCAL` on `codex/candidate21-startup-recovery`, pending review and promotion to continuing `main` |
+| Exact signed candidate | `pokrov-1.2.0-candidate.20`, app `1.2.0+4049`; private immutable `NO_GO`, promotion unauthorized; bounded default-path and reboot proof pass but service-restart durable recovery fails |
 | Candidate created | `false` |
 | Candidate-created scope | The machine-readable release-handoff source seed remains pre-candidate for continuing `main`; candidate.20 exists in the separate cutover/signed-index contract and does not absorb later `main` commits. |
 | Separate signed candidate contract | strict-v2 candidate.20 and signed public-index receipt exist outside the continuing-source release-handoff seed |
@@ -33,8 +33,8 @@ development target. `config/cutover-readiness.seed.json` owns the current
 candidate and cutover verdict. Exact candidate.20 identity comes from the
 signed internal release-index manifest/receipt and the cutover seed; the
 release-handoff seed's `candidate_created=false` applies only to continuing
-`main`. Candidate.20 remains unpublished and unpromoted. Candidates 17–19 and
-candidate.12 remain immutable rejected history for their own bytes.
+`main`. Candidate.20 remains unpublished, unpromoted and rejected. Candidates
+17–19 and candidate.12 remain immutable rejected history for their own bytes.
 
 ## Current Local Completion
 
@@ -133,9 +133,17 @@ candidate.12 remain immutable rejected history for their own bytes.
   `330b87cb…587f`, `29140987` bytes, proves `11/11` files, ordinary UI,
   LocalSystem service, authenticated IPC, default TUN/DNS/DE egress,
   disconnect restoration, clean uninstall and public-1.1.6 migration on the
-  isolated Windows 11 VM. This does not prove candidate.20 Android runtime,
-  Windows 10/AWG/recovery, named origins, provider/Operator/legal,
-  performance, rollback or final Gate F.
+  isolated Windows 11 VM. A connected reboot restores the exact baseline and
+  reconnects, but a forced service termination leaves the durable journal at
+  `committed` after SCM restart and the UI unavailable. Candidate.20 is
+  immutable `NO_GO`; process-owned tunnel disappearance is not proof that the
+  service resumed rollback.
+- Candidate.21 startup-recovery source checks the durable journal before the
+  first IPC client, preserves lazy Core initialization for a clean journal and
+  leaves failed startup recovery fail-closed and retryable. Focused native
+  recovery tests, all Windows service native test executables, Flutter static
+  analysis and all 23 Flutter tests pass locally. Review, merge, exact package
+  construction and the same connected service-restart VM replay remain open.
 - VLESS/Reality remains the baseline. AWG 3.1 is the preferred closed UDP lab
   transport and AWG2 its rollback. XHTTP is post-1.2.0 TLS/CDN reserve work;
   Hysteria2 stays default-off and advances only after a bounded lab shows a
@@ -254,32 +262,37 @@ runtime, rollback or promotion proof.
 | 5 | Strict-v2 candidate metadata | `PASS_SIGNED_CANDIDATE_20` | Handoff `a8720ce0…081d` binds build `4049`, exact four-source tuple, six artifacts, SBOM, provenance and the `11/11` Windows runtime manifest. |
 | 6 | Android exact-candidate build and signer | `PASS_EXACT_CANDIDATE_20_ARTIFACT_SIGNING; INSTALL_IDENTITY_OPEN` | Five Android artifacts are production-signed. ARM64 APK `8dfca42e…056c`, `101366678` bytes, and x86_64 APK `d8ae790d…264b1`, `109951989` bytes, still require exact installed-byte readback. |
 | 7 | Android device matrix | `NOT_RUN_EXACT_CANDIDATE_20` | LDPlayer install/launch and physical Wi-Fi/Beeline default, AWG, WARP, per-app, handoff, IPv6/leak, UDP53/MTU, OEM and endurance proof remain open. Host-tunneled emulator networking is excluded. |
-| 8 | Windows exact-candidate package | `PASS_EXACT_CANDIDATE_20_WINDOWS11_DEFAULT_ONLY` | Setup `330b87cb…587f` passes `11/11`, service/IPC, default TUN/DNS/DE egress, disconnect restoration, clean uninstall and public-1.1.6 migration. Windows 10, AWG, restart/recovery, connected uninstall, IPv6/leak and SmartScreen remain open. |
-| 9 | Windows unsigned-beta warning and clean-host recovery | `OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY; LIVE_RECOVERY_OPEN` | The direct-beta warning/SmartScreen exception is explicit. Authenticode is `NotSigned`; trusted/Store/broad-stable claims remain forbidden. Connected recovery, sleep/reboot/crash, connected uninstall and interactive SmartScreen remain manual. |
+| 8 | Windows exact-candidate package | `FAIL_EXACT_CANDIDATE_20_SERVICE_RESTART_RECOVERY` | Setup `330b87cb…587f` passes `11/11`, service/IPC, default TUN/DNS/DE egress, disconnect restoration, connected reboot, clean uninstall and public-1.1.6 migration. Forced service termination leaves the durable journal committed after SCM restart, so candidate.20 is rejected. |
+| 9 | Windows unsigned-beta warning and clean-host recovery | `OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY; CANDIDATE_20_RECOVERY_FAIL` | The direct-beta warning/SmartScreen exception is explicit. Authenticode is `NotSigned`; trusted/Store/broad-stable claims remain forbidden. Candidate.21 source correction needs an exact rebuilt setup and connected service-restart replay before the remaining matrix. |
 | 10 | Hosted cross-repository CI | `PASS_EXACT_CANDIDATE_20_REPLAY_AND_INDEX_SIGNING` | Exact hosted tuple replay `33511744299` and signed release-index run `33509003189` execute real steps and pass. This does not replace device/live gates. |
 | 11 | Runtime/public readback and rollback | `CANDIDATE_20_NOT_RUN; LIVE_NOT_AUTHORIZED` | Older disposable reversal evidence does not approve candidate.20. No tag, public assets, live stable-pointer switch, anonymous public readback or runtime kill rollback exists. |
-| 12 | Promotion and go/no-go | `BLOCKED_EXACT_CANDIDATE_20_OPEN_GATES` | Candidate.20 remains private with Gate F not regenerated. Exact Android, remaining Windows, origins, provider/Operator/legal, performance, rollback and final no-open-P0/privacy evidence must close before a decision. Gate G, public release and stable pointer are unauthorized. |
+| 12 | Promotion and go/no-go | `NO_GO_EXACT_CANDIDATE_20` | Candidate.20 remains private and immutable after the Windows recovery failure. Gate G, public release and stable pointer are unauthorized. A successor must be cut from corrected source and receive its own exact evidence. |
 
 ## Next Action Order
 
-1. Install and hash-bind the exact candidate.20 ARM64 artifact on the physical
-   Android device, then run bounded Wi-Fi/Beeline default and explicitly
-   selected lab checks without transferring older candidate results.
-2. Run the remaining candidate.20 Windows 10, AWG, sleep/reboot/crash,
+1. Review and merge the candidate.21 startup-recovery source correction, then
+   create a new exact six-artifact candidate from that merged tuple.
+2. Install and hash-bind the successor Windows setup in the isolated VM. Prove
+   the connected forced-service-restart journal cleanup and reconnect before
+   spending time on the broader matrix.
+3. Run the successor Windows 10, AWG 3.1/AWG2, sleep/resume,
    connected-uninstall, IPv6/leak and interactive SmartScreen matrix only in
    the isolated VM; keep the main host network untouched.
-3. Retain authenticated current/Brain/RU-origin evidence separately. Bind
+4. Install and hash-bind the successor ARM64 artifact on the physical Android
+   device, then run bounded Wi-Fi/Beeline default and explicitly selected lab
+   checks without transferring older candidate results.
+5. Retain authenticated current/Brain/RU-origin evidence separately. Bind
    Linux Core/TUN ownership to the typed transaction and add durable recovery,
    but run native mutation/restoration, packaging and VM proof only for its
    separate conditional beta lane.
-4. Complete provider/payment/PostgreSQL, Operator OIDC/RBAC/action-intent,
+6. Complete provider/payment/PostgreSQL, Operator OIDC/RBAC/action-intent,
    legal/commercial, comparable performance and final no-open-P0/privacy
-   attestations for candidate.20.
-5. Regenerate Gate F only after exact retained candidate.20 evidence changes;
+   attestations for the successor candidate.
+7. Regenerate Gate F only after exact successor evidence changes;
    every skip, inaccessible environment and unrun manual row remains non-PASS.
-6. Request separate authority for public same-byte candidate publication,
+8. Request separate authority for public same-byte candidate publication,
    anonymous readback, rollback drill and promotion.
-7. Provision trusted Windows signing later before any signed, Store or
+9. Provision trusted Windows signing later before any signed, Store or
    broad-stable Windows claim.
 
 ## Retained History
