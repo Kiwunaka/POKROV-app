@@ -15,11 +15,11 @@ Older APK identities and device runs are retained separately as evidence.
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
 | Working package target | `1.2.0+4050` |
-| Exact replacement candidate | `pokrov-1.2.0-candidate.20`, build `4049`; signed manifest `046d3312…770a`, detached signature `f5e81d31…90ea`, promotion unauthorized and immutable `NO_GO` after the Windows recovery failure; exact Android install/runtime is `NOT_RUN` |
+| Exact replacement candidate | `pokrov-1.2.0-candidate.21`, build `4050`; local private, promotion unauthorized, exact Android install/runtime `NOT_RUN`; candidate.20 is the latest signed-index predecessor and immutable `NO_GO` |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Exact candidate source | Platform `d6898e6…967`, client `8ab9815…6e8`, Core `cd8f0f4…884d`, signed release-index source `61ad0b0…483`; ARM64 APK `8dfca42e…056c`, `101366678` bytes, universal APK `927270b3…48a8`, `295370161` bytes, and x86_64 APK `d8ae790d…264b1`, `109951989` bytes |
+| Exact candidate source | Platform `e2608130…32c3`, client `1e164586…cadb`, Core `cd8f0f4…884d`; ARM64 APK `d5dd9905…693c`, `101366678` bytes, universal APK `396e8aca…1578`, `295370161` bytes, and x86_64 APK `fc6da2ca…51e5`, `109951989` bytes |
 | Exact candidate Core package | Secret-safe POKROV Core `1.1.0` from `cd8f0f4…884d`, AAR `2a9677d9…c6a69`; two builds are byte-identical and contain all four required ABIs |
-| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`; candidate.20 signed supply retains the exact support trust root |
+| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`; candidate.21 private artifact scan retains the source-bound trust root, while signed supply refresh remains open |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
 
@@ -31,23 +31,24 @@ schema to two bounded files under the app-private no-backup directory. No raw
 message, URL, profile, token, endpoint or stack is accepted by that journal.
 These local contracts do not prove final APK bytes or physical behavior.
 
-## Exact Candidate.20 Android Boundary
+## Exact Candidate.21 Android Boundary
 
-Candidate.20 is a private immutable Actions artifact with
-`promotion_authorized=false`. Its ARM64, ARMv7, universal, x86_64 APKs and
-market AAB pass production-signing and signed-index identity. Exact
-candidate.20 LDPlayer install/launch and physical ARM64 install/runtime have
-not run. Older candidate install, AWG, WARP, handoff, Doze, routing and
-endurance results do not transfer.
+Candidate.21 is local private with `promotion_authorized=false`. Its ARM64,
+ARMv7, universal and x86_64 APKs plus market AAB pass production-certificate
+identity and private creation binding. Its strict-v2 handoff, refreshed
+SBOM/provenance and signed release index are not created. Exact candidate.21
+LDPlayer install/launch and physical ARM64 install/runtime have not run. Older
+candidate install, AWG, WARP, handoff, Doze, routing and endurance results do
+not transfer.
 
 The current host routes through a separate TUN, so any future LDPlayer network
 result from that host is excluded from release credit. Emulator credit is
 limited to exact APK install, version/byte identity, launch and process/crash
 checks until an isolated network environment is used. Physical Android must
 first hash-bind the installed base APK to ARM64 artifact
-`8dfca42e…056c`, then retain Wi-Fi and Beeline default/lab/runtime evidence.
+`d5dd9905…693c`, then retain Wi-Fi and Beeline default/lab/runtime evidence.
 
-Gate F is not regenerated for candidate.20. PB-14 currently fails closed at
+Gate F is not run for candidate.21. PB-14 currently fails closed at
 the missing exact installed Android identity boundary; this is an unmet gate,
 not a candidate defect. Gate G, public assets, Store submission and stable
 promotion remain unauthorized.
@@ -60,9 +61,9 @@ AWG2/AWG 3.1 lifecycle coverage. Two Android builds are byte-identical: AAR
 size `107419397`, SHA-256
 `2a9677d9e24ed7ef66d4e98f90e7033eb5450c9a2755f0fe6b8bba58036c6a69`,
 with all four required ABIs. The bytes are synchronized into the client source.
-Candidate.20 carries these exact Core bytes in retained build `4049`. Its five
-Android artifacts are production-signed, but no exact candidate.20 APK is
-installed or runtime-tested.
+Candidate.21 carries these exact Core bytes in build `4050`. Its five Android
+artifacts retain the production certificate lineage, but no exact candidate.21
+APK is installed or runtime-tested and signed-index supply remains open.
 The candidate.16 installs below remain retained evidence for older bytes only.
 
 ## Exact Candidate.16 Physical Install Binding

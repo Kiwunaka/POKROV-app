@@ -1,6 +1,6 @@
 {
   "lane": "POKROV-app/main",
-  "status": "retained_1_1_6_public_candidate20_signed_private_no_go_service_restart_recovery",
+  "status": "retained_1_1_6_public_candidate21_private_windows_upgrade_default_pass_promotion_blocked",
   "public_cutover_allowed": false,
   "last_updated": "2026-09-02",
   "latest_repo_backed_release": {
@@ -13,53 +13,56 @@
     "live_app_session_download_smoke": "PASS_1_1_6_REQUIRED_UPDATE_FOR_1_1_5_AND_NONE_FOR_1_1_6_ANDROID_WINDOWS_EXACT_METADATA"
   },
   "exact_replacement_candidate": {
-    "id": "pokrov-1.2.0-candidate.20",
+    "id": "pokrov-1.2.0-candidate.21",
     "version_name": "1.2.0",
-    "platform_build": 4049,
-    "state": "SIGNED_PRIVATE_ACTIONS_ARTIFACT_NO_GO_SERVICE_RESTART_RECOVERY",
+    "platform_build": 4050,
+    "state": "PRIVATE_LOCAL_WINDOWS11_UPGRADE_DEFAULT_RUNTIME_PASS_SIGNED_SUPPLY_NOT_CREATED",
     "promotion_authorized": false,
     "public_release_created": false,
     "store_object_created": false,
     "stable_pointer_mutated": false,
     "sources": {
-      "platform": "d6898e63c5c9ab7dd267b9d5150b54196f99d967",
-      "client": "8ab9815ab98f111140c0c8ce4e289555652d56e8",
+      "platform": "e2608130e85d9a0f8fa4b920f46cf3d7679332c3",
+      "client": "1e164586d741484b5ae8fb2ee267ef5dd813cadb",
       "core": "cd8f0f4169d570d693992a959d81d17c2c44884d",
-      "release_index": "61ad0b0e0780775b8f95f1a567e94d75d198a483"
+      "release_index": "NOT_CREATED"
     },
     "signed_contract": {
-      "manifest_sha256": "046d331274da76ba524f824debb17c4abc080657456c41099246589cc3c1770a",
-      "signature_sha256": "f5e81d310fa18b464421afe4c0da010e3b9c112c9affba64e7d1631b4f6890ea",
-      "receipt_sha256": "47429c2cb3b77520257bb63e7a41652d3744e0a4f710589bf4c20eec289b9479"
+      "status": "NOT_CREATED",
+      "strict_v2_handoff": "NOT_CREATED",
+      "sbom_provenance_refresh": "NOT_CREATED"
     },
+    "private_creation_manifest_sha256": "c79eb481c3ce0402edaf72c2a5083027481b5a8bc34511c1a694cb972f5331d6",
     "android_arm64": {
-      "sha256": "8dfca42e13eb4d64c9d627f377d8a201ad2a74fa0ca64c11e45c914d9a89056c",
+      "sha256": "d5dd9905bafdc30809a1199dde5961129680a03513b60a6e46f323a6a583693c",
       "size_bytes": 101366678,
       "signing": "PASS",
       "install_identity": "NOT_RUN",
       "physical_runtime": "NOT_RUN"
     },
     "android_x86_64": {
-      "sha256": "d8ae790d93a956e31c40778b769f7af69e6658d1e10f346d68096e7e764264b1",
+      "sha256": "fc6da2ca396d3e81c4bff1dc3bf7f40700fbf5fdc7bf0d76742e5d80984751e5",
       "size_bytes": 109951989,
       "signing": "PASS",
-      "ldplayer_rehearsal": "NOT_RUN_EXACT_CANDIDATE20_HOST_TUN_NETWORK_CREDIT_EXCLUDED",
+      "ldplayer_rehearsal": "NOT_RUN_EXACT_CANDIDATE21_HOST_TUN_NETWORK_CREDIT_EXCLUDED",
       "ordinary_current_origin": "NOT_RUN"
     },
     "windows_setup": {
-      "sha256": "330b87cb074a04f43cb7004e4c03cdd0c692b54397acbc223f25dd6e0be8587f",
-      "size_bytes": 29140987,
+      "sha256": "87f90be11a927c271c84e8042f17e052ee1070a1ac4923fa3949d6e19c00dff3",
+      "size_bytes": 29143633,
+      "manifest_sha256": "665f77f096a54b9fe5ec375149ebadae4e0871165dcba8f19c3fe6fbf6be2919",
       "signing": "SKIPPED_BY_OWNER_DIRECT_BETA_ONLY",
       "environment": "ISOLATED_WINDOWS_11_VM",
-      "current_host_smoke": "PASS_EXACT_WINDOWS11_VM_INSTALL_11_OF_11_SERVICE_AUTHENTICATED_IPC_DEFAULT_TUN_DNS_EGRESS_ROLLBACK_UNINSTALL_AND_1_1_6_MIGRATION",
-      "clean_vm_live_network": "PASS_EXACT_CANDIDATE20_WINDOWS11_DEFAULT_PATH_ONLY",
-      "connected_reboot": "PASS_EXACT_CANDIDATE20_PRESHUTDOWN_ROLLBACK_BASELINE_RESTORE_AND_RECONNECT",
-      "forced_service_restart_recovery": "FAIL_EXACT_CANDIDATE20_DURABLE_JOURNAL_REMAINS_COMMITTED_AFTER_SCM_RESTART",
-      "proof_ceiling": "CANDIDATE20_NO_GO_PROCESS_OWNED_TUN_DISAPPEARANCE_DOES_NOT_PROVE_DURABLE_RECOVERY"
+      "upgrade_startup_recovery": "PASS_EXACT_CANDIDATE21_FROM_CANDIDATE20_COMMITTED_JOURNAL_TO_CLEAN",
+      "non_elevated_ui_service": "PASS_EXACT_CANDIDATE21_11_OF_11_ORDINARY_UI_LOCAL_SYSTEM_SERVICE",
+      "clean_vm_live_network": "PASS_EXACT_CANDIDATE21_WINDOWS11_DEFAULT_TUN_ROUTE_DNS_DE_EGRESS_AND_RU_BASELINE_RESTORE",
+      "connected_reboot": "NOT_RUN_EXACT_CANDIDATE21",
+      "forced_service_restart_recovery": "NOT_RUN_FRESH_IN_PLACE_EXACT_CANDIDATE21",
+      "proof_ceiling": "WINDOWS11_UPGRADE_RECOVERY_AND_DEFAULT_CONNECT_DISCONNECT_ONLY"
     },
     "gate_f": {
-      "decision": "NO_GO_WINDOWS_SERVICE_RESTART_RECOVERY",
-      "evidence_generation": "NOT_REGENERATED_CANDIDATE20_ALREADY_REJECTED",
+      "decision": "NOT_RUN",
+      "evidence_generation": "NOT_RUN_CANDIDATE21_AGGREGATE_INCOMPLETE",
       "counts_authoritative": false,
       "required": 19,
       "pass": 0,
@@ -68,13 +71,21 @@
       "gate_g_authorized": false
     }
   },
+  "retained_signed_predecessor": {
+    "id": "pokrov-1.2.0-candidate.20",
+    "platform_build": 4049,
+    "state": "SIGNED_PRIVATE_NO_GO_SERVICE_RESTART_RECOVERY",
+    "manifest_sha256": "046d331274da76ba524f824debb17c4abc080657456c41099246589cc3c1770a",
+    "signature_sha256": "f5e81d310fa18b464421afe4c0da010e3b9c112c9affba64e7d1631b4f6890ea",
+    "receipt_sha256": "47429c2cb3b77520257bb63e7a41652d3744e0a4f710589bf4c20eec289b9479"
+  },
   "release_rollback": {
     "catalog": "config/release-rollback-catalog.seed.json",
     "stable_pointer": "artifacts/releases/release-handoff.json",
     "retained_target": "1.1.6+20260819",
     "source_contract": "PASS_LOCAL",
     "synthetic_pointer_reversal": "PASS_LOCAL",
-    "exact_candidate_drill": "NOT_RUN",
+    "exact_candidate_drill": "NOT_RUN_CANDIDATE21",
     "mutation_authority": "NOT_AUTHORIZED"
   },
   "android_release": {
@@ -125,8 +136,8 @@
       "smartscreen_warning_required": true
     },
     "blocked_on": [
-      "candidate.20 is rejected because durable recovery does not resume after SCM restarts the service; candidate.21 exact setup and replay are required before the remaining Windows matrix",
-      "Windows 10, AWG 3.1/AWG2, sleep/resume, connected uninstall, IPv6/leak and interactive SmartScreen proof for the successor candidate",
+      "fresh in-place candidate.21 forced service termination and SCM restart recovery plus reconnect",
+      "Windows 10, AWG 3.1/AWG2, sleep/resume, connected reboot, connected uninstall, IPv6/leak and interactive SmartScreen proof for candidate.21",
       "trusted signing and SmartScreen reputation for later broad distribution"
     ],
     "accepted_evidence": [
@@ -134,11 +145,12 @@
       "unsigned publisher warning accepted by owner for the 1.1.6 outside-store stable-direct wave",
       "Windows 1.1.6 production setup, portable ZIP and manifest match exact public GitHub sizes and SHA-256",
       "exact candidate.20 Windows 11 VM default connect proves ordinary UI, LocalSystem service, authenticated IPC, TUN, managed DNS, authenticated DE egress, disconnect rollback, clean uninstall and public 1.1.6 migration",
-      "exact candidate.20 connected reboot restores the baseline and reconnects, but forced service termination leaves the durable journal committed after SCM restart and rejects the candidate"
+      "exact candidate.20 connected reboot restores the baseline and reconnects, but forced service termination leaves the durable journal committed after SCM restart and rejects the candidate",
+      "exact private candidate.21 setup upgrades from the retained committed journal to clean, validates 11 of 11 files, starts the ordinary UI and LocalSystem service, reaches Germany through sing-tun and restores egress, route, DNS and adapter fingerprints to the RU baseline after disconnect"
     ]
   },
   "blocking_dependencies": [
-    "candidate.20 is immutable NO_GO after the exact Windows service-restart recovery failure; candidate.21 must be built from corrected source and receive independent exact evidence before any new cutover decision",
+    "candidate.21 lacks signed-index supply, exact Android runtime, fresh in-place Windows service-restart recovery, named-origin proof, guarded rollback and the final aggregate decision",
     "iOS production connectivity still requires on-device packet-tunnel proof plus reviewed entitlements",
     "the universal POKROV Core 1.1.0 macOS dylib still requires a macOS build and ABI probe",
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",

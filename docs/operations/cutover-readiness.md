@@ -27,9 +27,10 @@ contracts. Do not select the most optimistic status.
 | Retained public release | Android and Windows `1.1.6` |
 | New working target | `1.2.0+4050` |
 | Continuing source target | `PRE_CANDIDATE_LOCAL` on `POKROV-app/main` |
-| Exact signed candidate | `pokrov-1.2.0-candidate.20`, app `1.2.0+4049`; private immutable `NO_GO`, promotion false, after the exact Windows service-restart recovery failure below |
-| Candidate/current-main boundary | Candidate.20 remains the latest exact candidate but is rejected. Later client `main` commits do not alter or receive credit for its exact bytes. |
-| New public cutover | `NO_GO_EXACT_CANDIDATE_20`; successor not yet created |
+| Current exact candidate | `pokrov-1.2.0-candidate.21`, app `1.2.0+4050`; six local private artifacts, Windows 11 upgrade/default runtime PASS, promotion false |
+| Latest signed-index predecessor | Candidate.20 remains the latest signed snapshot and is immutable `NO_GO`; its evidence does not alter candidate.21 or receive current PASS credit. |
+| Candidate/current-main boundary | Candidate.21 binds exact client `1e164586…cadb`; later `main` commits do not alter or receive credit for its bytes. |
+| New public cutover | `BLOCKED_CANDIDATE_21_AGGREGATE_INCOMPLETE`; Gate F not run |
 | Planned distribution if approved | Android direct stable target; Windows direct unsigned beta with mandatory SmartScreen warning; stores `NOT_REQUESTED`. No new public claim exists yet. |
 
 The existing `1.1.6` publication does not approve new `1.2.0` bytes. Its
@@ -37,16 +38,16 @@ signing, device, runtime and origin evidence cannot be reused for promotion.
 The continuing client seed describes the `1.2.0+4050` development line with
 Core `cd8f0f4…884d`; its `candidate_created=false` describes continuing `main`,
 not the separate signed candidate contract. `config/cutover-readiness.seed.json`
-now binds immutable private candidate.20: platform `d6898e6…967`, client
-`8ab9815…6e8`, Core `cd8f0f4…884d` and release-index source `61ad0b0…483`.
-Candidate.20 passes signed supply and exact hosted replay. Its bounded Windows
-11 default path also passes install, ordinary UI to LocalSystem service,
-authenticated IPC, TUN, managed DNS, authenticated DE egress, disconnect
-rollback, clean uninstall and public-1.1.6 migration. A connected reboot
-restores the baseline and reconnects, but a forced service termination leaves
-the durable journal at `committed` after SCM restarts the service. Candidate.20
-is therefore immutable `NO_GO`. Candidates 17–19 remain retained immutable
-failure history and transfer no release credit.
+now binds local private candidate.21: platform `e2608130…32c3`, client
+`1e164586…cadb` and Core `cd8f0f4…884d`. Six build-4050 artifacts exist. The
+exact Windows setup upgrades candidate.20's retained committed journal to
+`clean`, validates `11/11` files, starts the ordinary UI and LocalSystem
+service, reaches Germany through `sing-tun`, changes route/DNS and restores
+egress, route, DNS and adapter fingerprints/counts exactly to the RU baseline
+after disconnect. Candidate.21 has no strict-v2 handoff, refreshed
+SBOM/provenance or signed release index and remains unpublished and
+unpromoted. Candidate.20 is the latest signed snapshot but immutable `NO_GO`;
+candidates 17–19 remain retained failure history.
 
 ## Current 1.2.0 Gate Matrix
 
@@ -57,44 +58,44 @@ failure history and transfer no release credit.
 | Stable pointer and rollback catalog | `PASS_LOCAL` | Retained `1.1.6` pointer matches its exact versioned handoff; isolated A→B→A proves optimistic lock, atomic replace, backup, receipt and byte-identical reversal. |
 | Operational producer/privacy contract | `PASS_LOCAL` | Auth, entitlement, performance, support and Android count-only routing producers pass focused client/platform tests; exact-candidate runtime proof remains later. |
 | Temporary support mode and encrypted export | `PASS_LOCAL` | Signed exact-audience activation, explicit consent, persistent indicator, nonce/TTL/cumulative caps, no-upload short code and encrypted-only Android/Windows export pass local source/widget/unit contracts; exact-candidate physical host proof remains later. |
-| Clean frozen revisions | `PASS_EXACT_CANDIDATE_20_TUPLE` | Signed candidate.20 binds platform `d6898e6…967`, client `8ab9815…6e8`, Core `cd8f0f4…884d` and release-index source `61ad0b0…483`. Paid GitHub branch protection remains outside the owner-solo lane. |
-| Release index | `PASS_SIGNED_CANDIDATE_20_CONTRACT` | Manifest `046d3312…770a`, detached signature `f5e81d31…90ea`, receipt `47429c2c…9479`, keyring and six artifact identities validate. Promotion is false and no tag/public assets/stable switch exists. |
-| Core replacement | `PASS_EXACT_CANDIDATE_20_ARTIFACTS` | Candidate.20 binds Core `cd8f0f4…884d`, reproducible AAR `2a9677d9…c6a69`, DLL `f284fa88…8204`, unchanged Cronet `8ef1f8bb…a6f7`, 352-component SBOM and six-subject provenance. |
-| AWG lifecycle | `CANDIDATE_20_NOT_RUN; RETAINED_HISTORY_ONLY` | Older candidate AWG2/AWG3.1 observations do not transfer. Exact candidate.20 Android and Windows protocol/runtime coverage remains open. |
-| AWG Windows app/service path | `CANDIDATE_20_NO_GO_BEFORE_AWG` | Candidate.20 proves the Windows 11 default path and connected reboot, but fails service-restart durable recovery. AWG2/AWG3.1 and the remaining matrix move to a successor. |
+| Clean frozen revisions | `PASS_EXACT_CANDIDATE_21_TUPLE_PRIVATE` | Candidate.21 binds platform `e2608130…32c3`, client `1e164586…cadb` and Core `cd8f0f4…884d`; hosted client main run `33576468801` passes. Paid GitHub branch protection remains outside the owner-solo lane. |
+| Release index | `NOT_CREATED_EXACT_CANDIDATE_21` | Candidate.20's signed manifest remains rejected predecessor evidence. Candidate.21 strict-v2 handoff, refreshed SBOM/provenance, signed manifest/signature/receipt and public assets remain absent. |
+| Core replacement | `PASS_EXACT_CANDIDATE_21_PRIVATE_ARTIFACTS` | All candidate.21 Android/Windows artifacts bind Core `cd8f0f4…884d`; the six private artifact hashes and Windows `11/11` manifest validate. Refreshed signed supply remains open. |
+| AWG lifecycle | `CANDIDATE_21_NOT_RUN; RETAINED_HISTORY_ONLY` | Older candidate AWG2/AWG3.1 observations do not transfer. Exact candidate.21 Android and Windows protocol/runtime coverage remains open. |
+| AWG Windows app/service path | `CANDIDATE_21_NOT_RUN` | Candidate.21 proves only the default Windows path and upgrade-time recovery. AWG2/AWG3.1 plus fresh in-place service-restart recovery remain open. |
 | External Smart-DNS lab | `PASS_LIVE_SERVER_ROLLBACK_AND_THREE_ORIGINS; CLIENT_DEFAULT_OFF` | `dns.pokrov.space` is authoritative, the owned `it` frontend/backend and certificate are live, receipt-bound rollback/re-apply passes, and bounded DoH plus ChatGPT/Gemini/Xbox TLS/SNI checks pass from current, Brain and RU origins. Client selection remains disabled and no device/session/leak/load claim transfers. |
-| Candidate.20 LDPlayer | `NOT_RUN; HOST_TUN_NETWORK_CREDIT_EXCLUDED` | Exact x86_64 APK `d8ae790d…264b1`, `109951989` bytes, is signed but has no candidate.20 install/launch readback. Network results from host-tunneled LDPlayer cannot receive release credit. |
-| Candidate handoff | `PASS_SIGNED_PRIVATE_CANDIDATE_20` | Handoff `a8720ce0…081d` binds build `4049`, exact four-source tuple, six artifacts, SBOM, provenance and the `11/11` Windows runtime manifest; output is artifact-only and promotion remains false. |
-| Android artifact/signing | `PASS_EXACT_CANDIDATE_20_SIGNING; INSTALL_IDENTITY_NOT_RUN` | Five candidate.20 Android artifacts are production-signed. Exact x86_64/ARM64 installed-byte identity and runtime remain open. |
-| Android device proof | `NOT_RUN_EXACT_CANDIDATE_20` | Physical Wi-Fi/Beeline default, AWG, WARP, per-app, handoff, IPv6/leak, UDP53/MTU, OEM and endurance coverage remain open. |
-| Android OEM limitations | `MANUAL_OWNER_TEST` | Candidate.20 background, screen-off, tile/notification, permission revoke, Doze/standby and broader OEM/endurance coverage remain manual. |
-| Windows package/signing | `FAIL_EXACT_CANDIDATE_20_SERVICE_RESTART_RECOVERY`; signing `SKIPPED_BY_OWNER` | Setup `330b87cb…587f`, `29140987` bytes, passes `11/11`, the bounded default path and connected reboot, but fails durable recovery after SCM restart. The direct-beta SmartScreen warning remains mandatory for a successor. |
-| Windows clean-host proof | `NO_GO_EXACT_CANDIDATE_20_SERVICE_RESTART_RECOVERY` | Route, DNS and egress return because process-owned tunnel state disappears, but the journal remains committed and the restarted runtime is unavailable. Candidate.21 source correction still needs exact setup/VM proof. |
-| Linux client | `IMPLEMENTED_PARTIAL_SOURCE_ONLY; NOT_IN_CANDIDATE_20` | The non-root UI/system daemon, bounded IPC, polkit and journald exist. A dormant typed NetworkManager/resolved/nft transaction with reverse fault recovery is source-tested but not wired to `connect`; native mutation/restoration, packages, signing and clean-VM proof remain open. |
+| Candidate.21 LDPlayer | `NOT_RUN; HOST_TUN_NETWORK_CREDIT_EXCLUDED` | Exact x86_64 APK `fc6da2ca…51e5`, `109951989` bytes, is signed but has no candidate.21 install/launch readback. Host-tunneled emulator networking receives no release credit. |
+| Candidate handoff | `NOT_CREATED_EXACT_CANDIDATE_21` | Private creation manifest `c79eb481…31d6` binds build `4050` and six artifacts; strict-v2 handoff, SBOM/provenance refresh and signed release index remain absent. |
+| Android artifact/signing | `PASS_EXACT_CANDIDATE_21_PRIVATE_SIGNING; INSTALL_IDENTITY_NOT_RUN` | Five candidate.21 Android artifacts retain production certificate SHA-256 `0A0602A7…2500`. Exact x86_64/ARM64 installed-byte identity and runtime remain open. |
+| Android device proof | `NOT_RUN_EXACT_CANDIDATE_21` | Physical Wi-Fi/Beeline default, AWG, WARP, per-app, handoff, IPv6/leak, UDP53/MTU, OEM and endurance coverage remain open. |
+| Android OEM limitations | `MANUAL_OWNER_TEST` | Candidate.21 background, screen-off, tile/notification, permission revoke, Doze/standby and broader OEM/endurance coverage remain manual. |
+| Windows package/signing | `PASS_EXACT_CANDIDATE_21_PRIVATE_UPGRADE_DEFAULT_RUNTIME`; signing `SKIPPED_BY_OWNER` | Setup `87f90be1…dff3`, `29143633` bytes, validates `11/11`, upgrade-time startup recovery and the bounded default path. Fresh in-place service-restart recovery and the remaining matrix stay open; SmartScreen warning is mandatory. |
+| Windows clean-host proof | `PASS_EXACT_CANDIDATE_21_BOUNDED_WINDOWS11` | Ordinary UI/LocalSystem service, upgrade recovery, default TUN/route/DNS/DE egress and exact RU baseline restoration pass. This is not fresh-profile, Windows 10 or full recovery-matrix proof. |
+| Linux client | `IMPLEMENTED_PARTIAL_SOURCE_ONLY; NOT_SHIPPED_IN_CANDIDATE_21` | The non-root UI/system daemon, bounded IPC, polkit and journald exist. A dormant typed NetworkManager/resolved/nft transaction with reverse fault recovery is source-tested but not wired to `connect`; native mutation/restoration, packages, signing and clean-VM proof remain open. |
 | Apple native release | `NOT_REQUESTED` | Apple remains readiness-only for this release. |
-| RU-origin proof | `CANDIDATE_20_NOT_RUN; OLDER_HISTORY_ONLY` | Older RU bundles and Pi plans do not transfer. No candidate.20 authenticated RU-origin app/runtime/admin readback exists. |
-| Hosted CI | `PASS_EXACT_CANDIDATE_20_REPLAY_AND_INDEX_SIGNING` | Signed-index run `33509003189` and post-build exact-tuple replay `33511744299` pass real steps for platform `d6898e6…`, client `8ab9815…` and Core `cd8f0f4…`. |
-| Runtime sync | `CANDIDATE_20_NO_GO_NOT_PROMOTED` | Candidate.20 remains private and artifact-only. No public runtime switch, stable pointer or post-promotion readback exists. |
-| Exact-candidate rollback drill | `CANDIDATE_20_NOT_RUN` | Older reversal evidence does not approve candidate.20. Guarded pointer/runtime rollback plus current/Brain/RU readback and health remain open. |
-| Final go/no-go | `NO_GO_EXACT_CANDIDATE_20` | Signed supply, bounded default path and connected reboot pass, but service-restart durable recovery fails. Gate F is not regenerated because the candidate is already rejected. Gate G, public release, Store object and stable pointer are unauthorized. |
+| RU-origin proof | `CANDIDATE_21_NOT_RUN; OLDER_HISTORY_ONLY` | Older RU bundles and Pi plans do not transfer. No candidate.21 authenticated RU-origin app/runtime/admin readback exists. |
+| Hosted CI | `PASS_EXACT_CLIENT_MAIN_CANDIDATE_21_SOURCE` | Client main run `33576468801` passes for exact client `1e164586…cadb`; candidate.21 signed-index creation/replay remains absent. |
+| Runtime sync | `CANDIDATE_21_PRIVATE_NOT_PROMOTED` | Candidate.21 remains local private. No public runtime switch, stable pointer or post-promotion readback exists. |
+| Exact-candidate rollback drill | `CANDIDATE_21_NOT_RUN` | Older reversal evidence does not approve candidate.21. Guarded pointer/runtime rollback plus current/Brain/RU readback and health remain open. |
+| Final go/no-go | `NOT_RUN_EXACT_CANDIDATE_21` | Windows bounded runtime passes, but signed supply and the Android/origin/rollback/aggregate matrix are incomplete. Gate F is deliberately not run; Gate G, public release, Store object and stable pointer are unauthorized. |
 
 ## Current Cutover Sequence
 
-1. Promote the build `4050` release-prep contract into clean client `main`.
-2. Freeze clean revisions and produce a new exact six-artifact successor.
-3. Generate and validate strict-v2 metadata.
-4. Prove connected forced-service-restart cleanup and reconnect on the isolated
+1. Generate and validate candidate.21 strict-v2 metadata, refreshed SBOM and
+   provenance without rebuilding its six private artifacts.
+2. Prove connected forced-service-restart cleanup and reconnect on the isolated
    Windows VM before the broader platform matrix.
-5. Run hosted CI, Android device and the remaining Windows clean-host gates. A retained
+3. Run Android device and the remaining Windows clean-host gates. A retained
    candidate must use the manual release-v2 replay with exact full client,
    platform and Core commit SHAs; a run mixing the candidate with current
    promotion lines is drift evidence, not an exact-candidate PASS.
-6. Verify Android signing, Windows `SKIPPED_BY_OWNER`, the mandatory SmartScreen warning, SBOM, provenance, checksums and anonymous downloads.
-7. Request runtime-sync authority and retain current-origin/brain-origin proof.
-8. Add the exact candidate and retained prior stable handoff to the rollback
+4. Verify Android signing, Windows `SKIPPED_BY_OWNER`, the mandatory SmartScreen warning, SBOM, provenance and checksums.
+5. Retain current-origin, Brain-origin and RU-origin proof before requesting runtime-sync authority.
+6. Add the exact candidate and retained prior stable handoff to the rollback
    catalog, then run the authorized pointer/runtime rollback with retained
    backup, receipt and readback evidence.
-9. Issue the evidence-based go/no-go decision.
+7. Issue the evidence-based go/no-go decision. Only a generated GO may proceed
+   to anonymous public downloads and stable promotion.
 
 No later step may convert a missing, manual, blocked or skipped result into
 `PASS`.
