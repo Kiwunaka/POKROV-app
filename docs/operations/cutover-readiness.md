@@ -25,17 +25,17 @@ contracts. Do not select the most optimistic status.
 |---|---|
 | Canonical lane | `POKROV-app/main` |
 | Retained public release | Android and Windows `1.1.6` |
-| New working target | `1.2.0+4050` |
+| New working target | `1.2.0+4051` |
 | Continuing source target | `PRE_CANDIDATE_LOCAL` on `POKROV-app/main` |
-| Current exact candidate | `pokrov-1.2.0-candidate.21`, app `1.2.0+4050`; six signed-private artifacts, strict-v2/SBOM/provenance PASS, Windows 11 upgrade/default runtime PASS, promotion false |
+| Latest exact candidate | `pokrov-1.2.0-candidate.21`, app `1.2.0+4050`; six signed-private artifacts and bounded Windows 11 PASS evidence retained, but immutable `NO_GO` because its service lacks the rejected-session availability correction |
 | Retained signed-index predecessor | Candidate.20 is immutable `NO_GO`; its evidence does not alter candidate.21 or receive current PASS credit. |
 | Candidate/current-main boundary | Candidate.21 binds exact client `1e164586…cadb`; later `main` commits do not alter or receive credit for its bytes. |
-| New public cutover | `BLOCKED_CANDIDATE_21_AGGREGATE_INCOMPLETE`; Gate F not run |
+| New public cutover | `BLOCKED_NO_PROMOTABLE_CANDIDATE`; build-4051 successor not created |
 | Planned distribution if approved | Android direct stable target; Windows direct unsigned beta with mandatory SmartScreen warning; stores `NOT_REQUESTED`. No new public claim exists yet. |
 
 The existing `1.1.6` publication does not approve new `1.2.0` bytes. Its
 signing, device, runtime and origin evidence cannot be reused for promotion.
-The continuing client seed describes the `1.2.0+4050` development line with
+The continuing client seed describes the `1.2.0+4051` development line with
 Core `cd8f0f4…884d`; its `candidate_created=false` describes continuing `main`,
 not the separate signed candidate contract. `config/cutover-readiness.seed.json`
 now binds local private candidate.21: platform `e2608130…32c3`, client
@@ -47,14 +47,16 @@ egress, route, DNS and adapter fingerprints/counts exactly to the RU baseline
 after disconnect. Candidate.21 strict-v2 handoff `07e0009c…55e9`, refreshed
 SBOM/provenance and signed manifest/signature/receipt `ce0b8586…3dc6` /
 `ef474e6e…7a58` / `aaa027cc…926f` validate from release-index source
-`cae911e…`. It remains unpublished and unpromoted. Candidate.20 is immutable
-signed `NO_GO` history; candidates 17–19 remain retained failure history.
+`cae911e…`. It remains unpublished and unpromoted. Its exact production service
+loop can terminate after a rejected pre-hello client session, while only later
+client `main` contains the correction; candidate.21 is therefore immutable
+`NO_GO`. Candidate.20 and candidates 17–19 remain retained failure history.
 
 ## Current 1.2.0 Gate Matrix
 
 | Gate | State | Required evidence |
 |---|---|---|
-| Development package/version parity | `PASS_PRE_CANDIDATE_4050` | Android and Windows source targets are `1.2.0+4050`; the shared app-shell remains product version `1.2.0`. Rejected candidate.20 retains its exact build `4049` identity. |
+| Development package/version parity | `PASS_PRE_CANDIDATE_4051` | Android and Windows source targets are `1.2.0+4051`; the shared app-shell remains product version `1.2.0`. Rejected candidate.21 retains its exact build `4050` identity. |
 | Strict-v2 generator contract | `PASS_LOCAL` | Schema, generator and cross-repository parity tests pass. |
 | Stable pointer and rollback catalog | `PASS_LOCAL` | Retained `1.1.6` pointer matches its exact versioned handoff; isolated A→B→A proves optimistic lock, atomic replace, backup, receipt and byte-identical reversal. |
 | Operational producer/privacy contract | `PASS_LOCAL` | Auth, entitlement, performance, support and Android count-only routing producers pass focused client/platform tests; exact-candidate runtime proof remains later. |
@@ -78,22 +80,26 @@ signed `NO_GO` history; candidates 17–19 remain retained failure history.
 | Hosted CI | `PASS_EXACT_CLIENT_AND_SIGNER_CHAIN` | Client main run `33576468801`, release-index source run `33586691099`, signer run `33586752995` and receipt run `33586988337` pass for the exact candidate.21 tuple. |
 | Runtime sync | `CANDIDATE_21_PRIVATE_NOT_PROMOTED` | Candidate.21 remains local private. No public runtime switch, stable pointer or post-promotion readback exists. |
 | Exact-candidate rollback drill | `CANDIDATE_21_NOT_RUN` | Older reversal evidence does not approve candidate.21. Guarded pointer/runtime rollback plus current/Brain/RU readback and health remain open. |
-| Final go/no-go | `NOT_RUN_EXACT_CANDIDATE_21` | Signed supply and bounded Windows runtime pass, but the Android/origin/rollback/aggregate matrix is incomplete. Gate F is deliberately not run; Gate G, public release, Store object and stable pointer are unauthorized. |
+| Final go/no-go | `NO_GO_EXACT_CANDIDATE_21_SERVICE_AVAILABILITY` | Its last digest-bound Gate F snapshot is `BLOCKED 5/14/0`; the later-confirmed production service-loop defect independently rejects candidate.21. Gate G, public release, Store object and stable pointer are unauthorized. |
 
 ## Current Cutover Sequence
 
-1. Prove connected forced-service-restart cleanup and reconnect on the isolated
-   Windows VM before the broader platform matrix.
-2. Run Android device and the remaining Windows clean-host gates. A retained
+1. Promote the build-4051 release-prep contract and freeze the corrected client
+   source with current platform and Core revisions.
+2. Build and bind candidate.22 without rewriting candidate.21. Verify Android
+   signing, Windows `SKIPPED_BY_OWNER`, the mandatory SmartScreen warning,
+   SBOM, provenance and checksums.
+3. Install the exact successor setup in the isolated Windows VM and prove
+   rejected-session continuity plus connected service-restart recovery.
+4. Run Android device and the remaining Windows clean-host gates. A retained
    candidate must use the manual release-v2 replay with exact full client,
    platform and Core commit SHAs; a run mixing the candidate with current
    promotion lines is drift evidence, not an exact-candidate PASS.
-3. Verify Android signing, Windows `SKIPPED_BY_OWNER`, the mandatory SmartScreen warning, SBOM, provenance and checksums.
-4. Retain current-origin, Brain-origin and RU-origin proof before requesting runtime-sync authority.
-5. Add the exact candidate and retained prior stable handoff to the rollback
+5. Retain current-origin, Brain-origin and RU-origin proof before requesting runtime-sync authority.
+6. Add the exact candidate and retained prior stable handoff to the rollback
    catalog, then run the authorized pointer/runtime rollback with retained
    backup, receipt and readback evidence.
-6. Issue the evidence-based go/no-go decision. Only a generated GO may proceed
+7. Issue the evidence-based go/no-go decision. Only a generated GO may proceed
    to anonymous public downloads and stable promotion.
 
 No later step may convert a missing, manual, blocked or skipped result into

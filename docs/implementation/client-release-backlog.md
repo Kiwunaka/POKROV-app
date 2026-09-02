@@ -14,12 +14,12 @@ results belong in dated evidence and never become reusable release approval.
 | Fact | Current state |
 |---|---|
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
-| Working package target | `1.2.0+4050` |
-| Working source target state | `PRE_CANDIDATE_LOCAL` on exact client `1e164586…cadb`; the source seed remains distinct from candidate authority |
-| Current exact candidate | `pokrov-1.2.0-candidate.21`, app `1.2.0+4050`; six signed-private artifacts, strict-v2/SBOM/provenance PASS, bounded Windows 11 upgrade/default runtime PASS, promotion unauthorized |
+| Working package target | `1.2.0+4051` |
+| Working source target state | `PRE_CANDIDATE_LOCAL` successor of merged client `8cf428f…8886`; exact candidate source freeze remains pending |
+| Latest exact candidate | `pokrov-1.2.0-candidate.21`, app `1.2.0+4050`; signed supply and bounded Windows 11 results are retained, but the exact source contains a service-availability defect and is immutable `NO_GO` |
 | Candidate created | `false` |
 | Private candidate created | `true` for candidate.21 in the separate creation/cutover contract; the source seed remains pre-candidate by design |
-| Candidate-created scope | Candidate.21 binds exact platform/client/Core revisions plus release-index signing source `cae911e…` and does not absorb later `main` commits. Candidate.20 is immutable signed `NO_GO` history. |
+| Candidate-created scope | Candidate.21 binds exact platform/client/Core revisions plus release-index signing source `cae911e…` and does not absorb later `main` commits. The build-4051 successor has not been created. |
 | Signed candidate contract | `PASS_ACTIONS_ARTIFACT_ONLY`: handoff `07e0009c…`, SBOM `c01234bf…`, provenance `b6e63ae0…`, manifest/signature/receipt `ce0b8586…` / `ef474e6e…` / `aaa027cc…`; promotion false and no public assets. |
 | Public cutover allowed for a new candidate | `false` |
 | Google Play | `NOT_REQUESTED` |
@@ -34,8 +34,9 @@ development target. `config/cutover-readiness.seed.json` owns the current
 candidate and cutover verdict. Exact candidate.21 identity comes from the
 private creation manifest, signed strict-v2 contract and cutover seed; the
 release-handoff seed's `candidate_created=false` applies only to continuing
-`main`. Candidate.21 is unpublished and unpromoted. Candidate.20 is immutable
-signed `NO_GO` history; candidates 17–19 and candidate.12 remain rejected
+`main`. Candidate.21 is unpublished, unpromoted and immutable `NO_GO` because
+its production service loop can terminate after a rejected pre-hello client
+session. Candidate.20, candidates 17–19 and candidate.12 remain rejected
 history for their own bytes.
 
 ## Current Local Completion
@@ -145,7 +146,7 @@ history for their own bytes.
   startup recovery fail-closed and retryable. Its six exact build-4050 private
   artifacts, signed supply and bounded Windows 11 upgrade/default runtime pass;
   fresh in-place service-restart recovery remains open.
-- Current successor source also isolates a rejected pipe session from service
+- Working build-4051 successor source isolates a rejected pipe session from service
   availability. A pre-hello, unauthorized or malformed client no longer ends
   the production SCM loop. The focused Flutter contract passes `7/7`, the
   complete Windows debug bundle builds and all six native service executables
@@ -162,7 +163,7 @@ history for their own bytes.
 
 ## Retained Pre-Convergence Evidence
 
-- Android and Windows development package versions match `1.2.0+4050`; app-shell reports the
+- Android and Windows development package versions match `1.2.0+4051`; app-shell reports the
   shared product version `1.2.0`.
 - Strict release-handoff v2 generation and client/Core parity pass locally.
 - The retained `1.1.6` stable pointer is hash-bound to its versioned rollback
@@ -277,8 +278,9 @@ runtime, rollback or promotion proof.
 
 ## Next Action Order
 
-1. Promote the build `4050` release-prep contract, then create a new exact
-   six-artifact candidate from the merged startup-recovery tuple.
+1. Promote the build `4051` release-prep contract, then create exact
+   candidate.22 from the merged startup-recovery and pipe-session-resilience
+   source tuple.
 2. Install and hash-bind the successor Windows setup in the isolated VM. Prove
    the connected forced-service-restart journal cleanup and reconnect before
    spending time on the broader matrix.
