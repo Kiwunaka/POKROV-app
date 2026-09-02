@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "service_protocol.h"
+#include "service_pipe_client.h"
 #include "service_server.h"
 
 namespace pokrov::service {
@@ -19,6 +20,7 @@ namespace {
 
 constexpr wchar_t kProductionServiceName[] = L"POKROVService";
 constexpr wchar_t kLocalSystemServiceAccount[] = L"LocalSystem";
+constexpr DWORD kProductionPipeConnectTimeoutMs = 5000;
 
 std::uint64_t UnixTimeMilliseconds() {
   FILETIME file_time{};
@@ -181,12 +183,8 @@ struct ExchangeResult {
 
 ExchangeResult Exchange(Command command, const std::string& body) {
   ExchangeResult result;
-  if (!::WaitNamedPipeW(kProductionPipeName, 250)) {
-    return result;
-  }
-  HANDLE pipe = ::CreateFileW(kProductionPipeName,
-                              GENERIC_READ | GENERIC_WRITE, 0, nullptr,
-                              OPEN_EXISTING, 0, nullptr);
+  HANDLE pipe = OpenNamedPipeClient(kProductionPipeName,
+                                    kProductionPipeConnectTimeoutMs);
   if (pipe == INVALID_HANDLE_VALUE) {
     return result;
   }

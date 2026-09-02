@@ -12,15 +12,15 @@ The root [AGENTS.md](AGENTS.md) is the short Codex operating contract.
 - Client strategy: `consumer-first` and `app-first`.
 - Public outside-store stable surfaces: Android and Windows.
 - Retained public line: `1.1.6` (`1.1.6+29`).
-- Development seed: `1.2.0+4052`, state `PRE_CANDIDATE_LOCAL`,
+- Development seed: `1.2.0+4053`, state `PRE_CANDIDATE_LOCAL`,
   `candidate_created=false`. The latest exact private candidate is signed
-  `pokrov-1.2.0-candidate.22`, build `4051`; its Windows 11 default, recovery,
-  Smart-DNS and packaged AWG results are retained, but connected uninstall
-  leaves the running UI and 13 loaded binaries behind. Candidate.22 is
-  therefore immutable `NO_GO`. Build-4052 working source contains the uninstall
-  fix and its exact local setup passes the connected-uninstall VM preflight;
-  a new exact candidate is still required. Candidate.21 is earlier rejected
-  history.
+  `pokrov-1.2.0-candidate.23`, build `4052`; its private signed supply and exact
+  Windows installation are retained, but the ordinary client can report
+  `CORE-001` while the service remains running under serial-pipe contention.
+  Candidate.23 is therefore immutable `NO_GO`. Build-4053 working source adds a
+  bounded retry and passes the local 32-client VM preflight; a new exact
+  candidate is still required. Candidate.22 and earlier candidates remain
+  rejected history.
 - Apple surfaces: readiness, packaging, signing, and device-proof work only.
 - Default runtime: `sing-box`; `xray` is an advanced compatibility fallback.
 - Default device-wide rule: `All except RU`; `Full tunnel` remains available.
@@ -48,13 +48,14 @@ creates an exact backup outside retained history, and records a receipt. Local
 fixture reversal is not an exact-candidate rollback drill or mutation authority.
 
 The retained `1.1.6` publication is evidence for that exact artifact set. The
-working seed remains pre-candidate source truth for build `4052`. Private
-candidate.22 binds exact build-4051 bytes through strict-v2 handoff
-`6fd9cb56…e566`, refreshed SBOM/provenance and signed public-index
-manifest/signature/receipt `81c56e9f…7d59` / `b230a442…a387` /
-`65123519…2124`; output is Actions-artifact-only with promotion false.
-Candidate.22 is immutable `NO_GO` because its connected uninstaller leaves the
-running UI and loaded binaries; candidate.21 remains earlier immutable
+working seed remains pre-candidate source truth for build `4053`. Private
+candidate.23 binds exact build-4052 bytes through strict-v2 handoff
+`457bbf71…ef50`, refreshed SBOM/provenance and signed public-index
+manifest/signature/receipt `5073c201…01a1` / `92027334…863` /
+`d11e24ac…8ba6`; output is Actions-artifact-only with promotion false.
+Candidate.23 is immutable `NO_GO` because valid service requests can fail under
+serial-pipe contention while the service remains running; candidate.22 remains
+earlier immutable
 `NO_GO` history. Android production signing is fail-closed by default; debug
 signing requires an explicit non-public smoke opt-in. The handoff does not
 prove:
@@ -62,7 +63,7 @@ prove:
 - a public or stable `1.2.0` publication;
 - Play, Microsoft Store, WinGet, TestFlight, App Store, or notarized delivery;
 - trusted Windows signing and reputation;
-- a physical-device or real-user pass for an exact build-4052 successor;
+- a physical-device or real-user pass for an exact build-4053 successor;
 - production WARP behavior on Android or Windows;
 - RU-origin readiness.
 
