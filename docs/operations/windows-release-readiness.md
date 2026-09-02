@@ -14,7 +14,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
-| Working package target | `1.2.0+4049` |
+| Working package target | `1.2.0+4050` |
 | Latest signed candidate | `pokrov-1.2.0-candidate.20`, app `1.2.0+4049`; setup `330b87cb…587f`, signed release index `046d3312…770a`, detached signature `f5e81d31…90ea`, promotion false; immutable `NO_GO` after the exact service-restart recovery failure below |
 | Current promotable candidate | None. Candidate.20 is rejected; the candidate.21 startup-recovery source correction has local proof only and is not an exact candidate. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |

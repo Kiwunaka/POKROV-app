@@ -14,8 +14,8 @@ results belong in dated evidence and never become reusable release approval.
 | Fact | Current state |
 |---|---|
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
-| Working package target | `1.2.0+4049` |
-| Working source target state | `PRE_CANDIDATE_LOCAL` on `codex/candidate21-startup-recovery`, pending review and promotion to continuing `main` |
+| Working package target | `1.2.0+4050` |
+| Working source target state | `PRE_CANDIDATE_LOCAL` successor of merged client `6801787…db82`; candidate.21 artifacts do not exist yet |
 | Exact signed candidate | `pokrov-1.2.0-candidate.20`, app `1.2.0+4049`; private immutable `NO_GO`, promotion unauthorized; bounded default-path and reboot proof pass but service-restart durable recovery fails |
 | Candidate created | `false` |
 | Candidate-created scope | The machine-readable release-handoff source seed remains pre-candidate for continuing `main`; candidate.20 exists in the separate cutover/signed-index contract and does not absorb later `main` commits. |
@@ -138,12 +138,13 @@ release-handoff seed's `candidate_created=false` applies only to continuing
   `committed` after SCM restart and the UI unavailable. Candidate.20 is
   immutable `NO_GO`; process-owned tunnel disappearance is not proof that the
   service resumed rollback.
-- Candidate.21 startup-recovery source checks the durable journal before the
+- Merged candidate.21 startup-recovery source checks the durable journal before the
   first IPC client, preserves lazy Core initialization for a clean journal and
   leaves failed startup recovery fail-closed and retryable. Focused native
   recovery tests, all Windows service native test executables, Flutter static
-  analysis and all 23 Flutter tests pass locally. Review, merge, exact package
-  construction and the same connected service-restart VM replay remain open.
+  analysis and all 23 Flutter tests pass locally; hosted run `33572910856`
+  also passes. Build `4050` package construction and the same connected
+  service-restart VM replay remain open.
 - VLESS/Reality remains the baseline. AWG 3.1 is the preferred closed UDP lab
   transport and AWG2 its rollback. XHTTP is post-1.2.0 TLS/CDN reserve work;
   Hysteria2 stays default-off and advances only after a bounded lab shows a
@@ -155,7 +156,7 @@ release-handoff seed's `candidate_created=false` applies only to continuing
 
 ## Retained Pre-Convergence Evidence
 
-- Android and Windows development package versions match `1.2.0+4049`; app-shell reports the
+- Android and Windows development package versions match `1.2.0+4050`; app-shell reports the
   shared product version `1.2.0`.
 - Strict release-handoff v2 generation and client/Core parity pass locally.
 - The retained `1.1.6` stable pointer is hash-bound to its versioned rollback
@@ -270,8 +271,8 @@ runtime, rollback or promotion proof.
 
 ## Next Action Order
 
-1. Review and merge the candidate.21 startup-recovery source correction, then
-   create a new exact six-artifact candidate from that merged tuple.
+1. Promote the build `4050` release-prep contract, then create a new exact
+   six-artifact candidate from the merged startup-recovery tuple.
 2. Install and hash-bind the successor Windows setup in the isolated VM. Prove
    the connected forced-service-restart journal cleanup and reconnect before
    spending time on the broader matrix.
