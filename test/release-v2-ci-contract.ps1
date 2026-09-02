@@ -325,6 +325,15 @@ foreach ($fragment in @(
   'POKROV_LEGACY_PER_USER_MIGRATION_COMPLETE',
   'POKROV_LEGACY_PER_USER_UNINSTALL_FAILED',
   'POKROV_LEGACY_PER_USER_RESIDUAL_FOUND',
+  'function InitializeUninstall: Boolean;',
+  'taskkill.exe',
+  '/IM "$($windowsReleaseConfig.binary_name)" /T /F',
+  'POKROV_UI_CLOSE_FAILED',
+  'ResultCode <> 128',
+  '[UninstallDelete]',
+  'Type: dirifempty; Name: "{app}"',
+  'WindowsPowerShell\v1.0\powershell.exe',
+  "WaitForStatus('Stopped', [TimeSpan]::FromSeconds(30))",
   'ResultCode = 0'
 )) {
   if (-not $windowsBuilder.Contains($fragment)) {

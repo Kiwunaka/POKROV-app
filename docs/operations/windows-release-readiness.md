@@ -14,13 +14,14 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Fact | Current state |
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
-| Working package target | `1.2.0+4051` |
-| Latest exact candidate | `pokrov-1.2.0-candidate.21`, app `1.2.0+4050`; signed private and immutable `NO_GO`; bounded Windows 11 upgrade/default runtime PASS remains retained evidence |
-| Retained signed-index predecessor | Candidate.20 setup `330b87cb…587f`, signed index `046d3312…770a`; immutable `NO_GO` after the service-restart recovery failure below |
-| Current promotable candidate | None. Candidate.21 contains the pre-hello/rejected-session service-availability defect; the corrected build-4051 successor is not yet an exact candidate. |
+| Working package target | `1.2.0+4052` |
+| Latest exact candidate | `pokrov-1.2.0-candidate.22`, app `1.2.0+4051`; signed private and immutable `NO_GO`; bounded Windows 11 default/recovery/Smart-DNS/AWG PASS evidence remains retained |
+| Retained signed-index predecessor | Candidate.21 setup `87f90be1…dff3`, signed index `ce0b8586…3dc6`; immutable `NO_GO` after the rejected-session service-availability defect |
+| Current promotable candidate | None. Candidate.22 connected uninstall restores the network and removes the service but leaves the running UI and 13 loaded binaries. Build-4052 contains the correction and passes an exact local VM preflight, but it is not candidate.23. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`; candidate.21 carries the same reviewed Core source in its exact private setup |
+| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`; candidate.22 carries the same reviewed Core source in its exact private setup |
+| Exact candidate.22 setup | `effc6a8e…f409`, `29137688` bytes; manifest `fbf08cf5…c527`, `11/11` files; tuple client/Core/platform/index `0aad6bbb…/cd8f0f4…/d16087d…/d45b503…`; signed release-index `81c56e9f…7d59`; unsigned Windows owner exception |
 | Exact candidate.21 setup | `87f90be1…dff3`, `29143633` bytes; manifest `665f77f0…2919`, `11/11` files; tuple client/Core/platform/index `1e164586…/cd8f0f4…/e2608130…/cae911e…`; signed release-index `ce0b8586…3dc6`; unsigned Windows owner exception |
 | Exact candidate.20 setup | `330b87cb…587f`, `29140987` bytes; manifest `57687e95…bd7`, `11/11` files; signed tuple client/Core/platform/index `8ab9815…/cd8f0f4…/d6898e6…/61ad0b0…`; unsigned owner exception |
 | Exact candidate.17 setup | `0afaf6e1…276c`, `28932793` bytes; signed tuple client/Core/platform/index `977c6ed…/cd8f0f4…/d6898e6…/2df538c…`; `8/8` runtime manifest and unsigned owner exception; rejected because clean Windows lacks the unbundled VC runtime and setup incorrectly returned success after service-start failure |
@@ -41,17 +42,53 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Candidate.19 clean Windows VM | `FAIL_EXACT_CANDIDATE19_WINDOWS11_VM_CORE_005`: exact setup identity, LocalSystem service, ordinary-user authenticated IPC, fresh-profile authorization, entitlement and profile staging passed; Core rejected service-relocated local rule-set paths, and the service completed rollback without reporting connected |
 | Candidate.20 Windows 11 VM | `NO_GO_EXACT_CANDIDATE20_SERVICE_RESTART_RECOVERY`: default connect/disconnect/migration and connected reboot pass, but a forced service termination leaves the journal at `committed` after SCM restart and the UI unavailable |
 | Candidate.21 Windows 11 VM | `PASS_EXACT_CANDIDATE21_UPGRADE_DEFAULT_RUNTIME`: upgrade startup recovery reaches `clean`; ordinary UI/LocalSystem service, default TUN/route/DNS/DE egress and exact RU baseline restoration pass |
-| Rule-set materialization | `PASS_RETAINED_CANDIDATE20_AND_BOUND_CANDIDATE21_SOURCE`: four exact `.srs` files remain service-owned; candidate.21 exact installed identity is `11/11` |
+| Rule-set materialization | `PASS_EXACT_CANDIDATE22`: four exact `.srs` files remain service-owned; candidate.22 exact installed identity is `11/11` |
 | Public 1.1.6 migration | `PASS_EXACT_CANDIDATE20_VM` — exact per-user 1.1.6 install was replaced by the candidate.20 machine/service package; final uninstall left no service, app directory or owner registry residue |
-| `WIN-003` default-path gate | `PASS` for exact candidate.21 on isolated Windows 11: `sing-tun`, route/DNS change, authenticated DE egress and exact RU baseline restoration after disconnect. |
+| `WIN-003` default-path gate | `PASS` for exact candidate.22 on isolated Windows 11: `sing-tun`, route/DNS change, authenticated DE egress, service-restart/reboot recovery and exact RU baseline restoration after disconnect. |
 | Candidate.21 startup correction | `PASS_EXACT_UPGRADE_RECOVERY`: the installed service resumes candidate.20's retained committed journal before serving IPC and returns it to `clean`. Fresh in-place candidate.21 termination/SCM restart remains open. |
-| Post-candidate.21 pipe-session resilience | `PASS_LOCAL_SOURCE`: production now rejects a pre-hello, unauthorized or malformed client session without terminating the SCM service; the native two-session regression proves a rejected first connection is followed by a valid authenticated session. Candidate.21 bytes are unchanged and `NO_GO`, so exact-package/VM credit requires a successor candidate. |
-| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; fresh in-place service-restart recovery/reconnect, then Windows 10, AWG 3.1/AWG2, sleep/resume, connected reboot/uninstall, leak/IPv6 and interactive SmartScreen remain separate exact-byte gates |
+| Post-candidate.21 pipe-session resilience | `PASS_EXACT_CANDIDATE22`: production rejects a pre-hello, unauthorized or malformed client session without terminating the SCM service; the exact candidate.22 VM proves rejected-first/valid-second continuity. |
+| Candidate.22 connected uninstall | `FAIL_EXACT_CANDIDATE22_RESIDUAL_UI_AND_13_BINARIES`; uninstaller exit `0`, service/tunnel removal and RU egress restoration pass, but the UI process and loaded installation files remain |
+| Post-candidate.22 uninstall correction | `PASS_EXACT_PRE_CANDIDATE4052_CONNECTED_UNINSTALL_VM`; local setup `9aa6b0fd…3152` terminates the UI, waits for service stop, removes every installed file and the empty app directory, clears service/registry/TUN state and restores RU egress. Exact candidate.23 proof remains required. |
+| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; Windows 10, exact-candidate connected-uninstall replay, leak/IPv6 and interactive SmartScreen remain separate exact-byte gates. VirtualBox exposes no guest sleep or IPv6 path. |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
 fallback. The service owns Core, managed state and recovery. Green state
 requires the authenticated egress proof.
+
+## Candidate.22 Connected-Uninstall NO_GO And Source Correction
+
+Candidate.22 binds platform `d16087d5da509e17163bdd7293bec5711aa7eedc`,
+client `0aad6bbb3a8baf9bd9e2436ed9e57f7c6fbbafed` and Core
+`cd8f0f4169d570d693992a959d81d17c2c44884d`. Exact setup
+`effc6a8ed7ccfa943986aca93f4d1d846d66c8d42730ea0b77854b48f77bf409`
+validates all `11/11` required files. Its retained Windows 11 evidence covers
+ordinary UI/service, default TUN/DNS/DE egress, in-place service-restart and
+connected-reboot recovery, in-app Smart DNS and separate packaged AWG3.1/AWG2.
+
+The connected-uninstall run started from one verified tunnel and DE egress.
+The exact uninstaller returned `0`, removed `POKROVService`, removed the tunnel
+and restored ordinary RU egress, but did not terminate `pokrov_windows.exe`.
+Thirteen loaded EXE/DLL files therefore remained under the installation root,
+while the uninstall registry entry was already absent. Repeating with the
+setup-only `/FORCECLOSEAPPLICATIONS` switch produced the same result because
+that switch is not an uninstaller contract. Candidate.22 is immutable
+`NO_GO`; its prior PASS slices remain evidence only.
+
+Build-4052 source adds an Inno `InitializeUninstall` step that terminates the
+exact configured UI image before uninstall begins and aborts on an unexpected
+termination-command failure. Its uninstall run waits up to 30 seconds for the
+SCM service to stop before file removal, then removes `{app}` only when empty.
+Static packaging tests bind those controls.
+
+An exact local pre-candidate setup, SHA-256
+`9aa6b0fd7e43338786a25c7f14b0bd06e04aed01e92e5f21869eb334b5973152`,
+installed in the isolated Windows 11 VM, launched the ordinary UI and reached
+one connected TUN. Connected silent uninstall then left zero UI/service
+processes, zero service registrations, zero TUN adapters, zero installed files,
+no uninstall registry entry and no installation directory; ordinary RU egress
+was restored. This is `PASS_PRE_CANDIDATE`, not candidate.23 credit. The fix
+must merge, be rebuilt into immutable candidate.23 and repeat on those bytes.
 
 ## Candidate.21 Private Upgrade And Default-Path PASS
 
@@ -84,15 +121,14 @@ AWG2/AWG3.1, sleep/resume, connected reboot/uninstall, IPv6/leak, interactive
 SmartScreen or trusted signing. Candidate.21 has a validated private signed
 release index but no public assets or promotion.
 
-Current main keeps the production service alive after a client
+Candidate.22 and current main keep the production service alive after a client
 opens the protected pipe but disconnects before `hello`, fails caller
 authorization or sends an invalid frame. The focused Flutter contract passes
 `7/7`; the complete debug Windows bundle builds, and all six native service
 executables pass, including a two-session test that rejects the first
-connection and serves the second. This is local successor-source proof only;
-it does not rewrite candidate.21. The presence of the old production loop in
-candidate.21 is sufficient to reject those bytes; a build-4051 successor must
-carry the correction before any VM result can receive exact-package credit.
+connection and serves the second. Candidate.22 packages that correction and
+proves it on the isolated VM; it does not rewrite candidate.21. Candidate.22's
+separate connected-uninstall failure is recorded above.
 
 ## Candidate.20 Reboot Pass And Service-Restart NO_GO
 

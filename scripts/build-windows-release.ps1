@@ -789,8 +789,11 @@ Root: HKLM64; Subkey: "Software\space.pokrov\POKROV\Service"; ValueType: string;
 Filename: "{app}\$($windowsReleaseConfig.binary_name)"; WorkingDir: "{app}"; Description: "Запустить POKROV"; Flags: nowait postinstall skipifsilent runasoriginaluser
 
 [UninstallRun]
-Filename: "{sys}\sc.exe"; Parameters: "stop POKROVService"; Flags: runhidden waituntilterminated; RunOnceId: "StopPOKROVService"
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ""`$ErrorActionPreference='Stop'; `$service=Get-Service -Name 'POKROVService' -ErrorAction SilentlyContinue; if (`$null -ne `$service -and `$service.Status -ne 'Stopped') {{ Stop-Service -InputObject `$service -Force -ErrorAction Stop; `$service.WaitForStatus('Stopped', [TimeSpan]::FromSeconds(30)) }"""; Flags: runhidden waituntilterminated; RunOnceId: "StopPOKROVService"
 Filename: "{sys}\sc.exe"; Parameters: "delete POKROVService"; Flags: runhidden waituntilterminated; RunOnceId: "DeletePOKROVService"
+
+[UninstallDelete]
+Type: dirifempty; Name: "{app}"
 
 [Code]
 var
@@ -802,6 +805,32 @@ var
   LegacyPerUserInstallDetected: Boolean;
   LegacyPerUserInstallDirectory: String;
   LegacyPerUserUninstaller: String;
+
+function InitializeUninstall: Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := Exec(
+    ExpandConstant('{sys}\taskkill.exe'),
+    '/IM "$($windowsReleaseConfig.binary_name)" /T /F',
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode
+  );
+  if not Result then
+  begin
+    Log('POKROV_UI_CLOSE_FAILED: taskkill could not be started');
+    Exit;
+  end;
+  if (ResultCode <> 0) and (ResultCode <> 128) then
+  begin
+    Log(Format('POKROV_UI_CLOSE_FAILED: taskkill exit %d', [ResultCode]));
+    Result := False;
+    Exit;
+  end;
+  Result := True;
+end;
 
 function IsSidCharacter(Value: Char): Boolean;
 begin
