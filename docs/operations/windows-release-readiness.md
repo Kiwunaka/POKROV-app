@@ -15,9 +15,9 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+4053` |
-| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.25`, app `1.2.0+4053`; exact client/Core bytes are unchanged from candidate.24 while the platform-only development lock is corrected. The bounded clean-host gate passes; Gate F remains `BLOCKED 5/14/0` pending connected and device evidence. |
+| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.25`, app `1.2.0+4053`; exact client/Core bytes are unchanged from candidate.24 while the platform-only development lock is corrected. The bounded clean-host gate passes, but a later current-source CLI precursor exposed an in-place-upgrade packaging defect. Candidate.25 remains immutable and is not promotable; Gate F remains `BLOCKED 5/14/0`. |
 | Retained signed-index predecessor | Candidate.22 setup `effc6a8e…f409`; immutable `NO_GO` after connected uninstall leaves the UI and 13 loaded binaries |
-| Current promotable candidate | None. Candidate.25 packages the connected-uninstall and bounded pipe-retry corrections and passes the bounded hosted clean-host gate, but exact connected Windows runtime evidence is still required before promotion. |
+| Current promotable candidate | None. Candidate.25 remains the latest exact private candidate, but successor packaging is required after the current-source in-place-upgrade correction; connected Windows and device evidence also remain open. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
 | Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`; candidate.25 carries the same reviewed Core source in its exact private setup |
@@ -28,6 +28,8 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Exact candidate.20 setup | `330b87cb…587f`, `29140987` bytes; manifest `57687e95…bd7`, `11/11` files; signed tuple client/Core/platform/index `8ab9815…/cd8f0f4…/d6898e6…/61ad0b0…`; unsigned owner exception |
 | Exact candidate.17 setup | `0afaf6e1…276c`, `28932793` bytes; signed tuple client/Core/platform/index `977c6ed…/cd8f0f4…/d6898e6…/2df538c…`; `8/8` runtime manifest and unsigned owner exception; rejected because clean Windows lacks the unbundled VC runtime and setup incorrectly returned success after service-start failure |
 | Corrected Windows pre-candidate | Setup `301d72fc…3ddc`, `29135238` bytes; manifest `4c9afeb4…f93a`; client `977c6ed…` plus reviewed diff `379a87fc…6f6f`; `11/11` files, app-local Microsoft VC143 runtime, transactional service failure, automatic cleanup and 1.1.6 per-user migration |
+| Candidate.27 CLI precursor | `NO_GO_PRECURSOR`: setup `0d8c89ae…1213`, `29148103` bytes; a direct first in-place upgrade from the retained candidate.23 VM stopped before file replacement because `ExecAsOriginalUser` could not resolve the installation owner. The second pass is retained only as diagnostic evidence. |
+| Candidate.28 corrected CLI precursor | `PASS_PRE_CANDIDATE_WINDOWS_UPGRADE_AND_DIRECT_RUNTIME`: setup `7986a2b3…8182`, `29141384` bytes; manifest `1ff59b17…cfef`, `11/11`; first-pass candidate.23 upgrade, LocalSystem service, direct TUN/DNS lifecycle and connected reboot recovery pass. This is not a created or promotable candidate. |
 | Retained candidate.16 setup | `0afaf6e1…276c`, `28932793` bytes; older signed tuple `75ba7e7…/cd8f0f4…/719e23d…/54cfa03…`; immutable predecessor evidence only |
 | Retained candidate.12 setup | `ebbe06f5…89c99c`, `28931263` bytes, exact client/Core `5b1aa02…/cd8f0f4…`; immutable rejected predecessor |
 | Exact candidate.8 setup | `26ec26d8…4668`, `28929376` bytes, exact client/Core `3459438…/a45d69e…`; unsigned owner exception |
@@ -53,7 +55,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Post-candidate.22 uninstall correction | `PASS_EXACT_PRE_CANDIDATE4052_CONNECTED_UNINSTALL_VM`; local setup `9aa6b0fd…3152` terminates the UI, waits for service stop, removes every installed file and the empty app directory, clears service/registry/TUN state and restores RU egress. Candidate.23 packages the source correction, but its exact connected-uninstall replay remains `NOT_RUN`. |
 | Candidate.23 serial-pipe contention | `FAIL_EXACT_CANDIDATE23_CORE001_SERVICE_RUNNING`; the exact client fails a later request while the service remains connected and running. A source-exact diagnostic client reproduces `0/32` accepted simultaneous status requests. |
 | Post-candidate.23 pipe correction | `PASS_CANDIDATE25_SOURCE_AND_NATIVE`; candidate.25 binds the corrected client/Core artifact set and a fresh CLI rehearsal passes Debug native CTest `8/8` plus the full Windows build. A follow-up CMake correction puts the Debug-only integration restriction on `add_test`, so Release enumerates and passes its seven applicable native tests instead of attempting the SCM binary as a console process. This test-harness-only successor change receives no candidate.25 runtime credit. Exact installed candidate.25 contention/connected runtime remains `NOT_RUN`. |
-| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; exact candidate.25 contention, TUN/DNS/egress, recovery, connected-uninstall, Windows 10, leak/IPv6 and interactive SmartScreen remain separate exact-byte gates. VirtualBox exposes no guest sleep or IPv6 path. |
+| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; a successor exact candidate must repeat contention, managed TUN/DNS/egress, recovery, connected-uninstall, Windows 10, leak/IPv6 and interactive SmartScreen. The candidate.28 precursor proves only its bounded direct synthetic-profile lane. VirtualBox exposes no guest sleep or IPv6 path. |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
@@ -80,6 +82,37 @@ This bounded PASS cannot claim connected TUN/DNS/egress,
 AWG/Smart DNS, sleep/reboot, connected uninstall, interactive SmartScreen,
 trusted signing or stable promotion. Candidate.23 remains immutable `NO_GO`
 history.
+
+## Candidate.27 Upgrade-Owner NO_GO And Candidate.28 Correction
+
+A clean CLI rebuild from client `ed74928…83a6` and Core
+`cd8f0f4…884d` produced candidate.27 precursor setup
+`0d8c89ae…1213`. A direct silent upgrade from the retained candidate.23 VM
+reproduced the first-run failure: `PrepareToInstall` could not resolve the
+interactive installation owner, exited before replacement and left only
+`8/11` required hashes current. The complete failing installer log closes
+normally and records the owner-resolution error, so the earlier successful
+second attempt cannot receive upgrade credit.
+
+The correction preserves the fresh-install fail-closed boundary and reuses an
+existing machine installation's protected `InstallOwnerSid` only when the
+original-user query fails and the stored value is an exact valid SID. The
+candidate.28 precursor binds base client `ed74928…83a6` plus source diff
+`1341da36…2888`, the same Core, setup `7986a2b3…8182` and manifest
+`1ff59b17…cfef`. Full CLI tests/build pass; native CTest passes Release `7/7`
+and Debug `8/8`; the bounded static scan covers 303 files / 99,269,838 bytes
+with zero definite findings.
+
+On the restored candidate.23 VM, the corrected setup succeeds on the first
+direct launch, records `POKROV_INSTALL_OWNER_REUSED_FOR_UPGRADE`, validates
+all `11/11` installed files and leaves `POKROVService` running as automatic
+LocalSystem. The exact installed bytes then pass direct synthetic-profile
+TUN/route/DNS lifecycle and connected guest-reboot cleanup. Windows rebuilds
+its ordinary route/DNS fingerprint across this reboot; the post-boot lifecycle
+proves exact restoration to the new boot baseline and no POKROV tunnel
+residue. Evidence is retained under
+`E:\POKROV-tools\release-evidence\1.2.0-candidate28-owner-upgrade-2026-09-03`.
+This is `PASS_PRE_CANDIDATE`, not candidate creation or promotion.
 
 ## Candidate.23 Pipe-Contention NO_GO And Source Correction
 

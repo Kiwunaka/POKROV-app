@@ -854,12 +854,32 @@ begin
     Result := '';
 end;
 
+function TryReuseExistingInstallOwnerSid(): Boolean;
+var
+  ExistingOwnerSid: String;
+begin
+  Result := RegQueryStringValue(HKLM64,
+    'Software\space.pokrov\POKROV\Service', 'InstallOwnerSid',
+    ExistingOwnerSid);
+  if Result then
+  begin
+    Result := (ExistingOwnerSid <> '') and
+      (ExtractOwnerSid(ExistingOwnerSid) = ExistingOwnerSid);
+    if Result then
+    begin
+      InstallOwnerSid := ExistingOwnerSid;
+      Log('POKROV_INSTALL_OWNER_REUSED_FOR_UPGRADE');
+    end;
+  end;
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   SidFile: String;
   SidLines: TArrayOfString;
   CommandLine: String;
   ResultCode: Integer;
+  OwnerQuerySucceeded: Boolean;
 begin
   Result := '';
   LegacyPerUserInstallDirectory :=
@@ -881,19 +901,28 @@ begin
   DeleteFile(SidFile);
   CommandLine := '/C ""' + ExpandConstant('{sys}\whoami.exe') +
     '" /user /fo csv /nh > "' + SidFile + '""';
-  if not ExecAsOriginalUser(ExpandConstant('{sys}\cmd.exe'), CommandLine, '',
-      SW_HIDE, ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) or
-      not LoadStringsFromFile(SidFile, SidLines) or
-      (GetArrayLength(SidLines) = 0) then
-  begin
-    Result := 'Не удалось определить владельца установки POKROV.';
-    exit;
-  end;
-  InstallOwnerSid := ExtractOwnerSid(SidLines[0]);
+  OwnerQuerySucceeded := ExecAsOriginalUser(
+    ExpandConstant('{sys}\cmd.exe'), CommandLine, '', SW_HIDE,
+    ewWaitUntilTerminated, ResultCode);
+  if OwnerQuerySucceeded then
+    OwnerQuerySucceeded := ResultCode = 0;
+  if OwnerQuerySucceeded then
+    OwnerQuerySucceeded := LoadStringsFromFile(SidFile, SidLines) and
+      (GetArrayLength(SidLines) > 0);
+  if OwnerQuerySucceeded then
+    InstallOwnerSid := ExtractOwnerSid(SidLines[0])
+  else
+    InstallOwnerSid := '';
   if InstallOwnerSid = '' then
   begin
-    Result := 'Windows вернула некорректный SID владельца установки POKROV.';
-    exit;
+    if not TryReuseExistingInstallOwnerSid() then
+    begin
+      if OwnerQuerySucceeded then
+        Result := 'Windows вернула некорректный SID владельца установки POKROV.'
+      else
+        Result := 'Не удалось определить владельца установки POKROV.';
+      exit;
+    end;
   end;
   Exec(ExpandConstant('{sys}\net.exe'), 'stop POKROVService /y', '', SW_HIDE,
     ewWaitUntilTerminated, ResultCode);
