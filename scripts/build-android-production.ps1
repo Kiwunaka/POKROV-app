@@ -64,6 +64,31 @@ function Resolve-AndroidBuildTool {
   throw "$FileName was not found in Android SDK build-tools."
 }
 
+function Resolve-JdkTool {
+  param([Parameter(Mandatory = $true)][string]$FileName)
+
+  $command = Get-Command $FileName -CommandType Application -ErrorAction SilentlyContinue |
+    Select-Object -First 1
+  if ($command) {
+    return $command.Source
+  }
+
+  $candidates = @()
+  if ($env:JAVA_HOME) {
+    $candidates += (Join-Path $env:JAVA_HOME "bin\$FileName")
+  }
+  $candidates += @(
+    (Join-Path ${env:ProgramFiles} "Android\Android Studio\jbr\bin\$FileName"),
+    (Join-Path ${env:ProgramFiles} "Android\Android Studio\jre\bin\$FileName")
+  )
+  foreach ($candidate in $candidates) {
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+      return $candidate
+    }
+  }
+  throw "$FileName was not found in the active JDK."
+}
+
 function Set-ProcessEnvironmentValue {
   param(
     [Parameter(Mandatory = $true)][string]$Name,
@@ -144,6 +169,24 @@ try {
     & flutter @commonBuildArguments
     if ($LASTEXITCODE -ne 0) {
       throw "Flutter production universal and ABI APK build failed with exit code $LASTEXITCODE."
+    }
+
+    $storeBundleBuildArguments = @(
+      "build",
+      "appbundle",
+      "--release",
+      "--flavor", "store",
+      "--target-platform", "android-arm,android-arm64,android-x64",
+      "--dart-define=POKROV_API_BASE_URL=$ApiBaseUrl",
+      "--dart-define=POKROV_APP_VERSION=$declaredVersionName",
+      "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
+      "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey",
+      "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
+      "--dart-define=POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64=$SupportSigningPublicKey"
+    )
+    & flutter @storeBundleBuildArguments
+    if ($LASTEXITCODE -ne 0) {
+      throw "Flutter production store AAB build failed with exit code $LASTEXITCODE."
     }
   } finally {
     Pop-Location
@@ -281,3 +324,104 @@ foreach ($artifact in $artifacts) {
   Write-Host "Certificate SHA-256: $artifactFingerprint"
   Write-Host "Evidence: $evidencePath"
 }
+
+$aabPath = Join-Path $androidRoot "build\app\outputs\bundle\storeRelease\app-store-release.aab"
+if (-not (Test-Path -LiteralPath $aabPath -PathType Leaf)) {
+  throw "The expected production store AAB was not produced."
+}
+
+$jarsigner = Resolve-JdkTool -FileName "jarsigner.exe"
+$jarVerificationOutput = @(
+  & $jarsigner -verify $aabPath 2>&1 | ForEach-Object { [string]$_ }
+)
+if ($LASTEXITCODE -ne 0) {
+  throw "jarsigner rejected the production store AAB."
+}
+$jarVerificationText = $jarVerificationOutput -join "`n"
+if ($jarVerificationText -notmatch "(?im)^\s*jar verified\.\s*$") {
+  throw "jarsigner did not confirm the production store AAB signature."
+}
+
+$keytool = Resolve-JdkTool -FileName "keytool.exe"
+$certificateOutput = @(
+  & $keytool -printcert -jarfile $aabPath 2>&1 | ForEach-Object { [string]$_ }
+)
+if ($LASTEXITCODE -ne 0) {
+  throw "keytool could not inspect the production store AAB signer."
+}
+$certificateText = $certificateOutput -join "`n"
+$aabFingerprintMatch = [regex]::Match(
+  $certificateText,
+  "SHA256:\s*((?:[0-9a-fA-F]{2}:){31}[0-9a-fA-F]{2})"
+)
+if (-not $aabFingerprintMatch.Success) {
+  throw "Could not read the production store AAB signer fingerprint."
+}
+$aabFingerprint = $aabFingerprintMatch.Groups[1].Value.Replace(":", "").ToUpperInvariant()
+if ($aabFingerprint -ne $expectedFingerprint) {
+  throw "The production store AAB signer does not match the configured POKROV production certificate."
+}
+
+$requiredAabEntries = @(
+  "base/manifest/AndroidManifest.xml",
+  "base/lib/armeabi-v7a/libpokrov-core.so",
+  "base/lib/arm64-v8a/libpokrov-core.so",
+  "base/lib/x86_64/libpokrov-core.so"
+)
+$aabArchive = [IO.Compression.ZipFile]::OpenRead($aabPath)
+try {
+  $aabEntryNames = @($aabArchive.Entries | ForEach-Object { $_.FullName })
+  foreach ($requiredEntry in $requiredAabEntries) {
+    if ($aabEntryNames -notcontains $requiredEntry) {
+      throw "The production store AAB is missing a required manifest or Core ABI entry."
+    }
+  }
+} finally {
+  $aabArchive.Dispose()
+}
+
+$clientRevision = ([string](& git -C $repoRoot rev-parse HEAD 2>&1 | Select-Object -First 1)).Trim()
+if ($LASTEXITCODE -ne 0 -or $clientRevision -notmatch '^[0-9a-fA-F]{40}$') {
+  throw "Could not bind the production store AAB to the exact client revision."
+}
+$aab = Get-Item -LiteralPath $aabPath
+$aabHash = (Get-FileHash -LiteralPath $aabPath -Algorithm SHA256).Hash
+$aabEvidence = [ordered]@{
+  schema_version = 1
+  artifact = $aab.Name
+  canonical_file_name = "pokrov-android-market.aab"
+  package_name = [string]$metadata.package_name
+  version_name = $declaredVersionName
+  version_code = $declaredVersionCode
+  distribution = "store_aab"
+  build_mode = "release"
+  debuggable = $false
+  signing_state = "production_self_managed_upload_key"
+  certificate_sha256 = $aabFingerprint
+  aab_sha256 = $aabHash
+  size_bytes = [int64]$aab.Length
+  included_core_abis = @("armeabi-v7a", "arm64-v8a", "x86_64")
+  api_base_url = $ApiBaseUrl
+  emergency_signing_key_id = $EmergencySigningKeyId
+  emergency_public_key_sha256 = $emergencyPublicKeySha256
+  jar_signature_integrity = "PASS"
+  certificate_chain_status = "SELF_MANAGED_SELF_SIGNED_NO_PUBLIC_CHAIN"
+  source_client_sha = $clientRevision.ToLowerInvariant()
+  store_submission_status = "NOT_REQUESTED"
+  candidate_created = $false
+  verified_at_utc = [DateTime]::UtcNow.ToString("o")
+}
+$aabEvidencePath = "$aabPath.signing.json"
+[System.IO.File]::WriteAllText(
+  $aabEvidencePath,
+  ($aabEvidence | ConvertTo-Json -Depth 4),
+  [System.Text.UTF8Encoding]::new($false)
+)
+
+Write-Host "Android production store AAB built and verified." -ForegroundColor Green
+Write-Host "AAB: $aabPath"
+Write-Host "Size: $($aab.Length) bytes"
+Write-Host "AAB SHA-256: $aabHash"
+Write-Host "Certificate SHA-256: $aabFingerprint"
+Write-Host "Store submission: NOT_REQUESTED"
+Write-Host "Evidence: $aabEvidencePath"

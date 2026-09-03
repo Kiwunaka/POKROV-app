@@ -707,8 +707,13 @@ python C:\path\to\platform\scripts\android_localhost_audit.py `
   --require-release-build
 ```
 
-The build command does not authorize publishing. The audit command does not
-replace install, routing, network, OEM or endurance evidence.
+The build command produces and verifies four production-signed direct APKs and
+one production-signed market-only AAB in one fail-closed CLI path. The AAB
+check covers its JAR signature, exact production certificate and required Core
+ABI entries; its evidence remains `store_submission_status=NOT_REQUESTED` and
+`candidate_created=false`. The build command does not authorize publishing or
+create a Store claim. The audit command does not replace install, routing,
+network, OEM or endurance evidence.
 
 ## Retained History
 
