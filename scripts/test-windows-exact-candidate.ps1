@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [string]$CandidatePath = "build/private-candidate/pokrov-windows-setup-x64.exe",
-  [string]$GateInputPath = "config/windows-clean-host-gate.candidate-3.json",
+  [string]$GateInputPath = "config/windows-clean-host-gate.candidate-25.json",
   [string]$EvidencePath = "build/evidence/windows-exact-candidate-clean-host.json",
   [switch]$RunCleanHostSmoke,
   [switch]$RunOwnerCurrentHostSmoke,
@@ -236,6 +236,14 @@ $knownCandidates = @{
     platform = "719e23dc49407beb9ae30d98d17d4b73d18ae37c"
     release_index = "54cfa03502ffafa5e4fb230a2cbdb0c0572c429f"
   }
+  "pokrov-1.2.0-candidate.25" = [ordered]@{
+    manifest = "7161bae715d590fac0623561d147e4d9ee069da14a5e3645001cc4c39aa329b6"
+    signature = "f83cf5acbfa8aa55a45a73f03a2f4e829661215a788f68e8b7b36764b1ff3d14"
+    client = "54259b0f84e16c58e2d1f5f04b369af4fd0834b2"
+    core = "cd8f0f4169d570d693992a959d81d17c2c44884d"
+    platform = "883cd1038a087fbf9f570cffcbfdfd5f5197ffd4"
+    release_index = "18d9cb4c5541481c5e60713376904f962ec19a7c"
+  }
 }
 $candidateLabel = [string]$gateInput.candidate_label
 Assert-Gate -Condition $knownCandidates.ContainsKey($candidateLabel) -Code "candidate_label_invalid"
@@ -379,7 +387,7 @@ try {
     Assert-Gate -Condition ((Get-Item -LiteralPath $installedPath).Length -eq [int64]$required.size_bytes) -Code "installed_required_file_size_mismatch"
     Assert-Gate -Condition ((Get-Sha256 -Path $installedPath) -eq ([string]$required.sha256).ToLowerInvariant()) -Code "installed_required_file_sha256_mismatch"
   }
-  Add-Check -Checks $checks -Id "installed_file_identity" -Status "PASS" -Detail "all 8 manifest-bound installed files match size and SHA-256"
+  Add-Check -Checks $checks -Id "installed_file_identity" -Status "PASS" -Detail "all $(@($gateInput.installation.required_files).Count) manifest-bound installed files match size and SHA-256"
 
   $failureStage = "service_contract"
   $serviceRunning = Wait-ServiceState -Name $serviceName -State "Running"

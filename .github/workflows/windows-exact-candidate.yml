@@ -19,7 +19,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $gate = Get-Content -LiteralPath config/windows-clean-host-gate.candidate-3.json -Raw |
+          $gate = Get-Content -LiteralPath config/windows-clean-host-gate.candidate-25.json -Raw |
             ConvertFrom-Json -Depth 20
           New-Item -ItemType Directory -Path build/private-candidate -Force | Out-Null
           gh release download $gate.private_ci_release_tag `
@@ -31,6 +31,7 @@ jobs:
         shell: pwsh
         run: >-
           ./scripts/test-windows-exact-candidate.ps1
+          -GateInputPath config/windows-clean-host-gate.candidate-25.json
           -RunCleanHostSmoke
 
       - name: Upload sanitized exact-candidate evidence

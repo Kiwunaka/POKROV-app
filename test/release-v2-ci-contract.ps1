@@ -105,8 +105,8 @@ foreach ($forbiddenFragment in @('event_message', 'owner_sid_value', 'registry_o
 
 $windowsWorkflowPath = Join-Path $root ".github\workflows\windows-exact-candidate.yml"
 $windowsWorkflow = [IO.File]::ReadAllText($windowsWorkflowPath).Replace("`r`n", "`n")
-if (-not $windowsWorkflow.Contains("config/windows-clean-host-gate.candidate-3.json")) {
-  throw "Windows exact-candidate workflow is not pinned to candidate.3"
+if (-not $windowsWorkflow.Contains("config/windows-clean-host-gate.candidate-25.json")) {
+  throw "Windows exact-candidate workflow is not pinned to candidate.25"
 }
 
 $candidateThreeInputPath = Join-Path $root "config\windows-clean-host-gate.candidate-3.json"
@@ -165,6 +165,68 @@ foreach ($requiredFile in @($candidateThreeInput.installation.required_files)) {
   $actualIdentity = "$([int64]$requiredFile.size_bytes)|$([string]$requiredFile.sha256)"
   if ([string]::IsNullOrWhiteSpace($expectedIdentity) -or $actualIdentity -ne $expectedIdentity) {
     throw "Windows candidate.3 input has wrong installed-file identity for $($requiredFile.path)"
+  }
+}
+
+$candidateTwentyFiveInputPath = Join-Path $root "config\windows-clean-host-gate.candidate-25.json"
+if (-not (Test-Path -LiteralPath $candidateTwentyFiveInputPath -PathType Leaf)) {
+  throw "Windows candidate.25 clean-host input is missing: $candidateTwentyFiveInputPath"
+}
+
+$candidateTwentyFiveInput = [IO.File]::ReadAllText($candidateTwentyFiveInputPath) | ConvertFrom-Json -Depth 20
+$candidateTwentyFiveExpected = [ordered]@{
+  candidate_label = "pokrov-1.2.0-candidate.25"
+  candidate_manifest_sha256 = "7161bae715d590fac0623561d147e4d9ee069da14a5e3645001cc4c39aa329b6"
+  candidate_manifest_signature_sha256 = "f83cf5acbfa8aa55a45a73f03a2f4e829661215a788f68e8b7b36764b1ff3d14"
+  private_ci_release_tag = "pokrov-1.2.0-candidate.25-private-ci"
+}
+foreach ($entry in $candidateTwentyFiveExpected.GetEnumerator()) {
+  if ([string]$candidateTwentyFiveInput.($entry.Key) -ne [string]$entry.Value) {
+    throw "Windows candidate.25 input has wrong $($entry.Key)"
+  }
+}
+
+$candidateTwentyFiveSourceExpected = [ordered]@{
+  client = "54259b0f84e16c58e2d1f5f04b369af4fd0834b2"
+  core = "cd8f0f4169d570d693992a959d81d17c2c44884d"
+  platform = "883cd1038a087fbf9f570cffcbfdfd5f5197ffd4"
+  release_index = "18d9cb4c5541481c5e60713376904f962ec19a7c"
+}
+foreach ($entry in $candidateTwentyFiveSourceExpected.GetEnumerator()) {
+  if ([string]$candidateTwentyFiveInput.source_tuple.($entry.Key) -ne [string]$entry.Value) {
+    throw "Windows candidate.25 input has wrong source tuple member $($entry.Key)"
+  }
+}
+
+if (
+  [string]$candidateTwentyFiveInput.artifact.sha256 -ne "ffc9b07c59f75372b48c5c1e94551d6d9af710ac0287cd1352142b0964707fb3" -or
+  [int64]$candidateTwentyFiveInput.artifact.size_bytes -ne 29139238
+) {
+  throw "Windows candidate.25 input has wrong installer identity"
+}
+
+if (@($candidateTwentyFiveInput.installation.required_files).Count -ne 11) {
+  throw "Windows candidate.25 input does not bind all eleven installed files"
+}
+
+$candidateTwentyFiveRequiredFiles = [ordered]@{
+  "pokrov_windows.exe" = "192512|16c7ea0749d33f8e18716dd4f459d2a184b26c2db85d9d3e7d564f964ff473e4"
+  "pokrov_service.exe" = "188416|feb38138aafe8457932db87bc1a77d330c049a19122448a761334106188b697a"
+  "flutter_windows.dll" = "18511872|1f4215e1072dd9e34f4565b74310e6771364e1470c7e92214bca64947bd012a1"
+  "pokrov-core.dll" = "55426048|f284fa8841f1a45271874a7a05ed6093fb0e3efbdd03e00001edd046be708204"
+  "libcronet.dll" = "8596992|8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+  "msvcp140.dll" = "575592|9057d39b36b6c7d054865ee2bf9cde7a490fe3b01ec4e82514687e24f576269f"
+  "vcruntime140.dll" = "120432|da72e6677bd1bcd01c453c1998aaa19aeaf6659f4774cf6848409da8232a95b2"
+  "vcruntime140_1.dll" = "49744|26e470b29bed3d873e0c328186e53f95e9edbfe0b0fd0cda44743a0b1a04a828"
+  "pokrov_tray.ico" = "110013|9eea4eff6f980edda2b9c61f3d86fa63e6349bed23bc83e09d5fbb3274d9575d"
+  "data/app.so" = "8930224|d16cc59715250d3686602c42d1a6bbfd45a201823b55ad3890e0d7bd9f16d754"
+  "data/icudtl.dat" = "778864|c12537022ef818991a7bfed41a76d8d6ae962ffbc0e6511ac762a5d0845e7f7c"
+}
+foreach ($requiredFile in @($candidateTwentyFiveInput.installation.required_files)) {
+  $expectedIdentity = $candidateTwentyFiveRequiredFiles[[string]$requiredFile.path]
+  $actualIdentity = "$([int64]$requiredFile.size_bytes)|$([string]$requiredFile.sha256)"
+  if ([string]::IsNullOrWhiteSpace($expectedIdentity) -or $actualIdentity -ne $expectedIdentity) {
+    throw "Windows candidate.25 input has wrong installed-file identity for $($requiredFile.path)"
   }
 }
 
