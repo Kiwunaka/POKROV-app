@@ -165,6 +165,34 @@ void main() {
     }
   });
 
+  test('windows release build normalizes native and Dart build metadata',
+      () async {
+    final buildScript =
+        await File('../../scripts/build-windows-release.ps1').readAsString();
+    final reproducibleBuildScript = await File(
+      '../../scripts/build-windows-release-reproducible.ps1',
+    ).readAsString();
+    final cmake = await File('windows/CMakeLists.txt').readAsString();
+
+    expect(cmake, contains('/Brepro'));
+    expect(cmake, contains(r'Release>,$<CONFIG:Profile>'));
+    expect(
+      buildScript,
+      contains('function Set-StableDartPluginRegistrantPackageUri'),
+    );
+    expect(buildScript, contains('pokrov_generated_registrant'));
+    expect(buildScript, contains(r'rootUri = $stableRootUri'));
+    expect(buildScript, contains(r'packageUri = $stablePackageUri'));
+    expect(buildScript, contains('Set-StableDartPluginRegistrantPackageUri'));
+    expect(buildScript, contains('Sync-FlutterWindowsCppClientWrapper'));
+    expect(buildScript, contains(r'windows-x64\\cpp_client_wrapper'));
+    expect(buildScript, contains(r'build\\native_assets\\windows'));
+    expect(buildScript, contains('"--no-pub"'));
+    expect(reproducibleBuildScript, contains('subst.exe'));
+    expect(reproducibleBuildScript, contains(r'$stableDrive = "P:"'));
+    expect(reproducibleBuildScript, contains('finally'));
+  });
+
   test('production shells bind one tracked support signing pin', () async {
     final seed = jsonDecode(
       await File('../../config/support-signing.seed.json').readAsString(),

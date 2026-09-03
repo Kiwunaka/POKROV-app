@@ -718,12 +718,45 @@ recovery, connected uninstall and interactive SmartScreen remain
 
 ## Verification Commands
 
+### Successor-source reproducible build contract
+
+The Windows release builder now normalizes both sources of nondeterminism
+observed in fresh candidate.31 source rebuilds:
+
+- MSVC Release/Profile executable and DLL targets use `/Brepro`, removing the
+  changing PE linker timestamp and matching debug-directory timestamp;
+- after the final `flutter pub get`, the builder assigns the generated Dart
+  plugin registrant a stable package URI and invokes `flutter build windows`
+  with `--no-pub`. This prevents the absolute worktree path from entering
+  `data/app.so`.
+
+For byte-for-byte rebuild evidence, invoke
+`scripts/build-windows-release-reproducible.ps1` with the ordinary release
+builder arguments. The wrapper fails closed if `P:` is occupied, maps the exact
+client checkout to that stable path only for the child build, and removes the
+mapping in `finally`. The release builder also stages the pinned Flutter
+Windows C++ wrapper from the SDK engine cache before CMake runs, so a clean
+worktree does not depend on stale `windows/flutter/ephemeral` files. It removes
+the Windows-specific `build/native_assets/windows` staging directory before the
+build so an obsolete optional file cannot leak into the release bundle.
+
+The contract is fail closed on a missing, unsupported or conflicting Flutter
+package config. It does not patch completed binaries and does not weaken AOT
+stack metadata for normal package sources. Byte identity must be proved by two
+clean builds from different absolute worktree paths before a successor
+candidate can receive reproducibility credit.
+
+Candidate.31 remains immutable. This source/tooling correction is
+`PRE_CANDIDATE_LOCAL` until merged and assembled into a newly numbered exact
+candidate; it changes no public or stable pointer.
+
 ```powershell
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-seed.ps1 `
   -PlatformRoot C:\path\to\platform `
   -CoreRoot C:\path\to\POKROV-core
 
-pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1
+pwsh -NoProfile -ExecutionPolicy Bypass `
+  -File .\scripts\build-windows-release-reproducible.ps1
 ```
 
 The builder normally discovers the latest installed official x64

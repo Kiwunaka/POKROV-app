@@ -45,6 +45,13 @@ function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_options(${TARGET} PRIVATE /EHsc)
   target_compile_definitions(${TARGET} PRIVATE "_HAS_EXCEPTIONS=0")
   target_compile_definitions(${TARGET} PRIVATE "$<$<CONFIG:Debug>:_DEBUG>")
+  if(MSVC)
+    get_target_property(POKROV_TARGET_TYPE ${TARGET} TYPE)
+    if(POKROV_TARGET_TYPE MATCHES "EXECUTABLE|SHARED_LIBRARY|MODULE_LIBRARY")
+      target_link_options(${TARGET} PRIVATE
+        "$<$<OR:$<CONFIG:Release>,$<CONFIG:Profile>>:/Brepro>")
+    endif()
+  endif()
 endfunction()
 
 # Flutter library and tool build rules.

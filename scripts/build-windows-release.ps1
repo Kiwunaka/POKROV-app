@@ -110,6 +110,102 @@ function Invoke-External {
   }
 }
 
+function Set-StableDartPluginRegistrantPackageUri {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$AppDirectory
+  )
+
+  $packageConfigPath = Join-Path $AppDirectory ".dart_tool\package_config.json"
+  if (-not (Test-Path -LiteralPath $packageConfigPath)) {
+    throw "Flutter package config is missing after pub get: $packageConfigPath"
+  }
+
+  $packageConfig = Get-Content -Raw -LiteralPath $packageConfigPath | ConvertFrom-Json
+  if ([int]$packageConfig.configVersion -ne 2) {
+    throw "Flutter package config version must be 2 for reproducible Windows builds."
+  }
+
+  $stablePackageName = "pokrov_generated_registrant"
+  $stableRootUri = "flutter_build/"
+  $stablePackageUri = "./"
+  $existing = @(
+    $packageConfig.packages |
+      Where-Object { [string]$_.name -eq $stablePackageName }
+  )
+  if ($existing.Count -gt 1) {
+    throw "Flutter package config contains duplicate $stablePackageName entries."
+  }
+  if ($existing.Count -eq 1) {
+    if ([string]$existing[0].rootUri -ne $stableRootUri -or
+        [string]$existing[0].packageUri -ne $stablePackageUri) {
+      throw "Flutter package config contains a conflicting $stablePackageName entry."
+    }
+    return
+  }
+
+  $stablePackage = [pscustomobject][ordered]@{
+    name = $stablePackageName
+    rootUri = $stableRootUri
+    packageUri = $stablePackageUri
+    languageVersion = "3.0"
+  }
+  $packageConfig.packages = @($packageConfig.packages) + $stablePackage
+  $serialized = $packageConfig | ConvertTo-Json -Depth 20
+  [System.IO.File]::WriteAllText(
+    $packageConfigPath,
+    $serialized,
+    (New-Object System.Text.UTF8Encoding($false))
+  )
+}
+
+function Sync-FlutterWindowsCppClientWrapper {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$AppDirectory
+  )
+
+  $flutterMetadataJson = & flutter --version --machine
+  if ($LASTEXITCODE -ne 0) {
+    throw "Could not resolve the pinned Flutter SDK metadata."
+  }
+  $flutterMetadata = ($flutterMetadataJson -join "`n") | ConvertFrom-Json
+  $flutterRoot = [string]$flutterMetadata.flutterRoot
+  if ([string]::IsNullOrWhiteSpace($flutterRoot)) {
+    throw "Pinned Flutter SDK metadata does not declare flutterRoot."
+  }
+  $sourceDirectory = Join-Path $flutterRoot `
+    "bin\\cache\\artifacts\\engine\\windows-x64\\cpp_client_wrapper"
+  $destinationDirectory = Join-Path $AppDirectory `
+    "windows\\flutter\\ephemeral\\cpp_client_wrapper"
+  $requiredFiles = @(
+    "core_implementations.cc",
+    "standard_codec.cc",
+    "plugin_registrar.cc",
+    "flutter_engine.cc",
+    "flutter_view_controller.cc",
+    "include\\flutter\\basic_message_channel.h"
+  )
+
+  $missingSourceFiles = @(
+    Test-RequiredFiles -BasePath $sourceDirectory -RelativePaths $requiredFiles
+  )
+  if ($missingSourceFiles.Count -gt 0) {
+    throw "Pinned Flutter Windows C++ wrapper is incomplete: $($missingSourceFiles -join ', ')"
+  }
+
+  New-Item -ItemType Directory -Force -Path $destinationDirectory | Out-Null
+  Copy-Item -Path (Join-Path $sourceDirectory "*") `
+    -Destination $destinationDirectory -Recurse -Force
+
+  $missingDestinationFiles = @(
+    Test-RequiredFiles -BasePath $destinationDirectory -RelativePaths $requiredFiles
+  )
+  if ($missingDestinationFiles.Count -gt 0) {
+    throw "Flutter Windows C++ wrapper staging is incomplete: $($missingDestinationFiles -join ', ')"
+  }
+}
+
 function Resolve-VersionFromPubspec {
   param(
     [Parameter(Mandatory = $true)]
@@ -580,7 +676,7 @@ if (-not $SkipTests) {
   if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
   }
-} else {
+} elseif ($SkipBuild) {
   $pubGetArgs = @("pub", "get")
   if ($OfflinePubGet) {
     $pubGetArgs += "--offline"
@@ -593,6 +689,19 @@ if (-not $SkipAnalyze) {
 }
 
 if (-not $SkipBuild) {
+  $buildPubGetArgs = @("pub", "get")
+  if ($OfflinePubGet) {
+    $buildPubGetArgs += "--offline"
+  }
+  Invoke-External -FilePath "flutter" -Arguments $buildPubGetArgs -WorkingDirectory $appDirectory
+  Set-StableDartPluginRegistrantPackageUri -AppDirectory $appDirectory
+  Sync-FlutterWindowsCppClientWrapper -AppDirectory $appDirectory
+
+  $windowsNativeAssetsDirectory = Join-Path $appDirectory `
+    "build\\native_assets\\windows"
+  if (Test-Path -LiteralPath $windowsNativeAssetsDirectory) {
+    Remove-Item -Recurse -Force -LiteralPath $windowsNativeAssetsDirectory
+  }
   $windowsBuildDirectory = Join-Path $appDirectory "build\\windows"
   if (Test-Path -LiteralPath $windowsBuildDirectory) {
     Remove-Item -Recurse -Force -LiteralPath $windowsBuildDirectory
@@ -601,6 +710,7 @@ if (-not $SkipBuild) {
     "build",
     "windows",
     "--release",
+    "--no-pub",
     "--dart-define=POKROV_APP_VERSION=$version",
     "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
     "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey",
