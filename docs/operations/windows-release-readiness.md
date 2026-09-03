@@ -718,6 +718,28 @@ recovery, connected uninstall and interactive SmartScreen remain
 
 ## Verification Commands
 
+### Successor-source reproducible build contract
+
+The Windows release builder now normalizes both sources of nondeterminism
+observed in fresh candidate.31 source rebuilds:
+
+- MSVC Release/Profile executable and DLL targets use `/Brepro`, removing the
+  changing PE linker timestamp and matching debug-directory timestamp;
+- after the final `flutter pub get`, the builder assigns the generated Dart
+  plugin registrant a stable package URI and invokes `flutter build windows`
+  with `--no-pub`. This prevents the absolute worktree path from entering
+  `data/app.so`.
+
+The contract is fail closed on a missing, unsupported or conflicting Flutter
+package config. It does not patch completed binaries and does not weaken AOT
+stack metadata for normal package sources. Byte identity must be proved by two
+clean builds from different absolute worktree paths before a successor
+candidate can receive reproducibility credit.
+
+Candidate.31 remains immutable. This source/tooling correction is
+`PRE_CANDIDATE_LOCAL` until merged and assembled into a newly numbered exact
+candidate; it changes no public or stable pointer.
+
 ```powershell
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-seed.ps1 `
   -PlatformRoot C:\path\to\platform `
