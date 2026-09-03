@@ -736,7 +736,9 @@ builder arguments. The wrapper fails closed if `P:` is occupied, maps the exact
 client checkout to that stable path only for the child build, and removes the
 mapping in `finally`. The release builder also stages the pinned Flutter
 Windows C++ wrapper from the SDK engine cache before CMake runs, so a clean
-worktree does not depend on stale `windows/flutter/ephemeral` files.
+worktree does not depend on stale `windows/flutter/ephemeral` files. It removes
+the Windows-specific `build/native_assets/windows` staging directory before the
+build so an obsolete optional file cannot leak into the release bundle.
 
 The contract is fail closed on a missing, unsupported or conflicting Flutter
 package config. It does not patch completed binaries and does not weaken AOT

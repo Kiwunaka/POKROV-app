@@ -186,6 +186,7 @@ void main() {
     expect(buildScript, contains('Set-StableDartPluginRegistrantPackageUri'));
     expect(buildScript, contains('Sync-FlutterWindowsCppClientWrapper'));
     expect(buildScript, contains(r'windows-x64\\cpp_client_wrapper'));
+    expect(buildScript, contains(r'build\\native_assets\\windows'));
     expect(buildScript, contains('"--no-pub"'));
     expect(reproducibleBuildScript, contains('subst.exe'));
     expect(reproducibleBuildScript, contains(r'$stableDrive = "P:"'));

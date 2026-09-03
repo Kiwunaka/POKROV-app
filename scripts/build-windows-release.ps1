@@ -697,6 +697,11 @@ if (-not $SkipBuild) {
   Set-StableDartPluginRegistrantPackageUri -AppDirectory $appDirectory
   Sync-FlutterWindowsCppClientWrapper -AppDirectory $appDirectory
 
+  $windowsNativeAssetsDirectory = Join-Path $appDirectory `
+    "build\\native_assets\\windows"
+  if (Test-Path -LiteralPath $windowsNativeAssetsDirectory) {
+    Remove-Item -Recurse -Force -LiteralPath $windowsNativeAssetsDirectory
+  }
   $windowsBuildDirectory = Join-Path $appDirectory "build\\windows"
   if (Test-Path -LiteralPath $windowsBuildDirectory) {
     Remove-Item -Recurse -Force -LiteralPath $windowsBuildDirectory
