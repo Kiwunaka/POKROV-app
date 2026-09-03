@@ -15,9 +15,9 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+4053` |
-| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.25`, app `1.2.0+4053`; exact client/Core bytes are unchanged from candidate.24 while the platform-only development lock is corrected. Gate F is `BLOCKED 5/14/0`; installed candidate.25 runtime remains `NOT_RUN` at this checkpoint |
+| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.25`, app `1.2.0+4053`; exact client/Core bytes are unchanged from candidate.24 while the platform-only development lock is corrected. The bounded clean-host gate passes; Gate F remains `BLOCKED 5/14/0` pending connected and device evidence. |
 | Retained signed-index predecessor | Candidate.22 setup `effc6a8e…f409`; immutable `NO_GO` after connected uninstall leaves the UI and 13 loaded binaries |
-| Current promotable candidate | None. Candidate.25 packages the connected-uninstall and bounded pipe-retry corrections, but exact installed Windows runtime evidence is still required before promotion. |
+| Current promotable candidate | None. Candidate.25 packages the connected-uninstall and bounded pipe-retry corrections and passes the bounded hosted clean-host gate, but exact connected Windows runtime evidence is still required before promotion. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
 | Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`; candidate.25 carries the same reviewed Core source in its exact private setup |
@@ -53,27 +53,30 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Post-candidate.22 uninstall correction | `PASS_EXACT_PRE_CANDIDATE4052_CONNECTED_UNINSTALL_VM`; local setup `9aa6b0fd…3152` terminates the UI, waits for service stop, removes every installed file and the empty app directory, clears service/registry/TUN state and restores RU egress. Candidate.23 packages the source correction, but its exact connected-uninstall replay remains `NOT_RUN`. |
 | Candidate.23 serial-pipe contention | `FAIL_EXACT_CANDIDATE23_CORE001_SERVICE_RUNNING`; the exact client fails a later request while the service remains connected and running. A source-exact diagnostic client reproduces `0/32` accepted simultaneous status requests. |
 | Post-candidate.23 pipe correction | `PASS_CANDIDATE25_SOURCE_AND_NATIVE`; candidate.25 binds the corrected client/Core artifact set and a fresh CLI rehearsal passes eight native tests plus the full Windows build. Exact installed candidate.25 contention/runtime remains `NOT_RUN`. |
-| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; exact candidate.25 install, contention, TUN/DNS/egress, recovery, connected-uninstall, Windows 10, leak/IPv6 and interactive SmartScreen remain separate exact-byte gates. VirtualBox exposes no guest sleep or IPv6 path. |
+| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; exact candidate.25 contention, TUN/DNS/egress, recovery, connected-uninstall, Windows 10, leak/IPv6 and interactive SmartScreen remain separate exact-byte gates. VirtualBox exposes no guest sleep or IPv6 path. |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
 fallback. The service owns Core, managed state and recovery. Green state
 requires the authenticated egress proof.
 
-## Candidate.25 Hosted Clean-Host Gate Preparation
+## Candidate.25 Hosted Clean-Host Gate PASS
 
-The private client repository now pins its manual GitHub-hosted Windows gate
-to candidate.25. The gate input binds the signed release-index manifest and
+The private client repository pins its manual GitHub-hosted Windows gate to
+candidate.25. The gate input binds the signed release-index manifest and
 signature, the exact four-source tuple, setup size and SHA-256, the unsigned
 owner exception and all `11/11` installed-file identities. The workflow uses
-an ephemeral `windows-2025` administrator runner, downloads only the named
-asset from the candidate.25 private CI carrier, then performs silent install,
-installed-file readback, LocalSystem service identity, ordinary UI/service
-authenticated IPC, SCM stop/restart, clean uninstall and idle route/DNS
-restoration.
+an ephemeral `windows-2025` administrator runner and downloads only the named
+asset from the candidate.25 private CI carrier.
 
-At this checkpoint the carrier and workflow run are `NOT_RUN`; preparation is
-not installation evidence. The gate cannot claim connected TUN/DNS/egress,
+Run `33717151777` completed successfully on image `win25-vs2026`
+`20260824.214.3`. It performed silent install, validated installed-file
+readback, LocalSystem service identity, ordinary UI/service
+authenticated IPC, SCM stop/restart, clean uninstall and idle route/DNS
+restoration. The exact candidate SHA-256 is `ffc9b07c…7fb3`; all `11/11`
+installed files matched. Sanitized evidence SHA-256 is `c6ec9d18…bfcd`.
+
+This bounded PASS cannot claim connected TUN/DNS/egress,
 AWG/Smart DNS, sleep/reboot, connected uninstall, interactive SmartScreen,
 trusted signing or stable promotion. Candidate.23 remains immutable `NO_GO`
 history.
