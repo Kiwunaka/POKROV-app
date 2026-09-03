@@ -223,6 +223,18 @@ void main() {
     expect(scriptContent, contains('PrivilegesRequired=admin'));
     expect(scriptContent, contains('InstallOwnerSid'));
     expect(scriptContent, contains('ExecAsOriginalUser'));
+    expect(
+      scriptContent,
+      contains('function TryReuseExistingInstallOwnerSid(): Boolean'),
+    );
+    expect(
+      scriptContent,
+      contains('POKROV_INSTALL_OWNER_REUSED_FOR_UPGRADE'),
+    );
+    expect(
+      scriptContent,
+      contains('ExtractOwnerSid(ExistingOwnerSid) = ExistingOwnerSid'),
+    );
     expect(scriptContent, contains('create POKROVService'));
     expect(scriptContent, contains('AfterInstall: InstallAndStartService'));
     expect(scriptContent, contains('procedure InstallAndStartService'));

@@ -27,9 +27,9 @@ contracts. Do not select the most optimistic status.
 | Retained public release | Android and Windows `1.1.6` |
 | New working target | `1.2.0+4053` |
 | Continuing source target | `PRE_CANDIDATE_LOCAL` on `POKROV-app/main` |
-| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.25`, app `1.2.0+4053`; signed supply and the bounded Windows clean-host gate pass. Gate F remains `BLOCKED 5/14/0`; connected Windows, Android and the other explicit non-PASS rows remain open. |
+| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.25`, app `1.2.0+4053`; signed supply and the bounded Windows clean-host gate pass. A later current-source precursor exposed an in-place-upgrade packaging defect, so candidate.25 remains immutable and non-promotable. Gate F remains `BLOCKED 5/14/0`. |
 | Retained signed-index predecessor | Candidate.24 is immutable signed predecessor history; candidate.23 is immutable `NO_GO` for serial-pipe contention. |
-| Candidate/current-main boundary | Candidate.25 binds exact client artifact source `54259b0…34b2`; later tooling/docs commits do not alter or receive runtime credit for those bytes. |
+| Candidate/current-main boundary | Candidate.25 binds exact client artifact source `54259b0…34b2`; candidate.27 failure and corrected candidate.28 precursor evidence belong to later current source and do not alter or receive candidate.25 runtime credit. |
 | New public cutover | `BLOCKED_GATE_F_14_NON_PASS`; no public asset, Store object or stable pointer exists |
 | Planned distribution if approved | Android direct stable target; Windows direct unsigned beta with mandatory SmartScreen warning; stores `NOT_REQUESTED`. No new public claim exists yet. |
 
@@ -71,27 +71,30 @@ candidates remain retained history.
 | Android OEM limitations | `MANUAL_OWNER_TEST` | Candidate.25 background, screen-off, tile/notification, permission revoke, Doze/standby and broader OEM/endurance coverage remain manual. |
 | Windows package/signing | `PASS_EXACT_CANDIDATE_25_SIGNED_SUPPLY_AND_11_OF_11`; signing `SKIPPED_BY_OWNER` | Setup `ffc9b07c…7fb3`, `29139238` bytes, binds the corrected build-4053 source. Installed 11-file identity is proved on the clean hosted runner. SmartScreen warning remains mandatory. |
 | Windows clean-host proof | `PASS_EXACT_PRIVATE_CI_INSTALL_SERVICE_IPC_RESTART_UNINSTALL_IDLE_NETWORK` | GitHub-hosted Windows 2025 run `33717151777` proves silent install, `11/11`, LocalSystem service, ordinary authenticated IPC, SCM stop/restart, clean uninstall and unchanged idle route/DNS. Evidence `c6ec9d18…bfcd`; connected TUN/DNS/egress remains separate. |
+| Windows in-place upgrade | `FAIL_PRECURSOR_27; PASS_PRECURSOR_28_SOURCE_FIX` | Candidate.27 precursor reproducibly aborted its first candidate.23 upgrade when original-user SID resolution failed. Candidate.28 precursor reuses only an exact validated protected owner SID for an existing installation; first-pass upgrade `11/11`, LocalSystem service, direct TUN/DNS lifecycle and connected reboot recovery pass. No successor exact candidate exists yet. |
 | Linux client | `IMPLEMENTED_PARTIAL_SOURCE_ONLY; NOT_SHIPPED_IN_CANDIDATE_25` | The non-root UI/system daemon, bounded IPC, polkit and journald exist. A dormant typed NetworkManager/resolved/nft transaction with reverse fault recovery is source-tested but not wired to `connect`; native mutation/restoration, packages, signing and clean-VM proof remain open. |
 | Apple native release | `NOT_REQUESTED` | Apple remains readiness-only for this release. |
 | RU-origin proof | `BOUNDED_CORE_SLICE_PASS; FULL_CANDIDATE_25_NOT_RUN` | Exact-Core AWG3.1/AWG2 direct-RU Pi checks pass, but no full candidate.25 authenticated RU-origin aggregate exists. |
 | Hosted CI | `PASS_EXACT_CANDIDATE_25_ATTACHED_CHECKS_AND_WINDOWS_CLEAN_HOST` | Attached checks pass across exact platform, client, Core and release-index source SHAs; Windows clean-host run `33717151777` also passes its bounded exact-byte lane. |
 | Runtime sync | `CANDIDATE_25_PRIVATE_NOT_PROMOTED` | Candidate.25 remains private. No public runtime switch, stable pointer or post-promotion readback exists. |
 | Exact-candidate rollback drill | `CANDIDATE_25_NOT_RUN` | Older reversal evidence does not approve candidate.25. Guarded pointer/runtime rollback plus current/Brain/RU readback and health remain open. |
-| Final go/no-go | `BLOCKED_GATE_F_5_PASS_14_NON_PASS_0_FAIL` | Exact candidate.25 Gate F exists and remains blocked. Gate G, public release, Store object and stable pointer are unauthorized. |
+| Final go/no-go | `BLOCKED_GATE_F_5_PASS_14_NON_PASS_0_FAIL` | Exact candidate.25 Gate F exists and remains blocked; the current packaging correction also requires a new exact successor candidate. Gate G, public release, Store object and stable pointer are unauthorized. |
 
 ## Current Cutover Sequence
 
-1. Run exact candidate.25 connected contention, TUN/DNS/egress, recovery and
-   connected-uninstall checks in the isolated Windows VM.
-2. Run Android device and the remaining Windows gates. A retained
+1. Merge the validated Windows upgrade-owner correction and create a new exact
+   successor candidate from the resulting frozen client/platform/Core tuple.
+2. Run that successor's connected contention, managed TUN/DNS/egress,
+   recovery and connected-uninstall checks in the isolated Windows VM.
+3. Run Android device and the remaining Windows gates. A retained
    candidate must use the manual release-v2 replay with exact full client,
    platform and Core commit SHAs; a run mixing the candidate with current
    promotion lines is drift evidence, not an exact-candidate PASS.
-5. Retain current-origin, Brain-origin and RU-origin proof before requesting runtime-sync authority.
-6. Add the exact candidate and retained prior stable handoff to the rollback
+4. Retain current-origin, Brain-origin and RU-origin proof before requesting runtime-sync authority.
+5. Add the exact candidate and retained prior stable handoff to the rollback
    catalog, then run the authorized pointer/runtime rollback with retained
    backup, receipt and readback evidence.
-7. Issue the evidence-based go/no-go decision. Only a generated GO may proceed
+6. Issue the evidence-based go/no-go decision. Only a generated GO may proceed
    to anonymous public downloads and stable promotion.
 
 No later step may convert a missing, manual, blocked or skipped result into
