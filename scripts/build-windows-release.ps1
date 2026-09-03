@@ -159,6 +159,53 @@ function Set-StableDartPluginRegistrantPackageUri {
   )
 }
 
+function Sync-FlutterWindowsCppClientWrapper {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$AppDirectory
+  )
+
+  $flutterMetadataJson = & flutter --version --machine
+  if ($LASTEXITCODE -ne 0) {
+    throw "Could not resolve the pinned Flutter SDK metadata."
+  }
+  $flutterMetadata = ($flutterMetadataJson -join "`n") | ConvertFrom-Json
+  $flutterRoot = [string]$flutterMetadata.flutterRoot
+  if ([string]::IsNullOrWhiteSpace($flutterRoot)) {
+    throw "Pinned Flutter SDK metadata does not declare flutterRoot."
+  }
+  $sourceDirectory = Join-Path $flutterRoot `
+    "bin\\cache\\artifacts\\engine\\windows-x64\\cpp_client_wrapper"
+  $destinationDirectory = Join-Path $AppDirectory `
+    "windows\\flutter\\ephemeral\\cpp_client_wrapper"
+  $requiredFiles = @(
+    "core_implementations.cc",
+    "standard_codec.cc",
+    "plugin_registrar.cc",
+    "flutter_engine.cc",
+    "flutter_view_controller.cc",
+    "include\\flutter\\basic_message_channel.h"
+  )
+
+  $missingSourceFiles = @(
+    Test-RequiredFiles -BasePath $sourceDirectory -RelativePaths $requiredFiles
+  )
+  if ($missingSourceFiles.Count -gt 0) {
+    throw "Pinned Flutter Windows C++ wrapper is incomplete: $($missingSourceFiles -join ', ')"
+  }
+
+  New-Item -ItemType Directory -Force -Path $destinationDirectory | Out-Null
+  Copy-Item -Path (Join-Path $sourceDirectory "*") `
+    -Destination $destinationDirectory -Recurse -Force
+
+  $missingDestinationFiles = @(
+    Test-RequiredFiles -BasePath $destinationDirectory -RelativePaths $requiredFiles
+  )
+  if ($missingDestinationFiles.Count -gt 0) {
+    throw "Flutter Windows C++ wrapper staging is incomplete: $($missingDestinationFiles -join ', ')"
+  }
+}
+
 function Resolve-VersionFromPubspec {
   param(
     [Parameter(Mandatory = $true)]
@@ -648,6 +695,7 @@ if (-not $SkipBuild) {
   }
   Invoke-External -FilePath "flutter" -Arguments $buildPubGetArgs -WorkingDirectory $appDirectory
   Set-StableDartPluginRegistrantPackageUri -AppDirectory $appDirectory
+  Sync-FlutterWindowsCppClientWrapper -AppDirectory $appDirectory
 
   $windowsBuildDirectory = Join-Path $appDirectory "build\\windows"
   if (Test-Path -LiteralPath $windowsBuildDirectory) {

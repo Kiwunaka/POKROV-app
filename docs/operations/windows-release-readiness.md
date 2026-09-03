@@ -730,6 +730,14 @@ observed in fresh candidate.31 source rebuilds:
   with `--no-pub`. This prevents the absolute worktree path from entering
   `data/app.so`.
 
+For byte-for-byte rebuild evidence, invoke
+`scripts/build-windows-release-reproducible.ps1` with the ordinary release
+builder arguments. The wrapper fails closed if `P:` is occupied, maps the exact
+client checkout to that stable path only for the child build, and removes the
+mapping in `finally`. The release builder also stages the pinned Flutter
+Windows C++ wrapper from the SDK engine cache before CMake runs, so a clean
+worktree does not depend on stale `windows/flutter/ephemeral` files.
+
 The contract is fail closed on a missing, unsupported or conflicting Flutter
 package config. It does not patch completed binaries and does not weaken AOT
 stack metadata for normal package sources. Byte identity must be proved by two
@@ -745,7 +753,8 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-seed.ps1 `
   -PlatformRoot C:\path\to\platform `
   -CoreRoot C:\path\to\POKROV-core
 
-pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1
+pwsh -NoProfile -ExecutionPolicy Bypass `
+  -File .\scripts\build-windows-release-reproducible.ps1
 ```
 
 The builder normally discovers the latest installed official x64
