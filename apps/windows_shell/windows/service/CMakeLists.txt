@@ -95,8 +95,7 @@ if(BUILD_TESTING)
     pokrov_service_common)
   add_dependencies(pokrov_service_integration_test pokrov_service)
   add_test(NAME pokrov_service_integration
-    COMMAND pokrov_service_integration_test)
-  set_tests_properties(pokrov_service_integration PROPERTIES
+    COMMAND pokrov_service_integration_test
     CONFIGURATIONS Debug)
 
   add_executable(pokrov_service_pipe_client_test
