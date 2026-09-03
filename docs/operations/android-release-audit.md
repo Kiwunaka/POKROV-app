@@ -15,11 +15,11 @@ Older APK identities and device runs are retained separately as evidence.
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
 | Working package target | `1.2.0+4053` |
-| Latest exact candidate | `pokrov-1.2.0-candidate.23`, build `4052`; signed private and immutable `NO_GO` after the Windows serial-pipe contention failure; exact Android install/runtime remains `NOT_RUN` |
+| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.25`, build `4053`; Gate F is `BLOCKED 5/14/0` and exact Android install/runtime remains `NOT_RUN` |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Exact candidate source | Platform `5ba4dba…fe68`, client `df9ed85…6354`, Core `cd8f0f4…884d`; ARM64 APK `08406f37…cb42`, `101366678` bytes, universal APK `596f37f7…0bef`, `295370161` bytes, and x86_64 APK `9fa6727f…7e4f`, `109951989` bytes |
+| Exact candidate source | Platform `883cd10…ffd4`, client `54259b0…34b2`, Core `cd8f0f4…884d`; ARM64 APK `4e8cac9e…f9be9`, `101366678` bytes, universal APK `71e15a2c…cf52b`, `295370161` bytes, and x86_64 APK `7bcdc01e…9d7a`, `109951989` bytes |
 | Exact candidate Core package | Secret-safe POKROV Core `1.1.0` from `cd8f0f4…884d`, AAR `2a9677d9…c6a69`; two builds are byte-identical and contain all four required ABIs |
-| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`; candidate.23 signed supply and private artifact scan retain the source-bound trust root |
+| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`; candidate.25 signed supply and private artifact scan retain the source-bound trust root |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
 
@@ -31,14 +31,14 @@ schema to two bounded files under the app-private no-backup directory. No raw
 message, URL, profile, token, endpoint or stack is accepted by that journal.
 These local contracts do not prove final APK bytes or physical behavior.
 
-## Exact Candidate.23 Android Boundary
+## Exact Candidate.25 Android Boundary
 
-Candidate.23 is local private with `promotion_authorized=false`. Its ARM64,
+Candidate.25 is private with `promotion_authorized=false`. Its ARM64,
 ARMv7, universal and x86_64 APKs plus market AAB pass production-certificate
-identity and private creation binding. Strict-v2 handoff `457bbf71…ef50`,
+identity and private creation binding. Strict-v2 handoff `b65b9e7e…2908`,
 refreshed SBOM/provenance and signed manifest/signature/receipt
-`5073c201…01a1` / `92027334…863` / `d11e24ac…8ba6` validate from exact
-release-index source `95f9f03…`. Exact candidate.23 LDPlayer install/launch
+`7161bae7…29b6` / `f83cf5ac…3d14` / `2c18b318…d2cf` validate from exact
+release-index source `18d9cb4…`. Exact candidate.25 LDPlayer install/launch
 and physical ARM64 install/runtime have not run. Older
 candidate install, AWG, WARP, handoff, Doze, routing and endurance results do
 not transfer.
