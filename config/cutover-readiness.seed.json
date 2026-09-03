@@ -66,9 +66,11 @@
       "size_bytes": 29139238,
       "manifest_sha256": "344b842cd0222aa642115c00f42810bf922492394435271d43d9837169f187c0",
       "signing": "SKIPPED_BY_OWNER_DIRECT_BETA_ONLY",
-      "environment": "GITHUB_HOSTED_WINDOWS_2025_PREPARED_NOT_RUN",
+      "environment": "PASS_GITHUB_HOSTED_WINDOWS_2025_RUN_33717151777",
+      "clean_host_evidence_sha256": "c6ec9d18366289d02fcf6e9c8fe168227a3a9a1a5a19457703120c6a9582bfcd",
+      "clean_host_install_uninstall": "PASS_EXACT_CANDIDATE25_11_OF_11_LOCAL_SYSTEM_AUTHENTICATED_IPC_RESTART_CLEAN_UNINSTALL_IDLE_NETWORK_RESTORED",
       "upgrade_startup_recovery": "NOT_RUN_EXACT_CANDIDATE25",
-      "non_elevated_ui_service": "NOT_RUN_EXACT_CANDIDATE25",
+      "non_elevated_ui_service": "PASS_EXACT_CANDIDATE25_ORDINARY_UI_LOCAL_SYSTEM_SERVICE_AUTHENTICATED_IPC",
       "clean_vm_live_network": "NOT_RUN_EXACT_CANDIDATE25",
       "connected_reboot": "NOT_RUN_EXACT_CANDIDATE25",
       "forced_service_restart_recovery": "NOT_RUN_EXACT_CANDIDATE25",
@@ -76,7 +78,7 @@
       "packaged_awg": "NOT_RUN_EXACT_CANDIDATE25",
       "service_pipe_concurrency": "PASS_SOURCE_NATIVE_32_OF_32_EXACT_CANDIDATE25_INSTALLED_RUNTIME_NOT_RUN",
       "connected_uninstall": "NOT_RUN_EXACT_CANDIDATE25",
-      "proof_ceiling": "SIGNED_SUPPLY_AND_HEADLESS_FILE_IDENTITY_ONLY"
+      "proof_ceiling": "EXACT_PRIVATE_CI_INSTALL_11_FILE_SERVICE_AUTHENTICATED_IPC_RESTART_UNINSTALL_AND_NO_IDLE_NETWORK_MUTATION_ONLY"
     },
     "gate_f": {
       "decision": "BLOCKED",
@@ -154,7 +156,6 @@
       "smartscreen_warning_required": true
     },
     "blocked_on": [
-      "run the prepared exact candidate.25 clean-host install, installed-file readback, LocalSystem service, authenticated IPC, service restart, clean uninstall and idle route/DNS restoration gate",
       "exact candidate.25 connected TUN/DNS/egress, pipe-concurrency, reboot/recovery and connected uninstall proof",
       "Windows 10, sleep/resume, IPv6/leak and interactive SmartScreen proof for candidate.25",
       "trusted signing and SmartScreen reputation for later broad distribution"
@@ -169,7 +170,8 @@
       "candidate.22 connected uninstall restores RU egress and removes the service/tunnel but leaves the running UI and 13 loaded binaries",
       "exact candidate.23 validates signed supply and 11 of 11 Windows files and reaches the initial connected state, but the ordinary client later reports CORE-001 while the service is running and concurrent trusted status requests fail",
       "the build-4053 bounded-retry source passes 32 of 32 concurrent trusted status requests against the unchanged candidate.23 service; this is pre-candidate evidence only",
-      "exact candidate.25 binds the corrected build-4053 client source, signed supply, exact setup identity and 11 of 11 Windows bundle files; installed clean-host runtime is prepared but not yet run"
+      "exact candidate.25 binds the corrected build-4053 client source, signed supply, exact setup identity and 11 of 11 Windows bundle files",
+      "GitHub-hosted Windows 2025 run 33717151777 installs the exact candidate.25 setup, validates 11 of 11 installed files, LocalSystem service and authenticated IPC, stops and restarts the service, uninstalls cleanly and restores the unchanged idle route and DNS fingerprints"
     ]
   },
   "blocking_dependencies": [

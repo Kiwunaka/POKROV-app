@@ -35,8 +35,8 @@ candidate and cutover verdict. Exact candidate.25 identity comes from the
 private creation manifest, signed strict-v2 contract and cutover seed; the
 release-handoff seed's `candidate_created=false` applies only to continuing
 `main`. Candidate.25 is unpublished and unpromoted with Gate F
-`BLOCKED 5/14/0`; installed Windows/Android and the other explicit non-PASS
-rows remain open. Candidate.23 is immutable `NO_GO` for serial-pipe
+`BLOCKED 5/14/0`; the bounded Windows clean-host gate passes, while connected
+Windows, Android and the other explicit non-PASS rows remain open. Candidate.23 is immutable `NO_GO` for serial-pipe
 contention. Candidate.22, candidate.21, candidate.20,
 candidates 17–19 and candidate.12 remain rejected
 history for their own bytes.
@@ -286,38 +286,35 @@ runtime, rollback or promotion proof.
 | 5 | Strict-v2 candidate metadata | `PASS_SIGNED_CANDIDATE_25` | Handoff `b65b9e7e…2908` binds build `4053`, exact four-source tuple, six artifacts, SBOM, provenance and the `11/11` Windows runtime manifest. |
 | 6 | Android exact-candidate build and signer | `PASS_EXACT_CANDIDATE_25_ARTIFACT_SIGNING; INSTALL_IDENTITY_OPEN` | Five Android artifacts are production-signed. ARM64 APK `4e8cac9e…f9be9`, `101366678` bytes, and x86_64 APK `7bcdc01e…9d7a`, `109951989` bytes, still require exact installed-byte readback. |
 | 7 | Android device matrix | `NOT_RUN_EXACT_CANDIDATE_25` | LDPlayer install/launch and physical Wi-Fi/Beeline default, AWG, WARP, per-app, handoff, IPv6/leak, UDP53/MTU, OEM and endurance proof remain open. Host-tunneled emulator networking is excluded. |
-| 8 | Windows exact-candidate package | `PASS_SIGNED_SUPPLY_AND_11_OF_11; INSTALLED_RUNTIME_OPEN` | Setup `ffc9b07c…7fb3`, `29139238` bytes, binds the corrected build-4053 source and exact 11-file manifest. Installed clean-host and connected runtime proof remain open. |
-| 9 | Windows unsigned-beta warning and clean-host recovery | `OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY; HOSTED_GATE_PREPARED_NOT_RUN` | The direct-beta warning/SmartScreen exception is explicit. Authenticode is `NotSigned`; trusted/Store/broad-stable claims remain forbidden. The private candidate.25 hosted gate is exact-byte bound and awaits execution. |
+| 8 | Windows exact-candidate package | `PASS_EXACT_PRIVATE_CI_INSTALL_11_OF_11_SERVICE_IPC_RESTART_UNINSTALL_IDLE_NETWORK` | Setup `ffc9b07c…7fb3`, `29139238` bytes, binds the corrected build-4053 source. GitHub-hosted Windows 2025 run `33717151777` installs it, validates all 11 files, LocalSystem service and ordinary authenticated IPC, restarts the service, uninstalls cleanly and leaves idle route/DNS unchanged. Connected runtime remains open. |
+| 9 | Windows unsigned-beta warning and clean-host recovery | `OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY; HOSTED_GATE_PASS_BOUNDED` | Authenticode is `NotSigned` and the SmartScreen warning remains mandatory. Evidence `c6ec9d18…bfcd` proves only the bounded clean-host lane; trusted/Store/broad-stable and connected-network claims remain forbidden. |
 | 10 | Hosted cross-repository CI | `PASS_EXACT_CANDIDATE_25_ATTACHED_CHECKS` | Exact attached checks pass across platform, client, Core and release-index source, including signer run `33709201344`. This does not replace device/live gates. |
 | 11 | Runtime/public readback and rollback | `CANDIDATE_25_NOT_RUN; LIVE_NOT_AUTHORIZED` | Older disposable reversal evidence does not approve candidate.25. No public tag/assets, live stable-pointer switch, anonymous public readback or runtime rollback exists. |
 | 12 | Promotion and go/no-go | `BLOCKED_GATE_F_5_PASS_14_NON_PASS_0_FAIL` | Candidate.25 remains private with promotion false. Gate G, public release and stable pointer are unauthorized until the exact non-PASS rows are closed or explicitly dispositioned. |
 
 ## Next Action Order
 
-1. Merge the candidate.25 hosted clean-host gate tooling without changing the
-   immutable candidate bytes, publish the exact setup only to the private client
-   CI carrier and retain the sanitized runner evidence.
-2. Install and hash-bind candidate.25 in the isolated VM. Repeat concurrent
+1. Install and hash-bind candidate.25 in the isolated VM. Repeat concurrent
    service access through the ordinary client, then prove connected uninstall
    closes the UI, removes all installed files and restores the ordinary network.
-3. Run the candidate.25 Windows 10, AWG 3.1/AWG2, sleep/resume,
+2. Run the candidate.25 Windows 10, AWG 3.1/AWG2, sleep/resume,
    connected-uninstall, IPv6/leak and interactive SmartScreen matrix only in
    the isolated VM; keep the main host network untouched.
-4. Install and hash-bind the successor ARM64 artifact on the physical Android
+3. Install and hash-bind the successor ARM64 artifact on the physical Android
    device, then run bounded Wi-Fi/Beeline default and explicitly selected lab
    checks without transferring older candidate results.
-5. Retain authenticated current/Brain/RU-origin evidence separately. Bind
+4. Retain authenticated current/Brain/RU-origin evidence separately. Bind
    Linux Core/TUN ownership to the typed transaction and add durable recovery,
    but run native mutation/restoration, packaging and VM proof only for its
    separate conditional beta lane.
-6. Complete provider/payment/PostgreSQL, Operator OIDC/RBAC/action-intent,
+5. Complete provider/payment/PostgreSQL, Operator OIDC/RBAC/action-intent,
    legal/commercial, comparable performance and final no-open-P0/privacy
    attestations for the successor candidate.
-7. Regenerate Gate F only after exact successor evidence changes;
+6. Regenerate Gate F only after exact successor evidence changes;
    every skip, inaccessible environment and unrun manual row remains non-PASS.
-8. Request separate authority for public same-byte candidate publication,
+7. Request separate authority for public same-byte candidate publication,
    anonymous readback, rollback drill and promotion.
-9. Provision trusted Windows signing later before any signed, Store or
+8. Provision trusted Windows signing later before any signed, Store or
    broad-stable Windows claim.
 
 ## Retained History
