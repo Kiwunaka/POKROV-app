@@ -1473,6 +1473,21 @@ foreach ($requiredDirectBuildMarker in @(
     $errors += "Android production builder lacks direct-flavor marker: $requiredDirectBuildMarker"
   }
 }
+foreach ($requiredStoreBuildMarker in @(
+  '"appbundle"',
+  '"--flavor", "store"',
+  'app-store-release.aab',
+  'jarsigner.exe',
+  'keytool.exe',
+  'base/lib/arm64-v8a/libpokrov-core.so',
+  'canonical_file_name = "pokrov-android-market.aab"',
+  'store_submission_status = "NOT_REQUESTED"',
+  'candidate_created = $false'
+)) {
+  if (-not $androidProductionBuild.Contains($requiredStoreBuildMarker)) {
+    $errors += "Android production builder lacks store-AAB marker: $requiredStoreBuildMarker"
+  }
+}
 foreach ($requiredFlavorTestTask in @(
   ':app:testDirectDebugUnitTest',
   ':app:testStoreDebugUnitTest'
