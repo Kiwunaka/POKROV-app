@@ -304,6 +304,8 @@ void main() {
     expect(runnerContent, contains('Local\\\\POKROV.UI.'));
     expect(runnerContent, contains('POKROV_WINDOWS_UI_WINDOW_V1'));
     expect(runnerContent, contains('SendMessageTimeoutW'));
+    expect(runnerContent, contains('GetWindowThreadProcessId'));
+    expect(runnerContent, contains('AllowSetForegroundWindow'));
     expect(windowContent, contains('case WM_COPYDATA'));
     expect(windowContent, contains('pokrov::activation::Decode'));
     expect(activationHeaderContent, contains('kFrameVersion = 1'));

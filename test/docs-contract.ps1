@@ -1413,6 +1413,30 @@ if ([string]::IsNullOrWhiteSpace([string]$currentCandidate.id) -or
     $currentCandidate.stable_pointer_mutated -ne $false) {
   $errors += 'Cutover seed must bind either the working build or an older rejected candidate and retain all no-promotion boundaries'
 }
+$candidateGateF = $currentCandidate.gate_f
+$candidateGateRequired = [int]$candidateGateF.required
+$candidateGatePass = [int]$candidateGateF.pass
+$candidateGateNonPass = [int]$candidateGateF.non_pass
+$candidateGateFail = [int]$candidateGateF.fail
+if ($candidateGateRequired -le 0 -or
+    $candidateGatePass -lt 0 -or
+    $candidateGateNonPass -lt 0 -or
+    $candidateGateFail -lt 0 -or
+    $candidateGatePass + $candidateGateNonPass -ne $candidateGateRequired -or
+    $candidateGateFail -gt $candidateGateNonPass) {
+  $errors += 'Cutover seed Gate F counts are internally inconsistent'
+}
+if ([string]$currentCandidate.state -match 'NO_GO' -and
+    ($candidateGateF.decision -ne 'NO_GO' -or
+      $candidateGateFail -eq 0 -or
+      [string]$cutover.status -notmatch 'no_go')) {
+  $errors += 'Cutover seed NO_GO candidate must retain a NO_GO Gate F decision, at least one exact failure, and a matching root status'
+}
+if ([string]$currentCandidate.windows_setup.second_launch_focus -match '^FAIL_' -and
+    ([string]$currentCandidate.state -notmatch 'NO_GO' -or
+      [string]$currentCandidate.windows_setup.successor_source_focus -notmatch '^PASS_PRE_CANDIDATE_')) {
+  $errors += 'Cutover seed Windows focus failure must reject the exact candidate and keep any source correction explicitly pre-candidate'
+}
 foreach ($currentCandidateOwner in @(
   'docs\implementation\client-release-backlog.md',
   'docs\operations\android-release-audit.md',

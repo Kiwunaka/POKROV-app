@@ -1,6 +1,6 @@
 # Android Release Audit
 
-Last updated: 2026-09-03
+Last updated: 2026-09-04
 
 ## Document Status
 
@@ -15,11 +15,11 @@ Older APK identities and device runs are retained separately as evidence.
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
 | Working package target | `1.2.0+4053` |
-| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.25`, build `4053`; Gate F is `BLOCKED 5/14/0` and exact Android install/runtime remains `NOT_RUN` |
+| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.32`, build `4053`; Gate F is `NO_GO 2/17/2` because of an exact Windows STOP-SHIP failure, while exact Android install/runtime remains `NOT_RUN` |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Exact candidate source | Platform `883cd10…ffd4`, client `54259b0…34b2`, Core `cd8f0f4…884d`; ARM64 APK `4e8cac9e…f9be9`, `101366678` bytes, universal APK `71e15a2c…cf52b`, `295370161` bytes, and x86_64 APK `7bcdc01e…9d7a`, `109951989` bytes |
+| Exact candidate source | Platform `d0dd37c…1a86`, client `2d6adfc…a1e`, Core `cd8f0f4…884d`; ARM64 APK `fe8d8228…85f9`, `101366678` bytes, universal APK `a5ddfa5a…6d05`, `295370161` bytes, and x86_64 APK `00e792ab…d4f5`, `109951989` bytes |
 | Exact candidate Core package | Secret-safe POKROV Core `1.1.0` from `cd8f0f4…884d`, AAR `2a9677d9…c6a69`; two builds are byte-identical and contain all four required ABIs |
-| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`; candidate.25 signed supply and private artifact scan retain the source-bound trust root |
+| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`; candidate.32 signed supply and private artifact scan retain the source-bound trust root |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
 
@@ -31,14 +31,14 @@ schema to two bounded files under the app-private no-backup directory. No raw
 message, URL, profile, token, endpoint or stack is accepted by that journal.
 These local contracts do not prove final APK bytes or physical behavior.
 
-## Exact Candidate.25 Android Boundary
+## Exact Candidate.32 Android Boundary
 
-Candidate.25 is private with `promotion_authorized=false`. Its ARM64,
+Candidate.32 is private with `promotion_authorized=false`. Its ARM64,
 ARMv7, universal and x86_64 APKs plus market AAB pass production-certificate
-identity and private creation binding. Strict-v2 handoff `b65b9e7e…2908`,
+identity and private creation binding. Strict-v2 handoff `df85e2ee…2bef`,
 refreshed SBOM/provenance and signed manifest/signature/receipt
-`7161bae7…29b6` / `f83cf5ac…3d14` / `2c18b318…d2cf` validate from exact
-release-index source `18d9cb4…`. Exact candidate.25 LDPlayer install/launch
+`b15938e1…a449` / `e63d8ee3…fcf4` / `7bfaf81f…5a42` validate from exact
+release-index source `5d11fd6…53c3`. Exact candidate.32 LDPlayer install/launch
 and physical ARM64 install/runtime have not run. Older
 candidate install, AWG, WARP, handoff, Doze, routing and endurance results do
 not transfer.
@@ -48,7 +48,7 @@ result from that host is excluded from release credit. Emulator credit is
 limited to exact APK install, version/byte identity, launch and process/crash
 checks until an isolated network environment is used. Physical Android must
 first hash-bind the installed base APK to ARM64 artifact
-`08406f37…cb42`, then retain Wi-Fi and Beeline default/lab/runtime evidence.
+`fe8d8228…85f9`, then retain Wi-Fi and Beeline default/lab/runtime evidence.
 
 Candidate.23 Gate F was not generated. Its missing exact installed Android
 identity remains an unmet gate, while the independent Windows serial-pipe
