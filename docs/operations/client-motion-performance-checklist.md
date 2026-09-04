@@ -101,12 +101,17 @@ Normalize each array with the platform
   discarded warmups; working-set p95 `98693120` bytes is
   `BASELINE_RECORDED`, not a regression PASS; normalized evidence:
   `docs/operations/evidence/candidate33-windows-idle-budget.json`;
+- candidate.33 Windows useful cold-process start in the same VM: `PASS`, p95
+  `1499.404 ms <= 2000 ms` target and `3500 ms` stop from 20 retained launches
+  after 3 discarded warmups; this is not a cold OS boot or physical/comparable
+  Windows proof; normalized evidence:
+  `docs/operations/evidence/candidate33-windows-cold-start-budget.json`;
 - candidate.33 signed universal APK `295370161` bytes and owner-accepted
   unsigned Windows installer `29153792` bytes: both exact hashes match the
   signed private release index and both are `BASELINE_RECORDED`, not regression
   passes; normalized evidence:
   `docs/operations/evidence/candidate33-artifact-size-baseline.json`;
-- Android/Windows exact-candidate cold start, verified connect and frame
-  baselines, Android idle, physical/comparable Windows idle and memory
+- Android exact-candidate cold start, Windows cold OS boot, verified connect and
+  frame baselines, Android idle, physical/comparable Windows idle and memory
   regression comparison: `MANUAL_OWNER_TEST`;
 - later same-kind artifact-size comparison: `MANUAL_OWNER_TEST`.
