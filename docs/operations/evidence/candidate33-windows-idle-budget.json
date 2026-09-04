@@ -1,0 +1,81 @@
+{
+  "schema": "pokrov.client-performance.candidate33-windows-idle-budget/v1",
+  "recorded_at_utc": "2026-09-04T17:14:19.1430603Z",
+  "status": "PASS_EXACT_CANDIDATE33_WINDOWS_UI_IDLE_CPU_MEMORY_BASELINE_RECORDED_FULL_DEVICE_SCOPE_OPEN",
+  "candidate": {
+    "label": "pokrov-1.2.0-candidate.33",
+    "app_version": "1.2.0+4053",
+    "client_source": "6ab1bcaf39c61a0ae0c9d8328e6c95382885735e",
+    "windows_ui_sha256": "1b175a66523be467c0fa66e8f74df20dbeb87f7e190f5dc57a9f1cea0961d97f",
+    "windows_ui_size": 192512
+  },
+  "environment": {
+    "os": "Microsoft Windows 11 Enterprise Evaluation 10.0.26200 build 26200",
+    "device": "innotek GmbH VirtualBox; 2 vCPU; 4274917376 bytes RAM",
+    "architecture": "x86_64",
+    "power_mode": "balanced",
+    "network_profile": "dedicated_headless_vm_bridged_no_pokrov_tunnel",
+    "collector": "collect-client-performance-samples.ps1",
+    "collector_runtime": "PowerShell 7.6.5",
+    "host_input_used": false,
+    "host_network_changed": false
+  },
+  "sampling": {
+    "target_process": "pokrov_windows.exe",
+    "sample_interval_ms": 1000,
+    "warmups_discarded": 30,
+    "retained_samples": 60,
+    "retained_window_seconds": 60
+  },
+  "results": {
+    "client.windows.idle_cpu_percent": {
+      "state": "MEASURED",
+      "statistic": "p95",
+      "minimum": 0.0,
+      "p50": 0.0,
+      "p95": 1.0,
+      "maximum": 1.0,
+      "average": 0.083333,
+      "target_lte": 1.0,
+      "stop_lte": 1.0,
+      "gate_status": "PASS"
+    },
+    "client.windows.idle_working_set_bytes": {
+      "state": "MEASURED",
+      "statistic": "p95",
+      "minimum": 98660352,
+      "p50": 98693120,
+      "p95": 98693120,
+      "maximum": 98693120,
+      "average": 98677828.266667,
+      "gate_status": "BASELINE_RECORDED",
+      "regression_pass": false
+    }
+  },
+  "invalid_method": {
+    "windows_powershell_5_samples_excluded": true,
+    "reason": "the canonical collector requires PowerShell Core"
+  },
+  "safety": {
+    "connection_requested": false,
+    "ui_responding_after_collection": true,
+    "matching_crash_events": 0,
+    "service_before_and_after": "Running",
+    "pokrov_adapter_up_count_before_and_after": 0,
+    "route_dns_fingerprints_unchanged": true,
+    "ui_process_count_after_cleanup": 0,
+    "temporary_guest_tooling_removed": true
+  },
+  "credit": {
+    "windows_ui_idle_cpu_budget": "PASS",
+    "windows_ui_working_set": "BASELINE_RECORDED",
+    "full_candidate_device_scope": false,
+    "physical_or_comparable_windows": false,
+    "cold_start_connect_frame": false,
+    "level_changed": false
+  },
+  "external_index": {
+    "path": "E:/POKROV-tools/release-evidence/1.2.0-candidate33-windows-idle-budget-2026-09-04/candidate33-windows-idle-budget-evidence-index.json",
+    "sha256": "db39ed2cd619ff84b618f43a9dc43c09cf5b1693ff3a0856557ee99a458353c6"
+  }
+}
