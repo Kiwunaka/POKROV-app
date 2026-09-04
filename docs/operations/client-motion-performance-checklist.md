@@ -101,6 +101,12 @@ Normalize each array with the platform
   discarded warmups; working-set p95 `98693120` bytes is
   `BASELINE_RECORDED`, not a regression PASS; normalized evidence:
   `docs/operations/evidence/candidate33-windows-idle-budget.json`;
+- candidate.33 combined Windows UI plus automatic service idle on the same VM:
+  `PASS`, p95 `0.749734% <= 1.0%` from 60 retained one-second samples after 30
+  discarded warmups; combined working-set p95 `108158976` bytes is a new
+  full-process `BASELINE_RECORDED`, not a comparison with the earlier UI-only
+  baseline; normalized evidence:
+  `docs/operations/evidence/candidate33-windows-combined-idle-budget.json`;
 - candidate.33 Windows useful cold-process start in the same VM: `PASS`, p95
   `1499.404 ms <= 2000 ms` target and `3500 ms` stop from 20 retained launches
   after 3 discarded warmups; this is not a cold OS boot or physical/comparable
