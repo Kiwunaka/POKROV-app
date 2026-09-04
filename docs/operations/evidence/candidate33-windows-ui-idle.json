@@ -1,0 +1,64 @@
+{
+  "schema": "pokrov.windows.performance-candidate-evidence/v1",
+  "candidate": "pokrov-1.2.0-candidate.33",
+  "recorded_at_utc": "2026-09-04T16:06:27.4298830Z",
+  "exact_sources": {
+    "platform": "f5300053026d32826e54c02202303e1f68c65bc1",
+    "client": "6ab1bcaf39c61a0ae0c9d8328e6c95382885735e",
+    "core": "cd8f0f4169d570d693992a959d81d17c2c44884d",
+    "release_index": "63993fba699b68641b7e972071ab7729fa9ec43c"
+  },
+  "artifact": {
+    "name": "pokrov_windows.exe",
+    "version": "1.2.0+4053",
+    "size_bytes": 192512,
+    "sha256": "1b175a66523be467c0fa66e8f74df20dbeb87f7e190f5dc57a9f1cea0961d97f"
+  },
+  "environment": {
+    "class": "dedicated headless VirtualBox Windows 11 VM",
+    "os": "Microsoft Windows 11 Enterprise Evaluation",
+    "logical_processors": 2,
+    "memory_bytes": 4274917376,
+    "host_input_used": false,
+    "host_network_changed": false
+  },
+  "startup": {
+    "mode": "fresh process with warm guest file cache",
+    "process_observed_ms": 75.107,
+    "responsive_window_observed_ms": 376.835,
+    "responsive_window_observed": true
+  },
+  "idle": {
+    "sample_interval_seconds": 5,
+    "sample_count": 10,
+    "sample_duration_seconds": 45,
+    "normalized_cpu_percent": 1.9097,
+    "working_set_bytes_p50": 94621696,
+    "working_set_bytes_p95": 95019008,
+    "private_memory_bytes_p50": 76607488,
+    "private_memory_bytes_p95": 81367040,
+    "thread_count_min": 15,
+    "thread_count_max": 22,
+    "handle_count_min": 378,
+    "handle_count_max": 404,
+    "all_samples_responding": true,
+    "all_samples_window_present": true,
+    "crash_event_count": 0
+  },
+  "safety": {
+    "connect_requested": false,
+    "user_data_inspected": false,
+    "service_before_and_after": "Running_Auto_LocalSystem",
+    "route_dns_fingerprint_unchanged": true,
+    "pokrov_or_wintun_adapter_up_count_before_after_cleanup": 0,
+    "ui_process_count_after_cleanup": 0,
+    "route_dns_restored_after_cleanup": true
+  },
+  "external_evidence": {
+    "directory": "E:/POKROV-tools/release-evidence/1.2.0-candidate33-windows-idle-performance-2026-09-04",
+    "manifest_sha256": "d176d3c08df91366e055626c012a8304a0c6e535e0f49bcb285c8411f679d68a"
+  },
+  "release_credit": "PASS_EXACT_CANDIDATE33_WINDOWS_FRESH_PROCESS_UI_IDLE_OBSERVATION_NO_NETWORK_MUTATION",
+  "performance_budget_effect": "NONE_NO_EXACT_WINDOWS_RUNTIME_BUDGET_OR_COMPARABLE_MATRIX",
+  "promotion_effect": "NONE"
+}

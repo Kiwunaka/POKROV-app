@@ -15,7 +15,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+4053` |
-| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.33`, app `1.2.0+4053`, client `6ab1bca…735e`, Core `cd8f0f4…884d`, platform `f530005…5bc1` and signed release-index `63993fb…c43c`. Exact `WIN-001` focus, product launchAtLogin, hidden login startup and synthetic saved-state migration across offline startup/network appearance pass; Gate F remains `BLOCKED 2/17/0`, so the candidate is private and not promotable. |
+| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.33`, app `1.2.0+4053`, client `6ab1bca…735e`, Core `cd8f0f4…884d`, platform `f530005…5bc1` and signed release-index `63993fb…c43c`. Exact `WIN-001` focus, product launchAtLogin, hidden login startup, synthetic saved-state migration and a bounded fresh-process Windows UI idle observation pass; Gate F remains `BLOCKED 2/17/0`, so the candidate is private and not promotable. |
 | Retained signed-index predecessor | Candidate.22 setup `effc6a8e…f409`; immutable `NO_GO` after connected uninstall leaves the UI and 13 loaded binaries |
 | Current promotable candidate | None. Candidate.33 closes the candidate.32 `WIN-001` defect, but aggregate, managed-runtime, device/origin and public-promotion gates remain non-PASS. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
@@ -62,6 +62,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Candidate.33 singleton/focus | `PASS_EXACT_CANDIDATE33_WIN_001`: exact installed candidate.33 plain and typed second launches retain one original UI process, forward activation and restore foreground focus. |
 | Candidate.33 Windows startup preference and login | `PASS_EXACT_CANDIDATE33_PRODUCT_PREFERENCE_TOGGLE_AND_LOGIN_STARTUP`: the product Profile → Windows switch creates and removes the exact quoted `--startup` Run value with no TUN or route/DNS drift. Separately, a real guest reboot/login with that exact value creates one responsive hidden session-1 process; ordinary activation exposes a window on the same PID. All temporary Run/task/UI/first-launch state is removed. Valid saved-account/managed-profile refresh and managed auto-connect remain untested. |
 | Candidate.33 synthetic saved-state startup | `PASS_EXACT_CANDIDATE33_SYNTHETIC_SAVED_STATE_MIGRATION_OFFLINE_STARTUP_AND_NETWORK_APPEARANCE_NO_AUTOCONNECT`: a dedicated temporary Windows user starts exact candidate.33 offline with synthetic v0 account/profile state and the exact product Run value. The app migrates state to schema v1 secure storage, removes the plaintext token field, stays hidden on one PID and creates no TUN/Core. When the guest link returns, the same hidden PID remains disconnected with unchanged state/secure-store/experience fingerprints. A SYSTEM cleanup removes the temporary user/profile/data/task and restores `pokrovtest`. This is not valid-account or managed-profile proof. |
+| Candidate.33 Windows UI idle observation | `PASS_EXACT_CANDIDATE33_FRESH_PROCESS_UI_IDLE_NO_NETWORK_MUTATION; NO_PERFORMANCE_BUDGET_CREDIT`: warm-cache fresh process reaches a responsive window in `376.835 ms`; ten samples over `45` seconds remain responsive with `1.9097%` normalized CPU, working-set p50/p95 `94621696/95019008` bytes and zero crash events. Route/DNS stay byte-fingerprint identical, no adapter is Up, cleanup leaves UI `0` and the service Running/Auto/LocalSystem. One VM sample is not a cold-boot, comparable-device or budget PASS. |
 | Candidate.33 direct/Smart-DNS runtime | `PASS_EXACT_CANDIDATE33_SYNTHETIC_SECRET_FREE`: exact installed service/Core creates TUN, changes managed route/DNS, validates Core egress and DNS, receives DoH `200` in Smart-DNS mode, then restores the exact baseline. Managed-node/AWG credit remains open. |
 | Candidate.33 connected crash recovery | `PASS_EXACT_CANDIDATE33_CONNECTED_CRASH_RECOVERY_TO_SAFE_DISCONNECTED`: while the exact installed service/Core was connected through a secret-free direct TUN, forced service termination triggered automatic SCM restart in `5449` ms. The durable journal returned from `committed` to `clean`, TUN disappeared, exact route/DNS fingerprints were restored, and ordinary authenticated IPC reported `initialized`, `running=false`, `failure=none`. |
 | Candidate.33 connected reboot recovery | `PASS_EXACT_CANDIDATE33_CONNECTED_REBOOT_SAFE_DISCONNECTED_AND_REUSABLE`: Windows rebooted while the exact service/Core direct synthetic TUN was connected. After boot the automatic LocalSystem service was safely disconnected with no TUN, DNS remained `4/4`, API health was `200`, and a fresh connect/disconnect restored the post-boot route/DNS baseline. Final cleanup retained `11/11` exact files and removed the diagnostic CLI. |
@@ -215,11 +216,31 @@ record exposes only the physical Ethernet adapter and no product adapter. The
 initial password-policy and Public-folder ACL misses are retained as harness
 issues, not product failures.
 
+The exact installed Windows UI then passed a bounded fresh-process idle
+observation in the same dedicated VM. With no existing UI process and no
+POKROV/Wintun adapter Up, a warm-cache process exposed a responsive window in
+`376.835 ms`. Ten samples over `45` seconds remained responsive and kept the
+window present. Normalized CPU was `1.9097%` across two vCPUs; working-set
+p50/p95 was `94621696/95019008` bytes and private-memory p50/p95 was
+`76607488/81367040` bytes. The Application log contained zero matching crash
+events.
+
+No connection was requested and no user data was inspected. Route/DNS
+fingerprints were unchanged, the inactive hidden POKROV adapter remained
+`Not Present`, and cleanup left zero UI processes with the Automatic
+LocalSystem service intact. Closing the main window follows product tray
+behavior, so the harness force-stopped only the UI process after measurement.
+Normalized evidence is
+[`candidate33-windows-ui-idle.json`](evidence/candidate33-windows-ui-idle.json).
+This one warm-cache 2-vCPU/4-GiB VM sample is descriptive only: it does not
+create a cold-boot, comparable-device or release performance-budget PASS.
+
 These passes prove the exact candidate.33 installed service/Core/TUN/DNS
 boundary, forced-service rollback, connected-reboot rollback, connected
 uninstall, clean exact reinstall and login-startup hidden/same-process
-activation plus the owning product preference toggle and synthetic saved-state
-migration across offline login and later network appearance. They do not prove
+activation plus the owning product preference toggle, synthetic saved-state
+migration across offline login/later network appearance and one bounded UI
+idle observation. They do not prove
 a valid restored account/profile refresh, managed auto-connect, a managed
 production node, public egress change, AWG2/AWG3.1,
 Hysteria2, WARP, sleep, leak/IPv6, Windows 10, SmartScreen
