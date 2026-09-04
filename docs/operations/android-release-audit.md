@@ -15,11 +15,11 @@ Older APK identities and device runs are retained separately as evidence.
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
 | Working package target | `1.2.0+4053` |
-| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.32`, build `4053`; Gate F is `NO_GO 2/17/2` because of an exact Windows STOP-SHIP failure, while exact Android install/runtime remains `NOT_RUN` |
+| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.33`, build `4053`; exact physical install/Wi-Fi runtime is partially proven, Beeline automatic mode is bounded to 32 seconds before an external transport change, and Gate F remains `BLOCKED 2/17/0` |
 | Package ID | `space.pokrov.pokrov_android_shell` |
-| Exact candidate source | Platform `d0dd37c…1a86`, client `2d6adfc…a1e`, Core `cd8f0f4…884d`; ARM64 APK `fe8d8228…85f9`, `101366678` bytes, universal APK `a5ddfa5a…6d05`, `295370161` bytes, and x86_64 APK `00e792ab…d4f5`, `109951989` bytes |
+| Exact candidate source | Platform `f530005…5bc1`, client `6ab1bca…735e`, Core `cd8f0f4…884d`; ARM64 APK `1eca4cbe…cda5`, `101366678` bytes, universal APK `51b86f66…583f2`, `295370161` bytes, and x86_64 APK `fe1fa2d2…3168`, `109951989` bytes |
 | Exact candidate Core package | Secret-safe POKROV Core `1.1.0` from `cd8f0f4…884d`, AAR `2a9677d9…c6a69`; two builds are byte-identical and contain all four required ABIs |
-| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`; candidate.32 signed supply and private artifact scan retain the source-bound trust root |
+| Support-mode signing public pin | `PASS_EXACT_ARTIFACT` — tracked `pokrov-support-2026-08`; candidate.33 signed supply and private artifact scan retain the source-bound trust root |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Google Play | `NOT_REQUESTED` |
 
@@ -30,6 +30,44 @@ watchdog and direct-updater identity breadcrumbs are written through a closed
 schema to two bounded files under the app-private no-backup directory. No raw
 message, URL, profile, token, endpoint or stack is accepted by that journal.
 These local contracts do not prove final APK bytes or physical behavior.
+
+## Exact Candidate.33 Physical Android Partial
+
+Candidate.33 is private and has `promotion_authorized=false`. The production-
+signed universal APK `51b86f66…583f2`, `295370161` bytes, was installed in
+place on a physical Huawei/Android 12 device with `adb install -r`. Application
+data was retained; uninstall and clear-data were not used. Package readback is
+`1.2.0+4053`, and the installed `base.apk` SHA-256 is byte-identical to the
+candidate artifact. `apksigner` verifies APK Signature Scheme v2 and the
+production certificate `0a0602a7…2500`.
+
+On Wi-Fi, the preserved ordinary profile reached Android `CONNECTED` and
+`VALIDATED`. DNS and reply probes for `example.com`, `chatgpt.com`,
+`gemini.google.com` and `xbox.com` passed, and the bounded process log had no
+fatal exception, ANR, uncaught exception, terminal egress error or permission
+denial. The package update itself stopped the prior VPN, so one explicit
+in-app reconnect was required; automatic post-update reconnection is not
+claimed.
+
+On physical Beeline, the selected Milan whitelist profile briefly created a
+validated VPN but later failed closed. The emergency whitelist screen reported
+four saved and four checked channels, then returned `Не удалось подключить
+экстренный маршрут.` Automatic selection held a connected, validated VPN for
+32 seconds. At the next observation the underlying transport changed back to
+Wi-Fi outside the test harness, so the remaining interval receives no Beeline
+credit. This is a bounded cellular PASS plus two honest fail-closed results,
+not a full Beeline/endurance PASS.
+
+Managed `awg2_lab`, `awg31_lab` and `hy2_lab` were not run because the device
+had no authorized managed lab binding and no server rollout was changed.
+Direct-DoH/external Smart-DNS UI, WARP, per-app, IPv6/leak, UDP53/MTU, OEM and
+endurance also remain open. After owner foreground use was detected, ADB UI
+actions stopped; the final retained state has Wi-Fi enabled and POKROV
+disconnected. Normalized secret-free evidence is
+[`candidate33-physical-android.json`](evidence/candidate33-physical-android.json).
+
+Classification:
+`PARTIAL_EXACT_CANDIDATE_33_ANDROID_PHYSICAL`; promotion effect `NONE`.
 
 ## Exact Candidate.32 Android Boundary
 
