@@ -15,7 +15,7 @@ Older APK identities and device runs are retained separately as evidence.
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
 | Working package target | `1.2.0+4053` |
-| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.33`, build `4053`; exact physical install/Wi-Fi runtime is partially proven, Beeline automatic mode is bounded to 32 seconds before an external transport change, and Gate F remains `BLOCKED 2/17/0` |
+| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.33`, build `4053`; exact physical install/Wi-Fi runtime is partially proven, Beeline automatic mode is bounded to 32 seconds before an external transport change, exact LDPlayer install/cold-start identity passes without network credit, and Gate F remains `BLOCKED 2/17/0` |
 | Package ID | `space.pokrov.pokrov_android_shell` |
 | Exact candidate source | Platform `f530005…5bc1`, client `6ab1bca…735e`, Core `cd8f0f4…884d`; ARM64 APK `1eca4cbe…cda5`, `101366678` bytes, universal APK `51b86f66…583f2`, `295370161` bytes, and x86_64 APK `fe1fa2d2…3168`, `109951989` bytes |
 | Exact candidate Core package | Secret-safe POKROV Core `1.1.0` from `cd8f0f4…884d`, AAR `2a9677d9…c6a69`; two builds are byte-identical and contain all four required ABIs |
@@ -68,6 +68,34 @@ disconnected. Normalized secret-free evidence is
 
 Classification:
 `PARTIAL_EXACT_CANDIDATE_33_ANDROID_PHYSICAL`; promotion effect `NONE`.
+
+## Exact Candidate.33 LDPlayer Install And Cold Start
+
+The production-signed universal APK `51b86f66…583f2`, `295370161` bytes, was
+installed in place over build `4030` on the dedicated LDPlayer 14 Android 14
+instance `pokrov-qa-120`. Application data was preserved; uninstall and
+clear-data were not used. Package readback reports `1.2.0+4053`, and the
+installed `base.apk` is byte-identical to the candidate artifact.
+
+The exact `MainActivity` cold-started successfully in `665 ms` and remained the
+top resumed activity on one stable PID for `321` seconds while the LDPlayer
+window stayed minimized and responsive. The crash buffer remained empty. No
+POKROV VPN service or emulator `tun0` was present. A sanitized UI-tree summary
+contained `23/23` nodes from the POKROV package and no foreign-package nodes;
+the raw tree and screenshots were not retained.
+
+The host simultaneously had Hiddify and its sing-tun `tun0` active. DNS,
+egress, VPN, AWG, Smart-DNS, WARP, routing and protocol checks are therefore
+`BLOCKED_BY_HOST_TUN` and receive no release credit. An earlier hidden-window
+harness run was externally terminated by LDPlayer; its engine log records a
+requested shutdown, not a product crash. The primary minimized run passed and
+the QA instance was stopped gracefully with candidate data retained.
+
+Normalized evidence is
+[`candidate33-ldplayer14-ui.json`](evidence/candidate33-ldplayer14-ui.json).
+Classification:
+`PASS_EXACT_CANDIDATE_33_LDPLAYER_INSTALL_IDENTITY_AND_COLD_UI_START_ONLY`;
+promotion effect `NONE`. Gate F remains `BLOCKED 2/17/0`.
 
 ## Exact Candidate.32 Android Boundary
 
