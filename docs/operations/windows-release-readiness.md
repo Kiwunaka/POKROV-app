@@ -62,7 +62,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Candidate.33 singleton/focus | `PASS_EXACT_CANDIDATE33_WIN_001`: exact installed candidate.33 plain and typed second launches retain one original UI process, forward activation and restore foreground focus. |
 | Candidate.33 Windows startup preference and login | `PASS_EXACT_CANDIDATE33_PRODUCT_PREFERENCE_TOGGLE_AND_LOGIN_STARTUP`: the product Profile → Windows switch creates and removes the exact quoted `--startup` Run value with no TUN or route/DNS drift. Separately, a real guest reboot/login with that exact value creates one responsive hidden session-1 process; ordinary activation exposes a window on the same PID. All temporary Run/task/UI/first-launch state is removed. Valid saved-account/managed-profile refresh and managed auto-connect remain untested. |
 | Candidate.33 synthetic saved-state startup | `PASS_EXACT_CANDIDATE33_SYNTHETIC_SAVED_STATE_MIGRATION_OFFLINE_STARTUP_AND_NETWORK_APPEARANCE_NO_AUTOCONNECT`: a dedicated temporary Windows user starts exact candidate.33 offline with synthetic v0 account/profile state and the exact product Run value. The app migrates state to schema v1 secure storage, removes the plaintext token field, stays hidden on one PID and creates no TUN/Core. When the guest link returns, the same hidden PID remains disconnected with unchanged state/secure-store/experience fingerprints. A SYSTEM cleanup removes the temporary user/profile/data/task and restores `pokrovtest`. This is not valid-account or managed-profile proof. |
-| Candidate.33 Windows UI idle observation | `PASS_EXACT_CANDIDATE33_FRESH_PROCESS_UI_IDLE_NO_NETWORK_MUTATION; NO_PERFORMANCE_BUDGET_CREDIT`: warm-cache fresh process reaches a responsive window in `376.835 ms`; ten samples over `45` seconds remain responsive with `1.9097%` normalized CPU, working-set p50/p95 `94621696/95019008` bytes and zero crash events. Route/DNS stay byte-fingerprint identical, no adapter is Up, cleanup leaves UI `0` and the service Running/Auto/LocalSystem. One VM sample is not a cold-boot, comparable-device or budget PASS. |
+| Candidate.33 Windows UI idle observation | `PASS_EXACT_CANDIDATE33_WARM_CACHE_AND_POST_REBOOT_FRESH_PROCESS_UI_IDLE_NO_NETWORK_MUTATION; NO_PERFORMANCE_BUDGET_CREDIT`: warm-cache and post-reboot fresh processes reach responsive windows in `376.835/2560.474 ms`; both ten-sample `45`-second intervals remain responsive with `1.9097/0.9722%` normalized CPU and zero crash events. Route/DNS stay byte-fingerprint identical, no adapter is Up, and each cleanup leaves UI `0` with the service Running/Auto/LocalSystem. Two VM observations are not a controlled cold-boot distribution, comparable-device or budget PASS. |
 | Candidate.33 direct/Smart-DNS runtime | `PASS_EXACT_CANDIDATE33_SYNTHETIC_SECRET_FREE`: exact installed service/Core creates TUN, changes managed route/DNS, validates Core egress and DNS, receives DoH `200` in Smart-DNS mode, then restores the exact baseline. Managed-node/AWG credit remains open. |
 | Candidate.33 connected crash recovery | `PASS_EXACT_CANDIDATE33_CONNECTED_CRASH_RECOVERY_TO_SAFE_DISCONNECTED`: while the exact installed service/Core was connected through a secret-free direct TUN, forced service termination triggered automatic SCM restart in `5449` ms. The durable journal returned from `committed` to `clean`, TUN disappeared, exact route/DNS fingerprints were restored, and ordinary authenticated IPC reported `initialized`, `running=false`, `failure=none`. |
 | Candidate.33 connected reboot recovery | `PASS_EXACT_CANDIDATE33_CONNECTED_REBOOT_SAFE_DISCONNECTED_AND_REUSABLE`: Windows rebooted while the exact service/Core direct synthetic TUN was connected. After boot the automatic LocalSystem service was safely disconnected with no TUN, DNS remained `4/4`, API health was `200`, and a fresh connect/disconnect restored the post-boot route/DNS baseline. Final cleanup retained `11/11` exact files and removed the diagnostic CLI. |
@@ -225,6 +225,14 @@ p50/p95 was `94621696/95019008` bytes and private-memory p50/p95 was
 `76607488/81367040` bytes. The Application log contained zero matching crash
 events.
 
+After a full guest reboot with Windows Update already Stopped/Disabled, the
+same exact harness logged in through the guest-only DPAPI helper and repeated
+the slice. The fresh process exposed a responsive window in `2560.474 ms`;
+all ten samples over `45` seconds remained responsive. Normalized CPU was
+`0.9722%`; working-set p50/p95 was `99446784/99713024` bytes and matching crash
+events were again zero. Route/DNS stayed unchanged and no POKROV/Wintun adapter
+was Up before, during or after cleanup.
+
 No connection was requested and no user data was inspected. Route/DNS
 fingerprints were unchanged, the inactive hidden POKROV adapter remained
 `Not Present`, and cleanup left zero UI processes with the Automatic
@@ -232,8 +240,9 @@ LocalSystem service intact. Closing the main window follows product tray
 behavior, so the harness force-stopped only the UI process after measurement.
 Normalized evidence is
 [`candidate33-windows-ui-idle.json`](evidence/candidate33-windows-ui-idle.json).
-This one warm-cache 2-vCPU/4-GiB VM sample is descriptive only: it does not
-create a cold-boot, comparable-device or release performance-budget PASS.
+These two 2-vCPU/4-GiB VM observations are descriptive only: one uses a warm
+file cache and one follows a guest reboot, but they do not form a controlled
+cold-boot distribution, comparable-device or release performance-budget PASS.
 
 These passes prove the exact candidate.33 installed service/Core/TUN/DNS
 boundary, forced-service rollback, connected-reboot rollback, connected

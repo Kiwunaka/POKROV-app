@@ -1,7 +1,7 @@
 {
   "schema": "pokrov.windows.performance-candidate-evidence/v1",
   "candidate": "pokrov-1.2.0-candidate.33",
-  "recorded_at_utc": "2026-09-04T16:06:27.4298830Z",
+  "recorded_at_utc": "2026-09-04T16:21:43.0948115Z",
   "exact_sources": {
     "platform": "f5300053026d32826e54c02202303e1f68c65bc1",
     "client": "6ab1bcaf39c61a0ae0c9d8328e6c95382885735e",
@@ -45,6 +45,34 @@
     "all_samples_window_present": true,
     "crash_event_count": 0
   },
+  "post_reboot_repeat": {
+    "previous_boot_utc": "2026-09-04T14:46:38.5000000Z",
+    "current_boot_utc": "2026-09-04T16:19:24.5000000Z",
+    "guest_windows_update_before_reboot": "Stopped_Disabled",
+    "login_method": "guest_only_dpapi_helper",
+    "host_input_used": false,
+    "process_observed_ms": 372.677,
+    "responsive_window_observed_ms": 2560.474,
+    "sample_interval_seconds": 5,
+    "sample_count": 10,
+    "sample_duration_seconds": 45,
+    "normalized_cpu_percent": 0.9722,
+    "working_set_bytes_p50": 99446784,
+    "working_set_bytes_p95": 99713024,
+    "private_memory_bytes_p50": 77172736,
+    "private_memory_bytes_p95": 85934080,
+    "thread_count_min": 16,
+    "thread_count_max": 24,
+    "handle_count_min": 400,
+    "handle_count_max": 428,
+    "all_samples_responding": true,
+    "all_samples_window_present": true,
+    "crash_event_count": 0,
+    "route_dns_fingerprint_unchanged": true,
+    "pokrov_or_wintun_adapter_up_count": 0,
+    "ui_process_count_after_cleanup": 0,
+    "service_after_cleanup": "Running_Auto_LocalSystem"
+  },
   "safety": {
     "connect_requested": false,
     "user_data_inspected": false,
@@ -56,9 +84,9 @@
   },
   "external_evidence": {
     "directory": "E:/POKROV-tools/release-evidence/1.2.0-candidate33-windows-idle-performance-2026-09-04",
-    "manifest_sha256": "d176d3c08df91366e055626c012a8304a0c6e535e0f49bcb285c8411f679d68a"
+    "manifest_sha256": "82fe9df648f3f4b9d01b77c3321696ea9f44406bbfa54e8e583581677b71c42a"
   },
-  "release_credit": "PASS_EXACT_CANDIDATE33_WINDOWS_FRESH_PROCESS_UI_IDLE_OBSERVATION_NO_NETWORK_MUTATION",
+  "release_credit": "PASS_EXACT_CANDIDATE33_WINDOWS_WARM_CACHE_AND_POST_REBOOT_FRESH_PROCESS_UI_IDLE_OBSERVATIONS_NO_NETWORK_MUTATION",
   "performance_budget_effect": "NONE_NO_EXACT_WINDOWS_RUNTIME_BUDGET_OR_COMPARABLE_MATRIX",
   "promotion_effect": "NONE"
 }
