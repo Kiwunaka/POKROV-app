@@ -1,6 +1,6 @@
 # Client Motion Performance Checklist
 
-Last updated: 2026-08-22
+Last updated: 2026-09-04
 
 Registry class: `ACTIVE_EXECUTION`.
 
@@ -96,6 +96,12 @@ Normalize each array with the platform
 
 - capture contract, numeric client helper and its executable contract test:
   `PASS` locally;
-- Android/Windows exact-candidate cold start, verified connect, frame and idle
-  baselines: `MANUAL_OWNER_TEST`;
+- candidate.33 Windows UI idle CPU on the dedicated headless Windows 11 VM:
+  `PASS`, p95 `1.0% <= 1.0%` from 60 retained one-second samples after 30
+  discarded warmups; working-set p95 `98693120` bytes is
+  `BASELINE_RECORDED`, not a regression PASS; normalized evidence:
+  `docs/operations/evidence/candidate33-windows-idle-budget.json`;
+- Android/Windows exact-candidate cold start, verified connect and frame
+  baselines, Android idle, physical/comparable Windows idle and memory
+  regression comparison: `MANUAL_OWNER_TEST`;
 - signed artifact-size regression: `MANUAL_OWNER_TEST`.
