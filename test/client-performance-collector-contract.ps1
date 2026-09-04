@@ -40,7 +40,11 @@ try {
     '-ArtifactPath', $artifact,
     '-OutputPath', $artifactOutput
   )
-  $artifactValues = @([IO.File]::ReadAllText($artifactOutput) | ConvertFrom-Json)
+  $artifactJson = [IO.File]::ReadAllText($artifactOutput)
+  if (-not $artifactJson.TrimStart().StartsWith('[')) {
+    throw 'Artifact size collection must emit a JSON numeric array even for one sample.'
+  }
+  $artifactValues = @($artifactJson | ConvertFrom-Json)
   if ($artifactValues.Count -ne 1 -or [double]$artifactValues[0] -ne 16) {
     throw 'Artifact size collection did not retain the exact byte count.'
   }
