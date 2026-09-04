@@ -49,6 +49,15 @@ bool ForwardActivation(const pokrov::activation::Message& message) {
   for (int attempt = 0; attempt < 40; ++attempt) {
     const HWND existing = ::FindWindowW(kPokrovWindowClass, L"POKROV");
     if (existing != nullptr) {
+      DWORD existing_process_id = 0;
+      if (::GetWindowThreadProcessId(existing, &existing_process_id) != 0 &&
+          existing_process_id != 0) {
+        // The new instance was started by the foreground shell. Transfer that
+        // permission before the existing instance handles WM_COPYDATA and
+        // calls SetForegroundWindow; otherwise Windows can keep focus on the
+        // launcher even though forwarding itself succeeds.
+        ::AllowSetForegroundWindow(existing_process_id);
+      }
       COPYDATASTRUCT payload{};
       payload.dwData = kPokrovAcquisitionCopyData;
       payload.cbData = static_cast<DWORD>(frame.size());

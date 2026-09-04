@@ -1,6 +1,6 @@
 # POKROV Client Release Backlog
 
-Last updated: 2026-09-03
+Last updated: 2026-09-04
 
 ## Document Status
 
@@ -15,15 +15,15 @@ results belong in dated evidence and never become reusable release approval.
 |---|---|
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
 | Working package target | `1.2.0+4053` |
-| Working source target state | `PRE_CANDIDATE_LOCAL` continuing post-candidate tooling/docs line; candidate.25 exact client artifact source is `54259b0…34b2` |
-| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.25`, app `1.2.0+4053`; Gate F is `BLOCKED 5/14/0` and public promotion is false |
+| Working source target state | `PRE_CANDIDATE_LOCAL` post-candidate.32 Windows focus correction; candidate.32 exact client artifact source is `2d6adfc…a1e` |
+| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.32`, app `1.2.0+4053`; its last generated Gate F snapshot is `BLOCKED 2/17/0`, but exact `WIN-001` focus replay makes the immutable candidate `NO_GO`; public promotion is false |
 | Candidate created | `false` |
-| Private candidate created | `true` for candidate.25 in the separate creation/cutover contract; the continuing-source seed remains pre-candidate by design |
-| Candidate-created scope | Candidate.25 binds platform `883cd10…`, client `54259b0…`, Core `cd8f0f4…` and release-index source `18d9cb4…`; its six build-4053 client artifacts are private and immutable. |
-| Signed candidate contract | `PASS_ACTIONS_ARTIFACT_ONLY`: handoff `b65b9e7e…`, SBOM `f6d8ec5b…`, provenance `4f106a2e…`, manifest/signature/receipt `7161bae7…` / `f83cf5ac…` / `2c18b318…`; promotion false and no public assets. |
+| Private candidate created | `true` for candidate.32 in the separate creation/cutover contract; the continuing-source seed remains pre-candidate by design |
+| Candidate-created scope | Candidate.32 binds platform `d0dd37c…`, client `2d6adfc…`, Core `cd8f0f4…` and release-index source `5d11fd6…`; its six build-4053 client artifacts are private and immutable. |
+| Signed candidate contract | `PASS_ACTIONS_ARTIFACT_ONLY`: handoff `df85e2ee…`, SBOM `5ddf2a96…`, provenance `4785cd00…`, manifest/signature/receipt `b15938e1…` / `e63d8ee3…` / `7bfaf81f…`; promotion false and no public assets. |
 | Public cutover allowed for a new candidate | `false` |
 | Google Play | `NOT_REQUESTED` |
-| Exact candidate Core artifact | POKROV Core `1.1.0` at `cd8f0f4…884d`; candidate.25 six private artifacts and signed SBOM/provenance bind the reviewed Core source |
+| Exact candidate Core artifact | POKROV Core `1.1.0` at `cd8f0f4…884d`; candidate.32 six private artifacts and signed SBOM/provenance bind the reviewed Core source |
 | Support-mode signing public pin | `PASS_SOURCE_CONTROL` — tracked key `pokrov-support-2026-08`; private/HMAC values are secret-only and not deployed |
 | Retained public Core | `1.0.3`; rollback/history identity only |
 | Windows trusted-signing decision | `SKIPPED_BY_OWNER` for the exact `1.2.0` direct-download beta; mandatory SmartScreen warning; no trusted/Store/broad-stable claim |
@@ -31,12 +31,16 @@ results belong in dated evidence and never become reusable release approval.
 
 `config/release-handoff.seed.json` owns the public release and continuing
 development target. `config/cutover-readiness.seed.json` owns the current
-candidate and cutover verdict. Exact candidate.25 identity comes from the
+candidate and cutover verdict. Exact candidate.32 identity comes from the
 private creation manifest, signed strict-v2 contract and cutover seed; the
 release-handoff seed's `candidate_created=false` applies only to continuing
-`main`. Candidate.25 is unpublished and unpromoted with Gate F
-`BLOCKED 5/14/0`; the bounded Windows clean-host gate passes, while connected
-Windows, Android and the other explicit non-PASS rows remain open. Candidate.23 is immutable `NO_GO` for serial-pipe
+`main`. Candidate.32 is unpublished and unpromoted. Its last generated Gate F
+snapshot is `BLOCKED 2/17/0`, but exact Windows second-launch focus is now an
+explicit `WIN-001` failure, so the immutable candidate is `NO_GO`. The
+post-candidate source correction passes focused tests, Release build/native
+tests and a bounded Windows 11 VM precursor; it requires a newly numbered
+candidate before receiving candidate credit. Connected Windows, Android and
+the other explicit non-PASS rows remain open. Candidate.23 is immutable `NO_GO` for serial-pipe
 contention. Candidate.22, candidate.21, candidate.20,
 candidates 17–19 and candidate.12 remain rejected
 history for their own bytes.

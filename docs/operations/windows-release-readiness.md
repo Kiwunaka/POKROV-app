@@ -1,6 +1,6 @@
 # Windows Release Readiness
 
-Last updated: 2026-09-03
+Last updated: 2026-09-04
 
 ## Document Status
 
@@ -15,12 +15,13 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+4053` |
-| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.25`, app `1.2.0+4053`; exact client/Core bytes are unchanged from candidate.24 while the platform-only development lock is corrected. The bounded clean-host gate passes, but a later current-source CLI precursor exposed an in-place-upgrade packaging defect. Candidate.25 remains immutable and is not promotable; Gate F remains `BLOCKED 5/14/0`. |
+| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.32`, app `1.2.0+4053`, client `2d6adfc…a1e`, Core `cd8f0f4…884d`, platform `d0dd37c…1a86` and signed release-index `5d11fd6…53c3`. Its last generated Gate F snapshot is `BLOCKED 2/17/0`, but a later exact-candidate `WIN-001` replay proves singleton forwarding while focus restoration fails. Candidate.32 is therefore immutable `NO_GO` and not promotable. |
 | Retained signed-index predecessor | Candidate.22 setup `effc6a8e…f409`; immutable `NO_GO` after connected uninstall leaves the UI and 13 loaded binaries |
-| Current promotable candidate | None. Candidate.25 remains the latest exact private candidate, but successor packaging is required after the current-source in-place-upgrade correction; connected Windows and device evidence also remain open. |
+| Current promotable candidate | None. Candidate.32 is immutable `NO_GO`. The source correction passes focused tests, Release native tests and a bounded Windows 11 VM precursor, but it is not candidate credit; a newly numbered exact candidate and its full applicable gates are required. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`; candidate.25 carries the same reviewed Core source in its exact private setup |
+| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`; candidate.32 carries the same reviewed Core source in its exact private setup |
+| Exact candidate.32 setup | `22689e3e…0574`, `29154647` bytes; Windows bundle manifest `43bd310e…7dd`, `11/11` files; signed tuple client/Core/platform/index `2d6adfc…/cd8f0f4…/d0dd37c…/5d11fd6…`; Windows signing `SKIPPED_BY_OWNER` |
 | Exact candidate.25 setup | `ffc9b07c…7fb3`, `29139238` bytes; Windows bundle manifest `344b842c…87c0`, `11/11` files; signed tuple client/Core/platform/index `54259b0…/cd8f0f4…/883cd10…/18d9cb4…`; Windows signing `SKIPPED_BY_OWNER` |
 | Exact candidate.23 setup | `ded8c447…291`, `29146140` bytes; manifest `f92c007d…877`, `11/11` files; tuple client/Core/platform `df9ed85…/cd8f0f4…/5ba4dba…`; Windows signing `SKIPPED_BY_OWNER` |
 | Exact candidate.22 setup | `effc6a8e…f409`, `29137688` bytes; manifest `fbf08cf5…c527`, `11/11` files; tuple client/Core/platform/index `0aad6bbb…/cd8f0f4…/d16087d…/d45b503…`; signed release-index `81c56e9f…7d59`; unsigned Windows owner exception |
@@ -55,12 +56,42 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Post-candidate.22 uninstall correction | `PASS_EXACT_PRE_CANDIDATE4052_CONNECTED_UNINSTALL_VM`; local setup `9aa6b0fd…3152` terminates the UI, waits for service stop, removes every installed file and the empty app directory, clears service/registry/TUN state and restores RU egress. Candidate.23 packages the source correction, but its exact connected-uninstall replay remains `NOT_RUN`. |
 | Candidate.23 serial-pipe contention | `FAIL_EXACT_CANDIDATE23_CORE001_SERVICE_RUNNING`; the exact client fails a later request while the service remains connected and running. A source-exact diagnostic client reproduces `0/32` accepted simultaneous status requests. |
 | Post-candidate.23 pipe correction | `PASS_CANDIDATE25_SOURCE_AND_NATIVE`; candidate.25 binds the corrected client/Core artifact set and a fresh CLI rehearsal passes Debug native CTest `8/8` plus the full Windows build. A follow-up CMake correction puts the Debug-only integration restriction on `add_test`, so Release enumerates and passes its seven applicable native tests instead of attempting the SCM binary as a console process. This test-harness-only successor change receives no candidate.25 runtime credit. Exact installed candidate.25 contention/connected runtime remains `NOT_RUN`. |
+| Candidate.32 singleton/focus | `FAIL_EXACT_CANDIDATE32_SECOND_LAUNCH_FOCUS_NOT_RESTORED`: plain and typed second launches exit `0`, retain exactly one original UI PID and forward activation, but the existing window does not regain foreground focus from an independent control window. This is exact `WIN-001` stop-ship evidence. |
+| Post-candidate.32 focus correction | `PASS_PRE_CANDIDATE_SUCCESSOR_SINGLETON_SHOW_TYPED_FORWARDING_FOCUS`: the foreground-launched second instance transfers foreground permission to the existing UI before `WM_COPYDATA`; focused Flutter `8/8`, Release native CTest `7/7`, Release build and ordinary medium-integrity Windows 11 VM plain/typed replay pass. This is source/precursor proof only. |
 | Remaining Windows network matrix | `MANUAL_OWNER_TEST`; a successor exact candidate must repeat contention, managed TUN/DNS/egress, recovery, connected-uninstall, Windows 10, leak/IPv6 and interactive SmartScreen. The candidate.28 precursor proves only its bounded direct synthetic-profile lane. VirtualBox exposes no guest sleep or IPv6 path. |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
 fallback. The service owns Core, managed state and recovery. Green state
 requires the authenticated egress proof.
+
+## Candidate.32 Singleton/Focus NO_GO And Source Correction
+
+Candidate.32 binds client `2d6adfcebc37f2109ef339276be6a1569cb7aa1e`.
+In the isolated Windows 11 VM, the exact UI accepts both a plain second launch
+and a typed `pokrov://` activation: each new process exits `0`, leaves one
+original UI process and forwards activation. However, the existing window
+does not regain foreground focus from an independent foreground control
+window. Candidate.32 therefore fails `WIN-001` and remains immutable
+`NO_GO`; its signed manifest and application files are not rewritten.
+
+The source correction keeps the existing single-instance and `WM_COPYDATA`
+contract. Before sending the activation frame, the foreground-launched second
+process resolves the existing window's process id and calls
+`AllowSetForegroundWindow` for that process. The existing instance then uses
+its current restore/focus path when handling the frame.
+
+Focused Flutter contract tests pass `8/8`, Release native CTest passes `7/7`
+and the Release build succeeds. A separately named precursor UI is staged in
+the VM without replacing candidate.32. Under an ordinary medium-integrity
+token, both plain and typed second launches exit `0`, retain one original PID
+and return foreground focus to it. Route/DNS/adapter counts remain unchanged;
+the precursor and staging directory are removed, candidate.32's UI hash stays
+`611208b2…15a2`, its service remains running, and the VM is powered off.
+
+This is `PASS_PRE_CANDIDATE`, not a newly created candidate and not promotion
+approval. A newly numbered exact candidate must rebuild/package the correction
+and repeat the applicable Windows and aggregate release gates.
 
 ## Candidate.25 Hosted Clean-Host Gate PASS
 
