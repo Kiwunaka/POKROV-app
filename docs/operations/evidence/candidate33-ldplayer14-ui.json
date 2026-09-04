@@ -1,0 +1,72 @@
+{
+  "schema": "pokrov.android.emulator-candidate-evidence/v1",
+  "candidate": "pokrov-1.2.0-candidate.33",
+  "recorded_at_utc": "2026-09-04T15:46:01Z",
+  "exact_sources": {
+    "platform": "f5300053026d32826e54c02202303e1f68c65bc1",
+    "client": "6ab1bcaf39c61a0ae0c9d8328e6c95382885735e",
+    "core": "cd8f0f4169d570d693992a959d81d17c2c44884d",
+    "release_index": "63993fba699b68641b7e972071ab7729fa9ec43c"
+  },
+  "artifact": {
+    "name": "pokrov-android-universal.apk",
+    "version_name": "1.2.0",
+    "version_code": 4053,
+    "size_bytes": 295370161,
+    "sha256": "51b86f66bd5c79fdf8a8e51d7607315a6ea3f8dfe9c36c4656034aac3b4583f2",
+    "production_certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500"
+  },
+  "emulator": {
+    "class": "LDPlayer 14 Android 14",
+    "instance_name": "pokrov-qa-120",
+    "display": "1080x1920@480dpi",
+    "primary_abi": "x86_64",
+    "host_input_used": false
+  },
+  "install": {
+    "method": "LDPlayer CLI in-place update",
+    "result": "PASS_EXACT_INSTALLED_BYTES_VERSION_4053_DATA_PRESERVED",
+    "previous_version_code": 4030,
+    "installed_base_apk_sha256": "51b86f66bd5c79fdf8a8e51d7607315a6ea3f8dfe9c36c4656034aac3b4583f2",
+    "uninstall_used": false,
+    "clear_data_used": false
+  },
+  "launch": {
+    "result": "PASS_COLD_MAIN_ACTIVITY_MINIMIZED_STABILITY_NO_CRASH",
+    "activity": "space.pokrov.pokrov_android_shell/.MainActivity",
+    "cold_total_time_ms": 665,
+    "cold_wait_time_ms": 670,
+    "stable_process_seconds": 321,
+    "process_id_stable": true,
+    "crash_buffer_lines": 0,
+    "vpn_service_records": 0,
+    "emulator_tun0_present": false
+  },
+  "ui_privacy": {
+    "sanitized_tree_nodes": 23,
+    "app_package_nodes": 23,
+    "foreign_package_nodes": 0,
+    "raw_tree_retained": false,
+    "screenshot_retained": false,
+    "account_or_user_text_retained": false
+  },
+  "network": {
+    "result": "BLOCKED_BY_HOST_TUN",
+    "host_tunnel_observed": "Hiddify plus sing-tun tun0 Up",
+    "dns_egress_vpn_awg_smart_dns_warp_credit": false,
+    "host_network_changed": false
+  },
+  "harness": {
+    "primary_minimized_run": "PASS",
+    "earlier_hidden_window_run": "EXTERNALLY_TERMINATED_BY_LDPLAYER_HARNESS_NOT_PRODUCT_CRASH",
+    "qa_instance_stopped_gracefully": true,
+    "installed_package_and_data_retained": true
+  },
+  "external_evidence": {
+    "directory": "E:/POKROV-tools/release-evidence/1.2.0-candidate33-ldplayer14-ui-2026-09-04",
+    "manifest_sha256": "74703a9d17707cccec94f9ad5f134fed02f29ac9e14c23d9953164d6d3dfd850"
+  },
+  "release_credit": "PASS_EXACT_CANDIDATE_33_LDPLAYER_INSTALL_IDENTITY_AND_COLD_UI_START_ONLY",
+  "promotion_effect": "NONE",
+  "remaining_decision": "NETWORK_AND_FULL_UI_RUNTIME_MATRIX_OPEN"
+}

@@ -37,8 +37,9 @@ release-handoff seed's `candidate_created=false` applies only to continuing
 `main`. Candidate.33 is unpublished and unpromoted. Its generated Gate F
 snapshot is `BLOCKED 2/17/0`: exact Windows focus, product launchAtLogin,
 login-startup hidden/same-process activation, synthetic saved-state migration
-across offline startup/network appearance, synthetic direct/Smart-DNS service lifecycles
-and partial physical Android evidence do not close the
+across offline startup/network appearance, synthetic direct/Smart-DNS service
+lifecycles, partial physical Android evidence and exact LDPlayer install/cold-
+start proof do not close the
 remaining managed-runtime, device, origin, provider and promotion rows.
 Candidate.32 remains immutable `NO_GO` history for its `WIN-001` focus defect.
 Candidate.23 is immutable `NO_GO` for serial-pipe
@@ -311,6 +312,8 @@ runtime, rollback or promotion proof.
 4. Continue physical Android from the exact installed candidate.33 bytes:
    finish a stable Beeline interval, then bounded AWG/DNS/WARP and lifecycle
    checks without changing managed rollout unless separately authorized.
+   Candidate.33 LDPlayer install identity and cold UI start already pass; rerun
+   its network matrix only on an isolated path without the host Hiddify tunnel.
 5. Retain authenticated current/Brain/RU-origin evidence separately. Bind
    Linux Core/TUN ownership to the typed transaction and add durable recovery,
    but run native mutation/restoration, packaging and VM proof only for its

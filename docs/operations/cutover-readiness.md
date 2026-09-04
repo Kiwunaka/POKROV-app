@@ -27,7 +27,7 @@ contracts. Do not select the most optimistic status.
 | Retained public release | Android and Windows `1.1.6` |
 | New working target | `1.2.0+4053` |
 | Continuing source target | `PRE_CANDIDATE_LOCAL` on `POKROV-app/main` |
-| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.33`, app `1.2.0+4053`. Supply and exact `WIN-001` pass; bounded Windows synthetic TUN/DNS and partial physical Android evidence exist. Gate F remains `BLOCKED 2/17/0`. |
+| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.33`, app `1.2.0+4053`. Supply and exact `WIN-001` pass; bounded Windows synthetic TUN/DNS, partial physical Android and exact LDPlayer install/cold-start evidence exist. Gate F remains `BLOCKED 2/17/0`. |
 | Retained signed-index predecessor | Candidate.32 is immutable `NO_GO` history for `WIN-001`. Candidate.31 and earlier candidates retain their original evidence and verdicts. |
 | Candidate/current-main boundary | Candidate.33 binds exact client source `6ab1bca…735e`, which is the current `POKROV-app/main`. Later documentation does not change candidate bytes. |
 | New public cutover | `BLOCKED_GATE_F_17_NON_PASS`; no public asset, Store object or stable pointer exists |
@@ -65,7 +65,7 @@ verdicts.
 | AWG lifecycle | `NOT_RUN_EXACT_CANDIDATE_33_MANAGED` | Older exact-Core and predecessor results do not transfer to candidate.33's managed packaged lifecycle. Android, UDP, IPv6, MTU and endurance remain open. |
 | AWG Windows app/service path | `NOT_RUN_EXACT_CANDIDATE_33_MANAGED` | Candidate.33 direct/Smart-DNS synthetic runtime passes, but packaged AWG3.1/AWG2 managed replay remains open. |
 | External Smart-DNS lab | `PASS_EXACT_CANDIDATE_33_WINDOWS_SYNTHETIC; PHYSICAL_AUTHENTICATED_OPEN` | Windows receives DoH `200` and restores exact network state through a secret-free synthetic profile. Physical Android UI, authenticated managed sessions and leak/load/lifecycle remain open. |
-| Candidate.33 LDPlayer | `NOT_RUN; HOST_TUN_NETWORK_CREDIT_EXCLUDED` | Exact x86_64 APK `fe1fa2d2…3168`, `109951989` bytes, is signed but has no current isolated emulator runtime credit. |
+| Candidate.33 LDPlayer | `PASS_EXACT_INSTALL_IDENTITY_AND_COLD_UI_START; NETWORK_BLOCKED_BY_HOST_TUN` | Universal APK `51b86f66…583f2`, `295370161` bytes, update-installs/readbacks byte-identically as `1.2.0+4053`; exact MainActivity cold-start and 321-second minimized process/crash check pass. Host Hiddify/sing-tun excludes DNS, egress, VPN, AWG, Smart-DNS, WARP and protocol credit. |
 | Candidate handoff | `PASS_EXACT_CANDIDATE_33_STRICT_V2` | Private candidate input `2ed2160a…2604` and strict-v2 handoff `30d9d044…72c81` bind build `4053`, exact sources and six artifacts. |
 | Android artifact/signing | `PASS_EXACT_CANDIDATE_33_PRIVATE_SIGNING_AND_INSTALL_IDENTITY` | Five candidate.33 Android artifacts retain production certificate SHA-256 `0A0602A7…2500`. Universal APK `51b86f66…583f2` is installed/read back byte-identically on physical Android. |
 | Android device proof | `PARTIAL_EXACT_CANDIDATE_33_PHYSICAL` | Wi-Fi validated VPN and four DNS/reply probes pass. Beeline Auto is bounded to 32 seconds before an external transport change; selected Milan and emergency whitelist fail closed. AWG, WARP, per-app, handoff, IPv6/leak, UDP53/MTU, OEM and endurance remain open. |
