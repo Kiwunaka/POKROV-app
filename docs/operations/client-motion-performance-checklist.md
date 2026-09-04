@@ -111,6 +111,15 @@ Normalize each array with the platform
   full-process `BASELINE_RECORDED`, not a comparison with the earlier UI-only
   baseline; normalized evidence:
   `docs/operations/evidence/candidate33-windows-combined-idle-budget.json`;
+- candidate.33 combined Windows UI/service idle, fresh raw-WMI repeat:
+  CPU `PASS`, p95 `0.751195% <= 1.0%`; 30 discarded warmups and 60 retained
+  samples over `62.5179899` seconds. Both cumulative CPU counters are readable;
+  all 90 deltas were independently recomputed and native UI counter readback
+  matched. Working-set p95 `107057152` bytes is `BASELINE_RECORDED` for this
+  collection method, not a regression PASS. Subsequent cleanup readback proves
+  UI count zero, service Running and no tunnel. The earlier invalid CPU run
+  remains withdrawn; evidence:
+  `docs/operations/evidence/candidate33-windows-wmi-idle-budget.json`;
 - candidate.33 Windows useful cold-process start in the same VM: `PASS`, p95
   `1499.404 ms <= 2000 ms` target and `3500 ms` stop from 20 retained launches
   after 3 discarded warmups; this is not a cold OS boot or physical/comparable
