@@ -63,7 +63,8 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Candidate.33 direct/Smart-DNS runtime | `PASS_EXACT_CANDIDATE33_SYNTHETIC_SECRET_FREE`: exact installed service/Core creates TUN, changes managed route/DNS, validates Core egress and DNS, receives DoH `200` in Smart-DNS mode, then restores the exact baseline. Managed-node/AWG credit remains open. |
 | Candidate.33 connected crash recovery | `PASS_EXACT_CANDIDATE33_CONNECTED_CRASH_RECOVERY_TO_SAFE_DISCONNECTED`: while the exact installed service/Core was connected through a secret-free direct TUN, forced service termination triggered automatic SCM restart in `5449` ms. The durable journal returned from `committed` to `clean`, TUN disappeared, exact route/DNS fingerprints were restored, and ordinary authenticated IPC reported `initialized`, `running=false`, `failure=none`. |
 | Candidate.33 connected reboot recovery | `PASS_EXACT_CANDIDATE33_CONNECTED_REBOOT_SAFE_DISCONNECTED_AND_REUSABLE`: Windows rebooted while the exact service/Core direct synthetic TUN was connected. After boot the automatic LocalSystem service was safely disconnected with no TUN, DNS remained `4/4`, API health was `200`, and a fresh connect/disconnect restored the post-boot route/DNS baseline. Final cleanup retained `11/11` exact files and removed the diagnostic CLI. |
-| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; candidate.33 proves exact installed service/Core direct and Smart-DNS synthetic TUN/DNS lifecycles, connected forced-service recovery and connected reboot recovery. Managed-node/AWG, connected uninstall, Windows 10, leak/IPv6, sleep and interactive SmartScreen remain open. VirtualBox exposes no guest sleep or IPv6 path. |
+| Candidate.33 connected uninstall | `PASS_EXACT_CANDIDATE33_CONNECTED_UNINSTALL_PRODUCT_CLEANUP_AND_CLEAN_REINSTALL`: with the exact interactive UI open and the exact service/Core direct synthetic TUN running, the uninstaller exits `0`, terminates UI, removes service, all `11` product files, uninstall registry and TUN, and restores exact route/DNS. A clean exact setup then reinstalls `11/11` with Automatic LocalSystem service and unchanged network baseline. |
+| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; candidate.33 proves exact installed service/Core direct and Smart-DNS synthetic TUN/DNS lifecycles, connected forced-service recovery, connected reboot recovery and connected uninstall. Managed-node/AWG, Windows 10, leak/IPv6, sleep and interactive SmartScreen remain open. VirtualBox exposes no guest sleep or IPv6 path. |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
@@ -131,10 +132,30 @@ Windows updates were disabled only inside the dedicated test guest after the
 product check; this is harness configuration, not release credit. No host,
 production account, server, deployment or public release state changed.
 
+The exact interactive UI was then opened in user session `1`, while the same
+ordinary diagnostic client connected the exact service/Core through the
+secret-free direct TUN. The uninstaller returned `0`, terminated the UI,
+removed `POKROVService`, all `11` manifest-owned product files, the uninstall
+registry entry and TUN, and restored the exact route/DNS baseline. The only
+remaining file was the exact external diagnostic CLI, which is not part of the
+candidate manifest; the harness identified it by SHA-256, removed it and then
+removed the empty installation root.
+
+A clean reinstall from exact setup `250622f7…3580` returned `0`, restored
+`11/11` files and the Automatic LocalSystem service, and left the route/DNS
+baseline unchanged with zero UI/TUN residue. The connected-uninstall evidence
+index is
+`E:\POKROV-tools\release-evidence\1.2.0-candidate33-windows-connected-uninstall-2026-09-04\candidate33-connected-uninstall-evidence-index.json`,
+SHA-256 `bf222d36…a771`. One pre-mutation hash-binding error and two
+postcollector StrictMode errors are retained explicitly; neither is presented
+as product failure or hidden as PASS. No production account, server, host
+network, deployment or public release state changed.
+
 These passes prove the exact candidate.33 installed service/Core/TUN/DNS
-boundary, forced-service rollback, connected-reboot rollback and cleanup. They
+boundary, forced-service rollback, connected-reboot rollback, connected
+uninstall and clean exact reinstall. They
 do not prove a managed production node, public egress change, AWG2/AWG3.1,
-Hysteria2, WARP, connected uninstall, sleep, leak/IPv6, Windows 10, SmartScreen
+Hysteria2, WARP, sleep, leak/IPv6, Windows 10, SmartScreen
 interaction or promotion. The VM was headless; neither host input nor host
 networking was changed.
 
