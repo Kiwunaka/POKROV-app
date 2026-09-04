@@ -57,6 +57,39 @@ try {
     '-Samples', '3',
     '-OutputPath', (Join-Path $temporaryRoot 'invalid-output.json')
   )
+  if ($IsWindows) {
+    foreach ($missingAt in @(1, 2, 0)) {
+      $cpuOutput = Join-Path $temporaryRoot "cpu-counter-$missingAt.json"
+      & {
+        param($MissingAt, $Output, $CollectorPath)
+        $script:cpuReadCount = 0
+        function Get-Process {
+          param($Id)
+          $script:cpuReadCount += 1
+          [pscustomobject]@{
+            TotalProcessorTime = $(if ($script:cpuReadCount -eq $MissingAt) { $null } else { [TimeSpan]::Zero })
+            WorkingSet64 = 1024
+          }
+        }
+        $caught = $null
+        try {
+          & $CollectorPath -Mode WindowsIdleCpu -TargetProcessId 42 -Samples 1 -IntervalMilliseconds 1 -OutputPath $Output
+        } catch {
+          $caught = $_
+        }
+        if ($MissingAt -gt 0) {
+          if ($null -eq $caught -or $caught.Exception.Message -notmatch 'CPU counter unavailable') {
+            throw "Missing CPU counter at read $MissingAt must fail explicitly."
+          }
+          if (Test-Path -LiteralPath $Output) { throw 'Missing CPU counter produced evidence.' }
+        } else {
+          if ($null -ne $caught) { throw $caught }
+          $values = @([IO.File]::ReadAllText($Output) | ConvertFrom-Json)
+          if ($values.Count -ne 1 -or $values[0] -ne 0) { throw 'Readable zero CPU counter must remain valid.' }
+        }
+      } $missingAt $cpuOutput $collector
+    }
+  }
 } finally {
   $resolvedTemporaryRoot = [IO.Path]::GetFullPath($temporaryRoot)
   $resolvedSystemTemp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
