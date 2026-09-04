@@ -1,0 +1,94 @@
+{
+  "schema": "pokrov.client-performance.candidate33-windows-combined-idle-budget/v1",
+  "recorded_at_utc": "2026-09-04T18:23:49.3406636Z",
+  "status": "PASS_EXACT_CANDIDATE33_WINDOWS_COMBINED_UI_SERVICE_IDLE_CPU_MEMORY_BASELINE_RECORDED_FULL_DEVICE_SCOPE_OPEN",
+  "candidate": {
+    "label": "pokrov-1.2.0-candidate.33",
+    "app_version": "1.2.0+4053",
+    "client_source": "6ab1bcaf39c61a0ae0c9d8328e6c95382885735e",
+    "windows_ui_sha256": "1b175a66523be467c0fa66e8f74df20dbeb87f7e190f5dc57a9f1cea0961d97f",
+    "windows_ui_size": 192512,
+    "windows_service_sha256": "b962d3d0c369e24a5d927a4b024148a3b8ceaed0e78efb6aef454f537d4c326b",
+    "windows_service_size": 188416,
+    "combined_artifact_fingerprint_sha256": "f718bb93982fdcb8565ffb81dbb5d1f0849310219dc0bc6d2220e445b6638fa6"
+  },
+  "environment": {
+    "os": "Microsoft Windows 11 Enterprise Evaluation 10.0.26200 build 26200",
+    "device": "innotek GmbH VirtualBox; 2 vCPU; 4274917376 bytes RAM",
+    "architecture": "x86_64",
+    "power_mode": "balanced",
+    "network_profile": "dedicated_headless_vm_bridged_no_pokrov_tunnel",
+    "collector": "guest combined idle harness plus collect-client-performance-samples.ps1 RecordedSamples",
+    "collector_source": "3a88044cc8c6dc49ac652bdf681a71e53f22c4d0",
+    "host_input_used": false,
+    "host_network_changed": false
+  },
+  "sampling": {
+    "target_processes": [
+      "pokrov_windows.exe",
+      "POKROVService/pokrov_service.exe"
+    ],
+    "sample_interval_ms": 1000,
+    "warmups_discarded": 30,
+    "retained_samples": 60,
+    "retained_window_seconds": 60,
+    "cpu_method": "combined process CPU seconds normalized by elapsed wall time and two logical processors",
+    "working_set_method": "sum of both process working sets"
+  },
+  "results": {
+    "client.windows.idle_cpu_percent": {
+      "state": "MEASURED",
+      "statistic": "p95",
+      "minimum": 0.0,
+      "p50": 0.0,
+      "p95": 0.749734,
+      "maximum": 1.499068,
+      "average": 0.137304,
+      "target_lte": 1.0,
+      "stop_lte": 1.0,
+      "gate_status": "PASS"
+    },
+    "client.windows.idle_working_set_bytes": {
+      "state": "MEASURED",
+      "statistic": "p95",
+      "minimum": 107610112,
+      "p50": 108019712,
+      "p95": 108158976,
+      "maximum": 108158976,
+      "average": 107953288.533333,
+      "gate_status": "BASELINE_RECORDED",
+      "baseline_compared": false,
+      "regression_pass": false
+    }
+  },
+  "invalid_attempts": {
+    "count": 2,
+    "classification": "HARNESS_FAILURE_NO_PRODUCT_RESULT",
+    "accepted_samples": 0,
+    "reason": "the external harness initially assumed a Windows PowerShell process CPU property shape that was not present; it was corrected before the accepted run"
+  },
+  "safety": {
+    "connection_requested": false,
+    "all_retained_samples_ui_responding": true,
+    "matching_crash_events": 0,
+    "service_before_and_after": "Running",
+    "pokrov_adapter_up_count_before_and_after": 0,
+    "route_dns_fingerprints_unchanged": true,
+    "ui_process_count_after_cleanup": 0,
+    "temporary_guest_tooling_removed": true,
+    "temporary_scheduled_task_removed": true
+  },
+  "credit": {
+    "windows_combined_ui_service_idle_cpu_budget": "PASS",
+    "windows_combined_ui_service_working_set": "BASELINE_RECORDED",
+    "memory_regression_pass": false,
+    "full_candidate_device_scope": false,
+    "physical_or_comparable_windows": false,
+    "android_candidate_device": false,
+    "level_changed": false
+  },
+  "external_index": {
+    "path": "E:/POKROV-tools/release-evidence/1.2.0-candidate33-windows-combined-idle-budget-2026-09-04/candidate33-windows-combined-idle-budget-evidence-index.json",
+    "sha256": "6c2434c1178b5f3fb61c1e5bb356c026142b822fd4c025a62b4b3382a06a44f2"
+  }
+}
