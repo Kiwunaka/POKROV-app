@@ -1,0 +1,44 @@
+{
+  "schema": "pokrov.client-performance.candidate33-artifact-size-baseline/v1",
+  "recorded_at_utc": "2026-09-04T17:39:04Z",
+  "status": "EXACT_CANDIDATE33_ANDROID_WINDOWS_ARTIFACT_SIZE_BASELINES_RECORDED_REGRESSION_PASS_OPEN",
+  "candidate": {
+    "label": "pokrov-1.2.0-candidate.33",
+    "app_version": "1.2.0+4053",
+    "client_source": "6ab1bcaf39c61a0ae0c9d8328e6c95382885735e",
+    "release_index_source": "63993fba699b68641b7e972071ab7729fa9ec43c"
+  },
+  "results": {
+    "client.android.apk_size_bytes": {
+      "artifact": "pokrov-android-universal.apk",
+      "artifact_sha256": "51b86f66bd5c79fdf8a8e51d7607315a6ea3f8dfe9c36c4656034aac3b4583f2",
+      "value": 295370161,
+      "gate_status": "BASELINE_RECORDED",
+      "regression_pass": false
+    },
+    "client.windows.installer_size_bytes": {
+      "artifact": "pokrov-windows-setup-x64.exe",
+      "artifact_sha256": "250622f7e4bf9bea39a9456004d4cfeb2340a987c622c46f70b3af07aaec3580",
+      "value": 29153792,
+      "gate_status": "BASELINE_RECORDED",
+      "regression_pass": false
+    }
+  },
+  "method": {
+    "collector_source": "7855edf315a8d0768cb8f78b3f3bbdeab9dd40bf",
+    "contract_version": "1.0.0",
+    "contract_sha256": "9edc0b96ee1b7e762342d8ff72f974d61898540fd5c4174ff0cc8d6583d6fca2",
+    "artifact_hashes_match_signed_private_release_index": true,
+    "candidate_source_worktree_clean": true
+  },
+  "credit": {
+    "required_artifact_budgets_covered": "2/2",
+    "artifact_size_regression_pass": false,
+    "full_candidate_device_scope": false,
+    "level_changed": false
+  },
+  "external_index": {
+    "path": "E:/POKROV-tools/release-evidence/1.2.0-candidate33-artifact-size-2026-09-04/candidate33-artifact-size-evidence-index.json",
+    "sha256": "1784eaa9840c18ec4375f39f081815dd2a8829897cfc06ac2cebb812f6eed105"
+  }
+}
