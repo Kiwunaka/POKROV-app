@@ -283,42 +283,43 @@ runtime, rollback or promotion proof.
 
 | Order | Gate | State | Completion rule |
 |---:|---|---|---|
-| 1 | Clean platform, client, Core and release-index revisions | `PASS_EXACT_CANDIDATE_25_TUPLE` | Candidate.25 binds platform `883cd10…ffd4`, client `54259b0…34b2`, Core `cd8f0f4…884d` and signed release-index source `18d9cb4…62c`. |
-| 2 | Public release-index revision | `PASS_SIGNED_CANDIDATE_25_MANIFEST` | Manifest `7161bae7…29b6`, detached signature `f83cf5ac…3d14`, receipt `2c18b318…d2cf`, keyring and six exact artifacts validate. Output is artifact-only and promotion remains false. |
-| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_CANDIDATE_25_ARTIFACTS` | Candidate.25 binds reproducible AAR `2a9677d9…c6a69`, DLL `f284fa88…8204`, unchanged Cronet `8ef1f8bb…a6f7`, refreshed SBOM/provenance and exact Core source `cd8f0f4…884d`. |
+| 1 | Clean platform, client, Core and release-index revisions | `PASS_EXACT_CANDIDATE_32_TUPLE` | Candidate.32 binds platform `d0dd37c…1a86`, client `2d6adfc…a1e`, Core `cd8f0f4…884d` and signed release-index source `5d11fd6…53c3`. |
+| 2 | Public release-index revision | `PASS_SIGNED_CANDIDATE_32_MANIFEST` | Manifest `b15938e1…a449`, detached signature `e63d8ee3…fcf4`, receipt `7bfaf81f…5a42`, keyring and six exact artifacts validate. Output is artifact-only and promotion remains false. |
+| 3 | POKROV Core `1.1.0` replacement artifact | `PASS_EXACT_CANDIDATE_32_ARTIFACTS` | Candidate.32 binds reproducible AAR `2a9677d9…c6a69`, DLL `f284fa88…8204`, unchanged Cronet `8ef1f8bb…a6f7`, refreshed SBOM/provenance and exact Core source `cd8f0f4…884d`. |
 | 4 | Conditional Linux beta runtime and package | `IMPLEMENTED_PARTIAL_SOURCE_ONLY; NOT_IN_CURRENT_CANDIDATE` | The current source contains the non-root Flutter host plus fail-closed systemd/socket/polkit daemon foundation, a closed authorization trace, and a dormant typed transaction engine for a real NetworkManager D-Bus checkpoint, per-link resolved settings, one dedicated atomic nft table and reverse rollback with injected faults. It is not wired to `connect`; the exact Core/TUN plan, durable recovery, native mutation/restoration, signed packages and clean-VM proof remain absent. Current candidate and public facts exclude Linux. |
-| 5 | Strict-v2 candidate metadata | `PASS_SIGNED_CANDIDATE_25` | Handoff `b65b9e7e…2908` binds build `4053`, exact four-source tuple, six artifacts, SBOM, provenance and the `11/11` Windows runtime manifest. |
-| 6 | Android exact-candidate build and signer | `PASS_EXACT_CANDIDATE_25_ARTIFACT_SIGNING; INSTALL_IDENTITY_OPEN` | Five Android artifacts are production-signed. ARM64 APK `4e8cac9e…f9be9`, `101366678` bytes, and x86_64 APK `7bcdc01e…9d7a`, `109951989` bytes, still require exact installed-byte readback. |
-| 7 | Android device matrix | `NOT_RUN_EXACT_CANDIDATE_25` | LDPlayer install/launch and physical Wi-Fi/Beeline default, AWG, WARP, per-app, handoff, IPv6/leak, UDP53/MTU, OEM and endurance proof remain open. Host-tunneled emulator networking is excluded. |
-| 8 | Windows exact-candidate package | `PASS_EXACT_PRIVATE_CI_INSTALL_11_OF_11_SERVICE_IPC_RESTART_UNINSTALL_IDLE_NETWORK` | Setup `ffc9b07c…7fb3`, `29139238` bytes, binds the corrected build-4053 source. GitHub-hosted Windows 2025 run `33717151777` installs it, validates all 11 files, LocalSystem service and ordinary authenticated IPC, restarts the service, uninstalls cleanly and leaves idle route/DNS unchanged. Connected runtime remains open. |
-| 9 | Windows unsigned-beta warning and clean-host recovery | `OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY; HOSTED_GATE_PASS_BOUNDED` | Authenticode is `NotSigned` and the SmartScreen warning remains mandatory. Evidence `c6ec9d18…bfcd` proves only the bounded clean-host lane; trusted/Store/broad-stable and connected-network claims remain forbidden. |
-| 10 | Hosted cross-repository CI | `PASS_EXACT_CANDIDATE_25_ATTACHED_CHECKS` | Exact attached checks pass across platform, client, Core and release-index source, including signer run `33709201344`. This does not replace device/live gates. |
-| 11 | Runtime/public readback and rollback | `CANDIDATE_25_NOT_RUN; LIVE_NOT_AUTHORIZED` | Older disposable reversal evidence does not approve candidate.25. No public tag/assets, live stable-pointer switch, anonymous public readback or runtime rollback exists. |
-| 12 | Promotion and go/no-go | `BLOCKED_GATE_F_5_PASS_14_NON_PASS_0_FAIL` | Candidate.25 remains private with promotion false. Gate G, public release and stable pointer are unauthorized until the exact non-PASS rows are closed or explicitly dispositioned. |
+| 5 | Strict-v2 candidate metadata | `PASS_SIGNED_CANDIDATE_32` | Handoff `df85e2ee…2bef` binds build `4053`, exact four-source tuple, six artifacts, SBOM, provenance and the `11/11` Windows runtime manifest. |
+| 6 | Android exact-candidate build and signer | `PASS_EXACT_CANDIDATE_32_ARTIFACT_SIGNING; INSTALL_IDENTITY_OPEN` | Five Android artifacts are production-signed. ARM64 APK `fe8d8228…85f9`, `101366678` bytes, and x86_64 APK `00e792ab…d4f5`, `109951989` bytes, still require exact installed-byte readback. |
+| 7 | Android device matrix | `NOT_RUN_EXACT_CANDIDATE_32` | LDPlayer install/launch and physical Wi-Fi/Beeline default, AWG, WARP, per-app, handoff, IPv6/leak, UDP53/MTU, OEM and endurance proof remain open. Host-tunneled emulator networking is excluded. |
+| 8 | Windows exact-candidate package | `PASS_EXACT_CANDIDATE_32_DISCONNECTED_INSTALL_MIGRATION_IPC_RECOVERY` | Setup `22689e3e…0574`, `29154647` bytes, validates `11/11`. Isolated Windows 11 proves clean install, public `1.1.6` migration, ordinary UI/authenticated IPC, disconnected automatic service recovery and unchanged disconnected network contour. |
+| 9 | Windows STOP-SHIP and unsigned-beta warning | `FAIL_EXACT_CANDIDATE_32_WIN_001; OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY` | Authenticode is `NotSigned` and the SmartScreen warning remains mandatory. Plain and typed second launches retain singleton forwarding but fail foreground focus. Client `76abed9…711` fixes only successor source/VM pre-candidate behavior. |
+| 10 | Hosted cross-repository CI | `MIXED_EXACT_CANDIDATE_32_7_PASS_3_BLOCKED_BY_ACCESS` | Seven exact-SHA jobs pass, including signer run `33819350778`; three platform/client jobs execute zero steps because of GitHub billing access and remain `BLOCKED_BY_ACCESS`. |
+| 11 | Runtime/public readback and rollback | `LOCAL_FIXTURE_PASS; LIVE_NOT_AUTHORIZED` | Candidate.32 disposable A→B→A reversal is byte-identical. No public tag/assets, live stable-pointer switch, anonymous public readback or runtime rollback exists. |
+| 12 | Promotion and go/no-go | `NO_GO_GATE_F_2_PASS_17_NON_PASS_2_FAIL` | Candidate.32 remains private with promotion false and cannot be patched. Gate G, public release and stable pointer are unauthorized. |
 
 ## Next Action Order
 
-1. Install and hash-bind candidate.25 in the isolated VM. Repeat concurrent
-   service access through the ordinary client, then prove connected uninstall
-   closes the UI, removes all installed files and restores the ordinary network.
-2. Run the candidate.25 Windows 10, AWG 3.1/AWG2, sleep/resume,
-   connected-uninstall, IPv6/leak and interactive SmartScreen matrix only in
-   the isolated VM; keep the main host network untouched.
-3. Install and hash-bind the successor ARM64 artifact on the physical Android
+1. Merge the validated focus correction, refresh the platform release truth
+   and create a newly numbered exact candidate from the frozen tuple.
+2. Install and hash-bind that successor in the isolated VM. Repeat singleton,
+   contention, connected TUN/DNS/egress, recovery and connected uninstall.
+3. Run the successor Windows 10, AWG 3.1/AWG2, sleep/resume,
+   IPv6/leak and interactive SmartScreen matrix only in isolated targets; keep
+   the main host network untouched.
+4. Install and hash-bind the successor ARM64 artifact on the physical Android
    device, then run bounded Wi-Fi/Beeline default and explicitly selected lab
    checks without transferring older candidate results.
-4. Retain authenticated current/Brain/RU-origin evidence separately. Bind
+5. Retain authenticated current/Brain/RU-origin evidence separately. Bind
    Linux Core/TUN ownership to the typed transaction and add durable recovery,
    but run native mutation/restoration, packaging and VM proof only for its
    separate conditional beta lane.
-5. Complete provider/payment/PostgreSQL, Operator OIDC/RBAC/action-intent,
+6. Complete provider/payment/PostgreSQL, Operator OIDC/RBAC/action-intent,
    legal/commercial, comparable performance and final no-open-P0/privacy
    attestations for the successor candidate.
-6. Regenerate Gate F only after exact successor evidence changes;
+7. Regenerate Gate F only after exact successor evidence changes;
    every skip, inaccessible environment and unrun manual row remains non-PASS.
-7. Request separate authority for public same-byte candidate publication,
+8. Request separate authority for public same-byte candidate publication,
    anonymous readback, rollback drill and promotion.
-8. Provision trusted Windows signing later before any signed, Store or
+9. Provision trusted Windows signing later before any signed, Store or
    broad-stable Windows claim.
 
 ## Retained History

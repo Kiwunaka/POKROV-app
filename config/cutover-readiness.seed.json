@@ -1,8 +1,8 @@
 {
   "lane": "POKROV-app/main",
-  "status": "retained_1_1_6_public_candidate25_signed_private_gate_f_blocked_5_14_0",
+  "status": "retained_1_1_6_public_candidate32_signed_private_no_go_2_17_2",
   "public_cutover_allowed": false,
-  "last_updated": "2026-09-03",
+  "last_updated": "2026-09-04",
   "latest_repo_backed_release": {
     "version": "1.1.6",
     "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.1.6",
@@ -13,91 +13,93 @@
     "live_app_session_download_smoke": "PASS_1_1_6_REQUIRED_UPDATE_FOR_1_1_5_AND_NONE_FOR_1_1_6_ANDROID_WINDOWS_EXACT_METADATA"
   },
   "exact_replacement_candidate": {
-    "id": "pokrov-1.2.0-candidate.25",
+    "id": "pokrov-1.2.0-candidate.32",
     "version_name": "1.2.0",
     "platform_build": 4053,
-    "state": "SIGNED_PRIVATE_GATE_F_BLOCKED_5_PASS_14_NON_PASS_0_FAIL",
+    "state": "SIGNED_PRIVATE_NO_GO_2_PASS_17_NON_PASS_2_FAIL",
     "promotion_authorized": false,
     "public_release_created": false,
     "store_object_created": false,
     "stable_pointer_mutated": false,
     "sources": {
-      "platform": "883cd1038a087fbf9f570cffcbfdfd5f5197ffd4",
-      "client": "54259b0f84e16c58e2d1f5f04b369af4fd0834b2",
+      "platform": "d0dd37c1003198ba08cffc49a040a77e21621a86",
+      "client": "2d6adfcebc37f2109ef339276be6a1569cb7aa1e",
       "core": "cd8f0f4169d570d693992a959d81d17c2c44884d",
-      "release_index": "18d9cb4c5541481c5e60713376904f962ec19a7c",
-      "release_index_receipt_main": "8dba76b7cdf0a7b89c2db3ba4d7b9b096e0c2391"
+      "release_index": "5d11fd6821a5ebfa42163f461332125143c553c3",
+      "release_index_receipt_main": "7a6b2ce859b34b074e877851ba50aae7e80854a3"
     },
     "signed_contract": {
       "status": "PASS_ACTIONS_ARTIFACT_ONLY",
-      "strict_v2_handoff_sha256": "b65b9e7ec16b85c55235f4f5b9481507e13dccd07f0ba2c0a74202d661702908",
-      "sbom_provenance_refresh": "PASS_EXACT_CANDIDATE25",
-      "sbom_sha256": "f6d8ec5b7ab999bd8d7ca648aed4ff640543fef11c8176781922e82482779d70",
-      "provenance_sha256": "4f106a2ed15b37457816460d42db5706f79c377bf7671bb9ba58bd93cf414f0d",
-      "supply_validation_sha256": "2eba8a01829d7fac5a505a9d7328fd7def936f944d60763fe18386acf9321996",
-      "manifest_sha256": "7161bae715d590fac0623561d147e4d9ee069da14a5e3645001cc4c39aa329b6",
-      "signature_sha256": "f83cf5acbfa8aa55a45a73f03a2f4e829661215a788f68e8b7b36764b1ff3d14",
-      "receipt_sha256": "2c18b318fb538eeec69a9226f4eacf5a19066b0c1d479d26a7b6a13325cdd2cf",
+      "strict_v2_handoff_sha256": "df85e2ee1a03133ac79bb36064d47518f9067cd188e7624d70fd349011422bef",
+      "sbom_provenance_refresh": "PASS_EXACT_CANDIDATE32",
+      "sbom_sha256": "5ddf2a96244e70ad1284409f0cea6f5838fab5bfbca5c5b96a245f0716de2893",
+      "provenance_sha256": "4785cd005791a8872f4c8a45202ba2d35c9d1ba65737f5683ee17d0b927c53e6",
+      "supply_validation_sha256": "d4937711dcf021fe50ce030903418f4fd7c0e97210e69d06ed1433dd4bfbf47e",
+      "manifest_sha256": "b15938e1bef2b4cafb634eea81039163e2b15a446cda5bbd32d9894cbe2da449",
+      "signature_sha256": "e63d8ee39c15185afc9e600efe66a1a081b0fafc50343fd898114dfcb8bafcf4",
+      "receipt_sha256": "7bfaf81f26a2030e01db534732723fe726251457f4d0f7ebc6d7d92018375a42",
       "signing_key_id": "pokrov-release-2026-01",
-      "signer_run_id": 33709201344,
+      "signer_run_id": 33819350778,
       "signer_conclusion": "success",
-      "actions_artifact_id": 9876331429,
-      "actions_artifact_digest": "sha256:7dc9beb122c0315017835cad6877513754b9acc5bd0120d369dd16f2602e61bb",
-      "actions_artifact_expires_at": "2026-09-17T02:52:15Z",
+      "actions_artifact_id": 9917689367,
+      "actions_artifact_digest": "sha256:fc4b30a35ae98418392e245867ca1d269fb4cc08359ff7835f0f4bf0fd8ccb13",
+      "actions_artifact_expires_at": "2026-09-17T23:51:15Z",
       "promotion_authorized": false
     },
-    "private_creation_manifest_sha256": "3f316f3e890880d668845358505d23ad31ba32bc765a1ad9dfa8a253645e4c47",
+    "private_creation_manifest_sha256": "66598d26fc69d2ab0378ac7facb518b33241c16daa167cf3208f1a0c829f0bee",
     "android_arm64": {
-      "sha256": "4e8cac9e8619c25ccb42a923a19f4ad04d52b7f3c4a08945f0c1c5cd0cdf9be9",
+      "sha256": "fe8d82289a4903958fe7ed4cf7f8a472e417760a72c95930328a9b9ec3a285f9",
       "size_bytes": 101366678,
       "signing": "PASS",
       "install_identity": "NOT_RUN",
       "physical_runtime": "NOT_RUN"
     },
     "android_x86_64": {
-      "sha256": "7bcdc01edb25b37f2297ea2adadace4b12f0135b93ef000e5464d22132f49d7a",
+      "sha256": "00e792ab69e1d0e0c165e3e94be9c9bd4c1b66e9e2dbf706363987b45791d4f5",
       "size_bytes": 109951989,
       "signing": "PASS",
-      "ldplayer_rehearsal": "NOT_RUN_EXACT_CANDIDATE25",
+      "ldplayer_rehearsal": "NOT_RUN_EXACT_CANDIDATE32",
       "ordinary_current_origin": "NOT_RUN"
     },
     "windows_setup": {
-      "sha256": "ffc9b07c59f75372b48c5c1e94551d6d9af710ac0287cd1352142b0964707fb3",
-      "size_bytes": 29139238,
-      "manifest_sha256": "344b842cd0222aa642115c00f42810bf922492394435271d43d9837169f187c0",
+      "sha256": "22689e3e61be82f90b1ba9530cba37628ec546022338fc87018b2d460c020574",
+      "size_bytes": 29154647,
+      "manifest_sha256": "43bd310e2fb287d2ada339d8938fbe2304261fe23c9d8608124417d05af9e7dd",
       "signing": "SKIPPED_BY_OWNER_DIRECT_BETA_ONLY",
-      "environment": "PASS_GITHUB_HOSTED_WINDOWS_2025_RUN_33717151777",
-      "clean_host_evidence_sha256": "c6ec9d18366289d02fcf6e9c8fe168227a3a9a1a5a19457703120c6a9582bfcd",
-      "clean_host_install_uninstall": "PASS_EXACT_CANDIDATE25_11_OF_11_LOCAL_SYSTEM_AUTHENTICATED_IPC_RESTART_CLEAN_UNINSTALL_IDLE_NETWORK_RESTORED",
-      "upgrade_startup_recovery": "NOT_RUN_EXACT_CANDIDATE25",
-      "non_elevated_ui_service": "PASS_EXACT_CANDIDATE25_ORDINARY_UI_LOCAL_SYSTEM_SERVICE_AUTHENTICATED_IPC",
-      "clean_vm_live_network": "NOT_RUN_EXACT_CANDIDATE25",
-      "connected_reboot": "NOT_RUN_EXACT_CANDIDATE25",
-      "forced_service_restart_recovery": "NOT_RUN_EXACT_CANDIDATE25",
-      "smart_dns": "NOT_RUN_EXACT_CANDIDATE25",
-      "packaged_awg": "NOT_RUN_EXACT_CANDIDATE25",
-      "service_pipe_concurrency": "PASS_SOURCE_NATIVE_32_OF_32_EXACT_CANDIDATE25_INSTALLED_RUNTIME_NOT_RUN",
-      "connected_uninstall": "NOT_RUN_EXACT_CANDIDATE25",
-      "proof_ceiling": "EXACT_PRIVATE_CI_INSTALL_11_FILE_SERVICE_AUTHENTICATED_IPC_RESTART_UNINSTALL_AND_NO_IDLE_NETWORK_MUTATION_ONLY"
+      "environment": "PASS_ISOLATED_WINDOWS_11_VM",
+      "clean_host_evidence_sha256": "838ce9971ba802d5019471ad6bf3ffc1ea39d3a79bee32aa00fa946f85cf8d26",
+      "clean_host_install_uninstall": "PASS_EXACT_CANDIDATE32_CLEAN_INSTALL_11_OF_11_LOCAL_SYSTEM_IDLE_NETWORK; CONNECTED_UNINSTALL_NOT_RUN",
+      "upgrade_startup_recovery": "PASS_EXACT_CANDIDATE32_IN_PLACE_AND_PUBLIC_1_1_6_MIGRATION",
+      "non_elevated_ui_service": "PASS_EXACT_CANDIDATE32_ORDINARY_UI_LOCAL_SYSTEM_SERVICE_AUTHENTICATED_IPC",
+      "clean_vm_live_network": "NOT_RUN_EXACT_CANDIDATE32",
+      "connected_reboot": "NOT_RUN_EXACT_CANDIDATE32",
+      "forced_service_restart_recovery": "PASS_EXACT_CANDIDATE32_DISCONNECTED_SCM_AUTOMATIC_RECOVERY",
+      "smart_dns": "NOT_RUN_EXACT_CANDIDATE32",
+      "packaged_awg": "NOT_RUN_EXACT_CANDIDATE32",
+      "service_pipe_concurrency": "PASS_SOURCE_NATIVE_32_OF_32_EXACT_CANDIDATE32_INSTALLED_RUNTIME_NOT_RUN",
+      "second_launch_focus": "FAIL_EXACT_CANDIDATE32_WIN_001_FOCUS_NOT_RESTORED",
+      "successor_source_focus": "PASS_PRE_CANDIDATE_COMMIT_76ABED9_ORDINARY_VM_REPLAY",
+      "connected_uninstall": "NOT_RUN_EXACT_CANDIDATE32",
+      "proof_ceiling": "EXACT_PRIVATE_SUPPLY_AND_DISCONNECTED_WINDOWS_INSTALL_MIGRATION_IPC_RECOVERY_PASS; WIN_001_FOCUS_FAILS; CONNECTED_AND_ANDROID_RUNTIME_REMAIN_OPEN"
     },
     "gate_f": {
-      "decision": "BLOCKED",
-      "evidence_generation": "PASS_EXACT_CANDIDATE25_GATE_F_DECISION",
+      "decision": "NO_GO",
+      "evidence_generation": "PASS_EXACT_CANDIDATE32_GATE_F_DECISION",
       "counts_authoritative": true,
       "required": 19,
-      "pass": 5,
-      "non_pass": 14,
-      "fail": 0,
+      "pass": 2,
+      "non_pass": 17,
+      "fail": 2,
       "gate_g_authorized": false
     }
   },
   "retained_signed_predecessor": {
-    "id": "pokrov-1.2.0-candidate.24",
+    "id": "pokrov-1.2.0-candidate.31",
     "platform_build": 4053,
-    "state": "SIGNED_PRIVATE_SUPERSEDED_BY_PLATFORM_DEVELOPMENT_LOCK_CORRECTION",
-    "manifest_sha256": "bdd51f2c428298e3178fd94d9befaf79aa442445a384f52882995ffd5d9ddeed",
-    "signature_sha256": "ef47e339cafe23bd994844e70fe8263902a0d62f03312a35b10536913e7ac0bc",
-    "receipt_sha256": "1ff20e15adda261dff182c1166a276270a05721f3770f5cc4df1d77b61153343"
+    "state": "SIGNED_PRIVATE_SUPERSEDED_BY_CANDIDATE32",
+    "manifest_sha256": "dd4e99166ac3ec2c566e7d44ee93324f15ae7b3b92df6b35ff35de7053691f9a",
+    "signature_sha256": "959328f891a5dfa5c7c5c3f1cf2463b77137d5a7ca0812bab0b746e0a9c5c01a",
+    "receipt_sha256": "8e47f3e9f298aa8e67c5d07ff5ad2be976f09091863aa42cd49c3e0ff8e8ff89"
   },
   "release_rollback": {
     "catalog": "config/release-rollback-catalog.seed.json",
@@ -105,7 +107,7 @@
     "retained_target": "1.1.6+20260819",
     "source_contract": "PASS_LOCAL",
     "synthetic_pointer_reversal": "PASS_LOCAL",
-    "exact_candidate_drill": "NOT_RUN_CANDIDATE25",
+    "exact_candidate_drill": "PASS_LOCAL_FIXTURE_CANDIDATE32; LIVE_NOT_AUTHORIZED",
     "mutation_authority": "NOT_AUTHORIZED"
   },
   "android_release": {
@@ -156,8 +158,8 @@
       "smartscreen_warning_required": true
     },
     "blocked_on": [
-      "exact candidate.25 connected TUN/DNS/egress, pipe-concurrency, reboot/recovery and connected uninstall proof",
-      "Windows 10, sleep/resume, IPv6/leak and interactive SmartScreen proof for candidate.25",
+      "merge the validated Windows focus correction and create a newly numbered exact candidate; candidate.32 is immutable NO_GO",
+      "successor exact-candidate connected TUN/DNS/egress, recovery, connected uninstall, Windows 10, sleep/resume, IPv6/leak and interactive SmartScreen proof",
       "trusted signing and SmartScreen reputation for later broad distribution"
     ],
     "accepted_evidence": [
@@ -171,11 +173,14 @@
       "exact candidate.23 validates signed supply and 11 of 11 Windows files and reaches the initial connected state, but the ordinary client later reports CORE-001 while the service is running and concurrent trusted status requests fail",
       "the build-4053 bounded-retry source passes 32 of 32 concurrent trusted status requests against the unchanged candidate.23 service; this is pre-candidate evidence only",
       "exact candidate.25 binds the corrected build-4053 client source, signed supply, exact setup identity and 11 of 11 Windows bundle files",
-      "GitHub-hosted Windows 2025 run 33717151777 installs the exact candidate.25 setup, validates 11 of 11 installed files, LocalSystem service and authenticated IPC, stops and restarts the service, uninstalls cleanly and restores the unchanged idle route and DNS fingerprints"
+      "GitHub-hosted Windows 2025 run 33717151777 installs the exact candidate.25 setup, validates 11 of 11 installed files, LocalSystem service and authenticated IPC, stops and restarts the service, uninstalls cleanly and restores the unchanged idle route and DNS fingerprints",
+      "exact candidate.32 binds signed supply and 11 of 11 Windows files; isolated Windows 11 proves clean install, public 1.1.6 migration, ordinary UI and authenticated IPC, disconnected automatic service recovery and unchanged disconnected network contour",
+      "exact candidate.32 second-launch singleton and typed forwarding succeed but foreground focus restoration fails; candidate.32 is immutable NO_GO",
+      "client commit 76abed9056282df6436fbd8734f8093baabdb711 restores focus in focused tests, Release CTest, Release build and an ordinary Windows 11 VM replay; this remains pre-candidate evidence"
     ]
   },
   "blocking_dependencies": [
-    "candidate.25 is signed and candidate-bound but Gate F remains blocked at 5 PASS, 14 non-PASS and 0 FAIL until exact device and live-runtime evidence is completed",
+    "candidate.32 is signed and candidate-bound but immutable NO_GO at 2 PASS, 17 non-PASS and 2 FAIL because exact WIN-001 focus restoration fails; a newly numbered candidate is required",
     "iOS production connectivity still requires on-device packet-tunnel proof plus reviewed entitlements",
     "the universal POKROV Core 1.1.0 macOS dylib still requires a macOS build and ABI probe",
     "real Apple team, profiles, signing identities, and notary credentials are not provisioned in this lane",
@@ -191,7 +196,7 @@
     "Android build-tool future-support warning closed with Gradle 8.11.1, AGP 8.9.1, and Kotlin 2.1.0",
     "release-note guardrails recorded; post-announcement monitoring remains operator work",
     "POKROV 1.1.6 exact eight-asset GitHub digest, anonymous range-download verification, production handoff and authenticated/anonymous catalog checks PASS",
-    "candidate.25 strict-v2 handoff, refreshed SBOM/provenance and signed private release-index manifest validate from exact release-index source 18d9cb4c; output is ACTIONS_ARTIFACT_ONLY with promotion false",
+    "candidate.32 strict-v2 handoff, refreshed SBOM/provenance and signed private release-index manifest validate from exact release-index source 5d11fd68; output is ACTIONS_ARTIFACT_ONLY with promotion false",
     "Android 1.1.6 split APKs are production-signed; exact Huawei and clean Windows TUN/DNS remain manual"
   ],
   "ios_release_gates": [
