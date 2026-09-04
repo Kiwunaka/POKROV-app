@@ -150,7 +150,7 @@ $temporaryPath = "$fullOutput.$([Guid]::NewGuid().ToString('N')).tmp"
 try {
   [IO.File]::WriteAllText(
     $temporaryPath,
-    (($normalized | ConvertTo-Json -Compress) + [Environment]::NewLine),
+    ((ConvertTo-Json -InputObject @($normalized) -Compress) + [Environment]::NewLine),
     [Text.UTF8Encoding]::new($false)
   )
   Move-Item -LiteralPath $temporaryPath -Destination $fullOutput -Force
