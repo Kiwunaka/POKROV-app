@@ -15,7 +15,7 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+4053` |
-| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.33`, app `1.2.0+4053`, client `6ab1bca…735e`, Core `cd8f0f4…884d`, platform `f530005…5bc1` and signed release-index `63993fb…c43c`. Exact `WIN-001` focus, product launchAtLogin toggle and login-startup hidden/same-process activation replay pass; Gate F remains `BLOCKED 2/17/0`, so the candidate is private and not promotable. |
+| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.33`, app `1.2.0+4053`, client `6ab1bca…735e`, Core `cd8f0f4…884d`, platform `f530005…5bc1` and signed release-index `63993fb…c43c`. Exact `WIN-001` focus, product launchAtLogin, hidden login startup and synthetic saved-state migration across offline startup/network appearance pass; Gate F remains `BLOCKED 2/17/0`, so the candidate is private and not promotable. |
 | Retained signed-index predecessor | Candidate.22 setup `effc6a8e…f409`; immutable `NO_GO` after connected uninstall leaves the UI and 13 loaded binaries |
 | Current promotable candidate | None. Candidate.33 closes the candidate.32 `WIN-001` defect, but aggregate, managed-runtime, device/origin and public-promotion gates remain non-PASS. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
@@ -60,12 +60,13 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Candidate.32 singleton/focus | `FAIL_EXACT_CANDIDATE32_SECOND_LAUNCH_FOCUS_NOT_RESTORED`: plain and typed second launches exit `0`, retain exactly one original UI PID and forward activation, but the existing window does not regain foreground focus from an independent control window. This is exact `WIN-001` stop-ship evidence. |
 | Post-candidate.32 focus correction | `PASS_PRE_CANDIDATE_SUCCESSOR_SINGLETON_SHOW_TYPED_FORWARDING_FOCUS`: the foreground-launched second instance transfers foreground permission to the existing UI before `WM_COPYDATA`; focused Flutter `8/8`, Release native CTest `7/7`, Release build and ordinary medium-integrity Windows 11 VM plain/typed replay pass. This is source/precursor proof only. |
 | Candidate.33 singleton/focus | `PASS_EXACT_CANDIDATE33_WIN_001`: exact installed candidate.33 plain and typed second launches retain one original UI process, forward activation and restore foreground focus. |
-| Candidate.33 Windows startup preference and login | `PASS_EXACT_CANDIDATE33_PRODUCT_PREFERENCE_TOGGLE_AND_LOGIN_STARTUP`: the product Profile → Windows switch creates and removes the exact quoted `--startup` Run value with no TUN or route/DNS drift. Separately, a real guest reboot/login with that exact value creates one responsive hidden session-1 process; ordinary activation exposes a window on the same PID. All temporary Run/task/UI/first-launch state is removed. Saved account/profile migration, managed auto-connect and delayed-network readiness remain untested. |
+| Candidate.33 Windows startup preference and login | `PASS_EXACT_CANDIDATE33_PRODUCT_PREFERENCE_TOGGLE_AND_LOGIN_STARTUP`: the product Profile → Windows switch creates and removes the exact quoted `--startup` Run value with no TUN or route/DNS drift. Separately, a real guest reboot/login with that exact value creates one responsive hidden session-1 process; ordinary activation exposes a window on the same PID. All temporary Run/task/UI/first-launch state is removed. Valid saved-account/managed-profile refresh and managed auto-connect remain untested. |
+| Candidate.33 synthetic saved-state startup | `PASS_EXACT_CANDIDATE33_SYNTHETIC_SAVED_STATE_MIGRATION_OFFLINE_STARTUP_AND_NETWORK_APPEARANCE_NO_AUTOCONNECT`: a dedicated temporary Windows user starts exact candidate.33 offline with synthetic v0 account/profile state and the exact product Run value. The app migrates state to schema v1 secure storage, removes the plaintext token field, stays hidden on one PID and creates no TUN/Core. When the guest link returns, the same hidden PID remains disconnected with unchanged state/secure-store/experience fingerprints. A SYSTEM cleanup removes the temporary user/profile/data/task and restores `pokrovtest`. This is not valid-account or managed-profile proof. |
 | Candidate.33 direct/Smart-DNS runtime | `PASS_EXACT_CANDIDATE33_SYNTHETIC_SECRET_FREE`: exact installed service/Core creates TUN, changes managed route/DNS, validates Core egress and DNS, receives DoH `200` in Smart-DNS mode, then restores the exact baseline. Managed-node/AWG credit remains open. |
 | Candidate.33 connected crash recovery | `PASS_EXACT_CANDIDATE33_CONNECTED_CRASH_RECOVERY_TO_SAFE_DISCONNECTED`: while the exact installed service/Core was connected through a secret-free direct TUN, forced service termination triggered automatic SCM restart in `5449` ms. The durable journal returned from `committed` to `clean`, TUN disappeared, exact route/DNS fingerprints were restored, and ordinary authenticated IPC reported `initialized`, `running=false`, `failure=none`. |
 | Candidate.33 connected reboot recovery | `PASS_EXACT_CANDIDATE33_CONNECTED_REBOOT_SAFE_DISCONNECTED_AND_REUSABLE`: Windows rebooted while the exact service/Core direct synthetic TUN was connected. After boot the automatic LocalSystem service was safely disconnected with no TUN, DNS remained `4/4`, API health was `200`, and a fresh connect/disconnect restored the post-boot route/DNS baseline. Final cleanup retained `11/11` exact files and removed the diagnostic CLI. |
 | Candidate.33 connected uninstall | `PASS_EXACT_CANDIDATE33_CONNECTED_UNINSTALL_PRODUCT_CLEANUP_AND_CLEAN_REINSTALL`: with the exact interactive UI open and the exact service/Core direct synthetic TUN running, the uninstaller exits `0`, terminates UI, removes service, all `11` product files, uninstall registry and TUN, and restores exact route/DNS. A clean exact setup then reinstalls `11/11` with Automatic LocalSystem service and unchanged network baseline. |
-| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; candidate.33 proves the product launchAtLogin toggle, exact login-startup hidden/same-process activation, installed service/Core direct and Smart-DNS synthetic TUN/DNS lifecycles, connected forced-service recovery, connected reboot recovery and connected uninstall. Managed auto-connect/saved state/delayed-network readiness, managed-node/AWG, Windows 10, leak/IPv6, sleep and interactive SmartScreen remain open. VirtualBox exposes no guest sleep or IPv6 path. |
+| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; candidate.33 proves the product launchAtLogin toggle, exact login-startup hidden/same-process activation, synthetic saved-state migration across offline startup/network appearance, installed service/Core direct and Smart-DNS synthetic TUN/DNS lifecycles, connected forced-service recovery, connected reboot recovery and connected uninstall. Valid saved-account/managed-profile refresh and managed auto-connect, managed-node/AWG, Windows 10, leak/IPv6, sleep and interactive SmartScreen remain open. VirtualBox exposes no guest sleep or IPv6 path. |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
@@ -188,12 +189,39 @@ so those no-mutation probes remain harness evidence only; the successful path
 used guest-only keyboard focus traversal. One offline rehearsal entered a
 whitelist information screen and performed no server or network action.
 
+A separate exact-artifact slice then staged only synthetic v0 account/profile
+state under a dedicated temporary Windows user. No existing `pokrovtest`
+session files were read, moved or copied. With the exact quoted product Run
+value present and the guest adapter cable off, Windows login created one hidden
+candidate.33 UI process. The app migrated the state to schema v1, moved the
+synthetic token to secure storage and left no plaintext `session_token` field.
+The Automatic LocalSystem service remained running while UI, consent, Core and
+TUN counts were `1/0/0/0`.
+
+Restoring only the guest adapter cable preserved the same hidden UI PID `6884`
+and unchanged state, secure-store and experience fingerprints. Ethernet became
+`Up`, but no Core or TUN appeared and no automatic connection occurred. That is
+the intended 1.2.0 behavior: login startup registers and hides the UI; it does
+not yet own a managed auto-connect contract. The external evidence index is
+`E:\POKROV-tools\release-evidence\1.2.0-candidate33-windows-saved-state-startup-2026-09-04\candidate33-windows-saved-state-startup-evidence-index.json`,
+SHA-256 `43a7e737…3bb7`.
+
+Cleanup ran once as SYSTEM before the next login and removed the temporary
+local user, profile, ProgramData, public fixture files and scheduled task. The
+normal `pokrovtest` session was restored with no startup value, UI, Core or TUN;
+the exact service remained Running/Auto/LocalSystem. Post-cleanup DNS/route
+fingerprints reflect the full guest reboot and DHCP renewal, while the retained
+record exposes only the physical Ethernet adapter and no product adapter. The
+initial password-policy and Public-folder ACL misses are retained as harness
+issues, not product failures.
+
 These passes prove the exact candidate.33 installed service/Core/TUN/DNS
 boundary, forced-service rollback, connected-reboot rollback, connected
 uninstall, clean exact reinstall and login-startup hidden/same-process
-activation plus the owning product preference toggle. They do not prove
-restored account/profile state, managed
-auto-connect, a managed production node, public egress change, AWG2/AWG3.1,
+activation plus the owning product preference toggle and synthetic saved-state
+migration across offline login and later network appearance. They do not prove
+a valid restored account/profile refresh, managed auto-connect, a managed
+production node, public egress change, AWG2/AWG3.1,
 Hysteria2, WARP, sleep, leak/IPv6, Windows 10, SmartScreen
 interaction or promotion. The VM was headless; neither host input nor host
 networking was changed.
