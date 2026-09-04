@@ -1,0 +1,82 @@
+{
+  "schema": "pokrov.android.physical-candidate-evidence/v1",
+  "candidate": "pokrov-1.2.0-candidate.33",
+  "recorded_at_utc": "2026-09-04T10:39:50Z",
+  "exact_sources": {
+    "platform": "f5300053026d32826e54c02202303e1f68c65bc1",
+    "client": "6ab1bcaf39c61a0ae0c9d8328e6c95382885735e",
+    "core": "cd8f0f4169d570d693992a959d81d17c2c44884d",
+    "release_index": "63993fba699b68641b7e972071ab7729fa9ec43c"
+  },
+  "artifact": {
+    "name": "pokrov-android-universal.apk",
+    "version_name": "1.2.0",
+    "version_code": 4053,
+    "size_bytes": 295370161,
+    "sha256": "51b86f66bd5c79fdf8a8e51d7607315a6ea3f8dfe9c36c4656034aac3b4583f2",
+    "signature_scheme": "APK_SIGNATURE_SCHEME_V2",
+    "production_certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500"
+  },
+  "device": {
+    "class": "physical Huawei Android 12",
+    "abi": "arm64-v8a",
+    "unique_identifiers_retained": false
+  },
+  "install": {
+    "method": "adb install -r",
+    "result": "PASS_EXACT_INSTALLED_BYTES_VERSION_4053_DATA_PRESERVED",
+    "installed_base_apk_sha256": "51b86f66bd5c79fdf8a8e51d7607315a6ea3f8dfe9c36c4656034aac3b4583f2",
+    "uninstall_used": false,
+    "clear_data_used": false
+  },
+  "wifi_default_profile": {
+    "result": "PASS_CONNECTED_VALIDATED_DNS_4_OF_4",
+    "android_vpn_connected": true,
+    "android_vpn_validated": true,
+    "dns_targets": [
+      "example.com",
+      "chatgpt.com",
+      "gemini.google.com",
+      "xbox.com"
+    ],
+    "raw_addresses_retained": false
+  },
+  "process_health": {
+    "result": "PASS_NO_FATAL_ANR_UNCAUGHT_EGRESS_OR_PERMISSION_ERRORS",
+    "raw_log_retained": false
+  },
+  "beeline": {
+    "selected_location": "Milan whitelist type 4",
+    "selected_location_result": "FAIL_CLOSED_AFTER_TRANSIENT_VALIDATED_STATE",
+    "white_mode_channels_reported": 4,
+    "white_mode_result": "FAIL_CLOSED_NO_CONFIRMED_EMERGENCY_ROUTE",
+    "automatic_mode_result": "PASS_BOUNDED_CONNECTED_VALIDATED_32_SECONDS_THEN_EXTERNAL_TRANSPORT_CHANGE",
+    "pure_cellular_observed_seconds": 32,
+    "post_transport_change_credit": false,
+    "raw_addresses_retained": false
+  },
+  "not_run": {
+    "direct_doh_and_external_smart_dns_ui": "NOT_RUN_PHONE_RETURNED_TO_OWNER_FOREGROUND",
+    "managed_awg2_awg31_hy2": "NOT_RUN_NO_MANAGED_LAB_BIND_OR_ROLLOUT_MUTATION",
+    "warp_per_app_ipv6_leak_udp53_mtu_oem_endurance": "MANUAL_OWNER_TEST"
+  },
+  "safety": {
+    "server_rollout_changed": false,
+    "production_deploy_used": false,
+    "raw_profiles_retained": false,
+    "raw_network_identifiers_retained": false,
+    "owner_foreground_not_interrupted_after_detected_use": true
+  },
+  "final_device_state": {
+    "wifi_enabled": true,
+    "pokrov_vpn_connected": false,
+    "owner_foreground_preserved": true
+  },
+  "external_evidence": {
+    "directory": "E:/POKROV-tools/release-evidence/1.2.0-candidate33-android-physical-2026-09-04",
+    "manifest_sha256": "364f29a286f78cbed2be3710d4f84b8abc19834e5741b7daf2fd2de72476928e"
+  },
+  "release_credit": "PARTIAL_EXACT_CANDIDATE_33_ANDROID_PHYSICAL",
+  "promotion_effect": "NONE",
+  "remaining_decision": "NOT_PROMOTABLE_FROM_THIS_SLICE_ALONE"
+}

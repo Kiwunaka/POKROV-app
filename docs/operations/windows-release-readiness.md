@@ -15,12 +15,13 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 |---|---|
 | Retained public Windows release | Unsigned direct setup `1.1.6` |
 | Working package target | `1.2.0+4053` |
-| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.32`, app `1.2.0+4053`, client `2d6adfc…a1e`, Core `cd8f0f4…884d`, platform `d0dd37c…1a86` and signed release-index `5d11fd6…53c3`. Its last generated Gate F snapshot is `BLOCKED 2/17/0`, but a later exact-candidate `WIN-001` replay proves singleton forwarding while focus restoration fails. Candidate.32 is therefore immutable `NO_GO` and not promotable. |
+| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.33`, app `1.2.0+4053`, client `6ab1bca…735e`, Core `cd8f0f4…884d`, platform `f530005…5bc1` and signed release-index `63993fb…c43c`. Exact `WIN-001` focus replay passes; Gate F remains `BLOCKED 2/17/0`, so the candidate is private and not promotable. |
 | Retained signed-index predecessor | Candidate.22 setup `effc6a8e…f409`; immutable `NO_GO` after connected uninstall leaves the UI and 13 loaded binaries |
-| Current promotable candidate | None. Candidate.32 is immutable `NO_GO`. The source correction passes focused tests, Release native tests and a bounded Windows 11 VM precursor, but it is not candidate credit; a newly numbered exact candidate and its full applicable gates are required. |
+| Current promotable candidate | None. Candidate.33 closes the candidate.32 `WIN-001` defect, but aggregate, managed-runtime, device/origin and public-promotion gates remain non-PASS. |
 | Runtime architecture | Unelevated UI plus authenticated SCM service |
 | Required service | `pokrov_service.exe` |
-| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`; candidate.32 carries the same reviewed Core source in its exact private setup |
+| Active candidate Core | Secret-safe POKROV Core `1.1.0`, desktop ABI `2`, exact source `cd8f0f4…884d`; candidate.33 carries the same reviewed Core source in its exact private setup |
+| Exact candidate.33 setup | `250622f7…3580`, `29153792` bytes; Windows bundle manifest `0f93211e…a5b`, `11/11` files; signed tuple client/Core/platform/index `6ab1bca…/cd8f0f4…/f530005…/63993fb…`; Windows Authenticode `SKIPPED_BY_OWNER` |
 | Exact candidate.32 setup | `22689e3e…0574`, `29154647` bytes; Windows bundle manifest `43bd310e…7dd`, `11/11` files; signed tuple client/Core/platform/index `2d6adfc…/cd8f0f4…/d0dd37c…/5d11fd6…`; Windows signing `SKIPPED_BY_OWNER` |
 | Exact candidate.25 setup | `ffc9b07c…7fb3`, `29139238` bytes; Windows bundle manifest `344b842c…87c0`, `11/11` files; signed tuple client/Core/platform/index `54259b0…/cd8f0f4…/883cd10…/18d9cb4…`; Windows signing `SKIPPED_BY_OWNER` |
 | Exact candidate.23 setup | `ded8c447…291`, `29146140` bytes; manifest `f92c007d…877`, `11/11` files; tuple client/Core/platform `df9ed85…/cd8f0f4…/5ba4dba…`; Windows signing `SKIPPED_BY_OWNER` |
@@ -58,12 +59,40 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Post-candidate.23 pipe correction | `PASS_CANDIDATE25_SOURCE_AND_NATIVE`; candidate.25 binds the corrected client/Core artifact set and a fresh CLI rehearsal passes Debug native CTest `8/8` plus the full Windows build. A follow-up CMake correction puts the Debug-only integration restriction on `add_test`, so Release enumerates and passes its seven applicable native tests instead of attempting the SCM binary as a console process. This test-harness-only successor change receives no candidate.25 runtime credit. Exact installed candidate.25 contention/connected runtime remains `NOT_RUN`. |
 | Candidate.32 singleton/focus | `FAIL_EXACT_CANDIDATE32_SECOND_LAUNCH_FOCUS_NOT_RESTORED`: plain and typed second launches exit `0`, retain exactly one original UI PID and forward activation, but the existing window does not regain foreground focus from an independent control window. This is exact `WIN-001` stop-ship evidence. |
 | Post-candidate.32 focus correction | `PASS_PRE_CANDIDATE_SUCCESSOR_SINGLETON_SHOW_TYPED_FORWARDING_FOCUS`: the foreground-launched second instance transfers foreground permission to the existing UI before `WM_COPYDATA`; focused Flutter `8/8`, Release native CTest `7/7`, Release build and ordinary medium-integrity Windows 11 VM plain/typed replay pass. This is source/precursor proof only. |
-| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; a successor exact candidate must repeat contention, managed TUN/DNS/egress, recovery, connected-uninstall, Windows 10, leak/IPv6 and interactive SmartScreen. The candidate.28 precursor proves only its bounded direct synthetic-profile lane. VirtualBox exposes no guest sleep or IPv6 path. |
+| Candidate.33 singleton/focus | `PASS_EXACT_CANDIDATE33_WIN_001`: exact installed candidate.33 plain and typed second launches retain one original UI process, forward activation and restore foreground focus. |
+| Candidate.33 direct/Smart-DNS runtime | `PASS_EXACT_CANDIDATE33_SYNTHETIC_SECRET_FREE`: exact installed service/Core creates TUN, changes managed route/DNS, validates Core egress and DNS, receives DoH `200` in Smart-DNS mode, then restores the exact baseline. Managed-node/AWG credit remains open. |
+| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; candidate.33 proves exact installed service/Core direct and Smart-DNS synthetic TUN/DNS lifecycles, but managed-node/AWG, recovery, connected-uninstall, Windows 10, leak/IPv6, sleep and interactive SmartScreen remain open. VirtualBox exposes no guest sleep or IPv6 path. |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
 fallback. The service owns Core, managed state and recovery. Green state
 requires the authenticated egress proof.
+
+## Candidate.33 Focus And Connected Synthetic Runtime
+
+Candidate.33 packages the merged focus correction at client
+`6ab1bcaf39c61a0ae0c9d8328e6c95382885735e`. The exact setup is
+`250622f7…3580`, `29153792` bytes, with `11/11` bundle identities and exact
+installed UI `1b175a66…1d97`, service `b962d3d0…326b` and Core DLL
+`f284fa88…8204`. In the isolated Windows 11 VM, candidate.32-to-candidate.33
+update and plain/typed second-launch replay retain one UI instance, forward
+activation and restore foreground focus. Exact `WIN-001` therefore passes for
+candidate.33; candidate.32 remains immutable failed history.
+
+The installed LocalSystem service then passed two headless, secret-free
+synthetic-profile lifecycles. The direct slice staged and connected through
+authenticated IPC, created one TUN, changed route and DNS fingerprints,
+resolved the example/ChatGPT/Gemini/Xbox set, returned API health `200`, and
+restored the exact disconnected route/DNS/TUN baseline. The Smart-DNS slice
+repeated the lifecycle and received an RFC 8484 response from
+`dns.pokrov.space/dns-query` with HTTP `200` and a DNS message body. Evidence
+SHA-256 values are `f0eaa96e…05f6` and `ae7d0c3f…1d1a`.
+
+These passes prove the exact candidate.33 installed service/Core/TUN/DNS
+boundary and cleanup. They do not prove a managed production node, public
+egress change, AWG2/AWG3.1, Hysteria2, WARP, connected restart/uninstall,
+sleep, leak/IPv6, Windows 10, SmartScreen interaction or promotion. The VM was
+headless; neither host input nor host networking was changed.
 
 ## Candidate.32 Singleton/Focus NO_GO And Source Correction
 
