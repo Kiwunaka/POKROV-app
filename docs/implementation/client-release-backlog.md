@@ -16,7 +16,7 @@ results belong in dated evidence and never become reusable release approval.
 | Public retained release | Android and Windows `1.1.6`, tag `v1.1.6` |
 | Working package target | `1.2.0+4053` |
 | Working source target state | `PRE_CANDIDATE_LOCAL` continuing-source seed on `POKROV-app/main`; the separate exact candidate.33 artifact source is `6ab1bca…735e` |
-| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.33`, app `1.2.0+4053`; exact `WIN-001`, bounded Windows synthetic TUN/DNS and partial physical Android slices pass, while Gate F remains `BLOCKED 2/17/0`; public promotion is false |
+| Latest exact candidate | Private signed `pokrov-1.2.0-candidate.33`, app `1.2.0+4053`; exact `WIN-001`, Windows login-startup hidden/same-process activation, bounded Windows synthetic TUN/DNS and partial physical Android slices pass, while Gate F remains `BLOCKED 2/17/0`; public promotion is false |
 | Candidate created | `false` |
 | Private candidate created | `true` for candidate.33 in the separate creation/cutover contract; the continuing-source seed remains pre-candidate by design |
 | Candidate-created scope | Candidate.33 binds platform `f530005…`, client `6ab1bca…`, Core `cd8f0f4…` and release-index source `63993fb…`; its six build-4053 client artifacts are private and immutable. |
@@ -35,8 +35,9 @@ candidate and cutover verdict. Exact candidate.33 identity comes from the
 private creation manifest, signed strict-v2 contract and cutover seed; the
 release-handoff seed's `candidate_created=false` applies only to continuing
 `main`. Candidate.33 is unpublished and unpromoted. Its generated Gate F
-snapshot is `BLOCKED 2/17/0`: exact Windows focus, synthetic direct/Smart-DNS
-service lifecycles and partial physical Android evidence do not close the
+snapshot is `BLOCKED 2/17/0`: exact Windows focus, login-startup
+hidden/same-process activation, synthetic direct/Smart-DNS service lifecycles
+and partial physical Android evidence do not close the
 remaining managed-runtime, device, origin, provider and promotion rows.
 Candidate.32 remains immutable `NO_GO` history for its `WIN-001` focus defect.
 Candidate.23 is immutable `NO_GO` for serial-pipe
@@ -289,8 +290,8 @@ runtime, rollback or promotion proof.
 | 5 | Strict-v2 candidate metadata | `PASS_SIGNED_CANDIDATE_33` | Handoff `30d9d044…72c81` binds build `4053`, exact four-source tuple, six artifacts, SBOM, provenance and the `11/11` Windows runtime manifest. |
 | 6 | Android exact-candidate build and signer | `PASS_EXACT_CANDIDATE_33_INSTALL_IDENTITY` | Five Android artifacts are production-signed. Universal APK `51b86f66…583f2`, `295370161` bytes, is installed and read back byte-identically as `1.2.0+4053` on physical Android. |
 | 7 | Android device matrix | `PARTIAL_EXACT_CANDIDATE_33_PHYSICAL` | Wi-Fi validated VPN and four DNS/reply probes pass. Beeline Auto is bounded to 32 seconds before an external transport change; selected Milan and emergency whitelist fail closed. AWG, WARP, per-app, handoff, IPv6/leak, UDP53/MTU, OEM and endurance remain open. |
-| 8 | Windows exact-candidate package | `PASS_EXACT_CANDIDATE_33_FOCUS_AND_SYNTHETIC_TUN_DNS` | Setup `250622f7…3580`, `29153792` bytes, validates `11/11`. Isolated Windows 11 proves candidate.32 update, exact focus restoration and secret-free direct/Smart-DNS service/Core/TUN/DNS lifecycles with exact cleanup. |
-| 9 | Windows STOP-SHIP and unsigned-beta warning | `PASS_EXACT_CANDIDATE_33_WIN_001; OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY` | Plain and typed second launches restore foreground focus. Authenticode remains `NotSigned`; the SmartScreen warning is mandatory and managed-node/recovery/connected-uninstall coverage stays open. |
+| 8 | Windows exact-candidate package | `PASS_EXACT_CANDIDATE_33_FOCUS_LOGIN_STARTUP_AND_SYNTHETIC_TUN_DNS` | Setup `250622f7…3580`, `29153792` bytes, validates `11/11`. Isolated Windows 11 proves candidate.32 update, exact focus restoration, real-login hidden startup with ordinary same-PID activation and secret-free direct/Smart-DNS service/Core/TUN/DNS lifecycles with exact cleanup. |
+| 9 | Windows STOP-SHIP and unsigned-beta warning | `PASS_EXACT_CANDIDATE_33_WIN_001; OWNER_ACCEPTED_UNSIGNED_DIRECT_BETA_ONLY` | Plain and typed second launches restore foreground focus; exact `--startup` stays hidden until ordinary activation exposes the same PID. Authenticode remains `NotSigned`; the SmartScreen warning is mandatory and managed auto-connect/saved-state, managed-node/AWG, Windows 10/sleep/IPv6/leak coverage stays open. |
 | 10 | Hosted cross-repository CI | `MIXED_EXACT_CANDIDATE_33_BLOCKED_BY_ACCESS` | Release-index source-contract and signer runs pass; platform/client jobs that execute zero steps because of GitHub billing remain `BLOCKED_BY_ACCESS_GITHUB_BILLING`, not PASS. |
 | 11 | Runtime/public readback and rollback | `PASS_LOCAL_FIXTURE_CANDIDATE_33; LIVE_NOT_AUTHORIZED` | Candidate.33 disposable stable→candidate→stable reversal is byte-identical. No public tag/assets, live stable-pointer switch, anonymous public readback or runtime rollback exists. |
 | 12 | Promotion and go/no-go | `BLOCKED_GATE_F_2_PASS_17_NON_PASS_0_FAIL` | Candidate.33 remains private with promotion false. Gate G, public release and stable pointer are unauthorized. |
@@ -299,8 +300,9 @@ runtime, rollback or promotion proof.
 
 1. Retain candidate.33 as the exact private baseline; do not rebuild or patch
    its bytes. Re-run Gate F only when new exact-candidate pointers are added.
-2. Continue the isolated Windows matrix with contention, managed-node
-   TUN/DNS/egress, recovery and connected uninstall.
+2. Continue the isolated Windows matrix with managed auto-connect/saved-state
+   fixtures and managed-node TUN/DNS/egress/recovery. Exact login startup,
+   contention, connected crash/reboot and connected uninstall are retained.
 3. Run candidate.33 on Windows 10, AWG 3.1/AWG2, sleep/resume,
    IPv6/leak and interactive SmartScreen matrix only in isolated targets; keep
    the main host network untouched.
