@@ -96,6 +96,15 @@ function Read-ArtifactSize {
   return @([double](Get-Item -LiteralPath $fullArtifact).Length)
 }
 
+function Read-ProcessCpuSeconds {
+  param([Parameter(Mandatory = $true)]$Process)
+  $counter = $Process.TotalProcessorTime
+  if ($null -eq $counter -or $counter -isnot [TimeSpan]) {
+    throw 'Windows CPU counter unavailable; no performance evidence can be emitted.'
+  }
+  return $counter.TotalSeconds
+}
+
 function Read-WindowsIdleSamples {
   param([Parameter(Mandatory = $true)][bool]$Cpu)
   if (-not $IsWindows) {
@@ -107,7 +116,7 @@ function Read-WindowsIdleSamples {
   $processorCount = [Environment]::ProcessorCount
   $retained = [System.Collections.Generic.List[double]]::new()
   $previous = Get-Process -Id $TargetProcessId
-  $previousCpu = $previous.TotalProcessorTime.TotalSeconds
+  $previousCpu = if ($Cpu) { Read-ProcessCpuSeconds -Process $previous } else { 0.0 }
   $previousAt = [Diagnostics.Stopwatch]::GetTimestamp()
   $frequency = [double][Diagnostics.Stopwatch]::Frequency
   $total = $Warmups + $Samples
@@ -120,7 +129,8 @@ function Read-WindowsIdleSamples {
       if ($elapsed -le 0) {
         throw 'Windows CPU sample interval was not positive.'
       }
-      $cpuValue = (($current.TotalProcessorTime.TotalSeconds - $previousCpu) / $elapsed / $processorCount) * 100
+      $currentCpu = Read-ProcessCpuSeconds -Process $current
+      $cpuValue = (($currentCpu - $previousCpu) / $elapsed / $processorCount) * 100
       $value = [Math]::Max(0, $cpuValue)
     } else {
       $value = [double]$current.WorkingSet64
@@ -128,7 +138,7 @@ function Read-WindowsIdleSamples {
     if ($index -ge $Warmups) {
       $retained.Add([Math]::Round($value, 6))
     }
-    $previousCpu = $current.TotalProcessorTime.TotalSeconds
+    if ($Cpu) { $previousCpu = $currentCpu }
     $previousAt = $currentAt
   }
   return @($retained)

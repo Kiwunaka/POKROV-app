@@ -1,7 +1,16 @@
 {
   "schema": "pokrov.client-performance.candidate33-windows-combined-idle-budget/v1",
   "recorded_at_utc": "2026-09-04T18:23:49.3406636Z",
-  "status": "PASS_EXACT_CANDIDATE33_WINDOWS_COMBINED_UI_SERVICE_IDLE_CPU_MEMORY_BASELINE_RECORDED_FULL_DEVICE_SCOPE_OPEN",
+  "status": "INVALID_METHOD_COMBINED_CPU_MEMORY_BASELINE_RETAINED",
+  "correction": {
+    "date": "2026-09-04",
+    "prior_summary_sha256": "cd7e4608e44d0465e1a063aad8f9518d4cf775627792ed31879613a9c1c29e95",
+    "reason": "Ordinary-user service CPU and TotalProcessorTime were null; the external harness cast null CPU to double zero. Historical CPU numbers below are invalid, not measured combined CPU.",
+    "runtime_observation": { "service_state": "Running", "pid": 3192, "cpu_is_null": true, "total_processor_time_is_null": true, "cpu_cast_to_double": 0, "working_set": 10338304 },
+    "accepted_combined_cpu_samples": 0,
+    "repeat_run": "NOT_RUN",
+    "raw_external_evidence_preserved": true
+  },
   "candidate": {
     "label": "pokrov-1.2.0-candidate.33",
     "app_version": "1.2.0+4053",
@@ -37,7 +46,7 @@
   },
   "results": {
     "client.windows.idle_cpu_percent": {
-      "state": "MEASURED",
+      "state": "HISTORICAL_INVALID_OBSERVATION",
       "statistic": "p95",
       "minimum": 0.0,
       "p50": 0.0,
@@ -46,7 +55,7 @@
       "average": 0.137304,
       "target_lte": 1.0,
       "stop_lte": 1.0,
-      "gate_status": "PASS"
+      "gate_status": "INVALID_METHOD"
     },
     "client.windows.idle_working_set_bytes": {
       "state": "MEASURED",
@@ -65,7 +74,7 @@
     "count": 2,
     "classification": "HARNESS_FAILURE_NO_PRODUCT_RESULT",
     "accepted_samples": 0,
-    "reason": "the external harness initially assumed a Windows PowerShell process CPU property shape that was not present; it was corrected before the accepted run"
+    "reason": "Two setup failures preceded the retained run; its subsequent null-to-zero CPU workaround was also invalid. See correction."
   },
   "safety": {
     "connection_requested": false,
@@ -79,7 +88,7 @@
     "temporary_scheduled_task_removed": true
   },
   "credit": {
-    "windows_combined_ui_service_idle_cpu_budget": "PASS",
+    "windows_combined_ui_service_idle_cpu_budget": "INVALID_METHOD",
     "windows_combined_ui_service_working_set": "BASELINE_RECORDED",
     "memory_regression_pass": false,
     "full_candidate_device_scope": false,

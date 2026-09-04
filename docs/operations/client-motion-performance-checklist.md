@@ -70,6 +70,9 @@ Capture these raw values:
   exact UI/service processes with the client helper. Android idle CPU/PSS uses
   the selected physical-device profiler; record no domains, config or process
   command lines.
+  Every CPU counter must be readable at every observation; an unavailable
+  counter is an error, never zero. Use an appropriately privileged collector
+  for LocalSystem services without changing the ordinary UI process identity.
 - APK/installer size: collect the exact candidate byte length, then compare it
   with the prior same-kind artifact baseline.
 
@@ -102,8 +105,9 @@ Normalize each array with the platform
   `BASELINE_RECORDED`, not a regression PASS; normalized evidence:
   `docs/operations/evidence/candidate33-windows-idle-budget.json`;
 - candidate.33 combined Windows UI plus automatic service idle on the same VM:
-  `PASS`, p95 `0.749734% <= 1.0%` from 60 retained one-second samples after 30
-  discarded warmups; combined working-set p95 `108158976` bytes is a new
+  CPU `INVALID_METHOD`, previous PASS withdrawn: the ordinary-user harness
+  cast an unavailable LocalSystem CPU counter to zero. Its 60 retained CPU
+  values cannot establish combined CPU usage. Working-set p95 `108158976` bytes is a new
   full-process `BASELINE_RECORDED`, not a comparison with the earlier UI-only
   baseline; normalized evidence:
   `docs/operations/evidence/candidate33-windows-combined-idle-budget.json`;
