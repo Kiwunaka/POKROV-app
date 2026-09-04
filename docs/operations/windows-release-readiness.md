@@ -61,7 +61,8 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 | Post-candidate.32 focus correction | `PASS_PRE_CANDIDATE_SUCCESSOR_SINGLETON_SHOW_TYPED_FORWARDING_FOCUS`: the foreground-launched second instance transfers foreground permission to the existing UI before `WM_COPYDATA`; focused Flutter `8/8`, Release native CTest `7/7`, Release build and ordinary medium-integrity Windows 11 VM plain/typed replay pass. This is source/precursor proof only. |
 | Candidate.33 singleton/focus | `PASS_EXACT_CANDIDATE33_WIN_001`: exact installed candidate.33 plain and typed second launches retain one original UI process, forward activation and restore foreground focus. |
 | Candidate.33 direct/Smart-DNS runtime | `PASS_EXACT_CANDIDATE33_SYNTHETIC_SECRET_FREE`: exact installed service/Core creates TUN, changes managed route/DNS, validates Core egress and DNS, receives DoH `200` in Smart-DNS mode, then restores the exact baseline. Managed-node/AWG credit remains open. |
-| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; candidate.33 proves exact installed service/Core direct and Smart-DNS synthetic TUN/DNS lifecycles, but managed-node/AWG, recovery, connected-uninstall, Windows 10, leak/IPv6, sleep and interactive SmartScreen remain open. VirtualBox exposes no guest sleep or IPv6 path. |
+| Candidate.33 connected crash recovery | `PASS_EXACT_CANDIDATE33_CONNECTED_CRASH_RECOVERY_TO_SAFE_DISCONNECTED`: while the exact installed service/Core was connected through a secret-free direct TUN, forced service termination triggered automatic SCM restart in `5449` ms. The durable journal returned from `committed` to `clean`, TUN disappeared, exact route/DNS fingerprints were restored, and ordinary authenticated IPC reported `initialized`, `running=false`, `failure=none`. |
+| Remaining Windows network matrix | `MANUAL_OWNER_TEST`; candidate.33 proves exact installed service/Core direct and Smart-DNS synthetic TUN/DNS lifecycles plus connected forced-service recovery. Managed-node/AWG, connected reboot/uninstall, Windows 10, leak/IPv6, sleep and interactive SmartScreen remain open. VirtualBox exposes no guest sleep or IPv6 path. |
 | Native crash profile | `PASS_LOCAL`: stack-only, no full dump default |
 
 The ordinary UI does not load Core, run elevated or use a system-proxy
@@ -88,11 +89,34 @@ repeated the lifecycle and received an RFC 8484 response from
 `dns.pokrov.space/dns-query` with HTTP `200` and a DNS message body. Evidence
 SHA-256 values are `f0eaa96e…05f6` and `ae7d0c3f…1d1a`.
 
+The same exact install then passed connected forced-service recovery. An
+ordinary medium-integrity diagnostic client staged the secret-free direct
+profile from the protected installation directory and reached `running` with
+TUN, changed route/DNS fingerprints, Core egress validation, DNS readiness,
+four-of-four domain resolution and API health `200`. A high-integrity probe
+terminated the LocalSystem service process while its durable journal was
+`committed`. SCM started a new service process automatically in `5449` ms;
+no operator remediation was used. Startup recovery returned the journal to
+`clean`, removed the TUN and restored the exact pre-connect route and DNS
+fingerprints. A new ordinary authenticated IPC request reported
+`phase=initialized`, `running=false`, `failure=none`. The temporary diagnostic
+client was removed, all `11/11` installed candidate files still matched, and
+the final VM state had zero POKROV TUN adapters and zero UI processes with
+four-of-four DNS resolution and API health `200`.
+
+The retained evidence index is
+`E:\POKROV-tools\release-evidence\1.2.0-candidate33-windows-connected-recovery-2026-09-04\candidate33-connected-recovery-evidence-index.json`,
+SHA-256 `50552ddd…6109`. Two earlier harness-only failures are retained in the
+same directory and explicitly classified as pre-mutation argument/location
+errors; neither reached a connected network boundary. No production account,
+server, host network, deployment or public release was changed.
+
 These passes prove the exact candidate.33 installed service/Core/TUN/DNS
-boundary and cleanup. They do not prove a managed production node, public
-egress change, AWG2/AWG3.1, Hysteria2, WARP, connected restart/uninstall,
-sleep, leak/IPv6, Windows 10, SmartScreen interaction or promotion. The VM was
-headless; neither host input nor host networking was changed.
+boundary, forced-service rollback and cleanup. They do not prove a managed
+production node, public egress change, AWG2/AWG3.1, Hysteria2, WARP, connected
+reboot/uninstall, sleep, leak/IPv6, Windows 10, SmartScreen interaction or
+promotion. The VM was headless; neither host input nor host networking was
+changed.
 
 ## Candidate.32 Singleton/Focus NO_GO And Source Correction
 
