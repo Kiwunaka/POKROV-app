@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
+import 'package:pokrov_app_shell/src/design_system/design_system.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
@@ -1496,6 +1497,57 @@ Future<void> _openSupportChatFromProfile(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('inactive app mutes animation ticks including modal routes',
+      (tester) async {
+    tester.binding
+        .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    addTearDown(() async {
+      PokrovLoopingMotion.debugLoopingOverride = null;
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 250));
+      tester.binding
+        .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    });
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+    ));
+    await tester.pumpAndSettle();
+    final homeContext =
+        tester.element(find.byKey(const ValueKey('primary-connect-action')));
+    PokrovLoopingMotion.debugLoopingOverride = true;
+    unawaited(showDialog<void>(
+      context: homeContext,
+      builder: (_) => const Dialog(child: PokrovSkeletonList(rows: 1)),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 550));
+    final pulse = find.byKey(PokrovSkeletonPulse.motionKey);
+    double opacity() => tester.widget<FadeTransition>(pulse).opacity.value;
+    final activeOpacity = opacity();
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(opacity(), isNot(activeOpacity));
+
+    tester.binding
+        .handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+    final inactiveOpacity = opacity();
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(opacity(), inactiveOpacity);
+    expect(TickerMode.of(tester.element(pulse)), isFalse);
+
+    tester.binding
+        .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    final resumedOpacity = opacity();
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(opacity(), isNot(resumedOpacity));
+    expect(TickerMode.of(tester.element(pulse)), isTrue);
+    expect(find.byType(Dialog), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 250));
+  });
+
   testWidgets('consumes only valid host-bound acquisition continuation once',
       (tester) async {
     const handle = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';

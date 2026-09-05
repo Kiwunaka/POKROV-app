@@ -1,6 +1,6 @@
 # Client Motion Performance Checklist
 
-Last updated: 2026-09-04
+Last updated: 2026-09-06
 
 Registry class: `ACTIVE_EXECUTION`.
 
@@ -25,13 +25,20 @@ platform repository; this document owns the client capture procedure only.
 ## Connect Ritual
 
 - Press feedback scales the connect disc immediately and settles without layout shift.
-- Busy state uses a finite sweep, not an unbounded spinner.
+- Busy sweep runs only while the connection phase is busy and the app is active;
+  test environments use the finite pass unless looping motion is explicitly enabled.
 - Connected state settles into `connect-disc-connected-settle`.
 - Error/degraded state settles into `connect-disc-error-settle` with calm warning color.
 - Reduced-motion mode keeps labels and state changes understandable without decorative movement.
 - Connect disc animated region remains inside a `RepaintBoundary`.
 
 ## Shell Motion
+
+- Losing focus (`inactive`), hiding or pausing the app mutes tickers across the
+  navigator and modal routes; returning to `resumed` preserves visible state.
+  Verify this on the reference Windows/Android host with an open modal as well
+  as the connect screen. The local animation-value regression proves Flutter
+  lifecycle behavior only, not host CPU or battery savings.
 
 - Sidebar collapse changes width and label opacity without shifting page content unexpectedly.
 - Rows and chips use tactile feedback only on real interactive controls.

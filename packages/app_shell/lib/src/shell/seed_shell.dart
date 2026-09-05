@@ -93,6 +93,9 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
     return MaterialApp(
       title: 'POKROV',
       debugShowCheckedModeBanner: false,
+      builder: (context, child) => PokrovAppMotionGate(
+        child: child ?? const SizedBox.shrink(),
+      ),
       scrollBehavior: const PokrovScrollBehavior(),
       themeMode: _themeMode,
       theme: _buildPokrovTheme(
