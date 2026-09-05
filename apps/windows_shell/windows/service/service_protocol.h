@@ -20,6 +20,7 @@ constexpr std::size_t kMaxFrameSize = kFrameHeaderSize + kMaxBodySize;
 constexpr std::uint64_t kCapabilityProtocolV1 = 1ULL << 0;
 constexpr std::uint64_t kCapabilityStatus = 1ULL << 1;
 constexpr std::uint64_t kCapabilityRuntimeControl = 1ULL << 2;
+constexpr std::uint64_t kCapabilityProfileIdentity = 1ULL << 5;
 constexpr std::uint64_t kCapabilityRecovery = 1ULL << 3;
 constexpr std::uint64_t kCapabilitySanitizedDiagnostic = 1ULL << 4;
 

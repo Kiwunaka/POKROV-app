@@ -1,5 +1,13 @@
 # Windows Release Readiness
 
+R12 local staging correction (2026-09-05): the service now secures the pending
+profile before atomic replacement. A `SecureFile` failure retains the previously
+acknowledged profile bytes and reports `profile_security_failed`; the caller does
+not receive a successful stage acknowledgement. The native runtime regression
+first reproduced loss of the old file, then passed after the fix. This source
+test does not establish packaged install, durable profile rollback, service
+effective revision or clean-VM TUN proof for a new candidate.
+
 Last updated: 2026-09-04
 
 ## Document Status
@@ -10,6 +18,12 @@ This file contains the current Windows gate for the `1.2.0` working target.
 Older unsigned packages and pre-service behavior are retained as evidence.
 
 ## Current Truth
+
+The R12 source branch refreshes managed profiles on ordinary Windows reconnect
+and requires explicit staging acknowledgement before connect. Local shell and
+runtime regression tests do not prove service-effective revision or a packaged
+AWG3.1→AWG2→AWG3.1 cycle. A new exact candidate and isolated VM readback remain
+pending; the retained candidate.33 evidence below is unchanged.
 
 | Fact | Current state |
 |---|---|
@@ -1037,3 +1051,17 @@ build.
 Prior Windows packages, hashes and pre-service notes are preserved as
 [2026-08-21-windows-release-readiness-snapshot.md](history/2026-08-21-windows-release-readiness-snapshot.md).
 They cannot approve `1.2.0`.
+
+### R12 local service profile identity, 2026-09-05
+
+The local source requires matching ProfileIdentity-capable UI and service.
+Connect is bound to the SHA-256 of the stage request, including flags and bundled
+rulesets. A stale intent is rejected before start; stop clears effective proof.
+Native tests cover digest mismatch, stage failure, invalidation, strict/atomic
+snapshot parsing and poll projection. The test pipe uses the existing isolated
+`--test-reject-then-serve` process and does not install or replace the host service.
+Logs: `E:/r12-identity-before.log`, `E:/r12-identity-ctest.log`,
+`E:/r12-identity-flutter-test.log`, `E:/r12-identity-windows-debug-final.log`.
+The debug UI build is compilation proof only. Installed mixed-version behavior,
+SCM/TUN routing and AWG31→AWG2→AWG31 remain MANUAL_OWNER_TEST on exact candidate
+bytes. Rollback must restore UI and service together; Core ABI remains 2.

@@ -38,6 +38,7 @@ class FlutterWindow : public Win32Window {
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
       runtime_engine_channel_;
   std::string pending_acquisition_uri_;
+  std::string expected_profile_digest_;
   bool start_hidden_;
 };
 

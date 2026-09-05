@@ -427,6 +427,7 @@ void main() {
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     var phase = 'artifactReady';
+    var permissionDenied = false;
 
     Map<String, Object?> snapshot() => <String, Object?>{
           'phase': phase,
@@ -437,9 +438,9 @@ void main() {
           'supportsLiveConnect': true,
           'canInitialize': phase == 'artifactReady',
           'canConnect': phase == 'configStaged',
-          if (phase == 'configStaged')
+          if (permissionDenied)
             'last_failure_kind': 'vpn_permission_denied',
-          'message': phase == 'configStaged'
+          'message': permissionDenied
               ? 'Permission denied.'
               : 'Host bridge ready.',
         };
@@ -453,8 +454,10 @@ void main() {
           return snapshot();
         case 'runtimeEngine.stageManagedProfile':
           phase = 'configStaged';
+          permissionDenied = false;
           return snapshot();
         case 'runtimeEngine.connect':
+          permissionDenied = true;
           return snapshot();
       }
       return null;

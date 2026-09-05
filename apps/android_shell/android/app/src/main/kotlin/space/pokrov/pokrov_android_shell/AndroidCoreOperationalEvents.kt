@@ -130,7 +130,7 @@ internal object AndroidCoreOperationalEvents {
             return
         }
         if (record.name == "core.egress.probe") {
-            AndroidCoreEgressProbe.writeCoreOperationalEvent(record)
+            // Shared ABI1 events are diagnostic breadcrumbs, not probe responses.
         }
     }
 

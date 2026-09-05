@@ -104,6 +104,29 @@ The service transport is a local named pipe with:
   disconnect, cancel, recover and a sanitized diagnostic state;
 - server-side authorization per command.
 
+The current local R12 source also requires the negotiated `ProfileIdentity`
+capability (bit 5) on both UI and service. Frame version stays 1; a mixed old/new
+bundle fails capability negotiation and requires matching UI/service installation.
+`connect` carries exactly one lowercase 64-hex SHA-256 of the acknowledged stage
+request. The digest covers the flag line, materialized JSON and embedded ruleset
+bytes. It identifies local content, not a server assignment revision.
+
+The service changes `staged_profile_digest` only after the atomic stage commits.
+It sets `effective_profile_digest` only after Core start, egress proof and recovery
+transaction commit, and clears effective identity on stop/failure. A connect with
+a different digest fails before network mutation. Failed staging retains the
+previous staged identity. Service restart clears in-memory identity and requires
+restaging; durable last-known-good restoration remains a separate N02 gate.
+
+The bounded status response includes both digests. The native parser rejects
+malformed identity, a running effective/staged mismatch and partial healthy data.
+The UI keeps its expected stage digest across polling; another session's staged
+profile cannot silently become this session's protected connection. Relaunch
+without a local intent may show the actual service-owned running profile, but a
+new connect still requires an acknowledged stage. Flutter receives only bounded
+digests and the fixed origin `windows_service_stage_request_sha256`; raw profile,
+ruleset, endpoint and credential data never enter this projection.
+
 The protocol contains no arbitrary command execution, URL fetch, caller-owned
 privileged output path or raw secret-bearing log request. Unknown or
 unauthorized input fails before Core or network mutation.
@@ -492,3 +515,22 @@ As of 2026-09-03:
   matrices are implemented and retained.
 
 These statements describe source progress, not a 1.2.0 candidate or release.
+
+### Android stage/start identity
+
+The bridge persists and acknowledges SHA-256 over exact staged content,
+route mode and the egress requirement. Service intents, including deferred
+notification/VPN consent and Quick Settings, carry the captured digest. Service
+start compares saved metadata and actual content before touching a live session,
+and uses the verified immutable string for Core. A replaced file at the same
+path cannot inherit the previous start intent. Deferred consent ownership also
+compares digests, so completion of an old request cannot release a newer one.
+
+`stagedProfileDigest` names the staged input; `effectiveProfileDigest` is emitted
+only for a running, egress-validated active input. Staging a different digest
+invalidates previous proof; an old proof cannot validate the replacement. Stop
+and failure clear active proof. The fixed origin is
+`android_private_stage_request_sha256`; these digests are not server revisions.
+Quick Settings requires a supported record with a valid digest. Old records
+without one require an app refresh. Local JVM tests do not prove packaged Core,
+Android filesystem crash durability, routing coverage or physical-device behavior.

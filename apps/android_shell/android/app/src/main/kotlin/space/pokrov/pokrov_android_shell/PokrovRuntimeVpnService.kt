@@ -142,6 +142,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 }
                 val configPath = intent.getStringExtra(EXTRA_CONFIG_PATH)
                 val routeMode = intent.getStringExtra(EXTRA_ROUTE_MODE).orEmpty()
+                val expectedDigest = intent.getStringExtra(EXTRA_PROFILE_DIGEST).orEmpty()
                 val tileGeneration = intent.getLongExtra(
                     PokrovQuickSettingsTileService.EXTRA_TILE_TRANSITION_GENERATION,
                     NO_TILE_TRANSITION_GENERATION,
@@ -170,10 +171,9 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     stopSelf()
                 } else {
                     try {
-                        markServiceStarting()
                         AndroidRuntimeState.markConnectionPending()
                         runtimeExecutor.execute {
-                            startRuntime(configPath, tileGeneration, routeMode)
+                            startRuntime(configPath, tileGeneration, routeMode, expectedDigest)
                         }
                     } catch (_: Throwable) {
                         AndroidOperationalJournal.record(
@@ -283,8 +283,27 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
     }
 
-    private fun startRuntime(configPath: String, tileGeneration: Long?, routeMode: String) {
+    private fun startRuntime(
+        configPath: String, tileGeneration: Long?, routeMode: String, expectedDigest: String,
+    ) {
+        val persistedProfile = AndroidRuntimeProfileStore.load(this)
+        val stagedContent = runCatching { File(configPath).readText() }.getOrNull()
+        if (stagedContent == null || !runtimeProfileMatchesIntent(
+                persistedProfile, expectedDigest, configPath, routeMode, stagedContent,
+            )) {
+            AndroidRuntimeState.markFailure(
+                kind = "profile_identity_mismatch",
+                message = AndroidRuntimeSafety.publicFailureMessage("profile_identity_mismatch"),
+            )
+            PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)
+            if (activeTun == null) stopSelf()
+            return
+        }
+        // Pin the verified immutable bytes before replacing any live session.
+        val rawContent = stagedContent.removePrefix("\uFEFF")
+        markServiceStarting()
         val session = replaceRuntimeSession()
+        AndroidRuntimeState.bindActiveProfile(expectedDigest)
         AndroidOperationalJournal.record(
             AndroidOperationalEvent.VPN_SERVICE,
             AndroidOperationalOutcome.SESSION_STARTED,
@@ -297,7 +316,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         runCatching { activeTun?.close() }
         activeTun = null
         activeCoreEgressProbeRequired = coreEgressProbeRequiredForRuntime(
-            AndroidRuntimeProfileStore.load(this),
+            persistedProfile,
             configPath,
         )
         AndroidRuntimeState.updateCoreEgressRequirement(activeCoreEgressProbeRequired)
@@ -319,11 +338,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
 
         try {
-            val rawContent = File(configPath)
-                .takeIf { it.exists() }
-                ?.readText()
-                ?.removePrefix("\uFEFF")
-            if (rawContent.isNullOrBlank()) {
+            if (rawContent.isBlank()) {
                 throw IllegalStateException("Staged runtime config is missing or empty.")
             }
             val runtimeConfig = JSONObject(rawContent).apply { remove("_meta") }
@@ -500,10 +515,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             nextServer.startOrReloadService(content, OverrideOptions())
             startTunnelTrafficMonitor(session)
             activeTileStartGeneration = tileGeneration
-            AndroidRuntimeState.markProfileStaged(
-                configPath,
-                preserveConnectionPending = true,
-            )
+            // Staging belongs to the bridge/store. A delayed Core start must
+            // not overwrite a newer staged identity with its older profile.
         } catch (error: Throwable) {
             AndroidOperationalJournal.record(
                 AndroidOperationalEvent.VPN_SERVICE,
@@ -1021,6 +1034,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             )
             return
         }
+        val probeServer = commandServer
         val watchdog = Runnable {
             AndroidRuntimeDispatchPolicy.dispatch(
                 executor = runtimeExecutor,
@@ -1041,7 +1055,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         session.onCancel { mainHandler.removeCallbacks(watchdog) }
         if (!session.execute {
             try {
-                var result = AndroidCoreEgressProbe.probe(target)
+                var result = AndroidCoreEgressProbe.probe(target, probeServer)
                 var completedAttempts = 1
                 while (
                     AndroidCoreEgressRetryPolicy.shouldRetry(
@@ -1060,7 +1074,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                         },
                     )
                     if (ownsRuntimeSession(session) && healthGeneration.get() == generation) {
-                        result = AndroidCoreEgressProbe.probe(target)
+                        result = AndroidCoreEgressProbe.probe(target, probeServer)
                         completedAttempts += 1
                     }
                 }
@@ -1415,6 +1429,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         const val ACTION_REFRESH_NOTIFICATION = "space.pokrov.runtime.REFRESH_NOTIFICATION"
         const val EXTRA_CONFIG_PATH = "extra_config_path"
         const val EXTRA_ROUTE_MODE = "extra_route_mode"
+        const val EXTRA_PROFILE_DIGEST = "extra_profile_digest"
         private const val NO_TILE_TRANSITION_GENERATION = Long.MIN_VALUE
         @Volatile
         private var tunEstablished: Boolean = false
@@ -1478,12 +1493,14 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             context: Context,
             configPath: String,
             routeMode: String,
+            profileDigest: String,
             tileGeneration: Long? = null,
         ) {
             val intent = Intent(context, PokrovRuntimeVpnService::class.java).apply {
                 action = ACTION_START
                 putExtra(EXTRA_CONFIG_PATH, configPath)
                 putExtra(EXTRA_ROUTE_MODE, routeMode)
+                putExtra(EXTRA_PROFILE_DIGEST, profileDigest)
                 tileGeneration?.let {
                     putExtra(PokrovQuickSettingsTileService.EXTRA_TILE_TRANSITION_GENERATION, it)
                 }

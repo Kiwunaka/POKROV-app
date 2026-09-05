@@ -1,4 +1,5 @@
 #include "service_protocol.h"
+#include "service_profile_identity.h"
 
 #include <algorithm>
 #include <cstring>
@@ -111,7 +112,9 @@ bool IsValidFrame(const Frame& frame) {
              frame.deadline_unix_ms != 0 && frame.capabilities == 0 &&
              (frame.command == Command::kStageProfile
                   ? IsBoundedProfile(frame.body)
-                  : frame.body.empty());
+                  : (frame.command == Command::kConnect
+                         ? IsProfileDigest(frame.body)
+                         : frame.body.empty()));
     case FrameKind::kResponse:
       if (frame.status == Status::kNone ||
           IsZeroIdentifier(frame.session_token) ||

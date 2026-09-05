@@ -12,6 +12,7 @@ import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
 import 'package:pokrov_app_shell/emergency_network_contract.dart';
 import 'package:pokrov_app_shell/src/emergency/emergency_network_store.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
+import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
 const _ruDomainWhitelistRuleSetTag = 'pokrov-ru-domain-whitelist';
 const _ruDomainCategoryRuleSetTag = 'pokrov-ru-domain-category';
@@ -1608,6 +1609,8 @@ void main() {
     );
 
     expect(payload.profileName, 'pokrov-windows-rev-007');
+    expect(payload.source?.revision, 'rev-007');
+    expect(payload.source?.origin, RuntimeProfileSourceOrigin.managedManifest);
     expect(payload.smartConnect, isNotNull);
     expect(payload.smartConnect?.shortlistRevision, 'short-007');
     expect(payload.smartConnect?.shortlist.single.code, 'pl');

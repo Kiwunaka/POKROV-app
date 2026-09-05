@@ -2396,7 +2396,9 @@ class ClientAppsMetadata {
     return switch (hostPlatform) {
       HostPlatform.android => android.update,
       HostPlatform.windows => windows.update,
-      HostPlatform.ios || HostPlatform.linux || HostPlatform.macos =>
+      HostPlatform.ios ||
+      HostPlatform.linux ||
+      HostPlatform.macos =>
         ClientAppUpdateInfo.none,
     };
   }
@@ -3999,6 +4001,10 @@ class AppFirstRuntimeBootstrapper
     );
     return ManagedProfilePayload(
       profileName: 'pokrov-emergency-${profile.profileRevision}',
+      source: RuntimeProfileSource(
+        revision: profile.profileRevision,
+        origin: RuntimeProfileSourceOrigin.signedEmergencyEnvelope,
+      ),
       configPayload: materialized,
       materializedForRuntime: true,
       quickSettingsEligible: false,
@@ -5851,6 +5857,10 @@ class AppFirstRuntimeBootstrapper
     );
 
     final payload = ManagedProfilePayload(
+      source: RuntimeProfileSource(
+        revision: _readText(response['profile_revision']),
+        origin: RuntimeProfileSourceOrigin.managedManifest,
+      ),
       profileName: _profileName(
         hostPlatform: hostPlatform,
         profileRevision: _readText(response['profile_revision']),

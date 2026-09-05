@@ -5,6 +5,7 @@ import java.io.File
 
 internal data class PersistedRuntimeProfile(
     val configPath: String,
+    val configDigest: String = "",
     /** Route mode attached by Flutter to this exact staged config. */
     val routeMode: String = "",
     /**
@@ -21,7 +22,7 @@ internal data class PersistedRuntimeProfile(
 )
 
 internal fun PersistedRuntimeProfile.canStartFromQuickSettings(): Boolean =
-    quickSettingsEligible && routeMode.isNotBlank()
+    quickSettingsEligible && routeMode.isNotBlank() && isRuntimeProfileDigest(configDigest)
 
 internal fun coreEgressProbeRequiredForRuntime(
     profile: PersistedRuntimeProfile?,
@@ -58,6 +59,7 @@ internal fun runtimeProfileSchemaRoute(values: Map<String, *>): RuntimeProfileSc
 internal fun runtimeProfileStorageValues(profile: PersistedRuntimeProfile): Map<String, Any> = mapOf(
     "schema_version" to RUNTIME_PROFILE_SCHEMA_VERSION,
     "config_path" to profile.configPath,
+    "config_digest" to profile.configDigest,
     "route_mode" to profile.routeMode,
     "quick_settings_eligible" to profile.quickSettingsEligible,
     "core_egress_probe_required" to profile.coreEgressProbeRequired,
@@ -79,6 +81,8 @@ internal fun decodeRuntimeProfileStorage(
         ?: return null
     return PersistedRuntimeProfile(
         configPath = configPath,
+        configDigest = (values["config_digest"] as? String)
+            ?.takeIf(::isRuntimeProfileDigest).orEmpty(),
         routeMode = (values["route_mode"] as? String).orEmpty(),
         quickSettingsEligible = values["quick_settings_eligible"] as? Boolean ?: false,
         coreEgressProbeRequired = values["core_egress_probe_required"] as? Boolean ?: true,
@@ -165,7 +169,9 @@ internal object AndroidRuntimeProfileStore {
         val profile = load(context) ?: return null
         AndroidRuntimeState.resolveEnvironment(context) ?: return null
         if (AndroidRuntimeState.stagedConfigPath().isNullOrBlank()) {
-            AndroidRuntimeState.markProfileStaged(profile.configPath)
+            AndroidRuntimeState.markProfileStaged(
+                profile.configPath, profileDigest = profile.configDigest,
+            )
         }
         return profile
     }

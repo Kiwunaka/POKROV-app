@@ -11,6 +11,15 @@ Older APK identities and device runs are retained separately as evidence.
 
 ## Current Truth
 
+The R12 source branch replaces event/cache health authority with per-call Core
+`CommandServer.ProbeEndpoint` and `ProbeSelectedOutbound` results. Core
+`3f52efd4635218967cc84d58cb06b2fa593fd563` is bound in the runtime manifest;
+two byte-identical builds contain both methods and all four Android ABIs.
+Both flavor JVM suites pass on this AAR. Host A/B completion tests and Core
+race tests reject unrelated late results, changed selection, direct and cyclic
+routes. Packaged checks and device evidence remain pending; candidate.33
+evidence below is not evidence for this source diff.
+
 | Fact | Current state |
 |---|---|
 | Retained public Android release | Production-signed direct APK `1.1.6` |
@@ -786,3 +795,14 @@ network, OEM or endurance evidence.
 Prior Android candidate identities and audits are preserved as
 [2026-08-19-android-release-audit-snapshot.md](history/2026-08-19-android-release-audit-snapshot.md).
 They cannot approve `1.2.0`.
+
+### 2026-09-05 local stage/start identity slice
+
+N01C source includes digest-bound service starts, consent fencing, stored-profile
+reuse gates and active/effective digest snapshots. Both flavor JVM suites passed
+with `gradlew.bat :app:testDirectDebugUnitTest :app:testStoreDebugUnitTest`
+(`E:/r12-android-identity-final.log`). Synthetic tests cover same-path content or
+route replacement, old consent completion, delayed old proof and stop clearing.
+Atomic profile replacement uses OS rename without deleting the old target first;
+actual Android rename-failure/crash recovery remains MANUAL_OWNER_TEST.
+This is local I3 coverage, not packaged/new-candidate or physical-device PASS.

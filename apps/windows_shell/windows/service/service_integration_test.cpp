@@ -166,7 +166,7 @@ int wmain() {
         {},
         0,
         kCapabilityProtocolV1 | kCapabilityStatus |
-            kCapabilityRuntimeControl,
+            kCapabilityRuntimeControl | kCapabilityProfileIdentity,
         "",
     };
     Expect(WriteFrame(pipe, hello), "hello write failed");
@@ -177,7 +177,7 @@ int wmain() {
              "compatible hello was rejected");
       Expect(hello_response->capabilities ==
                  (kCapabilityProtocolV1 | kCapabilityStatus |
-                  kCapabilityRuntimeControl),
+                  kCapabilityRuntimeControl | kCapabilityProfileIdentity),
              "service advertised unsupported capabilities");
       Expect(!IsZeroIdentifier(hello_response->session_token),
              "service omitted the session token");

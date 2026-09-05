@@ -76,34 +76,6 @@ class AndroidCoreOperationalEventsTest {
         )
     }
 
-    @Test
-    fun mapsOnlyClosedEgressResults() {
-        assertEquals(
-            AndroidCoreEgressProbeResult.HEALTHY,
-            AndroidCoreEgressProbe.endpointResultFromOperationalEvent(
-                "core.egress.probe",
-                "succeeded",
-                null,
-            ),
-        )
-        assertEquals(
-            AndroidCoreEgressProbeResult.FAILED,
-            AndroidCoreEgressProbe.endpointResultFromOperationalEvent(
-                "core.egress.probe",
-                "failed",
-                "EGRESS-001",
-            ),
-        )
-        assertEquals(
-            null,
-            AndroidCoreEgressProbe.endpointResultFromOperationalEvent(
-                "core.egress.probe",
-                "failed",
-                "https://private.example.test?token=secret",
-            ),
-        )
-    }
-
     private fun record(
         runId: String,
         attemptId: String,

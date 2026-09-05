@@ -1,5 +1,35 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
+## Current binding — 2026-09-05
+
+The local R12 client now binds Core `3f52efd4635218967cc84d58cb06b2fa593fd563` for Android and Windows.
+This adds per-call Android `ProbeEndpoint` and `ProbeSelectedOutbound` results
+used by the endpoint and group egress verifier. Group proof captures the selected
+proxy leaf and rejects a changed route/runtime, timeout, direct or cyclic route.
+The desktop ABI remains 2, event ABI 1, with 15 exports. The AAR contains all
+four ABIs and both methods; its consumer rules preserve them under R8.
+Both platform outputs were built twice and compared byte for byte. The exact
+Windows DLL passed 100 proxy-only start/stop cycles. Full Core tests passed.
+
+- android: `pokrov-core.aar`, 107450158 bytes, SHA-256 `c02bc2fcc25f925f9062520f85667c324999b091eb2251a9cf26b8a1f66b0302`.
+- windows: `pokrov-core.dll`, 55434240 bytes, SHA-256 `94acf541893be21341255fe2fce66116fab48d68c80e84f3a820dc2fcfc40366`.
+
+The machine owner is `config/runtime-artifacts.seed.json`. Retained build
+evidence is under `docs/operations/evidence/2026-09-05-r12-core-binding/final/`;
+`previous-runtime-binding.json` preserves the superseded local binding. Full
+SBOMs and both build trees remain in `E:/r12-artifacts/final`. SBOM generation reported
+missing license/version metadata for local replacements; this is not a
+license-clearance pass. Evidence was generated locally, with no hosted run.
+
+New APK/installer, physical Android, clean Windows VM, signing, hosted CI and
+RU-origin checks have no transferred PASS. Candidate.33 and public release
+metadata remain retained. No candidate, tag, promotion or publication is created.
+
+## Superseded binding and historical evidence — 2026-08-30
+
+The remainder records earlier bytes and their evidence; it is not the current
+artifact identity and does not establish device proof for the R12 replacement.
+
 Status: refreshed on 2026-08-30 as a security-fixed, single-source
 Android/Windows pre-candidate binding for POKROV `1.2.0+4047`. Both active
 platform artifacts carry the Core egress, AWG allocated-port binding,

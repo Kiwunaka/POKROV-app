@@ -79,6 +79,17 @@ enum RuntimeStopReason {
   final String wireName;
 }
 
+enum RuntimeProfileSourceOrigin { managedManifest, signedEmergencyEnvelope }
+
+/// Upstream revision carried alongside its materialized local execution input.
+/// This does not prove the server still desires this revision after the fetch.
+class RuntimeProfileSource {
+  const RuntimeProfileSource({required this.revision, required this.origin});
+
+  final String revision;
+  final RuntimeProfileSourceOrigin origin;
+}
+
 class RuntimeSnapshot {
   const RuntimeSnapshot({
     required this.hostPlatform,
@@ -101,6 +112,12 @@ class RuntimeSnapshot {
     this.dnsReady,
     this.coreEgressValidated,
     this.coreEgressValidationRequired,
+    this.stagedProfileDigest,
+    this.effectiveProfileDigest,
+    this.profileIdentityOrigin,
+    this.fetchedProfileSource,
+    this.stagedProfileSource,
+    this.effectiveProfileSource,
     this.lastFailureKind,
     this.lastStopReason,
     this.safeProtocolDiagnosticCode,
@@ -132,6 +149,14 @@ class RuntimeSnapshot {
   final bool? dnsReady;
   final bool? coreEgressValidated;
   final bool? coreEgressValidationRequired;
+
+  /// Local service content identity; not a server assignment revision.
+  final String? stagedProfileDigest;
+  final String? effectiveProfileDigest;
+  final String? profileIdentityOrigin;
+  final RuntimeProfileSource? fetchedProfileSource;
+  final RuntimeProfileSource? stagedProfileSource;
+  final RuntimeProfileSource? effectiveProfileSource;
   final String? lastFailureKind;
   final String? lastStopReason;
   final String? safeProtocolDiagnosticCode;
@@ -416,6 +441,8 @@ const _publicRuntimeFailureKinds = <String>{
   'desktop_tun_egress_probe_failed',
   'emergency_endpoint_unreachable',
   'profile_staging_failed',
+  'profile_identity_failed',
+  'profile_identity_mismatch',
   'config_apply_failed',
   'vpn_permission_denied',
   'notification_permission_denied',
@@ -607,6 +634,9 @@ String _publicRuntimeMessage({
       return 'POKROV не завершил проверку защищенного подключения и отключил системный VPN. Попробуйте еще раз.';
     case 'desktop_tun_egress_probe_failed':
       return 'Туннель запущен, но Windows не пропускает трафик. POKROV отключил его, чтобы не оставить устройство без сети.';
+    case 'profile_identity_mismatch':
+      return 'Изменение профиля не применено. Повторите подключение, чтобы загрузить актуальные настройки.';
+    case 'profile_identity_failed':
     case 'profile_staging_failed':
       return 'POKROV не смог подготовить настройки подключения.';
     case 'config_apply_failed':
@@ -1097,6 +1127,7 @@ class ManagedProfilePayload {
   const ManagedProfilePayload({
     required this.profileName,
     required this.configPayload,
+    this.source,
     this.disableMemoryLimit = false,
     this.materializedForRuntime = false,
     this.quickSettingsEligible = false,
@@ -1109,6 +1140,7 @@ class ManagedProfilePayload {
   });
 
   final String profileName;
+  final RuntimeProfileSource? source;
   final String configPayload;
   final bool disableMemoryLimit;
   final bool materializedForRuntime;
@@ -1144,6 +1176,7 @@ class ManagedProfilePayload {
   }) {
     return ManagedProfilePayload(
       profileName: profileName ?? this.profileName,
+      source: source,
       configPayload: configPayload ?? this.configPayload,
       disableMemoryLimit: disableMemoryLimit ?? this.disableMemoryLimit,
       materializedForRuntime:
@@ -2008,7 +2041,9 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     final coreFileNames = switch (hostPlatform) {
       HostPlatform.windows => const ['pokrov-core.dll'],
       HostPlatform.macos => const ['pokrov-core.dylib'],
-      HostPlatform.android || HostPlatform.ios || HostPlatform.linux =>
+      HostPlatform.android ||
+      HostPlatform.ios ||
+      HostPlatform.linux =>
         const <String>[],
     };
 
@@ -2735,6 +2770,8 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
   final String? assetRootOverride;
   final RuntimeLane runtimeLane;
   ManagedProfilePayload? _stagedPayload;
+  RuntimeProfileSource? _fetchedSource;
+  String? _acknowledgedProfileDigest;
 
   static const defaultCoreTag = DesktopRuntimeEngine.defaultCoreTag;
   static const _runtimeChannel = MethodChannel('space.pokrov/runtime_engine');
@@ -2796,8 +2833,9 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     ManagedProfilePayload payload,
   ) async {
     if (!payload.materializedForRuntime) {
-      return await snapshot();
+      throw StateError('managed_profile_stage_failed');
     }
+    _fetchedSource = payload.source;
     final configPayload = _materializePokrovCoreConfig(
       payload.configPayload,
       payload.warpPolicy,
@@ -2806,7 +2844,6 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     final serviceProfileBundle = hostPlatform == HostPlatform.windows
         ? await _buildWindowsServiceProfileBundle(configPayload)
         : null;
-    _stagedPayload = payload;
     final resolvedCode = payload.resolvedNodeCode.trim().toLowerCase();
     SmartConnectNode? displayNode;
     for (final node
@@ -2823,6 +2860,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     }
     final hostSnapshot = await _invokeHostSnapshot(
       'runtimeEngine.stageManagedProfile',
+      stagedPayload: payload,
       arguments: <String, Object?>{
         'profileName': payload.profileName,
         'configPayload': configPayload,
@@ -2838,12 +2876,22 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         'displayRouteMode': payload.routeMode.name,
       },
     );
-    return hostSnapshot ?? await snapshot();
+    if (hostSnapshot == null ||
+        hostSnapshot.phase != RuntimePhase.configStaged ||
+        (hostSnapshot.stagedConfigPath ?? '').isEmpty ||
+        ((hostSnapshot.lastFailureKind?.isNotEmpty ?? false) &&
+            hostSnapshot.lastFailureKind != 'notification_permission_denied')) {
+      throw StateError('managed_profile_stage_failed');
+    }
+    _stagedPayload = payload;
+    _acknowledgedProfileDigest = hostSnapshot.stagedProfileDigest;
+    return hostSnapshot;
   }
 
   @override
   Future<RuntimeSnapshot> invalidateManagedProfile() async {
     _stagedPayload = null;
+    _acknowledgedProfileDigest = null;
     final hostSnapshot = await _invokeHostSnapshot(
       'runtimeEngine.invalidateManagedProfile',
     );
@@ -2941,6 +2989,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
   Future<RuntimeSnapshot?> _invokeHostSnapshot(
     String method, {
     Map<String, Object?>? arguments,
+    ManagedProfilePayload? stagedPayload,
   }) async {
     if (!hostPlatform.isRuntimeBridgeTarget) {
       return null;
@@ -2955,10 +3004,14 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         return null;
       }
 
-      return _snapshotFromHostMap(response);
+      return _snapshotFromHostMap(response, stagedPayload: stagedPayload);
     } on MissingPluginException {
       return null;
     } on PlatformException {
+      // An older snapshot cannot acknowledge a failed profile mutation.
+      if (method == 'runtimeEngine.stageManagedProfile') {
+        return null;
+      }
       if (method != 'runtimeEngine.snapshot') {
         final fallback = await _trySnapshotAfterPlatformError();
         if (fallback != null) {
@@ -3000,7 +3053,10 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     }
   }
 
-  RuntimeSnapshot _snapshotFromHostMap(Map<String, Object?> response) {
+  RuntimeSnapshot _snapshotFromHostMap(
+    Map<String, Object?> response, {
+    ManagedProfilePayload? stagedPayload,
+  }) {
     final hostDiagnostics = _readObjectMap(response['hostDiagnostics']);
     final phase = _runtimePhaseFromWireValue(response['phase']);
     final defaultNetworkInterface = _publicNetworkInterface(
@@ -3198,6 +3254,24 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       includePackageCount: includePackageCount,
       excludePackageCount: excludePackageCount,
     );
+    final stagedDigest =
+        _profileDigestFromWire(response['stagedProfileDigest']);
+    final effectiveDigest =
+        _profileDigestFromWire(response['effectiveProfileDigest']);
+    final stagedSource = stagedPayload != null
+        ? (phase == RuntimePhase.configStaged && stagedDigest != null
+            ? stagedPayload.source
+            : null)
+        : (stagedDigest != null && stagedDigest == _acknowledgedProfileDigest
+            ? _stagedPayload?.source
+            : null);
+    final effectiveSource = phase == RuntimePhase.running &&
+            coreEgressValidated == true &&
+            effectiveDigest != null &&
+            effectiveDigest == _acknowledgedProfileDigest &&
+            stagedDigest == effectiveDigest
+        ? _stagedPayload?.source
+        : null;
     return RuntimeSnapshot(
       hostPlatform: hostPlatform,
       lane: runtimeLane,
@@ -3206,6 +3280,17 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       coreBinaryPath: response['coreBinaryPath'] as String?,
       helperBinaryPath: response['helperBinaryPath'] as String?,
       stagedConfigPath: response['stagedConfigPath'] as String?,
+      stagedProfileDigest: stagedDigest,
+      effectiveProfileDigest: effectiveDigest,
+      fetchedProfileSource: _fetchedSource,
+      stagedProfileSource: stagedSource,
+      effectiveProfileSource: effectiveSource,
+      profileIdentityOrigin: const {
+        'windows_service_stage_request_sha256',
+        'android_private_stage_request_sha256',
+      }.contains(response['profileIdentityOrigin'])
+          ? response['profileIdentityOrigin'] as String
+          : null,
       supportsLiveConnect: response['supportsLiveConnect'] as bool? ?? false,
       canInitialize: response['canInitialize'] as bool? ?? false,
       canConnect: response['canConnect'] as bool? ?? false,
@@ -3235,6 +3320,11 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       connectionPending: connectionPending,
     );
   }
+
+  String? _profileDigestFromWire(Object? value) =>
+      value is String && RegExp(r'^[0-9a-f]{64}$').hasMatch(value)
+          ? value
+          : null;
 
   RuntimePhase _runtimePhaseFromWireValue(Object? value) {
     switch (value) {

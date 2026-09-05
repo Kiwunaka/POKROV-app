@@ -20,7 +20,8 @@ namespace pokrov::service {
 namespace {
 
 constexpr std::uint64_t kServiceCapabilities =
-    kCapabilityProtocolV1 | kCapabilityStatus | kCapabilityRuntimeControl;
+    kCapabilityProtocolV1 | kCapabilityStatus | kCapabilityRuntimeControl |
+    kCapabilityProfileIdentity;
 constexpr std::uint64_t kMaximumDeadlineLeadMs = 5 * 60 * 1000;
 
 std::uint64_t UnixTimeMilliseconds() {
@@ -174,7 +175,8 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
   }
   const bool compatible =
       (hello->capabilities & kCapabilityProtocolV1) != 0 &&
-      (hello->capabilities & kCapabilityStatus) != 0;
+      (hello->capabilities & kCapabilityStatus) != 0 &&
+      (hello->capabilities & kCapabilityProfileIdentity) != 0;
   const auto negotiated_capabilities =
       hello->capabilities & kServiceCapabilities;
   const auto hello_response = ResponseFor(
@@ -256,7 +258,7 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
             result = runtime->InvalidateProfile();
             break;
           case Command::kConnect:
-            result = runtime->Connect();
+            result = runtime->Connect(request->body);
             break;
           case Command::kDisconnect:
             result = runtime->Disconnect();

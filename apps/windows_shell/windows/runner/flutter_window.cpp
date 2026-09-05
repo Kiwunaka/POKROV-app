@@ -8,6 +8,7 @@
 #include "activation_protocol.h"
 #include "flutter/generated_plugin_registrant.h"
 #include "service_client.h"
+#include "service_profile_identity.h"
 #include "utils.h"
 
 namespace {
@@ -166,7 +167,10 @@ std::string DartRuntimePhase(const std::string& phase) {
 }
 
 flutter::EncodableValue RuntimeSnapshotValue(
-    const pokrov::service::ServiceRuntimeSnapshot& snapshot) {
+    pokrov::service::ServiceRuntimeSnapshot snapshot,
+    const std::string& expected_profile_digest = "") {
+  snapshot = pokrov::service::BindSnapshotToProfileIntent(
+      std::move(snapshot), expected_profile_digest);
   flutter::EncodableMap values;
   values[flutter::EncodableValue("phase")] =
       flutter::EncodableValue(DartRuntimePhase(snapshot.phase));
@@ -203,6 +207,12 @@ flutter::EncodableValue RuntimeSnapshotValue(
   }
   values[flutter::EncodableValue("dnsReady")] =
       flutter::EncodableValue(snapshot.dns_ready);
+  values[flutter::EncodableValue("stagedProfileDigest")] =
+      flutter::EncodableValue(snapshot.staged_profile_digest);
+  values[flutter::EncodableValue("effectiveProfileDigest")] =
+      flutter::EncodableValue(snapshot.effective_profile_digest);
+  values[flutter::EncodableValue("profileIdentityOrigin")] =
+      flutter::EncodableValue("windows_service_stage_request_sha256");
   values[flutter::EncodableValue("coreEgressValidated")] =
       flutter::EncodableValue(snapshot.core_egress_validated);
   values[flutter::EncodableValue("coreEgressValidationRequired")] =
@@ -353,19 +363,21 @@ bool FlutterWindow::OnCreate() {
           flutter_controller_->engine()->messenger(), kRuntimeEngineChannel,
           &flutter::StandardMethodCodec::GetInstance());
   runtime_engine_channel_->SetMethodCallHandler(
-      [](const flutter::MethodCall<flutter::EncodableValue>& call,
+      [this](const flutter::MethodCall<flutter::EncodableValue>& call,
          std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
              result) {
         using pokrov::service::Command;
         if (call.method_name() == "runtimeEngine.snapshot") {
           result->Success(RuntimeSnapshotValue(
-              pokrov::service::InvokeInstalledService(Command::kStatus, "")));
+              pokrov::service::InvokeInstalledService(Command::kStatus, ""),
+              expected_profile_digest_));
           return;
         }
         if (call.method_name() == "runtimeEngine.initialize") {
           result->Success(RuntimeSnapshotValue(
               pokrov::service::InvokeInstalledService(Command::kInitialize,
-                                                       "")));
+                                                       ""),
+              expected_profile_digest_));
           return;
         }
         if (call.method_name() == "runtimeEngine.stageManagedProfile") {
@@ -388,12 +400,14 @@ bool FlutterWindow::OnCreate() {
                                                 : *service_profile_bundle;
           const std::string body =
               (*disable_memory_limit ? "1\n" : "0\n") + service_profile;
-          result->Success(RuntimeSnapshotValue(
-              pokrov::service::InvokeInstalledService(Command::kStageProfile,
-                                                       body)));
+          const auto staged = pokrov::service::InvokeInstalledService(
+              Command::kStageProfile, body);
+          expected_profile_digest_ = pokrov::service::ProfileDigest(body);
+          result->Success(RuntimeSnapshotValue(staged, expected_profile_digest_));
           return;
         }
         if (call.method_name() == "runtimeEngine.invalidateManagedProfile") {
+          expected_profile_digest_.clear();
           result->Success(RuntimeSnapshotValue(
               pokrov::service::InvokeInstalledService(
                   Command::kInvalidateProfile, "")));
@@ -402,13 +416,15 @@ bool FlutterWindow::OnCreate() {
         if (call.method_name() == "runtimeEngine.connect") {
           result->Success(RuntimeSnapshotValue(
               pokrov::service::InvokeInstalledService(Command::kConnect,
-                                                       "")));
+                                                       expected_profile_digest_),
+              expected_profile_digest_));
           return;
         }
         if (call.method_name() == "runtimeEngine.disconnect") {
           result->Success(RuntimeSnapshotValue(
               pokrov::service::InvokeInstalledService(Command::kDisconnect,
-                                                       "")));
+                                                       ""),
+              expected_profile_digest_));
           return;
         }
         if (call.method_name() == "runtimeEngine.applyWarp") {
@@ -420,11 +436,12 @@ bool FlutterWindow::OnCreate() {
             result->Error("invalid_arguments", "A managed profile is required.");
             return;
           }
-          const auto snapshot = pokrov::service::InvokeInstalledService(
-              Command::kStageProfile,
+          const std::string body =
               "0\n" + (service_profile_bundle == nullptr
-                            ? *profile
-                            : *service_profile_bundle));
+                           ? *profile : *service_profile_bundle);
+          expected_profile_digest_ = pokrov::service::ProfileDigest(body);
+          const auto snapshot = pokrov::service::InvokeInstalledService(
+              Command::kStageProfile, body);
           flutter::EncodableMap values;
           values[flutter::EncodableValue("applied")] =
               flutter::EncodableValue(snapshot.command_accepted);

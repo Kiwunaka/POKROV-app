@@ -1,4 +1,5 @@
 #include "service_runtime.h"
+#include "service_profile_identity.h"
 
 #include <windows.h>
 
@@ -236,6 +237,15 @@ void RemoveTestRoot(const std::wstring& root) {
 
 std::string ReadTextFile(const std::wstring& path);
 
+std::string StagedDigest(const pokrov::service::RuntimeHost& host) {
+  const auto body = host.Snapshot().body;
+  const std::string key = ";staged_profile_digest=";
+  const auto start = body.find(key);
+  if (start == std::string::npos) return std::string(64, 'a');
+  const auto value = start + key.size();
+  return body.substr(value, body.find(';', value) - value);
+}
+
 void TestBundledRuleSetsAreStagedInsideProtectedWorkingDirectory() {
   using namespace pokrov::service;
   const auto root = CreateTestRoot();
@@ -341,6 +351,74 @@ std::string ReadTextFile(const std::wstring& path) {
   return success ? content : "";
 }
 
+void TestFailedProfileSecurityPreservesPreviouslyStagedBytes() {
+  using namespace pokrov::service;
+  const auto root = CreateTestRoot();
+  if (root.empty()) {
+    Expect(false, "profile security test root was not created");
+    return;
+  }
+  auto fake = std::make_unique<FakeCoreRuntime>();
+  auto* core = fake.get();
+  {
+    RuntimeHost host(std::move(fake), std::make_unique<FakeEgressProbe>(),
+                     std::make_unique<FakeRecovery>(), root, false);
+    const std::string previous = "{\"route\":{\"final\":\"old-proxy\"}}";
+    Expect(host.StageProfile("0\n" + previous).status == Status::kOk,
+           "previous profile fixture was not staged");
+    const auto path = root + L"\\working\\configs\\managed-profile.json";
+    core->secure_error = "synthetic security failure";
+    const auto failed = host.StageProfile("0\n{\"route\":{\"final\":\"new-proxy\"}}");
+    Expect(failed.status == Status::kNotReady &&
+               Contains(failed, "failure=profile_security_failed"),
+           "profile security failure was not reported");
+    Expect(ReadTextFile(path) == previous,
+           "failed stage destroyed the previously staged profile");
+    Expect(StagedDigest(host) == ProfileDigest("0\n" + previous),
+           "failed stage changed acknowledged profile identity");
+    Expect(core->start_calls == 0,
+           "failed staging started a runtime");
+  }
+  RemoveTestRoot(root);
+}
+
+void TestProfileIdentityFollowsCommittedRuntime() {
+  using namespace pokrov::service;
+  const auto root = CreateTestRoot();
+  Expect(!root.empty(), "identity test root was not created");
+  if (root.empty()) return;
+  {
+    RuntimeHost host(std::make_unique<FakeCoreRuntime>(),
+                     std::make_unique<FakeEgressProbe>(),
+                     std::make_unique<FakeRecovery>(), root, false);
+    const auto staged = host.StageProfile("0\n{}");
+    const auto digest = ProfileDigest("0\n{}");
+    Expect(staged.body.find(";staged_profile_digest=" + digest + ";") != std::string::npos,
+           "staged snapshot has wrong profile identity");
+    Expect(host.Connect(std::string(64, '0')).status == Status::kNotReady,
+           "connect accepted another profile identity");
+    const auto connected = host.Connect(StagedDigest(host));
+    Expect(connected.body.find(";effective_profile_digest=" + digest + ";") != std::string::npos,
+           "running proof has wrong effective profile identity");
+    const auto stopped = host.Disconnect();
+    Expect(Contains(stopped, ";effective_profile_digest=none;"),
+           "stopped snapshot retains effective profile identity");
+    Expect(host.StageProfile("1\n{}").status == Status::kOk,
+           "replacement profile did not stage");
+    const auto mismatch = host.Connect(digest);
+    Expect(mismatch.status == Status::kNotReady &&
+               Contains(mismatch, "failure=profile_identity_mismatch") &&
+               Contains(mismatch, ";effective_profile_digest=none;"),
+           "stale intent connected a replacement profile");
+    Expect(host.Connect(ProfileDigest("1\n{}")).status == Status::kOk,
+           "matching replacement identity failed to connect");
+    host.Disconnect();
+    host.InvalidateProfile();
+    Expect(StagedDigest(host) == "none", "invalidation retained staged identity");
+  }
+  RemoveTestRoot(root);
+}
+
 void TestRuntimeLifecycle() {
   using namespace pokrov::service;
   const auto root = CreateTestRoot();
@@ -382,11 +460,11 @@ void TestRuntimeLifecycle() {
            "runtime did not enter config_staged phase");
     Expect(core->secure_calls == 1,
            "staged profile was not secured exactly once");
-    Expect(core->last_profile_path.find(L"managed-profile.json") !=
+    Expect(core->last_profile_path.find(L"managed-profile.pending") !=
                std::wstring::npos,
            "runtime used a caller-selected profile path");
 
-    const auto connected = host.Connect();
+    const auto connected = host.Connect(StagedDigest(host));
     Expect(connected.status == Status::kOk, "runtime connect failed");
     Expect(Contains(connected, "phase=running"),
            "runtime did not enter running phase");
@@ -454,7 +532,7 @@ void TestCoreErrorsAreSanitized() {
                    std::make_unique<FakeRecovery>(), root, false);
   host.Initialize();
   host.StageProfile("0\n{}");
-  const auto result = host.Connect();
+  const auto result = host.Connect(StagedDigest(host));
   Expect(result.status == Status::kNotReady,
          "core start failure did not fail closed");
   Expect(Contains(result, "failure=core_start_failed"),
@@ -481,7 +559,7 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
   host.Initialize();
   host.StageProfile("0\n{}");
 
-  const auto result = host.Connect();
+  const auto result = host.Connect(StagedDigest(host));
 
   Expect(result.status == Status::kNotReady,
          "failed authenticated egress probe did not fail closed");
@@ -646,7 +724,7 @@ void TestConnectFaultsRollbackEveryPersistedStage() {
     host.Initialize();
     host.StageProfile("0\n{}");
 
-    const auto result = host.Connect();
+    const auto result = host.Connect(StagedDigest(host));
 
     Expect(result.status == Status::kNotReady &&
                Contains(result, "failure=recovery_write_failed") &&
@@ -686,7 +764,7 @@ void TestSnapshotCaptureFailureDoesNotStartCore() {
   host.Initialize();
   host.StageProfile("0\n{}");
 
-  const auto result = host.Connect();
+  const auto result = host.Connect(StagedDigest(host));
 
   Expect(result.status == Status::kNotReady &&
              Contains(result, "failure=recovery_network_capture_failed") &&
@@ -716,7 +794,7 @@ void TestRollbackFailuresStayClosedAndCanRetry() {
                      std::move(recovery), root, false);
     host.Initialize();
     host.StageProfile("0\n{}");
-    Expect(host.Connect().status == Status::kOk,
+    Expect(host.Connect(StagedDigest(host)).status == Status::kOk,
            "rollback fault fixture did not connect");
     if (fault == Fault::kCoreStop) {
       core->stop_error = "stop failed";
@@ -925,6 +1003,8 @@ void TestCoreOperationalEventFenceRejectsLateAndUnsafeCallbacks() {
 }  // namespace
 
 int main() {
+  TestProfileIdentityFollowsCommittedRuntime();
+  TestFailedProfileSecurityPreservesPreviouslyStagedBytes();
   TestRuntimeLifecycle();
   TestBundledRuleSetsAreStagedInsideProtectedWorkingDirectory();
   TestCoreErrorsAreSanitized();

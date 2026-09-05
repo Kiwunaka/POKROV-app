@@ -5024,21 +5024,37 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
       final shouldRefreshManagedProfile = _managedProfileDirty ||
           (current.stagedConfigPath ?? '').isEmpty ||
-          (widget.appContext.hostPlatform == HostPlatform.android &&
+          ((widget.appContext.hostPlatform == HostPlatform.android ||
+                  widget.appContext.hostPlatform == HostPlatform.windows) &&
               (actionIntent == ConnectionTransitionIntent.connect ||
                   actionIntent == ConnectionTransitionIntent.reconnect));
       if (shouldRefreshManagedProfile) {
+        ManagedProfilePayload? managedProfile;
         try {
           failureOperation = 'managed_profile_refresh';
           failureStage = ConnectionStage.profile;
-          final managedProfile = await _resolveManagedProfile(
+          managedProfile = await _resolveManagedProfile(
             deadline: cachedProfileFallbackAllowed
                 ? _cachedProfileRefreshDeadline
                 : widget.runtimeActionTimeout,
           );
+        } on TimeoutException {
+          if (!cachedProfileFallbackAllowed) rethrow;
+          usedCachedProfile = true;
+        } on BootstrapFailure catch (error) {
+          if (!cachedProfileFallbackAllowed || !_isTransientProfileFailure(error)) {
+            rethrow;
+          }
+          usedCachedProfile = true;
+        }
+        final resolvedProfile = managedProfile;
+        if (resolvedProfile != null) {
+          // A stage timeout has an unknown mutation outcome and cannot fall
+          // through to connect using the previous snapshot.
+          failureOperation = 'managed_profile_stage';
           current = await _withRuntimeActionTimeout(
             'stageManagedProfile',
-            () => _runtimeEngine.stageManagedProfile(managedProfile),
+            () => _runtimeEngine.stageManagedProfile(resolvedProfile),
           );
           if (!mounted) {
             return;
@@ -5056,22 +5072,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             _runtimeSnapshot = current;
             _runtimeHeadline = null;
             _managedProfileDirty = false;
-            _stagedProfileUsesWarp = managedProfile.warpPolicy.canEnableRuntime;
+            _stagedProfileUsesWarp = resolvedProfile.warpPolicy.canEnableRuntime;
             _stagedNodeCode = _resolvedProfileNodeCode;
             _stagedVariantId = _resolvedProfileVariantId;
             _cachedProfileFallbackGate.markFreshProfileStaged();
           });
-        } on TimeoutException {
-          if (!cachedProfileFallbackAllowed) {
-            rethrow;
-          }
-          usedCachedProfile = true;
-        } on BootstrapFailure catch (error) {
-          if (!cachedProfileFallbackAllowed ||
-              !_isTransientProfileFailure(error)) {
-            rethrow;
-          }
-          usedCachedProfile = true;
         }
       }
 

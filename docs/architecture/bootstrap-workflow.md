@@ -5,6 +5,14 @@ This workflow gives client workers a consistent way to validate the canonical
 materialize local-only config. The clean-room/Wave 7 wording below is retained
 only where it explains bootstrap provenance.
 
+Ordinary Android and Windows connect/reconnect refresh the authorized managed
+profile before staging, even when a reusable staged path exists. Server-side
+assignment changes therefore do not depend on the repair action or a local
+settings change. Transient refresh failures may reuse only the existing fresh,
+authorized cache permitted by `CachedProfileFallbackGate`; the UI identifies
+that fallback and does not claim the new assignment was applied. A rejected
+profile or prior dataplane failure cannot use that transient fallback.
+
 Historical mapping note:
 
 - older docs may still say `external/pokrov-next-client/` or `app-next/`
@@ -149,8 +157,19 @@ Current blocking dependency:
   fixed Core category allowlist into the existing safe protocol-diagnostic
   fields, and retains no raw log text. Once captured, the terminal egress
   category takes precedence over later transport-retry categories until the
-  next connection attempt. It never overrides the structured
-  `core.egress.probe` result or weakens `EGRESS-001` fail-close
+  next connection attempt. It never overrides the result of the specific
+  endpoint probe call or weakens `EGRESS-001` fail-close
+- Android endpoint verification calls the additive Core `CommandServer.ProbeEndpoint`
+  method on the server captured for the active lifecycle task. A delayed result
+  for another invocation cannot satisfy this call, and the existing session and
+  generation fences still guard its application. Shared ABI1 operational events
+  remain diagnostic breadcrumbs. A missing method or invocation failure returns
+  `UNAVAILABLE`, never healthy. Selector/urltest groups use the per-call
+  `ProbeSelectedOutbound` method, which captures the selected proxy leaf and
+  rejects a changed selection, runtime replacement, timeout, direct leaf or
+  cyclic group. Shared URL-test history cannot settle protection health.
+  Both methods are present in the exact replacement AAR recorded by the active
+  Core binding decision. Packaged and device proof remain separate gates
 - after Android reports `running`, the shared shell polls the host-owned egress result through a bounded 750 ms interval for the Core probe window; a terminal `core_egress_probe_failed` snapshot immediately replaces the protected UI with the normal disconnected/reconnect state, while a canceled or newer connect generation cannot be overwritten by an older poll
 - a terminal Android selected-outbound egress failure also invalidates the staged cached runtime profile and blocks that cache from offline fallback; the next connect must obtain and stage a fresh authorized manifest, while ordinary offline fallback remains bounded before any dataplane failure
 - the Android host performs that selected-outbound fail-close as one synchronous profile-reuse invalidation: it clears the persisted Quick Settings profile and drops the staged pointer while preserving the safe failure snapshot, so a backgrounded Flutter shell cannot let the tile restart the rejected configuration
@@ -389,3 +408,43 @@ The Apple placeholder inputs that now shape later operator work live in:
 That keeps local bootstrap work separate from public release authority. The
 active client lane remains `POKROV-app/main`; historical Karing and clean-room
 inputs cannot reopen it without a new owner decision.
+
+## R12 Windows profile content identity — local implementation
+
+Windows staging and connect use the negotiated profile-identity contract in
+[platform privilege and runtime](platform-privilege-runtime-contract.md).
+The service acknowledges the exact stage-request SHA-256 and accepts connect
+only for that digest. Staged and effective identity are distinct; effective is
+set only after proof and commit. The native UI binds subsequent polls to its
+own intent and presents an explicit profile-not-applied recovery on mismatch.
+This closes the local stage/start identity gap; server desired/fetched revision,
+Android identity and exact packaged AWG transitions remain separate N01 proof.
+
+### Android profile replacement identity
+
+Android stages private config with a persisted content/options SHA-256. Normal,
+permission-delayed and Quick Settings starts carry that digest; before replacing
+a live session, the service verifies it against metadata and config bytes.
+A same-path replacement rejects the stale intent with `profile_identity_mismatch`.
+Only the active matching input can receive egress proof. Missing legacy digest
+requires a new app-managed fetch/stage before Quick Settings can connect.
+The host digest is local identity and does not manufacture server revision truth.
+
+### Fetched revision to service identity
+
+`ManagedProfilePayload.source` carries the exact managed-manifest revision and
+`managedManifest` origin; validated emergency material uses
+`signedEmergencyEnvelope`. Routing/materialization copies retain that upstream
+source. The runtime stores the most recently supplied fetched source separately
+from the source of the acknowledged stage digest. Its snapshot exposes
+`fetchedProfileSource`, `stagedProfileSource` and `effectiveProfileSource`.
+The last field requires running state, successful egress and the same effective,
+staged and acknowledged digest. A failed stage can leave fetched B with staged
+and effective A; a delayed A proof cannot confirm B. Unknown identity stays null.
+
+This association is process-local and never reconstructed from a filename, hash,
+local counter or stale session JSON. After process restart the app fetches/stages
+again to restore source lineage; Quick Settings can prove only its persisted
+local digest. The managed-manifest response describes desired server assignment
+at fetch time, not a promise that the server has not changed it since. Offline
+fallback retains its original source and the existing entitlement restrictions.

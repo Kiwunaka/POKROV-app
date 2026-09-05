@@ -1,4 +1,5 @@
 #include "service_runtime.h"
+#include "service_profile_identity.h"
 
 #include <windows.h>
 
@@ -824,6 +825,10 @@ RuntimeResult RuntimeHost::StageProfile(const std::string& body) {
                 ServiceEventOutcome::kFailed);
     return Fail(Status::kInvalid, "profile_request_invalid");
   }
+  const auto profile_digest = ProfileDigest(body);
+  if (profile_digest.empty()) {
+    return Fail(Status::kNotReady, "profile_identity_failed");
+  }
   ParsedProfileBundle bundle;
   if (!ParseProfilePayload(body.substr(2), &bundle)) {
     RecordEvent(ServiceEvent::kRuntimeProfileStage,
@@ -859,18 +864,12 @@ RuntimeResult RuntimeHost::StageProfile(const std::string& body) {
       return Fail(Status::kNotReady, "profile_security_failed");
     }
   }
-  if (!WriteProfileAtomically(profile)) {
+  const auto profile_error = WriteProfileAtomically(profile);
+  if (!profile_error.empty()) {
     CleanupBundledRuleSets(staged_rule_set_slot);
     RecordEvent(ServiceEvent::kRuntimeProfileStage,
                 ServiceEventOutcome::kFailed);
-    return Fail(Status::kNotReady, "profile_write_failed");
-  }
-  if (!core_->SecureFile(profile_path_).empty()) {
-    ::DeleteFileW(profile_path_.c_str());
-    CleanupBundledRuleSets(staged_rule_set_slot);
-    RecordEvent(ServiceEvent::kRuntimeProfileStage,
-                ServiceEventOutcome::kFailed);
-    return Fail(Status::kNotReady, "profile_security_failed");
+    return Fail(Status::kNotReady, profile_error.c_str());
   }
   disable_memory_limit_ = body[0] == '1';
   const int previous_rule_set_slot = bundled_rule_set_slot_;
@@ -879,6 +878,8 @@ RuntimeResult RuntimeHost::StageProfile(const std::string& body) {
       previous_rule_set_slot != bundled_rule_set_slot_) {
     CleanupBundledRuleSets(previous_rule_set_slot);
   }
+  staged_profile_digest_ = profile_digest;
+  effective_profile_digest_.clear();
   profile_staged_ = true;
   phase_ = Phase::kConfigStaged;
   failure_.clear();
@@ -900,15 +901,21 @@ RuntimeResult RuntimeHost::InvalidateProfile() {
   CleanupBundledRuleSets(bundled_rule_set_slot_);
   bundled_rule_set_slot_ = 0;
   profile_staged_ = false;
+  staged_profile_digest_.clear();
+  effective_profile_digest_.clear();
   disable_memory_limit_ = false;
   phase_ = initialized_ ? Phase::kInitialized : Phase::kArtifactReady;
   failure_.clear();
   return Snapshot();
 }
 
-RuntimeResult RuntimeHost::Connect() {
+RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest) {
   if (!initialized_ || !profile_staged_) {
     return Fail(Status::kNotReady, "profile_not_staged");
+  }
+  if (!IsProfileDigest(expected_profile_digest) ||
+      expected_profile_digest != staged_profile_digest_) {
+    return Fail(Status::kNotReady, "profile_identity_mismatch");
   }
   if (phase_ == Phase::kRunning) {
     return Snapshot();
@@ -1010,6 +1017,7 @@ RuntimeResult RuntimeHost::Connect() {
     RecordEvent(ServiceEvent::kRuntimeEgressVerify,
                 ServiceEventOutcome::kFailed);
     const auto rollback_error = RollbackRuntime();
+    effective_profile_digest_.clear();
     core_egress_validated_ = false;
     phase_ = rollback_error.empty() ? Phase::kConfigStaged
                                     : Phase::kRecoveryRequired;
@@ -1032,6 +1040,7 @@ RuntimeResult RuntimeHost::Connect() {
     RecordEvent(ServiceEvent::kRuntimeCommit,
                 ServiceEventOutcome::kFailed);
     const auto rollback_error = RollbackRuntime();
+    effective_profile_digest_.clear();
     core_egress_validated_ = false;
     phase_ = rollback_error.empty() ? Phase::kConfigStaged
                                     : Phase::kRecoveryRequired;
@@ -1042,6 +1051,7 @@ RuntimeResult RuntimeHost::Connect() {
     }
     return Fail(Status::kNotReady, recovery_error.c_str());
   }
+  effective_profile_digest_ = staged_profile_digest_;
   core_egress_validated_ = true;
   phase_ = Phase::kRunning;
   failure_.clear();
@@ -1057,6 +1067,7 @@ RuntimeResult RuntimeHost::Disconnect() {
     return Snapshot();
   }
   const auto rollback_error = RollbackRuntime();
+  effective_profile_digest_.clear();
   core_egress_validated_ = false;
   phase_ = rollback_error.empty()
                ? (profile_staged_ ? Phase::kConfigStaged
@@ -1076,6 +1087,7 @@ void RuntimeHost::Shutdown() {
       (phase_ == Phase::kRunning ||
        phase_ == Phase::kRecoveryRequired)) {
     const auto rollback_error = RollbackRuntime();
+    effective_profile_digest_.clear();
     core_egress_validated_ = false;
     phase_ = rollback_error.empty()
                  ? (profile_staged_ ? Phase::kConfigStaged
@@ -1204,6 +1216,10 @@ std::string RuntimeHost::SnapshotBody() const {
          ";core_egress_validated=" +
          (core_egress_validated_ ? "1" : "0") +
          ";dns_ready=" + (core_egress_validated_ ? "1" : "0") +
+         ";staged_profile_digest=" +
+         (staged_profile_digest_.empty() ? "none" : staged_profile_digest_) +
+         ";effective_profile_digest=" +
+         (effective_profile_digest_.empty() ? "none" : effective_profile_digest_) +
          ";failure=" +
          (failure_.empty() ? "none" : failure_);
 }
@@ -1231,13 +1247,13 @@ bool RuntimeHost::PrepareDirectories() {
   return true;
 }
 
-bool RuntimeHost::WriteProfileAtomically(const std::string& profile) {
+std::string RuntimeHost::WriteProfileAtomically(const std::string& profile) {
   const auto pending =
       AppendPath(directories_.config, L"managed-profile.pending");
   HANDLE file = ::CreateFileW(pending.c_str(), GENERIC_WRITE, 0, nullptr,
                               CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
   if (file == INVALID_HANDLE_VALUE) {
-    return false;
+    return "profile_write_failed";
   }
   DWORD written = 0;
   const bool success =
@@ -1245,14 +1261,23 @@ bool RuntimeHost::WriteProfileAtomically(const std::string& profile) {
                   &written, nullptr) != FALSE &&
       written == profile.size() && ::FlushFileBuffers(file) != FALSE;
   ::CloseHandle(file);
-  if (!success ||
-      ::MoveFileExW(pending.c_str(), profile_path_.c_str(),
+  if (!success) {
+    ::DeleteFileW(pending.c_str());
+    return "profile_write_failed";
+  }
+  // Secure the new file before replacing the last acknowledged profile. A
+  // security failure must not destroy the old bytes while leaving staged=true.
+  if (!core_->SecureFile(pending).empty()) {
+    ::DeleteFileW(pending.c_str());
+    return "profile_security_failed";
+  }
+  if (::MoveFileExW(pending.c_str(), profile_path_.c_str(),
                     MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) ==
           FALSE) {
     ::DeleteFileW(pending.c_str());
-    return false;
+    return "profile_write_failed";
   }
-  return true;
+  return "";
 }
 
 bool RuntimeHost::WriteBundledRuleSets(

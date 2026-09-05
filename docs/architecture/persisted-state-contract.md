@@ -98,3 +98,19 @@ crash-over-clean ordering, bounded secret-free breadcrumbs, false-green
 rejection, distinct cancelled/superseded/timeout/crash terminals, and an
 identity-free aggregate projection. Exact-candidate crash survival and remote
 delivery remain candidate/environment evidence, not a source-level pass.
+
+### Android staged profile identity
+
+The additive `config_digest` in supported schema `1` is lowercase SHA-256 of
+`egress-required + newline + route-mode + newline + UTF-8 config`. It identifies
+local execution input, not a server revision or entitlement. Missing/malformed
+values remain readable for migration but cannot authorize Quick Settings reuse;
+the app must refresh and stage a profile first. Unknown schema records remain
+untouched. A service start verifies the captured digest against the saved
+metadata and actual file, then pins the verified bytes before replacing Core.
+
+Staging restricts the pending file before `android.system.Os.rename` atomically
+replaces the old file. A rename failure retains the old file. The preferences
+write follows replacement; a crash between the two produces a digest mismatch
+and requires refresh, never a successful acknowledgement of different bytes.
+This is not durable last-known-good rollback or device crash proof.

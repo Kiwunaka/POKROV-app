@@ -36,10 +36,17 @@ struct ServiceRuntimeSnapshot {
   bool running = false;
   bool core_egress_validated = false;
   bool dns_ready = false;
+  std::string staged_profile_digest;
+  std::string effective_profile_digest;
   std::string phase = "artifact_missing";
   std::string failure = "service_unavailable";
 };
 
+// Parse atomically: rejected service data cannot leave partially healthy state.
+bool ParseServiceRuntimeSnapshot(const std::string& body,
+                                 ServiceRuntimeSnapshot* output);
+ServiceRuntimeSnapshot BindSnapshotToProfileIntent(
+    ServiceRuntimeSnapshot snapshot, const std::string& expected_profile_digest);
 ClientProbe ProbeInstalledService();
 ServiceRuntimeSnapshot InvokeInstalledService(Command command,
                                               const std::string& body);

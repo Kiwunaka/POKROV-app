@@ -69,7 +69,7 @@ class RuntimeHost {
   RuntimeResult Initialize();
   RuntimeResult StageProfile(const std::string& body);
   RuntimeResult InvalidateProfile();
-  RuntimeResult Connect();
+  RuntimeResult Connect(const std::string& expected_profile_digest);
   RuntimeResult Disconnect();
   void Shutdown();
 
@@ -86,7 +86,7 @@ class RuntimeHost {
   RuntimeResult Fail(Status status, const char* failure);
   std::string SnapshotBody() const;
   bool PrepareDirectories();
-  bool WriteProfileAtomically(const std::string& profile);
+  std::string WriteProfileAtomically(const std::string& profile);
   bool WriteBundledRuleSets(
       int slot, const std::vector<std::vector<std::uint8_t>>& rule_sets,
       std::vector<std::wstring>* written_paths);
@@ -105,6 +105,8 @@ class RuntimeHost {
   bool secure_storage_ = true;
   bool initialized_ = false;
   bool profile_staged_ = false;
+  std::string staged_profile_digest_;
+  std::string effective_profile_digest_;
   bool disable_memory_limit_ = false;
   int bundled_rule_set_slot_ = 0;
   bool core_egress_validated_ = false;

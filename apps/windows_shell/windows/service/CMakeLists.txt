@@ -1,5 +1,6 @@
 add_library(pokrov_service_common STATIC
   "service_protocol.cpp"
+  "service_profile_identity.cpp"
   "service_security.cpp"
   "windows_crash_profile.cpp"
 )
@@ -8,6 +9,7 @@ target_include_directories(pokrov_service_common PUBLIC
   "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(pokrov_service_common PUBLIC
   "advapi32.lib"
+  "bcrypt.lib"
   "shell32.lib"
 )
 
@@ -42,6 +44,15 @@ target_link_libraries(pokrov_service PRIVATE
 )
 
 if(BUILD_TESTING)
+  add_executable(pokrov_service_client_test
+    "service_client.cpp"
+    "service_pipe_client.cpp"
+    "service_client_test.cpp"
+  )
+  apply_standard_settings(pokrov_service_client_test)
+  target_link_libraries(pokrov_service_client_test PRIVATE pokrov_service_common)
+  add_test(NAME pokrov_service_client COMMAND pokrov_service_client_test)
+
   add_executable(pokrov_service_protocol_test
     "service_protocol_test.cpp"
   )

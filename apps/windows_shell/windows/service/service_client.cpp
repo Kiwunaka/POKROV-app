@@ -1,4 +1,5 @@
 #include "service_client.h"
+#include "service_profile_identity.h"
 
 #include <windows.h>
 
@@ -209,7 +210,8 @@ ExchangeResult Exchange(Command command, const std::string& body) {
       {},
       {},
       0,
-      kCapabilityProtocolV1 | kCapabilityStatus | kCapabilityRuntimeControl,
+      kCapabilityProtocolV1 | kCapabilityStatus | kCapabilityRuntimeControl |
+          kCapabilityProfileIdentity,
       "",
   };
   if (!WriteFrame(pipe, hello)) {
@@ -224,7 +226,8 @@ ExchangeResult Exchange(Command command, const std::string& body) {
       hello_response->status != Status::kOk ||
       (hello_response->capabilities & kCapabilityProtocolV1) == 0 ||
       (hello_response->capabilities & kCapabilityStatus) == 0 ||
-      (hello_response->capabilities & kCapabilityRuntimeControl) == 0) {
+      (hello_response->capabilities & kCapabilityRuntimeControl) == 0 ||
+      (hello_response->capabilities & kCapabilityProfileIdentity) == 0) {
     result.probe.state = ClientState::kProtocolIncompatible;
     ::CloseHandle(pipe);
     return result;
@@ -302,7 +305,7 @@ bool IsKnownPhase(const std::string& value) {
 }
 
 bool IsKnownFailure(const std::string& value) {
-  static constexpr std::array<const char*, 33> failures = {
+  static constexpr std::array<const char*, 35> failures = {
       "none",
       "core_not_initialized",
       "core_missing",
@@ -318,6 +321,8 @@ bool IsKnownFailure(const std::string& value) {
       "profile_security_failed",
       "runtime_running",
       "profile_not_staged",
+      "profile_identity_failed",
+      "profile_identity_mismatch",
       "core_start_failed",
       "core_egress_probe_failed",
       "core_stop_failed",
@@ -343,8 +348,8 @@ bool IsKnownFailure(const std::string& value) {
                       }) != failures.end();
 }
 
-bool ParseSnapshotBody(const std::string& body,
-                       ServiceRuntimeSnapshot* output) {
+bool ParseSnapshotBodyInternal(const std::string& body,
+                               ServiceRuntimeSnapshot* output) {
   if (output == nullptr || body.size() > kMaxControlBodySize) {
     return false;
   }
@@ -356,6 +361,8 @@ bool ParseSnapshotBody(const std::string& body,
   std::string running;
   std::string egress;
   std::string dns_ready;
+  std::string staged_digest;
+  std::string effective_digest;
   std::string failure;
   if (!ReadField(body, &offset, "phase", &phase, false) ||
       !ReadField(body, &offset, "core_ready", &core_ready, false) ||
@@ -364,6 +371,9 @@ bool ParseSnapshotBody(const std::string& body,
       !ReadField(body, &offset, "running", &running, false) ||
       !ReadField(body, &offset, "core_egress_validated", &egress, false) ||
       !ReadField(body, &offset, "dns_ready", &dns_ready, false) ||
+      !ReadField(body, &offset, "staged_profile_digest", &staged_digest, false) ||
+      !ReadField(body, &offset, "effective_profile_digest", &effective_digest,
+                 false) ||
       !ReadField(body, &offset, "failure", &failure, true) ||
       offset != body.size() || !IsKnownPhase(phase) ||
       !IsKnownFailure(failure) ||
@@ -382,12 +392,44 @@ bool ParseSnapshotBody(const std::string& body,
       (output->can_connect && !output->core_ready)) {
     return false;
   }
+  if ((staged_digest != "none" && !IsProfileDigest(staged_digest)) ||
+      (effective_digest != "none" && !IsProfileDigest(effective_digest)) ||
+      (output->can_connect && staged_digest == "none") ||
+      (output->running &&
+       (staged_digest == "none" || effective_digest != staged_digest)) ||
+      (!output->running && effective_digest != "none")) {
+    return false;
+  }
+  output->staged_profile_digest = staged_digest == "none" ? "" : staged_digest;
+  output->effective_profile_digest =
+      effective_digest == "none" ? "" : effective_digest;
   output->phase = phase;
   output->failure = failure;
   return true;
 }
 
 }  // namespace
+
+bool ParseServiceRuntimeSnapshot(const std::string& body,
+                                 ServiceRuntimeSnapshot* output) {
+  if (output == nullptr) return false;
+  auto parsed = *output;
+  if (!ParseSnapshotBodyInternal(body, &parsed)) return false;
+  *output = std::move(parsed);
+  return true;
+}
+
+ServiceRuntimeSnapshot BindSnapshotToProfileIntent(
+    ServiceRuntimeSnapshot snapshot, const std::string& expected_profile_digest) {
+  if (!expected_profile_digest.empty() &&
+      snapshot.staged_profile_digest != expected_profile_digest) {
+    snapshot.core_egress_validated = false;
+    snapshot.dns_ready = false;
+    snapshot.can_connect = false;
+    snapshot.failure = "profile_identity_mismatch";
+  }
+  return snapshot;
+}
 
 ClientProbe ProbeInstalledService() {
   const auto snapshot = InvokeInstalledService(Command::kStatus, "");
@@ -413,11 +455,22 @@ ServiceRuntimeSnapshot InvokeInstalledService(Command command,
   }
   result.status = exchange.response->status;
   result.command_accepted = result.status == Status::kOk;
-  if (!ParseSnapshotBody(exchange.response->body, &result)) {
+  if (!ParseServiceRuntimeSnapshot(exchange.response->body, &result)) {
     result.client_state = ClientState::kProtocolIncompatible;
     result.compatible = false;
     result.command_accepted = false;
     return result;
+  }
+  if (result.command_accepted &&
+      ((command == Command::kStageProfile &&
+        result.staged_profile_digest != ProfileDigest(body)) ||
+       (command == Command::kConnect &&
+        result.effective_profile_digest != body))) {
+    result.command_accepted = false;
+    result.running = false;
+    result.core_egress_validated = false;
+    result.dns_ready = false;
+    result.failure = "profile_identity_mismatch";
   }
   result.client_state = result.core_ready ? ClientState::kReady
                                           : ClientState::kBootstrap;

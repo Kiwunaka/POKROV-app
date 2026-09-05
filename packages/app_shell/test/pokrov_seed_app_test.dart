@@ -1684,6 +1684,7 @@ void main() {
           return <String, Object?>{
             ...ready,
             'phase': 'configStaged',
+            'stagedConfigPath': '/host/runtime/synthetic-profile.json',
             'canConnect': true
           };
         case 'runtimeEngine.connect':
@@ -11705,18 +11706,26 @@ void main() {
     expect(find.textContaining('vless'), findsNothing);
   });
 
+  for (final host in [HostPlatform.android, HostPlatform.windows]) {
+  for (final stageResult in ['success', 'timeout', 'rejected']) {
   testWidgets(
-      'android reconnect refreshes the managed profile even when one is already staged',
+      '${host.name} reconnect refreshes the managed profile even when one is already staged ($stageResult)',
       (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     final calls = <String>[];
+    final stagedProfiles = <String>[];
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'managed-from-api',
         configPayload:
             '{"outbounds":[{"type":"selector","tag":"proxy"},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+      ),
+      managedProfileResolver: (call, _) => ManagedProfilePayload(
+        profileName: 'managed-revision-$call',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -11736,6 +11745,13 @@ void main() {
             'message': 'Managed profile staged on the host bridge.',
           };
         case 'runtimeEngine.stageManagedProfile':
+          stagedProfiles.add((call.arguments as Map)['profileName'] as String);
+          if (stagedProfiles.length == 2 && stageResult == 'timeout') {
+            return Completer<Map<String, Object?>>().future;
+          }
+          if (stagedProfiles.length == 2 && stageResult == 'rejected') {
+            throw PlatformException(code: 'stage_failed');
+          }
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
@@ -11777,8 +11793,10 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        appContext: buildSeedAppContext(hostPlatform: host),
         bootstrapper: bootstrapper,
+        runtimeActionTimeout: const Duration(milliseconds: 500),
+        windowsTunnelAuthorizer: () async => PokrovWindowsTunnelAuthorization.allowed,
       ),
     );
     await tester.pumpAndSettle();
@@ -11811,16 +11829,22 @@ void main() {
     await tester.tap(connectAction);
     await tester.pumpAndSettle();
 
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
     expect(bootstrapper.calls, 2);
+    expect(stagedProfiles, ['managed-revision-1', 'managed-revision-2']);
     expect(
       calls.where((call) => call == 'runtimeEngine.stageManagedProfile'),
       hasLength(2),
     );
     expect(
       calls.where((call) => call == 'runtimeEngine.connect'),
-      hasLength(2),
+      hasLength(stageResult == 'success' ? 2 : 1),
     );
   });
+
+  }
+  }
 
   testWidgets(
       'primary connect action is disabled when live connect is unavailable',

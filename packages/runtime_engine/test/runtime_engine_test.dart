@@ -585,6 +585,7 @@ void main() {
         stagedArguments = Map<Object?, Object?>.from(call.arguments as Map);
         return <String, Object?>{
           'phase': 'configStaged',
+          'stagedConfigPath': '/host/runtime/synthetic-profile.json',
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': true,
@@ -648,6 +649,7 @@ void main() {
         stagedArguments = Map<Object?, Object?>.from(call.arguments as Map);
         return <String, Object?>{
           'phase': 'configStaged',
+          'stagedConfigPath': '/host/runtime/synthetic-profile.json',
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': true,
@@ -804,6 +806,7 @@ void main() {
         );
         return <String, Object?>{
           'phase': 'configStaged',
+          'stagedConfigPath': '/host/runtime/synthetic-profile.json',
           'supportsLiveConnect': true,
           'canInitialize': true,
           'canConnect': true,
@@ -1299,6 +1302,67 @@ void main() {
     _expectNoSensitiveRuntimeDetail(snapshot.message);
   });
 
+  for (final response in [
+    'exception',
+    'missing',
+    'rejected',
+    'missing-path',
+    'notification-warning'
+  ]) {
+    test('profile stage $response requires an explicit host acknowledgement',
+        () async {
+      const channel = MethodChannel('space.pokrov/runtime_engine');
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      final oldSnapshot = <String, Object?>{
+        'phase': 'configStaged',
+        'stagedConfigPath': '/synthetic/previous-profile.json',
+        'supportsLiveConnect': true,
+        'canInitialize': true,
+        'canConnect': true,
+      };
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        if (call.method == 'runtimeEngine.stageManagedProfile') {
+          if (response == 'exception') {
+            throw PlatformException(code: 'profile_staging_failed');
+          }
+          if (response == 'missing') return null;
+          return <String, Object?>{
+            ...oldSnapshot,
+            if (response == 'missing-path') 'stagedConfigPath': null,
+            'last_failure_kind': response == 'missing-path'
+                ? null
+                : response == 'notification-warning'
+                    ? 'notification_permission_denied'
+                    : 'profile_staging_failed',
+          };
+        }
+        return oldSnapshot;
+      });
+      addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+      final engine = createRuntimeEngine(hostPlatform: HostPlatform.windows);
+      await expectLater(
+        engine.stageManagedProfile(const ManagedProfilePayload(
+          profileName: 'synthetic-new-profile',
+          configPayload:
+              '{"outbounds":[{"type":"direct","tag":"direct"}],"route":{"final":"direct"}}',
+          materializedForRuntime: true,
+        )),
+        response == 'notification-warning'
+            ? completion(isA<RuntimeSnapshot>().having(
+                (snapshot) => snapshot.phase,
+                'staged phase',
+                RuntimePhase.configStaged))
+            : throwsA(isA<StateError>().having(
+                (error) => error.message,
+                'safe failure',
+                'managed_profile_stage_failed',
+              )),
+      );
+    });
+  }
+
   test('mobile lane redacts PlatformException details after fallback fails',
       () async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
@@ -1487,6 +1551,114 @@ void main() {
     expect(calls, ['runtimeEngine.snapshot']);
   });
 
+  test('server revision follows acknowledged and effective content identity',
+      () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final digestA = 'a' * 64;
+    final digestB = 'b' * 64;
+    var stagedDigest = digestA;
+    String? effectiveDigest;
+    var rejectStage = false;
+    var nextDigest = digestA;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.stageManagedProfile') {
+        if (rejectStage)
+          throw PlatformException(code: 'synthetic_stage_rejection');
+        stagedDigest = nextDigest;
+        effectiveDigest = null;
+      }
+      if (call.method == 'runtimeEngine.connect')
+        effectiveDigest = stagedDigest;
+      return <String, Object?>{
+        'phase': effectiveDigest == null ? 'configStaged' : 'running',
+        'stagedConfigPath': '/synthetic/profile.json',
+        'stagedProfileDigest': stagedDigest,
+        'effectiveProfileDigest': effectiveDigest,
+        'profileIdentityOrigin': 'android_private_stage_request_sha256',
+        'coreEgressValidated': effectiveDigest != null,
+      };
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    const sourceA = RuntimeProfileSource(
+        revision: 'synthetic:awg31:1',
+        origin: RuntimeProfileSourceOrigin.managedManifest);
+    const sourceB = RuntimeProfileSource(
+        revision: 'synthetic:awg2:2',
+        origin: RuntimeProfileSourceOrigin.managedManifest);
+    const payloadA = ManagedProfilePayload(
+        profileName: 'synthetic-a',
+        configPayload: '{"outbounds":[{"type":"direct","tag":"direct"}]}',
+        materializedForRuntime: true,
+        source: sourceA);
+    const payloadB = ManagedProfilePayload(
+        profileName: 'synthetic-b',
+        configPayload: '{"outbounds":[{"type":"direct","tag":"direct"}]}',
+        materializedForRuntime: true,
+        source: sourceB);
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.android);
+    var state = await engine
+        .stageManagedProfile(payloadA.copyWith(quickSettingsEligible: true));
+    expect(state.fetchedProfileSource, same(sourceA));
+    expect(state.stagedProfileSource, same(sourceA));
+    expect(state.effectiveProfileSource, isNull);
+    state = await engine.connect();
+    expect(state.effectiveProfileSource, same(sourceA));
+
+    rejectStage = true;
+    await expectLater(engine.stageManagedProfile(payloadB), throwsStateError);
+    state = await engine.snapshot();
+    expect(state.fetchedProfileSource, same(sourceB));
+    expect(state.stagedProfileSource, same(sourceA));
+    expect(state.effectiveProfileSource, same(sourceA));
+
+    rejectStage = false;
+    nextDigest = digestB;
+    state = await engine.stageManagedProfile(payloadB);
+    expect(state.stagedProfileSource, same(sourceB));
+    expect(state.effectiveProfileSource, isNull);
+    effectiveDigest =
+        digestA; // Delayed previous proof cannot confirm revision B.
+    expect((await engine.snapshot()).effectiveProfileSource, isNull);
+    state = await engine.connect();
+    expect(state.effectiveProfileSource, same(sourceB));
+    // A new consumer cannot reconstruct upstream authority from the local hash.
+    final freshEngine = createRuntimeEngine(hostPlatform: HostPlatform.android);
+    expect((await freshEngine.snapshot()).effectiveProfileSource, isNull);
+  });
+
+  test('windows profile mismatch remains unprotected with explicit recovery',
+      () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final digest = 'a' * 64;
+    messenger.setMockMethodCallHandler(
+        channel,
+        (call) async => <String, Object?>{
+              'phase': 'configStaged',
+              'supportsLiveConnect': true,
+              'canConnect': false,
+              'lastFailureKind': 'profile_identity_mismatch',
+              'coreEgressValidated': false,
+              'coreEgressValidationRequired': true,
+              'stagedProfileDigest': digest,
+              'effectiveProfileDigest': '',
+              'profileIdentityOrigin': 'windows_service_stage_request_sha256',
+            });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.windows);
+    final snapshot = await engine.connect();
+    expect(snapshot.stagedProfileDigest, digest);
+    expect(snapshot.effectiveProfileDigest, isNull);
+    expect(
+        snapshot.profileIdentityOrigin, 'windows_service_stage_request_sha256');
+    expect(snapshot.isCleanlyHealthy, isFalse);
+    expect(snapshot.canConnect, isFalse);
+    expect(snapshot.message, contains('Изменение профиля не применено'));
+  });
+
   test('windows service stages local rule sets through a bounded bundle',
       () async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
@@ -1498,6 +1670,7 @@ void main() {
         stagedArguments = Map<Object?, Object?>.from(call.arguments as Map);
         return <String, Object?>{
           'phase': 'configStaged',
+          'stagedConfigPath': '/host/runtime/synthetic-profile.json',
           'helperBinaryPath': 'service://pokrov_service.exe',
           'supportsLiveConnect': true,
           'canInitialize': true,
@@ -1569,9 +1742,9 @@ void main() {
     final stagedConfig = jsonDecode(
       bundle.substring(marker + 'POKROV_PROFILE_JSON\n'.length),
     ) as Map<String, dynamic>;
-    final definition = ((stagedConfig['route'] as Map<String, dynamic>)[
-            'rule_set'] as List)
-        .single as Map<String, dynamic>;
+    final definition =
+        ((stagedConfig['route'] as Map<String, dynamic>)['rule_set'] as List)
+            .single as Map<String, dynamic>;
     expect(
       definition['path'],
       'data/rule-set/__POKROV_RULE_SET_SLOT__/ruleset-0.srs',
