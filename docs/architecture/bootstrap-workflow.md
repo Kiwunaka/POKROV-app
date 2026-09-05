@@ -463,3 +463,19 @@ ordinary import and adds no shell `part`.
 `managed_profile_lifecycle_test.dart` exercises coalescing, timeout/disposal and
 non-Android revision tracking independently. Existing seed-app widget tests
 continue to exercise the connection/Quick Settings integration.
+
+### Ordinary cache outage boundary
+
+Normal managed-profile fallback requires a readable staged config whose file
+modification age is between zero and 24 hours. A future timestamp (including
+clock rollback) is rejected; it cannot extend freshness. Refresh waits at most
+15 seconds when an otherwise eligible cache exists. Only timeout or transient
+408/429/502/503/504/no-status failures may use it; explicit authorization failures,
+user input changes and a failed dataplane require a fresh profile.
+
+This local freshness check is not a signed offline entitlement lease. The client
+cannot learn a new remote revocation during a complete control-plane outage;
+server-side credential enforcement remains authoritative. The separate signed
+emergency bundle has its own account/catalog/eligibility expiry checks. Neither
+path grants new entitlement. Exact outage/revocation behavior still needs the
+candidate and owned server scenario; a local cache test does not prove it.

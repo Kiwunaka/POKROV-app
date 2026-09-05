@@ -4449,8 +4449,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!file.existsSync()) {
         return false;
       }
-      final age = DateTime.now().difference(file.lastModifiedSync());
-      if (age > const Duration(hours: 24)) {
+      if (!CachedProfileFallbackGate.isCacheTimestampFresh(
+        modifiedAt: file.lastModifiedSync(),
+        now: DateTime.now(),
+      )) {
         return false;
       }
       final decoded = jsonDecode(file.readAsStringSync());
