@@ -1,6 +1,6 @@
 # Cutover Readiness
 
-Last updated: 2026-09-04
+Last updated: 2026-09-05
 
 ## Document Status
 
@@ -20,6 +20,11 @@ If prose disagrees with these machine contracts, stop and reconcile the
 contracts. Do not select the most optimistic status.
 
 ## Current Decision
+
+Owner checkpoint, 2026-09-05: execution is `OWNER_PAUSED_FOR_REPLANNING`.
+Preserve candidate.33 and all partial/blocked results as-is. Do not continue
+the old test/build/deploy plan without a new owner request. This pause does
+not mark the release goal complete or turn any missing gate into PASS.
 
 | Fact | Current state |
 |---|---|
@@ -59,7 +64,7 @@ Candidate.33 bytes are unchanged. On the isolated Windows VM, exact client
 session; no interactive login was required. The platform helper successfully
 selected AWG3.1 and AWG2 for this install only and restored the default after
 each selection. A subsequent AWG3.1 UI attempt reached the first-connect
-`Всё устройство` / `Выбранные приложения` sheet. Scope selection remains
+`Всё устройство` / `Выбранные приложения` sheet. At that checkpoint selection was
 `MANUAL_OWNER_TEST` because the Windows computer-use skill does not allow
 changing VPN privacy/scope settings. No managed tunnel, DNS or egress PASS is
 assigned. Default restoration was confirmed after the UI attempt; a fresh
@@ -72,6 +77,42 @@ The later `awg31-ui-test-apply.json` and
 earlier index. Platform WO-013HL records identity correction and helper tests.
 This control-plane result does not change Gate F or the matrix below.
 
+Owner-ready follow-up on the same day supersedes the scope blocker:
+`firstRouteScopeConfirmed=true`, `firstRouteScopeMode=fullTunnel` were read
+from the VM. Exact candidate.33 UI/service hashes still match. The client
+fetched an `awg31_lab` manifest revision, displayed connected with DNS/egress
+ready, and an independent guest probe received an API DNS answer and HTTPS
+`200`. This is `PARTIAL_EXACT_CANDIDATE_33_MANAGED_ATTEMPT`, not complete
+AWG lifecycle proof: the protected service profile identity was not read back,
+location remained unresolved and route counters were unavailable.
+
+After server selection changed to AWG2, ordinary disconnect/reconnect still
+retained the AWG3.1 revision. That attempt gets **no AWG2 credit**. Its guest
+probes found one Up tunnel, resolved API/ChatGPT/Gemini/Xbox names and received
+API/POKROV DoH HTTP `200`; these do not prove DNS-only mode or service access.
+An attempted non-UI client restart stopped at `Access is denied`; the previous
+zero-Up-tunnel guard passed, but the restart did not happen. DE-side independent
+handshake capture also remains `BLOCKED_BY_ACCESS`: the old helper selected an
+untrusted port alias, and the configured port-22 SSH target reported a changed
+host key. Neither trust check was bypassed.
+
+Both temporary lab selections were restored to default with exact-install
+guarded readback (`ok=true`, no cohort/allowlist identity). The final UI showed
+disconnected. Exact route/DNS baseline restoration was not measured in this
+follow-up. Sanitized apply/restore and guest observations are retained under
+`E:/POKROV-tools/release-evidence/1.2.0-candidate33-awg-after-owner-scope-2026-09-05/`.
+Source inspection then confirmed that ordinary Windows reconnect intentionally
+reuses a staged profile; the built-in repair action explicitly refreshes it.
+AWG2 was assigned again to test repair, but the owner stopped computer-use
+before that action. Repair therefore remains `NOT_RUN`, not failed or passed.
+The final `default-after-owner-freeze.json` confirms restoration after this
+interruption. All eight sanitized reports are now retained in Git in
+[the freeze evidence](evidence/candidate33-owner-freeze-awg.json), including
+original external-file hashes. The previous restart attempt made no process
+change. No binary change, new candidate, public publication or deploy occurred;
+Gate F stays unchanged. Any future AWG2 run must first assert the refreshed
+revision; DE-side observation also requires independently verified host trust.
+
 | Gate | State | Required evidence |
 |---|---|---|
 | Development package/version parity | `PASS_EXACT_CANDIDATE_33_BUILD_4053` | Candidate.33 Android and Windows artifacts are `1.2.0+4053`; the shared app-shell remains product version `1.2.0`. |
@@ -83,7 +124,7 @@ This control-plane result does not change Gate F or the matrix below.
 | Release index | `PASS_EXACT_CANDIDATE_33_ACTIONS_ARTIFACT_ONLY` | Handoff `30d9d044…72c81`, SBOM/provenance and manifest/signature/receipt `5620c2f0…f680` / `5115ab3c…3191` / `f84843c8…78d7` validate; signer run `33851401873` passes with promotion false. Public assets remain absent. |
 | Core replacement | `PASS_EXACT_CANDIDATE_33_SIGNED_ARTIFACTS` | All candidate.33 Android/Windows artifacts and refreshed SBOM/provenance bind Core `cd8f0f4…884d`; the six hashes and Windows `11/11` manifest validate. |
 | AWG lifecycle | `NOT_RUN_EXACT_CANDIDATE_33_MANAGED` | Older exact-Core and predecessor results do not transfer to candidate.33's managed packaged lifecycle. Android, UDP, IPv6, MTU and endurance remain open. |
-| AWG Windows app/service path | `NOT_RUN_EXACT_CANDIDATE_33_MANAGED` | Candidate.33 direct/Smart-DNS synthetic runtime passes, but packaged AWG3.1/AWG2 managed replay remains open. |
+| AWG Windows app/service path | `PARTIAL_EXACT_CANDIDATE_33_MANAGED_ATTEMPT` | Owner scope is confirmed; AWG3.1 manifest fetch, connected UI and bounded guest DNS/HTTPS observations exist. Service-profile identity and full lifecycle remain open; the AWG2 attempt retained the AWG3.1 revision and receives no AWG2 credit. |
 | External Smart-DNS lab | `PASS_EXACT_CANDIDATE_33_WINDOWS_SYNTHETIC; PHYSICAL_AUTHENTICATED_OPEN` | Windows receives DoH `200` and restores exact network state through a secret-free synthetic profile. Physical Android UI, authenticated managed sessions and leak/load/lifecycle remain open. |
 | Candidate.33 LDPlayer | `PASS_EXACT_INSTALL_IDENTITY_AND_COLD_UI_START; NETWORK_BLOCKED_BY_HOST_TUN` | Universal APK `51b86f66…583f2`, `295370161` bytes, update-installs/readbacks byte-identically as `1.2.0+4053`; exact MainActivity cold-start and 321-second minimized process/crash check pass. Host Hiddify/sing-tun excludes DNS, egress, VPN, AWG, Smart-DNS, WARP and protocol credit. |
 | Candidate handoff | `PASS_EXACT_CANDIDATE_33_STRICT_V2` | Private candidate input `2ed2160a…2604` and strict-v2 handoff `30d9d044…72c81` bind build `4053`, exact sources and six artifacts. |
