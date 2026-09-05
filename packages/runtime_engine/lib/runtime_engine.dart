@@ -452,6 +452,12 @@ const _publicRuntimeFailureKinds = <String>{
   'default_network_unavailable',
   'default_network_interface_unresolved',
   'default_network_index_unresolved',
+  'network_unavailable',
+  'dns_failure',
+  'endpoint_connect_failed',
+  'endpoint_connect_refused',
+  'transport_timeout',
+  'tunnel_handshake_failed',
 };
 
 const _publicRuntimeStopReasons = <String>{
@@ -517,18 +523,35 @@ String? _publicRuntimeFailureKind(Object? value) {
   if (_publicRuntimeFailureKinds.contains(normalized)) {
     return normalized;
   }
-  if (normalized.startsWith('resolver_') || normalized.startsWith('dns_')) {
-    return 'dns_failure';
-  }
-  if (normalized.startsWith('default_network_')) {
-    return 'network_unavailable';
-  }
-  if (normalized.startsWith('vless_') ||
-      normalized.startsWith('reality_') ||
-      normalized == 'tls_handshake_failed') {
-    return 'tunnel_handshake_failed';
-  }
-  return 'runtime_failure';
+  // Only closed producer categories establish an observation. A new or
+  // unrecognized prefix cannot establish DNS failure, offline state or DPI.
+  return switch (normalized) {
+    'dns_connection_refused' ||
+    'dns_timeout' ||
+    'dns_lookup_failed' ||
+    'dns_exchange_failed' ||
+    'dns_runtime_error' ||
+    'vless_dns_failed' =>
+      'dns_failure',
+    'dns_default_interface_missing' => 'default_network_interface_unresolved',
+    'dns_network_unreachable' ||
+    'vless_network_unreachable' ||
+    'outbound_network_unreachable' ||
+    'vless_outbound_connect_failed' =>
+      'endpoint_connect_failed',
+    'vless_connection_refused' => 'endpoint_connect_refused',
+    'vless_timeout' ||
+    'reality_timeout' ||
+    'outbound_timeout' =>
+      'transport_timeout',
+    'tls_handshake_failed' ||
+    'vless_tls_failed' ||
+    'vless_handshake_failed' ||
+    'reality_verification_failed' ||
+    'reality_handshake_failed' =>
+      'tunnel_handshake_failed',
+    _ => 'runtime_failure',
+  };
 }
 
 String? _publicRuntimeStopReason(Object? value) {
@@ -649,13 +672,21 @@ String _publicRuntimeMessage({
     case 'resolver_callback_error':
     case 'resolver_timeout':
     case 'dns_failure':
+      return 'POKROV не смог подтвердить DNS-подключение устройства.';
     case 'default_network_unavailable':
+    case 'network_unavailable':
+      return 'Нет доступной сети. Проверьте Wi-Fi или мобильный интернет.';
     case 'default_network_interface_unresolved':
     case 'default_network_index_unresolved':
-    case 'network_unavailable':
-      return 'POKROV не смог подтвердить DNS-подключение устройства.';
+      return 'POKROV не смог определить сетевой интерфейс устройства.';
+    case 'endpoint_connect_failed':
+      return 'Не удалось установить соединение с точкой подключения.';
+    case 'endpoint_connect_refused':
+      return 'Точка подключения отклонила соединение.';
+    case 'transport_timeout':
+      return 'Точка подключения не ответила вовремя. Причина не установлена.';
     case 'tunnel_handshake_failed':
-      return 'POKROV подключил системный VPN, но защищенный канал до локации не отвечает.';
+      return 'Не удалось согласовать защищённое соединение с точкой подключения.';
     case 'runtime_failure':
       return 'POKROV не смог завершить действие на устройстве.';
   }

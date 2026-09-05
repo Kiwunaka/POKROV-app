@@ -48,6 +48,37 @@ void main() {
     );
   });
 
+  test('explicit failures are not relabelled by unconfirmed DNS and egress',
+      () {
+    for (final entry in <String, String>{
+      'default_network_unavailable': 'CONN-003',
+      'runtime_start_failed': 'CORE-003',
+      'core_egress_probe_unavailable': 'CONN-008',
+    }.entries) {
+      final report = PokrovDiagnosticsPresenter.fromRuntime(
+        hostPlatform: HostPlatform.android,
+        routeMode: RouteMode.fullTunnel,
+        snapshot: _snapshot(
+          lastFailureKind: entry.key,
+          hostHealth: RuntimeHostHealth.degraded,
+          dnsState: RuntimeDiagnosticState.degraded,
+          dnsReady: false,
+          coreEgressValidated: false,
+        ),
+        statusLabel: 'Нужно внимание',
+        warpState: 'disabled',
+        now: now,
+        appVersion: '1.2.0',
+        buildNumber: '30',
+        releaseChannel: 'store',
+        candidateLabel: 'pokrov-1.2.0-test',
+        encryptedDeliveryAvailable: false,
+      );
+      expect(report.errorCode, entry.value, reason: entry.key);
+      expect(report.summaryKey, PokrovDiagnosticMessageKey.attention);
+    }
+  });
+
   test('degraded DNS maps only to evidence and a supported problem-book rule',
       () {
     const rawHostSummary =
@@ -507,6 +538,7 @@ RuntimeSnapshot _snapshot({
   bool? dnsReady = true,
   bool? coreEgressValidated = true,
   String? hostDiagnosticsSummary,
+  String? lastFailureKind,
   String? safeProtocolDiagnosticCode,
   int? safeProtocolDiagnosticOccurrence,
 }) =>
@@ -526,6 +558,7 @@ RuntimeSnapshot _snapshot({
       dnsState: dnsState,
       uplinkState: uplinkState,
       hostDiagnosticsSummary: hostDiagnosticsSummary,
+      lastFailureKind: lastFailureKind,
       dnsReady: dnsReady,
       coreEgressValidated: coreEgressValidated,
       coreEgressValidationRequired: true,

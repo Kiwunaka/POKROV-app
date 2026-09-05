@@ -214,7 +214,10 @@ abstract final class OperationalFailureMapper {
     'default_network_interface_unresolved': 'ROUTE-003',
     'default_network_index_unresolved': 'ROUTE-003',
     'network_unavailable': 'CONN-003',
-    'tunnel_handshake_failed': 'CORE-006',
+    'endpoint_connect_failed': 'CONN-006',
+    'endpoint_connect_refused': 'TRANSPORT-002',
+    'transport_timeout': 'TRANSPORT-001',
+    'tunnel_handshake_failed': 'TRANSPORT-004',
     'runtime_failure': 'CONN-005',
   };
 

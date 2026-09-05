@@ -464,6 +464,22 @@ ordinary import and adds no shell `part`.
 non-Android revision tracking independently. Existing seed-app widget tests
 continue to exercise the connection/Quick Settings integration.
 
+### Runtime failure observations
+
+Native failure categories pass through an exact allowlist before reaching public
+messages. Offline state, unresolved network interface, DNS failure, refused
+endpoint, transport timeout and handshake failure retain distinct observations.
+Unknown `dns_`, `default_network_`, `vless_` or `reality_` prefixes do not establish
+a cause and become generic runtime failure. A timeout alone does not identify
+UDP blocking, DPI, MTU, ASN policy or a whitelist. Request-scoped protocol log
+categories remain diagnostic context and cannot change runtime health.
+
+The diagnostics presenter preserves an explicit failure code before checking
+incomplete DNS/egress proofs. Failed Core startup, unavailable verifier or absent
+network must not become a DNS fault merely because no proof was completed.
+Without an explicit failure, existing proof-gap presentation remains available.
+These mappings grant no route change or retry permission.
+
 ### Ordinary cache outage boundary
 
 Normal managed-profile fallback requires a readable staged config whose file

@@ -1243,6 +1243,69 @@ void main() {
     }
   });
 
+  test('mobile lane distinguishes observed network failures without guessing',
+      () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final cases = <String, (String, String)>{
+      'default_network_unavailable': (
+        'default_network_unavailable',
+        'Нет доступной сети. Проверьте Wi-Fi или мобильный интернет.'
+      ),
+      'default_network_interface_unresolved': (
+        'default_network_interface_unresolved',
+        'POKROV не смог определить сетевой интерфейс устройства.'
+      ),
+      'resolver_timeout': (
+        'resolver_timeout',
+        'POKROV не смог подтвердить DNS-подключение устройства.'
+      ),
+      'default_network_dpi_detected': (
+        'runtime_failure',
+        'POKROV не смог завершить действие на устройстве.'
+      ),
+      'vless_dns_failed': (
+        'dns_failure',
+        'POKROV не смог подтвердить DNS-подключение устройства.'
+      ),
+      'tls_handshake_failed': (
+        'tunnel_handshake_failed',
+        'Не удалось согласовать защищённое соединение с точкой подключения.'
+      ),
+      'vless_connection_refused': (
+        'endpoint_connect_refused',
+        'Точка подключения отклонила соединение.'
+      ),
+      'vless_timeout': (
+        'transport_timeout',
+        'Точка подключения не ответила вовремя. Причина не установлена.'
+      ),
+      'dns_dpi_detected': (
+        'runtime_failure',
+        'POKROV не смог завершить действие на устройстве.'
+      ),
+      'vless_dpi_detected': (
+        'runtime_failure',
+        'POKROV не смог завершить действие на устройстве.'
+      ),
+    };
+    for (final entry in cases.entries) {
+      messenger.setMockMethodCallHandler(
+          channel,
+          (call) async => {
+                'phase': 'initialized',
+                'last_failure_kind': entry.key,
+              });
+      final snapshot =
+          await createRuntimeEngine(hostPlatform: HostPlatform.android)
+              .snapshot();
+      expect(snapshot.lastFailureKind, entry.value.$1, reason: entry.key);
+      expect(snapshot.message, entry.value.$2, reason: entry.key);
+    }
+  });
+
   test('mobile lane preserves the safe emergency endpoint failure kind',
       () async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
