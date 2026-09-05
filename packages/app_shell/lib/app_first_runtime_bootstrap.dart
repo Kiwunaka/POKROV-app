@@ -6670,6 +6670,12 @@ class AppFirstRuntimeBootstrapper
     final sanitized = Map<String, dynamic>.from(baseConfig)..remove('_meta');
     if (hostPlatform == HostPlatform.windows) {
       final outbounds = _readListOfMaps(sanitized['outbounds']);
+      final directTag = _ensureAuxiliaryOutbound(
+        outbounds,
+        outbounds.map((outbound) => _readText(outbound['tag'])).toSet(),
+        preferredTag: 'direct',
+        type: 'direct',
+      );
       final transportTags = <String>[
         ...outbounds
             .where(_isProxyTransportOutbound)
@@ -6682,9 +6688,50 @@ class AppFirstRuntimeBootstrapper
       _normalizeVpnOutboundChains(
         outbounds: outbounds,
         proxyOutboundTags: transportTags,
-        directTag: _findOutboundTag(outbounds, 'direct') ?? 'direct',
+        directTag: directTag,
       );
       sanitized['outbounds'] = outbounds;
+      final route = Map<String, dynamic>.from(_readMap(sanitized['route']));
+      final safeTags = _computeVpnSafeOutboundTags(
+          outbounds: outbounds, proxyOutboundTags: transportTags);
+      var vpnTag = _readText(route['final']);
+      if (!safeTags.contains(vpnTag)) {
+        vpnTag = outbounds
+                .map((outbound) => _readText(outbound['tag']))
+                .where(safeTags.contains)
+                .firstOrNull ??
+            '';
+      }
+      if (vpnTag.isEmpty) {
+        throw const BootstrapFailure('Не удалось подготовить параметры VPN.');
+      }
+      // Replace prior per-process routing; the current mode and selection own
+      // it. Non-routing actions and the rest of the materialized profile stay.
+      route['rules'] = _readListOfMaps(route['rules'])
+          .where((rule) => !((rule.containsKey('process_name') ||
+                  rule.containsKey('process_path') ||
+                  rule.containsKey('process_path_regex')) &&
+              _readText(rule['outbound']).isNotEmpty))
+          .toList();
+      sanitized['route'] = _buildRouteBlock(
+        baseRoute: route,
+        directTag: directTag,
+        dnsOutboundTag: null,
+        finalOutboundTag: vpnTag,
+        hostPlatform: hostPlatform,
+        routeMode: routeMode,
+        selectedApps: selectedApps,
+        clientRuleSetCatalog: clientRuleSetCatalog,
+      );
+      sanitized['dns'] = _buildWindowsDnsBlock(
+        baseDns: sanitized['dns'],
+        outbounds: outbounds,
+        finalOutboundTag: vpnTag,
+        routeMode: routeMode,
+        selectedApps: selectedApps,
+        clientRuleSetCatalog: clientRuleSetCatalog,
+      );
+      return sanitized;
     }
     if (hostPlatform != HostPlatform.android) {
       if (routeMode == RouteMode.allExceptRu && !clientRuleSetCatalog.isEmpty) {
@@ -7575,6 +7622,80 @@ class AppFirstRuntimeBootstrapper
         .toList(growable: false);
     final processNames =
         _selectedWindowsProcessNames(HostPlatform.windows, selectedApps);
+    final base = _readMap(baseDns);
+    final baseServers = _readListOfMaps(base['servers']);
+    final directTag = _findOutboundTag(outbounds, 'direct') ?? 'direct';
+    bool isNetworkDns(Map<String, dynamic> server) =>
+        _readText(server['type']).toLowerCase() != 'local' &&
+        _readText(server['address']).toLowerCase() != 'local' &&
+        !_readText(server['address']).startsWith('rcode://');
+    final candidates = baseServers.where(isNetworkDns).toList();
+    final template = candidates
+            .where((server) => _readText(server['tag']) == 'dns-remote')
+            .firstOrNull ??
+        candidates
+            .where((server) =>
+                _readText(server['tag']) == _readText(base['final']))
+            .firstOrNull ??
+        candidates.firstOrNull;
+    final servers = <Map<String, dynamic>>[...baseServers];
+    void putLane(String tag, String detour, Map<String, dynamic> fallback) {
+      final index =
+          servers.indexWhere((server) => _readText(server['tag']) == tag);
+      final existing = index < 0 ? null : servers[index];
+      final definition = <String, dynamic>{
+        ...((tag == 'dns-remote' && existing != null && !isNetworkDns(existing)
+                ? template
+                : existing ?? template) ??
+            fallback),
+        'tag': tag,
+        'detour': detour,
+      };
+      if (tag == 'dns-direct') {
+        // The VPN resolver can bootstrap through direct DNS. Its direct copy
+        // must not point back to either generated lane.
+        const laneTags = <String>{'dns-direct', 'dns-remote'};
+        final resolver = definition['domain_resolver'];
+        if (resolver is Map &&
+            laneTags.contains(_readText(resolver['server']))) {
+          definition['domain_resolver'] = <String, dynamic>{
+            ..._readMap(resolver),
+            'server': 'dns-local',
+          };
+        } else if (resolver is String && laneTags.contains(resolver)) {
+          definition['domain_resolver'] = 'dns-local';
+        }
+        if (laneTags.contains(_readText(definition['address_resolver']))) {
+          definition['address_resolver'] = 'dns-local';
+        }
+      }
+      if (index < 0) {
+        servers.add(definition);
+      } else {
+        servers[index] = definition;
+      }
+    }
+
+    putLane('dns-remote', finalOutboundTag,
+        <String, dynamic>{'type': 'tcp', 'server': '1.1.1.1'});
+    putLane('dns-direct', directTag, <String, dynamic>{
+      'type': 'udp',
+      'server': '1.1.1.1',
+      'connect_timeout': '5s',
+      'disable_tcp_keep_alive': true
+    });
+    _ensureDnsServerDefinition(
+        servers: servers,
+        tag: 'dns-local',
+        definition: <String, dynamic>{
+          'type': 'local',
+          'tag': 'dns-local',
+          'prefer_go': true
+        });
+    // Keep non-routing DNS actions, replace stale process/domain server choices.
+    final preservedActions = _readListOfMaps(base['rules'])
+        .where((rule) => _readText(rule['server']).isEmpty)
+        .toList();
     final rules = <Map<String, dynamic>>[];
 
     _ensureDnsServerDomainRule(
@@ -7606,27 +7727,9 @@ class AppFirstRuntimeBootstrapper
     }
 
     return <String, dynamic>{
-      'servers': <Map<String, dynamic>>[
-        <String, dynamic>{
-          'type': 'tcp',
-          'tag': 'dns-remote',
-          'detour': finalOutboundTag,
-          'server': '1.1.1.1',
-        },
-        <String, dynamic>{
-          'type': 'udp',
-          'tag': 'dns-direct',
-          'connect_timeout': '5s',
-          'disable_tcp_keep_alive': true,
-          'server': '1.1.1.1',
-        },
-        <String, dynamic>{
-          'type': 'local',
-          'tag': 'dns-local',
-          'prefer_go': true,
-        },
-      ],
-      'rules': rules,
+      ...base,
+      'servers': servers,
+      'rules': <Map<String, dynamic>>[...preservedActions, ...rules],
       'final':
           routeMode == RouteMode.selectedApps ? 'dns-direct' : 'dns-remote',
       'disable_expire': true,

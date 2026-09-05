@@ -257,6 +257,17 @@ Current blocking dependency:
   this lane
 - before securing the desktop config, the Windows runtime verifies every loopback-only helper port for both TCP and UDP. A collision with Hiddify or another local proxy is remapped to an OS-selected free loopback port; external listeners and profile routing are not changed
 - generated Windows VPN profiles follow the proven POKROV Core/Hiddify system-TUN shape: `address`, `stack: system` by default, `strict_route`, a first-match `port: 53 -> hijack-dns` rule before LAN/direct or user routing, route-level `sniff`, typed TCP/UDP DNS servers, and no legacy `dns-out` or TUN-level sniff/NAT fields. The final preference pass reasserts that protected rule prefix after every other transform. The explicit port match is required by the shipped Core generation because Windows sends resolver packets to a private LAN DNS address before protocol sniffing has classified them. `Full tunnel` removes inherited Internet bypass rules while retaining local/private LAN access; selected and excluded process modes use opposite route and DNS decisions as their labels promise
+- server-materialized Windows profiles also apply the current routing mode and
+  process selection: stale process routes and DNS server choices are replaced,
+  Full tunnel removes inherited Internet bypasses, and All except RU applies
+  the local RU catalog. Profiles without a safe VPN path are rejected before
+  staging. A missing direct outbound is added for explicit direct decisions.
+  Existing inbounds and unrelated profile options remain; configured DNS
+  server protocol, address, TLS and transport options are retained in the
+  direct/VPN resolver lanes. With no configured network resolver, defaults
+  remain TCP/UDP `1.1.1.1`. Direct resolver copies use local bootstrap instead
+  of a self-reference to a generated resolver lane. DNS non-routing actions
+  are preserved; user routing preferences apply afterward
 - Windows VPN verification is service-owned. After Core starts, WinHTTP uses
   proxy bypass to request the owned HTTPS marker at
   `https://api.pokrov.space/api/public/authenticated-egress-probe`. Windows gets

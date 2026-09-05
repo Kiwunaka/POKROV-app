@@ -6365,7 +6365,8 @@ void main() {
     );
   });
 
-  test('preserves a runtime-ready managed config on desktop hosts', () async {
+  test('preserves Windows runtime settings while applying mode rules',
+      () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-bootstrap-pass-through-test-',
     );
@@ -6430,7 +6431,16 @@ void main() {
                     '_meta': <String, Object?>{'source': 'managed'},
                     'log': <String, Object?>{'level': 'info'},
                     'dns': <String, Object?>{
-                      'servers': <Object?>['local'],
+                      'servers': <Object?>[
+                        <String, Object?>{
+                          'type': 'https',
+                          'tag': 'sealed',
+                          'server': '9.9.9.9',
+                          'path': '/dns-query',
+                          'detour': 'proxy'
+                        }
+                      ],
+                      'final': 'sealed',
                     },
                     'inbounds': <Object?>[
                       <String, Object?>{
@@ -6440,8 +6450,17 @@ void main() {
                     ],
                     'outbounds': <Object?>[
                       <String, Object?>{
+                        'type': 'vless',
+                        'tag': 'node-1',
+                        'server': '127.0.0.1',
+                        'server_port': 443,
+                        'uuid': '00000000-0000-4000-8000-000000000001'
+                      },
+                      <String, Object?>{'type': 'direct', 'tag': 'direct'},
+                      <String, Object?>{
                         'type': 'selector',
                         'tag': 'proxy',
+                        'outbounds': <String>['node-1'],
                       },
                     ],
                     'route': <String, Object?>{
@@ -6481,7 +6500,19 @@ void main() {
     expect(config.containsKey('_meta'), isFalse);
     expect(config.toString(), contains('auto_detect_interface'));
     expect(config.toString(), contains('override_android_vpn'));
-    expect((config['dns'] as Map<String, dynamic>)['servers'], ['local']);
+    final dns = config['dns'] as Map<String, dynamic>;
+    expect(dns['final'], 'dns-remote');
+    expect(
+        (dns['servers'] as List)
+            .cast<Map>()
+            .singleWhere((server) => server['tag'] == 'sealed'),
+        <String, Object?>{
+          'type': 'https',
+          'tag': 'sealed',
+          'server': '9.9.9.9',
+          'path': '/dns-query',
+          'detour': 'proxy'
+        });
     expect(payload.routeMode, RouteMode.fullTunnel);
   });
 
@@ -8146,6 +8177,41 @@ void main() {
                         'config_format': 'singbox-json',
                         'config_payload': <String, Object?>{
                           if (ready)
+                            'dns': <String, Object?>{
+                              'servers': <Object?>[
+                                <String, Object?>{
+                                  'type': 'local',
+                                  'tag': 'bootstrap'
+                                },
+                                <String, Object?>{
+                                  'type': 'https',
+                                  'tag': 'sealed',
+                                  'server': '9.9.9.9',
+                                  'path': '/private-dns-query',
+                                  'domain_resolver': <String, Object?>{
+                                    'server': 'dns-direct',
+                                    'strategy': 'ipv4_only'
+                                  },
+                                  'tls': <String, Object?>{
+                                    'server_name': 'dns.example'
+                                  },
+                                  'detour': 'select'
+                                },
+                              ],
+                              'rules': <Object?>[
+                                <String, Object?>{
+                                  'query_type': <String>['AXFR'],
+                                  'action': 'reject'
+                                },
+                                <String, Object?>{
+                                  'process_name': <String>['old.exe'],
+                                  'server': 'sealed'
+                                }
+                              ],
+                              'final': 'sealed',
+                              'independent_cache': true,
+                            },
+                          if (ready)
                             'inbounds': <Object?>[
                               <String, Object?>{
                                 'type': 'tun',
@@ -8173,12 +8239,24 @@ void main() {
                               'server_port': 443,
                               'uuid': 'test-uuid',
                             },
-                            <String, Object?>{
-                              'type': 'direct',
-                              'tag': 'direct',
-                            },
+                            if (!ready)
+                              <String, Object?>{
+                                'type': 'direct',
+                                'tag': 'direct',
+                              },
                           ],
                           'route': <String, Object?>{
+                            if (ready)
+                              'rules': <Object?>[
+                                <String, Object?>{
+                                  'process_name': <String>['old.exe'],
+                                  'outbound': 'select'
+                                },
+                                <String, Object?>{
+                                  'domain_suffix': <String>['.ru'],
+                                  'outbound': 'direct'
+                                }
+                              ],
                             'final': ready && mode == RouteMode.selectedApps
                                 ? 'direct'
                                 : 'select',
@@ -8220,6 +8298,65 @@ void main() {
               outbounds.singleWhere((outbound) => outbound['tag'] == 'auto');
           final route = config['route'] as Map<String, dynamic>;
 
+          if (ready) {
+            final dns = config['dns'] as Map<String, dynamic>;
+            expect(
+                outbounds.singleWhere(
+                    (outbound) => outbound['tag'] == 'direct')['type'],
+                'direct');
+            final rules = (route['rules'] as List? ?? []).cast<Map>();
+            final dnsRules = (dns['rules'] as List? ?? []).cast<Map>();
+            expect(route['find_process'], isTrue);
+            expect(
+                rules.any((rule) =>
+                    (rule['process_name'] as List?)?.contains('old.exe') ==
+                    true),
+                isFalse);
+            expect(
+                rules.any((rule) =>
+                    (rule['domain_suffix'] as List?)?.contains('.ru') == true &&
+                    rule['outbound'] == 'direct'),
+                mode == RouteMode.allExceptRu);
+            expect(
+                dnsRules.any((rule) =>
+                    (rule['process_name'] as List?)?.contains('old.exe') ==
+                    true),
+                isFalse);
+            expect(rules.first, containsPair('action', 'hijack-dns'));
+            if (mode == RouteMode.selectedApps ||
+                mode == RouteMode.excludedApps) {
+              final processRule = rules.singleWhere((rule) =>
+                  (rule['process_name'] as List?)?.contains('telegram.exe') ==
+                  true);
+              expect(processRule['outbound'],
+                  mode == RouteMode.selectedApps ? 'select' : 'direct');
+              expect(
+                  dnsRules.any((rule) =>
+                      (rule['process_name'] as List?)
+                          ?.contains('telegram.exe') ==
+                      true),
+                  isTrue);
+            }
+            expect(dnsRules.first['action'], 'reject');
+            final servers = (dns['servers'] as List).cast<Map>();
+            final directDns =
+                servers.singleWhere((server) => server['tag'] == 'dns-direct');
+            expect(directDns['domain_resolver'], <String, Object?>{
+              'server': 'dns-local',
+              'strategy': 'ipv4_only'
+            });
+            final routedDns =
+                servers.singleWhere((server) => server['tag'] == dns['final']);
+            expect(routedDns['type'], 'https');
+            expect(routedDns['server'], '9.9.9.9');
+            expect(routedDns['path'], '/private-dns-query');
+            expect(routedDns['tls'],
+                <String, Object?>{'server_name': 'dns.example'});
+            expect(routedDns['detour'],
+                mode == RouteMode.selectedApps ? 'direct' : 'select');
+            final tun = (config['inbounds'] as List).cast<Map>().single;
+            expect(tun['address'], <String>['172.19.0.1/28']);
+          }
           expect(selector['outbounds'], isNot(contains('direct')));
           expect(selector['default'], isNot('direct'));
           expect(urltest['outbounds'], isNot(contains('direct')));
