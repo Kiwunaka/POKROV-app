@@ -448,3 +448,18 @@ again to restore source lineage; Quick Settings can prove only its persisted
 local digest. The managed-manifest response describes desired server assignment
 at fetch time, not a promise that the server has not changed it since. Offline
 fallback retains its original source and the existing entitlement restrictions.
+
+### Managed profile lifecycle owner
+
+`src/shell/managed_profile_lifecycle.dart` owns profile-input dirtiness and the
+local revision, host invalidation queue, timeout generation and disposal. Shell
+composition supplies the existing host call and snapshot callback. Bursts are
+coalesced into the latest requested revision; connect waits for completed host
+invalidation. Timeout/disposal settle the waiter without allowing a late host
+acknowledgement to update the shell. This refactor does not change server source
+revision, fallback authority or the connection transaction. The module is an
+ordinary import and adds no shell `part`.
+
+`managed_profile_lifecycle_test.dart` exercises coalescing, timeout/disposal and
+non-Android revision tracking independently. Existing seed-app widget tests
+continue to exercise the connection/Quick Settings integration.

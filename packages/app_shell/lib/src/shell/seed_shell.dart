@@ -555,15 +555,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   final TextEditingController _firstLaunchRestoreCodeController =
       TextEditingController();
   bool _emergencyRuntimeActive = false;
-  bool _managedProfileDirty = true;
-  int _managedProfileRevision = 0;
-  int _quickSettingsInvalidationRequestedRevision = 0;
-  int _quickSettingsInvalidationCompletedRevision = 0;
-  Future<bool>? _quickSettingsInvalidationInFlight;
-  int _managedProfileInvalidationGeneration = 0;
-  Timer? _managedProfileInvalidationTimer;
-  Completer<bool>? _managedProfileInvalidationCompletion;
-  bool _seedShellDisposed = false;
+  late final ManagedProfileLifecycle _managedProfileLifecycle;
+  bool get _managedProfileDirty => _managedProfileLifecycle.dirty;
+  set _managedProfileDirty(bool value) =>
+      _managedProfileLifecycle.dirty = value;
+  int get _managedProfileRevision => _managedProfileLifecycle.revision;
   final CachedProfileFallbackGate _cachedProfileFallbackGate =
       CachedProfileFallbackGate();
   // Hidden until the store confirms the hint was never dismissed, so the
@@ -665,6 +661,15 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _selectedRouteMode = widget.appContext.runtimeProfile.defaultRouteMode;
     _runtimeEngine = createRuntimeEngine(
       hostPlatform: widget.appContext.hostPlatform,
+    );
+    _managedProfileLifecycle = ManagedProfileLifecycle(
+      invalidateProfile: _runtimeEngine.invalidateManagedProfile,
+      invalidateOnHost: () =>
+          widget.appContext.hostPlatform == HostPlatform.android,
+      timeout: () => widget.runtimeActionTimeout,
+      onInvalidated: (snapshot) {
+        if (mounted) setState(() => _runtimeSnapshot = snapshot);
+      },
     );
     _connectionCoordinator = ConnectionCoordinator(
       primaryConnectEnabled: _canPrimaryConnect,
@@ -2248,15 +2253,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   @override
   void dispose() {
-    _seedShellDisposed = true;
-    _managedProfileInvalidationGeneration += 1;
-    _managedProfileInvalidationTimer?.cancel();
-    _managedProfileInvalidationTimer = null;
-    final pendingInvalidation = _managedProfileInvalidationCompletion;
-    if (pendingInvalidation != null && !pendingInvalidation.isCompleted) {
-      pendingInvalidation.complete(false);
-    }
-    _managedProfileInvalidationCompletion = null;
+    _managedProfileLifecycle.dispose();
     unawaited(_acquisitionUriSubscription?.cancel());
     _acquisitionUriSubscription = null;
     WidgetsBinding.instance.removeObserver(this);
@@ -4741,103 +4738,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  void _invalidateQuickSettingsProfile() {
-    _managedProfileRevision += 1;
-    if (_seedShellDisposed ||
-        widget.appContext.hostPlatform != HostPlatform.android) {
-      return;
-    }
-    _quickSettingsInvalidationRequestedRevision = _managedProfileRevision;
-    _quickSettingsInvalidationInFlight ??= _drainQuickSettingsInvalidations();
-  }
+  void _invalidateQuickSettingsProfile() =>
+      _managedProfileLifecycle.invalidate();
 
-  Future<bool> _waitForQuickSettingsInvalidation(int revision) async {
-    if (_seedShellDisposed ||
-        widget.appContext.hostPlatform != HostPlatform.android) {
-      return true;
-    }
-    while (_quickSettingsInvalidationCompletedRevision < revision) {
-      final pending = _quickSettingsInvalidationInFlight ??=
-          _drainQuickSettingsInvalidations();
-      if (!await pending) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  Future<bool> _drainQuickSettingsInvalidations() async {
-    try {
-      // Snapshot the desired revision for each host call. All edits that land
-      // while it is running collapse into one follow-up call for the latest
-      // revision instead of building an unbounded timeout queue.
-      while (!_seedShellDisposed) {
-        final targetRevision = _quickSettingsInvalidationRequestedRevision;
-        final invalidated = await _runQuickSettingsProfileInvalidation();
-        if (!invalidated) {
-          return false;
-        }
-        _quickSettingsInvalidationCompletedRevision = targetRevision;
-        if (_quickSettingsInvalidationRequestedRevision <= targetRevision) {
-          return true;
-        }
-      }
-      return false;
-    } finally {
-      _quickSettingsInvalidationInFlight = null;
-    }
-  }
-
-  Future<bool> _runQuickSettingsProfileInvalidation() {
-    if (_seedShellDisposed) {
-      return Future<bool>.value(false);
-    }
-    final generation = ++_managedProfileInvalidationGeneration;
-    final completion = Completer<bool>();
-    _managedProfileInvalidationCompletion = completion;
-    final timer = Timer(widget.runtimeActionTimeout, () {
-      if (_seedShellDisposed ||
-          generation != _managedProfileInvalidationGeneration ||
-          completion.isCompleted) {
-        return;
-      }
-      _managedProfileInvalidationTimer = null;
-      completion.complete(false);
-      if (identical(_managedProfileInvalidationCompletion, completion)) {
-        _managedProfileInvalidationCompletion = null;
-      }
-    });
-    _managedProfileInvalidationTimer = timer;
-
-    void complete(bool invalidated, [RuntimeSnapshot? snapshot]) {
-      if (_seedShellDisposed ||
-          generation != _managedProfileInvalidationGeneration ||
-          completion.isCompleted) {
-        return;
-      }
-      timer.cancel();
-      if (identical(_managedProfileInvalidationTimer, timer)) {
-        _managedProfileInvalidationTimer = null;
-      }
-      if (identical(_managedProfileInvalidationCompletion, completion)) {
-        _managedProfileInvalidationCompletion = null;
-      }
-      if (invalidated && mounted && snapshot != null) {
-        setState(() {
-          _runtimeSnapshot = snapshot;
-        });
-      }
-      completion.complete(invalidated);
-    }
-
-    unawaited(
-      _runtimeEngine
-          .invalidateManagedProfile()
-          .then((snapshot) => complete(true, snapshot))
-          .catchError((Object _) => complete(false)),
-    );
-    return completion.future;
-  }
+  Future<bool> _waitForQuickSettingsInvalidation(int revision) =>
+      _managedProfileLifecycle.waitForInvalidation(revision);
 
   Future<void> _toggleRuntime({bool reconnectAfterDisconnect = false}) {
     final observability = widget.observability;
@@ -5042,7 +4947,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           if (!cachedProfileFallbackAllowed) rethrow;
           usedCachedProfile = true;
         } on BootstrapFailure catch (error) {
-          if (!cachedProfileFallbackAllowed || !_isTransientProfileFailure(error)) {
+          if (!cachedProfileFallbackAllowed ||
+              !_isTransientProfileFailure(error)) {
             rethrow;
           }
           usedCachedProfile = true;
@@ -5072,7 +4978,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             _runtimeSnapshot = current;
             _runtimeHeadline = null;
             _managedProfileDirty = false;
-            _stagedProfileUsesWarp = resolvedProfile.warpPolicy.canEnableRuntime;
+            _stagedProfileUsesWarp =
+                resolvedProfile.warpPolicy.canEnableRuntime;
             _stagedNodeCode = _resolvedProfileNodeCode;
             _stagedVariantId = _resolvedProfileVariantId;
             _cachedProfileFallbackGate.markFreshProfileStaged();
