@@ -54,6 +54,8 @@ void main() {
       'default_network_unavailable': 'CONN-003',
       'runtime_start_failed': 'CORE-003',
       'core_egress_probe_unavailable': 'CONN-008',
+      'runtime_failure': 'CORE-009',
+      'default_network_interface_unresolved': 'ROUTE-005',
     }.entries) {
       final report = PokrovDiagnosticsPresenter.fromRuntime(
         hostPlatform: HostPlatform.android,

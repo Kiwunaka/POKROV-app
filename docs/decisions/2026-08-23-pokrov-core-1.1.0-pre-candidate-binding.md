@@ -1,6 +1,29 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-## Current binding — 2026-09-05
+## Current binding — 2026-09-06
+
+The local N05 client binds Core `6bc36034c86528972488fc203a98512686ac4db9`. Observed DNS, UDP timeout,
+TLS-handshake timeout and response stall retain separate diagnostic codes.
+An unqualified timeout stays generic. URL probes propagate cancellation after
+dial instead of reporting success. These observations do not establish censorship
+or change fallback authority. The desktop ABI remains 2, event ABI 1, 15 exports.
+Both Android (four ABIs) and Windows were built twice with byte-identical results.
+The exact Windows DLL passed 100 proxy-only start/stop cycles; full and race Core
+tests passed. The machine owner is `config/runtime-artifacts.seed.json`.
+
+- android: `pokrov-core.aar`, 107465916 bytes, SHA-256 `9f99134528e8309f60b2fb20bfed9df9db7f5fa978ec1f13b7d329e2a70cf19b`.
+- windows: `pokrov-core.dll`, 55440384 bytes, SHA-256 `148453156b61bf22c18d987cbf0cd8a47c0bf99636b2650c016310e92bc3384b`.
+
+Evidence and the previous runtime binding are retained in
+`docs/operations/evidence/2026-09-06-r12-n05-core-binding/`. Build trees and SBOMs:
+`E:/POKROV-tools/builds/core-6bc3603-n05/`. SBOM license/version warnings remain
+unresolved; this is not license clearance or hosted provenance. The former local
+binaries remain in `E:/r12-artifacts/final/` and candidate.33 is unchanged.
+No new candidate, release tag, signing, publication or promotion is created.
+Physical Android, Windows TUN/DNS/clean-VM and independent-origin checks remain
+open for these bytes. Prior receipts below are not transferred to this binding.
+
+## Superseded local binding — 2026-09-05
 
 The local R12 client now binds Core `3f52efd4635218967cc84d58cb06b2fa593fd563` for Android and Windows.
 This adds per-call Android `ProbeEndpoint` and `ProbeSelectedOutbound` results

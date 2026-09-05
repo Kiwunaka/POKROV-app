@@ -4,7 +4,7 @@
     "version": "1.1.0",
     "release_tag": "v1.1.0",
     "release_tag_created": false,
-    "source_commit": "6bc36034c86528972488fc203a98512686ac4db9",
+    "source_commit": "3f52efd4635218967cc84d58cb06b2fa593fd563",
     "android_package": "space.pokrov.core",
     "sing_box_version": "1.13.0",
     "sing_dependency": "v0.8.0-beta.12",
@@ -20,9 +20,9 @@
       "artifact_evidence": {
         "android": {
           "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "source_commit": "6bc36034c86528972488fc203a98512686ac4db9",
-          "tree_sha256": "fe21aa5a4dd309061d3f37273cb533c46449eab84148b369d09fbf4e8b6157b6",
-          "evidence_sha256": "8a691e904b7533807250519cbab58ba6deed52cfb089a1b43164df93ac2394a3",
+          "source_commit": "3f52efd4635218967cc84d58cb06b2fa593fd563",
+          "tree_sha256": "8c33543649e976628e691a848b73b4146bfb82478c6c6dfedb335dcb6b2710f0",
+          "evidence_sha256": "3fffb5fb2f8b156f8b3d1897cf3db90e5133f923b488a71095a3619d686c3aa4",
           "abis": [
             "armeabi-v7a",
             "arm64-v8a",
@@ -32,9 +32,9 @@
         },
         "windows": {
           "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "source_commit": "6bc36034c86528972488fc203a98512686ac4db9",
-          "tree_sha256": "390b7d34d045e7b091e30aab1cbcfbeaba5cbb3919d462d6a935ddbbbd396b6f",
-          "evidence_sha256": "b7067e91a6dcfbab1f90095ff2a3ef131c938872fed56c80a8c7cb70a79109c4",
+          "source_commit": "3f52efd4635218967cc84d58cb06b2fa593fd563",
+          "tree_sha256": "56009d4d353c53e3b69de72b97123a0ae2d376c759e604255f9de8631d6d64bd",
+          "evidence_sha256": "405effb141d73d065c5c09acb0333d313e9a55d56cfc9c99561fc98d9a823ae1",
           "required_exports": 15,
           "proxy_only_start_stop_cycles": 100,
           "proxy_only_result": "PASS_LOCAL"
@@ -42,7 +42,7 @@
         "sbom": [
           {
             "name": "pokrov-core.cdx.json",
-            "sha256": "54d585e349111afe0762dc9add8250e213f404ee2529ceff1e5a04a00f94c5dd"
+            "sha256": "bc3de60080ba3bd1e26e185a7d01ff6bea2aa617f3f3525f8a999faf99aca83e"
           },
           {
             "name": "sing-box.cdx.json",
@@ -53,15 +53,15 @@
       "reproducible_build": {
         "android": {
           "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "source_commit": "6bc36034c86528972488fc203a98512686ac4db9",
-          "size": 107465916,
-          "sha256": "9f99134528e8309f60b2fb20bfed9df9db7f5fa978ec1f13b7d329e2a70cf19b"
+          "source_commit": "3f52efd4635218967cc84d58cb06b2fa593fd563",
+          "size": 107450158,
+          "sha256": "c02bc2fcc25f925f9062520f85667c324999b091eb2251a9cf26b8a1f66b0302"
         },
         "windows": {
           "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "source_commit": "6bc36034c86528972488fc203a98512686ac4db9",
-          "size": 55440384,
-          "sha256": "148453156b61bf22c18d987cbf0cd8a47c0bf99636b2650c016310e92bc3384b"
+          "source_commit": "3f52efd4635218967cc84d58cb06b2fa593fd563",
+          "size": 55434240,
+          "sha256": "94acf541893be21341255fe2fce66116fab48d68c80e84f3a820dc2fcfc40366"
         },
         "libcronet_sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
       },
@@ -132,9 +132,9 @@
     "assets": {
       "android": {
         "entry": "pokrov-core.aar",
-        "source_commit": "6bc36034c86528972488fc203a98512686ac4db9",
-        "size": 107465916,
-        "sha256": "9f99134528e8309f60b2fb20bfed9df9db7f5fa978ec1f13b7d329e2a70cf19b",
+        "source_commit": "3f52efd4635218967cc84d58cb06b2fa593fd563",
+        "size": 107450158,
+        "sha256": "c02bc2fcc25f925f9062520f85667c324999b091eb2251a9cf26b8a1f66b0302",
         "sync_policy": "exact_pre_candidate_build",
         "sync_destination": "apps/android_shell/android/app/libs",
         "platform_state": "active_pre_candidate_local_security_fixed_physical_repeat_open"
@@ -157,9 +157,9 @@
       },
       "windows": {
         "entry": "pokrov-core.dll",
-        "source_commit": "6bc36034c86528972488fc203a98512686ac4db9",
-        "size": 55440384,
-        "sha256": "148453156b61bf22c18d987cbf0cd8a47c0bf99636b2650c016310e92bc3384b",
+        "source_commit": "3f52efd4635218967cc84d58cb06b2fa593fd563",
+        "size": 55434240,
+        "sha256": "94acf541893be21341255fe2fce66116fab48d68c80e84f3a820dc2fcfc40366",
         "runtime_dependencies": [
           "libcronet.dll"
         ],

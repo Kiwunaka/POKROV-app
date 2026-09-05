@@ -4447,7 +4447,11 @@ void main() {
         hostPlatform: HostPlatform.windows,
         routeMode: RouteMode.fullTunnel,
       ),
-      throwsA(isA<BootstrapFailure>()),
+      throwsA(isA<BootstrapFailure>().having(
+        (failure) => failure.operationalErrorCode,
+        'provisioning observation',
+        'API-011',
+      )),
     );
     expect(starts, 1);
     final payload = await bootstrapper.resolveManagedProfile(

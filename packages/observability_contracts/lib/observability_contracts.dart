@@ -22,7 +22,7 @@ abstract final class PokrovObservabilityContracts {
   static const errorCatalog = ObservabilityContractDescriptor(
     id: 'error-catalog',
     version: '1.2.0',
-    sha256: '7d3bf242777d5bf76bbebcf162e5969d3f83d7f68b2787051e1c4fddeadc3dc7',
+    sha256: '1cef07aea2f859891794546569431d0e6aab91c6921729389fd63013f3002af1',
   );
 
   static const descriptors = <ObservabilityContractDescriptor>[
@@ -136,6 +136,7 @@ abstract final class KnownOperationalErrorCodes {
     'API-008',
     'API-009',
     'API-010',
+    'API-011',
     'ENT-001',
     'ENT-002',
     'ENT-003',
@@ -156,10 +157,14 @@ abstract final class KnownOperationalErrorCodes {
     'CORE-006',
     'CORE-007',
     'CORE-008',
+    'CORE-009',
     'TRANSPORT-001',
     'TRANSPORT-002',
     'TRANSPORT-003',
     'TRANSPORT-004',
+    'TRANSPORT-005',
+    'TRANSPORT-006',
+    'TRANSPORT-007',
     'TUN-001',
     'TUN-002',
     'TUN-003',
@@ -168,6 +173,7 @@ abstract final class KnownOperationalErrorCodes {
     'ROUTE-002',
     'ROUTE-003',
     'ROUTE-004',
+    'ROUTE-005',
     'DNS-001',
     'DNS-002',
     'DNS-003',

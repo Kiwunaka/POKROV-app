@@ -1033,7 +1033,8 @@ void TestCoreOperationalEventFenceRejectsLateAndUnsafeCallbacks() {
   event.severity = "error";
   for (const std::string& error_code :
        {"TRANSPORT-001", "TRANSPORT-002", "TRANSPORT-003",
-        "TRANSPORT-004"}) {
+        "TRANSPORT-004", "TRANSPORT-005", "TRANSPORT-006", "TRANSPORT-007",
+        "DNS-002"}) {
     event.error_code = error_code;
     Expect(fence.Accept(event), "closed transport failure was rejected");
     event.sequence += 1;

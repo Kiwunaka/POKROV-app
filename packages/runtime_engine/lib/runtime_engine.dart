@@ -492,6 +492,12 @@ const _publicAwgSafeDiagnosticCodes = <String>{
   'egress_probe_connection_reset',
   'egress_probe_network_unreachable',
   'egress_probe_io_timeout',
+  'egress_probe_udp_timeout',
+  'egress_probe_tls_timeout',
+  'egress_probe_response_timeout',
+  'egress_probe_endpoint_initialization_udp_timeout',
+  'egress_probe_endpoint_initialization_tls_timeout',
+  'egress_probe_endpoint_initialization_response_timeout',
   'egress_probe_deadline_exceeded',
   'egress_probe_context_canceled',
   'egress_probe_transport_failure',
@@ -680,6 +686,7 @@ String _publicRuntimeMessage({
     case 'default_network_index_unresolved':
       return 'POKROV не смог определить сетевой интерфейс устройства.';
     case 'endpoint_connect_failed':
+    case 'emergency_endpoint_unreachable':
       return 'Не удалось установить соединение с точкой подключения.';
     case 'endpoint_connect_refused':
       return 'Точка подключения отклонила соединение.';

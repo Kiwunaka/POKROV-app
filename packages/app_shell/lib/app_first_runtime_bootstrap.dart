@@ -5834,6 +5834,7 @@ class AppFirstRuntimeBootstrapper
     if (!provisioningReady) {
       throw const BootstrapFailure(
         'POKROV еще завершает первый запуск. Попробуйте через минуту.',
+        operationalCode: 'API-011',
       );
     }
     final supportContext = _readMap(response['support_context']);

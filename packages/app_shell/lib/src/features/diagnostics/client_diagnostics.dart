@@ -469,9 +469,7 @@ abstract final class PokrovDiagnosticsPresenter {
 
   static String? _errorCode(RuntimeSnapshot? snapshot) {
     final failure = snapshot?.lastFailureKind?.trim() ?? '';
-    if (failure.isNotEmpty &&
-        failure != 'runtime_failure' &&
-        failure != 'notification_permission_denied') {
+    if (failure.isNotEmpty && failure != 'notification_permission_denied') {
       return OperationalFailureMapper.connection(failure);
     }
     if (snapshot?.dnsReady == false ||

@@ -480,6 +480,13 @@ network must not become a DNS fault merely because no proof was completed.
 Without an explicit failure, existing proof-gap presentation remains available.
 These mappings grant no route change or retry permission.
 
+The shared catalog distinguishes pending profile provisioning (`API-011`),
+unresolved interface (`ROUTE-005`) and an unspecified runtime failure (`CORE-009`).
+Subscription refresh failure keeps its API/auth observation rather than claiming
+that access is absent. Native event consumers retain typed DNS, UDP, TLS timeout
+and response-stall codes from Core, including in the support timeline. Their
+presence is diagnostic evidence and does not authorize automatic fallback.
+
 ### Ordinary cache outage boundary
 
 Normal managed-profile fallback requires a readable staged config whose file

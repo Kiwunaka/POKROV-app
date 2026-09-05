@@ -218,5 +218,9 @@ private val CORE_EVENT_ERROR_CODES = setOf(
     "TRANSPORT-002",
     "TRANSPORT-003",
     "TRANSPORT-004",
+    "TRANSPORT-005",
+    "TRANSPORT-006",
+    "TRANSPORT-007",
+    "DNS-002",
     "EGRESS-001",
 )

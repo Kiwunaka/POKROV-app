@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show Platform;
+import 'dart:io' show Directory, Platform;
 import 'dart:ui' show PointerDeviceKind;
 
 import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
@@ -4402,6 +4402,57 @@ void main() {
     expect(find.byKey(const ValueKey('rewards-quest-second_device')),
         findsNothing);
   });
+
+  testWidgets('subscription refresh timeout does not claim missing entitlement',
+      (tester) async {
+    await tester.runAsync(() async {
+      final directory = await Directory.systemTemp.createTemp(
+        'pokrov-entitlement-observation-',
+      );
+      final observability = await PokrovClientObservability.start(
+        hostPlatform: HostPlatform.android,
+        directoryResolver: () async => directory,
+      );
+      final subscriptionGate = Completer<void>();
+      final bootstrapper = _FakeBootstrapper(
+        const ManagedProfilePayload(
+          profileName: 'test-profile',
+          configPayload: _materializedRuntimeConfig,
+          materializedForRuntime: true,
+        ),
+        subscriptionGate: subscriptionGate.future,
+      );
+      await tester.pumpWidget(PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        observability: observability,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ));
+      await tester.pump();
+      subscriptionGate.completeError(const BootstrapFailure(
+        'Сервис не ответил вовремя.',
+        operationalCode: 'API-002',
+      ));
+      await tester.pumpAndSettle();
+      await observability.flush();
+      final refresh =
+          observability.dispatcher.breadcrumbs.snapshot().singleWhere(
+                (event) => event.name == 'app.entitlement.refresh.finished',
+              );
+      expect(refresh.errorCode, 'API-002');
+      // Detach this test's observer before disposing the shell so its
+      // fire-and-forget exit marker cannot race our temporary-file cleanup.
+      await tester.pumpWidget(PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ));
+      await tester.pumpWidget(const SizedBox.shrink());
+      await observability.flush();
+      await observability.markCleanExit();
+      await directory.delete(recursive: true);
+    });
+  }, timeout: const Timeout(Duration(seconds: 30)));
 
   testWidgets('startup orders subscription before bonus summary',
       (tester) async {

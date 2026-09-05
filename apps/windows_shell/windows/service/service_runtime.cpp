@@ -328,6 +328,8 @@ bool IsCoreErrorCode(const std::string& value) {
          value == "CORE-006" || value == "CORE-008" ||
          value == "TRANSPORT-001" || value == "TRANSPORT-002" ||
          value == "TRANSPORT-003" || value == "TRANSPORT-004" ||
+         value == "TRANSPORT-005" || value == "TRANSPORT-006" ||
+         value == "TRANSPORT-007" || value == "DNS-002" ||
          value == "EGRESS-001";
 }
 
