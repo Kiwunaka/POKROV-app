@@ -52,6 +52,26 @@ verdicts.
 
 ## Current 1.2.0 Gate Matrix
 
+### 2026-09-05 Windows managed AWG attempt
+
+Candidate.33 bytes are unchanged. On the isolated Windows VM, exact client
+`6ab1bca…735e` completed the local welcome screen using the existing protected
+session; no interactive login was required. The platform helper successfully
+selected AWG3.1 and AWG2 for this install only and restored the default after
+each selection. A subsequent AWG3.1 UI attempt reached the first-connect
+`Всё устройство` / `Выбранные приложения` sheet. Scope selection remains
+`MANUAL_OWNER_TEST` because the Windows computer-use skill does not allow
+changing VPN privacy/scope settings. No managed tunnel, DNS or egress PASS is
+assigned. Default restoration was confirmed after the UI attempt; a fresh
+guarded lab selection is required before continuing AWG tests.
+
+Sanitized platform reports and the initial eight-report index are retained in
+`E:/POKROV-tools/release-evidence/1.2.0-candidate33-windows-awg-authorized-2026-09-05/`.
+The later `awg31-ui-test-apply.json` and
+`default-after-ui-route-prompt.json` are additional reports, not members of that
+earlier index. Platform WO-013HL records identity correction and helper tests.
+This control-plane result does not change Gate F or the matrix below.
+
 | Gate | State | Required evidence |
 |---|---|---|
 | Development package/version parity | `PASS_EXACT_CANDIDATE_33_BUILD_4053` | Candidate.33 Android and Windows artifacts are `1.2.0+4053`; the shared app-shell remains product version `1.2.0`. |
