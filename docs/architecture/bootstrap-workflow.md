@@ -187,6 +187,11 @@ Current blocking dependency:
   but keeps the slot occupied until the original probe settles; an exhausted
   pool skips further advisory probes. The default socket probe retains its own
   timeout. A late result releases capacity without becoming a new RTT sample
+- Android and Windows VPN selector/urltest chains exclude the direct outbound in
+  every routing mode, including server-materialized Windows profiles. Nested
+  chains retain only paths to managed transport outbounds or AWG endpoints;
+  their default cannot select direct. Explicit direct route/DNS rules, LAN
+  preferences and platform per-app exclusions remain separate route decisions
 - an explicit manual location variant is materialized from the exact managed
   profile only: `direct` requires the verified canonical base outbound to be a
   member of the final selector, while a bridge id requires one unique safe
@@ -341,6 +346,9 @@ convergence is proved; candidate, signing and platform-runtime gates remain.
   route-policy sync or profile fetch. Android receives the staged route-mode
   attestation separately and rejects an empty selected-app allow-list instead
   of interpreting it as a device-wide tunnel.
+- Windows selected/excluded modes additionally require a non-empty set after
+  process-name normalization. A selection containing only rejected identifiers
+  fails before bootstrap state, API access or native staging begins.
 - Android `excludedApps` also requires a non-empty selection. Materialization
   keeps the app itself and every selected package outside `VpnService`, then
   routes all remaining packages through the managed profile; the server still

@@ -2815,7 +2815,11 @@ class AppFirstRuntimeBootstrapper
         .toSet();
     if ((routeMode == RouteMode.selectedApps ||
             routeMode == RouteMode.excludedApps) &&
-        normalizedSelectedApps.isEmpty) {
+        (normalizedSelectedApps.isEmpty ||
+            (hostPlatform == HostPlatform.windows &&
+                _selectedWindowsProcessNames(
+                        hostPlatform, normalizedSelectedApps)
+                    .isEmpty))) {
       throw const BootstrapFailure(
         'Выберите хотя бы одно приложение в разделе «Правила».',
       );
@@ -6664,6 +6668,24 @@ class AppFirstRuntimeBootstrapper
     required _ClientRuleSetCatalog clientRuleSetCatalog,
   }) {
     final sanitized = Map<String, dynamic>.from(baseConfig)..remove('_meta');
+    if (hostPlatform == HostPlatform.windows) {
+      final outbounds = _readListOfMaps(sanitized['outbounds']);
+      final transportTags = <String>[
+        ...outbounds
+            .where(_isProxyTransportOutbound)
+            .map((outbound) => _readText(outbound['tag'])),
+        ..._readListOfMaps(sanitized['endpoints'])
+            .where((endpoint) =>
+                _readText(endpoint['type']).toLowerCase() == 'awg')
+            .map((endpoint) => _readText(endpoint['tag'])),
+      ].where((tag) => tag.isNotEmpty).toList(growable: false);
+      _normalizeVpnOutboundChains(
+        outbounds: outbounds,
+        proxyOutboundTags: transportTags,
+        directTag: _findOutboundTag(outbounds, 'direct') ?? 'direct',
+      );
+      sanitized['outbounds'] = outbounds;
+    }
     if (hostPlatform != HostPlatform.android) {
       if (routeMode == RouteMode.allExceptRu && !clientRuleSetCatalog.isEmpty) {
         _injectAllExceptRuRuleSetCatalog(
@@ -6792,11 +6814,11 @@ class AppFirstRuntimeBootstrapper
       finalOutboundTag = '';
     }
 
-    if (hostPlatform == HostPlatform.android) {
-      _normalizeAndroidOutboundChains(
+    if (hostPlatform == HostPlatform.android ||
+        hostPlatform == HostPlatform.windows) {
+      _normalizeVpnOutboundChains(
         outbounds: outbounds,
         proxyOutboundTags: transportPathTags,
-        routeMode: routeMode,
         directTag: directTag,
       );
     }
@@ -7220,22 +7242,16 @@ class AppFirstRuntimeBootstrapper
     );
   }
 
-  void _normalizeAndroidOutboundChains({
+  void _normalizeVpnOutboundChains({
     required List<Map<String, dynamic>> outbounds,
     required List<String> proxyOutboundTags,
-    required RouteMode routeMode,
     required String directTag,
   }) {
-    if (routeMode != RouteMode.fullTunnel &&
-        routeMode != RouteMode.excludedApps) {
-      return;
-    }
-
     final safeProxyTags = proxyOutboundTags
         .where((tag) => tag.isNotEmpty && tag != directTag)
         .toList(growable: false);
     for (var pass = 0; pass < outbounds.length + 1; pass += 1) {
-      final safeTags = _computeAndroidSafeOutboundTags(
+      final safeTags = _computeVpnSafeOutboundTags(
         outbounds: outbounds,
         proxyOutboundTags: safeProxyTags,
       );
@@ -7284,7 +7300,7 @@ class AppFirstRuntimeBootstrapper
       return currentFinalOutboundTag;
     }
 
-    final safeTags = _computeAndroidSafeOutboundTags(
+    final safeTags = _computeVpnSafeOutboundTags(
       outbounds: outbounds,
       proxyOutboundTags: proxyOutboundTags
           .where((tag) => tag.isNotEmpty && tag != directTag)
@@ -7307,7 +7323,7 @@ class AppFirstRuntimeBootstrapper
     );
   }
 
-  Set<String> _computeAndroidSafeOutboundTags({
+  Set<String> _computeVpnSafeOutboundTags({
     required List<Map<String, dynamic>> outbounds,
     required List<String> proxyOutboundTags,
   }) {

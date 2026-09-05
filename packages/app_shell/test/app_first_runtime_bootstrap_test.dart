@@ -7721,26 +7721,37 @@ void main() {
     expect(config['route'], containsPair('final', 'proxy'));
   });
 
-  test('selected-apps mode rejects an empty selection before bootstrap sync',
-      () async {
-    final bootstrapper = AppFirstRuntimeBootstrapper(
-      apiBaseUrl: 'http://127.0.0.1:1/',
-    );
+  for (final host in [HostPlatform.android, HostPlatform.windows]) {
+    for (final selection in host == HostPlatform.windows
+        ? <List<String>>[
+            [],
+            ['not a process']
+          ]
+        : <List<String>>[[]]) {
+      test(
+          '${host.name} selected-apps rejects an effectively empty selection $selection before bootstrap sync',
+          () async {
+        final bootstrapper = AppFirstRuntimeBootstrapper(
+          apiBaseUrl: 'http://127.0.0.1:1/',
+        );
 
-    await expectLater(
-      bootstrapper.resolveManagedProfile(
-        hostPlatform: HostPlatform.android,
-        routeMode: RouteMode.selectedApps,
-      ),
-      throwsA(
-        isA<BootstrapFailure>().having(
-          (error) => error.message,
-          'message',
-          'Выберите хотя бы одно приложение в разделе «Правила».',
-        ),
-      ),
-    );
-  });
+        await expectLater(
+          bootstrapper.resolveManagedProfile(
+            hostPlatform: host,
+            routeMode: RouteMode.selectedApps,
+            selectedApps: selection,
+          ),
+          throwsA(
+            isA<BootstrapFailure>().having(
+              (error) => error.message,
+              'message',
+              'Выберите хотя бы одно приложение в разделе «Правила».',
+            ),
+          ),
+        );
+      });
+    }
+  }
 
   test(
       'windows selected-apps route mode limits proxy routing to selected processes',
@@ -8067,135 +8078,165 @@ void main() {
     expect(finalServer['address_resolver'], 'local');
   });
 
-  test('android full tunnel removes direct from selector and urltest chains',
-      () async {
-    final tempDirectory = await Directory.systemTemp.createTemp(
-      'pokrov-bootstrap-android-selector-sanitize-test-',
-    );
-    addTearDown(() async {
-      if (await tempDirectory.exists()) {
-        await tempDirectory.delete(recursive: true);
-      }
-    });
+  for (final host in [HostPlatform.android, HostPlatform.windows]) {
+    for (final mode in RouteMode.values) {
+      for (final ready
+          in host == HostPlatform.windows ? [false, true] : [false]) {
+        test(
+            '${host.name} ${mode.name} removes direct from VPN selector and urltest chains (runtimeReady=$ready)',
+            () async {
+          final tempDirectory = await Directory.systemTemp.createTemp(
+            'pokrov-bootstrap-android-selector-sanitize-test-',
+          );
+          addTearDown(() async {
+            if (await tempDirectory.exists()) {
+              await tempDirectory.delete(recursive: true);
+            }
+          });
 
-    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    addTearDown(server.close);
-    unawaited(() async {
-      await for (final request in server) {
-        await utf8.decoder.bind(request).join();
-        if (request.uri.path == '/api/client/session/start-trial') {
-          request.response
-            ..headers.contentType = ContentType.json
-            ..write(
-              jsonEncode(
-                <String, Object?>{
-                  'session': <String, Object?>{
-                    'session_token': 'session-token-android-selector-sanitize',
-                    'account_id': '340',
-                  },
-                  'provisioning': <String, Object?>{
-                    'status': 'ready',
-                    'sync_ok': true,
-                    'managed_manifest': <String, Object?>{
-                      'url': '/api/client/profile/managed',
-                    },
-                  },
-                },
-              ),
+          final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+          addTearDown(server.close);
+          unawaited(() async {
+            await for (final request in server) {
+              await utf8.decoder.bind(request).join();
+              if (request.uri.path == '/api/client/session/start-trial') {
+                request.response
+                  ..headers.contentType = ContentType.json
+                  ..write(
+                    jsonEncode(
+                      <String, Object?>{
+                        'session': <String, Object?>{
+                          'session_token':
+                              'session-token-android-selector-sanitize',
+                          'account_id': '340',
+                        },
+                        'provisioning': <String, Object?>{
+                          'status': 'ready',
+                          'sync_ok': true,
+                          'managed_manifest': <String, Object?>{
+                            'url': '/api/client/profile/managed',
+                          },
+                        },
+                      },
+                    ),
+                  );
+                await request.response.close();
+                continue;
+              }
+
+              if (request.uri.path == '/api/client/route-policy') {
+                request.response
+                  ..headers.contentType = ContentType.json
+                  ..write(jsonEncode(<String, Object?>{'ok': true}));
+                await request.response.close();
+                continue;
+              }
+
+              if (request.uri.path == '/api/client/profile/managed') {
+                request.response
+                  ..headers.contentType = ContentType.json
+                  ..write(
+                    jsonEncode(
+                      <String, Object?>{
+                        'provisioning': <String, Object?>{
+                          'status': 'ready',
+                          'sync_ok': true,
+                        },
+                        'profile_revision': 'rev-android-selector-sanitize',
+                        'config_format': 'singbox-json',
+                        'config_payload': <String, Object?>{
+                          if (ready)
+                            'inbounds': <Object?>[
+                              <String, Object?>{
+                                'type': 'tun',
+                                'tag': 'tun-in',
+                                'address': <String>['172.19.0.1/28']
+                              }
+                            ],
+                          'outbounds': <Object?>[
+                            <String, Object?>{
+                              'type': 'selector',
+                              'tag': 'select',
+                              'outbounds': <Object?>['auto', 'direct'],
+                              'default': 'direct',
+                            },
+                            <String, Object?>{
+                              'type': 'urltest',
+                              'tag': 'auto',
+                              'outbounds': <Object?>['direct', 'node-1'],
+                              'url': 'http://cp.cloudflare.com',
+                            },
+                            <String, Object?>{
+                              'type': 'vless',
+                              'tag': 'node-1',
+                              'server': 'nl.kiwunaka.space',
+                              'server_port': 443,
+                              'uuid': 'test-uuid',
+                            },
+                            <String, Object?>{
+                              'type': 'direct',
+                              'tag': 'direct',
+                            },
+                          ],
+                          'route': <String, Object?>{
+                            'final': ready && mode == RouteMode.selectedApps
+                                ? 'direct'
+                                : 'select',
+                          },
+                        },
+                      },
+                    ),
+                  );
+                await request.response.close();
+                continue;
+              }
+
+              request.response.statusCode = HttpStatus.notFound;
+              await request.response.close();
+            }
+          }());
+
+          final bootstrapper = AppFirstRuntimeBootstrapper(
+            apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+            supportDirectoryResolver: () async => tempDirectory,
+            allExceptRuRuleSetUrlsResolver: (_) =>
+                <String>['http://127.0.0.1:${server.port}/missing-rules'],
+          );
+
+          final payload = await bootstrapper.resolveManagedProfile(
+            hostPlatform: host,
+            routeMode: mode,
+            selectedApps: host == HostPlatform.android
+                ? const <String>['org.telegram.messenger']
+                : const <String>['telegram.exe'],
+          );
+          final config =
+              jsonDecode(payload.configPayload) as Map<String, dynamic>;
+          final outbounds =
+              (config['outbounds'] as List).cast<Map<String, dynamic>>();
+          final selector =
+              outbounds.singleWhere((outbound) => outbound['tag'] == 'select');
+          final urltest =
+              outbounds.singleWhere((outbound) => outbound['tag'] == 'auto');
+          final route = config['route'] as Map<String, dynamic>;
+
+          expect(selector['outbounds'], isNot(contains('direct')));
+          expect(selector['default'], isNot('direct'));
+          expect(urltest['outbounds'], isNot(contains('direct')));
+          if (host == HostPlatform.android)
+            expect(
+              urltest['url'],
+              'https://api.pokrov.space/api/public/authenticated-egress-probe',
             );
-          await request.response.close();
-          continue;
-        }
-
-        if (request.uri.path == '/api/client/route-policy') {
-          request.response
-            ..headers.contentType = ContentType.json
-            ..write(jsonEncode(<String, Object?>{'ok': true}));
-          await request.response.close();
-          continue;
-        }
-
-        if (request.uri.path == '/api/client/profile/managed') {
-          request.response
-            ..headers.contentType = ContentType.json
-            ..write(
-              jsonEncode(
-                <String, Object?>{
-                  'provisioning': <String, Object?>{
-                    'status': 'ready',
-                    'sync_ok': true,
-                  },
-                  'profile_revision': 'rev-android-selector-sanitize',
-                  'config_format': 'singbox-json',
-                  'config_payload': <String, Object?>{
-                    'outbounds': <Object?>[
-                      <String, Object?>{
-                        'type': 'selector',
-                        'tag': 'select',
-                        'outbounds': <Object?>['auto', 'direct'],
-                        'default': 'direct',
-                      },
-                      <String, Object?>{
-                        'type': 'urltest',
-                        'tag': 'auto',
-                        'outbounds': <Object?>['direct', 'node-1'],
-                        'url': 'http://cp.cloudflare.com',
-                      },
-                      <String, Object?>{
-                        'type': 'vless',
-                        'tag': 'node-1',
-                        'server': 'nl.kiwunaka.space',
-                        'server_port': 443,
-                        'uuid': 'test-uuid',
-                      },
-                      <String, Object?>{
-                        'type': 'direct',
-                        'tag': 'direct',
-                      },
-                    ],
-                    'route': <String, Object?>{
-                      'final': 'select',
-                    },
-                  },
-                },
-              ),
-            );
-          await request.response.close();
-          continue;
-        }
-
-        request.response.statusCode = HttpStatus.notFound;
-        await request.response.close();
+          expect(
+              route['final'],
+              host == HostPlatform.windows && mode == RouteMode.selectedApps
+                  ? 'direct'
+                  : 'select');
+        });
       }
-    }());
-
-    final bootstrapper = AppFirstRuntimeBootstrapper(
-      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
-      supportDirectoryResolver: () async => tempDirectory,
-    );
-
-    final payload = await bootstrapper.resolveManagedProfile(
-      hostPlatform: HostPlatform.android,
-      routeMode: RouteMode.fullTunnel,
-    );
-    final config = jsonDecode(payload.configPayload) as Map<String, dynamic>;
-    final outbounds =
-        (config['outbounds'] as List).cast<Map<String, dynamic>>();
-    final selector =
-        outbounds.singleWhere((outbound) => outbound['tag'] == 'select');
-    final urltest =
-        outbounds.singleWhere((outbound) => outbound['tag'] == 'auto');
-    final route = config['route'] as Map<String, dynamic>;
-
-    expect(selector['outbounds'], isNot(contains('direct')));
-    expect(selector['default'], isNot('direct'));
-    expect(urltest['outbounds'], isNot(contains('direct')));
-    expect(
-      urltest['url'],
-      'https://api.pokrov.space/api/public/authenticated-egress-probe',
-    );
-    expect(route['final'], 'select');
-  });
+    }
+  }
 
   test(
       'android ipv4-only support context does not keep a dead ipv6 tunnel lane',
