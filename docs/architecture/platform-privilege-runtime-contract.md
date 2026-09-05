@@ -249,6 +249,14 @@ permits a repeated disconnect/recovery attempt. A corrupted, partial or future
 journal is preserved and fails closed; it is not silently erased while
 POKROV-owned network state may remain.
 
+If restart or a final journal-write failure leaves the transaction at
+`recovered`, retry clears the saved network snapshot in the atomic `clean`
+commit. A failed write retains the `recovered` checkpoint and its snapshot for
+another retry. The completed journal must reload as `clean` before a later
+transaction starts. Native tests cover this interrupted completion using a
+synthetic network backend and a locked journal; installed-package reboot and
+last-known-good profile restoration remain separate proof obligations.
+
 The boot marker is derived from system FILETIME minus Windows uptime, so a
 service restart in the same OS boot retains the same opaque boot correlation;
 a later boot changes it. This is source-level correlation, not retained proof

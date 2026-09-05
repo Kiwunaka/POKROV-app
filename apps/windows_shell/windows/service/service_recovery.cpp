@@ -285,7 +285,7 @@ class DurableRuntimeRecovery final : public RuntimeRecovery {
       return "";
     }
     if (stage_ == RecoveryStage::kRecovered) {
-      return Record(RecoveryStage::kClean);
+      return FinishRecovery();
     }
     return Record(RecoveryStage::kRollingBack);
   }
@@ -324,16 +324,20 @@ class DurableRuntimeRecovery final : public RuntimeRecovery {
     if (!error.empty()) {
       return error;
     }
+    return FinishRecovery();
+  }
+
+ private:
+  std::string FinishRecovery() {
     const auto snapshot = network_snapshot_;
     network_snapshot_.clear();
-    error = Record(RecoveryStage::kClean);
+    const auto error = Record(RecoveryStage::kClean);
     if (!error.empty()) {
       network_snapshot_ = snapshot;
     }
     return error;
   }
 
- private:
   void Load() {
     const DWORD attributes = ::GetFileAttributesW(journal_path_.c_str());
     if (attributes == INVALID_FILE_ATTRIBUTES) {

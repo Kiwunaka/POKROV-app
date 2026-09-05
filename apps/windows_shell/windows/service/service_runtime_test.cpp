@@ -900,6 +900,55 @@ void TestDurableRecoveryJournalSurvivesRestart() {
   RemoveTestRoot(root);
 }
 
+void TestRecoveredCheckpointCanRetryAndSurviveRestart() {
+  using namespace pokrov::service;
+  for (const bool restart : {false, true}) {
+    const auto root = CreateTestRoot();
+    if (root.empty()) {
+      Expect(false, "recovered checkpoint test root was not created");
+      return;
+    }
+    auto recovery = CreateRuntimeRecoveryForTesting(
+        root, std::make_unique<FakeNetworkState>());
+    Expect(recovery->Begin().empty() &&
+               recovery->BeginRollback().empty() &&
+               recovery->RestoreNetworkState().empty() &&
+               recovery->Record(RecoveryStage::kRecovered).empty(),
+           "recovered checkpoint fixture failed");
+    if (restart) {
+      recovery = CreateRuntimeRecoveryForTesting(
+          root, std::make_unique<FakeNetworkState>());
+    }
+    const auto journal = root + L"\\recovery-journal.v1";
+    const auto recovered_bytes = ReadTextFile(journal);
+    HANDLE lock = ::CreateFileW(journal.c_str(), GENERIC_READ,
+                                FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+                                FILE_ATTRIBUTE_NORMAL, nullptr);
+    Expect(lock != INVALID_HANDLE_VALUE, "journal fixture lock failed");
+    Expect(recovery->BeginRollback() == "recovery_write_failed" &&
+               std::string(recovery->StageName()) == "recovered" &&
+               recovery->RequiresRecovery(),
+           "failed clean commit lost the recovered checkpoint");
+    Expect(ReadTextFile(journal) == recovered_bytes,
+           "failed clean commit changed durable recovery evidence");
+    if (lock != INVALID_HANDLE_VALUE) {
+      ::CloseHandle(lock);
+    }
+    Expect(recovery->BeginRollback().empty() &&
+               recovery->RestoreNetworkState().empty() &&
+               recovery->CompleteRollback().empty(),
+           "recovered checkpoint could not finish after write retry");
+    recovery = CreateRuntimeRecoveryForTesting(
+        root, std::make_unique<FakeNetworkState>());
+    Expect(!recovery->RequiresRecovery() &&
+               std::string(recovery->StageName()) == "clean",
+           "recovered checkpoint produced an invalid clean journal on restart");
+    Expect(recovery->Begin().empty(),
+           "recovered checkpoint blocked the next transaction");
+    RemoveTestRoot(root);
+  }
+}
+
 void TestCorruptRecoveryJournalIsPreservedAndFailsClosed() {
   using namespace pokrov::service;
   const auto root = CreateTestRoot();
@@ -1016,6 +1065,7 @@ int main() {
   TestSnapshotCaptureFailureDoesNotStartCore();
   TestRollbackFailuresStayClosedAndCanRetry();
   TestDurableRecoveryJournalSurvivesRestart();
+  TestRecoveredCheckpointCanRetryAndSurviveRestart();
   TestCorruptRecoveryJournalIsPreservedAndFailsClosed();
   TestPartialRecoveryJournalIsPreservedAndFailsClosed();
   TestCoreOperationalEventFenceRejectsLateAndUnsafeCallbacks();
