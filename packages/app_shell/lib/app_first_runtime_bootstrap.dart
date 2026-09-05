@@ -2675,6 +2675,7 @@ class AppFirstRuntimeBootstrapper
       <String, Future<void>>{};
   String? _activeApiBaseUrl;
   Future<String>? _apiBaseUrlFlight;
+  int _activeSmartConnectProbes = 0;
 
   static const _defaultManagedManifestPath = '/api/client/profile/managed';
   // Current managed manifests are compact JSON and the checked-in rule-set
@@ -6523,8 +6524,17 @@ class AppFirstRuntimeBootstrapper
           smartConnectProbeTimeout,
           remaining,
         );
+        if (_activeSmartConnectProbes >= max(1, smartConnectProbeConcurrency)) {
+          return;
+        }
+        _activeSmartConnectProbes += 1;
+        // Future.timeout only ends this wait. Keep its slot occupied until the
+        // underlying probe settles, including across later profile resolutions.
+        final pendingProbe = Future<int?>.sync(() => probe(node)).whenComplete(
+          () => _activeSmartConnectProbes -= 1,
+        );
         try {
-          final rttMs = await probe(node).timeout(
+          final rttMs = await pendingProbe.timeout(
             probeBudget,
           );
           if (rttMs == null || rttMs < 1 || rttMs > 60000) {

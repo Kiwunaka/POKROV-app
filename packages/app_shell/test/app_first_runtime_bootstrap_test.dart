@@ -2517,8 +2517,8 @@ void main() {
     final bootstrapper = AppFirstRuntimeBootstrapper(
       apiBaseUrl: 'http://127.0.0.1:${server.port}/',
       supportDirectoryResolver: () async => tempDirectory,
-      smartConnectTelemetryDeadline: const Duration(milliseconds: 80),
-      smartConnectProbeTimeout: const Duration(seconds: 5),
+      smartConnectTelemetryDeadline: const Duration(milliseconds: 500),
+      smartConnectProbeTimeout: const Duration(milliseconds: 40),
       smartConnectProbeConcurrency: 3,
       smartConnectLatencyProbe: (_) {
         probesStarted += 1;
@@ -2535,6 +2535,22 @@ void main() {
     expect(stopwatch.elapsed, lessThan(const Duration(milliseconds: 500)));
     await Future<void>.delayed(const Duration(milliseconds: 160));
     expect(probesStarted, 3);
+    // A wrapper timeout does not cancel the original Future. A new resolution
+    // must share occupied slots until those probes actually settle.
+    await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 160));
+    expect(probesStarted, 3);
+    neverCompletes.complete(null);
+    await Future<void>.delayed(Duration.zero);
+    await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 160));
+    expect(probesStarted, greaterThan(3));
   });
 
   test('manual smart-connect preference does not upload fake RTT samples',
