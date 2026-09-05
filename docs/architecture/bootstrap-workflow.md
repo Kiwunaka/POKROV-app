@@ -222,7 +222,7 @@ Current blocking dependency:
   `ru`, and `ru_spb` for eligible non-US nodes and direct-only for `us`.
   Exact public-app visibility, selection, reconnect, and materialized runtime
   proof remain `MANUAL_OWNER_TEST` until the owner's phone is ADB-visible
-- a confirmed selected-outbound egress failure in automatic mode quarantines the exact node for 15 minutes with an eight-node cap and at most two failover attempts; manual mode and unavailable probe evidence remain fail-closed without silent route changes
+- a confirmed selected-outbound egress failure in automatic mode quarantines the exact node for 15 minutes with an eight-node cap and at most two failover attempts; manual mode and unavailable probe evidence remain fail-closed without silent route changes; retry delays use 250/500 ms backoff plus 0–250 ms jitter, and the existing owner-generation check cancels stale retries
 - Android reconnect now always resyncs and restages the live managed profile before start, which keeps the staged runtime config aligned with the currently selected route mode instead of trusting whatever was left from an older session
 - the shared shell now keeps Android connect/disconnect transitions busy until the host actually settles, which prevents repeated taps from queueing duplicate service start or stop requests while VPN permission or teardown is still underway
 - when the Android host tears down immediately after a failed start, runtime snapshot state now keeps the concrete startup failure instead of replacing it with a generic stop message

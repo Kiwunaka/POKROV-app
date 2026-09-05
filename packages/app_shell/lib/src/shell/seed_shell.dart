@@ -5659,7 +5659,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   Future<void> _retryAutomaticLocationAfterEgressFailure(
     int ownerGeneration,
   ) async {
-    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final retryIndex = (_automaticFailoverAttempts - 1).clamp(0, 1);
+    final retryDelay = Duration(
+      milliseconds: (250 << retryIndex) + math.Random().nextInt(251),
+    );
+    await Future<void>.delayed(retryDelay);
     try {
       if (!mounted ||
           ownerGeneration != _automaticFailoverGeneration ||
