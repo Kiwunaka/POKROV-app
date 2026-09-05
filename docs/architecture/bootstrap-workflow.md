@@ -488,6 +488,15 @@ ordinary import and adds no shell `part`.
 non-Android revision tracking independently. Existing seed-app widget tests
 continue to exercise the connection/Quick Settings integration.
 
+Normal connect and explicit protection repair both wait for the pending host
+profile invalidation before staging a replacement. An invalidation timeout
+ends the operation without stage/connect, even if the host responds later.
+Repair also captures the local input revision and checks it after the stage
+acknowledgement: if the user closes the repair sheet and changes routing while
+staging is pending, the old profile stays dirty and cannot start. The user
+retries with the current settings. Host content-digest checks remain separate
+from this local intent fence.
+
 ### Runtime failure observations
 
 Native failure categories pass through an exact allowlist before reaching public

@@ -3914,6 +3914,22 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         );
       }
 
+      // Reuse the normal connect barrier: a pending host invalidation must
+      // finish before repair can stage a replacement profile.
+      final invalidated = await _waitForQuickSettingsInvalidation(
+        _managedProfileRevision,
+      );
+      if (!mounted) {
+        return;
+      }
+      if (!invalidated) {
+        throw const BootstrapFailure(
+          'Не удалось обновить настройки для быстрого подключения. Попробуйте ещё раз.',
+        );
+      }
+
+      final profileRevision = _managedProfileRevision;
+
       // A repair always resolves the current account/node/routing contract.
       // Staging is idempotent on the host and the loop runs exactly once.
       onStep?.call(_ProtectionRepairStep.refreshProfile);
@@ -3923,6 +3939,18 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         'repairStageManagedProfile',
         () => _runtimeEngine.stageManagedProfile(managedProfile),
       );
+      if (!mounted) {
+        return;
+      }
+      if (profileRevision != _managedProfileRevision) {
+        setState(() {
+          _runtimeSnapshot = current;
+          _managedProfileDirty = true;
+        });
+        throw const BootstrapFailure(
+          'Настройки изменились. Подключитесь еще раз, чтобы обновить профиль.',
+        );
+      }
       _managedProfileDirty = false;
       _stagedProfileUsesWarp = managedProfile.warpPolicy.canEnableRuntime;
       _stagedNodeCode = _resolvedProfileNodeCode;

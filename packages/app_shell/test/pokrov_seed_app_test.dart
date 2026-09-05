@@ -1705,88 +1705,168 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets(
-      'Quick Settings invalidation coalesces a held burst before connect',
+  for (final action in [
+    'connect',
+    'repair',
+    'repair-stale',
+    'repair-timeout',
+  ]) {
+    final repair = action != 'connect';
+    final changeDuringStage = action == 'repair-stale';
+    testWidgets(
+      'Quick Settings invalidation coalesces a held burst before $action',
       (tester) async {
-    const channel = MethodChannel('space.pokrov/runtime_engine');
-    final messenger =
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-    final first = Completer<Map<String, Object?>>();
-    final second = Completer<Map<String, Object?>>();
-    var invalidations = 0;
-    final calls = <String>[];
-    const ready = <String, Object?>{
-      'phase': 'initialized',
-      'artifactDirectory': '/host/runtime',
-      'coreBinaryPath': '/host/runtime/pokrov-core.aar',
-      'supportsLiveConnect': true,
-      'canInitialize': true,
-      'canConnect': true,
-      'message': 'Runtime initialized.',
-    };
-    messenger.setMockMethodCallHandler(channel, (call) async {
-      calls.add(call.method);
-      switch (call.method) {
-        case 'runtimeEngine.snapshot':
-        case 'runtimeEngine.initialize':
-          return ready;
-        case 'runtimeEngine.invalidateManagedProfile':
-          return ++invalidations == 1 ? first.future : second.future;
-        case 'runtimeEngine.stageManagedProfile':
-          return <String, Object?>{
-            ...ready,
-            'phase': 'configStaged',
-            'stagedConfigPath': '/host/runtime/synthetic-profile.json',
-            'canConnect': true
-          };
-        case 'runtimeEngine.connect':
-          return <String, Object?>{
-            ...ready,
-            'phase': 'running',
-            'canConnect': true
-          };
-      }
-      return null;
-    });
-    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
-    final store = _FakeClientExperienceStore(
-      const PokrovClientExperienceState.empty().copyWith(
-        firstRouteScopeConfirmed: true,
-        firstRouteScopeMode: RouteMode.fullTunnel,
-      ),
+        const channel = MethodChannel('space.pokrov/runtime_engine');
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        final first = Completer<Map<String, Object?>>();
+        final second = Completer<Map<String, Object?>>();
+        final stageResult = Completer<Map<String, Object?>>();
+        var invalidations = 0;
+        final calls = <String>[];
+        const ready = <String, Object?>{
+          'phase': 'initialized',
+          'artifactDirectory': '/host/runtime',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'message': 'Runtime initialized.',
+        };
+        final staged = <String, Object?>{
+          ...ready,
+          'phase': 'configStaged',
+          'stagedConfigPath': '/host/runtime/synthetic-profile.json',
+          'canConnect': true,
+        };
+        messenger.setMockMethodCallHandler(channel, (call) async {
+          calls.add(call.method);
+          switch (call.method) {
+            case 'runtimeEngine.snapshot':
+            case 'runtimeEngine.initialize':
+              return ready;
+            case 'runtimeEngine.invalidateManagedProfile':
+              return ++invalidations == 1 ? first.future : second.future;
+            case 'runtimeEngine.stageManagedProfile':
+              return changeDuringStage ? stageResult.future : staged;
+            case 'runtimeEngine.connect':
+              return <String, Object?>{
+                ...ready,
+                'phase': 'running',
+                'canConnect': true,
+              };
+          }
+          return null;
+        });
+        addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+        final store = _FakeClientExperienceStore(
+          const PokrovClientExperienceState.empty().copyWith(
+            firstRouteScopeConfirmed: true,
+            firstRouteScopeMode: RouteMode.fullTunnel,
+          ),
+        );
+        await tester.pumpWidget(
+          PokrovSeedApp(
+            appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+            bootstrapper: _FakeBootstrapper(
+              const ManagedProfilePayload(
+                profileName: 'burst',
+                configPayload: _materializedRuntimeConfig,
+                materializedForRuntime: true,
+              ),
+            ),
+            firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+            clientExperienceStore: store,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await _tapNav(tester, 'nav-rules');
+        for (var i = 0; i < 10; i += 1) {
+          await tester.tap(
+            find.byKey(
+              ValueKey(
+                'rules-mode-row-${i.isEven ? 'allExceptRu' : 'fullTunnel'}',
+              ),
+            ),
+          );
+          await tester.pump();
+        }
+        expect(invalidations, 1);
+        await _tapNav(tester, 'nav-protection');
+        if (repair) {
+          await tester.tap(
+            find.byKey(const ValueKey('home-connection-details-action')),
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find.byKey(const ValueKey('protection-repair-action')),
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find.byKey(const ValueKey('protection-repair-confirm')),
+          );
+        } else {
+          await tester.tap(
+            find.byKey(const ValueKey('primary-connect-action')),
+          );
+        }
+        await tester.pump();
+        expect(calls, isNot(contains('runtimeEngine.stageManagedProfile')));
+        if (action == 'repair-timeout') {
+          await tester.pump(const Duration(seconds: 18));
+          await tester.pumpAndSettle();
+          expect(calls, isNot(contains('runtimeEngine.stageManagedProfile')));
+          expect(calls, isNot(contains('runtimeEngine.connect')));
+          first.complete(ready);
+          await tester.pumpAndSettle();
+          expect(calls, isNot(contains('runtimeEngine.stageManagedProfile')));
+          expect(calls, isNot(contains('runtimeEngine.connect')));
+          return;
+        }
+        first.complete(ready);
+        await tester.pump();
+        expect(invalidations, 2);
+        expect(calls, isNot(contains('runtimeEngine.stageManagedProfile')));
+        second.complete(ready);
+        if (changeDuringStage) {
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 100));
+        } else {
+          await tester.pumpAndSettle();
+        }
+        expect(invalidations, 2);
+        expect(
+          calls.where((it) => it == 'runtimeEngine.stageManagedProfile'),
+          hasLength(1),
+        );
+        if (changeDuringStage) {
+          // A user can dismiss the repair sheet and change routing while a slow
+          // host stage still acknowledges the old profile.
+          expect(
+            find.byKey(const ValueKey('protection-repair-progress')),
+            findsOneWidget,
+          );
+          await tester.binding.handlePopRoute();
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.tap(find.byKey(const ValueKey('nav-rules')));
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.tap(
+            find.byKey(const ValueKey('rules-mode-row-allExceptRu')),
+          );
+          await tester.pump();
+          expect(invalidations, 3);
+          stageResult.complete(staged);
+          await tester.pumpAndSettle();
+          expect(calls, isNot(contains('runtimeEngine.connect')));
+        } else {
+          expect(
+            calls.where((it) => it == 'runtimeEngine.connect'),
+            hasLength(1),
+          );
+        }
+      },
     );
-    await tester.pumpWidget(PokrovSeedApp(
-      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
-      bootstrapper: _FakeBootstrapper(const ManagedProfilePayload(
-          profileName: 'burst',
-          configPayload: _materializedRuntimeConfig,
-          materializedForRuntime: true)),
-      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
-      clientExperienceStore: store,
-    ));
-    await tester.pumpAndSettle();
-    await _tapNav(tester, 'nav-rules');
-    for (var i = 0; i < 10; i += 1) {
-      await tester.tap(find.byKey(ValueKey(
-          'rules-mode-row-${i.isEven ? 'allExceptRu' : 'fullTunnel'}')));
-      await tester.pump();
-    }
-    expect(invalidations, 1);
-    await _tapNav(tester, 'nav-protection');
-    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
-    await tester.pump();
-    expect(calls, isNot(contains('runtimeEngine.stageManagedProfile')));
-    first.complete(ready);
-    await tester.pump();
-    expect(invalidations, 2);
-    expect(calls, isNot(contains('runtimeEngine.stageManagedProfile')));
-    second.complete(ready);
-    await tester.pumpAndSettle();
-    expect(invalidations, 2);
-    expect(calls.where((it) => it == 'runtimeEngine.stageManagedProfile'),
-        hasLength(1));
-    expect(calls.where((it) => it == 'runtimeEngine.connect'), hasLength(1));
-  });
+  }
 
   test(
       'android seed app context keeps smoke profile free of desktop route keys',
