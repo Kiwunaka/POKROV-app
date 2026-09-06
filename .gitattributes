@@ -6,6 +6,7 @@ apps/windows_shell/windows/runner/resources/runtime/*.exe filter=lfs diff=lfs me
 # Keep the assembled upstream license text byte-stable on Windows checkouts.
 apps/windows_shell/windows/runner/resources/runtime/libcronet.NOTICES.txt -text whitespace=-blank-at-eol,-blank-at-eof
 packages/app_shell/assets/licenses/native-go-NOTICES.txt -text whitespace=-blank-at-eol,-blank-at-eof
+apps/android_shell/assets/licenses/maven-NOTICES.txt -text whitespace=-blank-at-eol,-blank-at-eof
 artifacts/releases/**/*.apk filter=lfs diff=lfs merge=lfs -text
 artifacts/releases/**/*.aab filter=lfs diff=lfs merge=lfs -text
 artifacts/releases/**/*.exe filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,1303 @@
+{
+  "schema": "pokrov.android-maven-notices/v1",
+  "client_before": "509190b19fb08543c9a7fcf9e750c14b6c8429c9",
+  "asset": {
+    "path": "apps/android_shell/assets/licenses/maven-NOTICES.txt",
+    "bytes": 176690,
+    "sha256": "06b7256830d0d19ec1aeb70326ea8216b830e2c41a29cb3c4314e7ca84f180af"
+  },
+  "body_count": 164,
+  "body_hashes": [
+    {
+      "label": "Apache License 2.0 \u2014 declared by the selected Maven POMs",
+      "body_offset": 3401,
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "label": "Boost Software License 1.0 \u2014 Kotlin MathJVM derived functions",
+      "body_offset": 14984,
+      "bytes": 1337,
+      "sha256": "8d8291caf1cee26d23acf3eb67c9f9a2d58f1c681b16a4fbe8cbfb9e3c0b5a9b"
+    },
+    {
+      "label": "Protocol Buffers \u2014 shaded dependency within Tink Android",
+      "body_offset": 16541,
+      "bytes": 1732,
+      "sha256": "6e5e117324afd944dcf67f36cf329843bc1a92229a8cd9bb573d7a83130fea7d"
+    },
+    {
+      "label": "CC BY 2.5 \u2014 Brian Goetz JSR-305 concurrency annotations",
+      "body_offset": 18492,
+      "bytes": 16348,
+      "sha256": "4d8ba71ebf0198d313388e80df3eb3d3deae7ce5c17ea64c407a8bc8123019d9"
+    },
+    {
+      "label": "Source attribution: androidx.activity_activity_1.8.1, androidx.annotation_annotation-jvm_1.9.1, androidx.annotation_annotation_1.9.1, androidx.browser_browser_1.8.0, androidx.core_core_1.13.1, androidx.fragment_fragment_1.7.1, androidx.lifecycle_lifecycle-viewmodel_2.7.0, androidx.media3_media3-common_1.9.2, androidx.media3_media3-container_1.9.2, androidx.media3_media3-datasource_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2, androidx.window.extensions.core_core_1.0.0, androidx.window_window-java_1.2.0, androidx.window_window_1.2.0",
+      "body_offset": 35580,
+      "bytes": 615,
+      "sha256": "ffbf3b8a42860b5eaa8228cca1c1f328305ad749737bef00ef43520d8f5e48b7"
+    },
+    {
+      "label": "Source attribution: androidx.activity_activity_1.8.1, androidx.annotation_annotation-experimental_1.4.0, androidx.annotation_annotation-jvm_1.9.1, androidx.browser_browser_1.8.0, androidx.core_core_1.13.1, androidx.fragment_fragment_1.7.1, androidx.lifecycle_lifecycle-common_2.7.0, androidx.lifecycle_lifecycle-livedata_2.7.0, androidx.lifecycle_lifecycle-runtime_2.7.0, androidx.lifecycle_lifecycle-viewmodel-savedstate_2.7.0, androidx.lifecycle_lifecycle-viewmodel_2.7.0, androidx.savedstate_savedstate_1.2.1",
+      "body_offset": 36868,
+      "bytes": 615,
+      "sha256": "0fb76639cf65ffb51bcc4bdf5c15623ef6cd1c4ae400c99fcf32187123bbc35c"
+    },
+    {
+      "label": "Source attribution: androidx.activity_activity_1.8.1, androidx.annotation_annotation-jvm_1.9.1, androidx.annotation_annotation_1.9.1, androidx.arch.core_core-common_2.2.0, androidx.browser_browser_1.8.0, androidx.collection_collection_1.2.0, androidx.concurrent_concurrent-futures_1.1.0, androidx.core_core-ktx_1.13.1, androidx.core_core_1.13.1, androidx.customview_customview_1.0.0, androidx.exifinterface_exifinterface_1.3.6, androidx.fragment_fragment_1.7.1, androidx.interpolator_interpolator_1.0.0, androidx.lifecycle_lifecycle-common_2.7.0, androidx.lifecycle_lifecycle-livedata-core-ktx_2.7.0, androidx.lifecycle_lifecycle-viewmodel-savedstate_2.7.0, androidx.loader_loader_1.0.0, androidx.savedstate_savedstate_1.2.1, androidx.versionedparcelable_versionedparcelable_1.1.1, androidx.viewpager_viewpager_1.0.0",
+      "body_offset": 38461,
+      "bytes": 615,
+      "sha256": "768f8c7388691bf175d55d8107d3bb9cd7c64ac1f74411309d0b138fa9895cb0"
+    },
+    {
+      "label": "Source attribution: androidx.activity_activity_1.8.1, androidx.annotation_annotation-jvm_1.9.1, androidx.core_core_1.13.1, androidx.fragment_fragment_1.7.1, androidx.lifecycle_lifecycle-process_2.7.0, androidx.lifecycle_lifecycle-viewmodel-savedstate_2.7.0, androidx.lifecycle_lifecycle-viewmodel_2.7.0, androidx.media3_media3-common_1.9.2, androidx.media3_media3-datasource_1.9.2, androidx.media3_media3-exoplayer-dash_1.9.2, androidx.media3_media3-exoplayer-rtsp_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2, androidx.profileinstaller_profileinstaller_1.3.1, androidx.window_window-java_1.2.0, androidx.window_window_1.2.0",
+      "body_offset": 39903,
+      "bytes": 615,
+      "sha256": "b698582c54bfdc53aace53dba7612f36ddbb0259cfddd6168604e1e0e56212ee"
+    },
+    {
+      "label": "Source attribution: androidx.activity_activity_1.8.1, androidx.core_core-ktx_1.13.1, androidx.core_core_1.13.1, androidx.fragment_fragment_1.7.1, androidx.lifecycle_lifecycle-viewmodel_2.7.0, androidx.media3_media3-common_1.9.2, androidx.media3_media3-exoplayer-rtsp_1.9.2, androidx.media3_media3-extractor_1.9.2, androidx.profileinstaller_profileinstaller_1.3.1, androidx.window_window_1.2.0",
+      "body_offset": 41072,
+      "bytes": 615,
+      "sha256": "098ca21a7be9224c03b2c4966bbec5c1b3c7511f391545373c2b450fae6541e4"
+    },
+    {
+      "label": "Source attribution: androidx.activity_activity_1.8.1, androidx.annotation_annotation-experimental_1.4.0, androidx.browser_browser_1.8.0, androidx.collection_collection_1.2.0, androidx.core_core_1.13.1, androidx.exifinterface_exifinterface_1.3.6, androidx.fragment_fragment_1.7.1, androidx.lifecycle_lifecycle-viewmodel_2.7.0, androidx.media3_media3-common_1.9.2, androidx.media3_media3-exoplayer-dash_1.9.2, androidx.media3_media3-exoplayer-hls_1.9.2, androidx.media3_media3-exoplayer-rtsp_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2, androidx.savedstate_savedstate_1.2.1, androidx.startup_startup-runtime_1.1.1, androidx.tracing_tracing_1.2.0",
+      "body_offset": 42534,
+      "bytes": 615,
+      "sha256": "575ee5739171b0a546eb044c10ef188f605a1e8c975a728a6072f61ed2658e94"
+    },
+    {
+      "label": "Source attribution: androidx.activity_activity_1.8.1, androidx.annotation_annotation-jvm_1.9.1, androidx.media3_media3-common_1.9.2, androidx.media3_media3-exoplayer-hls_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 43566,
+      "bytes": 619,
+      "sha256": "fd14cf2373f18c32e45014401759f2d03327d918729be380314118647b82784c"
+    },
+    {
+      "label": "Source attribution: androidx.annotation_annotation-jvm_1.9.1, androidx.annotation_annotation_1.9.1, androidx.core_core_1.13.1, androidx.media3_media3-common_1.9.2, androidx.media3_media3-exoplayer-dash_1.9.2",
+      "body_offset": 44554,
+      "bytes": 619,
+      "sha256": "112331fa20ed11a2311644f2b9cef74da0274eac198f18ec6b16bac4e6f82613"
+    },
+    {
+      "label": "Source attribution: androidx.annotation_annotation-jvm_1.9.1, androidx.annotation_annotation_1.9.1, androidx.core_core_1.13.1",
+      "body_offset": 45460,
+      "bytes": 619,
+      "sha256": "3eef9d928917c18427704cbdf31a57e9548a88a918cbb3924a2cfbff04a86ffd"
+    },
+    {
+      "label": "Source attribution: androidx.annotation_annotation-jvm_1.9.1, androidx.annotation_annotation_1.9.1, androidx.core_core_1.13.1, androidx.media3_media3-common_1.9.2, androidx.media3_media3-exoplayer_1.9.2",
+      "body_offset": 46443,
+      "bytes": 619,
+      "sha256": "a34cd7c49b07da7319aadce0fee47da135773758afb314667d92ecc29657deb4"
+    },
+    {
+      "label": "Source attribution: androidx.annotation_annotation-jvm_1.9.1, androidx.annotation_annotation_1.9.1, androidx.core_core_1.13.1, androidx.media3_media3-common_1.9.2, androidx.media3_media3-container_1.9.2, androidx.media3_media3-datasource_1.9.2, androidx.media3_media3-decoder_1.9.2, androidx.media3_media3-exoplayer-dash_1.9.2, androidx.media3_media3-exoplayer-hls_1.9.2, androidx.media3_media3-exoplayer-smoothstreaming_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 47730,
+      "bytes": 619,
+      "sha256": "bd681efb8799978450f2abfdb13bf66aa8e2050c974625bf6ab8e184d4500b65"
+    },
+    {
+      "label": "Source attribution: androidx.annotation_annotation-jvm_1.9.1, androidx.annotation_annotation_1.9.1, androidx.arch.core_core-runtime_2.2.0, androidx.core_core-ktx_1.13.1, androidx.core_core_1.13.1, androidx.lifecycle_lifecycle-common_2.7.0, androidx.lifecycle_lifecycle-livedata-core_2.7.0, androidx.lifecycle_lifecycle-livedata_2.7.0, androidx.lifecycle_lifecycle-process_2.7.0, androidx.lifecycle_lifecycle-runtime_2.7.0, androidx.lifecycle_lifecycle-viewmodel_2.7.0, androidx.media3_media3-common_1.9.2, androidx.media3_media3-datasource_1.9.2, androidx.media3_media3-decoder_1.9.2, androidx.media3_media3-exoplayer-dash_1.9.2, androidx.media3_media3-exoplayer-hls_1.9.2, androidx.media3_media3-exoplayer-smoothstreaming_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 49319,
+      "bytes": 619,
+      "sha256": "75dbadc0b3159a276c67a0bf4f5e7fb11b02fec4223eae12aa3a64e195a4fca6"
+    },
+    {
+      "label": "Source attribution: androidx.annotation_annotation-jvm_1.9.1, androidx.core_core_1.13.1",
+      "body_offset": 50187,
+      "bytes": 619,
+      "sha256": "324242fc42ca1fe5892a57220c8a8720f68f1d5923bd69f0fc4e63f2b032656f"
+    },
+    {
+      "label": "Source attribution: androidx.annotation_annotation-jvm_1.9.1, androidx.media3_media3-common_1.9.2, androidx.media3_media3-container_1.9.2, androidx.media3_media3-datasource_1.9.2, androidx.media3_media3-exoplayer-hls_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 51270,
+      "bytes": 615,
+      "sha256": "85d89e90bd56722f8d3a5386d12bacfc7eb6c0bb83e87d1f8e29d7f0ea871bf5"
+    },
+    {
+      "label": "Source attribution: androidx.annotation_annotation-jvm_1.9.1, androidx.annotation_annotation_1.9.1, androidx.core_core_1.13.1, androidx.media3_media3-common_1.9.2, androidx.media3_media3-datasource_1.9.2, androidx.media3_media3-exoplayer-dash_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.profileinstaller_profileinstaller_1.3.1",
+      "body_offset": 52385,
+      "bytes": 619,
+      "sha256": "883fc7ae513b62f8c406fe00a6dda4a281a059fc674b554c6e24ee0e36347193"
+    },
+    {
+      "label": "Source attribution: androidx.browser_browser_1.8.0, androidx.core_core_1.13.1, androidx.media3_media3-common_1.9.2",
+      "body_offset": 53280,
+      "bytes": 615,
+      "sha256": "0a482956cdefef7b857c207289fcf91b92f4c4003e79fdd0d6e5021d6ec60305"
+    },
+    {
+      "label": "Source attribution: androidx.collection_collection_1.2.0, androidx.core_core-ktx_1.13.1, androidx.core_core_1.13.1, androidx.media3_media3-common_1.9.2, androidx.media3_media3-container_1.9.2, androidx.media3_media3-database_1.9.2, androidx.media3_media3-datasource_1.9.2, androidx.media3_media3-decoder_1.9.2, androidx.media3_media3-exoplayer-dash_1.9.2, androidx.media3_media3-exoplayer-hls_1.9.2, androidx.media3_media3-exoplayer-smoothstreaming_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 54591,
+      "bytes": 619,
+      "sha256": "f522a5228a4efd49ff1fba81fa2fba84dd5864ae3a85ed3af016abb700aa49f9"
+    },
+    {
+      "label": "Source attribution: androidx.core_core-ktx_1.13.1",
+      "body_offset": 55421,
+      "bytes": 620,
+      "sha256": "dc12336bbf298546ef57c053e433668b61d9e2d5bf142d29b0f017a37a0eb151"
+    },
+    {
+      "label": "Source attribution: androidx.core_core-ktx_1.13.1",
+      "body_offset": 56252,
+      "bytes": 620,
+      "sha256": "7147d3f75b51ca20ce6e3f5095c0b4ec0193de2804e8daac15749a8ed424f415"
+    },
+    {
+      "label": "Source attribution: androidx.core_core-ktx_1.13.1",
+      "body_offset": 57083,
+      "bytes": 621,
+      "sha256": "60fdc91f1d77dab4e4d2ef9b97fb850b500698c4514f859602e1fbc692de2974"
+    },
+    {
+      "label": "Source attribution: androidx.core_core-ktx_1.13.1, androidx.core_core_1.13.1, androidx.media3_media3-common_1.9.2, androidx.media3_media3-database_1.9.2, androidx.media3_media3-datasource_1.9.2, androidx.media3_media3-exoplayer-dash_1.9.2, androidx.media3_media3-exoplayer-hls_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 58228,
+      "bytes": 619,
+      "sha256": "9d0f46e29c70c3c5e1bf9827a8b6f89dd4633da52ce437ab334a833487c84e14"
+    },
+    {
+      "label": "Source attribution: androidx.core_core_1.13.1",
+      "body_offset": 59054,
+      "bytes": 619,
+      "sha256": "b9fc24a6ca136cc571f5237f1b82536034946353b635870a7640a1443eb2e209"
+    },
+    {
+      "label": "Source attribution: androidx.core_core_1.13.1",
+      "body_offset": 59880,
+      "bytes": 619,
+      "sha256": "a1dfc2b88d1a51e2574ccf5b123ffb2c7c518a5ed10f4c57dfc43faec195907c"
+    },
+    {
+      "label": "Source attribution: androidx.core_core_1.13.1",
+      "body_offset": 60706,
+      "bytes": 633,
+      "sha256": "cc72f0c458dab99b2021d05c8bf272eb917dda654c3baf737db83ba3cf57aeb4"
+    },
+    {
+      "label": "Source attribution: androidx.core_core_1.13.1",
+      "body_offset": 61546,
+      "bytes": 618,
+      "sha256": "85304b741dae82536140550f0ee7054d122ebdf816c852c92bbbe86686501ae6"
+    },
+    {
+      "label": "Source attribution: androidx.core_core_1.13.1",
+      "body_offset": 62371,
+      "bytes": 620,
+      "sha256": "627eb9ffdae7f73ea2a685b2bed602684547109928c6bf4afa08a88f7f96af32"
+    },
+    {
+      "label": "Source attribution: androidx.core_core_1.13.1",
+      "body_offset": 63198,
+      "bytes": 615,
+      "sha256": "1a6d45f82689dd204ca86c5a6dc8b06244cd1ddd46fb9bdbbc82f0b62fdcdd97"
+    },
+    {
+      "label": "Source attribution: androidx.core_core_1.13.1",
+      "body_offset": 64020,
+      "bytes": 610,
+      "sha256": "7d6bc44faadcfc207a6e1e5ba86e8a3d3df5ab796a1fbfa779bdd42ffbb8cc5c"
+    },
+    {
+      "label": "Source attribution: androidx.core_core_1.13.1, androidx.media3_media3-common_1.9.2, androidx.media3_media3-container_1.9.2, androidx.media3_media3-datasource_1.9.2, androidx.media3_media3-exoplayer_1.9.2",
+      "body_offset": 64995,
+      "bytes": 619,
+      "sha256": "d6cfc574bd8e3ac4a60037317c60b273556b72fa04fa4e32bb8b3581f949c76e"
+    },
+    {
+      "label": "Source attribution: androidx.core_core_1.13.1",
+      "body_offset": 65821,
+      "bytes": 619,
+      "sha256": "623d3727872cbcb7ff339b9a151f6f1a6eeb5bdf9f0afe2d7d51b2804fb6591c"
+    },
+    {
+      "label": "Source attribution: androidx.core_core_1.13.1",
+      "body_offset": 66647,
+      "bytes": 616,
+      "sha256": "916ad05d2ddb5952efa00a8eacd18ecca04b6fab9c55adf238e4847ac255c35f"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-common_1.9.2",
+      "body_offset": 67480,
+      "bytes": 618,
+      "sha256": "7c9db8e897e6f3179069e08c6f89fd9a4ab775a62b6c10322a26c09dc8c995c7"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-common_1.9.2, androidx.media3_media3-container_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 68435,
+      "bytes": 615,
+      "sha256": "f5021ffa3612486880f2e3307e1560862dd6e6dd8b2cb7bd9d0df85e8f6c6961"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-common_1.9.2",
+      "body_offset": 69267,
+      "bytes": 618,
+      "sha256": "33ff883fe3dccec8de864ff36445c86bfe04a0571ffb4f6050eac161f2b3a937"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-common_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 70182,
+      "bytes": 616,
+      "sha256": "ac4121f8722403571cfe60775d644be9c095cc3310f9ac233e66b91765773dd7"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-common_1.9.2, androidx.media3_media3-container_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 71135,
+      "bytes": 616,
+      "sha256": "77496174065409af52177a397a9c66f6bc0911344d14ae8838947f1dcbaf2584"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-common_1.9.2",
+      "body_offset": 71968,
+      "bytes": 665,
+      "sha256": "b7dc0f3dbbe86cc868f63e368faf0834bdca1fc99fee35cd98b79b609f784a40"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-common_1.9.2, androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 72890,
+      "bytes": 622,
+      "sha256": "dd4f6bac39414b2466cfab60aaae3d21436d46334ecd343e49560da45a23538f"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-common_1.9.2",
+      "body_offset": 73729,
+      "bytes": 622,
+      "sha256": "330dfe100498c95c70e14baebc1641830a37e6e096bf4d06a76cdce740f87cb4"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-common_1.9.2",
+      "body_offset": 74568,
+      "bytes": 614,
+      "sha256": "2f2ef5e57c28e53a8b96467d3001df6883614d249a3b1179aa24f1ef2968d3c4"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-common_1.9.2, androidx.media3_media3-container_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 75519,
+      "bytes": 616,
+      "sha256": "0fe4f1bde056243e9ed62dd5a02870d40b055223764490ef71392a83a907952a"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-datasource_1.9.2, androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 76436,
+      "bytes": 618,
+      "sha256": "a8b99713089eea67558debd2024a40a8a27202e1ee264d3c474c32035504ffcb"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-exoplayer_1.9.2",
+      "body_offset": 77274,
+      "bytes": 619,
+      "sha256": "c2845d4ef93c794ef47fd460a599aef8ed029edf0e550918180cc320cddadad9"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-exoplayer_1.9.2",
+      "body_offset": 78113,
+      "bytes": 619,
+      "sha256": "5815b574cfcef1e44e38268b463e224d826598f7506ca4926794c42e8fee0efb"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-exoplayer_1.9.2, androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 78992,
+      "bytes": 615,
+      "sha256": "7f891628d7c09a66a2e09eaaa52288af969df930794cd47e1701353ad82f259b"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 79827,
+      "bytes": 615,
+      "sha256": "5a90d2946d836db5ba4929b5e52d28c11e22df5b4a5455db4334e6365a3e12e4"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 80662,
+      "bytes": 616,
+      "sha256": "788db44a55f3b79624bf05480c28b5ce87015169af06e04dd246e52cefb644f9"
+    },
+    {
+      "label": "Source attribution: androidx.media3_media3-extractor_1.9.2",
+      "body_offset": 81498,
+      "bytes": 622,
+      "sha256": "4a7dfc2d42fb416ef2927db93c3f1b70f362184d924cecf2cf23f82a75d90ffa"
+    },
+    {
+      "label": "Source attribution: com.getkeepsafe.relinker_relinker_1.4.5",
+      "body_offset": 82341,
+      "bytes": 623,
+      "sha256": "b547829fb73cf6d7dd11e60d7bd8afc5b91c5a6118f65e0a8740fa66a7896086"
+    },
+    {
+      "label": "Source attribution: com.getkeepsafe.relinker_relinker_1.4.5",
+      "body_offset": 83185,
+      "bytes": 609,
+      "sha256": "430bf2a05fb4a780a778ee7068fb25dc47ca4613c8fa9c55adc9dd8992d65051"
+    },
+    {
+      "label": "Source attribution: com.getkeepsafe.relinker_relinker_1.4.5",
+      "body_offset": 84015,
+      "bytes": 624,
+      "sha256": "eb8396e589b30b7d83bd0d9a71100f3298f27c5172695190f4ba1ea39882ed4d"
+    },
+    {
+      "label": "Source attribution: com.google.code.findbugs_jsr305_3.0.2",
+      "body_offset": 84858,
+      "bytes": 187,
+      "sha256": "126a1126efb3c2ec7abe38fbb520ca6459525ac353bf0b259d78d759cc75b58e"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 85259,
+      "bytes": 594,
+      "sha256": "c9c285dbef62beb3c04fedb3990184124e8df78ae919ea21e7243c53d920011f"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 86067,
+      "bytes": 594,
+      "sha256": "edbaf0b326d9f78618036d5e3fcd99fde7e66468d009013b7ee34c655262b1cc"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 86875,
+      "bytes": 594,
+      "sha256": "62f9a87a4d354eaf592d9dcd61c5863128c6506f640e2f3967d0a98f2724d434"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 87683,
+      "bytes": 594,
+      "sha256": "dedd8d9107f2fa208a6fffdc2bd2803ede1104dc924e997938da3073d32e1057"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 88491,
+      "bytes": 594,
+      "sha256": "037120081e614adbe1c42f542f6f31d8521b2dc58b5d18e6b8a0c7f2ba11dca0"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 89299,
+      "bytes": 599,
+      "sha256": "37ecbe1fa3e01b951b39e397e2119cca5ab2004a1141b524530e188650c9ecb5"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 90112,
+      "bytes": 599,
+      "sha256": "c53f8ad493c13a836f71aabd72594cb2e667a1c45a3065f7cb959fec24bc3687"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 90925,
+      "bytes": 594,
+      "sha256": "d7ce9e8797a58ad957eea97c5ceb8ac988300a46015e877b010b1bda616deafb"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 91733,
+      "bytes": 599,
+      "sha256": "4c6a4eb35d2fd425aba6035abb92879be7b25ecbfbf624bbf961573aca09c387"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 92546,
+      "bytes": 653,
+      "sha256": "83941d01778827dd77a9ad728797392686d44de2df3aab35765fe4547c7d022b"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 93413,
+      "bytes": 594,
+      "sha256": "cf4507780b7536570a87d1ac6c4f72d6200921a12e554dfa532e1b71a23df8dc"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 94221,
+      "bytes": 594,
+      "sha256": "f94897badaeea28de09b06fe36a58e018cf57f6be0e288185474cdd6abe18e4c"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 95029,
+      "bytes": 594,
+      "sha256": "1d8a763ac8b7bb759ecd7b9d781074e074cf7cca6f84bb3a873baefbd9298d6a"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 95837,
+      "bytes": 594,
+      "sha256": "7320c59d690317c46151f2ad5fe9c451008f5035c8501d5abb73c3dc0ab0c4a5"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 96645,
+      "bytes": 599,
+      "sha256": "4f7600a78597b23d1d8f8e32f14a643268c38082e7bfb69b92accb8310761cee"
+    },
+    {
+      "label": "Source attribution: com.google.code.gson_gson_2.13.2",
+      "body_offset": 97458,
+      "bytes": 599,
+      "sha256": "1c4d856d37d271dec191067fa93924fc006560f2a96b799ba70be1d53c568d12"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 98281,
+      "bytes": 671,
+      "sha256": "0d31e1dbde588daf63438f433a5b5ac8431e14ccce088a808dd8cd9297269ec7"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 99176,
+      "bytes": 672,
+      "sha256": "9ba226d801d064998b9ff4c3d51c6daf2063e2c9eecc2f59ba048ce5ac8912b6"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 100072,
+      "bytes": 671,
+      "sha256": "5f26db9b0151e588f93efd83c601096a9b2f8a3d9a1399d18a28c6215e2479f5"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 100967,
+      "bytes": 671,
+      "sha256": "51d02aac2bffb90a879b98c6e6256c770d683dccb71b2f309e5fc53ac4027b06"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 101862,
+      "bytes": 671,
+      "sha256": "7791caea8fa5274fe53f7782606b00dcb3e3002e936a90e7110d4596ce553ad9"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 102757,
+      "bytes": 671,
+      "sha256": "4eddd9d29633b8e0718f6fa6a05a121cf7b89594e043d22d8772f5ffff38f182"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 103652,
+      "bytes": 671,
+      "sha256": "d003c1a5d3ff91112edd1aa9cc03c01b967261e29c6aae1519979ed604ad37cb"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 104547,
+      "bytes": 671,
+      "sha256": "0bb70c1b54a04164b54e0f66ca2be85494b8724bae89a15e20f01228ac4418dc"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 105442,
+      "bytes": 672,
+      "sha256": "dbec55b344014fb84d75eb9375641fa04454dc3daa236e74d6b22e08710fee27"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 106338,
+      "bytes": 671,
+      "sha256": "8a4f59c1dce6e06de8e6899ba74a62e0622876c3dfdef0e84b7507d3edd143af"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 107233,
+      "bytes": 673,
+      "sha256": "583e1acb950d2ef5d1f89f603a8ccde24c4e39568a88b08e9cc855b04aa45b1c"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 108130,
+      "bytes": 672,
+      "sha256": "b8927fcc0b55bac5aeb626c04f2d5ef3ea8883ecdd078d562ce821158093d017"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 109026,
+      "bytes": 672,
+      "sha256": "791abb9091fa50b829fbfdf5e6d6021e36257c3d3fcf382c424c92fb23bac562"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 109922,
+      "bytes": 669,
+      "sha256": "639a6f4952bfb46d273865577794ac662135b73717f666dc82fe7df85c16cf20"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 110815,
+      "bytes": 669,
+      "sha256": "30ec9364472916fe33ef08184ce5ce486613f45e088792e465d8a113dd4e5daf"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 111708,
+      "bytes": 669,
+      "sha256": "882ce7d0e3bdb29ae9b54b7d345c87a8c459526878a7ea09f45db26781aa3ba3"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 112601,
+      "bytes": 594,
+      "sha256": "792d03891354a29783c6748fe2eed474724523987e1ed807ccffcef911fd9778"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 113419,
+      "bytes": 619,
+      "sha256": "41845febcd9458cc67174fa6c5de8d6070fdab00f336f834d22135c0e7e29ecd"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 114262,
+      "bytes": 672,
+      "sha256": "a0b7a425ffb3d4f2453f0e9d39ed4cf8eb74d0d1fcb7c6d592e24e2427a193da"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 115158,
+      "bytes": 671,
+      "sha256": "e615098b113d280764ca953bde4a50ac6dfe7d677251037d60d780ea6b899bd6"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 116053,
+      "bytes": 669,
+      "sha256": "aa60e132bb2450f6db9a00166402df709a4b28a276d47c4b7c0482101429098b"
+    },
+    {
+      "label": "Source attribution: com.google.crypto.tink_tink-android_1.21.0",
+      "body_offset": 116946,
+      "bytes": 672,
+      "sha256": "89c89001fdde4dffe411698424dd2f97fb98c2f999edc4ba2df34e3d7c5f368e"
+    },
+    {
+      "label": "Source attribution: com.google.errorprone_error_prone_annotations_2.41.0",
+      "body_offset": 117852,
+      "bytes": 607,
+      "sha256": "80bb5643c4bd201c7306a48cd8a7e9069cae786d25aab3b734ae2b093baea342"
+    },
+    {
+      "label": "Source attribution: com.google.errorprone_error_prone_annotations_2.41.0",
+      "body_offset": 118693,
+      "bytes": 607,
+      "sha256": "be363ad0f0a1f69a0e6bf014d2147b89977a914ea2083962a6e218e3edcd09ca"
+    },
+    {
+      "label": "Source attribution: com.google.errorprone_error_prone_annotations_2.41.0",
+      "body_offset": 119534,
+      "bytes": 607,
+      "sha256": "3d6cfaead17fe243949f66ae8c8311c3dd2e1e79af3e305d5a71eb0e2f2aec69"
+    },
+    {
+      "label": "Source attribution: com.google.errorprone_error_prone_annotations_2.41.0",
+      "body_offset": 120375,
+      "bytes": 607,
+      "sha256": "3bd8c2bec0bad3254596d46b7ed1bb1d772d3076e868b464e13630d8e951c068"
+    },
+    {
+      "label": "Source attribution: com.google.errorprone_error_prone_annotations_2.41.0",
+      "body_offset": 121216,
+      "bytes": 607,
+      "sha256": "db6296ab6266013c16f53e9ade9789598b1c66e16179a5236f85df287b13c4c0"
+    },
+    {
+      "label": "Source attribution: com.google.errorprone_error_prone_annotations_2.41.0",
+      "body_offset": 122057,
+      "bytes": 607,
+      "sha256": "e78c246af482b43258f6968ee7a998fa699f4b4a03e42c9902ee1ad8a4f3682e"
+    },
+    {
+      "label": "Source attribution: com.google.errorprone_error_prone_annotations_2.41.0",
+      "body_offset": 122898,
+      "bytes": 607,
+      "sha256": "b9c026aaba308f1635696dba23b986237a9ab95d94e6333d9847454cad4ed7d5"
+    },
+    {
+      "label": "Source attribution: com.google.guava_failureaccess_1.0.2, com.google.guava_guava_33.3.1-android",
+      "body_offset": 123762,
+      "bytes": 594,
+      "sha256": "d3025470be544b4e22a443502cb5a197e16d19efc9641e9fde60be001086f722"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 124575,
+      "bytes": 594,
+      "sha256": "b282641ceb1d6c81f6af571af7cc86d2d3bd2ef3a31dc53825256b5c70e18a79"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 125388,
+      "bytes": 594,
+      "sha256": "89d8e269a393f14accf023c686813946dd3b65c368184359cb39aaea5bfba8e3"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 126201,
+      "bytes": 594,
+      "sha256": "dba4e88e74df4772eee206651579c4fac6928a03a9406975a340bc3467b0d39e"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 127014,
+      "bytes": 594,
+      "sha256": "74dde86fd09d606652a756f72f0c2cafea3ec64a327a08e6e7a8ee42364cd622"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 127827,
+      "bytes": 594,
+      "sha256": "3401916a213ab1d1518c336719bf249bdf4d6554f681f0f8653dc576550c00f8"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 128640,
+      "bytes": 594,
+      "sha256": "0b19ca24f04af93bb59bff37e1b3f0d24ea89e8636c89d09c4cf399d76b06266"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 129453,
+      "bytes": 594,
+      "sha256": "00b452f94fa3e29a6975711c55612f48f772e1306e6925ca50f8d0a46d4e9c33"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 130266,
+      "bytes": 600,
+      "sha256": "9462d53d511b016de81c07a37455431ea444c3a3f84db36e8c831603d8757117"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 131085,
+      "bytes": 590,
+      "sha256": "9b9dece573ebab7f2ccc5c43455b5aa380e004d044df2ea935eefb142ec8f7a0"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 131894,
+      "bytes": 594,
+      "sha256": "a827f91f361ce75e69f1a624ea6b4db0ea73a0695ffc320eaa22c43bea6d2110"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 132707,
+      "bytes": 594,
+      "sha256": "be0d04c919ed5e75e24794563fccdd6ae241f058cb1faaffc0721f519cb6d993"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 133520,
+      "bytes": 594,
+      "sha256": "834507d390255bfc593611ec04f60a176431196151775f2f823ebf79dc0b25e9"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 134333,
+      "bytes": 594,
+      "sha256": "4434447c486a14c93b15bb46d24bc7484ebc8b9efe4a476fcaeab6a19746cbcc"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 135146,
+      "bytes": 594,
+      "sha256": "991a39a1ec4dea22f250b97785c0f010c1327a2a31a45d3f20305a1b1ad0743f"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 135959,
+      "bytes": 376,
+      "sha256": "ad2730610bf2f60e1819083587afb75f75db790d76e8fbcacb7755bbee2b9463"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 136554,
+      "bytes": 594,
+      "sha256": "3ce4daca7753f2af06f7a50202a06dc50b11149541986e6a09caf81a37003861"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 137367,
+      "bytes": 600,
+      "sha256": "2977aae780411a15bf8002a7b6d28ff35d14de27c23d643d9f93ee84e4b4d886"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 138186,
+      "bytes": 600,
+      "sha256": "ded5fa8e1515a4c4137ed6aa4d37d702ea2a70e94a060771f3fd68fd67ff4534"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 139005,
+      "bytes": 600,
+      "sha256": "683a1389cf64f33c3bd25de8768f985a0f3cbb1fdc8351d2f510d7df3497e74d"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 139824,
+      "bytes": 594,
+      "sha256": "661c97573e9d0816a901c15445edf91407448c8eb1dd7897648377591bc63aa3"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 140637,
+      "bytes": 600,
+      "sha256": "41d3b8cc2b31d25436f9356b8226877d2a45418cd6a141c909ea6e0dfe3939f8"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 141456,
+      "bytes": 600,
+      "sha256": "fc88570df067926cda62acfaf25cece728499f76f6086280ed4786acea689ed2"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 142275,
+      "bytes": 600,
+      "sha256": "0d438fc81f25cbb612eea50113d767809c2ab1b291f978cc1d7340b1d7529830"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 143094,
+      "bytes": 600,
+      "sha256": "5c9588f976e332b77ea2960425330d87bdc6ca62a742b2dbbe52e6c2d0ede3a9"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 143913,
+      "bytes": 600,
+      "sha256": "78c3511cd3d5333fc76a0d66a772295f7b9f589d24794d1b357186e406012d15"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 144732,
+      "bytes": 594,
+      "sha256": "ce742a503a59fe2f4d6781bc30a6bbe327ac8b9f8d85319f98baadac2c5ad29d"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 145545,
+      "bytes": 600,
+      "sha256": "cbaf232fc2ae16fe4c51c21f337cebe9b33877ddd6e3312ef5d52a7a2426b06b"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 146364,
+      "bytes": 600,
+      "sha256": "82d2a970868a18e32e246a8b206d264430efa146cd1d1ae551766fad7314572d"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 147183,
+      "bytes": 600,
+      "sha256": "583d8a0d0ed9a36280000acc8ba40b8a557304a5b11f4e7b48f7bcfe99993a17"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 148002,
+      "bytes": 600,
+      "sha256": "252cb770c2fa18cd0d7821c8a40c8609c7eeb678a60ce7f15a73a29bf2f9ca42"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 148821,
+      "bytes": 600,
+      "sha256": "4c9d107083a9c5f9b381e62b21e2be97f405963e30bb15ead4b3f392addfed46"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 149640,
+      "bytes": 600,
+      "sha256": "6ec5d558e71234d1f4680fd33a8c6a7993d469e0f96bf36025cba5dbc9c96970"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 150459,
+      "bytes": 594,
+      "sha256": "38c893c3481d926f43e5904a0c7480c5affcb7a728470ffe11a76e6a1a26c650"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 151272,
+      "bytes": 50,
+      "sha256": "3b375ee9e486d484a7d26dd458a081b826ea7689011073cb028a3507c7d2ef85"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 151541,
+      "bytes": 150,
+      "sha256": "195f9b09b111dd6ea48b0ec19cef1d1764a84cf61e96dddeae53a1a0e492f94d"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 151910,
+      "bytes": 595,
+      "sha256": "afe904d1a4b543f85c404cf182c5733c2cda2c5ff6f75f3ee34eb1d2696419ec"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 152724,
+      "bytes": 594,
+      "sha256": "963f0b0411fe2777ac3e2b299e0000d84c654d333c588c629eee4166a2f77f0e"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 153537,
+      "bytes": 594,
+      "sha256": "d9a25dfb977e82947f4660a976bef48a67de9736b637a7b0ccb01920f617c8e1"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 154350,
+      "bytes": 594,
+      "sha256": "c7a5b18752be4cc3ab79ba76f34dbeb2f2c3d479bdc2d5a066df42c8be64a218"
+    },
+    {
+      "label": "Source attribution: com.google.guava_guava_33.3.1-android",
+      "body_offset": 155163,
+      "bytes": 600,
+      "sha256": "4fe371c61f57f389b89578fc2ef337d00c90f93a58decda4f604468f9696764a"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 155985,
+      "bytes": 208,
+      "sha256": "e2047ed7177b71a0e09d4bfbd8f812a2d1567a36d8c5778d8d31ddda9a440dda"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 156415,
+      "bytes": 208,
+      "sha256": "f50ca6aa79045374440f42aa6233e36d1215bceb0fcf93b09f34e2561563365f"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 156845,
+      "bytes": 208,
+      "sha256": "b435f6f0d1197e2dbfdc63891b518b09b5149047df84ffa9439831f5638e88de"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 157275,
+      "bytes": 208,
+      "sha256": "d29b406a88c0419f5816e7aef86703075ff16587d06678f732f61e02b2465dd5"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 157705,
+      "bytes": 208,
+      "sha256": "b78b570c391fe81f8eb5d8c9097adbc76ed6260accdde523e6b4a5572afde0b2"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 158135,
+      "bytes": 600,
+      "sha256": "bf07db813d204a4f09e1738e9d2c4755ca6c6e00dcf8fe6df35166d6d12e02da"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 158957,
+      "bytes": 208,
+      "sha256": "97dce00ca628c83039b628553ae8f8b4ee886f13b2c2fbbd6e223ff80b2f64a5"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 159387,
+      "bytes": 208,
+      "sha256": "417bd21c84f6b6cf6fe0845135eab4f26e5db4be62bc9dcaf346e8e6f957f3df"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 159817,
+      "bytes": 600,
+      "sha256": "3af858fc83088f11647ba3e0aa03e03edd30b3d6f3c4e7342764a5b739dceefe"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 160639,
+      "bytes": 600,
+      "sha256": "92fe2dd0e41b0844d2f9b5050342ed5188ca445a95dd8166650278a2d10ecf67"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 161461,
+      "bytes": 133,
+      "sha256": "1f4a1e2fda7c82e64a1348c4d0a6982e6bc64293a1f8d69e897b06b437ffcefe"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 161816,
+      "bytes": 222,
+      "sha256": "6527d7350dd076b211da0833010253e868b12f47ae931dee27be5fee03897ddd"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 162260,
+      "bytes": 64,
+      "sha256": "87ddd2a79cfcbc090d214e16fc95a47d0eb04e279fd0d5a7a1bd687966de5fb1"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 162546,
+      "bytes": 64,
+      "sha256": "cd759ab92e3254b7062e7c9e02a64ed007d5256cfb2eb739f9270e19abb6cd76"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlin_kotlin-stdlib_2.1.0",
+      "body_offset": 162832,
+      "bytes": 150,
+      "sha256": "cd3cfb7e2ada97740fb20d20c0b251754e8cd763b5ef103860ec1e814cfafeea"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlinx_kotlinx-coroutines-android_1.7.1, org.jetbrains.kotlinx_kotlinx-coroutines-core-jvm_1.7.1, org.jetbrains.kotlinx_kotlinx-coroutines-core_1.7.1",
+      "body_offset": 163328,
+      "bytes": 109,
+      "sha256": "7c09ff90a7ab273dab7e008debd8714ea754442239b3db3072b558b9e7ee6740"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlinx_kotlinx-coroutines-core-jvm_1.7.1, org.jetbrains.kotlinx_kotlinx-coroutines-core_1.7.1",
+      "body_offset": 163727,
+      "bytes": 109,
+      "sha256": "e93ee8672954e4d1812ebfdb6e6bd4b08baf3f7cedd923ad13a4cdae7dec2ebd"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlinx_kotlinx-coroutines-core-jvm_1.7.1, org.jetbrains.kotlinx_kotlinx-coroutines-core_1.7.1",
+      "body_offset": 164126,
+      "bytes": 109,
+      "sha256": "7a78f36dcb7856eecb0223083b114c8e446f61ed41ccc90eb5aaedaf4e289683"
+    },
+    {
+      "label": "Source attribution: org.jetbrains.kotlinx_kotlinx-coroutines-core-jvm_1.7.1, org.jetbrains.kotlinx_kotlinx-coroutines-core_1.7.1",
+      "body_offset": 164525,
+      "bytes": 109,
+      "sha256": "248cb127169cc9ce2be39cf088d5d7457367832214ce014114a7b8f08a2e0041"
+    },
+    {
+      "label": "Source attribution: org.jetbrains_annotations_23.0.0",
+      "body_offset": 164848,
+      "bytes": 615,
+      "sha256": "ef2ef7bd49d5403b82fdf1d8dab5cae1fe3d8fa8e7394aa3ce3ce85616e2c235"
+    },
+    {
+      "label": "Source attribution: org.jetbrains_annotations_23.0.0",
+      "body_offset": 165677,
+      "bytes": 615,
+      "sha256": "8d1c5167d49a0e73f9e9afd77f7e27e2a89e335d00ef66ffe05340cb83289059"
+    },
+    {
+      "label": "AndroidX Annotation \u2014 license retained in the selected JAR",
+      "body_offset": 166514,
+      "bytes": 10175,
+      "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+    }
+  ],
+  "source_files_scanned": 4035,
+  "selected_module_count": 68,
+  "public_maven_module_count": 63,
+  "unique_official_binary_matches": 58,
+  "metadata_or_redirect_only_modules": [
+    "androidx.annotation:annotation:1.9.1",
+    "org.jetbrains.kotlin:kotlin-bom:1.8.0",
+    "org.jetbrains.kotlin:kotlin-stdlib-common:2.1.0",
+    "org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.7.1",
+    "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1"
+  ],
+  "packages": {
+    "status": "PASS_LOCAL_ANDROID_NOTICE_PACKAGING",
+    "asset": {
+      "path": "apps/android_shell/assets/licenses/maven-NOTICES.txt",
+      "bytes": 176690,
+      "sha256": "06b7256830d0d19ec1aeb70326ea8216b830e2c41a29cb3c4314e7ca84f180af"
+    },
+    "body_count": 164,
+    "packages": [
+      {
+        "file": "E:\\r12-c05-maven-notices\\android\\app-direct-arm64-v8a-release.apk",
+        "bytes": 101210488,
+        "sha256": "139bf49582373d2b2d80602fd92a5006c2d3e22f870fbdc4c38755ab56f550b7",
+        "added": [
+          "assets/flutter_assets/assets/licenses/maven-NOTICES.txt"
+        ],
+        "changed": [
+          "assets/flutter_assets/AssetManifest.bin"
+        ],
+        "unchanged_entries": 375,
+        "protected_entries": {
+          "classes.dex": "30b6a2b2dbcd87256746968c0143c096e0173288669e36eacd1cb485ecddcd38",
+          "lib/arm64-v8a/libapp.so": "84a5bd338a3542643f692066176f1be141f559cd0179773fe92e491eceefd297",
+          "lib/arm64-v8a/libflutter.so": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d",
+          "lib/arm64-v8a/libpokrov-core.so": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+          "assets/flutter_assets/NOTICES.Z": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+          "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt": "8075f4b06ef00fc4b7bf50e05905a4908d63619d73a1571aaf74c5e3b62314e8"
+        },
+        "signing": {
+          "command": [
+            "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+            "verify",
+            "--print-certs",
+            "E:\\r12-c05-maven-notices\\android\\app-direct-arm64-v8a-release.apk"
+          ],
+          "exit_code": 0,
+          "signer": "Android Debug",
+          "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+        }
+      },
+      {
+        "file": "E:\\r12-c05-maven-notices\\android\\app-direct-armeabi-v7a-release.apk",
+        "bytes": 90724718,
+        "sha256": "656c5b930730e41b0ec1a14c4cc94844a52214e7a39931e92eb19c2be2522c5d",
+        "added": [
+          "assets/flutter_assets/assets/licenses/maven-NOTICES.txt"
+        ],
+        "changed": [
+          "assets/flutter_assets/AssetManifest.bin"
+        ],
+        "unchanged_entries": 375,
+        "protected_entries": {
+          "classes.dex": "30b6a2b2dbcd87256746968c0143c096e0173288669e36eacd1cb485ecddcd38",
+          "lib/armeabi-v7a/libapp.so": "c97027de9cd0cc8f7856ae6e41a8717b332a4a467800a7f08bbbb91ed4941b1c",
+          "lib/armeabi-v7a/libflutter.so": "a4a921f6c02b5bdc52eae98528a7fbd242c2819d06de97014ee932f90c1b7a07",
+          "lib/armeabi-v7a/libpokrov-core.so": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e",
+          "assets/flutter_assets/NOTICES.Z": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+          "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt": "8075f4b06ef00fc4b7bf50e05905a4908d63619d73a1571aaf74c5e3b62314e8"
+        },
+        "signing": {
+          "command": [
+            "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+            "verify",
+            "--print-certs",
+            "E:\\r12-c05-maven-notices\\android\\app-direct-armeabi-v7a-release.apk"
+          ],
+          "exit_code": 0,
+          "signer": "Android Debug",
+          "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+        }
+      },
+      {
+        "file": "E:\\r12-c05-maven-notices\\android\\app-direct-universal-release.apk",
+        "bytes": 295195219,
+        "sha256": "41f296e9e4ef6b3155fa25a421ec887f955f3f1f9208c6d4534724c09e9502fa",
+        "added": [
+          "assets/flutter_assets/assets/licenses/maven-NOTICES.txt"
+        ],
+        "changed": [
+          "assets/flutter_assets/AssetManifest.bin"
+        ],
+        "unchanged_entries": 381,
+        "protected_entries": {
+          "classes.dex": "30b6a2b2dbcd87256746968c0143c096e0173288669e36eacd1cb485ecddcd38",
+          "lib/arm64-v8a/libapp.so": "84a5bd338a3542643f692066176f1be141f559cd0179773fe92e491eceefd297",
+          "lib/arm64-v8a/libflutter.so": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d",
+          "lib/arm64-v8a/libpokrov-core.so": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+          "lib/armeabi-v7a/libapp.so": "c97027de9cd0cc8f7856ae6e41a8717b332a4a467800a7f08bbbb91ed4941b1c",
+          "lib/armeabi-v7a/libflutter.so": "a4a921f6c02b5bdc52eae98528a7fbd242c2819d06de97014ee932f90c1b7a07",
+          "lib/armeabi-v7a/libpokrov-core.so": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e",
+          "lib/x86_64/libapp.so": "fc5aea0b80c0717c4a31288465bcae91a3c6ec0279b79613dc5ab96b32fe5886",
+          "lib/x86_64/libflutter.so": "9e8c7fac2fb253a2c00ec61f0ba5b82545d3e781b220a2563a981c233127defd",
+          "lib/x86_64/libpokrov-core.so": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376",
+          "assets/flutter_assets/NOTICES.Z": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+          "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt": "8075f4b06ef00fc4b7bf50e05905a4908d63619d73a1571aaf74c5e3b62314e8"
+        },
+        "signing": {
+          "command": [
+            "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+            "verify",
+            "--print-certs",
+            "E:\\r12-c05-maven-notices\\android\\app-direct-universal-release.apk"
+          ],
+          "exit_code": 0,
+          "signer": "Android Debug",
+          "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+        }
+      },
+      {
+        "file": "E:\\r12-c05-maven-notices\\android\\app-direct-x86_64-release.apk",
+        "bytes": 110219415,
+        "sha256": "00f88c40c5d3b690f0cb3b262dbcbe54c94cce2b4e2c03ee60f771f9afb90c38",
+        "added": [
+          "assets/flutter_assets/assets/licenses/maven-NOTICES.txt"
+        ],
+        "changed": [
+          "assets/flutter_assets/AssetManifest.bin"
+        ],
+        "unchanged_entries": 375,
+        "protected_entries": {
+          "classes.dex": "30b6a2b2dbcd87256746968c0143c096e0173288669e36eacd1cb485ecddcd38",
+          "lib/x86_64/libapp.so": "fc5aea0b80c0717c4a31288465bcae91a3c6ec0279b79613dc5ab96b32fe5886",
+          "lib/x86_64/libflutter.so": "9e8c7fac2fb253a2c00ec61f0ba5b82545d3e781b220a2563a981c233127defd",
+          "lib/x86_64/libpokrov-core.so": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376",
+          "assets/flutter_assets/NOTICES.Z": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+          "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt": "8075f4b06ef00fc4b7bf50e05905a4908d63619d73a1571aaf74c5e3b62314e8"
+        },
+        "signing": {
+          "command": [
+            "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+            "verify",
+            "--print-certs",
+            "E:\\r12-c05-maven-notices\\android\\app-direct-x86_64-release.apk"
+          ],
+          "exit_code": 0,
+          "signer": "Android Debug",
+          "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+        }
+      }
+    ],
+    "preexisting_registrants": "4 byte-identical",
+    "scope": "Internal Android Debug-signed Direct release-mode APKs with loopback API. No installed runtime/privacy, production signing or final candidate acceptance."
+  },
+  "full_license_clearance": false,
+  "cc_text_transformation": "BeautifulSoup legal-code-body get_text(newline, strip=True); source HTML retained. Other bodies copied byte-for-byte.",
+  "sbom_scope": "58 exact Maven runtime artifact inputs plus 1 source-declared shaded Protobuf; not a complete application SBOM or DEX reachability claim.",
+  "protobuf_scope": "539 upstream class names present; 3 extra anonymous WireFormat classes. Exact shaded byte reproduction remains unproven.",
+  "protobuf_osv": {
+    "query": {
+      "ecosystem": "Maven",
+      "name": "com.google.protobuf:protobuf-javalite",
+      "version": "4.33.0"
+    },
+    "advisory_ids": [],
+    "pagination": false,
+    "response_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  "evidence_directory": "E:\\r12-c05-maven-notices",
+  "evidence_archive": {
+    "path": "E:\\r12-c05-maven-notices\\maven-notices-evidence.zip",
+    "bytes": 512727,
+    "sha256": "f8b9ab9aa6dd035a670b345524a554157fe0131189d15e2d76a65ec3245c4e51",
+    "file_count": 290
+  },
+  "commands": [
+    {
+      "command": [
+        "gradlew.bat",
+        "-I",
+        "E:/r12-c05-maven-notices/inventory.init.gradle",
+        ":app:r12MavenInventory",
+        "--offline"
+      ],
+      "cwd": "E:\\r12client\\apps\\android_shell\\android",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-maven-notices\\gradle-inventory.log",
+      "sha256": "403559fad46e886e2819164cc8b0c9c42d8dda0b35019a6bbbf4d784687953fe"
+    },
+    {
+      "command": [
+        "flutter.bat",
+        "build",
+        "apk",
+        "--release",
+        "--flavor",
+        "direct",
+        "--target-platform",
+        "android-arm,android-arm64,android-x64",
+        "--android-project-arg=pokrov.singleVersionSplitApks=true",
+        "--dart-define=POKROV_API_BASE_URL=http://127.0.0.1:9",
+        "--dart-define=POKROV_APP_VERSION=1.2.0"
+      ],
+      "cwd": "E:\\r12client\\apps\\android_shell",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-maven-notices\\android-build.log",
+      "sha256": "8cf8815ff92bb56491db67ac5d2eb7b895ee44bb6334a6b9defd0f26658a51cf"
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "E:\\r12-c05-maven-notices\\verify-packages.py"
+      ],
+      "cwd": "E:\\r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-maven-notices\\package-verification.log",
+      "sha256": "8f9ac026518bfa8db850127d3d7304a52318d41cf0d1115a6cc0e91220ec2106"
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "E:\\r12-c05-maven-notices\\validate-sbom.py"
+      ],
+      "cwd": "E:\\r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-maven-notices\\sbom-validation.log",
+      "sha256": "2b576646ee0d6851d7ca2da65a96013de55a07cd5e1297aa75a3e2787add3a53"
+    },
+    {
+      "command": [
+        "pwsh",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "./scripts/validate-seed.ps1",
+        "-PlatformRoot",
+        "C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start",
+        "-CoreRoot",
+        "E:/r12core-implementation"
+      ],
+      "cwd": "E:\\r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-maven-notices\\client-seed.log",
+      "sha256": "091b5c7394b148e7c5e8111023989c6eae2174cb3dd593931bde4b4b3753c80e"
+    }
+  ],
+  "environment": {
+    "JAVA_HOME": "C:/Users/kiwun/tools/jdk/17.0.18",
+    "flutter": "C:/Users/kiwun/tools/flutter/git-3.38.5/bin/flutter.bat",
+    "POKROV_ALLOW_INTERNAL_BETA_DEBUG_SIGNING": "true"
+  },
+  "seed_performance_scope": "fixture, not device performance evidence",
+  "retained_initial_failures": [
+    "Gradle JAVA_HOME initially pointed to a missing local Android Studio JBR; final run used existing JDK 17.0.18.",
+    "urllib and curl downloads had connection resets; retried official inputs are hashed. The unneeded Tink Maven POM path returned 404.",
+    "A gzip Flutter notice was initially passed to zlib; corrected read used gzip without changing packaged bytes.",
+    "Initial seed invocation omitted explicit worktree roots and failed to resolve E:/POKROV-core; final invocation passed the active roots."
+  ],
+  "input_receipts": {
+    "assembly.json": {
+      "path": "E:\\r12-c05-maven-notices\\assembly.json",
+      "sha256": "4386c5ac54061866d3650ec9e78b431440ec8b5ae82765534bca9798ca181c0e"
+    },
+    "artifact-inspection.json": {
+      "path": "E:\\r12-c05-maven-notices\\artifact-inspection.json",
+      "sha256": "3ba3ad0379448c95ca5e226f5ee0fba67aa54a74753311568674176b0ca867f0"
+    },
+    "official-downloads.json": {
+      "path": "E:\\r12-c05-maven-notices\\official-downloads.json",
+      "sha256": "0a935bb6b80a77910e6053f5cf770a9178447b1c2db9a23a7064cd4823baff08"
+    },
+    "source-headers.json": {
+      "path": "E:\\r12-c05-maven-notices\\source-headers.json",
+      "sha256": "f3c67a92139ab655d0bc4fe8a89a12cbe1c12c041a05a287d7764ea581b2edf5"
+    },
+    "supplement-followup.json": {
+      "path": "E:\\r12-c05-maven-notices\\supplement-followup.json",
+      "sha256": "7276512eb07d6630b877fb17c957025b3323cfbf9e112700e21130d4507a616f"
+    },
+    "curl-supplements.json": {
+      "path": "E:\\r12-c05-maven-notices\\curl-supplements.json",
+      "sha256": "36d6af8717937375a582283cd3f88214e0e1c4d64f727813799ec04cf05c2407"
+    },
+    "curl-supplements-retry.json": {
+      "path": "E:\\r12-c05-maven-notices\\curl-supplements-retry.json",
+      "sha256": "a82b0083843096cb4a67c3b1562b6a13139a2a16ad9285b04a1d8c35d2af612a"
+    },
+    "shaded-protobuf-binding.json": {
+      "path": "E:\\r12-c05-maven-notices\\shaded-protobuf-binding.json",
+      "sha256": "f57dd551476339bd7287f013474aa7c9f3b201d4240a1650856ce315b8f84a57"
+    },
+    "protobuf-osv-query.json": {
+      "path": "E:\\r12-c05-maven-notices\\protobuf-osv-query.json",
+      "sha256": "2f8f5877ee58fa424d8025ce6551068a1860e168569b675450686ccdca78422b"
+    },
+    "protobuf-osv-response.json": {
+      "path": "E:\\r12-c05-maven-notices\\protobuf-osv-response.json",
+      "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "evidence-archive.json": {
+      "path": "E:\\r12-c05-maven-notices\\evidence-archive.json",
+      "sha256": "dd3fd11f3e1452b8af6dccc1de7f2065211a22c1b6a0f5b30a7a907081bfb028"
+    }
+  }
+}

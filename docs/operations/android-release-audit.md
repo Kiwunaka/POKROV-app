@@ -78,6 +78,27 @@ local Direct APKs retain the same Core/Flutter SOs and generated Flutter notices
 and carry the updated shared asset with 186 texts, including the Windows-only
 Wintun prebuilt terms. Their internal signer and existing runtime gates remain.
 
+The [Maven notice follow-up](evidence/2026-09-06-r12-c05-maven-notices/package-notices.json)
+adds an Android-only asset with 164 license texts and source attributions.
+All 58 unique selected public Maven binaries match official downloads; the
+63-module public graph also includes five metadata/redirect-only coordinates.
+The source scan covers 4035 Java/Kotlin/native source files in 59 source JARs.
+It retains the JSR-305 CC BY 2.5 headers, Kotlin Boost attribution and terms,
+MurmurHash attribution and the BSD license for Protobuf shaded inside Tink.
+Tink release-source metadata declares Protobuf 4.33.0; 539 upstream class names
+are present, with three extra anonymous WireFormat classes. That is not byte
+reproduction. Its separate OSV query returned no advisory IDs or pagination.
+The 59-component CycloneDX supplement records this boundary explicitly.
+
+Four local Direct APKs contain the exact 176690-byte asset and all body hashes.
+Only the new asset and Flutter AssetManifest.bin differ from the previous APK
+entries; DEX, native SOs and prior notices are byte-identical. These packages
+use Android Debug signing and the loopback API. CC legal text is extracted from
+the official HTML; other included bodies retain their source bytes. This work
+does not close complete license compatibility, corresponding-source delivery,
+installed privacy or final candidate/device acceptance. Windows packaging and
+retained release artifacts are unchanged.
+
 The R12 source branch replaces event/cache health authority with per-call Core
 `CommandServer.ProbeEndpoint` and `ProbeSelectedOutbound` results. Core
 `8dc57a830bd1487389dd1b7c9190f094c31e13bc` is bound in the runtime manifest;

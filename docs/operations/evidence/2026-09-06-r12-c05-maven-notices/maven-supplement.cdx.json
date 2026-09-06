@@ -1,0 +1,2031 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "application",
+      "name": "POKROV Android Maven dependency-input supplement",
+      "version": "1.2.0+4053",
+      "bom-ref": "pokrov-android-maven-inputs"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "group": "androidx.activity",
+      "name": "activity",
+      "version": "1.8.1",
+      "bom-ref": "pkg:maven/androidx.activity/activity@1.8.1",
+      "purl": "pkg:maven/androidx.activity/activity@1.8.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "66bc2c13bd91fb8ea09e445b21f784d3e5d3a9ec9b180cd07e0e9208c2f939c6"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/activity/activity/1.8.1/activity-1.8.1.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.annotation",
+      "name": "annotation-experimental",
+      "version": "1.4.0",
+      "bom-ref": "pkg:maven/androidx.annotation/annotation-experimental@1.4.0",
+      "purl": "pkg:maven/androidx.annotation/annotation-experimental@1.4.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c6eb7e676011ec65b32428373d450debdfc45179c4f8b3a752174fb87c17b08a"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-experimental/1.4.0/annotation-experimental-1.4.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.annotation",
+      "name": "annotation-jvm",
+      "version": "1.9.1",
+      "bom-ref": "pkg:maven/androidx.annotation/annotation-jvm@1.9.1",
+      "purl": "pkg:maven/androidx.annotation/annotation-jvm@1.9.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1e343917ebf27ba96fe4dc52b1cad7fd32b738fbc6355bb6cd5b3b305d7212d0"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.arch.core",
+      "name": "core-common",
+      "version": "2.2.0",
+      "bom-ref": "pkg:maven/androidx.arch.core/core-common@2.2.0",
+      "purl": "pkg:maven/androidx.arch.core/core-common@2.2.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "65308a06b1c00ee186cb9e19321383f043b993813f1522c47f4a3e3303bdba41"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.2.0/core-common-2.2.0.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.arch.core",
+      "name": "core-runtime",
+      "version": "2.2.0",
+      "bom-ref": "pkg:maven/androidx.arch.core/core-runtime@2.2.0",
+      "purl": "pkg:maven/androidx.arch.core/core-runtime@2.2.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a1be5e0caa2b07623862af6ae21b3ab0718123245184d0e30dea81b53f990a47"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-runtime/2.2.0/core-runtime-2.2.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.browser",
+      "name": "browser",
+      "version": "1.8.0",
+      "bom-ref": "pkg:maven/androidx.browser/browser@1.8.0",
+      "purl": "pkg:maven/androidx.browser/browser@1.8.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2d6167b33bf6a064c37501501543702349e850ac62c732d1efa4e71063675456"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/browser/browser/1.8.0/browser-1.8.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.collection",
+      "name": "collection",
+      "version": "1.2.0",
+      "bom-ref": "pkg:maven/androidx.collection/collection@1.2.0",
+      "purl": "pkg:maven/androidx.collection/collection@1.2.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "16d77e8c443fa55fe9a6074d00445d520ca5c9f913cefdbf4828356255214e42"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/collection/collection/1.2.0/collection-1.2.0.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.concurrent",
+      "name": "concurrent-futures",
+      "version": "1.1.0",
+      "bom-ref": "pkg:maven/androidx.concurrent/concurrent-futures@1.1.0",
+      "purl": "pkg:maven/androidx.concurrent/concurrent-futures@1.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0ce067c514a0d1049d1bebdf709e344ed3266fe9744275682937cdcb13334e9e"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/concurrent/concurrent-futures/1.1.0/concurrent-futures-1.1.0.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.core",
+      "name": "core",
+      "version": "1.13.1",
+      "bom-ref": "pkg:maven/androidx.core/core@1.13.1",
+      "purl": "pkg:maven/androidx.core/core@1.13.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2c27de199535675005553066597a4b20fa1eea7c228ab4ef6b32b5fe39ca1f59"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.13.1/core-1.13.1.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.core",
+      "name": "core-ktx",
+      "version": "1.13.1",
+      "bom-ref": "pkg:maven/androidx.core/core-ktx@1.13.1",
+      "purl": "pkg:maven/androidx.core/core-ktx@1.13.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "19ba50d094c7368ede1b4ccf1195ceb83e35970736593f823e5af716f8d05d70"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/core/core-ktx/1.13.1/core-ktx-1.13.1.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.customview",
+      "name": "customview",
+      "version": "1.0.0",
+      "bom-ref": "pkg:maven/androidx.customview/customview@1.0.0",
+      "purl": "pkg:maven/androidx.customview/customview@1.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "20e5b8f6526a34595a604f56718da81167c0b40a7a94a57daa355663f2594df2"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/customview/customview/1.0.0/customview-1.0.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.exifinterface",
+      "name": "exifinterface",
+      "version": "1.3.6",
+      "bom-ref": "pkg:maven/androidx.exifinterface/exifinterface@1.3.6",
+      "purl": "pkg:maven/androidx.exifinterface/exifinterface@1.3.6",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1804105e9e05fdd8f760413bad5de498c381aa329f4f9d94c851bc891ac654c6"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/exifinterface/exifinterface/1.3.6/exifinterface-1.3.6.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.fragment",
+      "name": "fragment",
+      "version": "1.7.1",
+      "bom-ref": "pkg:maven/androidx.fragment/fragment@1.7.1",
+      "purl": "pkg:maven/androidx.fragment/fragment@1.7.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7ddebe9d830a04963733dcb340cab4bac1e69dfca797a6d59aa7bc56282150af"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/fragment/fragment/1.7.1/fragment-1.7.1.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.interpolator",
+      "name": "interpolator",
+      "version": "1.0.0",
+      "bom-ref": "pkg:maven/androidx.interpolator/interpolator@1.0.0",
+      "purl": "pkg:maven/androidx.interpolator/interpolator@1.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "33193135a64fe21fa2c35eec6688f1a76e512606c0fc83dc1b689e37add7732a"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/interpolator/interpolator/1.0.0/interpolator-1.0.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-common",
+      "version": "2.7.0",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-common@2.7.0",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-common@2.7.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "533ded8ee0645a18f6653da53fe1ec5a15430e7f36a737d45e410531f30f3318"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.7.0/lifecycle-common-2.7.0.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-common-java8",
+      "version": "2.7.0",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-common-java8@2.7.0",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-common-java8@2.7.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common-java8/2.7.0/lifecycle-common-java8-2.7.0.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-livedata",
+      "version": "2.7.0",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-livedata@2.7.0",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-livedata@2.7.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9affa24c6160dc8cadaac9422d4f714e5009537d0243afc4bc74b5b7cf0de4ad"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-livedata/2.7.0/lifecycle-livedata-2.7.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-livedata-core",
+      "version": "2.7.0",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.7.0",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.7.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "af8e11b87e030d6e3107ed39adcf01fa10d6259eb15c43cba6e7b4e3ffaedf27"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-livedata-core/2.7.0/lifecycle-livedata-core-2.7.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-livedata-core-ktx",
+      "version": "2.7.0",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-livedata-core-ktx@2.7.0",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-livedata-core-ktx@2.7.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a97f4c2191ebdd32f99ac229597bd1a92446b01cd1a088d13494cc05cabf0def"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-livedata-core-ktx/2.7.0/lifecycle-livedata-core-ktx-2.7.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-process",
+      "version": "2.7.0",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-process@2.7.0",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-process@2.7.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6fb33d9473a4933da9d98a0b12b606127e80681bd9b90309ccd2c2230863b939"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-process/2.7.0/lifecycle-process-2.7.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-runtime",
+      "version": "2.7.0",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.7.0",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.7.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "81c6fb1dbb6a3cd7dc827d7b08e1c8142ed3a400a3422441108480e22f8937c4"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.7.0/lifecycle-runtime-2.7.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-viewmodel",
+      "version": "2.7.0",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.7.0",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.7.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4e1d92e289920cd7b50e3671b9191bd413407349cda6f602b0285464f41c1c82"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel/2.7.0/lifecycle-viewmodel-2.7.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-viewmodel-savedstate",
+      "version": "2.7.0",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel-savedstate@2.7.0",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel-savedstate@2.7.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "57c578862e219e360c6957ff0bca6f169707b1e5582d4fa593e284f7f63e33f6"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel-savedstate/2.7.0/lifecycle-viewmodel-savedstate-2.7.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.loader",
+      "name": "loader",
+      "version": "1.0.0",
+      "bom-ref": "pkg:maven/androidx.loader/loader@1.0.0",
+      "purl": "pkg:maven/androidx.loader/loader@1.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "11f735cb3b55c458d470bed9e25254375b518b4b1bad6926783a7026db0f5025"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/loader/loader/1.0.0/loader-1.0.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.media3",
+      "name": "media3-common",
+      "version": "1.9.2",
+      "bom-ref": "pkg:maven/androidx.media3/media3-common@1.9.2",
+      "purl": "pkg:maven/androidx.media3/media3-common@1.9.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1088b8ab2ef36e316d1cb4877013a31e1a6a4d61f06f310bd3065926d9f502b5"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/media3/media3-common/1.9.2/media3-common-1.9.2.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.media3",
+      "name": "media3-container",
+      "version": "1.9.2",
+      "bom-ref": "pkg:maven/androidx.media3/media3-container@1.9.2",
+      "purl": "pkg:maven/androidx.media3/media3-container@1.9.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f73cea4fe8a2bf9eb6462bfb7a547d1aaf55395d0007eed6fadb129b56927c0d"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/media3/media3-container/1.9.2/media3-container-1.9.2.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.media3",
+      "name": "media3-database",
+      "version": "1.9.2",
+      "bom-ref": "pkg:maven/androidx.media3/media3-database@1.9.2",
+      "purl": "pkg:maven/androidx.media3/media3-database@1.9.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "de88a2ca8fd1efb1dbe7d8cd4c728fca15fafb629442514a689dea1788817637"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/media3/media3-database/1.9.2/media3-database-1.9.2.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.media3",
+      "name": "media3-datasource",
+      "version": "1.9.2",
+      "bom-ref": "pkg:maven/androidx.media3/media3-datasource@1.9.2",
+      "purl": "pkg:maven/androidx.media3/media3-datasource@1.9.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ccaf5530a31e64dffe2a803feeeb654e7e81fc4a2597f6d929ce7a9aba7ff13e"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/media3/media3-datasource/1.9.2/media3-datasource-1.9.2.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.media3",
+      "name": "media3-decoder",
+      "version": "1.9.2",
+      "bom-ref": "pkg:maven/androidx.media3/media3-decoder@1.9.2",
+      "purl": "pkg:maven/androidx.media3/media3-decoder@1.9.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2337461b4ed4ec3cd32330cd530d9b471d5d45b76410f6e0d66f1331c9a0bc08"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/media3/media3-decoder/1.9.2/media3-decoder-1.9.2.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.media3",
+      "name": "media3-exoplayer",
+      "version": "1.9.2",
+      "bom-ref": "pkg:maven/androidx.media3/media3-exoplayer@1.9.2",
+      "purl": "pkg:maven/androidx.media3/media3-exoplayer@1.9.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2bffdab9cb5271655b9901c16ebd7034adc3b30bde6fe1347ed1f84030aaf400"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/media3/media3-exoplayer/1.9.2/media3-exoplayer-1.9.2.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.media3",
+      "name": "media3-exoplayer-dash",
+      "version": "1.9.2",
+      "bom-ref": "pkg:maven/androidx.media3/media3-exoplayer-dash@1.9.2",
+      "purl": "pkg:maven/androidx.media3/media3-exoplayer-dash@1.9.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4ca85490b83d81c38cbe86db3313784d2f7fc5d8d0810c42210fc56ae328e7a5"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/media3/media3-exoplayer-dash/1.9.2/media3-exoplayer-dash-1.9.2.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.media3",
+      "name": "media3-exoplayer-hls",
+      "version": "1.9.2",
+      "bom-ref": "pkg:maven/androidx.media3/media3-exoplayer-hls@1.9.2",
+      "purl": "pkg:maven/androidx.media3/media3-exoplayer-hls@1.9.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f8540171a92c61b3725166a946e9935dd7d083ef5c1f4da8131c74472ab84c36"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/media3/media3-exoplayer-hls/1.9.2/media3-exoplayer-hls-1.9.2.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.media3",
+      "name": "media3-exoplayer-rtsp",
+      "version": "1.9.2",
+      "bom-ref": "pkg:maven/androidx.media3/media3-exoplayer-rtsp@1.9.2",
+      "purl": "pkg:maven/androidx.media3/media3-exoplayer-rtsp@1.9.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "600aac5064c64b8da0d6e941bcd185be279462e57e2c651ce8c00da38c19dda0"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/media3/media3-exoplayer-rtsp/1.9.2/media3-exoplayer-rtsp-1.9.2.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.media3",
+      "name": "media3-exoplayer-smoothstreaming",
+      "version": "1.9.2",
+      "bom-ref": "pkg:maven/androidx.media3/media3-exoplayer-smoothstreaming@1.9.2",
+      "purl": "pkg:maven/androidx.media3/media3-exoplayer-smoothstreaming@1.9.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "063306573ae2d6246c8c062d62f2b1a668e9bb4ca22415720ad64f0a54242123"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/media3/media3-exoplayer-smoothstreaming/1.9.2/media3-exoplayer-smoothstreaming-1.9.2.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.media3",
+      "name": "media3-extractor",
+      "version": "1.9.2",
+      "bom-ref": "pkg:maven/androidx.media3/media3-extractor@1.9.2",
+      "purl": "pkg:maven/androidx.media3/media3-extractor@1.9.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fb1d260cea679efd3568b4b4b02c9aa1dd84cef847cd50f93f50ca02e59cb20b"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/media3/media3-extractor/1.9.2/media3-extractor-1.9.2.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.profileinstaller",
+      "name": "profileinstaller",
+      "version": "1.3.1",
+      "bom-ref": "pkg:maven/androidx.profileinstaller/profileinstaller@1.3.1",
+      "purl": "pkg:maven/androidx.profileinstaller/profileinstaller@1.3.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d0e402ec31f24028a1dc7eb6a0a3f9d9635c1459392cd734396343b73d673948"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/profileinstaller/profileinstaller/1.3.1/profileinstaller-1.3.1.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.savedstate",
+      "name": "savedstate",
+      "version": "1.2.1",
+      "bom-ref": "pkg:maven/androidx.savedstate/savedstate@1.2.1",
+      "purl": "pkg:maven/androidx.savedstate/savedstate@1.2.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "21a7d4bcf6bdb94ad7b9283801529300b4fbb8808ca4f191e0cdce6fd8e4705a"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/savedstate/savedstate/1.2.1/savedstate-1.2.1.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.startup",
+      "name": "startup-runtime",
+      "version": "1.1.1",
+      "bom-ref": "pkg:maven/androidx.startup/startup-runtime@1.1.1",
+      "purl": "pkg:maven/androidx.startup/startup-runtime@1.1.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e0a6329a371262fe4c450372b70fdaf33b769ef6917094723787cfce896b1dd3"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/startup/startup-runtime/1.1.1/startup-runtime-1.1.1.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.tracing",
+      "name": "tracing",
+      "version": "1.2.0",
+      "bom-ref": "pkg:maven/androidx.tracing/tracing@1.2.0",
+      "purl": "pkg:maven/androidx.tracing/tracing@1.2.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6faa90390d1fdbf0adb9a99bf99de67b94c6c6f35aea9510593a9d17973736a2"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/tracing/tracing/1.2.0/tracing-1.2.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.versionedparcelable",
+      "name": "versionedparcelable",
+      "version": "1.1.1",
+      "bom-ref": "pkg:maven/androidx.versionedparcelable/versionedparcelable@1.1.1",
+      "purl": "pkg:maven/androidx.versionedparcelable/versionedparcelable@1.1.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "57e8d93260d18d5b9007c9eed3c64ad159de90c8609ebfc74a347cbd514535a4"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/versionedparcelable/versionedparcelable/1.1.1/versionedparcelable-1.1.1.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.viewpager",
+      "name": "viewpager",
+      "version": "1.0.0",
+      "bom-ref": "pkg:maven/androidx.viewpager/viewpager@1.0.0",
+      "purl": "pkg:maven/androidx.viewpager/viewpager@1.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "147af4e14a1984010d8f155e5e19d781f03c1d70dfed02a8e0d18428b8fc8682"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/viewpager/viewpager/1.0.0/viewpager-1.0.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.window.extensions.core",
+      "name": "core",
+      "version": "1.0.0",
+      "bom-ref": "pkg:maven/androidx.window.extensions.core/core@1.0.0",
+      "purl": "pkg:maven/androidx.window.extensions.core/core@1.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3100854b2dc0de5c4d88b47e1c5db30801770c821dca28189443b7624f4008ae"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/window/extensions/core/core/1.0.0/core-1.0.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.window",
+      "name": "window",
+      "version": "1.2.0",
+      "bom-ref": "pkg:maven/androidx.window/window@1.2.0",
+      "purl": "pkg:maven/androidx.window/window@1.2.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a834c217d973112777533daf1281dab33bd778fadd2d66bebc39b5fe81a890ac"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/window/window/1.2.0/window-1.2.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "androidx.window",
+      "name": "window-java",
+      "version": "1.2.0",
+      "bom-ref": "pkg:maven/androidx.window/window-java@1.2.0",
+      "purl": "pkg:maven/androidx.window/window-java@1.2.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e3defb5ee3857757505d7ad66275dc3a0b014169301b89d6e4eec03b0e45bcab"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://dl.google.com/dl/android/maven2/androidx/window/window-java/1.2.0/window-java-1.2.0.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "com.getkeepsafe.relinker",
+      "name": "relinker",
+      "version": "1.4.5",
+      "bom-ref": "pkg:maven/com.getkeepsafe.relinker/relinker@1.4.5",
+      "purl": "pkg:maven/com.getkeepsafe.relinker/relinker@1.4.5",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b03b4d113a9fef79400ae854c17757c2915725e6ffd1d61116eadaeb5613374a"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://repo.maven.apache.org/maven2/com/getkeepsafe/relinker/relinker/1.4.5/relinker-1.4.5.aar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "com.google.code.findbugs",
+      "name": "jsr305",
+      "version": "3.0.2",
+      "bom-ref": "pkg:maven/com.google.code.findbugs/jsr305@3.0.2",
+      "purl": "pkg:maven/com.google.code.findbugs/jsr305@3.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "CC-BY-2.5"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://repo.maven.apache.org/maven2/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "com.google.code.gson",
+      "name": "gson",
+      "version": "2.13.2",
+      "bom-ref": "pkg:maven/com.google.code.gson/gson@2.13.2",
+      "purl": "pkg:maven/com.google.code.gson/gson@2.13.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "dd0ce1b55a3ed2080cb70f9c655850cda86c206862310009dcb5e5c95265a5e0"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://repo.maven.apache.org/maven2/com/google/code/gson/gson/2.13.2/gson-2.13.2.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "com.google.crypto.tink",
+      "name": "tink-android",
+      "version": "1.21.0",
+      "bom-ref": "pkg:maven/com.google.crypto.tink/tink-android@1.21.0",
+      "purl": "pkg:maven/com.google.crypto.tink/tink-android@1.21.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "61d60f28640b16a92f74c5c34191432f639da4fd79ce7b50a4b7af35fbafaf7d"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://repo.maven.apache.org/maven2/com/google/crypto/tink/tink-android/1.21.0/tink-android-1.21.0.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "com.google.errorprone",
+      "name": "error_prone_annotations",
+      "version": "2.41.0",
+      "bom-ref": "pkg:maven/com.google.errorprone/error_prone_annotations@2.41.0",
+      "purl": "pkg:maven/com.google.errorprone/error_prone_annotations@2.41.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a56e782b5b50811ac204073a355a21d915a2107fce13ec711331ad036f660fcc"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://repo.maven.apache.org/maven2/com/google/errorprone/error_prone_annotations/2.41.0/error_prone_annotations-2.41.0.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "com.google.guava",
+      "name": "failureaccess",
+      "version": "1.0.2",
+      "bom-ref": "pkg:maven/com.google.guava/failureaccess@1.0.2",
+      "purl": "pkg:maven/com.google.guava/failureaccess@1.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8a8f81cf9b359e3f6dfa691a1e776985c061ef2f223c9b2c80753e1b458e8064"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://repo.maven.apache.org/maven2/com/google/guava/failureaccess/1.0.2/failureaccess-1.0.2.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "com.google.guava",
+      "name": "guava",
+      "version": "33.3.1-android",
+      "bom-ref": "pkg:maven/com.google.guava/guava@33.3.1-android",
+      "purl": "pkg:maven/com.google.guava/guava@33.3.1-android",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2c3e41d1b380f2044d257947a3aa82dabf3ae4b978622745254aa18b6cf89ab0"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://repo.maven.apache.org/maven2/com/google/guava/guava/33.3.1-android/guava-33.3.1-android.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "com.google.guava",
+      "name": "listenablefuture",
+      "version": "9999.0-empty-to-avoid-conflict-with-guava",
+      "bom-ref": "pkg:maven/com.google.guava/listenablefuture@9999.0-empty-to-avoid-conflict-with-guava",
+      "purl": "pkg:maven/com.google.guava/listenablefuture@9999.0-empty-to-avoid-conflict-with-guava",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b372a037d4230aa57fbeffdef30fd6123f9c0c2db85d0aced00c91b974f33f99"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://repo.maven.apache.org/maven2/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib",
+      "version": "2.1.0",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@2.1.0",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@2.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d6f91b7b0f306cca299fec74fb7c34e4874d6f5ec5b925a0b4de21901e119c3f"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "BSL-1.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.0/kotlin-stdlib-2.1.0.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-jdk7",
+      "version": "1.8.20",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk7@1.8.20",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk7@1.8.20",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "af1ec40c3b951afdcc0c2a0173c7b81763c5281c2d5bafbf0a8544a24c5dcc0c"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.8.20/kotlin-stdlib-jdk7-1.8.20.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-jdk8",
+      "version": "1.8.20",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk8@1.8.20",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk8@1.8.20",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e398b67977622718bf18ff99b739c7d9da060f33fb458a2e25203221c16af010"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.8.20/kotlin-stdlib-jdk8-1.8.20.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlinx",
+      "name": "kotlinx-coroutines-android",
+      "version": "1.7.1",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlinx/kotlinx-coroutines-android@1.7.1",
+      "purl": "pkg:maven/org.jetbrains.kotlinx/kotlinx-coroutines-android@1.7.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "107313760c18f8da174e8d8103504a468e806e88f7b55a84bd1c0eaeea118e9a"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-android/1.7.1/kotlinx-coroutines-android-1.7.1.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlinx",
+      "name": "kotlinx-coroutines-core-jvm",
+      "version": "1.7.1",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm@1.7.1",
+      "purl": "pkg:maven/org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm@1.7.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7496cffdd3eb10109acdda1c3212f6ac7815789e09380dc9e2ccdec496dba3fc"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.7.1/kotlinx-coroutines-core-jvm-1.7.1.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains",
+      "name": "annotations",
+      "version": "23.0.0",
+      "bom-ref": "pkg:maven/org.jetbrains/annotations@23.0.0",
+      "purl": "pkg:maven/org.jetbrains/annotations@23.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7b0f19724082cbfcbc66e5abea2b9bc92cf08a1ea11e191933ed43801eb3cd05"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/23.0.0/annotations-23.0.0.jar"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Exact selected runtime artifact; POM license. File-level exceptions are retained in maven-NOTICES.txt; no blanket license clearance or DEX reachability claim."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "group": "com.google.protobuf",
+      "name": "protobuf-javalite",
+      "version": "4.33.0",
+      "bom-ref": "pkg:maven/com.google.protobuf/protobuf-javalite@4.33.0",
+      "purl": "pkg:maven/com.google.protobuf/protobuf-javalite@4.33.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:version-evidence",
+          "value": "Tink v1.21.0 source declaration; 539 upstream class names plus 3 extra anonymous WireFormat classes in shaded input. Exact binary reproduction unproven."
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pokrov-android-maven-inputs",
+      "dependsOn": [
+        "pkg:maven/androidx.activity/activity@1.8.1",
+        "pkg:maven/androidx.annotation/annotation-experimental@1.4.0",
+        "pkg:maven/androidx.annotation/annotation-jvm@1.9.1",
+        "pkg:maven/androidx.arch.core/core-common@2.2.0",
+        "pkg:maven/androidx.arch.core/core-runtime@2.2.0",
+        "pkg:maven/androidx.browser/browser@1.8.0",
+        "pkg:maven/androidx.collection/collection@1.2.0",
+        "pkg:maven/androidx.concurrent/concurrent-futures@1.1.0",
+        "pkg:maven/androidx.core/core@1.13.1",
+        "pkg:maven/androidx.core/core-ktx@1.13.1",
+        "pkg:maven/androidx.customview/customview@1.0.0",
+        "pkg:maven/androidx.exifinterface/exifinterface@1.3.6",
+        "pkg:maven/androidx.fragment/fragment@1.7.1",
+        "pkg:maven/androidx.interpolator/interpolator@1.0.0",
+        "pkg:maven/androidx.lifecycle/lifecycle-common@2.7.0",
+        "pkg:maven/androidx.lifecycle/lifecycle-common-java8@2.7.0",
+        "pkg:maven/androidx.lifecycle/lifecycle-livedata@2.7.0",
+        "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.7.0",
+        "pkg:maven/androidx.lifecycle/lifecycle-livedata-core-ktx@2.7.0",
+        "pkg:maven/androidx.lifecycle/lifecycle-process@2.7.0",
+        "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.7.0",
+        "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.7.0",
+        "pkg:maven/androidx.lifecycle/lifecycle-viewmodel-savedstate@2.7.0",
+        "pkg:maven/androidx.loader/loader@1.0.0",
+        "pkg:maven/androidx.media3/media3-common@1.9.2",
+        "pkg:maven/androidx.media3/media3-container@1.9.2",
+        "pkg:maven/androidx.media3/media3-database@1.9.2",
+        "pkg:maven/androidx.media3/media3-datasource@1.9.2",
+        "pkg:maven/androidx.media3/media3-decoder@1.9.2",
+        "pkg:maven/androidx.media3/media3-exoplayer@1.9.2",
+        "pkg:maven/androidx.media3/media3-exoplayer-dash@1.9.2",
+        "pkg:maven/androidx.media3/media3-exoplayer-hls@1.9.2",
+        "pkg:maven/androidx.media3/media3-exoplayer-rtsp@1.9.2",
+        "pkg:maven/androidx.media3/media3-exoplayer-smoothstreaming@1.9.2",
+        "pkg:maven/androidx.media3/media3-extractor@1.9.2",
+        "pkg:maven/androidx.profileinstaller/profileinstaller@1.3.1",
+        "pkg:maven/androidx.savedstate/savedstate@1.2.1",
+        "pkg:maven/androidx.startup/startup-runtime@1.1.1",
+        "pkg:maven/androidx.tracing/tracing@1.2.0",
+        "pkg:maven/androidx.versionedparcelable/versionedparcelable@1.1.1",
+        "pkg:maven/androidx.viewpager/viewpager@1.0.0",
+        "pkg:maven/androidx.window.extensions.core/core@1.0.0",
+        "pkg:maven/androidx.window/window@1.2.0",
+        "pkg:maven/androidx.window/window-java@1.2.0",
+        "pkg:maven/com.getkeepsafe.relinker/relinker@1.4.5",
+        "pkg:maven/com.google.code.findbugs/jsr305@3.0.2",
+        "pkg:maven/com.google.code.gson/gson@2.13.2",
+        "pkg:maven/com.google.crypto.tink/tink-android@1.21.0",
+        "pkg:maven/com.google.errorprone/error_prone_annotations@2.41.0",
+        "pkg:maven/com.google.guava/failureaccess@1.0.2",
+        "pkg:maven/com.google.guava/guava@33.3.1-android",
+        "pkg:maven/com.google.guava/listenablefuture@9999.0-empty-to-avoid-conflict-with-guava",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@2.1.0",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk7@1.8.20",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk8@1.8.20",
+        "pkg:maven/org.jetbrains.kotlinx/kotlinx-coroutines-android@1.7.1",
+        "pkg:maven/org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm@1.7.1",
+        "pkg:maven/org.jetbrains/annotations@23.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.crypto.tink/tink-android@1.21.0",
+      "dependsOn": [
+        "pkg:maven/com.google.protobuf/protobuf-javalite@4.33.0"
+      ]
+    }
+  ]
+}
