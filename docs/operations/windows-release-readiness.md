@@ -82,6 +82,16 @@ passed. The cache now uses the normal runner output directory. Psiphon utls,
 nested/native notice coverage, corresponding source, signing, installer and
 installed privacy/runtime gates remain open.
 
+The [nested notice follow-up](evidence/2026-09-06-r12-c05-nested-notices/package-notices.json)
+adds 28 source-package license/patent texts to the shared asset (173 verbatim
+texts in total). Selection follows package and embedded-file ancestors using
+the bound AAR/DLL build settings; all 128 recorded Go modules are represented.
+This includes distinct freelru, dicttls and Psiphon notices without treating
+package membership as proof that optional native code was linked. The exact
+Psiphon utls upstream tree confirms the missing root license; its scoped
+dicttls text does not close that gap. Other native/file-header obligations,
+corresponding-source delivery and the complete C05 gate remain open.
+
 The R12 source branch refreshes managed profiles on ordinary Windows reconnect
 and requires explicit staging acknowledgement before connect. Local shell and
 runtime regression tests do not prove service-effective revision or a packaged

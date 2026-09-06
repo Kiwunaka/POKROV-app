@@ -36,6 +36,16 @@ root license; that gap, nested/native coverage, source delivery and installed
 privacy/device acceptance remain open. These APKs use internal debug signing
 and the loopback API; they are not a new release candidate.
 
+The [nested notice follow-up](evidence/2026-09-06-r12-c05-nested-notices/package-notices.json)
+adds 28 source-package license/patent texts, bringing the asset to 173 verbatim
+texts. Five source dependency graphs use the tags and GOOS/GOARCH/CGO settings
+recorded in the bound DLL and four AAR libraries; all 128 recorded Go modules
+are represented. Package-ancestor selection covers distinct dicttls, freelru
+and Psiphon notices, but does not establish every native include or file-header
+obligation. The exact Psiphon utls upstream tree has no root license; all 298
+module-cache files match it. Its nested dicttls license is included with its
+own scope and does not substitute for the missing root text.
+
 The R12 source branch replaces event/cache health authority with per-call Core
 `CommandServer.ProbeEndpoint` and `ProbeSelectedOutbound` results. Core
 `8dc57a830bd1487389dd1b7c9190f094c31e13bc` is bound in the runtime manifest;
