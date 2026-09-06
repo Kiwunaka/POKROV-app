@@ -190,6 +190,16 @@
           }
         }
       }
+    },
+    "native_go_notices": {
+      "file": "packages/app_shell/assets/licenses/native-go-NOTICES.txt",
+      "sha256": "c0389ada6e70b079fb964eb04ec015db63db85e699b7d82e21a64b568c1c19f3",
+      "source_commit": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+      "go_toolchain": "go1.26.8",
+      "scope": "Verbatim root license and patent notices for recorded Android/Windows Go inputs, Core, ray2sing and Go; nested/native/source clearance remains separate",
+      "missing_root_license_modules": [
+        "github.com/Psiphon-Labs/utls@v0.0.0-20260129182755-24497d415a8d"
+      ]
     }
   }
 }

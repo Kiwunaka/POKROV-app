@@ -18,7 +18,7 @@ first reproduced loss of the old file, then passed after the fix. This source
 test does not establish packaged install, durable profile rollback, service
 effective revision or clean-VM TUN proof for a new candidate.
 
-Last updated: 2026-09-04
+Last updated: 2026-09-06
 
 ## Document Status
 
@@ -70,6 +70,17 @@ checks its SHA-256. An isolated 301-file bundle contains the exact notice; its
 other 300 files match the preserved C05 package baseline. This covers identified
 Cronet native OSS notices; other Core/Android/Flutter/Microsoft notice coverage
 and the complete C05 gate remain open.
+
+The subsequent [Go native notice receipt](evidence/2026-09-06-r12-c05-go-notices/package-notices.json)
+verifies the shared `native-go-NOTICES.txt` asset in a new 302-file local bundle.
+It preserves 145 license/patent texts and binds their hash to the current Core
+source and Go toolchain. Compared with the retained 301-file Cronet-notice
+bundle, only `AssetManifest.bin` changed and the Go notice was added; the other
+300 files match exactly. The earlier Flutter build failed at installation due
+to a stale, incorrectly restored CMake cache prefix; a fresh isolated prefix
+passed. The cache now uses the normal runner output directory. Psiphon utls,
+nested/native notice coverage, corresponding source, signing, installer and
+installed privacy/runtime gates remain open.
 
 The R12 source branch refreshes managed profiles on ordinary Windows reconnect
 and requires explicit staging acknowledgement before connect. Local shell and

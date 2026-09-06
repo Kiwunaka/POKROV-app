@@ -1,0 +1,3072 @@
+{
+  "schema": "pokrov.native-go-root-notices/v1",
+  "source_commit": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "go_toolchain": "go1.26.8",
+  "artifact_binding": {
+    "android": {
+      "file": "apps/android_shell/android/app/libs/pokrov-core.aar",
+      "bytes": 107483275,
+      "sha256": "bc5ef7ece6ba6c138589307a7c5e30be32ec01cdd396e23dfdb8840011148b29"
+    },
+    "windows": {
+      "file": "apps/windows_shell/windows/runner/resources/runtime/pokrov-core.dll",
+      "bytes": 55449088,
+      "sha256": "c679ba5af42939acbc8c6f44af59b4608f6a76c99e0d444cfa4bcc825bcc8e68"
+    }
+  },
+  "notice_asset": {
+    "file": "packages/app_shell/assets/licenses/native-go-NOTICES.txt",
+    "bytes": 550167,
+    "sha256": "c0389ada6e70b079fb964eb04ec015db63db85e699b7d82e21a64b568c1c19f3"
+  },
+  "sections": [
+    {
+      "component": "POKROV Core",
+      "source": "8dc57a830bd1487389dd1b7c9190f094c31e13bc"
+    },
+    {
+      "component": "ray2sing converter",
+      "source": "8dc57a830bd1487389dd1b7c9190f094c31e13bc"
+    },
+    {
+      "component": "Go runtime and standard library",
+      "version": "go1.26.8"
+    },
+    {
+      "component": "filippo.io/edwards25519 v1.1.0",
+      "identity": {
+        "module": "filippo.io/edwards25519",
+        "version": "v1.1.0",
+        "sum": "h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/AdguardTeam/golibs v0.32.7",
+      "identity": {
+        "module": "github.com/AdguardTeam/golibs",
+        "version": "v0.32.7",
+        "sum": "h1:3dmGlAVgmvquCCwHsvEl58KKcRAK3z1UnjMnwSIeDH4=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/Jigsaw-Code/outline-sdk v0.0.16",
+      "identity": {
+        "module": "github.com/Jigsaw-Code/outline-sdk",
+        "version": "v0.0.16",
+        "sum": "h1:WbHmv80FKDIpzEmR3GehTbq5CibYTLvcxIIpMMILiEs=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/Psiphon-Labs/bolt v0.0.0-20200624191537-23cedaef7ad7",
+      "identity": {
+        "module": "github.com/Psiphon-Labs/bolt",
+        "version": "v0.0.0-20200624191537-23cedaef7ad7",
+        "sum": "h1:Hx/NCZTnvoKZuIBwSmxE58KKoNLXIGG6hBJYN7pj9Ag=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/Psiphon-Labs/consistent v0.0.0-20240322131436-20aaa4e05737",
+      "identity": {
+        "module": "github.com/Psiphon-Labs/consistent",
+        "version": "v0.0.0-20240322131436-20aaa4e05737",
+        "sum": "h1:QTMy7Uc2Xc7fz6O/Khy1xi0VBND13GqzLUE2mHw6HUU=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/Psiphon-Labs/goptlib v0.0.0-20200406165125-c0e32a7a3464",
+      "identity": {
+        "module": "github.com/Psiphon-Labs/goptlib",
+        "version": "v0.0.0-20200406165125-c0e32a7a3464",
+        "sum": "h1:VmnMMMheFXwLV0noxYhbJbLmkV4iaVW3xNnj6xcCNHo=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/Psiphon-Labs/psiphon-tls v0.0.0-20250318183125-2a2fae2db378",
+      "identity": {
+        "module": "github.com/Psiphon-Labs/psiphon-tls",
+        "version": "v0.0.0-20250318183125-2a2fae2db378",
+        "sum": "",
+        "replacement": {
+          "module": "./engine/sing-box/replace/psiphon-tls",
+          "version": "(devel)",
+          "sum": ""
+        }
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/Psiphon-Labs/psiphon-tunnel-core v1.0.11-0.20260202154140-a3384a551c62",
+      "identity": {
+        "module": "github.com/Psiphon-Labs/psiphon-tunnel-core",
+        "version": "v1.0.11-0.20260202154140-a3384a551c62",
+        "sum": "h1:QH1wzk3ixBdbiy+D6X42kq9Xtqz4ljdJOCQ4IP0E4tc=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/Psiphon-Labs/quic-go v0.0.0-20250527153145-79fe45fb83b1",
+      "identity": {
+        "module": "github.com/Psiphon-Labs/quic-go",
+        "version": "v0.0.0-20250527153145-79fe45fb83b1",
+        "sum": "",
+        "replacement": {
+          "module": "./engine/sing-box/replace/psiphon-quic-go",
+          "version": "(devel)",
+          "sum": ""
+        }
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/Psiphon-Labs/utls v0.0.0-20260129182755-24497d415a8d",
+      "identity": {
+        "module": "github.com/Psiphon-Labs/utls",
+        "version": "v0.0.0-20260129182755-24497d415a8d",
+        "sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+        "replacement": null
+      },
+      "root_notice_count": 0,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/ajg/form v1.5.1",
+      "identity": {
+        "module": "github.com/ajg/form",
+        "version": "v1.5.1",
+        "sum": "h1:t9c7v8JUKu/XxOGBU0yjNpaMloxGEJhUkqFRq0ibGeU=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/ameshkov/dnscrypt/v2 v2.4.0",
+      "identity": {
+        "module": "github.com/ameshkov/dnscrypt/v2",
+        "version": "v2.4.0",
+        "sum": "",
+        "replacement": {
+          "module": "github.com/shtorm-7/dnscrypt/v2",
+          "version": "v2.4.0-extended-1.0.0",
+          "sum": "h1:e5s7RKBd2rIPR0StbvZ2vTVtJ5jDTsTk5wtIIapZTRg="
+        }
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/ameshkov/dnsstamps v1.0.3",
+      "identity": {
+        "module": "github.com/ameshkov/dnsstamps",
+        "version": "v1.0.3",
+        "sum": "h1:Srzik+J9mivH1alRACTbys2xOxs0lRH9qnTA7Y1OYVo=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/amnezia-vpn/amneziawg-go/v3 v3.1.20260814",
+      "identity": {
+        "module": "github.com/amnezia-vpn/amneziawg-go/v3",
+        "version": "v3.1.20260814",
+        "sum": "h1:l2AhBD+sFycU8Im81n/bZORMxW7fWtlZJEuJ4Hh0+z0=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/andybalholm/brotli v1.1.1",
+      "identity": {
+        "module": "github.com/andybalholm/brotli",
+        "version": "v1.1.1",
+        "sum": "h1:PR2pgnyFznKEugtsUo0xLdDop5SKXd5Qf5ysW+7XdTA=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/anytls/sing-anytls v0.0.11",
+      "identity": {
+        "module": "github.com/anytls/sing-anytls",
+        "version": "v0.0.11",
+        "sum": "h1:w8e9Uj1oP3m4zxkyZDewPk0EcQbvVxb7Nn+rapEx4fc=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/axiomhq/hyperloglog v0.2.6",
+      "identity": {
+        "module": "github.com/axiomhq/hyperloglog",
+        "version": "v0.2.6",
+        "sum": "h1:sRhvvF3RIXWQgAXaTphLp4yJiX4S0IN3MWTaAgZoRJw=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/bepass-org/warp-plus v1.2.6",
+      "identity": {
+        "module": "github.com/bepass-org/warp-plus",
+        "version": "v1.2.6",
+        "sum": "",
+        "replacement": {
+          "module": "./third_party/warp-plus",
+          "version": "(devel)",
+          "sum": ""
+        }
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/bifurcation/mint v0.0.0-20180306135233-198357931e61",
+      "identity": {
+        "module": "github.com/bifurcation/mint",
+        "version": "v0.0.0-20180306135233-198357931e61",
+        "sum": "h1:BU+NxuoaYPIvvp8NNkNlLr8aA0utGyuunf4Q3LJ0bh0=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/biter777/countries v1.7.5",
+      "identity": {
+        "module": "github.com/biter777/countries",
+        "version": "v1.7.5",
+        "sum": "h1:MJ+n3+rSxWQdqVJU8eBy9RqcdH6ePPn4PJHocVWUa+Q=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/bits-and-blooms/bitset v1.10.0",
+      "identity": {
+        "module": "github.com/bits-and-blooms/bitset",
+        "version": "v1.10.0",
+        "sum": "h1:ePXTeiPEazB5+opbv5fr8umg2R/1NlzgDsyepwsSr88=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/bits-and-blooms/bloom/v3 v3.6.0",
+      "identity": {
+        "module": "github.com/bits-and-blooms/bloom/v3",
+        "version": "v3.6.0",
+        "sum": "h1:dTU0OVLJSoOhz9m68FTXMFfA39nR8U/nTCs1zb26mOI=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/cespare/xxhash v1.1.0",
+      "identity": {
+        "module": "github.com/cespare/xxhash",
+        "version": "v1.1.0",
+        "sum": "h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/cheekybits/genny v0.0.0-20170328200008-9127e812e1e9",
+      "identity": {
+        "module": "github.com/cheekybits/genny",
+        "version": "v0.0.0-20170328200008-9127e812e1e9",
+        "sum": "h1:a1zrFsLFac2xoM6zG1u72DWJwZG3ayttYLfmLbxVETk=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/cloudflare/circl v1.6.3",
+      "identity": {
+        "module": "github.com/cloudflare/circl",
+        "version": "v1.6.3",
+        "sum": "h1:9GPOhQGF9MCYUeXyMYlqTR6a5gTrgR/fBLXvUgtVcg8=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/cognusion/go-cache-lru v0.0.0-20170419142635-f73e2280ecea",
+      "identity": {
+        "module": "github.com/cognusion/go-cache-lru",
+        "version": "v0.0.0-20170419142635-f73e2280ecea",
+        "sum": "h1:9C2rdYRp8Vzwhm3sbFX0yYfB+70zKFRjn7cnPCucHSw=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/cretz/bine v0.2.0",
+      "identity": {
+        "module": "github.com/cretz/bine",
+        "version": "v0.2.0",
+        "sum": "h1:8GiDRGlTgz+o8H9DSnsl+5MeBK4HsExxgl6WgzOCuZo=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/database64128/netx-go v0.1.1",
+      "identity": {
+        "module": "github.com/database64128/netx-go",
+        "version": "v0.1.1",
+        "sum": "h1:dT5LG7Gs7zFZBthFBbzWE6K8wAHjSNAaK7wCYZT7NzM=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/database64128/tfo-go/v2 v2.3.3",
+      "identity": {
+        "module": "github.com/database64128/tfo-go/v2",
+        "version": "v2.3.3",
+        "sum": "h1:M0X1SgOirhSvMKI8VQfgUtNVM53L6Rzg9Z+DN6fLA50=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/dgryski/go-metro v0.0.0-20250106013310-edb8663e5e33",
+      "identity": {
+        "module": "github.com/dgryski/go-metro",
+        "version": "v0.0.0-20250106013310-edb8663e5e33",
+        "sum": "h1:ucRHb6/lvW/+mTEIGbvhcYU3S8+uSNkuMjx/qZFfhtM=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/ebitengine/purego v0.9.1",
+      "identity": {
+        "module": "github.com/ebitengine/purego",
+        "version": "v0.9.1",
+        "sum": "h1:a/k2f2HQU3Pi399RPW1MOaZyhKJL9w/xFpKAg4q1s0A=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/enfein/mieru/v3 v3.27.0",
+      "identity": {
+        "module": "github.com/enfein/mieru/v3",
+        "version": "v3.27.0",
+        "sum": "h1:+E/1TF7OfimS2h582atEXQxPtJMyvqUTFBJUgzn1rxg=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/florianl/go-nfqueue/v2 v2.0.2",
+      "identity": {
+        "module": "github.com/florianl/go-nfqueue/v2",
+        "version": "v2.0.2",
+        "sum": "h1:FL5lQTeetgpCvac1TRwSfgaXUn0YSO7WzGvWNIp3JPE=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/flynn/noise v1.1.0",
+      "identity": {
+        "module": "github.com/flynn/noise",
+        "version": "v1.1.0",
+        "sum": "h1:KjPQoQCEFdZDiP03phOvGi11+SVVhBG2wOWAorLsstg=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/fsnotify/fsnotify v1.7.0",
+      "identity": {
+        "module": "github.com/fsnotify/fsnotify",
+        "version": "v1.7.0",
+        "sum": "h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nosvA=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/fxamacker/cbor/v2 v2.7.0",
+      "identity": {
+        "module": "github.com/fxamacker/cbor/v2",
+        "version": "v2.7.0",
+        "sum": "h1:iM5WgngdRBanHcxugY4JySA0nk1wZorNOpTgCMedv5E=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/go-chi/chi/v5 v5.2.3",
+      "identity": {
+        "module": "github.com/go-chi/chi/v5",
+        "version": "v5.2.3",
+        "sum": "h1:WQIt9uxdsAbgIYgid+BpYc+liqQZGMHRaUwp0JUcvdE=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/go-chi/render v1.0.3",
+      "identity": {
+        "module": "github.com/go-chi/render",
+        "version": "v1.0.3",
+        "sum": "h1:AsXqd2a1/INaIfUSKq3G5uA8weYx20FOsM7uSoCyyt4=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/go-ole/go-ole v1.3.0",
+      "identity": {
+        "module": "github.com/go-ole/go-ole",
+        "version": "v1.3.0",
+        "sum": "h1:Dt6ye7+vXGIKZ7Xtk4s6/xVdGDQynvom7xCFEdWr6uE=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/gobwas/httphead v0.1.0",
+      "identity": {
+        "module": "github.com/gobwas/httphead",
+        "version": "v0.1.0",
+        "sum": "h1:exrUm0f4YX0L7EBwZHuCF4GDp8aJfVeBrlLQrs6NqWU=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/gobwas/pool v0.2.1",
+      "identity": {
+        "module": "github.com/gobwas/pool",
+        "version": "v0.2.1",
+        "sum": "h1:xfeeEhW7pwmX8nuLVlqbzVc7udMDrwetjEv+TZIz1og=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/godbus/dbus/v5 v5.2.1",
+      "identity": {
+        "module": "github.com/godbus/dbus/v5",
+        "version": "v5.2.1",
+        "sum": "h1:I4wwMdWSkmI57ewd+elNGwLRf2/dtSaFz1DujfWYvOk=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/gofrs/uuid/v5 v5.4.0",
+      "identity": {
+        "module": "github.com/gofrs/uuid/v5",
+        "version": "v5.4.0",
+        "sum": "h1:EfbpCTjqMuGyq5ZJwxqzn3Cbr2d0rUZU7v5ycAk/e/0=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da",
+      "identity": {
+        "module": "github.com/golang/groupcache",
+        "version": "v0.0.0-20210331224755-41bb18bfe9da",
+        "sum": "h1:oI5xCqsCo564l8iNU+DwB5epxmsaqB+rhGL0m5jtYqE=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/golang/snappy v0.0.1",
+      "identity": {
+        "module": "github.com/golang/snappy",
+        "version": "v0.0.1",
+        "sum": "h1:Qgr9rKW7uDUkrbSmQeiDsGa8SjGyCOGtuasMWwvp2P4=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/google/btree v1.1.3",
+      "identity": {
+        "module": "github.com/google/btree",
+        "version": "v1.1.3",
+        "sum": "h1:CVpQJjYgC4VbzxeGVHfvZrv1ctoYCAI8vbl07Fcxlyg=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/grafov/m3u8 v0.0.0-20171211212457-6ab8f28ed427",
+      "identity": {
+        "module": "github.com/grafov/m3u8",
+        "version": "v0.0.0-20171211212457-6ab8f28ed427",
+        "sum": "h1:xh96CCAZTX8LJPFoOVRgTwZbn2DvJl8fyCyivohhSIg=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/hashicorp/yamux v0.1.2",
+      "identity": {
+        "module": "github.com/hashicorp/yamux",
+        "version": "v0.1.2",
+        "sum": "h1:XtB8kyFOyHXYVFnwT5C3+Bdo8gArse7j2AQ0DA0Uey8=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/hectane/go-acl v0.0.0-20230122075934-ca0b05cb1adb",
+      "identity": {
+        "module": "github.com/hectane/go-acl",
+        "version": "v0.0.0-20230122075934-ca0b05cb1adb",
+        "sum": "h1:PGufWXXDq9yaev6xX1YQauaO1MV90e6Mpoq1I7Lz/VM=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/kamstrup/intmap v0.5.2",
+      "identity": {
+        "module": "github.com/kamstrup/intmap",
+        "version": "v0.5.2",
+        "sum": "h1:qnwBm1mh4XAnW9W9Ue9tZtTff8pS6+s6iKF6JRIV2Dk=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/klauspost/compress v1.18.0",
+      "identity": {
+        "module": "github.com/klauspost/compress",
+        "version": "v1.18.0",
+        "sum": "h1:c/Cqfb0r+Yi+JtIEq73FWXVkRonBlf0CRNYc8Zttxdo=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/klauspost/cpuid/v2 v2.3.0",
+      "identity": {
+        "module": "github.com/klauspost/cpuid/v2",
+        "version": "v2.3.0",
+        "sum": "h1:S4CRMLnYUhGeDFDqkGriYKdfoFlDnMtqTiI/sFzhA9Y=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/klauspost/reedsolomon v1.12.0",
+      "identity": {
+        "module": "github.com/klauspost/reedsolomon",
+        "version": "v1.12.0",
+        "sum": "h1:I5FEp3xSwVCcEh3F5A7dofEfhXdF/bWhQWPH+XwBFno=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/logrusorgru/aurora v2.0.3+incompatible",
+      "identity": {
+        "module": "github.com/logrusorgru/aurora",
+        "version": "v2.0.3+incompatible",
+        "sum": "h1:tOpm7WcpBTn4fjmVfgpQq0EfczGlG91VSDkswnjF5A8=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/mahsanet/dnstt v0.0.0-20260208072932-d75b50056612",
+      "identity": {
+        "module": "github.com/mahsanet/dnstt",
+        "version": "v0.0.0-20260208072932-d75b50056612",
+        "sum": "h1:d4i0AY/0omVj2Rv/WKEWlO1f6EalZpogr148GKhlgrw=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/marusama/semaphore v0.0.0-20171214154724-565ffd8e868a",
+      "identity": {
+        "module": "github.com/marusama/semaphore",
+        "version": "v0.0.0-20171214154724-565ffd8e868a",
+        "sum": "h1:6SRny9FLB1eWasPyDUqBQnMi9NhXU01XIlB0ao89YoI=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/mdlayher/netlink v1.7.3-0.20250113171957-fbb4dce95f42",
+      "identity": {
+        "module": "github.com/mdlayher/netlink",
+        "version": "v1.7.3-0.20250113171957-fbb4dce95f42",
+        "sum": "h1:A1Cq6Ysb0GM0tpKMbdCXCIfBclan4oHk1Jb+Hrejirg=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/mdlayher/socket v0.5.1",
+      "identity": {
+        "module": "github.com/mdlayher/socket",
+        "version": "v0.5.1",
+        "sum": "h1:VZaqt6RkGkt2OE9l3GcC6nZkqD3xKeQLyfleW/uBcos=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/metacubex/utls v1.8.4",
+      "identity": {
+        "module": "github.com/metacubex/utls",
+        "version": "v1.8.4",
+        "sum": "h1:HmL9nUApDdWSkgUyodfwF6hSjtiwCGGdyhaSpEejKpg=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/miekg/dns v1.1.72",
+      "identity": {
+        "module": "github.com/miekg/dns",
+        "version": "v1.1.72",
+        "sum": "h1:vhmr+TF2A3tuoGNkLDFK9zi36F2LS+hKTRW0Uf8kbzI=",
+        "replacement": null
+      },
+      "root_notice_count": 2,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/pires/go-proxyproto v0.9.2",
+      "identity": {
+        "module": "github.com/pires/go-proxyproto",
+        "version": "v0.9.2",
+        "sum": "h1:H1UdHn695zUVVmB0lQ354lOWHOy6TZSpzBl3tgN0s1U=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/pkg/errors v0.9.1",
+      "identity": {
+        "module": "github.com/pkg/errors",
+        "version": "v0.9.1",
+        "sum": "h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/quic-go/qpack v0.6.0",
+      "identity": {
+        "module": "github.com/quic-go/qpack",
+        "version": "v0.6.0",
+        "sum": "h1:g7W+BMYynC1LbYLSqRt8PBg5Tgwxn214ZZR34VIOjz8=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/refraction-networking/utls v1.8.2",
+      "identity": {
+        "module": "github.com/refraction-networking/utls",
+        "version": "v1.8.2",
+        "sum": "h1:j4Q1gJj0xngdeH+Ox/qND11aEfhpgoEvV+S9iJ2IdQo=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/bbolt v0.0.0-20231014093535-ea5cb2fe9f0a",
+      "identity": {
+        "module": "github.com/sagernet/bbolt",
+        "version": "v0.0.0-20231014093535-ea5cb2fe9f0a",
+        "sum": "h1:+NkI2670SQpQWvkkD2QgdTuzQG263YZ+2emfpeyGqW0=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/cors v1.2.1",
+      "identity": {
+        "module": "github.com/sagernet/cors",
+        "version": "v1.2.1",
+        "sum": "h1:Cv5Z8y9YSD6Gm+qSpNrL3LO4lD3eQVvbFYJSG7JCMHQ=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/cronet-go v0.0.0-20260117110918-dc1cda1fe287",
+      "identity": {
+        "module": "github.com/sagernet/cronet-go",
+        "version": "v0.0.0-20260117110918-dc1cda1fe287",
+        "sum": "h1:0BYNmr0ptjsII948U0oBFmrbo4qEaCFcrE2JPRg3Zlk=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/cronet-go/all v0.0.0-20260117110918-dc1cda1fe287",
+      "identity": {
+        "module": "github.com/sagernet/cronet-go/all",
+        "version": "v0.0.0-20260117110918-dc1cda1fe287",
+        "sum": "h1:ghxhYSBQpzkakqWqJDvXr/Zmxe0WjTjKuALEGbjGiGY=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/cronet-go/lib/android_386 v0.0.0-20260117110516-f21660bef13f",
+      "identity": {
+        "module": "github.com/sagernet/cronet-go/lib/android_386",
+        "version": "v0.0.0-20260117110516-f21660bef13f",
+        "sum": "h1:8jZbZ4KBTdcXDFLwUBNQt5Xci6ZuAKh255S8TwuBCaM=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-x86.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/cronet-go/lib/android_amd64 v0.0.0-20260117110516-f21660bef13f",
+      "identity": {
+        "module": "github.com/sagernet/cronet-go/lib/android_amd64",
+        "version": "v0.0.0-20260117110516-f21660bef13f",
+        "sum": "h1:tG0hCx+0u5zca7qQ7AMkcv4DCrBG/DKW1ggs/P+BRRI=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-x86_64.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/cronet-go/lib/android_arm v0.0.0-20260117110516-f21660bef13f",
+      "identity": {
+        "module": "github.com/sagernet/cronet-go/lib/android_arm",
+        "version": "v0.0.0-20260117110516-f21660bef13f",
+        "sum": "h1:ZXp5hKJIA7iJ52ZShJCKMQEPLpp/7dDIVZmPGV9Il40=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/cronet-go/lib/android_arm64 v0.0.0-20260117110516-f21660bef13f",
+      "identity": {
+        "module": "github.com/sagernet/cronet-go/lib/android_arm64",
+        "version": "v0.0.0-20260117110516-f21660bef13f",
+        "sum": "h1:gL7H8HS8s38adz4/HZtRHh79qMwsbLTRRPz4GQ9LcWI=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/cronet-go/lib/windows_amd64 v0.0.0-20260117110516-f21660bef13f",
+      "identity": {
+        "module": "github.com/sagernet/cronet-go/lib/windows_amd64",
+        "version": "v0.0.0-20260117110516-f21660bef13f",
+        "sum": "h1:B0fnGu0sh9yT/9JDN5u/GqThGoOzNN/daOAuGWFLXEk=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/fswatch v0.1.1",
+      "identity": {
+        "module": "github.com/sagernet/fswatch",
+        "version": "v0.1.1",
+        "sum": "h1:YqID+93B7VRfqIH3PArW/XpJv5H4OLEVWDfProGoRQs=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/gomobile v0.1.11",
+      "identity": {
+        "module": "github.com/sagernet/gomobile",
+        "version": "v0.1.11",
+        "sum": "h1:niMQAspvuThup5eRZQpsGcbM76zAvnsGr7RUIpnQMDQ=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/gvisor v0.0.0-20250811.0-sing-box-mod.1",
+      "identity": {
+        "module": "github.com/sagernet/gvisor",
+        "version": "v0.0.0-20250811.0-sing-box-mod.1",
+        "sum": "h1:AzCE2RhBjLJ4WIWc/GejpNh+z30d5H1hwaB0nD9eY3o=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/netlink v0.0.0-20240612041022-b9a21c07ac6a",
+      "identity": {
+        "module": "github.com/sagernet/netlink",
+        "version": "v0.0.0-20240612041022-b9a21c07ac6a",
+        "sum": "h1:ObwtHN2VpqE0ZNjr6sGeT00J8uU7JF4cNUdb44/Duis=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/nftables v0.3.0-beta.4",
+      "identity": {
+        "module": "github.com/sagernet/nftables",
+        "version": "v0.3.0-beta.4",
+        "sum": "h1:kbULlAwAC3jvdGAC1P5Fa3GSxVwQJibNenDW2zaXr8I=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/quic-go v0.59.0-sing-box-mod.2",
+      "identity": {
+        "module": "github.com/sagernet/quic-go",
+        "version": "v0.59.0-sing-box-mod.2",
+        "sum": "h1:hJUL+HtxEOjxsa0CsucbBVqI/AMS4k52NwNU637zmdw=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/sing v0.8.0-beta.12",
+      "identity": {
+        "module": "github.com/sagernet/sing",
+        "version": "v0.8.0-beta.12",
+        "sum": "h1:Xt0MNk6i6vI9f2vV6QkwhgiLB0g53fZSVsCCBEtQ8qQ=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/sing-box v1.13.0",
+      "identity": {
+        "module": "github.com/sagernet/sing-box",
+        "version": "v1.13.0",
+        "sum": "",
+        "replacement": {
+          "module": "./engine/sing-box",
+          "version": "(devel)",
+          "sum": ""
+        }
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/sing-dns v0.3.0",
+      "identity": {
+        "module": "github.com/sagernet/sing-dns",
+        "version": "v0.3.0",
+        "sum": "",
+        "replacement": {
+          "module": "github.com/shtorm-7/sing-dns",
+          "version": "v0.4.6-extended-1.0.0",
+          "sum": "h1:/fyqTYciGYTEbDDySW22t9vY5bSr+lCeLZfjVlv9qgw="
+        }
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/sing-mux v0.3.4",
+      "identity": {
+        "module": "github.com/sagernet/sing-mux",
+        "version": "v0.3.4",
+        "sum": "h1:ZQplKl8MNXutjzbMVtWvWG31fohhgOfCuUZR4dVQ8+s=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/sing-quic v0.6.0-beta.11",
+      "identity": {
+        "module": "github.com/sagernet/sing-quic",
+        "version": "v0.6.0-beta.11",
+        "sum": "h1:eUusxITKKRedhWC2ScUYFUvD96h/QfbKLaS3N6/7in4=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/sing-shadowsocks v0.2.8",
+      "identity": {
+        "module": "github.com/sagernet/sing-shadowsocks",
+        "version": "v0.2.8",
+        "sum": "h1:PURj5PRoAkqeHh2ZW205RWzN9E9RtKCVCzByXruQWfE=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/sing-shadowsocks2 v0.2.1",
+      "identity": {
+        "module": "github.com/sagernet/sing-shadowsocks2",
+        "version": "v0.2.1",
+        "sum": "h1:dWV9OXCeFPuYGHb6IRqlSptVnSzOelnqqs2gQ2/Qioo=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/sing-shadowtls v0.2.1-0.20250503051639-fcd445d33c11",
+      "identity": {
+        "module": "github.com/sagernet/sing-shadowtls",
+        "version": "v0.2.1-0.20250503051639-fcd445d33c11",
+        "sum": "h1:tK+75l64tm9WvEFrYRE1t0YxoFdWQqw/h7Uhzj0vJ+w=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/sing-tun v0.8.0-beta.17",
+      "identity": {
+        "module": "github.com/sagernet/sing-tun",
+        "version": "v0.8.0-beta.17",
+        "sum": "h1:6DdbNXeTFYj8Tb4FCh8Mp2boA3rVY6VNqzTOObj7Xis=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/sing-vmess v0.2.8-0.20250909125414-3aed155119a1",
+      "identity": {
+        "module": "github.com/sagernet/sing-vmess",
+        "version": "v0.2.8-0.20250909125414-3aed155119a1",
+        "sum": "h1:aSwUNYUkVyVvdmBSufR8/nRFonwJeKSIROxHcm5br9o=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/smux v1.5.50-sing-box-mod.1",
+      "identity": {
+        "module": "github.com/sagernet/smux",
+        "version": "v1.5.50-sing-box-mod.1",
+        "sum": "h1:XkJcivBC9V4wBjiGXIXZ229aZCU1hzcbp6kSkkyQ478=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/wireguard-go v0.0.2-beta.1.0.20250917110311-16510ac47288",
+      "identity": {
+        "module": "github.com/sagernet/wireguard-go",
+        "version": "v0.0.2-beta.1.0.20250917110311-16510ac47288",
+        "sum": "",
+        "replacement": {
+          "module": "./engine/sing-box/replace/wireguard-go",
+          "version": "(devel)",
+          "sum": ""
+        }
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/sagernet/ws v0.0.0-20231204124109-acfe8907c854",
+      "identity": {
+        "module": "github.com/sagernet/ws",
+        "version": "v0.0.0-20231204124109-acfe8907c854",
+        "sum": "h1:6uUiZcDRnZSAegryaUGwPC/Fj13JSHwiTftrXhMmYOc=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/shadowsocks/go-shadowsocks2 v0.1.5",
+      "identity": {
+        "module": "github.com/shadowsocks/go-shadowsocks2",
+        "version": "v0.1.5",
+        "sum": "h1:PDSQv9y2S85Fl7VBeOMF9StzeXZyK1HakRm86CUbr28=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635",
+      "identity": {
+        "module": "github.com/syndtr/gocapability",
+        "version": "v0.0.0-20200815063812-42c35b437635",
+        "sum": "h1:kdXcSzyDtseVEc4yCz2qF8ZrQvIDBJLl4S1c3GCXmoI=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca",
+      "identity": {
+        "module": "github.com/syndtr/goleveldb",
+        "version": "v1.0.1-0.20200815110645-5c35d600f0ca",
+        "sum": "h1:Ld/zXl5t4+D69SiV4JoN7kkfvJdOWlPpfxrzxpLMoUk=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/tailscale/netlink v1.1.1-0.20240822203006-4d49adab4de7",
+      "identity": {
+        "module": "github.com/tailscale/netlink",
+        "version": "v1.1.1-0.20240822203006-4d49adab4de7",
+        "sum": "h1:uFsXVBE9Qr4ZoF094vE6iYTLDl0qCiKzYXlL6UeWObU=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/tendermint/tm-db v0.6.7",
+      "identity": {
+        "module": "github.com/tendermint/tm-db",
+        "version": "v0.6.7",
+        "sum": "h1:fE00Cbl0jayAoqlExN6oyQJ7fR/ZtoVOmvPJ//+shu8=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/tidwall/gjson v1.18.0",
+      "identity": {
+        "module": "github.com/tidwall/gjson",
+        "version": "v1.18.0",
+        "sum": "h1:FIDeeyB800efLX89e5a8Y0BNH+LOngJyGrIWxG2FKQY=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/tidwall/match v1.1.1",
+      "identity": {
+        "module": "github.com/tidwall/match",
+        "version": "v1.1.1",
+        "sum": "h1:+Ho715JplO36QYgwN9PGYNhgZvoUSc9X2c80KVTi+GA=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/tidwall/pretty v1.2.1",
+      "identity": {
+        "module": "github.com/tidwall/pretty",
+        "version": "v1.2.1",
+        "sum": "h1:qjsOFOWWQl+N3RsoF5/ssm1pHmJJwhjlSbZ51I6wMl4=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/tjfoc/gmsm v1.4.1",
+      "identity": {
+        "module": "github.com/tjfoc/gmsm",
+        "version": "v1.4.1",
+        "sum": "h1:aMe1GlZb+0bLjn+cKTPEvvn9oUEBlJitaZiiBwsbgho=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/vishvananda/netns v0.0.5",
+      "identity": {
+        "module": "github.com/vishvananda/netns",
+        "version": "v0.0.5",
+        "sum": "h1:DfiHV+j8bA32MFM7bfEunvT8IAqQ/NzSJHtcmW5zdEY=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/wader/filtertransport v0.0.0-20200316221534-bdd9e61eee78",
+      "identity": {
+        "module": "github.com/wader/filtertransport",
+        "version": "v0.0.0-20200316221534-bdd9e61eee78",
+        "sum": "h1:9sreu9e9KOihf2Y0NbpyfWhd1XFDcL4GTkPYL4IvMrg=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/wlynxg/anet v0.0.5",
+      "identity": {
+        "module": "github.com/wlynxg/anet",
+        "version": "v0.0.5",
+        "sum": "h1:J3VJGi1gvo0JwZ/P1/Yc/8p63SoW98B5dHkYDmpgvvU=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/x448/float16 v0.8.4",
+      "identity": {
+        "module": "github.com/x448/float16",
+        "version": "v0.8.4",
+        "sum": "h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/xmdhs/clash2singbox v0.1.4",
+      "identity": {
+        "module": "github.com/xmdhs/clash2singbox",
+        "version": "v0.1.4",
+        "sum": "h1:fhyFLve8VR/FtNVTjBLDsxRkzWqhUpaXq4XDdGYqWXM=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/xtaci/kcp-go/v5 v5.6.70",
+      "identity": {
+        "module": "github.com/xtaci/kcp-go/v5",
+        "version": "v5.6.70",
+        "sum": "h1:AYX0QZl6PqmNj2IdYGZGuBfZuDUkUfl+eHYNijCqaO0=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "github.com/xtaci/smux v1.5.24",
+      "identity": {
+        "module": "github.com/xtaci/smux",
+        "version": "v1.5.24",
+        "sum": "h1:77emW9dtnOxxOQ5ltR+8BbsX1kzcOxQ5gB+aaV9hXOY=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "go4.org/netipx v0.0.0-20231129151722-fdeea329fbba",
+      "identity": {
+        "module": "go4.org/netipx",
+        "version": "v0.0.0-20231129151722-fdeea329fbba",
+        "sum": "h1:0b9z3AuHCjxk0x/opv64kcgZLBseWJUpBw5I82+2U4M=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "golang.org/x/crypto v0.56.0",
+      "identity": {
+        "module": "golang.org/x/crypto",
+        "version": "v0.56.0",
+        "sum": "h1:GUh5Ii4J5jtcseSMiRqr1jXCNHoxjeV9Fmekc2oLy6Y=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93",
+      "identity": {
+        "module": "golang.org/x/exp",
+        "version": "v0.0.0-20251219203646-944ab1f22d93",
+        "sum": "h1:fQsdNF2N+/YewlRZiricy4P1iimyPKZ/xwniHj8Q2a0=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "golang.org/x/mod v0.38.0",
+      "identity": {
+        "module": "golang.org/x/mod",
+        "version": "v0.38.0",
+        "sum": "h1:MECBjubtXD7yj4HrhIUcywNaGeNVUdfVnxmPajOk4yk=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "golang.org/x/net v0.57.0",
+      "identity": {
+        "module": "golang.org/x/net",
+        "version": "v0.57.0",
+        "sum": "h1:K5+3DljvIuDG9/Jv9rvyMywYNFCQ9RSUY6OOTTkT+tE=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "golang.org/x/sync v0.22.0",
+      "identity": {
+        "module": "golang.org/x/sync",
+        "version": "v0.22.0",
+        "sum": "h1:SZjpbeLmrCk4xhRSZFNZW5gFUeCeFgjekvI/+gfScek=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log"
+      ]
+    },
+    {
+      "component": "golang.org/x/sys v0.47.0",
+      "identity": {
+        "module": "golang.org/x/sys",
+        "version": "v0.47.0",
+        "sum": "h1:o7XGOvZQCADBQQ4Y7VNq2dRWQR7JmOUW8Kxx4ZsNgWs=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "golang.org/x/text v0.41.0",
+      "identity": {
+        "module": "golang.org/x/text",
+        "version": "v0.41.0",
+        "sum": "h1:vz/seA0lnX87Othu2f/0L24RcgrXD9/YFTSuGjj3rH8=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "golang.org/x/time v0.14.0",
+      "identity": {
+        "module": "golang.org/x/time",
+        "version": "v0.14.0",
+        "sum": "h1:MRx4UaLrDotUKUdCIqzPC48t1Y9hANFKIRpNx+Te8PI=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2",
+      "identity": {
+        "module": "golang.zx2c4.com/wintun",
+        "version": "v0.0.0-20230126152724-0fa3db229ce2",
+        "sum": "h1:B82qJJgjvYKsXS9jeunTOisW56dUokqW/FOteYJJ/yg=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "golang.zx2c4.com/wireguard v0.0.0-20231211153847-12269c276173",
+      "identity": {
+        "module": "golang.zx2c4.com/wireguard",
+        "version": "v0.0.0-20231211153847-12269c276173",
+        "sum": "h1:/jFs0duh4rdb8uIfPMv78iAJGcPKDeqAFnaLBropIC4=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10",
+      "identity": {
+        "module": "golang.zx2c4.com/wireguard/wgctrl",
+        "version": "v0.0.0-20241231184526-a9ab2273dd10",
+        "sum": "h1:3GDAcqdIg1ozBNLgPy4SLT84nfcBjr6rhGtXYtrkWLU=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "golang.zx2c4.com/wireguard/windows v0.5.3",
+      "identity": {
+        "module": "golang.zx2c4.com/wireguard/windows",
+        "version": "v0.5.3",
+        "sum": "h1:On6j2Rpn3OEMXqBq00QEDC7bWSZrPIHKIus8eIuExIE=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478",
+      "identity": {
+        "module": "google.golang.org/genproto/googleapis/rpc",
+        "version": "v0.0.0-20260414002931-afd174a4e478",
+        "sum": "h1:RmoJA1ujG+/lRGNfUnOMfhCy5EipVMyvUE+KNbPbTlw=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "google.golang.org/grpc v1.82.1",
+      "identity": {
+        "module": "google.golang.org/grpc",
+        "version": "v1.82.1",
+        "sum": "h1:NnAxzGRA0677vCa4BUkOAnO5+FfQqVl9iUXeD0IqcGE=",
+        "replacement": null
+      },
+      "root_notice_count": 2,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "google.golang.org/protobuf v1.36.11",
+      "identity": {
+        "module": "google.golang.org/protobuf",
+        "version": "v1.36.11",
+        "sum": "h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "gopkg.in/yaml.v3 v3.0.1",
+      "identity": {
+        "module": "gopkg.in/yaml.v3",
+        "version": "v3.0.1",
+        "sum": "h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=",
+        "replacement": null
+      },
+      "root_notice_count": 2,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "gvisor.dev/gvisor v0.0.0-20240503213918-b7c924bc64f8",
+      "identity": {
+        "module": "gvisor.dev/gvisor",
+        "version": "v0.0.0-20240503213918-b7c924bc64f8",
+        "sum": "h1:DzvThIeaqCvbufowKcGjJ04qrViggGUg6zEcGFC4i3k=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "lukechampine.com/blake3 v1.4.1",
+      "identity": {
+        "module": "lukechampine.com/blake3",
+        "version": "v1.4.1",
+        "sum": "h1:I3Smz7gso8w4/TunLKec6K2fn+kyKtDxr/xcQEN84Wg=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-libpokrov-core-arm64-v8a.buildinfo.log",
+        "final-libpokrov-core-armeabi-v7a.buildinfo.log",
+        "final-libpokrov-core-x86.buildinfo.log",
+        "final-libpokrov-core-x86_64.buildinfo.log",
+        "final-pokrov-core.buildinfo.log"
+      ]
+    },
+    {
+      "component": "tailscale.com v1.58.2",
+      "identity": {
+        "module": "tailscale.com",
+        "version": "v1.58.2",
+        "sum": "h1:5trkhh/fpUn7f6TUcGUQYJ0GokdNNfNrjh9ONJhoc5A=",
+        "replacement": null
+      },
+      "root_notice_count": 1,
+      "recorded_binaries": [
+        "final-pokrov-core.buildinfo.log"
+      ]
+    }
+  ],
+  "verbatim_files": [
+    {
+      "source_ref": "core@8dc57a830bd1487389dd1b7c9190f094c31e13bc/LICENSE",
+      "body_offset": 790,
+      "bytes": 35149,
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    },
+    {
+      "source_ref": "core@8dc57a830bd1487389dd1b7c9190f094c31e13bc/ray2sing/LICENSE",
+      "body_offset": 36277,
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "source_ref": "go1.26.8/LICENSE",
+      "body_offset": 43591,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "go1.26.8/PATENTS",
+      "body_offset": 45091,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "filippo.io/edwards25519@v1.1.0/LICENSE",
+      "body_offset": 46886,
+      "bytes": 1479,
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "source_ref": "github.com/AdguardTeam/golibs@v0.32.7/LICENSE",
+      "body_offset": 48871,
+      "bytes": 1210,
+      "sha256": "88d9b4eb60579c191ec391ca04c16130572d7eedc4a86daa58bf28c6e14c9bcd"
+    },
+    {
+      "source_ref": "github.com/Jigsaw-Code/outline-sdk@v0.0.16/LICENSE",
+      "body_offset": 50597,
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/bolt@v0.0.0-20200624191537-23cedaef7ad7/LICENSE",
+      "body_offset": 62512,
+      "bytes": 1078,
+      "sha256": "c15d721c37e277a11584547de6d618541501f7aa10c4e32a945a4f9ff36cb0f6"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/consistent@v0.0.0-20240322131436-20aaa4e05737/LICENSE",
+      "body_offset": 64160,
+      "bytes": 1073,
+      "sha256": "ccad81ce98d570d7d47cbb3b477796c37a92ba24b530c16783a273e7674eae2e"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/goptlib@v0.0.0-20200406165125-c0e32a7a3464/COPYING",
+      "body_offset": 65797,
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "source_ref": "core@8dc57a830bd1487389dd1b7c9190f094c31e13bc/engine/sing-box/replace/psiphon-tls/LICENSE",
+      "body_offset": 73567,
+      "bytes": 1609,
+      "sha256": "34060834fa66dd237e40d87d05570c2478c5a69bb7fae371243afc3eeea67396"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/LICENSE",
+      "body_offset": 75770,
+      "bytes": 35148,
+      "sha256": "0ae0485a5bd37a63e63603596417e4eb0e653334fa6c7f932ca3a0e85d4af227"
+    },
+    {
+      "source_ref": "core@8dc57a830bd1487389dd1b7c9190f094c31e13bc/engine/sing-box/replace/psiphon-quic-go/LICENSE",
+      "body_offset": 111644,
+      "bytes": 1112,
+      "sha256": "f2aba6ed89d882c7a609576a301721c9183856cb96e0f2ea717116f92462ba0d"
+    },
+    {
+      "source_ref": "github.com/ajg/form@v1.5.1/LICENSE",
+      "body_offset": 113820,
+      "bytes": 1481,
+      "sha256": "a66b5c17a29c5b28713fc55662593eb22fab1332d0060bdae5ff8c890e821c67"
+    },
+    {
+      "source_ref": "github.com/shtorm-7/dnscrypt/v2@v2.4.0-extended-1.0.0/LICENSE",
+      "body_offset": 115901,
+      "bytes": 1212,
+      "sha256": "6a90b88421a0d9b090e121daa11b3c6d55eed5eeb3281a2fcc454d6a28b5547c"
+    },
+    {
+      "source_ref": "github.com/ameshkov/dnsstamps@v1.0.3/LICENSE",
+      "body_offset": 117617,
+      "bytes": 1212,
+      "sha256": "6a90b88421a0d9b090e121daa11b3c6d55eed5eeb3281a2fcc454d6a28b5547c"
+    },
+    {
+      "source_ref": "github.com/amnezia-vpn/amneziawg-go/v3@v3.1.20260814/LICENSE",
+      "body_offset": 119365,
+      "bytes": 1084,
+      "sha256": "9ec168d1f4af53f293be8bd2e882588f0e35af0334292d4ca4e5ede84408420e"
+    },
+    {
+      "source_ref": "github.com/andybalholm/brotli@v1.1.1/LICENSE",
+      "body_offset": 120953,
+      "bytes": 1084,
+      "sha256": "3d180008e36922a4e8daec11c34c7af264fed5962d07924aea928c38e8663c94"
+    },
+    {
+      "source_ref": "github.com/anytls/sing-anytls@v0.0.11/LICENSE",
+      "body_offset": 122543,
+      "bytes": 673,
+      "sha256": "df8e304aaa400c40a02bb48836a6172ee9ffb3666a5b28088d7201cf1a8b740e"
+    },
+    {
+      "source_ref": "github.com/axiomhq/hyperloglog@v0.2.6/LICENSE",
+      "body_offset": 123722,
+      "bytes": 1055,
+      "sha256": "23c37f1226d190d522b7e802ca94e8fbf1e00a331abee11c636815ac6191d025"
+    },
+    {
+      "source_ref": "core@8dc57a830bd1487389dd1b7c9190f094c31e13bc/third_party/warp-plus/LICENSE",
+      "body_offset": 125439,
+      "bytes": 1040,
+      "sha256": "c118d742cc937fe458812f8cddf5191303b3eab88ed49c0723f5c9ce8a39ab4d"
+    },
+    {
+      "source_ref": "github.com/bifurcation/mint@v0.0.0-20180306135233-198357931e61/LICENSE.md",
+      "body_offset": 127041,
+      "bytes": 1081,
+      "sha256": "26a7e75ecd6ebc45ccb78afda78b833d6c2be36a73470f52b8417238ecc72718"
+    },
+    {
+      "source_ref": "github.com/biter777/countries@v1.7.5/LICENSE",
+      "body_offset": 128626,
+      "bytes": 1331,
+      "sha256": "67f041ee048d3b539234eeb82c5ab22b082285f4679bcddba0a138ab69e333c4"
+    },
+    {
+      "source_ref": "github.com/bits-and-blooms/bitset@v1.10.0/LICENSE",
+      "body_offset": 130471,
+      "bytes": 1480,
+      "sha256": "3ef376b769105f14098dd45e9d08ed3568c77d38ad33c470634606048e62119f"
+    },
+    {
+      "source_ref": "github.com/bits-and-blooms/bloom/v3@v3.6.0/LICENSE",
+      "body_offset": 132467,
+      "bytes": 1296,
+      "sha256": "a008ab764525543af95239bcf2fe9aebea63ea8a8b2f21809a3976ec12509db6"
+    },
+    {
+      "source_ref": "github.com/cespare/xxhash@v1.1.0/LICENSE.txt",
+      "body_offset": 134267,
+      "bytes": 1068,
+      "sha256": "f566a9f97bacdaf00d9f21dd991e81dc11201c4e016c86b470799429a1c9a79c"
+    },
+    {
+      "source_ref": "github.com/cheekybits/genny@v0.0.0-20170328200008-9127e812e1e9/LICENSE",
+      "body_offset": 135891,
+      "bytes": 1078,
+      "sha256": "1a248d1287ff3f6c6f3dd341f467a26dca32ccdadc59dc554b0286869e658e85"
+    },
+    {
+      "source_ref": "github.com/cloudflare/circl@v1.6.3/LICENSE",
+      "body_offset": 137469,
+      "bytes": 3028,
+      "sha256": "b0da1764fe4d13d610b695536fc3f2ebc362482d053a1cd258e36975bc6b97a7"
+    },
+    {
+      "source_ref": "github.com/cognusion/go-cache-lru@v0.0.0-20170419142635-f73e2280ecea/LICENSE",
+      "body_offset": 141065,
+      "bytes": 1101,
+      "sha256": "0070a164e0fc28e82739a764c37b38c56de796f9a8d1862b4413eb6978cd4e04"
+    },
+    {
+      "source_ref": "github.com/cretz/bine@v0.2.0/LICENSE",
+      "body_offset": 142654,
+      "bytes": 1065,
+      "sha256": "9808ceffe450ef163ae04ba0d42149c3742a55ddd8da580c2471f23a7f79a405"
+    },
+    {
+      "source_ref": "github.com/database64128/netx-go@v0.1.1/LICENSE",
+      "body_offset": 144229,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "github.com/database64128/tfo-go/v2@v2.3.3/LICENSE",
+      "body_offset": 146196,
+      "bytes": 1070,
+      "sha256": "092daaeb0ef37d1e9870febdaa8e2e19f263128bf4351f811bd5181d0f4a1081"
+    },
+    {
+      "source_ref": "github.com/dgryski/go-metro@v0.0.0-20250106013310-edb8663e5e33/LICENSE",
+      "body_offset": 147822,
+      "bytes": 1220,
+      "sha256": "4c9aa4187a0088cc5fd5914f89276463d0e1dc1c01d49bdac6fd5bd3d38db476"
+    },
+    {
+      "source_ref": "github.com/ebitengine/purego@v0.9.1/LICENSE",
+      "body_offset": 149367,
+      "bytes": 11357,
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+    },
+    {
+      "source_ref": "github.com/enfein/mieru/v3@v3.27.0/LICENSE",
+      "body_offset": 161224,
+      "bytes": 35149,
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    },
+    {
+      "source_ref": "github.com/florianl/go-nfqueue/v2@v2.0.2/LICENSE",
+      "body_offset": 196852,
+      "bytes": 1108,
+      "sha256": "5425254065e61bfe5f0b686aebe1132b4a1596e0e14ede729cfc52cc3e187af6"
+    },
+    {
+      "source_ref": "github.com/flynn/noise@v1.1.0/LICENSE",
+      "body_offset": 198450,
+      "bytes": 1544,
+      "sha256": "42d4cb1b0c67fe32f716fca52b3d7148406b09c8024e3844ac0595707557da49"
+    },
+    {
+      "source_ref": "github.com/fsnotify/fsnotify@v1.7.0/LICENSE",
+      "body_offset": 200496,
+      "bytes": 1531,
+      "sha256": "2dfbe6d2b5eb18b55148f3805d88648a09e0d17e38428123259afb08c8996e37"
+    },
+    {
+      "source_ref": "github.com/fxamacker/cbor/v2@v2.7.0/LICENSE",
+      "body_offset": 202529,
+      "bytes": 1076,
+      "sha256": "78cad457d5ea7318230f3d969d4cdf29cef45524a1fc8ca3a97646da1ad7a841"
+    },
+    {
+      "source_ref": "github.com/go-chi/chi/v5@v5.2.3/LICENSE",
+      "body_offset": 204099,
+      "bytes": 1123,
+      "sha256": "a2d51b7515acfaff2f7a88688650f2fc4fd99561383e72bba2305e3db59a1647"
+    },
+    {
+      "source_ref": "github.com/go-chi/render@v1.0.3/LICENSE",
+      "body_offset": 205716,
+      "bytes": 1098,
+      "sha256": "98e196bb920eee8b82b0ee2001d609b2cfe57cb83ee1d15f315f327e5599d6df"
+    },
+    {
+      "source_ref": "github.com/go-ole/go-ole@v1.3.0/LICENSE",
+      "body_offset": 207131,
+      "bytes": 1119,
+      "sha256": "d883dbca28769ff23dd4368a8edb7ad9f9f23a8f86adde2875c6e41a828aac62"
+    },
+    {
+      "source_ref": "github.com/gobwas/httphead@v0.1.0/LICENSE",
+      "body_offset": 208748,
+      "bytes": 1082,
+      "sha256": "7d168561ad5212bf5b3023d55cba37c9594eb011ba74445d99f82055be662589"
+    },
+    {
+      "source_ref": "github.com/gobwas/pool@v0.2.1/LICENSE",
+      "body_offset": 210320,
+      "bytes": 1106,
+      "sha256": "bcc745631c0144db2c601650c55d108172c80d601cf2346c71594a0bc32f6f1c"
+    },
+    {
+      "source_ref": "github.com/godbus/dbus/v5@v5.2.1/LICENSE",
+      "body_offset": 211889,
+      "bytes": 1328,
+      "sha256": "e4646a82a976369d7ae8f6ed5c11d35dc0af18433a8ccc24c85b459ad8b95128"
+    },
+    {
+      "source_ref": "github.com/gofrs/uuid/v5@v5.4.0/LICENSE",
+      "body_offset": 213711,
+      "bytes": 1082,
+      "sha256": "92a328e1d5f3269b42e2ce32b4494eafdb3132f204a911c5c95cf3d8465490e4"
+    },
+    {
+      "source_ref": "github.com/golang/groupcache@v0.0.0-20210331224755-41bb18bfe9da/LICENSE",
+      "body_offset": 215351,
+      "bytes": 10273,
+      "sha256": "73ba74dfaa520b49a401b5d21459a8523a146f3b7518a833eea5efa85130bf68"
+    },
+    {
+      "source_ref": "github.com/golang/snappy@v0.0.1/LICENSE",
+      "body_offset": 226118,
+      "bytes": 1486,
+      "sha256": "f69f157b0be75da373605dbc8bbf142e8924ee82d8f44f11bcaf351335bf98cf"
+    },
+    {
+      "source_ref": "github.com/google/btree@v1.1.3/LICENSE",
+      "body_offset": 228096,
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "source_ref": "github.com/grafov/m3u8@v0.0.0-20171211212457-6ab8f28ed427/LICENSE",
+      "body_offset": 240000,
+      "bytes": 1558,
+      "sha256": "7182cc78969d9792de6115f341207cdb744705f9e70a4edc1533ac9d7536e312"
+    },
+    {
+      "source_ref": "github.com/hashicorp/yamux@v0.1.2/LICENSE",
+      "body_offset": 242056,
+      "bytes": 15956,
+      "sha256": "ba36895caa0717b51eacc64ad50ef0b399482e1b82b93cfcdd065307409b3d9d"
+    },
+    {
+      "source_ref": "github.com/hectane/go-acl@v0.0.0-20230122075934-ca0b05cb1adb/LICENSE.txt",
+      "body_offset": 258395,
+      "bytes": 1079,
+      "sha256": "e8f4d38175a71a0bcb92e9af29ba837a5a35682f1d699df8cf02aec435203416"
+    },
+    {
+      "source_ref": "github.com/kamstrup/intmap@v0.5.2/LICENSE",
+      "body_offset": 259972,
+      "bytes": 1314,
+      "sha256": "656136c00f9d31aa4f9f9876e7180d3f090b93733cfabc3c78b46fce4f6ebfa9"
+    },
+    {
+      "source_ref": "github.com/klauspost/compress@v1.18.0/LICENSE",
+      "body_offset": 261792,
+      "bytes": 16733,
+      "sha256": "0d9e582ee4bff57bf1189c9e514e6da7ce277f9cd3bc2d488b22fbb39a6d87cf"
+    },
+    {
+      "source_ref": "github.com/klauspost/cpuid/v2@v2.3.0/LICENSE",
+      "body_offset": 279029,
+      "bytes": 1078,
+      "sha256": "5d966570d7a442d4e969892860a914e542c97f262c873baee8f0aa48e1f40212"
+    },
+    {
+      "source_ref": "github.com/klauspost/reedsolomon@v1.12.0/LICENSE",
+      "body_offset": 280619,
+      "bytes": 1107,
+      "sha256": "345aa942daa8c117669a85bd75f44a8364faceee962812ddb5a576977e0610ee"
+    },
+    {
+      "source_ref": "github.com/logrusorgru/aurora@v2.0.3+incompatible/LICENSE",
+      "body_offset": 282256,
+      "bytes": 1211,
+      "sha256": "7e12e5df4bae12cb21581ba157ced20e1986a0508dd10d0e8a4ab9a4cf94e85c"
+    },
+    {
+      "source_ref": "github.com/mahsanet/dnstt@v0.0.0-20260208072932-d75b50056612/COPYING",
+      "body_offset": 284019,
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "source_ref": "github.com/marusama/semaphore@v0.0.0-20171214154724-565ffd8e868a/LICENSE",
+      "body_offset": 291627,
+      "bytes": 1065,
+      "sha256": "6d259032f167cbb35eb8fce3d075c8e84ba371f4e726e99dad973850b7992aa9"
+    },
+    {
+      "source_ref": "github.com/mdlayher/netlink@v1.7.3-0.20250113171957-fbb4dce95f42/LICENSE.md",
+      "body_offset": 293225,
+      "bytes": 1075,
+      "sha256": "fc7c6fc520ba7d8bded1f601c13ed3918709b13e8b45c37820fdeddaecc9992a"
+    },
+    {
+      "source_ref": "github.com/mdlayher/socket@v0.5.1/LICENSE.md",
+      "body_offset": 294771,
+      "bytes": 1070,
+      "sha256": "7ac20f598f63dfd35c7c6c3844073af0bebfa436cfe58b91af9ac17cd727ea42"
+    },
+    {
+      "source_ref": "github.com/metacubex/utls@v1.8.4/LICENSE",
+      "body_offset": 296337,
+      "bytes": 1479,
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "source_ref": "github.com/miekg/dns@v1.1.72/COPYRIGHT",
+      "body_offset": 298308,
+      "bytes": 512,
+      "sha256": "66550c0ad5ca7ec1e08683e5f872cc45c741f311eee3b8ee484206ecbf9c740d"
+    },
+    {
+      "source_ref": "github.com/miekg/dns@v1.1.72/LICENSE",
+      "body_offset": 298887,
+      "bytes": 1568,
+      "sha256": "f200ff9bad73385db2ed81e23ee2c1fe069eb5776e17fae4ee85ad0a9e1361a5"
+    },
+    {
+      "source_ref": "github.com/pires/go-proxyproto@v0.9.2/LICENSE",
+      "body_offset": 300961,
+      "bytes": 11341,
+      "sha256": "666f1951be1d543e744818d232bb311a4a310fd1d344288642c796fca39af3c7"
+    },
+    {
+      "source_ref": "github.com/pkg/errors@v0.9.1/LICENSE",
+      "body_offset": 312790,
+      "bytes": 1312,
+      "sha256": "8d427fd87bc9579ea368fde3d49f9ca22eac857f91a9dec7e3004bdfab7dee86"
+    },
+    {
+      "source_ref": "github.com/quic-go/qpack@v0.6.0/LICENSE.md",
+      "body_offset": 314602,
+      "bytes": 1054,
+      "sha256": "1b6a897efd39b20b3cdce8cd306160d115dbded39d855ceeffe21dc11e4d53df"
+    },
+    {
+      "source_ref": "github.com/refraction-networking/utls@v1.8.2/LICENSE",
+      "body_offset": 316176,
+      "bytes": 1479,
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "source_ref": "github.com/sagernet/bbolt@v0.0.0-20231014093535-ea5cb2fe9f0a/LICENSE",
+      "body_offset": 318207,
+      "bytes": 1078,
+      "sha256": "c15d721c37e277a11584547de6d618541501f7aa10c4e32a945a4f9ff36cb0f6"
+    },
+    {
+      "source_ref": "github.com/sagernet/cors@v1.2.1/LICENSE",
+      "body_offset": 319779,
+      "bytes": 1154,
+      "sha256": "df53da8b4f70a2d6e360b9c86ba7b9cc284654c126686656cbe9029809fca25f"
+    },
+    {
+      "source_ref": "github.com/sagernet/cronet-go@v0.0.0-20260117110918-dc1cda1fe287/LICENSE",
+      "body_offset": 321493,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/cronet-go/all@v0.0.0-20260117110918-dc1cda1fe287/LICENSE",
+      "body_offset": 322735,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/cronet-go/lib/android_386@v0.0.0-20260117110516-f21660bef13f/LICENSE",
+      "body_offset": 323831,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/cronet-go/lib/android_amd64@v0.0.0-20260117110516-f21660bef13f/LICENSE",
+      "body_offset": 324934,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/cronet-go/lib/android_arm@v0.0.0-20260117110516-f21660bef13f/LICENSE",
+      "body_offset": 326038,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/cronet-go/lib/android_arm64@v0.0.0-20260117110516-f21660bef13f/LICENSE",
+      "body_offset": 327144,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/cronet-go/lib/windows_amd64@v0.0.0-20260117110516-f21660bef13f/LICENSE",
+      "body_offset": 328237,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/fswatch@v0.1.1/LICENSE",
+      "body_offset": 329411,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/gomobile@v0.1.11/LICENSE",
+      "body_offset": 330556,
+      "bytes": 1479,
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "source_ref": "github.com/sagernet/gomobile@v0.1.11/PATENTS",
+      "body_offset": 332110,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "github.com/sagernet/gvisor@v0.0.0-20250811.0-sing-box-mod.1/LICENSE",
+      "body_offset": 333963,
+      "bytes": 14110,
+      "sha256": "0fbab5c58efbdf6d31e8085214f2dd821659c03d73cff3ed2b08e98826ea1cd9"
+    },
+    {
+      "source_ref": "github.com/sagernet/netlink@v0.0.0-20240612041022-b9a21c07ac6a/LICENSE",
+      "body_offset": 348596,
+      "bytes": 10796,
+      "sha256": "04cf148229e562c643203d1ee8c43aae2022e5130e95ceb8ba8357a27c1a9abe"
+    },
+    {
+      "source_ref": "github.com/sagernet/nftables@v0.3.0-beta.4/LICENSE",
+      "body_offset": 359875,
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "source_ref": "github.com/sagernet/quic-go@v0.59.0-sing-box-mod.2/LICENSE",
+      "body_offset": 371765,
+      "bytes": 1091,
+      "sha256": "77d0b7b53e8abb84cf4dd3f9945a7fdf27044240d2e8023966a721a9a46fe96e"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing@v0.8.0-beta.12/LICENSE",
+      "body_offset": 373366,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "core@8dc57a830bd1487389dd1b7c9190f094c31e13bc/engine/sing-box/LICENSE",
+      "body_offset": 374688,
+      "bytes": 808,
+      "sha256": "bb3805862b583aee73ad6f7805ec634747a37257a637a3069857843f05ea589c"
+    },
+    {
+      "source_ref": "github.com/shtorm-7/sing-dns@v0.4.6-extended-1.0.0/LICENSE",
+      "body_offset": 376087,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing-mux@v0.3.4/LICENSE",
+      "body_offset": 377263,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing-quic@v0.6.0-beta.11/LICENSE",
+      "body_offset": 378457,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing-shadowsocks@v0.2.8/LICENSE",
+      "body_offset": 379649,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing-shadowsocks2@v0.2.1/LICENSE",
+      "body_offset": 380843,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing-shadowtls@v0.2.1-0.20250503051639-fcd445d33c11/LICENSE",
+      "body_offset": 382091,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing-tun@v0.8.0-beta.17/LICENSE",
+      "body_offset": 383283,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing-vmess@v0.2.8-0.20250909125414-3aed155119a1/LICENSE",
+      "body_offset": 384523,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/smux@v1.5.50-sing-box-mod.1/LICENSE",
+      "body_offset": 385723,
+      "bytes": 1067,
+      "sha256": "4d853d6e64790ccada70727c25334c50529b25ce57048129aaf6f8b0f2208516"
+    },
+    {
+      "source_ref": "core@8dc57a830bd1487389dd1b7c9190f094c31e13bc/engine/sing-box/replace/wireguard-go/LICENSE",
+      "body_offset": 387520,
+      "bytes": 1040,
+      "sha256": "c118d742cc937fe458812f8cddf5191303b3eab88ed49c0723f5c9ce8a39ab4d"
+    },
+    {
+      "source_ref": "github.com/sagernet/ws@v0.0.0-20231204124109-acfe8907c854/LICENSE",
+      "body_offset": 389106,
+      "bytes": 1106,
+      "sha256": "db823214b3ef18274418accda3812faac38a1545b8bd589aeb613a849b949c7a"
+    },
+    {
+      "source_ref": "github.com/shadowsocks/go-shadowsocks2@v0.1.5/LICENSE",
+      "body_offset": 390734,
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "source_ref": "github.com/syndtr/gocapability@v0.0.0-20200815063812-42c35b437635/LICENSE",
+      "body_offset": 402621,
+      "bytes": 1318,
+      "sha256": "659b62a3a50d253340a078d4e2be746c983d1be6c8b2c8832869d26327dcc008"
+    },
+    {
+      "source_ref": "github.com/syndtr/goleveldb@v1.0.1-0.20200815110645-5c35d600f0ca/LICENSE",
+      "body_offset": 404499,
+      "bytes": 1318,
+      "sha256": "7df695202f82a52f8891a9913438c7fde15bd71034fd1853b9ed46503ea52a19"
+    },
+    {
+      "source_ref": "github.com/tailscale/netlink@v1.1.1-0.20240822203006-4d49adab4de7/LICENSE",
+      "body_offset": 406346,
+      "bytes": 10796,
+      "sha256": "04cf148229e562c643203d1ee8c43aae2022e5130e95ceb8ba8357a27c1a9abe"
+    },
+    {
+      "source_ref": "github.com/tendermint/tm-db@v0.6.7/LICENSE",
+      "body_offset": 417642,
+      "bytes": 11346,
+      "sha256": "4a5fa6c348c75d0e4ebff5bee4f007c3115c41ac29792cefbb4c924008fb6e09"
+    },
+    {
+      "source_ref": "github.com/tidwall/gjson@v1.18.0/LICENSE",
+      "body_offset": 429484,
+      "bytes": 1077,
+      "sha256": "be83ad53208d03a9fe08c7fac231cabf79422989ef5706bff217bd35104ebf07"
+    },
+    {
+      "source_ref": "github.com/tidwall/match@v1.1.1/LICENSE",
+      "body_offset": 431055,
+      "bytes": 1077,
+      "sha256": "be83ad53208d03a9fe08c7fac231cabf79422989ef5706bff217bd35104ebf07"
+    },
+    {
+      "source_ref": "github.com/tidwall/pretty@v1.2.1/LICENSE",
+      "body_offset": 432628,
+      "bytes": 1077,
+      "sha256": "0ca70311227fe097c662dece3f359e3317fa7f9d41f8d29eb45fc5135e216139"
+    },
+    {
+      "source_ref": "github.com/tjfoc/gmsm@v1.4.1/LICENSE",
+      "body_offset": 434193,
+      "bytes": 11357,
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+    },
+    {
+      "source_ref": "github.com/vishvananda/netns@v0.0.5/LICENSE",
+      "body_offset": 446052,
+      "bytes": 10796,
+      "sha256": "04cf148229e562c643203d1ee8c43aae2022e5130e95ceb8ba8357a27c1a9abe"
+    },
+    {
+      "source_ref": "github.com/wader/filtertransport@v0.0.0-20200316221534-bdd9e61eee78/LICENSE",
+      "body_offset": 457414,
+      "bytes": 1058,
+      "sha256": "35afdb32beb2cfc1641d373521f4a96efa7279bc9bc90562adefdb70bca68651"
+    },
+    {
+      "source_ref": "github.com/wlynxg/anet@v0.0.5/LICENSE",
+      "body_offset": 458962,
+      "bytes": 1493,
+      "sha256": "6b8970dbe36fe214fd02b438c06daee19897708e435d761ecd18adc9ef7e7a05"
+    },
+    {
+      "source_ref": "github.com/x448/float16@v0.8.4/LICENSE",
+      "body_offset": 460947,
+      "bytes": 1102,
+      "sha256": "a555f1194fdac34da70fb416968f7e2217b02352c26c1eac2fa45fcb4290ae8d"
+    },
+    {
+      "source_ref": "github.com/xmdhs/clash2singbox@v0.1.4/LICENSE",
+      "body_offset": 462555,
+      "bytes": 1062,
+      "sha256": "be41bcb7ec5ed370a472c5740c7c102fbd6ed59588a053a18ba35e2a17bd2133"
+    },
+    {
+      "source_ref": "github.com/xtaci/kcp-go/v5@v5.6.70/LICENSE",
+      "body_offset": 464117,
+      "bytes": 1073,
+      "sha256": "68eb46479424095361384cbb6b056dd10c0f9bb708796a68bdd830fa7baa6ebb"
+    },
+    {
+      "source_ref": "github.com/xtaci/smux@v1.5.24/LICENSE",
+      "body_offset": 465680,
+      "bytes": 1071,
+      "sha256": "d3dc71253c64844d5f9a29f7b247e4e44db6dc049492d370ce43c399a0b54d75"
+    },
+    {
+      "source_ref": "go4.org/netipx@v0.0.0-20231129151722-fdeea329fbba/LICENSE",
+      "body_offset": 467281,
+      "bytes": 1487,
+      "sha256": "1bfc4f32f4ec8ca8fce54bd2d97784f003786753a69a78ca74ffae1574037fb9"
+    },
+    {
+      "source_ref": "golang.org/x/crypto@v0.56.0/LICENSE",
+      "body_offset": 469254,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/crypto@v0.56.0/PATENTS",
+      "body_offset": 470773,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.org/x/exp@v0.0.0-20251219203646-944ab1f22d93/LICENSE",
+      "body_offset": 472610,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/exp@v0.0.0-20251219203646-944ab1f22d93/PATENTS",
+      "body_offset": 474153,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.org/x/mod@v0.38.0/LICENSE",
+      "body_offset": 475936,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/mod@v0.38.0/PATENTS",
+      "body_offset": 477452,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.org/x/net@v0.57.0/LICENSE",
+      "body_offset": 479235,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/net@v0.57.0/PATENTS",
+      "body_offset": 480751,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.org/x/sync@v0.22.0/LICENSE",
+      "body_offset": 482503,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/sync@v0.22.0/PATENTS",
+      "body_offset": 484020,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.org/x/sys@v0.47.0/LICENSE",
+      "body_offset": 485803,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/sys@v0.47.0/PATENTS",
+      "body_offset": 487319,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.org/x/text@v0.41.0/LICENSE",
+      "body_offset": 489104,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/text@v0.41.0/PATENTS",
+      "body_offset": 490621,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.org/x/time@v0.14.0/LICENSE",
+      "body_offset": 492406,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/time@v0.14.0/PATENTS",
+      "body_offset": 493923,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.zx2c4.com/wintun@v0.0.0-20230126152724-0fa3db229ce2/LICENSE",
+      "body_offset": 495597,
+      "bytes": 1023,
+      "sha256": "91276db973f25602d1aa43491f59cbc84cb88e6f151e1d0cc82a755563ce0195"
+    },
+    {
+      "source_ref": "golang.zx2c4.com/wireguard@v0.0.0-20231211153847-12269c276173/LICENSE",
+      "body_offset": 497174,
+      "bytes": 1023,
+      "sha256": "91276db973f25602d1aa43491f59cbc84cb88e6f151e1d0cc82a755563ce0195"
+    },
+    {
+      "source_ref": "golang.zx2c4.com/wireguard/wgctrl@v0.0.0-20241231184526-a9ab2273dd10/LICENSE.md",
+      "body_offset": 498771,
+      "bytes": 1075,
+      "sha256": "e386a66ee99a45d00b07eb636c934bfb5d3c34b580b9404aaae8a9135ee400f7"
+    },
+    {
+      "source_ref": "golang.zx2c4.com/wireguard/windows@v0.5.3/COPYING",
+      "body_offset": 500183,
+      "bytes": 1084,
+      "sha256": "76ab82fe34e6ad03d064b0fdf4ba892e28fc20f740aeda49b5ac8d58c727a20f"
+    },
+    {
+      "source_ref": "google.golang.org/genproto/googleapis/rpc@v0.0.0-20260414002931-afd174a4e478/LICENSE",
+      "body_offset": 501851,
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "source_ref": "google.golang.org/grpc@v1.82.1/LICENSE",
+      "body_offset": 513701,
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "source_ref": "google.golang.org/grpc@v1.82.1/NOTICE.txt",
+      "body_offset": 525134,
+      "bytes": 554,
+      "sha256": "693ff28ec216d5112ac1bbfe64ef539005867d1c7bd427b57d579683293b947f"
+    },
+    {
+      "source_ref": "google.golang.org/protobuf@v1.36.11/LICENSE",
+      "body_offset": 526190,
+      "bytes": 1479,
+      "sha256": "4835612df0098ca95f8e7d9e3bffcb02358d435dbb38057c844c99d7f725eb20"
+    },
+    {
+      "source_ref": "google.golang.org/protobuf@v1.36.11/PATENTS",
+      "body_offset": 527743,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "gopkg.in/yaml.v3@v3.0.1/LICENSE",
+      "body_offset": 529524,
+      "bytes": 2151,
+      "sha256": "d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b"
+    },
+    {
+      "source_ref": "gopkg.in/yaml.v3@v3.0.1/NOTICE",
+      "body_offset": 531735,
+      "bytes": 560,
+      "sha256": "f6c2dd3a67b576eafb89b80200b8b1627230bf3821a0c14cb99a22ac19107d00"
+    },
+    {
+      "source_ref": "gvisor.dev/gvisor@v0.0.0-20240503213918-b7c924bc64f8/LICENSE",
+      "body_offset": 532831,
+      "bytes": 12519,
+      "sha256": "5af94223052169198cfa2195455b7d87209d9aa0fff4705822f328b4b272facb"
+    },
+    {
+      "source_ref": "lukechampine.com/blake3@v1.4.1/LICENSE",
+      "body_offset": 545842,
+      "bytes": 1080,
+      "sha256": "7a576402565d51f9c0c7ee5a639aa91d49ed1a54c21a8d0b56f0d25e72d8b2f1"
+    },
+    {
+      "source_ref": "tailscale.com@v1.58.2/LICENSE",
+      "body_offset": 547219,
+      "bytes": 1510,
+      "sha256": "d1ee1c7947d4b2c1963ea214d5324f1d4c89f2f1d0f0224889b4dfb868dad725"
+    },
+    {
+      "source_ref": "tailscale.com@v1.58.2/PATENTS",
+      "body_offset": 548789,
+      "bytes": 1377,
+      "sha256": "debc5ca73d082a6c7de743fecdba6f75deafdf9200acfbddeb8ca32d66e6e128"
+    }
+  ],
+  "module_entries": 128,
+  "modules_with_root_license_notices": 127,
+  "additional_module_patent_files": 11,
+  "missing_root_license": [
+    {
+      "module": "github.com/Psiphon-Labs/utls",
+      "version": "v0.0.0-20260129182755-24497d415a8d",
+      "sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+      "replacement": null
+    }
+  ],
+  "complete_license_clearance": false,
+  "input_inventory_sha256": "528149a64746f4e08ac9fd9dacb34d51414d7ebb801a310a5aea81c57258349f",
+  "input_archive_sha256": "568cd1091c8db4207dcf9e41862d5a1e7228bd712bee15d3dcfb05b1018598b9"
+}

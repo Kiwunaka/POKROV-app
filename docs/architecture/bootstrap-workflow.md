@@ -391,6 +391,13 @@ Exact artifacts and platform gates are owned by
 `config/runtime-artifacts.seed.json` and
 `docs/decisions/2026-07-23-pokrov-core-1.0.0-activation.md`.
 
+The runtime artifact manifest also binds the shared native Go notice asset to
+the Core source commit, Go toolchain and notice SHA-256. The app-shell asset
+declaration includes it in Android and Windows packages. Seed validation rejects
+a missing asset, hash mismatch, source/toolchain mismatch or missing declaration.
+This root-notice binding does not establish complete dependency licensing or
+corresponding-source delivery; remaining gaps stay explicit in release readiness.
+
 ## Update Handoff Boundary
 
 The shared shell may present and open an update only when the metadata carries a

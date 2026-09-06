@@ -461,6 +461,21 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   if ($runtimeArtifacts.core.go_toolchain -ne "go1.26.8") {
     $manifestErrors.Add("runtime artifact contract must pin Go 1.26.8")
   }
+  $nativeGoNotices = $runtimeArtifacts.core.native_go_notices
+  $nativeGoNoticeRelativePath = "packages/app_shell/assets/licenses/native-go-NOTICES.txt"
+  $nativeGoNoticePath = Join-Path $root $nativeGoNoticeRelativePath
+  if ($nativeGoNotices.file -ne $nativeGoNoticeRelativePath -or
+      $nativeGoNotices.source_commit -ne $runtimeArtifacts.core.source_commit -or
+      $nativeGoNotices.go_toolchain -ne $runtimeArtifacts.core.go_toolchain -or
+      -not (Test-Path -LiteralPath $nativeGoNoticePath -PathType Leaf)) {
+    $manifestErrors.Add("Core native Go notices must exist and bind the current Core source and toolchain")
+  } elseif ((Get-FileHash -Algorithm SHA256 -LiteralPath $nativeGoNoticePath).Hash.ToLowerInvariant() -ne $nativeGoNotices.sha256) {
+    $manifestErrors.Add("Core native Go notices must match their manifest SHA-256")
+  }
+  $appShellPubspec = [System.IO.File]::ReadAllText((Join-Path $root "packages/app_shell/pubspec.yaml"))
+  if ($appShellPubspec -notmatch '(?m)^\s+- assets/licenses/native-go-NOTICES\.txt\s*$') {
+    $manifestErrors.Add("App shell must package the declared Core native Go notice asset")
+  }
   $artifactProvenance = $runtimeArtifacts.core.artifact_provenance
   if ($artifactProvenance.status -ne "clean_reproducible_pre_candidate_local" -or
       $artifactProvenance.vcs_stamp -ne "disabled_for_reproducible_release_artifacts" -or

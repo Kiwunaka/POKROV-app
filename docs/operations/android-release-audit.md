@@ -1,6 +1,6 @@
 # Android Release Audit
 
-Last updated: 2026-09-04
+Last updated: 2026-09-06
 
 ## Document Status
 
@@ -24,8 +24,17 @@ the exact bound Core SO bytes and now include the existing Golos Text
 `OFL.txt` as a package asset. The [package audit receipt](evidence/2026-09-06-r12-c05-package-audit/package-audit.json)
 records byte inventories, dependency queries and their limits. This is not a
 production-signed candidate or installed runtime/privacy proof. Core native
-notices, nested/native dependency coverage and corresponding source delivery
-remain open; a generated Flutter `NOTICES.Z` does not cover them automatically.
+notice coverage, nested/native dependencies and corresponding source delivery
+remain separate gates; a generated Flutter `NOTICES.Z` does not cover them automatically.
+
+The subsequent [Go native notice receipt](evidence/2026-09-06-r12-c05-go-notices/package-notices.json)
+verifies `native-go-NOTICES.txt` in all four local Direct APKs. The shared asset
+contains 145 verbatim license/patent texts from the recorded Core, Go and module
+inputs, with hash, Core source and toolchain binding in the runtime manifest.
+The Core SO entries still match the pinned AAR. Psiphon utls has no retained
+root license; that gap, nested/native coverage, source delivery and installed
+privacy/device acceptance remain open. These APKs use internal debug signing
+and the loopback API; they are not a new release candidate.
 
 The R12 source branch replaces event/cache health authority with per-call Core
 `CommandServer.ProbeEndpoint` and `ProbeSelectedOutbound` results. Core
