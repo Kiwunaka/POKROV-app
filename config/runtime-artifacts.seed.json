@@ -171,7 +171,19 @@
         },
         "sync_policy": "exact_pre_candidate_build",
         "sync_destination": "apps/windows_shell/windows/runner/resources/runtime",
-        "platform_state": "active_pre_candidate_local_security_fixed_reproducible_abi_proxy_recheck_passed"
+        "platform_state": "active_pre_candidate_local_security_fixed_reproducible_abi_proxy_recheck_passed",
+        "runtime_dependency_origin": {
+          "libcronet.dll": {
+            "status": "UPSTREAM_RELEASE_ASSET_MATCH",
+            "release_url": "https://github.com/SagerNet/cronet-go/releases/tag/143.0.7499.109-2",
+            "release_asset": "libcronet-windows-amd64.dll",
+            "tag_commit": "82e152101769e4655794c3c33518be224d7e9b9e",
+            "declared_native_gitlink": "2be061b6c2e9b316f75ec1e329e345406cd4c62d",
+            "evidence": "docs/operations/evidence/2026-09-06-r12-c05-cronet-origin/provenance.json",
+            "source_reproducibility": "NOT_ESTABLISHED",
+            "complete_notices": "OPEN"
+          }
+        }
       }
     }
   }

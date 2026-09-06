@@ -53,8 +53,16 @@ binds these checks. This direct Flutter bundle is not an installer or clean-host
 acceptance and does not stage the VC runtime handled by the release builder.
 The pinned external Cronet DLL and the current Go module's DLL both report
 `143.0.7499.109` but have different hashes. The module SBOM cannot establish
-the pinned DLL's source/notice provenance. That reconciliation, complete Core
-native notices and installed runtime/privacy evidence remain open.
+the pinned DLL's source/notice provenance. The subsequent
+[Cronet origin receipt](evidence/2026-09-06-r12-c05-cronet-origin/provenance.json)
+proves byte-for-byte identity with the upstream `143.0.7499.109-2` Windows
+asset, tag commit `82e1521` and declared native gitlink `2be061b6`. The source
+archive matches 30,561 Git blobs directly and 30 after CRLF normalization;
+no unexplained mismatch remains. A separate 69-file source license review
+archive contains all explicitly declared license files from 36 metadata files.
+This is source inventory, not the exact Windows linked notice set. Native
+source-to-binary reproducibility, complete packaged notices and installed
+runtime/privacy evidence remain open.
 
 The R12 source branch refreshes managed profiles on ordinary Windows reconnect
 and requires explicit staging acknowledgement before connect. Local shell and
