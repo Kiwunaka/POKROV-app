@@ -4,10 +4,11 @@ Last updated: 2026-09-02
 
 Registry class: `ACTIVE_EXECUTION`.
 
-This is the current client evidence gate for WARP on signed
-`pokrov-1.2.0-candidate.10`, app `1.2.0+4046`. The successor
-`1.2.0+4053`/Core `cd8f0f4…884d` line is pre-candidate only. Older device or runtime passes
-are supporting evidence only and cannot close the exact-candidate gate.
+This checklist retains WARP evidence for signed
+`pokrov-1.2.0-candidate.10`, app `1.2.0+4046`. The current development runtime
+binding is owned by `config/runtime-artifacts.seed.json` (C05 Core `8dc57a8`).
+No WARP runtime proof was rerun for that binding. Older candidate/device results
+remain supporting evidence and cannot close its exact-candidate WARP gate.
 
 The client UI may use the owner-approved labels `WARP`,
 `Расширенная защита`, or `Расширенная приватность`. Public copy must not claim

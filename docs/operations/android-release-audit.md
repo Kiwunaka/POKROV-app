@@ -11,16 +11,24 @@ Older APK identities and device runs are retained separately as evidence.
 
 ## Current Truth
 
+C05 updates the development binding to Go 1.26.8 / x/crypto 0.56.0 with the
+Psiphon TLS layout correction. [Current two-build evidence](evidence/2026-09-06-r12-c05-core-binding/android-evidence.json)
+and [previous D05 binding](evidence/2026-09-06-r12-c05-core-binding/previous-runtime-binding.json)
+bind the AAR. This dependency correction requires fresh installed-package,
+privacy and device acceptance; previous candidate.33 evidence stays historical.
+
 The R12 source branch replaces event/cache health authority with per-call Core
 `CommandServer.ProbeEndpoint` and `ProbeSelectedOutbound` results. Core
-`94dd31012ac91fb9ecf2c98ad7383afb54102dd4` is bound in the runtime manifest;
+`8dc57a830bd1487389dd1b7c9190f094c31e13bc` is bound in the runtime manifest;
 two byte-identical builds contain both methods and all four Android ABIs.
-Both flavor JVM suites pass on this AAR. Host A/B completion tests and Core
+Both flavor JVM suites pass on this AAR (372 fresh tests, 186 per flavor);
+[current backtests](evidence/2026-09-06-r12-c05-core-binding/client-backtests.json) retain the
+explicit rerun and JVM/Flutter limits. Host A/B completion tests and Core
 race tests reject unrelated late results, changed selection, direct and cyclic
 routes. Packaged checks and device evidence remain pending; candidate.33
 evidence below is not evidence for this source diff.
 
-The D05 binding filters native managed-engine messages before observable
+The current C05 binding retains the D05 filter for native managed-engine messages before observable
 writers, subscriptions and replay buffers, including debug mode. Arbitrary
 messages and logger tags become a fixed redacted category; supported AWG
 diagnostic categories remain closed. The planted-value Go regression covers

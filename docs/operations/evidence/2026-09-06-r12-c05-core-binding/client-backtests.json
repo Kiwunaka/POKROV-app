@@ -1,0 +1,178 @@
+{
+  "schema": "pokrov.r12.c05-client-binding/v1",
+  "observed_at": "2026-09-06T05:29:51.294603+00:00",
+  "status": "LOCAL_BINDING_BACKTEST_PASS",
+  "origin": "current-origin Windows host; synthetic JVM fixtures and loopback Windows proxy-only runtime",
+  "client_base_commit": "777e48e97913618df4e16be5eebb1e46a559b32d",
+  "core_source_commit": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "client_commit_note": "Backtests ran on the scoped uncommitted binding now retained with this receipt; exact changed/test bytes are SHA-bound. Platform follow-up references the resulting client commit.",
+  "manifest_sha256": "2f8cf7e338a152ec7b3ea97432e03ec038c62709307ea7f2f3ccc801d00b3856",
+  "source_sha256": {
+    "config/runtime-artifacts.seed.json": "2f8cf7e338a152ec7b3ea97432e03ec038c62709307ea7f2f3ccc801d00b3856",
+    "scripts/validate-seed.ps1": "668c170e4c5e5d4d2f562728d59d444391372abb3201e70ec585142904f0dfb9",
+    "scripts/sync-pokrov-core-runtime.ps1": "484ed1eaa44638726155ac2ae88e607339d165575eb46d7260ffc9acf8638cd3",
+    "scripts/test-windows-core-proxy-only.ps1": "be88d3ee2be0d3967a6ecd0ab499389a7256cc554c52fe623e98de0b26d5f2cb",
+    "test/fixtures/release-handoff-v2/synthetic-candidate-input.json": "055b64777b105d98339f7dfd5da3212118084fd504424cc0aa3fc6f473668173",
+    "packages/runtime_engine/test/runtime_engine_test.dart": "6dea73e48a464b91b67f5da4e992a641aab4611442c5c3482430fd27619ec760"
+  },
+  "synced_artifacts": [
+    {
+      "platform": "android",
+      "path": "E:\\r12client\\apps\\android_shell\\android\\app\\libs\\pokrov-core.aar",
+      "size": 107483275,
+      "sha256": "bc5ef7ece6ba6c138589307a7c5e30be32ec01cdd396e23dfdb8840011148b29"
+    },
+    {
+      "platform": "windows",
+      "path": "E:\\r12client\\apps\\windows_shell\\windows\\runner\\resources\\runtime\\pokrov-core.dll",
+      "size": 55449088,
+      "sha256": "c679ba5af42939acbc8c6f44af59b4608f6a76c99e0d444cfa4bcc825bcc8e68"
+    }
+  ],
+  "commands": [
+    {
+      "command": "scripts/sync-pokrov-core-runtime.ps1 -CoreRoot E:/r12core-implementation",
+      "cwd": "E:\\r12client",
+      "log": "E:/r12-c05-client-sync.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0,
+      "result": "PASS clean exact Core source and synchronized AAR/DLL/Cronet identities"
+    },
+    {
+      "command": "flutter analyze",
+      "cwd": "E:\\r12client\\packages\\runtime_engine",
+      "log": "E:/r12-c05-client-runtime-analyze.log",
+      "sha256": "23192f454cf14067b4c57b6424acf28fc8424e570fe14e1141d1cb5331dafcb2",
+      "exit_code": 0,
+      "result": "PASS no issues"
+    },
+    {
+      "command": "flutter test test/runtime_engine_test.dart",
+      "cwd": "E:\\r12client\\packages\\runtime_engine",
+      "log": "E:/r12-c05-client-runtime-tests.log",
+      "sha256": "2b0fb24775e320112775260b7a615133ca7d031fecb892caf3aeb675b8b92065",
+      "exit_code": 0,
+      "result": "80 PASS; one opt-in real-Core test skipped in default suite and executed separately below"
+    },
+    {
+      "command": "flutter analyze",
+      "cwd": "E:\\r12client\\apps\\android_shell",
+      "log": "E:/r12-c05-client-android-analyze.log",
+      "sha256": "213edaf055975610ce6ff4666926f3c250d6a606f680ade12f246270287a07e1",
+      "exit_code": 0,
+      "result": "PASS no issues"
+    },
+    {
+      "command": "flutter test",
+      "cwd": "E:\\r12client\\apps\\android_shell",
+      "log": "E:/r12-c05-client-android-flutter.log",
+      "sha256": "d4b6683d685d83fefd50509660b663bf68487aa93fd972707b6b5844fa2a3464",
+      "exit_code": 0,
+      "result": "8 PASS"
+    },
+    {
+      "command": "gradlew.bat :app:testDirectDebugUnitTest :app:testStoreDebugUnitTest",
+      "cwd": "E:\\r12client\\apps\\android_shell\\android",
+      "log": "E:/r12-c05-client-jvm.log",
+      "sha256": "0ffc5f476645c7eac8cbbf27428a70ead92382851667817dd4573287964f9b4d",
+      "exit_code": 0,
+      "result": "BUILD SUCCESSFUL; test tasks UP-TO-DATE, not fresh JVM execution"
+    },
+    {
+      "command": "gradlew.bat :app:testDirectDebugUnitTest --rerun :app:testStoreDebugUnitTest --rerun",
+      "cwd": "E:\\r12client\\apps\\android_shell\\android",
+      "log": "E:/r12-c05-client-jvm-rerun.log",
+      "sha256": "54c26068f0f301f4134bc2263e20ac437a83812c2525a373966de3fa1630de1e",
+      "exit_code": 0,
+      "result": "372 PASS fresh JVM tests, 186 per flavor; host contracts, not Android native device runtime"
+    },
+    {
+      "command": "scripts/test-windows-core-proxy-only.ps1",
+      "cwd": "E:\\r12client",
+      "log": "E:/r12-c05-client-windows-proxy.log",
+      "sha256": "08efbae100edce007d2eaac287a97ab1e81e002b8890db28b9f635fb9d82e246",
+      "exit_code": 0,
+      "result": "PASS 100 proxy-only start/stop cycles on synced DLL; temporary DB isolated and retained, no TUN/system route change"
+    },
+    {
+      "command": "scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "cwd": "E:\\r12client",
+      "log": "E:/r12-c05-client-seed.log",
+      "sha256": "5082007bd965f5d37654fbe036ebe5165794ce291c22a3be124e3536847703d9",
+      "exit_code": 0,
+      "result": "PASS source/artifact pins, parity, logging 151 files + 4 negative fixtures, docs, hygiene, release contracts"
+    },
+    {
+      "command": "test/docs-contract.ps1",
+      "cwd": "E:\\r12client",
+      "log": "E:/r12-c05-client-docs-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0,
+      "result": "PASS after final backtest links"
+    }
+  ],
+  "prior_binding": {
+    "path": "previous-runtime-binding.json",
+    "sha256": "43df14326a7061d6243e44e491b36ea057fcecce2609f8fa99175ef1394fec46",
+    "rollback_builds": "E:/POKROV-tools/builds/core-d05",
+    "note": "Old Core dist, client files and retained rollback outputs verified against the previous binding before replacement."
+  },
+  "two_build_evidence": {
+    "android": {
+      "path": "android-evidence.json",
+      "sha256": "3174f48987666393dfea5ffa5f9aad89cc69cbf4639e18e8b633e867c6d4ff7d"
+    },
+    "windows": {
+      "path": "windows-evidence.json",
+      "sha256": "372dd0ed2642720e71488f6a84fbceb4503df19bbd84197efee19d383d1906e4"
+    }
+  },
+  "jvm_reports": {
+    "path": "E:/r12-c05-client-junit/summary.json",
+    "sha256": "f1a8e7476c4ef4ea11e11e20ea240f43f3377e2abc9620d4bb6daf95c7234cef",
+    "flavors": [
+      {
+        "flavor": "Direct",
+        "tests": 186,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "flavor": "Store",
+        "tests": 186,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "note": "Full XML reports copied to E:/r12-c05-client-junit with every XML digest retained in summary."
+  },
+  "preflight": {
+    "path": "E:/r12-c05-artifacts/client-binding-preflight.json",
+    "sha256": "3c6ed313308fa746b7a580a8c700e7ae7f4c79cfdcf58f3a36337718a784ed8b"
+  },
+  "collector": {
+    "path": "E:/r12-c05-bind-client.py",
+    "sha256": "6ba5a3e87d5ac09d5579e9d200eb1bf93795ec30cc41cc7fdbbdc578d6eb1b4a",
+    "note": "Initial binding update, old-byte verification and Core dist copy. SBOM display names reconciled afterwards to copied receipt filenames; sync performed through canonical helper."
+  },
+  "retained_release_changed": false,
+  "core_git_source_changed": false,
+  "limits": [
+    "Not a new client candidate, signed package, hosted CI, public release or promotion.",
+    "No final APK/installer build or installed-package privacy/license/native dependency acceptance in this binding step.",
+    "Android JVM tests do not execute the native mobile library; physical four-ABI/OEM/network proof is not supplied.",
+    "Windows proxy-only cycles do not prove SCM, TUN, DNS capture, leak protection or installer lifecycle.",
+    "Prior Win11 lab uses D05 Core 94dd310; C05 binding does not update that guest or its evidence.",
+    "No WARP, RU-origin or brain-origin runtime proof. No push, merge, deploy, signing, provider operation or publication.",
+    "C05 dependency scan still has nine module-precision advisory IDs and unresolved final notice/license/reachability coverage."
+  ],
+  "canonical_docs_sha256": {
+    "docs/architecture/bootstrap-workflow.md": "8983ab3d755e85c2035701cd24fc424ac96f0d8be6ccd3f313a60b16e53514f3",
+    "docs/decisions/2026-08-23-pokrov-core-1.1.0-pre-candidate-binding.md": "6bc94964fc1b644e4770256f896e17514a7391f471ffe42189b124b08ed5f486",
+    "docs/operations/android-release-audit.md": "a2ad322c9c816df781502eee3357e409299f7382c4228396ec1d52912c6141a3",
+    "docs/operations/windows-release-readiness.md": "e79d4f46e45d6e5b852f472740e4da3639559e919f7dabcc258f726a468bbee9",
+    "docs/operations/warp-runtime-proof-checklist.md": "1c5b2aac95fcc505ac2cf7ce8452be1d81356fbd9b90ca2c0c66b82b1594b6c6"
+  }
+}

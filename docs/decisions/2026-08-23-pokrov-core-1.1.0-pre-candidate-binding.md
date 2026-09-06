@@ -1,6 +1,41 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-## Current binding — 2026-09-06
+## Current C05 binding — 2026-09-06
+
+The development client binds Core `8dc57a830bd1487389dd1b7c9190f094c31e13bc`
+for Android and Windows. `config/runtime-artifacts.seed.json` owns the identity.
+The binding uses Go 1.26.8, x/crypto 0.56.0 and tfo-go 2.3.3, including the
+Go 1.26 Psiphon TLS ConnectionState layout correction. It fixes source call
+paths to SSH deadlock advisories GO-2026-6354 and GO-2026-6355. Existing managed
+log filtering, probe correlation and transport authority are retained.
+
+- Android AAR: 107483275 bytes, SHA-256 `bc5ef7ece6ba6c138589307a7c5e30be32ec01cdd396e23dfdb8840011148b29`.
+- Windows DLL: 55449088 bytes, SHA-256 `c679ba5af42939acbc8c6f44af59b4608f6a76c99e0d444cfa4bcc825bcc8e68`.
+- Desktop ABI 2, event ABI 1, 15 required exports, four Android ABIs.
+
+Both platform builds are byte-identical across two local builds. Full Core gate,
+TLS conversion and 100 component proxy-only cycles passed. Build outputs and
+SBOMs remain in `E:/r12-c05-artifacts`. The copied [Android evidence](../operations/evidence/2026-09-06-r12-c05-core-binding/android-evidence.json),
+[Windows evidence](../operations/evidence/2026-09-06-r12-c05-core-binding/windows-evidence.json)
+and [previous D05 binding](../operations/evidence/2026-09-06-r12-c05-core-binding/previous-runtime-binding.json)
+retain exact identity and rollback; previous D05 build trees remain under
+`E:/POKROV-tools/builds/core-d05`. This section supersedes the stale N05-current
+heading below; the actual immediately preceding binding was D05 Core `94dd310`.
+
+The scanner extracts no symbols from these stripped DLL/SO, so its nine
+remaining advisory IDs have module precision. Bounded source analysis is not
+full reachability proof. Source SBOM license warnings and final APK/EXE notices
+remain open; no broad security or license clearance is claimed. Reproducibility
+receipts were generated after the source commit, from code-identical builds
+compiled before commit; their helper CI label is local evidence, not a hosted run.
+No new release tag, candidate, signing, publication or promotion is created.
+Candidate.33, public releases and the D05 Win11 component lab retain their
+original bytes and evidence. Physical Android, Windows SCM/TUN/DNS, WARP and
+independent-origin acceptance remain open for this binding.
+
+Consumer [backtests](../operations/evidence/2026-09-06-r12-c05-core-binding/client-backtests.json): 80 runtime tests, 8 Android Flutter tests and 372 fresh JVM tests pass; the default opt-in skip is covered by a separate 100-cycle run on the synced Windows DLL. Runtime/Android analyze and the seed/docs/parity gates pass. These are host/component checks, not device or final-package acceptance.
+
+## Superseded N05 local binding — 2026-09-06
 
 The local N05 client binds Core `6bc36034c86528972488fc203a98512686ac4db9`. Observed DNS, UDP timeout,
 TLS-handshake timeout and response stall retain separate diagnostic codes.

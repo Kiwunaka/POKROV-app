@@ -29,13 +29,19 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 
 ## Current Truth
 
-The local D05 runtime binding uses Core
-`94dd31012ac91fb9ecf2c98ad7383afb54102dd4`, with managed native messages filtered
-before engine log sinks. [Two-build evidence](evidence/2026-09-06-r12-d05-core-binding/windows-evidence.json)
-pins the DLL; 100 proxy-only start/stop cycles pass on the synced bytes. The
-smoke helper gives each run a separate temporary runtime database, retained for
-inspection. An earlier run against reused test storage timed out with database
-`file missing` errors. This does not establish Windows service, TUN or DNS proof.
+The local C05 runtime binding uses Core
+`8dc57a830bd1487389dd1b7c9190f094c31e13bc`, Go 1.26.8 / x/crypto 0.56.0 and the
+Psiphon TLS layout correction, retaining managed native log filtering.
+[Two-build evidence](evidence/2026-09-06-r12-c05-core-binding/windows-evidence.json)
+pins the DLL; [client backtests](evidence/2026-09-06-r12-c05-core-binding/client-backtests.json)
+retain 100 proxy-only start/stop cycles on the synchronized DLL.
+The smoke helper isolates and retains each run's runtime database. The
+[previous D05 binding](evidence/2026-09-06-r12-c05-core-binding/previous-runtime-binding.json)
+and its [older evidence](evidence/2026-09-06-r12-d05-core-binding/windows-evidence.json)
+remain rollback/history. An earlier D05 run against reused test storage timed
+out with database `file missing` errors; that receipt remains retained.
+This binding does not establish Windows service, TUN or DNS proof. The offline
+Win11 component lab above still contains D05 bytes and is not C05 acceptance.
 
 The R12 source branch refreshes managed profiles on ordinary Windows reconnect
 and requires explicit staging acknowledgement before connect. Local shell and
