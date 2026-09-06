@@ -181,7 +181,12 @@
             "declared_native_gitlink": "2be061b6c2e9b316f75ec1e329e345406cd4c62d",
             "evidence": "docs/operations/evidence/2026-09-06-r12-c05-cronet-origin/provenance.json",
             "source_reproducibility": "NOT_ESTABLISHED",
-            "complete_notices": "OPEN"
+            "complete_notices": "OPEN",
+            "notices": {
+              "file": "apps/windows_shell/windows/runner/resources/runtime/libcronet.NOTICES.txt",
+              "sha256": "2c24f29748b438f85ad6ef44548395970a4a1d04b89e653e6a4a56601297e267",
+              "scope": "Identified OSS components in the declared Windows native source graph; other Core/Flutter/Microsoft notices remain separate"
+            }
           }
         }
       }

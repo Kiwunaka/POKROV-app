@@ -117,6 +117,10 @@ foreach(POKROV_RUNTIME_FILE pokrov-core.dll libcronet.dll)
   endif()
 endforeach()
 
+install(FILES "${POKROV_RUNTIME_DIR}/libcronet.NOTICES.txt"
+  DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+  COMPONENT Runtime)
+
 install(FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/runner/resources/pokrov_tray.ico"
   DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"

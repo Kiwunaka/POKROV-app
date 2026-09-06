@@ -61,8 +61,15 @@ archive matches 30,561 Git blobs directly and 30 after CRLF normalization;
 no unexplained mismatch remains. A separate 69-file source license review
 archive contains all explicitly declared license files from 36 metadata files.
 This is source inventory, not the exact Windows linked notice set. Native
-source-to-binary reproducibility, complete packaged notices and installed
-runtime/privacy evidence remain open.
+source-to-binary reproducibility and installed runtime/privacy evidence remain
+open. The subsequent [native notice receipt](evidence/2026-09-06-r12-c05-cronet-notices/native-notices.json)
+retains a successful local Windows GN graph (558 recursive dependencies),
+recovered Perfetto/Protobuf/compiler-rt license texts and 28 notice sections.
+CMake now requires `libcronet.NOTICES.txt` beside the DLL, and seed validation
+checks its SHA-256. An isolated 301-file bundle contains the exact notice; its
+other 300 files match the preserved C05 package baseline. This covers identified
+Cronet native OSS notices; other Core/Android/Flutter/Microsoft notice coverage
+and the complete C05 gate remain open.
 
 The R12 source branch refreshes managed profiles on ordinary Windows reconnect
 and requires explicit staging acknowledgement before connect. Local shell and

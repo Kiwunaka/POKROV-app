@@ -3,6 +3,8 @@ apps/ios_shell/ios/Frameworks/PokrovCore.xcframework/**/PokrovCore.framework/Ver
 apps/macos_shell/macos/Runner/Frameworks/*.dylib filter=lfs diff=lfs merge=lfs -text
 apps/windows_shell/windows/runner/resources/runtime/*.dll filter=lfs diff=lfs merge=lfs -text
 apps/windows_shell/windows/runner/resources/runtime/*.exe filter=lfs diff=lfs merge=lfs -text
+# Keep the assembled upstream license text byte-stable on Windows checkouts.
+apps/windows_shell/windows/runner/resources/runtime/libcronet.NOTICES.txt -text whitespace=-blank-at-eol,-blank-at-eof
 artifacts/releases/**/*.apk filter=lfs diff=lfs merge=lfs -text
 artifacts/releases/**/*.aab filter=lfs diff=lfs merge=lfs -text
 artifacts/releases/**/*.exe filter=lfs diff=lfs merge=lfs -text

@@ -583,6 +583,16 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
     $manifestErrors.Add("config\\runtime-artifacts.seed.json must pin the POKROV Core 1.1.0 Windows DLL and retained libcronet.dll")
   }
 
+  $cronetNotices = $windowsRuntime.runtime_dependency_origin.'libcronet.dll'.notices
+  $cronetNoticeRelativePath = "apps/windows_shell/windows/runner/resources/runtime/libcronet.NOTICES.txt"
+  $cronetNoticePath = Join-Path $root $cronetNoticeRelativePath
+  if ($cronetNotices.file -ne $cronetNoticeRelativePath -or
+      -not (Test-Path -LiteralPath $cronetNoticePath -PathType Leaf)) {
+    $manifestErrors.Add("Windows Cronet must retain its declared native notice file")
+  } elseif ((Get-FileHash -Algorithm SHA256 -LiteralPath $cronetNoticePath).Hash.ToLowerInvariant() -ne $cronetNotices.sha256) {
+    $manifestErrors.Add("Windows Cronet native notice file must match its manifest SHA-256")
+  }
+
   foreach ($target in @("ios", "macos")) {
     $asset = $runtimeArtifacts.core.assets.$target
     if ($asset.sync_policy -ne "manual_core_build" -or
