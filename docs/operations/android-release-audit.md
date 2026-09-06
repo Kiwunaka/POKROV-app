@@ -11,6 +11,17 @@ Older APK identities and device runs are retained separately as evidence.
 
 ## Current Truth
 
+The [C05 source packet](evidence/2026-09-06-r12-c05-source-packet/source-packet.json)
+prepares the exact Core `8dc57a8` source and authenticated runtime module archives.
+All five package graphs resolve offline from that snapshot with the same source
+selections and module sums. The four Android `libcronet.a` files match upstream
+Git blobs at `f21660be`; both that library commit and wrapper `dc1cda1f` declare
+native commit `30f3a568`. Its source archive is verified against the Git tree.
+This differs from retained Windows native commit `2be061b6`; the Windows source
+archive must not stand in for Android. Native source-to-binary reproduction,
+complete license/corresponding-source acceptance and publication remain open.
+No runtime binary or candidate identity changed in this source preparation.
+
 C05 updates the development binding to Go 1.26.8 / x/crypto 0.56.0 with the
 Psiphon TLS layout correction. [Current two-build evidence](evidence/2026-09-06-r12-c05-core-binding/android-evidence.json)
 and [previous D05 binding](evidence/2026-09-06-r12-c05-core-binding/previous-runtime-binding.json)
