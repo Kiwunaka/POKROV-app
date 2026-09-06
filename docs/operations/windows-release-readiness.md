@@ -19,6 +19,14 @@ Older unsigned packages and pre-service behavior are retained as evidence.
 
 ## Current Truth
 
+The local D05 runtime binding uses Core
+`94dd31012ac91fb9ecf2c98ad7383afb54102dd4`, with managed native messages filtered
+before engine log sinks. [Two-build evidence](evidence/2026-09-06-r12-d05-core-binding/windows-evidence.json)
+pins the DLL; 100 proxy-only start/stop cycles pass on the synced bytes. The
+smoke helper gives each run a separate temporary runtime database, retained for
+inspection. An earlier run against reused test storage timed out with database
+`file missing` errors. This does not establish Windows service, TUN or DNS proof.
+
 The R12 source branch refreshes managed profiles on ordinary Windows reconnect
 and requires explicit staging acknowledgement before connect. Local shell and
 runtime regression tests do not prove service-effective revision or a packaged

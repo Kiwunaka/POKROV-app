@@ -13,12 +13,20 @@ Older APK identities and device runs are retained separately as evidence.
 
 The R12 source branch replaces event/cache health authority with per-call Core
 `CommandServer.ProbeEndpoint` and `ProbeSelectedOutbound` results. Core
-`3f52efd4635218967cc84d58cb06b2fa593fd563` is bound in the runtime manifest;
+`94dd31012ac91fb9ecf2c98ad7383afb54102dd4` is bound in the runtime manifest;
 two byte-identical builds contain both methods and all four Android ABIs.
 Both flavor JVM suites pass on this AAR. Host A/B completion tests and Core
 race tests reject unrelated late results, changed selection, direct and cyclic
 routes. Packaged checks and device evidence remain pending; candidate.33
 evidence below is not evidence for this source diff.
+
+The D05 binding filters native managed-engine messages before observable
+writers, subscriptions and replay buffers, including debug mode. Arbitrary
+messages and logger tags become a fixed redacted category; supported AWG
+diagnostic categories remain closed. The planted-value Go regression covers
+these sinks. [Binding evidence](evidence/2026-09-06-r12-d05-core-binding/android-evidence.json)
+and the [previous binding](evidence/2026-09-06-r12-d05-core-binding/previous-runtime-binding.json)
+retain exact identities; installed APK and physical log inspection remain open.
 
 | Fact | Current state |
 |---|---|
@@ -38,6 +46,10 @@ Release-safe lifecycle, permission, network, Doze/app-standby, stack-free
 watchdog and direct-updater identity breadcrumbs are written through a closed
 schema to two bounded files under the app-private no-backup directory. No raw
 message, URL, profile, token, endpoint or stack is accepted by that journal.
+The Home live-speed card is labelled `Сейчас через POKROV`: Android samples
+Core/TUN totals for the current session, with reset/unavailable states. It does
+not use UID-wide `TrafficStats`. Account traffic in Profile remains the separate
+`panel_runtime` measurement and is not a total of the Home samples.
 These local contracts do not prove final APK bytes or physical behavior.
 
 ## Exact Candidate.33 Physical Android Partial

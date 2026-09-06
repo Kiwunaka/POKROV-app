@@ -17,7 +17,15 @@ if (-not (Test-Path -LiteralPath $coreDll -PathType Leaf)) {
 }
 
 $previousCoreRoot = $env:POKROV_REAL_CORE_ROOT
+$previousTemp = $env:TEMP
+$previousTmp = $env:TMP
+$testTemp = Join-Path ([IO.Path]::GetTempPath()) ("pokrov-core-proxy-" + [guid]::NewGuid().ToString("N"))
+[IO.Directory]::CreateDirectory($testTemp) | Out-Null
 try {
+    # The headless host falls back to TEMP for runtime storage. Isolate its
+    # database from previous tests; retain it for inspection after the run.
+    $env:TEMP = $testTemp
+    $env:TMP = $testTemp
     $env:POKROV_REAL_CORE_ROOT = $resolvedCoreRoot
     Push-Location $runtimePackage
     try {
@@ -32,6 +40,8 @@ try {
 }
 finally {
     $env:POKROV_REAL_CORE_ROOT = $previousCoreRoot
+    $env:TEMP = $previousTemp
+    $env:TMP = $previousTmp
 }
 
 Write-Output "PASS: exact Windows Core completed 100 proxy-only start/stop cycles without changing system routes."
