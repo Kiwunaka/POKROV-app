@@ -283,7 +283,7 @@ class _FakeBootstrapper
   final Future<void>? assistantGate;
   final Set<int> assistantFailureCalls;
   final Future<void>? bonusSummaryGate;
-  final Future<void>? subscriptionGate;
+  Future<void>? subscriptionGate;
   final Future<void>? locationsCatalogGate;
   final String? locationsCatalogFailure;
   final String? notificationsFailure;
@@ -307,6 +307,7 @@ class _FakeBootstrapper
   int channelBonusClaimCalls = 0;
   int bonusSummaryCalls = 0;
   int subscriptionCalls = 0;
+  int notificationCalls = 0;
   final List<String> accountSummaryCallOrder = <String>[];
   int wheelSpinCalls = 0;
   int calendarCheckInCalls = 0;
@@ -584,6 +585,7 @@ class _FakeBootstrapper
     required HostPlatform hostPlatform,
     String after = '',
   }) async {
+    notificationCalls += 1;
     if (notificationsFailure != null) {
       throw BootstrapFailure(notificationsFailure!);
     }
@@ -1963,6 +1965,13 @@ void main() {
 
     expect(bootstrapper.subscriptionCalls, 0,
         reason: 'account provisioning waits for the access choice');
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(bootstrapper.subscriptionCalls, 0,
+        reason: 'foreground return cannot select a trial or restore account');
+    expect(bootstrapper.notificationCalls, 0,
+        reason: 'the welcome screen cannot start a session through inbox reads');
     await tester.tap(find.byKey(const ValueKey('first-launch-new-user')));
     await tester.pumpAndSettle();
 
@@ -4188,6 +4197,130 @@ void main() {
       launched.single.queryParameters['handoff_token'],
       'short-cabinet-token',
     );
+  });
+
+  for (final host in [HostPlatform.android, HostPlatform.windows]) {
+    testWidgets('cabinet return refreshes subscription on ${host.name}',
+        (tester) async {
+      if (host == HostPlatform.windows) {
+        await tester.binding.setSurfaceSize(const Size(1280, 900));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+      }
+      final bootstrapper = _FakeBootstrapper(
+        const ManagedProfilePayload(
+          profileName: 'cabinet-return',
+          configPayload: _materializedRuntimeConfig,
+          materializedForRuntime: true,
+        ),
+        subscriptionInfo: const ClientSubscriptionInfo(
+          lane: 'expiredOrBlocked',
+          expiresAt: '',
+          daysLeft: 0,
+          autoRenew: false,
+          renewUrl: null,
+          plans: <ClientSubscriptionPlan>[],
+          trafficPolicy: <String, Object?>{},
+        ),
+      );
+      final launched = <Uri>[];
+      await tester.pumpWidget(PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: host),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        handoffLauncher: (uri) async {
+          launched.add(uri);
+          return true;
+        },
+      ));
+      await tester.pumpAndSettle();
+      await _tapNav(tester, 'nav-profile');
+      await tester.pumpAndSettle();
+      expect(find.text('Доступ не активен'), findsWidgets);
+      final cabinet = find.byKey(const ValueKey('profile-open-cabinet-action'));
+      await tester.dragUntilVisible(
+        cabinet,
+        find.byType(Scrollable).first,
+        const Offset(0, -220),
+        maxIteration: 8,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(cabinet);
+      await tester.pumpAndSettle();
+      final callsBeforeReturn = bootstrapper.subscriptionCalls;
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      bootstrapper.subscriptionInfo = _paidSubscriptionInfo;
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(bootstrapper.subscriptionCalls, callsBeforeReturn + 1);
+      expect(bootstrapper.cabinetCalls, 1);
+      expect(launched, hasLength(1));
+      // Resume retains the current profile route; no second handoff or login.
+      expect(cabinet, findsOneWidget);
+      await tester.dragUntilVisible(
+        find.text('30 дней доступа'),
+        find.byType(Scrollable).first,
+        const Offset(0, 220),
+        maxIteration: 8,
+      );
+      expect(find.text('30 дней доступа'), findsOneWidget);
+      expect(find.text('Доступ не активен'), findsNothing);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 300));
+    });
+  }
+
+  testWidgets('foreground account refresh coalesces and recovers after offline',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'foreground-account',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+    );
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+    ));
+    await tester.pumpAndSettle();
+    final callsBeforeReturn = bootstrapper.subscriptionCalls;
+    final bonusCallsBeforeReturn = bootstrapper.bonusSummaryCalls;
+    final notificationCallsBeforeReturn = bootstrapper.notificationCalls;
+    final refresh = Completer<void>();
+    bootstrapper.subscriptionGate = refresh.future;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await _tapNav(tester, 'nav-profile');
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(bootstrapper.subscriptionCalls, callsBeforeReturn + 1);
+    expect(bootstrapper.bonusSummaryCalls, bonusCallsBeforeReturn);
+    expect(bootstrapper.notificationCalls, notificationCallsBeforeReturn);
+    expect(find.text('5 дней пробного доступа'), findsOneWidget);
+
+    refresh.completeError(const BootstrapFailure(
+      'Сервис не ответил вовремя.',
+      operationalCode: 'API-002',
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('5 дней пробного доступа'), findsOneWidget);
+    expect(find.text('Доступ не активен'), findsNothing);
+    expect(find.text('30 дней доступа'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    bootstrapper.subscriptionGate = null;
+    bootstrapper.subscriptionInfo = _paidSubscriptionInfo;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(bootstrapper.subscriptionCalls, callsBeforeReturn + 2);
+    expect(find.text('30 дней доступа'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 300));
   });
 
   testWidgets(

@@ -1,6 +1,6 @@
 # App-First Onboarding Flow
 
-Last updated: 2026-08-17
+Last updated: 2026-09-06
 
 ## Document Status
 
@@ -62,6 +62,23 @@ UX guardrail:
   acquisition handle, session token, profile, endpoint, or raw host detail.
 
 ## Account Experience And Connection Evidence
+
+When an established app flow returns to the foreground (including a cabinet
+browser return), the shell refreshes its existing account subscription,
+bonus summary and inbox without changing the selected tab. Access changes come
+only from the authenticated server response; closing the browser never means payment
+succeeded. The welcome/restore choice does not start an authenticated refresh
+merely because the app resumes. Pending Telegram verification keeps its existing
+dedicated refresh path.
+
+Foreground, profile-tab and initial account-summary requests share one in-flight
+refresh, keeping subscription, bonus and inbox reads sequential. Inbox reads
+also wait for the access choice because their session helper can create a trial
+when no app session exists. A failed refresh retains the previously observed
+account view and permits another foreground or
+profile refresh; it does not clear access, claim payment or reset navigation.
+These reads use the existing bounded app-first HTTP request path. Native browser,
+tray, upgrade and payment acceptance still require exact installed-package proof.
 
 The native welcome shown before account creation is necessarily install-scoped.
 Once a real app session exists, onboarding continuation and first-connection UX

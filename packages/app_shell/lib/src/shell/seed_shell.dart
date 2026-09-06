@@ -624,6 +624,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       ClientUpdateCoordinator();
   bool _clientLifecycleOpenReported = false;
   StreamSubscription<Uri>? _acquisitionUriSubscription;
+  Future<void>? _accountSummaryRefresh;
 
   RuntimeSnapshot? get _runtimeSnapshot => _connectionCoordinator.snapshot;
   set _runtimeSnapshot(RuntimeSnapshot? value) =>
@@ -848,12 +849,23 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     await _refreshAccountSummary();
   }
 
-  Future<void> _refreshAccountSummary() async {
-    // Both calls may refresh the same expired app session and reconcile the
+  Future<void> _refreshAccountSummary() {
+    return _accountSummaryRefresh ??= _loadAccountSummary().whenComplete(() {
+      _accountSummaryRefresh = null;
+    });
+  }
+
+  Future<void> _loadAccountSummary() async {
+    // These reads may refresh the same expired app session and reconcile the
     // same account projection. Keep them ordered so first launch cannot make
-    // two competing account transactions and leave bonuses in an error state.
+    // competing account transactions and leave bonuses in an error state.
     await _refreshSubscriptionInfo();
-    await _loadBonusSummary();
+    if (mounted) {
+      await _loadBonusSummary();
+    }
+    if (mounted) {
+      await _refreshNotifications();
+    }
   }
 
   Future<void> _restoreClientExperience() async {
@@ -1797,7 +1809,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     if (tab == SeedTab.profile && widget.bootstrapper != null) {
       unawaited(_refreshAccountSummary());
-      unawaited(_refreshNotifications());
     }
   }
 
@@ -2054,7 +2065,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   Future<void> _refreshNotifications() async {
     final service = _clientDataService;
-    if (service == null || _notificationsBusy) {
+    if (service == null ||
+        _notificationsBusy ||
+        !_firstSessionCoordinator.isReady) {
       return;
     }
     if (mounted) {
@@ -2287,9 +2300,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (state == AppLifecycleState.resumed) {
       unawaited(_resumeRuntimeAndTrustedWifiChecks());
       unawaited(_checkForClientUpdate());
-      unawaited(_refreshNotifications());
       if (_telegramLinkVerificationPending) {
         unawaited(_verifyTelegramLinkAfterHandoff());
+        unawaited(_refreshNotifications());
+      } else if (_firstSessionCoordinator.isReady) {
+        // A browser/cabinet visit may change access on the server. Refresh the
+        // existing account on return without changing the selected tab or
+        // treating the browser return itself as payment confirmation.
+        unawaited(_refreshAccountSummary());
       }
     }
   }
