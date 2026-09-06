@@ -1,5 +1,15 @@
 # Windows Release Readiness
 
+R12 Win11 component lab (2026-09-06): seven Release native test executables pass
+on the offline linked clone `d5ae2f7a-96c3-48b5-a2ba-5e009948ee27`, Windows
+`10.0.26200`, client `ded58b1`, Core `94dd310`.
+[Guest evidence](evidence/2026-09-06-r12-win11-component-lab/evidence.json)
+retains binary/source/log hashes and the rejected first collector run. Runtime
+Core/egress/network backends are fixtures; no service, UI, installer or TUN
+acceptance is claimed. A clone-pinned SCM start/status/stop script is prepared
+for manual UAC execution; its runtime result is still `MANUAL_OWNER_TEST`.
+Retained candidate `pokrov-1.2.0-candidate.33` and its release gate are unchanged.
+
 R12 local staging correction (2026-09-05): the service now secures the pending
 profile before atomic replacement. A `SecureFile` failure retains the previously
 acknowledged profile bytes and reports `profile_security_failed`; the caller does
