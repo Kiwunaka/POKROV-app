@@ -1,0 +1,331 @@
+[
+  {
+    "name": "file_selector_windows",
+    "version": "0.9.3+5",
+    "metadata_url": "https://pub.dev/api/packages/file_selector_windows/versions/0.9.3%2B5",
+    "archive_url": "https://pub.dev/api/archives/file_selector_windows-0.9.3%2B5.tar.gz",
+    "archive_sha256": "62197474ae75893a62df75939c777763d39c2bc5f73ce5b88497208bc269abfd",
+    "locked_sha256_match": true,
+    "cache_root": "E:\\CodexCaches\\pub-cache\\hosted\\pub.dev\\file_selector_windows-0.9.3+5",
+    "checked_files": 18,
+    "files": [
+      {
+        "path": "windows/CMakeLists.txt",
+        "sha256": "e7fcfd9a4df57d37aa3f2eb2988595fb8aa5a0218548296b72bf5ca51f6e1edd",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/file_dialog_controller.cpp",
+        "sha256": "b35502bb981c2e19b201c2c0bd7202dc25d0b255ac5fef66fec4b80da63e4d4e",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/file_dialog_controller.h",
+        "sha256": "2dbd646f1da2d1d3f6f643f806cbc02a046f260602eda5c93156fdbb45e7ae22",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/file_selector_plugin.cpp",
+        "sha256": "17e0345a6c0a508986d7d2100ecd04880339b40459c46bb1c14370cbce4b2d3e",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/file_selector_plugin.h",
+        "sha256": "fab7c648fec2f95fab974dd5f38971dd7eefbaed0a5ba7fc58ef33b90d4e2fb7",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/file_selector_windows.cpp",
+        "sha256": "eee98d463b07eaaed9caba99476b91e1cf1ccbfadf1d59e3db07e4a9fa9c5332",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/messages.g.cpp",
+        "sha256": "fe78de0f0c5dbc3b76c6b062d270973494d152f8d7a3f92777833d1dd0a2856b",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/messages.g.h",
+        "sha256": "b0d7969b123f8c87fce1dd220f9448a8b97f921124b55e2c3e8596fa1a57c8ac",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/string_utils.cpp",
+        "sha256": "56f5f0f9196d423fb17ec3d01ec83baa9a3065a91757039c9df38579ef92fcf9",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/string_utils.h",
+        "sha256": "8dc8d38b948d9dc8f4b4014a2fb64eebdad673404f7f1b85ba5f9438e9796087",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/test/file_selector_plugin_test.cpp",
+        "sha256": "f31019700caa27abceec52b9f6af446cea77d38a27f9b22cefa6dec17c884eb5",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/test/test_file_dialog_controller.cpp",
+        "sha256": "5b2356135f1cc18fcd680a0da7bf7e89e1f0e80ad58e27f96163eba6932adceb",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/test/test_file_dialog_controller.h",
+        "sha256": "84101719dba167c83fe1133b676af7b4a1533dea9dc6447c03676e05b8c6fcfa",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/test/test_main.cpp",
+        "sha256": "adf09de1011f25d4edc0206a5ff442dd6b2bfcf6417c946591ced1c19d6bddce",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/test/test_utils.cpp",
+        "sha256": "0f37c8247389dfaefb3c317a7c1b0bc0fef4b072a016eb1f09c784159571844f",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/test/test_utils.h",
+        "sha256": "bf993e744458796f2f87f6aeed16e45140e8c71651c50242531e07a18285f1a3",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/include/file_selector_windows/file_selector_windows.h",
+        "sha256": "f7dbfc39e822507ced773d7df89311f8a8c4a52fc03c60481f9cadd00d9df06e",
+        "matches_archive": true
+      },
+      {
+        "path": "LICENSE",
+        "sha256": "420f7739f169097f0aad1242045169cd643c8f1d94e62866fad265ae4c369b7d",
+        "matches_archive": true
+      }
+    ],
+    "mismatches": [],
+    "status": "PASS"
+  },
+  {
+    "name": "flutter_secure_storage_windows",
+    "version": "4.1.0",
+    "metadata_url": "https://pub.dev/api/packages/flutter_secure_storage_windows/versions/4.1.0",
+    "archive_url": "https://pub.dev/api/archives/flutter_secure_storage_windows-4.1.0.tar.gz",
+    "archive_sha256": "3b7c8e068875dfd46719ff57c90d8c459c87f2302ed6b00ff006b3c9fcad1613",
+    "locked_sha256_match": true,
+    "cache_root": "E:\\CodexCaches\\pub-cache\\hosted\\pub.dev\\flutter_secure_storage_windows-4.1.0",
+    "checked_files": 4,
+    "files": [
+      {
+        "path": "windows/CMakeLists.txt",
+        "sha256": "2dc207d858f111003cf570076025018b923b1ac5768294ac48793a76c7903a3e",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/flutter_secure_storage_windows_plugin.cpp",
+        "sha256": "f4ec3f08a3670d9f1f7e872285e9d914a4c898cd4ad8e44b9c5777791fe8f5f0",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/include/flutter_secure_storage_windows/flutter_secure_storage_windows_plugin.h",
+        "sha256": "73951e5e1c93c75ccdecc4d0f247843ddb062489c0b62146062cba8a85504d5c",
+        "matches_archive": true
+      },
+      {
+        "path": "LICENSE",
+        "sha256": "55dafb084270616f95b9bea53654adda8bdcad95c022a83c4cf8769073f829fa",
+        "matches_archive": true
+      }
+    ],
+    "mismatches": [],
+    "status": "PASS"
+  },
+  {
+    "name": "screen_retriever_windows",
+    "version": "0.2.0",
+    "metadata_url": "https://pub.dev/api/packages/screen_retriever_windows/versions/0.2.0",
+    "archive_url": "https://pub.dev/api/archives/screen_retriever_windows-0.2.0.tar.gz",
+    "archive_sha256": "449ee257f03ca98a57288ee526a301a430a344a161f9202b4fcc38576716fe13",
+    "locked_sha256_match": true,
+    "cache_root": "E:\\CodexCaches\\pub-cache\\hosted\\pub.dev\\screen_retriever_windows-0.2.0",
+    "checked_files": 7,
+    "files": [
+      {
+        "path": "windows/CMakeLists.txt",
+        "sha256": "c29ab025c02a357a029b2be4021dce8a7d748132d7ce4e9827272d19e56f23e2",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/screen_retriever_windows_plugin.cpp",
+        "sha256": "c74c35dc67d6c17b5b9f497eda9dda1330ad04d4b797e0f8dc79cd6934d01dd3",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/screen_retriever_windows_plugin.h",
+        "sha256": "d6daf6e166c580d76a356626f72e7fba627880f6554ed6e9c5e0a5620e353839",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/screen_retriever_windows_plugin_c_api.cpp",
+        "sha256": "9d448866594dec82a4abb30ac0e186acf553ff19cad88480960a4d434fdc1314",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/test/screen_retriever_windows_plugin_test.cpp",
+        "sha256": "6f22926e4b87465bb1c30e668199769a329e2a77a2d4992491c457e1e7a10138",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/include/screen_retriever_windows/screen_retriever_windows_plugin_c_api.h",
+        "sha256": "a2a40b03ec71aa29db83e0eb9ef502db1d015c22b136e5e655b6cbb63f306532",
+        "matches_archive": true
+      },
+      {
+        "path": "LICENSE",
+        "sha256": "4c275c4e1ab3ffb97508c3c66a87db1c6e4f5d0233205fff8ca57ac35d20199f",
+        "matches_archive": true
+      }
+    ],
+    "mismatches": [],
+    "status": "PASS"
+  },
+  {
+    "name": "tray_manager",
+    "version": "0.5.2",
+    "metadata_url": "https://pub.dev/api/packages/tray_manager/versions/0.5.2",
+    "archive_url": "https://pub.dev/api/archives/tray_manager-0.5.2.tar.gz",
+    "archive_sha256": "c5fd83b0ae4d80be6eaedfad87aaefab8787b333b8ebd064b0e442a81006035b",
+    "locked_sha256_match": true,
+    "cache_root": "E:\\CodexCaches\\pub-cache\\hosted\\pub.dev\\tray_manager-0.5.2",
+    "checked_files": 4,
+    "files": [
+      {
+        "path": "windows/CMakeLists.txt",
+        "sha256": "719b6b4df2889eddbd120b67a1d343e91d766fc1f3b107a639540165ef7aab42",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/tray_manager_plugin.cpp",
+        "sha256": "24e19d45827a6d9ded599d1f3c3a7a1d0acc2ef095daf8ae784378a974be4460",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/include/tray_manager/tray_manager_plugin.h",
+        "sha256": "1a752e85e4382fbbdc7232ec3512a158364efd38bd191135bb14e4be59b2887c",
+        "matches_archive": true
+      },
+      {
+        "path": "LICENSE",
+        "sha256": "516e1f470fd0e4c5c6cf02b6876153a9145283660a5de03fe9812b207dc34db5",
+        "matches_archive": true
+      }
+    ],
+    "mismatches": [],
+    "status": "PASS"
+  },
+  {
+    "name": "url_launcher_windows",
+    "version": "3.1.4",
+    "metadata_url": "https://pub.dev/api/packages/url_launcher_windows/versions/3.1.4",
+    "archive_url": "https://pub.dev/api/archives/url_launcher_windows-3.1.4.tar.gz",
+    "archive_sha256": "3284b6d2ac454cf34f114e1d3319866fdd1e19cdc329999057e44ffe936cfa77",
+    "locked_sha256_match": true,
+    "cache_root": "E:\\CodexCaches\\pub-cache\\hosted\\pub.dev\\url_launcher_windows-3.1.4",
+    "checked_files": 11,
+    "files": [
+      {
+        "path": "windows/CMakeLists.txt",
+        "sha256": "c0781fc6f840108f663439dd2714af7c8eee6e6f186f1df9c33294b342ada637",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/messages.g.cpp",
+        "sha256": "07b00627c3c86a4d02f304c0a38d160eb495623335759803582b19d7db925d7e",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/messages.g.h",
+        "sha256": "ccbfb08d337525e9faeb4ab31e3cd733053ca17890f0495e530c18d1814b4492",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/system_apis.cpp",
+        "sha256": "bb95660ae8ddad1ec803c3e64da2af94e242f197eadbf8005e7d7c190d0711bd",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/system_apis.h",
+        "sha256": "24418a326c78b0423f6c7896d4b08578c7947d694f8f3faa3c4bdd9f6076fa7c",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/url_launcher_plugin.cpp",
+        "sha256": "499fccd82eb10acfbd0a57aee7f4d22659ee9c1a27bdbf240528306416b576a9",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/url_launcher_plugin.h",
+        "sha256": "8c8ebbee5b9accee8047d9adf3ddeddda8e0f88bc4ddca4d3a84c48b95cfd5f2",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/url_launcher_windows.cpp",
+        "sha256": "a448aca328b209cdd20b37071096fe08f6ed0361307eff93ae195860c87a298a",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/test/url_launcher_windows_test.cpp",
+        "sha256": "87847006980c326fd7a2c0d46fdfa55ad2ea9de55f146117d87ce9ef9ad443ee",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/include/url_launcher_windows/url_launcher_windows.h",
+        "sha256": "f9632231786ea1451996610564c56f31b041bf3f3fb5caa004c1bf20c763b325",
+        "matches_archive": true
+      },
+      {
+        "path": "LICENSE",
+        "sha256": "89519eca6f7b9529b35bdddd623a58c3af06a88c458dbd6531ddb4675acf75a9",
+        "matches_archive": true
+      }
+    ],
+    "mismatches": [],
+    "status": "PASS"
+  },
+  {
+    "name": "window_manager",
+    "version": "0.5.1",
+    "metadata_url": "https://pub.dev/api/packages/window_manager/versions/0.5.1",
+    "archive_url": "https://pub.dev/api/archives/window_manager-0.5.1.tar.gz",
+    "archive_sha256": "7eb6d6c4164ec08e1bf978d6e733f3cebe792e2a23fb07cbca25c2872bfdbdcd",
+    "locked_sha256_match": true,
+    "cache_root": "E:\\CodexCaches\\pub-cache\\hosted\\pub.dev\\window_manager-0.5.1",
+    "checked_files": 5,
+    "files": [
+      {
+        "path": "windows/CMakeLists.txt",
+        "sha256": "86175ee74559252805ce1dae22d7206fa8c46c442eccae80cb91a52e69cef153",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/window_manager.cpp",
+        "sha256": "fe90a377f8d14b37f5643e7db4550ea0fb64a54d8f0a9751cb7ae10744860b53",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/window_manager_plugin.cpp",
+        "sha256": "6fa2dc3eea3543108957a142e273a4fc9faf101bae09444bcd9be4712d3238d0",
+        "matches_archive": true
+      },
+      {
+        "path": "windows/include/window_manager/window_manager_plugin.h",
+        "sha256": "833d67c5af5e22efbb873b66fdb672fcb3575a0c257c5300b75790c3ef253354",
+        "matches_archive": true
+      },
+      {
+        "path": "LICENSE",
+        "sha256": "516e1f470fd0e4c5c6cf02b6876153a9145283660a5de03fe9812b207dc34db5",
+        "matches_archive": true
+      }
+    ],
+    "mismatches": [],
+    "status": "PASS"
+  }
+]

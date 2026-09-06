@@ -102,6 +102,24 @@ scan covers full permission/redistribution blocks in the first 160 lines of
 source-delivery or installed-runtime proof. The original CMake install prefix
 is restored, and the four preexisting generated registrants remain unchanged.
 
+The [Flutter/native follow-up](evidence/2026-09-06-r12-c05-flutter-native/package-notices.json)
+reconstructs all 1624 packaged Flutter notice bodies and matches the engine DLL
+and sky_engine license to official archives for engine `1527ae0ec577a4ef50e65f6fefcfc1326707d9bf`.
+All 49 inspected Windows plugin files/root licenses match six locked pub.dev
+archives; their license bodies are included in Flutter notices. This establishes
+input and package identity, not native source-to-binary reproducibility.
+
+The exact signed Wintun 0.14.1 amd64 DLL is embedded in the Windows Core. Its
+separate prebuilt terms are now included verbatim in the shared asset (186 texts).
+A schema-validated native CycloneDX supplement records twelve components,
+including Wintun and its Core parent; it is not the complete application SBOM.
+The wrapper resolves thirteen names corresponding to official header typedefs
+and uses a memory loader. API-use and redistribution compatibility remain a
+separate review; the source GPL and wrapper MIT do not replace the binary terms.
+The new bundle changes only notices; 301 other files match the preceding bundle.
+Root utls licensing, other native/Maven obligations, corresponding source and
+installed privacy/final candidate acceptance remain open.
+
 The R12 source branch refreshes managed profiles on ordinary Windows reconnect
 and requires explicit staging acknowledgement before connect. Local shell and
 runtime regression tests do not prove service-effective revision or a packaged

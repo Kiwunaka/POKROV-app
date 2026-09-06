@@ -1,0 +1,82 @@
+{
+  "components": [
+    {
+      "component": "sky_engine notices",
+      "sha256": "66f37204b91a314563d3261efdd4b1858a49684ed99c267e0ee4ad5f00f74ea0",
+      "official_archive": "E:\\r12-c05-flutter-native\\official\\sky_engine.zip",
+      "exact_sdk_match": true
+    },
+    {
+      "component": "windows Flutter DLL",
+      "sha256": "1f4215e1072dd9e34f4565b74310e6771364e1470c7e92214bca64947bd012a1",
+      "official_archive": "E:\\r12-c05-flutter-native\\official\\windows-x64-flutter.zip",
+      "exact_sdk_and_bundle_match": true
+    },
+    {
+      "component": "android Flutter arm64-v8a",
+      "original_sha256": "38fc35b2fe79f8653c9e7c0811cc922c00e885fcfac86c6c42bfb35394c7f097",
+      "packaged_sha256": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d",
+      "official_archive": "E:\\r12-c05-flutter-native\\official\\arm64_v8a_release.jar",
+      "strip_command": [
+        "C:\\Users\\kiwun\\AppData\\Local\\Android\\Sdk\\ndk\\28.2.13676358\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-strip.exe",
+        "--strip-unneeded",
+        "-o",
+        "E:\\r12-c05-flutter-native\\stripped\\arm64-v8a.so",
+        "E:\\r12-c05-flutter-native\\stripped\\arm64-v8a-unstripped.so"
+      ],
+      "strip_exit_code": 0,
+      "exact_apk_matches": [
+        "E:\\r12-c05-header-review\\android\\app-direct-arm64-v8a-release.apk",
+        "E:\\r12-c05-header-review\\android\\app-direct-universal-release.apk"
+      ]
+    },
+    {
+      "component": "android Flutter armeabi-v7a",
+      "original_sha256": "a3e7d86fb605a57bc1e3dc4edf1f9e3b3e3a699aa552a1da0ac83450dc155557",
+      "packaged_sha256": "a4a921f6c02b5bdc52eae98528a7fbd242c2819d06de97014ee932f90c1b7a07",
+      "official_archive": "E:\\r12-c05-flutter-native\\official\\armeabi_v7a_release.jar",
+      "strip_command": [
+        "C:\\Users\\kiwun\\AppData\\Local\\Android\\Sdk\\ndk\\28.2.13676358\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-strip.exe",
+        "--strip-unneeded",
+        "-o",
+        "E:\\r12-c05-flutter-native\\stripped\\armeabi-v7a.so",
+        "E:\\r12-c05-flutter-native\\stripped\\armeabi-v7a-unstripped.so"
+      ],
+      "strip_exit_code": 0,
+      "exact_apk_matches": [
+        "E:\\r12-c05-header-review\\android\\app-direct-armeabi-v7a-release.apk",
+        "E:\\r12-c05-header-review\\android\\app-direct-universal-release.apk"
+      ]
+    },
+    {
+      "component": "android Flutter x86_64",
+      "original_sha256": "614ed89be04229bdc900ca8ffcb91c30b1b9f76cfac3ba6830efff09e5165e29",
+      "packaged_sha256": "9e8c7fac2fb253a2c00ec61f0ba5b82545d3e781b220a2563a981c233127defd",
+      "official_archive": "E:\\r12-c05-flutter-native\\official\\x86_64_release.jar",
+      "strip_command": [
+        "C:\\Users\\kiwun\\AppData\\Local\\Android\\Sdk\\ndk\\28.2.13676358\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-strip.exe",
+        "--strip-unneeded",
+        "-o",
+        "E:\\r12-c05-flutter-native\\stripped\\x86_64.so",
+        "E:\\r12-c05-flutter-native\\stripped\\x86_64-unstripped.so"
+      ],
+      "strip_exit_code": 0,
+      "exact_apk_matches": [
+        "E:\\r12-c05-header-review\\android\\app-direct-universal-release.apk",
+        "E:\\r12-c05-header-review\\android\\app-direct-x86_64-release.apk"
+      ]
+    },
+    {
+      "component": "flutter_embedding_release input",
+      "official_jar_sha256": "0ac8e2486a4d706aa8bb8fa555bc1088e5176ed06dc2e0fc5dd3091cb897e45e",
+      "cache_path": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\modules-2\\files-2.1\\io.flutter\\flutter_embedding_release\\1.0.0-1527ae0ec577a4ef50e65f6fefcfc1326707d9bf\\183bc417022328b920f763c8dba91ee5954308fb\\flutter_embedding_release-1.0.0-1527ae0ec577a4ef50e65f6fefcfc1326707d9bf.jar",
+      "scope": "Exact selected compiler input match; DEX transformation/reachability not proven by raw jar equality."
+    }
+  ],
+  "strip_tool": {
+    "path": "C:\\Users\\kiwun\\AppData\\Local\\Android\\Sdk\\ndk\\28.2.13676358\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-strip.exe",
+    "sha256": "2d411db64e0b45508775e9e8fd436fb6e0af814a9dfbf8aea8fc37ce436c435c"
+  },
+  "engine_version": "1527ae0ec577a4ef50e65f6fefcfc1326707d9bf",
+  "source_reproduction": "NOT_PERFORMED"
+}

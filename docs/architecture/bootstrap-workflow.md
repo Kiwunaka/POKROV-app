@@ -397,6 +397,8 @@ declaration includes it in Android and Windows packages. Seed validation rejects
 a missing asset, hash mismatch, source/toolchain mismatch or missing declaration.
 The asset includes root notices, selected source-package ancestor notices and
 full license comment blocks found in a bounded scan of selected source files.
+It also carries the separate prebuilt license for Wintun 0.14.1, whose exact
+amd64 DLL bytes are embedded in the bound Windows Core through sing-tun.
 This notice binding does not establish complete dependency licensing or
 corresponding-source delivery; remaining gaps stay explicit in release readiness.
 

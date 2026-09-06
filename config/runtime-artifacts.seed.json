@@ -193,10 +193,10 @@
     },
     "native_go_notices": {
       "file": "packages/app_shell/assets/licenses/native-go-NOTICES.txt",
-      "sha256": "71b707bb4af6d879c6ce13d86644ce1e1dbd5dabb7846085b10e798d63e9b56a",
+      "sha256": "8075f4b06ef00fc4b7bf50e05905a4908d63619d73a1571aaf74c5e3b62314e8",
       "source_commit": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
       "go_toolchain": "go1.26.8",
-      "scope": "Verbatim root, selected source-package and bounded full file-header license/patent notices for recorded Android/Windows Go inputs; complete native, file-header and corresponding-source clearance remains separate",
+      "scope": "Verbatim root, source-package, bounded full file-header and identified embedded-native license notices for recorded Android/Windows Go inputs; complete licensing and corresponding-source clearance remains separate",
       "missing_root_license_modules": [
         "github.com/Psiphon-Labs/utls@v0.0.0-20260129182755-24497d415a8d"
       ]

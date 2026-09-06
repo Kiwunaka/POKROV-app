@@ -67,6 +67,17 @@ lines for full permission/redistribution blocks. Literal body matching avoids
 duplicate texts but does not establish complete file-level licensing, native
 include coverage, corresponding source, installed privacy or final acceptance.
 
+The [Flutter/native follow-up](evidence/2026-09-06-r12-c05-flutter-native/package-notices.json)
+reconstructs the packaged Flutter `NOTICES.Z` exactly from its license inputs:
+1621 distinct bodies, including 1594 sky_engine blocks. Official sky_engine
+notices match the SDK; all three packaged Flutter SOs match official engine
+`1527ae0ec577a4ef50e65f6fefcfc1326707d9bf` artifacts after the recorded NDK strip
+operation. The selected embedding JAR matches its official download; this does
+not prove DEX reachability or native source-to-binary reproducibility. Four new
+local Direct APKs retain the same Core/Flutter SOs and generated Flutter notices,
+and carry the updated shared asset with 186 texts, including the Windows-only
+Wintun prebuilt terms. Their internal signer and existing runtime gates remain.
+
 The R12 source branch replaces event/cache health authority with per-call Core
 `CommandServer.ProbeEndpoint` and `ProbeSelectedOutbound` results. Core
 `8dc57a830bd1487389dd1b7c9190f094c31e13bc` is bound in the runtime manifest;
