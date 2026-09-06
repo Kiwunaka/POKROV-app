@@ -60,6 +60,8 @@ if(BUILD_TESTING)
     "activation_protocol_test.cpp"
   )
   apply_standard_settings(pokrov_activation_protocol_test)
+  set_target_properties(pokrov_activation_protocol_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
   add_test(NAME pokrov_activation_protocol
     COMMAND pokrov_activation_protocol_test)
 endif()

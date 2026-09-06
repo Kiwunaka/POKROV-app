@@ -43,6 +43,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/brand/
+    - assets/fonts/OFL.txt
   fonts:
     - family: Golos Text
       fonts:

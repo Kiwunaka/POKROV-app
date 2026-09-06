@@ -15,7 +15,17 @@ C05 updates the development binding to Go 1.26.8 / x/crypto 0.56.0 with the
 Psiphon TLS layout correction. [Current two-build evidence](evidence/2026-09-06-r12-c05-core-binding/android-evidence.json)
 and [previous D05 binding](evidence/2026-09-06-r12-c05-core-binding/previous-runtime-binding.json)
 bind the AAR. This dependency correction requires fresh installed-package,
-privacy and device acceptance; previous candidate.33 evidence stays historical.
+privacy and device acceptance; retained `pokrov-1.2.0-candidate.33` evidence
+stays historical.
+
+The local C05 package audit builds Direct release-mode APKs with the explicit
+internal debug-signing option and a loopback API endpoint. All four APKs retain
+the exact bound Core SO bytes and now include the existing Golos Text
+`OFL.txt` as a package asset. The [package audit receipt](evidence/2026-09-06-r12-c05-package-audit/package-audit.json)
+records byte inventories, dependency queries and their limits. This is not a
+production-signed candidate or installed runtime/privacy proof. Core native
+notices, nested/native dependency coverage and corresponding source delivery
+remain open; a generated Flutter `NOTICES.Z` does not cover them automatically.
 
 The R12 source branch replaces event/cache health authority with per-call Core
 `CommandServer.ProbeEndpoint` and `ProbeSelectedOutbound` results. Core
@@ -25,7 +35,7 @@ Both flavor JVM suites pass on this AAR (372 fresh tests, 186 per flavor);
 [current backtests](evidence/2026-09-06-r12-c05-core-binding/client-backtests.json) retain the
 explicit rerun and JVM/Flutter limits. Host A/B completion tests and Core
 race tests reject unrelated late results, changed selection, direct and cyclic
-routes. Packaged checks and device evidence remain pending; candidate.33
+routes. Exact candidate package checks and device evidence remain pending; candidate.33
 evidence below is not evidence for this source diff.
 
 The current C05 binding retains the D05 filter for native managed-engine messages before observable

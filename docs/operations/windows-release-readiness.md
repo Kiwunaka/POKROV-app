@@ -43,6 +43,19 @@ out with database `file missing` errors; that receipt remains retained.
 This binding does not establish Windows service, TUN or DNS proof. The offline
 Win11 component lab above still contains D05 bytes and is not C05 acceptance.
 
+The local C05 package audit retains an unsigned release-mode Flutter bundle
+with a loopback API endpoint. Golos Text `OFL.txt` is included as a package asset.
+The activation protocol test now builds under `build/windows/x64/tests/`
+instead of the runner output copied by the release packager. Its CTest entry
+remains active; the retained bundle contains no test EXE. The
+[package audit receipt](evidence/2026-09-06-r12-c05-package-audit/package-audit.json)
+binds these checks. This direct Flutter bundle is not an installer or clean-host
+acceptance and does not stage the VC runtime handled by the release builder.
+The pinned external Cronet DLL and the current Go module's DLL both report
+`143.0.7499.109` but have different hashes. The module SBOM cannot establish
+the pinned DLL's source/notice provenance. That reconciliation, complete Core
+native notices and installed runtime/privacy evidence remain open.
+
 The R12 source branch refreshes managed profiles on ordinary Windows reconnect
 and requires explicit staging acknowledgement before connect. Local shell and
 runtime regression tests do not prove service-effective revision or a packaged
