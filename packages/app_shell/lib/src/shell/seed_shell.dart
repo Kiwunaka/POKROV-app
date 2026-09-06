@@ -624,7 +624,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       ClientUpdateCoordinator();
   bool _clientLifecycleOpenReported = false;
   StreamSubscription<Uri>? _acquisitionUriSubscription;
-  Future<void>? _accountSummaryRefresh;
 
   RuntimeSnapshot? get _runtimeSnapshot => _connectionCoordinator.snapshot;
   set _runtimeSnapshot(RuntimeSnapshot? value) =>
@@ -849,24 +848,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     await _refreshAccountSummary();
   }
 
-  Future<void> _refreshAccountSummary() {
-    return _accountSummaryRefresh ??= _loadAccountSummary().whenComplete(() {
-      _accountSummaryRefresh = null;
-    });
-  }
-
-  Future<void> _loadAccountSummary() async {
-    // These reads may refresh the same expired app session and reconcile the
-    // same account projection. Keep them ordered so first launch cannot make
-    // competing account transactions and leave bonuses in an error state.
-    await _refreshSubscriptionInfo();
-    if (mounted) {
-      await _loadBonusSummary();
-    }
-    if (mounted) {
-      await _refreshNotifications();
-    }
-  }
+  Future<void> _refreshAccountSummary() =>
+      _accountSessionCoordinator.refreshSummary(
+        refreshSubscription: _refreshSubscriptionInfo,
+        refreshBonus: _loadBonusSummary,
+        refreshInbox: _refreshNotifications,
+        isActive: () => mounted,
+      );
 
   Future<void> _restoreClientExperience() async {
     final restoreRevision = _clientExperienceRevision;

@@ -146,7 +146,13 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   supplies account/device correlation; no acquisition handle, session token,
   managed profile, endpoint or raw host text belongs in the event body.
 - `AccountSessionCoordinator` owns account action capability plus current
-  `FreeProfileAccess` and `ClientSubscriptionInfo`. Clearing a stale
+  `FreeProfileAccess` and `ClientSubscriptionInfo` in a standalone module. It
+  also owns the shared in-flight summary refresh and the subscription → bonus
+  → inbox sequence. The shell supplies existing read/UI callbacks and its
+  mounted predicate; the coordinator stops subsequent reads when that predicate
+  becomes false and releases the flight after success or failure. Session
+  readiness and per-read error presentation remain at their existing boundaries.
+  Clearing a stale
   subscription refresh must not erase independent access state or mutate local
   routing/runtime policy; the shell must not restore parallel account fields.
 - `DiagnosticsCoordinator` owns foreground-refresh single-flight and bounded

@@ -1,32 +1,5 @@
 part of pokrov_app_shell;
 
-/// Owns account-scoped actions and the current access/subscription view state.
-///
-/// Local routing preferences and runtime truth deliberately stay outside this
-/// coordinator; clearing an account refresh never mutates device policy.
-class AccountSessionCoordinator {
-  AccountSessionCoordinator({required this.accountActions});
-
-  final AppFirstAccountActionService? accountActions;
-  FreeProfileAccess? _freeProfileAccess;
-  ClientSubscriptionInfo? _subscriptionInfo;
-
-  FreeProfileAccess? get freeProfileAccess => _freeProfileAccess;
-  ClientSubscriptionInfo? get subscriptionInfo => _subscriptionInfo;
-
-  void updateFreeProfileAccess(FreeProfileAccess? value) {
-    _freeProfileAccess = value;
-  }
-
-  void updateSubscriptionInfo(ClientSubscriptionInfo? value) {
-    _subscriptionInfo = value;
-  }
-
-  void clearSubscriptionInfo() {
-    _subscriptionInfo = null;
-  }
-}
-
 class _ProfileSection extends StatelessWidget {
   const _ProfileSection({
     required this.appContext,
