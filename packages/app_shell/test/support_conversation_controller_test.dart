@@ -100,7 +100,7 @@ void main() {
     expect(service.lastDiagnostics, isEmpty);
   });
 
-  test('poll failure and explicit retry share lifecycle and foreground gates',
+  test('poll failures back off and explicit retry restores the active cadence',
       () async {
     final service = _Tickets()..listed = [_thread(7)];
     final timers = <_Timer>[];
@@ -122,6 +122,13 @@ void main() {
     controller.setForeground(true);
     await _settle();
     expect(controller.lifecycle, SupportConversationLifecycle.offline);
+    expect(timers.where((timer) => timer.isActive), hasLength(1));
+    expect(timers.last.delay, const Duration(seconds: 16));
+    timers.last.fire();
+    await _settle();
+    expect(service.readIds, [7, 7, 7]);
+    expect(timers.where((timer) => timer.isActive), hasLength(1));
+    expect(timers.last.delay, const Duration(seconds: 32));
 
     service.readFailure = false;
     service.current = _thread(7, body: 'Operator update', role: 'operator');

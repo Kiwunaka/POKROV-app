@@ -542,7 +542,10 @@ Support contract rules:
   8–10 seconds; after one minute without a ticket change it relaxes to 15–30
   seconds. Returning from background triggers one immediate refresh. Transport
   failures use bounded exponential backoff with jitter and retain the explicit
-  retry control. SSE/WebSocket remains conditional on measured polling failure
+  retry control. A failed read restores polling eligibility before the existing
+  coordinator schedules its backoff; an offline hint does not stop retries for
+  an open foreground ticket. Backgrounding or closing the screen still cancels
+  them. SSE/WebSocket remains conditional on measured polling failure
   and is not part of the 1.2.0 support contract
 - the AI helper handles WARP, location, route-mode, and system-permission
   recovery before human escalation. A transport failure is shown as a retryable

@@ -7756,6 +7756,10 @@ void main() {
         findsOneWidget);
     expect(find.byKey(const ValueKey('support-thread-refresh-action')),
         findsOneWidget);
+    final failedReads = supportTicketService.getCalls;
+    await tester.pump(const Duration(seconds: 20));
+    await tester.pumpAndSettle();
+    expect(supportTicketService.getCalls, failedReads + 1);
   });
 
   testWidgets('rules show selected-apps editor and hide beta prose',

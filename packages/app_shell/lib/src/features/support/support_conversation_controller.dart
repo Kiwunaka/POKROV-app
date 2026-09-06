@@ -218,6 +218,7 @@ class SupportConversationController extends ChangeNotifier {
         _refreshingThread = false;
         _threadRefreshFailed = true;
       });
+      _syncThreadPolling();
       if (!pollingOwned) {
         _threadPolling.recordExternalResult(
           result: SupportPollingResult.failed,
