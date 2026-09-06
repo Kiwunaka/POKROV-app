@@ -99,6 +99,29 @@ does not close complete license compatibility, corresponding-source delivery,
 installed privacy or final candidate/device acceptance. Windows packaging and
 retained release artifacts are unchanged.
 
+The [Android Cronet notice follow-up](evidence/2026-09-06-r12-c05-android-cronet/package-notices.json)
+adds a separate 173535-byte Android asset with 31 native license sections.
+Pinned GN and the declared Android wrapper flags generated four dependency
+graphs from native commit `30f3a568` in the local Ubuntu lab. Each graph's
+compile-source basenames match the object-member multiset of its bound static
+archive: arm64 2663, arm 2663, amd64 2666, 386 2665. Non-assembly STT_FILE
+filename multisets also match (2538/2538/2540/2540). Basename agreement does not
+prove source-to-binary reproduction. All 30591 original source entries remained
+unchanged, and 4771 original GN-declared files have retained hashes.
+
+Android-specific libunwind, CPU Features and JNI Zero licenses are included,
+along with the separate BSD header in CPU Features' NDK compatibility layer.
+Perfetto, Protobuf and compiler-rt upstream-license evidence was reused only
+after every file in those Android source subtrees matched the prior snapshot.
+The 29-component CycloneDX supplement distinguishes 25 source directories from
+four static archive inputs; 386 remains AAR-only. Four new internal Direct APKs
+contain the exact asset and all 31 body hashes. Existing entries changed only
+in AssetManifest.bin; DEX, native SOs and prior notices are byte-identical.
+The lab VM is again powered off; previous lab services stayed inactive.
+There was no native compilation, engine execution, installer or production
+operation. Full transitive header/license compatibility, source delivery,
+installed privacy and final candidate/device/origin acceptance remain open.
+
 The R12 source branch replaces event/cache health authority with per-call Core
 `CommandServer.ProbeEndpoint` and `ProbeSelectedOutbound` results. Core
 `8dc57a830bd1487389dd1b7c9190f094c31e13bc` is bound in the runtime manifest;

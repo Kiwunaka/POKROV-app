@@ -1,0 +1,17 @@
+[
+  {
+    "prefix": "src/third_party/perfetto/",
+    "files": 7693,
+    "different": []
+  },
+  {
+    "prefix": "src/third_party/protobuf/",
+    "files": 682,
+    "different": []
+  },
+  {
+    "prefix": "src/third_party/compiler-rt/",
+    "files": 4,
+    "different": []
+  }
+]

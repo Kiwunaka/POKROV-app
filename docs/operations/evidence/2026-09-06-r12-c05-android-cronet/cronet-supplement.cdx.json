@@ -1,0 +1,1083 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "application",
+      "name": "POKROV Android Cronet native input supplement",
+      "version": "1.2.0+4053",
+      "bom-ref": "pokrov-android-cronet-inputs"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "base/third_party/cityhash",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/cityhash",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/base/third_party/cityhash"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "base/third_party/cityhash"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "745ca65d7762e565ec910d38a88badf817006e790c2cea3b8566b20a86de3fca"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "base/third_party/cityhash_v103",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/cityhash_v103",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/base/third_party/cityhash_v103"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "base/third_party/cityhash_v103"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "c37810ed4d957b2a4170232ca189b9d723abc7ee9e9c2caa329e836c27516c6c"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "base/third_party/double_conversion",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/double_conversion",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/base/third_party/double_conversion"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "base/third_party/double_conversion"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "5b6f2a88485bb23f66708ad038c44ddaacea27a92699ec2cc332aea6f539d7e5"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "base/third_party/icu",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/icu",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/base/third_party/icu"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "base/third_party/icu"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "1cd292a23b3e59b9537a60c619b5e1c607340a73325f9bcb5f6ac028eaed3df9"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unicode-DFS-2016, ICU"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "base/third_party/nspr",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/nspr",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/base/third_party/nspr"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "base/third_party/nspr"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "d6bce729aace09b8f45edc0d21bd7d72ef6500d3746f34171cc8ef7c61e1a803"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "MPL-1.1"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "base/third_party/superfasthash",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/superfasthash",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/base/third_party/superfasthash"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "base/third_party/superfasthash"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "2949b0559e9ff5c1dd67dc37be79fe7dbb711a9b1b25e9646715cb3ebc878ced"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "buildtools/third_party/libc++abi",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:buildtools/third_party/libc++abi",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/buildtools/third_party/libc++abi"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "buildtools/third_party/libc++abi"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "net/third_party/quiche",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:net/third_party/quiche",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/net/third_party/quiche"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "net/third_party/quiche"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "3f63ee027836fdf09f60274e749c80788367f93c22a48585230f0c2ffda7814e"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "net/third_party/uri_template",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:net/third_party/uri_template",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/net/third_party/uri_template"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "net/third_party/uri_template"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "29e7dbcfc35c59823c71103c9beb5ab3cda1524564f8f06f4d1469abe54e44aa"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/abseil-cpp",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/abseil-cpp",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/abseil-cpp"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/abseil-cpp"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "13ef7499fc5989212d31f1c09f4293cde1044b92ea7a8549f49ae7a891c4e266"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/boringssl",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/boringssl",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/boringssl"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/boringssl"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "2f684a99d221e2c3da0d6da0e9a6f8d59febd1ffb728bad6afc788566174cf9d"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT, BSD-3-Clause, OpenSSL, ISC, SSLeay"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/brotli",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/brotli",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/brotli"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/brotli"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "6f0dfdf642a0d11a139fc3da67fe64092dd5a5e29f67260677ee978d36dfefb8"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/compiler-rt",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/compiler-rt",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/compiler-rt"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/compiler-rt"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/cpu_features",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/cpu_features",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/cpu_features"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/cpu_features"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "b48aacd553663d2aa76c58717f81ee0b4aa2072d7ab5dd85f7fdf2a57cf1980b"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-2-Clause, Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/jni_zero",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/jni_zero",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/jni_zero"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/jni_zero"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "033d6caffa1a1f6fa7a2d5d1e8d98a09c7092cf4246715c274b383c5eeb0239e"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/libc++",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libc++",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/libc++"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/libc++"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "d17f4a602cb171160970ac4e21127eae93d665628d5f695fe38209a75b0a1282"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "NCSA, Apache-with-LLVM-Exception, MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/libc++abi",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libc++abi",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/libc++abi"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/libc++abi"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "e3b6a833b202a13179981fcf2cb85e0fce94a58555d07e85906ef3ae8d940039"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "NCSA, Apache-with-LLVM-Exception, MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/libunwind",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libunwind",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/libunwind"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/libunwind"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "96097406d30cbfccdbefb186d6bb27d9996c0b6b1fb1a513597578102d89fac5"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "NCSA, Apache-with-LLVM-Exception, MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/modp_b64",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/modp_b64",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/modp_b64"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/modp_b64"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "a728c6fd7330bd52bd392f1a0072de2433627fba0854a076ecb826ad7a77d8ee"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/perfetto",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/perfetto",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/perfetto"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/perfetto"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/protobuf",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/protobuf",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/protobuf"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/protobuf"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/simdutf",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/simdutf",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/simdutf"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/simdutf"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "7509bcefb96793cc479160b3a477f24fcbfe22ce4dfa97c3e2d8d3758dc9ea30"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/zlib",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/zlib",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/zlib"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/zlib"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "c9becd7285887ec3b93fa3c67d50bb958131473a863f0c3bc1973f45b1095a51"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Zlib"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "third_party/zstd",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/zstd",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/zstd"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "third_party/zstd"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "456319340a4ed7b9a28afe10033499d94572b42ac510207995aac586b8a19cad"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "url/third_party/mozilla",
+      "version": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "bom-ref": "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:url/third_party/mozilla",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/SagerNet/naiveproxy/tree/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/url/third_party/mozilla"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:source-directory",
+          "value": "url/third_party/mozilla"
+        },
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "GN-declared native source input; version below identifies the containing source snapshot, not the upstream package release."
+        },
+        {
+          "name": "pokrov:readme-chromium-sha256",
+          "value": "c2b84d5fc45fbb965ad07e7bb860f585b67b1988e7b287d127425de3399e6671"
+        },
+        {
+          "name": "pokrov:license-evidence",
+          "value": "Declared in retained README.chromium; verbatim package license bodies and source header supplements are in cronet-NOTICES.txt. No complete compatibility determination."
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "MPL-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libcronet.a",
+      "version": "143.0.7499.109/android-386",
+      "bom-ref": "cronet-static:386",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "cfa7db2f3725cec5a4d9874013c2d663f28700e89a02bd74d6b63d82f2129914"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Pinned static link input. Android 386 is in the AAR but not the current APKs; others contribute to bound Core SOs. Object/source filename multiset congruence does not establish full binary reproduction."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libcronet.a",
+      "version": "143.0.7499.109/android-amd64",
+      "bom-ref": "cronet-static:amd64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "208cc9e438a87f20f8510164dd6f97e2b1d5362b6f0c9c040c8d07a057cc2e16"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Pinned static link input. Android 386 is in the AAR but not the current APKs; others contribute to bound Core SOs. Object/source filename multiset congruence does not establish full binary reproduction."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libcronet.a",
+      "version": "143.0.7499.109/android-arm",
+      "bom-ref": "cronet-static:arm",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ff6f8a58dbe841284b974fd6d489bc6da27556aa10ce71b92853c8f688f26730"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Pinned static link input. Android 386 is in the AAR but not the current APKs; others contribute to bound Core SOs. Object/source filename multiset congruence does not establish full binary reproduction."
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libcronet.a",
+      "version": "143.0.7499.109/android-arm64",
+      "bom-ref": "cronet-static:arm64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2fbc1ac4261755cbfa923615fa10fef28fb804c0ee56d0fe5bcdb78f4b8b4cb5"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:evidence-scope",
+          "value": "Pinned static link input. Android 386 is in the AAR but not the current APKs; others contribute to bound Core SOs. Object/source filename multiset congruence does not establish full binary reproduction."
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pokrov-android-cronet-inputs",
+      "dependsOn": [
+        "cronet-static:386",
+        "cronet-static:amd64",
+        "cronet-static:arm",
+        "cronet-static:arm64"
+      ]
+    },
+    {
+      "ref": "cronet-static:386",
+      "dependsOn": [
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/cityhash",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/cityhash_v103",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/double_conversion",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/icu",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/nspr",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/superfasthash",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:buildtools/third_party/libc++abi",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:net/third_party/quiche",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:net/third_party/uri_template",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/abseil-cpp",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/boringssl",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/brotli",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/compiler-rt",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/cpu_features",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/jni_zero",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libc++",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libc++abi",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libunwind",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/modp_b64",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/perfetto",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/protobuf",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/simdutf",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/zlib",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/zstd",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:url/third_party/mozilla"
+      ]
+    },
+    {
+      "ref": "cronet-static:amd64",
+      "dependsOn": [
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/cityhash",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/cityhash_v103",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/double_conversion",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/icu",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/nspr",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/superfasthash",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:buildtools/third_party/libc++abi",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:net/third_party/quiche",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:net/third_party/uri_template",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/abseil-cpp",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/boringssl",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/brotli",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/compiler-rt",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/cpu_features",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/jni_zero",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libc++",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libc++abi",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libunwind",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/modp_b64",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/perfetto",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/protobuf",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/simdutf",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/zlib",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/zstd",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:url/third_party/mozilla"
+      ]
+    },
+    {
+      "ref": "cronet-static:arm",
+      "dependsOn": [
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/cityhash",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/cityhash_v103",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/double_conversion",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/icu",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/nspr",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/superfasthash",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:buildtools/third_party/libc++abi",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:net/third_party/quiche",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:net/third_party/uri_template",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/abseil-cpp",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/boringssl",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/brotli",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/compiler-rt",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/cpu_features",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/jni_zero",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libc++",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libc++abi",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libunwind",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/modp_b64",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/perfetto",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/protobuf",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/simdutf",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/zlib",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/zstd",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:url/third_party/mozilla"
+      ]
+    },
+    {
+      "ref": "cronet-static:arm64",
+      "dependsOn": [
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/cityhash",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/cityhash_v103",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/double_conversion",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/icu",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/nspr",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:base/third_party/superfasthash",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:buildtools/third_party/libc++abi",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:net/third_party/quiche",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:net/third_party/uri_template",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/abseil-cpp",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/boringssl",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/brotli",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/compiler-rt",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/cpu_features",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/jni_zero",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libc++",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libc++abi",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/libunwind",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/modp_b64",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/perfetto",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/protobuf",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/simdutf",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/zlib",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:third_party/zstd",
+        "naive:30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5:url/third_party/mozilla"
+      ]
+    }
+  ]
+}
