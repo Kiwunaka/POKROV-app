@@ -931,3 +931,16 @@ route replacement, old consent completion, delayed old proof and stop clearing.
 Atomic profile replacement uses OS rename without deleting the old target first;
 actual Android rename-failure/crash recovery remains MANUAL_OWNER_TEST.
 This is local I3 coverage, not packaged/new-candidate or physical-device PASS.
+
+## R12-D06 local delivery size review — 2026-09-06
+
+The [D06 size report](evidence/2026-09-06-r12-d06-size/README.md) accounts for
+all four local Direct APKs and compares them with earlier C05 packages.
+Android packaging now excludes only the upstream debugger resource
+`DebugProbesKt.bin`. Four rebuilt APKs lose 891 bytes each; every retained ZIP
+entry, including manifest, DEX, SO, fonts and license notices, is byte-identical.
+ARM64 saves 193984731 bytes versus universal; all nine SOs have no DWARF/debuglink
+sections. The duplicate brand assets remain required by the current host-path
+contract. This is I3 packaging evidence with internal Android Debug signing
+and loopback API. D01/final signed candidate, installation, distribution and
+full C05 acceptance remain open; retained candidate.33 evidence is unchanged.

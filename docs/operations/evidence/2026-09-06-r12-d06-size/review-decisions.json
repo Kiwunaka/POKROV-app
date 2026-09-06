@@ -1,0 +1,20 @@
+{
+  "debug_resource": {
+    "origin": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.1",
+    "jar_sha256": "7496cffdd3eb10109acdda1c3212f6ac7815789e09380dc9e2ccdec496dba3fc",
+    "bytes": 1738,
+    "sha256": "ae8a082dd609313835ba93c3ef479a3af9903977d7bdc81df45bbd209ec7d0da",
+    "upstream_guidance": "https://github.com/Kotlin/kotlinx.coroutines/blob/1.7.1/README.md#avoiding-including-the-debug-infrastructure-in-the-resulting-apk"
+  },
+  "filename_false_positive": {
+    "entry": "META-INF/services/m2.a",
+    "bytes": 6,
+    "sha256": "2a80bca81589b12faae01b8188c5d6561ff119974594cd6f7df95f2a08ccd7f8",
+    "is_static_archive": false,
+    "disposition": "Java ServiceLoader provider metadata; retained, not a native .a library."
+  },
+  "brand_duplicates": {
+    "extra_compressed_bytes": 211103,
+    "disposition": "Retained: shared PokrovBrandMark uses unqualified Image.asset; host path currently required. Removing it alone would trigger placeholder, and broader shared-asset migration is not needed for D06."
+  }
+}
