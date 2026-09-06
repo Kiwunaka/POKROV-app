@@ -57,6 +57,16 @@ obligation. The exact Psiphon utls upstream tree has no root license; all 298
 module-cache files match it. Its nested dicttls license is included with its
 own scope and does not substitute for the missing root text.
 
+The [file-header supplement](evidence/2026-09-06-r12-c05-file-headers/package-notices.json)
+retains 12 original comment blocks, including Inferno, fiat-crypto, FreeBSD,
+UTF-8 decoder and quic-go tree notices, for a total of 185 verbatim texts.
+All four new local Direct APKs contain the exact asset and bound Core libraries;
+their Android Debug signer remains an internal packaging-only result. The scan
+checked hashes for 6751 selected source files and inspected their first 160
+lines for full permission/redistribution blocks. Literal body matching avoids
+duplicate texts but does not establish complete file-level licensing, native
+include coverage, corresponding source, installed privacy or final acceptance.
+
 The R12 source branch replaces event/cache health authority with per-call Core
 `CommandServer.ProbeEndpoint` and `ProbeSelectedOutbound` results. Core
 `8dc57a830bd1487389dd1b7c9190f094c31e13bc` is bound in the runtime manifest;

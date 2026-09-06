@@ -395,7 +395,8 @@ The runtime artifact manifest also binds the shared native Go notice asset to
 the Core source commit, Go toolchain and notice SHA-256. The app-shell asset
 declaration includes it in Android and Windows packages. Seed validation rejects
 a missing asset, hash mismatch, source/toolchain mismatch or missing declaration.
-The asset includes root notices and selected source-package ancestor notices.
+The asset includes root notices, selected source-package ancestor notices and
+full license comment blocks found in a bounded scan of selected source files.
 This notice binding does not establish complete dependency licensing or
 corresponding-source delivery; remaining gaps stay explicit in release readiness.
 

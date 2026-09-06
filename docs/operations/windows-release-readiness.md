@@ -92,6 +92,16 @@ Psiphon utls upstream tree confirms the missing root license; its scoped
 dicttls text does not close that gap. Other native/file-header obligations,
 corresponding-source delivery and the complete C05 gate remain open.
 
+The [file-header supplement](evidence/2026-09-06-r12-c05-file-headers/package-notices.json)
+adds 12 original license comment blocks to the common asset (185 verbatim
+texts). The new local Windows bundle verifies every body hash; only that asset
+differs from the preceding 302-file bundle, while 301 files remain identical.
+Both application and service executables remain unsigned. The bounded source
+scan covers full permission/redistribution blocks in the first 160 lines of
+6751 hash-verified selected files; it is not complete native/include, licensing,
+source-delivery or installed-runtime proof. The original CMake install prefix
+is restored, and the four preexisting generated registrants remain unchanged.
+
 The R12 source branch refreshes managed profiles on ordinary Windows reconnect
 and requires explicit staging acknowledgement before connect. Local shell and
 runtime regression tests do not prove service-effective revision or a packaged
