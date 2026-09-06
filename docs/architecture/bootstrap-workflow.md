@@ -95,6 +95,25 @@ Current blocking dependency:
 
 - the active local pre-candidate runtime has exact single-source platform bindings: Android and Windows use security-fixed Core commit `cd8f0f4169d570d693992a959d81d17c2c44884d`, retaining the egress, AWG, Android outer-socket and default-off provenance-bound `pokrov.hy2.outbound.v1` lanes while correcting AWG allocated-port binding, `GO-2026-6303`, AWG endpoint use of the configured default bootstrap resolver and legacy raw-settings/error logging; raw Hysteria2 URI conversion stays disabled, AWG2/AWG 3.1 lifecycle proof is retained, and two local builds per platform produced byte-identical AAR/DLL trees
 - device-bound `awg2_lab`, `awg31_lab` and `hy2_lab` envelopes do not participate in ordinary Smart Connect selection or automatic-node quarantine. Their typed endpoint is already the complete route decision. The bootstrapper clears `smartConnect` for those profiles and skips selection when no Smart Connect profile is present, so an unrelated VLESS egress failure cannot block a fresh lab fetch before Core starts
+- Those lab envelopes may advertise ordinary `legacy_reality_fallback` in
+  `fallback_order`. Only then does the client retain their exact source revision
+  as a TCP fallback candidate. A confirmed `core_egress_probe_failed` can make
+  one fallback request through `GET /api/client/profile/managed` with
+  `fallback_from_revision`; unavailable proof and arbitrary runtime errors do
+  not trigger it. The server revalidates the current device/lab revision and
+  ordinary TCP provisioning. The response must identify the expected REALITY
+  transport and `<source-revision>:fallback:legacy_reality_fallback`; ignored
+  parameters, stale revision or an unrelated response fail before staging.
+  Promote the platform API support before enabling this client recovery path;
+  an older server that ignores the query cannot supply an accepted fallback.
+  The same route mode, selected/excluded apps and local routing preferences are
+  materialized again. Existing WARP consent/fallback policy remains its own
+  boundary. The rejected lab cache cannot be used for this retry. Both the lab
+  transition and subsequent automatic node retries share the existing two-retry
+  budget and generation fence. A manual Home action or location change cancels
+  the pending transport choice; there is no persisted cohort mutation. Native
+  stage/proof checks still decide whether the new connection is protected.
+
 - `Android` host now reaches a real service-backed connect lane: it can initialize POKROV Core, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
 - Android runtime discovery accepts either an extracted `nativeLibraryDir/libpokrov-core.so` or the ABI-matched `lib/<abi>/libpokrov-core.so` entry in the base/split APK. This is required on physical devices that install the release APK with native-library extraction disabled; Java still loads the packaged Core through the generated bindings
 - Android runtime materialization is intentionally `tun`-only in this lane; desktop loopback listener inbounds such as `mixed-in` and `dns-in` stay disabled for the mobile `VpnService` path

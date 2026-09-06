@@ -601,6 +601,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   String _resolvedProfileVariantId = 'direct';
   String _stagedNodeCode = '';
   String _stagedVariantId = 'direct';
+  String _stagedTcpFallbackFromRevision = '';
+  String _tcpFallbackFromRevision = '';
   String _activeNodeCode = '';
   String _activeVariantId = 'direct';
   final Map<String, DateTime> _automaticNodeQuarantineUntil =
@@ -3474,6 +3476,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     _automaticFailoverGeneration += 1;
     _automaticFailoverInFlight = false;
+    _tcpFallbackFromRevision = '';
     if (_runtimeSnapshot?.phase != RuntimePhase.running) {
       _automaticFailoverAttempts = 0;
     }
@@ -3953,6 +3956,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       _managedProfileDirty = false;
       _stagedProfileUsesWarp = managedProfile.warpPolicy.canEnableRuntime;
+      _stagedTcpFallbackFromRevision = managedProfile.tcpFallbackFromRevision;
       _stagedNodeCode = _resolvedProfileNodeCode;
       _stagedVariantId = _resolvedProfileVariantId;
       _cachedProfileFallbackGate.markFreshProfileStaged();
@@ -4360,6 +4364,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final resolveFuture = _bootstrapper.resolveManagedProfile(
       hostPlatform: widget.appContext.hostPlatform,
       routeMode: _selectedRouteMode,
+      tcpFallbackFromRevision: _tcpFallbackFromRevision,
       selectedApps: _selectedRouteMode == RouteMode.selectedApps ||
               _selectedRouteMode == RouteMode.excludedApps
           ? _selectedAppIds
@@ -5009,6 +5014,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             _managedProfileDirty = false;
             _stagedProfileUsesWarp =
                 resolvedProfile.warpPolicy.canEnableRuntime;
+            _stagedTcpFallbackFromRevision =
+                resolvedProfile.tcpFallbackFromRevision;
             _stagedNodeCode = _resolvedProfileNodeCode;
             _stagedVariantId = _resolvedProfileVariantId;
             _cachedProfileFallbackGate.markFreshProfileStaged();
@@ -5149,6 +5156,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                         ? PokrovProtectionEventTone.success
                         : PokrovProtectionEventTone.warning,
           );
+        }
+        if (current.phase != RuntimePhase.running &&
+            _handleFailedManagedProfile(current)) {
+          return;
         }
         if (current.phase != RuntimePhase.running &&
             current.message.trim().isNotEmpty) {
@@ -5436,49 +5447,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           widget.shellController?.refresh();
           return;
         }
-        final mustRefreshProfile = _mustRefreshProfileAfterRuntimeFailure(
-          refreshed,
-        );
-        final failedNodeCode = _stagedNodeCode.trim().toLowerCase();
-        final confirmedAutomaticNodeFailure =
-            refreshed.lastFailureKind?.trim() == 'core_egress_probe_failed' &&
-                _preferredNodeCode.trim().isEmpty &&
-                failedNodeCode.isNotEmpty;
-        final shouldRetryAutomatically = confirmedAutomaticNodeFailure &&
-            !_automaticFailoverInFlight &&
-            _automaticFailoverAttempts < _maxAutomaticFailoverAttempts;
-        if (confirmedAutomaticNodeFailure) {
-          _quarantineAutomaticNode(failedNodeCode);
-        }
-        setState(() {
-          _runtimeSnapshot = refreshed;
-          if (mustRefreshProfile) {
-            _managedProfileDirty = true;
-            _stagedNodeCode = '';
-            _stagedVariantId = 'direct';
-          }
-          _runtimeHeadline = shouldRetryAutomatically
-              ? 'Локация не ответила. Пробуем другую…'
-              : refreshed.message.trim().isEmpty
-                  ? 'Подключение остановлено. Попробуйте еще раз.'
-                  : refreshed.message;
-        });
-        if (mustRefreshProfile) {
-          // The last staged profile failed after its TUN was established. Do
-          // not let a later offline fallback restart it under the same UI
-          // choice; the next CTA must resolve and stage a fresh authorized
-          // profile first.
-          _cachedProfileFallbackGate.markRuntimeProfileInvalid();
-          _invalidateQuickSettingsProfile();
-        }
-        if (shouldRetryAutomatically) {
-          _automaticFailoverAttempts += 1;
-          _automaticFailoverInFlight = true;
-          final ownerGeneration = _automaticFailoverGeneration;
-          unawaited(
-            _retryAutomaticLocationAfterEgressFailure(ownerGeneration),
-          );
-        }
+        _handleFailedManagedProfile(refreshed);
         widget.shellController?.refresh();
         return;
       }
@@ -5556,6 +5525,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _runtimeSnapshot = staged;
           _managedProfileDirty = !baselineReady;
           _stagedProfileUsesWarp = false;
+          _stagedTcpFallbackFromRevision = baselineReady
+              ? baselineProfile.tcpFallbackFromRevision
+              : '';
           _stagedNodeCode = baselineReady ? _resolvedProfileNodeCode : '';
           _stagedVariantId =
               baselineReady ? _resolvedProfileVariantId : 'direct';
@@ -5683,6 +5655,62 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _automaticFailoverGeneration += 1;
     _automaticFailoverAttempts = 0;
     _automaticFailoverInFlight = false;
+    _tcpFallbackFromRevision = '';
+  }
+
+  bool _handleFailedManagedProfile(RuntimeSnapshot failed) {
+    final mustRefreshProfile = _mustRefreshProfileAfterRuntimeFailure(failed);
+    final confirmedFailure =
+        failed.lastFailureKind?.trim() == 'core_egress_probe_failed';
+    final failedNodeCode = _stagedNodeCode.trim().toLowerCase();
+    final confirmedAutomaticNodeFailure =
+        confirmedFailure &&
+        _preferredNodeCode.trim().isEmpty &&
+        failedNodeCode.isNotEmpty;
+    final failedLabRevision = _stagedTcpFallbackFromRevision;
+    final confirmedLabFailure =
+        confirmedFailure &&
+        failedLabRevision.isNotEmpty &&
+        _tcpFallbackFromRevision.isEmpty;
+    final shouldRetryAutomatically =
+        (confirmedLabFailure || confirmedAutomaticNodeFailure) &&
+        !_automaticFailoverInFlight &&
+        _automaticFailoverAttempts < _maxAutomaticFailoverAttempts;
+    if (confirmedAutomaticNodeFailure) {
+      _quarantineAutomaticNode(failedNodeCode);
+    }
+    setState(() {
+      _runtimeSnapshot = failed;
+      if (mustRefreshProfile) {
+        _managedProfileDirty = true;
+        _stagedNodeCode = '';
+        _stagedVariantId = 'direct';
+        _stagedTcpFallbackFromRevision = '';
+      }
+      if (shouldRetryAutomatically && confirmedLabFailure) {
+        _tcpFallbackFromRevision = failedLabRevision;
+      }
+      _runtimeHeadline = shouldRetryAutomatically
+          ? confirmedLabFailure
+              ? 'Основное подключение не ответило. Пробуем резервное…'
+              : 'Локация не ответила. Пробуем другую…'
+          : failed.message.trim().isEmpty
+              ? 'Подключение остановлено. Попробуйте еще раз.'
+              : failed.message;
+    });
+    // A failed dataplane profile cannot become the offline cache for a retry.
+    if (mustRefreshProfile) {
+      _cachedProfileFallbackGate.markRuntimeProfileInvalid();
+      _invalidateQuickSettingsProfile();
+    }
+    if (shouldRetryAutomatically) {
+      _automaticFailoverAttempts += 1;
+      _automaticFailoverInFlight = true;
+      unawaited(
+        _retryAutomaticLocationAfterEgressFailure(_automaticFailoverGeneration),
+      );
+    }
+    return shouldRetryAutomatically;
   }
 
   Future<void> _retryAutomaticLocationAfterEgressFailure(
@@ -5696,7 +5724,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     try {
       if (!mounted ||
           ownerGeneration != _automaticFailoverGeneration ||
-          _preferredNodeCode.trim().isNotEmpty) {
+          (_preferredNodeCode.trim().isNotEmpty &&
+              _tcpFallbackFromRevision.isEmpty)) {
         return;
       }
       await _toggleRuntime();

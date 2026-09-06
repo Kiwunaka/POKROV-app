@@ -5485,6 +5485,8 @@ void main() {
 
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       addTearDown(server.close);
+      var fallbackResponseMode = 'accepted';
+      final fallbackRequests = <String>[];
       unawaited(() async {
         await for (final request in server) {
           await utf8.decoder.bind(request).join();
@@ -5492,90 +5494,134 @@ void main() {
             case '/api/client/session/start-trial':
               request.response
                 ..headers.contentType = ContentType.json
-                ..write(jsonEncode(<String, Object?>{
-                  'session': <String, Object?>{
-                    'session_token': 'awg-lab-session',
-                    'account_id': '127',
-                  },
-                  'provisioning': <String, Object?>{
-                    'status': 'ready',
-                    'sync_ok': true,
-                    'managed_manifest': <String, Object?>{
-                      'url': '/api/client/profile/managed',
+                ..write(
+                  jsonEncode(<String, Object?>{
+                    'session': <String, Object?>{
+                      'session_token': 'awg-lab-session',
+                      'account_id': '127',
                     },
-                  },
-                }));
+                    'provisioning': <String, Object?>{
+                      'status': 'ready',
+                      'sync_ok': true,
+                      'managed_manifest': <String, Object?>{
+                        'url': '/api/client/profile/managed',
+                      },
+                    },
+                  }),
+                );
             case '/api/client/route-policy':
               request.response
                 ..headers.contentType = ContentType.json
                 ..write(jsonEncode(<String, Object?>{'ok': true}));
             case '/api/client/profile/managed':
+              final requestedFallback =
+                  request.uri.queryParameters['fallback_from_revision'];
+              if (requestedFallback != null) {
+                fallbackRequests.add(requestedFallback);
+              }
+              if (requestedFallback != null &&
+                  fallbackResponseMode != 'ignored') {
+                request.response
+                  ..headers.contentType = ContentType.json
+                  ..write(
+                    jsonEncode(<String, Object?>{
+                      ..._readyManagedProfile(
+                        fallbackResponseMode == 'wrongRevision'
+                            ? 'unrelated-revision'
+                            : '$requestedFallback:fallback:legacy_reality_fallback',
+                      ),
+                      'transport_profile': 'legacy_reality_fallback',
+                      'fallback_order': <String>['legacy_reality_fallback'],
+                      'config_payload': <String, Object?>{
+                        'outbounds': <Object?>[
+                          <String, Object?>{
+                            'type': 'vless',
+                            'tag': 'proxy',
+                            'server': 'tcp-fallback.example',
+                            'server_port': 443,
+                            'uuid': '11111111-1111-4111-8111-111111111111',
+                            'tls': <String, Object?>{'enabled': true},
+                          },
+                          <String, Object?>{'type': 'direct', 'tag': 'direct'},
+                        ],
+                        'route': <String, Object?>{'final': 'proxy'},
+                      },
+                    }),
+                  );
+                break;
+              }
               request.response
                 ..headers.contentType = ContentType.json
-                ..write(jsonEncode(<String, Object?>{
-                  'provisioning': <String, Object?>{
-                    'status': 'ready',
-                    'sync_ok': true,
-                  },
-                  'profile_revision': 'rev-${lab['profile']}',
-                  'transport_profile': lab['profile'],
-                  'config_format': 'singbox-json',
-                  'smart_connect': <String, Object?>{
-                    'eligible': true,
-                    'shortlist': <Object?>[
-                      <String, Object?>{'code': 'de-fra'},
-                    ],
-                  },
-                  'config_payload': <String, Object?>{
-                    '_meta': <String, Object?>{
-                      'title': 'POKROV',
-                      'transport_contract': <String, Object?>{
-                        'id': lab['contract_id'],
-                        'sha256': lab['contract_sha256'],
-                        'profile': lab['profile'],
-                        'state': 'enabled',
-                        'generation': '${lab['profile']}-v1',
-                      },
+                ..write(
+                  jsonEncode(<String, Object?>{
+                    'provisioning': <String, Object?>{
+                      'status': 'ready',
+                      'sync_ok': true,
                     },
-                    'dns': <String, Object?>{
-                      'servers': <Object?>[
-                        <String, Object?>{
-                          'tag': 'bootstrap',
-                          'address': 'local',
+                    'profile_revision': 'rev-${lab['profile']}',
+                    'transport_profile': lab['profile'],
+                    'fallback_order': <String>[
+                      lab['profile']!,
+                      'legacy_reality_fallback',
+                    ],
+                    'config_format': 'singbox-json',
+                    'smart_connect': <String, Object?>{
+                      'eligible': true,
+                      'shortlist': <Object?>[
+                        <String, Object?>{'code': 'de-fra'},
+                      ],
+                    },
+                    'config_payload': <String, Object?>{
+                      '_meta': <String, Object?>{
+                        'title': 'POKROV',
+                        'transport_contract': <String, Object?>{
+                          'id': lab['contract_id'],
+                          'sha256': lab['contract_sha256'],
+                          'profile': lab['profile'],
+                          'state': 'enabled',
+                          'generation': '${lab['profile']}-v1',
                         },
+                      },
+                      'dns': <String, Object?>{
+                        'servers': <Object?>[
+                          <String, Object?>{
+                            'tag': 'bootstrap',
+                            'address': 'local',
+                          },
+                          <String, Object?>{
+                            'tag': 'lab-dns',
+                            'address': '8.8.8.8',
+                            'detour': lab['tag'],
+                          },
+                        ],
+                        'final': 'lab-dns',
+                      },
+                      'inbounds': <Object?>[],
+                      'endpoints': <Object?>[
                         <String, Object?>{
-                          'tag': 'lab-dns',
-                          'address': '8.8.8.8',
-                          'detour': lab['tag'],
+                          'type': 'awg',
+                          'tag': lab['tag'],
+                          'contract_id': lab['contract_id'],
+                          'useIntegratedTun': false,
                         },
                       ],
-                      'final': 'lab-dns',
-                    },
-                    'inbounds': <Object?>[],
-                    'endpoints': <Object?>[
-                      <String, Object?>{
-                        'type': 'awg',
-                        'tag': lab['tag'],
-                        'contract_id': lab['contract_id'],
-                        'useIntegratedTun': false,
-                      },
-                    ],
-                    'outbounds': <Object?>[
-                      <String, Object?>{'type': 'direct', 'tag': 'direct'},
-                      <String, Object?>{'type': 'block', 'tag': 'block'},
-                      <String, Object?>{'type': 'dns', 'tag': 'dns-out'},
-                    ],
-                    'route': <String, Object?>{
-                      'rules': <Object?>[
-                        <String, Object?>{
-                          'protocol': 'dns',
-                          'outbound': 'dns-out',
-                        },
+                      'outbounds': <Object?>[
+                        <String, Object?>{'type': 'direct', 'tag': 'direct'},
+                        <String, Object?>{'type': 'block', 'tag': 'block'},
+                        <String, Object?>{'type': 'dns', 'tag': 'dns-out'},
                       ],
-                      'final': lab['tag'],
+                      'route': <String, Object?>{
+                        'rules': <Object?>[
+                          <String, Object?>{
+                            'protocol': 'dns',
+                            'outbound': 'dns-out',
+                          },
+                        ],
+                        'final': lab['tag'],
+                      },
                     },
-                  },
-                }));
+                  }),
+                );
             default:
               request.response.statusCode = HttpStatus.notFound;
           }
@@ -5599,24 +5645,60 @@ void main() {
           (config['_meta'] as Map<String, dynamic>)['transport_contract']
               as Map<String, dynamic>;
       final route = config['route'] as Map<String, dynamic>;
-      final outbounds =
-          (config['outbounds'] as List<dynamic>).cast<Map<String, dynamic>>();
+      final outbounds = (config['outbounds'] as List<dynamic>)
+          .cast<Map<String, dynamic>>();
 
       expect(endpoint['type'], 'awg');
       expect(endpoint['tag'], lab['tag']);
       expect(endpoint['contract_id'], lab['contract_id']);
       expect(contract['id'], lab['contract_id']);
       expect(contract['profile'], lab['profile']);
+      expect(payload.tcpFallbackFromRevision, 'rev-${lab['profile']}');
       expect(payload.resolvedNodeCode, isEmpty);
       expect(payload.smartConnect, isNull);
       expect(route['final'], lab['tag']);
       expect(
         outbounds.every(
-          (outbound) => const <String>{'direct', 'block', 'dns'}
-              .contains(outbound['type']),
+          (outbound) => const <String>{
+            'direct',
+            'block',
+            'dns',
+          }.contains(outbound['type']),
         ),
         isTrue,
       );
+      final fallback = await bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.android,
+        routeMode: RouteMode.fullTunnel,
+        tcpFallbackFromRevision: payload.tcpFallbackFromRevision,
+      );
+      final fallbackConfig =
+          jsonDecode(fallback.configPayload) as Map<String, dynamic>;
+      expect(
+        fallback.source?.revision,
+        '${payload.tcpFallbackFromRevision}:fallback:legacy_reality_fallback',
+      );
+      expect(fallback.tcpFallbackFromRevision, isEmpty);
+      expect(fallback.routeMode, payload.routeMode);
+      expect(fallbackConfig['endpoints'], anyOf(isNull, isEmpty));
+      expect(
+        (fallbackConfig['outbounds'] as List).any(
+          (outbound) => (outbound as Map)['type'] == 'vless',
+        ),
+        isTrue,
+      );
+      expect(fallbackRequests.single, payload.tcpFallbackFromRevision);
+      for (final responseMode in ['ignored', 'wrongRevision']) {
+        fallbackResponseMode = responseMode;
+        await expectLater(
+          bootstrapper.resolveManagedProfile(
+            hostPlatform: HostPlatform.android,
+            routeMode: RouteMode.fullTunnel,
+            tcpFallbackFromRevision: payload.tcpFallbackFromRevision,
+          ),
+          throwsA(isA<BootstrapFailure>()),
+        );
+      }
     }
   });
 

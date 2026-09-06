@@ -325,6 +325,7 @@ class _FakeBootstrapper
   String? lastWarpRuntimeEventState;
   Map<String, Object?>? lastWarpRuntimeEventMeta;
   WarpControlStatus warpStatus;
+  final tcpFallbackRequests = <String>[];
   RouteMode? lastRouteMode;
   HostPlatform? lastHostPlatform;
   String? lastRedeemCode;
@@ -400,11 +401,13 @@ class _FakeBootstrapper
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
+    String tcpFallbackFromRevision = '',
   }) async {
     calls += 1;
     if (managedProfileFailure != null) {
       throw managedProfileFailure!;
     }
+    tcpFallbackRequests.add(tcpFallbackFromRevision);
     lastRouteMode = routeMode;
     lastHostPlatform = hostPlatform;
     lastPreferredNodeCode = preferredNodeCode;
@@ -1045,6 +1048,7 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
+    String tcpFallbackFromRevision = '',
   }) async {
     calls += 1;
     throw BootstrapFailure(message);
@@ -9255,22 +9259,36 @@ void main() {
     expect(runtimeCalls, contains('runtimeEngine.invalidateManagedProfile'));
   });
 
-  testWidgets(
-      'automatic Android connect quarantines a confirmed failed node and retries',
+  for (final (
+        host,
+        labFallback,
+        baselineFails,
+        proofUnavailable,
+        bootstrapRefused,
+      )
+      in [
+        (HostPlatform.android, false, false, false, false),
+        (HostPlatform.android, true, false, false, false),
+        (HostPlatform.windows, true, false, false, false),
+        (HostPlatform.android, true, true, false, false),
+        (HostPlatform.android, true, false, true, false),
+        (HostPlatform.android, true, false, false, true),
+      ]) {
+    testWidgets(
+      'managed fallback on ${host.name} (lab: $labFallback, baseline failure: $baselineFails, unavailable: $proofUnavailable, refused: $bootstrapRefused)',
       (tester) async {
-    const channel = MethodChannel('space.pokrov/runtime_engine');
-    final messenger =
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-    var connectCalls = 0;
-    var firstConnectSnapshots = 0;
+        const channel = MethodChannel('space.pokrov/runtime_engine');
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        var connectCalls = 0;
+        var firstConnectSnapshots = 0;
 
-    Map<String, Object?> runtimeState(
-      String phase, {
-      bool? egressValidated,
-      String message = 'Runtime ready.',
-      String? failureKind,
-    }) =>
-        <String, Object?>{
+        Map<String, Object?> runtimeState(
+          String phase, {
+          bool? egressValidated,
+          String message = 'Runtime ready.',
+          String? failureKind,
+        }) => <String, Object?>{
           'phase': phase,
           'artifactDirectory': '/host/runtime',
           'coreBinaryPath': '/host/runtime/pokrov-core.aar',
@@ -9289,137 +9307,204 @@ void main() {
           'message': message,
         };
 
-    messenger.setMockMethodCallHandler(channel, (call) async {
-      switch (call.method) {
-        case 'runtimeEngine.snapshot':
-          if (connectCalls == 0) {
-            return runtimeState('artifactReady');
-          }
-          if (connectCalls == 1) {
-            firstConnectSnapshots += 1;
-            if (firstConnectSnapshots >= 2) {
+        messenger.setMockMethodCallHandler(channel, (call) async {
+          switch (call.method) {
+            case 'runtimeEngine.snapshot':
+              if (connectCalls == 0) {
+                return runtimeState('artifactReady');
+              }
+              if (baselineFails && connectCalls > 1) {
+                return runtimeState(
+                  'configStaged',
+                  egressValidated: false,
+                  failureKind: 'core_egress_probe_failed',
+                  message: 'Fixture path failed.',
+                );
+              }
+              if (connectCalls == 1) {
+                firstConnectSnapshots += 1;
+                if (firstConnectSnapshots >= 2 ||
+                    host == HostPlatform.windows) {
+                  return runtimeState(
+                    'configStaged',
+                    egressValidated: false,
+                    failureKind: proofUnavailable
+                        ? 'core_egress_probe_unavailable'
+                        : 'core_egress_probe_failed',
+                    message:
+                        'POKROV не подтвердил защищенное подключение и отключил системный VPN.',
+                  );
+                }
+                return runtimeState(
+                  'running',
+                  message: 'Runtime service is running.',
+                );
+              }
               return runtimeState(
-                'configStaged',
-                egressValidated: false,
-                failureKind: 'core_egress_probe_failed',
-                message:
-                    'POKROV не подтвердил защищенное подключение и отключил системный VPN.',
+                'running',
+                egressValidated: true,
+                message: 'Runtime service is running.',
               );
-            }
-            return runtimeState(
-              'running',
-              message: 'Runtime service is running.',
-            );
+            case 'runtimeEngine.initialize':
+              return runtimeState('initialized');
+            case 'runtimeEngine.stageManagedProfile':
+              return runtimeState('configStaged');
+            case 'runtimeEngine.connect':
+              connectCalls += 1;
+              if ((host == HostPlatform.windows && connectCalls == 1) ||
+                  (baselineFails && connectCalls > 1)) {
+                return runtimeState(
+                  'configStaged',
+                  egressValidated: false,
+                  failureKind: 'core_egress_probe_failed',
+                  message: 'Fixture path failed.',
+                );
+              }
+              return runtimeState(
+                'running',
+                egressValidated: connectCalls > 1 ? true : null,
+                message: 'Runtime service is running.',
+              );
+            case 'runtimeEngine.invalidateManagedProfile':
+              return runtimeState('initialized');
           }
-          return runtimeState(
-            'running',
-            egressValidated: true,
-            message: 'Runtime service is running.',
-          );
-        case 'runtimeEngine.initialize':
-          return runtimeState('initialized');
-        case 'runtimeEngine.stageManagedProfile':
-          return runtimeState('configStaged');
-        case 'runtimeEngine.connect':
-          connectCalls += 1;
-          return runtimeState(
-            'running',
-            egressValidated: connectCalls > 1 ? true : null,
-            message: 'Runtime service is running.',
-          );
-        case 'runtimeEngine.invalidateManagedProfile':
-          return runtimeState('initialized');
-      }
-      return null;
-    });
-    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+          return null;
+        });
+        addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
-    const smartConnect = SmartConnectProfile(
-      eligible: true,
-      fallbackRequired: false,
-      shortlistReason: 'eligible',
-      shortlistLimit: 2,
-      shortlistRevision: 'failover-shortlist',
-      transportProfile: 'reality',
-      profileRevision: 'failover-profile',
-      fallbackOrder: <String>['nl', 'ru-spb'],
-      shortlist: <SmartConnectNode>[
-        SmartConnectNode(
-          code: 'nl',
-          country: 'Netherlands',
-          rank: 1,
-          rankHint: SmartConnectRankHint(
-            healthScore: 96,
-            cpuPercent: 8,
-            panelLatencyMs: 24,
-            backendPenalty: 0,
-            cpuPenalty: 0,
-            stickyPreferred: false,
+        const smartConnect = SmartConnectProfile(
+          eligible: true,
+          fallbackRequired: false,
+          shortlistReason: 'eligible',
+          shortlistLimit: 2,
+          shortlistRevision: 'failover-shortlist',
+          transportProfile: 'reality',
+          profileRevision: 'failover-profile',
+          fallbackOrder: <String>['nl', 'ru-spb'],
+          shortlist: <SmartConnectNode>[
+            SmartConnectNode(
+              code: 'nl',
+              country: 'Netherlands',
+              rank: 1,
+              rankHint: SmartConnectRankHint(
+                healthScore: 96,
+                cpuPercent: 8,
+                panelLatencyMs: 24,
+                backendPenalty: 0,
+                cpuPenalty: 0,
+                stickyPreferred: false,
+              ),
+            ),
+            SmartConnectNode(
+              code: 'ru-spb',
+              country: 'Russia',
+              rank: 2,
+              rankHint: SmartConnectRankHint(
+                healthScore: 92,
+                cpuPercent: 12,
+                panelLatencyMs: 40,
+                backendPenalty: 0,
+                cpuPenalty: 0,
+                stickyPreferred: false,
+              ),
+            ),
+          ],
+          stickiness: SmartConnectStickiness(
+            preferredNodeCode: '',
+            thresholdPercent: 15,
+            latestSampleAt: '',
+            stickinessApplied: false,
           ),
-        ),
-        SmartConnectNode(
-          code: 'ru-spb',
-          country: 'Russia',
-          rank: 2,
-          rankHint: SmartConnectRankHint(
-            healthScore: 92,
-            cpuPercent: 12,
-            panelLatencyMs: 40,
-            backendPenalty: 0,
-            cpuPenalty: 0,
-            stickyPreferred: false,
+        );
+        const basePayload = ManagedProfilePayload(
+          profileName: 'automatic-egress-failover',
+          configPayload: _materializedRuntimeConfig,
+          materializedForRuntime: true,
+          smartConnect: smartConnect,
+        );
+        final bootstrapper = _FakeBootstrapper(
+          basePayload,
+          managedProfileResolver: (call, excludedNodeCodes) =>
+              bootstrapRefused && call > 1
+              ? throw const BootstrapFailure(
+                  'Резервное подключение недоступно.',
+                  statusCode: 503,
+                )
+              : labFallback && call == 1
+              ? const ManagedProfilePayload(
+                  profileName: 'owned-lab-profile',
+                  configPayload: _materializedRuntimeConfig,
+                  materializedForRuntime: true,
+                  tcpFallbackFromRevision: 'lab-generation-1',
+                )
+              : basePayload.copyWith(
+                  resolvedNodeCode: call == 1 ? 'nl' : 'ru-spb',
+                ),
+        );
+        final store = _FakeClientExperienceStore();
+
+        await tester.pumpWidget(
+          PokrovSeedApp(
+            appContext: buildSeedAppContext(hostPlatform: host),
+            bootstrapper: bootstrapper,
+            windowsTunnelAuthorizer: () async =>
+                PokrovWindowsTunnelAuthorization.allowed,
+            firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+            clientExperienceStore: store,
           ),
-        ),
-      ],
-      stickiness: SmartConnectStickiness(
-        preferredNodeCode: '',
-        thresholdPercent: 15,
-        latestSampleAt: '',
-        stickinessApplied: false,
-      ),
-    );
-    const basePayload = ManagedProfilePayload(
-      profileName: 'automatic-egress-failover',
-      configPayload: _materializedRuntimeConfig,
-      materializedForRuntime: true,
-      smartConnect: smartConnect,
-    );
-    final bootstrapper = _FakeBootstrapper(
-      basePayload,
-      managedProfileResolver: (call, excludedNodeCodes) => basePayload.copyWith(
-        resolvedNodeCode: call == 1 ? 'nl' : 'ru-spb',
-      ),
-    );
-    final store = _FakeClientExperienceStore();
+        );
+        await tester.pumpAndSettle();
+        await _tapPrimaryConnectAndConfirmRouteScope(tester);
+        await tester.pump(const Duration(seconds: 4));
+        await tester.pumpAndSettle();
 
-    await tester.pumpWidget(
-      PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
-        bootstrapper: bootstrapper,
-        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
-        clientExperienceStore: store,
-      ),
+        expect(connectCalls, proofUnavailable || bootstrapRefused ? 1 : 2);
+        expect(bootstrapper.calls, proofUnavailable ? 1 : 2);
+        expect(bootstrapper.excludedNodeCodeRequests.first, isEmpty);
+        expect(
+          bootstrapper.excludedNodeCodeRequests.last,
+          labFallback ? isEmpty : <String>{'nl'},
+        );
+        expect(
+          bootstrapper.tcpFallbackRequests,
+          proofUnavailable
+              ? ['']
+              : labFallback
+              ? ['', 'lab-generation-1']
+              : ['', ''],
+        );
+        expect(store.state.preferredNodeCode, isEmpty);
+        expect(
+          store.state.automaticNodeQuarantineUntil,
+          baselineFails
+              ? contains('ru-spb')
+              : labFallback
+              ? isEmpty
+              : contains('nl'),
+        );
+        expect(bootstrapper.lastRouteMode, store.state.firstRouteScopeMode);
+        expect(
+          find.text('Отключить'),
+          baselineFails || proofUnavailable || bootstrapRefused
+              ? findsNothing
+              : findsOneWidget,
+        );
+        if (!baselineFails && !proofUnavailable && !bootstrapRefused) {
+          expect(
+            find.descendant(
+              of: find.byKey(const ValueKey('home-location-chip')),
+              matching: find.text('Россия'),
+            ),
+            findsOneWidget,
+          );
+        }
+        final attemptsBeforeWait = connectCalls;
+        await tester.pump(const Duration(seconds: 20));
+        await tester.pumpAndSettle();
+        expect(connectCalls, attemptsBeforeWait);
+      },
     );
-    await tester.pumpAndSettle();
-    await _tapPrimaryConnectAndConfirmRouteScope(tester);
-    await tester.pump(const Duration(seconds: 4));
-    await tester.pumpAndSettle();
-
-    expect(connectCalls, 2);
-    expect(bootstrapper.calls, 2);
-    expect(bootstrapper.excludedNodeCodeRequests.first, isEmpty);
-    expect(bootstrapper.excludedNodeCodeRequests.last, <String>{'nl'});
-    expect(store.state.preferredNodeCode, isEmpty);
-    expect(store.state.automaticNodeQuarantineUntil, contains('nl'));
-    expect(find.text('Отключить'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('home-location-chip')),
-        matching: find.text('Россия'),
-      ),
-      findsOneWidget,
-    );
-  });
+  }
 
   testWidgets('stale Android egress poll cannot override a newer connection',
       (tester) async {

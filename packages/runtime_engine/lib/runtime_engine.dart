@@ -1166,6 +1166,7 @@ class ManagedProfilePayload {
     required this.profileName,
     required this.configPayload,
     this.source,
+    this.tcpFallbackFromRevision = '',
     this.disableMemoryLimit = false,
     this.materializedForRuntime = false,
     this.quickSettingsEligible = false,
@@ -1179,6 +1180,9 @@ class ManagedProfilePayload {
 
   final String profileName;
   final RuntimeProfileSource? source;
+
+  /// Current server-authorized lab revision eligible for ordinary TCP fallback.
+  final String tcpFallbackFromRevision;
   final String configPayload;
   final bool disableMemoryLimit;
   final bool materializedForRuntime;
@@ -1215,6 +1219,7 @@ class ManagedProfilePayload {
     return ManagedProfilePayload(
       profileName: profileName ?? this.profileName,
       source: source,
+      tcpFallbackFromRevision: tcpFallbackFromRevision,
       configPayload: configPayload ?? this.configPayload,
       disableMemoryLimit: disableMemoryLimit ?? this.disableMemoryLimit,
       materializedForRuntime:

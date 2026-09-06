@@ -53,6 +53,7 @@ class _StubBootstrapper
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
+    String tcpFallbackFromRevision = '',
   }) async {
     return const ManagedProfilePayload(
       profileName: 'test-profile',

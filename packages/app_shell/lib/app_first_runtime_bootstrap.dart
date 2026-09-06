@@ -67,6 +67,7 @@ abstract interface class ManagedProfileBootstrapper {
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
+    String tcpFallbackFromRevision = '',
   });
 }
 
@@ -2804,6 +2805,7 @@ class AppFirstRuntimeBootstrapper
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
+    String tcpFallbackFromRevision = '',
   }) async {
     final normalizedSelectedApps = _normalizeSelectedAppIdentifiers(
       selectedApps,
@@ -2846,6 +2848,7 @@ class AppFirstRuntimeBootstrapper
             client: client,
           );
           var manifest = await _fetchManagedManifest(
+            tcpFallbackFromRevision: tcpFallbackFromRevision,
             state: state,
             hostPlatform: hostPlatform,
             routeMode: routeMode,
@@ -2881,6 +2884,7 @@ class AppFirstRuntimeBootstrapper
               } on Object {
                 try {
                   manifest = await _fetchManagedManifest(
+                    tcpFallbackFromRevision: tcpFallbackFromRevision,
                     state: state,
                     hostPlatform: hostPlatform,
                     routeMode: routeMode,
@@ -5806,12 +5810,17 @@ class AppFirstRuntimeBootstrapper
     required String preferredNodeCode,
     required String preferredVariantId,
     required HttpClient client,
+    String tcpFallbackFromRevision = '',
   }) async {
     final path = _validatedManagedManifestPath(state.managedManifestPath);
     final normalizedPreferredNode = preferredNodeCode.trim().toLowerCase();
-    final requestPath = normalizedPreferredNode.isEmpty
+    var requestPath = normalizedPreferredNode.isEmpty
         ? path
         : '$path${path.contains('?') ? '&' : '?'}selected_node_code=${Uri.encodeQueryComponent(normalizedPreferredNode)}';
+    if (tcpFallbackFromRevision.isNotEmpty) {
+      requestPath +=
+          '${requestPath.contains('?') ? '&' : '?'}fallback_from_revision=${Uri.encodeQueryComponent(tcpFallbackFromRevision)}';
+    }
     final response = await _requestJson(
       method: 'GET',
       path: requestPath,
@@ -5820,6 +5829,15 @@ class AppFirstRuntimeBootstrapper
       hostPlatform: hostPlatform,
     );
 
+    if (tcpFallbackFromRevision.isNotEmpty &&
+        (_readText(response['transport_profile']) !=
+                'legacy_reality_fallback' ||
+            _readText(response['profile_revision']) !=
+                '$tcpFallbackFromRevision:fallback:legacy_reality_fallback')) {
+      throw const BootstrapFailure(
+        'Сервер не подтвердил резервное подключение. Повторите попытку позже.',
+      );
+    }
     final configFormat = _readText(response['config_format']);
     if (configFormat != 'singbox-json') {
       throw BootstrapFailure(
@@ -5862,7 +5880,15 @@ class AppFirstRuntimeBootstrapper
       client: client,
     );
 
+    final fallbackOrder = response['fallback_order'];
+    final tcpFallbackRevision =
+        isOwnedTransportLab &&
+            fallbackOrder is List &&
+            fallbackOrder.contains('legacy_reality_fallback')
+        ? _readText(response['profile_revision'])
+        : '';
     final payload = ManagedProfilePayload(
+      tcpFallbackFromRevision: tcpFallbackRevision,
       source: RuntimeProfileSource(
         revision: _readText(response['profile_revision']),
         origin: RuntimeProfileSourceOrigin.managedManifest,
