@@ -174,5 +174,11 @@
     "docs/operations/android-release-audit.md": "a2ad322c9c816df781502eee3357e409299f7382c4228396ec1d52912c6141a3",
     "docs/operations/windows-release-readiness.md": "e79d4f46e45d6e5b852f472740e4da3639559e919f7dabcc258f726a468bbee9",
     "docs/operations/warp-runtime-proof-checklist.md": "1c5b2aac95fcc505ac2cf7ce8452be1d81356fbd9b90ca2c0c66b82b1594b6c6"
+  },
+  "git_evidence_integrity": {
+    "first_binding_commit": "510aedbb0d0224b939555bcf00e074336c408cd2",
+    "observed_failure": "Git text normalization changed copied evidence CRLF to LF in the first binding commit; exact manifest evidence hashes no longer matched committed blobs.",
+    "correction": "The new C05 evidence JSON folder uses -text in root .gitattributes, preserving copied receipt bytes, prior binding and backtest receipt in Git. No runtime-byte change.",
+    "source_sha256_scope": "source_sha256 and canonical_docs_sha256 describe local workspace bytes at test/inspection time; Git may normalize other text sources. Runtime LFS pointer OIDs and evidence JSON bytes are independently verified against committed blobs."
   }
 }
