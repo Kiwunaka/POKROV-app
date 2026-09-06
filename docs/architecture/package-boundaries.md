@@ -159,6 +159,12 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   post-connect polling timer/generation/in-flight fences. It does not interpret
   health evidence or create connection truth; typed runtime snapshots still
   flow through `ConnectionCoordinator` and the existing reducer.
+- `SupportConversationController` owns the ticket identity/version, message
+  projection, initial read, refresh, send and feedback state, plus eligibility
+  for its existing `SupportPollingCoordinator`. The support view owns composer,
+  scrolling, dialogs and diagnostic consent; accepted-message callbacks clear
+  only the matching draft. The controller is independent of the shell library
+  and does not introduce another assistant, transport or persistence owner.
 - `ConnectionCoordinator` also owns the ten-second per-stage timer. Progress to
   a new typed stage resets it; when one stage remains slow, Home exposes the
   current safe stage and an explicit details action and records one bounded
