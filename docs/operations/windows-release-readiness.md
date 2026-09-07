@@ -1,5 +1,14 @@
 # Windows Release Readiness
 
+R12 installer (2026-09-07): fixed clean installation when UAC elevates a
+separate ordinary account through another administrator. Owner SID capture now
+uses the original process's tagged exit codes instead of an elevated temporary
+file. [Exact red/green package proof](evidence/2026-09-07-r12-standard-installer/README.md)
+passes clean install, all 305 file hashes, standard-account stock UI/IPC,
+uninstall, reinstall and automatic SCM start before login after a planned
+reboot. These unsigned loopback-API packages do not close managed-network,
+connected update/recovery, Win10 or final-channel gates.
+
 R12 SCM lab (2026-09-07): current service and Core `8dc57a8` pass real
 LocalSystem start, limited-token owner IPC, explicit Core initialization and
 clean stop on the offline Win11 clone. [Exact component evidence](evidence/2026-09-07-r12-scm-lab/README.md)
