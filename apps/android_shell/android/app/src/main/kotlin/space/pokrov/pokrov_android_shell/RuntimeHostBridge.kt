@@ -106,6 +106,15 @@ class RuntimeHostBridge(
             METHOD_LIST_INSTALLED_APPS -> listInstalledApps(result)
             METHOD_CURRENT_WIFI -> result.success(currentWifi())
             METHOD_MEASURE_NODE_LATENCIES -> measureNodeLatencies(call, result)
+            "runtimeEngine.observeNetworkContext" -> executeHostTask(result, emptyMap<String, Any?>()) {
+                AndroidNetworkDiagnostics.observe(
+                    activity, call.argument<String>("apiBaseUrl").orEmpty(),
+                    call.argument<String>("sessionToken").orEmpty(),
+                    call.argument<String>("appVersion").orEmpty(),
+                    call.argument<String>("profileRevision").orEmpty(),
+                    call.argument<String>("runtimePhase").orEmpty(),
+                )
+            }
             METHOD_MEASURE_LOCATION_VARIANTS -> measureLocationVariants(call, result)
             METHOD_REQUEST_WIFI_PERMISSION ->
                 result.success(requestWifiPermission())

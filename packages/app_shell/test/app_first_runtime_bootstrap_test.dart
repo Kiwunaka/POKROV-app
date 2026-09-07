@@ -393,6 +393,66 @@ void main() {
     expect(await restarted.loadCachedManagedProfile(inputs), isNull);
   });
 
+  test('automatic Android network context reports unknown origin through API and throttles duplicates', () async {
+    final originalHttpOverrides = HttpOverrides.current;
+    TestWidgetsFlutterBinding.ensureInitialized();
+    HttpOverrides.global = originalHttpOverrides;
+    final directory = await Directory.systemTemp.createTemp('pokrov-network-context-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    addTearDown(() async {
+      messenger.setMockMethodCallHandler(channel, null);
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    final secrets = MemoryAppFirstSessionSecretStore();
+    await secrets.writeSessionToken(hostPlatform: HostPlatform.android,
+      installId: 'network-fixture-install', sessionToken: 'network-fixture-session');
+    await File('${directory.path}/app-first-session-android.json').writeAsString(jsonEncode({
+      'schema_version': 1, 'install_id': 'network-fixture-install',
+      'account_id': 'network-fixture-account', 'profile_revision': 'network-revision',
+      'managed_manifest_path': '/api/client/profile/managed',
+    }));
+    var nativeCalls = 0;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method != 'runtimeEngine.observeNetworkContext') return null;
+      nativeCalls++;
+      final args = Map<String, dynamic>.from(call.arguments as Map);
+      expect(args['sessionToken'], 'network-fixture-session');
+      expect(args['profileRevision'], 'network-revision');
+      return {'status': 'unavailable', 'network_class': 'cellular', 'carrier': 'Fixture carrier'};
+    });
+    final observed = Completer<Map<String, dynamic>>();
+    final paths = <String>[];
+    unawaited(() async {
+      await for (final request in server) {
+        paths.add(request.uri.path);
+        final raw = await utf8.decoder.bind(request).join();
+        expect(request.headers.value(HttpHeaders.authorizationHeader), 'Bearer network-fixture-session');
+        if (request.uri.path == '/api/client/network/context') {
+          observed.complete(jsonDecode(raw) as Map<String, dynamic>);
+        }
+        request.response.headers.contentType = ContentType.json;
+        request.response.write('{"ok":true}');
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => directory, sessionSecretStore: secrets,
+      maxRequestAttempts: 1,
+    );
+    await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.android, runtimePhase: 'running', connected: true);
+    final context = await observed.future.timeout(const Duration(seconds: 3));
+    expect(context, {'network_class': 'cellular', 'carrier': 'Fixture carrier',
+      'direct_observation': false, 'profile_revision': 'network-revision', 'runtime_phase': 'running'});
+    await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.android, runtimePhase: 'failed', connected: false);
+    expect(nativeCalls, 1);
+    expect(paths.where((path) => path == '/api/client/network/context').length, 1);
+    expect(paths, isNot(contains('/api/client/session/start-trial')));
+  });
+
   test('default API origin is owned and arbitrary fallbacks are rejected', () {
     expect(
       AppFirstRuntimeBootstrapper().apiBaseUrl,

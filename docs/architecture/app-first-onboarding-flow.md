@@ -11,6 +11,25 @@ The platform contract owner is
 Public download behavior belongs to
 `C:/Users/kiwun/Documents/ai/VPN/docs/architecture/client-downloads-flow.md`.
 
+## Automatic access-network context (owner decision 2026-09-07)
+
+Android reports source-network context on app open/connect/running/failure,
+at most once per minute per account in a process. `AndroidNetworkDiagnostics`
+uses the latency probe's physical `NOT_VPN` network and `Network.openConnection`
+to fixed owned HTTPS hosts, without proxy, redirects or default-network
+fallback. Carrier comes from the default data subscription; Wi-Fi is not
+labeled with the SIM operator. No GPS or additional permission is requested.
+The source IP remains server-side, never in Dart, logs or consumer UI.
+
+If the direct path fails, ordinary authenticated transport sends carrier/class
+with `direct_observation=false`; its IP cannot become the underlying address.
+Unknown stays unknown. This best-effort observation cannot gate connect,
+renew a session or confer access. Platform owns local coarse geography,
+sensitive-role reads/audit and capped 72-hour raw data retention. First launch
+and the linked privacy policy disclose collection. Manual support bundles
+retain separate consent/custody. Network observations are not persisted as
+client state or added to the operational event journal.
+
 ## Goal
 
 The app must give the user a real working session after `Try free`, then let the user choose how the device should work before the first live connect.

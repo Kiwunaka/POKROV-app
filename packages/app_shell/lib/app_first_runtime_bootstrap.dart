@@ -2708,6 +2708,9 @@ class AppFirstRuntimeBootstrapper
   final EmergencyEnvelopeVerifier _emergencyEnvelopeVerifier;
   final EmergencyNetworkStore _emergencyNetworkStore;
   final ManagedProfileCache _managedProfileCache;
+  bool _networkContextInFlight = false;
+  DateTime? _lastNetworkContextAt;
+  String _lastNetworkContextAccount = '';
   final Map<String, Future<_StoredBootstrapState>> _initialStateFlights =
       <String, Future<_StoredBootstrapState>>{};
   final Map<String, Future<_StoredBootstrapState>> _initialTrialFlights =
@@ -3408,6 +3411,10 @@ class AppFirstRuntimeBootstrapper
     final safeNodeCode = selectedNodeCode.trim().toLowerCase();
     final safeRouteMode = routeMode.trim().toLowerCase();
     final safeNetworkClass = networkClass.trim().toLowerCase();
+    if (hostPlatform == HostPlatform.android &&
+        const {'app_opened', 'connect_requested', 'running', 'failed'}.contains(phase)) {
+      unawaited(_reportAutomaticNetworkContext(phase));
+    }
     await _requestClientJsonWithSession(
       hostPlatform: hostPlatform,
       method: 'POST',
@@ -3429,6 +3436,53 @@ class AppFirstRuntimeBootstrapper
           'network_class': safeNetworkClass,
       },
     );
+  }
+
+  Future<void> _reportAutomaticNetworkContext(String phase) async {
+    if (_networkContextInFlight) return;
+    _networkContextInFlight = true;
+    try {
+      final state = await _loadState(HostPlatform.android);
+      if (state == null || !state.hasSession || state.accountId.isEmpty) return;
+      final now = DateTime.now();
+      if (_lastNetworkContextAccount == state.accountId && _lastNetworkContextAt != null &&
+          now.difference(_lastNetworkContextAt!) < const Duration(minutes: 1)) return;
+      _lastNetworkContextAccount = state.accountId;
+      _lastNetworkContextAt = now;
+      final result = await _appFirstRuntimeEngineChannel.invokeMapMethod<String, dynamic>(
+        'runtimeEngine.observeNetworkContext', <String, Object?>{
+          'apiBaseUrl': apiBaseUrl, 'sessionToken': state.sessionToken,
+          'appVersion': pokrovClientVersion, 'profileRevision': state.profileRevision,
+          'runtimePhase': phase,
+        },
+      ).timeout(const Duration(seconds: 6));
+      if (result == null || result['status'] != 'unavailable') return;
+      final current = await _loadState(HostPlatform.android);
+      if (current?.accountId != state.accountId || current?.sessionToken != state.sessionToken) return;
+      final network = _readText(result['network_class']);
+      final carrier = _readText(result['carrier']);
+      if (!const {'cellular', 'wifi', 'ethernet', 'other', 'unknown'}.contains(network)) return;
+      // A request through the ordinary API can report carrier/unknown, never
+      // infer the underlying IP from the tunnel's exit address.
+      final client = _createHttpClient(HostPlatform.android);
+      try {
+        await _requestJson(
+          client: client, method: 'POST', path: '/api/client/network/context',
+          bearerToken: state.sessionToken, hostPlatform: HostPlatform.android,
+          body: <String, Object?>{
+            'network_class': network, 'direct_observation': false,
+            if (network == 'cellular' && carrier.isNotEmpty && carrier.length <= 80) 'carrier': carrier,
+            'profile_revision': state.profileRevision, 'runtime_phase': phase,
+          },
+        );
+      } finally {
+        client.close(force: true);
+      }
+    } on Object {
+      // Automatic diagnostics cannot block connect or trigger session renewal.
+    } finally {
+      _networkContextInFlight = false;
+    }
   }
 
   @override
