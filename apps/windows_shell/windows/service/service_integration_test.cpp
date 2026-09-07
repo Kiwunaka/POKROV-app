@@ -100,7 +100,8 @@ std::wstring SiblingServicePath() {
 }
 
 bool WaitForPipe(const std::wstring& pipe_name) {
-  for (int attempt = 0; attempt < 100; ++attempt) {
+  const auto deadline = ::GetTickCount64() + 5000;
+  while (::GetTickCount64() < deadline) {
     if (::WaitNamedPipeW(pipe_name.c_str(), 50)) {
       return true;
     }
@@ -111,11 +112,12 @@ bool WaitForPipe(const std::wstring& pipe_name) {
 
 }  // namespace
 
-int wmain() {
+int RunStalledClientCase(bool unread_hello_response) {
   using namespace pokrov::service;
   const auto service_path = SiblingServicePath();
   const auto pipe_name = std::wstring(kTestPipePrefix) +
-                         std::to_wstring(::GetCurrentProcessId());
+                         std::to_wstring(::GetCurrentProcessId()) +
+                         (unread_hello_response ? L".unread" : L".partial");
   Expect(!service_path.empty(), "service binary path was unavailable");
   Expect(::SetEnvironmentVariableW(L"POKROV_SERVICE_TEST_MODE", L"1") !=
              FALSE,
@@ -144,11 +146,32 @@ int wmain() {
   Expect(rejected_pipe != INVALID_HANDLE_VALUE,
          "pre-hello client could not open secured pipe");
   if (rejected_pipe != INVALID_HANDLE_VALUE) {
-    ::CloseHandle(rejected_pipe);
+    if (unread_hello_response) {
+      const Frame hello{
+          FrameKind::kHelloRequest, Command::kHello, Status::kNone,
+          MakeIdentifier(9), {}, {}, 0,
+          kCapabilityProtocolV1 | kCapabilityStatus |
+              kCapabilityRuntimeControl | kCapabilityProfileIdentity, ""};
+      Expect(WriteFrame(rejected_pipe, hello), "stalled hello write failed");
+    } else {
+      std::uint8_t partial_header = 0x50;
+      Expect(TransferExact(rejected_pipe, &partial_header, 1, true),
+             "partial hello write failed");
+    }
   }
 
   HANDLE pipe = INVALID_HANDLE_VALUE;
-  if (WaitForPipe(pipe_name)) {
+  const bool released_stalled_client = WaitForPipe(pipe_name);
+  Expect(released_stalled_client,
+         unread_hello_response
+             ? "unread hello response monopolized the service pipe"
+             : "partial hello monopolized the service pipe");
+  // Keep the first handle open until the normal acquisition budget expires;
+  // closing it earlier would hide an unbounded server-side read/flush.
+  if (rejected_pipe != INVALID_HANDLE_VALUE) {
+    ::CloseHandle(rejected_pipe);
+  }
+  if (released_stalled_client || WaitForPipe(pipe_name)) {
     pipe = ::CreateFileW(pipe_name.c_str(), GENERIC_READ | GENERIC_WRITE, 0,
                          nullptr, OPEN_EXISTING, 0, nullptr);
   }
@@ -197,7 +220,7 @@ int wmain() {
       const auto status_response = ReadFrame(pipe);
       Expect(status_response.has_value() &&
                  status_response->status == Status::kOk &&
-                 status_response->body.find("phase=artifact_ready") !=
+                 status_response->body.find("phase=artifact_missing") !=
                      std::string::npos &&
                  status_response->body.find("core_egress_validated=0") !=
                      std::string::npos &&
@@ -251,5 +274,11 @@ int wmain() {
   ::CloseHandle(process.hThread);
   ::CloseHandle(process.hProcess);
   ::SetEnvironmentVariableW(L"POKROV_SERVICE_TEST_MODE", nullptr);
+  return failures == 0 ? 0 : 1;
+}
+
+int wmain() {
+  RunStalledClientCase(false);
+  RunStalledClientCase(true);
   return failures == 0 ? 0 : 1;
 }

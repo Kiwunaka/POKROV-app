@@ -1,5 +1,12 @@
 # Windows Release Readiness
 
+R12 IPC timeout (2026-09-08): fixed stalled sessions blocking the sole pipe
+and an unread reply blocking SCM stop. [Native and installed red/green proof](evidence/2026-09-08-r12-ipc-timeout/README.md)
+shows another client admitted after 3.0–3.05 seconds and SCM stop in 10 ms.
+The VM experiment replaced only the service EXE, then restored all 305 original
+package hashes. Correlated Core/network cancellation, concurrent mutations,
+WFP coexistence, connected recovery, Win10 and final-channel gates remain OPEN.
+
 R12 installed IPC (2026-09-07): the standard-account lifecycle package passes
 eight ordinary-owner protocol cases and denies a filtered non-owner token.
 [Actual service evidence](evidence/2026-09-07-r12-installed-ipc/README.md)

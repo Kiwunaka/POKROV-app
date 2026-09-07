@@ -23,6 +23,9 @@ constexpr std::uint64_t kServiceCapabilities =
     kCapabilityProtocolV1 | kCapabilityStatus | kCapabilityRuntimeControl |
     kCapabilityProfileIdentity;
 constexpr std::uint64_t kMaximumDeadlineLeadMs = 5 * 60 * 1000;
+// Release a stalled session before the normal client's five-second pipe
+// acquisition budget expires. Header and body share one transfer deadline.
+constexpr ULONGLONG kFrameTransferTimeoutMs = 3000;
 
 std::uint64_t UnixTimeMilliseconds() {
   FILETIME file_time{};
@@ -44,10 +47,10 @@ bool GenerateIdentifier(Identifier* output) {
 }
 
 bool WaitForIo(HANDLE pipe, HANDLE stop_event, OVERLAPPED* overlapped,
-               DWORD* transferred) {
+               DWORD* transferred, DWORD timeout_ms = INFINITE) {
   const HANDLE waits[] = {stop_event, overlapped->hEvent};
-  const DWORD wait = ::WaitForMultipleObjects(2, waits, FALSE, INFINITE);
-  if (wait == WAIT_OBJECT_0) {
+  const DWORD wait = ::WaitForMultipleObjects(2, waits, FALSE, timeout_ms);
+  if (wait != WAIT_OBJECT_0 + 1) {
     ::CancelIoEx(pipe, overlapped);
     ::GetOverlappedResult(pipe, overlapped, transferred, TRUE);
     return false;
@@ -57,10 +60,14 @@ bool WaitForIo(HANDLE pipe, HANDLE stop_event, OVERLAPPED* overlapped,
 }
 
 bool TransferExact(HANDLE pipe, HANDLE stop_event, void* buffer,
-                   std::size_t size, bool write) {
+                   std::size_t size, bool write, ULONGLONG deadline) {
   auto* bytes = static_cast<std::uint8_t*>(buffer);
   std::size_t offset = 0;
   while (offset < size) {
+    const auto now = ::GetTickCount64();
+    if (now >= deadline) {
+      return false;
+    }
     OVERLAPPED overlapped{};
     overlapped.hEvent = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
     if (overlapped.hEvent == nullptr) {
@@ -75,7 +82,8 @@ bool TransferExact(HANDLE pipe, HANDLE stop_event, void* buffer,
                            &overlapped);
     bool success = completed != FALSE;
     if (!success && ::GetLastError() == ERROR_IO_PENDING) {
-      success = WaitForIo(pipe, stop_event, &overlapped, &transferred);
+      success = WaitForIo(pipe, stop_event, &overlapped, &transferred,
+                           static_cast<DWORD>(deadline - now));
     }
     ::CloseHandle(overlapped.hEvent);
     if (!success || transferred == 0) {
@@ -87,8 +95,10 @@ bool TransferExact(HANDLE pipe, HANDLE stop_event, void* buffer,
 }
 
 std::optional<Frame> ReadFrame(HANDLE pipe, HANDLE stop_event) {
+  const auto deadline = ::GetTickCount64() + kFrameTransferTimeoutMs;
   std::array<std::uint8_t, kFrameHeaderSize> header{};
-  if (!TransferExact(pipe, stop_event, header.data(), header.size(), false)) {
+  if (!TransferExact(pipe, stop_event, header.data(), header.size(), false,
+                      deadline)) {
     return std::nullopt;
   }
   const auto expected = ExpectedFrameSize(header.data(), header.size());
@@ -99,7 +109,7 @@ std::optional<Frame> ReadFrame(HANDLE pipe, HANDLE stop_event) {
   std::copy(header.begin(), header.end(), bytes.begin());
   if (bytes.size() > header.size() &&
       !TransferExact(pipe, stop_event, bytes.data() + header.size(),
-                     bytes.size() - header.size(), false)) {
+                     bytes.size() - header.size(), false, deadline)) {
     return std::nullopt;
   }
   return Decode(bytes.data(), bytes.size());
@@ -108,7 +118,8 @@ std::optional<Frame> ReadFrame(HANDLE pipe, HANDLE stop_event) {
 bool WriteFrame(HANDLE pipe, HANDLE stop_event, const Frame& frame) {
   auto bytes = Encode(frame);
   return !bytes.empty() &&
-         TransferExact(pipe, stop_event, bytes.data(), bytes.size(), true);
+         TransferExact(pipe, stop_event, bytes.data(), bytes.size(), true,
+                         ::GetTickCount64() + kFrameTransferTimeoutMs);
 }
 
 bool ConnectClient(HANDLE pipe, HANDLE stop_event) {
@@ -186,8 +197,14 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
     events->RecordIpcResponse(hello->command, hello_response.status,
                               hello->correlation_id);
   }
-  if (!WriteFrame(pipe, stop_event, hello_response) || !compatible) {
-    return compatible;
+  if (!WriteFrame(pipe, stop_event, hello_response)) {
+    return false;
+  }
+  if (!compatible) {
+    // Let the peer consume the rejection and close, within the same bounded
+    // idle-read policy. No follow-up command from this session is executed.
+    ReadFrame(pipe, stop_event);
+    return false;
   }
 
   std::vector<Identifier> used_nonces;
@@ -299,12 +316,17 @@ DWORD RunPipeServer(const std::wstring& pipe_name,
     return ERROR_INVALID_SECURITY_DESCR;
   }
 
-  const auto runtime_root = ResolveServiceRuntimeRoot();
+  // Bounded debug IPC fixtures must not open the installed recovery journal.
+  const auto runtime_root = test_client_limit == 0
+                                ? ResolveServiceRuntimeRoot()
+                                : std::wstring{};
   auto core = CreateInstalledCoreRuntime();
   pokrov::windows_crash::RefreshWindowsCrashProfileModules();
   RuntimeHost runtime(std::move(core),
                       CreateAuthenticatedEgressProbe(),
-                      CreateRuntimeRecovery(runtime_root), runtime_root, true,
+                      test_client_limit == 0
+                          ? CreateRuntimeRecovery(runtime_root) : nullptr,
+                      runtime_root, true,
                       events);
   runtime.RecoverOnStartup();
   std::size_t processed_client_count = 0;
@@ -331,7 +353,8 @@ DWORD RunPipeServer(const std::wstring& pipe_name,
     bool authorized = false;
     const bool processed = ProcessClient(pipe, stop_event, owner_sid,
                                          &runtime, &authorized, events);
-    ::FlushFileBuffers(pipe);
+    // FlushFileBuffers on a pipe waits indefinitely for an unread response.
+    // The bounded session read already lets a healthy peer consume responses.
     ::DisconnectNamedPipe(pipe);
     ::CloseHandle(pipe);
     if (::WaitForSingleObject(stop_event, 0) == WAIT_OBJECT_0) {

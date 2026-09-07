@@ -152,6 +152,11 @@ The current WO-005B1/005B2/005C source implements:
   immediately. After observing an existing but busy pipe, the client retries
   both another waiter's `CreateFileW` race and the short gap while the serial
   service replaces its pipe instance, for at most five seconds;
+- a three-second monotonic budget for each IPC frame transfer, shared by its
+  header and body. Partial frames, idle sessions and unread replies cannot
+  monopolize the serial pipe indefinitely. An incompatible hello gets a
+  bounded opportunity to consume its rejection; no follow-up request is run.
+  Session teardown never calls an unbounded pipe flush;
 - a persistent service runtime owner that loads only the sibling
   `pokrov-core.dll`, negotiates desktop ABI 2 and the optional exact capability
   descriptor, and owns Core setup/start/stop after the UI disconnects;
@@ -195,12 +200,14 @@ and rollback stages. They are a local producer seam only. Unified support
 envelopes, export/upload, remote ingest, retention and alerts belong to the
 observability work order.
 
-Debug builds expose a one-client isolated handshake mode used by native tests.
+Debug builds expose bounded isolated handshake modes used by native tests.
 Release builds do not expose that entrypoint. The service and UI client are
 copied into the local release bundle and the Inno source installs a machine-wide
-SCM service. This is source/build/package-syntax evidence only: no current
-1.2.0 service installation, clean-VM runtime, signing or exact-candidate proof
-exists.
+SCM service. Debug IPC fixtures use no installed runtime root or recovery
+backend, so the protocol tests cannot open the host's recovery journal. Bounded
+local installed-service evidence is linked from
+[Windows readiness](../operations/windows-release-readiness.md); it does not
+establish final-candidate signing or the complete managed-network matrix.
 
 The production pipe loop isolates client-session failure from service
 availability. A caller that disconnects before `hello`, fails caller
@@ -211,6 +218,13 @@ rejected first session followed by a valid session is exercised without
 exposing a release entrypoint. A separate native concurrency test opens 32
 clients against one serial pipe instance and requires every bounded retry to
 reach the server.
+
+These transport deadlines do not cancel an already executing Core/network
+transaction. The `cancel`, `recover` and `diagnostic-state` command identifiers
+are recognized but currently have no dispatcher implementation and return
+`runtime_not_owned`. Automatic startup recovery remains separate. Correlated
+operation cancellation and concurrent mutation acceptance remain open W06
+requirements; a frame timeout is not evidence that those requirements passed.
 
 ### Windows network transaction target
 
