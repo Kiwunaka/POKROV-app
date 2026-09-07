@@ -13,6 +13,11 @@ does not prove the newer local working sources below.
 
 ## Current Truth
 
+The [2026-09-07 network handoff receipt](evidence/2026-09-07-r12-network-handoff/README.md)
+retains bounded Wi-Fi/mobile/Wi-Fi service continuity and refreshed protection
+for the same ARM64 APK. An earlier interruption without a native before-state
+remains unresolved; the full D02 matrix is not a PASS.
+
 The [current ARM64/access receipt](evidence/2026-09-07-r12-arm64-access/receipt.json)
 binds client `9334d46` / Core `8dc57a8` to normal same-signer 1.2.0+4053 APKs.
 The canonical Direct build produces genuine per-ABI APKs: ARM64 101225939 bytes,

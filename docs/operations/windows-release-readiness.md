@@ -1,5 +1,13 @@
 # Windows Release Readiness
 
+R12 Windows shell (2026-09-07): `0f115d0` fixes repeated hidden startup and
+`98c39d6` fixes native teardown re-entry. The offline Win11 clone passes the
+six activation/visibility scenarios and exits cleanly through both message-loop
+termination and the real tray Exit item. [Current bounded evidence](evidence/2026-09-07-r12-w04-shell/README.md)
+binds exact local bytes and retained red/green results. SCM, installer, login
+boot, managed-network and final-channel acceptance remain open; retained
+`pokrov-1.2.0-candidate.33` is unchanged.
+
 R12 Win11 component lab (2026-09-06): seven Release native test executables pass
 on the offline linked clone `d5ae2f7a-96c3-48b5-a2ba-5e009948ee27`, Windows
 `10.0.26200`, client `ded58b1`, Core `94dd310`.
