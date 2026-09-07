@@ -27,6 +27,13 @@ confirmed again; VPN was then disconnected with Wi-Fi enabled. This is local
 physical acceptance, not a final downloadable candidate, actual carrier block,
 RU-origin proof or the complete newer-version/channel/OEM/network matrix.
 
+The [same-APK lifecycle receipt](evidence/2026-09-07-r12-lifecycle/receipt.json)
+adds 120 seconds of forced deep Doze and 60 seconds of app standby on Huawei.
+The process and foreground VPN service survived both; protection refresh after
+each returned confirmed tunnel/DNS/egress. Final readback restored ACTIVE,
+force=false, standby false, Wi-Fi enabled and no VPN service. Forced idle with
+USB attached is not a battery baseline or the full OEM/API/lifecycle matrix.
+
 The [2026-09-07 local Huawei receipt](evidence/2026-09-07-r12-offline-network/receipt.json)
 binds client `550329f` / Core `8dc57a8`, same-signer 1.2.0+4053 bytes and
 preserved app data. On physical Android 12/API 31, normal Wi-Fi, restart/reconnect
