@@ -629,74 +629,6 @@ class InstalledCoreRuntime final : public CoreRuntime {
 std::mutex InstalledCoreRuntime::callback_lock_;
 InstalledCoreRuntime* InstalledCoreRuntime::callback_runtime_ = nullptr;
 
-class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
- public:
-  std::string Verify() override {
-    for (int attempt = 0; attempt < 3; ++attempt) {
-      if (ProbeOnce()) {
-        return "";
-      }
-      if (attempt < 2) {
-        ::Sleep(attempt == 0 ? 900 : 1500);
-      }
-    }
-    return "core_egress_probe_failed";
-  }
-
- private:
-  bool ProbeOnce() {
-    HINTERNET session = ::WinHttpOpen(
-        L"POKROVService/1.2", WINHTTP_ACCESS_TYPE_NO_PROXY,
-        WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
-    if (session == nullptr) {
-      return false;
-    }
-    ::WinHttpSetTimeouts(session, 3000, 3000, 3000, 6000);
-    HINTERNET connection = ::WinHttpConnect(
-        session, L"api.pokrov.space", INTERNET_DEFAULT_HTTPS_PORT, 0);
-    HINTERNET request =
-        connection == nullptr
-            ? nullptr
-            : ::WinHttpOpenRequest(
-                  connection, L"GET",
-                  L"/api/public/authenticated-egress-probe", nullptr,
-                  WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
-                  WINHTTP_FLAG_SECURE | WINHTTP_FLAG_REFRESH);
-    bool valid = request != nullptr &&
-                 ::WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS,
-                                      0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0) !=
-                     FALSE &&
-                 ::WinHttpReceiveResponse(request, nullptr) != FALSE;
-    DWORD status = 0;
-    DWORD status_size = sizeof(status);
-    if (valid) {
-      valid = ::WinHttpQueryHeaders(
-                  request,
-                  WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
-                  WINHTTP_HEADER_NAME_BY_INDEX, &status, &status_size,
-                  WINHTTP_NO_HEADER_INDEX) != FALSE &&
-              status == HTTP_STATUS_NO_CONTENT;
-    }
-    std::array<wchar_t, 64> proof{};
-    DWORD proof_size = static_cast<DWORD>(proof.size() * sizeof(wchar_t));
-    if (valid) {
-      valid = ::WinHttpQueryHeaders(
-                  request, WINHTTP_QUERY_CUSTOM,
-                  L"x-pokrov-egress-probe", proof.data(), &proof_size,
-                  WINHTTP_NO_HEADER_INDEX) != FALSE &&
-              std::wstring(proof.data()) == L"pokrov-authenticated-egress-v1";
-    }
-    if (request != nullptr) {
-      ::WinHttpCloseHandle(request);
-    }
-    if (connection != nullptr) {
-      ::WinHttpCloseHandle(connection);
-    }
-    ::WinHttpCloseHandle(session);
-    return valid;
-  }
-};
-
 }  // namespace
 
 bool CoreOperationalEventFence::Activate(const std::string& run_id,
@@ -761,6 +693,11 @@ RuntimeHost::~RuntimeHost() { Shutdown(); }
 
 RuntimeResult RuntimeHost::Snapshot() const {
   return RuntimeResult{Status::kOk, SnapshotBody()};
+}
+
+RuntimeResult RuntimeHost::PendingSnapshot(Command command) const {
+  return RuntimeResult{Status::kOk,
+      SnapshotBody(command == Command::kConnect ? "connecting" : "busy")};
 }
 
 RuntimeResult RuntimeHost::RecoverOnStartup() {
@@ -1043,7 +980,7 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest,
   RecordEvent(ServiceEvent::kRuntimeEgressVerify,
               ServiceEventOutcome::kAttempted);
   const bool egress_verified =
-      egress_probe_ != nullptr && egress_probe_->Verify().empty();
+      egress_probe_ != nullptr && egress_probe_->Verify(interrupted).empty();
   if (const auto result = interruption(true)) return *result;
   if (!egress_verified) {
     RecordEvent(ServiceEvent::kRuntimeEgressVerify,
@@ -1236,26 +1173,27 @@ RuntimeResult RuntimeHost::Fail(Status status, const char* failure) {
   return RuntimeResult{status, SnapshotBody()};
 }
 
-std::string RuntimeHost::SnapshotBody() const {
+std::string RuntimeHost::SnapshotBody(const char* pending_phase) const {
   const auto phase = static_cast<int>(phase_);
+  const bool pending = pending_phase != nullptr;
   const bool core_ready = initialized_;
-  const bool can_initialize = core_ != nullptr && !runtime_root_.empty();
-  const bool can_connect = initialized_ && profile_staged_ &&
+  const bool can_initialize = !pending && core_ != nullptr && !runtime_root_.empty();
+  const bool can_connect = !pending && initialized_ && profile_staged_ &&
                            phase_ == Phase::kConfigStaged;
-  return std::string("phase=") + PhaseName(phase) +
+  return std::string("phase=") + (pending ? pending_phase : PhaseName(phase)) +
          ";core_ready=" + (core_ready ? "1" : "0") +
          ";can_initialize=" + (can_initialize ? "1" : "0") +
          ";can_connect=" + (can_connect ? "1" : "0") +
-         ";running=" + (phase_ == Phase::kRunning ? "1" : "0") +
+         ";running=" + (!pending && phase_ == Phase::kRunning ? "1" : "0") +
          ";core_egress_validated=" +
-         (core_egress_validated_ ? "1" : "0") +
-         ";dns_ready=" + (core_egress_validated_ ? "1" : "0") +
+         (!pending && core_egress_validated_ ? "1" : "0") +
+         ";dns_ready=" + (!pending && core_egress_validated_ ? "1" : "0") +
          ";staged_profile_digest=" +
          (staged_profile_digest_.empty() ? "none" : staged_profile_digest_) +
          ";effective_profile_digest=" +
-         (effective_profile_digest_.empty() ? "none" : effective_profile_digest_) +
+         (pending || effective_profile_digest_.empty() ? "none" : effective_profile_digest_) +
          ";failure=" +
-         (failure_.empty() ? "none" : failure_);
+         (pending || failure_.empty() ? "none" : failure_);
 }
 
 bool RuntimeHost::PrepareDirectories() {
@@ -1393,9 +1331,7 @@ std::unique_ptr<CoreRuntime> CreateInstalledCoreRuntime() {
   return std::make_unique<InstalledCoreRuntime>();
 }
 
-std::unique_ptr<RuntimeEgressProbe> CreateAuthenticatedEgressProbe() {
-  return std::make_unique<AuthenticatedEgressProbe>();
-}
+
 
 std::wstring ResolveServiceRuntimeRoot() {
   PWSTR program_data = nullptr;

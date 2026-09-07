@@ -114,7 +114,9 @@ bool IsValidFrame(const Frame& frame) {
                   ? IsBoundedProfile(frame.body)
                   : (frame.command == Command::kConnect
                          ? IsProfileDigest(frame.body)
-                         : frame.body.empty()));
+                         : (frame.command == Command::kCancel
+                                ? DecodeCancellationTarget(frame.body).has_value()
+                                : frame.body.empty())));
     case FrameKind::kResponse:
       if (frame.status == Status::kNone ||
           IsZeroIdentifier(frame.session_token) ||
@@ -142,6 +144,39 @@ std::optional<FrameKind> DecodeKind(std::uint16_t raw_kind) {
 }
 
 }  // namespace
+
+std::string EncodeCancellationTarget(const CancellationTarget& target) {
+  if (IsZeroIdentifier(target.session_token) || IsZeroIdentifier(target.operation_nonce)) {
+    return "";
+  }
+  constexpr char digits[] = "0123456789abcdef";
+  std::string result;
+  result.reserve(64);
+  for (const auto& identifier : {target.session_token, target.operation_nonce}) {
+    for (const auto byte : identifier) {
+      result.push_back(digits[byte >> 4]);
+      result.push_back(digits[byte & 15]);
+    }
+  }
+  return result;
+}
+
+std::optional<CancellationTarget> DecodeCancellationTarget(const std::string& body) {
+  if (!IsProfileDigest(body)) return std::nullopt;  // exactly 64 lower hex bytes
+  const auto digit = [](char value) {
+    return value <= '9' ? value - '0' : value - 'a' + 10;
+  };
+  CancellationTarget result;
+  for (std::size_t index = 0; index < 32; ++index) {
+    const auto value = static_cast<std::uint8_t>(
+        digit(body[index * 2]) * 16 + digit(body[index * 2 + 1]));
+    (index < 16 ? result.session_token : result.operation_nonce)[index % 16] = value;
+  }
+  if (IsZeroIdentifier(result.session_token) || IsZeroIdentifier(result.operation_nonce)) {
+    return std::nullopt;
+  }
+  return result;
+}
 
 bool IsZeroIdentifier(const Identifier& value) {
   return std::all_of(value.begin(), value.end(),

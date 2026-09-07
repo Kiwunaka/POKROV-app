@@ -14,6 +14,7 @@ target_link_libraries(pokrov_service_common PUBLIC
 )
 
 add_library(pokrov_service_runtime STATIC
+  "service_egress_probe.cpp"
   "service_events.cpp"
   "service_network_state.cpp"
   "service_recovery.cpp"
@@ -35,6 +36,7 @@ target_link_libraries(pokrov_service_runtime PUBLIC
 add_executable(pokrov_service
   "service_main.cpp"
   "service_server.cpp"
+  "service_dispatcher.cpp"
 )
 apply_standard_settings(pokrov_service)
 target_link_libraries(pokrov_service PRIVATE
@@ -44,6 +46,21 @@ target_link_libraries(pokrov_service PRIVATE
 )
 
 if(BUILD_TESTING)
+  add_executable(pokrov_service_cancellation_test
+    "service_cancellation_test.cpp" "service_server.cpp" "service_dispatcher.cpp"
+    "service_pipe_client.cpp" "service_client.cpp")
+  apply_standard_settings(pokrov_service_cancellation_test)
+  target_link_libraries(pokrov_service_cancellation_test PRIVATE pokrov_service_runtime)
+  add_test(NAME pokrov_service_cancellation COMMAND pokrov_service_cancellation_test
+    CONFIGURATIONS Debug)
+  set_tests_properties(pokrov_service_cancellation PROPERTIES TIMEOUT 30)
+
+  add_executable(pokrov_service_egress_probe_test "service_egress_probe_test.cpp")
+  apply_standard_settings(pokrov_service_egress_probe_test)
+  target_link_libraries(pokrov_service_egress_probe_test PRIVATE pokrov_service_runtime)
+  add_test(NAME pokrov_service_egress_probe COMMAND pokrov_service_egress_probe_test
+    CONFIGURATIONS Debug)
+
   add_executable(pokrov_service_client_test
     "service_client.cpp"
     "service_pipe_client.cpp"

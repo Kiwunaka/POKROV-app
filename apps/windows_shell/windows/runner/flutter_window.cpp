@@ -16,6 +16,7 @@ constexpr ULONG_PTR kPokrovAcquisitionCopyData = 0x504F4B52;
 constexpr char kAcquisitionLinksChannel[] = "space.pokrov/acquisition-links";
 constexpr char kWindowsShellChannel[] = "space.pokrov/windows-shell";
 constexpr char kRuntimeEngineChannel[] = "space.pokrov/runtime_engine";
+constexpr UINT kRuntimeCompletionMessage = WM_APP + 41;
 constexpr wchar_t kPokrovPreferencesKey[] =
     L"Software\\space.pokrov\\POKROV";
 constexpr wchar_t kWindowsRunKey[] =
@@ -157,12 +158,13 @@ std::string DartRuntimePhase(const std::string& phase) {
   if (phase == "artifact_ready") {
     return "artifactReady";
   }
-  if (phase == "config_staged") {
+  if (phase == "config_staged" || phase == "connecting") {
     return "configStaged";
   }
   if (phase == "initialized" || phase == "running") {
     return phase;
   }
+  if (phase == "busy") return "initialized";
   return "artifactMissing";
 }
 
@@ -190,7 +192,7 @@ flutter::EncodableValue RuntimeSnapshotValue(
           ? flutter::EncodableValue("service://pokrov_service.exe")
           : flutter::EncodableValue();
   values[flutter::EncodableValue("stagedConfigPath")] =
-      snapshot.can_connect || snapshot.running
+      !snapshot.staged_profile_digest.empty()
           ? flutter::EncodableValue("service://managed-profile")
           : flutter::EncodableValue();
   const char* diagnostic_state =
@@ -218,8 +220,7 @@ flutter::EncodableValue RuntimeSnapshotValue(
   values[flutter::EncodableValue("coreEgressValidationRequired")] =
       flutter::EncodableValue(true);
   values[flutter::EncodableValue("connectionPending")] =
-      flutter::EncodableValue(snapshot.running &&
-                              !snapshot.core_egress_validated);
+      flutter::EncodableValue(snapshot.phase == "connecting");
   if (snapshot.failure != "none" &&
       snapshot.failure != "service_unavailable") {
     values[flutter::EncodableValue("lastFailureKind")] =
@@ -267,6 +268,20 @@ FlutterWindow::~FlutterWindow() {
   // View teardown can synchronously dispatch parent-window messages. Clear the
   // controller through OnDestroy before its destructor re-enters our handler.
   OnDestroy();
+}
+
+bool FlutterWindow::QueueRuntime(pokrov::service::Command command, std::string body,
+                                RuntimeTaskRunner::Completion completion) {
+  using pokrov::service::Command;
+  auto control = std::make_shared<pokrov::service::ServiceCallControl>();
+  if (!runtime_tasks_ || !runtime_tasks_->Submit(command, std::move(body), control,
+                                                std::move(completion))) return false;
+  if (command == Command::kConnect || command == Command::kDisconnect ||
+      command == Command::kStageProfile || command == Command::kInvalidateProfile) {
+    if (pending_connect_) pending_connect_->cancel_requested = true;
+  }
+  if (command == Command::kConnect) pending_connect_ = std::move(control);
+  return true;
 }
 
 bool FlutterWindow::OnCreate() {
@@ -366,22 +381,31 @@ bool FlutterWindow::OnCreate() {
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(), kRuntimeEngineChannel,
           &flutter::StandardMethodCodec::GetInstance());
+  const HWND runtime_window = GetHandle();
+  runtime_tasks_ = std::make_unique<RuntimeTaskRunner>([runtime_window] {
+    ::PostMessageW(runtime_window, kRuntimeCompletionMessage, 0, 0);
+  });
   runtime_engine_channel_->SetMethodCallHandler(
       [this](const flutter::MethodCall<flutter::EncodableValue>& call,
          std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
              result) {
         using pokrov::service::Command;
+        auto reply = std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>>(std::move(result));
+        const auto snapshot_call = [this, reply](Command command, std::string body,
+                                                std::string expected) {
+          if (QueueRuntime(command, std::move(body),
+              [reply, expected = std::move(expected)](auto snapshot) {
+                reply->Success(RuntimeSnapshotValue(std::move(snapshot), expected));
+              })) return true;
+          reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          return false;
+        };
         if (call.method_name() == "runtimeEngine.snapshot") {
-          result->Success(RuntimeSnapshotValue(
-              pokrov::service::InvokeInstalledService(Command::kStatus, ""),
-              expected_profile_digest_));
+          snapshot_call(Command::kStatus, "", expected_profile_digest_);
           return;
         }
         if (call.method_name() == "runtimeEngine.initialize") {
-          result->Success(RuntimeSnapshotValue(
-              pokrov::service::InvokeInstalledService(Command::kInitialize,
-                                                       ""),
-              expected_profile_digest_));
+          snapshot_call(Command::kInitialize, "", expected_profile_digest_);
           return;
         }
         if (call.method_name() == "runtimeEngine.stageManagedProfile") {
@@ -395,7 +419,7 @@ bool FlutterWindow::OnCreate() {
               BoolArgument(arguments, "materializedForRuntime");
           if (profile == nullptr || disable_memory_limit == nullptr ||
               materialized == nullptr || !*materialized) {
-            result->Error("invalid_arguments",
+            reply->Error("invalid_arguments",
                           "A materialized managed profile is required.");
             return;
           }
@@ -404,31 +428,22 @@ bool FlutterWindow::OnCreate() {
                                                 : *service_profile_bundle;
           const std::string body =
               (*disable_memory_limit ? "1\n" : "0\n") + service_profile;
-          const auto staged = pokrov::service::InvokeInstalledService(
-              Command::kStageProfile, body);
-          expected_profile_digest_ = pokrov::service::ProfileDigest(body);
-          result->Success(RuntimeSnapshotValue(staged, expected_profile_digest_));
+          const auto expected = pokrov::service::ProfileDigest(body);
+          if (snapshot_call(Command::kStageProfile, body, expected)) {
+            expected_profile_digest_ = expected;
+          }
           return;
         }
         if (call.method_name() == "runtimeEngine.invalidateManagedProfile") {
-          expected_profile_digest_.clear();
-          result->Success(RuntimeSnapshotValue(
-              pokrov::service::InvokeInstalledService(
-                  Command::kInvalidateProfile, "")));
+          if (snapshot_call(Command::kInvalidateProfile, "", "")) expected_profile_digest_.clear();
           return;
         }
         if (call.method_name() == "runtimeEngine.connect") {
-          result->Success(RuntimeSnapshotValue(
-              pokrov::service::InvokeInstalledService(Command::kConnect,
-                                                       expected_profile_digest_),
-              expected_profile_digest_));
+          snapshot_call(Command::kConnect, expected_profile_digest_, expected_profile_digest_);
           return;
         }
         if (call.method_name() == "runtimeEngine.disconnect") {
-          result->Success(RuntimeSnapshotValue(
-              pokrov::service::InvokeInstalledService(Command::kDisconnect,
-                                                       ""),
-              expected_profile_digest_));
+          snapshot_call(Command::kDisconnect, "", expected_profile_digest_);
           return;
         }
         if (call.method_name() == "runtimeEngine.applyWarp") {
@@ -437,15 +452,14 @@ bool FlutterWindow::OnCreate() {
           const auto* service_profile_bundle =
               StringArgument(arguments, "serviceProfileBundle");
           if (profile == nullptr) {
-            result->Error("invalid_arguments", "A managed profile is required.");
+            reply->Error("invalid_arguments", "A managed profile is required.");
             return;
           }
           const std::string body =
               "0\n" + (service_profile_bundle == nullptr
                            ? *profile : *service_profile_bundle);
-          expected_profile_digest_ = pokrov::service::ProfileDigest(body);
-          const auto snapshot = pokrov::service::InvokeInstalledService(
-              Command::kStageProfile, body);
+          const auto expected = pokrov::service::ProfileDigest(body);
+          if (!QueueRuntime(Command::kStageProfile, body, [reply](auto snapshot) {
           flutter::EncodableMap values;
           values[flutter::EncodableValue("applied")] =
               flutter::EncodableValue(snapshot.command_accepted);
@@ -459,12 +473,16 @@ bool FlutterWindow::OnCreate() {
             values[flutter::EncodableValue("reason")] =
                 flutter::EncodableValue("runtime_failure");
           }
-          result->Success(flutter::EncodableValue(values));
+          reply->Success(flutter::EncodableValue(values));
+          })) {
+            reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          } else {
+            expected_profile_digest_ = expected;
+          }
           return;
         }
         if (call.method_name() == "runtimeEngine.liveStats") {
-          const auto snapshot = pokrov::service::InvokeInstalledService(
-              Command::kStatus, "");
+          if (!QueueRuntime(Command::kStatus, "", [reply](auto snapshot) {
           flutter::EncodableMap values;
           values[flutter::EncodableValue("available")] =
               flutter::EncodableValue(snapshot.running);
@@ -474,17 +492,18 @@ bool FlutterWindow::OnCreate() {
               flutter::EncodableValue("");
           values[flutter::EncodableValue("protocol")] =
               flutter::EncodableValue(snapshot.running ? "sing-box" : "");
-          result->Success(flutter::EncodableValue(values));
+          reply->Success(flutter::EncodableValue(values));
+          })) reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
           return;
         }
         if (call.method_name() == "runtimeEngine.pushToken") {
           flutter::EncodableMap values;
           values[flutter::EncodableValue("available")] =
               flutter::EncodableValue(false);
-          result->Success(flutter::EncodableValue(values));
+          reply->Success(flutter::EncodableValue(values));
           return;
         }
-        result->NotImplemented();
+        reply->NotImplemented();
       });
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
@@ -503,6 +522,11 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  if (runtime_tasks_) {
+    runtime_tasks_->Shutdown();
+    runtime_tasks_.reset();
+  }
+  pending_connect_.reset();
   runtime_engine_channel_.reset();
   windows_shell_channel_.reset();
   acquisition_links_channel_.reset();
@@ -517,6 +541,10 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  if (message == kRuntimeCompletionMessage) {
+    if (runtime_tasks_) runtime_tasks_->Drain();
+    return 0;
+  }
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =

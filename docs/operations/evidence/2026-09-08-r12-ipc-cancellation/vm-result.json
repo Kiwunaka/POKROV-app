@@ -1,0 +1,119 @@
+{
+    "utc":  "2026-09-07T22:30:11.8476086Z",
+    "kind":  "offline Debug component fixtures",
+    "status":  "FAIL",
+    "before_installed_count":  305,
+    "tests":  [
+                  {
+                      "exit_code":  0,
+                      "name":  "pokrov_activation_protocol_test.exe",
+                      "elapsed_ms":  280,
+                      "sha256":  "5964cfe74d1d8c50d1d828573a3493873335b450ea6dfd0b420c4de4780c096e",
+                      "stderr":  "",
+                      "stdout":  "",
+                      "timeout":  false
+                  },
+                  {
+                      "exit_code":  0,
+                      "name":  "pokrov_runtime_task_runner_test.exe",
+                      "elapsed_ms":  143,
+                      "sha256":  "c0541d90e48710309ccd6dcb7b05a7d7814f8063e06e6e9d15c516a26c71ee08",
+                      "stderr":  "",
+                      "stdout":  "",
+                      "timeout":  false
+                  },
+                  {
+                      "exit_code":  0,
+                      "name":  "pokrov_service_cancellation_test.exe",
+                      "elapsed_ms":  386,
+                      "sha256":  "af7e38758328ae6636c87d774a13ecae4f8475a8d9e90a997b0c53d042434ac2",
+                      "stderr":  "",
+                      "stdout":  "ipc_cancel_rollback_ms=31\r\n",
+                      "timeout":  false
+                  },
+                  {
+                      "exit_code":  0,
+                      "name":  "pokrov_service_client_test.exe",
+                      "elapsed_ms":  122,
+                      "sha256":  "bff25d5c7d78bf85877c4c8e776289cfa671321aee8aba497bb8b178abe8080c",
+                      "stderr":  "",
+                      "stdout":  "",
+                      "timeout":  false
+                  },
+                  {
+                      "exit_code":  0,
+                      "name":  "pokrov_service_egress_probe_test.exe",
+                      "elapsed_ms":  2955,
+                      "sha256":  "8d28c156eb06acbf1d1fa40be66e9ca16cf6fecad5924e9a7adde53eefdaf409",
+                      "stderr":  "",
+                      "stdout":  "pending_headers_cancel_ms=94\r\n",
+                      "timeout":  false
+                  },
+                  {
+                      "exit_code":  0,
+                      "name":  "pokrov_service_events_test.exe",
+                      "elapsed_ms":  2336,
+                      "sha256":  "1bf12976d040893262046e76921e2637456da3f7a5ababd75bf91835944ba1dc",
+                      "stderr":  "",
+                      "stdout":  "service event journal checks passed\r\n",
+                      "timeout":  false
+                  },
+                  {
+                      "exit_code":  1,
+                      "name":  "pokrov_service_integration_test.exe",
+                      "elapsed_ms":  121,
+                      "sha256":  "869b28601dfb7cfbec303a1fc7895e0838dce72f06ad97c52fa0385953f21f38",
+                      "stderr":  "service test process did not start\r\nservice test process did not start\r\n",
+                      "stdout":  "",
+                      "timeout":  false
+                  },
+                  {
+                      "exit_code":  0,
+                      "name":  "pokrov_service_pipe_client_test.exe",
+                      "elapsed_ms":  671,
+                      "sha256":  "cddd1e21824550612bc9122ed676c893019ba9c46cc52b313150df6dd97b5740",
+                      "stderr":  "",
+                      "stdout":  "",
+                      "timeout":  false
+                  },
+                  {
+                      "exit_code":  0,
+                      "name":  "pokrov_service_protocol_test.exe",
+                      "elapsed_ms":  100,
+                      "sha256":  "98c600db631bece1277236c8a7f4e425504d4a4ab0e79f39d8a65ad2ef0b2a77",
+                      "stderr":  "",
+                      "stdout":  "",
+                      "timeout":  false
+                  },
+                  {
+                      "exit_code":  0,
+                      "name":  "pokrov_service_runtime_test.exe",
+                      "elapsed_ms":  425,
+                      "sha256":  "2848b325a505860079048a3fae7a74aa2fc49cac70e87a886809e165d3b9b30b",
+                      "stderr":  "",
+                      "stdout":  "",
+                      "timeout":  false
+                  },
+                  {
+                      "exit_code":  0,
+                      "name":  "pokrov_service_security_test.exe",
+                      "elapsed_ms":  120,
+                      "sha256":  "c4ff8ee525d48c7bbf535c36f13f5af5a7870967c5a0868772c2361c5c5c1099",
+                      "stderr":  "",
+                      "stdout":  "",
+                      "timeout":  false
+                  },
+                  {
+                      "exit_code":  0,
+                      "name":  "pokrov_windows_crash_profile_test.exe",
+                      "elapsed_ms":  159,
+                      "sha256":  "c4dd75ca983129f83289f38bdbca8cbdbdda1aa7cb89544ddceec754fe1e42a8",
+                      "stderr":  "",
+                      "stdout":  "Windows crash profile checks passed\r\n",
+                      "timeout":  false
+                  }
+              ],
+    "after_installed_count":  305,
+    "final_service_state":  "Running",
+    "final_adapter_count":  0
+}

@@ -54,5 +54,15 @@ int main() {
                !interrupted.core_egress_validated && interrupted.can_connect,
            "interrupted runtime response lost retry state or became incompatible");
   }
+  for (const auto* phase : {"connecting", "busy"}) {
+    const auto pending = std::string("phase=") + phase +
+        ";core_ready=1;can_initialize=0;can_connect=0;running=0;"
+        "core_egress_validated=0;dns_ready=0;staged_profile_digest=" + digest +
+        ";effective_profile_digest=none;failure=none";
+    ServiceRuntimeSnapshot parsed_pending;
+    expect(ParseServiceRuntimeSnapshot(pending, &parsed_pending) &&
+               !parsed_pending.running && !parsed_pending.can_connect,
+           "pending service state was rejected or advertised a concurrent connection");
+  }
   return failures == 0 ? 0 : 1;
 }

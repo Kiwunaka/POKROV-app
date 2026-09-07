@@ -69,7 +69,7 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
 
 class FakeEgressProbe final : public pokrov::service::RuntimeEgressProbe {
  public:
-  std::string Verify() override {
+  std::string Verify(const pokrov::service::CheckInterruption& = {}) override {
     ++verify_calls;
     if (on_verify) on_verify();
     return verify_error;

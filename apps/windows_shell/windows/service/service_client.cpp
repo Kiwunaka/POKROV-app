@@ -11,6 +11,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <thread>
 
 #include "service_protocol.h"
 #include "service_pipe_client.h"
@@ -40,17 +41,37 @@ bool GenerateIdentifier(Identifier* output) {
          !IsZeroIdentifier(*output);
 }
 
-bool TransferExact(HANDLE pipe, void* buffer, std::size_t size, bool write) {
+bool TransferExact(HANDLE pipe, void* buffer, std::size_t size, bool write,
+                   ULONGLONG deadline, ServiceCallControl* control) {
   auto* bytes = static_cast<std::uint8_t*>(buffer);
   std::size_t offset = 0;
   while (offset < size) {
+    if (::GetTickCount64() >= deadline || (control && control->abandon_wait)) return false;
+    OVERLAPPED overlapped{};
+    overlapped.hEvent = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
+    if (overlapped.hEvent == nullptr) return false;
     DWORD transferred = 0;
     const DWORD chunk = static_cast<DWORD>(size - offset);
-    const BOOL success = write
+    bool success = (write
                              ? ::WriteFile(pipe, bytes + offset, chunk,
-                                           &transferred, nullptr)
+                                           &transferred, &overlapped)
                              : ::ReadFile(pipe, bytes + offset, chunk,
-                                          &transferred, nullptr);
+                                          &transferred, &overlapped)) != FALSE;
+    if (!success && ::GetLastError() == ERROR_IO_PENDING) {
+      while (::GetTickCount64() < deadline && !(control && control->abandon_wait)) {
+        const auto wait = ::WaitForSingleObject(overlapped.hEvent, 25);
+        if (wait == WAIT_OBJECT_0) {
+          success = ::GetOverlappedResult(pipe, &overlapped, &transferred, FALSE) != FALSE;
+          break;
+        }
+        if (wait != WAIT_TIMEOUT) break;
+      }
+      if (!success) {
+        ::CancelIoEx(pipe, &overlapped);
+        ::GetOverlappedResult(pipe, &overlapped, &transferred, TRUE);
+      }
+    }
+    ::CloseHandle(overlapped.hEvent);
     if (!success || transferred == 0) {
       return false;
     }
@@ -59,15 +80,16 @@ bool TransferExact(HANDLE pipe, void* buffer, std::size_t size, bool write) {
   return true;
 }
 
-bool WriteFrame(HANDLE pipe, const Frame& frame) {
+bool WriteFrame(HANDLE pipe, const Frame& frame, ULONGLONG deadline,
+                ServiceCallControl* control) {
   auto bytes = Encode(frame);
   return !bytes.empty() &&
-         TransferExact(pipe, bytes.data(), bytes.size(), true);
+         TransferExact(pipe, bytes.data(), bytes.size(), true, deadline, control);
 }
 
-std::optional<Frame> ReadFrame(HANDLE pipe) {
+std::optional<Frame> ReadFrame(HANDLE pipe, ULONGLONG deadline, ServiceCallControl* control) {
   std::array<std::uint8_t, kFrameHeaderSize> header{};
-  if (!TransferExact(pipe, header.data(), header.size(), false)) {
+  if (!TransferExact(pipe, header.data(), header.size(), false, deadline, control)) {
     return std::nullopt;
   }
   const auto expected = ExpectedFrameSize(header.data(), header.size());
@@ -78,7 +100,7 @@ std::optional<Frame> ReadFrame(HANDLE pipe) {
   std::copy(header.begin(), header.end(), bytes.begin());
   if (bytes.size() > header.size() &&
       !TransferExact(pipe, bytes.data() + header.size(),
-                     bytes.size() - header.size(), false)) {
+                     bytes.size() - header.size(), false, deadline, control)) {
     return std::nullopt;
   }
   return Decode(bytes.data(), bytes.size());
@@ -182,15 +204,18 @@ struct ExchangeResult {
   std::optional<Frame> response;
 };
 
-ExchangeResult Exchange(Command command, const std::string& body) {
+ExchangeResult Exchange(Command command, const std::string& body,
+                        ServiceCallControl* control = nullptr,
+                        const wchar_t* pipe_name = kProductionPipeName,
+                        bool verify_server = true) {
   ExchangeResult result;
-  HANDLE pipe = OpenNamedPipeClient(kProductionPipeName,
-                                    kProductionPipeConnectTimeoutMs);
+  HANDLE pipe = OpenNamedPipeClient(pipe_name, kProductionPipeConnectTimeoutMs,
+                                    FILE_FLAG_OVERLAPPED);
   if (pipe == INVALID_HANDLE_VALUE) {
     return result;
   }
   result.probe.available = true;
-  if (!IsExpectedServer(pipe)) {
+  if (verify_server && !IsExpectedServer(pipe)) {
     result.probe.state = ClientState::kServerUntrusted;
     ::CloseHandle(pipe);
     return result;
@@ -211,14 +236,14 @@ ExchangeResult Exchange(Command command, const std::string& body) {
       {},
       0,
       kCapabilityProtocolV1 | kCapabilityStatus | kCapabilityRuntimeControl |
-          kCapabilityProfileIdentity,
+          kCapabilityProfileIdentity | kCapabilityCancellation,
       "",
   };
-  if (!WriteFrame(pipe, hello)) {
+  if (!WriteFrame(pipe, hello, ::GetTickCount64() + 3000, control)) {
     ::CloseHandle(pipe);
     return result;
   }
-  const auto hello_response = ReadFrame(pipe);
+  const auto hello_response = ReadFrame(pipe, ::GetTickCount64() + 3000, control);
   if (!hello_response.has_value() ||
       hello_response->kind != FrameKind::kResponse ||
       hello_response->command != Command::kHello ||
@@ -227,7 +252,8 @@ ExchangeResult Exchange(Command command, const std::string& body) {
       (hello_response->capabilities & kCapabilityProtocolV1) == 0 ||
       (hello_response->capabilities & kCapabilityStatus) == 0 ||
       (hello_response->capabilities & kCapabilityRuntimeControl) == 0 ||
-      (hello_response->capabilities & kCapabilityProfileIdentity) == 0) {
+      (hello_response->capabilities & kCapabilityProfileIdentity) == 0 ||
+      (hello_response->capabilities & kCapabilityCancellation) == 0) {
     result.probe.state = ClientState::kProtocolIncompatible;
     ::CloseHandle(pipe);
     return result;
@@ -248,18 +274,40 @@ ExchangeResult Exchange(Command command, const std::string& body) {
       request_correlation,
       hello_response->session_token,
       operation_nonce,
-      UnixTimeMilliseconds() + 30000,
+      UnixTimeMilliseconds() + (command == Command::kCancel ? 3000 : 30000),
       0,
       body,
   };
-  if (!WriteFrame(pipe, request)) {
+  if ((command == Command::kConnect && control && control->cancel_requested) ||
+      !WriteFrame(pipe, request, ::GetTickCount64() + 3000, control)) {
     ::CloseHandle(pipe);
     return result;
   }
-  result.response = ReadFrame(pipe);
+  std::atomic<bool> finished{false};
+  std::thread cancellation;
+  if (command == Command::kConnect && control != nullptr) {
+    const auto target = EncodeCancellationTarget({request.session_token, request.operation_nonce});
+    cancellation = std::thread([&, target] {
+      for (;;) {
+        if (control->cancel_requested) {
+          const auto cancelled = Exchange(Command::kCancel, target, nullptr, pipe_name, verify_server);
+          if (cancelled.response && cancelled.response->status == Status::kOk) break;
+        }
+        if (finished) break;
+        ::Sleep(25);
+      }
+    });
+  }
+  result.response = ReadFrame(pipe,
+      ::GetTickCount64() + (command == Command::kCancel ? 3000 : 33000), control);
+  finished = true;
+  if (cancellation.joinable()) cancellation.join();
   ::CloseHandle(pipe);
-  if (!result.response.has_value() ||
-      result.response->kind != FrameKind::kResponse ||
+  if (!result.response.has_value()) {
+    result.probe.state = ClientState::kUnavailable;
+    return result;
+  }
+  if (result.response->kind != FrameKind::kResponse ||
       result.response->command != command ||
       result.response->correlation_id != request_correlation ||
       result.response->session_token != hello_response->session_token) {
@@ -300,12 +348,13 @@ bool ParseBool(const std::string& value, bool* output) {
 
 bool IsKnownPhase(const std::string& value) {
   return value == "artifact_missing" || value == "artifact_ready" ||
+         value == "connecting" || value == "busy" ||
          value == "initialized" || value == "config_staged" ||
          value == "running" || value == "recovery_required";
 }
 
 bool IsKnownFailure(const std::string& value) {
-  static constexpr std::array<const char*, 37> failures = {
+  static constexpr std::array<const char*, 38> failures = {
       "none",
       "core_not_initialized",
       "core_missing",
@@ -327,6 +376,7 @@ bool IsKnownFailure(const std::string& value) {
       "core_egress_probe_failed",
       "deadline_exceeded",
       "operation_cancelled",
+      "runtime_busy",
       "core_stop_failed",
       "recovery_unavailable",
       "recovery_journal_invalid",
@@ -388,6 +438,8 @@ bool ParseSnapshotBodyInternal(const std::string& body,
     return false;
   }
   if ((phase == "running") != output->running ||
+      ((phase == "connecting" || phase == "busy") &&
+       (output->can_initialize || output->can_connect || output->running)) ||
       output->dns_ready != output->core_egress_validated ||
       output->running != output->core_egress_validated ||
       (output->running && !output->core_ready) ||
@@ -444,10 +496,11 @@ ClientProbe ProbeInstalledService() {
   return result;
 }
 
-ServiceRuntimeSnapshot InvokeInstalledService(Command command,
-                                              const std::string& body) {
+ServiceRuntimeSnapshot InvokeService(Command command, const std::string& body,
+                                     ServiceCallControl* control,
+                                     const wchar_t* pipe_name, bool verify_server) {
   ServiceRuntimeSnapshot result;
-  const auto exchange = Exchange(command, body);
+  const auto exchange = Exchange(command, body, control, pipe_name, verify_server);
   result.client_state = exchange.probe.state;
   result.available = exchange.probe.available;
   result.trusted = exchange.probe.trusted;
@@ -478,6 +531,21 @@ ServiceRuntimeSnapshot InvokeInstalledService(Command command,
                                           : ClientState::kBootstrap;
   return result;
 }
+
+ServiceRuntimeSnapshot InvokeInstalledService(Command command,
+                                              const std::string& body,
+                                              ServiceCallControl* control) {
+  return InvokeService(command, body, control, kProductionPipeName, true);
+}
+
+#ifdef _DEBUG
+ServiceRuntimeSnapshot InvokeServiceForTest(const std::wstring& pipe_name,
+                                            Command command, const std::string& body,
+                                            ServiceCallControl* control) {
+  if (pipe_name.rfind(kTestPipePrefix, 0) != 0) return {};
+  return InvokeService(command, body, control, pipe_name.c_str(), false);
+}
+#endif
 
 const char* ClientStateName(ClientState state) {
   switch (state) {

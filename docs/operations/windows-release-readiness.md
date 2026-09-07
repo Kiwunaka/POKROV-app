@@ -3,6 +3,16 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
+R12 IPC cancellation (2026-09-08): concurrent status/cancel, serialized runtime
+mutations, cancellable WinHTTP and a worker for UI service calls now have
+[source-bound component proof](evidence/2026-09-08-r12-ipc-cancellation/README.md).
+Native 12/12, Windows Flutter 24 and runtime Flutter 80 PASS (one exact-DLL
+case SKIPPED). Offline Win11 fixtures passed, with an integration recheck after
+supplying an omitted test EXE; installed 305 hashes stayed unchanged. Matching
+UI/service packaging, blocking Core cancellation, live TUN, WFP coexistence,
+Win10 and final candidate gates remain OPEN. Earlier entries below are dated
+snapshots; their cancellation gaps are advanced only within this fixture scope.
+
 R12 connect interruption (2026-09-08): a deadline or SCM stop observed between
 connection stages now rolls back before publishing protection. Six local
 fault scenarios cover pre-mutation, late Core/probe completion, journal commit

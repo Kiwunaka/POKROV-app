@@ -4,7 +4,7 @@
 
 namespace pokrov::service {
 
-HANDLE OpenNamedPipeClient(const wchar_t* pipe_name, DWORD timeout_ms) {
+HANDLE OpenNamedPipeClient(const wchar_t* pipe_name, DWORD timeout_ms, DWORD flags) {
   if (pipe_name == nullptr || pipe_name[0] == L'\0') {
     ::SetLastError(ERROR_INVALID_PARAMETER);
     return INVALID_HANDLE_VALUE;
@@ -14,7 +14,7 @@ HANDLE OpenNamedPipeClient(const wchar_t* pipe_name, DWORD timeout_ms) {
   bool observed_busy = false;
   while (true) {
     HANDLE pipe = ::CreateFileW(pipe_name, GENERIC_READ | GENERIC_WRITE, 0,
-                                nullptr, OPEN_EXISTING, 0, nullptr);
+                                nullptr, OPEN_EXISTING, flags, nullptr);
     if (pipe != INVALID_HANDLE_VALUE) {
       return pipe;
     }

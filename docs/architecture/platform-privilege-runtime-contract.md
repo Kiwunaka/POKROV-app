@@ -104,8 +104,8 @@ The service transport is a local named pipe with:
   disconnect, cancel, recover and a sanitized diagnostic state;
 - server-side authorization per command.
 
-The current local R12 source also requires the negotiated `ProfileIdentity`
-capability (bit 5) on both UI and service. Frame version stays 1; a mixed old/new
+The current local R12 source requires negotiated `ProfileIdentity` (bit 5) and
+`Cancellation` (bit 6) capabilities on both UI and service. Frame version stays 1; a mixed old/new
 bundle fails capability negotiation and requires matching UI/service installation.
 `connect` carries exactly one lowercase 64-hex SHA-256 of the acknowledged stage
 request. The digest covers the flag line, materialized JSON and embedded ruleset
@@ -151,10 +151,11 @@ The current WO-005B1/005B2/005C source implements:
 - bounded UI-side pipe acquisition. A genuinely absent service pipe fails
   immediately. After observing an existing but busy pipe, the client retries
   both another waiter's `CreateFileW` race and the short gap while the serial
-  service replaces its pipe instance, for at most five seconds;
+  service replaces a pipe instance, for at most five seconds. The service now
+  admits at most eight authenticated sessions while keeping one runtime owner;
 - a three-second monotonic budget for each IPC frame transfer, shared by its
   header and body. Partial frames, idle sessions and unread replies cannot
-  monopolize the serial pipe indefinitely. An incompatible hello gets a
+  monopolize a session slot indefinitely. An incompatible hello gets a
   bounded opportunity to consume its rejection; no follow-up request is run.
   Session teardown never calls an unbounded pipe flush;
 - a persistent service runtime owner that loads only the sibling
@@ -229,13 +230,43 @@ identity or protection. A rollback failure takes precedence and remains
 native UI parser accepts `deadline_exceeded` and `operation_cancelled` as closed
 failure categories; matched UI/service source must be packaged together.
 
-These checks are cooperative boundaries: a blocking Core, WinHTTP or recovery
-call must return before the signal can be observed. They do not promise bounded
-in-call cancellation or rollback duration. The `cancel`, `recover` and `diagnostic-state` command identifiers
-are recognized but currently have no dispatcher implementation and return
-`runtime_not_owned`. Automatic startup recovery remains separate. Correlated
-operation cancellation and concurrent mutation acceptance remain open W06
-requirements; neither a frame timeout nor a late-commit fence closes them.
+Status and cancellation can be served during Connect. A concurrent mutation
+returns `runtime_busy`; it is not queued inside the privileged service. Cached
+`connecting`/`busy` snapshots expose no protection or effective identity and
+do not permit another connect. RuntimeHost itself is touched by only one
+dispatcher execution, including rollback.
+
+A cancel request carries exactly 64 lowercase hexadecimal characters encoding
+the target connection's session token and operation nonce. It still has its own
+authenticated session, correlation, deadline and fresh replay-protected nonce.
+Only the active token/nonce pair can be cancelled. `cancellation_requested`
+acknowledges the request; the original Connect response proves its outcome.
+The dispatcher also rolls back a cancellation accepted after the final runtime
+check but before completion is published. Active identity is cleared under the
+cancellation lock; stale cancellation cannot reach a later connection. Target
+tokens and nonces never enter the event journal.
+
+The UI runs service calls on one bounded worker queue and completes method
+results on the window thread. A replacement connect, stage, invalidation or
+disconnect requests cancellation of the preceding connection before its queued
+mutation runs. A separate authenticated IPC exchange sends that cancellation.
+Client frame I/O is overlapped and bounded (three-second hello/write frames,
+33-second normal response budget); window destruction abandons pending reads
+after requesting cancellation. This does not assert that the remote runtime
+has already stopped.
+
+The egress request uses asynchronous WinHTTP, retains callback state until
+`HANDLE_CLOSING`, and closes the pending request on interruption. Retry waits
+also check interruption. HTTPS, proxy bypass and the required proof marker are
+unchanged. The loopback HTTP factory exists only in Debug test builds. See
+[WinHTTP cancellation and callback lifetime](https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpclosehandle).
+
+Blocking Core Start/Stop and recovery calls still must return before the
+cooperative signal can be observed; bounded in-call Core cancellation and
+rollback duration remain unproven. The `recover` and `diagnostic-state` command
+identifiers still return `runtime_not_owned`; automatic startup recovery is
+separate. Local IPC/worker tests do not close installed WFP coexistence, Win10
+or the final package's connected-network acceptance.
 
 ### Windows network transaction target
 

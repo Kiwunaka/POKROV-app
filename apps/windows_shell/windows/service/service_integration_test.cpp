@@ -151,7 +151,8 @@ int RunStalledClientCase(bool unread_hello_response) {
           FrameKind::kHelloRequest, Command::kHello, Status::kNone,
           MakeIdentifier(9), {}, {}, 0,
           kCapabilityProtocolV1 | kCapabilityStatus |
-              kCapabilityRuntimeControl | kCapabilityProfileIdentity, ""};
+              kCapabilityRuntimeControl | kCapabilityProfileIdentity |
+              kCapabilityCancellation, ""};
       Expect(WriteFrame(rejected_pipe, hello), "stalled hello write failed");
     } else {
       std::uint8_t partial_header = 0x50;
@@ -189,7 +190,7 @@ int RunStalledClientCase(bool unread_hello_response) {
         {},
         0,
         kCapabilityProtocolV1 | kCapabilityStatus |
-            kCapabilityRuntimeControl | kCapabilityProfileIdentity,
+            kCapabilityRuntimeControl | kCapabilityProfileIdentity | kCapabilityCancellation,
         "",
     };
     Expect(WriteFrame(pipe, hello), "hello write failed");
@@ -200,7 +201,8 @@ int RunStalledClientCase(bool unread_hello_response) {
              "compatible hello was rejected");
       Expect(hello_response->capabilities ==
                  (kCapabilityProtocolV1 | kCapabilityStatus |
-                  kCapabilityRuntimeControl | kCapabilityProfileIdentity),
+                  kCapabilityRuntimeControl | kCapabilityProfileIdentity |
+                  kCapabilityCancellation),
              "service advertised unsupported capabilities");
       Expect(!IsZeroIdentifier(hello_response->session_token),
              "service omitted the session token");

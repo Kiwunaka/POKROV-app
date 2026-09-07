@@ -45,19 +45,19 @@ class CoreOperationalEventFence {
   std::int64_t last_sequence_ = 0;
 };
 
+enum class OperationInterruption { kNone, kCancelled, kDeadlineExceeded };
+using CheckInterruption = std::function<OperationInterruption()>;
+
 class RuntimeEgressProbe {
  public:
   virtual ~RuntimeEgressProbe() = default;
-  virtual std::string Verify() = 0;
+  virtual std::string Verify(const CheckInterruption& interrupted = {}) = 0;
 };
 
 struct RuntimeResult {
   Status status = Status::kNotReady;
   std::string body;
 };
-
-enum class OperationInterruption { kNone, kCancelled, kDeadlineExceeded };
-using CheckInterruption = std::function<OperationInterruption()>;
 
 class RuntimeHost {
  public:
@@ -69,6 +69,7 @@ class RuntimeHost {
   ~RuntimeHost();
 
   RuntimeResult Snapshot() const;
+  RuntimeResult PendingSnapshot(Command command) const;
   RuntimeResult RecoverOnStartup();
   RuntimeResult Initialize();
   RuntimeResult StageProfile(const std::string& body);
@@ -89,7 +90,7 @@ class RuntimeHost {
   };
 
   RuntimeResult Fail(Status status, const char* failure);
-  std::string SnapshotBody() const;
+  std::string SnapshotBody(const char* pending_phase = nullptr) const;
   bool PrepareDirectories();
   std::string WriteProfileAtomically(const std::string& profile);
   bool WriteBundledRuleSets(
@@ -121,6 +122,11 @@ class RuntimeHost {
 
 std::unique_ptr<CoreRuntime> CreateInstalledCoreRuntime();
 std::unique_ptr<RuntimeEgressProbe> CreateAuthenticatedEgressProbe();
+#ifdef _DEBUG
+// Loopback-only fixture; the production factory has no caller-owned URL.
+std::unique_ptr<RuntimeEgressProbe> CreateLoopbackEgressProbeForTest(
+    std::uint16_t port);
+#endif
 std::wstring ResolveServiceRuntimeRoot();
 
 }  // namespace pokrov::service
