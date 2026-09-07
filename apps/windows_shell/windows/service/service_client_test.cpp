@@ -43,5 +43,16 @@ int main() {
          "trailing service field accepted");
   expect(snapshot(digest).size() <= kMaxControlBodySize,
          "snapshot exceeded bounded IPC response");
+  for (const auto* failure : {"deadline_exceeded", "operation_cancelled"}) {
+    const auto body =
+        std::string("phase=config_staged;core_ready=1;can_initialize=1;can_connect=1;") +
+        "running=0;core_egress_validated=0;dns_ready=0;staged_profile_digest=" +
+        digest + ";effective_profile_digest=none;failure=" + failure;
+    ServiceRuntimeSnapshot interrupted;
+    expect(ParseServiceRuntimeSnapshot(body, &interrupted) &&
+               interrupted.failure == failure && !interrupted.running &&
+               !interrupted.core_egress_validated && interrupted.can_connect,
+           "interrupted runtime response lost retry state or became incompatible");
+  }
   return failures == 0 ? 0 : 1;
 }

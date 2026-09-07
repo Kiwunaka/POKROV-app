@@ -44,6 +44,7 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
     ++start_calls;
     last_profile_path = config_path;
     last_disable_memory_limit = disable_memory_limit;
+    if (on_start) on_start();
     return start_error;
   }
 
@@ -63,17 +64,20 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
   std::string secure_error;
   std::string start_error;
   std::string stop_error;
+  std::function<void()> on_start;
 };
 
 class FakeEgressProbe final : public pokrov::service::RuntimeEgressProbe {
  public:
   std::string Verify() override {
     ++verify_calls;
+    if (on_verify) on_verify();
     return verify_error;
   }
 
   int verify_calls = 0;
   std::string verify_error;
+  std::function<void()> on_verify;
 };
 
 class FakeRecovery final : public pokrov::service::RuntimeRecovery {
@@ -91,6 +95,7 @@ class FakeRecovery final : public pokrov::service::RuntimeRecovery {
 
   std::string Record(pokrov::service::RecoveryStage stage) override {
     recorded.push_back(stage);
+    if (on_record) on_record(stage);
     return fail_record && stage == fail_stage ? record_error : "";
   }
 
@@ -126,6 +131,7 @@ class FakeRecovery final : public pokrov::service::RuntimeRecovery {
   std::string rollback_error;
   std::string restore_error;
   std::string complete_error;
+  std::function<void(pokrov::service::RecoveryStage)> on_record;
 };
 
 class FakeServiceEvents final : public pokrov::service::ServiceEventSink {
@@ -1050,9 +1056,84 @@ void TestCoreOperationalEventFenceRejectsLateAndUnsafeCallbacks() {
   Expect(fence.Accept(event), "closed egress failure was rejected");
 }
 
+void TestInterruptedConnectNeverPublishesProtection() {
+  using namespace pokrov::service;
+  // The signal can arrive before mutation, inside Core/probe, or while the
+  // durable journal is being advanced. No late success may publish protection.
+  for (int checkpoint = 0; checkpoint < 6; ++checkpoint) {
+    const auto root = CreateTestRoot();
+    Expect(!root.empty(), "interrupted connect root was not created");
+    if (root.empty()) return;
+    {
+      auto core = std::make_unique<FakeCoreRuntime>();
+      auto* core_state = core.get();
+      auto probe = std::make_unique<FakeEgressProbe>();
+      auto* probe_state = probe.get();
+      auto recovery = std::make_unique<FakeRecovery>();
+      auto* recovery_state = recovery.get();
+      auto signal = OperationInterruption::kNone;
+      const auto reason = checkpoint % 2 == 0
+                              ? OperationInterruption::kDeadlineExceeded
+                              : OperationInterruption::kCancelled;
+      core->on_start = [&] {
+        if (checkpoint == 1) signal = reason;
+      };
+      probe->on_verify = [&] {
+        if (checkpoint == 2 || checkpoint == 5) signal = reason;
+      };
+      recovery->on_record = [&](RecoveryStage stage) {
+        if ((checkpoint == 3 && stage == RecoveryStage::kVerified) ||
+            (checkpoint == 4 && stage == RecoveryStage::kCommitted)) {
+          signal = reason;
+        }
+      };
+      if (checkpoint == 5) {
+        recovery->restore_error = "recovery_network_restore_failed";
+      }
+      RuntimeHost host(std::move(core), std::move(probe), std::move(recovery),
+                       root, false);
+      Expect(host.Initialize().status == Status::kOk &&
+                 host.StageProfile("0\n{\"inbounds\":[{\"type\":\"tun\"}]}")
+                         .status == Status::kOk,
+             "interrupted connect fixture could not stage");
+      if (checkpoint == 0) signal = reason;
+      const auto result = host.Connect(StagedDigest(host), [&] { return signal; });
+      const auto expected_status =
+          checkpoint == 5 || reason == OperationInterruption::kCancelled
+              ? Status::kNotReady : Status::kDeadlineExceeded;
+      Expect(result.status == expected_status,
+             "interrupted connection returned success or lost interruption status");
+      Expect(!Contains(result, "phase=running") &&
+                 Contains(result, ";core_egress_validated=0;") &&
+                 Contains(result, ";effective_profile_digest=none;"),
+             "interrupted connection published protection or effective identity");
+      Expect(checkpoint == 0
+                 ? core_state->start_calls == 0 && recovery_state->begin_calls == 0
+                 : core_state->stop_calls == 1 &&
+                       recovery_state->restore_network_calls == 1,
+             "interrupted connection crossed mutation boundary or skipped rollback");
+      Expect(checkpoint != 1 || probe_state->verify_calls == 0,
+             "cancelled Core start continued into egress verification");
+      if (checkpoint == 5) {
+        Expect(Contains(result, "phase=recovery_required") &&
+                   Contains(result, "failure=recovery_network_restore_failed"),
+               "interruption hid rollback failure");
+        recovery_state->restore_error.clear();
+        Expect(host.Disconnect().status == Status::kOk,
+               "interrupted rollback could not be retried");
+      } else {
+        Expect(Contains(result, "phase=config_staged"),
+               "interruption did not preserve staged profile for a fresh attempt");
+      }
+    }
+    RemoveTestRoot(root);
+  }
+}
+
 }  // namespace
 
 int main() {
+  TestInterruptedConnectNeverPublishesProtection();
   TestProfileIdentityFollowsCommittedRuntime();
   TestFailedProfileSecurityPreservesPreviouslyStagedBytes();
   TestRuntimeLifecycle();

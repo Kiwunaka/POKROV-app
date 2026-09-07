@@ -227,6 +227,7 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
 
     Status status = Status::kOk;
     std::string body;
+    const auto monotonic_now = ::GetTickCount64();
     const auto now = UnixTimeMilliseconds();
     if (request->session_token != session_token) {
       status = Status::kUnauthorized;
@@ -274,9 +275,20 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
           case Command::kInvalidateProfile:
             result = runtime->InvalidateProfile();
             break;
-          case Command::kConnect:
-            result = runtime->Connect(request->body);
+          case Command::kConnect: {
+            // Convert the admitted wall-clock deadline once. Clock changes
+            // cannot extend the lifetime of this connection transaction.
+            const auto deadline = monotonic_now + request->deadline_unix_ms - now;
+            result = runtime->Connect(request->body, [stop_event, deadline] {
+              if (::WaitForSingleObject(stop_event, 0) == WAIT_OBJECT_0) {
+                return OperationInterruption::kCancelled;
+              }
+              return ::GetTickCount64() >= deadline
+                         ? OperationInterruption::kDeadlineExceeded
+                         : OperationInterruption::kNone;
+            });
             break;
+          }
           case Command::kDisconnect:
             result = runtime->Disconnect();
             break;

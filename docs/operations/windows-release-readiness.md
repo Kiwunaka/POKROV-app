@@ -1,5 +1,16 @@
 # Windows Release Readiness
 
+Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
+lab entries below do not replace its packaged bytes or release decision.
+
+R12 connect interruption (2026-09-08): a deadline or SCM stop observed between
+connection stages now rolls back before publishing protection. Six local
+fault scenarios cover pre-mutation, late Core/probe completion, journal commit
+and failed rollback; [source-bound evidence](evidence/2026-09-08-r12-connect-interruption/README.md)
+retains the failed regression and passing native/runtime suites. This is local
+source proof. Blocking-call interruption, correlated IPC cancellation,
+concurrent mutations and installed managed-network acceptance remain OPEN.
+
 R12 IPC timeout (2026-09-08): fixed stalled sessions blocking the sole pipe
 and an unread reply blocking SCM stop. [Native and installed red/green proof](evidence/2026-09-08-r12-ipc-timeout/README.md)
 shows another client admitted after 3.0–3.05 seconds and SCM stop in 10 ms.

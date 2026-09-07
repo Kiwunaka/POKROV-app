@@ -2,6 +2,7 @@
 #define POKROV_SERVICE_SERVICE_RUNTIME_H_
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -55,6 +56,9 @@ struct RuntimeResult {
   std::string body;
 };
 
+enum class OperationInterruption { kNone, kCancelled, kDeadlineExceeded };
+using CheckInterruption = std::function<OperationInterruption()>;
+
 class RuntimeHost {
  public:
   RuntimeHost(std::unique_ptr<CoreRuntime> core,
@@ -69,7 +73,8 @@ class RuntimeHost {
   RuntimeResult Initialize();
   RuntimeResult StageProfile(const std::string& body);
   RuntimeResult InvalidateProfile();
-  RuntimeResult Connect(const std::string& expected_profile_digest);
+  RuntimeResult Connect(const std::string& expected_profile_digest,
+                        const CheckInterruption& interrupted = {});
   RuntimeResult Disconnect();
   void Shutdown();
 

@@ -219,12 +219,23 @@ exposing a release entrypoint. A separate native concurrency test opens 32
 clients against one serial pipe instance and requires every bounded retry to
 reach the server.
 
-These transport deadlines do not cancel an already executing Core/network
-transaction. The `cancel`, `recover` and `diagnostic-state` command identifiers
+Connect also checks its admitted deadline and the SCM stop signal before
+mutation and between snapshot, Core start, egress verification and journal
+commit. The wall-clock deadline is converted once to a monotonic deadline.
+A signal observed after mutation rolls back through the existing journal on
+the same runtime owner before returning; it cannot publish effective profile
+identity or protection. A rollback failure takes precedence and remains
+`recovery_required`. Successful rollback preserves the staged profile. The
+native UI parser accepts `deadline_exceeded` and `operation_cancelled` as closed
+failure categories; matched UI/service source must be packaged together.
+
+These checks are cooperative boundaries: a blocking Core, WinHTTP or recovery
+call must return before the signal can be observed. They do not promise bounded
+in-call cancellation or rollback duration. The `cancel`, `recover` and `diagnostic-state` command identifiers
 are recognized but currently have no dispatcher implementation and return
 `runtime_not_owned`. Automatic startup recovery remains separate. Correlated
 operation cancellation and concurrent mutation acceptance remain open W06
-requirements; a frame timeout is not evidence that those requirements passed.
+requirements; neither a frame timeout nor a late-commit fence closes them.
 
 ### Windows network transaction target
 

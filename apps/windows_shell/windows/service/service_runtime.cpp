@@ -911,7 +911,29 @@ RuntimeResult RuntimeHost::InvalidateProfile() {
   return Snapshot();
 }
 
-RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest) {
+RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest,
+                                  const CheckInterruption& interrupted) {
+  // Core and network state stay on this serial owner. An interruption never
+  // races Stop against Start, and rollback must finish even after the deadline.
+  const auto interruption = [&](bool rollback) -> std::optional<RuntimeResult> {
+    const auto reason =
+        interrupted ? interrupted() : OperationInterruption::kNone;
+    if (reason == OperationInterruption::kNone) return std::nullopt;
+    if (rollback) {
+      const auto error = RollbackRuntime();
+      effective_profile_digest_.clear();
+      core_egress_validated_ = false;
+      phase_ = error.empty() ? Phase::kConfigStaged : Phase::kRecoveryRequired;
+      if (!error.empty()) {
+        RecordEvent(ServiceEvent::kRuntimeRecoveryRequired,
+                    ServiceEventOutcome::kFailed);
+        return Fail(Status::kNotReady, error.c_str());
+      }
+    }
+    return reason == OperationInterruption::kDeadlineExceeded
+               ? Fail(Status::kDeadlineExceeded, "deadline_exceeded")
+               : Fail(Status::kNotReady, "operation_cancelled");
+  };
   if (!initialized_ || !profile_staged_) {
     return Fail(Status::kNotReady, "profile_not_staged");
   }
@@ -919,6 +941,7 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest) {
       expected_profile_digest != staged_profile_digest_) {
     return Fail(Status::kNotReady, "profile_identity_mismatch");
   }
+  if (const auto result = interruption(false)) return *result;
   if (phase_ == Phase::kRunning) {
     return Snapshot();
   }
@@ -938,6 +961,7 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest) {
   }
   RecordEvent(ServiceEvent::kRuntimeNetworkSnapshot,
               ServiceEventOutcome::kSucceeded);
+  if (const auto result = interruption(true)) return *result;
   recovery_error = recovery_->Record(RecoveryStage::kCoreStarted);
   if (!recovery_error.empty()) {
     const auto rollback_error = RollbackRuntime();
@@ -950,6 +974,7 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest) {
     }
     return Fail(Status::kNotReady, recovery_error.c_str());
   }
+  if (const auto result = interruption(true)) return *result;
   RecordEvent(ServiceEvent::kRuntimeCoreStart,
               ServiceEventOutcome::kAttempted);
   RecordEvent(ServiceEvent::kRuntimeWintunStart,
@@ -981,6 +1006,7 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest) {
     }
     return Fail(Status::kNotReady, "core_start_failed");
   }
+  if (const auto result = interruption(true)) return *result;
   recovery_error = recovery_->Record(RecoveryStage::kNetworkApplied);
   if (!recovery_error.empty()) {
     RecordEvent(ServiceEvent::kRuntimeCoreStart,
@@ -1013,9 +1039,13 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest) {
               ServiceEventOutcome::kSucceeded);
   RecordEvent(ServiceEvent::kRuntimeDnsApply,
               ServiceEventOutcome::kSucceeded);
+  if (const auto result = interruption(true)) return *result;
   RecordEvent(ServiceEvent::kRuntimeEgressVerify,
               ServiceEventOutcome::kAttempted);
-  if (egress_probe_ == nullptr || !egress_probe_->Verify().empty()) {
+  const bool egress_verified =
+      egress_probe_ != nullptr && egress_probe_->Verify().empty();
+  if (const auto result = interruption(true)) return *result;
+  if (!egress_verified) {
     RecordEvent(ServiceEvent::kRuntimeEgressVerify,
                 ServiceEventOutcome::kFailed);
     const auto rollback_error = RollbackRuntime();
@@ -1036,6 +1066,7 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest) {
               ServiceEventOutcome::kAttempted);
   recovery_error = recovery_->Record(RecoveryStage::kVerified);
   if (recovery_error.empty()) {
+    if (const auto result = interruption(true)) return *result;
     recovery_error = recovery_->Record(RecoveryStage::kCommitted);
   }
   if (!recovery_error.empty()) {
@@ -1053,6 +1084,7 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest) {
     }
     return Fail(Status::kNotReady, recovery_error.c_str());
   }
+  if (const auto result = interruption(true)) return *result;
   effective_profile_digest_ = staged_profile_digest_;
   core_egress_validated_ = true;
   phase_ = Phase::kRunning;
