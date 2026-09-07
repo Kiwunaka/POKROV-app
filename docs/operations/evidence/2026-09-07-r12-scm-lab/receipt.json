@@ -1,0 +1,593 @@
+{
+  "schema": "r12-windows-scm-lab-v1",
+  "date": "2026-09-07",
+  "status": "PASS_COMPONENT_ONLY",
+  "client_source": "40e005e76f01b3a5a9d9fbcd92fa1749c412956b",
+  "bundle_source": "98c39d62442865b46a13c40092217f6ec71ee33b",
+  "core_source": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "vm_uuid": "d5ae2f7a-96c3-48b5-a2ba-5e009948ee27",
+  "os": "Windows 11 Enterprise Evaluation 10.0.26200 x64",
+  "origin": "local owned offline VM",
+  "scope": "real LocalSystem SCM and current Core DLL, production IPC client functions in a dedicated limited-token probe; not full UI, installer, TUN or release proof",
+  "token_scope": "filtered non-elevated token of existing administrator account; not separate non-admin account install proof",
+  "results": {
+    "limited_probe": {
+      "utc": "2026-09-07T19:34:06.4989504Z",
+      "elevated": false,
+      "exit_code": 0,
+      "owner_sid_matches": true,
+      "install_write_allowed": false,
+      "probe": {
+        "available": true,
+        "before_can_initialize": true,
+        "initialize_accepted": true,
+        "initialize_core_ready": true,
+        "can_connect": false,
+        "trusted": true,
+        "compatible": true,
+        "command_accepted": true,
+        "core_ready": true,
+        "running": false
+      }
+    },
+    "lifecycle_checks": [
+      {
+        "pass": true,
+        "name": "SCM_RUNNING"
+      },
+      {
+        "pass": true,
+        "name": "LIMITED_OWNER_AUTHENTICATED_STATUS_REAL_CORE_NO_TUN"
+      },
+      {
+        "pass": true,
+        "name": "SCM_STOPPED"
+      },
+      {
+        "pass": true,
+        "name": "DURABLE_LIFECYCLE_EVENTS"
+      }
+    ],
+    "final": {
+      "utc": "2026-09-07T19:38:30.7469912Z",
+      "from_utc": "2026-09-07T19:33:52.7103699Z",
+      "status": "PASS",
+      "service_events": [
+        {
+          "outcome": "succeeded",
+          "status": "none",
+          "utc": "2026-09-07T19:33:53.0759205Z",
+          "name": "service_boot_observed",
+          "command": "none"
+        },
+        {
+          "outcome": "attempted",
+          "status": "none",
+          "utc": "2026-09-07T19:33:53.0759205Z",
+          "name": "service_start_pending",
+          "command": "none"
+        },
+        {
+          "outcome": "succeeded",
+          "status": "none",
+          "utc": "2026-09-07T19:33:53.0759205Z",
+          "name": "service_running",
+          "command": "none"
+        },
+        {
+          "outcome": "accepted",
+          "status": "none",
+          "utc": "2026-09-07T19:34:06.6274785Z",
+          "name": "ipc_session_accepted",
+          "command": "none"
+        },
+        {
+          "outcome": "attempted",
+          "status": "none",
+          "utc": "2026-09-07T19:34:06.6274785Z",
+          "name": "ipc_request",
+          "command": "hello"
+        },
+        {
+          "outcome": "succeeded",
+          "status": "ok",
+          "utc": "2026-09-07T19:34:06.6274785Z",
+          "name": "ipc_response",
+          "command": "hello"
+        },
+        {
+          "outcome": "attempted",
+          "status": "none",
+          "utc": "2026-09-07T19:34:06.6274785Z",
+          "name": "ipc_request",
+          "command": "status"
+        },
+        {
+          "outcome": "succeeded",
+          "status": "ok",
+          "utc": "2026-09-07T19:34:06.6274785Z",
+          "name": "ipc_response",
+          "command": "status"
+        },
+        {
+          "outcome": "succeeded",
+          "status": "none",
+          "utc": "2026-09-07T19:34:06.6274785Z",
+          "name": "ipc_session_closed",
+          "command": "none"
+        },
+        {
+          "outcome": "accepted",
+          "status": "none",
+          "utc": "2026-09-07T19:34:06.6274785Z",
+          "name": "ipc_session_accepted",
+          "command": "none"
+        },
+        {
+          "outcome": "attempted",
+          "status": "none",
+          "utc": "2026-09-07T19:34:06.6274785Z",
+          "name": "ipc_request",
+          "command": "hello"
+        },
+        {
+          "outcome": "succeeded",
+          "status": "ok",
+          "utc": "2026-09-07T19:34:06.6274785Z",
+          "name": "ipc_response",
+          "command": "hello"
+        },
+        {
+          "outcome": "attempted",
+          "status": "none",
+          "utc": "2026-09-07T19:34:06.6274785Z",
+          "name": "ipc_request",
+          "command": "initialize"
+        },
+        {
+          "outcome": "attempted",
+          "status": "none",
+          "utc": "2026-09-07T19:34:06.6274785Z",
+          "name": "runtime_initialize",
+          "command": "none"
+        },
+        {
+          "outcome": "succeeded",
+          "status": "none",
+          "utc": "2026-09-07T19:34:10.6686277Z",
+          "name": "runtime_initialize",
+          "command": "none"
+        },
+        {
+          "outcome": "succeeded",
+          "status": "ok",
+          "utc": "2026-09-07T19:34:10.6686277Z",
+          "name": "ipc_response",
+          "command": "initialize"
+        },
+        {
+          "outcome": "succeeded",
+          "status": "none",
+          "utc": "2026-09-07T19:34:10.6686277Z",
+          "name": "ipc_session_closed",
+          "command": "none"
+        },
+        {
+          "outcome": "accepted",
+          "status": "none",
+          "utc": "2026-09-07T19:34:10.6806655Z",
+          "name": "ipc_session_accepted",
+          "command": "none"
+        },
+        {
+          "outcome": "attempted",
+          "status": "none",
+          "utc": "2026-09-07T19:34:10.6806655Z",
+          "name": "ipc_request",
+          "command": "hello"
+        },
+        {
+          "outcome": "succeeded",
+          "status": "ok",
+          "utc": "2026-09-07T19:34:10.6806655Z",
+          "name": "ipc_response",
+          "command": "hello"
+        },
+        {
+          "outcome": "attempted",
+          "status": "none",
+          "utc": "2026-09-07T19:34:10.6806655Z",
+          "name": "ipc_request",
+          "command": "status"
+        },
+        {
+          "outcome": "succeeded",
+          "status": "ok",
+          "utc": "2026-09-07T19:34:10.6806655Z",
+          "name": "ipc_response",
+          "command": "status"
+        },
+        {
+          "outcome": "succeeded",
+          "status": "none",
+          "utc": "2026-09-07T19:34:10.6806655Z",
+          "name": "ipc_session_closed",
+          "command": "none"
+        },
+        {
+          "outcome": "accepted",
+          "status": "none",
+          "utc": "2026-09-07T19:34:11.1130097Z",
+          "name": "service_stop_requested",
+          "command": "none"
+        },
+        {
+          "outcome": "succeeded",
+          "status": "none",
+          "utc": "2026-09-07T19:34:11.1149685Z",
+          "name": "service_stopped",
+          "command": "none"
+        }
+      ],
+      "core_events": [
+        {
+          "outcome": "started",
+          "utc": "2026-09-07T19:34:10.5594099Z",
+          "name": "core.runtime.initialize",
+          "subsystem": "core",
+          "stage": "initialize"
+        },
+        {
+          "outcome": "succeeded",
+          "utc": "2026-09-07T19:34:10.6686277Z",
+          "name": "core.runtime.initialize",
+          "subsystem": "core",
+          "stage": "initialize"
+        }
+      ],
+      "journal_sha256": "6be20f70bb9dc9802ff66ed7dc8d1d1dbc229427ec7e60374459e3b2a9674281",
+      "installed_files": [
+        {
+          "sha256": "46d87dcb3b82d1c6fdcd3ddbd17e829ad509fc21aba86a82425448c69f0fffcc",
+          "name": "pokrov_service.exe"
+        },
+        {
+          "sha256": "c679ba5af42939acbc8c6f44af59b4608f6a76c99e0d444cfa4bcc825bcc8e68",
+          "name": "pokrov-core.dll"
+        },
+        {
+          "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7",
+          "name": "libcronet.dll"
+        },
+        {
+          "sha256": "9057d39b36b6c7d054865ee2bf9cde7a490fe3b01ec4e82514687e24f576269f",
+          "name": "msvcp140.dll"
+        },
+        {
+          "sha256": "da72e6677bd1bcd01c453c1998aaa19aeaf6659f4774cf6848409da8232a95b2",
+          "name": "vcruntime140.dll"
+        },
+        {
+          "sha256": "26e470b29bed3d873e0c328186e53f95e9edbfe0b0fd0cda44743a0b1a04a828",
+          "name": "vcruntime140_1.dll"
+        },
+        {
+          "sha256": "040b2578391be04bd55a1448db68d7756625e7372a3013ab627fec8ba001cac1",
+          "name": "r12_scm_probe.exe"
+        }
+      ],
+      "service_state": "Stopped",
+      "service_start_mode": "Manual",
+      "service_account": "LocalSystem",
+      "service_path": "\"C:\\Program Files\\POKROV-R12-Lab\\pokrov_service.exe\"",
+      "service_process_count": 0,
+      "up_adapters": 0,
+      "pokrov_adapters": 0,
+      "runtime_files": [
+        "service-events.v1.log",
+        "working\\data\\AppSettings.db\\000001.log",
+        "working\\data\\AppSettings.db\\CURRENT",
+        "working\\data\\AppSettings.db\\LOCK",
+        "working\\data\\AppSettings.db\\LOG",
+        "working\\data\\AppSettings.db\\MANIFEST-000000"
+      ]
+    }
+  },
+  "attempts": [
+    {
+      "attempt": "v1",
+      "classification": "REJECTED_FIXTURE_PATH",
+      "result": "SCM running; IPC server rejected because fixture ImagePath used forward slashes; stock installer uses Windows backslashes."
+    },
+    {
+      "attempt": "v2",
+      "classification": "REJECTED_COLLECTOR_EXPECTATION",
+      "result": "IPC available/trusted/compatible/status accepted; core_ready false is expected before explicit initialization."
+    },
+    {
+      "attempt": "v3",
+      "classification": "PASS_COMPONENT_ONLY",
+      "result": "Explicit Initialize accepted, Core ready; subsequent Status accepted, no staged profile or connection; lifecycle events independently filtered by schema and v3 start time."
+    }
+  ],
+  "limitations": [
+    "No managed transport, TUN, DNS/IPv6/routes, network recovery or installer acceptance",
+    "No separate standard account, Windows 10 or final release-channel proof",
+    "First summary collector split service and Core records alike; use final-events.json schema-aware extraction, not v3 raw events array, for event semantics",
+    "Evaluation Windows shut down via wlms.exe at 19:36:19Z after completed run; restarted and evidence persisted; long duration lab constrained by evaluation shutdown"
+  ],
+  "artifacts": [
+    {
+      "path": "E:\\r12-scm-20260907\\collect-final.ps1",
+      "sha256": "f527d9414be29aeb52c96bafaa70d5a16967dcd1b48655e2f2573edf9288b16b",
+      "bytes": 2655
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\launch-collect.txt",
+      "sha256": "be5ee097804108139e6b85ecb9121fb3c6d50b92425a20e58375a7116f9210f0",
+      "bytes": 230
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\launch-scm.txt",
+      "sha256": "9667cdbefd24936906924c9d1e0b53bdefcdfbf47f06e6f0c811cbb619a8d572",
+      "bytes": 226
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\launch-v2.txt",
+      "sha256": "5897afe02657aac4837b17305569a7794715177dc4d60d006f9c34d410459f83",
+      "bytes": 229
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\launch-v3.txt",
+      "sha256": "76bcfba458da97b8d8100e2c5cfa647b49620438f2d519d728712b1953a8bb64",
+      "bytes": 229
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\limited-probe-v2.ps1",
+      "sha256": "1aeb8ed185e35d65afc356d456944ae58882d0f652d694a1d7331ffe6bc2ac06",
+      "bytes": 2036
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\limited-probe-v3.ps1",
+      "sha256": "1b8c4ecdefb61cedc1704d062b56f66b73504b146ebd974dd58663412c1839f4",
+      "bytes": 2039
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\limited-probe.ps1",
+      "sha256": "bcfa44b3ba3dfb3bba202076fe94708450fca0b8861778575f47aef0465701c5",
+      "bytes": 2009
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\login-state.png",
+      "sha256": "a30d982d2e9000abfe1ece8f344096075e733908c61524fc4581509800447013",
+      "bytes": 600673
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\payload.zip",
+      "sha256": "53b7fc7a209d1a6ab3340d4cf1d0264425e9cd57d3dda1badd8bcfad01a05a89",
+      "bytes": 24329154
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\probe-build-v3.log",
+      "sha256": "7fbfa3544b71e6c44ae54e5c5cdbdd1b7486883571c69e42d3ec8aa737775f8f",
+      "bytes": 479
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\probe-build.log",
+      "sha256": "080111c1ef1b0b1ac99bfece6d28527537a25128885532d6ed99dedd21b3e445",
+      "bytes": 470
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\probe-configure-v3.log",
+      "sha256": "ff642ea2e6e064036e74fd983a8bf7055c3bee947e9104139404a139704dd845",
+      "bytes": 577
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\probe-configure.log",
+      "sha256": "d8d0170d274c0f921a6d716e9887b578366c6332885197c799e895bffcda985e",
+      "bytes": 574
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\probe-source\\CMakeLists.txt",
+      "sha256": "e14ca2564a2422f09623e880732cd378a83e6d56091b118666c8adece44f6c38",
+      "bytes": 633
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\probe-source\\main.cpp",
+      "sha256": "498690bd52b0dca63d7cabb3c34d07de3cfdaaf7a3f01363d4af849007620647",
+      "bytes": 1044
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\probe-source-v3\\CMakeLists.txt",
+      "sha256": "e14ca2564a2422f09623e880732cd378a83e6d56091b118666c8adece44f6c38",
+      "bytes": 633
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\probe-source-v3\\main.cpp",
+      "sha256": "95c278c21f5bec7dbad4c9f674e0212599341fdffa3d7706e82fbc5eec1d664c",
+      "bytes": 1623
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\restart.png",
+      "sha256": "286458c5e7facb4be94b95754b8eff4f5fdc12881d4e4905d503e4473fe812f3",
+      "bytes": 387566
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v1\\limited-result.json",
+      "sha256": "178b3e87d6e6fe3e3cd05751a66aa9c6d72303f26884ac76932167961ac91996",
+      "bytes": 449
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v1\\limited.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v1\\limited.stdout.log",
+      "sha256": "ccb36d029442058beb379bb224364e405acaa8dc810ba2ba2f71df65ffc0c408",
+      "bytes": 115
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v1\\ready.json",
+      "sha256": "21f30687f1e1dcbff3f3b9594e07a709cbfd1c75d6e9ae6bfd916ab946ad9bd6",
+      "bytes": 71
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v1\\scm-smoke.json",
+      "sha256": "a07acc6187f7f85325b4b3d0ac7500aa241d5346fe02c258340af8b7ff4ceabf",
+      "bytes": 2479
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v2\\limited-result.json",
+      "sha256": "ae26ae75264566d0cab818af889bfb136f9824dabfb8c310be21e9d96b81cfc9",
+      "bytes": 446
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v2\\limited.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v2\\limited.stdout.log",
+      "sha256": "5a1954e6f71c7e02c260e4ce06ed72102086d07100ec39b7369ffbdb43dcf1a0",
+      "bytes": 112
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v2\\ready.json",
+      "sha256": "3b92091d7120e082dc7a41a640e6a3389a436ec98ac359cc22b0dfe096acf00b",
+      "bytes": 71
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v2\\scm-smoke.json",
+      "sha256": "7bcb3325b90ef068e1330b1d27f9970ea49251715e6b534fc8260478b5329ff4",
+      "bytes": 2564
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v3\\final-events.json",
+      "sha256": "7cf1787a168da3c7e1bbf8b4e77d015630260bf44120a2a3a299f4373f7d4cd0",
+      "bytes": 12259
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v3\\limited-result.json",
+      "sha256": "6687cb77df0f2ef683baa73a6f74daa31f1f7aa5dc0a0876b5718e6a5e4d5c8f",
+      "bytes": 638
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v3\\limited.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v3\\limited.stdout.log",
+      "sha256": "52071f1bed2e0279f334f10cac33940a42b4b073b6b246532b8a9ba611e27b4b",
+      "bytes": 216
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v3\\ready.json",
+      "sha256": "647fdf6be2755e198c4d693966ab93aae1acdcc4c9fb4d7a889d9e02a35cae11",
+      "bytes": 71
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\results\\v3\\scm-smoke.json",
+      "sha256": "ab8f5c8486ba20ab7cbd34ce69b31a7daa62e45ee6a6af73a1e00a9fde95c468",
+      "bytes": 4147
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\scm-smoke-v2.ps1",
+      "sha256": "0c2235cb26a543fae156ee00f4a8eb964e9a86d8abd6943330ddbd9e6dc360ed",
+      "bytes": 5293
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\scm-smoke-v3.ps1",
+      "sha256": "48db7dbd33c1d3903e1da5ebd797d6efc8737abce23ef7c7c86a9216127d05d5",
+      "bytes": 5467
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\scm-smoke.ps1",
+      "sha256": "4e89ad80e1f4aa34e00784ead58427e308932adba6c304964706456e49a7560d",
+      "bytes": 5395
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\scm-smoke.template.ps1",
+      "sha256": "d1a851cb89f6988d82b6e5c217abbf313a77a045689a27eed76115074da03c85",
+      "bytes": 5290
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\shutdown-events.json",
+      "sha256": "8b621b7c53737cc87be95ee703beea350bffc49359ebbf01bc8282a7f31f74fa",
+      "bytes": 491
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\uac-collect.png",
+      "sha256": "541c071a060e29388b6821499a1d676dc08d88909f43912b391f14e6cf84b1df",
+      "bytes": 287617
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\uac-settled.png",
+      "sha256": "541c071a060e29388b6821499a1d676dc08d88909f43912b391f14e6cf84b1df",
+      "bytes": 287617
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\uac-v2.png",
+      "sha256": "541c071a060e29388b6821499a1d676dc08d88909f43912b391f14e6cf84b1df",
+      "bytes": 287617
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\uac-v3.png",
+      "sha256": "541c071a060e29388b6821499a1d676dc08d88909f43912b391f14e6cf84b1df",
+      "bytes": 287617
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\uac.png",
+      "sha256": "df6d33cdf3536deba6eb0497b808f801f083f9cafe9470b5049d9d5156b9ebca",
+      "bytes": 600980
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\probe-build\\Release\\r12_scm_probe.exe",
+      "sha256": "040b2578391be04bd55a1448db68d7756625e7372a3013ab627fec8ba001cac1",
+      "bytes": 43520
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\probe-build-v3\\Release\\r12_scm_probe.exe",
+      "sha256": "21b94713ab84c46fe67ace431bb00bb2c66b48866f0b3e4ab8220ac65c87eb24",
+      "bytes": 44032
+    },
+    {
+      "path": "E:\\r12-scm-20260907\\payload\\manifest.json",
+      "sha256": "c5570b15d312f01702bae3eec9ff1d67a3861c8dddbdf763f66bbd521597dfd5",
+      "bytes": 1242
+    }
+  ],
+  "rollback": "Fixture retained stopped/manual in C:/Program Files/POKROV-R12-Lab with owner registry and private ProgramData; no removal or snapshot rollback. VM running offline; source VM unchanged. No push/merge/deploy/release artifacts.",
+  "validation": {
+    "probe_cmake_release": "PASS /W4 /WX",
+    "client_seed_docs": "PASS",
+    "platform_docs": "PASS 33 tests",
+    "platform_context": "PASS",
+    "package": "PASS 13 imports / 83 R12 / 378 legacy / 278 links",
+    "git_diff_check": "PASS",
+    "release_artifact_delta": "none",
+    "artifacts": [
+      {
+        "path": "E:\\r12-scm-20260907\\client-docs-validation.log",
+        "sha256": "8f5977dd91fc74932aef3ea70cd473b1507ce69dc2e1efb5babfdf1963c475dc",
+        "bytes": 1817
+      },
+      {
+        "path": "E:\\r12-scm-20260907\\platform-docs-validation.log",
+        "sha256": "8e8012de312ded1fc1a4eb22b5cdb3d776c4be76fdde07836ddf39e5bec16c6b",
+        "bytes": 101
+      },
+      {
+        "path": "E:\\r12-scm-20260907\\platform-context-validation.log",
+        "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d",
+        "bytes": 23
+      },
+      {
+        "path": "E:\\r12-scm-20260907\\package-validation.log",
+        "sha256": "dc0559925f8edf5b3456ca231bb541ce011c1d4f515e3cb6efce04365925ac3b",
+        "bytes": 109
+      }
+    ]
+  }
+}

@@ -1,5 +1,12 @@
 # Windows Release Readiness
 
+R12 SCM lab (2026-09-07): current service and Core `8dc57a8` pass real
+LocalSystem start, limited-token owner IPC, explicit Core initialization and
+clean stop on the offline Win11 clone. [Exact component evidence](evidence/2026-09-07-r12-scm-lab/README.md)
+retains the rejected fixture attempts and schema-aware lifecycle results. The
+filtered token belongs to the existing administrator account; full non-admin
+UI/installer, TUN/network, Win10 and final-channel acceptance remain open.
+
 R12 Windows shell (2026-09-07): `0f115d0` fixes repeated hidden startup and
 `98c39d6` fixes native teardown re-entry. The offline Win11 clone passes the
 six activation/visibility scenarios and exits cleanly through both message-loop
@@ -15,7 +22,8 @@ on the offline linked clone `d5ae2f7a-96c3-48b5-a2ba-5e009948ee27`, Windows
 retains binary/source/log hashes and the rejected first collector run. Runtime
 Core/egress/network backends are fixtures; no service, UI, installer or TUN
 acceptance is claimed. A clone-pinned SCM start/status/stop script is prepared
-for manual UAC execution; its runtime result is still `MANUAL_OWNER_TEST`.
+for manual UAC execution at that historical cutoff; the newer SCM evidence
+above executes the current component scenario.
 Retained candidate `pokrov-1.2.0-candidate.33` and its release gate are unchanged.
 
 R12 local staging correction (2026-09-05): the service now secures the pending
@@ -48,8 +56,9 @@ The smoke helper isolates and retains each run's runtime database. The
 and its [older evidence](evidence/2026-09-06-r12-d05-core-binding/windows-evidence.json)
 remain rollback/history. An earlier D05 run against reused test storage timed
 out with database `file missing` errors; that receipt remains retained.
-This binding does not establish Windows service, TUN or DNS proof. The offline
-Win11 component lab above still contains D05 bytes and is not C05 acceptance.
+This binding alone does not establish Windows service, TUN or DNS proof. The
+2026-09-06 component lab used D05 bytes; the 2026-09-07 SCM evidence above uses
+C05 bytes for the bounded service/Core initialization slice.
 
 The local C05 package audit retains an unsigned release-mode Flutter bundle
 with a loopback API endpoint. Golos Text `OFL.txt` is included as a package asset.
