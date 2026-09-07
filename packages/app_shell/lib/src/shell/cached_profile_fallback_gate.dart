@@ -1,5 +1,5 @@
 class CachedProfileFallbackGate {
-  static const maximumRefreshWait = Duration(seconds: 15);
+  static const maximumRefreshWait = Duration(seconds: 3);
 
   static bool isCacheTimestampFresh({
     required DateTime modifiedAt,
@@ -10,6 +10,8 @@ class CachedProfileFallbackGate {
   }
 
   bool _blockedUntilFreshProfile = false;
+  bool _authorizationDenied = false;
+  bool preferProvenProfile = false;
 
   static Duration refreshDeadline(Duration actionTimeout) {
     return actionTimeout < maximumRefreshWait
@@ -17,22 +19,28 @@ class CachedProfileFallbackGate {
         : maximumRefreshWait;
   }
 
-  bool canFallback({required bool cachedProfileAvailable}) {
-    return cachedProfileAvailable && !_blockedUntilFreshProfile;
+  bool canFallback({required bool cachedProfileAvailable, bool inputsVerified = false}) {
+    return cachedProfileAvailable && !_authorizationDenied &&
+        (inputsVerified || !_blockedUntilFreshProfile);
   }
 
   void markUserChange() {
     _blockedUntilFreshProfile = true;
   }
 
-  /// A failed dataplane is not evidence that the staged authorization is
-  /// still valid. Keep normal offline fallback available until that point,
-  /// then require a fresh managed profile before the next connect.
-  void markRuntimeProfileInvalid() {
-    _blockedUntilFreshProfile = true;
+  void markAuthorizationDenied() {
+    _authorizationDenied = true;
+  }
+
+  /// A transport failure is not an authorization denial. Prefer the last
+  /// proven profile on a manual retry without extending its offline window.
+  void markRuntimeFailure() {
+    preferProvenProfile = true;
   }
 
   void markFreshProfileStaged() {
     _blockedUntilFreshProfile = false;
+    _authorizationDenied = false;
+    preferProvenProfile = false;
   }
 }

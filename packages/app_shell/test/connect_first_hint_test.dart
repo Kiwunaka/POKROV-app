@@ -54,6 +54,7 @@ class _StubBootstrapper
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
+    Duration? timeout,
   }) async {
     return const ManagedProfilePayload(
       profileName: 'test-profile',

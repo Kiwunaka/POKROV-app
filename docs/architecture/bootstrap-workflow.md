@@ -10,8 +10,10 @@ profile before staging, even when a reusable staged path exists. Server-side
 assignment changes therefore do not depend on the repair action or a local
 settings change. Transient refresh failures may reuse only the existing fresh,
 authorized cache permitted by `CachedProfileFallbackGate`; the UI identifies
-that fallback and does not claim the new assignment was applied. A rejected
-profile or prior dataplane failure cannot use that transient fallback.
+that fallback and does not claim the new assignment was applied. The owner's
+2026-09-07 decision permits a manual retry after dataplane failure using the
+last downloaded or last proven profile within its original offline window.
+An explicit authorization denial is separate from an unreachable API.
 
 Historical mapping note:
 
@@ -192,7 +194,7 @@ Current blocking dependency:
   Both methods are present in the exact replacement AAR recorded by the active
   Core binding decision. Packaged and device proof remain separate gates
 - after Android reports `running`, the shared shell polls the host-owned egress result through a bounded 750 ms interval for the Core probe window; a terminal `core_egress_probe_failed` snapshot immediately replaces the protected UI with the normal disconnected/reconnect state, while a canceled or newer connect generation cannot be overwritten by an older poll
-- a terminal Android selected-outbound egress failure also invalidates the staged cached runtime profile and blocks that cache from offline fallback; the next connect must obtain and stage a fresh authorized manifest, while ordinary offline fallback remains bounded before any dataplane failure
+- a terminal Android selected-outbound egress failure stops false protection but preserves the bounded downloaded/proven profile cache. A manual retry refreshes opportunistically and may restore the last proven profile if the API is unavailable. Automatic transport/node failover still requires a freshly selected profile and cannot loop through the same cached failed endpoint.
 - the Android host performs that selected-outbound fail-close as one synchronous profile-reuse invalidation: it clears the persisted Quick Settings profile and drops the staged pointer while preserving the safe failure snapshot, so a backgrounded Flutter shell cannot let the tile restart the rejected configuration
 - Android Quick Settings may reuse only a freshly staged managed profile carrying Flutter's completed first-connect route-scope confirmation; legacy path-only or unconfirmed persisted records fail closed into the app
 - Android service stop/start commands carry a monotonic ownership generation;
@@ -554,16 +556,36 @@ presence is diagnostic evidence and does not authorize automatic fallback.
 
 ### Ordinary cache outage boundary
 
-Normal managed-profile fallback requires a readable staged config whose file
-modification age is between zero and 24 hours. A future timestamp (including
-clock rollback) is rejected; it cannot extend freshness. Refresh waits at most
-15 seconds when an otherwise eligible cache exists. Only timeout or transient
-408/429/502/503/504/no-status failures may use it; explicit authorization failures,
-user input changes and a failed dataplane require a fresh profile.
+The owner's 2026-09-07 restricted-network decision permits normal connection
+when the API is unreachable but a VPN endpoint from the last downloaded profile
+is still reachable. `ManagedProfileCache` stores two records in platform secure
+storage: downloaded and last proven. They bind account, install, platform,
+route mode, selected apps and preferred node/variant. They preserve the original
+server-observation time and expire 24 hours after that observation. Future
+timestamps are unavailable. Offline reads, repeated failures and host restaging
+never extend that window. A cache transaction ID fences delayed proof from
+promoting a different download; it is not a server revision or egress proof.
 
-This local freshness check is not a signed offline entitlement lease. The client
+The app tries refresh on ordinary connect/reconnect, allowing at most three
+seconds when a matching cached profile exists. Timeout or transient
+408/429/502/503/504/no-status failure may restore that protected record through
+the regular host staging transaction, including after app/process restart.
+The cache is checked again after refresh failure for expiry or intervening
+authorization denial. Offline preparation performs no WARP-status API call.
+Known 401/403 denial clears the protected cache; missing credentials or an
+account/input mismatch makes it unavailable. A dataplane failure alone prefers
+the proven slot on the next manual retry and does not erase either record.
+
+Hosts/bootstrap fixtures without the protected-cache capability retain the
+legacy staged-file fallback with a 0–24-hour modification-age check. The real
+app bootstrapper uses the protected records rather than resetting freshness
+from a newly materialized file. Every restored profile retains its original
+server revision, and every new tunnel still requires its normal route/egress
+checks. An offline attempt never implies that a new server assignment applied.
+
+This owner-approved grace is not a signed offline entitlement lease. The client
 cannot learn a new remote revocation during a complete control-plane outage;
 server-side credential enforcement remains authoritative. The separate signed
 emergency bundle has its own account/catalog/eligibility expiry checks. Neither
-path grants new entitlement. Exact outage/revocation behavior still needs the
+path creates a new trial or subscription. Exact outage/revocation behavior still needs the
 candidate and owned server scenario; a local cache test does not prove it.

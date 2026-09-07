@@ -565,6 +565,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   int get _managedProfileRevision => _managedProfileLifecycle.revision;
   final CachedProfileFallbackGate _cachedProfileFallbackGate =
       CachedProfileFallbackGate();
+  ManagedProfileCacheInputs? _stagedCacheInputs;
+  String _stagedProfileCacheEntryId = '';
   // Hidden until the store confirms the hint was never dismissed, so the
   // one-time pulse never flashes for returning users while the read is
   // in flight.
@@ -3965,6 +3967,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _stagedTcpFallbackFromRevision = managedProfile.tcpFallbackFromRevision;
       _stagedNodeCode = _resolvedProfileNodeCode;
       _stagedVariantId = _resolvedProfileVariantId;
+      _stagedCacheInputs = _managedProfileCacheInputs;
+      _stagedProfileCacheEntryId = managedProfile.cacheEntryId;
       _cachedProfileFallbackGate.markFreshProfileStaged();
       onStep?.call(_ProtectionRepairStep.verifyProtection);
       current = await _withRuntimeActionTimeout(
@@ -4368,6 +4372,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }) async {
     widget.observability?.enterProfilePhase();
     final resolveFuture = _bootstrapper.resolveManagedProfile(
+      timeout: deadline,
       hostPlatform: widget.appContext.hostPlatform,
       routeMode: _selectedRouteMode,
       tcpFallbackFromRevision: _tcpFallbackFromRevision,
@@ -4385,8 +4390,28 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final payload = deadline == null
         ? await resolveFuture
         : await resolveFuture.timeout(deadline);
+    return _prepareManagedProfile(
+      payload, suppressWarpRuntime: suppressWarpRuntime);
+  }
+
+  ManagedProfileCacheInputs get _managedProfileCacheInputs =>
+      ManagedProfileCacheInputs(
+        hostPlatform: widget.appContext.hostPlatform,
+        routeMode: _selectedRouteMode,
+        selectedApps: _selectedRouteMode == RouteMode.selectedApps ||
+                _selectedRouteMode == RouteMode.excludedApps
+            ? List<String>.of(_selectedAppIds) : const <String>[],
+        preferredNodeCode: _preferredNodeCode,
+        preferredVariantId: _preferredVariantId,
+      );
+
+  Future<ManagedProfilePayload> _prepareManagedProfile(
+    ManagedProfilePayload payload, {
+    bool suppressWarpRuntime = false,
+    bool offline = false,
+  }) async {
     final baseWarpPolicy = payload.warpPolicy.withClientLocalDefaults();
-    final warpStatus = await _fetchWarpStatusOrNull();
+    final warpStatus = offline ? null : await _fetchWarpStatusOrNull();
     final serverDisplayWarpPolicy =
         warpStatus?.applyTo(baseWarpPolicy) ?? baseWarpPolicy;
     final explicitRetryRequested =
@@ -4955,12 +4980,25 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         });
       }
 
-      final cachedProfileAvailable = _hasFreshCachedManagedProfile(
-        current.stagedConfigPath,
-      );
+      final cacheInputs = _managedProfileCacheInputs;
+      final cacheService = _bootstrapper is CachedManagedProfileBootstrapper
+          ? _bootstrapper as CachedManagedProfileBootstrapper : null;
+      Future<ManagedProfilePayload?> readCache() async => cacheService != null &&
+              !_automaticFailoverInFlight && _tcpFallbackFromRevision.isEmpty
+          ? await cacheService.loadCachedManagedProfile(
+              cacheInputs,
+              preferProven: _cachedProfileFallbackGate.preferProvenProfile,
+            ).timeout(const Duration(seconds: 2), onTimeout: () => null)
+          : null;
+      var cachedPayload = await readCache();
+      final cachedProfileAvailable = cacheService == null
+          ? _hasFreshCachedManagedProfile(current.stagedConfigPath)
+          : cachedPayload != null;
       final cachedProfileFallbackAllowed = _cachedProfileFallbackGate
-          .canFallback(cachedProfileAvailable: cachedProfileAvailable);
-      if (cachedProfileAvailable &&
+          .canFallback(cachedProfileAvailable: cachedProfileAvailable,
+            inputsVerified: cachedPayload != null) &&
+          !_automaticFailoverInFlight && _tcpFallbackFromRevision.isEmpty;
+      if (cacheService == null && cachedProfileAvailable &&
           widget.appContext.hostPlatform == HostPlatform.android) {
         failureOperation = 'cached_profile_migration';
         failureStage = ConnectionStage.profile;
@@ -4985,13 +5023,25 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           );
         } on TimeoutException {
           if (!cachedProfileFallbackAllowed) rethrow;
+          cachedPayload = await readCache();
+          if (cacheService != null && cachedPayload == null) rethrow;
           usedCachedProfile = true;
         } on BootstrapFailure catch (error) {
+          if (error.statusCode == 401 || error.statusCode == 403) {
+            _cachedProfileFallbackGate.markAuthorizationDenied();
+          }
           if (!cachedProfileFallbackAllowed ||
               !_isTransientProfileFailure(error)) {
             rethrow;
           }
+          cachedPayload = await readCache();
+          if (cacheService != null && cachedPayload == null) rethrow;
           usedCachedProfile = true;
+        }
+        if (usedCachedProfile && cachedPayload != null) {
+          // Restore from the protected original, including after process restart
+          // or a host clear. Restaging must not renew the cache timestamp.
+          managedProfile = await _prepareManagedProfile(cachedPayload, offline: true);
         }
         final resolvedProfile = managedProfile;
         if (resolvedProfile != null) {
@@ -5024,7 +5074,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                 resolvedProfile.tcpFallbackFromRevision;
             _stagedNodeCode = _resolvedProfileNodeCode;
             _stagedVariantId = _resolvedProfileVariantId;
-            _cachedProfileFallbackGate.markFreshProfileStaged();
+            _stagedCacheInputs = cacheInputs;
+            _stagedProfileCacheEntryId = resolvedProfile.cacheEntryId;
+            if (!usedCachedProfile) {
+              _cachedProfileFallbackGate.markFreshProfileStaged();
+            }
           });
         }
       }
@@ -5363,6 +5417,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _connectionCoordinator.presentation;
 
   void _finalizeProvenConnection(RuntimeSnapshot snapshot) {
+    final cacheService = _bootstrapper;
+    final cacheInputs = _stagedCacheInputs;
+    if (!_emergencyRuntimeActive && snapshot.isCleanlyHealthy &&
+        cacheService is CachedManagedProfileBootstrapper && cacheInputs != null) {
+      unawaited((cacheService as CachedManagedProfileBootstrapper).markManagedProfileProven(
+        cacheInputs, _stagedProfileCacheEntryId));
+    }
     _automaticFailoverAttempts = 0;
     _automaticFailoverInFlight = false;
     _promoteStagedLocationAfterFreshConnect();
@@ -5537,6 +5598,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _stagedNodeCode = baselineReady ? _resolvedProfileNodeCode : '';
           _stagedVariantId =
               baselineReady ? _resolvedProfileVariantId : 'direct';
+          _stagedCacheInputs = _managedProfileCacheInputs;
+          _stagedProfileCacheEntryId = baselineReady ? baselineProfile.cacheEntryId : '';
           _managedWarpPolicy = _managedWarpPolicy.copyWith(
             state: 'fallback',
             userConsented: true,
@@ -5590,8 +5653,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _managedProfileDirty = true;
         _stagedNodeCode = '';
         _stagedVariantId = 'direct';
-        _cachedProfileFallbackGate.markRuntimeProfileInvalid();
-        _invalidateQuickSettingsProfile();
+        _cachedProfileFallbackGate.markRuntimeFailure();
       }
       widget.shellController?.refresh();
     } on Object catch (error) {
@@ -5704,10 +5766,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
               ? 'Подключение остановлено. Попробуйте еще раз.'
               : failed.message;
     });
-    // A failed dataplane profile cannot become the offline cache for a retry.
+    // Preserve the downloaded/proven cache for a manual offline retry.
+    // Automatic failover still requires a newly selected server profile.
     if (mustRefreshProfile) {
-      _cachedProfileFallbackGate.markRuntimeProfileInvalid();
-      _invalidateQuickSettingsProfile();
+      _cachedProfileFallbackGate.markRuntimeFailure();
     }
     if (shouldRetryAutomatically) {
       _automaticFailoverAttempts += 1;

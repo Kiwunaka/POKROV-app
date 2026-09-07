@@ -15,6 +15,7 @@ import 'package:pokrov_support_bundle/support_bundle.dart';
 import 'emergency_network_contract.dart';
 import 'src/emergency/emergency_network_store.dart';
 import 'src/observability/release_health_baseline.dart';
+import 'src/shell/managed_profile_cache.dart';
 
 /// Build identity shared by provisioning, update checks, and diagnostics.
 ///
@@ -68,7 +69,44 @@ abstract interface class ManagedProfileBootstrapper {
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
+    Duration? timeout,
   });
+}
+
+class ManagedProfileCacheInputs {
+  const ManagedProfileCacheInputs({
+    required this.hostPlatform,
+    required this.routeMode,
+    this.selectedApps = const <String>[],
+    this.preferredNodeCode = '',
+    this.preferredVariantId = 'direct',
+  });
+
+  final HostPlatform hostPlatform;
+  final RouteMode routeMode;
+  final List<String> selectedApps;
+  final String preferredNodeCode;
+  final String preferredVariantId;
+
+  String binding(String accountId, String installId) {
+    final apps = selectedApps.map((app) => app.trim()).toSet().toList()..sort();
+    final node = preferredNodeCode.trim().toLowerCase();
+    return jsonEncode([
+      accountId, installId, hostPlatform.name, routeMode.name, apps, node,
+      node.isEmpty ? 'direct' : preferredVariantId.trim().toLowerCase(),
+    ]);
+  }
+}
+
+abstract interface class CachedManagedProfileBootstrapper {
+  Future<ManagedProfilePayload?> loadCachedManagedProfile(
+    ManagedProfileCacheInputs inputs, {
+    bool preferProven = false,
+  });
+  Future<void> markManagedProfileProven(
+    ManagedProfileCacheInputs inputs,
+    String entryId,
+  );
 }
 
 typedef SmartConnectLatencyProbe = Future<int?> Function(
@@ -2590,6 +2628,7 @@ class AppFirstBonusHistoryItem {
 class AppFirstRuntimeBootstrapper
     implements
         ManagedProfileBootstrapper,
+        CachedManagedProfileBootstrapper,
         AppFirstAccountActionService,
         AppFirstBonusActionService,
         AppFirstWarpActionService,
@@ -2625,6 +2664,7 @@ class AppFirstRuntimeBootstrapper
     AppFirstAndroidAbiResolver? androidAbiResolver,
     EmergencyEnvelopeVerifier? emergencyEnvelopeVerifier,
     EmergencyNetworkStore? emergencyNetworkStore,
+    ManagedProfileCache? managedProfileCache,
   })  : apiBaseUrl = _normalizeApiBaseUrl(apiBaseUrl),
         _apiBaseUrls = _buildApiBaseUrls(
           apiBaseUrl,
@@ -2643,7 +2683,8 @@ class AppFirstRuntimeBootstrapper
         _emergencyEnvelopeVerifier =
             emergencyEnvelopeVerifier ?? EmergencyEnvelopeVerifier.pinned(),
         _emergencyNetworkStore =
-            emergencyNetworkStore ?? EncryptedEmergencyNetworkStore();
+            emergencyNetworkStore ?? EncryptedEmergencyNetworkStore(),
+        _managedProfileCache = managedProfileCache ?? ManagedProfileCache();
 
   final String apiBaseUrl;
   final List<String> _apiBaseUrls;
@@ -2666,6 +2707,7 @@ class AppFirstRuntimeBootstrapper
   final AppFirstAndroidAbiResolver _androidAbiResolver;
   final EmergencyEnvelopeVerifier _emergencyEnvelopeVerifier;
   final EmergencyNetworkStore _emergencyNetworkStore;
+  final ManagedProfileCache _managedProfileCache;
   final Map<String, Future<_StoredBootstrapState>> _initialStateFlights =
       <String, Future<_StoredBootstrapState>>{};
   final Map<String, Future<_StoredBootstrapState>> _initialTrialFlights =
@@ -2798,6 +2840,65 @@ class AppFirstRuntimeBootstrapper
   };
 
   @override
+  Future<ManagedProfilePayload?> loadCachedManagedProfile(
+    ManagedProfileCacheInputs inputs, {
+    bool preferProven = false,
+  }) async {
+    try {
+      final state = await _loadState(inputs.hostPlatform);
+      if (state == null || !state.hasSession || state.accountId.isEmpty) {
+        return null;
+      }
+      final value = await _managedProfileCache.read(
+        platform: inputs.hostPlatform.name,
+        binding: inputs.binding(state.accountId, state.installId),
+        preferProven: preferProven,
+      );
+      if (value == null) return null;
+      final config = value['config_payload'];
+      final revision = _readText(value['revision']);
+      if (config is! String || revision.isEmpty ||
+          _readMap(jsonDecode(config))['outbounds'] is! List) return null;
+      return ManagedProfilePayload(
+        cacheEntryId: _readText(value['cache_entry_id']),
+        profileName: _profileName(
+          hostPlatform: inputs.hostPlatform, profileRevision: revision),
+        configPayload: config,
+        materializedForRuntime: true,
+        source: RuntimeProfileSource(
+          revision: revision, origin: RuntimeProfileSourceOrigin.managedManifest),
+        tcpFallbackFromRevision: _readText(value['tcp_fallback_from_revision']),
+        routeMode: inputs.routeMode,
+        resolvedNodeCode: _readText(value['resolved_node_code']),
+        smartConnect: SmartConnectProfile.tryParse(value['smart_connect']),
+        warpPolicy: WarpRuntimePolicy.tryParse(value['warp_policy']),
+        freeProfileAccess: FreeProfileAccess.tryParse(
+          access: value['access'], freeCaps: value['free_caps']),
+      );
+    } on Object {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> markManagedProfileProven(
+    ManagedProfileCacheInputs inputs,
+    String entryId,
+  ) async {
+    try {
+      final state = await _loadState(inputs.hostPlatform);
+      if (state == null || !state.hasSession || entryId.isEmpty) return;
+      await _managedProfileCache.markProven(
+        platform: inputs.hostPlatform.name,
+        binding: inputs.binding(state.accountId, state.installId),
+        entryId: entryId,
+      );
+    } on Object {
+      // A cache write cannot change the state of an already proven tunnel.
+    }
+  }
+
+  @override
   Future<ManagedProfilePayload> resolveManagedProfile({
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
@@ -2806,6 +2907,7 @@ class AppFirstRuntimeBootstrapper
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
+    Duration? timeout,
   }) async {
     final normalizedSelectedApps = _normalizeSelectedAppIdentifiers(
       selectedApps,
@@ -2828,6 +2930,11 @@ class AppFirstRuntimeBootstrapper
     }
     var state = await _loadOrCreateState(hostPlatform);
     final client = _createHttpClient(hostPlatform);
+    var timedOut = false;
+    final timer = timeout == null ? null : Timer(timeout, () {
+      timedOut = true;
+      client.close(force: true);
+    });
 
     try {
       for (var attempt = 0; attempt < 2; attempt += 1) {
@@ -2916,13 +3023,55 @@ class AppFirstRuntimeBootstrapper
               );
             }
           }
+          if (timedOut) throw TimeoutException('Managed profile refresh');
           state = state.copyWith(
             profileRevision: manifest.profileRevision,
             managedManifestPath: manifest.managedManifestPath,
           );
           await _saveState(hostPlatform, state);
+          try {
+            final currentState = await _loadState(hostPlatform);
+            if (currentState?.accountId == state.accountId &&
+                currentState?.installId == state.installId &&
+                currentState?.hasSession == true) {
+              final payload = manifest.payload;
+              final response = manifest.response;
+              await _managedProfileCache.saveDownloaded(
+                platform: hostPlatform.name,
+                binding: ManagedProfileCacheInputs(
+                  hostPlatform: hostPlatform, routeMode: routeMode,
+                  selectedApps: normalizedSelectedApps,
+                  preferredNodeCode: preferredNodeCode,
+                  preferredVariantId: preferredVariantId,
+                ).binding(state.accountId, state.installId),
+                revision: manifest.profileRevision,
+                verifiedAt: manifest.verifiedAt,
+                payload: <String, Object?>{
+                  'cache_entry_id': payload.cacheEntryId,
+                  'revision': manifest.profileRevision,
+                  'config_payload': payload.configPayload,
+                  'resolved_node_code': payload.resolvedNodeCode,
+                  'tcp_fallback_from_revision': payload.tcpFallbackFromRevision,
+                  'smart_connect': payload.smartConnect == null
+                      ? null : response['smart_connect'],
+                  'warp_policy': response['warp_policy'] ??
+                      _readMap(response['client_policy'])['warp_policy'],
+                  'access': response['access'], 'free_caps': response['free_caps'],
+                },
+              );
+            }
+          } on Object {
+            // Keep online connect available if protected cache storage fails.
+          }
           return manifest.payload;
         } on BootstrapFailure catch (error) {
+          if (error.statusCode == 401 || error.statusCode == 403) {
+            try {
+              await _managedProfileCache.clear(hostPlatform.name);
+            } on Object {
+              // The explicit denial still propagates; no offline fall-through.
+            }
+          }
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
             state = await _startTrial(
               state: state.copyWith(
@@ -2942,6 +3091,7 @@ class AppFirstRuntimeBootstrapper
         'POKROV не смог завершить подготовку устройства.',
       );
     } finally {
+      timer?.cancel();
       client.close(force: true);
     }
   }
@@ -5828,6 +5978,7 @@ class AppFirstRuntimeBootstrapper
       bearerToken: state.sessionToken,
       hostPlatform: hostPlatform,
     );
+    final verifiedAt = DateTime.now().toUtc();
 
     if (tcpFallbackFromRevision.isNotEmpty &&
         (_readText(response['transport_profile']) !=
@@ -5888,6 +6039,7 @@ class AppFirstRuntimeBootstrapper
         ? _readText(response['profile_revision'])
         : '';
     final payload = ManagedProfilePayload(
+      cacheEntryId: ManagedProfileCache.newEntryId(),
       tcpFallbackFromRevision: tcpFallbackRevision,
       source: RuntimeProfileSource(
         revision: _readText(response['profile_revision']),
@@ -5923,6 +6075,8 @@ class AppFirstRuntimeBootstrapper
 
     return _ManagedManifestEnvelope(
       payload: payload,
+      response: response,
+      verifiedAt: verifiedAt,
       profileRevision: _readText(response['profile_revision']),
       managedManifestPath: path,
     );
@@ -6368,6 +6522,8 @@ class AppFirstRuntimeBootstrapper
       ),
       profileRevision: manifest.profileRevision,
       managedManifestPath: manifest.managedManifestPath,
+      response: manifest.response,
+      verifiedAt: manifest.verifiedAt,
     );
   }
 
@@ -10670,11 +10826,15 @@ class _ManagedManifestEnvelope {
     required this.payload,
     required this.profileRevision,
     required this.managedManifestPath,
+    required this.response,
+    required this.verifiedAt,
   });
 
   final ManagedProfilePayload payload;
   final String profileRevision;
   final String managedManifestPath;
+  final Map<String, dynamic> response;
+  final DateTime verifiedAt;
 }
 
 class _SmartConnectLatencySample {

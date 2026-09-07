@@ -320,6 +320,79 @@ void main() {
     expect(selectSafeTunMtu(1500), 1500);
   });
 
+  test('protected managed cache restores exact profile after restart and respects server denial', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-managed-cache-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    var revision = 'a';
+    var denied = false;
+    var stall = false;
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response.write(jsonEncode({
+            'session': {'session_token': 'cache-fixture-token', 'account_id': 'cache-account'},
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+          }));
+        } else if (denied) {
+          request.response.statusCode = 403;
+          request.response.write('{"detail":"access denied"}');
+        } else if (request.uri.path == '/api/client/route-policy') {
+          request.response.write('{"ok":true}');
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          if (stall) continue;
+          request.response.write(jsonEncode(_readyManagedProfile(revision)));
+        } else {
+          request.response.statusCode = 404;
+          request.response.write('{}');
+        }
+        await request.response.close();
+      }
+    }());
+    AppFirstRuntimeBootstrapper create({bool offline = false}) => AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => directory,
+      maxRequestAttempts: 1, delayScheduler: (_) async {},
+      httpClientFactory: offline ? () => throw StateError('offline cache used HTTP') : null,
+    );
+    const inputs = ManagedProfileCacheInputs(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel);
+    final online = create();
+    final a = await online.resolveManagedProfile(
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode);
+    await online.markManagedProfileProven(inputs, a.cacheEntryId);
+    revision = 'b';
+    final b = await online.resolveManagedProfile(
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode);
+    // Simulate a process restart with no available HTTP transport.
+    final restarted = create(offline: true);
+    final restored = await restarted.loadCachedManagedProfile(inputs);
+    expect(restored?.configPayload, b.configPayload);
+    expect(restored?.source?.revision, 'b');
+    expect(restored?.cacheEntryId, b.cacheEntryId);
+    final proven = await restarted.loadCachedManagedProfile(inputs, preferProven: true);
+    expect(proven?.configPayload, a.configPayload);
+    expect(proven?.source?.revision, 'a');
+    expect(await restarted.loadCachedManagedProfile(const ManagedProfileCacheInputs(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.allExceptRu)), isNull);
+    stall = true;
+    await expectLater(online.resolveManagedProfile(
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
+      timeout: const Duration(milliseconds: 100),
+    ).timeout(const Duration(seconds: 2)), throwsA(isA<BootstrapFailure>()));
+    expect((await restarted.loadCachedManagedProfile(inputs))?.cacheEntryId, b.cacheEntryId);
+    stall = false;
+    denied = true;
+    await expectLater(online.resolveManagedProfile(
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode), throwsA(isA<BootstrapFailure>()));
+    expect(await restarted.loadCachedManagedProfile(inputs), isNull);
+  });
+
   test('default API origin is owned and arbitrary fallbacks are rejected', () {
     expect(
       AppFirstRuntimeBootstrapper().apiBaseUrl,

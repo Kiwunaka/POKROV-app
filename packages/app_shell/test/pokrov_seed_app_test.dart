@@ -403,6 +403,7 @@ class _FakeBootstrapper
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
+    Duration? timeout,
   }) async {
     calls += 1;
     if (managedProfileFailure != null) {
@@ -1036,6 +1037,26 @@ SupportTicketMessage _supportMessage({
   );
 }
 
+class _CachedBootstrapper extends _FakeBootstrapper
+    implements CachedManagedProfileBootstrapper {
+  _CachedBootstrapper(ManagedProfilePayload payload, {int status = 503})
+      : super(payload, managedProfileFailure: BootstrapFailure('API unavailable', statusCode: status));
+  final cacheReads = <bool>[];
+  final provenEntries = <String>[];
+
+  @override
+  Future<ManagedProfilePayload?> loadCachedManagedProfile(
+    ManagedProfileCacheInputs inputs, {bool preferProven = false}) async {
+    cacheReads.add(preferProven);
+    return payload;
+  }
+
+  @override
+  Future<void> markManagedProfileProven(ManagedProfileCacheInputs inputs, String entryId) async {
+    provenEntries.add(entryId);
+  }
+}
+
 class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
   _ThrowingBootstrapper(this.message);
 
@@ -1051,6 +1072,7 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
+    Duration? timeout,
   }) async {
     calls += 1;
     throw BootstrapFailure(message);
@@ -9258,6 +9280,56 @@ void main() {
     });
   }
 
+  for (final status in [503, 403]) {
+    testWidgets('cached Android profile handles API $status after app restart', (tester) async {
+      final calls = <String>[];
+      final staged = <String>[];
+      _installReadyRuntimeBridgeMock(calls: calls, stagedPayloads: staged,
+        retainHealthyConnectedSnapshot: true);
+      final bootstrapper = _CachedBootstrapper(const ManagedProfilePayload(
+        profileName: 'cached-profile', configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true, cacheEntryId: 'cached-entry',
+      ), status: status);
+      await tester.pumpWidget(PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ));
+      await tester.pumpAndSettle();
+      await _completeFirstLaunchIfPresent(tester);
+      await _tapPrimaryConnectAndConfirmRouteScope(tester);
+      await tester.pumpAndSettle();
+      expect(calls.where((c) => c == 'runtimeEngine.connect').length, status == 503 ? 1 : 0);
+      expect(staged.length, status == 503 ? 1 : 0);
+      expect(bootstrapper.cacheReads, isNotEmpty);
+      if (status == 503) expect(bootstrapper.provenEntries, contains('cached-entry'));
+    });
+  }
+
+  testWidgets('manual retry after egress failure retains the cached profile during API outage', (tester) async {
+    final calls = <String>[];
+    _installReadyRuntimeBridgeMock(calls: calls, failAfterConnect: true);
+    final bootstrapper = _CachedBootstrapper(const ManagedProfilePayload(
+      profileName: 'cached-profile', configPayload: _materializedRuntimeConfig,
+      materializedForRuntime: true, cacheEntryId: 'cached-entry',
+    ));
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+    ));
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+    expect(find.text('Подключено'), findsNothing);
+    final invalidations = calls.where((c) => c == 'runtimeEngine.invalidateManagedProfile').length;
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    expect(calls.where((c) => c == 'runtimeEngine.connect').length, 2);
+    expect(bootstrapper.cacheReads, contains(true));
+    expect(calls.where((c) => c == 'runtimeEngine.invalidateManagedProfile').length, invalidations);
+  });
+
   testWidgets('android egress fail-closed stop clears the connected home state',
       (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
@@ -9393,7 +9465,8 @@ void main() {
     expect(
         find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
     expect(find.textContaining('core_egress_probe_failed'), findsNothing);
-    expect(runtimeCalls, contains('runtimeEngine.invalidateManagedProfile'));
+    expect(runtimeCalls.where((c) => c == 'runtimeEngine.invalidateManagedProfile').length,
+        lessThanOrEqualTo(1)); // Initial route consent may invalidate; failure does not.
   });
 
   for (final (

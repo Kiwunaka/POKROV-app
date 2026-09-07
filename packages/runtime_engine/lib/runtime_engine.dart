@@ -1176,6 +1176,7 @@ class ManagedProfilePayload {
     this.resolvedNodeCode = '',
     this.warpPolicy = WarpRuntimePolicy.disabled,
     this.freeProfileAccess,
+    this.cacheEntryId = '',
   });
 
   final String profileName;
@@ -1202,6 +1203,9 @@ class ManagedProfilePayload {
   final String resolvedNodeCode;
   final WarpRuntimePolicy warpPolicy;
   final FreeProfileAccess? freeProfileAccess;
+
+  /// App-local cache transaction identity; never a server revision or proof.
+  final String cacheEntryId;
 
   ManagedProfilePayload copyWith({
     String? profileName,
@@ -1233,6 +1237,7 @@ class ManagedProfilePayload {
       resolvedNodeCode: resolvedNodeCode ?? this.resolvedNodeCode,
       warpPolicy: warpPolicy ?? this.warpPolicy,
       freeProfileAccess: freeProfileAccess ?? this.freeProfileAccess,
+      cacheEntryId: cacheEntryId,
     );
   }
 }
