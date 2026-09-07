@@ -8,8 +8,24 @@ Registry class: `ACTIVE_EXECUTION`.
 
 This file contains the current Android gate for the `1.2.0` working target.
 Older APK identities and device runs are retained separately as evidence.
+The cutover seed still names `pokrov-1.2.0-candidate.33`; its retained evidence
+does not prove the newer local working sources below.
 
 ## Current Truth
+
+The [current ARM64/access receipt](evidence/2026-09-07-r12-arm64-access/receipt.json)
+binds client `9334d46` / Core `8dc57a8` to normal same-signer 1.2.0+4053 APKs.
+The canonical Direct build produces genuine per-ABI APKs: ARM64 101225939 bytes,
+universal 295227054 bytes (65.71% less delivery). SO identities match the bound
+AAR and all notice assets are preserved. The earlier extra-ABI observation
+below applies only to the quick local build command. Huawei accepted local
+universal-to-ARM64 replacement with preferences retained, and both packages
+confirmed protection. A controlled API-unavailable build verified unknown
+subscription labels alongside cached-profile tunnel/DNS/egress proof. The
+ordinary ARM64 APK was restored, installed hash verified and protection
+confirmed again; VPN was then disconnected with Wi-Fi enabled. This is local
+physical acceptance, not a final downloadable candidate, actual carrier block,
+RU-origin proof or the complete newer-version/channel/OEM/network matrix.
 
 The [2026-09-07 local Huawei receipt](evidence/2026-09-07-r12-offline-network/receipt.json)
 binds client `550329f` / Core `8dc57a8`, same-signer 1.2.0+4053 bytes and
