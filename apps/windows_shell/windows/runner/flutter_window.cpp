@@ -263,7 +263,11 @@ FlutterWindow::FlutterWindow(const flutter::DartProject& project,
       pending_acquisition_uri_(std::move(initial_acquisition_uri)),
       start_hidden_(start_hidden) {}
 
-FlutterWindow::~FlutterWindow() {}
+FlutterWindow::~FlutterWindow() {
+  // View teardown can synchronously dispatch parent-window messages. Clear the
+  // controller through OnDestroy before its destructor re-enters our handler.
+  OnDestroy();
+}
 
 bool FlutterWindow::OnCreate() {
   if (!Win32Window::OnCreate()) {
