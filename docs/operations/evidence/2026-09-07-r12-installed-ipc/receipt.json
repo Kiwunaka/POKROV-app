@@ -1,0 +1,257 @@
+{
+  "schema": "pokrov.r12-installed-ipc-evidence.v1",
+  "status": "PASS_BOUNDED_INSTALLED_SERVICE_PROTOCOL",
+  "date": "2026-09-07",
+  "origin": "current-origin offline owned Win11 VM",
+  "vm_uuid": "960ae449-036f-4166-b215-d8349145a4de",
+  "vm_name": "POKROV-r12-installer-20260907",
+  "os": "Windows 11 evaluation 10.0.26200",
+  "network": "NIC1 none; 0 up adapters and 0 POKROV/TUN adapters",
+  "source": {
+    "client": "46ba68d9d88d53f22052cf3b41a01bda37adeff3",
+    "bundle_source": "98c39d6",
+    "core": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+    "installer_sha256": "d792f4215b1feae486f84c8b077b74a3b840bcdc437048a03dabfe5ec15b8ed9",
+    "package": "unsigned local 1.2.0+4053 with unavailable loopback API",
+    "protocol_blobs": {
+      "service_protocol.cpp": "72109337d95a24c63094a0e063a0b8ea9190665f",
+      "service_protocol.h": "4a123204310c507373c7359a0567e3f997094a64",
+      "service_pipe_client.cpp": "293b26100f4353a99904ecf42c0239f24909eafe",
+      "service_server.cpp": "1b5bfbbc653d2ce3b7d3bea5b142120ce08b1377",
+      "service_security.cpp": "dbed2c7fafd8ae817ee0c01fc466d570754bb729"
+    }
+  },
+  "owner": {
+    "utc": "2026-09-07T20:48:09.2039985Z",
+    "status": "PASS_OWNER_PROTOCOL",
+    "standard_user": true,
+    "is_administrator": false,
+    "probe_sha256": "9388bbf3c3c27779aeb98128a413915f31fe2958a79237cc48cb79749ce4326f",
+    "exit_code": 0,
+    "identity": [
+      {
+        "identity": "SCM_PIPE_PID_MATCH",
+        "service_pid": 3084
+      }
+    ],
+    "cases": [
+      {
+        "case": "owner_status",
+        "pass": true,
+        "response_status": 1
+      },
+      {
+        "case": "replayed_nonce",
+        "pass": true,
+        "response_status": 6
+      },
+      {
+        "case": "wrong_session",
+        "pass": true,
+        "response_status": 3
+      },
+      {
+        "case": "expired_deadline",
+        "pass": true,
+        "response_status": 7
+      },
+      {
+        "case": "valid_after_rejections",
+        "pass": true,
+        "response_status": 1
+      },
+      {
+        "case": "oversized_frame_disconnected",
+        "pass": true
+      },
+      {
+        "case": "cross_session_token",
+        "pass": true,
+        "response_status": 3
+      },
+      {
+        "case": "fresh_session_after_malformed",
+        "pass": true,
+        "response_status": 1
+      }
+    ]
+  },
+  "nonowner": {
+    "not_elevated": true,
+    "access_denied": true,
+    "win32_error": 5,
+    "actor": "pokrovtest filtered administrator token; not installation owner",
+    "exit_code": 0
+  },
+  "installed_identity": {
+    "service": {
+      "start_mode": "Auto",
+      "account": "LocalSystem",
+      "pid": 3084,
+      "pipe_pid_matches": true,
+      "state": "Running"
+    },
+    "file_count": 305,
+    "all_expected_hashes_unchanged": true,
+    "only_extra_files": [
+      "unins000.dat",
+      "unins000.exe"
+    ],
+    "executables": [
+      {
+        "sha256": "c679ba5af42939acbc8c6f44af59b4608f6a76c99e0d444cfa4bcc825bcc8e68",
+        "name": "pokrov-core.dll",
+        "bytes": 55449088
+      },
+      {
+        "sha256": "46d87dcb3b82d1c6fdcd3ddbd17e829ad509fc21aba86a82425448c69f0fffcc",
+        "name": "pokrov_service.exe",
+        "bytes": 193024
+      },
+      {
+        "sha256": "04fa96b7c82a091b2afad8bbbddbc7bd2faa69ac527e2c054ec9f7258f0eeca5",
+        "name": "pokrov_windows.exe",
+        "bytes": 198656
+      }
+    ],
+    "service_acl_sha256": "0b96b6801d59335d69880bccc57eae5e0ade1de4a875fb41731c9bda6b193a5d"
+  },
+  "fixture_limits": [
+    "Dedicated probe uses current protocol implementation and real production pipe, independently bound to the running SCM PID on every connection.",
+    "No mock service; no installation changes or extra installed probe executable.",
+    "Requests are hello/status and malformed header only. No profile, initialize/connect/disconnect, cancellation or network operation was requested.",
+    "An absent result from the noninteractive guestcontrol credential child was not counted as a pass. The successful worker ran from the logged-in guest desktop under R12Standard.",
+    "The first five-case collector retained a FAIL because Process.ExitCode was null; its responses passed. Capturing the process handle before waiting corrected exit-code collection; final exit is 0.",
+    "PowerShell Select-Object on an ordered dictionary printed null summary fields; retained state-result.json was independently read and validated as PASS."
+  ],
+  "open": [
+    "W06 cancellation and concurrent mutation races",
+    "W06 WFP/firewall/other-VPN coexistence",
+    "managed-network acceptance",
+    "Win10",
+    "exact final channel candidate"
+  ],
+  "artifacts": [
+    {
+      "path": "E:\\r12-ipc-20260907\\source\\main.cpp",
+      "sha256": "6bdb821a579c4cb116a1632b26bab9ef5ebeeff3f40f6e78c0c681b5666576cb",
+      "bytes": 5332
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\source\\main-v1.cpp",
+      "sha256": "e8bc175dbb72b14940b747ff535b41ae10dd217813f7f238b1b08c9c8cde212b",
+      "bytes": 3428
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\source\\CMakeLists.txt",
+      "sha256": "e25e2a45d0dbf5cd1e85c8d4367f27be35a0e950b6757bca880451d99a76d5c1",
+      "bytes": 679
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\owner-worker.ps1",
+      "sha256": "44ab428ca8785df6b533c8f6aa8d023b6814bae46039e29aab945b2c412b474d",
+      "bytes": 1601
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\owner-worker-v1.ps1",
+      "sha256": "06947f6e8379eb065b7ba06b7bba950eb1d2a3723675d30da361c07eb28b9b06",
+      "bytes": 1381
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\collect-state.ps1",
+      "sha256": "ff0fbb6794ccfc02658a624399ec193abbe09c0043bf8eb5a510f436597f7d14",
+      "bytes": 2136
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\build\\Release\\r12_scm_probe.exe",
+      "sha256": "9388bbf3c3c27779aeb98128a413915f31fe2958a79237cc48cb79749ce4326f",
+      "bytes": 262656
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\build-v3.log",
+      "sha256": "614d28d8e37afaf168d2863b480130e3ee371ea1cd601f80d34007d267ac3a53",
+      "bytes": 156
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\results\\owner-result.json",
+      "sha256": "e8c0d23694d22cfc4132c8d0f5be86c573289c34a786b56fd995521b4c678301",
+      "bytes": 1900
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\results\\nonowner-result-v3.json",
+      "sha256": "9400855dc9cbd1c1a2377d43bcf7c2870c1cd4ee5a7788df019c9fa4b9ff366c",
+      "bytes": 122
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\results\\state-result.json",
+      "sha256": "91d10edcf06f641300ba037413ce51afb58f9a89c3a4064b178df92a2e5b2ec0",
+      "bytes": 83762
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\results\\owner-stdout.jsonl",
+      "sha256": "a315e6f770cb8bb55359bac4bf1f0a243943977f0d66240ef9733b54ea69d669",
+      "bytes": 547
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\results\\owner-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\results\\owner-result-v1-null-exit.json",
+      "sha256": "b640ebe9fed45fd702b971afee69c961667081cd287223a62a308019139e2057",
+      "bytes": 1217
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\results\\owner-result-v2.json",
+      "sha256": "dc3b81665c990271d5e2f4e7af518b1714938f19681a795f73432260f59e94da",
+      "bytes": 1703
+    },
+    {
+      "path": "E:\\r12-ipc-20260907\\results\\nonowner-result.json",
+      "sha256": "9400855dc9cbd1c1a2377d43bcf7c2870c1cd4ee5a7788df019c9fa4b9ff366c",
+      "bytes": 122
+    }
+  ],
+  "commands": [
+    "cmake -S E:/r12-ipc-20260907/source -B E:/r12-ipc-20260907/build -G \"Visual Studio 17 2022\" -A x64",
+    "cmake --build E:/r12-ipc-20260907/build --config Release",
+    "C:/Users/Public/R12Ipc/probe.exe deny (guest pokrovtest filtered token)",
+    "C:/Users/Public/R12Ipc/owner-worker.ps1 (guest R12Standard via existing guest-private credentials)",
+    "C:/Users/Public/R12Ipc/collect-state.ps1 (guest readback)",
+    "pwsh -NoProfile -File scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+    "python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q",
+    "python -B scripts/agent_context_packet_audit.py --platform-context-root .",
+    "python docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/validate_package.py",
+    "git diff --check",
+    "git diff --name-only -- artifacts/releases"
+  ],
+  "validation": {
+    "client_seed_docs": "PASS",
+    "platform_docs": "33 PASS",
+    "platform_context": "PASS",
+    "package": "13 imports / 83 R12 / 378 legacy / 284 links PASS",
+    "diff_check": "PASS",
+    "retained_release_delta": "none",
+    "logs": [
+      {
+        "path": "E:\\r12-ipc-20260907\\client-validation.log",
+        "sha256": "d2bfe42132a0704618cd378c01c9edec1a2d1e816668d910309c9babf917a3f2"
+      },
+      {
+        "path": "E:\\r12-ipc-20260907\\platform-docs-validation.log",
+        "sha256": "8e8012de312ded1fc1a4eb22b5cdb3d776c4be76fdde07836ddf39e5bec16c6b"
+      },
+      {
+        "path": "E:\\r12-ipc-20260907\\platform-context-validation.log",
+        "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d"
+      },
+      {
+        "path": "E:\\r12-ipc-20260907\\package-validation.log",
+        "sha256": "06bdc3868b2b318ceff322f84609f73ddb0d0e205e5bad10e9ab116e7feb6069"
+      }
+    ]
+  },
+  "release_candidate_created": false,
+  "push_merge_deploy": "NOT_PERFORMED"
+}

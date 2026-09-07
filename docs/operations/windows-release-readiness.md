@@ -1,5 +1,12 @@
 # Windows Release Readiness
 
+R12 installed IPC (2026-09-07): the standard-account lifecycle package passes
+eight ordinary-owner protocol cases and denies a filtered non-owner token.
+[Actual service evidence](evidence/2026-09-07-r12-installed-ipc/README.md)
+binds every pipe connection to SCM PID, replay/session/deadline/frame rejection,
+and 305 unchanged installed files. W06 cancellation/concurrent mutations,
+WFP coexistence, managed network, Win10 and final channel remain OPEN.
+
 R12 installer (2026-09-07): fixed clean installation when UAC elevates a
 separate ordinary account through another administrator. Owner SID capture now
 uses the original process's tagged exit codes instead of an elevated temporary
