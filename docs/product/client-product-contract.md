@@ -869,6 +869,9 @@ Host behavior:
   button hides to tray (default) or exits; the explicit tray `Выход` action
   always requests native teardown. Exact-artifact runtime shutdown and system
   proxy restoration remain a manual release check.
+  Login startup (`--startup`) stays hidden; repeating it leaves the existing
+  window's visibility unchanged. An ordinary launch or acquisition link
+  activates the one existing UI instead of opening another instance.
 
 Compatibility-only residue may still exist in internal identifiers, imports, namespaces, or hidden handlers such as `pokrovvpn://`, but it must not define the user-facing product story.
 
