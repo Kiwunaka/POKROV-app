@@ -1259,9 +1259,11 @@ void _showSubscriptionSheet(
             _SheetReveal(
               order: 1,
               child: Text(
-                hasProvisionedAccess
-                    ? 'Доступ активен. Продление открывается на защищенной странице оплаты.'
-                    : 'Сначала активируйте доступ на этом устройстве, затем продлите его на защищенной странице оплаты.',
+                _effectiveAccessLane(appContext, info) == null
+                    ? 'Статус подписки пока неизвестен. Проверьте его в личном кабинете.'
+                    : hasProvisionedAccess
+                        ? 'Доступ активен. Продление открывается на защищенной странице оплаты.'
+                        : 'Сначала активируйте доступ на этом устройстве, затем продлите его на защищенной странице оплаты.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: PokrovPalette.of(context).muted,
                       height: 1.35,
@@ -1273,7 +1275,8 @@ void _showSubscriptionSheet(
               order: 2,
               child: _KeyValueLine(
                 label: 'Текущий доступ',
-                value: _effectiveAccessLane(appContext, info).label,
+                value:
+                    _effectiveAccessLane(appContext, info)?.label ?? 'Нет данных',
               ),
             ),
             if (info != null && info.daysLeft > 0)

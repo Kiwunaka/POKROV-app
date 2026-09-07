@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-08-31
+Last updated: 2026-09-07
 
 ## Document Status
 
@@ -33,7 +33,16 @@ tariff-catalog and commercial-contract digests plus the commercial revision.
 from the same owners and supplies runtime trial, Telegram reward, platform
 routing, legal, official-release and support constants. Consumer fallback copy is assembled
 in `src/shared/platform_product_copy.dart`; account-specific values still come
-from server responses. `docs/generated/platform-copy-contract.md` maps every
+from server responses. The account badge, profile and subscription sheet do
+not derive a user's access lane or remaining days from the seed or the
+advertised trial duration. Before the first valid subscription response,
+including after an API timeout or app restart, the account presentation is
+unknown. Zero remaining days never becomes a fresh trial. A previously received
+in-process subscription value may remain displayed after a failed refresh;
+this presentation grants no access. The protected offline-profile policy and
+current tunnel proof independently determine whether connection can proceed.
+
+`docs/generated/platform-copy-contract.md` maps every
 platform copy namespace, the active-client `app.*` review baseline and the
 authority boundary. It is generated reference evidence, not runtime copy or a
 new source of truth. `validate-seed.ps1`

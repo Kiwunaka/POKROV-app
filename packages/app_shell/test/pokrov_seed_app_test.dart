@@ -3594,7 +3594,7 @@ void main() {
     expect(find.byKey(const ValueKey('profile-section-plan-access')),
         findsOneWidget);
     final accessHeadline = tester.widget<Text>(
-      find.text('5 дней пробного доступа'),
+      find.text('Статус доступа уточняется'),
     );
     expect(accessHeadline.maxLines, 2);
     expect(accessHeadline.overflow, TextOverflow.clip);
@@ -4694,6 +4694,39 @@ void main() {
         findsNothing);
   });
 
+  testWidgets('zero remaining days never resets to the advertised trial duration',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'zero-days-ui',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      subscriptionInfo: const ClientSubscriptionInfo(
+        lane: 'trialPremium',
+        expiresAt: '',
+        daysLeft: 0,
+        autoRenew: false,
+        renewUrl: null,
+        plans: <ClientSubscriptionPlan>[],
+        trafficPolicy: <String, Object?>{},
+      ),
+    );
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('5 дней'), findsNothing);
+    await _tapNav(tester, 'nav-profile');
+    expect(find.text('Пробный доступ'), findsOneWidget);
+    expect(find.descendant(
+      of: find.byKey(const ValueKey('profile-section-plan-access')),
+      matching: find.textContaining('5 дней'),
+    ), findsNothing);
+  });
+
   testWidgets('subscription refresh timeout does not claim missing entitlement',
       (tester) async {
     await tester.runAsync(() async {
@@ -4731,6 +4764,20 @@ void main() {
                 (event) => event.name == 'app.entitlement.refresh.finished',
               );
       expect(refresh.errorCode, 'API-002');
+      expect(find.textContaining(RegExp('пробного доступа|Пробный ·')),
+          findsNothing);
+      expect(find.text('Подписка'), findsOneWidget);
+      await _tapNav(tester, 'nav-profile');
+      expect(find.text('Статус доступа уточняется'), findsOneWidget);
+      expect(find.text('Нет данных'), findsWidgets);
+      await tester.tap(find.byKey(const ValueKey('profile-plan-details-action')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Статус подписки пока неизвестен. Проверьте его в личном кабинете.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Доступ активен.'), findsNothing);
+
       // Detach this test's observer before disposing the shell so its
       // fire-and-forget exit marker cannot race our temporary-file cleanup.
       await tester.pumpWidget(PokrovSeedApp(
@@ -5573,6 +5620,7 @@ void main() {
       await _completeFirstLaunchIfPresent(tester);
 
       expect(find.byKey(ValueKey(item.shellKey)), findsOneWidget);
+      expect(find.text('Активен'), findsNothing);
       expect(
           find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
       expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
@@ -5583,7 +5631,7 @@ void main() {
             find.byKey(const ValueKey('home-access-badge-bloom-false')),
             findsNothing,
           );
-          expect(find.text('Пробный · 5 дней'), findsOneWidget);
+          expect(find.text('Подписка'), findsOneWidget);
           expect(find.text('Затем — продлите доступ'), findsNothing);
           expect(find.byKey(const ValueKey('home-warp-info-action')),
               findsOneWidget);
