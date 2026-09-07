@@ -1,6 +1,6 @@
 # Android Release Audit
 
-Last updated: 2026-09-06
+Last updated: 2026-09-07
 
 ## Document Status
 
@@ -10,6 +10,19 @@ This file contains the current Android gate for the `1.2.0` working target.
 Older APK identities and device runs are retained separately as evidence.
 
 ## Current Truth
+
+The [2026-09-07 local Huawei receipt](evidence/2026-09-07-r12-offline-network/receipt.json)
+binds client `550329f` / Core `8dc57a8`, same-signer 1.2.0+4053 bytes and
+preserved app data. On physical Android 12/API 31, normal Wi-Fi, restart/reconnect
+and mobile reached the app's confirmed tunnel/DNS/VPN-egress state. A controlled
+build-time API-unavailable fixture connected from the encrypted cache, including
+after force-stop/relaunch on mobile. It does not prove an actual carrier block,
+RU origin, WARP, Doze or the full network matrix. The normal API APK was restored and its installed SHA-256 verified; the previous installed APK is retained for rollback. These
+are local test packages, not published candidates. The ARM64 Flutter build
+includes Core-only armeabi-v7a/x86_64 libraries from the AAR, so primary-ARM64
+packaging acceptance remains open. Automatic source-network diagnostics pass
+local native/Dart/API/RBAC/retention tests; deployed ingestion and geographic
+accuracy remain unproven until the new backend is deployed and observed.
 
 The [C05 source packet](evidence/2026-09-06-r12-c05-source-packet/source-packet.json)
 prepares the exact Core `8dc57a8` source and authenticated runtime module archives.
