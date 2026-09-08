@@ -1,6 +1,6 @@
 # Client Motion Performance Checklist
 
-Last updated: 2026-09-06
+Last updated: 2026-09-08
 
 Registry class: `ACTIVE_EXECUTION`.
 
@@ -160,3 +160,24 @@ the VM off/NIC none and host routes/DNS unchanged. This closes the named idle
 observation only. Semantic useful-start, separate warm/cold/post-reboot
 distributions, Windows 10, connected/tray-hidden and physical/comparable-device
 performance remain open for R12-W05 and the final release candidate.
+
+## R12 Windows useful-start follow-up — 2026-09-08
+
+[Method and exact receipt](evidence/2026-09-08-r12-windows-startup/README.md):
+the same installed `e88dff9` package now has two separate useful Protection
+startup distributions. Warm OS/file-cache fresh process p95 is `765.5534 ms`;
+first UI process after full guest power-on/login p95 is `2311.4823 ms`.
+Both discard three warmups and retain twenty samples. The canonical 3500 ms
+stop passes for both; the 2000 ms target is unmet after guest boot.
+
+The terminal requires enabled visible Connect and protection-status buttons,
+Protection navigation and no onboarding/accessibility errors through MSAA on
+the exact Flutter window. The status button was also exercised separately.
+Timing includes semantic inspection; OS boot/login and service autostart are
+excluded. The 23 post-boot samples have distinct boot identities and installed
+hash verification after each capture. Warm and post-boot fingerprints differ;
+this is no comparison with the withdrawn Pane-only candidate.33 method.
+All 305 installed files match; VM off/NIC none and host network unchanged.
+Windows 10, physical cold-cache/comparable hardware, connected/tray-hidden
+performance and exact final-channel acceptance remain open. The earlier idle
+report above records its own state before this follow-up.

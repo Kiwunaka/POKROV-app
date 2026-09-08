@@ -1,5 +1,16 @@
 # Windows Release Readiness
 
+R12 useful startup (2026-09-08): [new semantic evidence](evidence/2026-09-08-r12-windows-startup/README.md)
+for installed `e88dff9` separates warm OS/file-cache launches (p95 765.5534 ms)
+from first UI processes after 23 guest power-on/login cycles (3 discarded,
+20 retained; p95 2311.4823 ms). Both pass the 3500 ms stop; the post-boot
+2000 ms target is unmet. Enabled visible Protection controls are verified
+through MSAA, with no onboarding; the status button was exercised separately.
+305 installed hashes match, VM off/NIC none and host network unchanged.
+Physical cold-cache/comparable hardware, Win10, other runtime states and full
+W05/final-channel acceptance remain open. Earlier reports below retain their
+dated boundaries, including the withdrawn Pane-only candidate.33 credit.
+
 R12 performance follow-up (2026-09-08): [idle CPU and memory evidence](evidence/2026-09-08-r12-windows-idle/README.md)
 binds local client `e88dff9` / Core `02a091c` to 305 installed hashes. The same
 offline Windows 11 VM measured combined CPU p95 `0.749983%` against 1% after
