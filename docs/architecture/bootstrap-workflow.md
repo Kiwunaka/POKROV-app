@@ -383,6 +383,10 @@ convergence is proved; candidate, signing and platform-runtime gates remain.
 - Windows selected/excluded modes additionally require a non-empty set after
   process-name normalization. A selection containing only rejected identifiers
   fails before bootstrap state, API access or native staging begins.
+- In Windows selected-app mode the final route is direct while the selected
+  process rule may target an AWG endpoint. Client routing preferences resolve
+  that referenced endpoint for VPN/DNS additions without changing the direct
+  final or selecting an unused endpoint.
 - Android `excludedApps` also requires a non-empty selection. Materialization
   keeps the app itself and every selected package outside `VpnService`, then
   routes all remaining packages through the managed profile; the server still
