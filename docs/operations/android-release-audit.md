@@ -977,8 +977,8 @@ network, OEM or endurance evidence.
 The [2026-09-08 integrated Huawei AWG receipt](evidence/2026-09-08-r12-integrated-android-awg/README.md)
 adds exact ARM64 AWG3.1 → AWG2 → AWG3.1 reconnect and Wi-Fi/mobile/Wi-Fi
 continuity, with server inner traffic and full backend policy restoration.
-Final routes matched and VPN/TUN stopped; two policy-rule hashes differed
-after handover, so exact rule restoration remains open. This bounded local
+Final routes matched and VPN/TUN stopped. Two rule hashes differed only in
+the recreated OS network ID; every other byte matched. This bounded local
 acceptance does not close the full Android or final-candidate release gate.
 
 Prior Android candidate identities and audits are preserved as

@@ -1,5 +1,14 @@
 # Integrated Huawei AWG acceptance
 
+Follow-up: **PASS_BOUNDED**. [Rule analysis](rule-final-analysis.json) explains
+the original rule-hash gap below. Both changed lines differ only in `fwmark`
+low 16 bits: 221 became 239, matching Android's current active default network
+ID 239. Substituting the old number reproduces each original complete-line
+SHA-256; priorities, masks, targets and every other byte match. Routes match,
+VPN/TUN are absent. Exact raw rule hashes remain different; no stale VPN-rule
+finding follows from this OS network renumbering. The original observations
+and receipt are preserved without rewriting their results.
+
 2026-09-08, **PASS_BOUNDED_WITH_RULE_RESTORE_GAP**. The [receipt](receipt.json)
 binds ARM64 APK `88452b99…5850` (1.2.0+4053), client `7ae931b`, Core
 `02a091c`, the physical Huawei Android 12 / SDK 31 and existing owned DE labs.
