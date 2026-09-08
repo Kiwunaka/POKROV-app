@@ -127,10 +127,12 @@ Normalize each array with the platform
   UI count zero, service Running and no tunnel. The earlier invalid CPU run
   remains withdrawn; evidence:
   `docs/operations/evidence/candidate33-windows-wmi-idle-budget.json`;
-- candidate.33 Windows useful cold-process start in the same VM: `PASS`, p95
-  `1499.404 ms <= 2000 ms` target and `3500 ms` stop from 20 retained launches
-  after 3 discarded warmups; this is not a cold OS boot or physical/comparable
-  Windows proof; normalized evidence:
+- candidate.33 historical Windows process-start observation in the same VM:
+  p95 `1499.404 ms` from 20 retained launches after 3 discarded warmups.
+  **Useful-start credit withdrawn on 2026-09-08:** the collector terminal only
+  required a responsive window and visible UIA Pane, without useful Protection
+  controls. The historical normalized PASS is retained as provenance, not a
+  current useful cold-start gate; normalized evidence:
   `docs/operations/evidence/candidate33-windows-cold-start-budget.json`;
 - candidate.33 signed universal APK `295370161` bytes and owner-accepted
   unsigned Windows installer `29153792` bytes: both exact hashes match the
@@ -141,3 +143,20 @@ Normalize each array with the platform
   frame baselines, Android idle, physical/comparable Windows idle and memory
   regression comparison: `MANUAL_OWNER_TEST`;
 - later same-kind artifact-size comparison: `MANUAL_OWNER_TEST`.
+
+## R12 Windows idle follow-up — 2026-09-08
+
+[Exact receipt and method](evidence/2026-09-08-r12-windows-idle/README.md):
+local client `e88dff9` / Core `02a091c`, owned offline Windows 11 VM, same warm
+OS boot. Skipping unchanged two-second runtime notifications reduced observed
+combined UI/service CPU p95 from `1.498296%` (FAIL) to `0.749983%` (PASS at 1%).
+Both runs discarded 30 intervals and retained 60; both process counters were
+readable and all 90 deltas were independently recomputed. Memory p95 moved
+from `117440512` to `120459264` bytes; the canonical matching-fingerprint
+comparison passes with `2.570452%` growth, below 10%.
+
+305 installed package hashes matched; saved state was preserved. Cleanup left
+the VM off/NIC none and host routes/DNS unchanged. This closes the named idle
+observation only. Semantic useful-start, separate warm/cold/post-reboot
+distributions, Windows 10, connected/tray-hidden and physical/comparable-device
+performance remain open for R12-W05 and the final release candidate.

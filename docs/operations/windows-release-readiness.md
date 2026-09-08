@@ -1,5 +1,14 @@
 # Windows Release Readiness
 
+R12 performance follow-up (2026-09-08): [idle CPU and memory evidence](evidence/2026-09-08-r12-windows-idle/README.md)
+binds local client `e88dff9` / Core `02a091c` to 305 installed hashes. The same
+offline Windows 11 VM measured combined CPU p95 `0.749983%` against 1% after
+the unchanged-status notification fix (before `1.498296%`, FAIL). Comparable
+memory growth is `2.570452%`, PASS against 10%. Useful cold start, Windows 10,
+physical hardware and the complete W05 matrix remain open; this is no final
+release acceptance. The historical candidate.33 Pane-only startup measurement
+does not establish useful Protection readiness.
+
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
