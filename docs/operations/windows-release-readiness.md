@@ -3,6 +3,14 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
+R12 service crash (2026-09-08): [installed failure and correction](evidence/2026-09-08-r12-service-crash/README.md)
+bind client `68a44e5` / Core `02a091c` to the fixed UI. SCM recovery had left the
+previous UI falsely Connected. Local status observation now clears that claim;
+the same UI process reconnects after forced service termination. First clean
+SCM sample was 15,588 ms; route/DNS restoration, saved-state continuity and all
+305 installed hashes PASS. Test configuration restored, VM off/NIC none and
+host network unchanged. W02 sleep/handoff, Win10 and final-channel gates OPEN.
+
 R12 new A03 Core package (2026-09-08): [installed Windows evidence](evidence/2026-09-08-r12-awg-crossfield-windows/README.md)
 binds client `295ceac` / Core `02a091c` to an actual 305-file upgrade and ordinary
 AWG3.1 → AWG2 → AWG3.1 reconnects. Three disconnects restore exact route/DNS
