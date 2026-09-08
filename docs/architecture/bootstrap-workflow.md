@@ -576,9 +576,13 @@ seconds when a matching cached profile exists. Timeout or transient
 the regular host staging transaction, including after app/process restart.
 The cache is checked again after refresh failure for expiry or intervening
 authorization denial. Offline preparation performs no WARP-status API call.
-Known 401/403 denial clears the protected cache; missing credentials or an
-account/input mismatch makes it unavailable. A dataplane failure alone prefers
-the proven slot on the next manual retry and does not erase either record.
+Known 401/403 denial and a successful subscription response with lane
+`expiredOrBlocked` clear the protected cache. The subscription denial also
+blocks cached reconnect and stops a running tunnel through normal disconnect;
+if a native action is in flight, disconnect follows its completion. A transient
+managed-profile failure cannot override that known denial. Missing credentials
+or an account/input mismatch makes the cache unavailable. A dataplane failure
+alone prefers the proven slot on the next manual retry and does not erase either record.
 
 Hosts/bootstrap fixtures without the protected-cache capability retain the
 legacy staged-file fallback with a 0–24-hour modification-age check. The real

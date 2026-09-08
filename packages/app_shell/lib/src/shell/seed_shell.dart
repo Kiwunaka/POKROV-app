@@ -594,6 +594,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   bool _warpPolicyBusy = false;
   bool _stagedProfileUsesWarp = false;
   bool _activeConnectUsedWarp = false;
+  bool _accessDenialPending = false;
   bool _warpFallbackInFlight = false;
   SmartConnectProfile? _smartConnectProfile;
   ClientLocationsCatalog? _locationsCatalog;
@@ -1974,6 +1975,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _telegramBonusError = null;
         }
       });
+      if (info.lane == 'expiredOrBlocked') {
+        _cachedProfileFallbackGate.markAuthorizationDenied();
+        _managedProfileDirty = true;
+        _accessDenialPending = true;
+        await _enforceKnownAccessDenial();
+      }
       if (const {'trialPremium', 'paidUnlimited'}.contains(info.lane)) {
         final emergencyService = _emergencyNetworkService;
         if (emergencyService != null) {
@@ -4317,6 +4324,46 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
+  Future<void> _enforceKnownAccessDenial() async {
+    if (!mounted || !_accessDenialPending || _runtimeBusy) return;
+    _accessDenialPending = false;
+    if (_runtimeSnapshot?.phase != RuntimePhase.running) {
+      _invalidateQuickSettingsProfile();
+      return;
+    }
+    _cancelPostConnectHostHealthPolling();
+    setState(() {
+      _runtimeBusy = true;
+      _runtimeIntent = ConnectionTransitionIntent.disconnect;
+    });
+    try {
+      var current = await _withRuntimeActionTimeout(
+        'accessDeniedDisconnect',
+        _runtimeEngine.disconnect,
+      );
+      current = await _settleRuntimeDisconnectTransition(current);
+      if (!mounted) return;
+      setState(() {
+        _runtimeSnapshot = current;
+        _emergencyRuntimeActive = false;
+        _runtimeHeadline = 'Доступ не активен. Продлите доступ, чтобы подключиться.';
+      });
+      _invalidateQuickSettingsProfile();
+    } on Object catch (error) {
+      if (mounted) {
+        setState(() => _runtimeHeadline = _runtimeUnexpectedErrorMessage(error));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _runtimeBusy = false;
+          _runtimeIntent = ConnectionTransitionIntent.none;
+        });
+      }
+      widget.shellController?.refresh();
+    }
+  }
+
   Future<RuntimeSnapshot> _runRuntimeAction(
     Future<RuntimeSnapshot> Function() action,
   ) async {
@@ -4324,8 +4371,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _runtimeBusy = true;
     });
 
+    late RuntimeSnapshot snapshot;
     try {
-      final snapshot = await action();
+      snapshot = await action();
       if (!mounted) {
         return snapshot;
       }
@@ -4340,15 +4388,16 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _runtimeHeadline = null;
       });
       widget.shellController?.refresh();
-      return snapshot;
     } finally {
       if (mounted) {
         setState(() {
           _runtimeBusy = false;
         });
       }
+      await _enforceKnownAccessDenial();
       widget.shellController?.refresh();
     }
+    return _runtimeSnapshot ?? snapshot;
   }
 
   Future<void> _refreshRuntimeSnapshot() async {
@@ -5058,7 +5107,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                 : widget.runtimeActionTimeout,
           );
         } on TimeoutException {
-          if (!cachedProfileFallbackAllowed) rethrow;
+          if (!cachedProfileFallbackAllowed ||
+              !_cachedProfileFallbackGate.canFallback(
+                cachedProfileAvailable: cachedProfileAvailable,
+                inputsVerified: cachedPayload != null,
+              )) {
+            rethrow;
+          }
           cachedPayload = await readCache();
           if (cacheService != null && cachedPayload == null) rethrow;
           usedCachedProfile = true;
@@ -5067,6 +5122,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             _cachedProfileFallbackGate.markAuthorizationDenied();
           }
           if (!cachedProfileFallbackAllowed ||
+              !_cachedProfileFallbackGate.canFallback(
+                cachedProfileAvailable: cachedProfileAvailable,
+                inputsVerified: cachedPayload != null,
+              ) ||
               !_isTransientProfileFailure(error)) {
             rethrow;
           }
@@ -5317,6 +5376,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (_runtimeSnapshot?.phase != RuntimePhase.running) {
         _connectionCoordinator.clearAttempt();
       }
+      await _enforceKnownAccessDenial();
       widget.shellController?.refresh();
     }
   }

@@ -1217,6 +1217,7 @@ void _installReadyRuntimeBridgeMock({
   bool failAfterConnect = false,
   bool failApplyWarp = false,
   bool retainHealthyConnectedSnapshot = false,
+  Future<void>? connectGate,
 }) {
   const channel = MethodChannel('space.pokrov/runtime_engine');
   final messenger =
@@ -1342,6 +1343,7 @@ void _installReadyRuntimeBridgeMock({
           'message': 'Managed profile staged on the host bridge.',
         };
       case 'runtimeEngine.connect':
+        await connectGate;
         connectCalls += 1;
         if (failAllEmergencyConnects ||
             (failFirstConnect && connectCalls == 1)) {
@@ -9446,6 +9448,92 @@ void main() {
       }
     });
   }
+
+  testWidgets('explicit inactive subscription blocks cached reconnect on profile 503', (tester) async {
+    final calls = <String>[];
+    _installReadyRuntimeBridgeMock(calls: calls,
+      retainHealthyConnectedSnapshot: true);
+    final bootstrapper = _CachedBootstrapper(const ManagedProfilePayload(
+      profileName: 'cached-profile', configPayload: _materializedRuntimeConfig,
+      materializedForRuntime: true, cacheEntryId: 'cached-entry',
+    ));
+    bootstrapper.subscriptionInfo = const ClientSubscriptionInfo(
+      lane: 'expiredOrBlocked', expiresAt: '', daysLeft: 0,
+      autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {},
+    );
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+    ));
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    expect(calls.where((c) => c == 'runtimeEngine.connect'), isEmpty);
+    expect(bootstrapper.provenEntries, isEmpty);
+  });
+
+  testWidgets('explicit inactive subscription disconnects a cached tunnel on resume', (tester) async {
+    final calls = <String>[];
+    _installReadyRuntimeBridgeMock(calls: calls,
+      retainHealthyConnectedSnapshot: true);
+    final bootstrapper = _CachedBootstrapper(const ManagedProfilePayload(
+      profileName: 'cached-profile', configPayload: _materializedRuntimeConfig,
+      materializedForRuntime: true, cacheEntryId: 'cached-entry',
+    ));
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+    ));
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    expect(calls.where((c) => c == 'runtimeEngine.connect').length, 1);
+    bootstrapper.subscriptionInfo = const ClientSubscriptionInfo(
+      lane: 'expiredOrBlocked', expiresAt: '', daysLeft: 0,
+      autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {},
+    );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(calls.where((c) => c == 'runtimeEngine.disconnect').length, 1);
+    expect(find.text('Подключено'), findsNothing);
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    expect(calls.where((c) => c == 'runtimeEngine.connect').length, 1);
+  });
+
+  testWidgets('inactive subscription during native connect stops the settled tunnel', (tester) async {
+    final calls = <String>[];
+    final connectGate = Completer<void>();
+    _installReadyRuntimeBridgeMock(calls: calls,
+      retainHealthyConnectedSnapshot: true, connectGate: connectGate.future);
+    final bootstrapper = _CachedBootstrapper(const ManagedProfilePayload(
+      profileName: 'cached-profile', configPayload: _materializedRuntimeConfig,
+      materializedForRuntime: true, cacheEntryId: 'cached-entry',
+    ));
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+    ));
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(calls.where((c) => c == 'runtimeEngine.connect').length, 1);
+    bootstrapper.subscriptionInfo = const ClientSubscriptionInfo(
+      lane: 'expiredOrBlocked', expiresAt: '', daysLeft: 0,
+      autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {},
+    );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump(const Duration(milliseconds: 300));
+    connectGate.complete();
+    await tester.pumpAndSettle();
+    expect(calls.where((c) => c == 'runtimeEngine.disconnect').length, 1);
+    expect(find.text('Подключено'), findsNothing);
+  });
 
   for (final status in [503, 403]) {
     testWidgets('cached Android profile handles API $status after app restart', (tester) async {

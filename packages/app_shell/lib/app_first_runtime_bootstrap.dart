@@ -4323,7 +4323,15 @@ class AppFirstRuntimeBootstrapper
       method: 'GET',
       path: '/api/client/subscription',
     );
-    return ClientSubscriptionInfo.fromJson(response);
+    final info = ClientSubscriptionInfo.fromJson(response);
+    if (info.lane == 'expiredOrBlocked') {
+      try {
+        await _managedProfileCache.clear(hostPlatform.name);
+      } on Object {
+        // Preserve the explicit denial even if protected storage is unavailable.
+      }
+    }
+    return info;
   }
 
   @override

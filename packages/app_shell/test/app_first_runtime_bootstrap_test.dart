@@ -329,6 +329,7 @@ void main() {
     });
     var revision = 'a';
     var denied = false;
+    var subscriptionDenied = false;
     var stall = false;
     unawaited(() async {
       await for (final request in server) {
@@ -342,6 +343,10 @@ void main() {
         } else if (denied) {
           request.response.statusCode = 403;
           request.response.write('{"detail":"access denied"}');
+        } else if (request.uri.path == '/api/client/subscription') {
+          request.response.write(jsonEncode({
+            'lane': subscriptionDenied ? 'expiredOrBlocked' : 'paidUnlimited',
+          }));
         } else if (request.uri.path == '/api/client/route-policy') {
           request.response.write('{"ok":true}');
         } else if (request.uri.path == '/api/client/profile/managed') {
@@ -387,6 +392,14 @@ void main() {
     ).timeout(const Duration(seconds: 2)), throwsA(isA<BootstrapFailure>()));
     expect((await restarted.loadCachedManagedProfile(inputs))?.cacheEntryId, b.cacheEntryId);
     stall = false;
+    await online.fetchClientSubscription(hostPlatform: inputs.hostPlatform);
+    expect(await restarted.loadCachedManagedProfile(inputs), isNotNull);
+    subscriptionDenied = true;
+    await online.fetchClientSubscription(hostPlatform: inputs.hostPlatform);
+    expect(await restarted.loadCachedManagedProfile(inputs), isNull);
+    subscriptionDenied = false;
+    await online.resolveManagedProfile(
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode);
     denied = true;
     await expectLater(online.resolveManagedProfile(
       hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode), throwsA(isA<BootstrapFailure>()));
