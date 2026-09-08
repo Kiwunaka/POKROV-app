@@ -1,0 +1,19 @@
+{
+  "client_source": "f479fd49f7904bda5c916e5f7148675f45105872",
+  "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "fixed_source": {
+    "packages/app_shell/lib/app_first_runtime_bootstrap.dart": {
+      "git_blob_sha256": "e0a20fa64086092508b2ba4b0aa1e37b4304fe4933344318a0facdefb17ed606",
+      "worktree_sha256": "8c30afd97106918860cd5713da710c9267f8bd555e135be5cffb40b09d9de47d",
+      "only_checkout_eol_difference": true
+    },
+    "packages/app_shell/lib/src/shell/seed_shell.dart": {
+      "git_blob_sha256": "1cfd6ae8a926347b9d5d1d486fd42c3615a8e91c075d61388872db8d02ea6be5",
+      "worktree_sha256": "af88978bb1d899db53e07d4a097d98b1d93a2ce14195d89143edf049803e27cc",
+      "only_checkout_eol_difference": true
+    }
+  },
+  "relevant_tracked_diff": "none: apps/android_shell packages config scripts",
+  "build_outputs": "abi-package-audit.json",
+  "device_install": "physical-install.json"
+}

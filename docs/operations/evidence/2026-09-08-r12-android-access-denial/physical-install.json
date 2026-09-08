@@ -1,0 +1,25 @@
+{
+  "scope": "same-version local integrated package replacement; not channel update",
+  "started_at_utc": "2026-09-08T13:23:17.270330+00:00",
+  "before": {
+    "sha256": "88452b9921873c4fbb42bef25ed4d89c34841399ae11cbe8d9d482e5a03d5850",
+    "first_install_time": "2026-08-12 00:50:03",
+    "vpn_service": false,
+    "wifi_on": "1",
+    "mobile_data": "1"
+  },
+  "rollback_apk": "E:\\r12-integrated-acceptance-20260908\\android\\pokrov-r12-arm64-v8a.apk",
+  "apk_sha256": "20a0781baf9bea1e9e0e55de5f4d7d5193936dfe7a9d894df98c1bc457b897af",
+  "after": {
+    "sha256": "20a0781baf9bea1e9e0e55de5f4d7d5193936dfe7a9d894df98c1bc457b897af",
+    "first_install_time": "2026-08-12 00:50:03",
+    "vpn_service": false,
+    "wifi_on": "1",
+    "mobile_data": "1"
+  },
+  "result": "PASS_INSTALL_BYTES_FIRST_INSTALL_TIME",
+  "limits": [
+    "account and preferences require UI readback",
+    "not final release/channel upgrade"
+  ]
+}

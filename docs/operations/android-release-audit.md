@@ -11,7 +11,13 @@ Older APK identities and device runs are retained separately as evidence.
 The cutover seed still names `pokrov-1.2.0-candidate.33`; its retained evidence
 does not prove the newer local working sources below.
 
-The latest [integrated ARM64 acceptance](evidence/2026-09-08-r12-integrated-android/README.md)
+The latest [APK after explicit-denial fix](evidence/2026-09-08-r12-android-access-denial/README.md)
+binds client `f479fd4` to ARM64 `20a0781b…97af`. All four ABI packages passed
+signer/native/notices audit; Huawei update, ordinary connect, resume and exact
+route/rule cleanup passed. Physical denial/revocation remains MANUAL_OWNER_TEST
+pending a separate test login; the primary administrator's session is preserved.
+
+The earlier [integrated ARM64 acceptance](evidence/2026-09-08-r12-integrated-android/README.md)
 binds client `7ae931b` / Core `02a091c` to APK `88452b99...`: same-version
 installation, retained visible preferences, two ordinary-profile connections
 and exact route/rule restoration PASS_BOUNDED on Huawei. Earlier APK network

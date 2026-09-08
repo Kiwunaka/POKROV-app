@@ -1,0 +1,84 @@
+{
+  "schema": "pokrov.r12-android-access-denial-build/v1",
+  "client_source": "f479fd49f7904bda5c916e5f7148675f45105872",
+  "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "arm64_sha256": "20a0781baf9bea1e9e0e55de5f4d7d5193936dfe7a9d894df98c1bc457b897af",
+  "result": "PASS_BOUNDED_BUILD_UPDATE_CONNECT_RESUME_DISCONNECT",
+  "denial_revocation": "MANUAL_OWNER_TEST",
+  "backend_mutation": false,
+  "not_a_release_candidate": true,
+  "files": {
+    "abi-package-audit.json": {
+      "sha256": "df61336cfcb7c02c59625a2ae7176978031723f184e11b7e0e37905b959d4514",
+      "size_bytes": 8878
+    },
+    "physical-install.json": {
+      "sha256": "77aec7fb0c50903e31f8dd05b1a5a3cd3a9c19c5fe5f765ffc0cd9f1fff1a4e7",
+      "size_bytes": 947
+    },
+    "source-binding.json": {
+      "sha256": "84a31ee37e2477886624f21570a66fa57fec7241f89216790e9a8821052ddaa5",
+      "size_bytes": 934
+    },
+    "before-runtime.json": {
+      "sha256": "39313555e15a3cedefc05e7d9cb839bc76c883eb9f8013454af5d445db91ffc7",
+      "size_bytes": 1775
+    },
+    "connected-first.json": {
+      "sha256": "28ea8d0ad1f8b38283990595cee51de8dc17e3a70ba00c0c7c3a641f49144213",
+      "size_bytes": 2520
+    },
+    "background-running.json": {
+      "sha256": "2f7b11fcb7b8f552959f5954adbd881929bd0d0a3fbf6b058d834081b9aa8c5f",
+      "size_bytes": 2523
+    },
+    "resumed-running.json": {
+      "sha256": "b07b3d76d2faf8d857462bf85e8a1e8c37747e9f3cd110850db7ac96fd8040d8",
+      "size_bytes": 2520
+    },
+    "disconnected-final.json": {
+      "sha256": "ecb0f9c9f971ff0cb549c977fbfa44fa6b1757984ffc0ee8d331deb0dfcc5153",
+      "size_bytes": 1779
+    },
+    "runtime-summary.json": {
+      "sha256": "7bc9beaa2597058504b35cd78ec5ceaf14c2faab53189f6b765122105f8fa933",
+      "size_bytes": 706
+    },
+    "home-ready.png": {
+      "sha256": "444082f88194ee18c9e11d8cf784313723314c6f38e148796ce39ec717a48cee",
+      "size_bytes": 149383
+    },
+    "connected-first.png": {
+      "sha256": "3bf85a9edc424e22ea71d09d4bb721606fb5cd5dc2292d31dc0da93648450e6b",
+      "size_bytes": 161749
+    },
+    "protection-first.png": {
+      "sha256": "a044b56f9720a94052283bade43ce284e0e7db572bb629a5c9e794a802c34f42",
+      "size_bytes": 172733
+    },
+    "resumed-running.png": {
+      "sha256": "5a7108eed09a43c74baaeae480ccc3e1a399ef408570c588f42879c29207acdf",
+      "size_bytes": 162250
+    },
+    "disconnected-final.png": {
+      "sha256": "ba2d18bf57413b6c5f545e5e7509d4fd95451e5d1810a87d1452df72a8863ee2",
+      "size_bytes": 164514
+    },
+    "audit-abi-packages.py": {
+      "sha256": "32c0bd8675b3f6cfe02f3a71fd46ba58ce2b030522d3d058e35ec7f1acf61b11",
+      "size_bytes": 4224
+    },
+    "install-physical.py": {
+      "sha256": "5ee2c5ac23989efd2589913ca1c293145a0b7e0cd369ba567caded122ffc2f17",
+      "size_bytes": 2171
+    },
+    "sample-network.py": {
+      "sha256": "546af7ef6d872d3d6f2d8d52d1da29b8e9de4751376c888d72b779fc8ae3c482",
+      "size_bytes": 1182
+    },
+    "build-abi-packages.log": {
+      "sha256": "a3bf24befd611f44d209a8fa58c2964cdc0fc5bbd5ed57ca7694c064811819e2",
+      "size_bytes": 3020
+    }
+  }
+}
