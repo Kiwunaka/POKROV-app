@@ -1,5 +1,17 @@
 # Windows Release Readiness
 
+Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
+lab entries below do not replace its packaged bytes or release decision.
+
+R12 control-plane outage (2026-09-08): [installed Win11 evidence](evidence/2026-09-08-r12-windows-api-outage/README.md)
+for unchanged `e88dff9` / Core `02a091c`: established AWG3.1 survives 61 seconds
+of blocked client web/API traffic; cached reconnect and UI-restart reconnect
+reach fresh runtime proof. Original cache timestamp/binding/payload do not renew;
+online refresh later creates a fresh observation. Four disconnects restore
+routes/DNS; 488 firewall rules and 305 installed files match. Fixtures removed,
+backend restored, VM off/NIC none, host network unchanged. Actual 24-hour expiry,
+explicit denial/revocation, Win10 and complete N02/N07/final channel remain open.
+
 R12 firewall/local application (2026-09-08): [installed Win11 evidence](evidence/2026-09-08-r12-firewall-coexistence/README.md)
 for unchanged `e88dff9` / Core `02a091c`: before AWG3.1, while connected and after
 disconnect, a narrow foreign firewall block denies the test HTTPS request and
@@ -34,9 +46,6 @@ memory growth is `2.570452%`, PASS against 10%. Useful cold start, Windows 10,
 physical hardware and the complete W05 matrix remain open; this is no final
 release acceptance. The historical candidate.33 Pane-only startup measurement
 does not establish useful Protection readiness.
-
-Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
-lab entries below do not replace its packaged bytes or release decision.
 
 R12 service crash (2026-09-08): [installed failure and correction](evidence/2026-09-08-r12-service-crash/README.md)
 bind client `68a44e5` / Core `02a091c` to the fixed UI. SCM recovery had left the
