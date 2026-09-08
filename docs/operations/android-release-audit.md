@@ -1,6 +1,6 @@
 # Android Release Audit
 
-Last updated: 2026-09-07
+Last updated: 2026-09-08
 
 ## Document Status
 
@@ -10,6 +10,12 @@ This file contains the current Android gate for the `1.2.0` working target.
 Older APK identities and device runs are retained separately as evidence.
 The cutover seed still names `pokrov-1.2.0-candidate.33`; its retained evidence
 does not prove the newer local working sources below.
+
+New Core package preparation (2026-09-08): [source-bound APK evidence](evidence/2026-09-08-r12-android-awg-crossfield/README.md)
+binds client `76614b1` / Core `02a091c` to ARM64, universal, ARMv7 and x86_64
+packages. Signer/ABI/native Core identity checks PASS; ARM64 is 101,229,131 bytes.
+These bytes have no physical installation proof yet. D01/D02/A03 device gates
+remain open; previous device results are not transferred to this package.
 
 ## Current Truth
 
