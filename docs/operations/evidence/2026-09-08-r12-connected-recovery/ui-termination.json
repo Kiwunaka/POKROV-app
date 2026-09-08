@@ -1,0 +1,43 @@
+{
+  "utc": "2026-09-08T01:20:05.7209798Z",
+  "ui_pid": 7184,
+  "service_pid_before": 2888,
+  "method": "Stop-Process exact UI PID Force",
+  "before": {
+    "client_source": "0218e89",
+    "action": "status",
+    "elapsed_ms": 32,
+    "available": true,
+    "trusted": true,
+    "compatible": true,
+    "accepted": true,
+    "phase": "running",
+    "running": true,
+    "core_ready": true,
+    "dns_ready": true,
+    "egress_validated": true,
+    "can_connect": false,
+    "effective_matches_staged": true,
+    "failure": "none"
+  },
+  "after": {
+    "client_source": "0218e89",
+    "action": "status",
+    "elapsed_ms": 16,
+    "available": true,
+    "trusted": true,
+    "compatible": true,
+    "accepted": true,
+    "phase": "running",
+    "running": true,
+    "core_ready": true,
+    "dns_ready": true,
+    "egress_validated": true,
+    "can_connect": false,
+    "effective_matches_staged": true,
+    "failure": "none"
+  },
+  "ui_count_after": 0,
+  "service_pid_after": 2888,
+  "service_pid_unchanged": true
+}

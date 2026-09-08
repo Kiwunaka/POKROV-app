@@ -3,6 +3,14 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
+R12 connected recovery (2026-09-08): [installed Win11 evidence](evidence/2026-09-08-r12-connected-recovery/README.md)
+confirms forced UI termination preserves the running AWG31 service/TUN and
+relaunch observes it. Graceful connected reboot returns to safe disconnected
+state with exact route/DNS baseline, automatic LocalSystem service and all
+305 package hashes unchanged. Original rollout configuration restored; clone
+off/NIC none; host route/DNS hashes unchanged. Service-process crash, sleep,
+post-reboot reconnect, WFP, IPv6, Win10 and final-channel acceptance remain open.
+
 R12 managed switching (2026-09-08): [installed Win11 evidence](evidence/2026-09-08-r12-managed-switching/README.md)
 confirms ordinary UI AWG3.1 → AWG2 → AWG3.1 reconnect, protected service-file
 changes and exact return hash, with three running/identity observations and

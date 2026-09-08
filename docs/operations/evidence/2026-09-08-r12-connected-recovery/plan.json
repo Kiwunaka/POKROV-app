@@ -1,0 +1,76 @@
+{
+  "materials": {
+    "awg2_lab": {
+      "endpoint_revision": "awg2-v1",
+      "endpoint_sha256": "07ae6a2f8bdbfc3bd78bb6fabf105db5380f1bf9a0989efed7a8330d0f7648a9",
+      "generation": "awg2-lab-v1",
+      "latest_source_equal": true,
+      "node_code": "de",
+      "peer_key_sha256": "a3c903d990d506fff21f6fb4602191b648c2ed8b1f8bef72a4970cc345eac80d",
+      "ready_count": 1
+    },
+    "awg31_lab": {
+      "endpoint_revision": "awg31-v1",
+      "endpoint_sha256": "7effbffdbab9013e682f60832c89d488ef0ecfe0829c4e8acb788918bbfaea50",
+      "generation": "awg31-lab-v4-mobile-safe-trailers",
+      "latest_source_equal": true,
+      "node_code": "de",
+      "peer_key_sha256": "68105095df51ea3599392ce3a9bfa824e82d09e1f46e028ff8d4186b74d3e7ae",
+      "ready_count": 1
+    }
+  },
+  "ok": true,
+  "operation": "plan",
+  "plan": {
+    "before_config_sha256": "cd0add7b4805b863531ba0cd49b44c9749dbe38d6e740be6154114631b6920a3",
+    "before_gates": {
+      "awg2_lab": {
+        "allowed_platforms": [
+          "android",
+          "windows"
+        ],
+        "allowlist_install_ids": [],
+        "allowlist_node_codes": [
+          "de"
+        ],
+        "allowlist_tg_ids": [],
+        "contract_id": "pokrov.awg2.endpoint.v1",
+        "contract_sha256": "c473c411025825bfef5a76c64990c5c921e9658b3581210d3a86d72e454fdea8",
+        "enabled": true,
+        "endpoint_revision": "awg2-v1",
+        "expires_at": "2026-09-06T04:27:23.296532Z",
+        "generation": "awg2-lab-v1",
+        "kill_switch_engaged": false,
+        "material_max_age_hours": 168,
+        "server_owner": "pokrov",
+        "server_record_id": "de-awg2-20260827-01",
+        "server_state": "ready"
+      },
+      "awg31_lab": {
+        "allowed_platforms": [
+          "android",
+          "windows"
+        ],
+        "allowlist_install_ids": [],
+        "allowlist_node_codes": [
+          "de"
+        ],
+        "allowlist_tg_ids": [],
+        "contract_id": "pokrov.awg31.endpoint.v1",
+        "contract_sha256": "1bb49b61549ba7c4a3c2d56df445e919ebb1ed12d42e04b0cb3c915d23240818",
+        "enabled": true,
+        "endpoint_revision": "awg31-v1",
+        "expires_at": "2026-09-06T04:27:23.296532Z",
+        "generation": "awg31-lab-v4-mobile-safe-trailers",
+        "kill_switch_engaged": false,
+        "material_max_age_hours": 168,
+        "server_owner": "pokrov",
+        "server_record_id": "de-awg31-20260829-04-mobile-safe-trailers",
+        "server_state": "ready"
+      }
+    },
+    "before_profile": "legacy_reality_fallback",
+    "expires_at": "2026-09-08T04:15:47.495101Z"
+  },
+  "raw_identifiers_returned": false
+}

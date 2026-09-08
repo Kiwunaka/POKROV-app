@@ -1,0 +1,7 @@
+{
+  "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "rollback_snapshot": "785e0b63-c486-4f9d-81e3-ec9abd3e0ef3",
+  "source_vm": "b769c8b4-e88a-452e-9d3a-cb4be23125e7",
+  "before_vm_state": "poweroff",
+  "before_nic1": "none"
+}
