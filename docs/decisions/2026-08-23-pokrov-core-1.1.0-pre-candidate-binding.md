@@ -1,6 +1,48 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-## Current C05 binding — 2026-09-06
+## Current AWG cross-field binding — 2026-09-08
+
+The development client binds Core `02a091cb0e369192a5ad0909b56ccba8aa1dce17`
+for Android and Windows. The validator rejects intersecting H1-H4 ranges,
+S1-S4/MTU combinations exceeding the supported message buffer, oversized junk
+packets and inconsistent AWG3.1 rekey/reject/receive-refresh timing before
+device creation. The managed Android/Windows packet ceiling is 2016 bytes;
+this is a buffer bound, not a network path-MTU guarantee. Scalar schema maxima
+are necessary but insufficient on their own. ABI and dependency versions stay
+unchanged from the previous C05 binding.
+
+- Android AAR: 107490210 bytes, SHA-256 `5e2ea69c044ea461b9be352cb7ce73ddd208898b5a364b6a2642024a6215534a`.
+- Windows DLL: 55451648 bytes, SHA-256 `0409da4762c56234c38f7b60ac5fe8b49d4131c4a4debedf3ef313aebe8d0371`.
+- Both builds are byte-identical across two runs; four Android ABIs, desktop
+  ABI 2, event ABI 1 and 15 exports are retained. The exact DLL passed 100
+  proxy-only start/stop cycles. Full Core tests passed.
+- The exact source passed six owned Pi userspace AWG2/AWG3.1 cases at client
+  MTU 1280/1400/1408 with authenticated TLS/HTTP. These are bounded transport
+  checks and do not establish whole-client routing or independent RU-origin.
+
+[Binding receipt](../operations/evidence/2026-09-08-r12-awg-crossfield-binding/binding.json),
+[Android builds](../operations/evidence/2026-09-08-r12-awg-crossfield-binding/android-evidence.json),
+[Windows builds](../operations/evidence/2026-09-08-r12-awg-crossfield-binding/windows-evidence.json)
+and the [previous manifest](../operations/evidence/2026-09-08-r12-awg-crossfield-binding/previous-runtime-binding.json)
+retain exact identity and rollback. Local build trees, logs and source SBOMs
+are retained under `E:/r12-awg-crossfield-20260908`; the previous binaries remain
+under `E:/r12-c05-artifacts`. Native notices only update source references;
+module manifests and verbatim license text are unchanged. SBOM license warnings
+remain separate from this source/build verification. The evidence helper's CI
+label denotes local execution here, with no hosted workflow run.
+
+No new candidate, signing, tag, publication or promotion. Existing installed
+phone/VM packages still contain their earlier Core until explicitly replaced
+and checked; their acceptance is not transferred to these new bytes. Android
+and Windows whole-client, WARP, final package and full-origin gates stay open.
+
+[Consumer backtests](../operations/evidence/2026-09-08-r12-awg-crossfield-binding/client-backtests.json):
+80 runtime tests, 8 Android Flutter tests and 376 freshly executed JVM tests
+pass. Runtime/Android analyze, explicit-root seed/docs/parity and 16 release
+handoff-v2 cases pass. Five compiled Go target module/build records match the
+previous binding; the retained DLL/AAR bytes themselves have changed.
+
+## Superseded C05 binding — 2026-09-06
 
 The development client binds Core `8dc57a830bd1487389dd1b7c9190f094c31e13bc`
 for Android and Windows. `config/runtime-artifacts.seed.json` owns the identity.

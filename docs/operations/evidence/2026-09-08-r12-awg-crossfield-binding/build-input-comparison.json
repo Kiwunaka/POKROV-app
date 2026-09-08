@@ -1,0 +1,11 @@
+{
+  "result": "PASS",
+  "module_and_build_records_equal": {
+    "windows": true,
+    "armeabi-v7a": true,
+    "arm64-v8a": true,
+    "x86": true,
+    "x86_64": true
+  },
+  "scope": "Five compiled Go target graphs; binary code differs as expected"
+}
