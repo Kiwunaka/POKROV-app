@@ -1,0 +1,70 @@
+{
+    "schema":  "pokrov.r12-windows-api-outage-sample/v1",
+    "utc":  "2026-09-08T13:03:18.2639715Z",
+    "label":  "after-denial-before-restart",
+    "collector_admin":  false,
+    "ui_pids":  [
+
+                ],
+    "service_pid":  8912,
+    "service_state":  "Running",
+    "probe":  {
+                  "client_source":  "0218e89",
+                  "action":  "status",
+                  "elapsed_ms":  0,
+                  "available":  true,
+                  "trusted":  true,
+                  "compatible":  true,
+                  "accepted":  true,
+                  "phase":  "config_staged",
+                  "running":  false,
+                  "core_ready":  true,
+                  "dns_ready":  false,
+                  "egress_validated":  false,
+                  "can_connect":  true,
+                  "effective_matches_staged":  false,
+                  "failure":  "none"
+              },
+    "probe_exit":  0,
+    "tun_count":  0,
+    "routes_sha256":  "50cbe1bc4f3c39cc361ba90c06f9b3e59edbc2c996020bf723430e5de7900885",
+    "dns_sha256":  "5de74dba88385fbea86c0728fb4e44572a06ee8f7a8d3aad71187cee9f80ae4b",
+    "curl_exit":  0,
+    "curl_status":  200,
+    "blocked_process_probe":  {
+                                  "status":  null,
+                                  "error":  "ConnectFailure",
+                                  "elapsed_ms":  38
+                              },
+    "cache":  {
+                  "available":  false,
+                  "reason":  "cache_key_absent"
+              },
+    "connected_events":  [
+                             {
+                                 "occurred_at":  "2026-09-08T12:59:15.232163Z",
+                                 "id_sha256":  "54b8d9d97378efbb79f34a92582fb223097d5c5e137493a4a35033966d11813c",
+                                 "cached_profile":  true
+                             },
+                             {
+                                 "occurred_at":  "2026-09-08T12:31:07.260870Z",
+                                 "id_sha256":  "b89a4d08f09c130ede586c1dc5af26e4d6eebf582d59ff4e820fa228abf98970",
+                                 "cached_profile":  true
+                             },
+                             {
+                                 "occurred_at":  "2026-09-08T12:27:33.827803Z",
+                                 "id_sha256":  "111c121d78c50ba7c40739209ca5bddf25a6686e72643777f2077d12547c3d54",
+                                 "cached_profile":  true
+                             }
+                         ],
+    "outage_rule_states":  [
+                               {
+                                   "Name":  "R12DenialFix-20260908-Probe",
+                                   "Enabled":  1
+                               },
+                               {
+                                   "Name":  "R12DenialFix-20260908-Ui",
+                                   "Enabled":  1
+                               }
+                           ]
+}

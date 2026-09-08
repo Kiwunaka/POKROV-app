@@ -1,0 +1,13 @@
+{
+  "host_utc": "2026-09-08T12:36:33.3000540Z",
+  "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "vm_state": [
+    "VMState=\"poweroff\"",
+    "nic1=\"none\""
+  ],
+  "host_time_extra_data": "No value set!",
+  "original_vm_state": "VMState=\"poweroff\"",
+  "backend_mutation": false,
+  "clock_source": "clock-v2-Restore.json",
+  "firewall_cleanup": "firewall-cleanup.json"
+}

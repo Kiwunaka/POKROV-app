@@ -3,6 +3,15 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
+R12 explicit access denial (2026-09-08): [fixed Windows acceptance](evidence/2026-09-08-r12-access-denial/README.md)
+replaces the affected behavior in the earlier integrated package. Client
+`f479fd4` stops the cached tunnel and clears protected cache on the explicit
+`expiredOrBlocked` subscription result, including denial during native connect.
+Installed 304-file identity, automatic disconnect and offline refusal after UI
+restart passed in Win11. Controlled 24-hour expiry passed only on the earlier
+package. Actual session revocation, new Android bytes, fixed-package expiry and
+full N02/N07 remain open. VM off/NIC none; no backend mutation or release.
+
 R12 integrated connected update (2026-09-08): [current package evidence](evidence/2026-09-08-r12-integrated-windows-update/README.md)
 passes first-attempt update from retained `e88dff9` to `3784352` while the UI,
 service and TUN are running. All 305 files match before/after; saved session and
