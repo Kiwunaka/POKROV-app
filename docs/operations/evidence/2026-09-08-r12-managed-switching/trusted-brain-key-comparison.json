@@ -1,0 +1,22 @@
+{
+  "keys": [
+    {
+      "type": "ssh-rsa",
+      "sha256": "265aa4d40b9633dffd17c1f7bf6205c6c68245d98c5ac8f6c8c1c6e2455f73f5",
+      "trusted_target_match": false
+    },
+    {
+      "type": "ecdsa-sha2-nistp256",
+      "sha256": "b1dd968573dbf6b056b16ede0a7232a5360df6521d98b2a3c34bddc147a613ce",
+      "trusted_target_match": false
+    },
+    {
+      "type": "ssh-ed25519",
+      "sha256": "4ff9d387c5a48b5fe5c047eb79fd0ab46154fb3b971d786861f59c70b63bb045",
+      "trusted_target_match": false
+    }
+  ],
+  "target_stored": false,
+  "local_keys": [],
+  "origins_agree": false
+}

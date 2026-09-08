@@ -3,6 +3,15 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
+R12 managed switching (2026-09-08): [installed Win11 evidence](evidence/2026-09-08-r12-managed-switching/README.md)
+confirms ordinary UI AWG3.1 → AWG2 → AWG3.1 reconnect, protected service-file
+changes and exact return hash, with three running/identity observations and
+route/DNS recovery after every disconnect. All 305 installed hashes match.
+Independent route proof remains open: unchanged external IP and an unverified
+DE SSH host-key change prevented server counter correlation. The original
+cohort is restored; VM is off with NIC disabled. Full N01/N03/W01, effective
+location presentation, crash/sleep/WFP, Win10 and final candidate remain open.
+
 R12 upgrade and installed cancellation (2026-09-08): [source-bound lab evidence](evidence/2026-09-08-r12-upgrade-managed/README.md)
 closes the reproduced Restart Manager shutdown failure and exact obsolete-test
 cleanup. Repeated Win11 upgrade, 305 package hashes, unchanged saved state and
