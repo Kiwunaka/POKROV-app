@@ -1,0 +1,64 @@
+{
+  "scope": "exact integrated Huawei ARM64; managed AWG3.1; WiFi/mobile/WiFi handover",
+  "result": "PASS_BOUNDED",
+  "samples": [
+    {
+      "label": "wifi-before",
+      "utc": "2026-09-08T10:36:31.919802+00:00",
+      "active_default_type": "WIFI",
+      "active_default_state": "CONNECTED",
+      "connected_vpn_agent": true,
+      "vpn_service": true,
+      "foreground": true,
+      "pid": "9024",
+      "wifi_on": "1",
+      "tun_interfaces": [
+        "tun0"
+      ]
+    },
+    {
+      "label": "mobile-before-refresh",
+      "utc": "2026-09-08T10:36:42.301898+00:00",
+      "active_default_type": "MOBILE",
+      "active_default_state": "CONNECTED",
+      "connected_vpn_agent": true,
+      "vpn_service": true,
+      "foreground": true,
+      "pid": "9024",
+      "wifi_on": "0",
+      "tun_interfaces": [
+        "tun0"
+      ]
+    },
+    {
+      "label": "mobile-after-refresh",
+      "utc": "2026-09-08T10:36:47.736931+00:00",
+      "active_default_type": "MOBILE",
+      "active_default_state": "CONNECTED",
+      "connected_vpn_agent": true,
+      "vpn_service": true,
+      "foreground": true,
+      "pid": "9024",
+      "wifi_on": "0",
+      "tun_interfaces": [
+        "tun0"
+      ]
+    },
+    {
+      "label": "wifi-restored",
+      "utc": "2026-09-08T10:37:03.609749+00:00",
+      "active_default_type": "WIFI",
+      "active_default_state": "CONNECTED",
+      "connected_vpn_agent": true,
+      "vpn_service": true,
+      "foreground": true,
+      "pid": "9024",
+      "wifi_on": "1",
+      "tun_interfaces": [
+        "tun0"
+      ]
+    }
+  ],
+  "wifi_restored": true,
+  "pid_continuity": true
+}
