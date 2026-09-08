@@ -320,6 +320,9 @@ service stop/restart or unavailable observer clears the previous UI/tray
 protection claim. Poll results that cross a runtime action or replace an older
 snapshot are discarded; polling stops when the shell is disposed. The existing
 bounded Android post-connect diagnostics remain separate.
+Equal status values do not rebuild the shell or notify tray listeners. The
+comparison includes diagnostics and profile revision/identity values, so a
+health or source change within the same runtime phase still reaches the UI.
 
 If restart or a final journal-write failure leaves the transaction at
 `recovered`, retry clears the saved network snapshot in the atomic `clean`

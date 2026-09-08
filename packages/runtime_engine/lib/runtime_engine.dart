@@ -167,6 +167,48 @@ class RuntimeSnapshot {
   final int? excludePackageCount;
   final bool connectionPending;
 
+  /// Repeated host observations need not notify UI listeners when their values
+  /// are unchanged. Profile sources are compared by value, not object identity.
+  bool hasSameStateAs(RuntimeSnapshot other) => _stateValues == other._stateValues;
+
+  Record get _stateValues => (
+        hostPlatform,
+        lane,
+        phase,
+        artifactDirectory,
+        coreBinaryPath,
+        helperBinaryPath,
+        stagedConfigPath,
+        supportsLiveConnect,
+        canInitialize,
+        canConnect,
+        message,
+        hostHealth,
+        dnsState,
+        uplinkState,
+        hostDiagnosticsSummary,
+        defaultNetworkInterface,
+        defaultNetworkIndex,
+        dnsReady,
+        coreEgressValidated,
+        coreEgressValidationRequired,
+        stagedProfileDigest,
+        effectiveProfileDigest,
+        profileIdentityOrigin,
+        (fetchedProfileSource?.revision, fetchedProfileSource?.origin),
+        (stagedProfileSource?.revision, stagedProfileSource?.origin),
+        (effectiveProfileSource?.revision, effectiveProfileSource?.origin),
+        lastFailureKind,
+        lastStopReason,
+        safeProtocolDiagnosticCode,
+        safeProtocolDiagnosticOccurrence,
+        ipv4RouteCount,
+        ipv6RouteCount,
+        includePackageCount,
+        excludePackageCount,
+        connectionPending,
+      );
+
   /// The host may advertise whether a selected-outbound Core probe is an
   /// explicit lifecycle requirement. Consumer health is stricter: every
   /// release target must still provide current DNS and egress proof before it

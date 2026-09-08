@@ -9220,6 +9220,7 @@ void main() {
     final messenger = tester.binding.defaultBinaryMessenger;
     var phase = 'running';
     var snapshotCalls = 0;
+    var egressHealthy = true;
     Completer<Map<String, Object?>>? heldSnapshot;
     var heldSnapshotClaimed = false;
     Map<String, Object?> hostSnapshot() => <String, Object?>{
@@ -9234,7 +9235,7 @@ void main() {
       'hostHealth': phase == 'running' ? 'healthy' : 'unknown',
       'dnsState': phase == 'running' ? 'healthy' : 'unknown',
       'uplinkState': phase == 'running' ? 'healthy' : 'unknown',
-      'core_egress_validated': phase == 'running',
+      'core_egress_validated': phase == 'running' && egressHealthy,
     };
     messenger.setMockMethodCallHandler(channel, (call) async {
       switch (call.method) {
@@ -9276,8 +9277,23 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(controller.isConnected, isTrue);
+    var statusNotifications = 0;
+    controller.addListener(() => statusNotifications += 1);
     await tester.pump(const Duration(minutes: 2));
     await tester.pumpAndSettle();
+    expect(statusNotifications, 0,
+        reason: 'unchanged local status must not rebuild the shell and tray');
+    egressHealthy = false;
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+    expect(controller.isConnected, isFalse);
+    expect(statusNotifications, 1,
+        reason: 'a health change in the running phase must reach the UI');
+    egressHealthy = true;
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+    expect(controller.isConnected, isTrue);
+    expect(statusNotifications, 2);
     phase = 'initialized'; // SCM restarted; its durable recovery cleared TUN.
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();

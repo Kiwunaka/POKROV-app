@@ -4378,6 +4378,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (!mounted || _runtimeBusy || !identical(observed, _runtimeSnapshot)) {
       return;
     }
+    if (identical(observed, refreshed) ||
+        (observed != null && refreshed != null &&
+            observed.hasSameStateAs(refreshed))) {
+      return;
+    }
     setState(() {
       _runtimeSnapshot = refreshed;
       if (refreshed?.phase != RuntimePhase.running) {

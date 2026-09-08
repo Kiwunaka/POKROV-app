@@ -88,6 +88,7 @@ class _FakeDesktopBindings implements DesktopRuntimeBindings {
 RuntimeSnapshot _runningSnapshot({
   required HostPlatform hostPlatform,
   bool? coreEgressValidated,
+  String? effectiveProfileRevision,
 }) {
   return RuntimeSnapshot(
     hostPlatform: hostPlatform,
@@ -108,11 +109,30 @@ RuntimeSnapshot _runningSnapshot({
     uplinkState: RuntimeDiagnosticState.healthy,
     dnsReady: true,
     coreEgressValidated: coreEgressValidated,
+    effectiveProfileSource: effectiveProfileRevision == null
+        ? null
+        : RuntimeProfileSource(
+            revision: effectiveProfileRevision,
+            origin: RuntimeProfileSourceOrigin.managedManifest,
+          ),
   );
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('snapshot values retain health and profile changes within one phase', () {
+    RuntimeSnapshot snapshot({bool healthy = true, String revision = 'r1'}) =>
+        _runningSnapshot(
+          hostPlatform: HostPlatform.windows,
+          coreEgressValidated: healthy,
+          effectiveProfileRevision: revision,
+        );
+    final initial = snapshot();
+    expect(initial.hasSameStateAs(snapshot()), isTrue);
+    expect(initial.hasSameStateAs(snapshot(healthy: false)), isFalse);
+    expect(initial.hasSameStateAs(snapshot(revision: 'r2')), isFalse);
+  });
 
   test('desktop ABI 2 retains the released marker-only compatibility lane', () {
     final decision = CoreRuntimeCompatibility.negotiate(
