@@ -1,5 +1,13 @@
 # Windows Release Readiness
 
+R12 firewall/local application (2026-09-08): [installed Win11 evidence](evidence/2026-09-08-r12-firewall-coexistence/README.md)
+for unchanged `e88dff9` / Core `02a091c`: before AWG3.1, while connected and after
+disconnect, a narrow foreign firewall block denies the test HTTPS request and
+disabling it restores 200; ordinary-user loopback HTTP remains reachable.
+488 preexisting rules and selected filters, route/DNS restoration and 305 files
+PASS_BOUNDED. Exact fixtures removed, backend restored, VM off/NIC none and host
+network unchanged. Other VPN/native WFP, LAN/IPv6, Win10 and full W06 remain open.
+
 R12 Windows 10 access (2026-09-08): [new owned lab](evidence/2026-09-08-r12-win10-access/README.md)
 installed official hash-verified LTSC 2021 Evaluation, but both normal activation
 attempts returned `0x87E10BC6`, LicenseStatus 5 / grace 0. This is
