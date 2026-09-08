@@ -14,8 +14,12 @@ does not prove the newer local working sources below.
 New Core package preparation (2026-09-08): [source-bound APK evidence](evidence/2026-09-08-r12-android-awg-crossfield/README.md)
 binds client `76614b1` / Core `02a091c` to ARM64, universal, ARMv7 and x86_64
 packages. Signer/ABI/native Core identity checks PASS; ARM64 is 101,229,131 bytes.
-These bytes have no physical installation proof yet. D01/D02/A03 device gates
-remain open; previous device results are not transferred to this package.
+[New physical evidence](evidence/2026-09-08-r12-android-device/README.md) now
+confirms these exact ARM64 bytes on Huawei: same-version replacement, retained
+preferences, ordinary-profile connection and bounded Wi-Fi/mobile/Wi-Fi handoff.
+A separate reconnect restored routes/rules and removed TUN; the earlier handoff
+rule-hash difference remains unproven. Exact installed AWG, full D01/D02/A03
+and final channel gates remain open.
 
 ## Current Truth
 
