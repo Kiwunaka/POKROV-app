@@ -3,6 +3,14 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
+R12 revocation fixture (2026-09-08): [initial availability receipt](evidence/2026-09-08-r12-revocation-availability/README.md)
+preserves the failed installation attempt in a separate standard-user clone.
+Automatic UAC password input was rejected; setup exited 2, actual revocation
+was NOT_RUN. All 304 expected installed files and old user data were preserved.
+The clone reports Enterprise Evaluation LicenseStatus 5 / grace 0. The owner
+subsequently agreed to enter UAC credentials manually; the retry is pending,
+and the initial receipt remains historical rather than proof of acceptance.
+
 R12 explicit access denial (2026-09-08): [fixed Windows acceptance](evidence/2026-09-08-r12-access-denial/README.md)
 replaces the affected behavior in the earlier integrated package. Client
 `f479fd4` stops the cached tunnel and clears protected cache on the explicit

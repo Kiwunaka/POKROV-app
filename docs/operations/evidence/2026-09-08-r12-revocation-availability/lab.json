@@ -1,0 +1,10 @@
+{
+  "utc": "2026-09-08T13:38:01.951889+00:00",
+  "vm_uuid": "808ca28e-cb34-4c49-b661-8aca4d138b01",
+  "source_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "source_snapshot": "e9b7fcd8-a726-43b8-bb76-d8165086db3d",
+  "source_snapshot_name": "r12-before-isolated-revocation-20260908",
+  "network_before_boot": "none",
+  "source_current_disk_preserved": true,
+  "source_snapshot_added": true
+}
