@@ -3,6 +3,15 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
+R12 new A03 Core package (2026-09-08): [installed Windows evidence](evidence/2026-09-08-r12-awg-crossfield-windows/README.md)
+binds client `295ceac` / Core `02a091c` to an actual 305-file upgrade and ordinary
+AWG3.1 → AWG2 → AWG3.1 reconnects. Three disconnects restore exact route/DNS
+hashes; package files remain unchanged. Original rollout restored, clone off
+with NIC none, host network unchanged. This supersedes the earlier absence of
+installed Windows proof for these bytes within this bounded scenario only.
+Independent route, effective location, new Android bytes and full release gates
+remain open.
+
 R12 connected recovery (2026-09-08): [installed Win11 evidence](evidence/2026-09-08-r12-connected-recovery/README.md)
 confirms forced UI termination preserves the running AWG31 service/TUN and
 relaunch observes it. Graceful connected reboot returns to safe disconnected
