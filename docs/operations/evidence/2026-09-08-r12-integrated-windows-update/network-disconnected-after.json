@@ -1,0 +1,30 @@
+﻿{
+    "utc":  "2026-09-08T11:36:40.4005047Z",
+    "label":  "w03-disconnected-after",
+    "routes_sha256":  "ea4a3102efedcb8609d8678e468bf8575cbabb4c11c495c3cdd09eba98ea9e06",
+    "dns_sha256":  "5de74dba88385fbea86c0728fb4e44572a06ee8f7a8d3aad71187cee9f80ae4b",
+    "up_adapter_count":  1,
+    "tun_count":  0,
+    "health_status":  200,
+    "egress_sha256":  "350fae6cb583c84a346ead8dd287415917df2a91a9c895703c4174bf41268051",
+    "egress_error":  null,
+    "dns_a_count":  1,
+    "probe":  {
+                  "client_source":  "0218e89",
+                  "action":  "status",
+                  "elapsed_ms":  0,
+                  "available":  true,
+                  "trusted":  true,
+                  "compatible":  true,
+                  "accepted":  true,
+                  "phase":  "config_staged",
+                  "running":  false,
+                  "core_ready":  true,
+                  "dns_ready":  false,
+                  "egress_validated":  false,
+                  "can_connect":  true,
+                  "effective_matches_staged":  false,
+                  "failure":  "none"
+              },
+    "probe_exit_code":  0
+}

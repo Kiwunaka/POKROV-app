@@ -1,0 +1,30 @@
+﻿{
+    "utc":  "2026-09-08T11:30:06.4755288Z",
+    "label":  "w03-connected-before",
+    "routes_sha256":  "729b1a918594e35ce7c2afc127ab1b3b81bfef3d7036f846e73cf3c22d46c388",
+    "dns_sha256":  "8b8aea14ca08919a1e1cec9ebe83557aa4e9fa01b3787517103be725195f536e",
+    "up_adapter_count":  2,
+    "tun_count":  1,
+    "health_status":  200,
+    "egress_sha256":  "350fae6cb583c84a346ead8dd287415917df2a91a9c895703c4174bf41268051",
+    "egress_error":  null,
+    "dns_a_count":  1,
+    "probe":  {
+                  "client_source":  "0218e89",
+                  "action":  "status",
+                  "elapsed_ms":  0,
+                  "available":  true,
+                  "trusted":  true,
+                  "compatible":  true,
+                  "accepted":  true,
+                  "phase":  "running",
+                  "running":  true,
+                  "core_ready":  true,
+                  "dns_ready":  true,
+                  "egress_validated":  true,
+                  "can_connect":  false,
+                  "effective_matches_staged":  true,
+                  "failure":  "none"
+              },
+    "probe_exit_code":  0
+}

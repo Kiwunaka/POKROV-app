@@ -3,6 +3,16 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
+R12 integrated connected update (2026-09-08): [current package evidence](evidence/2026-09-08-r12-integrated-windows-update/README.md)
+passes first-attempt update from retained `e88dff9` to `3784352` while the UI,
+service and TUN are running. All 305 files match before/after; saved session and
+experience bytes survive setup, routes/DNS restore, and the new UI reconnects
+and disconnects. No new Defender 1116/1117 events; prior AV issue stays open.
+Exact backend configuration restored after the entitlement selector refused
+rollback; no account/material changes. VM off/NIC none, host network unchanged.
+External egress hash was unchanged: this gives no new leak/protocol-route proof.
+Win10, sleep (unsupported by VM), full W03 and final-channel gates remain open.
+
 R12 routing (2026-09-08): [installed route proof and AWG fix](evidence/2026-09-08-r12-windows-route-proof/README.md)
 binds client `3784352` / Core `02a091c` to 305 installed hashes. Selected
 PowerShell now connects with AWG3.1; independent counters distinguish its TUN

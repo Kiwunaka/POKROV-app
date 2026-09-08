@@ -1,0 +1,58 @@
+{
+    "utc":  "2026-09-08T11:35:48.8828870Z",
+    "label":  "connected-after",
+    "bundle":  "after",
+    "client_source":  "3784352dc58a282910c4ddc77ff7a30493706f2f",
+    "core_source":  "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+    "files_verified":  305,
+    "installer_sha256":  "83c253ce8a1cc5d64aa615e259ae2a0f6d5d978442fd3732965d7778d14d6063",
+    "state_sha256":  "fd541af77737c022f46afc0fe415e2760557bb3a0ec2fa9d3414f693a76eafe5",
+    "experience_sha256":  "18d67dacba4870faee4c70339110b251cc4c691cdc016b528a7da0823d719c82",
+    "routing_preferences":  {
+                                "purposeRoutes":  [
+
+                                                  ],
+                                "overrides":  [
+
+                                              ],
+                                "dnsPreset":  "automatic",
+                                "dnsTransport":  "vpn",
+                                "customDnsUrl":  "",
+                                "externalSmartDnsEnabled":  false,
+                                "allowLan":  true,
+                                "trustedWifiNames":  [
+
+                                                     ],
+                                "pauseOnTrustedWifi":  false,
+                                "windowsConnectionMode":  "vpn",
+                                "tunStack":  "system"
+                            },
+    "selected_apps_count":  0,
+    "routes_sha256":  "729b1a918594e35ce7c2afc127ab1b3b81bfef3d7036f846e73cf3c22d46c388",
+    "dns_sha256":  "8b8aea14ca08919a1e1cec9ebe83557aa4e9fa01b3787517103be725195f536e",
+    "ui_count":  1,
+    "service_state":  "Running",
+    "service_account":  "LocalSystem",
+    "service_start_mode":  "Auto",
+    "probe_exit":  0,
+    "probe":  {
+                  "client_source":  "0218e89",
+                  "action":  "status",
+                  "elapsed_ms":  16,
+                  "available":  true,
+                  "trusted":  true,
+                  "compatible":  true,
+                  "accepted":  true,
+                  "phase":  "running",
+                  "running":  true,
+                  "core_ready":  true,
+                  "dns_ready":  true,
+                  "egress_validated":  true,
+                  "can_connect":  false,
+                  "effective_matches_staged":  true,
+                  "failure":  "none"
+              },
+    "install_succeeded":  true,
+    "log_closed":  true,
+    "restart_required":  false
+}

@@ -1,0 +1,22 @@
+{
+  "account_component_user_count": 1,
+  "account_user_count": 1,
+  "blocker": "entitled_user_install_ownership",
+  "candidate_rank": 1,
+  "device_account_matches_global_install_user": true,
+  "device_account_matches_runtime_owner": false,
+  "device_app_version": "1.2.0+4053",
+  "device_record_present": true,
+  "entitlement_resolution": "runtime_admin_owner_fallback",
+  "global_install_user_count": 1,
+  "last_seen_age_seconds": 432027,
+  "matched_device_count": 1,
+  "ok": false,
+  "raw_identifiers_returned": false,
+  "runtime_owner_entitled_user_count": 1,
+  "runtime_owner_user_count": 1,
+  "target_install_sha256": "fe746f1300ba28298736b684b3b272af2f0c3d02cf4934def66ee98f581475d0",
+  "target_user_is_currently_entitled": false,
+  "target_user_matches_runtime_owner": false,
+  "target_user_resolution": "exact_install_global"
+}
