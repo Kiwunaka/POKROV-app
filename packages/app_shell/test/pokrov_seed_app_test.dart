@@ -9212,6 +9212,109 @@ void main() {
     expect(find.textContaining('Host diagnostics'), findsNothing);
   });
 
+  testWidgets('windows observes service loss after a long connected session',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    var phase = 'running';
+    var snapshotCalls = 0;
+    Completer<Map<String, Object?>>? heldSnapshot;
+    var heldSnapshotClaimed = false;
+    Map<String, Object?> hostSnapshot() => <String, Object?>{
+      'phase': phase,
+      'artifactDirectory': '/host/runtime',
+      'coreBinaryPath': '/host/runtime/pokrov-core.dll',
+      'stagedConfigPath': phase == 'initialized'
+          ? null : '/host/runtime/managed-profile.json',
+      'supportsLiveConnect': true,
+      'canInitialize': true,
+      'canConnect': phase == 'configStaged',
+      'hostHealth': phase == 'running' ? 'healthy' : 'unknown',
+      'dnsState': phase == 'running' ? 'healthy' : 'unknown',
+      'uplinkState': phase == 'running' ? 'healthy' : 'unknown',
+      'core_egress_validated': phase == 'running',
+    };
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      switch (call.method) {
+        case 'runtimeEngine.snapshot':
+          snapshotCalls += 1;
+          if (heldSnapshot != null && !heldSnapshotClaimed) {
+            heldSnapshotClaimed = true;
+            return heldSnapshot.future;
+          }
+        case 'runtimeEngine.initialize':
+          phase = 'initialized';
+        case 'runtimeEngine.stageManagedProfile':
+          phase = 'configStaged';
+        case 'runtimeEngine.connect':
+          phase = 'running';
+        case 'runtimeEngine.disconnect':
+          phase = 'initialized';
+        default:
+          return null;
+      }
+      return hostSnapshot();
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final controller = PokrovShellController();
+    final bootstrapper = _FakeBootstrapper(const ManagedProfilePayload(
+      profileName: 'windows-service-restart',
+      configPayload: _materializedRuntimeConfig,
+      materializedForRuntime: true,
+    ));
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      bootstrapper: bootstrapper,
+      shellController: controller,
+      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      clientExperienceStore:
+          _FakeClientExperienceStore(const PokrovClientExperienceState.empty()),
+      windowsTunnelAuthorizer: () async =>
+          PokrovWindowsTunnelAuthorization.allowed,
+    ));
+    await tester.pumpAndSettle();
+    expect(controller.isConnected, isTrue);
+    await tester.pump(const Duration(minutes: 2));
+    await tester.pumpAndSettle();
+    phase = 'initialized'; // SCM restarted; its durable recovery cleared TUN.
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+    expect(controller.isConnected, isFalse);
+    expect(find.text('Подключено'), findsNothing);
+    expect(bootstrapper.calls, 0, reason: 'local status must not fetch profiles');
+
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    expect(controller.isConnected, isTrue);
+    expect(bootstrapper.calls, 1);
+    final staleRunningSnapshot = hostSnapshot();
+    heldSnapshot = Completer<Map<String, Object?>>();
+    addTearDown(() {
+      if (!heldSnapshot!.isCompleted) heldSnapshot.complete(hostSnapshot());
+    });
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump();
+    final callsWhilePending = snapshotCalls;
+    await tester.pump(const Duration(seconds: 10));
+    expect(snapshotCalls, callsWhilePending,
+        reason: 'only one local status request may be in flight');
+    expect(controller.canToggle, isTrue,
+        reason: 'attached=${controller.attached} busy=${controller.isBusy}');
+    await controller.toggleConnection();
+    await tester.pumpAndSettle();
+    expect(controller.isConnected, isFalse);
+    heldSnapshot.complete(staleRunningSnapshot);
+    await tester.pumpAndSettle();
+    expect(controller.isConnected, isFalse,
+        reason: 'a late status response cannot undo an explicit disconnect');
+    await tester.pumpWidget(const SizedBox.shrink());
+    final callsAtDispose = snapshotCalls;
+    await tester.pump(const Duration(seconds: 5));
+    expect(snapshotCalls, callsAtDispose);
+  });
+
   testWidgets('android refreshes delayed degraded host health after connect',
       (tester) async {
     final runtimeCalls = <String>[];

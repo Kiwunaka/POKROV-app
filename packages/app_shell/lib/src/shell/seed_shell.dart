@@ -772,6 +772,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     unawaited(_loadConnectHintState());
     unawaited(_restoreClientExperience());
     _refreshRuntimeSnapshot();
+    if (widget.appContext.hostPlatform == HostPlatform.windows) {
+      _diagnosticsCoordinator.startRuntimePolling(_refreshWindowsRuntimeSnapshot);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.observability?.markUiReady();
       final initialAcquisitionUri = widget.initialAcquisitionUri;
@@ -4358,6 +4361,34 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _schedulePostConnectHostHealthRefresh(snapshot);
       }
     }
+  }
+
+  Future<void> _refreshWindowsRuntimeSnapshot() async {
+    if (!mounted || _runtimeBusy) return;
+    final observed = _runtimeSnapshot;
+    RuntimeSnapshot? refreshed;
+    try {
+      refreshed = await _withRuntimeActionTimeout(
+        'windowsServiceStatus', _runtimeEngine.snapshot,
+      );
+    } on Object {
+      // An unavailable observer cannot retain the previous protection proof.
+      // The next local poll can recover without reconnecting or fetching API.
+    }
+    if (!mounted || _runtimeBusy || !identical(observed, _runtimeSnapshot)) {
+      return;
+    }
+    setState(() {
+      _runtimeSnapshot = refreshed;
+      if (refreshed?.phase != RuntimePhase.running) {
+        _emergencyRuntimeActive = false;
+      }
+      if (observed?.phase != refreshed?.phase ||
+          observed?.isCleanlyHealthy != refreshed?.isCleanlyHealthy) {
+        _runtimeHeadline = null;
+      }
+    });
+    widget.shellController?.refresh();
   }
 
   Future<T> _withRuntimeActionTimeout<T>(

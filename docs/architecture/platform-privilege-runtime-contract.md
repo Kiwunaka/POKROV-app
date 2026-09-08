@@ -313,6 +313,14 @@ permits a repeated disconnect/recovery attempt. A corrupted, partial or future
 journal is preserved and fails closed; it is not silently erased while
 POKROV-owned network state may remain.
 
+While the Windows UI process is alive, including when hidden in the tray,
+it samples the local service status every two seconds with at most one such
+request in flight. This does not fetch profiles or run network probes. A
+service stop/restart or unavailable observer clears the previous UI/tray
+protection claim. Poll results that cross a runtime action or replace an older
+snapshot are discarded; polling stops when the shell is disposed. The existing
+bounded Android post-connect diagnostics remain separate.
+
 If restart or a final journal-write failure leaves the transaction at
 `recovered`, retry clears the saved network snapshot in the atomic `clean`
 commit. A failed write retains the `recovered` checkpoint and its snapshot for
