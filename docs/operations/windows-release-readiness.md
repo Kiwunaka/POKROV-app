@@ -3,6 +3,16 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
+R12 routing (2026-09-08): [installed route proof and AWG fix](evidence/2026-09-08-r12-windows-route-proof/README.md)
+binds client `3784352` / Core `02a091c` to 305 installed hashes. Selected
+PowerShell now connects with AWG3.1; independent counters distinguish its TUN
+path from unselected curl's physical path under the same profile. Full tunnel
+and Russia-direct mode send the owned non-RU target through TUN. Seven bounded
+samples and cleanup pass. The first automated install failed with a Defender
+behavior detection; ordinary interactive installation succeeded with protection
+enabled. Automated-install AV compatibility, full N03/N08, Win10 and final
+channel remain open; earlier source evidence below retains its own identity.
+
 R12 control-plane outage (2026-09-08): [installed Win11 evidence](evidence/2026-09-08-r12-windows-api-outage/README.md)
 for unchanged `e88dff9` / Core `02a091c`: established AWG3.1 survives 61 seconds
 of blocked client web/API traffic; cached reconnect and UI-restart reconnect
