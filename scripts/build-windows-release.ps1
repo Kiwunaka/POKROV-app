@@ -884,6 +884,9 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 [Tasks]
 Name: "desktopicon"; Description: "Создать ярлык на рабочем столе"; GroupDescription: "Ярлыки:"; Flags: unchecked
 
+[InstallDelete]
+Type: files; Name: "{app}\pokrov_activation_protocol_test.exe"
+
 [Files]
 Source: "$stagedBundleDirectory\*"; Excludes: "\$($windowsReleaseConfig.runtime.service_binary)"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "$stagedBundleDirectory\$($windowsReleaseConfig.runtime.service_binary)"; DestDir: "{app}"; Flags: ignoreversion; AfterInstall: InstallAndStartService

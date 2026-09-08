@@ -1,0 +1,5 @@
+Exception: E:\r12client\scripts\validate-seed.ps1:742
+Line |
+ 742 |    throw "Client version parity failed during seed validation: $($_.Ex …
+     |    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Client version parity failed during seed validation: Cannot find path 'E:\POKROV-core' because it does not exist.

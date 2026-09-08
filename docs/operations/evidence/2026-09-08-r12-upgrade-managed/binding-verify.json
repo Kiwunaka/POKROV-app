@@ -1,0 +1,8 @@
+{
+  "after_config_sha256": "5d56fd0cae261bd9212bec0f1e1a41f53244602f90ce09a8c68fa461a7737fb3",
+  "ok": true,
+  "only_planned_delta_present": true,
+  "operation": "verify",
+  "raw_identifiers_returned": false,
+  "resolved_profile": "awg31_lab"
+}

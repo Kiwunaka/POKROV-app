@@ -541,6 +541,15 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  // Restart Manager uses these messages during an in-place update. A normal
+  // WM_CLOSE can be converted to hide-to-tray by the window-manager plugin.
+  if (message == WM_QUERYENDSESSION) {
+    return TRUE;
+  }
+  if (message == WM_ENDSESSION) {
+    if (wparam != FALSE) Destroy();
+    return 0;
+  }
   if (message == kRuntimeCompletionMessage) {
     if (runtime_tasks_) runtime_tasks_->Drain();
     return 0;

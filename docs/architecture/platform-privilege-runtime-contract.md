@@ -210,6 +210,14 @@ local installed-service evidence is linked from
 [Windows readiness](../operations/windows-release-readiness.md); it does not
 establish final-candidate signing or the complete managed-network matrix.
 
+The UI accepts `WM_QUERYENDSESSION` without exiting and tears down through its
+normal native destruction path only on a confirmed `WM_ENDSESSION`. A canceled
+session end keeps the UI alive. Restart Manager can therefore release the UI
+files during an update without the ordinary close-to-tray preference preventing
+shutdown. The service keeps its separate SCM lifecycle. The installer removes
+the exact obsolete `pokrov_activation_protocol_test.exe` left by earlier bundles;
+this is not a wildcard cleanup of the installation directory.
+
 The production pipe loop isolates client-session failure from service
 availability. A caller that disconnects before `hello`, fails caller
 authorization or sends an invalid frame is rejected and recorded without

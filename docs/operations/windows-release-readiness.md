@@ -3,6 +3,16 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
+R12 upgrade and installed cancellation (2026-09-08): [source-bound lab evidence](evidence/2026-09-08-r12-upgrade-managed/README.md)
+closes the reproduced Restart Manager shutdown failure and exact obsolete-test
+cleanup. Repeated Win11 upgrade, 305 package hashes, unchanged saved state and
+ordinary-account IPC PASS. Installed AWG31 service proof was observed; disconnect
+and cancellation restore guest route/DNS hashes, with cancellation returning in
+2110 ms. Identical external IP hashes limit independent route proof. The temporary
+server cohort is fully restored, host routes/DNS unchanged, and the disposable
+VM powered off with NIC disabled. Full switching, blocking-call cancellation,
+sleep/crash/connected update, WFP, Win10 and final candidate remain OPEN.
+
 R12 IPC cancellation (2026-09-08): concurrent status/cancel, serialized runtime
 mutations, cancellable WinHTTP and a worker for UI service calls now have
 [source-bound component proof](evidence/2026-09-08-r12-ipc-cancellation/README.md).
