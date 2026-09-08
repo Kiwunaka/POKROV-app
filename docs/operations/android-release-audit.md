@@ -11,6 +11,12 @@ Older APK identities and device runs are retained separately as evidence.
 The cutover seed still names `pokrov-1.2.0-candidate.33`; its retained evidence
 does not prove the newer local working sources below.
 
+The latest [integrated ARM64 acceptance](evidence/2026-09-08-r12-integrated-android/README.md)
+binds client `7ae931b` / Core `02a091c` to APK `88452b99...`: same-version
+installation, retained visible preferences, two ordinary-profile connections
+and exact route/rule restoration PASS_BOUNDED on Huawei. Earlier APK network
+handoff results below remain historical; AWG and final-channel gates are open.
+
 New Core package preparation (2026-09-08): [source-bound APK evidence](evidence/2026-09-08-r12-android-awg-crossfield/README.md)
 binds client `76614b1` / Core `02a091c` to ARM64, universal, ARMv7 and x86_64
 packages. Signer/ABI/native Core identity checks PASS; ARM64 is 101,229,131 bytes.

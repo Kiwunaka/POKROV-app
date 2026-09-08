@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "result": "PASS_BOUNDED",
+  "scope": "Huawei Android 12; integrated local ARM64; fixed Wi-Fi ordinary profile; not final candidate",
+  "client_source": "7ae931bdfcecf9614ecb96ab4714185a6cea1744",
+  "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "install": {
+    "scope": "same-version local integrated package replacement; not channel update",
+    "started_at_utc": "2026-09-08T10:07:21.250321+00:00",
+    "before": {
+      "sha256": "0206cd2a0d76ae427a988bc2220af8f2157d5c153c212cbdcaa3338cf89b41ce",
+      "first_install_time": "2026-08-12 00:50:03",
+      "vpn_service": false,
+      "wifi_on": "1",
+      "mobile_data": "1"
+    },
+    "rollback_apk": "E:\\r12-android-awg-crossfield-20260908\\pokrov-r12-arm64-v8a.apk",
+    "apk_sha256": "88452b9921873c4fbb42bef25ed4d89c34841399ae11cbe8d9d482e5a03d5850",
+    "after": {
+      "sha256": "88452b9921873c4fbb42bef25ed4d89c34841399ae11cbe8d9d482e5a03d5850",
+      "first_install_time": "2026-08-12 00:50:03",
+      "vpn_service": false,
+      "wifi_on": "1",
+      "mobile_data": "1"
+    },
+    "result": "PASS_INSTALL_BYTES_FIRST_INSTALL_TIME",
+    "limits": [
+      "account and preferences require UI readback",
+      "not final release/channel upgrade"
+    ]
+  },
+  "connected_native_samples": [
+    {
+      "label": "connected-1",
+      "utc": "2026-09-08T10:09:39.636557+00:00",
+      "vpn_service": true,
+      "foreground": true,
+      "rule_line_hashes": [
+        "003bbcd46b56ceb13297d1d6da84e12e9710fc065c632936ef80c20dc0708dcc",
+        "07d8d800c508c2c42701e482f70f603b021d48da80edc9db2f0d510d3e092d46",
+        "088b1d91d4ccb2cd0a40b01b0a07d34e62853d08a1c97f3bf6e154b6241d1941",
+        "17a8f893271c5ace2a2f17a72fd5ca0b03439afa04ae8d88bef76f15a4e47c33",
+        "1a44496f99cf5e63acda9c0ae91ee8c77ca41b12d176d7fe4d0f133284181d5f",
+        "1a5da0804dc21d14f5fe7f68cdeb5bcfaca3249cdbf85b4ffcb08d788b39450b",
+        "1ba3de2388c658d0b6106a7d4116aa31e990a7d6824ab01846045d3219068774",
+        "290ef90c90d195d88e5b2350334465d813a24cc2131bb558cf9f2b12ada3dfa7",
+        "29ea3afd3d67d6bdc1f15e23aa3144a172b3b32a76d2c4bea45d42e7dbb5a64d",
+        "33455f99d33f86147d8b5e789cb4c48fdf30cd5952447131cff4bc0b405a1d68",
+        "3b2cb9d334432f61671cc72e7d82151b1735ebe6f5958bf6167693a7d09d2f03",
+        "41d4e6c2bd5ec6f0e76d8a878c40d2d281e74d5641863a1002c5e4860f614d20",
+        "52c51b98a785886ff4bbd98d711987bc1eece2f311121f90a986e5527744a01a",
+        "561b9c28f0676428ae2809dd50d371c10156ec0f14a9ab17877b7b0a95ce8a25",
+        "580984c5737cceef8746414ab7d056030b194cfbaa8b376006ff34bc23d8de02",
+        "5a3cb1ebd05e3f1f008e4609162efbc6e28d8a7cea16acc8928ecc570ce9a853",
+        "6602fc063c09ab5f1f158f7cd65f4758de7ddc066d942042e61777c81def8c99",
+        "6e5093c74296c9ce13be580953b54bd19930b014f5d7b90f90d907b385a76705",
+        "78ed8303d23852211d027265f781f146748c3cf649fc230fcb4e4cf8131bb6ee",
+        "7e9a39b2f689dc8b09da0cbc64caa5b5b5fd1deb837b232b6610464ea9d5e03a",
+        "8a6a329b017ef2a98478114268babb4c885f94d315737e20e4134e94fdea1b03",
+        "9b5e73ff0b3128a481e74960839bd698fe11c60542ad607eb62e83ff5b0848e4",
+        "c7ead28a3ab95d7e77d43acb91fc4ae6a120324a6ea1e0054f5e0985e285e8c9",
+        "d2d3603af0ecbf1e61a4462cff6a7f6afbc08964a689eac34e59aa50689bd8a7",
+        "e2c0025c07f80b9100204a23066ab0600bdb50d51f898ce80b3b2acf2f461403",
+        "e32af7e551a580bd81afd2a87f952579750e16dea58574e56efe929be1e4e15c",
+        "e3f7a22f5183ec59cffad20329e9ae13d912cd0181182cac1a573230aeed4781",
+        "e99a8b6586a5cca793dd7e201759a02b04b548a9e1db5397612f1477d19ffaec",
+        "f3952a01c146adb56f5b440987506bf1d8efef0102845b8559215dc375597064",
+        "fed1a6d6e6e1aecc6962c5355b19b6d757977fb8d9e1702f01a91b2d2a50dfa0"
+      ],
+      "routes_sha256": "05e23bede3114cec363185c06e79061b714e284f49a91f506f181d7a380e1d52",
+      "tun_interfaces": [
+        "tun0"
+      ]
+    },
+    {
+      "label": "second-connected",
+      "utc": "2026-09-08T10:12:16.842371+00:00",
+      "vpn_service": true,
+      "foreground": true,
+      "rule_line_hashes": [
+        "088b1d91d4ccb2cd0a40b01b0a07d34e62853d08a1c97f3bf6e154b6241d1941",
+        "17a8f893271c5ace2a2f17a72fd5ca0b03439afa04ae8d88bef76f15a4e47c33",
+        "1a44496f99cf5e63acda9c0ae91ee8c77ca41b12d176d7fe4d0f133284181d5f",
+        "1a5da0804dc21d14f5fe7f68cdeb5bcfaca3249cdbf85b4ffcb08d788b39450b",
+        "290ef90c90d195d88e5b2350334465d813a24cc2131bb558cf9f2b12ada3dfa7",
+        "29ea3afd3d67d6bdc1f15e23aa3144a172b3b32a76d2c4bea45d42e7dbb5a64d",
+        "33455f99d33f86147d8b5e789cb4c48fdf30cd5952447131cff4bc0b405a1d68",
+        "3f94cb4ae98edb0d36131b37c23e7603637ee9e487e2c6b4905997572dd0cde5",
+        "41d4e6c2bd5ec6f0e76d8a878c40d2d281e74d5641863a1002c5e4860f614d20",
+        "4addd6a9db1fce6b7f52cf86e9c9e7ca1e5f12dfa3e02c36d7de943adb84f3e3",
+        "4eee6685703664b081ce6ab05ce63727c5022ab3ff60974247548c749ea3e228",
+        "52c51b98a785886ff4bbd98d711987bc1eece2f311121f90a986e5527744a01a",
+        "561b9c28f0676428ae2809dd50d371c10156ec0f14a9ab17877b7b0a95ce8a25",
+        "5a3cb1ebd05e3f1f008e4609162efbc6e28d8a7cea16acc8928ecc570ce9a853",
+        "6e5093c74296c9ce13be580953b54bd19930b014f5d7b90f90d907b385a76705",
+        "78ed8303d23852211d027265f781f146748c3cf649fc230fcb4e4cf8131bb6ee",
+        "7e9a39b2f689dc8b09da0cbc64caa5b5b5fd1deb837b232b6610464ea9d5e03a",
+        "8a6a329b017ef2a98478114268babb4c885f94d315737e20e4134e94fdea1b03",
+        "8f5e30a15b9c5326e05cf5b06cb8c35f16234c5e7af7c9d371bd0a7a7f456b2f",
+        "9b5e73ff0b3128a481e74960839bd698fe11c60542ad607eb62e83ff5b0848e4",
+        "c0c568aaf8f67c1b23117fb51ba3dec22f0108074a411966710b9a047b04d521",
+        "c1ff237654c055d989e167bd1240116fa5cf9f0371e1854689f0c41412fbe6d0",
+        "c7ead28a3ab95d7e77d43acb91fc4ae6a120324a6ea1e0054f5e0985e285e8c9",
+        "d841613b8370c074aeb41e259044996742d80d3195a8bdea2653f057461f9c16",
+        "dbc1904f5c752946f97ce1cf9418725e938d820a2ffb71f39aa81d6cd0a78d45",
+        "e2c0025c07f80b9100204a23066ab0600bdb50d51f898ce80b3b2acf2f461403",
+        "e32af7e551a580bd81afd2a87f952579750e16dea58574e56efe929be1e4e15c",
+        "e3f7a22f5183ec59cffad20329e9ae13d912cd0181182cac1a573230aeed4781",
+        "f6532a743ccbda3ac8f45d586312028061ada8898802a64a0f4a6a83f808bbb3",
+        "fed1a6d6e6e1aecc6962c5355b19b6d757977fb8d9e1702f01a91b2d2a50dfa0"
+      ],
+      "routes_sha256": "f1530acb145b407b8d84180ffd4a2cd88bc9cd6c34e76e7ec339087ad48e6ff7",
+      "tun_interfaces": [
+        "tun0"
+      ],
+      "wifi_on": "1",
+      "mobile_data": "1"
+    }
+  ],
+  "disconnect_checks": {
+    "first": {
+      "rules_restored": true,
+      "routes_restored": true,
+      "vpn_stopped": true,
+      "tun_removed": true
+    },
+    "second": {
+      "rules_restored": true,
+      "routes_restored": true,
+      "vpn_stopped": true,
+      "tun_removed": true
+    }
+  },
+  "final": {
+    "label": "after-second-disconnect",
+    "utc": "2026-09-08T10:12:46.444763+00:00",
+    "vpn_service": false,
+    "foreground": false,
+    "rule_line_hashes": [
+      "088b1d91d4ccb2cd0a40b01b0a07d34e62853d08a1c97f3bf6e154b6241d1941",
+      "17a8f893271c5ace2a2f17a72fd5ca0b03439afa04ae8d88bef76f15a4e47c33",
+      "1a44496f99cf5e63acda9c0ae91ee8c77ca41b12d176d7fe4d0f133284181d5f",
+      "1a5da0804dc21d14f5fe7f68cdeb5bcfaca3249cdbf85b4ffcb08d788b39450b",
+      "290ef90c90d195d88e5b2350334465d813a24cc2131bb558cf9f2b12ada3dfa7",
+      "29ea3afd3d67d6bdc1f15e23aa3144a172b3b32a76d2c4bea45d42e7dbb5a64d",
+      "33455f99d33f86147d8b5e789cb4c48fdf30cd5952447131cff4bc0b405a1d68",
+      "41d4e6c2bd5ec6f0e76d8a878c40d2d281e74d5641863a1002c5e4860f614d20",
+      "52c51b98a785886ff4bbd98d711987bc1eece2f311121f90a986e5527744a01a",
+      "5a3cb1ebd05e3f1f008e4609162efbc6e28d8a7cea16acc8928ecc570ce9a853",
+      "6e5093c74296c9ce13be580953b54bd19930b014f5d7b90f90d907b385a76705",
+      "78ed8303d23852211d027265f781f146748c3cf649fc230fcb4e4cf8131bb6ee",
+      "7e9a39b2f689dc8b09da0cbc64caa5b5b5fd1deb837b232b6610464ea9d5e03a",
+      "8a6a329b017ef2a98478114268babb4c885f94d315737e20e4134e94fdea1b03",
+      "9b5e73ff0b3128a481e74960839bd698fe11c60542ad607eb62e83ff5b0848e4",
+      "c7ead28a3ab95d7e77d43acb91fc4ae6a120324a6ea1e0054f5e0985e285e8c9",
+      "e2c0025c07f80b9100204a23066ab0600bdb50d51f898ce80b3b2acf2f461403",
+      "e32af7e551a580bd81afd2a87f952579750e16dea58574e56efe929be1e4e15c",
+      "e3f7a22f5183ec59cffad20329e9ae13d912cd0181182cac1a573230aeed4781",
+      "fed1a6d6e6e1aecc6962c5355b19b6d757977fb8d9e1702f01a91b2d2a50dfa0"
+    ],
+    "routes_sha256": "dc8544ead514a526f995794734cbab5463654ca2bd595bf72dcad214c17a6588",
+    "tun_interfaces": [],
+    "wifi_on": "1",
+    "mobile_data": "1"
+  },
+  "final_apk_sha256": "88452b9921873c4fbb42bef25ed4d89c34841399ae11cbe8d9d482e5a03d5850",
+  "visual_readback": {
+    "two_connections": "home connected; protection sheet reported tunnel DNS and VPN egress confirmed",
+    "preferences": "Warsaw whitelist; Russia direct; WARP off",
+    "independent_egress": "NOT_RUN"
+  },
+  "observer_limitations": [
+    "first observer failed Windows text decoding before mutation",
+    "next UIAutomator dumps failed idle detection and returned stale XML; known_ui_strings discarded, no UI PASS inferred from them",
+    "native network samples remain usable; live screenshots and observed-coordinate actions completed the two cycles"
+  ],
+  "remaining": [
+    "exact account identity continuity",
+    "managed AWG identity and protocol matrix",
+    "outage expiry revocation",
+    "network handoff Doze IPv6 MTU UDP53 energy",
+    "final signed/channel candidate"
+  ],
+  "retained_files": [
+    {
+      "path": "E:/r12-integrated-acceptance-20260908/android/physical-install.json",
+      "sha256": "b78a2b58af627962c6f015e28359cb760810fe53808e96c1565a52b5df390de9",
+      "bytes": 939
+    },
+    {
+      "path": "E:/r12-integrated-acceptance-20260908/android/critical-path-initial-observer-failure.json",
+      "sha256": "e1d278adfe85c44f1c52b8ffe2a2bede57436de2c28e5d10611084d2fb477217",
+      "bytes": 4017
+    },
+    {
+      "path": "E:/r12-integrated-acceptance-20260908/android/critical-path.json",
+      "sha256": "477d1156b1544a5bcaaaa3a930da1abf8de5087d9f926cae05d924a9fd28e0b8",
+      "bytes": 10472
+    },
+    {
+      "path": "E:/r12-integrated-acceptance-20260908/android/after-first-disconnect.json",
+      "sha256": "97e0e321849463a03cbb5bbac19e3ed4ae1e7084b52dd3f2c3c43b9fbe0f7b81",
+      "bytes": 1783
+    },
+    {
+      "path": "E:/r12-integrated-acceptance-20260908/android/second-connected.json",
+      "sha256": "bdde4780bfc5f9f6c8a00596d1c81db53201a181215e56f2dcc39568d41d3382",
+      "bytes": 2521
+    },
+    {
+      "path": "E:/r12-integrated-acceptance-20260908/android/after-second-disconnect.json",
+      "sha256": "84596dfd4bfc26d9d1b5da3c0efd1847a8224ed0cb5f54b357cc21fd749db989",
+      "bytes": 1784
+    },
+    {
+      "path": "E:/r12-integrated-acceptance-20260908/android/current-screen.png",
+      "sha256": "ca2ff74fdac7c4cf14b96a74828e10f9e71ce954337ccd471b4947471aaa546c",
+      "bytes": 162163
+    },
+    {
+      "path": "E:/r12-integrated-acceptance-20260908/android/protection-screen.png",
+      "sha256": "b4df5c6375cfde352c39d0a98b58ec83b5f85d674bc1189a4e1c0959f018216a",
+      "bytes": 172520
+    },
+    {
+      "path": "E:/r12-integrated-acceptance-20260908/android/disconnected-screen.png",
+      "sha256": "0fc3d8e3d831b4164905e032c631c20e8d49fe380ddca6727f6a49d7230c724d",
+      "bytes": 164213
+    },
+    {
+      "path": "E:/r12-integrated-acceptance-20260908/android/second-connected.png",
+      "sha256": "afb4f9d298242a11a2b87a975476a7a93f1b95cc02afeae5d1a40cae26e3a085",
+      "bytes": 160543
+    },
+    {
+      "path": "E:/r12-integrated-acceptance-20260908/android/second-protection.png",
+      "sha256": "4cff3a016970bf293f4ef8a8efdb6232960950a18a1e3fecdb53a74107df406d",
+      "bytes": 174715
+    },
+    {
+      "path": "E:/r12-integrated-acceptance-20260908/android/install-physical.py",
+      "sha256": "b036b54963accff62f7a66ad5d220783fe61633ec1941049a553d4dcbf8ed77a",
+      "bytes": 2164
+    },
+    {
+      "path": "E:/r12-integrated-acceptance-20260908/android/critical-path.py",
+      "sha256": "d818dd8397c369a865ec62c847f9934b7867431ae95b00d7c0a3942c6eb9a163",
+      "bytes": 3711
+    },
+    {
+      "path": "E:/r12-integrated-acceptance-20260908/android/sample-network.py",
+      "sha256": "546af7ef6d872d3d6f2d8d52d1da29b8e9de4751376c888d72b779fc8ae3c482",
+      "bytes": 1182
+    }
+  ]
+}
