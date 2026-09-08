@@ -1,5 +1,12 @@
 # Windows Release Readiness
 
+R12 Windows 10 access (2026-09-08): [new owned lab](evidence/2026-09-08-r12-win10-access/README.md)
+installed official hash-verified LTSC 2021 Evaluation, but both normal activation
+attempts returned `0x87E10BC6`, LicenseStatus 5 / grace 0. This is
+`BLOCKED_BY_ACCESS: WINDOWS10_EVALUATION_NOT_LICENSED`; POKROV installation and
+runtime acceptance are NOT_RUN. VM off/NIC none, host routes/DNS unchanged.
+Existing licensed Win10 access is pending; full Windows gates remain open.
+
 R12 useful startup (2026-09-08): [new semantic evidence](evidence/2026-09-08-r12-windows-startup/README.md)
 for installed `e88dff9` separates warm OS/file-cache launches (p95 765.5534 ms)
 from first UI processes after 23 guest power-on/login cycles (3 discarded,
