@@ -44,6 +44,15 @@ not mark the release goal complete or turn any missing gate into PASS.
 | New public cutover | `BLOCKED_GATE_F_17_NON_PASS`; no public asset, Store object or stable pointer exists |
 | Planned distribution if approved | Android direct stable target; Windows direct unsigned beta with mandatory SmartScreen warning; stores `NOT_REQUESTED`. No new public claim exists yet. |
 
+The September 9 source integration uses signed promotion PR #95 after platform
+PR #243 and before Core PR #9. This exact client PR validates against Core
+`1f9a5a8865b80067784b893ef99d43c63f943777`; its Git tree matches the retained
+`c7a11f7` source bound by the runtime seed. Other PRs and pushes keep the normal
+promotion-line check. The platform publishing guide owns this bounded merge
+sequence and requires ordinary checks after all three source lines converge.
+Source integration does not change the candidate.33 or public-release decision
+above, and signed Git commits do not establish signed application packages.
+
 The existing `1.1.6` publication does not approve new `1.2.0` bytes. Its
 signing, device, runtime and origin evidence cannot be reused for promotion.
 The continuing client seed describes the `1.2.0+4053` development line; its
