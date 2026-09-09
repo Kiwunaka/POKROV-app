@@ -128,5 +128,17 @@
     "battery baseline and long soak",
     "Warsaw whitelist egress defect",
     "independent DNS/egress and complete network matrix"
+  ],
+  "documentation_checks": [
+    {
+      "file": "client-seed.log",
+      "sha256": "09e6bd672dc701204deaea4141f0568e837b1f842b42d7f4ca168d4ef764599d",
+      "bytes": 1818
+    },
+    {
+      "file": "client-docs-contract.log",
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874",
+      "bytes": 26
+    }
   ]
 }

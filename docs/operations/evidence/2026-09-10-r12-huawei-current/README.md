@@ -74,3 +74,5 @@ The Warsaw whitelist egress failure, independent leak/egress checks, remaining
 network/OEM/API matrix, permission revocation, lockdown, reboot, battery and
 final-channel release acceptance remain open. No release artifacts, product
 source, signing identities, entitlement or rollout configuration were changed.
+
+Validation: PowerShell Core `scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation` and `test/docs-contract.ps1` PASS; `git diff --check` PASS; no `artifacts/releases/**` delta.
