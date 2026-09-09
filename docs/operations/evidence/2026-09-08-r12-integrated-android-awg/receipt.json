@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "captured_at_utc": "2026-09-08T10:48:31.838234+00:00",
+  "result": "PASS_BOUNDED_WITH_RULE_RESTORE_GAP",
+  "scope": "Huawei Android12 SDK31 managed AWG3.1 to AWG2 to AWG3.1, cellular handover and original policy restore; current-origin device and DE server",
+  "source_tuple": {
+    "client": {
+      "branch": "",
+      "revision": "7ae931bdfcecf9614ecb96ab4714185a6cea1744",
+      "working_tree_state": "clean"
+    },
+    "core": {
+      "branch": "codex/r12-correlated-endpoint-probe",
+      "revision": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+      "working_tree_state": "clean"
+    },
+    "platform": {
+      "branch": "",
+      "revision": "16407b8909508c9d533e88ba24153f8fef0314ce",
+      "working_tree_state": "clean"
+    }
+  },
+  "runtime_backend": "existing deployed brain; local platform tuple was not deployed",
+  "apk_sha256": "88452b9921873c4fbb42bef25ed4d89c34841399ae11cbe8d9d482e5a03d5850",
+  "identity": {
+    "method": "app account display and fresh server device touch after device list opened; exact install hash confirmed by preview",
+    "target_install_sha256": "64a9c9b73d01eedf96a7377df0b1c1c49d023546217184671b57cdd56750943b",
+    "fresh_last_seen_age_seconds": 1
+  },
+  "protocol_cycle": [
+    "awg31_lab",
+    "awg2_lab",
+    "awg31_lab"
+  ],
+  "material_refresh": {
+    "ok": true,
+    "operation": "reprovision_exact_test_install",
+    "proof": {
+      "awg2_lab": {
+        "old_age_hours": 226.1,
+        "old_retained_rotated": true,
+        "active_count": 1,
+        "endpoint_unchanged": true,
+        "material_ready": true
+      },
+      "awg31_lab": {
+        "old_age_hours": 226.1,
+        "old_retained_rotated": true,
+        "active_count": 1,
+        "endpoint_unchanged": true,
+        "material_ready": true
+      }
+    },
+    "config_unchanged": true,
+    "entitlement_mutated": false,
+    "raw_identifiers_returned": false
+  },
+  "handover": {
+    "scope": "exact integrated Huawei ARM64; managed AWG3.1; WiFi/mobile/WiFi handover",
+    "result": "PASS_BOUNDED",
+    "samples": [
+      {
+        "label": "wifi-before",
+        "utc": "2026-09-08T10:36:31.919802+00:00",
+        "active_default_type": "WIFI",
+        "active_default_state": "CONNECTED",
+        "connected_vpn_agent": true,
+        "vpn_service": true,
+        "foreground": true,
+        "pid": "9024",
+        "wifi_on": "1",
+        "tun_interfaces": [
+          "tun0"
+        ]
+      },
+      {
+        "label": "mobile-before-refresh",
+        "utc": "2026-09-08T10:36:42.301898+00:00",
+        "active_default_type": "MOBILE",
+        "active_default_state": "CONNECTED",
+        "connected_vpn_agent": true,
+        "vpn_service": true,
+        "foreground": true,
+        "pid": "9024",
+        "wifi_on": "0",
+        "tun_interfaces": [
+          "tun0"
+        ]
+      },
+      {
+        "label": "mobile-after-refresh",
+        "utc": "2026-09-08T10:36:47.736931+00:00",
+        "active_default_type": "MOBILE",
+        "active_default_state": "CONNECTED",
+        "connected_vpn_agent": true,
+        "vpn_service": true,
+        "foreground": true,
+        "pid": "9024",
+        "wifi_on": "0",
+        "tun_interfaces": [
+          "tun0"
+        ]
+      },
+      {
+        "label": "wifi-restored",
+        "utc": "2026-09-08T10:37:03.609749+00:00",
+        "active_default_type": "WIFI",
+        "active_default_state": "CONNECTED",
+        "connected_vpn_agent": true,
+        "vpn_service": true,
+        "foreground": true,
+        "pid": "9024",
+        "wifi_on": "1",
+        "tun_interfaces": [
+          "tun0"
+        ]
+      }
+    ],
+    "wifi_restored": true,
+    "pid_continuity": true
+  },
+  "restore": {
+    "config_sha256": "cd0add7b4805b863531ba0cd49b44c9749dbe38d6e740be6154114631b6920a3",
+    "entitlement_mutated": false,
+    "full_original_config_restored": true,
+    "material_mutated": false,
+    "materials": {
+      "awg2_lab": {
+        "endpoint_revision": "awg2-v1",
+        "endpoint_sha256": "07ae6a2f8bdbfc3bd78bb6fabf105db5380f1bf9a0989efed7a8330d0f7648a9",
+        "generation": "awg2-lab-v1",
+        "latest_source_equal": true,
+        "node_code": "de",
+        "peer_key_sha256": "a3c903d990d506fff21f6fb4602191b648c2ed8b1f8bef72a4970cc345eac80d",
+        "ready_count": 1
+      },
+      "awg31_lab": {
+        "endpoint_revision": "awg31-v1",
+        "endpoint_sha256": "7effbffdbab9013e682f60832c89d488ef0ecfe0829c4e8acb788918bbfaea50",
+        "generation": "awg31-lab-v4-mobile-safe-trailers",
+        "latest_source_equal": true,
+        "node_code": "de",
+        "peer_key_sha256": "68105095df51ea3599392ce3a9bfa824e82d09e1f46e028ff8d4186b74d3e7ae",
+        "ready_count": 1
+      }
+    },
+    "ok": true,
+    "operation": "restore",
+    "raw_identifiers_returned": false,
+    "resolved_profile": "legacy_reality_fallback",
+    "selected_profile": "awg31_lab"
+  },
+  "final_checks": {
+    "apk_sha256": "88452b9921873c4fbb42bef25ed4d89c34841399ae11cbe8d9d482e5a03d5850",
+    "apk_matches": true,
+    "rules_restored": false,
+    "routes_restored": true,
+    "vpn_stopped": true,
+    "tun_removed": true,
+    "wifi_restored": true,
+    "mobile_restored": true
+  },
+  "rule_delta": {
+    "before_count": 20,
+    "final_count": 20,
+    "added_hashes": 2,
+    "removed_hashes": 2,
+    "cause": "UNDETERMINED; no exact policy-rule restoration PASS after network handover"
+  },
+  "protection_ui": "confirmed for AWG2, AWG3.1 return, AWG3.1 cellular/WiFi and ordinary profile after restore",
+  "limits": [
+    "server inner capture proves bidirectional lab traffic, not independent full DNS/IPv6 leak exclusion",
+    "handover capture spans all phases; no phase-exclusive cellular packet counts",
+    "initial handover parser failure retained and not counted",
+    "first final disconnect tap missed during sheet transition; second observed tap stopped VPN",
+    "full Android matrix, outage expiry revocation, MTU UDP53 energy soak and final candidate remain open"
+  ],
+  "retained_files": [
+    {
+      "path": "alignment-awg2-confirmed.json",
+      "sha256": "f9b780d9ad419d08121c464e2268efb45c163cd4f1e2b2475cde7203957fc804",
+      "bytes": 529
+    },
+    {
+      "path": "alignment-awg31-confirmed.json",
+      "sha256": "372fcc0cbd184f4383a2d71826498330968b88cc2e7aef44d94802b2656f56b3",
+      "bytes": 530
+    },
+    {
+      "path": "awg-before.json",
+      "sha256": "3f5f298074191f66479da4c08511a6d5ccdeec1c286c571ac0308a86f9c796d3",
+      "bytes": 1771
+    },
+    {
+      "path": "awg-current-install-refresh-preview.json",
+      "sha256": "0c4e5235cbfb858cc167f607d351fec54cafe29f44ad1ce78c8cbb28c7c46cdb",
+      "bytes": 1549
+    },
+    {
+      "path": "awg-final-confirmed.json",
+      "sha256": "f695a137e7274d5a1aa2386dbfe373cc3b71dde25e8df4a290fecae08e9cb71a",
+      "bytes": 1780
+    },
+    {
+      "path": "awg2-connected.json",
+      "sha256": "a848dbd4455aaa7c3e27c572aa586ae8b873dfb6d8534b3e17146f580945c0f4",
+      "bytes": 2519
+    },
+    {
+      "path": "awg2-disconnected.json",
+      "sha256": "4b960845aa1f722ff845f33e40393272b3a960f48416061c1fed533735c44ca3",
+      "bytes": 2070
+    },
+    {
+      "path": "awg2-inner.json",
+      "sha256": "452d7a76318057532dc63e9b3f23c9c4f2dd9a9e7f12dc246f935dfdf3f998ac",
+      "bytes": 578
+    },
+    {
+      "path": "awg2-protection.png",
+      "sha256": "fde55e50fdfe66ca492a38901fc28fe97a180ec16c081a251f06e33ffddbda64",
+      "bytes": 152085
+    },
+    {
+      "path": "awg31-inner-first.json",
+      "sha256": "37e680e9fc976c29fb7f94bacecf6968ad5ea952aa78c8dd683036741216851e",
+      "bytes": 582
+    },
+    {
+      "path": "awg31-inner-handover.json",
+      "sha256": "36fed2dbb394a3f33a5037462fc94ba7930d4114ab1db3ddf466c75319f57145",
+      "bytes": 582
+    },
+    {
+      "path": "awg31-inner-return.json",
+      "sha256": "081fa86aa22de2d114da9f3b742154c6899f4412749ab531c8b184727e1cfe32",
+      "bytes": 580
+    },
+    {
+      "path": "awg31-mobile-protection.png",
+      "sha256": "cd4aef052a29e77a9399bc3d5659a96d25218d9ada8fdfa4e6950c8e8336ed4b",
+      "bytes": 151021
+    },
+    {
+      "path": "awg31-return-connected.json",
+      "sha256": "0f97a2d00f2c004101ec803b5a616155deef77d5343237c614ffdf3fc30cfe7e",
+      "bytes": 2527
+    },
+    {
+      "path": "awg31-return-disconnected.json",
+      "sha256": "693dd5851983c429b774377addb27ba79006456eacc20b8491c34914003b7f1c",
+      "bytes": 2078
+    },
+    {
+      "path": "awg31-return-protection.png",
+      "sha256": "cf33cf2f2148de53a9204b59dcfc5adb6f7e95e44755b056a5c814c9bb5aba6e",
+      "bytes": 152232
+    },
+    {
+      "path": "awg31-wifi-restored-protection.png",
+      "sha256": "f572dcbffe8ac626fbb0b9f9ea7027ba19c57f98b45f3ce50a6dc12069582d9d",
+      "bytes": 152128
+    },
+    {
+      "path": "final-checks.json",
+      "sha256": "f41e999278443f55c0e436ff734d5a942547c08fbcc906fe594ea42c35ed17cf",
+      "bytes": 275
+    },
+    {
+      "path": "final-confirmed-checks.json",
+      "sha256": "321b1f52826847734c57096569d1dd9f6cb0a58fbcc65133f1b530933b5504ee",
+      "bytes": 272
+    },
+    {
+      "path": "handover-initial-parser-failure.json",
+      "sha256": "75f353467a83922078cbe74685f1219cdfcf0f606cd6f715a106254eb825df76",
+      "bytes": 929
+    },
+    {
+      "path": "handover.json",
+      "sha256": "46997b88b7f654c24ed4f2006384670b49c6a5251559277c3ad80f44fe359b65",
+      "bytes": 1685
+    },
+    {
+      "path": "reprovision.json",
+      "sha256": "ab4cad06c76b28b6268b1f3e987bc8f493aeb7850e5aea3498aee71d22674f33",
+      "bytes": 562
+    },
+    {
+      "path": "restored-protection.png",
+      "sha256": "70aeb282d30256658471265cf9b27259795439de8b848e21215fa1a2b4c8e74a",
+      "bytes": 152008
+    },
+    {
+      "path": "restored.json",
+      "sha256": "f1e12298af36d10de101be6a70a96f140373a5912ac32f52960b85362ec43d93",
+      "bytes": 1163
+    },
+    {
+      "path": "switch-awg2.json",
+      "sha256": "123784d8b7a4beb220834fa42b843f956cd79340002fc9abfc602ef330fff614",
+      "bytes": 1147
+    },
+    {
+      "path": "switch-awg31-return.json",
+      "sha256": "39be140943c9103aa7446aae036a971c6305db358cdaf6e986c1741d14a2f3fe",
+      "bytes": 1149
+    },
+    {
+      "path": "switch-awg31.json",
+      "sha256": "a582bc99a71086a3c156982c736c5d42b01ff7db329cff224850b2351839fdca",
+      "bytes": 1164
+    },
+    {
+      "path": "E:\\r12-integrated-acceptance-20260908\\android\\awg\\lab-control.py",
+      "sha256": "a44a49d0b11c7f923ab3d06e25d3396521c31bec0071d80681b860f39a6c4203",
+      "bytes": 7759
+    },
+    {
+      "path": "E:\\r12-integrated-acceptance-20260908\\android\\awg\\reprovision.py",
+      "sha256": "022b802af748325f09348779b4a2a2fc7369e5023e5928ec814823b67a2879e3",
+      "bytes": 3708
+    },
+    {
+      "path": "E:\\r12-integrated-acceptance-20260908\\android\\awg\\handover.py",
+      "sha256": "955a77ad8a0635e9cd172f98dbfc87368ce97f887a255debe5a3cf34ac5639f4",
+      "bytes": 3066
+    },
+    {
+      "path": "E:\\r12-integrated-acceptance-20260908\\android\\sample-network.py",
+      "sha256": "546af7ef6d872d3d6f2d8d52d1da29b8e9de4751376c888d72b779fc8ae3c482",
+      "bytes": 1182
+    }
+  ]
+}

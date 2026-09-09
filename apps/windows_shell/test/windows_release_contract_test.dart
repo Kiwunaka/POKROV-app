@@ -409,7 +409,6 @@ void main() {
     expect(securityContent, contains('ImpersonateNamedPipeClient'));
     expect(serverContent, contains('operation_replay'));
     expect(serverContent, contains('session_nonce_capacity'));
-    expect(serverContent, contains('processed_client_count'));
     expect(serverContent, contains('continue;'));
     expect(serverContent, contains('RecordIpcRequest'));
     expect(serverContent, contains('RecordIpcResponse'));

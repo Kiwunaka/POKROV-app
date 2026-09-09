@@ -5,8 +5,6 @@ part of pokrov_app_shell;
 /// Values come only from the generated digest-pinned projection. Server
 /// responses remain authoritative whenever an account-specific value exists.
 abstract final class _PlatformProductCopy {
-  static String get trialDaysLabel => ruDays(PlatformProductFacts.trialDays);
-
   static String get telegramRewardLabel =>
       'Telegram +${ruDays(PlatformProductFacts.telegramRewardDays)}';
 

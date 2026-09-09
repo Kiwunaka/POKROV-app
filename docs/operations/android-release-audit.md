@@ -1,6 +1,6 @@
 # Android Release Audit
 
-Last updated: 2026-09-04
+Last updated: 2026-09-08
 
 ## Document Status
 
@@ -8,8 +8,201 @@ Registry class: `ACTIVE_EXECUTION`.
 
 This file contains the current Android gate for the `1.2.0` working target.
 Older APK identities and device runs are retained separately as evidence.
+The cutover seed still names `pokrov-1.2.0-candidate.33`; its retained evidence
+does not prove the newer local working sources below.
+
+The latest [APK after explicit-denial fix](evidence/2026-09-08-r12-android-access-denial/README.md)
+binds client `f479fd4` to ARM64 `20a0781b…97af`. All four ABI packages passed
+signer/native/notices audit; Huawei update, ordinary connect, resume and exact
+route/rule cleanup passed. Physical denial/revocation remains MANUAL_OWNER_TEST
+pending a separate test login; the primary administrator's session is preserved.
+
+The earlier [integrated ARM64 acceptance](evidence/2026-09-08-r12-integrated-android/README.md)
+binds client `7ae931b` / Core `02a091c` to APK `88452b99...`: same-version
+installation, retained visible preferences, two ordinary-profile connections
+and exact route/rule restoration PASS_BOUNDED on Huawei. Earlier APK network
+handoff results below remain historical; AWG and final-channel gates are open.
+
+New Core package preparation (2026-09-08): [source-bound APK evidence](evidence/2026-09-08-r12-android-awg-crossfield/README.md)
+binds client `76614b1` / Core `02a091c` to ARM64, universal, ARMv7 and x86_64
+packages. Signer/ABI/native Core identity checks PASS; ARM64 is 101,229,131 bytes.
+[New physical evidence](evidence/2026-09-08-r12-android-device/README.md) now
+confirms these exact ARM64 bytes on Huawei: same-version replacement, retained
+preferences, ordinary-profile connection and bounded Wi-Fi/mobile/Wi-Fi handoff.
+A separate reconnect restored routes/rules and removed TUN; the earlier handoff
+rule-hash difference remains unproven. Exact installed AWG, full D01/D02/A03
+and final channel gates remain open.
 
 ## Current Truth
+
+The [2026-09-07 network handoff receipt](evidence/2026-09-07-r12-network-handoff/README.md)
+retains bounded Wi-Fi/mobile/Wi-Fi service continuity and refreshed protection
+for the same ARM64 APK. An earlier interruption without a native before-state
+remains unresolved; the full D02 matrix is not a PASS.
+
+The [current ARM64/access receipt](evidence/2026-09-07-r12-arm64-access/receipt.json)
+binds client `9334d46` / Core `8dc57a8` to normal same-signer 1.2.0+4053 APKs.
+The canonical Direct build produces genuine per-ABI APKs: ARM64 101225939 bytes,
+universal 295227054 bytes (65.71% less delivery). SO identities match the bound
+AAR and all notice assets are preserved. The earlier extra-ABI observation
+below applies only to the quick local build command. Huawei accepted local
+universal-to-ARM64 replacement with preferences retained, and both packages
+confirmed protection. A controlled API-unavailable build verified unknown
+subscription labels alongside cached-profile tunnel/DNS/egress proof. The
+ordinary ARM64 APK was restored, installed hash verified and protection
+confirmed again; VPN was then disconnected with Wi-Fi enabled. This is local
+physical acceptance, not a final downloadable candidate, actual carrier block,
+RU-origin proof or the complete newer-version/channel/OEM/network matrix.
+
+The [same-APK lifecycle receipt](evidence/2026-09-07-r12-lifecycle/receipt.json)
+adds 120 seconds of forced deep Doze and 60 seconds of app standby on Huawei.
+The process and foreground VPN service survived both; protection refresh after
+each returned confirmed tunnel/DNS/egress. Final readback restored ACTIVE,
+force=false, standby false, Wi-Fi enabled and no VPN service. Forced idle with
+USB attached is not a battery baseline or the full OEM/API/lifecycle matrix.
+
+The [2026-09-07 local Huawei receipt](evidence/2026-09-07-r12-offline-network/receipt.json)
+binds client `550329f` / Core `8dc57a8`, same-signer 1.2.0+4053 bytes and
+preserved app data. On physical Android 12/API 31, normal Wi-Fi, restart/reconnect
+and mobile reached the app's confirmed tunnel/DNS/VPN-egress state. A controlled
+build-time API-unavailable fixture connected from the encrypted cache, including
+after force-stop/relaunch on mobile. It does not prove an actual carrier block,
+RU origin, WARP, Doze or the full network matrix. The normal API APK was restored and its installed SHA-256 verified; the previous installed APK is retained for rollback. These
+are local test packages, not published candidates. The ARM64 Flutter build
+includes Core-only armeabi-v7a/x86_64 libraries from the AAR, so primary-ARM64
+packaging acceptance remains open. Automatic source-network diagnostics pass
+local native/Dart/API/RBAC/retention tests; deployed ingestion and geographic
+accuracy remain unproven until the new backend is deployed and observed.
+
+The [C05 source packet](evidence/2026-09-06-r12-c05-source-packet/source-packet.json)
+prepares the exact Core `8dc57a8` source and authenticated runtime module archives.
+All five package graphs resolve offline from that snapshot with the same source
+selections and module sums. The four Android `libcronet.a` files match upstream
+Git blobs at `f21660be`; both that library commit and wrapper `dc1cda1f` declare
+native commit `30f3a568`. Its source archive is verified against the Git tree.
+This differs from retained Windows native commit `2be061b6`; the Windows source
+archive must not stand in for Android. Native source-to-binary reproduction,
+complete license/corresponding-source acceptance and publication remain open.
+No runtime binary or candidate identity changed in this source preparation.
+
+C05 updates the development binding to Go 1.26.8 / x/crypto 0.56.0 with the
+Psiphon TLS layout correction. [Current two-build evidence](evidence/2026-09-06-r12-c05-core-binding/android-evidence.json)
+and [previous D05 binding](evidence/2026-09-06-r12-c05-core-binding/previous-runtime-binding.json)
+bind the AAR. This dependency correction requires fresh installed-package,
+privacy and device acceptance; retained `pokrov-1.2.0-candidate.33` evidence
+stays historical.
+
+The local C05 package audit builds Direct release-mode APKs with the explicit
+internal debug-signing option and a loopback API endpoint. All four APKs retain
+the exact bound Core SO bytes and now include the existing Golos Text
+`OFL.txt` as a package asset. The [package audit receipt](evidence/2026-09-06-r12-c05-package-audit/package-audit.json)
+records byte inventories, dependency queries and their limits. This is not a
+production-signed candidate or installed runtime/privacy proof. Core native
+notice coverage, nested/native dependencies and corresponding source delivery
+remain separate gates; a generated Flutter `NOTICES.Z` does not cover them automatically.
+
+The subsequent [Go native notice receipt](evidence/2026-09-06-r12-c05-go-notices/package-notices.json)
+verifies `native-go-NOTICES.txt` in all four local Direct APKs. The shared asset
+contains 145 verbatim license/patent texts from the recorded Core, Go and module
+inputs, with hash, Core source and toolchain binding in the runtime manifest.
+The Core SO entries still match the pinned AAR. Psiphon utls has no retained
+root license; that gap, nested/native coverage, source delivery and installed
+privacy/device acceptance remain open. These APKs use internal debug signing
+and the loopback API; they are not a new release candidate.
+
+The [nested notice follow-up](evidence/2026-09-06-r12-c05-nested-notices/package-notices.json)
+adds 28 source-package license/patent texts, bringing the asset to 173 verbatim
+texts. Five source dependency graphs use the tags and GOOS/GOARCH/CGO settings
+recorded in the bound DLL and four AAR libraries; all 128 recorded Go modules
+are represented. Package-ancestor selection covers distinct dicttls, freelru
+and Psiphon notices, but does not establish every native include or file-header
+obligation. The exact Psiphon utls upstream tree has no root license; all 298
+module-cache files match it. Its nested dicttls license is included with its
+own scope and does not substitute for the missing root text.
+
+The [file-header supplement](evidence/2026-09-06-r12-c05-file-headers/package-notices.json)
+retains 12 original comment blocks, including Inferno, fiat-crypto, FreeBSD,
+UTF-8 decoder and quic-go tree notices, for a total of 185 verbatim texts.
+All four new local Direct APKs contain the exact asset and bound Core libraries;
+their Android Debug signer remains an internal packaging-only result. The scan
+checked hashes for 6751 selected source files and inspected their first 160
+lines for full permission/redistribution blocks. Literal body matching avoids
+duplicate texts but does not establish complete file-level licensing, native
+include coverage, corresponding source, installed privacy or final acceptance.
+
+The [Flutter/native follow-up](evidence/2026-09-06-r12-c05-flutter-native/package-notices.json)
+reconstructs the packaged Flutter `NOTICES.Z` exactly from its license inputs:
+1621 distinct bodies, including 1594 sky_engine blocks. Official sky_engine
+notices match the SDK; all three packaged Flutter SOs match official engine
+`1527ae0ec577a4ef50e65f6fefcfc1326707d9bf` artifacts after the recorded NDK strip
+operation. The selected embedding JAR matches its official download; this does
+not prove DEX reachability or native source-to-binary reproducibility. Four new
+local Direct APKs retain the same Core/Flutter SOs and generated Flutter notices,
+and carry the updated shared asset with 186 texts, including the Windows-only
+Wintun prebuilt terms. Their internal signer and existing runtime gates remain.
+
+The [Maven notice follow-up](evidence/2026-09-06-r12-c05-maven-notices/package-notices.json)
+adds an Android-only asset with 164 license texts and source attributions.
+All 58 unique selected public Maven binaries match official downloads; the
+63-module public graph also includes five metadata/redirect-only coordinates.
+The source scan covers 4035 Java/Kotlin/native source files in 59 source JARs.
+It retains the JSR-305 CC BY 2.5 headers, Kotlin Boost attribution and terms,
+MurmurHash attribution and the BSD license for Protobuf shaded inside Tink.
+Tink release-source metadata declares Protobuf 4.33.0; 539 upstream class names
+are present, with three extra anonymous WireFormat classes. That is not byte
+reproduction. Its separate OSV query returned no advisory IDs or pagination.
+The 59-component CycloneDX supplement records this boundary explicitly.
+
+Four local Direct APKs contain the exact 176690-byte asset and all body hashes.
+Only the new asset and Flutter AssetManifest.bin differ from the previous APK
+entries; DEX, native SOs and prior notices are byte-identical. These packages
+use Android Debug signing and the loopback API. CC legal text is extracted from
+the official HTML; other included bodies retain their source bytes. This work
+does not close complete license compatibility, corresponding-source delivery,
+installed privacy or final candidate/device acceptance. Windows packaging and
+retained release artifacts are unchanged.
+
+The [Android Cronet notice follow-up](evidence/2026-09-06-r12-c05-android-cronet/package-notices.json)
+adds a separate 173535-byte Android asset with 31 native license sections.
+Pinned GN and the declared Android wrapper flags generated four dependency
+graphs from native commit `30f3a568` in the local Ubuntu lab. Each graph's
+compile-source basenames match the object-member multiset of its bound static
+archive: arm64 2663, arm 2663, amd64 2666, 386 2665. Non-assembly STT_FILE
+filename multisets also match (2538/2538/2540/2540). Basename agreement does not
+prove source-to-binary reproduction. All 30591 original source entries remained
+unchanged, and 4771 original GN-declared files have retained hashes.
+
+Android-specific libunwind, CPU Features and JNI Zero licenses are included,
+along with the separate BSD header in CPU Features' NDK compatibility layer.
+Perfetto, Protobuf and compiler-rt upstream-license evidence was reused only
+after every file in those Android source subtrees matched the prior snapshot.
+The 29-component CycloneDX supplement distinguishes 25 source directories from
+four static archive inputs; 386 remains AAR-only. Four new internal Direct APKs
+contain the exact asset and all 31 body hashes. Existing entries changed only
+in AssetManifest.bin; DEX, native SOs and prior notices are byte-identical.
+The lab VM is again powered off; previous lab services stayed inactive.
+There was no native compilation, engine execution, installer or production
+operation. Full transitive header/license compatibility, source delivery,
+installed privacy and final candidate/device/origin acceptance remain open.
+
+The R12 source branch replaces event/cache health authority with per-call Core
+`CommandServer.ProbeEndpoint` and `ProbeSelectedOutbound` results. Core
+`8dc57a830bd1487389dd1b7c9190f094c31e13bc` is bound in the runtime manifest;
+two byte-identical builds contain both methods and all four Android ABIs.
+Both flavor JVM suites pass on this AAR (372 fresh tests, 186 per flavor);
+[current backtests](evidence/2026-09-06-r12-c05-core-binding/client-backtests.json) retain the
+explicit rerun and JVM/Flutter limits. Host A/B completion tests and Core
+race tests reject unrelated late results, changed selection, direct and cyclic
+routes. Exact candidate package checks and device evidence remain pending; candidate.33
+evidence below is not evidence for this source diff.
+
+The current C05 binding retains the D05 filter for native managed-engine messages before observable
+writers, subscriptions and replay buffers, including debug mode. Arbitrary
+messages and logger tags become a fixed redacted category; supported AWG
+diagnostic categories remain closed. The planted-value Go regression covers
+these sinks. [Binding evidence](evidence/2026-09-06-r12-d05-core-binding/android-evidence.json)
+and the [previous binding](evidence/2026-09-06-r12-d05-core-binding/previous-runtime-binding.json)
+retain exact identities; installed APK and physical log inspection remain open.
 
 | Fact | Current state |
 |---|---|
@@ -29,6 +222,10 @@ Release-safe lifecycle, permission, network, Doze/app-standby, stack-free
 watchdog and direct-updater identity breadcrumbs are written through a closed
 schema to two bounded files under the app-private no-backup directory. No raw
 message, URL, profile, token, endpoint or stack is accepted by that journal.
+The Home live-speed card is labelled `Сейчас через POKROV`: Android samples
+Core/TUN totals for the current session, with reset/unavailable states. It does
+not use UID-wide `TrafficStats`. Account traffic in Profile remains the separate
+`panel_runtime` measurement and is not a total of the Home samples.
 These local contracts do not prove final APK bytes or physical behavior.
 
 ## Exact Candidate.33 Physical Android Partial
@@ -783,6 +980,37 @@ network, OEM or endurance evidence.
 
 ## Retained History
 
+The [2026-09-08 integrated Huawei AWG receipt](evidence/2026-09-08-r12-integrated-android-awg/README.md)
+adds exact ARM64 AWG3.1 → AWG2 → AWG3.1 reconnect and Wi-Fi/mobile/Wi-Fi
+continuity, with server inner traffic and full backend policy restoration.
+Final routes matched and VPN/TUN stopped. Two rule hashes differed only in
+the recreated OS network ID; every other byte matched. This bounded local
+acceptance does not close the full Android or final-candidate release gate.
+
 Prior Android candidate identities and audits are preserved as
 [2026-08-19-android-release-audit-snapshot.md](history/2026-08-19-android-release-audit-snapshot.md).
 They cannot approve `1.2.0`.
+
+### 2026-09-05 local stage/start identity slice
+
+N01C source includes digest-bound service starts, consent fencing, stored-profile
+reuse gates and active/effective digest snapshots. Both flavor JVM suites passed
+with `gradlew.bat :app:testDirectDebugUnitTest :app:testStoreDebugUnitTest`
+(`E:/r12-android-identity-final.log`). Synthetic tests cover same-path content or
+route replacement, old consent completion, delayed old proof and stop clearing.
+Atomic profile replacement uses OS rename without deleting the old target first;
+actual Android rename-failure/crash recovery remains MANUAL_OWNER_TEST.
+This is local I3 coverage, not packaged/new-candidate or physical-device PASS.
+
+## R12-D06 local delivery size review — 2026-09-06
+
+The [D06 size report](evidence/2026-09-06-r12-d06-size/README.md) accounts for
+all four local Direct APKs and compares them with earlier C05 packages.
+Android packaging now excludes only the upstream debugger resource
+`DebugProbesKt.bin`. Four rebuilt APKs lose 891 bytes each; every retained ZIP
+entry, including manifest, DEX, SO, fonts and license notices, is byte-identical.
+ARM64 saves 193984731 bytes versus universal; all nine SOs have no DWARF/debuglink
+sections. The duplicate brand assets remain required by the current host-path
+contract. This is I3 packaging evidence with internal Android Debug signing
+and loopback API. D01/final signed candidate, installation, distribution and
+full C05 acceptance remain open; retained candidate.33 evidence is unchanged.

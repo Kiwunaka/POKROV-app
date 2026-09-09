@@ -1,0 +1,28 @@
+{
+  "framework_revision": "f6ff1529fd6d8af5f706051d9251ac9231c83407",
+  "engine_revision": "1527ae0ec577a4ef50e65f6fefcfc1326707d9bf",
+  "files": [
+    {
+      "file": "LICENSE",
+      "url": "https://raw.githubusercontent.com/flutter/flutter/f6ff1529fd6d8af5f706051d9251ac9231c83407/LICENSE",
+      "official_sha256": "a598db94b6290ffbe10b5ecf911057b6a943351c727fdda9e5f2891d68700a20",
+      "local_sha256": "a3a9fd82f800a47377f7d3f60c60a5c91cae0495be8f329031e1448ce0f5dab9",
+      "equality": "CRLF-normalized only"
+    },
+    {
+      "file": "packages/flutter/LICENSE",
+      "url": "https://raw.githubusercontent.com/flutter/flutter/f6ff1529fd6d8af5f706051d9251ac9231c83407/packages/flutter/LICENSE",
+      "official_sha256": "a598db94b6290ffbe10b5ecf911057b6a943351c727fdda9e5f2891d68700a20",
+      "local_sha256": "a3a9fd82f800a47377f7d3f60c60a5c91cae0495be8f329031e1448ce0f5dab9",
+      "equality": "CRLF-normalized only"
+    },
+    {
+      "file": "packages/flutter_tools/lib/src/license_collector.dart",
+      "url": "https://raw.githubusercontent.com/flutter/flutter/f6ff1529fd6d8af5f706051d9251ac9231c83407/packages/flutter_tools/lib/src/license_collector.dart",
+      "official_sha256": "35ec0f1d1b50d7ba364135d354675e924a52d58503d9cac59b1045c11c3ba006",
+      "local_sha256": "48aa8d673c0f8d3f3006deda14650decd98964c335a99edca521f86aa21ba21f",
+      "equality": "CRLF-normalized only"
+    }
+  ],
+  "root_license_present_in_both_generated_notices": true
+}

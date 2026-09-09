@@ -1077,11 +1077,11 @@ class _HomeAccessStrip extends StatelessWidget {
         ? telegramBonusClaimedDays == null
             ? 'Telegram'
             : '+${ruDays(telegramBonusClaimedDays!)}'
-        : accessLabel.startsWith('${PlatformProductFacts.trialDays} ')
-            ? _PlatformProductCopy.trialDaysLabel
+        : accessLabel.toLowerCase().contains('пробн')
+            ? 'Пробный'
             : accessLabel.toLowerCase().contains('премиум')
                 ? 'Премиум'
-                : 'Активен';
+                : 'Подписка';
     final content = Container(
       key: const ValueKey('home-access-strip'),
       width: double.infinity,
@@ -2354,6 +2354,15 @@ class _HomeAccessPill extends StatelessWidget {
     if (accessLabel.toLowerCase().contains('премиум')) {
       return 'Премиум';
     }
+    if (accessLabel == 'Статус доступа уточняется') {
+      return 'Подписка';
+    }
+    if (accessLabel == 'Пробный доступ') {
+      return 'Пробный';
+    }
+    if (accessLabel == 'Бонусный доступ') {
+      return 'Бонусный';
+    }
     return 'Продлить';
   }
 
@@ -2454,7 +2463,7 @@ class _HomeNotificationsButton extends StatelessWidget {
 }
 
 String _accessHomeSupportLabel(
-  AccessLane lane, [
+  AccessLane? lane, [
   FreeProfileAccess? freeProfileAccess,
 ]) {
   final freeNotice = _freeProfileAccessNotice(freeProfileAccess);
@@ -2467,6 +2476,7 @@ String _accessHomeSupportLabel(
     AccessLane.freeMonthly => 'Можно продлить до премиум-доступа',
     AccessLane.freeSoftMode => 'Продлите доступ, чтобы подключиться',
     AccessLane.expiredOrBlocked => 'Продлите доступ, чтобы подключиться',
+    null => 'Данные о подписке пока недоступны',
   };
 }
 

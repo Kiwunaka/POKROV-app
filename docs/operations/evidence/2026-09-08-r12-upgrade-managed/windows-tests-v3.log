@@ -1,0 +1,26 @@
+00:00 +0: loading E:/r12client/apps/windows_shell/test/widget_test.dart
+00:00 +0: E:/r12client/apps/windows_shell/test/widget_test.dart: windows release metadata is stable rather than prerelease
+00:00 +1: E:/r12client/apps/windows_shell/test/widget_test.dart: windows minimum size keeps the compact drawer lane reachable
+00:00 +2: E:/r12client/apps/windows_shell/test/widget_test.dart: windows tray connection label reports actionable state
+00:00 +3: E:/r12client/apps/windows_shell/test/widget_test.dart: windows tray icon resolves beside the installed executable
+00:00 +4: E:/r12client/apps/windows_shell/test/widget_test.dart: windows tray show window restores minimized windows before focusing
+00:00 +5: E:/r12client/apps/windows_shell/test/widget_test.dart: windows tray show window skips restore when already visible
+00:00 +6: E:/r12client/apps/windows_shell/test/widget_test.dart: windows close hides to tray while prevent-close is active
+00:00 +7: E:/r12client/apps/windows_shell/test/widget_test.dart: windows close exits when close-to-tray is disabled
+00:00 +8: E:/r12client/apps/windows_shell/test/widget_test.dart: windows close leaves the window alone when prevent-close is off
+00:00 +9: E:/r12client/apps/windows_shell/test/widget_test.dart: windows tray exit destroys tray before the native window
+00:00 +10: E:/r12client/apps/windows_shell/test/widget_test.dart: windows startup and acquisition arguments are explicit and exact
+00:00 +11: E:/r12client/apps/windows_shell/test/widget_test.dart: windows tunnel authorization accepts the authenticated service
+00:00 +12: E:/r12client/apps/windows_shell/test/widget_test.dart: windows tunnel authorization rejects an untrusted service
+00:00 +13: E:/r12client/apps/windows_shell/test/widget_test.dart: windows service status accepts a consistent authenticated probe
+00:00 +14: E:/r12client/apps/windows_shell/test/widget_test.dart: windows service status rejects inconsistent or unsupported input
+00:00 +15: E:/r12client/apps/windows_shell/test/windows_release_contract_test.dart: windows release contract requires POKROV Core 1.1.0
+00:00 +16: E:/r12client/apps/windows_shell/test/widget_test.dart: windows shell boots the shared protection surface
+00:00 +17: E:/r12client/apps/windows_shell/test/widget_test.dart: windows shell boots the shared protection surface
+00:00 +18: E:/r12client/apps/windows_shell/test/widget_test.dart: windows shell boots the shared protection surface
+00:00 +19: E:/r12client/apps/windows_shell/test/widget_test.dart: windows shell boots the shared protection surface
+00:00 +20: E:/r12client/apps/windows_shell/test/widget_test.dart: windows shell boots the shared protection surface
+00:00 +21: E:/r12client/apps/windows_shell/test/widget_test.dart: windows shell boots the shared protection surface
+00:00 +22: E:/r12client/apps/windows_shell/test/widget_test.dart: windows shell boots the shared protection surface
+00:00 +23: E:/r12client/apps/windows_shell/test/widget_test.dart: windows shell boots the shared protection surface
+00:00 +24: All tests passed!

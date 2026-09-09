@@ -11,6 +11,7 @@ add_executable(${BINARY_NAME} WIN32
   "../service/service_client.cpp"
   "../service/service_pipe_client.cpp"
   "flutter_window.cpp"
+  "runtime_task_runner.cpp"
   "main.cpp"
   "utils.cpp"
   "win32_window.cpp"
@@ -55,11 +56,24 @@ add_custom_command(TARGET ${BINARY_NAME} POST_BUILD
   VERBATIM)
 
 if(BUILD_TESTING)
+  add_executable(pokrov_runtime_task_runner_test
+    "runtime_task_runner.cpp" "runtime_task_runner_test.cpp"
+    "../service/service_client.cpp" "../service/service_pipe_client.cpp")
+  apply_standard_settings(pokrov_runtime_task_runner_test)
+  target_include_directories(pokrov_runtime_task_runner_test PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/../service")
+  target_link_libraries(pokrov_runtime_task_runner_test PRIVATE pokrov_service_common)
+  set_target_properties(pokrov_runtime_task_runner_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
+  add_test(NAME pokrov_runtime_task_runner COMMAND pokrov_runtime_task_runner_test)
+
   add_executable(pokrov_activation_protocol_test
     "activation_protocol.cpp"
     "activation_protocol_test.cpp"
   )
   apply_standard_settings(pokrov_activation_protocol_test)
+  set_target_properties(pokrov_activation_protocol_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
   add_test(NAME pokrov_activation_protocol
     COMMAND pokrov_activation_protocol_test)
 endif()

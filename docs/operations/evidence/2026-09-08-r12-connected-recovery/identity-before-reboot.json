@@ -1,0 +1,10 @@
+{
+  "utc": "2026-09-08T01:29:11.3082712Z",
+  "installed_files_verified": 305,
+  "ui_sha256": "c8e1f31696525f50a108d5fb7f5f310423e08061e4bc825f7f23204fa150d515",
+  "service_sha256": "2aa636766328cbf6ce2f9efe651c97638542764a5dabf66b0c40c79210b70889",
+  "probe_sha256": "7c5e01fd1b46985c768ff5c9a90fb9b2bfd24c65dadb05102b058ca11faad05d",
+  "sampler_stop_requested": true,
+  "temporary_task_absent": true,
+  "elevated": false
+}

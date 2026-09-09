@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "observed_date": "2026-09-06",
+  "scope": "Windows pinned Cronet upstream asset and declared native source; local evidence only",
+  "source_tuple": {
+    "client_before": "7a8fd55f77d18982e71b39060371dacf4dfa1594",
+    "core": "8dc57a830bd1487389dd1b7c9190f094c31e13bc"
+  },
+  "binary": {
+    "url": "https://github.com/SagerNet/cronet-go/releases/download/143.0.7499.109-2/libcronet-windows-amd64.dll",
+    "path": "E:\\r12-c05-cronet-provenance\\upstream-143.0.7499.109-2-amd64.dll",
+    "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7",
+    "size": 8596992,
+    "matches_client_bound_bytes": true,
+    "client_path": "E:\\r12client\\apps\\windows_shell\\windows\\runner\\resources\\runtime\\libcronet.dll",
+    "identity_result": "PASS_BYTE_FOR_BYTE"
+  },
+  "upstream": {
+    "release_url": "https://github.com/SagerNet/cronet-go/releases/tag/143.0.7499.109-2",
+    "tag": "143.0.7499.109-2",
+    "tag_commit": "82e152101769e4655794c3c33518be224d7e9b9e",
+    "native_repository": "https://github.com/SagerNet/naiveproxy",
+    "native_gitlink": "2be061b6c2e9b316f75ec1e329e345406cd4c62d",
+    "native_tree": "2be061b6c2e9b316f75ec1e329e345406cd4c62d",
+    "chromium_version": "143.0.7499.109",
+    "actions_run": {
+      "id": 22617992901,
+      "url": "https://github.com/SagerNet/cronet-go/actions/runs/22617992901",
+      "head_sha": "82e152101769e4655794c3c33518be224d7e9b9e",
+      "conclusion": "success"
+    },
+    "binding_ceiling": "UPSTREAM_RELEASE_ASSET_MATCH_AND_DECLARED_SOURCE; no source-to-binary reproducibility/attestation proof"
+  },
+  "source_archive": {
+    "url": "https://codeload.github.com/SagerNet/naiveproxy/zip/2be061b6c2e9b316f75ec1e329e345406cd4c62d",
+    "path": "E:\\r12-c05-cronet-provenance\\naive-source-2be061b6.zip",
+    "size": 69284854,
+    "sha256": "1c0a128aaff7ac8b5e80f2b7d06c273261de1b6dc2b0692f1d7c3855e6703096"
+  },
+  "archive_integrity": {
+    "files": 30591,
+    "exact_git_blob_matches": 30561,
+    "line_ending_only_matches": 30,
+    "unexplained_mismatches": 0,
+    "symlinks_retained_as_text": [
+      {
+        "path": "src/third_party/zstd/src/tests/cli-tests/bin/unzstd",
+        "target": "zstd"
+      },
+      {
+        "path": "src/third_party/zstd/src/tests/cli-tests/bin/zstdcat",
+        "target": "zstd"
+      }
+    ],
+    "source_archive_unchanged": true
+  },
+  "license_inventory": {
+    "scope": "SOURCE_TREE_INVENTORY_NOT_WINDOWS_LINKED_COMPONENTS",
+    "metadata_files": 36,
+    "metadata_without_license_field": [
+      "src/build/internal/README.chromium",
+      "src/components/cronet/license/tests/target_a/README.chromium",
+      "src/components/cronet/license/tests/target_b/README.chromium",
+      "src/components/cronet/license/tests/target_c/README.chromium"
+    ],
+    "missing_declared_files": [],
+    "review_archive_entries": 69,
+    "shipping_status": "REVIEW_MATERIAL_ONLY_NOT_PACKAGED_NOTICES"
+  },
+  "remaining": [
+    "Exact Windows cronet linked dependency graph and corresponding complete notices have not been generated. README Shipped fields are upstream source metadata, not proof for this DLL.",
+    "Upstream get-clang.sh exists in the complete source tree and fetches pinned GN/toolchain/PGO inputs; GN/toolchain are not bootstrapped in this review. Earlier partial-extraction absence is not a source defect.",
+    "Upstream successful workflow has a native-gitlink-based build cache; actual build logs/cache provenance and source-to-binary reproducibility were not established.",
+    "Go module DLL with the same version has different bytes; its module metadata must not substitute for this Windows native source.",
+    "Core nested notices, Psiphon utls root license, Flutter/C++ notices, residual advisory reachability and installed privacy remain open.",
+    "No corresponding-source publication, new candidate, installer, production signing, push/merge/deploy or device/origin acceptance."
+  ],
+  "retained_artifacts": [
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\chromium-LICENSE.txt",
+      "size": 1536,
+      "sha256": "368cca1106be99d39ecd32a38d8305585d802a475effb66380b91ffc9bcf709b"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\naive-archive-integrity-review.json",
+      "size": 12046,
+      "sha256": "81cc8d4c146218b40c21990edd3a93a53010683425cefb5d4fc82c4b09e3cf5c"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\naive-CHROMIUM_VERSION.txt",
+      "size": 15,
+      "sha256": "d20daa09250c839222cb23489fe6f6a243ca5b40462956a7a0cca0daa2e18d46"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\naive-LICENSE.txt",
+      "size": 1559,
+      "sha256": "845022e0c1db1abb41a6ba4cd3c4b674ec290f3359d9d3c78ae558d4c0ed9308"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\naive-source-2be061b6.zip",
+      "size": 69284854,
+      "sha256": "1c0a128aaff7ac8b5e80f2b7d06c273261de1b6dc2b0692f1d7c3855e6703096"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\naive-source-archive.json",
+      "size": 278,
+      "sha256": "690e64df49c18c38c70922c9b11506cd165d499e6afb78079ef021c4325162a6"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\naive-source-tree.json",
+      "size": 13511666,
+      "sha256": "eda98324ba23792d228fb2abd2a0774711a04ab3f958148a3eb4bb9c4513c5c7"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\native-commit.json",
+      "size": 2025,
+      "sha256": "824ea992ae46a64c9baca73418f4fe69196e95eca768427306fc13738a4049e4"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\native-license-constants.py",
+      "size": 6091,
+      "sha256": "88a46990c1ee532ffa910285beb28c55ef102b9f394de264ba9bdc716e2ff712"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\native-license-create_android_metadata_license.py",
+      "size": 12245,
+      "sha256": "c4e9cb2f114401a9c803e3b758b0317dec818141ae9991d44cb697d265dfffea"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\native-license-license_type.py",
+      "size": 377,
+      "sha256": "0ae5ed85a51c79cc70245b96f6aa528a1053212a5321e86acb5375431f75b71b"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\native-license-license_utils.py",
+      "size": 6183,
+      "sha256": "ac1d03c0f213cb060beffb6f50070e7e0bffdc9419dc569a39e3c02ad1369805"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\native-license-mapper.py",
+      "size": 2788,
+      "sha256": "3556e8c07e7e9b43d37b6b6f4ab2b93e89a8461d13deeab75e8dccaef00b0577"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\native-license-metadata.py",
+      "size": 3530,
+      "sha256": "a49a8b71ceb5660a88b041951d63166b207214d68e26f75314ac1900b6ecb7c1"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\native-license-metadata_dictionary.py",
+      "size": 1110,
+      "sha256": "ae54e60121e99ef1412ea4c860f043ec00cf2cdfb5c90b16c862d9b1a2f49a12"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\native-source-license-inventory.json",
+      "size": 26023,
+      "sha256": "d51888de64ef25a8d0d98c7989cde1dea54b2de830c0bc2150853b258cf0b4d0"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\native-source-license-review.zip",
+      "size": 107610,
+      "sha256": "079c1ee24c9c708d10ef26f1c0bf29e13150b9ac22673b6712c7f5b991a759dd"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\source-file-references.json",
+      "size": 776,
+      "sha256": "ca25c3ac8ded8010913f209564d3119c682a11bc5f5d20162a401240157ad554"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\upstream-actions-runs.json",
+      "size": 15702,
+      "sha256": "0e99fa77bf98ab668eb8c31bc9895c789f2bfbd619b6350a2b23700f4a1675b7"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\upstream-asset-readback.json",
+      "size": 333,
+      "sha256": "312dc88a6d4755b7a0e62f841455a522e084899c91b60107cdfdf95e7ce83941"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\upstream-build-jobs.json",
+      "size": 36875,
+      "sha256": "d96a5cf93d94c0c093a8b7b51c3191a36f3212ad020fd0c1336269b537218abb"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\upstream-cmd.go",
+      "size": 8738,
+      "sha256": "480c4242e8e1a712ad704948b1802b4f1e9d3a2e41d3e1a9984082511b5ee883"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\upstream-cmd_build.go",
+      "size": 10310,
+      "sha256": "8c15e0062b2c427c9cb7a02f984cbb781b88b978dd812dc0fa5e699205491702"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\upstream-cmd_package.go",
+      "size": 12497,
+      "sha256": "00e2a4bd902e78985231d940cc4b33ad3c313f5a06776600c1cdf07c4826fbd6"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\upstream-commit.json",
+      "size": 1929,
+      "sha256": "9b788827c8bb76c5ea8812faeb77bb53826b0260508ef10bd2c2c37753ec0375"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\upstream-cronet-go-LICENSE.txt",
+      "size": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\upstream-gitmodules.txt",
+      "size": 114,
+      "sha256": "66cbd75e4526d7209b25aea89d836e776fe9afcde486d5d036ad0eadf6f60f6a"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\upstream-naive-build.yml",
+      "size": 28275,
+      "sha256": "7846e4d13ded927fd40236761ca5da1c26c75aa31c555c6c16baaee22d83328f"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\upstream-release-metadata.json",
+      "size": 155800,
+      "sha256": "4fabce20499e8bcef9dfcc3f1cdd013faaf14bc177b2f98b3d6ef5c532610cba"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\upstream-run-artifacts.json",
+      "size": 25765,
+      "sha256": "b3c0980fa20215abb1f8b551a473b413eb58e64a47e3686d3b320666259b5ebe"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\upstream-tag.json",
+      "size": 536,
+      "sha256": "ed0dc2fd291b90ad99d5bfc14c7404d8ae1e9766cb9053d22609510c63c0c2b3"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\upstream-tree.json",
+      "size": 45111,
+      "sha256": "3e57015f8d74b75e2ef7a0a4e623af0ce0e3e2d56d956d18bdef0bbc60614700"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\windows-release-assets.json",
+      "size": 4099,
+      "sha256": "26461d159ba8d6eb01a6b1b95b6a17a98ca02c63917d1014b26f2f7fb8d45ea7"
+    }
+  ],
+  "checks": [
+    {
+      "command": "./scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "cwd": "E:/r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-cronet-client-seed.log",
+      "sha256": "f0575c881b196af480277d01058738a670344edd55b388b429b412d3b8facd2c",
+      "result": "PASS seed/docs/source/fixture contracts; performance collector fixture is not a new physical measurement"
+    }
+  ]
+}

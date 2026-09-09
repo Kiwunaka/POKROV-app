@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "win32_window.h"
+#include "runtime_task_runner.h"
 
 // A window that does nothing but host a Flutter view.
 class FlutterWindow : public Win32Window {
@@ -26,6 +27,10 @@ class FlutterWindow : public Win32Window {
                          LPARAM const lparam) noexcept override;
 
  private:
+  bool QueueRuntime(pokrov::service::Command command, std::string body,
+                    RuntimeTaskRunner::Completion completion);
+  std::unique_ptr<RuntimeTaskRunner> runtime_tasks_;
+  std::shared_ptr<pokrov::service::ServiceCallControl> pending_connect_;
   // The project to run.
   flutter::DartProject project_;
 
@@ -38,6 +43,7 @@ class FlutterWindow : public Win32Window {
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
       runtime_engine_channel_;
   std::string pending_acquisition_uri_;
+  std::string expected_profile_digest_;
   bool start_hidden_;
 };
 

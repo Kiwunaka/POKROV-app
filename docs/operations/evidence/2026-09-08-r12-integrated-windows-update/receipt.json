@@ -1,0 +1,179 @@
+{
+  "status": "PASS_BOUNDED_CONNECTED_UPDATE",
+  "origin": "current-origin Windows 11 Enterprise Evaluation VM via host NAT; not independent RU-origin proof",
+  "client_source_before": "e88dff94bef85650c5f0b3d31dc3ff9a5e39c38a",
+  "client_source_after": "3784352dc58a282910c4ddc77ff7a30493706f2f",
+  "integrated_client_source": "7ae931b",
+  "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "installer_before_sha256": "29a87a13906909e400037a947f1e4f876ca59821e7e34c73060e623f2d9fbeea",
+  "installer_after_sha256": "83c253ce8a1cc5d64aa615e259ae2a0f6d5d978442fd3732965d7778d14d6063",
+  "app_version_before_and_after": "1.2.0+4053",
+  "installed_file_count_before_and_after": 305,
+  "first_attempt_upgrade_succeeded": true,
+  "installer_closed_running_ui": true,
+  "saved_session_bytes_unchanged": true,
+  "saved_experience_bytes_unchanged_at_install": true,
+  "post_update_connect_disconnect": true,
+  "guest_routes_dns_restored": true,
+  "host_routes_dns_unchanged": true,
+  "backend_full_config_restored": true,
+  "new_defender_detection_action_event_count": 0,
+  "defender_realtime_enabled": true,
+  "limitations": [
+    "Two local same-version source packages; not final-channel or version-number migration proof.",
+    "Managed probe client_source 0218e89 identifies the retained diagnostic helper, not installed application; 305-file hashes establish application identity.",
+    "External egress hash remained equal to baseline; network observations prove running TUN and reachability only, not independent egress/leak or protocol-specific proof.",
+    "UI access status remained unknown. The test selector later rejected entitlement ownership; this is not expiry/revocation acceptance.",
+    "Rollback used exact enabled-config and original-config hashes plus existing admin action intent, without changing entitlement or material.",
+    "W02 sleep unsupported by VM firmware; Win10, full W03 clean standard-user/uninstall/reinstall/final-channel scope and previous Defender issue remain open."
+  ],
+  "commands": [
+    "VBoxManage controlvm <managed-clone> keyboardputstring <verified local installer with /LOG>; UAC/installer interactive prompts",
+    "Guest capture.ps1 -Label preinstall-running -Bundle before; capture.ps1 -Label installed-before-launch -Bundle after; capture.ps1 -Label connected-after -Bundle after; capture.ps1 -Label final-identity -Bundle after",
+    "Guest network.ps1 -Label w03-baseline|w03-connected-before|w03-connected-after|w03-disconnected-after",
+    "lab-control.py switch --profile awg31_lab --label enable-awg31; restore refused ownership guard; restore-config.py exact configuration rollback succeeded",
+    "Guest graceful shutdown; VBoxManage modifyvm <managed-clone> --nic1 none; host route/DNS hash comparison"
+  ],
+  "evidence": [
+    {
+      "path": "identity-before.json",
+      "sha256": "8a1561d1392ac8827bbf300dc99b1f3405165b615cc513732fc2daeb8c89a9d6",
+      "size": 1810
+    },
+    {
+      "path": "before-verified.json",
+      "sha256": "8a27b539e4b41039dbcebafe15e37fc4bd9a63ba2d1a4fe0853c65416f2e78bb",
+      "size": 226
+    },
+    {
+      "path": "expected-before.json",
+      "sha256": "8ae6d3f4ef8506434fb1ad0e69564978d7b35422226f7e248c9baabbaae63d24",
+      "size": 39997
+    },
+    {
+      "path": "expected-after.json",
+      "sha256": "ca4f8f7af306ae37796383551b43a0b4c7afe3729acf133da2934d71046dc6a7",
+      "size": 39997
+    },
+    {
+      "path": "baseline.json",
+      "sha256": "ef5c9ad7a7f85a64229f075f79b0b7a03277bf8aad9b518c4c4c4f9f27885742",
+      "size": 2523
+    },
+    {
+      "path": "connected-before.json",
+      "sha256": "79e305202ccfbd448ce40effc9dd3d4e9f4ffc3e1ca6d6bfcd818e32be21a9ea",
+      "size": 2519
+    },
+    {
+      "path": "preinstall-running.json",
+      "sha256": "96a8b51cccefe5e940d40256886a9864e08c9e08c95399e804c2f64da6f68778",
+      "size": 2522
+    },
+    {
+      "path": "installed-before-launch.json",
+      "sha256": "99a32f15954d81f9b5373bd3643541c3f134207afa5f92902d914a8d8b945561",
+      "size": 2537
+    },
+    {
+      "path": "connected-after.json",
+      "sha256": "86f72179ee0daf447f07908cf7b4b72bae54720f3ac65ddd7cc17208a57193c8",
+      "size": 2518
+    },
+    {
+      "path": "disconnected-after.json",
+      "sha256": "a15bdcfb86ce51076456e9893df7567cbdd0a465fbfd97e735bafbe33c2825cb",
+      "size": 2529
+    },
+    {
+      "path": "final-identity.json",
+      "sha256": "8a4662d1afff87a5b37af08e4c3738d7dca8924d3d203cc40b036bc54cbc5c4c",
+      "size": 2525
+    },
+    {
+      "path": "network-baseline.json",
+      "sha256": "900dae6b4197269a32dbef9525f4fb28a5127e2740af3f4f0156e7fb9ef4f1a6",
+      "size": 1175
+    },
+    {
+      "path": "network-connected-before.json",
+      "sha256": "c7a62ab9297c308df1083af343525377edc9c54406deb8bfb2eef48b884398de",
+      "size": 1171
+    },
+    {
+      "path": "network-connected-after.json",
+      "sha256": "67f2f47f662df5cf837a67a14036949f865de8879758fdf3763ca4223f8e0f6f",
+      "size": 1170
+    },
+    {
+      "path": "network-disconnected-after.json",
+      "sha256": "fb5be5941bf20622e57a1139a09cdbcfb5249d441e1a8f8718cc2b982ce8e4b5",
+      "size": 1182
+    },
+    {
+      "path": "defender-before.json",
+      "sha256": "7ee807359ee2dc27d2321806b3bd156270a2feb9034979df7131ec23014d2464",
+      "size": 2818
+    },
+    {
+      "path": "defender-during.json",
+      "sha256": "a755b2a9eed8bc63d540ce11bd16f75ca1b22b5a8d4b7ee58adf9c86511a4918",
+      "size": 2818
+    },
+    {
+      "path": "defender-after.json",
+      "sha256": "076a2bcb6f26045980f56bb017135ab7251bec52139824dac8684d3461dfd6a9",
+      "size": 2818
+    },
+    {
+      "path": "enable-awg31.json",
+      "sha256": "57f7f7aea8767338fefd6afbd0adf9ffa1cf4608faee16770bacbf9c7a0b3cce",
+      "size": 1149
+    },
+    {
+      "path": "restore.json",
+      "sha256": "b54f0b93a95f262264abddc2f572b0d2a7b9046084b9f47d03c6e1028f9eba41",
+      "size": 858
+    },
+    {
+      "path": "restore-config.json",
+      "sha256": "1f82ab609a60788c3e6782b5080196fb57b8fc59179ef4faa4418d7aa6903df1",
+      "size": 300
+    },
+    {
+      "path": "ui-exit-final.json",
+      "sha256": "6c07a197f36aa1a7434aa594edab245960dab0a3bf148abcfdd8b9beb635a328",
+      "size": 160
+    },
+    {
+      "path": "return-state.json",
+      "sha256": "f110422f2003585105ff0b3fd96e732e2d07ace5f23442158a07e5a44338830f",
+      "size": 372
+    },
+    {
+      "path": "capture.ps1",
+      "sha256": "570b129af9ebde1e7f0150c12d863408035155c9aefadc95278573afe69df648",
+      "size": 2686
+    },
+    {
+      "path": "connect-before-ui.png",
+      "sha256": "41961f826be04b4cf6423fa6614e65af5865a310e0aa3bfbd0606be9b13ef585",
+      "size": 104154
+    },
+    {
+      "path": "update-progress.png",
+      "sha256": "a0163556909f22a8b0a1f73e81d5b42c00658bf696ebe9e8e85cbdce92ae64ae",
+      "size": 111012
+    },
+    {
+      "path": "update-finished.png",
+      "sha256": "ec0d490e6cc5f712269986df20dcf35b2ee6bab7170d5b14c17d5ba94d406b1c",
+      "size": 314982
+    },
+    {
+      "path": "connected-after-ui.png",
+      "sha256": "02d146a2f6acc3adeb64ca324aaaea790b3ab0d4bdc1f0749dd32db31ad05502",
+      "size": 103889
+    }
+  ]
+}

@@ -62,6 +62,10 @@ class AndroidCoreOperationalEventsTest {
             "TRANSPORT-002",
             "TRANSPORT-003",
             "TRANSPORT-004",
+            "TRANSPORT-005",
+            "TRANSPORT-006",
+            "TRANSPORT-007",
+            "DNS-002",
         ).forEach { code ->
             assertEquals(
                 code,
@@ -72,34 +76,6 @@ class AndroidCoreOperationalEventsTest {
             null,
             AndroidCoreOperationalEvents.parse(
                 FakeCoreOperationalEvent("https://private.example.test?token=secret"),
-            ),
-        )
-    }
-
-    @Test
-    fun mapsOnlyClosedEgressResults() {
-        assertEquals(
-            AndroidCoreEgressProbeResult.HEALTHY,
-            AndroidCoreEgressProbe.endpointResultFromOperationalEvent(
-                "core.egress.probe",
-                "succeeded",
-                null,
-            ),
-        )
-        assertEquals(
-            AndroidCoreEgressProbeResult.FAILED,
-            AndroidCoreEgressProbe.endpointResultFromOperationalEvent(
-                "core.egress.probe",
-                "failed",
-                "EGRESS-001",
-            ),
-        )
-        assertEquals(
-            null,
-            AndroidCoreEgressProbe.endpointResultFromOperationalEvent(
-                "core.egress.probe",
-                "failed",
-                "https://private.example.test?token=secret",
             ),
         )
     }

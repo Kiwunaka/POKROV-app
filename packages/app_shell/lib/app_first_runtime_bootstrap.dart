@@ -15,6 +15,7 @@ import 'package:pokrov_support_bundle/support_bundle.dart';
 import 'emergency_network_contract.dart';
 import 'src/emergency/emergency_network_store.dart';
 import 'src/observability/release_health_baseline.dart';
+import 'src/shell/managed_profile_cache.dart';
 
 /// Build identity shared by provisioning, update checks, and diagnostics.
 ///
@@ -67,7 +68,45 @@ abstract interface class ManagedProfileBootstrapper {
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
+    String tcpFallbackFromRevision = '',
+    Duration? timeout,
   });
+}
+
+class ManagedProfileCacheInputs {
+  const ManagedProfileCacheInputs({
+    required this.hostPlatform,
+    required this.routeMode,
+    this.selectedApps = const <String>[],
+    this.preferredNodeCode = '',
+    this.preferredVariantId = 'direct',
+  });
+
+  final HostPlatform hostPlatform;
+  final RouteMode routeMode;
+  final List<String> selectedApps;
+  final String preferredNodeCode;
+  final String preferredVariantId;
+
+  String binding(String accountId, String installId) {
+    final apps = selectedApps.map((app) => app.trim()).toSet().toList()..sort();
+    final node = preferredNodeCode.trim().toLowerCase();
+    return jsonEncode([
+      accountId, installId, hostPlatform.name, routeMode.name, apps, node,
+      node.isEmpty ? 'direct' : preferredVariantId.trim().toLowerCase(),
+    ]);
+  }
+}
+
+abstract interface class CachedManagedProfileBootstrapper {
+  Future<ManagedProfilePayload?> loadCachedManagedProfile(
+    ManagedProfileCacheInputs inputs, {
+    bool preferProven = false,
+  });
+  Future<void> markManagedProfileProven(
+    ManagedProfileCacheInputs inputs,
+    String entryId,
+  );
 }
 
 typedef SmartConnectLatencyProbe = Future<int?> Function(
@@ -2396,7 +2435,9 @@ class ClientAppsMetadata {
     return switch (hostPlatform) {
       HostPlatform.android => android.update,
       HostPlatform.windows => windows.update,
-      HostPlatform.ios || HostPlatform.linux || HostPlatform.macos =>
+      HostPlatform.ios ||
+      HostPlatform.linux ||
+      HostPlatform.macos =>
         ClientAppUpdateInfo.none,
     };
   }
@@ -2587,6 +2628,7 @@ class AppFirstBonusHistoryItem {
 class AppFirstRuntimeBootstrapper
     implements
         ManagedProfileBootstrapper,
+        CachedManagedProfileBootstrapper,
         AppFirstAccountActionService,
         AppFirstBonusActionService,
         AppFirstWarpActionService,
@@ -2622,6 +2664,7 @@ class AppFirstRuntimeBootstrapper
     AppFirstAndroidAbiResolver? androidAbiResolver,
     EmergencyEnvelopeVerifier? emergencyEnvelopeVerifier,
     EmergencyNetworkStore? emergencyNetworkStore,
+    ManagedProfileCache? managedProfileCache,
   })  : apiBaseUrl = _normalizeApiBaseUrl(apiBaseUrl),
         _apiBaseUrls = _buildApiBaseUrls(
           apiBaseUrl,
@@ -2640,7 +2683,8 @@ class AppFirstRuntimeBootstrapper
         _emergencyEnvelopeVerifier =
             emergencyEnvelopeVerifier ?? EmergencyEnvelopeVerifier.pinned(),
         _emergencyNetworkStore =
-            emergencyNetworkStore ?? EncryptedEmergencyNetworkStore();
+            emergencyNetworkStore ?? EncryptedEmergencyNetworkStore(),
+        _managedProfileCache = managedProfileCache ?? ManagedProfileCache();
 
   final String apiBaseUrl;
   final List<String> _apiBaseUrls;
@@ -2663,6 +2707,10 @@ class AppFirstRuntimeBootstrapper
   final AppFirstAndroidAbiResolver _androidAbiResolver;
   final EmergencyEnvelopeVerifier _emergencyEnvelopeVerifier;
   final EmergencyNetworkStore _emergencyNetworkStore;
+  final ManagedProfileCache _managedProfileCache;
+  bool _networkContextInFlight = false;
+  DateTime? _lastNetworkContextAt;
+  String _lastNetworkContextAccount = '';
   final Map<String, Future<_StoredBootstrapState>> _initialStateFlights =
       <String, Future<_StoredBootstrapState>>{};
   final Map<String, Future<_StoredBootstrapState>> _initialTrialFlights =
@@ -2673,6 +2721,7 @@ class AppFirstRuntimeBootstrapper
       <String, Future<void>>{};
   String? _activeApiBaseUrl;
   Future<String>? _apiBaseUrlFlight;
+  int _activeSmartConnectProbes = 0;
 
   static const _defaultManagedManifestPath = '/api/client/profile/managed';
   // Current managed manifests are compact JSON and the checked-in rule-set
@@ -2794,6 +2843,65 @@ class AppFirstRuntimeBootstrapper
   };
 
   @override
+  Future<ManagedProfilePayload?> loadCachedManagedProfile(
+    ManagedProfileCacheInputs inputs, {
+    bool preferProven = false,
+  }) async {
+    try {
+      final state = await _loadState(inputs.hostPlatform);
+      if (state == null || !state.hasSession || state.accountId.isEmpty) {
+        return null;
+      }
+      final value = await _managedProfileCache.read(
+        platform: inputs.hostPlatform.name,
+        binding: inputs.binding(state.accountId, state.installId),
+        preferProven: preferProven,
+      );
+      if (value == null) return null;
+      final config = value['config_payload'];
+      final revision = _readText(value['revision']);
+      if (config is! String || revision.isEmpty ||
+          _readMap(jsonDecode(config))['outbounds'] is! List) return null;
+      return ManagedProfilePayload(
+        cacheEntryId: _readText(value['cache_entry_id']),
+        profileName: _profileName(
+          hostPlatform: inputs.hostPlatform, profileRevision: revision),
+        configPayload: config,
+        materializedForRuntime: true,
+        source: RuntimeProfileSource(
+          revision: revision, origin: RuntimeProfileSourceOrigin.managedManifest),
+        tcpFallbackFromRevision: _readText(value['tcp_fallback_from_revision']),
+        routeMode: inputs.routeMode,
+        resolvedNodeCode: _readText(value['resolved_node_code']),
+        smartConnect: SmartConnectProfile.tryParse(value['smart_connect']),
+        warpPolicy: WarpRuntimePolicy.tryParse(value['warp_policy']),
+        freeProfileAccess: FreeProfileAccess.tryParse(
+          access: value['access'], freeCaps: value['free_caps']),
+      );
+    } on Object {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> markManagedProfileProven(
+    ManagedProfileCacheInputs inputs,
+    String entryId,
+  ) async {
+    try {
+      final state = await _loadState(inputs.hostPlatform);
+      if (state == null || !state.hasSession || entryId.isEmpty) return;
+      await _managedProfileCache.markProven(
+        platform: inputs.hostPlatform.name,
+        binding: inputs.binding(state.accountId, state.installId),
+        entryId: entryId,
+      );
+    } on Object {
+      // A cache write cannot change the state of an already proven tunnel.
+    }
+  }
+
+  @override
   Future<ManagedProfilePayload> resolveManagedProfile({
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
@@ -2801,6 +2909,8 @@ class AppFirstRuntimeBootstrapper
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
+    String tcpFallbackFromRevision = '',
+    Duration? timeout,
   }) async {
     final normalizedSelectedApps = _normalizeSelectedAppIdentifiers(
       selectedApps,
@@ -2812,13 +2922,22 @@ class AppFirstRuntimeBootstrapper
         .toSet();
     if ((routeMode == RouteMode.selectedApps ||
             routeMode == RouteMode.excludedApps) &&
-        normalizedSelectedApps.isEmpty) {
+        (normalizedSelectedApps.isEmpty ||
+            (hostPlatform == HostPlatform.windows &&
+                _selectedWindowsProcessNames(
+                        hostPlatform, normalizedSelectedApps)
+                    .isEmpty))) {
       throw const BootstrapFailure(
         'Выберите хотя бы одно приложение в разделе «Правила».',
       );
     }
     var state = await _loadOrCreateState(hostPlatform);
     final client = _createHttpClient(hostPlatform);
+    var timedOut = false;
+    final timer = timeout == null ? null : Timer(timeout, () {
+      timedOut = true;
+      client.close(force: true);
+    });
 
     try {
       for (var attempt = 0; attempt < 2; attempt += 1) {
@@ -2839,6 +2958,7 @@ class AppFirstRuntimeBootstrapper
             client: client,
           );
           var manifest = await _fetchManagedManifest(
+            tcpFallbackFromRevision: tcpFallbackFromRevision,
             state: state,
             hostPlatform: hostPlatform,
             routeMode: routeMode,
@@ -2874,6 +2994,7 @@ class AppFirstRuntimeBootstrapper
               } on Object {
                 try {
                   manifest = await _fetchManagedManifest(
+                    tcpFallbackFromRevision: tcpFallbackFromRevision,
                     state: state,
                     hostPlatform: hostPlatform,
                     routeMode: routeMode,
@@ -2905,13 +3026,55 @@ class AppFirstRuntimeBootstrapper
               );
             }
           }
+          if (timedOut) throw TimeoutException('Managed profile refresh');
           state = state.copyWith(
             profileRevision: manifest.profileRevision,
             managedManifestPath: manifest.managedManifestPath,
           );
           await _saveState(hostPlatform, state);
+          try {
+            final currentState = await _loadState(hostPlatform);
+            if (currentState?.accountId == state.accountId &&
+                currentState?.installId == state.installId &&
+                currentState?.hasSession == true) {
+              final payload = manifest.payload;
+              final response = manifest.response;
+              await _managedProfileCache.saveDownloaded(
+                platform: hostPlatform.name,
+                binding: ManagedProfileCacheInputs(
+                  hostPlatform: hostPlatform, routeMode: routeMode,
+                  selectedApps: normalizedSelectedApps,
+                  preferredNodeCode: preferredNodeCode,
+                  preferredVariantId: preferredVariantId,
+                ).binding(state.accountId, state.installId),
+                revision: manifest.profileRevision,
+                verifiedAt: manifest.verifiedAt,
+                payload: <String, Object?>{
+                  'cache_entry_id': payload.cacheEntryId,
+                  'revision': manifest.profileRevision,
+                  'config_payload': payload.configPayload,
+                  'resolved_node_code': payload.resolvedNodeCode,
+                  'tcp_fallback_from_revision': payload.tcpFallbackFromRevision,
+                  'smart_connect': payload.smartConnect == null
+                      ? null : response['smart_connect'],
+                  'warp_policy': response['warp_policy'] ??
+                      _readMap(response['client_policy'])['warp_policy'],
+                  'access': response['access'], 'free_caps': response['free_caps'],
+                },
+              );
+            }
+          } on Object {
+            // Keep online connect available if protected cache storage fails.
+          }
           return manifest.payload;
         } on BootstrapFailure catch (error) {
+          if (error.statusCode == 401 || error.statusCode == 403) {
+            try {
+              await _managedProfileCache.clear(hostPlatform.name);
+            } on Object {
+              // The explicit denial still propagates; no offline fall-through.
+            }
+          }
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
             state = await _startTrial(
               state: state.copyWith(
@@ -2931,6 +3094,7 @@ class AppFirstRuntimeBootstrapper
         'POKROV не смог завершить подготовку устройства.',
       );
     } finally {
+      timer?.cancel();
       client.close(force: true);
     }
   }
@@ -3247,6 +3411,10 @@ class AppFirstRuntimeBootstrapper
     final safeNodeCode = selectedNodeCode.trim().toLowerCase();
     final safeRouteMode = routeMode.trim().toLowerCase();
     final safeNetworkClass = networkClass.trim().toLowerCase();
+    if (hostPlatform == HostPlatform.android &&
+        const {'app_opened', 'connect_requested', 'running', 'failed'}.contains(phase)) {
+      unawaited(_reportAutomaticNetworkContext(phase));
+    }
     await _requestClientJsonWithSession(
       hostPlatform: hostPlatform,
       method: 'POST',
@@ -3268,6 +3436,53 @@ class AppFirstRuntimeBootstrapper
           'network_class': safeNetworkClass,
       },
     );
+  }
+
+  Future<void> _reportAutomaticNetworkContext(String phase) async {
+    if (_networkContextInFlight) return;
+    _networkContextInFlight = true;
+    try {
+      final state = await _loadState(HostPlatform.android);
+      if (state == null || !state.hasSession || state.accountId.isEmpty) return;
+      final now = DateTime.now();
+      if (_lastNetworkContextAccount == state.accountId && _lastNetworkContextAt != null &&
+          now.difference(_lastNetworkContextAt!) < const Duration(minutes: 1)) return;
+      _lastNetworkContextAccount = state.accountId;
+      _lastNetworkContextAt = now;
+      final result = await _appFirstRuntimeEngineChannel.invokeMapMethod<String, dynamic>(
+        'runtimeEngine.observeNetworkContext', <String, Object?>{
+          'apiBaseUrl': apiBaseUrl, 'sessionToken': state.sessionToken,
+          'appVersion': pokrovClientVersion, 'profileRevision': state.profileRevision,
+          'runtimePhase': phase,
+        },
+      ).timeout(const Duration(seconds: 6));
+      if (result == null || result['status'] != 'unavailable') return;
+      final current = await _loadState(HostPlatform.android);
+      if (current?.accountId != state.accountId || current?.sessionToken != state.sessionToken) return;
+      final network = _readText(result['network_class']);
+      final carrier = _readText(result['carrier']);
+      if (!const {'cellular', 'wifi', 'ethernet', 'other', 'unknown'}.contains(network)) return;
+      // A request through the ordinary API can report carrier/unknown, never
+      // infer the underlying IP from the tunnel's exit address.
+      final client = _createHttpClient(HostPlatform.android);
+      try {
+        await _requestJson(
+          client: client, method: 'POST', path: '/api/client/network/context',
+          bearerToken: state.sessionToken, hostPlatform: HostPlatform.android,
+          body: <String, Object?>{
+            'network_class': network, 'direct_observation': false,
+            if (network == 'cellular' && carrier.isNotEmpty && carrier.length <= 80) 'carrier': carrier,
+            'profile_revision': state.profileRevision, 'runtime_phase': phase,
+          },
+        );
+      } finally {
+        client.close(force: true);
+      }
+    } on Object {
+      // Automatic diagnostics cannot block connect or trigger session renewal.
+    } finally {
+      _networkContextInFlight = false;
+    }
   }
 
   @override
@@ -3999,6 +4214,10 @@ class AppFirstRuntimeBootstrapper
     );
     return ManagedProfilePayload(
       profileName: 'pokrov-emergency-${profile.profileRevision}',
+      source: RuntimeProfileSource(
+        revision: profile.profileRevision,
+        origin: RuntimeProfileSourceOrigin.signedEmergencyEnvelope,
+      ),
       configPayload: materialized,
       materializedForRuntime: true,
       quickSettingsEligible: false,
@@ -4104,7 +4323,15 @@ class AppFirstRuntimeBootstrapper
       method: 'GET',
       path: '/api/client/subscription',
     );
-    return ClientSubscriptionInfo.fromJson(response);
+    final info = ClientSubscriptionInfo.fromJson(response);
+    if (info.lane == 'expiredOrBlocked') {
+      try {
+        await _managedProfileCache.clear(hostPlatform.name);
+      } on Object {
+        // Preserve the explicit denial even if protected storage is unavailable.
+      }
+    }
+    return info;
   }
 
   @override
@@ -5795,12 +6022,17 @@ class AppFirstRuntimeBootstrapper
     required String preferredNodeCode,
     required String preferredVariantId,
     required HttpClient client,
+    String tcpFallbackFromRevision = '',
   }) async {
     final path = _validatedManagedManifestPath(state.managedManifestPath);
     final normalizedPreferredNode = preferredNodeCode.trim().toLowerCase();
-    final requestPath = normalizedPreferredNode.isEmpty
+    var requestPath = normalizedPreferredNode.isEmpty
         ? path
         : '$path${path.contains('?') ? '&' : '?'}selected_node_code=${Uri.encodeQueryComponent(normalizedPreferredNode)}';
+    if (tcpFallbackFromRevision.isNotEmpty) {
+      requestPath +=
+          '${requestPath.contains('?') ? '&' : '?'}fallback_from_revision=${Uri.encodeQueryComponent(tcpFallbackFromRevision)}';
+    }
     final response = await _requestJson(
       method: 'GET',
       path: requestPath,
@@ -5808,7 +6040,17 @@ class AppFirstRuntimeBootstrapper
       bearerToken: state.sessionToken,
       hostPlatform: hostPlatform,
     );
+    final verifiedAt = DateTime.now().toUtc();
 
+    if (tcpFallbackFromRevision.isNotEmpty &&
+        (_readText(response['transport_profile']) !=
+                'legacy_reality_fallback' ||
+            _readText(response['profile_revision']) !=
+                '$tcpFallbackFromRevision:fallback:legacy_reality_fallback')) {
+      throw const BootstrapFailure(
+        'Сервер не подтвердил резервное подключение. Повторите попытку позже.',
+      );
+    }
     final configFormat = _readText(response['config_format']);
     if (configFormat != 'singbox-json') {
       throw BootstrapFailure(
@@ -5828,6 +6070,7 @@ class AppFirstRuntimeBootstrapper
     if (!provisioningReady) {
       throw const BootstrapFailure(
         'POKROV еще завершает первый запуск. Попробуйте через минуту.',
+        operationalCode: 'API-011',
       );
     }
     final supportContext = _readMap(response['support_context']);
@@ -5850,7 +6093,20 @@ class AppFirstRuntimeBootstrapper
       client: client,
     );
 
+    final fallbackOrder = response['fallback_order'];
+    final tcpFallbackRevision =
+        isOwnedTransportLab &&
+            fallbackOrder is List &&
+            fallbackOrder.contains('legacy_reality_fallback')
+        ? _readText(response['profile_revision'])
+        : '';
     final payload = ManagedProfilePayload(
+      cacheEntryId: ManagedProfileCache.newEntryId(),
+      tcpFallbackFromRevision: tcpFallbackRevision,
+      source: RuntimeProfileSource(
+        revision: _readText(response['profile_revision']),
+        origin: RuntimeProfileSourceOrigin.managedManifest,
+      ),
       profileName: _profileName(
         hostPlatform: hostPlatform,
         profileRevision: _readText(response['profile_revision']),
@@ -5881,6 +6137,8 @@ class AppFirstRuntimeBootstrapper
 
     return _ManagedManifestEnvelope(
       payload: payload,
+      response: response,
+      verifiedAt: verifiedAt,
       profileRevision: _readText(response['profile_revision']),
       managedManifestPath: path,
     );
@@ -6326,6 +6584,8 @@ class AppFirstRuntimeBootstrapper
       ),
       profileRevision: manifest.profileRevision,
       managedManifestPath: manifest.managedManifestPath,
+      response: manifest.response,
+      verifiedAt: manifest.verifiedAt,
     );
   }
 
@@ -6512,8 +6772,17 @@ class AppFirstRuntimeBootstrapper
           smartConnectProbeTimeout,
           remaining,
         );
+        if (_activeSmartConnectProbes >= max(1, smartConnectProbeConcurrency)) {
+          return;
+        }
+        _activeSmartConnectProbes += 1;
+        // Future.timeout only ends this wait. Keep its slot occupied until the
+        // underlying probe settles, including across later profile resolutions.
+        final pendingProbe = Future<int?>.sync(() => probe(node)).whenComplete(
+          () => _activeSmartConnectProbes -= 1,
+        );
         try {
-          final rttMs = await probe(node).timeout(
+          final rttMs = await pendingProbe.timeout(
             probeBudget,
           );
           if (rttMs == null || rttMs < 1 || rttMs > 60000) {
@@ -6643,6 +6912,71 @@ class AppFirstRuntimeBootstrapper
     required _ClientRuleSetCatalog clientRuleSetCatalog,
   }) {
     final sanitized = Map<String, dynamic>.from(baseConfig)..remove('_meta');
+    if (hostPlatform == HostPlatform.windows) {
+      final outbounds = _readListOfMaps(sanitized['outbounds']);
+      final directTag = _ensureAuxiliaryOutbound(
+        outbounds,
+        outbounds.map((outbound) => _readText(outbound['tag'])).toSet(),
+        preferredTag: 'direct',
+        type: 'direct',
+      );
+      final transportTags = <String>[
+        ...outbounds
+            .where(_isProxyTransportOutbound)
+            .map((outbound) => _readText(outbound['tag'])),
+        ..._readListOfMaps(sanitized['endpoints'])
+            .where((endpoint) =>
+                _readText(endpoint['type']).toLowerCase() == 'awg')
+            .map((endpoint) => _readText(endpoint['tag'])),
+      ].where((tag) => tag.isNotEmpty).toList(growable: false);
+      _normalizeVpnOutboundChains(
+        outbounds: outbounds,
+        proxyOutboundTags: transportTags,
+        directTag: directTag,
+      );
+      sanitized['outbounds'] = outbounds;
+      final route = Map<String, dynamic>.from(_readMap(sanitized['route']));
+      final safeTags = _computeVpnSafeOutboundTags(
+          outbounds: outbounds, proxyOutboundTags: transportTags);
+      var vpnTag = _readText(route['final']);
+      if (!safeTags.contains(vpnTag)) {
+        vpnTag = outbounds
+                .map((outbound) => _readText(outbound['tag']))
+                .where(safeTags.contains)
+                .firstOrNull ??
+            '';
+      }
+      if (vpnTag.isEmpty) {
+        throw const BootstrapFailure('Не удалось подготовить параметры VPN.');
+      }
+      // Replace prior per-process routing; the current mode and selection own
+      // it. Non-routing actions and the rest of the materialized profile stay.
+      route['rules'] = _readListOfMaps(route['rules'])
+          .where((rule) => !((rule.containsKey('process_name') ||
+                  rule.containsKey('process_path') ||
+                  rule.containsKey('process_path_regex')) &&
+              _readText(rule['outbound']).isNotEmpty))
+          .toList();
+      sanitized['route'] = _buildRouteBlock(
+        baseRoute: route,
+        directTag: directTag,
+        dnsOutboundTag: null,
+        finalOutboundTag: vpnTag,
+        hostPlatform: hostPlatform,
+        routeMode: routeMode,
+        selectedApps: selectedApps,
+        clientRuleSetCatalog: clientRuleSetCatalog,
+      );
+      sanitized['dns'] = _buildWindowsDnsBlock(
+        baseDns: sanitized['dns'],
+        outbounds: outbounds,
+        finalOutboundTag: vpnTag,
+        routeMode: routeMode,
+        selectedApps: selectedApps,
+        clientRuleSetCatalog: clientRuleSetCatalog,
+      );
+      return sanitized;
+    }
     if (hostPlatform != HostPlatform.android) {
       if (routeMode == RouteMode.allExceptRu && !clientRuleSetCatalog.isEmpty) {
         _injectAllExceptRuRuleSetCatalog(
@@ -6771,11 +7105,11 @@ class AppFirstRuntimeBootstrapper
       finalOutboundTag = '';
     }
 
-    if (hostPlatform == HostPlatform.android) {
-      _normalizeAndroidOutboundChains(
+    if (hostPlatform == HostPlatform.android ||
+        hostPlatform == HostPlatform.windows) {
+      _normalizeVpnOutboundChains(
         outbounds: outbounds,
         proxyOutboundTags: transportPathTags,
-        routeMode: routeMode,
         directTag: directTag,
       );
     }
@@ -7199,22 +7533,16 @@ class AppFirstRuntimeBootstrapper
     );
   }
 
-  void _normalizeAndroidOutboundChains({
+  void _normalizeVpnOutboundChains({
     required List<Map<String, dynamic>> outbounds,
     required List<String> proxyOutboundTags,
-    required RouteMode routeMode,
     required String directTag,
   }) {
-    if (routeMode != RouteMode.fullTunnel &&
-        routeMode != RouteMode.excludedApps) {
-      return;
-    }
-
     final safeProxyTags = proxyOutboundTags
         .where((tag) => tag.isNotEmpty && tag != directTag)
         .toList(growable: false);
     for (var pass = 0; pass < outbounds.length + 1; pass += 1) {
-      final safeTags = _computeAndroidSafeOutboundTags(
+      final safeTags = _computeVpnSafeOutboundTags(
         outbounds: outbounds,
         proxyOutboundTags: safeProxyTags,
       );
@@ -7263,7 +7591,7 @@ class AppFirstRuntimeBootstrapper
       return currentFinalOutboundTag;
     }
 
-    final safeTags = _computeAndroidSafeOutboundTags(
+    final safeTags = _computeVpnSafeOutboundTags(
       outbounds: outbounds,
       proxyOutboundTags: proxyOutboundTags
           .where((tag) => tag.isNotEmpty && tag != directTag)
@@ -7286,7 +7614,7 @@ class AppFirstRuntimeBootstrapper
     );
   }
 
-  Set<String> _computeAndroidSafeOutboundTags({
+  Set<String> _computeVpnSafeOutboundTags({
     required List<Map<String, dynamic>> outbounds,
     required List<String> proxyOutboundTags,
   }) {
@@ -7538,6 +7866,80 @@ class AppFirstRuntimeBootstrapper
         .toList(growable: false);
     final processNames =
         _selectedWindowsProcessNames(HostPlatform.windows, selectedApps);
+    final base = _readMap(baseDns);
+    final baseServers = _readListOfMaps(base['servers']);
+    final directTag = _findOutboundTag(outbounds, 'direct') ?? 'direct';
+    bool isNetworkDns(Map<String, dynamic> server) =>
+        _readText(server['type']).toLowerCase() != 'local' &&
+        _readText(server['address']).toLowerCase() != 'local' &&
+        !_readText(server['address']).startsWith('rcode://');
+    final candidates = baseServers.where(isNetworkDns).toList();
+    final template = candidates
+            .where((server) => _readText(server['tag']) == 'dns-remote')
+            .firstOrNull ??
+        candidates
+            .where((server) =>
+                _readText(server['tag']) == _readText(base['final']))
+            .firstOrNull ??
+        candidates.firstOrNull;
+    final servers = <Map<String, dynamic>>[...baseServers];
+    void putLane(String tag, String detour, Map<String, dynamic> fallback) {
+      final index =
+          servers.indexWhere((server) => _readText(server['tag']) == tag);
+      final existing = index < 0 ? null : servers[index];
+      final definition = <String, dynamic>{
+        ...((tag == 'dns-remote' && existing != null && !isNetworkDns(existing)
+                ? template
+                : existing ?? template) ??
+            fallback),
+        'tag': tag,
+        'detour': detour,
+      };
+      if (tag == 'dns-direct') {
+        // The VPN resolver can bootstrap through direct DNS. Its direct copy
+        // must not point back to either generated lane.
+        const laneTags = <String>{'dns-direct', 'dns-remote'};
+        final resolver = definition['domain_resolver'];
+        if (resolver is Map &&
+            laneTags.contains(_readText(resolver['server']))) {
+          definition['domain_resolver'] = <String, dynamic>{
+            ..._readMap(resolver),
+            'server': 'dns-local',
+          };
+        } else if (resolver is String && laneTags.contains(resolver)) {
+          definition['domain_resolver'] = 'dns-local';
+        }
+        if (laneTags.contains(_readText(definition['address_resolver']))) {
+          definition['address_resolver'] = 'dns-local';
+        }
+      }
+      if (index < 0) {
+        servers.add(definition);
+      } else {
+        servers[index] = definition;
+      }
+    }
+
+    putLane('dns-remote', finalOutboundTag,
+        <String, dynamic>{'type': 'tcp', 'server': '1.1.1.1'});
+    putLane('dns-direct', directTag, <String, dynamic>{
+      'type': 'udp',
+      'server': '1.1.1.1',
+      'connect_timeout': '5s',
+      'disable_tcp_keep_alive': true
+    });
+    _ensureDnsServerDefinition(
+        servers: servers,
+        tag: 'dns-local',
+        definition: <String, dynamic>{
+          'type': 'local',
+          'tag': 'dns-local',
+          'prefer_go': true
+        });
+    // Keep non-routing DNS actions, replace stale process/domain server choices.
+    final preservedActions = _readListOfMaps(base['rules'])
+        .where((rule) => _readText(rule['server']).isEmpty)
+        .toList();
     final rules = <Map<String, dynamic>>[];
 
     _ensureDnsServerDomainRule(
@@ -7569,27 +7971,9 @@ class AppFirstRuntimeBootstrapper
     }
 
     return <String, dynamic>{
-      'servers': <Map<String, dynamic>>[
-        <String, dynamic>{
-          'type': 'tcp',
-          'tag': 'dns-remote',
-          'detour': finalOutboundTag,
-          'server': '1.1.1.1',
-        },
-        <String, dynamic>{
-          'type': 'udp',
-          'tag': 'dns-direct',
-          'connect_timeout': '5s',
-          'disable_tcp_keep_alive': true,
-          'server': '1.1.1.1',
-        },
-        <String, dynamic>{
-          'type': 'local',
-          'tag': 'dns-local',
-          'prefer_go': true,
-        },
-      ],
-      'rules': rules,
+      ...base,
+      'servers': servers,
+      'rules': <Map<String, dynamic>>[...preservedActions, ...rules],
       'final':
           routeMode == RouteMode.selectedApps ? 'dns-direct' : 'dns-remote',
       'disable_expire': true,
@@ -10504,11 +10888,15 @@ class _ManagedManifestEnvelope {
     required this.payload,
     required this.profileRevision,
     required this.managedManifestPath,
+    required this.response,
+    required this.verifiedAt,
   });
 
   final ManagedProfilePayload payload;
   final String profileRevision;
   final String managedManifestPath;
+  final Map<String, dynamic> response;
+  final DateTime verifiedAt;
 }
 
 class _SmartConnectLatencySample {

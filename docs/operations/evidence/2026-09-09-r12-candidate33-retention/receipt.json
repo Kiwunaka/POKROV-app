@@ -1,0 +1,32 @@
+{
+  "recorded_at_utc": "2026-09-09T01:29:44.598927+00:00",
+  "candidate_id": "pokrov-1.2.0-candidate.33",
+  "result": "RETENTION_VERIFIED_NO_NEW_RELEASE_CLAIM",
+  "local_candidate_root": "E:/POKROV-tools/release-candidates/pokrov-1.2.0-candidate.33",
+  "retained_ci_root": "E:\\r12-g02-retention-20260909",
+  "files": [
+    {
+      "path": "remote-retention.json",
+      "bytes": 7282,
+      "sha256": "b3fbb9351484d039a20845d3b260b9ea355482842a699bd8e49bbc57e35a48ea"
+    },
+    {
+      "path": "local-preservation.json",
+      "bytes": 10947,
+      "sha256": "50957c7ab3a2998acb76a6c065239de94cd3dd637765d285f373037e2ba6657b"
+    },
+    {
+      "path": "retain-remote.py",
+      "bytes": 3772,
+      "sha256": "2e0f620c41d07a6b8eea9a638506c4cb7326f5966217bde776f0d941036f5b28"
+    },
+    {
+      "path": "check-local.py",
+      "bytes": 5156,
+      "sha256": "1229076b36323037855eddd8c0f71b0a34a59579ed752267ca30924ffe972cb7"
+    }
+  ],
+  "private_signing_keys_accessed": false,
+  "candidate_binaries_copied": false,
+  "candidate_manifest_published": false
+}

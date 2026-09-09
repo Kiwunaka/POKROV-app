@@ -1,0 +1,335 @@
+{
+  "schema": "pokrov.r12.c05-cronet-native-notices/v1",
+  "observed_date": "2026-09-06",
+  "client_before": "47c6053cfc29874f9c72dafe8dd710055617880f",
+  "core_unchanged": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "candidate_created": false,
+  "binary_sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7",
+  "declared_native_gitlink": "2be061b6c2e9b316f75ec1e329e345406cd4c62d",
+  "gn": {
+    "revision": "07d3c6f4dc290fae5ca6152ebcb37d6815c411ab",
+    "version": "2287 (07d3c6f4dc29)",
+    "result": "PASS_LOCAL_GRAPH",
+    "all_targets": 1134,
+    "cronet_recursive_dependencies": 558,
+    "root_target": "//components/cronet:cronet",
+    "root_link_inputs": 473,
+    "source_entries": 5958,
+    "tracked_gn_inputs_verified_against_git_blobs": 259,
+    "local_generated_gn_inputs": 6,
+    "flags": "Exact Windows x64 feature flags from upstream cmd/build-naive/cmd_build.go at 82e1521; local hermetic toolchain configuration and explicit Python interpreter",
+    "toolchain": {
+      "clang": "llvmorg-22-init-8940-g4d4cb757-84",
+      "sdk_nuget": "10.0.26100.4654",
+      "msvc": "14.42.34433 local installation",
+      "debuggers": "Microsoft.Debugging.Platform.DbgEng 20260109.1235.0",
+      "scope": "Real toolchain inputs for local graph reconstruction; not original upstream toolchain/build attestation"
+    }
+  },
+  "source_license_gaps_reconciled": {
+    "protobuf": "682 local files match Chromium 143.0.7499.109 tree blobs; root LICENSE recovered from that tag, version 32.0 / upstream revision 4fbd1111a292d04746c732573025e3251de0bb9c",
+    "perfetto": "7687 exact blobs and 6 retained NaiveProxy differences against ac7792a0f3f1cbfffb071e8b97cd9a5168900e03; root Apache license recovered; unchanged license headers in modified files",
+    "compiler_rt": "2 exact headers and modified atomic.c against 08611c39bbfc52cc034904eb88817c6209b828f9; full LLVM license recovered; atomic.c modification comments out a static assertion and retains SPDX header",
+    "additional_attributions": "Nested Protobuf utf8_range MIT, Fiat-Crypto authors, LLVM libc++abi, and OpenBSD BSD notice in Perfetto intrusive_tree.cc retained"
+  },
+  "notices": {
+    "path": "apps/windows_shell/windows/runner/resources/runtime/libcronet.NOTICES.txt",
+    "sha256": "2c24f29748b438f85ad6ef44548395970a4a1d04b89e653e6a4a56601297e267",
+    "size": 158463,
+    "sections": 28,
+    "status": "PACKAGED_LOCAL_IDENTIFIED_NATIVE_OSS_NOTICES",
+    "coverage": "Declared native GN source graph plus identified supporting header/embedded attributions; excludes NASM build executable; not whole-client licensing clearance"
+  },
+  "implementation": {
+    "CMake": "Required install(FILES) for notice alongside DLL; missing notice fails install",
+    "seed": "Notice file path/existence/SHA-256 checked against manifest",
+    "gitattributes": "Notice bytes use -text, matching the existing raw receipt preservation approach; only this upstream-text file permits retained trailing spaces/blank EOF. No EOL allowlist expansion.",
+    "git_filters": "Workspace, staged blob and checkout filters produced identical notice SHA-256"
+  },
+  "package": {
+    "baseline": "E:\\r12-c05-package-artifacts\\after\\windows-bundle",
+    "after": "E:\\r12-c05-cronet-graph\\client-bundle",
+    "baseline_files": 300,
+    "after_files": 301,
+    "added": [
+      "libcronet.NOTICES.txt"
+    ],
+    "missing": [],
+    "changed": []
+  },
+  "checks": [
+    {
+      "command": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+        "-S",
+        "E:\\r12client\\apps\\windows_shell\\windows",
+        "-B",
+        "E:\\r12client\\apps\\windows_shell\\build\\windows\\x64",
+        "-DCMAKE_INSTALL_PREFIX=E:\\r12-c05-cronet-graph\\client-bundle"
+      ],
+      "cwd": "E:\\r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-cronet-graph\\client-cmake-isolated-configure.log",
+      "sha256": "b67ad681f2f3867d185c5e372ad34c0370e37ef6c1106ceaaa564dd2b8e6fc7e"
+    },
+    {
+      "command": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+        "--install",
+        "E:\\r12client\\apps\\windows_shell\\build\\windows\\x64",
+        "--config",
+        "Release",
+        "--component",
+        "Runtime"
+      ],
+      "cwd": "E:\\r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-cronet-graph\\client-cmake-isolated-install.log",
+      "sha256": "9cf373cf704d17834307f3696fda582e18acd7602a704ca4d593ea1dedb461fb"
+    },
+    {
+      "command": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+        "-S",
+        "E:\\r12client\\apps\\windows_shell\\windows",
+        "-B",
+        "E:\\r12client\\apps\\windows_shell\\build\\windows\\x64",
+        "-DCMAKE_INSTALL_PREFIX=$<TARGET_FILE_DIR:pokrov_windows>"
+      ],
+      "cwd": "E:\\r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-cronet-graph\\client-cmake-prefix-restored.log",
+      "sha256": "b67ad681f2f3867d185c5e372ad34c0370e37ef6c1106ceaaa564dd2b8e6fc7e"
+    },
+    {
+      "command": "./scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "cwd": "E:/r12client",
+      "exit_code": 1,
+      "log": "E:\\r12-c05-cronet-notices-client-seed.log",
+      "sha256": "362efa9b4b21819c0997e3e25f9b60d27d0315c15147920cd7733a280798e42d",
+      "result": "FAIL docs contract rejected new eol attribute; changed notice to byte-preserving -text without expanding the EOL allowlist"
+    },
+    {
+      "command": "./scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "cwd": "E:/r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-cronet-notices-client-seed-final.log",
+      "sha256": "bdf10c992130fefedbf764faff749c08ba1c770531feeba9a32e6f3482a2175d",
+      "result": "PASS final seed/docs/source/fixture contracts; performance collector is a fixture, not a new physical measurement"
+    }
+  ],
+  "retained_artifacts": [
+    {
+      "path": "E:\\r12-c05-cronet-graph\\gn-download.json",
+      "size": 611,
+      "sha256": "f61829424f7c18f6a9ec7e8032de629b2aad5efa9bc0da823d5b99bb0702f73d"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\gn-gen-first.json",
+      "size": 1247,
+      "sha256": "72eca469daa54f5219e71458c2762ab7e258dba0c078dc112f4b6e80ac996772"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\gn-gen-first.log",
+      "size": 2095,
+      "sha256": "3b0647a7253103603a70945c7f5ee1f2dea693849ea3755d077a9c1c705a7c48"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\gn-gen-vs.json",
+      "size": 1365,
+      "sha256": "dd89b2d2a2735b82b1151bf774b8bd971b42d20fa65dc912f5b82caf02b1238e"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\gn-gen-vs.log",
+      "size": 1506,
+      "sha256": "7fcdbe75223786ce606bfd39f1c1cca932f41b05c3c9f39d73a42e8bd6685a9f"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\gn-gen-local-toolchain.json",
+      "size": 1277,
+      "sha256": "a3b914170fedaa089a284cda6132fa6f76b50f07cd8c6aabf04c8f1bba05e3b6"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\gn-gen-local-toolchain.log",
+      "size": 49,
+      "sha256": "57813fefa67d173f20b20c4fac25ee54dd4294f85696a491e8f055e306bd19cb"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\local-toolchain-config.json",
+      "size": 2422,
+      "sha256": "d72cc9c13f029bc7e8f78decc82cd40ad52094a29f3dab078b7c86ece38b5fbb"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\toolchain-extraction.json",
+      "size": 2492057,
+      "sha256": "adfa9cc100046cef26a00e146076f7962545f9f7cfb546882f3137d3c9ab48ea"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\all-targets-first-failure.log",
+      "size": 733,
+      "sha256": "e02e03deaf701a3714d0a251807e2ab268db5625124b49ec58c4a89af8c591f7"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\all-targets.json",
+      "size": 7831131,
+      "sha256": "6eaab64df65a4a4a5689938fe94e52803146796e121aef39fe5ec8fa3657773b"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\cronet-target.json",
+      "size": 10342,
+      "sha256": "d6f18672dfa60673775ae6f25c9c404c8ec98d822833ee3730b94da12a12967a"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\cronet-deps.json",
+      "size": 31043,
+      "sha256": "fbe51ff4cae02de095d5fbb0a83f1efcf3a9e13da22e074738af4aacea9825d5"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\cronet-link-inputs.json",
+      "size": 31642,
+      "sha256": "30c1f152976d80c8d24ce65754696283bc42e74e1d5f9aff6efc6f8f8ad9a6e6"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\cronet-runtime-deps.txt",
+      "size": 124,
+      "sha256": "0361bcf25da124b26dfe177ef01843bb8c0c8818b2e31c5a8c8dfeafab43154f"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\gn-source-mapping-initial.json",
+      "size": 179186,
+      "sha256": "1c9932121b66e5fdf891660629cf24eeba10ac5b93aea4ed6c766e56373d47db"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\gn-input-integrity.json",
+      "size": 58834,
+      "sha256": "1f20239b5005580a60be0bbee4b020d5bda03d22da34bf69c75ff6865b54b4c5"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\perfetto-extra-license-header-scan.json",
+      "size": 614,
+      "sha256": "ac401578a8cc39a58b8c3a5c42f2060fe4508e55f4f0353411a66be75bd61f8d"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\notice-assembly.json",
+      "size": 11909,
+      "sha256": "63d71cd9a9ff0e237b91bf97c84fa907accf2db16b953ae9688482bb047fabea"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\client-install-checks.json",
+      "size": 1735,
+      "sha256": "94014411ca3ddb14dd2cfbb9a65cbccdd97d8cd0cd768fb16c470b9d4b07c723"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\client-bundle-inventory.json",
+      "size": 53424,
+      "sha256": "ef3f9ef4a06fdef08688d4a4e981dfd4b948f7a058cfd34d6565cc3ed466f28b"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\client-bundle-comparison.json",
+      "size": 254,
+      "sha256": "091dc007b3c9985e7d2547493a638bc6fdc659607f809b98ef6bd7c09baf7843"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\client-cmake-isolated-install-script.cmake",
+      "size": 19868,
+      "sha256": "0f72bf07650417d08a25aedca1f78a9d9d70d0c53241d35a6c592dbe9a78f1c8"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\downloads\\downloads.json",
+      "size": 1351,
+      "sha256": "a9cd4f950e3d6594b3965a3ec63ae27e41d0726f712a8d28debf4a580849ff79"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\downloads\\microsoft.debugging.platform.dbgeng.nupkg.json",
+      "size": 356,
+      "sha256": "146839dbc04192fde5bf7d3e163d14d93c3b97e09995c07fd730b981bc8243a4"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\upstream-notices\\fetch-receipt.json",
+      "size": 1277,
+      "sha256": "2a47ff19c3176bfe018f3d9c8d686c86b0e96a1e1f27f6275f9ff86a739b7ec0"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\upstream-notices\\source-identity-comparison.json",
+      "size": 2010,
+      "sha256": "ef842be29098248a68a34add139f126729f8eb880cb5f3d52ef83494b7e90f3c"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\upstream-notices\\fork-differences.json",
+      "size": 13173,
+      "sha256": "760b402d36d78892ca10d508940d8643a0ea4b0c1720adcf23e2b6e2e392a1ab"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\upstream-notices\\protobuf-tree-root.json",
+      "size": 11975,
+      "sha256": "a7b28557bc03a1053d5fed4a9ff5b1cbb185949aaa8508940a825c6839093d1d"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\upstream-notices\\protobuf-tree.json",
+      "size": 1142446,
+      "sha256": "156bb3c19ea0cd613d9c5c1a420cef117e7d3ec2a131de63932eb1c76d793ba1"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\upstream-notices\\perfetto-tree.json",
+      "size": 5953067,
+      "sha256": "3015300e4b4fd82217f5787fbba1d1375b17ed9e4d6b5e8d57963d915aaee032"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\upstream-notices\\compiler-rt-builtins-tree.json",
+      "size": 33836,
+      "sha256": "26d68b09e397455ee9d0126deb91b42e05c5bb39a1637e2fc0faa73e3233eeca"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\upstream-notices\\chromium-protobuf-README.chromium",
+      "size": 10866,
+      "sha256": "0ffac3a22a19617b2dc6d7c95379003d450cabeb249bfa791a91ab3a27ffbb78"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\upstream-notices\\chromium-protobuf-LICENSE",
+      "size": 1732,
+      "sha256": "6e5e117324afd944dcf67f36cf329843bc1a92229a8cd9bb573d7a83130fea7d"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\upstream-notices\\perfetto-LICENSE",
+      "size": 14169,
+      "sha256": "df3384bec476fac3525c723d0c10da9ac9820ef56cbb065ec035d32e9b55bd7a"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\upstream-notices\\compiler-rt-LICENSE.TXT",
+      "size": 16708,
+      "sha256": "1a8f1058753f1ba890de984e48f0242a3a5c29a6a8f2ed9fd813f36985387e8d"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\naive-source\\src\\out\\r12-license-win-x64\\args.gn",
+      "size": 653,
+      "sha256": "5d5da671b3ae40a8d9a749b86052db77540a613b6e8361c26858a934fd95457f"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-provenance\\naive-source\\src\\build\\win_toolchain.json",
+      "size": 514,
+      "sha256": "6423f567b62e2afdfaf11aba694f3bbf573477667c044500b9bdc670d1eda15e"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\toolchain\\Windows Kits\\10\\bin\\SetEnv.cmd",
+      "size": 2116,
+      "sha256": "3f5646d77a4fb302f4e561b61c02df8f77f62d5331834242c0094b6eeabceb0a"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\toolchain\\Windows Kits\\10\\bin\\SetEnv.x64.json",
+      "size": 1461,
+      "sha256": "2a54312044fb7e0f2964c7725d8efda63fa6a82ac5239627c96e4c860f338a8f"
+    },
+    {
+      "path": "E:\\r12-c05-cronet-graph\\toolchain\\Windows Kits\\10\\bin\\SetEnv.x86.json",
+      "size": 1461,
+      "sha256": "59708bbef654d3a7b40ca1aafd08a559c29efb736f79011553630e7d3bd8e5d1"
+    }
+  ],
+  "remaining": [
+    "Source-to-binary reproducibility/attestation of upstream DLL not established. No new Cronet binary was compiled.",
+    "Full Core/Android/Flutter/Microsoft runtime notices, Psiphon utls root license and residual advisory reachability remain open.",
+    "Installed runtime/privacy, installer/SCM/TUN/device/origin acceptance and corresponding source publication were not performed.",
+    "Prior client executable/service/Core/Cronet bytes were reused unchanged for CMake packaging verification; all 300 prior bundle files match the preserved baseline.",
+    "Generated graph runtime_deps includes debugger DLLs; it is not a readback of the already-shipped upstream artifact or a new production package."
+  ]
+}

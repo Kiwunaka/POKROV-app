@@ -79,6 +79,17 @@ enum RuntimeStopReason {
   final String wireName;
 }
 
+enum RuntimeProfileSourceOrigin { managedManifest, signedEmergencyEnvelope }
+
+/// Upstream revision carried alongside its materialized local execution input.
+/// This does not prove the server still desires this revision after the fetch.
+class RuntimeProfileSource {
+  const RuntimeProfileSource({required this.revision, required this.origin});
+
+  final String revision;
+  final RuntimeProfileSourceOrigin origin;
+}
+
 class RuntimeSnapshot {
   const RuntimeSnapshot({
     required this.hostPlatform,
@@ -101,6 +112,12 @@ class RuntimeSnapshot {
     this.dnsReady,
     this.coreEgressValidated,
     this.coreEgressValidationRequired,
+    this.stagedProfileDigest,
+    this.effectiveProfileDigest,
+    this.profileIdentityOrigin,
+    this.fetchedProfileSource,
+    this.stagedProfileSource,
+    this.effectiveProfileSource,
     this.lastFailureKind,
     this.lastStopReason,
     this.safeProtocolDiagnosticCode,
@@ -132,6 +149,14 @@ class RuntimeSnapshot {
   final bool? dnsReady;
   final bool? coreEgressValidated;
   final bool? coreEgressValidationRequired;
+
+  /// Local service content identity; not a server assignment revision.
+  final String? stagedProfileDigest;
+  final String? effectiveProfileDigest;
+  final String? profileIdentityOrigin;
+  final RuntimeProfileSource? fetchedProfileSource;
+  final RuntimeProfileSource? stagedProfileSource;
+  final RuntimeProfileSource? effectiveProfileSource;
   final String? lastFailureKind;
   final String? lastStopReason;
   final String? safeProtocolDiagnosticCode;
@@ -141,6 +166,48 @@ class RuntimeSnapshot {
   final int? includePackageCount;
   final int? excludePackageCount;
   final bool connectionPending;
+
+  /// Repeated host observations need not notify UI listeners when their values
+  /// are unchanged. Profile sources are compared by value, not object identity.
+  bool hasSameStateAs(RuntimeSnapshot other) => _stateValues == other._stateValues;
+
+  Record get _stateValues => (
+        hostPlatform,
+        lane,
+        phase,
+        artifactDirectory,
+        coreBinaryPath,
+        helperBinaryPath,
+        stagedConfigPath,
+        supportsLiveConnect,
+        canInitialize,
+        canConnect,
+        message,
+        hostHealth,
+        dnsState,
+        uplinkState,
+        hostDiagnosticsSummary,
+        defaultNetworkInterface,
+        defaultNetworkIndex,
+        dnsReady,
+        coreEgressValidated,
+        coreEgressValidationRequired,
+        stagedProfileDigest,
+        effectiveProfileDigest,
+        profileIdentityOrigin,
+        (fetchedProfileSource?.revision, fetchedProfileSource?.origin),
+        (stagedProfileSource?.revision, stagedProfileSource?.origin),
+        (effectiveProfileSource?.revision, effectiveProfileSource?.origin),
+        lastFailureKind,
+        lastStopReason,
+        safeProtocolDiagnosticCode,
+        safeProtocolDiagnosticOccurrence,
+        ipv4RouteCount,
+        ipv6RouteCount,
+        includePackageCount,
+        excludePackageCount,
+        connectionPending,
+      );
 
   /// The host may advertise whether a selected-outbound Core probe is an
   /// explicit lifecycle requirement. Consumer health is stricter: every
@@ -416,6 +483,8 @@ const _publicRuntimeFailureKinds = <String>{
   'desktop_tun_egress_probe_failed',
   'emergency_endpoint_unreachable',
   'profile_staging_failed',
+  'profile_identity_failed',
+  'profile_identity_mismatch',
   'config_apply_failed',
   'vpn_permission_denied',
   'notification_permission_denied',
@@ -425,6 +494,12 @@ const _publicRuntimeFailureKinds = <String>{
   'default_network_unavailable',
   'default_network_interface_unresolved',
   'default_network_index_unresolved',
+  'network_unavailable',
+  'dns_failure',
+  'endpoint_connect_failed',
+  'endpoint_connect_refused',
+  'transport_timeout',
+  'tunnel_handshake_failed',
 };
 
 const _publicRuntimeStopReasons = <String>{
@@ -459,6 +534,12 @@ const _publicAwgSafeDiagnosticCodes = <String>{
   'egress_probe_connection_reset',
   'egress_probe_network_unreachable',
   'egress_probe_io_timeout',
+  'egress_probe_udp_timeout',
+  'egress_probe_tls_timeout',
+  'egress_probe_response_timeout',
+  'egress_probe_endpoint_initialization_udp_timeout',
+  'egress_probe_endpoint_initialization_tls_timeout',
+  'egress_probe_endpoint_initialization_response_timeout',
   'egress_probe_deadline_exceeded',
   'egress_probe_context_canceled',
   'egress_probe_transport_failure',
@@ -490,18 +571,35 @@ String? _publicRuntimeFailureKind(Object? value) {
   if (_publicRuntimeFailureKinds.contains(normalized)) {
     return normalized;
   }
-  if (normalized.startsWith('resolver_') || normalized.startsWith('dns_')) {
-    return 'dns_failure';
-  }
-  if (normalized.startsWith('default_network_')) {
-    return 'network_unavailable';
-  }
-  if (normalized.startsWith('vless_') ||
-      normalized.startsWith('reality_') ||
-      normalized == 'tls_handshake_failed') {
-    return 'tunnel_handshake_failed';
-  }
-  return 'runtime_failure';
+  // Only closed producer categories establish an observation. A new or
+  // unrecognized prefix cannot establish DNS failure, offline state or DPI.
+  return switch (normalized) {
+    'dns_connection_refused' ||
+    'dns_timeout' ||
+    'dns_lookup_failed' ||
+    'dns_exchange_failed' ||
+    'dns_runtime_error' ||
+    'vless_dns_failed' =>
+      'dns_failure',
+    'dns_default_interface_missing' => 'default_network_interface_unresolved',
+    'dns_network_unreachable' ||
+    'vless_network_unreachable' ||
+    'outbound_network_unreachable' ||
+    'vless_outbound_connect_failed' =>
+      'endpoint_connect_failed',
+    'vless_connection_refused' => 'endpoint_connect_refused',
+    'vless_timeout' ||
+    'reality_timeout' ||
+    'outbound_timeout' =>
+      'transport_timeout',
+    'tls_handshake_failed' ||
+    'vless_tls_failed' ||
+    'vless_handshake_failed' ||
+    'reality_verification_failed' ||
+    'reality_handshake_failed' =>
+      'tunnel_handshake_failed',
+    _ => 'runtime_failure',
+  };
 }
 
 String? _publicRuntimeStopReason(Object? value) {
@@ -607,6 +705,9 @@ String _publicRuntimeMessage({
       return 'POKROV не завершил проверку защищенного подключения и отключил системный VPN. Попробуйте еще раз.';
     case 'desktop_tun_egress_probe_failed':
       return 'Туннель запущен, но Windows не пропускает трафик. POKROV отключил его, чтобы не оставить устройство без сети.';
+    case 'profile_identity_mismatch':
+      return 'Изменение профиля не применено. Повторите подключение, чтобы загрузить актуальные настройки.';
+    case 'profile_identity_failed':
     case 'profile_staging_failed':
       return 'POKROV не смог подготовить настройки подключения.';
     case 'config_apply_failed':
@@ -619,13 +720,22 @@ String _publicRuntimeMessage({
     case 'resolver_callback_error':
     case 'resolver_timeout':
     case 'dns_failure':
+      return 'POKROV не смог подтвердить DNS-подключение устройства.';
     case 'default_network_unavailable':
+    case 'network_unavailable':
+      return 'Нет доступной сети. Проверьте Wi-Fi или мобильный интернет.';
     case 'default_network_interface_unresolved':
     case 'default_network_index_unresolved':
-    case 'network_unavailable':
-      return 'POKROV не смог подтвердить DNS-подключение устройства.';
+      return 'POKROV не смог определить сетевой интерфейс устройства.';
+    case 'endpoint_connect_failed':
+    case 'emergency_endpoint_unreachable':
+      return 'Не удалось установить соединение с точкой подключения.';
+    case 'endpoint_connect_refused':
+      return 'Точка подключения отклонила соединение.';
+    case 'transport_timeout':
+      return 'Точка подключения не ответила вовремя. Причина не установлена.';
     case 'tunnel_handshake_failed':
-      return 'POKROV подключил системный VPN, но защищенный канал до локации не отвечает.';
+      return 'Не удалось согласовать защищённое соединение с точкой подключения.';
     case 'runtime_failure':
       return 'POKROV не смог завершить действие на устройстве.';
   }
@@ -1097,6 +1207,8 @@ class ManagedProfilePayload {
   const ManagedProfilePayload({
     required this.profileName,
     required this.configPayload,
+    this.source,
+    this.tcpFallbackFromRevision = '',
     this.disableMemoryLimit = false,
     this.materializedForRuntime = false,
     this.quickSettingsEligible = false,
@@ -1106,9 +1218,14 @@ class ManagedProfilePayload {
     this.resolvedNodeCode = '',
     this.warpPolicy = WarpRuntimePolicy.disabled,
     this.freeProfileAccess,
+    this.cacheEntryId = '',
   });
 
   final String profileName;
+  final RuntimeProfileSource? source;
+
+  /// Current server-authorized lab revision eligible for ordinary TCP fallback.
+  final String tcpFallbackFromRevision;
   final String configPayload;
   final bool disableMemoryLimit;
   final bool materializedForRuntime;
@@ -1129,6 +1246,9 @@ class ManagedProfilePayload {
   final WarpRuntimePolicy warpPolicy;
   final FreeProfileAccess? freeProfileAccess;
 
+  /// App-local cache transaction identity; never a server revision or proof.
+  final String cacheEntryId;
+
   ManagedProfilePayload copyWith({
     String? profileName,
     String? configPayload,
@@ -1144,6 +1264,8 @@ class ManagedProfilePayload {
   }) {
     return ManagedProfilePayload(
       profileName: profileName ?? this.profileName,
+      source: source,
+      tcpFallbackFromRevision: tcpFallbackFromRevision,
       configPayload: configPayload ?? this.configPayload,
       disableMemoryLimit: disableMemoryLimit ?? this.disableMemoryLimit,
       materializedForRuntime:
@@ -1157,6 +1279,7 @@ class ManagedProfilePayload {
       resolvedNodeCode: resolvedNodeCode ?? this.resolvedNodeCode,
       warpPolicy: warpPolicy ?? this.warpPolicy,
       freeProfileAccess: freeProfileAccess ?? this.freeProfileAccess,
+      cacheEntryId: cacheEntryId,
     );
   }
 }
@@ -2008,7 +2131,9 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     final coreFileNames = switch (hostPlatform) {
       HostPlatform.windows => const ['pokrov-core.dll'],
       HostPlatform.macos => const ['pokrov-core.dylib'],
-      HostPlatform.android || HostPlatform.ios || HostPlatform.linux =>
+      HostPlatform.android ||
+      HostPlatform.ios ||
+      HostPlatform.linux =>
         const <String>[],
     };
 
@@ -2735,6 +2860,8 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
   final String? assetRootOverride;
   final RuntimeLane runtimeLane;
   ManagedProfilePayload? _stagedPayload;
+  RuntimeProfileSource? _fetchedSource;
+  String? _acknowledgedProfileDigest;
 
   static const defaultCoreTag = DesktopRuntimeEngine.defaultCoreTag;
   static const _runtimeChannel = MethodChannel('space.pokrov/runtime_engine');
@@ -2796,8 +2923,9 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     ManagedProfilePayload payload,
   ) async {
     if (!payload.materializedForRuntime) {
-      return await snapshot();
+      throw StateError('managed_profile_stage_failed');
     }
+    _fetchedSource = payload.source;
     final configPayload = _materializePokrovCoreConfig(
       payload.configPayload,
       payload.warpPolicy,
@@ -2806,7 +2934,6 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     final serviceProfileBundle = hostPlatform == HostPlatform.windows
         ? await _buildWindowsServiceProfileBundle(configPayload)
         : null;
-    _stagedPayload = payload;
     final resolvedCode = payload.resolvedNodeCode.trim().toLowerCase();
     SmartConnectNode? displayNode;
     for (final node
@@ -2823,6 +2950,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     }
     final hostSnapshot = await _invokeHostSnapshot(
       'runtimeEngine.stageManagedProfile',
+      stagedPayload: payload,
       arguments: <String, Object?>{
         'profileName': payload.profileName,
         'configPayload': configPayload,
@@ -2838,12 +2966,22 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         'displayRouteMode': payload.routeMode.name,
       },
     );
-    return hostSnapshot ?? await snapshot();
+    if (hostSnapshot == null ||
+        hostSnapshot.phase != RuntimePhase.configStaged ||
+        (hostSnapshot.stagedConfigPath ?? '').isEmpty ||
+        ((hostSnapshot.lastFailureKind?.isNotEmpty ?? false) &&
+            hostSnapshot.lastFailureKind != 'notification_permission_denied')) {
+      throw StateError('managed_profile_stage_failed');
+    }
+    _stagedPayload = payload;
+    _acknowledgedProfileDigest = hostSnapshot.stagedProfileDigest;
+    return hostSnapshot;
   }
 
   @override
   Future<RuntimeSnapshot> invalidateManagedProfile() async {
     _stagedPayload = null;
+    _acknowledgedProfileDigest = null;
     final hostSnapshot = await _invokeHostSnapshot(
       'runtimeEngine.invalidateManagedProfile',
     );
@@ -2941,6 +3079,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
   Future<RuntimeSnapshot?> _invokeHostSnapshot(
     String method, {
     Map<String, Object?>? arguments,
+    ManagedProfilePayload? stagedPayload,
   }) async {
     if (!hostPlatform.isRuntimeBridgeTarget) {
       return null;
@@ -2955,10 +3094,14 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         return null;
       }
 
-      return _snapshotFromHostMap(response);
+      return _snapshotFromHostMap(response, stagedPayload: stagedPayload);
     } on MissingPluginException {
       return null;
     } on PlatformException {
+      // An older snapshot cannot acknowledge a failed profile mutation.
+      if (method == 'runtimeEngine.stageManagedProfile') {
+        return null;
+      }
       if (method != 'runtimeEngine.snapshot') {
         final fallback = await _trySnapshotAfterPlatformError();
         if (fallback != null) {
@@ -3000,7 +3143,10 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     }
   }
 
-  RuntimeSnapshot _snapshotFromHostMap(Map<String, Object?> response) {
+  RuntimeSnapshot _snapshotFromHostMap(
+    Map<String, Object?> response, {
+    ManagedProfilePayload? stagedPayload,
+  }) {
     final hostDiagnostics = _readObjectMap(response['hostDiagnostics']);
     final phase = _runtimePhaseFromWireValue(response['phase']);
     final defaultNetworkInterface = _publicNetworkInterface(
@@ -3198,6 +3344,24 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       includePackageCount: includePackageCount,
       excludePackageCount: excludePackageCount,
     );
+    final stagedDigest =
+        _profileDigestFromWire(response['stagedProfileDigest']);
+    final effectiveDigest =
+        _profileDigestFromWire(response['effectiveProfileDigest']);
+    final stagedSource = stagedPayload != null
+        ? (phase == RuntimePhase.configStaged && stagedDigest != null
+            ? stagedPayload.source
+            : null)
+        : (stagedDigest != null && stagedDigest == _acknowledgedProfileDigest
+            ? _stagedPayload?.source
+            : null);
+    final effectiveSource = phase == RuntimePhase.running &&
+            coreEgressValidated == true &&
+            effectiveDigest != null &&
+            effectiveDigest == _acknowledgedProfileDigest &&
+            stagedDigest == effectiveDigest
+        ? _stagedPayload?.source
+        : null;
     return RuntimeSnapshot(
       hostPlatform: hostPlatform,
       lane: runtimeLane,
@@ -3206,6 +3370,17 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       coreBinaryPath: response['coreBinaryPath'] as String?,
       helperBinaryPath: response['helperBinaryPath'] as String?,
       stagedConfigPath: response['stagedConfigPath'] as String?,
+      stagedProfileDigest: stagedDigest,
+      effectiveProfileDigest: effectiveDigest,
+      fetchedProfileSource: _fetchedSource,
+      stagedProfileSource: stagedSource,
+      effectiveProfileSource: effectiveSource,
+      profileIdentityOrigin: const {
+        'windows_service_stage_request_sha256',
+        'android_private_stage_request_sha256',
+      }.contains(response['profileIdentityOrigin'])
+          ? response['profileIdentityOrigin'] as String
+          : null,
       supportsLiveConnect: response['supportsLiveConnect'] as bool? ?? false,
       canInitialize: response['canInitialize'] as bool? ?? false,
       canConnect: response['canConnect'] as bool? ?? false,
@@ -3235,6 +3410,11 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       connectionPending: connectionPending,
     );
   }
+
+  String? _profileDigestFromWire(Object? value) =>
+      value is String && RegExp(r'^[0-9a-f]{64}$').hasMatch(value)
+          ? value
+          : null;
 
   RuntimePhase _runtimePhaseFromWireValue(Object? value) {
     switch (value) {

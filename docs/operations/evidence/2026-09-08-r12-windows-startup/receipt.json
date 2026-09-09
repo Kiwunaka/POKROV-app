@@ -1,0 +1,398 @@
+{
+  "schema": "pokrov.r12-windows-useful-start/v1",
+  "status": "PASS_BOUNDED",
+  "client_source": "e88dff94bef85650c5f0b3d31dc3ff9a5e39c38a",
+  "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "installer_sha256": "29a87a13906909e400037a947f1e4f876ca59821e7e34c73060e623f2d9fbeea",
+  "version": "1.2.0+4053",
+  "build_worktree_state": "dirty; unchanged installed e88dff9 local package; preserved generated registrants at build time",
+  "application_source_changed": false,
+  "new_package_built": false,
+  "installed_files_verified": 305,
+  "expected_bundle": {
+    "path": "E:/r12-windows-performance-20260908/expected-bundle.json",
+    "bytes": 39997,
+    "sha256": "8ae6d3f4ef8506434fb1ad0e69564978d7b35422226f7e248c9baabbaae63d24"
+  },
+  "origin": "current-origin; owned offline Windows 11 VM",
+  "environment": {
+    "utc": "2026-09-08T05:08:02.0432193Z",
+    "os": "Microsoft Windows 11 Enterprise Evaluation",
+    "os_version": "10.0.26200",
+    "os_build": "26200",
+    "last_boot_utc": "2026-09-08T05:07:05.5Z",
+    "manufacturer": "innotek GmbH",
+    "model": "VirtualBox",
+    "logical_processors": 2,
+    "total_physical_memory": 4274917376,
+    "powershell": "5.1.26100.9168",
+    "power_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+    "ui_count": 0,
+    "service_state": "Running",
+    "service_start_mode": "Auto",
+    "service_start_name": "LocalSystem",
+    "service_pid": 3252,
+    "adapter_count": 0,
+    "files_verified": 305,
+    "run_key_present": false
+  },
+  "measurements": {
+    "warm-os": {
+      "samples": 20,
+      "warmups": 3,
+      "p95_ms": 765.5534,
+      "min_ms": 557.6105,
+      "max_ms": 818.7529000000001,
+      "gate": {
+        "budget_id": "client.windows.cold_start_useful_ui_ms",
+        "scope": "candidate_device",
+        "state": "MEASURED",
+        "gate_status": "PASS",
+        "sample_count": 20,
+        "statistic": "p95",
+        "unit": "ms",
+        "baseline_compared": false,
+        "environment_fingerprint": "bfbf8492d308fb81535587a4ee5a80207997d3fa3df174c5d58c1fc2ef1b4bf8",
+        "max_regression_percent": 10,
+        "regression_met": true,
+        "regression_percent": null,
+        "stop_lte": 3500,
+        "stop_met": true,
+        "target_lte": 2000,
+        "target_met": true,
+        "value": 765.5534
+      }
+    },
+    "postboot": {
+      "samples": 20,
+      "warmups": 3,
+      "p95_ms": 2311.4823,
+      "min_ms": 1755.2214000000001,
+      "max_ms": 2628.5073,
+      "gate": {
+        "budget_id": "client.windows.cold_start_useful_ui_ms",
+        "scope": "candidate_device",
+        "state": "MEASURED",
+        "gate_status": "PASS",
+        "sample_count": 20,
+        "statistic": "p95",
+        "unit": "ms",
+        "baseline_compared": false,
+        "environment_fingerprint": "bc313b7cca7743612ebdc74717c2d2df00b511467701e5aecfcb5a6cd1d961a5",
+        "max_regression_percent": 10,
+        "regression_met": true,
+        "regression_percent": null,
+        "stop_lte": 3500,
+        "stop_met": true,
+        "target_lte": 2000,
+        "target_met": false,
+        "value": 2311.4823
+      }
+    }
+  },
+  "method": {
+    "terminal": "enabled visible Connect and Protection status buttons, Protection navigation, no onboarding and no accessibility errors; exact FLUTTERVIEW MSAA OBJID_CLIENT",
+    "timer": "Stopwatch starts before Start-Process; includes MSAA activation and inspection; nominal 25ms polling; excludes OS boot/login and service autostart",
+    "postboot_cycles": 23,
+    "distinct_windows_boots": 23,
+    "discarded_cycles": 3,
+    "retained_cycles": 20,
+    "hash_verification": "before warm batch; after each postboot sample; final pre-shutdown readback",
+    "status_control_exercised": true,
+    "regression_baseline_used": false,
+    "limits": "Semantic readiness observation in VM; no physical disk-cache/power-cold guarantee; different warm/postboot fingerprints; no comparison with withdrawn Pane-only candidate33 method"
+  },
+  "validation_notes": [
+    "All 46 raw terminal/control records and classifications independently checked; p95 recomputed by canonical performance_budget_gate",
+    "Initial COM walker failures were before sampling and remain in separate inspection receipts",
+    "Initial normalizer refused equal timestamps formatted .5000000Z versus .5Z; parsed UTC instant comparison passed without changing raw evidence",
+    "Transient VBox console queries during shutdown did not satisfy poweroff guard; confirmed poweroff was required before restart"
+  ],
+  "cleanup": {
+    "vm": {
+      "utc": "2026-09-08T05:08:08.0021936Z",
+      "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+      "powered_off": true,
+      "nic_none": true,
+      "source_powered_off": true,
+      "installed_files_verified": 305,
+      "ui_after": 0,
+      "service_before_poweroff": "Running"
+    },
+    "host_routes_and_dns_unchanged": true,
+    "backend_changed": false,
+    "ui_processes": 0,
+    "service": "Auto LocalSystem Running before poweroff"
+  },
+  "open_checks": [
+    "postboot 2000ms optimization target",
+    "Windows 10",
+    "physical/comparable hardware",
+    "physical cold-cache conditions",
+    "connected/tray-hidden performance",
+    "exact final channel and full R12-W05"
+  ],
+  "release": {
+    "published": false,
+    "deployed": false,
+    "promoted": false,
+    "final_candidate": false
+  },
+  "artifacts": [
+    {
+      "path": "E:/r12-windows-startup-20260908/msaa-reader.cs",
+      "bytes": 3601,
+      "sha256": "8a6f8043b3d8ee926bd98cf26f058f897f078634fbf0a4202b7b45689c8c5a39"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/measure-startup.ps1",
+      "bytes": 5678,
+      "sha256": "2a973bd2ff450a7232b0e87bb37ded49fcc9dcfb0ab2ca3fd20f88859312f47b"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/measure-postboot.ps1",
+      "bytes": 5782,
+      "sha256": "7a03420a15207c9cf6a9204495e94866183fd1b5427ef378cf2fec3a5d5c2d7f"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/run-postboot-series.ps1",
+      "bytes": 5651,
+      "sha256": "2253558d516e4484186768ccc8316e476552d3a25d2b99fa716cccca821c41fd"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/finish-startup.ps1",
+      "bytes": 4725,
+      "sha256": "f14d08d5aaae7f2b21f0c7117026079506e05f97e51df61658f4abc9f3f08d94"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/normalize.py",
+      "bytes": 6729,
+      "sha256": "e9e8302d11ebdbe514b5bb65093593b6f147e124177d4c4400ee83e7d252d0b1"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/write-receipt.py",
+      "bytes": 4585,
+      "sha256": "86576401cd2e786a16dc5181aac5e95e3e2f1d86c13d9a7d5af497767807077a"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-warm-os.json",
+      "bytes": 85826,
+      "sha256": "933ee02400704b72a0a1fe0e6c8b97325a447e4bbdd3606936d8da82c33ebd7d"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/postboot-series.json",
+      "bytes": 8604,
+      "sha256": "ff2a873d1f1e32551765d1e0d354545ea7dfdb116eaffefc9a7552ad61970e87"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/warm-os-evidence.json",
+      "bytes": 2135,
+      "sha256": "d88ede5ae564d3f5fbf34dcbf1b70a6fba4ee8a9be3b0b3e898c0dc15d0ee665"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/warm-os-gate.json",
+      "bytes": 1429,
+      "sha256": "952058f8f7de914ae45d2382cc5771a53a37e02211ee90dd5985ef2a75506076"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/postboot-evidence.json",
+      "bytes": 2321,
+      "sha256": "34a08263bc298e97c9f86d7490e9e9729bafe11f43c980a792e0b286ff3ec0a9"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/postboot-gate.json",
+      "bytes": 1432,
+      "sha256": "9a4c4bb6c482b966945411a3f0e6039eba65d53d007be4efc16a47875dd835bf"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-summary.json",
+      "bytes": 1545,
+      "sha256": "476903e3d4d9f3505966bec525ad094d13c0e766f4f405aa9a6db63e762f6c5b"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/environment-final.json",
+      "bytes": 681,
+      "sha256": "f9ac3fcf51aebfe1b9ac4e2305f1ac45249cbd5c9da1ca59ecf7b227fdf41c52"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/initial-identity.json",
+      "bytes": 355,
+      "sha256": "f5ee864428d24eb12bb683664f3274bcbde928d20aeaa6da7da2f9dd482e0925"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/vm-before.json",
+      "bytes": 146,
+      "sha256": "c31c5f7fb88204e6bf97a9868d1311cff777ba7d94ef7eae77d5f6a030e234ee"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/vm-final.json",
+      "bytes": 272,
+      "sha256": "d76843d5acb6e719e6b65044ef76555578c3626f849e8d165c6f7d2f613000cb"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/host-network-before.json",
+      "bytes": 220,
+      "sha256": "707ba8a58b51313ab2b83c07ac1033762436c30a8ba6227c2093ae6a7041369e"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/host-network-after.json",
+      "bytes": 220,
+      "sha256": "1319c5d4399b7147c6c750091edb5ce6708b74c19e09ec75557f2ff84dc1bfda"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/inspect-msaa.ps1",
+      "bytes": 4468,
+      "sha256": "feb6ebaa7babb51ee4dbaae42ddf79adae6fd04c2345d0d177080df44eb8536d"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/inspect-msaa-v2.ps1",
+      "bytes": 4464,
+      "sha256": "2b1688b6739f288ffe4e9ee35179f78a8e52d8c708502ae1b865b91813889046"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/inspect-msaa-v3.ps1",
+      "bytes": 1010,
+      "sha256": "18cdf28ae2fd011db87447740ff3d142d122e782e085e8779c6cf3519e0cb78c"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/msaa-inspection.json",
+      "bytes": 604,
+      "sha256": "40a4ee7bb2a6afe653e4a5e42220915e20d37d7ed6ca6bb23ef4660612f46cb8"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/msaa-inspection-v2.json",
+      "bytes": 1136,
+      "sha256": "860654207e73b83f94a7d83559263d659630294160ee6dedd0875e9ba08acc79"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/msaa-inspection-v3.json",
+      "bytes": 5665,
+      "sha256": "1d531a4fafa7c8ddbf700a012143ecd5ef5a2490e1c75a8bb8516e8decfa85ca"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/protection-action.png",
+      "bytes": 88968,
+      "sha256": "01272f20b165a2f31530c99b8f5049d9e51aa34b5a84840444324f681995fc20"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-01.json",
+      "bytes": 4880,
+      "sha256": "89cdc87aabfdb3dad633ef8899074d8f5907d0170ce6a94185e40aa96838d89c"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-02.json",
+      "bytes": 4862,
+      "sha256": "00a43e39df824430084bdcbf6a58f624f44f4a574a4b4522f5140ac5f6414837"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-03.json",
+      "bytes": 4862,
+      "sha256": "f5220768a6cce40b27ec4284b4ea5afa9f0c9e24a6456a4ff8d2e419da3c6dc0"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-04.json",
+      "bytes": 4862,
+      "sha256": "17e0a3fb81f097f632b2c7ffb9307dfd2f73287119cf3007b2717402e817c73d"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-05.json",
+      "bytes": 4862,
+      "sha256": "121a8d7141c45b5825219efeb15c740bf590b043259ef4e917ac1d6c4fe976a2"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-06.json",
+      "bytes": 4862,
+      "sha256": "f210623fed7445d0ad12029143e81e361d00218326c0fab1d95a6c8bbbf9ee90"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-07.json",
+      "bytes": 4871,
+      "sha256": "996f305e7f101e6e6e4b59acf9800315e991298676c5c6897f71dacbadd59f80"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-08.json",
+      "bytes": 4862,
+      "sha256": "4bc73cfc4aae929718f285ceaaefd814fc80d2861735baa6bcfbd0bb11aad83a"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-09.json",
+      "bytes": 4862,
+      "sha256": "0da2247a6e80d6520e2f665aa3a98f10900fb8131325480a582a656c5a0c3e6d"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-10.json",
+      "bytes": 4861,
+      "sha256": "6a36898b8589155fb1e59ff2e9cf8e0d0203956e33110ff4dcc34860e981ed43"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-11.json",
+      "bytes": 4862,
+      "sha256": "97ca120ae6ab1227243b607fcb270efbcf94cfcf5e89f22556f8577081726aa6"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-12.json",
+      "bytes": 4871,
+      "sha256": "78209ebb37571d67767f90ae028848455e68a3b69795f58ebb2d9c5b5e3beb9c"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-13.json",
+      "bytes": 4862,
+      "sha256": "99043e95a49469fccdc3b46ee4e9a992e8c9c01a5c2c03119fbbd341de52d224"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-14.json",
+      "bytes": 4871,
+      "sha256": "81ce38e02df1e7ad7f297f60037ab432f9a4ae49e33353c3db64bd0ac87c9c99"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-15.json",
+      "bytes": 4871,
+      "sha256": "7e092b62c6c1ed7b26218129d781c523023f73184f19a41e34ad392676ae4f02"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-16.json",
+      "bytes": 4880,
+      "sha256": "459f74875130719e9296d068f7bb5d0210cd4de7224a9eebf1d6029a39fd6eae"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-17.json",
+      "bytes": 4871,
+      "sha256": "295dd77f182d488e8739b1a00f24a0a379c6ab3976b3207a012e4fc3e4fb58ab"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-18.json",
+      "bytes": 4880,
+      "sha256": "0f0c00a2fd51f6984a4bdabfa683f3ed7ca92971cf37ff9c5080da51d65eb1e5"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-19.json",
+      "bytes": 4862,
+      "sha256": "a6a6a76dc625cb0232f5f48cb6b7eb254778dd76ac333516ff1d83471fabef1d"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-20.json",
+      "bytes": 4860,
+      "sha256": "b1a21161af6284df11155a238092ba1ab5995fb140a9eee46e0ee3aaf5768d5c"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-21.json",
+      "bytes": 4862,
+      "sha256": "74421bf94b408e282f2ac1d70be365c5768931d9c15e9bbf2077c87fabee49c0"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-22.json",
+      "bytes": 4862,
+      "sha256": "abd30fc37ad77e252aeefc81187da1fe6ed2da8c4d59f4cccf8af4e5efa0efb5"
+    },
+    {
+      "path": "E:/r12-windows-startup-20260908/startup-postboot-23.json",
+      "bytes": 4861,
+      "sha256": "a401697c004e62947623b7fd8b88d3f5d487b66209b6a3f83d1d8ddf37b73ae9"
+    },
+    {
+      "path": "E:/r12-windows-performance-20260908/expected-bundle.json",
+      "bytes": 39997,
+      "sha256": "8ae6d3f4ef8506434fb1ad0e69564978d7b35422226f7e248c9baabbaae63d24"
+    }
+  ]
+}

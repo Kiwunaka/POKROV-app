@@ -75,6 +75,8 @@ app invokes it and what the UI may expose.
   device changes.
 - Ticket history uses one compact lifecycle state. Initial-load and polling
   failures expose one retry, not a second notice with a duplicate action.
+  `SupportConversationController` owns this projection and the ticket read/send
+  lifecycle; the widget renders it and retains draft, scroll and dialog state.
 - A failed ticket send keeps the draft, removes the unconfirmed optimistic
   bubble, and retries without duplicating the user's message.
 - A transport failure in the assistant sheet exposes one inline retry while

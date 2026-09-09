@@ -1,0 +1,816 @@
+{
+  "scope": "Candidate license-bearing comment blocks in first 160 lines of selected source files. Text presence is normalized substring matching, not a legal completeness verdict. Excludes native transitive includes and full-file obligations.",
+  "inventory_sha256": "fa432bd61a8d660c8e523907e2c1f32c4622cdaee49b1d3572740997a7aa24fa",
+  "notice_sha256": "17034f0a50bbdc6480c660908885cf7d1ad185e1813e23b2dc6d2d25cde03355",
+  "files_checked": 6751,
+  "source_hash_mismatches": [],
+  "blocks": [
+    {
+      "sha256_normalized": "196cd108dbfd5aef48bf444a4a1d5fe7d8e29b4b923fc2224bbd82d8f3bf5687",
+      "text": "// Inferno's libkern/vlrt-arm.c\n// https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/vlrt-arm.c\n//\n//         Copyright \u00a9 1994-1999 Lucent Technologies Inc. All rights reserved.\n//         Revisions Copyright \u00a9 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com).  All rights reserved.\n//         Portions Copyright 2009 The Go Authors. All rights reserved.\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n//\n// The above copyright notice and this permission notice shall be included in\n// all copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n// THE SOFTWARE.",
+      "normalized": "Inferno's libkern/vlrt-arm.c https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/vlrt-arm.c Copyright \u00a9 1994-1999 Lucent Technologies Inc. All rights reserved. Revisions Copyright \u00a9 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com). All rights reserved. Portions Copyright 2009 The Go Authors. All rights reserved. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\runtime\\vlrt.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "1e4a144f169855121b6326967041206dfb81e5787f9865a278f4dd3fa5477b02",
+      "text": "/*\n * Copyright (c) 2014, Yawning Angel <yawning at torproject dot org>\n * All rights reserved.\n *\n * Redistribution and use in source and binary forms, with or without\n * modification, are permitted provided that the following conditions are met:\n *\n *  * Redistributions of source code must retain the above copyright notice,\n *    this list of conditions and the following disclaimer.\n *\n *  * Redistributions in binary form must reproduce the above copyright notice,\n *    this list of conditions and the following disclaimer in the documentation\n *    and/or other materials provided with the distribution.\n *\n * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\n * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\n * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE\n * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR\n * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF\n * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS\n * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN\n * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)\n * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE\n * POSSIBILITY OF SUCH DAMAGE.\n */",
+      "normalized": "Copyright (c) 2014, Yawning Angel <yawning at torproject dot org> All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62\\psiphon\\upstreamproxy\\proxy_http.go",
+          "line": 19,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "21605d6bd2bc9eb4f98234ecf5a740c9c0487205ddfd7bf2faefc3f6d7525836",
+      "text": "/*\nCopyright (c) 2012 The Go Authors. All rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are\nmet:\n\n   * Redistributions of source code must retain the above copyright\nnotice, this list of conditions and the following disclaimer.\n   * Redistributions in binary form must reproduce the above\ncopyright notice, this list of conditions and the following disclaimer\nin the documentation and/or other materials provided with the\ndistribution.\n   * Neither the name of Google Inc. nor the names of its\ncontributors may be used to endorse or promote products derived from\nthis software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\nLIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\nA PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT\nOWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\nSPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT\nLIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\nDATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\nTHEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n*/",
+      "normalized": "Copyright (c) 2012 The Go Authors. All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. Neither the name of Google Inc. nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62\\psiphon\\tlsDialer.go",
+          "line": 20,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "3c255b8b9cf52202fb1795df39d13a313429c964927ccd520167c5d363be43a8",
+      "text": "// Inferno's libkern/vlop-arm.s\n// https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/vlop-arm.s\n//\n//         Copyright \u00a9 1994-1999 Lucent Technologies Inc. All rights reserved.\n//         Revisions Copyright \u00a9 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com).  All rights reserved.\n//         Portions Copyright 2009 The Go Authors. All rights reserved.\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n//\n// The above copyright notice and this permission notice shall be included in\n// all copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n// THE SOFTWARE.",
+      "normalized": "Inferno's libkern/vlop-arm.s https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/vlop-arm.s Copyright \u00a9 1994-1999 Lucent Technologies Inc. All rights reserved. Revisions Copyright \u00a9 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com). All rights reserved. Portions Copyright 2009 The Go Authors. All rights reserved. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\runtime\\vlop_arm.s",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-armeabi-v7a"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "3ed70992df976e6756030938fddb70201e397b71d08a709ee9b030960892f10f",
+      "text": "// Inferno's libkern/vlop-386.s\n// https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/vlop-386.s\n//\n//         Copyright \u00a9 1994-1999 Lucent Technologies Inc. All rights reserved.\n//         Revisions Copyright \u00a9 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com).  All rights reserved.\n//         Portions Copyright 2009 The Go Authors. All rights reserved.\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n//\n// The above copyright notice and this permission notice shall be included in\n// all copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n// THE SOFTWARE.",
+      "normalized": "Inferno's libkern/vlop-386.s https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/vlop-386.s Copyright \u00a9 1994-1999 Lucent Technologies Inc. All rights reserved. Revisions Copyright \u00a9 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com). All rights reserved. Portions Copyright 2009 The Go Authors. All rights reserved. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\runtime\\vlop_386.s",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-x86"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "42fb62d6a612e420f069f156ad230472d3beef57bba09179e001be7cc29f8c91",
+      "text": "// Inferno's libkern/memset-arm.s\n// https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/memset-arm.s\n//\n//         Copyright \u00a9 1994-1999 Lucent Technologies Inc. All rights reserved.\n//         Revisions Copyright \u00a9 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com).  All rights reserved.\n//         Portions Copyright 2009 The Go Authors. All rights reserved.\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n//\n// The above copyright notice and this permission notice shall be included in\n// all copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n// THE SOFTWARE.",
+      "normalized": "Inferno's libkern/memset-arm.s https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/memset-arm.s Copyright \u00a9 1994-1999 Lucent Technologies Inc. All rights reserved. Revisions Copyright \u00a9 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com). All rights reserved. Portions Copyright 2009 The Go Authors. All rights reserved. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\runtime\\memclr_arm.s",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-armeabi-v7a"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "47e243082bc8fd6dab19834295a88ec33cc2417d129c382b145dbd3b3b6d82da",
+      "text": "// MIT License\n//\n// Copyright (c) 2016-2017 xtaci\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n//\n// The above copyright notice and this permission notice shall be included in all\n// copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n// SOFTWARE.",
+      "normalized": "MIT License Copyright (c) 2016-2017 xtaci Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": true,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\smux@v1.5.50-sing-box-mod.1\\alloc.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\smux@v1.5.50-sing-box-mod.1\\frame.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\smux@v1.5.50-sing-box-mod.1\\mux.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\smux@v1.5.50-sing-box-mod.1\\session.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\smux@v1.5.50-sing-box-mod.1\\shaper.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\smux@v1.5.50-sing-box-mod.1\\stream.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "550200e42ea35f1748e7038a300daf5319215b1fb4828979b8226e8f130cf6d2",
+      "text": "// Copyright (C) 2013-2018 by Maxim Bublis <b@codemonkey.ru>\n//\n// Permission is hereby granted, free of charge, to any person obtaining\n// a copy of this software and associated documentation files (the\n// \"Software\"), to deal in the Software without restriction, including\n// without limitation the rights to use, copy, modify, merge, publish,\n// distribute, sublicense, and/or sell copies of the Software, and to\n// permit persons to whom the Software is furnished to do so, subject to\n// the following conditions:\n//\n// The above copyright notice and this permission notice shall be\n// included in all copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,\n// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\n// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND\n// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE\n// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION\n// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION\n// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "normalized": "Copyright (C) 2013-2018 by Maxim Bublis <b@codemonkey.ru> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": true,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\gofrs\\uuid\\v5@v5.4.0\\codec.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\gofrs\\uuid\\v5@v5.4.0\\generator.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\gofrs\\uuid\\v5@v5.4.0\\sql.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\gofrs\\uuid\\v5@v5.4.0\\uuid.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "5831592249032edff6e8c59d6af3f2ed3bbda93d120c74a32036647ebb80e6d7",
+      "text": "// Inferno's libkern/memmove-386.s\n// https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/memmove-386.s\n//\n//         Copyright \u00a9 1994-1999 Lucent Technologies Inc. All rights reserved.\n//         Revisions Copyright \u00a9 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com).  All rights reserved.\n//         Portions Copyright 2009 The Go Authors. All rights reserved.\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n//\n// The above copyright notice and this permission notice shall be included in\n// all copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n// THE SOFTWARE.",
+      "normalized": "Inferno's libkern/memmove-386.s https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/memmove-386.s Copyright \u00a9 1994-1999 Lucent Technologies Inc. All rights reserved. Revisions Copyright \u00a9 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com). All rights reserved. Portions Copyright 2009 The Go Authors. All rights reserved. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\runtime\\memmove_386.s",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-x86"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "60a82543239838bfd32681f017d8ff443a4b91ee80c6905733fa661f09ed0f8a",
+      "text": "// Below is port of UTF-8 decoder from http://bjoern.hoehrmann.de/utf-8/decoder/dfa/\n//\n// Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to\n// deal in the Software without restriction, including without limitation the\n// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or\n// sell copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n//\n// The above copyright notice and this permission notice shall be included in\n// all copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING\n// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS\n// IN THE SOFTWARE.",
+      "normalized": "Below is port of UTF-8 decoder from http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\ws@v0.0.0-20231204124109-acfe8907c854\\wsutil\\utf8.go",
+          "line": 82,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "61effba88a0b31e599f9fb2b338c23e08bc4a8192955abd25ed715c761563af2",
+      "text": "/*\nCopyright (c) 2017 Ross Oreto\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n*/",
+      "normalized": "Copyright (c) 2017 Ross Oreto Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\quic-go@v0.59.0-sing-box-mod.2\\internal\\utils\\tree\\tree.go",
+          "line": 6,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "6c025d9f375be7dcb57d95c0964e2d104363c21d8fbfa5df5e56bebf7f866fec",
+      "text": "/*\n * ELF constants and data structures\n *\n * Derived from:\n * $FreeBSD: src/sys/sys/elf32.h,v 1.8.14.1 2005/12/30 22:13:58 marcel Exp $\n * $FreeBSD: src/sys/sys/elf64.h,v 1.10.14.1 2005/12/30 22:13:58 marcel Exp $\n * $FreeBSD: src/sys/sys/elf_common.h,v 1.15.8.1 2005/12/30 22:13:58 marcel Exp $\n * $FreeBSD: src/sys/alpha/include/elf.h,v 1.14 2003/09/25 01:10:22 peter Exp $\n * $FreeBSD: src/sys/amd64/include/elf.h,v 1.18 2004/08/03 08:21:48 dfr Exp $\n * $FreeBSD: src/sys/arm/include/elf.h,v 1.5.2.1 2006/06/30 21:42:52 cognet Exp $\n * $FreeBSD: src/sys/i386/include/elf.h,v 1.16 2004/08/02 19:12:17 dfr Exp $\n * $FreeBSD: src/sys/powerpc/include/elf.h,v 1.7 2004/11/02 09:47:01 ssouhlal Exp $\n * $FreeBSD: src/sys/sparc64/include/elf.h,v 1.12 2003/09/25 01:10:26 peter Exp $\n * \"System V ABI\" (http://www.sco.com/developers/gabi/latest/ch4.eheader.html)\n * \"ELF for the ARM\u00ae 64-bit Architecture (AArch64)\" (ARM IHI 0056B)\n * \"RISC-V ELF psABI specification\" (https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-elf.adoc)\n * llvm/BinaryFormat/ELF.h - ELF constants and structures\n *\n * Copyright (c) 1996-1998 John D. Polstra.  All rights reserved.\n * Copyright (c) 2001 David E. O'Brien\n * Portions Copyright 2009 The Go Authors. All rights reserved.\n *\n * Redistribution and use in source and binary forms, with or without\n * modification, are permitted provided that the following conditions\n * are met:\n * 1. Redistributions of source code must retain the above copyright\n *    notice, this list of conditions and the following disclaimer.\n * 2. Redistributions in binary form must reproduce the above copyright\n *    notice, this list of conditions and the following disclaimer in the\n *    documentation and/or other materials provided with the distribution.\n *\n * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND\n * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\n * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE\n * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\n * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS\n * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)\n * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT\n * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY\n * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF\n * SUCH DAMAGE.\n */",
+      "normalized": "ELF constants and data structures Derived from: $FreeBSD: src/sys/sys/elf32.h,v 1.8.14.1 2005/12/30 22:13:58 marcel Exp $ $FreeBSD: src/sys/sys/elf64.h,v 1.10.14.1 2005/12/30 22:13:58 marcel Exp $ $FreeBSD: src/sys/sys/elf_common.h,v 1.15.8.1 2005/12/30 22:13:58 marcel Exp $ $FreeBSD: src/sys/alpha/include/elf.h,v 1.14 2003/09/25 01:10:22 peter Exp $ $FreeBSD: src/sys/amd64/include/elf.h,v 1.18 2004/08/03 08:21:48 dfr Exp $ $FreeBSD: src/sys/arm/include/elf.h,v 1.5.2.1 2006/06/30 21:42:52 cognet Exp $ $FreeBSD: src/sys/i386/include/elf.h,v 1.16 2004/08/02 19:12:17 dfr Exp $ $FreeBSD: src/sys/powerpc/include/elf.h,v 1.7 2004/11/02 09:47:01 ssouhlal Exp $ $FreeBSD: src/sys/sparc64/include/elf.h,v 1.12 2003/09/25 01:10:26 peter Exp $ \"System V ABI\" (http://www.sco.com/developers/gabi/latest/ch4.eheader.html) \"ELF for the ARM\u00ae 64-bit Architecture (AArch64)\" (ARM IHI 0056B) \"RISC-V ELF psABI specification\" (https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-elf.adoc) llvm/BinaryFormat/ELF.h - ELF constants and structures Copyright (c) 1996-1998 John D. Polstra. All rights reserved. Copyright (c) 2001 David E. O'Brien Portions Copyright 2009 The Go Authors. All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\debug\\elf\\elf.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "6fd3d51145497f97d7887c338a2cb12e35f3fc708e1f86768420b9f64205e09a",
+      "text": "// Protocol Buffers - Google's data interchange format\n// Copyright 2008 Google Inc.  All rights reserved.\n// https://developers.google.com/protocol-buffers/\n//\n// Redistribution and use in source and binary forms, with or without\n// modification, are permitted provided that the following conditions are\n// met:\n//\n//     * Redistributions of source code must retain the above copyright\n// notice, this list of conditions and the following disclaimer.\n//     * Redistributions in binary form must reproduce the above\n// copyright notice, this list of conditions and the following disclaimer\n// in the documentation and/or other materials provided with the\n// distribution.\n//     * Neither the name of Google Inc. nor the names of its\n// contributors may be used to endorse or promote products derived from\n// this software without specific prior written permission.\n//\n// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n// \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\n// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\n// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT\n// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\n// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT\n// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\n// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.",
+      "normalized": "Protocol Buffers - Google's data interchange format Copyright 2008 Google Inc. All rights reserved. https://developers.google.com/protocol-buffers/ Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. * Neither the name of Google Inc. nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\google.golang.org\\protobuf@v1.36.11\\types\\known\\timestamppb\\timestamp.pb.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\google.golang.org\\protobuf@v1.36.11\\types\\known\\durationpb\\duration.pb.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\google.golang.org\\protobuf@v1.36.11\\types\\known\\anypb\\any.pb.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\google.golang.org\\protobuf@v1.36.11\\types\\known\\emptypb\\empty.pb.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "81ad5611516aa3db366a1743364d894873ac14005ddfa9a8c65f61345bd6e4f5",
+      "text": "// The MIT License (MIT)\n//\n// Copyright (c) 2015 xtaci\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n//\n// The above copyright notice and this permission notice shall be included in all\n// copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n// SOFTWARE.",
+      "normalized": "The MIT License (MIT) Copyright (c) 2015 xtaci Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": true,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\autotune.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\crypt.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\entropy.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\fec.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\kcp.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\platform_linux.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\readloop.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\readloop_linux.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\snmp.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\timedsched.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\tx.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\tx_linux.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\platform_generic.go",
+          "line": 1,
+          "targets": [
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\readloop_generic.go",
+          "line": 1,
+          "targets": [
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\tx_generic.go",
+          "line": 1,
+          "targets": [
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "8404be099b8790e5cc931bbb1be8013ee6a18159ed109102f9b305662827974e",
+      "text": "// The field implementation in scalar_fiat.go is generated by the fiat-crypto\n// project (https://github.com/mit-plv/fiat-crypto) at version v0.0.9 (23d2dbc)\n// from a formally verified model.\n//\n// fiat-crypto code comes under the following license.\n//\n//     Copyright (c) 2015-2020 The fiat-crypto Authors. All rights reserved.\n//\n//     Redistribution and use in source and binary forms, with or without\n//     modification, are permitted provided that the following conditions are\n//     met:\n//\n//         1. Redistributions of source code must retain the above copyright\n//         notice, this list of conditions and the following disclaimer.\n//\n//     THIS SOFTWARE IS PROVIDED BY the fiat-crypto authors \"AS IS\"\n//     AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,\n//     THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR\n//     PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL Berkeley Software Design,\n//     Inc. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,\n//     EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,\n//     PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR\n//     PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF\n//     LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING\n//     NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\n//     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n//",
+      "normalized": "The field implementation in scalar_fiat.go is generated by the fiat-crypto project (https://github.com/mit-plv/fiat-crypto) at version v0.0.9 (23d2dbc) from a formally verified model. fiat-crypto code comes under the following license. Copyright (c) 2015-2020 The fiat-crypto Authors. All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. THIS SOFTWARE IS PROVIDED BY the fiat-crypto authors \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL Berkeley Software Design, Inc. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\crypto\\internal\\fips140\\edwards25519\\scalar.go",
+          "line": 29,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\filippo.io\\edwards25519@v1.1.0\\scalar.go",
+          "line": 28,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "8456566af292c408ef6e22d44d4ee644a40d9e62f9b4f420f4e16d0f7780414e",
+      "text": "/*\n * Copyright (c) 2014, Yawning Angel <yawning at torproject dot org>\n * All rights reserved.\n *\n * Redistribution and use in source and binary forms, with or without\n * modification, are permitted provided that the following conditions are met:\n *\n *  * Redistributions of source code must retain the above copyright notice,\n *    this list of conditions and the following disclaimer.\n *\n *  * Redistributions in binary form must reproduce the above copyright notice,\n *    this list of conditions and the following disclaimer in the documentation\n *    and/or other materials provided with the distribution.\n *\n * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\n * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\n * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE\n * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR\n * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF\n * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS\n * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN\n * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)\n * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE\n * POSSIBILITY OF SUCH DAMAGE.\n *\n * This is inspired by go.net/proxy/socks5.go:\n *\n * Copyright 2011 The Go Authors. All rights reserved.\n * Use of this source code is governed by a BSD-style\n * license that can be found in the LICENSE file.\n */",
+      "normalized": "Copyright (c) 2014, Yawning Angel <yawning at torproject dot org> All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. This is inspired by go.net/proxy/socks5.go: Copyright 2011 The Go Authors. All rights reserved. Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62\\psiphon\\upstreamproxy\\proxy_socks4.go",
+          "line": 19,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "984ef010c35fb50b04ae5473b1b5868e47ba06a1bb526e4a1cc1677f541854b5",
+      "text": "// \n// Copyright (c) 2011-2019 Canonical Ltd\n// Copyright (c) 2006-2010 Kirill Simonov\n// \n// Permission is hereby granted, free of charge, to any person obtaining a copy of\n// this software and associated documentation files (the \"Software\"), to deal in\n// the Software without restriction, including without limitation the rights to\n// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies\n// of the Software, and to permit persons to whom the Software is furnished to do\n// so, subject to the following conditions:\n// \n// The above copyright notice and this permission notice shall be included in all\n// copies or substantial portions of the Software.\n// \n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n// SOFTWARE.",
+      "normalized": "Copyright (c) 2011-2019 Canonical Ltd Copyright (c) 2006-2010 Kirill Simonov Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\gopkg.in\\yaml.v3@v3.0.1\\apic.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\gopkg.in\\yaml.v3@v3.0.1\\emitterc.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\gopkg.in\\yaml.v3@v3.0.1\\parserc.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\gopkg.in\\yaml.v3@v3.0.1\\readerc.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\gopkg.in\\yaml.v3@v3.0.1\\scannerc.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\gopkg.in\\yaml.v3@v3.0.1\\writerc.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\gopkg.in\\yaml.v3@v3.0.1\\yamlh.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\gopkg.in\\yaml.v3@v3.0.1\\yamlprivateh.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "99d6a42549fc9e689801ea5aeb1f416772916fdd63223acd1267d6009a3856aa",
+      "text": "/*\nThe bloom library relied on the excellent murmur library\nby S\u00e9bastien Paolacci. Unfortunately, it involved some heap\nallocation. We want to avoid any heap allocation whatsoever\nin the hashing process. To preserve backward compatibility, we roll\nour own hashing functions. They are designed to be strictly equivalent\nto Paolacci's implementation.\n\nLicense on original code:\n\n\nCopyright 2013, S\u00e9bastien Paolacci.\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n    * Redistributions of source code must retain the above copyright\n      notice, this list of conditions and the following disclaimer.\n    * Redistributions in binary form must reproduce the above copyright\n      notice, this list of conditions and the following disclaimer in the\n      documentation and/or other materials provided with the distribution.\n    * Neither the name of the library nor the\n      names of its contributors may be used to endorse or promote products\n      derived from this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\nANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\nWARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY\nDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\nLOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\nON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\nSOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n*/",
+      "normalized": "The bloom library relied on the excellent murmur library by S\u00e9bastien Paolacci. Unfortunately, it involved some heap allocation. We want to avoid any heap allocation whatsoever in the hashing process. To preserve backward compatibility, we roll our own hashing functions. They are designed to be strictly equivalent to Paolacci's implementation. License on original code: Copyright 2013, S\u00e9bastien Paolacci. All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. Neither the name of the library nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\bits-and-blooms\\bloom\\v3@v3.6.0\\murmur.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "a9a491b9962aa7a4a8eadaa6e2035a8768f48cc19d663b34233cc60711105c2e",
+      "text": "// The MIT License (MIT)\n//\n// # Copyright (c) 2015 xtaci\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n//\n// The above copyright notice and this permission notice shall be included in all\n// copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n// SOFTWARE.",
+      "normalized": "The MIT License (MIT) # Copyright (c) 2015 xtaci Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\bufferpool.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        },
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\sess.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "bfe854d5d50748f98aef136d9acd1753f53f94f0fb70062ba7be4c995a0eba12",
+      "text": "// MIT License\n//\n// Copyright (c) 2016 the quic-go authors & Google, Inc.\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n//\n// The above copyright notice and this permission notice shall be included in all\n// copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n// SOFTWARE.",
+      "normalized": "MIT License Copyright (c) 2016 the quic-go authors & Google, Inc. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": true,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\enfein\\mieru\\v3@v3.27.0\\pkg\\congestion\\rtt.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "c11a1ebbfc863fdcd1bb644a260df09c9656d7107232ec88e5822960c9b08ea9",
+      "text": "/* Copyright (c) 2009 The Go Authors. All rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are\nmet:\n\n   * Redistributions of source code must retain the above copyright\nnotice, this list of conditions and the following disclaimer.\n   * Redistributions in binary form must reproduce the above\ncopyright notice, this list of conditions and the following disclaimer\nin the documentation and/or other materials provided with the\ndistribution.\n   * Neither the name of Google Inc. nor the names of its\ncontributors may be used to endorse or promote products derived from\nthis software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\nLIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\nA PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT\nOWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\nSPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT\nLIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\nDATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\nTHEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n*/",
+      "normalized": "Copyright (c) 2009 The Go Authors. All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. Neither the name of Google Inc. nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.",
+      "present_in_notice": true,
+      "sources": [
+        {
+          "path": "E:\\r12core-implementation\\engine\\sing-box\\replace\\psiphon-tls\\unsafe.go",
+          "line": 3,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "c492feb238b7452610478358b7b01fe7dc8a0137969976ab3bdd6f7377a1e287",
+      "text": "// Derived from Inferno's libkern/memmove-386.s (adapted for amd64)\n// https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/memmove-386.s\n//\n//         Copyright \u00a9 1994-1999 Lucent Technologies Inc. All rights reserved.\n//         Revisions Copyright \u00a9 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com).  All rights reserved.\n//         Portions Copyright 2009 The Go Authors. All rights reserved.\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n//\n// The above copyright notice and this permission notice shall be included in\n// all copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n// THE SOFTWARE.",
+      "normalized": "Derived from Inferno's libkern/memmove-386.s (adapted for amd64) https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/memmove-386.s Copyright \u00a9 1994-1999 Lucent Technologies Inc. All rights reserved. Revisions Copyright \u00a9 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com). All rights reserved. Portions Copyright 2009 The Go Authors. All rights reserved. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\runtime\\memmove_amd64.s",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "cff2df616f73daacc51a2779ddf39099e104b573b44a2f9c5c330f447d6dc484",
+      "text": "// The MIT License (MIT)\n//\n// Copyright (c) 2025 xtaci\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n//\n// The above copyright notice and this permission notice shall be included in all\n// copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n// SOFTWARE.",
+      "normalized": "The MIT License (MIT) Copyright (c) 2025 xtaci Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\xtaci\\kcp-go\\v5@v5.6.70\\ringbuffer.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "dd7793b795de39f5bd86d311277cca18a454177c03e08980cca98580b34d9aa4",
+      "text": "// Inferno's libkern/memmove-arm.s\n// https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/memmove-arm.s\n//\n//         Copyright \u00a9 1994-1999 Lucent Technologies Inc. All rights reserved.\n//         Revisions Copyright \u00a9 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com).  All rights reserved.\n//         Portions Copyright 2009 The Go Authors. All rights reserved.\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n//\n// The above copyright notice and this permission notice shall be included in\n// all copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n// THE SOFTWARE.",
+      "normalized": "Inferno's libkern/memmove-arm.s https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/memmove-arm.s Copyright \u00a9 1994-1999 Lucent Technologies Inc. All rights reserved. Revisions Copyright \u00a9 2000-2007 Vita Nuova Holdings Limited (www.vitanuova.com). All rights reserved. Portions Copyright 2009 The Go Authors. All rights reserved. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\runtime\\memmove_arm.s",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-armeabi-v7a"
+          ]
+        }
+      ]
+    },
+    {
+      "sha256_normalized": "fef1dc0f559554d1cad3badb88ecc08389849671beedbe3f04b5ec366275f533",
+      "text": "// Copyright (c) 2018-2022 Burak Sezer\n// All rights reserved.\n//\n// This code is licensed under the MIT License.\n//\n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files(the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and / or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions :\n//\n// The above copyright notice and this permission notice shall be included in\n// all copies or substantial portions of the Software.\n//\n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n// THE SOFTWARE.",
+      "normalized": "Copyright (c) 2018-2022 Burak Sezer All rights reserved. This code is licensed under the MIT License. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files(the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions : The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+      "present_in_notice": false,
+      "sources": [
+        {
+          "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\consistent@v0.0.0-20240322131436-20aaa4e05737\\consistent.go",
+          "line": 1,
+          "targets": [
+            "libpokrov-core-arm64-v8a",
+            "libpokrov-core-armeabi-v7a",
+            "libpokrov-core-x86",
+            "libpokrov-core-x86_64",
+            "pokrov-core"
+          ]
+        }
+      ]
+    }
+  ]
+}

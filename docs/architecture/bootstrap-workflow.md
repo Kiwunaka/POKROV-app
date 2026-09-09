@@ -5,6 +5,16 @@ This workflow gives client workers a consistent way to validate the canonical
 materialize local-only config. The clean-room/Wave 7 wording below is retained
 only where it explains bootstrap provenance.
 
+Ordinary Android and Windows connect/reconnect refresh the authorized managed
+profile before staging, even when a reusable staged path exists. Server-side
+assignment changes therefore do not depend on the repair action or a local
+settings change. Transient refresh failures may reuse only the existing fresh,
+authorized cache permitted by `CachedProfileFallbackGate`; the UI identifies
+that fallback and does not claim the new assignment was applied. The owner's
+2026-09-07 decision permits a manual retry after dataplane failure using the
+last downloaded or last proven profile within its original offline window.
+An explicit authorization denial is separate from an unreachable API.
+
 Historical mapping note:
 
 - older docs may still say `external/pokrov-next-client/` or `app-next/`
@@ -85,8 +95,29 @@ that candidate-specific release truth.
 
 Current blocking dependency:
 
-- the active local pre-candidate runtime has exact single-source platform bindings: Android and Windows use security-fixed Core commit `cd8f0f4169d570d693992a959d81d17c2c44884d`, retaining the egress, AWG, Android outer-socket and default-off provenance-bound `pokrov.hy2.outbound.v1` lanes while correcting AWG allocated-port binding, `GO-2026-6303`, AWG endpoint use of the configured default bootstrap resolver and legacy raw-settings/error logging; raw Hysteria2 URI conversion stays disabled, AWG2/AWG 3.1 lifecycle proof is retained, and two local builds per platform produced byte-identical AAR/DLL trees
+- the active local pre-candidate runtime has exact single-source platform bindings: Android and Windows use security-fixed Core commit `c7a11f7d2fd974726095ad7aa0619c055273dd15`, retaining the egress, AWG, Android outer-socket and default-off provenance-bound `pokrov.hy2.outbound.v1` lanes while correcting AWG allocated-port binding, `GO-2026-6303`, AWG endpoint use of the configured default bootstrap resolver and legacy raw-settings/error logging; raw Hysteria2 URI conversion stays disabled, AWG2/AWG 3.1 lifecycle proof is retained, and two local builds per platform produced byte-identical AAR/DLL trees
+- the C05 binding uses Go 1.26.8, x/crypto 0.56.0 and tfo-go 2.3.3 to fix two reachable SSH deadlock advisories. Its Psiphon TLS ConnectionState mirror follows the pinned Go layout with a guarded live handshake/conversion test. [C05 two-build evidence](../operations/evidence/2026-09-06-r12-c05-core-binding/android-evidence.json) and [previous D05 binding](../operations/evidence/2026-09-06-r12-c05-core-binding/previous-runtime-binding.json) retain exact identities; this does not transfer candidate, device, SCM/TUN or WARP proof
+- managed engine log filtering runs before observable writers, subscriptions and replay buffers in normal and debug mode. Arbitrary messages and tags become `runtime_log_redacted`; only fixed AWG categories survive. The retained [D05 binding evidence](../operations/evidence/2026-09-06-r12-d05-core-binding/android-evidence.json) and [previous binding](../operations/evidence/2026-09-06-r12-d05-core-binding/previous-runtime-binding.json) preserve source and rollback identities
 - device-bound `awg2_lab`, `awg31_lab` and `hy2_lab` envelopes do not participate in ordinary Smart Connect selection or automatic-node quarantine. Their typed endpoint is already the complete route decision. The bootstrapper clears `smartConnect` for those profiles and skips selection when no Smart Connect profile is present, so an unrelated VLESS egress failure cannot block a fresh lab fetch before Core starts
+- Those lab envelopes may advertise ordinary `legacy_reality_fallback` in
+  `fallback_order`. Only then does the client retain their exact source revision
+  as a TCP fallback candidate. A confirmed `core_egress_probe_failed` can make
+  one fallback request through `GET /api/client/profile/managed` with
+  `fallback_from_revision`; unavailable proof and arbitrary runtime errors do
+  not trigger it. The server revalidates the current device/lab revision and
+  ordinary TCP provisioning. The response must identify the expected REALITY
+  transport and `<source-revision>:fallback:legacy_reality_fallback`; ignored
+  parameters, stale revision or an unrelated response fail before staging.
+  Promote the platform API support before enabling this client recovery path;
+  an older server that ignores the query cannot supply an accepted fallback.
+  The same route mode, selected/excluded apps and local routing preferences are
+  materialized again. Existing WARP consent/fallback policy remains its own
+  boundary. The rejected lab cache cannot be used for this retry. Both the lab
+  transition and subsequent automatic node retries share the existing two-retry
+  budget and generation fence. A manual Home action or location change cancels
+  the pending transport choice; there is no persisted cohort mutation. Native
+  stage/proof checks still decide whether the new connection is protected.
+
 - `Android` host now reaches a real service-backed connect lane: it can initialize POKROV Core, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
 - Android runtime discovery accepts either an extracted `nativeLibraryDir/libpokrov-core.so` or the ABI-matched `lib/<abi>/libpokrov-core.so` entry in the base/split APK. This is required on physical devices that install the release APK with native-library extraction disabled; Java still loads the packaged Core through the generated bindings
 - Android runtime materialization is intentionally `tun`-only in this lane; desktop loopback listener inbounds such as `mixed-in` and `dns-in` stay disabled for the mobile `VpnService` path
@@ -149,10 +180,21 @@ Current blocking dependency:
   fixed Core category allowlist into the existing safe protocol-diagnostic
   fields, and retains no raw log text. Once captured, the terminal egress
   category takes precedence over later transport-retry categories until the
-  next connection attempt. It never overrides the structured
-  `core.egress.probe` result or weakens `EGRESS-001` fail-close
+  next connection attempt. It never overrides the result of the specific
+  endpoint probe call or weakens `EGRESS-001` fail-close
+- Android endpoint verification calls the additive Core `CommandServer.ProbeEndpoint`
+  method on the server captured for the active lifecycle task. A delayed result
+  for another invocation cannot satisfy this call, and the existing session and
+  generation fences still guard its application. Shared ABI1 operational events
+  remain diagnostic breadcrumbs. A missing method or invocation failure returns
+  `UNAVAILABLE`, never healthy. Selector/urltest groups use the per-call
+  `ProbeSelectedOutbound` method, which captures the selected proxy leaf and
+  rejects a changed selection, runtime replacement, timeout, direct leaf or
+  cyclic group. Shared URL-test history cannot settle protection health.
+  Both methods are present in the exact replacement AAR recorded by the active
+  Core binding decision. Packaged and device proof remain separate gates
 - after Android reports `running`, the shared shell polls the host-owned egress result through a bounded 750 ms interval for the Core probe window; a terminal `core_egress_probe_failed` snapshot immediately replaces the protected UI with the normal disconnected/reconnect state, while a canceled or newer connect generation cannot be overwritten by an older poll
-- a terminal Android selected-outbound egress failure also invalidates the staged cached runtime profile and blocks that cache from offline fallback; the next connect must obtain and stage a fresh authorized manifest, while ordinary offline fallback remains bounded before any dataplane failure
+- a terminal Android selected-outbound egress failure stops false protection but preserves the bounded downloaded/proven profile cache. A manual retry refreshes opportunistically and may restore the last proven profile if the API is unavailable. Automatic transport/node failover still requires a freshly selected profile and cannot loop through the same cached failed endpoint.
 - the Android host performs that selected-outbound fail-close as one synchronous profile-reuse invalidation: it clears the persisted Quick Settings profile and drops the staged pointer while preserving the safe failure snapshot, so a backgrounded Flutter shell cannot let the tile restart the rejected configuration
 - Android Quick Settings may reuse only a freshly staged managed profile carrying Flutter's completed first-connect route-scope confirmation; legacy path-only or unconfirmed persisted records fail closed into the app
 - Android service stop/start commands carry a monotonic ownership generation;
@@ -163,6 +205,16 @@ Current blocking dependency:
 - the shared shell now refreshes Android runtime truth again on foreground resume, and keeps polling a host-owned pending-connect signal through Android notification/VPN consent even when no lifecycle resume reaches Flutter; the host bridge reconciles a live TUN back to `running` and demotes a stale `running` snapshot when the app-owned TUN is absent, so a relaunch or interrupted service cannot leave the button lane falsely connected
 - the shared shell now treats `Connect with sing-box` as a one-tap lane on supported hosts: it auto-initializes the runtime, syncs a live app-first managed profile from the platform API, stages that profile, and then requests live connect instead of forcing manual `initialize -> stage -> connect`
 - Smart Connect promotes the selected direct outbound inside that authorized profile by canonical `outbound_tag` (with bounded compatibility mapping for older manifests); a second exact managed-profile fetch is a six-second fallback only when local identity cannot be proven, not part of the normal connect path
+- Smart Connect probe concurrency (default three) counts unresolved probes across
+  profile resolutions on the same bootstrapper. A wrapper timeout ends the wait
+  but keeps the slot occupied until the original probe settles; an exhausted
+  pool skips further advisory probes. The default socket probe retains its own
+  timeout. A late result releases capacity without becoming a new RTT sample
+- Android and Windows VPN selector/urltest chains exclude the direct outbound in
+  every routing mode, including server-materialized Windows profiles. Nested
+  chains retain only paths to managed transport outbounds or AWG endpoints;
+  their default cannot select direct. Explicit direct route/DNS rules, LAN
+  preferences and platform per-app exclusions remain separate route decisions
 - an explicit manual location variant is materialized from the exact managed
   profile only: `direct` requires the verified canonical base outbound to be a
   member of the final selector, while a bridge id requires one unique safe
@@ -203,7 +255,7 @@ Current blocking dependency:
   `ru`, and `ru_spb` for eligible non-US nodes and direct-only for `us`.
   Exact public-app visibility, selection, reconnect, and materialized runtime
   proof remain `MANUAL_OWNER_TEST` until the owner's phone is ADB-visible
-- a confirmed selected-outbound egress failure in automatic mode quarantines the exact node for 15 minutes with an eight-node cap and at most two failover attempts; manual mode and unavailable probe evidence remain fail-closed without silent route changes
+- a confirmed selected-outbound egress failure in automatic mode quarantines the exact node for 15 minutes with an eight-node cap and at most two failover attempts; manual mode and unavailable probe evidence remain fail-closed without silent route changes; retry delays use 250/500 ms backoff plus 0–250 ms jitter, and the existing owner-generation check cancels stale retries
 - Android reconnect now always resyncs and restages the live managed profile before start, which keeps the staged runtime config aligned with the currently selected route mode instead of trusting whatever was left from an older session
 - the shared shell now keeps Android connect/disconnect transitions busy until the host actually settles, which prevents repeated taps from queueing duplicate service start or stop requests while VPN permission or teardown is still underway
 - when the Android host tears down immediately after a failed start, runtime snapshot state now keeps the concrete startup failure instead of replacing it with a generic stop message
@@ -228,6 +280,17 @@ Current blocking dependency:
   this lane
 - before securing the desktop config, the Windows runtime verifies every loopback-only helper port for both TCP and UDP. A collision with Hiddify or another local proxy is remapped to an OS-selected free loopback port; external listeners and profile routing are not changed
 - generated Windows VPN profiles follow the proven POKROV Core/Hiddify system-TUN shape: `address`, `stack: system` by default, `strict_route`, a first-match `port: 53 -> hijack-dns` rule before LAN/direct or user routing, route-level `sniff`, typed TCP/UDP DNS servers, and no legacy `dns-out` or TUN-level sniff/NAT fields. The final preference pass reasserts that protected rule prefix after every other transform. The explicit port match is required by the shipped Core generation because Windows sends resolver packets to a private LAN DNS address before protocol sniffing has classified them. `Full tunnel` removes inherited Internet bypass rules while retaining local/private LAN access; selected and excluded process modes use opposite route and DNS decisions as their labels promise
+- server-materialized Windows profiles also apply the current routing mode and
+  process selection: stale process routes and DNS server choices are replaced,
+  Full tunnel removes inherited Internet bypasses, and All except RU applies
+  the local RU catalog. Profiles without a safe VPN path are rejected before
+  staging. A missing direct outbound is added for explicit direct decisions.
+  Existing inbounds and unrelated profile options remain; configured DNS
+  server protocol, address, TLS and transport options are retained in the
+  direct/VPN resolver lanes. With no configured network resolver, defaults
+  remain TCP/UDP `1.1.1.1`. Direct resolver copies use local bootstrap instead
+  of a self-reference to a generated resolver lane. DNS non-routing actions
+  are preserved; user routing preferences apply afterward
 - Windows VPN verification is service-owned. After Core starts, WinHTTP uses
   proxy bypass to request the owned HTTPS marker at
   `https://api.pokrov.space/api/public/authenticated-egress-probe`. Windows gets
@@ -317,6 +380,13 @@ convergence is proved; candidate, signing and platform-runtime gates remain.
   route-policy sync or profile fetch. Android receives the staged route-mode
   attestation separately and rejects an empty selected-app allow-list instead
   of interpreting it as a device-wide tunnel.
+- Windows selected/excluded modes additionally require a non-empty set after
+  process-name normalization. A selection containing only rejected identifiers
+  fails before bootstrap state, API access or native staging begins.
+- In Windows selected-app mode the final route is direct while the selected
+  process rule may target an AWG endpoint. Client routing preferences resolve
+  that referenced endpoint for VPN/DNS additions without changing the direct
+  final or selecting an unused endpoint.
 - Android `excludedApps` also requires a non-empty selection. Materialization
   keeps the app itself and every selected package outside `VpnService`, then
   routes all remaining packages through the managed profile; the server still
@@ -326,6 +396,17 @@ convergence is proved; candidate, signing and platform-runtime gates remain.
 Exact artifacts and platform gates are owned by
 `config/runtime-artifacts.seed.json` and
 `docs/decisions/2026-07-23-pokrov-core-1.0.0-activation.md`.
+
+The runtime artifact manifest also binds the shared native Go notice asset to
+the Core source commit, Go toolchain and notice SHA-256. The app-shell asset
+declaration includes it in Android and Windows packages. Seed validation rejects
+a missing asset, hash mismatch, source/toolchain mismatch or missing declaration.
+The asset includes root notices, selected source-package ancestor notices and
+full license comment blocks found in a bounded scan of selected source files.
+It also carries the separate prebuilt license for Wintun 0.14.1, whose exact
+amd64 DLL bytes are embedded in the bound Windows Core through sing-tun.
+This notice binding does not establish complete dependency licensing or
+corresponding-source delivery; remaining gaps stay explicit in release readiness.
 
 ## Update Handoff Boundary
 
@@ -389,3 +470,130 @@ The Apple placeholder inputs that now shape later operator work live in:
 That keeps local bootstrap work separate from public release authority. The
 active client lane remains `POKROV-app/main`; historical Karing and clean-room
 inputs cannot reopen it without a new owner decision.
+
+## R12 Windows profile content identity — local implementation
+
+Windows staging and connect use the negotiated profile-identity contract in
+[platform privilege and runtime](platform-privilege-runtime-contract.md).
+The service acknowledges the exact stage-request SHA-256 and accepts connect
+only for that digest. Staged and effective identity are distinct; effective is
+set only after proof and commit. The native UI binds subsequent polls to its
+own intent and presents an explicit profile-not-applied recovery on mismatch.
+This closes the local stage/start identity gap; server desired/fetched revision,
+Android identity and exact packaged AWG transitions remain separate N01 proof.
+
+### Android profile replacement identity
+
+Android stages private config with a persisted content/options SHA-256. Normal,
+permission-delayed and Quick Settings starts carry that digest; before replacing
+a live session, the service verifies it against metadata and config bytes.
+A same-path replacement rejects the stale intent with `profile_identity_mismatch`.
+Only the active matching input can receive egress proof. Missing legacy digest
+requires a new app-managed fetch/stage before Quick Settings can connect.
+The host digest is local identity and does not manufacture server revision truth.
+
+### Fetched revision to service identity
+
+`ManagedProfilePayload.source` carries the exact managed-manifest revision and
+`managedManifest` origin; validated emergency material uses
+`signedEmergencyEnvelope`. Routing/materialization copies retain that upstream
+source. The runtime stores the most recently supplied fetched source separately
+from the source of the acknowledged stage digest. Its snapshot exposes
+`fetchedProfileSource`, `stagedProfileSource` and `effectiveProfileSource`.
+The last field requires running state, successful egress and the same effective,
+staged and acknowledged digest. A failed stage can leave fetched B with staged
+and effective A; a delayed A proof cannot confirm B. Unknown identity stays null.
+
+This association is process-local and never reconstructed from a filename, hash,
+local counter or stale session JSON. After process restart the app fetches/stages
+again to restore source lineage; Quick Settings can prove only its persisted
+local digest. The managed-manifest response describes desired server assignment
+at fetch time, not a promise that the server has not changed it since. Offline
+fallback retains its original source and the existing entitlement restrictions.
+
+### Managed profile lifecycle owner
+
+`src/shell/managed_profile_lifecycle.dart` owns profile-input dirtiness and the
+local revision, host invalidation queue, timeout generation and disposal. Shell
+composition supplies the existing host call and snapshot callback. Bursts are
+coalesced into the latest requested revision; connect waits for completed host
+invalidation. Timeout/disposal settle the waiter without allowing a late host
+acknowledgement to update the shell. This refactor does not change server source
+revision, fallback authority or the connection transaction. The module is an
+ordinary import and adds no shell `part`.
+
+`managed_profile_lifecycle_test.dart` exercises coalescing, timeout/disposal and
+non-Android revision tracking independently. Existing seed-app widget tests
+continue to exercise the connection/Quick Settings integration.
+
+Normal connect and explicit protection repair both wait for the pending host
+profile invalidation before staging a replacement. An invalidation timeout
+ends the operation without stage/connect, even if the host responds later.
+Repair also captures the local input revision and checks it after the stage
+acknowledgement: if the user closes the repair sheet and changes routing while
+staging is pending, the old profile stays dirty and cannot start. The user
+retries with the current settings. Host content-digest checks remain separate
+from this local intent fence.
+
+### Runtime failure observations
+
+Native failure categories pass through an exact allowlist before reaching public
+messages. Offline state, unresolved network interface, DNS failure, refused
+endpoint, transport timeout and handshake failure retain distinct observations.
+Unknown `dns_`, `default_network_`, `vless_` or `reality_` prefixes do not establish
+a cause and become generic runtime failure. A timeout alone does not identify
+UDP blocking, DPI, MTU, ASN policy or a whitelist. Request-scoped protocol log
+categories remain diagnostic context and cannot change runtime health.
+
+The diagnostics presenter preserves an explicit failure code before checking
+incomplete DNS/egress proofs. Failed Core startup, unavailable verifier or absent
+network must not become a DNS fault merely because no proof was completed.
+Without an explicit failure, existing proof-gap presentation remains available.
+These mappings grant no route change or retry permission.
+
+The shared catalog distinguishes pending profile provisioning (`API-011`),
+unresolved interface (`ROUTE-005`) and an unspecified runtime failure (`CORE-009`).
+Subscription refresh failure keeps its API/auth observation rather than claiming
+that access is absent. Native event consumers retain typed DNS, UDP, TLS timeout
+and response-stall codes from Core, including in the support timeline. Their
+presence is diagnostic evidence and does not authorize automatic fallback.
+
+### Ordinary cache outage boundary
+
+The owner's 2026-09-07 restricted-network decision permits normal connection
+when the API is unreachable but a VPN endpoint from the last downloaded profile
+is still reachable. `ManagedProfileCache` stores two records in platform secure
+storage: downloaded and last proven. They bind account, install, platform,
+route mode, selected apps and preferred node/variant. They preserve the original
+server-observation time and expire 24 hours after that observation. Future
+timestamps are unavailable. Offline reads, repeated failures and host restaging
+never extend that window. A cache transaction ID fences delayed proof from
+promoting a different download; it is not a server revision or egress proof.
+
+The app tries refresh on ordinary connect/reconnect, allowing at most three
+seconds when a matching cached profile exists. Timeout or transient
+408/429/502/503/504/no-status failure may restore that protected record through
+the regular host staging transaction, including after app/process restart.
+The cache is checked again after refresh failure for expiry or intervening
+authorization denial. Offline preparation performs no WARP-status API call.
+Known 401/403 denial and a successful subscription response with lane
+`expiredOrBlocked` clear the protected cache. The subscription denial also
+blocks cached reconnect and stops a running tunnel through normal disconnect;
+if a native action is in flight, disconnect follows its completion. A transient
+managed-profile failure cannot override that known denial. Missing credentials
+or an account/input mismatch makes the cache unavailable. A dataplane failure
+alone prefers the proven slot on the next manual retry and does not erase either record.
+
+Hosts/bootstrap fixtures without the protected-cache capability retain the
+legacy staged-file fallback with a 0–24-hour modification-age check. The real
+app bootstrapper uses the protected records rather than resetting freshness
+from a newly materialized file. Every restored profile retains its original
+server revision, and every new tunnel still requires its normal route/egress
+checks. An offline attempt never implies that a new server assignment applied.
+
+This owner-approved grace is not a signed offline entitlement lease. The client
+cannot learn a new remote revocation during a complete control-plane outage;
+server-side credential enforcement remains authoritative. The separate signed
+emergency bundle has its own account/catalog/eligibility expiry checks. Neither
+path creates a new trial or subscription. Exact outage/revocation behavior still needs the
+candidate and owned server scenario; a local cache test does not prove it.

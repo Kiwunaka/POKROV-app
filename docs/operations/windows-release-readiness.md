@@ -1,6 +1,209 @@
 # Windows Release Readiness
 
-Last updated: 2026-09-04
+Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
+lab entries below do not replace its packaged bytes or release decision.
+
+R12 revocation fixture (2026-09-08): [initial availability receipt](evidence/2026-09-08-r12-revocation-availability/README.md)
+preserves the failed installation attempt in a separate standard-user clone.
+Automatic UAC password input was rejected; setup exited 2, actual revocation
+was NOT_RUN. All 304 expected installed files and old user data were preserved.
+The clone reports Enterprise Evaluation LicenseStatus 5 / grace 0. The owner
+subsequently agreed to enter UAC credentials manually; the retry is pending,
+and the initial receipt remains historical rather than proof of acceptance.
+
+R12 explicit access denial (2026-09-08): [fixed Windows acceptance](evidence/2026-09-08-r12-access-denial/README.md)
+replaces the affected behavior in the earlier integrated package. Client
+`f479fd4` stops the cached tunnel and clears protected cache on the explicit
+`expiredOrBlocked` subscription result, including denial during native connect.
+Installed 304-file identity, automatic disconnect and offline refusal after UI
+restart passed in Win11. Controlled 24-hour expiry passed only on the earlier
+package. Actual session revocation, new Android bytes, fixed-package expiry and
+full N02/N07 remain open. VM off/NIC none; no backend mutation or release.
+
+R12 integrated connected update (2026-09-08): [current package evidence](evidence/2026-09-08-r12-integrated-windows-update/README.md)
+passes first-attempt update from retained `e88dff9` to `3784352` while the UI,
+service and TUN are running. All 305 files match before/after; saved session and
+experience bytes survive setup, routes/DNS restore, and the new UI reconnects
+and disconnects. No new Defender 1116/1117 events; prior AV issue stays open.
+Exact backend configuration restored after the entitlement selector refused
+rollback; no account/material changes. VM off/NIC none, host network unchanged.
+External egress hash was unchanged: this gives no new leak/protocol-route proof.
+Win10, sleep (unsupported by VM), full W03 and final-channel gates remain open.
+
+R12 routing (2026-09-08): [installed route proof and AWG fix](evidence/2026-09-08-r12-windows-route-proof/README.md)
+binds client `3784352` / Core `02a091c` to 305 installed hashes. Selected
+PowerShell now connects with AWG3.1; independent counters distinguish its TUN
+path from unselected curl's physical path under the same profile. Full tunnel
+and Russia-direct mode send the owned non-RU target through TUN. Seven bounded
+samples and cleanup pass. The first automated install failed with a Defender
+behavior detection; ordinary interactive installation succeeded with protection
+enabled. Automated-install AV compatibility, full N03/N08, Win10 and final
+channel remain open; earlier source evidence below retains its own identity.
+
+R12 control-plane outage (2026-09-08): [installed Win11 evidence](evidence/2026-09-08-r12-windows-api-outage/README.md)
+for unchanged `e88dff9` / Core `02a091c`: established AWG3.1 survives 61 seconds
+of blocked client web/API traffic; cached reconnect and UI-restart reconnect
+reach fresh runtime proof. Original cache timestamp/binding/payload do not renew;
+online refresh later creates a fresh observation. Four disconnects restore
+routes/DNS; 488 firewall rules and 305 installed files match. Fixtures removed,
+backend restored, VM off/NIC none, host network unchanged. Actual 24-hour expiry,
+explicit denial/revocation, Win10 and complete N02/N07/final channel remain open.
+
+R12 firewall/local application (2026-09-08): [installed Win11 evidence](evidence/2026-09-08-r12-firewall-coexistence/README.md)
+for unchanged `e88dff9` / Core `02a091c`: before AWG3.1, while connected and after
+disconnect, a narrow foreign firewall block denies the test HTTPS request and
+disabling it restores 200; ordinary-user loopback HTTP remains reachable.
+488 preexisting rules and selected filters, route/DNS restoration and 305 files
+PASS_BOUNDED. Exact fixtures removed, backend restored, VM off/NIC none and host
+network unchanged. Other VPN/native WFP, LAN/IPv6, Win10 and full W06 remain open.
+
+R12 Windows 10 access (2026-09-08): [new owned lab](evidence/2026-09-08-r12-win10-access/README.md)
+installed official hash-verified LTSC 2021 Evaluation, but both normal activation
+attempts returned `0x87E10BC6`, LicenseStatus 5 / grace 0. This is
+`BLOCKED_BY_ACCESS: WINDOWS10_EVALUATION_NOT_LICENSED`; POKROV installation and
+runtime acceptance are NOT_RUN. VM off/NIC none, host routes/DNS unchanged.
+Existing licensed Win10 access is pending; full Windows gates remain open.
+
+R12 useful startup (2026-09-08): [new semantic evidence](evidence/2026-09-08-r12-windows-startup/README.md)
+for installed `e88dff9` separates warm OS/file-cache launches (p95 765.5534 ms)
+from first UI processes after 23 guest power-on/login cycles (3 discarded,
+20 retained; p95 2311.4823 ms). Both pass the 3500 ms stop; the post-boot
+2000 ms target is unmet. Enabled visible Protection controls are verified
+through MSAA, with no onboarding; the status button was exercised separately.
+305 installed hashes match, VM off/NIC none and host network unchanged.
+Physical cold-cache/comparable hardware, Win10, other runtime states and full
+W05/final-channel acceptance remain open. Earlier reports below retain their
+dated boundaries, including the withdrawn Pane-only candidate.33 credit.
+
+R12 performance follow-up (2026-09-08): [idle CPU and memory evidence](evidence/2026-09-08-r12-windows-idle/README.md)
+binds local client `e88dff9` / Core `02a091c` to 305 installed hashes. The same
+offline Windows 11 VM measured combined CPU p95 `0.749983%` against 1% after
+the unchanged-status notification fix (before `1.498296%`, FAIL). Comparable
+memory growth is `2.570452%`, PASS against 10%. Useful cold start, Windows 10,
+physical hardware and the complete W05 matrix remain open; this is no final
+release acceptance. The historical candidate.33 Pane-only startup measurement
+does not establish useful Protection readiness.
+
+R12 service crash (2026-09-08): [installed failure and correction](evidence/2026-09-08-r12-service-crash/README.md)
+bind client `68a44e5` / Core `02a091c` to the fixed UI. SCM recovery had left the
+previous UI falsely Connected. Local status observation now clears that claim;
+the same UI process reconnects after forced service termination. First clean
+SCM sample was 15,588 ms; route/DNS restoration, saved-state continuity and all
+305 installed hashes PASS. Test configuration restored, VM off/NIC none and
+host network unchanged. W02 sleep/handoff, Win10 and final-channel gates OPEN.
+
+R12 new A03 Core package (2026-09-08): [installed Windows evidence](evidence/2026-09-08-r12-awg-crossfield-windows/README.md)
+binds client `295ceac` / Core `02a091c` to an actual 305-file upgrade and ordinary
+AWG3.1 → AWG2 → AWG3.1 reconnects. Three disconnects restore exact route/DNS
+hashes; package files remain unchanged. Original rollout restored, clone off
+with NIC none, host network unchanged. This supersedes the earlier absence of
+installed Windows proof for these bytes within this bounded scenario only.
+Independent route, effective location, new Android bytes and full release gates
+remain open.
+
+R12 connected recovery (2026-09-08): [installed Win11 evidence](evidence/2026-09-08-r12-connected-recovery/README.md)
+confirms forced UI termination preserves the running AWG31 service/TUN and
+relaunch observes it. Graceful connected reboot returns to safe disconnected
+state with exact route/DNS baseline, automatic LocalSystem service and all
+305 package hashes unchanged. Original rollout configuration restored; clone
+off/NIC none; host route/DNS hashes unchanged. Service-process crash, sleep,
+post-reboot reconnect, WFP, IPv6, Win10 and final-channel acceptance remain open.
+
+R12 managed switching (2026-09-08): [installed Win11 evidence](evidence/2026-09-08-r12-managed-switching/README.md)
+confirms ordinary UI AWG3.1 → AWG2 → AWG3.1 reconnect, protected service-file
+changes and exact return hash, with three running/identity observations and
+route/DNS recovery after every disconnect. All 305 installed hashes match.
+Independent route proof remains open: unchanged external IP and an unverified
+DE SSH host-key change prevented server counter correlation. The original
+cohort is restored; VM is off with NIC disabled. Full N01/N03/W01, effective
+location presentation, crash/sleep/WFP, Win10 and final candidate remain open.
+
+R12 upgrade and installed cancellation (2026-09-08): [source-bound lab evidence](evidence/2026-09-08-r12-upgrade-managed/README.md)
+closes the reproduced Restart Manager shutdown failure and exact obsolete-test
+cleanup. Repeated Win11 upgrade, 305 package hashes, unchanged saved state and
+ordinary-account IPC PASS. Installed AWG31 service proof was observed; disconnect
+and cancellation restore guest route/DNS hashes, with cancellation returning in
+2110 ms. Identical external IP hashes limit independent route proof. The temporary
+server cohort is fully restored, host routes/DNS unchanged, and the disposable
+VM powered off with NIC disabled. Full switching, blocking-call cancellation,
+sleep/crash/connected update, WFP, Win10 and final candidate remain OPEN.
+
+R12 IPC cancellation (2026-09-08): concurrent status/cancel, serialized runtime
+mutations, cancellable WinHTTP and a worker for UI service calls now have
+[source-bound component proof](evidence/2026-09-08-r12-ipc-cancellation/README.md).
+Native 12/12, Windows Flutter 24 and runtime Flutter 80 PASS (one exact-DLL
+case SKIPPED). Offline Win11 fixtures passed, with an integration recheck after
+supplying an omitted test EXE; installed 305 hashes stayed unchanged. Matching
+UI/service packaging, blocking Core cancellation, live TUN, WFP coexistence,
+Win10 and final candidate gates remain OPEN. Earlier entries below are dated
+snapshots; their cancellation gaps are advanced only within this fixture scope.
+
+R12 connect interruption (2026-09-08): a deadline or SCM stop observed between
+connection stages now rolls back before publishing protection. Six local
+fault scenarios cover pre-mutation, late Core/probe completion, journal commit
+and failed rollback; [source-bound evidence](evidence/2026-09-08-r12-connect-interruption/README.md)
+retains the failed regression and passing native/runtime suites. This is local
+source proof. Blocking-call interruption, correlated IPC cancellation,
+concurrent mutations and installed managed-network acceptance remain OPEN.
+
+R12 IPC timeout (2026-09-08): fixed stalled sessions blocking the sole pipe
+and an unread reply blocking SCM stop. [Native and installed red/green proof](evidence/2026-09-08-r12-ipc-timeout/README.md)
+shows another client admitted after 3.0–3.05 seconds and SCM stop in 10 ms.
+The VM experiment replaced only the service EXE, then restored all 305 original
+package hashes. Correlated Core/network cancellation, concurrent mutations,
+WFP coexistence, connected recovery, Win10 and final-channel gates remain OPEN.
+
+R12 installed IPC (2026-09-07): the standard-account lifecycle package passes
+eight ordinary-owner protocol cases and denies a filtered non-owner token.
+[Actual service evidence](evidence/2026-09-07-r12-installed-ipc/README.md)
+binds every pipe connection to SCM PID, replay/session/deadline/frame rejection,
+and 305 unchanged installed files. W06 cancellation/concurrent mutations,
+WFP coexistence, managed network, Win10 and final channel remain OPEN.
+
+R12 installer (2026-09-07): fixed clean installation when UAC elevates a
+separate ordinary account through another administrator. Owner SID capture now
+uses the original process's tagged exit codes instead of an elevated temporary
+file. [Exact red/green package proof](evidence/2026-09-07-r12-standard-installer/README.md)
+passes clean install, all 305 file hashes, standard-account stock UI/IPC,
+uninstall, reinstall and automatic SCM start before login after a planned
+reboot. These unsigned loopback-API packages do not close managed-network,
+connected update/recovery, Win10 or final-channel gates.
+
+R12 SCM lab (2026-09-07): current service and Core `8dc57a8` pass real
+LocalSystem start, limited-token owner IPC, explicit Core initialization and
+clean stop on the offline Win11 clone. [Exact component evidence](evidence/2026-09-07-r12-scm-lab/README.md)
+retains the rejected fixture attempts and schema-aware lifecycle results. The
+filtered token belongs to the existing administrator account; full non-admin
+UI/installer, TUN/network, Win10 and final-channel acceptance remain open.
+
+R12 Windows shell (2026-09-07): `0f115d0` fixes repeated hidden startup and
+`98c39d6` fixes native teardown re-entry. The offline Win11 clone passes the
+six activation/visibility scenarios and exits cleanly through both message-loop
+termination and the real tray Exit item. [Current bounded evidence](evidence/2026-09-07-r12-w04-shell/README.md)
+binds exact local bytes and retained red/green results. SCM, installer, login
+boot, managed-network and final-channel acceptance remain open; retained
+`pokrov-1.2.0-candidate.33` is unchanged.
+
+R12 Win11 component lab (2026-09-06): seven Release native test executables pass
+on the offline linked clone `d5ae2f7a-96c3-48b5-a2ba-5e009948ee27`, Windows
+`10.0.26200`, client `ded58b1`, Core `94dd310`.
+[Guest evidence](evidence/2026-09-06-r12-win11-component-lab/evidence.json)
+retains binary/source/log hashes and the rejected first collector run. Runtime
+Core/egress/network backends are fixtures; no service, UI, installer or TUN
+acceptance is claimed. A clone-pinned SCM start/status/stop script is prepared
+for manual UAC execution at that historical cutoff; the newer SCM evidence
+above executes the current component scenario.
+Retained candidate `pokrov-1.2.0-candidate.33` and its release gate are unchanged.
+
+R12 local staging correction (2026-09-05): the service now secures the pending
+profile before atomic replacement. A `SecureFile` failure retains the previously
+acknowledged profile bytes and reports `profile_security_failed`; the caller does
+not receive a successful stage acknowledgement. The native runtime regression
+first reproduced loss of the old file, then passed after the fix. This source
+test does not establish packaged install, durable profile rollback, service
+effective revision or clean-VM TUN proof for a new candidate.
+
+Last updated: 2026-09-06
 
 ## Document Status
 
@@ -10,6 +213,104 @@ This file contains the current Windows gate for the `1.2.0` working target.
 Older unsigned packages and pre-service behavior are retained as evidence.
 
 ## Current Truth
+
+The local C05 runtime binding uses Core
+`8dc57a830bd1487389dd1b7c9190f094c31e13bc`, Go 1.26.8 / x/crypto 0.56.0 and the
+Psiphon TLS layout correction, retaining managed native log filtering.
+[Two-build evidence](evidence/2026-09-06-r12-c05-core-binding/windows-evidence.json)
+pins the DLL; [client backtests](evidence/2026-09-06-r12-c05-core-binding/client-backtests.json)
+retain 100 proxy-only start/stop cycles on the synchronized DLL.
+The smoke helper isolates and retains each run's runtime database. The
+[previous D05 binding](evidence/2026-09-06-r12-c05-core-binding/previous-runtime-binding.json)
+and its [older evidence](evidence/2026-09-06-r12-d05-core-binding/windows-evidence.json)
+remain rollback/history. An earlier D05 run against reused test storage timed
+out with database `file missing` errors; that receipt remains retained.
+This binding alone does not establish Windows service, TUN or DNS proof. The
+2026-09-06 component lab used D05 bytes; the 2026-09-07 SCM evidence above uses
+C05 bytes for the bounded service/Core initialization slice.
+
+The local C05 package audit retains an unsigned release-mode Flutter bundle
+with a loopback API endpoint. Golos Text `OFL.txt` is included as a package asset.
+The activation protocol test now builds under `build/windows/x64/tests/`
+instead of the runner output copied by the release packager. Its CTest entry
+remains active; the retained bundle contains no test EXE. The
+[package audit receipt](evidence/2026-09-06-r12-c05-package-audit/package-audit.json)
+binds these checks. This direct Flutter bundle is not an installer or clean-host
+acceptance and does not stage the VC runtime handled by the release builder.
+The pinned external Cronet DLL and the current Go module's DLL both report
+`143.0.7499.109` but have different hashes. The module SBOM cannot establish
+the pinned DLL's source/notice provenance. The subsequent
+[Cronet origin receipt](evidence/2026-09-06-r12-c05-cronet-origin/provenance.json)
+proves byte-for-byte identity with the upstream `143.0.7499.109-2` Windows
+asset, tag commit `82e1521` and declared native gitlink `2be061b6`. The source
+archive matches 30,561 Git blobs directly and 30 after CRLF normalization;
+no unexplained mismatch remains. A separate 69-file source license review
+archive contains all explicitly declared license files from 36 metadata files.
+This is source inventory, not the exact Windows linked notice set. Native
+source-to-binary reproducibility and installed runtime/privacy evidence remain
+open. The subsequent [native notice receipt](evidence/2026-09-06-r12-c05-cronet-notices/native-notices.json)
+retains a successful local Windows GN graph (558 recursive dependencies),
+recovered Perfetto/Protobuf/compiler-rt license texts and 28 notice sections.
+CMake now requires `libcronet.NOTICES.txt` beside the DLL, and seed validation
+checks its SHA-256. An isolated 301-file bundle contains the exact notice; its
+other 300 files match the preserved C05 package baseline. This covers identified
+Cronet native OSS notices; other Core/Android/Flutter/Microsoft notice coverage
+and the complete C05 gate remain open.
+
+The subsequent [Go native notice receipt](evidence/2026-09-06-r12-c05-go-notices/package-notices.json)
+verifies the shared `native-go-NOTICES.txt` asset in a new 302-file local bundle.
+It preserves 145 license/patent texts and binds their hash to the current Core
+source and Go toolchain. Compared with the retained 301-file Cronet-notice
+bundle, only `AssetManifest.bin` changed and the Go notice was added; the other
+300 files match exactly. The earlier Flutter build failed at installation due
+to a stale, incorrectly restored CMake cache prefix; a fresh isolated prefix
+passed. The cache now uses the normal runner output directory. Psiphon utls,
+nested/native notice coverage, corresponding source, signing, installer and
+installed privacy/runtime gates remain open.
+
+The [nested notice follow-up](evidence/2026-09-06-r12-c05-nested-notices/package-notices.json)
+adds 28 source-package license/patent texts to the shared asset (173 verbatim
+texts in total). Selection follows package and embedded-file ancestors using
+the bound AAR/DLL build settings; all 128 recorded Go modules are represented.
+This includes distinct freelru, dicttls and Psiphon notices without treating
+package membership as proof that optional native code was linked. The exact
+Psiphon utls upstream tree confirms the missing root license; its scoped
+dicttls text does not close that gap. Other native/file-header obligations,
+corresponding-source delivery and the complete C05 gate remain open.
+
+The [file-header supplement](evidence/2026-09-06-r12-c05-file-headers/package-notices.json)
+adds 12 original license comment blocks to the common asset (185 verbatim
+texts). The new local Windows bundle verifies every body hash; only that asset
+differs from the preceding 302-file bundle, while 301 files remain identical.
+Both application and service executables remain unsigned. The bounded source
+scan covers full permission/redistribution blocks in the first 160 lines of
+6751 hash-verified selected files; it is not complete native/include, licensing,
+source-delivery or installed-runtime proof. The original CMake install prefix
+is restored, and the four preexisting generated registrants remain unchanged.
+
+The [Flutter/native follow-up](evidence/2026-09-06-r12-c05-flutter-native/package-notices.json)
+reconstructs all 1624 packaged Flutter notice bodies and matches the engine DLL
+and sky_engine license to official archives for engine `1527ae0ec577a4ef50e65f6fefcfc1326707d9bf`.
+All 49 inspected Windows plugin files/root licenses match six locked pub.dev
+archives; their license bodies are included in Flutter notices. This establishes
+input and package identity, not native source-to-binary reproducibility.
+
+The exact signed Wintun 0.14.1 amd64 DLL is embedded in the Windows Core. Its
+separate prebuilt terms are now included verbatim in the shared asset (186 texts).
+A schema-validated native CycloneDX supplement records twelve components,
+including Wintun and its Core parent; it is not the complete application SBOM.
+The wrapper resolves thirteen names corresponding to official header typedefs
+and uses a memory loader. API-use and redistribution compatibility remain a
+separate review; the source GPL and wrapper MIT do not replace the binary terms.
+The new bundle changes only notices; 301 other files match the preceding bundle.
+Root utls licensing, other native/Maven obligations, corresponding source and
+installed privacy/final candidate acceptance remain open.
+
+The R12 source branch refreshes managed profiles on ordinary Windows reconnect
+and requires explicit staging acknowledgement before connect. Local shell and
+runtime regression tests do not prove service-effective revision or a packaged
+AWG3.1→AWG2→AWG3.1 cycle. A new exact candidate and isolated VM readback remain
+pending; the retained candidate.33 evidence below is unchanged.
 
 | Fact | Current state |
 |---|---|
@@ -1037,3 +1338,17 @@ build.
 Prior Windows packages, hashes and pre-service notes are preserved as
 [2026-08-21-windows-release-readiness-snapshot.md](history/2026-08-21-windows-release-readiness-snapshot.md).
 They cannot approve `1.2.0`.
+
+### R12 local service profile identity, 2026-09-05
+
+The local source requires matching ProfileIdentity-capable UI and service.
+Connect is bound to the SHA-256 of the stage request, including flags and bundled
+rulesets. A stale intent is rejected before start; stop clears effective proof.
+Native tests cover digest mismatch, stage failure, invalidation, strict/atomic
+snapshot parsing and poll projection. The test pipe uses the existing isolated
+`--test-reject-then-serve` process and does not install or replace the host service.
+Logs: `E:/r12-identity-before.log`, `E:/r12-identity-ctest.log`,
+`E:/r12-identity-flutter-test.log`, `E:/r12-identity-windows-debug-final.log`.
+The debug UI build is compilation proof only. Installed mixed-version behavior,
+SCM/TUN routing and AWG31→AWG2→AWG31 remain MANUAL_OWNER_TEST on exact candidate
+bytes. Rollback must restore UI and service together; Core ABI remains 2.

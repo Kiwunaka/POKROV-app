@@ -1,0 +1,32 @@
+{
+  "raw_root": "E:/r12-windows-revocation-20260908",
+  "client_source": "f479fd49f7904bda5c916e5f7148675f45105872",
+  "status": "BLOCKED_BY_ACCESS",
+  "actual_revocation": "NOT_RUN",
+  "files": [
+    {
+      "sha256": "e47a0c6473e5dafcde97ba05d3777bd796c54394b837cab236261b800439a3b7",
+      "path": "lab.json"
+    },
+    {
+      "sha256": "2522fe71a988b4669ce6a0b3ade27c3273c89cbd06341b923f9a6ee7f682757f",
+      "path": "return-state.json"
+    },
+    {
+      "sha256": "64ef7690a62ccb880f11a34262324b8e5fc78d53c59066f16389b5aa88cdab35",
+      "path": "final-audit.json"
+    },
+    {
+      "sha256": "9f06762b027f88bcfd5a48f770d998b378f686d73418186f0d561ba5daf4bfbc",
+      "path": "license-observation.json"
+    },
+    {
+      "sha256": "aabc2aeb1442b9d116c3e92b2a6d2a5849225dae7ff4c6e260a80d4fdc6f0a14",
+      "path": "standard-result.json"
+    },
+    {
+      "sha256": "0cc9a0b1be86840b8f9e12a46d70a9f88d783e0643e90b61746f2e707812420b",
+      "path": "account-created.json"
+    }
+  ]
+}

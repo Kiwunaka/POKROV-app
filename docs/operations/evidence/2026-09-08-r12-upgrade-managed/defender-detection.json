@@ -1,0 +1,26 @@
+[
+    {
+        "ThreatID":  2147939480,
+        "ThreatName":  "Behavior:Win32/SuspClickFix.G2",
+        "InitialDetectionTime":  "2026-09-07T22:50:09.7060000Z",
+        "ActionSuccess":  true,
+        "ProcessName":  "C:\\Users\\Public\\R12Managed\\setup.exe",
+        "Resources":  [
+                          "behavior:_process: C:\\Users\\Public\\R12Managed\\setup.exe, pid:7160:94231220206191",
+                          "process:_pid:7160,ProcessStart:134332950093642127"
+                      ],
+        "ThreatStatusID":  4
+    },
+    {
+        "ThreatID":  2147939480,
+        "ThreatName":  "Behavior:Win32/SuspClickFix.G2",
+        "InitialDetectionTime":  "2026-09-07T22:50:10.2460000Z",
+        "ActionSuccess":  true,
+        "ProcessName":  "C:\\Users\\POKROV~1\\AppData\\Local\\Temp\\is-LAXEMXGFOE.tmp\\setup.tmp",
+        "Resources":  [
+                          "behavior:_process: C:\\Users\\pokrovtest\\AppData\\Local\\Temp\\is-LAXEMXGFOE.tmp\\setup.tmp, pid:6744:94231220206191",
+                          "process:_pid:6744,ProcessStart:134332950102305111"
+                      ],
+        "ThreatStatusID":  4
+    }
+]

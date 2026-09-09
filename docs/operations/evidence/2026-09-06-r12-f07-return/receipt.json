@@ -1,0 +1,117 @@
+{
+  "status": "I3_PARTIALLY_FIXED_FULL_F07_OPEN",
+  "baseline_client": "3d212449d947112f89eb7fd30ed0831f2e6c5e24",
+  "core": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "original_shell_git_blob_sha256": "ad7746f659bfef5f6cca1c2ffbf7e8ffd6fe51c799af3efff2b2055bf0f50bdb",
+  "workspace_source_hashes": [
+    {
+      "path": "packages/app_shell/lib/src/shell/seed_shell.dart",
+      "sha256": "c2611dc52c133db8b58034198a011f180e92a21ccef72b7424c3eaca04e24848"
+    },
+    {
+      "path": "packages/app_shell/test/pokrov_seed_app_test.dart",
+      "sha256": "b4a6ac24710bcde0939d11f097d7c45b833b8e2623d67cdfd3096d24604ba2d5"
+    },
+    {
+      "path": "docs/architecture/app-first-onboarding-flow.md",
+      "sha256": "59679bace0342c6c66a664e5702486722d655b4ea180418d57ff4aa5ffa308b4"
+    }
+  ],
+  "checks": [
+    {
+      "log": "E:\\r12-f07-before.log",
+      "sha256": "052ae91ab32c2c50a0651e41181c0d4bd2ad7c35c3e97b74fa382b94383d6203",
+      "exit_code": 1,
+      "result": "fixture attempt, not final oracle"
+    },
+    {
+      "log": "E:\\r12-f07-before-v2.log",
+      "sha256": "78418e254dd2bd4e9e29570a2f328c1370bc44919c74d078ab9dc8b76cb4107c",
+      "exit_code": 1,
+      "result": "fixture attempt, not final oracle"
+    },
+    {
+      "log": "E:\\r12-f07-focused.log",
+      "sha256": "91c1b54930c1ec64f00a43493bd7de4bf54b152917f4b6c8fcdb09b07cbe766e",
+      "exit_code": 1,
+      "result": "fixture attempt with Android tap issue"
+    },
+    {
+      "log": "E:\\r12-f07-before-corrected.log",
+      "sha256": "26d371ffeacc8400b94c4ea2c4c9fb1bd3061a50b8515c7f1681360b30afe1b6",
+      "exit_code": 1,
+      "result": "confirmed original-shell red oracle on both hosts"
+    },
+    {
+      "log": "E:\\r12-f07-focused-v2.log",
+      "sha256": "2fce604e1a4871bda5133c17ca5174e5c774088eab6551ae4fc9f84f8a4491d6",
+      "exit_code": 0,
+      "result": "two corrected cabinet tests"
+    },
+    {
+      "log": "E:\\r12-f07-coalescing.log",
+      "sha256": "b48c17bb65150c071b2a10c17833e8500f9e932cb1087c7156a0d6325243e221",
+      "exit_code": 0,
+      "result": "focused in-flight/offline recovery"
+    },
+    {
+      "log": "E:\\r12-f07-regression.log",
+      "sha256": "a8f2b8c5bf1832973b14d8034badaed4c46c8a02eeff382573e6e47d38434ed0",
+      "exit_code": 0,
+      "result": "192 tests before inbox guard"
+    },
+    {
+      "log": "E:\\r12-f07-welcome.log",
+      "sha256": "907ff8905a875a83080e2351ed42e61a499332021bac8e2beb5248b41f9a54ff",
+      "exit_code": 0,
+      "result": "welcome subscription guard"
+    },
+    {
+      "log": "E:\\r12-f07-analyze.log",
+      "sha256": "dc6eee49b6b0beeccbc222b505e6aa7c144c89dcbe1d3fae5c062779a31061f9",
+      "exit_code": 0,
+      "result": "initial analyze"
+    },
+    {
+      "log": "E:\\r12-f07-welcome-notification-before.log",
+      "sha256": "e3a98f84749e96186d794784c0b06b8aebd4be6b5fdb87bf519512b65c422cb2",
+      "exit_code": 1,
+      "result": "confirmed premature inbox call"
+    },
+    {
+      "log": "E:\\r12-f07-regression-final.log",
+      "sha256": "0c676d37e8a076bb12166903127b620ddbba157cab8348b05633111faf60b3b3",
+      "exit_code": 0,
+      "result": "192 tests final behavioral patch"
+    },
+    {
+      "log": "E:\\r12-f07-analyze-final.log",
+      "sha256": "c9d9f8b86b933b6b7d664cb08c8b1615be94f6cf5389bde776bcb9902b2d9043",
+      "exit_code": 0,
+      "result": "final analyze"
+    },
+    {
+      "log": "E:\\r12-f07-seed.log",
+      "sha256": "0ab494064e7128397efbe6cdbf1606bb499e776faeab1494d0c9af63a0e58f75",
+      "exit_code": 0,
+      "result": "client seed/docs, performance uses fixture"
+    }
+  ],
+  "commands": [
+    "flutter test test/pokrov_seed_app_test.dart --plain-name \"cabinet return refreshes subscription\"",
+    "flutter test test/pokrov_seed_app_test.dart --plain-name \"foreground account refresh coalesces\"",
+    "flutter test test/pokrov_seed_app_test.dart --plain-name \"trial selection provisions account data and reports one journey\"",
+    "flutter test test/pokrov_seed_app_test.dart test/account_session_coordinator_test.dart test/first_session_coordinator_test.dart",
+    "flutter analyze",
+    "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation"
+  ],
+  "archive": {
+    "path": "E:\\r12-f07-return\\f07-evidence.zip",
+    "bytes": 192799,
+    "sha256": "14d4033099b39e8165e5da64bc10c3f56ff18648a06bc2130c6df8d5a19f5f93",
+    "files": 17
+  },
+  "scope": "Synthetic widget/coordinator tests on Windows host, Android/Windows app contexts. No real browser/tray/provider/upgrade or device acceptance.",
+  "generated_registrants": "four previous files byte-identical",
+  "operations": "No build, install, production signing, release artifact changes, new candidate, push, merge, deploy, publish, payment or host VPN execution."
+}

@@ -25,6 +25,7 @@ import io.flutter.plugin.common.MethodChannel
 internal data class PendingRuntimeConnect(
     val id: Long,
     val configPath: String,
+    val profileDigest: String,
 )
 
 /** Owns only consent callbacks; a dispatched service start must release it. */
@@ -33,12 +34,12 @@ internal class PendingRuntimeConnectGate {
     private var current: PendingRuntimeConnect? = null
 
     @Synchronized
-    fun acquire(configPath: String): Pair<PendingRuntimeConnect, Boolean> {
+    fun acquire(configPath: String, profileDigest: String): Pair<PendingRuntimeConnect, Boolean> {
         val existing = current
-        if (existing != null && existing.configPath == configPath) {
+        if (existing != null && existing.configPath == configPath && existing.profileDigest == profileDigest) {
             return existing to false
         }
-        return PendingRuntimeConnect(id = ++nextId, configPath = configPath).also {
+        return PendingRuntimeConnect(id = ++nextId, configPath = configPath, profileDigest = profileDigest).also {
             current = it
         } to true
     }
@@ -105,6 +106,15 @@ class RuntimeHostBridge(
             METHOD_LIST_INSTALLED_APPS -> listInstalledApps(result)
             METHOD_CURRENT_WIFI -> result.success(currentWifi())
             METHOD_MEASURE_NODE_LATENCIES -> measureNodeLatencies(call, result)
+            "runtimeEngine.observeNetworkContext" -> executeHostTask(result, emptyMap<String, Any?>()) {
+                AndroidNetworkDiagnostics.observe(
+                    activity, call.argument<String>("apiBaseUrl").orEmpty(),
+                    call.argument<String>("sessionToken").orEmpty(),
+                    call.argument<String>("appVersion").orEmpty(),
+                    call.argument<String>("profileRevision").orEmpty(),
+                    call.argument<String>("runtimePhase").orEmpty(),
+                )
+            }
             METHOD_MEASURE_LOCATION_VARIANTS -> measureLocationVariants(call, result)
             METHOD_REQUEST_WIFI_PERMISSION ->
                 result.success(requestWifiPermission())
@@ -256,6 +266,7 @@ class RuntimeHostBridge(
                     activity,
                     pending.configPath,
                     profile?.routeMode.orEmpty(),
+                    pending.profileDigest,
                 )
             }.onFailure {
                 AndroidRuntimeState.markFailure(
@@ -431,17 +442,19 @@ class RuntimeHostBridge(
                     "POKROV Core requires a materialized sing-box profile.",
                 )
             }
+            val serviceRouteMode = when (routeMode) {
+                "selectedApps" -> "selected_apps"
+                "excludedApps" -> "excluded_apps"
+                else -> "device"
+            }
+            val profileDigest = runtimeProfileDigest(configPayload, serviceRouteMode, coreEgressProbeRequired)
             writePrivateConfig(finalPath, configPayload)
-            AndroidRuntimeState.markProfileStaged(finalPath.absolutePath)
             AndroidRuntimeProfileStore.save(
                 activity,
                 PersistedRuntimeProfile(
                     configPath = finalPath.absolutePath,
-                    routeMode = when (routeMode) {
-                        "selectedApps" -> "selected_apps"
-                        "excludedApps" -> "excluded_apps"
-                        else -> "device"
-                    },
+                    configDigest = profileDigest,
+                    routeMode = serviceRouteMode,
                     quickSettingsEligible = quickSettingsEligible,
                     coreEgressProbeRequired = coreEgressProbeRequired,
                     displayCountry = displayCountry,
@@ -449,6 +462,7 @@ class RuntimeHostBridge(
                     displayRouteMode = displayRouteMode,
                 ),
             )
+            AndroidRuntimeState.markProfileStaged(finalPath.absolutePath, profileDigest = profileDigest)
             AndroidRuntimeState.snapshot()
         } catch (error: Throwable) {
             AndroidRuntimeState.markFailure(
@@ -489,7 +503,7 @@ class RuntimeHostBridge(
             )
             return AndroidRuntimeState.snapshot()
         }
-        val pending = pendingRequest ?: currentOrBeginPendingConnect(stagedConfigPath)
+        val pending = pendingRequest ?: currentOrBeginPendingConnect(stagedConfigPath, persistedProfile?.configDigest.orEmpty())
         if (!isCurrentPendingConnect(pending)) {
             return AndroidRuntimeState.snapshot()
         }
@@ -554,7 +568,9 @@ class RuntimeHostBridge(
         )
 
         runCatching {
-            PokrovRuntimeVpnService.start(activity, stagedConfigPath, routeMode)
+            PokrovRuntimeVpnService.start(
+                activity, stagedConfigPath, routeMode, pending.profileDigest,
+            )
         }.onFailure {
             AndroidRuntimeState.markFailure(
                 kind = "runtime_start_failed",
@@ -601,13 +617,17 @@ class RuntimeHostBridge(
             )
         }
         return try {
-            writePrivateConfig(File(stagedConfigPath), configPayload)
             val existingProfile = AndroidRuntimeProfileStore.load(activity)
+                ?: error("missing staged profile")
+            val profileDigest = runtimeProfileDigest(
+                configPayload, existingProfile.routeMode, existingProfile.coreEgressProbeRequired,
+            )
+            writePrivateConfig(File(stagedConfigPath), configPayload)
             AndroidRuntimeProfileStore.save(
                 activity,
-                existingProfile?.copy(configPath = stagedConfigPath)
-                    ?: PersistedRuntimeProfile(configPath = stagedConfigPath),
+                existingProfile.copy(configPath = stagedConfigPath, configDigest = profileDigest),
             )
+            AndroidRuntimeState.markProfileStaged(stagedConfigPath, profileDigest = profileDigest)
             mapOf(
                 "applied" to true,
                 "effectiveAt" to "next_connect",
@@ -633,12 +653,8 @@ class RuntimeHostBridge(
         next.setExecutable(false, false)
         check(next.setReadable(true, true)) { "Could not restrict profile read access." }
         check(next.setWritable(true, true)) { "Could not restrict profile write access." }
-        if (target.exists() && !target.delete()) {
-            throw IllegalStateException("Could not replace the staged profile.")
-        }
-        if (!next.renameTo(target)) {
-            throw IllegalStateException("Could not activate the staged profile.")
-        }
+        // POSIX rename replaces atomically; on failure the previous file remains.
+        android.system.Os.rename(next.absolutePath, target.absolutePath)
     }
 
     private fun pushToken(): Map<String, Any?> {
@@ -770,8 +786,8 @@ class RuntimeHostBridge(
         }
     }
 
-    private fun currentOrBeginPendingConnect(configPath: String): PendingRuntimeConnect {
-        val (pending, created) = pendingConnectGate.acquire(configPath)
+    private fun currentOrBeginPendingConnect(configPath: String, profileDigest: String): PendingRuntimeConnect {
+        val (pending, created) = pendingConnectGate.acquire(configPath, profileDigest)
         if (created) {
             synchronized(pendingConnectLock) {
                 notificationPermissionRequest = null

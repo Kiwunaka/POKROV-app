@@ -3,6 +3,11 @@ apps/ios_shell/ios/Frameworks/PokrovCore.xcframework/**/PokrovCore.framework/Ver
 apps/macos_shell/macos/Runner/Frameworks/*.dylib filter=lfs diff=lfs merge=lfs -text
 apps/windows_shell/windows/runner/resources/runtime/*.dll filter=lfs diff=lfs merge=lfs -text
 apps/windows_shell/windows/runner/resources/runtime/*.exe filter=lfs diff=lfs merge=lfs -text
+# Keep the assembled upstream license text byte-stable on Windows checkouts.
+apps/windows_shell/windows/runner/resources/runtime/libcronet.NOTICES.txt -text whitespace=-blank-at-eol,-blank-at-eof
+packages/app_shell/assets/licenses/native-go-NOTICES.txt -text whitespace=-blank-at-eol,-blank-at-eof
+apps/android_shell/assets/licenses/maven-NOTICES.txt -text whitespace=-blank-at-eol,-blank-at-eof
+apps/android_shell/assets/licenses/cronet-NOTICES.txt -text whitespace=-blank-at-eol,-blank-at-eof
 artifacts/releases/**/*.apk filter=lfs diff=lfs merge=lfs -text
 artifacts/releases/**/*.aab filter=lfs diff=lfs merge=lfs -text
 artifacts/releases/**/*.exe filter=lfs diff=lfs merge=lfs -text
@@ -18,3 +23,17 @@ packages/app_shell/test/fixtures/secure-session-v0.txt text eol=lf
 packages/app_shell/test/fixtures/client-experience-v0.json text eol=lf
 packages/app_shell/test/fixtures/routing-preferences-v0.json text eol=lf
 apps/android_shell/android/app/src/test/resources/runtime-profile-v0.properties text eol=lf
+docs/operations/evidence/2026-09-06-r12-c05-core-binding/*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/operations/evidence/2026-09-08-r12-integrated-windows-update/*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/operations/evidence/2026-09-08-r12-integrated-windows-update/capture.ps1 -text
+docs/operations/evidence/2026-09-08-r12-access-denial/**/*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/operations/evidence/2026-09-08-r12-access-denial/*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/operations/evidence/2026-09-08-r12-access-denial/*.txt -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+docs/operations/evidence/2026-09-08-r12-access-denial/fixed/*.ps1 -text
+docs/operations/evidence/2026-09-08-r12-android-access-denial/*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/operations/evidence/2026-09-08-r12-android-access-denial/*.py -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/operations/evidence/2026-09-08-r12-android-access-denial/*.log -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+docs/operations/evidence/2026-09-08-r12-revocation-availability/*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/operations/evidence/2026-09-09-r12-candidate33-retention/*.json -text whitespace=cr-at-eol
+docs/operations/evidence/2026-09-09-r12-candidate33-retention/*.py -text whitespace=cr-at-eol
+docs/operations/evidence/2026-09-09-r12-core-source-binding/*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol

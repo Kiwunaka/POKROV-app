@@ -1,0 +1,303 @@
+00:00 +0: loading E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart
+00:00 +0: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: managed TUN MTU rejects missing malformed and unsafe values
+00:00 +1: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: protected managed cache restores exact profile after restart and respects server denial
+00:00 +2: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: automatic Android network context reports unknown origin through API and throttles duplicates
+00:00 +3: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: default API origin is owned and arbitrary fallbacks are rejected
+00:00 +4: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: API preflight rejects HTML and sends one POST to the healthy fallback
+00:00 +5: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: non-idempotent API request is not replayed after transport failure
+00:00 +6: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: prewarmed emergency bundle connects without any control-plane request
+00:00 +7: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: prewarmed emergency bundle connects without any control-plane request
+00:00 +8: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: prewarmed emergency bundle connects without any control-plane request
+00:00 +9: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: prewarmed emergency bundle connects without any control-plane request
+00:00 +10: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: prewarmed emergency bundle connects without any control-plane request
+00:00 +11: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +12: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +13: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +14: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +15: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +16: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +17: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +18: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +19: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +20: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +21: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +22: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +23: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +24: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +25: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +26: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +27: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +28: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:00 +29: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:01 +30: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:01 +31: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:01 +32: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:01 +33: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:01 +34: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:01 +35: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:01 +36: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:01 +37: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive app mutes animation ticks including modal routes
+00:01 +38: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: uses local selection and promotes the profile when Smart Connect advisory stalls
+00:01 +39: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: uses local selection and promotes the profile when Smart Connect advisory stalls
+00:01 +40: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: uses local selection and promotes the profile when Smart Connect advisory stalls
+00:02 +41: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: uses local selection and promotes the profile when Smart Connect advisory stalls
+00:02 +42: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: uses local selection and promotes the profile when Smart Connect advisory stalls
+00:02 +43: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before connect
+00:02 +44: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: bounds hanging Smart Connect probes by concurrency and deadline
+00:03 +45: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +46: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +47: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +48: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +49: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +50: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +51: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +52: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +53: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +54: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +55: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +56: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +57: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +58: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +59: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +60: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +61: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair
+00:03 +62: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: temporary refresh failure remains manually retryable and retains the session pair
+00:03 +63: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-stale
+00:03 +64: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-stale
+00:03 +65: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-stale
+00:03 +66: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-stale
+00:03 +67: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-stale
+00:03 +68: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-stale
+00:03 +69: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-stale
+00:03 +70: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-stale
+00:03 +71: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-stale
+00:04 +72: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-stale
+00:04 +73: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-stale
+00:04 +74: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-stale
+00:04 +75: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-stale
+00:04 +76: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: android preserves managed routing semantics while removing desktop-only DNS surfaces
+00:04 +77: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +78: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +79: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +80: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +81: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +82: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +83: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +84: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +85: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +86: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +87: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +88: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +89: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +90: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +91: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Quick Settings invalidation coalesces a held burst before repair-timeout
+00:04 +92: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: android allExceptRu removes direct from VPN selector and urltest chains (runtimeReady=false)
+00:04 +93: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: android allExceptRu removes direct from VPN selector and urltest chains (runtimeReady=false)
+00:04 +94: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: android allExceptRu removes direct from VPN selector and urltest chains (runtimeReady=false)
+00:04 +95: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first launch keeps Home visible and offers soft recovery
+00:04 +96: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first launch keeps Home visible and offers soft recovery
+00:05 +97: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first launch keeps Home visible and offers soft recovery
+00:05 +98: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: windows selectedApps removes direct from VPN selector and urltest chains (runtimeReady=false)
+00:05 +99: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: trial selection provisions account data and reports one journey
+00:05 +100: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: trial selection provisions account data and reports one journey
+00:05 +101: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: trial selection provisions account data and reports one journey
+00:05 +102: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: windows excludedApps removes direct from VPN selector and urltest chains (runtimeReady=true)
+00:05 +103: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: completed first launch skips the startup choice screen
+00:05 +104: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: completed first launch skips the startup choice screen
+00:05 +105: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: windows allExceptRu removes direct from VPN selector and urltest chains (runtimeReady=true)
+00:05 +106: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first launch choice uses new and returning access copy
+00:05 +107: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first launch choice uses new and returning access copy
+00:05 +108: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first launch choice uses new and returning access copy
+00:05 +109: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first launch choice uses new and returning access copy
+00:05 +110: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: client support assistant gets one longer request window
+00:05 +111: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first-session actions remain reachable at 200 percent text
+00:05 +112: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first-session actions remain reachable at 200 percent text
+00:05 +113: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first-session actions remain reachable at 200 percent text
+00:05 +114: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first-session actions remain reachable at 200 percent text
+00:05 +115: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first-session actions remain reachable at 200 percent text
+00:05 +116: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first-session actions remain reachable at 200 percent text
+00:05 +117: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first-session actions remain reachable at 200 percent text
+00:05 +118: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: does not treat a missing client resource as session expiry
+00:05 +119: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: restore step focuses the code field and back returns to choice
+00:05 +120: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: restore step focuses the code field and back returns to choice
+00:05 +121: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:06 +122: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:06 +123: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:06 +124: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:06 +125: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:06 +126: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:06 +127: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:06 +128: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:07 +129: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:07 +130: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:07 +131: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:07 +132: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:07 +133: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:07 +134: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:07 +135: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: rejects an oversized JSON response before buffering it
+00:07 +136: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: protection center maps Android runtime failures to safe copy
+00:08 +137: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: protection center maps Android runtime failures to safe copy
+00:08 +138: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: accepts only canonical relative managed manifest paths
+00:08 +139: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: protection repair runs one bounded disconnect stage connect loop
+00:08 +140: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: protection repair runs one bounded disconnect stage connect loop
+00:08 +141: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: protection repair runs one bounded disconnect stage connect loop
+00:08 +142: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: protection repair runs one bounded disconnect stage connect loop
+00:08 +143: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: repair warns before disconnect and exposes three-step progress
+00:08 +144: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: repair profile failure keeps the sheet on the fresh stopped snapshot
+00:08 +145: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile uses grouped MVP account sections
+00:09 +146: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: live paid subscription replaces trial copy across home and profile
+00:09 +147: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: expired subscription replaces seed trial copy across home and profile
+00:09 +148: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Android notification sheet keeps details inside the app
+00:09 +149: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile explains managed free-profile states without premium copy
+00:10 +150: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile theme selector switches light and dark mode
+00:10 +151: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile legal rows open generated platform URLs
+00:10 +152: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile first layer stays compact and hides advanced controls
+00:10 +153: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile redeem uses native app-first endpoint
+00:11 +154: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile gift redeem keeps access-updated confirmation
+00:11 +155: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile redeem keeps the sheet open on empty code
+00:11 +156: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile cabinet opens through short-lived handoff
+00:11 +157: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: cabinet return refreshes subscription on android
+00:11 +158: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: cabinet return refreshes subscription on windows
+00:11 +159: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: foreground account refresh coalesces and recovers after offline
+00:12 +160: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile shows native Telegram identity without another link action
+00:12 +161: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile Telegram bonus works before payment
+00:12 +162: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile verifies Telegram after returning from the bot
+00:12 +163: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile loads compact bonus summary with reward preview
+00:12 +164: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: zero remaining days never resets to the advertised trial duration
+00:12 +165: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: subscription refresh timeout does not claim missing entitlement
+00:13 +166: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: startup orders subscription before bonus summary
+00:13 +167: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: bonus preview keeps wheel and activity calendar non-mutating
+00:13 +168: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile opens rewards hub with wheel and calendar preview
+00:13 +169: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: rewards hub can run live wheel and calendar actions
+00:13 +170: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile rewards hub shows first-party promo slots
+00:14 +171: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile rewards hub opens referral share link
+00:14 +172: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: rewards referral copy confirms in-sheet with icon morph
+00:14 +173: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: rewards referral hides dead actions without a server link
+00:14 +174: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile opens subscription and email recovery sheets
+00:14 +175: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile surfaces devices, notifications and subscription detail
+00:15 +176: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile keeps account and settings actions grouped
+00:15 +177: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: disabled rewards stay hidden instead of dead muted cards
+00:15 +178: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: P4 responsive width matrix keeps the app shell stable
+00:15 +179: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: expanded desktop sidebar animates label width and opacity
+00:15 +180: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: windows shell hides unavailable enhanced protection
+00:15 +181: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: windows profile controls autostart and close behavior
+00:16 +182: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: enhanced protection asks for explicit consent before activation
+00:16 +183: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: home WARP switch changes consent without opening details
+00:16 +184: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: home WARP tile is tappable as a whole and toggles the switch
+00:16 +185: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: failed WARP connect falls back to ordinary VPN and stays visibly enabled
+00:16 +186: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: explicit WARP retry overrides one stale fallback status
+00:16 +187: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: home WARP uses client-local defaults without server material
+00:16 +188: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: revoking WARP consent clears the local enabled state
+00:17 +189: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: narrow windows shell uses a hamburger drawer instead of fixed sidebar
+00:17 +190: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: home uses one compact animated connect control
+00:17 +191: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: preparation screens use geometry-matched motion skeletons
+00:17 +192: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: P5 rewards loading uses geometry-matched skeleton
+00:17 +193: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: P5 support loading uses geometry skeleton instead of spinner
+00:17 +194: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: P5 Windows shortcuts navigate tabs and focus support composer
+00:18 +195: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile handoffs open safe external destinations
+00:18 +196: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: home trial access strip opens the profile
+00:19 +197: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support chat reuses a loaded ticket thread for follow-up replies
+00:19 +198: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support diagnostics actions stay reachable in constrained landscape
+00:19 +199: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: configured support key exposes encrypted offline delivery
+00:19 +200: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support chat keeps optional actions out of the conversation
+00:20 +201: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support history failure exposes one compact retry
+00:20 +202: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support send retry preserves the draft without duplicate bubbles
+00:20 +203: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support AI entry preserves its purpose at 200 percent text
+00:21 +204: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support AI assistant opens an honest mini chat and answers from the knowledge base
+00:21 +205: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support AI diagnostics action reuses the explicit attachment preview
+00:21 +206: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support AI retry keeps one question bubble and returns concrete guidance
+00:21 +207: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support AI composer stays above the Android keyboard
+00:22 +208: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support AI assistant resets a failed continuation and keeps sessions sheet-local
+00:22 +209: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support AI assistant admits a missing answer instead of improvising
+00:22 +210: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support chat polls active ticket and shows operator reply
+00:23 +211: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support polling stops while the app is in background
+00:23 +212: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: support chat shows offline lifecycle hint after poll failure
+00:23 +213: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: rules show selected-apps editor and hide beta prose
+00:23 +214: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: windows rules use region and process copy instead of mobile presets
+00:23 +215: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: advanced routing controls persist real rules, DNS and LAN
+00:24 +216: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: external Smart DNS lab requires custom direct DoH and an eligible purpose
+00:24 +217: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: expert rules use one apply operation and one reconnect
+00:24 +218: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Windows advanced settings retain service VPN and TUN stack
+00:24 +219: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: trusted Wi-Fi detects, stores and enables a real network rule
+00:25 +220: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: trusted Wi-Fi accepts a manual network without framework errors
+00:25 +221: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: trusted Wi-Fi blocks connect before runtime staging
+00:25 +222: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Android rules open the host VPN settings action
+00:25 +223: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: desktop shell controller attaches and detaches with the app
+00:25 +224: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: desktop shell waits for saved route scope before elevated continuation
+00:25 +225: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: rules lets user add a custom selected app identifier
+00:25 +226: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: Android can keep selected apps direct and route the rest by VPN
+00:26 +227: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: RU app presets classify installed packages and confirm both modes
+00:26 +228: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: rules app picker adds a known Android application
+00:26 +229: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: rules app picker can use native Android catalog
+00:26 +230: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: advanced settings open as diagnostics without acknowledgement
+00:27 +231: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: diagnostics creates a case with one encrypted bundle action
+00:27 +232: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: android protection surface keeps degraded runtime messaging consumer friendly
+00:27 +233: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: windows observes service loss after a long connected session
+00:27 +234: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: android refreshes delayed degraded host health after connect
+00:27 +235: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: android running waits for selected-outbound egress proof
+00:27 +236: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: android running marks failed selected-outbound egress degraded
+00:28 +237: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: android running shows connected after selected-outbound egress proof
+00:28 +238: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: explicit inactive subscription blocks cached reconnect on profile 503
+00:28 +239: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: explicit inactive subscription disconnects a cached tunnel on resume
+00:28 +240: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: inactive subscription during native connect stops the settled tunnel
+00:28 +241: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: cached Android profile handles API 503 after app restart
+00:28 +242: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: cached Android profile handles API 403 after app restart
+00:28 +243: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: manual retry after egress failure retains the cached profile during API outage
+00:28 +244: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: android egress fail-closed stop clears the connected home state
+00:28 +245: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: managed fallback on android (lab: false, baseline failure: false, unavailable: false, refused: false)
+00:29 +246: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: managed fallback on android (lab: true, baseline failure: false, unavailable: false, refused: false)
+00:29 +247: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: managed fallback on windows (lab: true, baseline failure: false, unavailable: false, refused: false)
+00:29 +248: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: managed fallback on android (lab: true, baseline failure: true, unavailable: false, refused: false)
+00:29 +249: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: managed fallback on android (lab: true, baseline failure: false, unavailable: true, refused: false)
+00:29 +250: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: managed fallback on android (lab: true, baseline failure: false, unavailable: false, refused: true)
+00:29 +251: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: stale Android egress poll cannot override a newer connection
+00:29 +252: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: android protection surface hides raw top-level host diagnostics
+00:29 +253: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: shows a single logical location in locations
+00:29 +254: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: stale manual location can return to automatic before provisioning
+00:29 +255: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: recent automatic node stays automatic after restart
+00:30 +256: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: automatic Smart Connect stickiness never becomes a manual preference
+00:30 +257: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: locations screen renders backend catalog cities
+00:30 +258: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: manual city scrolls every variant into the safe sheet viewport
+00:30 +259: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: catalog refresh resets a removed preferred variant to direct
+00:30 +260: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: selected city shows active, available and unavailable variant status
+00:30 +261: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: location refresh spinner stays out of the Auto card
+00:30 +262: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: WARP with a white-list variant fails before runtime staging
+00:30 +263: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: locations stay readable at 200 percent on narrow Android
+00:31 +264: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: cached catalog allows recovery selection before Smart Connect resolves
+00:31 +265: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: manual location restarts the active tunnel and promotes the fresh profile
+00:31 +266: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: locations keep cached catalog favorites and recents offline
+00:31 +267: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: home bell opens cached notifications when refresh is offline
+00:31 +268: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: primary connect action auto-prepares and starts host runtime
+00:31 +269: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: long connect exposes the current stage and details after 10s
+00:31 +270: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first route scope blocks an empty selected-apps list
+00:31 +271: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: late client-experience restore cannot replace first-connect route choice
+00:32 +272: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first route scope confirmation survives a shell restart
+00:32 +273: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: primary connect activates once from pointer and keyboard
+00:32 +274: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: bootstrap failures surface as a calm recovery banner
+00:32 +275: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: unexpected runtime errors surface as redacted recovery feedback
+00:32 +276: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: android reconnect refreshes the managed profile even when one is already staged (success)
+00:32 +277: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: android reconnect refreshes the managed profile even when one is already staged (timeout)
+00:32 +278: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: android reconnect refreshes the managed profile even when one is already staged (rejected)
+00:33 +279: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: windows reconnect refreshes the managed profile even when one is already staged (success)
+00:33 +280: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: windows reconnect refreshes the managed profile even when one is already staged (timeout)
+00:33 +281: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: windows reconnect refreshes the managed profile even when one is already staged (rejected)
+00:33 +282: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: primary connect action is disabled when live connect is unavailable
+00:33 +283: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: first Android consent converges after delayed native running without lifecycle resume
+00:33 +284: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: primary connect action polls the host bridge until runtime is running
+00:33 +285: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: android shell refreshes runtime snapshot when the app resumes
+00:33 +286: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: tab changes animate through the shared tab transition wrapper
+00:33 +287: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: profile and rewards hub expose accent pull-to-refresh
+00:34 +288: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: home offers whitelist recovery after control-plane failure
+00:34 +289: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: whitelist mode opens ready for restricted networks without extra toggle
+00:34 +290: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: emergency page explains trial or paid access denial
+00:34 +291: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: emergency page never exposes raw transport failures
+00:34 +292: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: emergency catalogs fit 4 or 20 narrow rows
+00:35 +293: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: emergency disclosure gates profile resolution and connect
+00:35 +294: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: emergency connect rotates to the next reserve on Android
+00:36 +295: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: emergency connect rotates after the full-chain egress probe fails
+00:36 +296: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: manual whitelist route keeps the selected hop chain
+00:36 +297: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: emergency connect reports when every saved reserve is blocked
+00:37 +298: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: connection CTA and live status have one semantic source
+00:37 +299: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: matches deterministic critical-state goldens
+00:37 +300: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: builds seed app context for public and readiness-only host lanes
+00:37 +301: All tests passed!

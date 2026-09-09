@@ -1,0 +1,187 @@
+{
+  "schema": "pokrov.r12-access-denial-receipt/v1",
+  "result": "PASS_BOUNDED_FIXED_WINDOWS_DENIAL",
+  "client_source": "f479fd49f7904bda5c916e5f7148675f45105872",
+  "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "installer_sha256": "f44486c3ae32ac5c3020e9b76c997902c202084076cb7954bc0678d5805f676d",
+  "pre_fix_expiry_scope": "controlled guest clock on 3784352; not real 24h soak or fixed-package expiry proof",
+  "fixed_runtime": "fixed/summary.json",
+  "backend_mutation": false,
+  "android_new_package_acceptance": "NOT_RUN",
+  "device_session_revocation_401_403": "NOT_RUN",
+  "publication": "NOT_REQUESTED",
+  "files": {
+    "before-fix-summary.json": {
+      "sha256": "be30c454bd27afa9401c0bac9160b7a173d99f956b104673fcd4bec3c1b15e5c",
+      "size_bytes": 1035
+    },
+    "identity.json": {
+      "sha256": "b4b39f93da280c25bdacd7c71c3fd9b718a0dd51387090c6614c527eedc3a5fb",
+      "size_bytes": 2529
+    },
+    "before-expiry.json": {
+      "sha256": "75ea5744069a8b08d7f38224533f35a70a578b6d36b5682bf91d8fa74989d6c4",
+      "size_bytes": 4785
+    },
+    "cached-connected.json": {
+      "sha256": "1a842e89b6f954568a19ceae9b9dc9a71c8d35ee8365344af6176c632fc15436",
+      "size_bytes": 4787
+    },
+    "clock-Advance.json": {
+      "sha256": "38a1308b55c47e924232a63ca7caf4c21dda3103aa548efb4caf18edbb7b13a7",
+      "size_bytes": 306
+    },
+    "expired-result.json": {
+      "sha256": "3c2072ee334c1326d75a3657993398186f4674884e51a61b5e2a390977a67e1e",
+      "size_bytes": 4777
+    },
+    "clock-v2-Advance.json": {
+      "sha256": "68e5ad8c0955e4f35093d70553707f90e4aa30474ae9ebeed2def5b63eeb1c86",
+      "size_bytes": 306
+    },
+    "expired-v2-result.json": {
+      "sha256": "69dc32572a7564aa34e65722da56a23b8781c1f93dfca6f9b2208c234fbad631",
+      "size_bytes": 4794
+    },
+    "clock-v2-Restore.json": {
+      "sha256": "a43d2004327d06213762e64f8211e4bcc801198814213bb364e106628e6c6f68",
+      "size_bytes": 343
+    },
+    "clock-restored-connected.json": {
+      "sha256": "e0db7b65f0ad3547d6440ee5b5fe1cd3b3454fd3412526bdac2d2aeb19948930",
+      "size_bytes": 4793
+    },
+    "online-expired-account.json": {
+      "sha256": "b010d24da296fb9ff130ee701bae6f6912ff761ad17bbe26578970726e1b12a3",
+      "size_bytes": 4783
+    },
+    "api-expired-account.json": {
+      "sha256": "9812207a8dd579451af751f37cf08f768eeca8a559cae596a467c88c3693c1c5",
+      "size_bytes": 722
+    },
+    "sample-return-network.json": {
+      "sha256": "319a3a659b65c2e16a19caed86b7160ce26917c8cca10529894c278f6ed2e1a7",
+      "size_bytes": 4755
+    },
+    "firewall-cleanup.json": {
+      "sha256": "dd1e1fa6143036d11c0214619e6a3d4ab342a2e08cf4ef13232e094953f0d339",
+      "size_bytes": 3181
+    },
+    "return-state.json": {
+      "sha256": "2f6bf4637d097c23d552b6191ab4491f3520641a8d7de67021208d9562c3c732",
+      "size_bytes": 391
+    },
+    "final-identity.json": {
+      "sha256": "67f6e36c399ead3248d83cc432fd229fb15e9f4cf709e8b5a377558e1b5a963b",
+      "size_bytes": 2533
+    },
+    "regression-red.txt": {
+      "sha256": "5b81128e280caf89bbef16ec03db2fb3300ded5677710fde652e7aafb880e2a4",
+      "size_bytes": 2769
+    },
+    "regression-full.txt": {
+      "sha256": "9a3cfd3e16300a00cbe6611a7afd180d559cd3bd721ba173e13524b2a13f4144",
+      "size_bytes": 42908
+    },
+    "analyze-package.txt": {
+      "sha256": "5b2de910d5297f543395220ffd5dc44a0c70ce20da7301cd108a2f28e7c5bb8e",
+      "size_bytes": 98
+    },
+    "validate-seed-scoped.txt": {
+      "sha256": "eadf2c1f8249d59987380886209fe0654f89b55613c70f4a05a9f88c56e2d5c6",
+      "size_bytes": 1818
+    },
+    "docs-contract.txt": {
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874",
+      "size_bytes": 26
+    },
+    "build-windows.txt": {
+      "sha256": "eb6ff8d4c6745397d4256564fc2d561fcfdfaccd27009a20aecc17190e0c6870",
+      "size_bytes": 213539
+    },
+    "fixed/summary.json": {
+      "sha256": "07019bba4451b63d19844d7509e455de3fa418c153fb61db3e721e4ceb0b7371",
+      "size_bytes": 1128
+    },
+    "fixed/blocked-before-install.json": {
+      "sha256": "475b267f54c63fbcc181b20bdb9b6d90d8a7451ae840f542f9b63f918831f625",
+      "size_bytes": 4784
+    },
+    "fixed/installed-before-launch.json": {
+      "sha256": "e5f043133936d43d5b17be1f76ee59f91de58660f86c4296a0609dad8f21a770",
+      "size_bytes": 2537
+    },
+    "fixed/cached-connected.json": {
+      "sha256": "b7d1d57e4ff9c09aa275b6f423cf396bec9bd9de58851248eb8a09c6ffea3c53",
+      "size_bytes": 4792
+    },
+    "fixed/denied-online.json": {
+      "sha256": "cf505d8a84b748af24ce69316b0e138c4894c75d14d4e85a8deb7d9fd17ab314",
+      "size_bytes": 3038
+    },
+    "fixed/api-expired-account.json": {
+      "sha256": "7c62ff22148870536ecf42a0de466f8e195ca46ea163283db38c43e6306153e2",
+      "size_bytes": 723
+    },
+    "fixed/denied-offline-restart.json": {
+      "sha256": "d78e073775f45901b7b4a7a1d505e7f20e972b55722172e7816a2aebece3a794",
+      "size_bytes": 3059
+    },
+    "fixed/denied-offline-restart.png": {
+      "sha256": "42462be81b2c00594a155eaea3e7be3c49ef66736ecf2426763396a6bf7e81ba",
+      "size_bytes": 119950
+    },
+    "fixed/after-denial-before-restart.json": {
+      "sha256": "d439e305ce538ab076d98a29455b80192cb71a331cafc4881e8a6f15a72c73ec",
+      "size_bytes": 3040
+    },
+    "fixed/return-network.json": {
+      "sha256": "167d12c007c4dbaec0d3355168a56b0734a0399dc6ecd3e6ee8a87a521fa64d1",
+      "size_bytes": 2632
+    },
+    "fixed/return-state.json": {
+      "sha256": "415daf8ec25fbd3b3337a59f0f81ba32449f113b8c104f36db1639765020f0e3",
+      "size_bytes": 596
+    },
+    "fixed/final-identity.json": {
+      "sha256": "cffde7ece59cf8a7daafde377e9836e07ffd1062b9615bb1d9e0a4a13e5a8759",
+      "size_bytes": 2525
+    },
+    "fixed/firewall-cleanup.json": {
+      "sha256": "9ceba9b65dc8072626c2b0f8b25fe4b42a650155ea9c098ef0e67773cae9fa67",
+      "size_bytes": 3181
+    },
+    "fixed/firewall-enable.json": {
+      "sha256": "8e907e3768e166305f1a1935ae40741face82347bae53b2d009840b0099d9952",
+      "size_bytes": 3685
+    },
+    "fixed/firewall-online.json": {
+      "sha256": "1ca5d026bd1c0f4071e8fc1a03b5f9d1302b09099ff6a8bc15b21a05f33cf352",
+      "size_bytes": 3686
+    },
+    "fixed/firewall-after-denial-outage.json": {
+      "sha256": "c3de0c0eb20fa6d9ed05f22cefd71908f67877740fd10ece218dbe40ea17dd1b",
+      "size_bytes": 3698
+    },
+    "fixed/expected-after.json": {
+      "sha256": "856f43e9aeec9c9bfd0903a3433f1ebffb6ac2bc40e3f7506fa787198e1cee0a",
+      "size_bytes": 39900
+    },
+    "fixed/package-manifest.json": {
+      "sha256": "f0b5308c62386308d0b88b85cee035977bfd442b09340d0898455fb0640ab91c",
+      "size_bytes": 5884
+    },
+    "fixed/sample.ps1": {
+      "sha256": "0d1253a30f3bb3e2e61c120cac67b809c1f3cad2d90946ecfad04aac271e5c06",
+      "size_bytes": 5853
+    },
+    "fixed/capture.ps1": {
+      "sha256": "0e6f0dac409fd21f599d2bd2cf277c01735ddb44021afea125bfe5d24e588e10",
+      "size_bytes": 2679
+    },
+    "fixed/api-probe.ps1": {
+      "sha256": "18c9ce630dff6c0059846de62d7fd1b6cbc9a185966c09789b59ac792ddc9777",
+      "size_bytes": 2855
+    }
+  }
+}

@@ -1000,7 +1000,10 @@ class _ProtectionLiveStatsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Сейчас', style: Theme.of(context).textTheme.titleSmall),
+          Text(
+            'Сейчас через POKROV',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
           const SizedBox(height: 10),
           Wrap(
             spacing: 18,

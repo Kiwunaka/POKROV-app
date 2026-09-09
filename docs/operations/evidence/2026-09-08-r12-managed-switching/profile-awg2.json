@@ -1,0 +1,46 @@
+{
+  "utc": "2026-09-08T00:55:46.4010689Z",
+  "label": "awg31-first",
+  "profile_sha256": "e6a2ef8faa7a04684c7cb5f522b4bcc21e5c1298572a2d2f9655714e116b10f8",
+  "root_keys": [
+    "log",
+    "dns",
+    "inbounds",
+    "outbounds",
+    "route",
+    "endpoints"
+  ],
+  "outbound_types": [
+    "direct",
+    "block"
+  ],
+  "endpoint_types": [
+    "awg"
+  ],
+  "endpoint_contracts": [],
+  "outbound_field_names": [
+    "tag",
+    "type"
+  ],
+  "endpoint_field_names": [
+    "address",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "jc",
+    "jmax",
+    "jmin",
+    "mtu",
+    "peers",
+    "private_key",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "tag",
+    "type",
+    "useIntegratedTun"
+  ],
+  "raw_profile_returned": false
+}

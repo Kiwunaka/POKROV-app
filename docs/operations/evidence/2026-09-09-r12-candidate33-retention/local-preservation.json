@@ -1,0 +1,249 @@
+{
+  "recorded_at_utc": "2026-09-09T01:26:46.100677+00:00",
+  "candidate_id": "pokrov-1.2.0-candidate.33",
+  "candidate_root": "E:\\POKROV-tools\\release-candidates\\pokrov-1.2.0-candidate.33",
+  "source_revisions": {
+    "platform": "f5300053026d32826e54c02202303e1f68c65bc1",
+    "client": "6ab1bcaf39c61a0ae0c9d8328e6c95382885735e",
+    "core": "cd8f0f4169d570d693992a959d81d17c2c44884d",
+    "release_index": "63993fba699b68641b7e972071ab7729fa9ec43c",
+    "release_index_receipt_main": "7a6b2ce859b34b074e877851ba50aae7e80854a3"
+  },
+  "files": [
+    {
+      "name": "_assemble_candidate33_supply.py",
+      "bytes": 22526,
+      "sha256": "eb5a4fc4425c749e92876e107812a5187d8f28ed71962eff35c5bb5bbc5943e4",
+      "expected_sha256": null,
+      "result": "OBSERVED_AUXILIARY_FILE_NO_PRIOR_DIGEST"
+    },
+    {
+      "name": "candidate33-signing-evidence.json",
+      "bytes": 2255,
+      "sha256": "c1b00606c2df009870fbd64b54b99237296554c19099af33b270aeecc19fc4c7",
+      "expected_sha256": null,
+      "result": "OBSERVED_AUXILIARY_FILE_NO_PRIOR_DIGEST"
+    },
+    {
+      "name": "candidate33-supply-assembly.json",
+      "bytes": 2466,
+      "sha256": "bb97ac80fa0b0ca4a58ebbdae7d7faf88f4d2c13da35c3ad5e861c794f7170fd",
+      "expected_sha256": null,
+      "result": "OBSERVED_AUXILIARY_FILE_NO_PRIOR_DIGEST"
+    },
+    {
+      "name": "pokrov-1.2.0-candidate.33.cdx.json",
+      "bytes": 298029,
+      "sha256": "3b586c6e2b63e802ecb6cdfadf5cdac5cd8b7957a5112da4ed9d0a86f6646125",
+      "expected_sha256": "3b586c6e2b63e802ecb6cdfadf5cdac5cd8b7957a5112da4ed9d0a86f6646125",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-1.2.0-candidate.33.handoff-input.json",
+      "bytes": 11207,
+      "sha256": "2ed2160a36d6210e04369e7a805ab84e7d6736aaab9bfdc589a6fdad14842604",
+      "expected_sha256": "2ed2160a36d6210e04369e7a805ab84e7d6736aaab9bfdc589a6fdad14842604",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-1.2.0-candidate.33.provenance.json",
+      "bytes": 8538,
+      "sha256": "9aadcb1dfa8973c08ca4682238e91baa17f4aa952f4d03eb78ebdfea733aeb08",
+      "expected_sha256": "9aadcb1dfa8973c08ca4682238e91baa17f4aa952f4d03eb78ebdfea733aeb08",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-1.2.0-candidate.33.release-handoff.json",
+      "bytes": 13186,
+      "sha256": "30d9d04437caa51c0fafb533a77589d745c66cd7ce5c17843d5b3a1e37e72c81",
+      "expected_sha256": "30d9d04437caa51c0fafb533a77589d745c66cd7ce5c17843d5b3a1e37e72c81",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-1.2.0-candidate.33.release-index.json",
+      "bytes": 6884,
+      "sha256": "5620c2f0558e7c9a0f8ff8dfbcd47523986dd7fdf13f061e81adab3b10a3f680",
+      "expected_sha256": "5620c2f0558e7c9a0f8ff8dfbcd47523986dd7fdf13f061e81adab3b10a3f680",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-1.2.0-candidate.33.release-index.json.sig",
+      "bytes": 64,
+      "sha256": "5115ab3cd8ee0fa49018e521f75fd9baf5d469c2793a8a47cda4a965b82d3191",
+      "expected_sha256": "5115ab3cd8ee0fa49018e521f75fd9baf5d469c2793a8a47cda4a965b82d3191",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-1.2.0-candidate.33.signing-receipt.json",
+      "bytes": 589,
+      "sha256": "f84843c81f9173072dcb3f3f551f7ef5ca9e41c21312ddec77ca0fe6cb6b78d7",
+      "expected_sha256": "f84843c81f9173072dcb3f3f551f7ef5ca9e41c21312ddec77ca0fe6cb6b78d7",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-1.2.0-candidate.33.supply-validation.json",
+      "bytes": 765,
+      "sha256": "c1259e7acb9ff9793c43adf4088501ab3b41dbc29991ab64a151d61f11e87274",
+      "expected_sha256": "c1259e7acb9ff9793c43adf4088501ab3b41dbc29991ab64a151d61f11e87274",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-android-arm64-v8a.apk",
+      "bytes": 101366678,
+      "sha256": "1eca4cbe8d36cbec2aca3dd92f27b7b369fb1199a13e6110a2447fad265acda5",
+      "expected_sha256": "1eca4cbe8d36cbec2aca3dd92f27b7b369fb1199a13e6110a2447fad265acda5",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-android-arm64-v8a.apk.signing.json",
+      "bytes": 803,
+      "sha256": "d73290002802c89686ae10cca229a1e4c95f0effa20069e611f2a14f55f62120",
+      "expected_sha256": "d73290002802c89686ae10cca229a1e4c95f0effa20069e611f2a14f55f62120",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-android-armeabi-v7a.apk",
+      "bytes": 90778788,
+      "sha256": "cee69c797e5e73b929ee1ad7b56d4c0918d81d0b25b42cfc0903801b16450734",
+      "expected_sha256": "cee69c797e5e73b929ee1ad7b56d4c0918d81d0b25b42cfc0903801b16450734",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-android-armeabi-v7a.apk.signing.json",
+      "bytes": 806,
+      "sha256": "f8662b43ec8de7afee5d895e922891d398bd4922769e92cb5bf2f24ed13ac680",
+      "expected_sha256": "f8662b43ec8de7afee5d895e922891d398bd4922769e92cb5bf2f24ed13ac680",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-android-market.aab",
+      "bytes": 126263318,
+      "sha256": "9f3ad01d92fcde54d93d88b0df9a04e9b7b531362029d1df4beab86ded5fac2c",
+      "expected_sha256": "9f3ad01d92fcde54d93d88b0df9a04e9b7b531362029d1df4beab86ded5fac2c",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-android-market.aab.signing.json",
+      "bytes": 1178,
+      "sha256": "e1e58fd22ac28edf7e674325c0fac7040491068424f90dc0c98fbd86da4fe78d",
+      "expected_sha256": "e1e58fd22ac28edf7e674325c0fac7040491068424f90dc0c98fbd86da4fe78d",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-android-universal.apk",
+      "bytes": 295370161,
+      "sha256": "51b86f66bd5c79fdf8a8e51d7607315a6ea3f8dfe9c36c4656034aac3b4583f2",
+      "expected_sha256": "51b86f66bd5c79fdf8a8e51d7607315a6ea3f8dfe9c36c4656034aac3b4583f2",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-android-universal.apk.signing.json",
+      "bytes": 793,
+      "sha256": "b39f3112f96e44515c152cfa779b0c2e931d6ed46a608f7e276181798a2d0c5d",
+      "expected_sha256": "b39f3112f96e44515c152cfa779b0c2e931d6ed46a608f7e276181798a2d0c5d",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-android-x86_64.apk",
+      "bytes": 109951989,
+      "sha256": "fe1fa2d2efb3c20530ed4af7ef48d74e05b6b89e213410f976d180c58c473168",
+      "expected_sha256": "fe1fa2d2efb3c20530ed4af7ef48d74e05b6b89e213410f976d180c58c473168",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-android-x86_64.apk.signing.json",
+      "bytes": 797,
+      "sha256": "488a0998da428cc8cd6780958756e1705337e9c95b565a02da7b5a60d151b8bf",
+      "expected_sha256": "488a0998da428cc8cd6780958756e1705337e9c95b565a02da7b5a60d151b8bf",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-windows-setup-x64.exe",
+      "bytes": 29153792,
+      "sha256": "250622f7e4bf9bea39a9456004d4cfeb2340a987c622c46f70b3af07aaec3580",
+      "expected_sha256": "250622f7e4bf9bea39a9456004d4cfeb2340a987c622c46f70b3af07aaec3580",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-windows-setup-x64.exe.signing.json",
+      "bytes": 669,
+      "sha256": "b9e8cd579c2fa82a30ef25b1e587c67fe03c8068f11c1f5ecdfb2a480cf44673",
+      "expected_sha256": "b9e8cd579c2fa82a30ef25b1e587c67fe03c8068f11c1f5ecdfb2a480cf44673",
+      "result": "PINNED_BYTES_MATCH"
+    },
+    {
+      "name": "pokrov-windows-x64-1.2.0+4053.manifest.json",
+      "bytes": 5884,
+      "sha256": "0f93211e254076fad5de8cf88d0817897313c2fd3f3b2daa6d1253628da63a5b",
+      "expected_sha256": "0f93211e254076fad5de8cf88d0817897313c2fd3f3b2daa6d1253628da63a5b",
+      "result": "PINNED_BYTES_MATCH"
+    }
+  ],
+  "missing_expected_files": [],
+  "signed_remote_matches": [
+    {
+      "name": "release-index.json",
+      "result": "REMOTE_LOCAL_BYTE_IDENTICAL"
+    },
+    {
+      "name": "release-index.json.sig",
+      "result": "REMOTE_LOCAL_BYTE_IDENTICAL"
+    },
+    {
+      "name": "signing-receipt.json",
+      "result": "REMOTE_LOCAL_BYTE_IDENTICAL"
+    }
+  ],
+  "provenance_dependencies": [
+    {
+      "uri": "file:config/runtime-artifacts.seed.json",
+      "revision": "6ab1bcaf39c61a0ae0c9d8328e6c95382885735e",
+      "expected_sha256": "655417a14c14ae32e737deadf05a75cd788402544f6114c26f092460979abcb3",
+      "git_blob_sha256": "f932885502ed2d8c964c9b5bead76defddb7768ea03bb4741004aec61fba9cd7",
+      "result": "GIT_BLOB_WITH_ORIGINAL_CRLF_MATCH"
+    },
+    {
+      "uri": "file:apps/android_shell/pubspec.lock",
+      "revision": "6ab1bcaf39c61a0ae0c9d8328e6c95382885735e",
+      "expected_sha256": "f5c81bead8f2798a7c2e54b145c6e4eb3c8cc582fd2a1880862beed829863db8",
+      "git_blob_sha256": "7be64fbc5c94312961ea9ade445fde41237681d46a8e20116b650ecf4374d860",
+      "result": "GIT_BLOB_WITH_ORIGINAL_CRLF_MATCH"
+    },
+    {
+      "uri": "file:apps/windows_shell/pubspec.lock",
+      "revision": "6ab1bcaf39c61a0ae0c9d8328e6c95382885735e",
+      "expected_sha256": "e03787f9dc5697099f2e9ed15876e4c8d4a1085b3c3ceddc504ef9d07d277e49",
+      "git_blob_sha256": "d4bdccb786c20d93c7a3781f89077b8fa8a5a3aabc541663f5699b04d4401d8d",
+      "result": "GIT_BLOB_WITH_ORIGINAL_CRLF_MATCH"
+    },
+    {
+      "uri": "file:POKROV-core/go.mod",
+      "revision": "cd8f0f4169d570d693992a959d81d17c2c44884d",
+      "expected_sha256": "5abbdfdfc19754927642015c224dce90ef8675d2ea5e9feffb5e936856e55e5f",
+      "git_blob_sha256": "5abbdfdfc19754927642015c224dce90ef8675d2ea5e9feffb5e936856e55e5f",
+      "result": "EXACT_GIT_BLOB_MATCH"
+    },
+    {
+      "uri": "file:POKROV-core/engine/sing-box/go.mod",
+      "revision": "cd8f0f4169d570d693992a959d81d17c2c44884d",
+      "expected_sha256": "0e0a8f1c0e3abbc8125a03cf5eb642f778e2f470e0424a405ef9ed0c8d620d8f",
+      "git_blob_sha256": "0e0a8f1c0e3abbc8125a03cf5eb642f778e2f470e0424a405ef9ed0c8d620d8f",
+      "result": "EXACT_GIT_BLOB_MATCH"
+    },
+    {
+      "uri": "ci:Kiwunaka/pokrov-core/actions/runs/33303561763/pokrov-core.cdx.json",
+      "path": "E:\\r12-g02-retention-20260909\\9729751245\\pokrov-core.cdx.json",
+      "sha256": "cc8d93fc6b602b3d1c080b4f3d32367b231536a54c9bfa71272b0e1bd055e88e",
+      "result": "BOUND_CI_SOURCE_SBOM_MATCH"
+    },
+    {
+      "uri": "ci:Kiwunaka/pokrov-core/actions/runs/33303561763/sing-box.cdx.json",
+      "path": "E:\\r12-g02-retention-20260909\\9729751245\\sing-box.cdx.json",
+      "sha256": "04c0972025e3ade1e74294cf7adb5cb79e616ea03899bc131aadc1bb30d6ce51",
+      "result": "BOUND_CI_SOURCE_SBOM_MATCH"
+    }
+  ],
+  "binary_copies_created": 0,
+  "candidate_files_modified": 0,
+  "scope": "Retention and byte identity, not runtime, release approval or signing-key custody"
+}

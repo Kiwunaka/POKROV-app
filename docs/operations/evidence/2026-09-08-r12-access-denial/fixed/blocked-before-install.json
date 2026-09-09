@@ -1,0 +1,92 @@
+{
+    "schema":  "pokrov.r12-windows-api-outage-sample/v1",
+    "utc":  "2026-09-08T12:55:50.4210247Z",
+    "label":  "blocked-before-install",
+    "collector_admin":  false,
+    "ui_pids":  [
+
+                ],
+    "service_pid":  3168,
+    "service_state":  "Running",
+    "probe":  {
+                  "client_source":  "0218e89",
+                  "action":  "status",
+                  "elapsed_ms":  0,
+                  "available":  true,
+                  "trusted":  true,
+                  "compatible":  true,
+                  "accepted":  true,
+                  "phase":  "artifact_ready",
+                  "running":  false,
+                  "core_ready":  false,
+                  "dns_ready":  false,
+                  "egress_validated":  false,
+                  "can_connect":  false,
+                  "effective_matches_staged":  false,
+                  "failure":  "none"
+              },
+    "probe_exit":  0,
+    "tun_count":  0,
+    "routes_sha256":  "50cbe1bc4f3c39cc361ba90c06f9b3e59edbc2c996020bf723430e5de7900885",
+    "dns_sha256":  "5de74dba88385fbea86c0728fb4e44572a06ee8f7a8d3aad71187cee9f80ae4b",
+    "curl_exit":  0,
+    "curl_status":  200,
+    "blocked_process_probe":  {
+                                  "status":  null,
+                                  "error":  "ConnectFailure",
+                                  "elapsed_ms":  79
+                              },
+    "cache":  {
+                  "available":  true,
+                  "version":  1,
+                  "records":  [
+                                  {
+                                      "slot":  "downloaded",
+                                      "verified_at":  "2026-09-08T11:35:41.1639170Z",
+                                      "age_seconds":  4810.1659757,
+                                      "binding_sha256":  "995f17c54995c746f875fa5fc29fd55f27a95e96c964336b043e9bb9456b2cda",
+                                      "revision_sha256":  "ff956fc7ef3afd1bb8eced836b12bedabb23b65c87fdc582527ca2c0c076c1b6",
+                                      "payload_sha256":  "06ae09f773ae793f58d35c43e9d6470fa5b5c7dba3c2132f5f817d51ed28f9a8",
+                                      "cache_entry_id_sha256":  "bc2e556962481dab8f9de85afc6d30c44946304e6c29d078b18689265f6b7690"
+                                  },
+                                  {
+                                      "slot":  "proven",
+                                      "verified_at":  "2026-09-08T11:35:41.1639170Z",
+                                      "age_seconds":  4810.1875912999994,
+                                      "binding_sha256":  "995f17c54995c746f875fa5fc29fd55f27a95e96c964336b043e9bb9456b2cda",
+                                      "revision_sha256":  "ff956fc7ef3afd1bb8eced836b12bedabb23b65c87fdc582527ca2c0c076c1b6",
+                                      "payload_sha256":  "06ae09f773ae793f58d35c43e9d6470fa5b5c7dba3c2132f5f817d51ed28f9a8",
+                                      "cache_entry_id_sha256":  "bc2e556962481dab8f9de85afc6d30c44946304e6c29d078b18689265f6b7690"
+                                  }
+                              ],
+                  "raw_exported":  false,
+                  "store_written":  false
+              },
+    "connected_events":  [
+                             {
+                                 "occurred_at":  "2026-09-08T12:31:07.260870Z",
+                                 "id_sha256":  "b89a4d08f09c130ede586c1dc5af26e4d6eebf582d59ff4e820fa228abf98970",
+                                 "cached_profile":  true
+                             },
+                             {
+                                 "occurred_at":  "2026-09-08T12:27:33.827803Z",
+                                 "id_sha256":  "111c121d78c50ba7c40739209ca5bddf25a6686e72643777f2077d12547c3d54",
+                                 "cached_profile":  true
+                             },
+                             {
+                                 "occurred_at":  "2026-09-08T12:22:22.658274Z",
+                                 "id_sha256":  "ecb2c2baf26fc6f8825f401fb9ecbb71b7cfecec2dd7065acd91aaa9f1d7fbe8",
+                                 "cached_profile":  true
+                             }
+                         ],
+    "outage_rule_states":  [
+                               {
+                                   "Name":  "R12DenialFix-20260908-Probe",
+                                   "Enabled":  1
+                               },
+                               {
+                                   "Name":  "R12DenialFix-20260908-Ui",
+                                   "Enabled":  1
+                               }
+                           ]
+}

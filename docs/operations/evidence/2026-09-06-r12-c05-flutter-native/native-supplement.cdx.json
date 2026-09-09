@@ -1,0 +1,575 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:6bea84d4-2754-4a84-bf22-29ec720135e5",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-09-06T12:12:37Z",
+    "properties": [
+      {
+        "name": "pokrov:scope",
+        "value": "Native supplement: exact Flutter engine artifacts, six Windows plugin DLLs, embedded Wintun and its Windows Core parent. Not a complete application SBOM or license/release clearance. Dependency edges are limited to verified imports and embedding."
+      },
+      {
+        "name": "pokrov:package-evidence",
+        "value": "E:/r12-c05-flutter-native/package-verification.json"
+      },
+      {
+        "name": "pokrov:release-status",
+        "value": "Internal local packages; production signing, installed privacy, final candidate and overall C05 remain open."
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "flutter-windows-amd64",
+      "name": "Flutter engine for Windows amd64",
+      "version": "1527ae0ec577a4ef50e65f6fefcfc1326707d9bf",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1f4215e1072dd9e34f4565b74310e6771364e1470c7e92214bca64947bd012a1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:license-file-sha256",
+          "value": "66f37204b91a314563d3261efdd4b1858a49684ed99c267e0ee4ad5f00f74ea0"
+        },
+        {
+          "name": "pokrov:binding",
+          "value": "exact official archive DLL"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Flutter sky_engine aggregated upstream licenses",
+            "url": "https://storage.googleapis.com/flutter_infra_release/flutter/1527ae0ec577a4ef50e65f6fefcfc1326707d9bf/sky_engine.zip"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://storage.googleapis.com/flutter_infra_release/flutter/1527ae0ec577a4ef50e65f6fefcfc1326707d9bf/windows-x64-release/windows-x64-flutter.zip"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "flutter-android-arm64-v8a",
+      "name": "Flutter engine for Android arm64-v8a",
+      "version": "1527ae0ec577a4ef50e65f6fefcfc1326707d9bf",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:license-file-sha256",
+          "value": "66f37204b91a314563d3261efdd4b1858a49684ed99c267e0ee4ad5f00f74ea0"
+        },
+        {
+          "name": "pokrov:binding",
+          "value": "exact official artifact after recorded NDK strip operation"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Flutter sky_engine aggregated upstream licenses",
+            "url": "https://storage.googleapis.com/flutter_infra_release/flutter/1527ae0ec577a4ef50e65f6fefcfc1326707d9bf/sky_engine.zip"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://storage.googleapis.com/download.flutter.io/io/flutter/arm64_v8a_release/1.0.0-1527ae0ec577a4ef50e65f6fefcfc1326707d9bf/arm64_v8a_release-1.0.0-1527ae0ec577a4ef50e65f6fefcfc1326707d9bf.jar"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "flutter-android-armeabi-v7a",
+      "name": "Flutter engine for Android armeabi-v7a",
+      "version": "1527ae0ec577a4ef50e65f6fefcfc1326707d9bf",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a4a921f6c02b5bdc52eae98528a7fbd242c2819d06de97014ee932f90c1b7a07"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:license-file-sha256",
+          "value": "66f37204b91a314563d3261efdd4b1858a49684ed99c267e0ee4ad5f00f74ea0"
+        },
+        {
+          "name": "pokrov:binding",
+          "value": "exact official artifact after recorded NDK strip operation"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Flutter sky_engine aggregated upstream licenses",
+            "url": "https://storage.googleapis.com/flutter_infra_release/flutter/1527ae0ec577a4ef50e65f6fefcfc1326707d9bf/sky_engine.zip"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://storage.googleapis.com/download.flutter.io/io/flutter/armeabi_v7a_release/1.0.0-1527ae0ec577a4ef50e65f6fefcfc1326707d9bf/armeabi_v7a_release-1.0.0-1527ae0ec577a4ef50e65f6fefcfc1326707d9bf.jar"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "flutter-android-x86_64",
+      "name": "Flutter engine for Android x86_64",
+      "version": "1527ae0ec577a4ef50e65f6fefcfc1326707d9bf",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9e8c7fac2fb253a2c00ec61f0ba5b82545d3e781b220a2563a981c233127defd"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:license-file-sha256",
+          "value": "66f37204b91a314563d3261efdd4b1858a49684ed99c267e0ee4ad5f00f74ea0"
+        },
+        {
+          "name": "pokrov:binding",
+          "value": "exact official artifact after recorded NDK strip operation"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Flutter sky_engine aggregated upstream licenses",
+            "url": "https://storage.googleapis.com/flutter_infra_release/flutter/1527ae0ec577a4ef50e65f6fefcfc1326707d9bf/sky_engine.zip"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://storage.googleapis.com/download.flutter.io/io/flutter/x86_64_release/1.0.0-1527ae0ec577a4ef50e65f6fefcfc1326707d9bf/x86_64_release-1.0.0-1527ae0ec577a4ef50e65f6fefcfc1326707d9bf.jar"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pokrov-core-windows-amd64",
+      "name": "POKROV Core for Windows amd64",
+      "version": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c679ba5af42939acbc8c6f44af59b4608f6a76c99e0d444cfa4bcc825bcc8e68"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:scope",
+          "value": "parent artifact for embedded native component; full Go dependency/license SBOM remains separate"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "wintun-windows-amd64",
+      "name": "Wintun prebuilt API library for Windows amd64",
+      "version": "0.14.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e5da8447dc2c320edc0fc52fa01885c103de8c118481f683643cacc3220dafce"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:embedded-in-sha256",
+          "value": "c679ba5af42939acbc8c6f44af59b4608f6a76c99e0d444cfa4bcc825bcc8e68"
+        },
+        {
+          "name": "pokrov:embedded-offset",
+          "value": "25050912"
+        },
+        {
+          "name": "pokrov:license-file-sha256",
+          "value": "183adac21e7d96c508c8fd34d394b7b6708bc81564ad1bad61ab66143a008cd2"
+        },
+        {
+          "name": "pokrov:license-review",
+          "value": "API-use and redistribution compatibility remain open"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Wintun Prebuilt Binaries License",
+            "url": "https://www.wintun.net/builds/wintun-0.14.1.zip",
+            "text": {
+              "contentType": "text/plain",
+              "encoding": "base64",
+              "content": "UHJlYnVpbHQgQmluYXJpZXMgTGljZW5zZQ0KLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KDQoxLiBERUZJTklUSU9OUy4gIlNvZnR3YXJlIiBtZWFucyB0aGUgcHJlY2lzZSBjb250ZW50cyBvZiB0aGUgIndpbnR1bi5kbGwiDQogICBmaWxlcyB0aGF0IGFyZSBpbmNsdWRlZCBpbiB0aGUgLnppcCBmaWxlIHRoYXQgY29udGFpbnMgdGhpcyBkb2N1bWVudCBhcw0KICAgZG93bmxvYWRlZCBmcm9tIHdpbnR1bi5uZXQvYnVpbGRzLg0KDQoyLiBMSUNFTlNFIEdSQU5ULiBXaXJlR3VhcmQgTExDIGdyYW50cyB0byB5b3UgYSBub24tZXhjbHVzaXZlIGFuZA0KICAgbm9uLXRyYW5zZmVyYWJsZSByaWdodCB0byB1c2UgU29mdHdhcmUgZm9yIGxhd2Z1bCBwdXJwb3NlcyB1bmRlciBjZXJ0YWluDQogICBvYmxpZ2F0aW9ucyBhbmQgbGltaXRlZCByaWdodHMgYXMgc2V0IGZvcnRoIGluIHRoaXMgYWdyZWVtZW50Lg0KDQozLiBSRVNUUklDVElPTlMuIFNvZnR3YXJlIGlzIG93bmVkIGFuZCBjb3B5cmlnaHRlZCBieSBXaXJlR3VhcmQgTExDLiBJdCBpcw0KICAgbGljZW5zZWQsIG5vdCBzb2xkLiBUaXRsZSB0byBTb2Z0d2FyZSBhbmQgYWxsIGFzc29jaWF0ZWQgaW50ZWxsZWN0dWFsDQogICBwcm9wZXJ0eSByaWdodHMgYXJlIHJldGFpbmVkIGJ5IFdpcmVHdWFyZC4gWW91IG11c3Qgbm90Og0KICAgYS4gcmV2ZXJzZSBlbmdpbmVlciwgZGVjb21waWxlLCBkaXNhc3NlbWJsZSwgZXh0cmFjdCBmcm9tLCBvciBvdGhlcndpc2UNCiAgICAgIG1vZGlmeSB0aGUgU29mdHdhcmU7DQogICBiLiBtb2RpZnkgb3IgY3JlYXRlIGRlcml2YXRpdmUgd29yayBiYXNlZCB1cG9uIFNvZnR3YXJlIGluIHdob2xlIG9yIGluDQogICAgICBwYXJ0cywgZXhjZXB0IGluc29mYXIgYXMgb25seSB0aGUgQVBJIGludGVyZmFjZXMgb2YgdGhlICJ3aW50dW4uaCIgZmlsZQ0KICAgICAgZGlzdHJpYnV0ZWQgYWxvbmdzaWRlIHRoZSBTb2Z0d2FyZSAodGhlICJQZXJtaXR0ZWQgQVBJIikgYXJlIHVzZWQ7DQogICBjLiByZW1vdmUgYW55IHByb3ByaWV0YXJ5IG5vdGljZXMsIGxhYmVscywgb3IgY29weXJpZ2h0cyBmcm9tIHRoZSBTb2Z0d2FyZTsNCiAgIGQuIHJlc2VsbCwgcmVkaXN0cmlidXRlLCBsZWFzZSwgcmVudCwgdHJhbnNmZXIsIHN1YmxpY2Vuc2UsIG9yIG90aGVyd2lzZQ0KICAgICAgdHJhbnNmZXIgcmlnaHRzIG9mIHRoZSBTb2Z0d2FyZSB3aXRob3V0IHRoZSBwcmlvciB3cml0dGVuIGNvbnNlbnQgb2YNCiAgICAgIFdpcmVHdWFyZCBMTEMsIGV4Y2VwdCBpbnNvZmFyIGFzIHRoZSBTb2Z0d2FyZSBpcyBkaXN0cmlidXRlZCBhbG9uZ3NpZGUNCiAgICAgIG90aGVyIHNvZnR3YXJlIHRoYXQgdXNlcyB0aGUgU29mdHdhcmUgb25seSB2aWEgdGhlIFBlcm1pdHRlZCBBUEk7DQogICBlLiB1c2UgdGhlIG5hbWUgb2YgV2lyZUd1YXJkIExMQywgdGhlIFdpcmVHdWFyZCBwcm9qZWN0LCB0aGUgV2ludHVuDQogICAgICBwcm9qZWN0LCBvciB0aGUgbmFtZXMgb2YgaXRzIGNvbnRyaWJ1dG9ycyB0byBlbmRvcnNlIG9yIHByb21vdGUgcHJvZHVjdHMNCiAgICAgIGRlcml2ZWQgZnJvbSB0aGUgU29mdHdhcmUgd2l0aG91dCBzcGVjaWZpYyBwcmlvciB3cml0dGVuIGNvbnNlbnQuDQoNCjQuIExJTUlURUQgV0FSUkFOVFkuIFRIRSBTT0ZUV0FSRSBJUyBQUk9WSURFRCAiQVMgSVMiIEFORCBXSVRIT1VUIFdBUlJBTlRZIE9GDQogICBBTlkgS0lORC4gV0lSRUdVQVJEIExMQyBIRVJFQlkgRVhDTFVERVMgQU5EIERJU0NMQUlNUyBBTEwgSU1QTElFRCBPUg0KICAgU1RBVFVUT1JZIFdBUlJBTlRJRVMsIElOQ0xVRElORyBBTlkgV0FSUkFOVElFUyBPRiBNRVJDSEFOVEFCSUxJVFksIEZJVE5FU1MNCiAgIEZPUiBBIFBBUlRJQ1VMQVIgUFVSUE9TRSwgUVVBTElUWSwgTk9OLUlORlJJTkdFTUVOVCwgVElUTEUsIFJFU1VMVFMsDQogICBFRkZPUlRTLCBPUiBRVUlFVCBFTkpPWU1FTlQuIFRIRVJFIElTIE5PIFdBUlJBTlRZIFRIQVQgVEhFIFBST0RVQ1QgV0lMTCBCRQ0KICAgRVJST1ItRlJFRSBPUiBXSUxMIEZVTkNUSU9OIFdJVEhPVVQgSU5URVJSVVBUSU9OLiBZT1UgQVNTVU1FIFRIRSBFTlRJUkUNCiAgIFJJU0sgRk9SIFRIRSBSRVNVTFRTIE9CVEFJTkVEIFVTSU5HIFRIRSBQUk9EVUNULiBUTyBUSEUgRVhURU5UIFRIQVQNCiAgIFdJUkVHVUFSRCBMTEMgTUFZIE5PVCBESVNDTEFJTSBBTlkgV0FSUkFOVFkgQVMgQSBNQVRURVIgT0YgQVBQTElDQUJMRSBMQVcsDQogICBUSEUgU0NPUEUgQU5EIERVUkFUSU9OIE9GIFNVQ0ggV0FSUkFOVFkgV0lMTCBCRSBUSEUgTUlOSU1VTSBQRVJNSVRURUQgVU5ERVINCiAgIFNVQ0ggTEFXLiBBTEwgRVhQUkVTUyBPUiBJTVBMSUVEIENPTkRJVElPTlMsIFJFUFJFU0VOVEFUSU9OUyBBTkQNCiAgIFdBUlJBTlRJRVMsIElOQ0xVRElORyBBTlkgSU1QTElFRCBXQVJSQU5UWSBPRiBNRVJDSEFOVEFCSUxJVFksIEZJVE5FU1MgRk9SDQogICBBIFBBUlRJQ1VMQVIgUFVSUE9TRSBPUiBOT04tSU5GUklOR0VNRU5UIEFSRSBESVNDTEFJTUVELCBFWENFUFQgVE8gVEhFDQogICBFWFRFTlQgVEhBVCBUSEVTRSBESVNDTEFJTUVSUyBBUkUgSEVMRCBUTyBCRSBMRUdBTExZIElOVkFMSUQuDQoNCjUuIExJTUlUQVRJT04gT0YgTElBQklMSVRZLiBUbyB0aGUgZXh0ZW50IG5vdCBwcm9oaWJpdGVkIGJ5IGxhdywgaW4gbm8gZXZlbnQNCiAgIFdpcmVHdWFyZCBMTEMgb3IgYW55IHRoaXJkLXBhcnR5LWRldmVsb3BlciB3aWxsIGJlIGxpYWJsZSBmb3IgYW55IGxvc3QNCiAgIHJldmVudWUsIHByb2ZpdCBvciBkYXRhIG9yIGZvciBzcGVjaWFsLCBpbmRpcmVjdCwgY29uc2VxdWVudGlhbCwgaW5jaWRlbnRhbA0KICAgb3IgcHVuaXRpdmUgZGFtYWdlcywgaG93ZXZlciBjYXVzZWQgcmVnYXJkbGVzcyBvZiB0aGUgdGhlb3J5IG9mIGxpYWJpbGl0eSwNCiAgIGFyaXNpbmcgb3V0IG9mIG9yIHJlbGF0ZWQgdG8gdGhlIHVzZSBvZiBvciBpbmFiaWxpdHkgdG8gdXNlIFNvZnR3YXJlLCBldmVuDQogICBpZiBXaXJlR3VhcmQgTExDIGhhcyBiZWVuIGFkdmlzZWQgb2YgdGhlIHBvc3NpYmlsaXR5IG9mIHN1Y2ggZGFtYWdlcy4NCiAgIFNvbGVseSB5b3UgYXJlIHJlc3BvbnNpYmxlIGZvciBkZXRlcm1pbmluZyB0aGUgYXBwcm9wcmlhdGVuZXNzIG9mIHVzaW5nDQogICBTb2Z0d2FyZSBhbmQgYWNjZXB0IGZ1bGwgcmVzcG9uc2liaWxpdHkgZm9yIGFsbCByaXNrcyBhc3NvY2lhdGVkIHdpdGggaXRzDQogICBleGVyY2lzZSBvZiByaWdodHMgdW5kZXIgdGhpcyBhZ3JlZW1lbnQsIGluY2x1ZGluZyBidXQgbm90IGxpbWl0ZWQgdG8gdGhlDQogICByaXNrcyBhbmQgY29zdHMgb2YgcHJvZ3JhbSBlcnJvcnMsIGNvbXBsaWFuY2Ugd2l0aCBhcHBsaWNhYmxlIGxhd3MsIGRhbWFnZQ0KICAgdG8gb3IgbG9zcyBvZiBkYXRhLCBwcm9ncmFtcyBvciBlcXVpcG1lbnQsIGFuZCB1bmF2YWlsYWJpbGl0eSBvcg0KICAgaW50ZXJydXB0aW9uIG9mIG9wZXJhdGlvbnMuIFRoZSBmb3JlZ29pbmcgbGltaXRhdGlvbnMgd2lsbCBhcHBseSBldmVuIGlmDQogICB0aGUgYWJvdmUgc3RhdGVkIHdhcnJhbnR5IGZhaWxzIG9mIGl0cyBlc3NlbnRpYWwgcHVycG9zZS4gWW91IGFja25vd2xlZGdlLA0KICAgdGhhdCBpdCBpcyBpbiB0aGUgbmF0dXJlIG9mIHNvZnR3YXJlIHRoYXQgc29mdHdhcmUgaXMgY29tcGxleCBhbmQgbm90DQogICBjb21wbGV0ZWx5IGZyZWUgb2YgZXJyb3JzLiBJbiBubyBldmVudCBzaGFsbCBXaXJlR3VhcmQgTExDIG9yIGFueQ0KICAgdGhpcmQtcGFydHktZGV2ZWxvcGVyIGJlIGxpYWJsZSB0byB5b3UgdW5kZXIgYW55IHRoZW9yeSBmb3IgYW55IGRhbWFnZXMNCiAgIHN1ZmZlcmVkIGJ5IHlvdSBvciBhbnkgdXNlciBvZiBTb2Z0d2FyZSBvciBmb3IgYW55IHNwZWNpYWwsIGluY2lkZW50YWwsDQogICBpbmRpcmVjdCwgY29uc2VxdWVudGlhbCBvciBzaW1pbGFyIGRhbWFnZXMgKGluY2x1ZGluZyB3aXRob3V0IGxpbWl0YXRpb24NCiAgIGRhbWFnZXMgZm9yIGxvc3Mgb2YgYnVzaW5lc3MgcHJvZml0cywgYnVzaW5lc3MgaW50ZXJydXB0aW9uLCBsb3NzIG9mDQogICBidXNpbmVzcyBpbmZvcm1hdGlvbiBvciBhbnkgb3RoZXIgcGVjdW5pYXJ5IGxvc3MpIGFyaXNpbmcgb3V0IG9mIHRoZSB1c2Ugb3INCiAgIGluYWJpbGl0eSB0byB1c2UgU29mdHdhcmUsIGV2ZW4gaWYgV2lyZUd1YXJkIExMQyBoYXMgYmVlbiBhZHZpc2VkIG9mIHRoZQ0KICAgcG9zc2liaWxpdHkgb2Ygc3VjaCBkYW1hZ2VzIGFuZCByZWdhcmRsZXNzIG9mIHRoZSBsZWdhbCBvciBxdWl0YWJsZSB0aGVvcnkNCiAgIChjb250cmFjdCwgdG9ydCwgb3Igb3RoZXJ3aXNlKSB1cG9uIHdoaWNoIHRoZSBjbGFpbSBpcyBiYXNlZC4NCg0KNi4gVEVSTUlOQVRJT04uIFRoaXMgYWdyZWVtZW50IGlzIGFmZmVjdGVkIHVudGlsIHRlcm1pbmF0ZWQuIFlvdSBtYXkNCiAgIHRlcm1pbmF0ZSB0aGlzIGFncmVlbWVudCBhdCBhbnkgdGltZS4gVGhpcyBhZ3JlZW1lbnQgd2lsbCB0ZXJtaW5hdGUNCiAgIGltbWVkaWF0ZWx5IHdpdGhvdXQgbm90aWNlIGZyb20gV2lyZUd1YXJkIExMQyBpZiB5b3UgZmFpbCB0byBjb21wbHkgd2l0aA0KICAgdGhlIHRlcm1zIGFuZCBjb25kaXRpb25zIG9mIHRoaXMgYWdyZWVtZW50LiBVcG9uIHRlcm1pbmF0aW9uLCB5b3UgbXVzdA0KICAgZGVsZXRlIFNvZnR3YXJlIGFuZCBhbGwgY29waWVzIG9mIFNvZnR3YXJlIGFuZCBjZWFzZSBhbGwgZm9ybXMgb2YNCiAgIGRpc3RyaWJ1dGlvbiBvZiBTb2Z0d2FyZS4NCg0KNy4gU0VWRVJBQklMSVRZLiBJZiBhbnkgcHJvdmlzaW9uIG9mIHRoaXMgYWdyZWVtZW50IGlzIGhlbGQgdG8gYmUNCiAgIHVuZW5mb3JjZWFibGUsIHRoaXMgYWdyZWVtZW50IHdpbGwgcmVtYWluIGluIGVmZmVjdCB3aXRoIHRoZSBwcm92aXNpb24NCiAgIG9taXR0ZWQsIHVubGVzcyBvbWlzc2lvbiB3b3VsZCBmcnVzdHJhdGUgdGhlIGludGVudCBvZiB0aGUgcGFydGllcywgaW4NCiAgIHdoaWNoIGNhc2UgdGhpcyBhZ3JlZW1lbnQgd2lsbCBpbW1lZGlhdGVseSB0ZXJtaW5hdGUuDQoNCjguIFJFU0VSVkFUSU9OIE9GIFJJR0hUUy4gQWxsIHJpZ2h0cyBub3QgZXhwcmVzc2x5IGdyYW50ZWQgaW4gdGhpcyBhZ3JlZW1lbnQNCiAgIGFyZSByZXNlcnZlZCBieSBXaXJlR3VhcmQgTExDLiBGb3IgZXhhbXBsZSwgV2lyZUd1YXJkIExMQyByZXNlcnZlcyB0aGUNCiAgIHJpZ2h0IGF0IGFueSB0aW1lIHRvIGNlYXNlIGRldmVsb3BtZW50IG9mIFNvZnR3YXJlLCB0byBhbHRlciBkaXN0cmlidXRpb24NCiAgIGRldGFpbHMsIGZlYXR1cmVzLCBzcGVjaWZpY2F0aW9ucywgY2FwYWJpbGl0aWVzLCBmdW5jdGlvbnMsIGxpY2Vuc2luZw0KICAgdGVybXMsIHJlbGVhc2UgZGF0ZXMsIEFQSXMsIEFCSXMsIGdlbmVyYWwgYXZhaWxhYmlsaXR5LCBvciBvdGhlcg0KICAgY2hhcmFjdGVyaXN0aWNzIG9mIHRoZSBTb2Z0d2FyZS4NCg=="
+            }
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.wintun.net/builds/wintun-0.14.1.zip"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "plugin-file_selector_windows",
+      "name": "file_selector_windows",
+      "version": "0.9.3+5",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "33930ce4c1324b6b5fb7fbfe4ece64d51c9d6dcbae73137bb7f74f0730a72d12"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:package-archive-sha256",
+          "value": "62197474ae75893a62df75939c777763d39c2bc5f73ce5b88497208bc269abfd"
+        },
+        {
+          "name": "pokrov:license-file-sha256",
+          "value": "420f7739f169097f0aad1242045169cd643c8f1d94e62866fad265ae4c369b7d"
+        },
+        {
+          "name": "pokrov:license-in-packaged-flutter-notices",
+          "value": "true"
+        },
+        {
+          "name": "pokrov:source-auth",
+          "value": "all recorded Windows package files and root LICENSE match locked pub.dev archive; native source-to-binary reproducibility not claimed"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "file_selector_windows root LICENSE",
+            "text": {
+              "contentType": "text/plain",
+              "encoding": "base64",
+              "content": "Q29weXJpZ2h0IDIwMTMgVGhlIEZsdXR0ZXIgQXV0aG9ycwoKUmVkaXN0cmlidXRpb24gYW5kIHVzZSBpbiBzb3VyY2UgYW5kIGJpbmFyeSBmb3Jtcywgd2l0aCBvciB3aXRob3V0IG1vZGlmaWNhdGlvbiwKYXJlIHBlcm1pdHRlZCBwcm92aWRlZCB0aGF0IHRoZSBmb2xsb3dpbmcgY29uZGl0aW9ucyBhcmUgbWV0OgoKICAgICogUmVkaXN0cmlidXRpb25zIG9mIHNvdXJjZSBjb2RlIG11c3QgcmV0YWluIHRoZSBhYm92ZSBjb3B5cmlnaHQKICAgICAgbm90aWNlLCB0aGlzIGxpc3Qgb2YgY29uZGl0aW9ucyBhbmQgdGhlIGZvbGxvd2luZyBkaXNjbGFpbWVyLgogICAgKiBSZWRpc3RyaWJ1dGlvbnMgaW4gYmluYXJ5IGZvcm0gbXVzdCByZXByb2R1Y2UgdGhlIGFib3ZlCiAgICAgIGNvcHlyaWdodCBub3RpY2UsIHRoaXMgbGlzdCBvZiBjb25kaXRpb25zIGFuZCB0aGUgZm9sbG93aW5nCiAgICAgIGRpc2NsYWltZXIgaW4gdGhlIGRvY3VtZW50YXRpb24gYW5kL29yIG90aGVyIG1hdGVyaWFscyBwcm92aWRlZAogICAgICB3aXRoIHRoZSBkaXN0cmlidXRpb24uCiAgICAqIE5laXRoZXIgdGhlIG5hbWUgb2YgR29vZ2xlIEluYy4gbm9yIHRoZSBuYW1lcyBvZiBpdHMKICAgICAgY29udHJpYnV0b3JzIG1heSBiZSB1c2VkIHRvIGVuZG9yc2Ugb3IgcHJvbW90ZSBwcm9kdWN0cyBkZXJpdmVkCiAgICAgIGZyb20gdGhpcyBzb2Z0d2FyZSB3aXRob3V0IHNwZWNpZmljIHByaW9yIHdyaXR0ZW4gcGVybWlzc2lvbi4KClRISVMgU09GVFdBUkUgSVMgUFJPVklERUQgQlkgVEhFIENPUFlSSUdIVCBIT0xERVJTIEFORCBDT05UUklCVVRPUlMgIkFTIElTIiBBTkQKQU5ZIEVYUFJFU1MgT1IgSU1QTElFRCBXQVJSQU5USUVTLCBJTkNMVURJTkcsIEJVVCBOT1QgTElNSVRFRCBUTywgVEhFIElNUExJRUQKV0FSUkFOVElFUyBPRiBNRVJDSEFOVEFCSUxJVFkgQU5EIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFIEFSRQpESVNDTEFJTUVELiBJTiBOTyBFVkVOVCBTSEFMTCBUSEUgQ09QWVJJR0hUIE9XTkVSIE9SIENPTlRSSUJVVE9SUyBCRSBMSUFCTEUgRk9SCkFOWSBESVJFQ1QsIElORElSRUNULCBJTkNJREVOVEFMLCBTUEVDSUFMLCBFWEVNUExBUlksIE9SIENPTlNFUVVFTlRJQUwgREFNQUdFUwooSU5DTFVESU5HLCBCVVQgTk9UIExJTUlURUQgVE8sIFBST0NVUkVNRU5UIE9GIFNVQlNUSVRVVEUgR09PRFMgT1IgU0VSVklDRVM7CkxPU1MgT0YgVVNFLCBEQVRBLCBPUiBQUk9GSVRTOyBPUiBCVVNJTkVTUyBJTlRFUlJVUFRJT04pIEhPV0VWRVIgQ0FVU0VEIEFORCBPTgpBTlkgVEhFT1JZIE9GIExJQUJJTElUWSwgV0hFVEhFUiBJTiBDT05UUkFDVCwgU1RSSUNUIExJQUJJTElUWSwgT1IgVE9SVAooSU5DTFVESU5HIE5FR0xJR0VOQ0UgT1IgT1RIRVJXSVNFKSBBUklTSU5HIElOIEFOWSBXQVkgT1VUIE9GIFRIRSBVU0UgT0YgVEhJUwpTT0ZUV0FSRSwgRVZFTiBJRiBBRFZJU0VEIE9GIFRIRSBQT1NTSUJJTElUWSBPRiBTVUNIIERBTUFHRS4K"
+            }
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pub.dev/api/archives/file_selector_windows-0.9.3%2B5.tar.gz"
+        }
+      ],
+      "purl": "pkg:pub/file_selector_windows@0.9.3+5"
+    },
+    {
+      "type": "library",
+      "bom-ref": "plugin-flutter_secure_storage_windows",
+      "name": "flutter_secure_storage_windows",
+      "version": "4.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ef9e75dacb07a52fdf5f91cf50db9b86127c00f784b836f7ec54636b90364ad8"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:package-archive-sha256",
+          "value": "3b7c8e068875dfd46719ff57c90d8c459c87f2302ed6b00ff006b3c9fcad1613"
+        },
+        {
+          "name": "pokrov:license-file-sha256",
+          "value": "55dafb084270616f95b9bea53654adda8bdcad95c022a83c4cf8769073f829fa"
+        },
+        {
+          "name": "pokrov:license-in-packaged-flutter-notices",
+          "value": "true"
+        },
+        {
+          "name": "pokrov:source-auth",
+          "value": "all recorded Windows package files and root LICENSE match locked pub.dev archive; native source-to-binary reproducibility not claimed"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "flutter_secure_storage_windows root LICENSE",
+            "text": {
+              "contentType": "text/plain",
+              "encoding": "base64",
+              "content": "QlNEIDMtQ2xhdXNlIExpY2Vuc2UKCkNvcHlyaWdodCAyMDE3IEdlcm1hbiBTYXByeWtpbgpBbGwgcmlnaHRzIHJlc2VydmVkLgoKUmVkaXN0cmlidXRpb24gYW5kIHVzZSBpbiBzb3VyY2UgYW5kIGJpbmFyeSBmb3Jtcywgd2l0aCBvciB3aXRob3V0Cm1vZGlmaWNhdGlvbiwgYXJlIHBlcm1pdHRlZCBwcm92aWRlZCB0aGF0IHRoZSBmb2xsb3dpbmcgY29uZGl0aW9ucyBhcmUgbWV0OgoKKiBSZWRpc3RyaWJ1dGlvbnMgb2Ygc291cmNlIGNvZGUgbXVzdCByZXRhaW4gdGhlIGFib3ZlIGNvcHlyaWdodCBub3RpY2UsIHRoaXMKICBsaXN0IG9mIGNvbmRpdGlvbnMgYW5kIHRoZSBmb2xsb3dpbmcgZGlzY2xhaW1lci4KCiogUmVkaXN0cmlidXRpb25zIGluIGJpbmFyeSBmb3JtIG11c3QgcmVwcm9kdWNlIHRoZSBhYm92ZSBjb3B5cmlnaHQgbm90aWNlLAogIHRoaXMgbGlzdCBvZiBjb25kaXRpb25zIGFuZCB0aGUgZm9sbG93aW5nIGRpc2NsYWltZXIgaW4gdGhlIGRvY3VtZW50YXRpb24KICBhbmQvb3Igb3RoZXIgbWF0ZXJpYWxzIHByb3ZpZGVkIHdpdGggdGhlIGRpc3RyaWJ1dGlvbi4KCiogTmVpdGhlciB0aGUgbmFtZSBvZiB0aGUgY29weXJpZ2h0IGhvbGRlciBub3IgdGhlIG5hbWVzIG9mIGl0cwogIGNvbnRyaWJ1dG9ycyBtYXkgYmUgdXNlZCB0byBlbmRvcnNlIG9yIHByb21vdGUgcHJvZHVjdHMgZGVyaXZlZCBmcm9tCiAgdGhpcyBzb2Z0d2FyZSB3aXRob3V0IHNwZWNpZmljIHByaW9yIHdyaXR0ZW4gcGVybWlzc2lvbi4KClRISVMgU09GVFdBUkUgSVMgUFJPVklERUQgQlkgVEhFIENPUFlSSUdIVCBIT0xERVJTIEFORCBDT05UUklCVVRPUlMgIkFTIElTIgpBTkQgQU5ZIEVYUFJFU1MgT1IgSU1QTElFRCBXQVJSQU5USUVTLCBJTkNMVURJTkcsIEJVVCBOT1QgTElNSVRFRCBUTywgVEhFCklNUExJRUQgV0FSUkFOVElFUyBPRiBNRVJDSEFOVEFCSUxJVFkgQU5EIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFIEFSRQpESVNDTEFJTUVELiBJTiBOTyBFVkVOVCBTSEFMTCBUSEUgQ09QWVJJR0hUIEhPTERFUiBPUiBDT05UUklCVVRPUlMgQkUgTElBQkxFCkZPUiBBTlkgRElSRUNULCBJTkRJUkVDVCwgSU5DSURFTlRBTCwgU1BFQ0lBTCwgRVhFTVBMQVJZLCBPUiBDT05TRVFVRU5USUFMCkRBTUFHRVMgKElOQ0xVRElORywgQlVUIE5PVCBMSU1JVEVEIFRPLCBQUk9DVVJFTUVOVCBPRiBTVUJTVElUVVRFIEdPT0RTIE9SClNFUlZJQ0VTOyBMT1NTIE9GIFVTRSwgREFUQSwgT1IgUFJPRklUUzsgT1IgQlVTSU5FU1MgSU5URVJSVVBUSU9OKSBIT1dFVkVSCkNBVVNFRCBBTkQgT04gQU5ZIFRIRU9SWSBPRiBMSUFCSUxJVFksIFdIRVRIRVIgSU4gQ09OVFJBQ1QsIFNUUklDVCBMSUFCSUxJVFksCk9SIFRPUlQgKElOQ0xVRElORyBORUdMSUdFTkNFIE9SIE9USEVSV0lTRSkgQVJJU0lORyBJTiBBTlkgV0FZIE9VVCBPRiBUSEUgVVNFCk9GIFRISVMgU09GVFdBUkUsIEVWRU4gSUYgQURWSVNFRCBPRiBUSEUgUE9TU0lCSUxJVFkgT0YgU1VDSCBEQU1BR0Uu"
+            }
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pub.dev/api/archives/flutter_secure_storage_windows-4.1.0.tar.gz"
+        }
+      ],
+      "purl": "pkg:pub/flutter_secure_storage_windows@4.1.0"
+    },
+    {
+      "type": "library",
+      "bom-ref": "plugin-screen_retriever_windows",
+      "name": "screen_retriever_windows",
+      "version": "0.2.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a0adb51723692588265fce71b939aadb3607fb510134c21a5dfc26d3a7bb0d15"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:package-archive-sha256",
+          "value": "449ee257f03ca98a57288ee526a301a430a344a161f9202b4fcc38576716fe13"
+        },
+        {
+          "name": "pokrov:license-file-sha256",
+          "value": "4c275c4e1ab3ffb97508c3c66a87db1c6e4f5d0233205fff8ca57ac35d20199f"
+        },
+        {
+          "name": "pokrov:license-in-packaged-flutter-notices",
+          "value": "true"
+        },
+        {
+          "name": "pokrov:source-auth",
+          "value": "all recorded Windows package files and root LICENSE match locked pub.dev archive; native source-to-binary reproducibility not claimed"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "screen_retriever_windows root LICENSE",
+            "text": {
+              "contentType": "text/plain",
+              "encoding": "base64",
+              "content": "TUlUIExpY2Vuc2UKCkNvcHlyaWdodCAoYykgMjAyMi0yMDI0IExpSmlhbnlpbmcgPGxpank5MUBmb3htYWlsLmNvbT4KClBlcm1pc3Npb24gaXMgaGVyZWJ5IGdyYW50ZWQsIGZyZWUgb2YgY2hhcmdlLCB0byBhbnkgcGVyc29uIG9idGFpbmluZyBhIGNvcHkKb2YgdGhpcyBzb2Z0d2FyZSBhbmQgYXNzb2NpYXRlZCBkb2N1bWVudGF0aW9uIGZpbGVzICh0aGUgIlNvZnR3YXJlIiksIHRvIGRlYWwKaW4gdGhlIFNvZnR3YXJlIHdpdGhvdXQgcmVzdHJpY3Rpb24sIGluY2x1ZGluZyB3aXRob3V0IGxpbWl0YXRpb24gdGhlIHJpZ2h0cwp0byB1c2UsIGNvcHksIG1vZGlmeSwgbWVyZ2UsIHB1Ymxpc2gsIGRpc3RyaWJ1dGUsIHN1YmxpY2Vuc2UsIGFuZC9vciBzZWxsCmNvcGllcyBvZiB0aGUgU29mdHdhcmUsIGFuZCB0byBwZXJtaXQgcGVyc29ucyB0byB3aG9tIHRoZSBTb2Z0d2FyZSBpcwpmdXJuaXNoZWQgdG8gZG8gc28sIHN1YmplY3QgdG8gdGhlIGZvbGxvd2luZyBjb25kaXRpb25zOgoKVGhlIGFib3ZlIGNvcHlyaWdodCBub3RpY2UgYW5kIHRoaXMgcGVybWlzc2lvbiBub3RpY2Ugc2hhbGwgYmUgaW5jbHVkZWQgaW4gYWxsCmNvcGllcyBvciBzdWJzdGFudGlhbCBwb3J0aW9ucyBvZiB0aGUgU29mdHdhcmUuCgpUSEUgU09GVFdBUkUgSVMgUFJPVklERUQgIkFTIElTIiwgV0lUSE9VVCBXQVJSQU5UWSBPRiBBTlkgS0lORCwgRVhQUkVTUyBPUgpJTVBMSUVELCBJTkNMVURJTkcgQlVUIE5PVCBMSU1JVEVEIFRPIFRIRSBXQVJSQU5USUVTIE9GIE1FUkNIQU5UQUJJTElUWSwKRklUTkVTUyBGT1IgQSBQQVJUSUNVTEFSIFBVUlBPU0UgQU5EIE5PTklORlJJTkdFTUVOVC4gSU4gTk8gRVZFTlQgU0hBTEwgVEhFCkFVVEhPUlMgT1IgQ09QWVJJR0hUIEhPTERFUlMgQkUgTElBQkxFIEZPUiBBTlkgQ0xBSU0sIERBTUFHRVMgT1IgT1RIRVIKTElBQklMSVRZLCBXSEVUSEVSIElOIEFOIEFDVElPTiBPRiBDT05UUkFDVCwgVE9SVCBPUiBPVEhFUldJU0UsIEFSSVNJTkcgRlJPTSwKT1VUIE9GIE9SIElOIENPTk5FQ1RJT04gV0lUSCBUSEUgU09GVFdBUkUgT1IgVEhFIFVTRSBPUiBPVEhFUiBERUFMSU5HUyBJTiBUSEUKU09GVFdBUkUu"
+            }
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pub.dev/api/archives/screen_retriever_windows-0.2.0.tar.gz"
+        }
+      ],
+      "purl": "pkg:pub/screen_retriever_windows@0.2.0"
+    },
+    {
+      "type": "library",
+      "bom-ref": "plugin-tray_manager",
+      "name": "tray_manager",
+      "version": "0.5.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "778d36113b2662f0ac78e6a3cffdadc89cdebd902019e7b482cf61b1da14cc34"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:package-archive-sha256",
+          "value": "c5fd83b0ae4d80be6eaedfad87aaefab8787b333b8ebd064b0e442a81006035b"
+        },
+        {
+          "name": "pokrov:license-file-sha256",
+          "value": "516e1f470fd0e4c5c6cf02b6876153a9145283660a5de03fe9812b207dc34db5"
+        },
+        {
+          "name": "pokrov:license-in-packaged-flutter-notices",
+          "value": "true"
+        },
+        {
+          "name": "pokrov:source-auth",
+          "value": "all recorded Windows package files and root LICENSE match locked pub.dev archive; native source-to-binary reproducibility not claimed"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "tray_manager root LICENSE",
+            "text": {
+              "contentType": "text/plain",
+              "encoding": "base64",
+              "content": "TUlUIExpY2Vuc2UKCkNvcHlyaWdodCAoYykgMjAyMi1wcmVzZW50IExpSmlhbnlpbmcgPGxpank5MUBmb3htYWlsLmNvbT4KClBlcm1pc3Npb24gaXMgaGVyZWJ5IGdyYW50ZWQsIGZyZWUgb2YgY2hhcmdlLCB0byBhbnkgcGVyc29uIG9idGFpbmluZyBhIGNvcHkKb2YgdGhpcyBzb2Z0d2FyZSBhbmQgYXNzb2NpYXRlZCBkb2N1bWVudGF0aW9uIGZpbGVzICh0aGUgIlNvZnR3YXJlIiksIHRvIGRlYWwKaW4gdGhlIFNvZnR3YXJlIHdpdGhvdXQgcmVzdHJpY3Rpb24sIGluY2x1ZGluZyB3aXRob3V0IGxpbWl0YXRpb24gdGhlIHJpZ2h0cwp0byB1c2UsIGNvcHksIG1vZGlmeSwgbWVyZ2UsIHB1Ymxpc2gsIGRpc3RyaWJ1dGUsIHN1YmxpY2Vuc2UsIGFuZC9vciBzZWxsCmNvcGllcyBvZiB0aGUgU29mdHdhcmUsIGFuZCB0byBwZXJtaXQgcGVyc29ucyB0byB3aG9tIHRoZSBTb2Z0d2FyZSBpcwpmdXJuaXNoZWQgdG8gZG8gc28sIHN1YmplY3QgdG8gdGhlIGZvbGxvd2luZyBjb25kaXRpb25zOgoKVGhlIGFib3ZlIGNvcHlyaWdodCBub3RpY2UgYW5kIHRoaXMgcGVybWlzc2lvbiBub3RpY2Ugc2hhbGwgYmUgaW5jbHVkZWQgaW4gYWxsCmNvcGllcyBvciBzdWJzdGFudGlhbCBwb3J0aW9ucyBvZiB0aGUgU29mdHdhcmUuCgpUSEUgU09GVFdBUkUgSVMgUFJPVklERUQgIkFTIElTIiwgV0lUSE9VVCBXQVJSQU5UWSBPRiBBTlkgS0lORCwgRVhQUkVTUyBPUgpJTVBMSUVELCBJTkNMVURJTkcgQlVUIE5PVCBMSU1JVEVEIFRPIFRIRSBXQVJSQU5USUVTIE9GIE1FUkNIQU5UQUJJTElUWSwKRklUTkVTUyBGT1IgQSBQQVJUSUNVTEFSIFBVUlBPU0UgQU5EIE5PTklORlJJTkdFTUVOVC4gSU4gTk8gRVZFTlQgU0hBTEwgVEhFCkFVVEhPUlMgT1IgQ09QWVJJR0hUIEhPTERFUlMgQkUgTElBQkxFIEZPUiBBTlkgQ0xBSU0sIERBTUFHRVMgT1IgT1RIRVIKTElBQklMSVRZLCBXSEVUSEVSIElOIEFOIEFDVElPTiBPRiBDT05UUkFDVCwgVE9SVCBPUiBPVEhFUldJU0UsIEFSSVNJTkcgRlJPTSwKT1VUIE9GIE9SIElOIENPTk5FQ1RJT04gV0lUSCBUSEUgU09GVFdBUkUgT1IgVEhFIFVTRSBPUiBPVEhFUiBERUFMSU5HUyBJTiBUSEUKU09GVFdBUkUu"
+            }
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pub.dev/api/archives/tray_manager-0.5.2.tar.gz"
+        }
+      ],
+      "purl": "pkg:pub/tray_manager@0.5.2"
+    },
+    {
+      "type": "library",
+      "bom-ref": "plugin-url_launcher_windows",
+      "name": "url_launcher_windows",
+      "version": "3.1.4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3688c966897356067fde527eab7880e8e82a8f4be7300f666551a8270bc360f6"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:package-archive-sha256",
+          "value": "3284b6d2ac454cf34f114e1d3319866fdd1e19cdc329999057e44ffe936cfa77"
+        },
+        {
+          "name": "pokrov:license-file-sha256",
+          "value": "89519eca6f7b9529b35bdddd623a58c3af06a88c458dbd6531ddb4675acf75a9"
+        },
+        {
+          "name": "pokrov:license-in-packaged-flutter-notices",
+          "value": "true"
+        },
+        {
+          "name": "pokrov:source-auth",
+          "value": "all recorded Windows package files and root LICENSE match locked pub.dev archive; native source-to-binary reproducibility not claimed"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "url_launcher_windows root LICENSE",
+            "text": {
+              "contentType": "text/plain",
+              "encoding": "base64",
+              "content": "Q29weXJpZ2h0IDIwMTMgVGhlIEZsdXR0ZXIgQXV0aG9ycy4gQWxsIHJpZ2h0cyByZXNlcnZlZC4KClJlZGlzdHJpYnV0aW9uIGFuZCB1c2UgaW4gc291cmNlIGFuZCBiaW5hcnkgZm9ybXMsIHdpdGggb3Igd2l0aG91dCBtb2RpZmljYXRpb24sCmFyZSBwZXJtaXR0ZWQgcHJvdmlkZWQgdGhhdCB0aGUgZm9sbG93aW5nIGNvbmRpdGlvbnMgYXJlIG1ldDoKCiAgICAqIFJlZGlzdHJpYnV0aW9ucyBvZiBzb3VyY2UgY29kZSBtdXN0IHJldGFpbiB0aGUgYWJvdmUgY29weXJpZ2h0CiAgICAgIG5vdGljZSwgdGhpcyBsaXN0IG9mIGNvbmRpdGlvbnMgYW5kIHRoZSBmb2xsb3dpbmcgZGlzY2xhaW1lci4KICAgICogUmVkaXN0cmlidXRpb25zIGluIGJpbmFyeSBmb3JtIG11c3QgcmVwcm9kdWNlIHRoZSBhYm92ZQogICAgICBjb3B5cmlnaHQgbm90aWNlLCB0aGlzIGxpc3Qgb2YgY29uZGl0aW9ucyBhbmQgdGhlIGZvbGxvd2luZwogICAgICBkaXNjbGFpbWVyIGluIHRoZSBkb2N1bWVudGF0aW9uIGFuZC9vciBvdGhlciBtYXRlcmlhbHMgcHJvdmlkZWQKICAgICAgd2l0aCB0aGUgZGlzdHJpYnV0aW9uLgogICAgKiBOZWl0aGVyIHRoZSBuYW1lIG9mIEdvb2dsZSBJbmMuIG5vciB0aGUgbmFtZXMgb2YgaXRzCiAgICAgIGNvbnRyaWJ1dG9ycyBtYXkgYmUgdXNlZCB0byBlbmRvcnNlIG9yIHByb21vdGUgcHJvZHVjdHMgZGVyaXZlZAogICAgICBmcm9tIHRoaXMgc29mdHdhcmUgd2l0aG91dCBzcGVjaWZpYyBwcmlvciB3cml0dGVuIHBlcm1pc3Npb24uCgpUSElTIFNPRlRXQVJFIElTIFBST1ZJREVEIEJZIFRIRSBDT1BZUklHSFQgSE9MREVSUyBBTkQgQ09OVFJJQlVUT1JTICJBUyBJUyIgQU5ECkFOWSBFWFBSRVNTIE9SIElNUExJRUQgV0FSUkFOVElFUywgSU5DTFVESU5HLCBCVVQgTk9UIExJTUlURUQgVE8sIFRIRSBJTVBMSUVECldBUlJBTlRJRVMgT0YgTUVSQ0hBTlRBQklMSVRZIEFORCBGSVRORVNTIEZPUiBBIFBBUlRJQ1VMQVIgUFVSUE9TRSBBUkUKRElTQ0xBSU1FRC4gSU4gTk8gRVZFTlQgU0hBTEwgVEhFIENPUFlSSUdIVCBPV05FUiBPUiBDT05UUklCVVRPUlMgQkUgTElBQkxFIEZPUgpBTlkgRElSRUNULCBJTkRJUkVDVCwgSU5DSURFTlRBTCwgU1BFQ0lBTCwgRVhFTVBMQVJZLCBPUiBDT05TRVFVRU5USUFMIERBTUFHRVMKKElOQ0xVRElORywgQlVUIE5PVCBMSU1JVEVEIFRPLCBQUk9DVVJFTUVOVCBPRiBTVUJTVElUVVRFIEdPT0RTIE9SIFNFUlZJQ0VTOwpMT1NTIE9GIFVTRSwgREFUQSwgT1IgUFJPRklUUzsgT1IgQlVTSU5FU1MgSU5URVJSVVBUSU9OKSBIT1dFVkVSIENBVVNFRCBBTkQgT04KQU5ZIFRIRU9SWSBPRiBMSUFCSUxJVFksIFdIRVRIRVIgSU4gQ09OVFJBQ1QsIFNUUklDVCBMSUFCSUxJVFksIE9SIFRPUlQKKElOQ0xVRElORyBORUdMSUdFTkNFIE9SIE9USEVSV0lTRSkgQVJJU0lORyBJTiBBTlkgV0FZIE9VVCBPRiBUSEUgVVNFIE9GIFRISVMKU09GVFdBUkUsIEVWRU4gSUYgQURWSVNFRCBPRiBUSEUgUE9TU0lCSUxJVFkgT0YgU1VDSCBEQU1BR0UuCg=="
+            }
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pub.dev/api/archives/url_launcher_windows-3.1.4.tar.gz"
+        }
+      ],
+      "purl": "pkg:pub/url_launcher_windows@3.1.4"
+    },
+    {
+      "type": "library",
+      "bom-ref": "plugin-window_manager",
+      "name": "window_manager",
+      "version": "0.5.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e3d38c9cdaaab6a8e274b9d56efe10442f7fe69e475fdfef3a9f4667cd5c79d7"
+        }
+      ],
+      "properties": [
+        {
+          "name": "pokrov:package-archive-sha256",
+          "value": "7eb6d6c4164ec08e1bf978d6e733f3cebe792e2a23fb07cbca25c2872bfdbdcd"
+        },
+        {
+          "name": "pokrov:license-file-sha256",
+          "value": "516e1f470fd0e4c5c6cf02b6876153a9145283660a5de03fe9812b207dc34db5"
+        },
+        {
+          "name": "pokrov:license-in-packaged-flutter-notices",
+          "value": "true"
+        },
+        {
+          "name": "pokrov:source-auth",
+          "value": "all recorded Windows package files and root LICENSE match locked pub.dev archive; native source-to-binary reproducibility not claimed"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "window_manager root LICENSE",
+            "text": {
+              "contentType": "text/plain",
+              "encoding": "base64",
+              "content": "TUlUIExpY2Vuc2UKCkNvcHlyaWdodCAoYykgMjAyMi1wcmVzZW50IExpSmlhbnlpbmcgPGxpank5MUBmb3htYWlsLmNvbT4KClBlcm1pc3Npb24gaXMgaGVyZWJ5IGdyYW50ZWQsIGZyZWUgb2YgY2hhcmdlLCB0byBhbnkgcGVyc29uIG9idGFpbmluZyBhIGNvcHkKb2YgdGhpcyBzb2Z0d2FyZSBhbmQgYXNzb2NpYXRlZCBkb2N1bWVudGF0aW9uIGZpbGVzICh0aGUgIlNvZnR3YXJlIiksIHRvIGRlYWwKaW4gdGhlIFNvZnR3YXJlIHdpdGhvdXQgcmVzdHJpY3Rpb24sIGluY2x1ZGluZyB3aXRob3V0IGxpbWl0YXRpb24gdGhlIHJpZ2h0cwp0byB1c2UsIGNvcHksIG1vZGlmeSwgbWVyZ2UsIHB1Ymxpc2gsIGRpc3RyaWJ1dGUsIHN1YmxpY2Vuc2UsIGFuZC9vciBzZWxsCmNvcGllcyBvZiB0aGUgU29mdHdhcmUsIGFuZCB0byBwZXJtaXQgcGVyc29ucyB0byB3aG9tIHRoZSBTb2Z0d2FyZSBpcwpmdXJuaXNoZWQgdG8gZG8gc28sIHN1YmplY3QgdG8gdGhlIGZvbGxvd2luZyBjb25kaXRpb25zOgoKVGhlIGFib3ZlIGNvcHlyaWdodCBub3RpY2UgYW5kIHRoaXMgcGVybWlzc2lvbiBub3RpY2Ugc2hhbGwgYmUgaW5jbHVkZWQgaW4gYWxsCmNvcGllcyBvciBzdWJzdGFudGlhbCBwb3J0aW9ucyBvZiB0aGUgU29mdHdhcmUuCgpUSEUgU09GVFdBUkUgSVMgUFJPVklERUQgIkFTIElTIiwgV0lUSE9VVCBXQVJSQU5UWSBPRiBBTlkgS0lORCwgRVhQUkVTUyBPUgpJTVBMSUVELCBJTkNMVURJTkcgQlVUIE5PVCBMSU1JVEVEIFRPIFRIRSBXQVJSQU5USUVTIE9GIE1FUkNIQU5UQUJJTElUWSwKRklUTkVTUyBGT1IgQSBQQVJUSUNVTEFSIFBVUlBPU0UgQU5EIE5PTklORlJJTkdFTUVOVC4gSU4gTk8gRVZFTlQgU0hBTEwgVEhFCkFVVEhPUlMgT1IgQ09QWVJJR0hUIEhPTERFUlMgQkUgTElBQkxFIEZPUiBBTlkgQ0xBSU0sIERBTUFHRVMgT1IgT1RIRVIKTElBQklMSVRZLCBXSEVUSEVSIElOIEFOIEFDVElPTiBPRiBDT05UUkFDVCwgVE9SVCBPUiBPVEhFUldJU0UsIEFSSVNJTkcgRlJPTSwKT1VUIE9GIE9SIElOIENPTk5FQ1RJT04gV0lUSCBUSEUgU09GVFdBUkUgT1IgVEhFIFVTRSBPUiBPVEhFUiBERUFMSU5HUyBJTiBUSEUKU09GVFdBUkUu"
+            }
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pub.dev/api/archives/window_manager-0.5.1.tar.gz"
+        }
+      ],
+      "purl": "pkg:pub/window_manager@0.5.1"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pokrov-core-windows-amd64",
+      "dependsOn": [
+        "wintun-windows-amd64"
+      ]
+    },
+    {
+      "ref": "plugin-file_selector_windows",
+      "dependsOn": [
+        "flutter-windows-amd64"
+      ]
+    },
+    {
+      "ref": "plugin-flutter_secure_storage_windows",
+      "dependsOn": [
+        "flutter-windows-amd64"
+      ]
+    },
+    {
+      "ref": "plugin-screen_retriever_windows",
+      "dependsOn": [
+        "flutter-windows-amd64"
+      ]
+    },
+    {
+      "ref": "plugin-tray_manager",
+      "dependsOn": [
+        "flutter-windows-amd64"
+      ]
+    },
+    {
+      "ref": "plugin-url_launcher_windows",
+      "dependsOn": [
+        "flutter-windows-amd64"
+      ]
+    },
+    {
+      "ref": "plugin-window_manager",
+      "dependsOn": [
+        "flutter-windows-amd64"
+      ]
+    }
+  ]
+}

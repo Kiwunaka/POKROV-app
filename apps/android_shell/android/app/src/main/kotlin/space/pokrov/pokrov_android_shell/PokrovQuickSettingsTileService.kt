@@ -127,6 +127,7 @@ class PokrovQuickSettingsTileService : TileService() {
                     this,
                     requireNotNull(validProfile).configPath,
                     requireNotNull(validProfile).routeMode,
+                    requireNotNull(validProfile).configDigest,
                     generation,
                 )
             }

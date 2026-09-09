@@ -1,0 +1,166 @@
+{
+  "scope": "D03 controlled 120-second deep Doze; no reboot, permission revoke or battery baseline",
+  "client": "9334d46",
+  "apk_sha256": "d849d27398d0fdb18b8fdf3975c0a24b9d419c642048502018d76738201e14d2",
+  "samples": [
+    {
+      "label": "before",
+      "utc": "2026-09-07T17:16:19.738872+00:00",
+      "deep": "ACTIVE",
+      "force": "false",
+      "vpn_service": true,
+      "foreground": true,
+      "tun_present": "UNKNOWN_FAILED_PROBE",
+      "same_app_pid_as_baseline": true
+    },
+    {
+      "label": "idle_0s",
+      "utc": "2026-09-07T17:16:20.436249+00:00",
+      "deep": "IDLE",
+      "force": "true",
+      "vpn_service": true,
+      "foreground": true,
+      "tun_present": "UNKNOWN_FAILED_PROBE",
+      "same_app_pid_as_baseline": true
+    },
+    {
+      "label": "idle_30s",
+      "utc": "2026-09-07T17:16:50.855312+00:00",
+      "deep": "IDLE",
+      "force": "true",
+      "vpn_service": true,
+      "foreground": true,
+      "tun_present": "UNKNOWN_FAILED_PROBE",
+      "same_app_pid_as_baseline": true
+    },
+    {
+      "label": "idle_60s",
+      "utc": "2026-09-07T17:17:21.485246+00:00",
+      "deep": "IDLE",
+      "force": "true",
+      "vpn_service": true,
+      "foreground": true,
+      "tun_present": "UNKNOWN_FAILED_PROBE",
+      "same_app_pid_as_baseline": true
+    },
+    {
+      "label": "idle_90s",
+      "utc": "2026-09-07T17:17:52.172458+00:00",
+      "deep": "IDLE",
+      "force": "true",
+      "vpn_service": true,
+      "foreground": true,
+      "tun_present": "UNKNOWN_FAILED_PROBE",
+      "same_app_pid_as_baseline": true
+    },
+    {
+      "label": "idle_120s",
+      "utc": "2026-09-07T17:18:22.654083+00:00",
+      "deep": "IDLE",
+      "force": "true",
+      "vpn_service": true,
+      "foreground": true,
+      "tun_present": "UNKNOWN_FAILED_PROBE",
+      "same_app_pid_as_baseline": true
+    },
+    {
+      "label": "restored",
+      "utc": "2026-09-07T17:18:23.242426+00:00",
+      "deep": "ACTIVE",
+      "force": "false",
+      "vpn_service": true,
+      "foreground": true,
+      "tun_present": "UNKNOWN_FAILED_PROBE",
+      "same_app_pid_as_baseline": true
+    }
+  ],
+  "force_result": "Now forced in to deep idle mode",
+  "restore_result": "Light state: ACTIVE, deep state: ACTIVE",
+  "tun_probe_limitation": "The multi-sample sh -c probe was malformed; it gives no TUN evidence. Separate direct ls -d probe below succeeded during IDLE.",
+  "independent_tun_probe": {
+    "utc": "2026-09-07T17:17:17.857826+00:00",
+    "deep": "IDLE",
+    "tun_present": true,
+    "probe": "adb shell ls -d /sys/class/net/tun0"
+  },
+  "post_resume_fresh_protection": "PASS_APP_TUNNEL_DNS_EGRESS_AFTER_REFRESH",
+  "screenshots": {
+    "doze-before.png": "06227600a2a743d7fe6fec027ad485b061643284eec5bf84862327032974272c",
+    "doze-resumed.png": "73fd8359153363a501b91f2c2071db53c8c103be44a8bf2cbbadbc346fa19629",
+    "doze-refreshed.png": "4fbfd00b4c5149e14dfc7f79bff1b21414b2d51bd3b9436fdf1c4251937a4903",
+    "standby-refreshed.png": "ab654d609db68e2aaa4e0f33af8275228d84952cf3470a96eb3879310603c594",
+    "standby-confirmed.png": "ad13e170be33aeaf94fa9c8d652ced134f64ffa06dd3ab4ab602d52f854fa72d"
+  },
+  "raw_log_hashes": {
+    "check-doze.py": "301423f4de909f7dd287f9e9bc4bdb48853b8c13517c7d296585d6b900090c13",
+    "doze-receipt.json": "87aafcbd6cda3ca9ef5a797fdbde723128d54bf52bcdb93731c9514fa380dfb2",
+    "doze-sysfs-probe.json": "ad36d84f288cd3b28ce01012b17679fe9fec25e400a9c39019d21ac9d8c25d79",
+    "check-standby.py": "66a39bce421ba98b3e6b8a6734cf72975ffdcdd2fc372e373d6add5308f2d4d4",
+    "standby-receipt.json": "49f79ede6c4e3ab5a45f888768a9d01e024558ec6e1aa7f313a2588211238c47"
+  },
+  "app_standby": {
+    "scope": "D03 60-second app standby, same installed ARM64 package as Doze receipt",
+    "samples": [
+      {
+        "label": "before",
+        "utc": "2026-09-07T17:19:30.734743+00:00",
+        "inactive": "Idle=false",
+        "service": true,
+        "foreground": true,
+        "tun_present": true,
+        "same_app_pid_as_baseline": true
+      },
+      {
+        "label": "standby_0s",
+        "utc": "2026-09-07T17:19:31.265861+00:00",
+        "inactive": "Idle=true",
+        "service": true,
+        "foreground": true,
+        "tun_present": true,
+        "same_app_pid_as_baseline": true
+      },
+      {
+        "label": "standby_30s",
+        "utc": "2026-09-07T17:20:01.608413+00:00",
+        "inactive": "Idle=true",
+        "service": true,
+        "foreground": true,
+        "tun_present": true,
+        "same_app_pid_as_baseline": true
+      },
+      {
+        "label": "standby_60s",
+        "utc": "2026-09-07T17:20:31.988639+00:00",
+        "inactive": "Idle=true",
+        "service": true,
+        "foreground": true,
+        "tun_present": true,
+        "same_app_pid_as_baseline": true
+      },
+      {
+        "label": "restored",
+        "utc": "2026-09-07T17:20:32.528166+00:00",
+        "inactive": "Idle=false",
+        "service": true,
+        "foreground": true,
+        "tun_present": true,
+        "same_app_pid_as_baseline": true
+      }
+    ],
+    "post_resume_fresh_protection": "PASS_APP_TUNNEL_DNS_EGRESS_AFTER_REFRESH"
+  },
+  "return_state": {
+    "utc": "2026-09-07T17:22:11.012522+00:00",
+    "deep": "ACTIVE",
+    "force": "false",
+    "inactive": "Idle=false",
+    "wifi_enabled": true,
+    "vpn_service": false
+  },
+  "limits": [
+    "current-origin physical Huawei ADA-AL00U Android12 SDK31; no RU geolocation attestation",
+    "forced idle with USB connected, not natural screen-off or energy baseline",
+    "D03 remains active: min/current API, OEM coverage, revoke/lockdown/process kill/reboot, endurance and final channel still require their own proof",
+    "Doze does not by itself prove external traffic carriage during idle"
+  ]
+}

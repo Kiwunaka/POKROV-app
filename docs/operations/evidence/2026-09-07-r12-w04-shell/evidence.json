@@ -1,0 +1,591 @@
+{
+  "schema": "r12-w04-shell-evidence-v1",
+  "date": "2026-09-07",
+  "scope": "local portable Windows UI on offline owned Win11 clone; not installer/SCM/managed VPN acceptance",
+  "source_commits": {
+    "startup_fix": "0f115d09db6baa3c0d8639b28be106c091948860",
+    "teardown_fix": "98c39d62442865b46a13c40092217f6ec71ee33b"
+  },
+  "core": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "vm_uuid": "d5ae2f7a-96c3-48b5-a2ba-5e009948ee27",
+  "api_fixture": "https://127.0.0.1:1",
+  "results": {
+    "startup_before": {
+      "vm": "d5ae2f7a-96c3-48b5-a2ba-5e009948ee27",
+      "session": 1,
+      "ui_sha256": "28c84cfd0e9b7fb59525981e5b743b57eaf6602f94f1814722345cd96664741a",
+      "samples": [
+        {
+          "label": "first_startup",
+          "window_exists": true,
+          "visible": false,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 6084
+        },
+        {
+          "label": "second_startup",
+          "window_exists": true,
+          "visible": true,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 6084
+        },
+        {
+          "label": "ordinary_activation",
+          "window_exists": true,
+          "visible": true,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 6084
+        }
+      ],
+      "second_startup_exit": 0,
+      "ordinary_exit": 0,
+      "error": null,
+      "hidden_startup_pass": true,
+      "repeated_hidden_pass": false,
+      "ordinary_activation_pass": true,
+      "ui_count_after": 2
+    },
+    "startup_after": {
+      "vm": "d5ae2f7a-96c3-48b5-a2ba-5e009948ee27",
+      "session": 1,
+      "ui_sha256": "633c523cef9fdf132523d2a0e613e4c6353bdadf16c8693a4794909294d320cc",
+      "samples": [
+        {
+          "label": "first_startup",
+          "window_exists": true,
+          "visible": false,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 2640
+        },
+        {
+          "label": "second_startup",
+          "window_exists": true,
+          "visible": false,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 2640
+        },
+        {
+          "label": "ordinary_activation",
+          "window_exists": true,
+          "visible": true,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 2640
+        },
+        {
+          "label": "startup_keeps_visible",
+          "window_exists": true,
+          "visible": true,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 2640
+        },
+        {
+          "label": "close_to_tray",
+          "window_exists": true,
+          "visible": false,
+          "foreground": false,
+          "ui_count": 1,
+          "pid": 2640
+        },
+        {
+          "label": "acquisition_overrides_startup",
+          "window_exists": true,
+          "visible": true,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 2640
+        }
+      ],
+      "second_startup_exit": 0,
+      "ordinary_exit": 0,
+      "error": null,
+      "hidden_startup_pass": true,
+      "repeated_hidden_pass": true,
+      "ordinary_activation_pass": true,
+      "startup_keeps_visible_pass": true,
+      "close_to_tray_pass": true,
+      "acquisition_activation_pass": true,
+      "ui_count_after": 0
+    },
+    "teardown_red": {
+      "vm": "d5ae2f7a-96c3-48b5-a2ba-5e009948ee27",
+      "session": 1,
+      "ui_sha256": "633c523cef9fdf132523d2a0e613e4c6353bdadf16c8693a4794909294d320cc",
+      "samples": [
+        {
+          "label": "first_startup",
+          "window_exists": true,
+          "visible": false,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 1052
+        },
+        {
+          "label": "second_startup",
+          "window_exists": true,
+          "visible": false,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 1052
+        },
+        {
+          "label": "ordinary_activation",
+          "window_exists": true,
+          "visible": true,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 1052
+        },
+        {
+          "label": "startup_keeps_visible",
+          "window_exists": true,
+          "visible": true,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 1052
+        },
+        {
+          "label": "close_to_tray",
+          "window_exists": true,
+          "visible": false,
+          "foreground": false,
+          "ui_count": 1,
+          "pid": 1052
+        },
+        {
+          "label": "acquisition_overrides_startup",
+          "window_exists": true,
+          "visible": true,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 1052
+        }
+      ],
+      "second_startup_exit": 0,
+      "ordinary_exit": 0,
+      "error": null,
+      "hidden_startup_pass": true,
+      "repeated_hidden_pass": true,
+      "ordinary_activation_pass": true,
+      "startup_keeps_visible_pass": true,
+      "close_to_tray_pass": true,
+      "acquisition_activation_pass": true,
+      "ui_count_after": 0,
+      "main_exit_code": -1073740771,
+      "clean_exit_pass": false
+    },
+    "teardown_green": {
+      "vm": "d5ae2f7a-96c3-48b5-a2ba-5e009948ee27",
+      "session": 1,
+      "ui_sha256": "04fa96b7c82a091b2afad8bbbddbc7bd2faa69ac527e2c054ec9f7258f0eeca5",
+      "samples": [
+        {
+          "label": "first_startup",
+          "window_exists": true,
+          "visible": false,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 6468
+        },
+        {
+          "label": "second_startup",
+          "window_exists": true,
+          "visible": false,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 6468
+        },
+        {
+          "label": "ordinary_activation",
+          "window_exists": true,
+          "visible": true,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 6468
+        },
+        {
+          "label": "startup_keeps_visible",
+          "window_exists": true,
+          "visible": true,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 6468
+        },
+        {
+          "label": "close_to_tray",
+          "window_exists": true,
+          "visible": false,
+          "foreground": false,
+          "ui_count": 1,
+          "pid": 6468
+        },
+        {
+          "label": "acquisition_overrides_startup",
+          "window_exists": true,
+          "visible": true,
+          "foreground": true,
+          "ui_count": 1,
+          "pid": 6468
+        }
+      ],
+      "second_startup_exit": 0,
+      "ordinary_exit": 0,
+      "error": null,
+      "hidden_startup_pass": true,
+      "repeated_hidden_pass": true,
+      "ordinary_activation_pass": true,
+      "startup_keeps_visible_pass": true,
+      "close_to_tray_pass": true,
+      "acquisition_activation_pass": true,
+      "ui_count_after": 0,
+      "main_exit_code": 0,
+      "clean_exit_pass": true
+    },
+    "tray_exit": {
+      "exited": true,
+      "pid": 6404,
+      "utc": "2026-09-07T19:06:50.6462143Z",
+      "action": "hypervisor mouse click of visible tray Exit",
+      "exit_code": 0
+    },
+    "event_check": {
+      "events": [
+        {
+          "utc": "2026-09-07T18:45:27.4444235Z",
+          "module": "flutter_windows.dll",
+          "exception": "c000041d",
+          "process": 1052
+        },
+        {
+          "utc": "2026-09-07T18:45:24.9124345Z",
+          "module": "flutter_windows.dll",
+          "exception": "c0000005",
+          "process": 1052
+        },
+        {
+          "utc": "2026-09-07T17:55:09.6834406Z",
+          "module": "flutter_windows.dll",
+          "exception": "c000041d",
+          "process": 2812
+        },
+        {
+          "utc": "2026-09-07T17:55:08.1338561Z",
+          "module": "flutter_windows.dll",
+          "exception": "c0000005",
+          "process": 2812
+        },
+        {
+          "utc": "2026-09-07T17:44:31.8632483Z",
+          "module": "flutter_windows.dll",
+          "exception": "c000041d",
+          "process": 4720
+        },
+        {
+          "utc": "2026-09-07T17:44:30.7245823Z",
+          "module": "flutter_windows.dll",
+          "exception": "c0000005",
+          "process": 4720
+        },
+        {
+          "utc": "2026-09-07T17:42:45.2710443Z",
+          "module": "flutter_windows.dll",
+          "exception": "c000041d",
+          "process": 3044
+        },
+        {
+          "utc": "2026-09-07T17:42:44.4433697Z",
+          "module": "flutter_windows.dll",
+          "exception": "c0000005",
+          "process": 3044
+        },
+        {
+          "utc": "2026-09-07T17:39:43.2907040Z",
+          "module": "flutter_windows.dll",
+          "exception": "c000041d",
+          "process": 5848
+        },
+        {
+          "utc": "2026-09-07T17:39:42.7095783Z",
+          "module": "flutter_windows.dll",
+          "exception": "c0000005",
+          "process": 5848
+        },
+        {
+          "utc": "2026-09-07T17:37:06.1652355Z",
+          "module": "flutter_windows.dll",
+          "exception": "c000041d",
+          "process": 2640
+        },
+        {
+          "utc": "2026-09-07T17:37:05.4986819Z",
+          "module": "flutter_windows.dll",
+          "exception": "c0000005",
+          "process": 2640
+        },
+        {
+          "utc": "2026-09-07T17:32:38.4031848Z",
+          "module": "flutter_windows.dll",
+          "exception": "c000041d",
+          "process": 6084
+        },
+        {
+          "utc": "2026-09-07T17:32:37.1361241Z",
+          "module": "flutter_windows.dll",
+          "exception": "c0000005",
+          "process": 6084
+        }
+      ],
+      "green_pid": "0x1944",
+      "red_pid": "0x41c",
+      "green_count": 0,
+      "red_count": 2
+    },
+    "final_state": {
+      "utc": "2026-09-07T19:08:13.7072992Z",
+      "ui_count": 0,
+      "service_count": 0,
+      "up_adapters": 0,
+      "tray_crash_count": 0,
+      "fixture_tasks_remaining": 0,
+      "run_absent": true
+    }
+  },
+  "artifacts": [
+    {
+      "path": "E:\\r12-w04-20260907\\before-bundle.json",
+      "sha256": "6821dbd55e14c5d5f2580c4aec83fbff90db28cdcc08dac72479dc130650f9bb",
+      "bytes": 39946
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\after-bundle.json",
+      "sha256": "10e6bfc23cd754b011b58086a861e1eadc7fc26e8dfbb7e44c6287116ce971f1",
+      "bytes": 40109
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\before-result.json",
+      "sha256": "874b25f3b430f0f7b822d73eb74a1d36f28cf195686508d725f17fb5e67a332b",
+      "bytes": 1379
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\after-result.json",
+      "sha256": "9b2e15aae0a32c59daa2d157fa5b8e774fa18bc69aa895871b79c7cf26478780",
+      "bytes": 2472
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\probe-hidden-startup-v3.ps1",
+      "sha256": "a2b00a90b39671e765d64a786e4cc6f08bebea52fc62e974796716182afc8086",
+      "bytes": 5565
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\teardown-red-result.json",
+      "sha256": "bbeff380b5241cdd11c7a31f571a289655915808ebd1076f298b553c32d92c4a",
+      "bytes": 2541
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\teardown-v2-result.json",
+      "sha256": "4cd6edf1ff3834f59b6afa086693f6ea62867c0001685d39c3b998cea63cd7de",
+      "bytes": 2530
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\teardown-event-check.json",
+      "sha256": "b0d169dba26ba69bad61819fd5fc7c96dee0687f3c61a2abec5c08ddb32d30d0",
+      "bytes": 3754
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\teardown-v2-manifest.json",
+      "sha256": "d043aa89b0faa941e55ceeea517ee98278cc47dc6f72984279b4ee8b71ad521f",
+      "bytes": 39925
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\teardown-bundle-v2.zip",
+      "sha256": "001c784167c5c7d48632b85588764e953d622c1331da46e57eb2f3f94ac2ada8",
+      "bytes": 40330876
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\tray-fixed-start.json",
+      "sha256": "31ad2687671da18445bcd30a11cf94e584e50802d5f2618752e3711258e565d9",
+      "bytes": 153
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\tray-fixed-result.json",
+      "sha256": "50a30844dc2bf4112556b84c916a195933b8f2386a85b008066bb7aee7e59941",
+      "bytes": 117
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\tray-fixed-observed-exit.json",
+      "sha256": "0bd1d605d7197d0bf80ad8daf6ccebfb321791a9ae049492e18b19835e3b53c9",
+      "bytes": 160
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\tray-fixed-keyboard-exit-result.json",
+      "sha256": "001fcc5f9859cc66140b80e11251dcb143b8c26e19dc1d6941d0e89c2c186cbb",
+      "bytes": 161
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\tray-fixed-com-exit.json",
+      "sha256": "a22b2f13b077bdc7e584b8e372ec15b07a677c3d5fda6b3a4f4b84d65d29accb",
+      "bytes": 176
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\tray-fixed-com-before.png",
+      "sha256": "2549cd76e0b3984a966274dcb08d66eb13dacb0fd3d58d53fcd9aadbe52bd33f",
+      "bytes": 100527
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\tray-fixed-com-after.png",
+      "sha256": "f181577e228934c4f839661b3622090eef29151950d5a73a8eabfcd6f4d9ff70",
+      "bytes": 600654
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\w04-final-state.json",
+      "sha256": "f00321f9286aa9dd2037dc6c75daf6f136ffb388c64c03a31afadab17032e7b7",
+      "bytes": 212
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\run-key-on.json",
+      "sha256": "770707953d722a3b095b435417764e7063c51e61bc41d5581b70a3c8dac09d3c",
+      "bytes": 82
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\run-key-off.json",
+      "sha256": "a80cc9f7bbba2138d184ddbdbd2db9827c1b8e258d5f77a67dd3537114ee6136",
+      "bytes": 58
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\final-state-confirmed.json",
+      "sha256": "04fae734cd8778066eef0b989cf0f37c49563a0160a0d20df306e1ca1e3183f4",
+      "bytes": 160
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\preferences-result-v2.json",
+      "sha256": "a520b16ae571ef0eb4b09702bd96baf19c69082b5fb45a1ca5c58caf2f181a1f",
+      "bytes": 408
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\R12W04TrayOpen20260907.xml",
+      "sha256": "d5489b6d47f3eced5efbcea46eea9af696e19b12a5f03e8a95cad62e855fe0f6",
+      "bytes": 1203
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\R12W04TrayExit20260907.xml",
+      "sha256": "53c2d4274246ff19532bf41253e809fedcdd85c7901042d5a4b0b27e976b7f31",
+      "bytes": 1184
+    },
+    {
+      "path": "E:\\r12-w04-before-build.log",
+      "sha256": "a7445de982c059d937f49ef62c2aa87994f6f333c0d6eef0c1129e3acd7c5349",
+      "bytes": 137
+    },
+    {
+      "path": "E:\\r12-w04-after-build.log",
+      "sha256": "bfbdc14ec92d2c9bfbb6371837cfc00638cf0a7d2bf66c4d05360bff2ba94206",
+      "bytes": 137
+    },
+    {
+      "path": "E:\\r12-w04-teardown-build.log",
+      "sha256": "7645f90fbf86176d4e6bc968d121735275d5b2bd7ca43607a0b6f099ac326313",
+      "bytes": 137
+    },
+    {
+      "path": "E:\\r12-w04-activation-ctest.log",
+      "sha256": "d07dce1fe894a46e3322d7f6dadb2589c9d752cc71be535a04e13b37487ed45c",
+      "bytes": 351
+    },
+    {
+      "path": "E:\\r12-w04-flutter-tests.log",
+      "sha256": "763805f65702db8a8d32dc197bb33c9e65031ce0cefa6809107f688c6554f2df",
+      "bytes": 3057
+    },
+    {
+      "path": "E:\\r12-w04-teardown-flutter-tests.log",
+      "sha256": "d44c3c130486e31ded3a856e2e3da30b36c73dec0e8a673e2ece41ab453c991a",
+      "bytes": 3100
+    },
+    {
+      "path": "E:\\r12-w04-teardown-analyze.log",
+      "sha256": "9aa64b43b1c6d4cb787d79904bbd497d53a2ec9ea1344cccabc7bdebc863f84c",
+      "bytes": 98
+    },
+    {
+      "path": "E:\\r12-w04-teardown-seed.log",
+      "sha256": "31f544019d31e729768be2e0313c2e237a229c2f69ea7a70d8f65bb7bd6e2408",
+      "bytes": 1273
+    },
+    {
+      "path": "E:\\r12-w04-teardown-seed-final.log",
+      "sha256": "0b94c1058ae8690c3042780a55444c96488ad4cbb49b789cceb1d493a915ec9b",
+      "bytes": 1817
+    },
+    {
+      "path": "E:\\r12-w04-20260907\\w04-os-readback.json",
+      "sha256": "f513d2e70394ee33259222d9fbb645deccf8a51f39d383397b31821bcf8ec455",
+      "bytes": 165
+    }
+  ],
+  "checks": {
+    "windows_flutter_tests": 24,
+    "windows_flutter_analyze": "PASS",
+    "native_activation_ctest": "PASS 1/1",
+    "seed_pwsh": "PASS"
+  },
+  "rejected_collectors": [
+    "Initial teardown archive omitted CRT DLLs; complete v2 adds exactly the three existing CRT DLLs.",
+    "PowerShell 5.1 seed invocation failed on unavailable SHA256.HashData; PowerShell Core rerun passed.",
+    "Preferences UIA collector failed to find action; later actual UI toggles have independent Run-key snapshots.",
+    "Early tray mouse/keyboard dispatches did not activate Exit; timeout receipts retained. Actual hypervisor click reached Exit and returned code 0."
+  ],
+  "remaining": [
+    "final installer and channel",
+    "SCM and connected shutdown/proxy restoration",
+    "actual login boot with autostart",
+    "Windows 10 and full W01-W06 matrix"
+  ],
+  "os_readback": {
+    "version": "10.0.26200",
+    "architecture": "64-bit",
+    "vm": "d5ae2f7a-96c3-48b5-a2ba-5e009948ee27",
+    "utc": "2026-09-07T19:14:03.5255018Z"
+  },
+  "bundle_comparison": {
+    "same_305_file_set": true,
+    "changed_from_startup_fix_bundle": [
+      "pokrov_windows.exe"
+    ],
+    "all_other_304_files_byte_identical": true
+  },
+  "final_validation": {
+    "platform_docs": "33 PASS",
+    "platform_context_audit": "PASS",
+    "package": "13 imports / 83 R12 / 378 legacy / 275 links PASS",
+    "client_seed_and_docs": "PASS under pwsh",
+    "git_diff_check": "PASS",
+    "artifacts": [
+      {
+        "path": "E:\\r12-w04-final-platform-docs.log",
+        "sha256": "c6cf873946abb2b3c4162f1e037384e5dbbac1a46cf534489c159dc81dc4c0d2",
+        "bytes": 101
+      },
+      {
+        "path": "E:\\r12-w04-final-platform-audit.log",
+        "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d",
+        "bytes": 23
+      },
+      {
+        "path": "E:\\r12-w04-final-package.log",
+        "sha256": "8695345b8bdceee73d23d005884c6f3efa2f9f1dfa29863d0663c17f05594a1e",
+        "bytes": 109
+      },
+      {
+        "path": "E:\\r12-w04-final-client-docs.log",
+        "sha256": "49caecd67bae46ff13d1ff673c46524d60509c2e533fdde4314b649b400e36f7",
+        "bytes": 1817
+      }
+    ]
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "generated_at_utc": "2026-09-08T12:55:39.2737734Z",
+  "display_name": "POKROV",
+  "version": "1.2.0+4053",
+  "runtime_release_tag": "v1.1.0",
+  "release_output_directory": "P:\\apps\\windows_shell\\build\\windows\\x64\\runner\\Release",
+  "staged_bundle_directory": "P:\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053",
+  "zip_path": null,
+  "installer_path": "P:\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053-setup.exe",
+  "installer_sha256": "F44486C3AE32AC5C3020E9B76C997902C202084076CB7954BC0678D5805F676D",
+  "signing": {
+    "status": "SKIPPED_BY_OWNER",
+    "contract": "AUTHENTICODE_SHA256_RFC3161_HTTPS_V1",
+    "blocker_code": "OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_2_0",
+    "required_for_candidate": false,
+    "required_for_trusted_claim": true,
+    "requested": false,
+    "certificate_store_location": null,
+    "expected_subject": null,
+    "signer_thumbprint_sha1": null,
+    "signer_certificate_sha256": null,
+    "timestamp_url": null,
+    "owner_exception": {
+      "status": "SKIPPED_BY_OWNER",
+      "authorized_on": "2026-08-24",
+      "version_scope": "1.2.0",
+      "channel_scope": "outside_store_beta",
+      "distribution_scope": "direct_download_only",
+      "trusted_claim_allowed": false,
+      "store_claim_allowed": false,
+      "smartscreen_warning_required": true,
+      "expires_when_trusted_signing_is_available": true
+    },
+    "user_warning": "Windows may show a Microsoft Defender SmartScreen or unknown-publisher warning because this direct-download build is not trusted-signed yet.",
+    "targets": []
+  },
+  "app_local_msvc_runtime": {
+    "deployment": "app_local",
+    "architecture": "x64",
+    "toolset_directory": "Microsoft.VC143.CRT",
+    "files": [
+      {
+        "path": "msvcp140.dll",
+        "product_version": "14.42.34433.0",
+        "sha256": "9057D39B36B6C7D054865EE2BF9CDE7A490FE3B01EC4E82514687E24F576269F"
+      },
+      {
+        "path": "vcruntime140.dll",
+        "product_version": "14.42.34433.0",
+        "sha256": "DA72E6677BD1BCD01C453C1998AAA19AEAF6659F4774CF6848409DA8232A95B2"
+      },
+      {
+        "path": "vcruntime140_1.dll",
+        "product_version": "14.42.34433.0",
+        "sha256": "26E470B29BED3D873E0C328186E53F95E9EDBFE0B0FD0CDA44743A0B1A04A828"
+      }
+    ]
+  },
+  "executable": {
+    "file_name": "pokrov_windows.exe",
+    "file_description": "POKROV",
+    "product_name": "POKROV",
+    "product_version": "1.2.0+4053",
+    "is_prerelease": false
+  },
+  "required_files": [
+    {
+      "path": "pokrov_windows.exe",
+      "size_bytes": 225792,
+      "sha256": "838C25CEDD3AA01DBE1B4EB75AF6DF72187ECA462CC9D2888A49451E4889A4D2"
+    },
+    {
+      "path": "pokrov_service.exe",
+      "size_bytes": 207360,
+      "sha256": "D106F77421ECA9CA23B14F1B223C21576B3D6E0EC9EE6FA476A6452ADA88339F"
+    },
+    {
+      "path": "flutter_windows.dll",
+      "size_bytes": 18511872,
+      "sha256": "1F4215E1072DD9E34F4565B74310E6771364E1470C7E92214BCA64947BD012A1"
+    },
+    {
+      "path": "pokrov-core.dll",
+      "size_bytes": 55451648,
+      "sha256": "0409DA4762C56234C38F7B60AC5FE8B49D4131C4A4DEBEDF3EF313AEBE8D0371"
+    },
+    {
+      "path": "libcronet.dll",
+      "size_bytes": 8596992,
+      "sha256": "8EF1F8BBDE77F954AF1AE47BEE1819AC8DC2354BB0E1D4BABA3DAD9E58D7A6F7"
+    },
+    {
+      "path": "msvcp140.dll",
+      "size_bytes": 575592,
+      "sha256": "9057D39B36B6C7D054865EE2BF9CDE7A490FE3B01EC4E82514687E24F576269F"
+    },
+    {
+      "path": "vcruntime140.dll",
+      "size_bytes": 120432,
+      "sha256": "DA72E6677BD1BCD01C453C1998AAA19AEAF6659F4774CF6848409DA8232A95B2"
+    },
+    {
+      "path": "vcruntime140_1.dll",
+      "size_bytes": 49744,
+      "sha256": "26E470B29BED3D873E0C328186E53F95E9EDBFE0B0FD0CDA44743A0B1A04A828"
+    },
+    {
+      "path": "pokrov_tray.ico",
+      "size_bytes": 110013,
+      "sha256": "9EEA4EFF6F980EDDA2B9C61F3D86FA63E6349BED23BC83E09D5FBB3274D9575D"
+    },
+    {
+      "path": "data/app.so",
+      "size_bytes": 8995760,
+      "sha256": "287BC73D434EC98E6B1FF537BE4BC415D3C7AFD66754E414FDD7FE0A7077328A"
+    },
+    {
+      "path": "data/icudtl.dat",
+      "size_bytes": 778864,
+      "sha256": "C12537022EF818991A7BFED41A76D8D6AE962FFBC0E6511AC762A5D0845E7F7C"
+    }
+  ],
+  "safe_claims": [
+    "The ordinary Windows UI uses the authenticated POKROVService runtime lane and does not load POKROV Core directly.",
+    "This exact setup bundles the pinned POKROV Core 1.1.0 bytes, libcronet.dll dependency, the required x64 Microsoft VC143 runtime DLLs, and pokrov_service.exe in one machine-wide installation directory.",
+    "The installer performs the one-time administrative SCM registration; the ordinary UI does not receive privileged file, path, or shell execution.",
+    "The exact 1.2.0 owner exception permits an unsigned direct-download beta candidate only when its manifest records SKIPPED_BY_OWNER and the SmartScreen warning above; it does not permit a trusted, signed, Store or broad-stable claim.",
+    "Trusted signing accepts no PFX path or password: the private key remains in the selected Windows certificate store and only public certificate and timestamp evidence enters the manifest.",
+    "Retained candidate.8 evidence covers owner-current-host install, exact 8-file readback, LocalSystem service, authenticated IPC, restart, uninstall, and unchanged idle route/DNS for those older bytes only; it is not proof for this manifest's candidate, a clean VM, or connected-network behavior."
+  ],
+  "blocked_on": [
+    "trusted Windows signing remains required before any trusted, signed, Store or broad-stable Windows claim",
+    "exact-candidate clean-host install, TUN, DNS, egress, recovery and uninstall proof remains manual"
+  ]
+}

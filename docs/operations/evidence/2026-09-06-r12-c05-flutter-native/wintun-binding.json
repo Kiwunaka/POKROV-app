@@ -1,0 +1,21 @@
+{
+  "component": "Wintun prebuilt amd64",
+  "version": "0.14.1",
+  "download_url": "https://www.wintun.net/builds/wintun-0.14.1.zip",
+  "archive_sha256": "07c256185d6ee3652e09fa55c0b673e2624b565e02c4b9091c79ca7d2f24ef51",
+  "native_bytes": 427552,
+  "native_sha256": "e5da8447dc2c320edc0fc52fa01885c103de8c118481f683643cacc3220dafce",
+  "selected_module_file": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\sing-tun@v0.8.0-beta.17\\internal\\wintun\\amd64\\wintun.dll",
+  "module": "github.com/sagernet/sing-tun@v0.8.0-beta.17",
+  "module_file_matches_official_binary": true,
+  "parent_file": "E:\\r12client\\apps\\windows_shell\\windows\\runner\\resources\\runtime\\pokrov-core.dll",
+  "parent_sha256": "c679ba5af42939acbc8c6f44af59b4608f6a76c99e0d444cfa4bcc825bcc8e68",
+  "exact_embedded_offset": 25050912,
+  "exact_embedded_matches": 1,
+  "license_file": "wintun/LICENSE.txt",
+  "license_bytes": 5431,
+  "license_sha256": "183adac21e7d96c508c8fd34d394b7b6708bc81564ad1bad61ab66143a008cd2",
+  "license_class": "Wintun Prebuilt Binaries License; distinct from source GPL-2.0 and wrapper MIT",
+  "license_present_in_current_native_go_notices": false,
+  "scope": "Static bytes and license origin; not an API-use/redistribution compatibility decision, driver installation or runtime proof."
+}

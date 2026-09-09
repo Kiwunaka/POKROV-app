@@ -76,7 +76,7 @@ internal object AndroidNodeLatencyProbe {
         }
     }
 
-    private fun selectUnderlyingNetwork(connectivityManager: ConnectivityManager): Network? {
+    internal fun selectUnderlyingNetwork(connectivityManager: ConnectivityManager): Network? {
         fun capabilities(network: Network): NetworkCapabilities? =
             connectivityManager.getNetworkCapabilities(network)
 

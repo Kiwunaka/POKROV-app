@@ -9,19 +9,26 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <atomic>
+#include <thread>
 
 #include "service_protocol.h"
 #include "service_events.h"
 #include "service_runtime.h"
 #include "service_security.h"
+#include "service_dispatcher.h"
 #include "windows_crash_profile.h"
 
 namespace pokrov::service {
 namespace {
 
 constexpr std::uint64_t kServiceCapabilities =
-    kCapabilityProtocolV1 | kCapabilityStatus | kCapabilityRuntimeControl;
+    kCapabilityProtocolV1 | kCapabilityStatus | kCapabilityRuntimeControl |
+    kCapabilityProfileIdentity | kCapabilityCancellation;
 constexpr std::uint64_t kMaximumDeadlineLeadMs = 5 * 60 * 1000;
+// Release a stalled session before the normal client's five-second pipe
+// acquisition budget expires. Header and body share one transfer deadline.
+constexpr ULONGLONG kFrameTransferTimeoutMs = 3000;
 
 std::uint64_t UnixTimeMilliseconds() {
   FILETIME file_time{};
@@ -43,10 +50,10 @@ bool GenerateIdentifier(Identifier* output) {
 }
 
 bool WaitForIo(HANDLE pipe, HANDLE stop_event, OVERLAPPED* overlapped,
-               DWORD* transferred) {
+               DWORD* transferred, DWORD timeout_ms = INFINITE) {
   const HANDLE waits[] = {stop_event, overlapped->hEvent};
-  const DWORD wait = ::WaitForMultipleObjects(2, waits, FALSE, INFINITE);
-  if (wait == WAIT_OBJECT_0) {
+  const DWORD wait = ::WaitForMultipleObjects(2, waits, FALSE, timeout_ms);
+  if (wait != WAIT_OBJECT_0 + 1) {
     ::CancelIoEx(pipe, overlapped);
     ::GetOverlappedResult(pipe, overlapped, transferred, TRUE);
     return false;
@@ -56,10 +63,14 @@ bool WaitForIo(HANDLE pipe, HANDLE stop_event, OVERLAPPED* overlapped,
 }
 
 bool TransferExact(HANDLE pipe, HANDLE stop_event, void* buffer,
-                   std::size_t size, bool write) {
+                   std::size_t size, bool write, ULONGLONG deadline) {
   auto* bytes = static_cast<std::uint8_t*>(buffer);
   std::size_t offset = 0;
   while (offset < size) {
+    const auto now = ::GetTickCount64();
+    if (now >= deadline) {
+      return false;
+    }
     OVERLAPPED overlapped{};
     overlapped.hEvent = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
     if (overlapped.hEvent == nullptr) {
@@ -74,7 +85,8 @@ bool TransferExact(HANDLE pipe, HANDLE stop_event, void* buffer,
                            &overlapped);
     bool success = completed != FALSE;
     if (!success && ::GetLastError() == ERROR_IO_PENDING) {
-      success = WaitForIo(pipe, stop_event, &overlapped, &transferred);
+      success = WaitForIo(pipe, stop_event, &overlapped, &transferred,
+                           static_cast<DWORD>(deadline - now));
     }
     ::CloseHandle(overlapped.hEvent);
     if (!success || transferred == 0) {
@@ -86,8 +98,10 @@ bool TransferExact(HANDLE pipe, HANDLE stop_event, void* buffer,
 }
 
 std::optional<Frame> ReadFrame(HANDLE pipe, HANDLE stop_event) {
+  const auto deadline = ::GetTickCount64() + kFrameTransferTimeoutMs;
   std::array<std::uint8_t, kFrameHeaderSize> header{};
-  if (!TransferExact(pipe, stop_event, header.data(), header.size(), false)) {
+  if (!TransferExact(pipe, stop_event, header.data(), header.size(), false,
+                      deadline)) {
     return std::nullopt;
   }
   const auto expected = ExpectedFrameSize(header.data(), header.size());
@@ -98,7 +112,7 @@ std::optional<Frame> ReadFrame(HANDLE pipe, HANDLE stop_event) {
   std::copy(header.begin(), header.end(), bytes.begin());
   if (bytes.size() > header.size() &&
       !TransferExact(pipe, stop_event, bytes.data() + header.size(),
-                     bytes.size() - header.size(), false)) {
+                     bytes.size() - header.size(), false, deadline)) {
     return std::nullopt;
   }
   return Decode(bytes.data(), bytes.size());
@@ -107,7 +121,8 @@ std::optional<Frame> ReadFrame(HANDLE pipe, HANDLE stop_event) {
 bool WriteFrame(HANDLE pipe, HANDLE stop_event, const Frame& frame) {
   auto bytes = Encode(frame);
   return !bytes.empty() &&
-         TransferExact(pipe, stop_event, bytes.data(), bytes.size(), true);
+         TransferExact(pipe, stop_event, bytes.data(), bytes.size(), true,
+                         ::GetTickCount64() + kFrameTransferTimeoutMs);
 }
 
 bool ConnectClient(HANDLE pipe, HANDLE stop_event) {
@@ -143,7 +158,7 @@ Frame ResponseFor(const Frame& request, Status status,
 }
 
 bool ProcessClient(HANDLE pipe, HANDLE stop_event,
-                   const std::wstring& owner_sid, RuntimeHost* runtime,
+                   const std::wstring& owner_sid, RuntimeDispatcher* dispatcher,
                    bool* authorized, ServiceEventSink* events) {
   const auto hello = ReadFrame(pipe, stop_event);
   *authorized = AuthorizeNamedPipeCaller(pipe, owner_sid);
@@ -174,7 +189,9 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
   }
   const bool compatible =
       (hello->capabilities & kCapabilityProtocolV1) != 0 &&
-      (hello->capabilities & kCapabilityStatus) != 0;
+      (hello->capabilities & kCapabilityStatus) != 0 &&
+      (hello->capabilities & kCapabilityProfileIdentity) != 0 &&
+      (hello->capabilities & kCapabilityCancellation) != 0;
   const auto negotiated_capabilities =
       hello->capabilities & kServiceCapabilities;
   const auto hello_response = ResponseFor(
@@ -184,8 +201,14 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
     events->RecordIpcResponse(hello->command, hello_response.status,
                               hello->correlation_id);
   }
-  if (!WriteFrame(pipe, stop_event, hello_response) || !compatible) {
-    return compatible;
+  if (!WriteFrame(pipe, stop_event, hello_response)) {
+    return false;
+  }
+  if (!compatible) {
+    // Let the peer consume the rejection and close, within the same bounded
+    // idle-read policy. No follow-up command from this session is executed.
+    ReadFrame(pipe, stop_event);
+    return false;
   }
 
   std::vector<Identifier> used_nonces;
@@ -208,6 +231,7 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
 
     Status status = Status::kOk;
     std::string body;
+    const auto monotonic_now = ::GetTickCount64();
     const auto now = UnixTimeMilliseconds();
     if (request->session_token != session_token) {
       status = Status::kUnauthorized;
@@ -232,39 +256,22 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
           request->command == Command::kStageProfile ||
           request->command == Command::kInvalidateProfile ||
           request->command == Command::kConnect ||
+          request->command == Command::kCancel ||
           request->command == Command::kDisconnect;
-      if (runtime == nullptr) {
+      if (dispatcher == nullptr) {
         status = Status::kNotReady;
         body = "runtime_not_owned";
       } else if (runtime_command &&
                  (negotiated_capabilities & kCapabilityRuntimeControl) == 0) {
         status = Status::kUnsupported;
         body = "runtime_capability_required";
+      } else if (request->command == Command::kCancel &&
+                 (negotiated_capabilities & kCapabilityCancellation) == 0) {
+        status = Status::kUnsupported;
+        body = "cancellation_capability_required";
       } else {
-        RuntimeResult result;
-        switch (request->command) {
-          case Command::kStatus:
-            result = runtime->Snapshot();
-            break;
-          case Command::kInitialize:
-            result = runtime->Initialize();
-            break;
-          case Command::kStageProfile:
-            result = runtime->StageProfile(request->body);
-            break;
-          case Command::kInvalidateProfile:
-            result = runtime->InvalidateProfile();
-            break;
-          case Command::kConnect:
-            result = runtime->Connect();
-            break;
-          case Command::kDisconnect:
-            result = runtime->Disconnect();
-            break;
-          default:
-            result = RuntimeResult{Status::kNotReady, "runtime_not_owned"};
-            break;
-        }
+        auto result = dispatcher->Execute(*request, stop_event,
+            monotonic_now + request->deadline_unix_ms - now);
         status = result.status;
         body = std::move(result.body);
       }
@@ -282,7 +289,104 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
   return true;
 }
 
+DWORD ServeClients(const std::wstring& pipe_name, const std::wstring& owner_sid,
+                   HANDLE stop_event, std::size_t test_client_limit,
+                   ServiceEventSink* events, RuntimeHost* runtime) {
+  PipeSecurity security;
+  if (!security.Initialize(owner_sid)) return ERROR_INVALID_SECURITY_DESCR;
+  RuntimeDispatcher dispatcher(runtime);
+  struct ClientThread {
+    std::thread thread;
+    std::atomic<bool> done{false};
+    DWORD result = ERROR_SUCCESS;
+    std::size_t index = 0;
+  };
+  constexpr std::size_t kMaximumClients = 8;
+  std::vector<std::unique_ptr<ClientThread>> clients;
+  std::size_t accepted = 0;
+  DWORD server_result = ERROR_SUCCESS;
+  DWORD last_client_result = ERROR_SUCCESS;
+  std::size_t last_client_index = 0;
+  const auto join = [&](ClientThread& client) {
+    client.thread.join();
+    if (client.index >= last_client_index) {
+      last_client_index = client.index;
+      last_client_result = client.result;
+    }
+  };
+  while (::WaitForSingleObject(stop_event, 0) != WAIT_OBJECT_0 &&
+         (test_client_limit == 0 || accepted < test_client_limit)) {
+    for (auto iterator = clients.begin(); iterator != clients.end();) {
+      if ((*iterator)->done) {
+        join(**iterator);
+        iterator = clients.erase(iterator);
+      } else {
+        ++iterator;
+      }
+    }
+    if (clients.size() == kMaximumClients) {
+      ::WaitForSingleObject(stop_event, 25);
+      continue;
+    }
+    const HANDLE pipe = ::CreateNamedPipeW(
+        pipe_name.c_str(), PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+        PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS,
+        static_cast<DWORD>(kMaximumClients), static_cast<DWORD>(kMaxFrameSize),
+        static_cast<DWORD>(kMaxFrameSize), 0, security.attributes());
+    if (pipe == INVALID_HANDLE_VALUE) {
+      server_result = ::GetLastError();
+      ::SetEvent(stop_event);
+      break;
+    }
+    if (!ConnectClient(pipe, stop_event)) {
+      server_result = ::WaitForSingleObject(stop_event, 0) == WAIT_OBJECT_0
+                          ? ERROR_SUCCESS : ::GetLastError();
+      ::CloseHandle(pipe);
+      ::SetEvent(stop_event);
+      break;
+    }
+    auto client = std::make_unique<ClientThread>();
+    client->index = ++accepted;
+    auto* state = client.get();
+    try {
+      state->thread = std::thread([&, pipe, state] {
+        bool authorized = false;
+        const bool processed = ProcessClient(pipe, stop_event, owner_sid,
+                                             &dispatcher, &authorized, events);
+        ::DisconnectNamedPipe(pipe);
+        ::CloseHandle(pipe);
+        if (authorized && events != nullptr) {
+          events->Record(ServiceEvent::kIpcSessionClosed, ServiceEventOutcome::kSucceeded);
+        }
+        state->result = !authorized ? ERROR_ACCESS_DENIED
+                         : !processed ? ERROR_INVALID_DATA : ERROR_SUCCESS;
+        state->done = true;
+      });
+    } catch (const std::system_error&) {
+      ::DisconnectNamedPipe(pipe);
+      ::CloseHandle(pipe);
+      server_result = ERROR_NOT_ENOUGH_MEMORY;
+      ::SetEvent(stop_event);
+      break;
+    }
+    clients.push_back(std::move(client));
+  }
+  for (auto& client : clients) join(*client);
+  return server_result != ERROR_SUCCESS ? server_result
+         : test_client_limit != 0 ? last_client_result : ERROR_SUCCESS;
+}
+
 }  // namespace
+
+#ifdef _DEBUG
+DWORD RunPipeServerForTest(const std::wstring& pipe_name,
+                          const std::wstring& owner_sid, HANDLE stop_event,
+                          RuntimeHost* runtime) {
+  if (pipe_name.rfind(kTestPipePrefix, 0) != 0 || owner_sid.empty() ||
+      stop_event == nullptr || runtime == nullptr) return ERROR_INVALID_PARAMETER;
+  return ServeClients(pipe_name, owner_sid, stop_event, 0, nullptr, runtime);
+}
+#endif
 
 DWORD RunPipeServer(const std::wstring& pipe_name,
                     const std::wstring& owner_sid, HANDLE stop_event,
@@ -297,70 +401,23 @@ DWORD RunPipeServer(const std::wstring& pipe_name,
     return ERROR_INVALID_SECURITY_DESCR;
   }
 
-  const auto runtime_root = ResolveServiceRuntimeRoot();
+  // Bounded debug IPC fixtures must not open the installed recovery journal.
+  const auto runtime_root = test_client_limit == 0
+                                ? ResolveServiceRuntimeRoot()
+                                : std::wstring{};
   auto core = CreateInstalledCoreRuntime();
   pokrov::windows_crash::RefreshWindowsCrashProfileModules();
   RuntimeHost runtime(std::move(core),
                       CreateAuthenticatedEgressProbe(),
-                      CreateRuntimeRecovery(runtime_root), runtime_root, true,
+                      test_client_limit == 0
+                          ? CreateRuntimeRecovery(runtime_root) : nullptr,
+                      runtime_root, true,
                       events);
   runtime.RecoverOnStartup();
-  std::size_t processed_client_count = 0;
-  do {
-    const HANDLE pipe = ::CreateNamedPipeW(
-        pipe_name.c_str(), PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-        PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT |
-            PIPE_REJECT_REMOTE_CLIENTS,
-        1, static_cast<DWORD>(kMaxFrameSize),
-        static_cast<DWORD>(kMaxFrameSize), 0, security.attributes());
-    if (pipe == INVALID_HANDLE_VALUE) {
-      return ::GetLastError();
-    }
-
-    if (!ConnectClient(pipe, stop_event)) {
-      const DWORD result =
-          ::WaitForSingleObject(stop_event, 0) == WAIT_OBJECT_0
-              ? ERROR_SUCCESS
-              : ::GetLastError();
-      ::CloseHandle(pipe);
-      return result;
-    }
-
-    bool authorized = false;
-    const bool processed = ProcessClient(pipe, stop_event, owner_sid,
-                                         &runtime, &authorized, events);
-    ::FlushFileBuffers(pipe);
-    ::DisconnectNamedPipe(pipe);
-    ::CloseHandle(pipe);
-    if (::WaitForSingleObject(stop_event, 0) == WAIT_OBJECT_0) {
-      break;
-    }
-    ++processed_client_count;
-    if (authorized && events != nullptr) {
-      events->Record(ServiceEvent::kIpcSessionClosed,
-                     ServiceEventOutcome::kSucceeded);
-    }
-    if (!authorized) {
-      if (test_client_limit != 0 &&
-          processed_client_count >= test_client_limit) {
-        return ERROR_ACCESS_DENIED;
-      }
-      continue;
-    }
-    if (!processed) {
-      if (test_client_limit != 0 &&
-          processed_client_count >= test_client_limit) {
-        return ERROR_INVALID_DATA;
-      }
-      continue;
-    }
-    if (test_client_limit != 0 &&
-        processed_client_count >= test_client_limit) {
-      return ERROR_SUCCESS;
-    }
-  } while (::WaitForSingleObject(stop_event, 0) != WAIT_OBJECT_0);
+  const DWORD result = ServeClients(pipe_name, owner_sid, stop_event,
+                                    test_client_limit, events, &runtime);
   runtime.Shutdown();
-  return ERROR_SUCCESS;
+  return result;
 }
 
 }  // namespace pokrov::service

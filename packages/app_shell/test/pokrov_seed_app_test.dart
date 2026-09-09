@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show Platform;
+import 'dart:io' show Directory, Platform;
 import 'dart:ui' show PointerDeviceKind;
 
 import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
+import 'package:pokrov_app_shell/src/design_system/design_system.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
@@ -282,7 +283,7 @@ class _FakeBootstrapper
   final Future<void>? assistantGate;
   final Set<int> assistantFailureCalls;
   final Future<void>? bonusSummaryGate;
-  final Future<void>? subscriptionGate;
+  Future<void>? subscriptionGate;
   final Future<void>? locationsCatalogGate;
   final String? locationsCatalogFailure;
   final String? notificationsFailure;
@@ -306,6 +307,7 @@ class _FakeBootstrapper
   int channelBonusClaimCalls = 0;
   int bonusSummaryCalls = 0;
   int subscriptionCalls = 0;
+  int notificationCalls = 0;
   final List<String> accountSummaryCallOrder = <String>[];
   int wheelSpinCalls = 0;
   int calendarCheckInCalls = 0;
@@ -324,6 +326,7 @@ class _FakeBootstrapper
   String? lastWarpRuntimeEventState;
   Map<String, Object?>? lastWarpRuntimeEventMeta;
   WarpControlStatus warpStatus;
+  final tcpFallbackRequests = <String>[];
   RouteMode? lastRouteMode;
   HostPlatform? lastHostPlatform;
   String? lastRedeemCode;
@@ -399,11 +402,14 @@ class _FakeBootstrapper
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
+    String tcpFallbackFromRevision = '',
+    Duration? timeout,
   }) async {
     calls += 1;
     if (managedProfileFailure != null) {
       throw managedProfileFailure!;
     }
+    tcpFallbackRequests.add(tcpFallbackFromRevision);
     lastRouteMode = routeMode;
     lastHostPlatform = hostPlatform;
     lastPreferredNodeCode = preferredNodeCode;
@@ -580,6 +586,7 @@ class _FakeBootstrapper
     required HostPlatform hostPlatform,
     String after = '',
   }) async {
+    notificationCalls += 1;
     if (notificationsFailure != null) {
       throw BootstrapFailure(notificationsFailure!);
     }
@@ -1030,6 +1037,26 @@ SupportTicketMessage _supportMessage({
   );
 }
 
+class _CachedBootstrapper extends _FakeBootstrapper
+    implements CachedManagedProfileBootstrapper {
+  _CachedBootstrapper(ManagedProfilePayload payload, {int status = 503})
+      : super(payload, managedProfileFailure: BootstrapFailure('API unavailable', statusCode: status));
+  final cacheReads = <bool>[];
+  final provenEntries = <String>[];
+
+  @override
+  Future<ManagedProfilePayload?> loadCachedManagedProfile(
+    ManagedProfileCacheInputs inputs, {bool preferProven = false}) async {
+    cacheReads.add(preferProven);
+    return payload;
+  }
+
+  @override
+  Future<void> markManagedProfileProven(ManagedProfileCacheInputs inputs, String entryId) async {
+    provenEntries.add(entryId);
+  }
+}
+
 class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
   _ThrowingBootstrapper(this.message);
 
@@ -1044,6 +1071,8 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
+    String tcpFallbackFromRevision = '',
+    Duration? timeout,
   }) async {
     calls += 1;
     throw BootstrapFailure(message);
@@ -1188,6 +1217,7 @@ void _installReadyRuntimeBridgeMock({
   bool failAfterConnect = false,
   bool failApplyWarp = false,
   bool retainHealthyConnectedSnapshot = false,
+  Future<void>? connectGate,
 }) {
   const channel = MethodChannel('space.pokrov/runtime_engine');
   final messenger =
@@ -1313,6 +1343,7 @@ void _installReadyRuntimeBridgeMock({
           'message': 'Managed profile staged on the host bridge.',
         };
       case 'runtimeEngine.connect':
+        await connectGate;
         connectCalls += 1;
         if (failAllEmergencyConnects ||
             (failFirstConnect && connectCalls == 1)) {
@@ -1496,6 +1527,57 @@ Future<void> _openSupportChatFromProfile(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('inactive app mutes animation ticks including modal routes',
+      (tester) async {
+    tester.binding
+        .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    addTearDown(() async {
+      PokrovLoopingMotion.debugLoopingOverride = null;
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 250));
+      tester.binding
+        .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    });
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+    ));
+    await tester.pumpAndSettle();
+    final homeContext =
+        tester.element(find.byKey(const ValueKey('primary-connect-action')));
+    PokrovLoopingMotion.debugLoopingOverride = true;
+    unawaited(showDialog<void>(
+      context: homeContext,
+      builder: (_) => const Dialog(child: PokrovSkeletonList(rows: 1)),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 550));
+    final pulse = find.byKey(PokrovSkeletonPulse.motionKey);
+    double opacity() => tester.widget<FadeTransition>(pulse).opacity.value;
+    final activeOpacity = opacity();
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(opacity(), isNot(activeOpacity));
+
+    tester.binding
+        .handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+    final inactiveOpacity = opacity();
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(opacity(), inactiveOpacity);
+    expect(TickerMode.of(tester.element(pulse)), isFalse);
+
+    tester.binding
+        .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    final resumedOpacity = opacity();
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(opacity(), isNot(resumedOpacity));
+    expect(TickerMode.of(tester.element(pulse)), isTrue);
+    expect(find.byType(Dialog), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 250));
+  });
+
   testWidgets('consumes only valid host-bound acquisition continuation once',
       (tester) async {
     const handle = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
@@ -1653,87 +1735,168 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets(
-      'Quick Settings invalidation coalesces a held burst before connect',
+  for (final action in [
+    'connect',
+    'repair',
+    'repair-stale',
+    'repair-timeout',
+  ]) {
+    final repair = action != 'connect';
+    final changeDuringStage = action == 'repair-stale';
+    testWidgets(
+      'Quick Settings invalidation coalesces a held burst before $action',
       (tester) async {
-    const channel = MethodChannel('space.pokrov/runtime_engine');
-    final messenger =
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-    final first = Completer<Map<String, Object?>>();
-    final second = Completer<Map<String, Object?>>();
-    var invalidations = 0;
-    final calls = <String>[];
-    const ready = <String, Object?>{
-      'phase': 'initialized',
-      'artifactDirectory': '/host/runtime',
-      'coreBinaryPath': '/host/runtime/pokrov-core.aar',
-      'supportsLiveConnect': true,
-      'canInitialize': true,
-      'canConnect': true,
-      'message': 'Runtime initialized.',
-    };
-    messenger.setMockMethodCallHandler(channel, (call) async {
-      calls.add(call.method);
-      switch (call.method) {
-        case 'runtimeEngine.snapshot':
-        case 'runtimeEngine.initialize':
-          return ready;
-        case 'runtimeEngine.invalidateManagedProfile':
-          return ++invalidations == 1 ? first.future : second.future;
-        case 'runtimeEngine.stageManagedProfile':
-          return <String, Object?>{
-            ...ready,
-            'phase': 'configStaged',
-            'canConnect': true
-          };
-        case 'runtimeEngine.connect':
-          return <String, Object?>{
-            ...ready,
-            'phase': 'running',
-            'canConnect': true
-          };
-      }
-      return null;
-    });
-    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
-    final store = _FakeClientExperienceStore(
-      const PokrovClientExperienceState.empty().copyWith(
-        firstRouteScopeConfirmed: true,
-        firstRouteScopeMode: RouteMode.fullTunnel,
-      ),
+        const channel = MethodChannel('space.pokrov/runtime_engine');
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        final first = Completer<Map<String, Object?>>();
+        final second = Completer<Map<String, Object?>>();
+        final stageResult = Completer<Map<String, Object?>>();
+        var invalidations = 0;
+        final calls = <String>[];
+        const ready = <String, Object?>{
+          'phase': 'initialized',
+          'artifactDirectory': '/host/runtime',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'message': 'Runtime initialized.',
+        };
+        final staged = <String, Object?>{
+          ...ready,
+          'phase': 'configStaged',
+          'stagedConfigPath': '/host/runtime/synthetic-profile.json',
+          'canConnect': true,
+        };
+        messenger.setMockMethodCallHandler(channel, (call) async {
+          calls.add(call.method);
+          switch (call.method) {
+            case 'runtimeEngine.snapshot':
+            case 'runtimeEngine.initialize':
+              return ready;
+            case 'runtimeEngine.invalidateManagedProfile':
+              return ++invalidations == 1 ? first.future : second.future;
+            case 'runtimeEngine.stageManagedProfile':
+              return changeDuringStage ? stageResult.future : staged;
+            case 'runtimeEngine.connect':
+              return <String, Object?>{
+                ...ready,
+                'phase': 'running',
+                'canConnect': true,
+              };
+          }
+          return null;
+        });
+        addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+        final store = _FakeClientExperienceStore(
+          const PokrovClientExperienceState.empty().copyWith(
+            firstRouteScopeConfirmed: true,
+            firstRouteScopeMode: RouteMode.fullTunnel,
+          ),
+        );
+        await tester.pumpWidget(
+          PokrovSeedApp(
+            appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+            bootstrapper: _FakeBootstrapper(
+              const ManagedProfilePayload(
+                profileName: 'burst',
+                configPayload: _materializedRuntimeConfig,
+                materializedForRuntime: true,
+              ),
+            ),
+            firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+            clientExperienceStore: store,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await _tapNav(tester, 'nav-rules');
+        for (var i = 0; i < 10; i += 1) {
+          await tester.tap(
+            find.byKey(
+              ValueKey(
+                'rules-mode-row-${i.isEven ? 'allExceptRu' : 'fullTunnel'}',
+              ),
+            ),
+          );
+          await tester.pump();
+        }
+        expect(invalidations, 1);
+        await _tapNav(tester, 'nav-protection');
+        if (repair) {
+          await tester.tap(
+            find.byKey(const ValueKey('home-connection-details-action')),
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find.byKey(const ValueKey('protection-repair-action')),
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find.byKey(const ValueKey('protection-repair-confirm')),
+          );
+        } else {
+          await tester.tap(
+            find.byKey(const ValueKey('primary-connect-action')),
+          );
+        }
+        await tester.pump();
+        expect(calls, isNot(contains('runtimeEngine.stageManagedProfile')));
+        if (action == 'repair-timeout') {
+          await tester.pump(const Duration(seconds: 18));
+          await tester.pumpAndSettle();
+          expect(calls, isNot(contains('runtimeEngine.stageManagedProfile')));
+          expect(calls, isNot(contains('runtimeEngine.connect')));
+          first.complete(ready);
+          await tester.pumpAndSettle();
+          expect(calls, isNot(contains('runtimeEngine.stageManagedProfile')));
+          expect(calls, isNot(contains('runtimeEngine.connect')));
+          return;
+        }
+        first.complete(ready);
+        await tester.pump();
+        expect(invalidations, 2);
+        expect(calls, isNot(contains('runtimeEngine.stageManagedProfile')));
+        second.complete(ready);
+        if (changeDuringStage) {
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 100));
+        } else {
+          await tester.pumpAndSettle();
+        }
+        expect(invalidations, 2);
+        expect(
+          calls.where((it) => it == 'runtimeEngine.stageManagedProfile'),
+          hasLength(1),
+        );
+        if (changeDuringStage) {
+          // A user can dismiss the repair sheet and change routing while a slow
+          // host stage still acknowledges the old profile.
+          expect(
+            find.byKey(const ValueKey('protection-repair-progress')),
+            findsOneWidget,
+          );
+          await tester.binding.handlePopRoute();
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.tap(find.byKey(const ValueKey('nav-rules')));
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.tap(
+            find.byKey(const ValueKey('rules-mode-row-allExceptRu')),
+          );
+          await tester.pump();
+          expect(invalidations, 3);
+          stageResult.complete(staged);
+          await tester.pumpAndSettle();
+          expect(calls, isNot(contains('runtimeEngine.connect')));
+        } else {
+          expect(
+            calls.where((it) => it == 'runtimeEngine.connect'),
+            hasLength(1),
+          );
+        }
+      },
     );
-    await tester.pumpWidget(PokrovSeedApp(
-      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
-      bootstrapper: _FakeBootstrapper(const ManagedProfilePayload(
-          profileName: 'burst',
-          configPayload: _materializedRuntimeConfig,
-          materializedForRuntime: true)),
-      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
-      clientExperienceStore: store,
-    ));
-    await tester.pumpAndSettle();
-    await _tapNav(tester, 'nav-rules');
-    for (var i = 0; i < 10; i += 1) {
-      await tester.tap(find.byKey(ValueKey(
-          'rules-mode-row-${i.isEven ? 'allExceptRu' : 'fullTunnel'}')));
-      await tester.pump();
-    }
-    expect(invalidations, 1);
-    await _tapNav(tester, 'nav-protection');
-    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
-    await tester.pump();
-    expect(calls, isNot(contains('runtimeEngine.stageManagedProfile')));
-    first.complete(ready);
-    await tester.pump();
-    expect(invalidations, 2);
-    expect(calls, isNot(contains('runtimeEngine.stageManagedProfile')));
-    second.complete(ready);
-    await tester.pumpAndSettle();
-    expect(invalidations, 2);
-    expect(calls.where((it) => it == 'runtimeEngine.stageManagedProfile'),
-        hasLength(1));
-    expect(calls.where((it) => it == 'runtimeEngine.connect'), hasLength(1));
-  });
+  }
 
   test(
       'android seed app context keeps smoke profile free of desktop route keys',
@@ -1826,6 +1989,13 @@ void main() {
 
     expect(bootstrapper.subscriptionCalls, 0,
         reason: 'account provisioning waits for the access choice');
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(bootstrapper.subscriptionCalls, 0,
+        reason: 'foreground return cannot select a trial or restore account');
+    expect(bootstrapper.notificationCalls, 0,
+        reason: 'the welcome screen cannot start a session through inbox reads');
     await tester.tap(find.byKey(const ValueKey('first-launch-new-user')));
     await tester.pumpAndSettle();
 
@@ -3426,7 +3596,7 @@ void main() {
     expect(find.byKey(const ValueKey('profile-section-plan-access')),
         findsOneWidget);
     final accessHeadline = tester.widget<Text>(
-      find.text('5 дней пробного доступа'),
+      find.text('Статус доступа уточняется'),
     );
     expect(accessHeadline.maxLines, 2);
     expect(accessHeadline.overflow, TextOverflow.clip);
@@ -4053,6 +4223,130 @@ void main() {
     );
   });
 
+  for (final host in [HostPlatform.android, HostPlatform.windows]) {
+    testWidgets('cabinet return refreshes subscription on ${host.name}',
+        (tester) async {
+      if (host == HostPlatform.windows) {
+        await tester.binding.setSurfaceSize(const Size(1280, 900));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+      }
+      final bootstrapper = _FakeBootstrapper(
+        const ManagedProfilePayload(
+          profileName: 'cabinet-return',
+          configPayload: _materializedRuntimeConfig,
+          materializedForRuntime: true,
+        ),
+        subscriptionInfo: const ClientSubscriptionInfo(
+          lane: 'expiredOrBlocked',
+          expiresAt: '',
+          daysLeft: 0,
+          autoRenew: false,
+          renewUrl: null,
+          plans: <ClientSubscriptionPlan>[],
+          trafficPolicy: <String, Object?>{},
+        ),
+      );
+      final launched = <Uri>[];
+      await tester.pumpWidget(PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: host),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+        handoffLauncher: (uri) async {
+          launched.add(uri);
+          return true;
+        },
+      ));
+      await tester.pumpAndSettle();
+      await _tapNav(tester, 'nav-profile');
+      await tester.pumpAndSettle();
+      expect(find.text('Доступ не активен'), findsWidgets);
+      final cabinet = find.byKey(const ValueKey('profile-open-cabinet-action'));
+      await tester.dragUntilVisible(
+        cabinet,
+        find.byType(Scrollable).first,
+        const Offset(0, -220),
+        maxIteration: 8,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(cabinet);
+      await tester.pumpAndSettle();
+      final callsBeforeReturn = bootstrapper.subscriptionCalls;
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      bootstrapper.subscriptionInfo = _paidSubscriptionInfo;
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(bootstrapper.subscriptionCalls, callsBeforeReturn + 1);
+      expect(bootstrapper.cabinetCalls, 1);
+      expect(launched, hasLength(1));
+      // Resume retains the current profile route; no second handoff or login.
+      expect(cabinet, findsOneWidget);
+      await tester.dragUntilVisible(
+        find.text('30 дней доступа'),
+        find.byType(Scrollable).first,
+        const Offset(0, 220),
+        maxIteration: 8,
+      );
+      expect(find.text('30 дней доступа'), findsOneWidget);
+      expect(find.text('Доступ не активен'), findsNothing);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 300));
+    });
+  }
+
+  testWidgets('foreground account refresh coalesces and recovers after offline',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'foreground-account',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+    );
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+    ));
+    await tester.pumpAndSettle();
+    final callsBeforeReturn = bootstrapper.subscriptionCalls;
+    final bonusCallsBeforeReturn = bootstrapper.bonusSummaryCalls;
+    final notificationCallsBeforeReturn = bootstrapper.notificationCalls;
+    final refresh = Completer<void>();
+    bootstrapper.subscriptionGate = refresh.future;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await _tapNav(tester, 'nav-profile');
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(bootstrapper.subscriptionCalls, callsBeforeReturn + 1);
+    expect(bootstrapper.bonusSummaryCalls, bonusCallsBeforeReturn);
+    expect(bootstrapper.notificationCalls, notificationCallsBeforeReturn);
+    expect(find.text('5 дней пробного доступа'), findsOneWidget);
+
+    refresh.completeError(const BootstrapFailure(
+      'Сервис не ответил вовремя.',
+      operationalCode: 'API-002',
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('5 дней пробного доступа'), findsOneWidget);
+    expect(find.text('Доступ не активен'), findsNothing);
+    expect(find.text('30 дней доступа'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    bootstrapper.subscriptionGate = null;
+    bootstrapper.subscriptionInfo = _paidSubscriptionInfo;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(bootstrapper.subscriptionCalls, callsBeforeReturn + 2);
+    expect(find.text('30 дней доступа'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 300));
+  });
+
   testWidgets(
       'profile shows native Telegram identity without another link action',
       (tester) async {
@@ -4401,6 +4695,104 @@ void main() {
     expect(find.byKey(const ValueKey('rewards-quest-second_device')),
         findsNothing);
   });
+
+  testWidgets('zero remaining days never resets to the advertised trial duration',
+      (tester) async {
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'zero-days-ui',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      subscriptionInfo: const ClientSubscriptionInfo(
+        lane: 'trialPremium',
+        expiresAt: '',
+        daysLeft: 0,
+        autoRenew: false,
+        renewUrl: null,
+        plans: <ClientSubscriptionPlan>[],
+        trafficPolicy: <String, Object?>{},
+      ),
+    );
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('5 дней'), findsNothing);
+    await _tapNav(tester, 'nav-profile');
+    expect(find.text('Пробный доступ'), findsOneWidget);
+    expect(find.descendant(
+      of: find.byKey(const ValueKey('profile-section-plan-access')),
+      matching: find.textContaining('5 дней'),
+    ), findsNothing);
+  });
+
+  testWidgets('subscription refresh timeout does not claim missing entitlement',
+      (tester) async {
+    await tester.runAsync(() async {
+      final directory = await Directory.systemTemp.createTemp(
+        'pokrov-entitlement-observation-',
+      );
+      final observability = await PokrovClientObservability.start(
+        hostPlatform: HostPlatform.android,
+        directoryResolver: () async => directory,
+      );
+      final subscriptionGate = Completer<void>();
+      final bootstrapper = _FakeBootstrapper(
+        const ManagedProfilePayload(
+          profileName: 'test-profile',
+          configPayload: _materializedRuntimeConfig,
+          materializedForRuntime: true,
+        ),
+        subscriptionGate: subscriptionGate.future,
+      );
+      await tester.pumpWidget(PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        observability: observability,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ));
+      await tester.pump();
+      subscriptionGate.completeError(const BootstrapFailure(
+        'Сервис не ответил вовремя.',
+        operationalCode: 'API-002',
+      ));
+      await tester.pumpAndSettle();
+      await observability.flush();
+      final refresh =
+          observability.dispatcher.breadcrumbs.snapshot().singleWhere(
+                (event) => event.name == 'app.entitlement.refresh.finished',
+              );
+      expect(refresh.errorCode, 'API-002');
+      expect(find.textContaining(RegExp('пробного доступа|Пробный ·')),
+          findsNothing);
+      expect(find.text('Подписка'), findsOneWidget);
+      await _tapNav(tester, 'nav-profile');
+      expect(find.text('Статус доступа уточняется'), findsOneWidget);
+      expect(find.text('Нет данных'), findsWidgets);
+      await tester.tap(find.byKey(const ValueKey('profile-plan-details-action')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Статус подписки пока неизвестен. Проверьте его в личном кабинете.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Доступ активен.'), findsNothing);
+
+      // Detach this test's observer before disposing the shell so its
+      // fire-and-forget exit marker cannot race our temporary-file cleanup.
+      await tester.pumpWidget(PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      ));
+      await tester.pumpWidget(const SizedBox.shrink());
+      await observability.flush();
+      await observability.markCleanExit();
+      await directory.delete(recursive: true);
+    });
+  }, timeout: const Timeout(Duration(seconds: 30)));
 
   testWidgets('startup orders subscription before bonus summary',
       (tester) async {
@@ -5230,6 +5622,7 @@ void main() {
       await _completeFirstLaunchIfPresent(tester);
 
       expect(find.byKey(ValueKey(item.shellKey)), findsOneWidget);
+      expect(find.text('Активен'), findsNothing);
       expect(
           find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
       expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
@@ -5240,7 +5633,7 @@ void main() {
             find.byKey(const ValueKey('home-access-badge-bloom-false')),
             findsNothing,
           );
-          expect(find.text('Пробный · 5 дней'), findsOneWidget);
+          expect(find.text('Подписка'), findsOneWidget);
           expect(find.text('Затем — продлите доступ'), findsNothing);
           expect(find.byKey(const ValueKey('home-warp-info-action')),
               findsOneWidget);
@@ -7435,6 +7828,10 @@ void main() {
         findsOneWidget);
     expect(find.byKey(const ValueKey('support-thread-refresh-action')),
         findsOneWidget);
+    final failedReads = supportTicketService.getCalls;
+    await tester.pump(const Duration(seconds: 20));
+    await tester.pumpAndSettle();
+    expect(supportTicketService.getCalls, failedReads + 1);
   });
 
   testWidgets('rules show selected-apps editor and hide beta prose',
@@ -8817,6 +9214,125 @@ void main() {
     expect(find.textContaining('Host diagnostics'), findsNothing);
   });
 
+  testWidgets('windows observes service loss after a long connected session',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    var phase = 'running';
+    var snapshotCalls = 0;
+    var egressHealthy = true;
+    Completer<Map<String, Object?>>? heldSnapshot;
+    var heldSnapshotClaimed = false;
+    Map<String, Object?> hostSnapshot() => <String, Object?>{
+      'phase': phase,
+      'artifactDirectory': '/host/runtime',
+      'coreBinaryPath': '/host/runtime/pokrov-core.dll',
+      'stagedConfigPath': phase == 'initialized'
+          ? null : '/host/runtime/managed-profile.json',
+      'supportsLiveConnect': true,
+      'canInitialize': true,
+      'canConnect': phase == 'configStaged',
+      'hostHealth': phase == 'running' ? 'healthy' : 'unknown',
+      'dnsState': phase == 'running' ? 'healthy' : 'unknown',
+      'uplinkState': phase == 'running' ? 'healthy' : 'unknown',
+      'core_egress_validated': phase == 'running' && egressHealthy,
+    };
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      switch (call.method) {
+        case 'runtimeEngine.snapshot':
+          snapshotCalls += 1;
+          if (heldSnapshot != null && !heldSnapshotClaimed) {
+            heldSnapshotClaimed = true;
+            return heldSnapshot.future;
+          }
+        case 'runtimeEngine.initialize':
+          phase = 'initialized';
+        case 'runtimeEngine.stageManagedProfile':
+          phase = 'configStaged';
+        case 'runtimeEngine.connect':
+          phase = 'running';
+        case 'runtimeEngine.disconnect':
+          phase = 'initialized';
+        default:
+          return null;
+      }
+      return hostSnapshot();
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final controller = PokrovShellController();
+    final bootstrapper = _FakeBootstrapper(const ManagedProfilePayload(
+      profileName: 'windows-service-restart',
+      configPayload: _materializedRuntimeConfig,
+      materializedForRuntime: true,
+    ));
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      bootstrapper: bootstrapper,
+      shellController: controller,
+      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      clientExperienceStore:
+          _FakeClientExperienceStore(const PokrovClientExperienceState.empty()),
+      windowsTunnelAuthorizer: () async =>
+          PokrovWindowsTunnelAuthorization.allowed,
+    ));
+    await tester.pumpAndSettle();
+    expect(controller.isConnected, isTrue);
+    var statusNotifications = 0;
+    controller.addListener(() => statusNotifications += 1);
+    await tester.pump(const Duration(minutes: 2));
+    await tester.pumpAndSettle();
+    expect(statusNotifications, 0,
+        reason: 'unchanged local status must not rebuild the shell and tray');
+    egressHealthy = false;
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+    expect(controller.isConnected, isFalse);
+    expect(statusNotifications, 1,
+        reason: 'a health change in the running phase must reach the UI');
+    egressHealthy = true;
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+    expect(controller.isConnected, isTrue);
+    expect(statusNotifications, 2);
+    phase = 'initialized'; // SCM restarted; its durable recovery cleared TUN.
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+    expect(controller.isConnected, isFalse);
+    expect(find.text('Подключено'), findsNothing);
+    expect(bootstrapper.calls, 0, reason: 'local status must not fetch profiles');
+
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    expect(controller.isConnected, isTrue);
+    expect(bootstrapper.calls, 1);
+    final staleRunningSnapshot = hostSnapshot();
+    heldSnapshot = Completer<Map<String, Object?>>();
+    addTearDown(() {
+      if (!heldSnapshot!.isCompleted) heldSnapshot.complete(hostSnapshot());
+    });
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump();
+    final callsWhilePending = snapshotCalls;
+    await tester.pump(const Duration(seconds: 10));
+    expect(snapshotCalls, callsWhilePending,
+        reason: 'only one local status request may be in flight');
+    expect(controller.canToggle, isTrue,
+        reason: 'attached=${controller.attached} busy=${controller.isBusy}');
+    await controller.toggleConnection();
+    await tester.pumpAndSettle();
+    expect(controller.isConnected, isFalse);
+    heldSnapshot.complete(staleRunningSnapshot);
+    await tester.pumpAndSettle();
+    expect(controller.isConnected, isFalse,
+        reason: 'a late status response cannot undo an explicit disconnect');
+    await tester.pumpWidget(const SizedBox.shrink());
+    final callsAtDispose = snapshotCalls;
+    await tester.pump(const Duration(seconds: 5));
+    expect(snapshotCalls, callsAtDispose);
+  });
+
   testWidgets('android refreshes delayed degraded host health after connect',
       (tester) async {
     final runtimeCalls = <String>[];
@@ -8932,6 +9448,142 @@ void main() {
       }
     });
   }
+
+  testWidgets('explicit inactive subscription blocks cached reconnect on profile 503', (tester) async {
+    final calls = <String>[];
+    _installReadyRuntimeBridgeMock(calls: calls,
+      retainHealthyConnectedSnapshot: true);
+    final bootstrapper = _CachedBootstrapper(const ManagedProfilePayload(
+      profileName: 'cached-profile', configPayload: _materializedRuntimeConfig,
+      materializedForRuntime: true, cacheEntryId: 'cached-entry',
+    ));
+    bootstrapper.subscriptionInfo = const ClientSubscriptionInfo(
+      lane: 'expiredOrBlocked', expiresAt: '', daysLeft: 0,
+      autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {},
+    );
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+    ));
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    expect(calls.where((c) => c == 'runtimeEngine.connect'), isEmpty);
+    expect(bootstrapper.provenEntries, isEmpty);
+  });
+
+  testWidgets('explicit inactive subscription disconnects a cached tunnel on resume', (tester) async {
+    final calls = <String>[];
+    _installReadyRuntimeBridgeMock(calls: calls,
+      retainHealthyConnectedSnapshot: true);
+    final bootstrapper = _CachedBootstrapper(const ManagedProfilePayload(
+      profileName: 'cached-profile', configPayload: _materializedRuntimeConfig,
+      materializedForRuntime: true, cacheEntryId: 'cached-entry',
+    ));
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+    ));
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    expect(calls.where((c) => c == 'runtimeEngine.connect').length, 1);
+    bootstrapper.subscriptionInfo = const ClientSubscriptionInfo(
+      lane: 'expiredOrBlocked', expiresAt: '', daysLeft: 0,
+      autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {},
+    );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(calls.where((c) => c == 'runtimeEngine.disconnect').length, 1);
+    expect(find.text('Подключено'), findsNothing);
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    expect(calls.where((c) => c == 'runtimeEngine.connect').length, 1);
+  });
+
+  testWidgets('inactive subscription during native connect stops the settled tunnel', (tester) async {
+    final calls = <String>[];
+    final connectGate = Completer<void>();
+    _installReadyRuntimeBridgeMock(calls: calls,
+      retainHealthyConnectedSnapshot: true, connectGate: connectGate.future);
+    final bootstrapper = _CachedBootstrapper(const ManagedProfilePayload(
+      profileName: 'cached-profile', configPayload: _materializedRuntimeConfig,
+      materializedForRuntime: true, cacheEntryId: 'cached-entry',
+    ));
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+    ));
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(calls.where((c) => c == 'runtimeEngine.connect').length, 1);
+    bootstrapper.subscriptionInfo = const ClientSubscriptionInfo(
+      lane: 'expiredOrBlocked', expiresAt: '', daysLeft: 0,
+      autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {},
+    );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump(const Duration(milliseconds: 300));
+    connectGate.complete();
+    await tester.pumpAndSettle();
+    expect(calls.where((c) => c == 'runtimeEngine.disconnect').length, 1);
+    expect(find.text('Подключено'), findsNothing);
+  });
+
+  for (final status in [503, 403]) {
+    testWidgets('cached Android profile handles API $status after app restart', (tester) async {
+      final calls = <String>[];
+      final staged = <String>[];
+      _installReadyRuntimeBridgeMock(calls: calls, stagedPayloads: staged,
+        retainHealthyConnectedSnapshot: true);
+      final bootstrapper = _CachedBootstrapper(const ManagedProfilePayload(
+        profileName: 'cached-profile', configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true, cacheEntryId: 'cached-entry',
+      ), status: status);
+      await tester.pumpWidget(PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper,
+      ));
+      await tester.pumpAndSettle();
+      await _completeFirstLaunchIfPresent(tester);
+      await _tapPrimaryConnectAndConfirmRouteScope(tester);
+      await tester.pumpAndSettle();
+      expect(calls.where((c) => c == 'runtimeEngine.connect').length, status == 503 ? 1 : 0);
+      expect(staged.length, status == 503 ? 1 : 0);
+      expect(bootstrapper.cacheReads, isNotEmpty);
+      if (status == 503) expect(bootstrapper.provenEntries, contains('cached-entry'));
+    });
+  }
+
+  testWidgets('manual retry after egress failure retains the cached profile during API outage', (tester) async {
+    final calls = <String>[];
+    _installReadyRuntimeBridgeMock(calls: calls, failAfterConnect: true);
+    final bootstrapper = _CachedBootstrapper(const ManagedProfilePayload(
+      profileName: 'cached-profile', configPayload: _materializedRuntimeConfig,
+      materializedForRuntime: true, cacheEntryId: 'cached-entry',
+    ));
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+    ));
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+    expect(find.text('Подключено'), findsNothing);
+    final invalidations = calls.where((c) => c == 'runtimeEngine.invalidateManagedProfile').length;
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    expect(calls.where((c) => c == 'runtimeEngine.connect').length, 2);
+    expect(bootstrapper.cacheReads, contains(true));
+    expect(calls.where((c) => c == 'runtimeEngine.invalidateManagedProfile').length, invalidations);
+  });
 
   testWidgets('android egress fail-closed stop clears the connected home state',
       (tester) async {
@@ -9068,25 +9720,40 @@ void main() {
     expect(
         find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
     expect(find.textContaining('core_egress_probe_failed'), findsNothing);
-    expect(runtimeCalls, contains('runtimeEngine.invalidateManagedProfile'));
+    expect(runtimeCalls.where((c) => c == 'runtimeEngine.invalidateManagedProfile').length,
+        lessThanOrEqualTo(1)); // Initial route consent may invalidate; failure does not.
   });
 
-  testWidgets(
-      'automatic Android connect quarantines a confirmed failed node and retries',
+  for (final (
+        host,
+        labFallback,
+        baselineFails,
+        proofUnavailable,
+        bootstrapRefused,
+      )
+      in [
+        (HostPlatform.android, false, false, false, false),
+        (HostPlatform.android, true, false, false, false),
+        (HostPlatform.windows, true, false, false, false),
+        (HostPlatform.android, true, true, false, false),
+        (HostPlatform.android, true, false, true, false),
+        (HostPlatform.android, true, false, false, true),
+      ]) {
+    testWidgets(
+      'managed fallback on ${host.name} (lab: $labFallback, baseline failure: $baselineFails, unavailable: $proofUnavailable, refused: $bootstrapRefused)',
       (tester) async {
-    const channel = MethodChannel('space.pokrov/runtime_engine');
-    final messenger =
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-    var connectCalls = 0;
-    var firstConnectSnapshots = 0;
+        const channel = MethodChannel('space.pokrov/runtime_engine');
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        var connectCalls = 0;
+        var firstConnectSnapshots = 0;
 
-    Map<String, Object?> runtimeState(
-      String phase, {
-      bool? egressValidated,
-      String message = 'Runtime ready.',
-      String? failureKind,
-    }) =>
-        <String, Object?>{
+        Map<String, Object?> runtimeState(
+          String phase, {
+          bool? egressValidated,
+          String message = 'Runtime ready.',
+          String? failureKind,
+        }) => <String, Object?>{
           'phase': phase,
           'artifactDirectory': '/host/runtime',
           'coreBinaryPath': '/host/runtime/pokrov-core.aar',
@@ -9105,137 +9772,204 @@ void main() {
           'message': message,
         };
 
-    messenger.setMockMethodCallHandler(channel, (call) async {
-      switch (call.method) {
-        case 'runtimeEngine.snapshot':
-          if (connectCalls == 0) {
-            return runtimeState('artifactReady');
-          }
-          if (connectCalls == 1) {
-            firstConnectSnapshots += 1;
-            if (firstConnectSnapshots >= 2) {
+        messenger.setMockMethodCallHandler(channel, (call) async {
+          switch (call.method) {
+            case 'runtimeEngine.snapshot':
+              if (connectCalls == 0) {
+                return runtimeState('artifactReady');
+              }
+              if (baselineFails && connectCalls > 1) {
+                return runtimeState(
+                  'configStaged',
+                  egressValidated: false,
+                  failureKind: 'core_egress_probe_failed',
+                  message: 'Fixture path failed.',
+                );
+              }
+              if (connectCalls == 1) {
+                firstConnectSnapshots += 1;
+                if (firstConnectSnapshots >= 2 ||
+                    host == HostPlatform.windows) {
+                  return runtimeState(
+                    'configStaged',
+                    egressValidated: false,
+                    failureKind: proofUnavailable
+                        ? 'core_egress_probe_unavailable'
+                        : 'core_egress_probe_failed',
+                    message:
+                        'POKROV не подтвердил защищенное подключение и отключил системный VPN.',
+                  );
+                }
+                return runtimeState(
+                  'running',
+                  message: 'Runtime service is running.',
+                );
+              }
               return runtimeState(
-                'configStaged',
-                egressValidated: false,
-                failureKind: 'core_egress_probe_failed',
-                message:
-                    'POKROV не подтвердил защищенное подключение и отключил системный VPN.',
+                'running',
+                egressValidated: true,
+                message: 'Runtime service is running.',
               );
-            }
-            return runtimeState(
-              'running',
-              message: 'Runtime service is running.',
-            );
+            case 'runtimeEngine.initialize':
+              return runtimeState('initialized');
+            case 'runtimeEngine.stageManagedProfile':
+              return runtimeState('configStaged');
+            case 'runtimeEngine.connect':
+              connectCalls += 1;
+              if ((host == HostPlatform.windows && connectCalls == 1) ||
+                  (baselineFails && connectCalls > 1)) {
+                return runtimeState(
+                  'configStaged',
+                  egressValidated: false,
+                  failureKind: 'core_egress_probe_failed',
+                  message: 'Fixture path failed.',
+                );
+              }
+              return runtimeState(
+                'running',
+                egressValidated: connectCalls > 1 ? true : null,
+                message: 'Runtime service is running.',
+              );
+            case 'runtimeEngine.invalidateManagedProfile':
+              return runtimeState('initialized');
           }
-          return runtimeState(
-            'running',
-            egressValidated: true,
-            message: 'Runtime service is running.',
-          );
-        case 'runtimeEngine.initialize':
-          return runtimeState('initialized');
-        case 'runtimeEngine.stageManagedProfile':
-          return runtimeState('configStaged');
-        case 'runtimeEngine.connect':
-          connectCalls += 1;
-          return runtimeState(
-            'running',
-            egressValidated: connectCalls > 1 ? true : null,
-            message: 'Runtime service is running.',
-          );
-        case 'runtimeEngine.invalidateManagedProfile':
-          return runtimeState('initialized');
-      }
-      return null;
-    });
-    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+          return null;
+        });
+        addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
-    const smartConnect = SmartConnectProfile(
-      eligible: true,
-      fallbackRequired: false,
-      shortlistReason: 'eligible',
-      shortlistLimit: 2,
-      shortlistRevision: 'failover-shortlist',
-      transportProfile: 'reality',
-      profileRevision: 'failover-profile',
-      fallbackOrder: <String>['nl', 'ru-spb'],
-      shortlist: <SmartConnectNode>[
-        SmartConnectNode(
-          code: 'nl',
-          country: 'Netherlands',
-          rank: 1,
-          rankHint: SmartConnectRankHint(
-            healthScore: 96,
-            cpuPercent: 8,
-            panelLatencyMs: 24,
-            backendPenalty: 0,
-            cpuPenalty: 0,
-            stickyPreferred: false,
+        const smartConnect = SmartConnectProfile(
+          eligible: true,
+          fallbackRequired: false,
+          shortlistReason: 'eligible',
+          shortlistLimit: 2,
+          shortlistRevision: 'failover-shortlist',
+          transportProfile: 'reality',
+          profileRevision: 'failover-profile',
+          fallbackOrder: <String>['nl', 'ru-spb'],
+          shortlist: <SmartConnectNode>[
+            SmartConnectNode(
+              code: 'nl',
+              country: 'Netherlands',
+              rank: 1,
+              rankHint: SmartConnectRankHint(
+                healthScore: 96,
+                cpuPercent: 8,
+                panelLatencyMs: 24,
+                backendPenalty: 0,
+                cpuPenalty: 0,
+                stickyPreferred: false,
+              ),
+            ),
+            SmartConnectNode(
+              code: 'ru-spb',
+              country: 'Russia',
+              rank: 2,
+              rankHint: SmartConnectRankHint(
+                healthScore: 92,
+                cpuPercent: 12,
+                panelLatencyMs: 40,
+                backendPenalty: 0,
+                cpuPenalty: 0,
+                stickyPreferred: false,
+              ),
+            ),
+          ],
+          stickiness: SmartConnectStickiness(
+            preferredNodeCode: '',
+            thresholdPercent: 15,
+            latestSampleAt: '',
+            stickinessApplied: false,
           ),
-        ),
-        SmartConnectNode(
-          code: 'ru-spb',
-          country: 'Russia',
-          rank: 2,
-          rankHint: SmartConnectRankHint(
-            healthScore: 92,
-            cpuPercent: 12,
-            panelLatencyMs: 40,
-            backendPenalty: 0,
-            cpuPenalty: 0,
-            stickyPreferred: false,
+        );
+        const basePayload = ManagedProfilePayload(
+          profileName: 'automatic-egress-failover',
+          configPayload: _materializedRuntimeConfig,
+          materializedForRuntime: true,
+          smartConnect: smartConnect,
+        );
+        final bootstrapper = _FakeBootstrapper(
+          basePayload,
+          managedProfileResolver: (call, excludedNodeCodes) =>
+              bootstrapRefused && call > 1
+              ? throw const BootstrapFailure(
+                  'Резервное подключение недоступно.',
+                  statusCode: 503,
+                )
+              : labFallback && call == 1
+              ? const ManagedProfilePayload(
+                  profileName: 'owned-lab-profile',
+                  configPayload: _materializedRuntimeConfig,
+                  materializedForRuntime: true,
+                  tcpFallbackFromRevision: 'lab-generation-1',
+                )
+              : basePayload.copyWith(
+                  resolvedNodeCode: call == 1 ? 'nl' : 'ru-spb',
+                ),
+        );
+        final store = _FakeClientExperienceStore();
+
+        await tester.pumpWidget(
+          PokrovSeedApp(
+            appContext: buildSeedAppContext(hostPlatform: host),
+            bootstrapper: bootstrapper,
+            windowsTunnelAuthorizer: () async =>
+                PokrovWindowsTunnelAuthorization.allowed,
+            firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+            clientExperienceStore: store,
           ),
-        ),
-      ],
-      stickiness: SmartConnectStickiness(
-        preferredNodeCode: '',
-        thresholdPercent: 15,
-        latestSampleAt: '',
-        stickinessApplied: false,
-      ),
-    );
-    const basePayload = ManagedProfilePayload(
-      profileName: 'automatic-egress-failover',
-      configPayload: _materializedRuntimeConfig,
-      materializedForRuntime: true,
-      smartConnect: smartConnect,
-    );
-    final bootstrapper = _FakeBootstrapper(
-      basePayload,
-      managedProfileResolver: (call, excludedNodeCodes) => basePayload.copyWith(
-        resolvedNodeCode: call == 1 ? 'nl' : 'ru-spb',
-      ),
-    );
-    final store = _FakeClientExperienceStore();
+        );
+        await tester.pumpAndSettle();
+        await _tapPrimaryConnectAndConfirmRouteScope(tester);
+        await tester.pump(const Duration(seconds: 4));
+        await tester.pumpAndSettle();
 
-    await tester.pumpWidget(
-      PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
-        bootstrapper: bootstrapper,
-        firstLaunchStore: _FakeFirstLaunchStore(completed: true),
-        clientExperienceStore: store,
-      ),
+        expect(connectCalls, proofUnavailable || bootstrapRefused ? 1 : 2);
+        expect(bootstrapper.calls, proofUnavailable ? 1 : 2);
+        expect(bootstrapper.excludedNodeCodeRequests.first, isEmpty);
+        expect(
+          bootstrapper.excludedNodeCodeRequests.last,
+          labFallback ? isEmpty : <String>{'nl'},
+        );
+        expect(
+          bootstrapper.tcpFallbackRequests,
+          proofUnavailable
+              ? ['']
+              : labFallback
+              ? ['', 'lab-generation-1']
+              : ['', ''],
+        );
+        expect(store.state.preferredNodeCode, isEmpty);
+        expect(
+          store.state.automaticNodeQuarantineUntil,
+          baselineFails
+              ? contains('ru-spb')
+              : labFallback
+              ? isEmpty
+              : contains('nl'),
+        );
+        expect(bootstrapper.lastRouteMode, store.state.firstRouteScopeMode);
+        expect(
+          find.text('Отключить'),
+          baselineFails || proofUnavailable || bootstrapRefused
+              ? findsNothing
+              : findsOneWidget,
+        );
+        if (!baselineFails && !proofUnavailable && !bootstrapRefused) {
+          expect(
+            find.descendant(
+              of: find.byKey(const ValueKey('home-location-chip')),
+              matching: find.text('Россия'),
+            ),
+            findsOneWidget,
+          );
+        }
+        final attemptsBeforeWait = connectCalls;
+        await tester.pump(const Duration(seconds: 20));
+        await tester.pumpAndSettle();
+        expect(connectCalls, attemptsBeforeWait);
+      },
     );
-    await tester.pumpAndSettle();
-    await _tapPrimaryConnectAndConfirmRouteScope(tester);
-    await tester.pump(const Duration(seconds: 4));
-    await tester.pumpAndSettle();
-
-    expect(connectCalls, 2);
-    expect(bootstrapper.calls, 2);
-    expect(bootstrapper.excludedNodeCodeRequests.first, isEmpty);
-    expect(bootstrapper.excludedNodeCodeRequests.last, <String>{'nl'});
-    expect(store.state.preferredNodeCode, isEmpty);
-    expect(store.state.automaticNodeQuarantineUntil, contains('nl'));
-    expect(find.text('Отключить'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('home-location-chip')),
-        matching: find.text('Россия'),
-      ),
-      findsOneWidget,
-    );
-  });
+  }
 
   testWidgets('stale Android egress poll cannot override a newer connection',
       (tester) async {
@@ -11705,18 +12439,26 @@ void main() {
     expect(find.textContaining('vless'), findsNothing);
   });
 
+  for (final host in [HostPlatform.android, HostPlatform.windows]) {
+  for (final stageResult in ['success', 'timeout', 'rejected']) {
   testWidgets(
-      'android reconnect refreshes the managed profile even when one is already staged',
+      '${host.name} reconnect refreshes the managed profile even when one is already staged ($stageResult)',
       (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     final calls = <String>[];
+    final stagedProfiles = <String>[];
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'managed-from-api',
         configPayload:
             '{"outbounds":[{"type":"selector","tag":"proxy"},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
+        materializedForRuntime: true,
+      ),
+      managedProfileResolver: (call, _) => ManagedProfilePayload(
+        profileName: 'managed-revision-$call',
+        configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
       ),
     );
@@ -11736,6 +12478,13 @@ void main() {
             'message': 'Managed profile staged on the host bridge.',
           };
         case 'runtimeEngine.stageManagedProfile':
+          stagedProfiles.add((call.arguments as Map)['profileName'] as String);
+          if (stagedProfiles.length == 2 && stageResult == 'timeout') {
+            return Completer<Map<String, Object?>>().future;
+          }
+          if (stagedProfiles.length == 2 && stageResult == 'rejected') {
+            throw PlatformException(code: 'stage_failed');
+          }
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
@@ -11777,8 +12526,10 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
-        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        appContext: buildSeedAppContext(hostPlatform: host),
         bootstrapper: bootstrapper,
+        runtimeActionTimeout: const Duration(milliseconds: 500),
+        windowsTunnelAuthorizer: () async => PokrovWindowsTunnelAuthorization.allowed,
       ),
     );
     await tester.pumpAndSettle();
@@ -11811,16 +12562,22 @@ void main() {
     await tester.tap(connectAction);
     await tester.pumpAndSettle();
 
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
     expect(bootstrapper.calls, 2);
+    expect(stagedProfiles, ['managed-revision-1', 'managed-revision-2']);
     expect(
       calls.where((call) => call == 'runtimeEngine.stageManagedProfile'),
       hasLength(2),
     );
     expect(
       calls.where((call) => call == 'runtimeEngine.connect'),
-      hasLength(2),
+      hasLength(stageResult == 'success' ? 2 : 1),
     );
   });
+
+  }
+  }
 
   testWidgets(
       'primary connect action is disabled when live connect is unavailable',

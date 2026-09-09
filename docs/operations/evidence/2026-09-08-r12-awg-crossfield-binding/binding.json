@@ -1,0 +1,115 @@
+{
+  "source_commit": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "previous_core_commit": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "android_abis": [
+    "arm64-v8a",
+    "armeabi-v7a",
+    "x86",
+    "x86_64"
+  ],
+  "desktop_abi": 2,
+  "event_abi": 1,
+  "required_exports": 15,
+  "proxy_only_cycles": 100,
+  "proxy_only_result": "PASS_LOCAL",
+  "proxy_log_sha256": "b754b4dcbc7a6b84d0313027c7e89ebebc08f39568a4713e4db96dd26f738305",
+  "dependency_manifests_unchanged": true,
+  "native_notice_change": "source references only; verbatim licenses unchanged",
+  "pi_interop": {
+    "awg31": {
+      "binary_sha256": "cf3b2f103ca7d90464984d3e8f89f187a963e1f2e2e587ba0f51047d946d7031",
+      "core_revision": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+      "direct_default_route_preflight": true,
+      "execution_architecture": "linux_arm64",
+      "execution_host_class": "owned_raspberry_pi_4",
+      "execution_origin": "ru",
+      "execution_tool_sha256": {
+        "git": "fec691d80fccc35fcc309fbc9f720536c1d795b8a562ec169f28c9923da9600f",
+        "go": "21761eceb9302062c9623fb699f332c8c7fe000f15f70efe8da01a2cfbbc16b9",
+        "scp": "63b7118d8e1a8a84398cf4ce1584dc6b146606092fe9c68bbaf110bbdcfb480a",
+        "ssh": "6250fd52163fe99a0dc49403ed1b4bbef9b764bdb7bada017a93d057d9376a42"
+      },
+      "material_sha256": "7effbffdbab9013e682f60832c89d488ef0ecfe0829c4e8acb788918bbfaea50",
+      "mtu_observations": {
+        "1280": {
+          "elapsed_ms": 1226,
+          "rx_max": 1328,
+          "rx_packets": 14,
+          "tx_max": 1300,
+          "tx_packets": 23
+        },
+        "1400": {
+          "elapsed_ms": 1169,
+          "rx_max": 1328,
+          "rx_packets": 14,
+          "tx_max": 1420,
+          "tx_packets": 20
+        },
+        "1408": {
+          "elapsed_ms": 1169,
+          "rx_max": 1328,
+          "rx_packets": 14,
+          "tx_max": 1300,
+          "tx_packets": 24
+        }
+      },
+      "outcome": "passed",
+      "passed": true,
+      "profile": "awg31_lab",
+      "raw_material_returned": false,
+      "runtime_mutated": false,
+      "schema_version": "pokrov-owned-awg-core-interop-v4",
+      "server_mutated": false,
+      "temporary_remote_state_removed": true
+    },
+    "awg2": {
+      "binary_sha256": "f3927f8b34cac25c4ff5f8f625671765edb196f4bc768aab703ed61662ad8228",
+      "core_revision": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+      "direct_default_route_preflight": true,
+      "execution_architecture": "linux_arm64",
+      "execution_host_class": "owned_raspberry_pi_4",
+      "execution_origin": "ru",
+      "execution_tool_sha256": {
+        "git": "fec691d80fccc35fcc309fbc9f720536c1d795b8a562ec169f28c9923da9600f",
+        "go": "21761eceb9302062c9623fb699f332c8c7fe000f15f70efe8da01a2cfbbc16b9",
+        "scp": "63b7118d8e1a8a84398cf4ce1584dc6b146606092fe9c68bbaf110bbdcfb480a",
+        "ssh": "6250fd52163fe99a0dc49403ed1b4bbef9b764bdb7bada017a93d057d9376a42"
+      },
+      "material_sha256": "07ae6a2f8bdbfc3bd78bb6fabf105db5380f1bf9a0989efed7a8330d0f7648a9",
+      "mtu_observations": {
+        "1280": {
+          "elapsed_ms": 252,
+          "rx_max": 1312,
+          "rx_packets": 13,
+          "tx_max": 1296,
+          "tx_packets": 20
+        },
+        "1400": {
+          "elapsed_ms": 183,
+          "rx_max": 1312,
+          "rx_packets": 15,
+          "tx_max": 1296,
+          "tx_packets": 19
+        },
+        "1408": {
+          "elapsed_ms": 190,
+          "rx_max": 1312,
+          "rx_packets": 12,
+          "tx_max": 1296,
+          "tx_packets": 20
+        }
+      },
+      "outcome": "passed",
+      "passed": true,
+      "profile": "awg2_lab",
+      "raw_material_returned": false,
+      "runtime_mutated": false,
+      "schema_version": "pokrov-owned-awg-core-interop-v4",
+      "server_mutated": false,
+      "temporary_remote_state_removed": true
+    }
+  },
+  "candidate_created": false,
+  "installed_package_proof": "OPEN",
+  "publication": "NOT_REQUESTED"
+}

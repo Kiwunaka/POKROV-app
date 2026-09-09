@@ -1,0 +1,423 @@
+{
+  "schema_version": "pokrov.r12-c05-source-packet/v1",
+  "date": "2026-09-06",
+  "status": "SOURCE_PREPARATION_ONLY",
+  "c05_status": "PARTIALLY_FIXED",
+  "core_source_commit": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "client_consumer_commit": "b0f4374c8ac00840aaa52c170121ba310133bef0",
+  "source_archive": {
+    "path": "E:\\r12-c05-source-packet\\pokrov-core-8dc57a8-source-review-compact.zip",
+    "bytes": 350839950,
+    "sha256": "2cb77e211a8bec3f303a67282befd231a5f7c84d2c712b80771a7a063f232d59",
+    "payload_files": 3670,
+    "core_files": 3161,
+    "module_cache_files": 492,
+    "native_archives": 3,
+    "archive_entry_hashes_verified": true,
+    "core_snapshot_unchanged_after_offline_graphs": true,
+    "publication": "NOT_PERFORMED",
+    "excluded": "Derived module expansions and lock files created by offline go list; all original source module zip/mod/info/ziphash inputs retained.",
+    "retained_initial_archive": {
+      "path": "E:\\r12-c05-source-packet\\pokrov-core-8dc57a8-source-review.zip",
+      "bytes": 559302478,
+      "sha256": "4b381e442a4baba04440e6880fd58220a6c672c11695f88cd1e3bd1217bc3352",
+      "payload_files": 20661,
+      "payload_bytes": 882502944,
+      "core_files": 3161,
+      "module_cache_files": 492,
+      "native_archives": 3,
+      "archive_entry_hashes_verified": true,
+      "core_snapshot_unchanged_after_offline_graphs": true,
+      "publication": "NOT_PERFORMED"
+    }
+  },
+  "android_native_source": {
+    "wrapper_commit": "dc1cda1fe28740ba069934ab62aeb8ef85388332",
+    "library_commit": "f21660bef13fa6be033e335d64ef55433ce4b8f7",
+    "native_gitlink": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+    "source_tree_check": {
+      "native_commit": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+      "archive_sha256": "47bdd862d69801a241493743b6bcf12e47549737bbcc311bc7695d3bd805461c",
+      "git_blobs": 30591,
+      "archive_files": 30591,
+      "exact_git_blob_matches": 30561,
+      "line_ending_only_matches": [
+        "src/third_party/zstd/src/build/VS2008/fullbench/fullbench.vcproj",
+        "src/third_party/zstd/src/build/VS2008/zstd.sln",
+        "src/third_party/zstd/src/build/VS2008/zstd/zstd.vcproj",
+        "src/third_party/zstd/src/build/VS2008/zstdlib/zstdlib.vcproj",
+        "src/third_party/zstd/src/build/VS2010/datagen/datagen.vcxproj",
+        "src/third_party/zstd/src/build/VS2010/fullbench/fullbench.vcxproj",
+        "src/third_party/zstd/src/build/VS2010/libzstd-dll/libzstd-dll.rc",
+        "src/third_party/zstd/src/build/VS2010/libzstd-dll/libzstd-dll.vcxproj",
+        "src/third_party/zstd/src/build/VS2010/libzstd/libzstd.vcxproj",
+        "src/third_party/zstd/src/build/VS2010/zstd.sln",
+        "src/third_party/zstd/src/build/VS2010/zstd/zstd.rc",
+        "src/third_party/zstd/src/build/VS2010/zstd/zstd.vcxproj",
+        "src/third_party/zstd/src/build/VS_scripts/build.VS2010.cmd",
+        "src/third_party/zstd/src/build/VS_scripts/build.VS2012.cmd",
+        "src/third_party/zstd/src/build/VS_scripts/build.VS2013.cmd",
+        "src/third_party/zstd/src/build/VS_scripts/build.VS2015.cmd",
+        "src/third_party/zstd/src/build/VS_scripts/build.VS2017.cmd",
+        "src/third_party/zstd/src/build/VS_scripts/build.VS2017Community.cmd",
+        "src/third_party/zstd/src/build/VS_scripts/build.VS2017Enterprise.cmd",
+        "src/third_party/zstd/src/build/VS_scripts/build.VS2017Professional.cmd",
+        "src/third_party/zstd/src/build/VS_scripts/build.VSPreview.cmd",
+        "src/third_party/zstd/src/build/VS_scripts/build.generic.cmd",
+        "src/third_party/zstd/src/contrib/VS2005/fullbench/fullbench.vcproj",
+        "src/third_party/zstd/src/contrib/VS2005/zstd.sln",
+        "src/third_party/zstd/src/contrib/VS2005/zstd/zstd.vcproj",
+        "src/third_party/zstd/src/contrib/VS2005/zstdlib/zstdlib.vcproj",
+        "src/third_party/zstd/src/lib/dll/example/build_package.bat",
+        "src/third_party/zstd/src/lib/dll/example/fullbench-dll.sln",
+        "src/third_party/zstd/src/lib/dll/example/fullbench-dll.vcxproj",
+        "src/third_party/zstd/src/programs/windres/zstd.rc"
+      ],
+      "different": [],
+      "missing": [],
+      "extra": [],
+      "gitlinks": [],
+      "chromium_version": "143.0.7499.109",
+      "scope": "Public upstream source archive versus declared git tree, not source-to-binary reproduction.",
+      "version_source": "CHROMIUM_VERSION and src/chrome/VERSION in verified archive"
+    },
+    "library_matches": [
+      {
+        "arch": "386",
+        "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\cronet-go\\lib\\android_386@v0.0.0-20260117110516-f21660bef13f\\libcronet.a",
+        "bytes": 48601660,
+        "sha256": "cfa7db2f3725cec5a4d9874013c2d663f28700e89a02bd74d6b63d82f2129914",
+        "git_blob": "c7f43661e109a0b3d12c0b2c9d9cf1d86d5b6657",
+        "upstream_git_blob": "c7f43661e109a0b3d12c0b2c9d9cf1d86d5b6657",
+        "matches": true
+      },
+      {
+        "arch": "amd64",
+        "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\cronet-go\\lib\\android_amd64@v0.0.0-20260117110516-f21660bef13f\\libcronet.a",
+        "bytes": 59222234,
+        "sha256": "208cc9e438a87f20f8510164dd6f97e2b1d5362b6f0c9c040c8d07a057cc2e16",
+        "git_blob": "8376f00422c6d04c831edeb903a95b2ee657c43f",
+        "upstream_git_blob": "8376f00422c6d04c831edeb903a95b2ee657c43f",
+        "matches": true
+      },
+      {
+        "arch": "arm",
+        "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\cronet-go\\lib\\android_arm@v0.0.0-20260117110516-f21660bef13f\\libcronet.a",
+        "bytes": 53553950,
+        "sha256": "ff6f8a58dbe841284b974fd6d489bc6da27556aa10ce71b92853c8f688f26730",
+        "git_blob": "fc266740a4dd959f186f8f26eedf22dc2e929d93",
+        "upstream_git_blob": "fc266740a4dd959f186f8f26eedf22dc2e929d93",
+        "matches": true
+      },
+      {
+        "arch": "arm64",
+        "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\cronet-go\\lib\\android_arm64@v0.0.0-20260117110516-f21660bef13f\\libcronet.a",
+        "bytes": 62870636,
+        "sha256": "2fbc1ac4261755cbfa923615fa10fef28fb804c0ee56d0fe5bcdb78f4b8b4cb5",
+        "git_blob": "d0dd5352f955fab1831c5ae80765740fa588fba3",
+        "upstream_git_blob": "d0dd5352f955fab1831c5ae80765740fa588fba3",
+        "matches": true
+      }
+    ],
+    "claim_ceiling": "Four existing static libraries match upstream Git blobs; both wrapper/library commits declare this native source. Source-to-binary reproduction not established."
+  },
+  "windows_native_source": {
+    "url": "https://codeload.github.com/SagerNet/cronet-go/zip/82e152101769e4655794c3c33518be224d7e9b9e",
+    "commit": "82e152101769e4655794c3c33518be224d7e9b9e",
+    "path": "E:\\r12-c05-source-packet\\cronet-windows-build-source.zip",
+    "bytes": 202348,
+    "sha256": "1c8f69357267015e995e4d5effe7d2514bbb36263b6f0d4828410a1fbb46aa8c",
+    "exact_git_blob_matches": 138,
+    "native_gitlink": "2be061b6c2e9b316f75ec1e329e345406cd4c62d",
+    "scope": "Complete tracked wrapper/build source; native gitlink supplied separately."
+  },
+  "offline_graphs": [
+    {
+      "name": "libpokrov-core-arm64-v8a",
+      "packages": 1022,
+      "source_file_selections_and_module_sums_match": true
+    },
+    {
+      "name": "libpokrov-core-armeabi-v7a",
+      "packages": 1020,
+      "source_file_selections_and_module_sums_match": true
+    },
+    {
+      "name": "libpokrov-core-x86",
+      "packages": 1020,
+      "source_file_selections_and_module_sums_match": true
+    },
+    {
+      "name": "libpokrov-core-x86_64",
+      "packages": 1023,
+      "source_file_selections_and_module_sums_match": true
+    },
+    {
+      "name": "pokrov-core",
+      "packages": 1013,
+      "source_file_selections_and_module_sums_match": true
+    }
+  ],
+  "inputs": [
+    {
+      "path": "E:\\r12-c05-source-packet\\source-packet-compact-receipt.json",
+      "bytes": 1099,
+      "sha256": "17f0a6a02251e8302ee77f540e4841c6924889ec26b258f925d0c9588317ffb8"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\source-manifest-compact.json",
+      "bytes": 730359,
+      "sha256": "5c6230ffb1bab648c4a577b44d2d2b9ea29509e86555e29c536202e767380a37"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\source-inventory.json",
+      "bytes": 853967,
+      "sha256": "ef9534eb905c386ebb22a3faeb2bb5e9ed367f82aa19dbc398d6d21bdb7f9156"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\source-preflight.json",
+      "bytes": 706,
+      "sha256": "4bf9e0b36cbaeded69f2e8c9bc42bb088a12cbf04e27ae455f515c18e700465b"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\module-cache-inventory.json",
+      "bytes": 104853,
+      "sha256": "cc9b42a2d8637992e95f142a399706caf6358a9777c247bc894e7bc65f0bd886"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\offline-graph-checks.json",
+      "bytes": 3784,
+      "sha256": "603bfc9639ddcf0d9bd8c85041f43019412bb46f828e3d751d29f70576982ba1"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\offline-graph-comparison.json",
+      "bytes": 650,
+      "sha256": "3fd5a9beca9b27a45dbd31dfb127c32a0a7e8fa0a00b4a5f0205272797c92dbb"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\android-cronet-library-binding.json",
+      "bytes": 1757,
+      "sha256": "a7161863c275b090c4ff377754284e109246e112953f0e50c67d61649faf7fa9"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\android-native-source-check.json",
+      "bytes": 2626,
+      "sha256": "eb2a860852f96bcaaaf9aa5396fca8e022394f141136571513547bf6b2844bc1"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\windows-wrapper-source-check.json",
+      "bytes": 530,
+      "sha256": "9b4680efb19070b478e48ef30a39843366361dc689cfdd07521ba7bd3fb196f2"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\cronet-wrapper-tree.json",
+      "bytes": 26536,
+      "sha256": "79b02c8b1ab612d939d3d9f018ce81581e8244c2d25271e33b9d4d391ba5f193"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\cronet-android-libs-tree.json",
+      "bytes": 26335,
+      "sha256": "81a9ae5ddd91c8bce34ba7d7000eccd5c46ea5249c849efad02fce6398caf37e"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\cronet-native-libs-tree.json",
+      "bytes": 61449,
+      "sha256": "bc4ea24d0f3d81c9c2d7a5e073248a0bd05373c4fd07616399fab1d5946776b0"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\android-native-tree.json",
+      "bytes": 10776653,
+      "sha256": "95f67907a7c3fec7617d08e9c73278551f1f3432fc583994e0f1fa5c4893bd1a"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\fetch-android-native-source.py",
+      "bytes": 1149,
+      "sha256": "798ddf53271d9cfe405ba0a8921c99956edc1111c31e70955704a8db12636c97"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\check-native-source.py",
+      "bytes": 1678,
+      "sha256": "2103b5eb04e2b872ee2894bafd1863483ad3be11ddfa18420744dd0f93e69433"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\materialize-source.py",
+      "bytes": 2366,
+      "sha256": "40248b0ff8d2c4271c68a453c0bf6c353f36cff6386149e9c01f771bb4c8ccd7"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\check-offline-graphs.py",
+      "bytes": 1209,
+      "sha256": "683482cbe27330e545c795b833a6def10e724b719a9bbff6fe21bcf37fe46b82"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\compare-offline-graphs.py",
+      "bytes": 1227,
+      "sha256": "6d51596f84c64f6425ad569973a84361c35dd43bf1a0e7a8b55cc2c5890cb4d5"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\build-source-packet.py",
+      "bytes": 8497,
+      "sha256": "7997ad5dfbfce7996423f8acdf9be3f70669b25a14064f0466e774dd7219bccf"
+    },
+    {
+      "path": "E:\\r12-c05-source-packet\\package-compact.py",
+      "bytes": 2317,
+      "sha256": "a7733b375bbb99d8a7d1750fd78b81fed4c51e5eb35ef4b04b3902d01c11a379"
+    }
+  ],
+  "verification_commands": [
+    {
+      "command": [
+        "python",
+        "-X",
+        "utf8",
+        "-B",
+        "E:\\r12-c05-source-packet\\fetch-android-native-source.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python",
+        "-X",
+        "utf8",
+        "-B",
+        "E:\\r12-c05-source-packet\\check-native-source.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python",
+        "-X",
+        "utf8",
+        "-B",
+        "E:\\r12-c05-source-packet\\materialize-source.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python",
+        "-X",
+        "utf8",
+        "-B",
+        "E:\\r12-c05-source-packet\\check-offline-graphs.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python",
+        "-X",
+        "utf8",
+        "-B",
+        "E:\\r12-c05-source-packet\\compare-offline-graphs.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python",
+        "-X",
+        "utf8",
+        "-B",
+        "E:\\r12-c05-source-packet\\build-source-packet.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python",
+        "-X",
+        "utf8",
+        "-B",
+        "E:\\r12-c05-source-packet\\package-compact.py"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "client_checks": [
+    {
+      "name": "client-seed",
+      "command": [
+        "pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/validate-seed.ps1",
+        "-PlatformRoot",
+        "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start",
+        "-CoreRoot",
+        "E:/r12core-implementation"
+      ],
+      "cwd": "E:\\r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-source-packet\\client-seed.log",
+      "sha256": "91d7e396640410e44abf5da2208ee6f216673a3909aacb7d693f47e9b587241f",
+      "tail": "ts=2\r\nObservability contract parity OK: platform/client/Core snapshots agree.\r\nRelease source logging gate OK: 151 production files.\r\nRelease source logging contract OK: real tree plus 4 negative cases.\r\nRelease-handoff v2 client contract OK: 16 cases.\r\nRelease rollback catalog contract OK: retained pointer plus 5 synthetic cases.\r\nPASS: client release-v2 CI is strict and the Windows exact-candidate gate retains sanitized failure evidence.\r\nRepository hygiene OK: effective_tracked=836 retained_history=138 pending_temp_deletes=0 runtime_binaries=3\r\nPASS: standard client gate analyzes testless modules, tests all test-bearing modules and both Android flavors, and resolves Gradle and Python tools on Windows/Linux.\r\nClient presentation boundary OK: aggregate Home state/intents, five coordinators, update feature owner, progressive protection disclosure, 29 parts, centralized haptics.\r\nClient performance samples: C:\\Users\\kiwun\\AppData\\Local\\Temp\\pokrov-client-performance-3ac25ead04654de3af497b98a9d3b7fe\\cpu-counter-0.json\r\nMode: WindowsIdleCpu; retained samples: 1; discarded warmups: 0\r\nClient performance collector contract OK.\r\nClient docs contract OK.\r\nSeed scaffold OK:\r\nE:\\r12client\r\n"
+    }
+  ],
+  "platform_checks": [
+    {
+      "name": "platform-docs",
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_agent_docs_contract.py",
+        "tests/test_agent_context_packet_audit.py",
+        "-q"
+      ],
+      "cwd": "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-source-packet\\platform-docs.log",
+      "sha256": "1d595b0f41bdaa00bc8d036b46a72b457550edb57eee3577721e19551c42d556",
+      "tail": ".................................                                        [100%]\r\n33 passed in 0.71s\r\n"
+    },
+    {
+      "name": "platform-context",
+      "command": [
+        "python",
+        "-B",
+        "scripts/agent_context_packet_audit.py",
+        "--platform-context-root",
+        "."
+      ],
+      "cwd": "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-source-packet\\platform-context.log",
+      "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d",
+      "tail": "PASS platform-context\r\n"
+    },
+    {
+      "name": "platform-package",
+      "command": [
+        "python",
+        "-B",
+        "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start\\docs\\developer\\work-orders\\2026-09-05--consolidated-release-and-post12\\validate_package.py"
+      ],
+      "cwd": "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-source-packet\\platform-package.log",
+      "sha256": "3dee8137ab7fb7f0f992aad1cf4d8c9e1cbf36c16502ea6313b2bf267186ac16",
+      "tail": "PASS: 13 imported section hashes, 83 R12 IDs, 378 retained legacy IDs and ledger hash, 228 local file links\r\n"
+    }
+  ],
+  "limitations": [
+    "Internal Core source review packet, not complete legal clearance or corresponding-source acceptance.",
+    "No source-to-binary Cronet rebuild; external compiler/SDK/PGO/tool inputs still require separate provenance and setup.",
+    "Psiphon utls root license, complete native/file-header obligations, client license/brand/publication decisions remain open.",
+    "Core bounded secret-marker screen is not exhaustive publication/history clearance.",
+    "No client source export, app/device/privacy test, compile, signing, new candidate, push, merge, publication or deploy in this slice."
+  ],
+  "rollback": "Documentation can be reverted by scoped commits; initial and compact source artifacts retained externally, runtime/source bytes unchanged.",
+  "concurrent_registrants_preserved": {
+    "apps/macos_shell/macos/Flutter/GeneratedPluginRegistrant.swift": "1cf68ec73b24284c39c2944d6a55fbbe903d26fab547447d10cb68a29deb5bc3",
+    "apps/windows_shell/windows/flutter/generated_plugin_registrant.cc": "b3bf92197b2321101ade2d43690a15d223dca7e96579d45383f0f0422c4c1b6b",
+    "apps/windows_shell/windows/flutter/generated_plugin_registrant.h": "dbc11635d7b1ba1887adf40df5b83d634e9c3ab0bee34510c71528bb4d73602a",
+    "apps/windows_shell/windows/flutter/generated_plugins.cmake": "ac1ec22314251312b8d252962b0242a212ed217ed12b95bb21a968530fe3a282"
+  }
+}

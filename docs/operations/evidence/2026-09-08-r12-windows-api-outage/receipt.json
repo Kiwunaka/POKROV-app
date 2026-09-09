@@ -1,0 +1,445 @@
+{
+  "schema": "pokrov.r12-installed-windows-api-outage/v1",
+  "status": "PASS_BOUNDED",
+  "client_source": "e88dff94bef85650c5f0b3d31dc3ff9a5e39c38a",
+  "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "installer_sha256": "29a87a13906909e400037a947f1e4f876ca59821e7e34c73060e623f2d9fbeea",
+  "installed_files_verified": 305,
+  "version": "1.2.0+4053",
+  "os_version": "10.0.26200",
+  "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "origin": "current-origin; owned Windows 11 VM, VirtualBox NAT, managed AWG3.1",
+  "build_worktree_state": "unchanged e88dff9 local package; generated registrants dirty at original build time",
+  "new_package_built": false,
+  "application_source_changed": false,
+  "fixture": "two exact program-scoped outbound firewall rules block TCP80/443 from stock UI and PowerShell control process; Curl and Core service are not targeted; no live API outage",
+  "existing_tunnel": {
+    "samples": 23,
+    "duration_ms": 61023,
+    "all_healthy": true,
+    "same_ui_and_service_pid": true
+  },
+  "cached_reconnect": true,
+  "cached_connect_after_ui_restart": true,
+  "cache_original_verified_at": "2026-09-08T06:43:49.1273360Z",
+  "cache_timestamp_binding_payload_entry_unchanged_during_outage": true,
+  "fresh_online_verified_at": "2026-09-08T06:54:39.3603130Z",
+  "fresh_online_download_observed": true,
+  "cache_capture": "read-only DPAPI decrypt inside same ordinary guest identity; only timestamps and comparison hashes retained; no raw store/profile/credentials exported or modified",
+  "samples": {
+    "initial": {
+      "utc": "2026-09-08T06:41:36.1677604Z",
+      "running": false,
+      "tun_count": 0,
+      "curl_status": 200,
+      "blocked_process_probe": {
+        "status": 200,
+        "error": null,
+        "elapsed_ms": 624
+      },
+      "cache_used_event": false
+    },
+    "fresh-connected": {
+      "utc": "2026-09-08T06:44:00.3940507Z",
+      "running": true,
+      "tun_count": 1,
+      "curl_status": 200,
+      "blocked_process_probe": {
+        "status": 200,
+        "error": null,
+        "elapsed_ms": 534
+      },
+      "cache_used_event": false
+    },
+    "outage-start": {
+      "utc": "2026-09-08T06:45:28.0236040Z",
+      "running": true,
+      "tun_count": 1,
+      "curl_status": 200,
+      "blocked_process_probe": {
+        "status": null,
+        "error": "ConnectFailure",
+        "elapsed_ms": 313
+      },
+      "cache_used_event": false
+    },
+    "outage-held": {
+      "utc": "2026-09-08T06:47:05.4734443Z",
+      "running": true,
+      "tun_count": 1,
+      "curl_status": 200,
+      "blocked_process_probe": {
+        "status": null,
+        "error": "ConnectFailure",
+        "elapsed_ms": 173
+      },
+      "cache_used_event": false
+    },
+    "outage-disconnected": {
+      "utc": "2026-09-08T06:48:09.5427423Z",
+      "running": false,
+      "tun_count": 0,
+      "curl_status": 200,
+      "blocked_process_probe": {
+        "status": null,
+        "error": "ConnectFailure",
+        "elapsed_ms": 58
+      },
+      "cache_used_event": false
+    },
+    "cached-reconnect": {
+      "utc": "2026-09-08T06:48:54.4771588Z",
+      "running": true,
+      "tun_count": 1,
+      "curl_status": 200,
+      "blocked_process_probe": {
+        "status": null,
+        "error": "ConnectFailure",
+        "elapsed_ms": 236
+      },
+      "cache_used_event": true
+    },
+    "before-ui-restart": {
+      "utc": "2026-09-08T06:50:41.5725251Z",
+      "running": false,
+      "tun_count": 0,
+      "curl_status": 200,
+      "blocked_process_probe": {
+        "status": null,
+        "error": "ConnectFailure",
+        "elapsed_ms": 46
+      },
+      "cache_used_event": true
+    },
+    "restarted-before-connect": {
+      "utc": "2026-09-08T06:50:57.3025563Z",
+      "running": false,
+      "tun_count": 0,
+      "curl_status": 200,
+      "blocked_process_probe": {
+        "status": null,
+        "error": "ConnectFailure",
+        "elapsed_ms": 66
+      },
+      "cache_used_event": true
+    },
+    "restarted-cached-connect": {
+      "utc": "2026-09-08T06:51:45.8438748Z",
+      "running": true,
+      "tun_count": 1,
+      "curl_status": 200,
+      "blocked_process_probe": {
+        "status": null,
+        "error": "ConnectFailure",
+        "elapsed_ms": 219
+      },
+      "cache_used_event": true
+    },
+    "api-restored": {
+      "utc": "2026-09-08T06:53:25.4586485Z",
+      "running": true,
+      "tun_count": 1,
+      "curl_status": 200,
+      "blocked_process_probe": {
+        "status": 200,
+        "error": null,
+        "elapsed_ms": 556
+      },
+      "cache_used_event": true
+    },
+    "online-before-reconnect": {
+      "utc": "2026-09-08T06:54:04.4410974Z",
+      "running": false,
+      "tun_count": 0,
+      "curl_status": 200,
+      "blocked_process_probe": {
+        "status": 200,
+        "error": null,
+        "elapsed_ms": 494
+      },
+      "cache_used_event": true
+    },
+    "online-fresh-reconnect": {
+      "utc": "2026-09-08T06:54:49.0793191Z",
+      "running": true,
+      "tun_count": 1,
+      "curl_status": 200,
+      "blocked_process_probe": {
+        "status": 200,
+        "error": null,
+        "elapsed_ms": 616
+      },
+      "cache_used_event": false
+    },
+    "final-disconnected": {
+      "utc": "2026-09-08T06:56:21.7653219Z",
+      "running": false,
+      "tun_count": 0,
+      "curl_status": 200,
+      "blocked_process_probe": {
+        "status": 200,
+        "error": null,
+        "elapsed_ms": 610
+      },
+      "cache_used_event": false
+    }
+  },
+  "restored_disconnections": 4,
+  "foreign_firewall_rules_preserved": 488,
+  "routes_and_dns_restored": true,
+  "probe": {
+    "sha256": "7c5e01fd1b46985c768ff5c9a90fb9b2bfd24c65dadb05102b058ca11faad05d",
+    "embedded_source": "0218e89",
+    "role": "existing read-only SCM IPC helper; embedded source labels helper only"
+  },
+  "cleanup": {
+    "utc": "2026-09-08T06:58:14.1362718Z",
+    "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+    "vm_off": true,
+    "nic_none": true,
+    "source_off": true,
+    "routes_sha256": "401e4b0a47c9c8c73d6b52536cec753f09f559ceb2d512884e57d5f7aff72434",
+    "dns_sha256": "720fe40b4ee8ab42f57c808b3c5f824808703b35113fe9999ef97a7bbccdee59",
+    "backend_restored": true,
+    "fixture_rules": 0,
+    "ui_count": 0,
+    "installed_files_verified": 305,
+    "host_network_unchanged": true
+  },
+  "open_checks": [
+    "actual 24-hour expiry on installed bytes",
+    "explicit 401/403 and remote revocation on installed bytes",
+    "network-side/API-only failure variants",
+    "Windows 10",
+    "independent route/effective location proof",
+    "exact final channel and complete N02/N07"
+  ],
+  "release": {
+    "published": false,
+    "deployed": false,
+    "promoted": false,
+    "final_candidate": false
+  },
+  "artifacts": [
+    {
+      "path": "E:/r12-windows-api-outage-20260908/sample.ps1",
+      "bytes": 5853,
+      "sha256": "dab5794789444650a516f71d268bcfb1720c3ec49da26f40366a5823a955c6aa"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/firewall.ps1",
+      "bytes": 2453,
+      "sha256": "921d5e394d78fbc128727f5b62f19c6acec3c461b8dc2bd954cd6de8865ec245"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/firewall-common.ps1",
+      "bytes": 2493,
+      "sha256": "dd6ff04606382b73c3906955b3d0becbd239fc1683b4c5dccefbd172b696aeac"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/elevate.ps1",
+      "bytes": 798,
+      "sha256": "090d054cd7ef6b084af8cf396fd26c5f08f7540172fda56d4bd2f7de2b6cb427"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/observe-outage.ps1",
+      "bytes": 1348,
+      "sha256": "2843d7521ee6ddc9ae1f8f9ffbabe098f7efe750378baedafc87b4273be8256d"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/final-identity.ps1",
+      "bytes": 1803,
+      "sha256": "0cefd5a78fefdac59e2721f5f6f719a5bd225796c9389fd2871fbd65200f8728"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/finish.ps1",
+      "bytes": 2759,
+      "sha256": "af44cbb4367b965b1c7f541cade5cb240cc682f464d00816fb2fc180ce0a0f70"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/lab-control.py",
+      "bytes": 7755,
+      "sha256": "5ac743aef572b6adf656c6db26a0b7c9eb39f65e6580642511df1fc11cd79deb"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/retain-evidence.py",
+      "bytes": 9335,
+      "sha256": "3fb975bb1d1097e5b1e871365c1cc27a342507e39d1c950c8991a9580dce6336"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/host-before.json",
+      "bytes": 260,
+      "sha256": "9ea2ed8c74540c016b9cf7622c8374b925b6b82f242c247b431e4d69df7eee1c"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/initial-identity.json",
+      "bytes": 360,
+      "sha256": "2eba1729b8a95330260787abd792d990a6fa33c069cc3541da913107e2036d89"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/final-identity.json",
+      "bytes": 1257,
+      "sha256": "460ab66e2efd783b33efb1b8a04649edb5fb943534e329fb875ae67d0d83b001"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/ui-stopped.json",
+      "bytes": 123,
+      "sha256": "bc7da7440ad7ded8f45bae3076175b9f0a75b2bf01f218473c31d05e961a617e"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/outage-observation.json",
+      "bytes": 31572,
+      "sha256": "be24cda517475d44f22225a9d28ed4959f0cc0e5360780c56c1535a26d466448"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/plan.json",
+      "bytes": 2687,
+      "sha256": "59ab165217ab7c9b35cdc0adfb42424bcd8a5e3e266943bb6a8a221dd901a4ac"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/switch-awg31.json",
+      "bytes": 1149,
+      "sha256": "fec7382a77e7255e43146fde81f2eac631293ae1e0819173a5f03023cb3ac123"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/restore.json",
+      "bytes": 1163,
+      "sha256": "f1e12298af36d10de101be6a70a96f140373a5912ac32f52960b85362ec43d93"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/return-state.json",
+      "bytes": 478,
+      "sha256": "c3a4f501fdd8390c54fcf54d6675c27877bf7cc471271cb113537a05b220a4c1"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/ui-outage-held.png",
+      "bytes": 103552,
+      "sha256": "1d818752b0347dc3f0229187f2d5629808606313fc30dcf9a81beef0bfc7d42d"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/ui-cached-reconnect.png",
+      "bytes": 103449,
+      "sha256": "a685ff3c49fcab8e095199c96e64bef590441d281cfa91443ce72fdaf0b44dff"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/ui-restarted-before-connect.png",
+      "bytes": 102162,
+      "sha256": "0fa69e8a263779a6f287f7b7a4bf595d436d1a9bbb14ab561d16df9ceb3264b9"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/ui-api-restored.png",
+      "bytes": 103745,
+      "sha256": "b1b916c8c77414e29848556f33d5ec413f603908e89172a937fb8d27b4dd2f6e"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/ui-online-fresh-reconnect.png",
+      "bytes": 103890,
+      "sha256": "85ecc20c8a15abd3c02a3fe64c0237eabc4b4d579fbcce147fc76afbee821ade"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/sample-initial.json",
+      "bytes": 4370,
+      "sha256": "d35f009a8aef94c2c995840fef7f3553363e28842101cbf68a81974a208c9ef5"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/sample-fresh-connected.json",
+      "bytes": 4778,
+      "sha256": "b7b34504a4a58baa95f1df22e87aea72eb89a0a444d9da894597b6072633e8b0"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/sample-outage-start.json",
+      "bytes": 4796,
+      "sha256": "de54e10b375f1539d8907e5c3c3ad58dd4fa850b61bfa7d029c6a7de2913ddf6"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/sample-outage-held.json",
+      "bytes": 4781,
+      "sha256": "a35871d777c77ee0997eef691f4e05e33013d28ef0f83ee2c1c3f8512b729668"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/sample-outage-disconnected.json",
+      "bytes": 4795,
+      "sha256": "4249ca1cb840b281e13f60efc5c9f6736ada9c08da3e7167a324393bc0fabe26"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/sample-cached-reconnect.json",
+      "bytes": 4792,
+      "sha256": "517105eeb8671373113bb5a8b90407efb7f302d6954d394553a42e337b6e8596"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/sample-before-ui-restart.json",
+      "bytes": 4793,
+      "sha256": "eebed611d60860e5b935349183b3b955e158a6a31feccfcf866f31b4d619d63b"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/sample-restarted-before-connect.json",
+      "bytes": 4808,
+      "sha256": "d3b586588031a96425b5d7c7a80112590b5d95744cc04fe6a49c7d78865a9e66"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/sample-restarted-cached-connect.json",
+      "bytes": 4793,
+      "sha256": "a142a095d76f73961d062f41f0521965b7899b23d8e33c944dd775f35e98027c"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/sample-api-restored.json",
+      "bytes": 4767,
+      "sha256": "17dffdbef25cc2440ca3f4c72c8dcf508e2f1288b88e12533d4f318eb6333ce8"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/sample-online-before-reconnect.json",
+      "bytes": 4786,
+      "sha256": "58da4392013e77b28764c82c6fb520f29437057d799a20fc32d39246f5ded77b"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/sample-online-fresh-reconnect.json",
+      "bytes": 4775,
+      "sha256": "0792a549f3861c48aa5ab0a37ae97d3bb7c1dea3773e5389d4def29f736d0540"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/sample-final-disconnected.json",
+      "bytes": 4789,
+      "sha256": "81e90cee7a58a6756e7a0674e4c4d0424be3c992785ecbc2a5ad093da39d7ea9"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/firewall-prepare.json",
+      "bytes": 3687,
+      "sha256": "f95a5c7a270f516d80a946907ccba48358ada46a70ff7169b39b20751e21481a"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/firewall-prepare-exit.json",
+      "bytes": 123,
+      "sha256": "70ff18386afaa2768c88d0a295f32c7fe4e5b3977a83de52bbf66f98473d3adc"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/firewall-enable.json",
+      "bytes": 3685,
+      "sha256": "cffa4f5da72d0bd92f99a44cd7fd192bcc29d5a9d41095e2c065d22cc447027d"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/firewall-enable-exit.json",
+      "bytes": 121,
+      "sha256": "8567a35b74d9beb2409c203f3c629fc9ede524359a2c3e3ce1c28a8477eac625"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/firewall-disable.json",
+      "bytes": 3687,
+      "sha256": "3af1750d8ed595de8e5dc42a062b07b2b0a7e9f27b278b5ec78f3a0432934218"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/firewall-disable-exit.json",
+      "bytes": 123,
+      "sha256": "f6f679d6a7bcd1ff0489c4d97299110d9215fa33419cd0f55b3c001dd198ca86"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/firewall-cleanup.json",
+      "bytes": 3181,
+      "sha256": "a40bf9d7f0e498c3a39d75b5d2ffce705e569e19a22314ca77b713f98a27386f"
+    },
+    {
+      "path": "E:/r12-windows-api-outage-20260908/firewall-cleanup-exit.json",
+      "bytes": 123,
+      "sha256": "d1f114add3ae06e91a4f3d5311b5344259ac0334d5c40d22e6e3680e29293a89"
+    }
+  ]
+}

@@ -1,32 +1,5 @@
 part of pokrov_app_shell;
 
-/// Owns account-scoped actions and the current access/subscription view state.
-///
-/// Local routing preferences and runtime truth deliberately stay outside this
-/// coordinator; clearing an account refresh never mutates device policy.
-class AccountSessionCoordinator {
-  AccountSessionCoordinator({required this.accountActions});
-
-  final AppFirstAccountActionService? accountActions;
-  FreeProfileAccess? _freeProfileAccess;
-  ClientSubscriptionInfo? _subscriptionInfo;
-
-  FreeProfileAccess? get freeProfileAccess => _freeProfileAccess;
-  ClientSubscriptionInfo? get subscriptionInfo => _subscriptionInfo;
-
-  void updateFreeProfileAccess(FreeProfileAccess? value) {
-    _freeProfileAccess = value;
-  }
-
-  void updateSubscriptionInfo(ClientSubscriptionInfo? value) {
-    _subscriptionInfo = value;
-  }
-
-  void clearSubscriptionInfo() {
-    _subscriptionInfo = null;
-  }
-}
-
 class _ProfileSection extends StatelessWidget {
   const _ProfileSection({
     required this.appContext,
@@ -1286,9 +1259,11 @@ void _showSubscriptionSheet(
             _SheetReveal(
               order: 1,
               child: Text(
-                hasProvisionedAccess
-                    ? 'Доступ активен. Продление открывается на защищенной странице оплаты.'
-                    : 'Сначала активируйте доступ на этом устройстве, затем продлите его на защищенной странице оплаты.',
+                _effectiveAccessLane(appContext, info) == null
+                    ? 'Статус подписки пока неизвестен. Проверьте его в личном кабинете.'
+                    : hasProvisionedAccess
+                        ? 'Доступ активен. Продление открывается на защищенной странице оплаты.'
+                        : 'Сначала активируйте доступ на этом устройстве, затем продлите его на защищенной странице оплаты.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: PokrovPalette.of(context).muted,
                       height: 1.35,
@@ -1300,7 +1275,8 @@ void _showSubscriptionSheet(
               order: 2,
               child: _KeyValueLine(
                 label: 'Текущий доступ',
-                value: _effectiveAccessLane(appContext, info).label,
+                value:
+                    _effectiveAccessLane(appContext, info)?.label ?? 'Нет данных',
               ),
             ),
             if (info != null && info.daysLeft > 0)

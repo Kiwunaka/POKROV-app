@@ -1,0 +1,51 @@
+{
+  "status": "I3_PARTIALLY_FIXED_FULL_C03_OPEN",
+  "source_baseline": "c57970849b6f93183b3295c0c7ccc4fffa0edc7c",
+  "core": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "scope": "Behavior-preserving account summary state and orchestration extraction",
+  "checks": [
+    {
+      "path": "E:\\r12-c03-account-tests.log",
+      "sha256": "399b43f1196874e0dfaf0619eb6bf3d91bb286a50cbeca7b69ccd7f664a13d21",
+      "exit_code": 0,
+      "result": "188 tests passed"
+    },
+    {
+      "path": "E:\\r12-c03-account-analyze.log",
+      "sha256": "99e156082218ee53f5cd0f3a9fdf52897e1ee5026729b6062c1662f93de32b9a",
+      "exit_code": 0,
+      "result": "No issues found"
+    },
+    {
+      "path": "E:\\r12-c03-account-seed.log",
+      "sha256": "4dcca360f554eeba871d7a987212e2daa3abe7ab4887f53437a512dee6162f89",
+      "exit_code": 0,
+      "result": "Seed scaffold OK; docs and presentation boundary PASS"
+    }
+  ],
+  "counts": {
+    "packages/app_shell/lib/src/shell/seed_shell.dart": {
+      "before_lines": 6494,
+      "after_lines": 6482
+    },
+    "packages/app_shell/lib/app_shell.dart": {
+      "before_lines": 314,
+      "after_lines": 316,
+      "before_parts": 29,
+      "after_parts": 29
+    },
+    "packages/app_shell/lib/src/features/profile/profile_surface.dart": {
+      "before_lines": 1492,
+      "after_lines": 1465
+    }
+  },
+  "preexisting_registrants_unchanged": true,
+  "archive": {
+    "path": "E:\\r12-c03-account-evidence.zip",
+    "bytes": 7486,
+    "sha256": "4c33b549cdfc81abdded25a816fd7a6eadcd30967454e31729c9c4d3f51c2d9d",
+    "files": 3
+  },
+  "remaining": "Full C03 sequence; physical/native runtime; exact candidate and release gates",
+  "operations": "No package, install, signing, push, merge, deploy, publish or new candidate"
+}

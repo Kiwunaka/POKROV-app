@@ -1,0 +1,10 @@
+{
+  "utc": "2026-09-08T11:39:22.5486409Z",
+  "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "vm_off": true,
+  "nic_none": true,
+  "source_off": true,
+  "routes_sha256": "401e4b0a47c9c8c73d6b52536cec753f09f559ceb2d512884e57d5f7aff72434",
+  "dns_sha256": "720fe40b4ee8ab42f57c808b3c5f824808703b35113fe9999ef97a7bbccdee59",
+  "host_network_unchanged": true
+}

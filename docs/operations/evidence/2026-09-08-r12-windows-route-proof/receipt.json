@@ -1,0 +1,481 @@
+{
+  "schema": "pokrov.r12-installed-windows-route-proof/v1",
+  "status": "PASS_BOUNDED",
+  "client_source": "3784352dc58a282910c4ddc77ff7a30493706f2f",
+  "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "version": "1.2.0+4053",
+  "installer_sha256": "83c253ce8a1cc5d64aa615e259ae2a0f6d5d978442fd3732965d7778d14d6063",
+  "installed_files_verified": 305,
+  "origin": "current-origin; owned Windows 11 VM; VirtualBox NAT; managed AWG3.1",
+  "prior_source": "e88dff94bef85650c5f0b3d31dc3ff9a5e39c38a",
+  "samples": {
+    "baseline": {
+      "utc": "2026-09-08T07:23:09.5677988Z",
+      "http_200": 3,
+      "counters": {
+        "Intel(R) PRO/1000 MT Desktop Adapter": {
+          "Inbound": 15,
+          "Outbound": 15
+        }
+      },
+      "source": "e88dff9",
+      "profile_sha256": null
+    },
+    "awg31": {
+      "utc": "2026-09-08T07:27:02.1576921Z",
+      "http_200": 3,
+      "counters": {
+        "Intel(R) PRO/1000 MT Desktop Adapter": {
+          "Inbound": 0,
+          "Outbound": 0
+        },
+        "sing-tun Tunnel": {
+          "Inbound": 15,
+          "Outbound": 15
+        }
+      },
+      "source": "e88dff9",
+      "profile_sha256": null
+    },
+    "full": {
+      "utc": "2026-09-08T07:31:10.9700791Z",
+      "http_200": 3,
+      "counters": {
+        "Intel(R) PRO/1000 MT Desktop Adapter": {
+          "Inbound": 0,
+          "Outbound": 0
+        },
+        "sing-tun Tunnel": {
+          "Inbound": 15,
+          "Outbound": 15
+        }
+      },
+      "source": "e88dff9",
+      "profile_sha256": "b344b27f9520bb082aa1e26961b9e3ab1b807c6ec7fc52658341d00e7904173e"
+    },
+    "fixed-selected-ps": {
+      "utc": "2026-09-08T08:01:13.0671647Z",
+      "http_200": 3,
+      "counters": {
+        "Intel(R) PRO/1000 MT Desktop Adapter": {
+          "Inbound": 0,
+          "Outbound": 0
+        },
+        "sing-tun Tunnel": {
+          "Inbound": 15,
+          "Outbound": 15
+        }
+      },
+      "source": "3784352",
+      "profile_sha256": "37524ef9bf8b41ce230969441867920ca24ad4ccf7ac3088ccd8249fb1eaae04"
+    },
+    "fixed-unselected-curl": {
+      "utc": "2026-09-08T08:02:33.7910866Z",
+      "http_200": 3,
+      "counters": {
+        "Intel(R) PRO/1000 MT Desktop Adapter": {
+          "Inbound": 15,
+          "Outbound": 15
+        },
+        "sing-tun Tunnel": {
+          "Inbound": 15,
+          "Outbound": 15
+        }
+      },
+      "source": "3784352",
+      "profile_sha256": "37524ef9bf8b41ce230969441867920ca24ad4ccf7ac3088ccd8249fb1eaae04"
+    },
+    "fixed-full": {
+      "utc": "2026-09-08T08:05:58.5032430Z",
+      "http_200": 3,
+      "counters": {
+        "Intel(R) PRO/1000 MT Desktop Adapter": {
+          "Inbound": 0,
+          "Outbound": 0
+        },
+        "sing-tun Tunnel": {
+          "Inbound": 15,
+          "Outbound": 15
+        }
+      },
+      "source": "3784352",
+      "profile_sha256": "b344b27f9520bb082aa1e26961b9e3ab1b807c6ec7fc52658341d00e7904173e"
+    },
+    "fixed-all-except-ru": {
+      "utc": "2026-09-08T08:15:43.4018068Z",
+      "http_200": 3,
+      "counters": {
+        "Intel(R) PRO/1000 MT Desktop Adapter": {
+          "Inbound": 0,
+          "Outbound": 0
+        },
+        "sing-tun Tunnel": {
+          "Inbound": 15,
+          "Outbound": 15
+        }
+      },
+      "source": "3784352",
+      "profile_sha256": "20ce76b31fbc16f2ae8f8f49c934a45325dc74fba82b0eaf4948218189fe0dfb"
+    }
+  },
+  "selected_profile_final": "direct",
+  "selected_process": "powershell.exe",
+  "selected_process_target": "pokrov-awg31-lab",
+  "selected_pair_same_profile": true,
+  "routes_dns_preferences_restored": true,
+  "initial_install_result": "FAIL: 304/305 files; automated launch interrupted with Defender detection",
+  "interactive_install_result": "PASS_BOUNDED: same installer, 305/305 files; persisted state unchanged",
+  "defender": {
+    "status": "OPEN",
+    "threat": "Behavior:Win32/SuspClickFix.G2",
+    "events": 7,
+    "new_events_after_initial_attempt": 0,
+    "protection_enabled": true
+  },
+  "probe": {
+    "embedded_source": "0218e89",
+    "sha256": "7c5e01fd1b46985c768ff5c9a90fb9b2bfd24c65dadb05102b058ca11faad05d",
+    "role": "read-only existing SCM IPC helper"
+  },
+  "cleanup": {
+    "utc": "2026-09-08T08:21:28.0345837Z",
+    "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+    "vm_off": true,
+    "nic_none": true,
+    "source_off": true,
+    "routes_sha256": "401e4b0a47c9c8c73d6b52536cec753f09f559ceb2d512884e57d5f7aff72434",
+    "dns_sha256": "720fe40b4ee8ab42f57c808b3c5f824808703b35113fe9999ef97a7bbccdee59",
+    "backend_restored": true,
+    "fixture_rules": 0,
+    "ui_count": 0,
+    "installed_files_verified": 305,
+    "host_network_unchanged": true
+  },
+  "release": {
+    "published": false,
+    "deployed": false,
+    "promoted": false,
+    "final_candidate": false
+  },
+  "limitations": [
+    "one owned non-RU IPv4 TCP80 target, three requests per sample",
+    "not Russian services/DNS/IPv6/LAN/banking/effective-location acceptance",
+    "Windows10 and final channel open",
+    "Defender automated-install issue remains open",
+    "full N03/N08 remain open",
+    "raw process_paths_count field counts null as one; excluded from proof",
+    "final-identity routing_mode is null; UI screenshot/state preference comparison establish cleanup"
+  ],
+  "artifacts": [
+    {
+      "path": "E:/r12-windows-route-proof-20260908/initial-identity.json",
+      "bytes": 232,
+      "sha256": "778f7f0251673cd2fa2c534377263050cd72dc06398f931587ed5c635c484a21"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/installed.json",
+      "bytes": 1286,
+      "sha256": "8d6bbaf740bb97b3f9205f9420d3606ca70bcfed2348b8d562a5f3f615ba642f"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/final-identity.json",
+      "bytes": 1297,
+      "sha256": "dae10d687b75fb4a0d117f895be41cf8e3a54a736251059088adce287ebcd823"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/expected-bundle.json",
+      "bytes": 39997,
+      "sha256": "ca4f8f7af306ae37796383551b43a0b4c7afe3729acf133da2934d71046dc6a7"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/before-upgrade.json",
+      "bytes": 352,
+      "sha256": "b18df30021f04ceac8c13aaaf6e1ecc638b124eae0c3e49356654619c5edf103"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/state-baseline.json",
+      "bytes": 2131,
+      "sha256": "4075a05bdafacad34b5db0b366a678567229500785f8d0a9df8873c29527a076"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/state-final.json",
+      "bytes": 2124,
+      "sha256": "3d417623da9fc0093b30cbe2732905d6d2ee0085ff6fe557dd5d7d6db5497b9e"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/selected-failure-events.json",
+      "bytes": 2541,
+      "sha256": "0c97905e6d715e4e90ca437a8892accbb8338eb516cd7d03a07cb92cc7359ac7"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/state-empty-selected-clicked.json",
+      "bytes": 2141,
+      "sha256": "d276221bfafe80861461853faef8f5361b9dbf7cd40b4611f80a2805850c91fe"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/state-selected-failure.json",
+      "bytes": 2135,
+      "sha256": "9158af5cb9873ba52311efc7a5f456d4425142c620a38eb4e82e35b5239ea05e"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/install-mismatch.json",
+      "bytes": 502,
+      "sha256": "0276eae1339a018baf9937e98a6a8982b3a210173a0db2f229365a011bb2b82a"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/install-result.json",
+      "bytes": 201,
+      "sha256": "f6c5b30fbfffc04656110c7392efea3640f6a4d7cc8a735e58d2c251dc9b9f5a"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/install-failed.log",
+      "bytes": 1179,
+      "sha256": "9967b298cc093b8bdf1b2404031bbd8fac37d25e696e0628aed85bb27a592158"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/install-interactive.log",
+      "bytes": 147784,
+      "sha256": "93c511f33860a61bef7e0994c481bdc0f41de8e50909c5ed7003f0725ae1a7a4"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/defender-initial-install.json",
+      "bytes": 5542,
+      "sha256": "bdfc6a182ebb721e4919580ff6b66421148502ec3e83ed45eef7babbe458c8e6"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/defender-final.json",
+      "bytes": 5532,
+      "sha256": "3a143883e66bf69c3ddd6bb164cd6870864fc7af28fc145f09167f4068b9861e"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/inspect-final.json",
+      "bytes": 18598,
+      "sha256": "4255a9154c2f618d8282ce68c595085c4db2dc96bbff08212893b084fd7bfaab"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/inspect-final-exit.json",
+      "bytes": 137,
+      "sha256": "b09ed299965dfdfc7ca52d63026b9ce6c243189c6051a4221adacaed69ec6ef6"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/ui-exit-final.json",
+      "bytes": 160,
+      "sha256": "8328e60069b5f861fbf187bf2c6e32eaa4a0d3f0c34f280ace85286fcf9a1665"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/host-before.json",
+      "bytes": 337,
+      "sha256": "81c28bf815e6cb1d19d25fc0354b0750cf2da2c08ac4d03ac6beed8a03c145df"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/plan.json",
+      "bytes": 2687,
+      "sha256": "ab83f314fb5bba8f7f6e5fa3c49eb0c2c79a1141cdf5650feee04632393e627e"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/switch-awg31.json",
+      "bytes": 1149,
+      "sha256": "e6665419cf8d2e25d8f882446ce27c504b777ce77255f7a2855509002212d760"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/restore.json",
+      "bytes": 1163,
+      "sha256": "f1e12298af36d10de101be6a70a96f140373a5912ac32f52960b85362ec43d93"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/return-state.json",
+      "bytes": 478,
+      "sha256": "31719935fd87900d0eb94315f420c1cc6898aa6901c77a77c4e99231214e3145"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/capture.ps1",
+      "bytes": 3402,
+      "sha256": "8c9592bab16bd949712fa9d7ff8e77f4ceac3f01d181b4491e36eb774cbabadc"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/capture-v1.ps1",
+      "bytes": 2451,
+      "sha256": "cfedb59f2c2b586b8629aaa4490a4095094b8228c73af0ea97ee249a80362494"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/traffic.ps1",
+      "bytes": 2072,
+      "sha256": "6738fbfe2ce8c242662aba7b280e63adabf79ff30ebdb39e19644e1caf654338"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/traffic-v1.ps1",
+      "bytes": 1542,
+      "sha256": "847fc195e14e9b6838128dd78710b7440c6eaa96a420512ac6872d274a981d33"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/state.ps1",
+      "bytes": 1615,
+      "sha256": "ad589596d97a92595ce8478e9f17246a62fe892238b603bfc42cf9b7a887e173"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/defender-readback.ps1",
+      "bytes": 1882,
+      "sha256": "d6b95e8839e665fcb6f71cb9fd0ba73449beaaabcda4acb4a3bf02c42d5bb47c"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/inspect-final.ps1",
+      "bytes": 976,
+      "sha256": "38970c52958e211b40845e00a385982280c069b278c7d0b2d5abb02fd50c2492"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/final-identity.ps1",
+      "bytes": 1997,
+      "sha256": "704e85e048f1f3346b9d5413cbfdebee49a1206286f202dd7353ce6d281de98a"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/finish.ps1",
+      "bytes": 2900,
+      "sha256": "4a8c453c573007cde0b6ea038c27f1facf037517430080d7e8032bbc81cce6c6"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/lab-control.py",
+      "bytes": 7756,
+      "sha256": "ed31e1d1579738f1c647e7de65efa357bc94b9e1e78987cde880b6aa07e5bfca"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/build.ps1",
+      "bytes": 1080,
+      "sha256": "490b1126b1f33df8c8d3eec258062e3a08c5a13d0f00f0db1004f4e5fd98f809"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/package.ps1",
+      "bytes": 1372,
+      "sha256": "79079188276dcc238b776b382b661aeea9eae62733ef1b4f02e8210e51c9a496"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/packaging-source.ps1",
+      "bytes": 53437,
+      "sha256": "6eb38f1c97418dcfd01bafa64982b21f5fbf77faca5cabd93d40de494e6038e1"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/expected-bundle.py",
+      "bytes": 1521,
+      "sha256": "253bbb927f03f9e2dc4b41973635e6a539a8b77a3f93863209cfe7b019d4ffe2"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/retain-evidence.py",
+      "bytes": 7844,
+      "sha256": "0c80fa55b8847431ad143d7e3c68d08df51333eee5def1ed3840bb17f6152e99"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/regression-red.log",
+      "bytes": 2752,
+      "sha256": "6792d0ae68b90ff785b4379d3133abd86fde95b60d59561fcec5260185edd637"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/routing-regression-green.log",
+      "bytes": 21112,
+      "sha256": "0c3723ccc9cfb1712e56ecbdecfef84efaac8b76639e3cbe027e8d4bbc5de659"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/analyze.log",
+      "bytes": 2322,
+      "sha256": "be8e984d05fb6aace1771daeeacabae7365b84ab634e740a06a0b42d23816f66"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/source-seed.log",
+      "bytes": 1818,
+      "sha256": "d6c8a02cc988e1c4aaecd9814f6cd8d4ab0828a8468f4a7c88b92ae2c8b33bff"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/selected-failure-home.png",
+      "bytes": 110810,
+      "sha256": "53255f17280c3cf8e2bd155dc7a18629f439469b928bbbad4c11874999ef35f2"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/empty-selected-clicked.png",
+      "bytes": 94660,
+      "sha256": "4bb0828b8659e98912640a70b5b8b99f00360f2759c0ffd5432f36f7b715164d"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/selected-corrected-rules.png",
+      "bytes": 88764,
+      "sha256": "5677440984f2a734701f9ceab770c1809168be95959ef9b15fe74e79a04fec9e"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/new-selected-status.png",
+      "bytes": 102971,
+      "sha256": "670b7109da70b3a062dcd9b1c24c0cebd37d44e1ead4257e661001deb5c0df2d"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/fixed-full-before.png",
+      "bytes": 100379,
+      "sha256": "799068285eab6938d4f6b783f4b94087030cef9046e321702df4b920dda9271f"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/capture-baseline.json",
+      "bytes": 3752,
+      "sha256": "c58789236d8a2803dee3290762b3f6181f5068133b74956d4eedb0fbeb7141aa"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/traffic-baseline.json",
+      "bytes": 1532,
+      "sha256": "c776792c70df7d1cc21ec8901d3134130a7bbc90f9aa22016227125e5c2a727d"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/capture-awg31.json",
+      "bytes": 7135,
+      "sha256": "e254d3909e50c1f3fef596eb3670ed502c4c2bc36d9b337948d80c8900fa935a"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/traffic-awg31.json",
+      "bytes": 1516,
+      "sha256": "67572b4e976e329f87350a6b425271cc794dc3b6ed2476feebf878f533944c1a"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/capture-full.json",
+      "bytes": 13470,
+      "sha256": "b20950a9e2062e2187816e19543260f18dfe60ac5ee9aef054a6d17750cb925a"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/traffic-full.json",
+      "bytes": 1514,
+      "sha256": "bda6e569da7bc7066733e4c370201a0a9f5c8a1543b7d33e70ab0f11b74959c3"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/capture-fixed-selected-ps.json",
+      "bytes": 15069,
+      "sha256": "b0f94b5e0abd9c692ea14c70cd65d5a2915a5c684fc0fb8a6bccc6ddce9965fc"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/traffic-fixed-selected-ps.json",
+      "bytes": 1561,
+      "sha256": "208daaadd2568fa3376102d15f4a3f50d4a4594444a87823072b8b6247a9d322"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/capture-fixed-unselected-curl.json",
+      "bytes": 15081,
+      "sha256": "362a46d35473b2cfc664bba696c51539b3d79ac9d329615d60c110c304aab6b4"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/traffic-fixed-unselected-curl.json",
+      "bytes": 1559,
+      "sha256": "84e91c1d12ae07bbde228332d5218460aa97bc3dc851ba68ecd0beb283af2dc7"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/capture-fixed-full.json",
+      "bytes": 13476,
+      "sha256": "a8bf2c390ffa750c316d27aa869ca3407a727c3ea5b2b9d02dde405610637cd4"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/traffic-fixed-full.json",
+      "bytes": 1546,
+      "sha256": "be3b3732d6df3443ea5883979072225f78ab657b6a74b8da0a5d8cd8b02e3208"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/capture-fixed-all-except-ru.json",
+      "bytes": 19731,
+      "sha256": "bca59aba648c2eec2a4ec6042ed2feef7a59901d9c752bbf9f29ccb47334c76f"
+    },
+    {
+      "path": "E:/r12-windows-route-proof-20260908/traffic-fixed-all-except-ru.json",
+      "bytes": 1556,
+      "sha256": "a3a1b9b2fa9b59d9003525eb1cb14dd7acbada265fccccbf960dd77a16176776"
+    }
+  ]
+}

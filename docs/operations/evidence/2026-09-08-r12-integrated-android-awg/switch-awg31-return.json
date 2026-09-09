@@ -1,0 +1,31 @@
+{
+  "config_sha256": "38f68c3cf01547b411f7472eb21d4572b3c0aa8da8920c1ffd9ab05a86220eee",
+  "entitlement_mutated": false,
+  "full_original_config_restored": false,
+  "material_mutated": false,
+  "materials": {
+    "awg2_lab": {
+      "endpoint_revision": "awg2-v1",
+      "endpoint_sha256": "07ae6a2f8bdbfc3bd78bb6fabf105db5380f1bf9a0989efed7a8330d0f7648a9",
+      "generation": "awg2-lab-v1",
+      "latest_source_equal": true,
+      "node_code": "de",
+      "peer_key_sha256": "a3c903d990d506fff21f6fb4602191b648c2ed8b1f8bef72a4970cc345eac80d",
+      "ready_count": 1
+    },
+    "awg31_lab": {
+      "endpoint_revision": "awg31-v1",
+      "endpoint_sha256": "7effbffdbab9013e682f60832c89d488ef0ecfe0829c4e8acb788918bbfaea50",
+      "generation": "awg31-lab-v4-mobile-safe-trailers",
+      "latest_source_equal": true,
+      "node_code": "de",
+      "peer_key_sha256": "68105095df51ea3599392ce3a9bfa824e82d09e1f46e028ff8d4186b74d3e7ae",
+      "ready_count": 1
+    }
+  },
+  "ok": true,
+  "operation": "switch",
+  "raw_identifiers_returned": false,
+  "resolved_profile": "awg31_lab",
+  "selected_profile": "awg31_lab"
+}

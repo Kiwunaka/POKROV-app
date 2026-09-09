@@ -7,6 +7,54 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AndroidCoreEgressProbeTest {
+    class CallBoundCore {
+        val startedA = java.util.concurrent.CountDownLatch(1)
+        val startedB = java.util.concurrent.CountDownLatch(1)
+        val releaseA = java.util.concurrent.CountDownLatch(1)
+        val releaseB = java.util.concurrent.CountDownLatch(1)
+
+        fun probeSelectedOutbound(tag: String): Boolean = probeEndpoint(tag)
+
+        fun probeEndpoint(tag: String): Boolean {
+            if (tag == "target-a") {
+                startedA.countDown()
+                check(releaseA.await(3, java.util.concurrent.TimeUnit.SECONDS))
+                return true
+            }
+            startedB.countDown()
+            check(releaseB.await(3, java.util.concurrent.TimeUnit.SECONDS))
+            return false
+        }
+    }
+
+    @Test
+    fun delayedSuccessCannotConfirmReplacementProbe() {
+        for (kind in AndroidCoreEgressProbeTargetKind.values()) {
+            val core = CallBoundCore()
+            val results = java.util.concurrent.ConcurrentHashMap<String, AndroidCoreEgressProbeResult>()
+            val a = Thread { results["a"] = AndroidCoreEgressProbe.resultFromCore(core, AndroidCoreEgressProbeTarget("target-a", kind)) }
+            val b = Thread { results["b"] = AndroidCoreEgressProbe.resultFromCore(core, AndroidCoreEgressProbeTarget("target-b", kind)) }
+            try {
+                a.start()
+                assertTrue(core.startedA.await(1, java.util.concurrent.TimeUnit.SECONDS))
+                b.start()
+                assertTrue(core.startedB.await(1, java.util.concurrent.TimeUnit.SECONDS))
+                core.releaseA.countDown()
+                a.join(1000)
+                assertEquals(AndroidCoreEgressProbeResult.HEALTHY, results["a"])
+                assertNull("Late A success must not settle B", results["b"])
+                core.releaseB.countDown()
+                b.join(1000)
+                assertEquals(AndroidCoreEgressProbeResult.FAILED, results["b"])
+            } finally {
+                core.releaseA.countDown()
+                core.releaseB.countDown()
+                a.join(1000)
+                b.join(1000)
+            }
+            }
+    }
+
     @Test
     fun endpointFailureGetsBoundedRetriesWhileGroupFailureRemainsTerminal() {
         val endpoint = AndroidCoreEgressProbeTarget(
@@ -140,49 +188,18 @@ class AndroidCoreEgressProbeTest {
         assertFalse(AndroidCoreEgressProbe.isProbeableEndpointType("wireguard"))
     }
 
-    @Test
-    fun rejectsCoreTimeoutSentinelAsFailedEgress() {
-        assertTrue(AndroidCoreEgressProbe.isHealthySample(time = 1L, delay = 84))
-        assertFalse(AndroidCoreEgressProbe.isHealthySample(time = 0L, delay = 84))
-        assertFalse(AndroidCoreEgressProbe.isHealthySample(time = 1L, delay = 0))
-        assertFalse(AndroidCoreEgressProbe.isHealthySample(time = 1L, delay = 65_535))
+    class BrokenCore {
+        fun probeEndpoint(@Suppress("UNUSED_PARAMETER") tag: String): Boolean = error("synthetic private failure")
     }
 
     @Test
-    fun convertsCoreUnixSecondsToPublicMilliseconds() {
-        assertEquals(
-            1_786_716_000_000L,
-            AndroidCoreEgressProbe.urlTestTimeMillis(1_786_716_000L),
-        )
-        assertEquals(0L, AndroidCoreEgressProbe.urlTestTimeMillis(0L))
-        assertEquals(0L, AndroidCoreEgressProbe.urlTestTimeMillis(Long.MAX_VALUE))
-    }
-
-    @Test
-    fun recognizesEndpointResultsOnlyFromStructuredCoreEvents() {
-        assertEquals(
-            AndroidCoreEgressProbeResult.HEALTHY,
-            AndroidCoreEgressProbe.endpointResultFromOperationalEvent(
-                name = "core.egress.probe",
-                outcome = "succeeded",
-                errorCode = null,
-            ),
-        )
-        assertEquals(
-            AndroidCoreEgressProbeResult.FAILED,
-            AndroidCoreEgressProbe.endpointResultFromOperationalEvent(
-                name = "core.egress.probe",
-                outcome = "failed",
-                errorCode = "EGRESS-001",
-            ),
-        )
-        assertNull(
-            AndroidCoreEgressProbe.endpointResultFromOperationalEvent(
-                name = "core.egress.probe",
-                outcome = "failed",
-                errorCode = "RAW-001",
-            ),
-        )
+    fun missingOrFailingPerCallApiCannotProveHealth() {
+        for (kind in AndroidCoreEgressProbeTargetKind.values()) {
+            for (core in listOf(null, Any(), BrokenCore())) {
+                assertEquals(AndroidCoreEgressProbeResult.UNAVAILABLE,
+                    AndroidCoreEgressProbe.resultFromCore(core, AndroidCoreEgressProbeTarget("target", kind)))
+            }
+        }
     }
 
     @Test

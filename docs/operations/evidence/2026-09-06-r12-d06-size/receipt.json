@@ -1,0 +1,47 @@
+{
+  "status": "PASS_LOCAL_D06_FINAL_CANDIDATE_OPEN",
+  "commands": [
+    {
+      "command": "flutter test",
+      "exit_code": 0,
+      "log": "E:/r12-d06-flutter-test.log",
+      "sha256": "d4b6683d685d83fefd50509660b663bf68487aa93fd972707b6b5844fa2a3464"
+    },
+    {
+      "command": "flutter build apk --release --flavor direct --target-platform android-arm,android-arm64,android-x64 --android-project-arg=pokrov.singleVersionSplitApks=true --dart-define=POKROV_API_BASE_URL=http://127.0.0.1:9 --dart-define=POKROV_APP_VERSION=1.2.0",
+      "exit_code": 0,
+      "log": "E:/r12-d06-android-build.log",
+      "sha256": "acd7d051f5576d76d06a49a9f8a26e8f6c94d02b9db4853341fafee1e48e766c"
+    },
+    {
+      "command": "gradlew.bat :app:testDirectDebugUnitTest :app:testStoreDebugUnitTest",
+      "exit_code": 0,
+      "log": "E:/r12-d06-gradle-tests.log",
+      "sha256": "a0fdd732a2160c5dd303e4809ce6eb6ed95dedc010ff02761b606c4574d8358b"
+    },
+    {
+      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "exit_code": 0,
+      "log": "E:/r12-d06-seed.log",
+      "sha256": "da9a8ee153ca4b885b224d1c3d331b61b66304d76b382f265a48911b9762a5e0"
+    }
+  ],
+  "archive": {
+    "path": "E:\\r12-d06-size\\d06-evidence.zip",
+    "bytes": 175719,
+    "sha256": "3c4f0f66fa4e633dd25eab68431807580adfdd6d82fdb04cfc493443a363490b",
+    "files": 97
+  },
+  "archive_scope": "Pre-receipt evidence files, raw command logs, nine native section outputs and 64 JVM XML test results. APKs retained separately.",
+  "seed_performance_scope": "Fixture only, no device performance claim",
+  "source_inputs": {
+    "client_base": "0e69b11b41e149987930703d195ec24a7afd3ca7",
+    "core": "8dc57a830bd1487389dd1b7c9190f094c31e13bc"
+  },
+  "remaining": [
+    "D01 physical ARM64 acceptance",
+    "final signed candidate and distribution readback",
+    "full C05 privacy/license/source/advisory gates"
+  ],
+  "operations": "No production signing, install, VPN execution, release artifact modification, push, merge, deploy, publish or new candidate."
+}
