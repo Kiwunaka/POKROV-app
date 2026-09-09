@@ -21,6 +21,7 @@ contracts. Do not select the most optimistic status.
 
 ## Current Decision
 
+
 [Candidate.33 retention rechecked on 2026-09-09](evidence/2026-09-09-r12-candidate33-retention/README.md):
 all 24 local files remain, including 21 matches to previously pinned hashes.
 Five related CI archives were retained with their individual deadlines: Core
@@ -43,6 +44,12 @@ not mark the release goal complete or turn any missing gate into PASS.
 | Candidate/source boundary | Candidate.33 binds exact client source `6ab1bca…735e`. Continuing source commits do not change those candidate bytes or inherit their evidence. |
 | New public cutover | `BLOCKED_GATE_F_17_NON_PASS`; no public asset, Store object or stable pointer exists |
 | Planned distribution if approved | Android direct stable target; Windows direct unsigned beta with mandatory SmartScreen warning; stores `NOT_REQUESTED`. No new public claim exists yet. |
+
+[Installed development client checks, September 9](evidence/2026-09-09-r12-installed-current/README.md):
+Huawei Frankfurt ordinary connection and bounded Wi-Fi/mobile switch samples PASS;
+Warsaw egress FAIL. Windows installation subsequently passed after owner resume:
+304 files match, session and secure storage preserved; connectivity is pending.
+These observations do not change the candidate.33 or public release verdict.
 
 The September 9 source integration uses signed promotion PR #95 after platform
 PR #243 and before Core PR #9. This exact client PR validates against Core

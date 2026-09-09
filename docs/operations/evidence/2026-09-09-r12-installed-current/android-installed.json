@@ -1,0 +1,15 @@
+{
+  "utc": "2026-09-09T05:53:21.254650+00:00",
+  "status": "PASS_INSTALLED_EXACT_BYTES",
+  "client_source": "c05b58b268bbd789aa96fb662cb46c9768558ef0",
+  "core_source": "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+  "before_apk_sha256": "20a0781baf9bea1e9e0e55de5f4d7d5193936dfe7a9d894df98c1bc457b897af",
+  "installed_apk_sha256": "d030288a672b654a70db593f512416113fd2e8ad12025237b94a422c9613f510",
+  "rollback_apk": "android-before.apk",
+  "same_signer_verified": true,
+  "update_mode": "adb install -r",
+  "app_data_clear_requested": false,
+  "app_state_preservation_readback": "PENDING",
+  "runtime_checks": "PENDING",
+  "published_candidate": false
+}

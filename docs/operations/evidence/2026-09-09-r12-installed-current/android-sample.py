@@ -1,0 +1,9 @@
+import datetime,json,re,subprocess,sys,xml.etree.ElementTree as ET,hashlib
+from pathlib import Path
+A='C:/Users/kiwun/AppData/Local/Android/Sdk/platform-tools/adb.exe';out=Path(__file__).resolve().parent
+label=sys.argv[1]; assert re.fullmatch('[a-z0-9-]+',label)
+def sh(*a):return subprocess.check_output([A,'shell',*a],timeout=30).decode('utf8','replace').strip()
+s=subprocess.check_output([A,'exec-out','uiautomator','dump','/dev/tty'],timeout=35).decode('utf8');s=s[s.index('<?xml'):];r=ET.fromstring(s[:s.index('</hierarchy>')+12]);t='\n'.join(e.get('text') or e.get('content-desc') or '' for e in r.iter('node'))
+svc=sh('dumpsys','activity','services','space.pokrov.pokrov_android_shell');net=sh('dumpsys','connectivity')
+report={'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'label':label,'apk_sha256':'d030288a672b654a70db593f512416113fd2e8ad12025237b94a422c9613f510','source':'c05b58b268bbd789aa96fb662cb46c9768558ef0','origin':'RU-origin','device':'Huawei ADA-AL00U API31','profile':'Frankfurt ordinary','wifi_on':sh('settings','get','global','wifi_on'),'mobile_data':sh('settings','get','global','mobile_data'),'vpn_service':bool(re.search(r'ServiceRecord\{[^\n]*\.PokrovRuntimeVpnService',svc)),'foreground':'isForeground=true' in svc,'tun_interfaces':sorted(x for x in sh('ls','/sys/class/net').split() if re.fullmatch(r'tun\d+',x)),'protection_confirmed':'Защита работает' in t,'dns_ready':'Готов' in t,'egress_confirmed':'Подтверждён' in t,'routes_assigned':'Назначены' in t,'checked_time':next((e.get('text') for e in r.iter('node') if re.fullmatch(r'\d\d:\d\d',e.get('text') or '')),None),'network_transport_types':sorted(set(re.findall(r'Transports: ([A-Z| ]+?)(?: Capabilities:|\s+Capabilities:)',net))),'raw_identifiers_exported':False}
+p=out/('android-'+label+'.json');assert not p.exists();p.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
